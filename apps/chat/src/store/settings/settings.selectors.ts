@@ -131,6 +131,9 @@ const selectThemeHostDefined = (state: RootState) =>
 const selectCustomVisualizers = (state: RootState) =>
   rootSelector(state).customRenderers;
 
+const selectApplicationVisualizers = (state: RootState) =>
+  rootSelector(state).applicationVisualizers;
+
 const selectMappedVisualizers = createSelector(
   [selectCustomVisualizers],
   (customVisualizers) => {
@@ -160,6 +163,15 @@ const selectIsCustomAttachmentType = (attachmentType: string) =>
       Object.prototype.hasOwnProperty.call(mappedVisualizers, attachmentType)
     );
   });
+
+const selectApplicationVisualizerConfig = (
+  state: RootState,
+  applicationId: string | undefined,
+) => {
+  return applicationId
+    ? selectApplicationVisualizers(state)?.[applicationId]
+    : undefined;
+};
 
 const selectPublicationFilters = (state: RootState) =>
   rootSelector(state).publicationFilters;
@@ -205,6 +217,9 @@ const selectDialApiHost = (state: RootState) =>
 const selectDefaultSystemPrompt = (state: RootState) =>
   rootSelector(state).defaultSystemPrompt ?? FALLBACK_STRING_VALUE;
 
+const selectDialCoreUrl = (state: RootState) =>
+  rootSelector(state).dialCoreExternalUrl ?? FALLBACK_STRING_VALUE;
+
 const selectDefaults = createSelector(
   [
     selectQuickAppsHost,
@@ -213,6 +228,7 @@ const selectDefaults = createSelector(
     selectExternalAppsSchemaId,
     selectDialApiHost,
     selectDefaultSystemPrompt,
+    selectDialCoreUrl,
   ],
   (
     quickAppsHost,
@@ -221,6 +237,7 @@ const selectDefaults = createSelector(
     externalAppsSchemaId,
     dialApiHost,
     defaultSystemPrompt,
+    dialCoreExternalUrl,
   ) =>
     ({
       quickAppsHost,
@@ -229,6 +246,7 @@ const selectDefaults = createSelector(
       externalAppsSchemaId,
       dialApiHost,
       defaultSystemPrompt,
+      dialCoreExternalUrl,
     }) as Defaults,
 );
 const selectInitialDataStatus = (state: RootState) =>
@@ -244,6 +262,20 @@ const selectIsAuthDisabled = (state: RootState) =>
 
 const selectAttachmentsSettings = (state: RootState) =>
   rootSelector(state).attachmentsSettings;
+
+const selectHiddenEntityTag = (state: RootState) =>
+  rootSelector(state).hiddenEntityTag;
+
+const selectStageContentLimit = (state: RootState) =>
+  rootSelector(state).stageContentLimit;
+
+const selectResourceMaxSegmentBytes = (state: RootState) =>
+  rootSelector(state).resourceMaxSegmentBytes;
+
+const selectAsrModelId = (state: RootState) => rootSelector(state).asrModelId;
+
+const selectAudioTypesDefaultOrder = (state: RootState) =>
+  rootSelector(state).audioTypesDefaultOrder;
 
 export const SettingsSelectors = {
   selectAppName,
@@ -266,6 +298,8 @@ export const SettingsSelectors = {
   selectPreselectedAction,
   selectMappedVisualizers,
   selectIsCustomAttachmentType,
+  selectApplicationVisualizers,
+  selectApplicationVisualizerConfig,
   selectPublicationFilters,
   selectOverlayConversationId,
   selectIsSignInInSameWindow,
@@ -279,4 +313,9 @@ export const SettingsSelectors = {
   selectWidgetsSchemaIds,
   selectIsAuthDisabled,
   selectAttachmentsSettings,
+  selectHiddenEntityTag,
+  selectStageContentLimit,
+  selectResourceMaxSegmentBytes,
+  selectAsrModelId,
+  selectAudioTypesDefaultOrder,
 };

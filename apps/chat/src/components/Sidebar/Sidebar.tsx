@@ -17,6 +17,8 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
+
 import { Loader } from '@/src/components/Common/Loader';
 import {
   CreateNewConversation,
@@ -34,7 +36,7 @@ interface Props<T> {
   side: SidebarSide;
   filteredItems: T[];
   filteredFolders: FolderInterface[];
-  itemComponent: ReactNode;
+  itemComponent: ReactNode | ((isDraggingOver: boolean) => ReactNode);
   folderComponent: ReactNode;
   footerComponent?: ReactNode;
   searchTerm: string;
@@ -117,15 +119,18 @@ export const Sidebar = <T,>({
             )}
           >
             <p className="text-base font-semibold">
-              {t(isLeftSidebar ? 'Conversations' : 'Prompts')}
+              {t(
+                isLeftSidebar
+                  ? PromptBarI18nKeys.Conversations
+                  : PromptBarI18nKeys.Prompts,
+              )}
             </p>
             <CreateNewEntity iconSize={createIconSize} />
           </div>
           <Search
-            placeholder={t('Search {{name}}...', {
-              name: trimEnd(
-                EnumMapper.getApiKeyByFeatureType(featureType),
-                's',
+            placeholder={t(PromptBarI18nKeys.Search, {
+              name: t(
+                trimEnd(EnumMapper.getApiKeyByFeatureType(featureType), 's'),
               ),
             })}
             searchTerm={searchTerm}

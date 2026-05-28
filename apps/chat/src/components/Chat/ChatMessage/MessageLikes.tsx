@@ -7,14 +7,16 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { LikeState, onLikeMessageHandler } from '@epam/ai-dial-shared';
 import {
   ButtonAppearance,
-  ButtonSize,
   DialPrimaryIconButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
 interface LikeItemProps {
@@ -34,23 +36,26 @@ const DesktopLikeView = ({
   label,
   dataQa,
 }: LikeItemProps) => (
-  <Tooltip placement="top" isTriggerClickable={!wasClicked} tooltip={label}>
-    <DialPrimaryIconButton
-      appearance={ButtonAppearance.Ghost}
-      size={ButtonSize.Small}
-      onClick={() => {
-        if (!wasClicked) {
-          onLike(targetStatus);
-        }
-      }}
-      className={classNames(
-        wasClicked && 'text-accent-primary disabled:text-accent-primary',
-      )}
-      disabled={wasClicked}
-      data-qa={dataQa}
-      icon={<Icon size={16} stroke={1.5} />}
-    />
-  </Tooltip>
+  <DialPrimaryIconButton
+    tooltipProps={{
+      placement: 'top',
+      isTriggerClickable: !wasClicked,
+      tooltip: label,
+    }}
+    appearance={ButtonAppearance.Ghost}
+    size={ElementSize.Small}
+    onClick={() => {
+      if (!wasClicked) {
+        onLike(targetStatus);
+      }
+    }}
+    className={classNames(
+      wasClicked && 'text-accent-primary disabled:text-accent-primary',
+    )}
+    disabled={wasClicked}
+    data-qa={dataQa}
+    icon={<Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+  />
 );
 
 const MobileLikeView = ({
@@ -98,13 +103,13 @@ const LikeView = ({
     if (targetStatus === LikeState.Liked) {
       return {
         Icon: IconThumbUp,
-        label: t(wasClicked ? 'Liked' : 'Like'),
+        label: t(wasClicked ? ChatI18nKeys.Liked : ChatI18nKeys.Like),
         dataQa: 'like',
       };
     }
     return {
       Icon: IconThumbDown,
-      label: t(wasClicked ? 'Disliked' : 'Dislike'),
+      label: t(wasClicked ? ChatI18nKeys.Disliked : ChatI18nKeys.Dislike),
       dataQa: 'dislike',
     };
   }, [t, targetStatus, wasClicked]);

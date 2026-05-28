@@ -1,5 +1,5 @@
 import { IconKey } from '@tabler/icons-react';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -8,6 +8,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationActions } from '@/src/store/publication/publication.reducers';
 import { PublicationSelectors } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Checkbox } from '@/src/components/Common/Checkbox';
 
@@ -78,7 +80,7 @@ export const PublicationCredentialsRow: React.FC<PublicationItemProps> = ({
           className="mr-0"
         />
         <IconKey size={18} className="text-secondary" />
-        <p>{t('Credentials')}</p>
+        <p>{t(ChatI18nKeys.Credentials)}</p>
       </span>
     </div>
   );

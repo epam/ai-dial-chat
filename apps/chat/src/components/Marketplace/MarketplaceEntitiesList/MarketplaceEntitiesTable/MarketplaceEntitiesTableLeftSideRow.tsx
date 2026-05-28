@@ -1,4 +1,4 @@
-import { memo } from 'react';
+import React, { memo } from 'react';
 
 import classNames from 'classnames';
 
@@ -16,6 +16,8 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
+
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface Props<T> {
   entity: T;
@@ -47,11 +49,11 @@ export const MarketplaceEntitiesTableLeftSideRow: React.FC<
         onMouseEnter={() => onRowHover(entity.id)}
         onMouseLeave={() => onRowHoverOver()}
         className={classNames(
-          'flex h-[55px] cursor-pointer py-3 pl-3 pr-1 md:h-[115px] md:py-4 md:pl-4',
+          'flex h-[55px] cursor-pointer py-3 pe-1 ps-3 md:h-[115px] md:py-4 md:ps-4',
           isHovered && 'bg-layer-2',
         )}
       >
-        <div className="flex h-full items-center gap-3 md:gap-4">
+        <div className="flex size-full items-center gap-3 md:gap-4">
           <div className="flex items-center gap-2 md:gap-4">
             {(screenState === ScreenState.MD ||
               screenState === ScreenState.SM) && (
@@ -69,14 +71,20 @@ export const MarketplaceEntitiesTableLeftSideRow: React.FC<
               iconClassName={isHovered ? 'bg-layer-2 ' : 'bg-layer-1'}
               isMyEntity={isMyApplication(entity)}
             >
-              <ModelIcon entityId={entity.id} entity={entity} size={iconSize} />
+              <ModelIcon
+                entityId={entity.id}
+                entity={entity}
+                size={iconSize}
+                isTooltipDisabled
+              />
             </ShareIcon>
           </div>
-          <div>
+          <div className="min-w-0 flex-1">
             <div className="flex">
-              <div className="line-clamp-1 max-w-screen-sm break-all text-base font-semibold leading-5">
-                {entity.name}
-              </div>
+              <DialEllipsisTooltip
+                text={entity.name}
+                className="max-w-screen-sm text-base font-semibold leading-5"
+              />
             </div>
             <EntityMarkdownDescription className="mt-2 hidden max-w-screen-sm truncate whitespace-normal break-all !text-sm font-light !leading-[18px] text-secondary md:line-clamp-3">
               {getModelShortDescription(entity)}

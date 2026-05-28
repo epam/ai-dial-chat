@@ -1,5 +1,12 @@
-import { IconRefresh } from '@tabler/icons-react';
+import {
+  IconArrowsMaximize,
+  IconArrowsMinimize,
+  IconRefresh,
+} from '@tabler/icons-react';
+import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+
+import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -18,6 +25,7 @@ import {
   DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
   DEFAULT_CUSTOM_ATTACHMENT_WIDTH,
 } from '@/src/constants/chat';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 
@@ -36,21 +44,52 @@ interface Props {
   attachmentUrl: string;
   renderer: CustomVisualizer;
   mimeType: string;
+  isFullScreen?: boolean;
+  forceDefaultView?: boolean;
+  onFullScreenClick?: () => void;
 }
 
 export const VisualizerRenderer = ({
   attachmentUrl,
   renderer,
   mimeType,
+  isFullScreen,
+  forceDefaultView,
+  onFullScreenClick,
 }: Props) => {
   const iframeContainerRef = useRef<HTMLDivElement>(null);
   const visualizer = useRef<VisualizerConnector | null>(null);
   const { t } = useTranslation(Translation.Chat);
 
   const [ready, setReady] = useState<boolean>();
-  const { url: rendererUrl, title: visualizerTitle } = renderer;
+  const { data: session } = useSession();
+  const {
+    url: rendererUrl,
+    title: visualizerTitle,
+    requestTimeout,
+    passAuthInfo,
+    passExplicitToken,
+  } = renderer;
 
   const dispatch = useAppDispatch();
+
+  const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
+    const sessionAccessToken = session?.accessToken;
+    const tokenField =
+      passExplicitToken && sessionAccessToken != null
+        ? { accessToken: sessionAccessToken }
+        : {};
+
+    if (!passAuthInfo || !session) return tokenField;
+
+    const email = session.user?.email ?? undefined;
+    const providerId = (session as { providerId?: string }).providerId;
+    return {
+      ...(email != null && { logInHint: email }),
+      ...(providerId != null && { providerId }),
+      ...tokenField,
+    };
+  }, [passAuthInfo, passExplicitToken, session]);
 
   const attachmentDataLoading = useAppSelector(
     ConversationsSelectors.selectCustomAttachmentLoading,
@@ -70,14 +109,15 @@ export const VisualizerRenderer = ({
     SettingsSelectors.selectAllowVisualizerSendMessages,
   );
 
-  const { withoutTitleTypes } = useAppSelector(
+  const { withoutTitleTypes, borderlessTypes } = useAppSelector(
     SettingsSelectors.selectAttachmentsSettings,
   );
 
-  const hideTitle = withoutTitleTypes.includes(mimeType);
+  const hideTitle = withoutTitleTypes.includes(mimeType) && !forceDefaultView;
+  const isBorderless = borderlessTypes.includes(mimeType) && !forceDefaultView;
 
-  const scrollWidth =
-    iframeContainerRef?.current && iframeContainerRef.current.scrollWidth;
+  const scrollWidth = iframeContainerRef.current?.scrollWidth ?? null;
+  const containerHeight = iframeContainerRef.current?.clientHeight ?? null;
 
   useEffect(() => {
     if (attachmentUrl && !customAttachmentData) {
@@ -97,10 +137,23 @@ export const VisualizerRenderer = ({
         : (customAttachmentData?.layout.width ??
           DEFAULT_CUSTOM_ATTACHMENT_WIDTH),
       height:
-        customAttachmentData?.layout.height ?? DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+        isFullScreen && containerHeight
+          ? containerHeight
+          : Number(
+              customAttachmentData?.layout.height ??
+                DEFAULT_CUSTOM_ATTACHMENT_HEIGHT,
+            ),
       themeId,
+      ...authLayoutFields,
     };
-  }, [customAttachmentData?.layout, scrollWidth, themeId]);
+  }, [
+    containerHeight,
+    customAttachmentData?.layout,
+    isFullScreen,
+    scrollWidth,
+    themeId,
+    authLayoutFields,
+  ]);
 
   const sendMessage = useCallback(
     async (visualizer: VisualizerConnector) => {
@@ -129,6 +182,7 @@ export const VisualizerRenderer = ({
         hostDomain: window.location.origin,
         visualizerName: visualizerTitle,
         loaderStyles: { display: 'none' },
+        requestTimeout,
       });
 
       return () => {
@@ -136,7 +190,7 @@ export const VisualizerRenderer = ({
         visualizer.current = null;
       };
     }
-  }, [rendererUrl, visualizerTitle]);
+  }, [requestTimeout, rendererUrl, visualizerTitle]);
 
   useEffect(() => {
     if (
@@ -196,27 +250,47 @@ export const VisualizerRenderer = ({
     isAllowedSendMessage,
   ]);
 
+  const FullScreenIcon = useMemo(
+    () => (isFullScreen ? IconArrowsMinimize : IconArrowsMaximize),
+    [isFullScreen],
+  );
+
   if (!attachmentUrl) {
     return null;
   }
 
   return (
-    <div>
+    <div className={classNames(isFullScreen && 'size-full p-2')}>
       <div className="mb-2 flex flex-row justify-between">
         {!hideTitle ? <h2>{visualizerTitle}</h2> : <div />}
 
-        <DialLinkButton
-          className="flex text-accent-primary"
-          onClick={() => visualizer.current && sendMessage(visualizer.current)}
-          iconBefore={<IconRefresh size={18} />}
-          label={t('Refresh')}
-        />
+        <div className="flex items-center justify-end gap-2">
+          <DialLinkButton
+            className="flex text-accent-primary"
+            onClick={() =>
+              visualizer.current && sendMessage(visualizer.current)
+            }
+            iconBefore={<IconRefresh size={18} />}
+            label={t(ChatI18nKeys.Refresh)}
+          />
+
+          {isBorderless && (
+            <DialLinkButton
+              className="text-secondary hover:text-accent-primary"
+              iconBefore={<FullScreenIcon size={18} />}
+              onClick={onFullScreenClick}
+            />
+          )}
+        </div>
       </div>
       <div
         ref={iframeContainerRef}
-        className="size-full"
+        className={classNames(
+          'size-full',
+          isFullScreen && 'h-[calc(100%-30px)]',
+        )}
         style={{
-          height: `${customVisualizerLayout.height}px`,
+          height: !isFullScreen ? customVisualizerLayout.height : undefined,
         }}
       >
         {(!ready || attachmentDataLoading) && (

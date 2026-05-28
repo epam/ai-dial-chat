@@ -2,7 +2,11 @@ import { ApplicationStatus } from '@/src/types/applications';
 
 import { EntityType } from './common';
 
-import { EntityPublicationInfo, ShareEntity } from '@epam/ai-dial-shared';
+import {
+  EntityPublicationInfo,
+  ShareEntity,
+  ToolsetTransportType,
+} from '@epam/ai-dial-shared';
 import { TiktokenEncoding } from 'tiktoken';
 
 export type ModelsMap = Partial<Record<string, DialAIEntityModel>>;
@@ -55,6 +59,14 @@ export interface CoreAIEntity<T = EntityType.Model> {
   };
   viewer_url?: string;
   editor_url?: string;
+
+  mcp?: {
+    endpoint: string;
+    transport: ToolsetTransportType;
+    allowedTools?: string[];
+    configDelivery?: string;
+    forwardPerRequestKey?: boolean;
+  };
 }
 
 export interface DialAIEntityFeatures {
@@ -67,6 +79,7 @@ export interface DialAIEntityFeatures {
   configuration: boolean;
   tools: boolean;
   assistantAttachmentsInRequest: boolean;
+  mcp: boolean;
 }
 
 export interface DialAIEntity {
@@ -98,6 +111,10 @@ export interface DialAIEntityModel
     maxRequestTokens: number;
     isMaxRequestTokensCustom: boolean;
   };
+  tokenizer?: {
+    encoding?: TiktokenEncoding;
+    tokensPerMessage?: number;
+  };
   type: EntityType;
   reference: string;
   isDefault: boolean;
@@ -108,6 +125,14 @@ export interface DialAIEntityModel
 
   viewerUrl?: string;
   editorUrl?: string;
+
+  mcp?: {
+    endpoint: string;
+    transport: ToolsetTransportType;
+    allowedTools?: string[];
+    configDelivery?: string;
+    forwardPerRequestKey?: boolean;
+  };
 }
 
 export interface InstalledModel {
@@ -118,4 +143,22 @@ export interface InstalledModel {
 export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {
   folderId: string;
   publicationInfo: EntityPublicationInfo;
+}
+
+export interface LimitUsage {
+  total: number;
+  used: number;
+}
+
+export interface AgentUsageStats {
+  hourRequestStats: LimitUsage;
+  dayRequestStats: LimitUsage;
+  minuteTokenStats: LimitUsage;
+  dayTokenStats: LimitUsage;
+  weekTokenStats: LimitUsage;
+  monthTokenStats: LimitUsage;
+  minuteCostStats: LimitUsage;
+  dayCostStats: LimitUsage;
+  weekCostStats: LimitUsage;
+  monthCostStats: LimitUsage;
 }

@@ -3,7 +3,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { ShareByLinkResponseModel } from '@/chat/types/share';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import { EntityEditorAppTypes, ExpectedConstants } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { AttributeValues, Attributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { ApplicationsUtil, GeneratorUtil } from '@/src/utils';
 
@@ -71,7 +71,9 @@ dialSharedWithMeTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appEntity.name);
         agentElement = await marketplaceEntitiesSection.findEntityElement(
           appEntity,
           { isWorkspaceEntity: true, isEditable: true },
@@ -123,7 +125,7 @@ dialSharedWithMeTest(
       await additionalShareUserEntityDetailsModalAssertion.assertElementAttribute(
         additionalShareUserEntityDetailsModal.openInNewTabButton,
         Attributes.target,
-        Attributes.blank,
+        AttributeValues.blank,
       );
     });
 
@@ -154,7 +156,7 @@ dialSharedWithMeTest(
           additionalShareUserTalkToAgentDialog.noResultFound,
           'visible',
         );
-        await additionalShareUserTalkToAgentDialog.cancelButton.click();
+        await additionalShareUserTalkToAgentDialog.getCloseButton().click();
       },
     );
 
@@ -163,9 +165,9 @@ dialSharedWithMeTest(
       async () => {
         await additionalShareUserNavigationPanel.goToMyWorkspace();
         await additionalShareUserMarketplacePage.waitForPageLoaded();
-        await additionalShareUserMarketplaceHeader.searchInput.fillInInput(
-          appEntity.name,
-        );
+        await additionalShareUserMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appEntity.name);
         agentElement =
           await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
             appEntity,

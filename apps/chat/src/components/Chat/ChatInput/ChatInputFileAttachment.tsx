@@ -8,8 +8,11 @@ import classNames from 'classnames';
 
 import { DialFile } from '@/src/types/files';
 
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
+import { Tooltip } from '@/src/components/Common/Tooltip';
+
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   file: Pick<DialFile, 'name' | 'id' | 'status' | 'percent'>;
@@ -36,32 +39,41 @@ export const ChatInputFileAttachment = ({
       )}
 
       <div className="flex grow justify-between gap-3 overflow-hidden">
-        <div className="flex grow flex-col overflow-hidden text-sm">
-          <span
-            className={classNames(
-              'block max-w-full truncate whitespace-pre text-start text-sm',
-              file.status === UploadStatus.FAILED && 'text-error',
+        <Tooltip
+          key={file.id}
+          tooltip={file.name}
+          triggerClassName="truncate text-center flex-1 min-w-0 min-h-0"
+        >
+          <div className="flex grow flex-col overflow-hidden text-sm">
+            <span
+              className={classNames(
+                'block max-w-full truncate whitespace-pre text-start text-sm',
+                file.status === UploadStatus.FAILED && 'text-error',
+              )}
+              data-qa="attachment-name"
+            >
+              {file.name}
+            </span>
+            {file.status === UploadStatus.LOADING && (
+              <div className="h-[3px] w-full overflow-hidden rounded-full bg-layer-3">
+                <div
+                  className="h-full bg-controls-accent"
+                  style={{ width: `${file.percent}%` }}
+                  data-qa="attachment-loading"
+                ></div>
+              </div>
             )}
-            data-qa="attachment-name"
-          >
-            {file.name}
-          </span>
-          {file.status === UploadStatus.LOADING && (
-            <div className="h-[3px] w-full overflow-hidden rounded-full bg-layer-3">
-              <div
-                className="h-full bg-controls-accent"
-                style={{ width: `${file.percent}%` }}
-                data-qa="attachment-loading"
-              ></div>
-            </div>
-          )}
-        </div>
+          </div>
+        </Tooltip>
+
         <div className="flex gap-3">
           {onRetryFile && file.status === UploadStatus.FAILED && (
-            <DialButton
+            <DialGhostIconButton
               data-qa="retry-upload"
               onClick={() => onRetryFile(file.id)}
-              iconBefore={
+              size={ElementSize.Small}
+              className="px-0"
+              icon={
                 <IconReload
                   className="shrink-0 text-secondary hover:text-accent-primary"
                   size={18}
@@ -70,10 +82,9 @@ export const ChatInputFileAttachment = ({
             />
           )}
           {onUnselectFile && (
-            <DialCloseButton
-              onClose={() => onUnselectFile(file.id)}
-              ariaLabel="remove-file"
-              size={18}
+            <CloseButtonSmall
+              onClick={() => onUnselectFile(file.id)}
+              aria-label="remove-file"
             />
           )}
         </div>

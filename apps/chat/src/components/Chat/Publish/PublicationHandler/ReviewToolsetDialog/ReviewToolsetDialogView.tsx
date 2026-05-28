@@ -11,10 +11,16 @@ import { Translation } from '@/src/types/translation';
 
 import { ToolsetSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+import { NA_VERSION } from '@/src/constants/publication';
+import { AUTH_TYPE_OPTIONS } from '@/src/constants/toolsets';
+
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { withRenderWhenEntities } from '@/src/components/Common/RenderWhen';
 import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
+
+import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
 
 interface ReviewToolsetDialogContentProps {
   toolset: ToolsetModel;
@@ -31,98 +37,77 @@ function ReviewToolsetDialogContent({
       name: toolset.name,
       folderId: getFolderIdFromEntityId(toolset.id),
     }),
-    [toolset],
+    [toolset.id, toolset.name],
   );
+  const description = getModelDescription(toolset);
 
   return (
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
-        <div className="flex justify-between">
-          <h2 className="text-base font-semibold">{t('Application')}</h2>
+        <h2 className="text-base font-semibold">{t(ChatI18nKeys.Toolset)}</h2>
+        <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.Name)}
+            value={toolset.name}
+            dataQa="app-name"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.Version)}
+            value={toolset.version ?? NA_VERSION}
+            dataQa="app-version"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.Icon)}
+            value={
+              <ModelIcon
+                entity={toolset}
+                entityId={toolset.id}
+                size={60}
+                isTooltipDisabled
+              />
+            }
+            valueClassName=""
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.Description)}
+            value={description}
+            dataQa="app-description"
+          />
+          {toolset.topics?.length > 0 && (
+            <MarketplaceEntityInfoRow
+              label={t(ChatI18nKeys.Topics)}
+              value={
+                <div className="flex flex-wrap gap-1">
+                  {toolset.topics.map((topic) => (
+                    <MarketplaceEntityTopic key={topic} topic={topic} />
+                  ))}
+                </div>
+              }
+            />
+          )}
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.Endpoint)}
+            value={toolset.endpoint}
+            dataQa="app-endpoint"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.TransportProtocol)}
+            value={toolset.transport}
+            dataQa="app-transport"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.AuthenticationType)}
+            value={
+              AUTH_TYPE_OPTIONS[toolset.authSettings?.authenticationType]?.name
+            }
+            dataQa="app-authentication-type"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.AllowedTools)}
+            value={toolset.allowedTools?.join(', ')}
+            dataQa="app-allowed-tools"
+          />
         </div>
-        <div className="flex gap-4">
-          <span className="w-[135px] text-secondary">{t('Name: ')}</span>
-          <span className="max-w-[414px] text-primary" data-qa="app-name">
-            {toolset.name}
-          </span>
-        </div>
-        <div className="flex gap-4">
-          <span className="w-[135px] text-secondary">{t('Version: ')}</span>
-          <span className="max-w-[414px] text-primary" data-qa="app-version">
-            {toolset.version}
-          </span>
-        </div>
-        <div className="flex gap-4">
-          <span className="w-[135px] text-secondary">{t('Icon: ')}</span>
-          <ModelIcon entity={toolset} entityId={toolset.id} size={60} />
-        </div>
-        {!!getModelDescription(toolset) && (
-          <div className="flex gap-4">
-            <span className="w-[135px] shrink-0 text-secondary">
-              {t('Description: ')}
-            </span>
-            <span className="grow text-primary" data-qa="app-description">
-              {getModelDescription(toolset)}
-            </span>
-          </div>
-        )}
-        {!!toolset.topics?.length && (
-          <div className="flex gap-4">
-            <span className="w-[135px] text-secondary">{t('Topics: ')}</span>
-            <div className="flex max-w-[414px] flex-wrap gap-1">
-              {toolset.topics.map((topic) => (
-                <MarketplaceEntityTopic key={topic} topic={topic} />
-              ))}
-            </div>
-          </div>
-        )}
-        {toolset.endpoint && (
-          <div className="flex gap-4">
-            <span className="w-[135px] text-secondary">{t('Endpoint: ')}</span>
-            <span className="max-w-[414px] text-primary" data-qa="app-endpoint">
-              {toolset.endpoint}
-            </span>
-          </div>
-        )}
-        {toolset.transport && (
-          <div className="flex gap-4">
-            <span className="w-[135px] text-secondary">
-              {t('Transport protocol: ')}
-            </span>
-            <span
-              className="max-w-[414px] text-primary"
-              data-qa="app-transport"
-            >
-              {toolset.transport}
-            </span>
-          </div>
-        )}
-        {toolset.authSettings?.authenticationType && (
-          <div className="flex gap-4">
-            <span className="w-[135px] text-secondary">
-              {t('Authentication type: ')}
-            </span>
-            <span
-              className="max-w-[414px] text-primary"
-              data-qa="app-authentication-type"
-            >
-              {toolset.authSettings.authenticationType}
-            </span>
-          </div>
-        )}
-        {!!toolset.allowedTools?.length && (
-          <div className="flex gap-4">
-            <span className="w-[135px] text-secondary">
-              {t('Allowed tools: ')}
-            </span>
-            <span
-              className="max-w-[414px] text-primary"
-              data-qa="app-allowed-tools"
-            >
-              {toolset.allowedTools.join(', ')}
-            </span>
-          </div>
-        )}
       </div>
       <div className="flex w-full items-center justify-end border-t border-tertiary px-3 py-4 md:px-5">
         <PublicationControls

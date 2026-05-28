@@ -15,13 +15,13 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { DialButton } from '@epam/ai-dial-ui-kit';
 
-export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
+interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: boolean | string;
   tooltip?: ReactNode;
   dataQa?: string;
 }
 
-export const Input = forwardRef<HTMLInputElement, InputProps>(
+const Input = forwardRef<HTMLInputElement, InputProps>(
   ({ error, className, tooltip, dataQa, type, ...rest }, ref) => {
     const [isVisible, setIsVisible] = useState(false);
 
@@ -62,7 +62,6 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     );
   },
 );
-
 Input.displayName = 'Input';
 
 export const Field = withErrorMessage(withLabel(Input));

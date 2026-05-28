@@ -12,11 +12,11 @@ import {
   PublishPath,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
-import { BaseElement, FileModalSection } from '@/src/ui/webElements';
+import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, UserUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
-dialAdminTest.skip(
+dialAdminTest(
   'Publish custom app from context menu from card list view.\n' +
     'Publish custom app: version of app is displayed.\n' +
     'Author field is editable on publication request.\n' +
@@ -35,6 +35,8 @@ dialAdminTest.skip(
       customApplicationBuilder,
       applicationApiHelper,
       adminNavigationPanel,
+      adminFileManagerGridAssertion,
+      adminFileManagerToolbar,
       adminMarketplaceHeader,
       adminMarketplaceEntitiesSection,
       baseAssertion,
@@ -57,9 +59,6 @@ dialAdminTest.skip(
       adminAppToApproveAssertion,
       adminTooltip,
       adminTooltipAssertion,
-      adminManageAttachmentsAssertion,
-      adminChatBar,
-      adminAttachFilesModal,
       setTestIds,
       localStorageManager,
       adminLocalStorageManager,
@@ -103,7 +102,7 @@ dialAdminTest.skip(
     let appElement: BaseElement;
     const defaultAuthor = UserUtil.getE2EUsername(testInfo.parallelIndex);
     const updatedAuthor = GeneratorUtil.randomString(7);
-    const filename = `${GeneratorUtil.randomString(7)}.svg`;
+    const filename = GeneratorUtil.randomFilename('svg');
 
     await dialTest.step(
       'Upload a svg file with custom name via API',
@@ -146,7 +145,7 @@ dialAdminTest.skip(
         await adminLocalStorageManager.setShowSideBarPanels();
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await marketplaceHeader.getSearch().inputField.fillInInput(appName);
         appElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await appElement.hoverOver();
@@ -259,7 +258,7 @@ dialAdminTest.skip(
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
           requestName: requestName,
           publishToLabel: 'visible',
-          publishTo: PublishPath.Organization,
+          publishPath: PublishPath.Organization,
           authorLabel: 'visible',
           author: defaultAuthor,
           publicAuthorLabel: 'visible',
@@ -337,7 +336,7 @@ dialAdminTest.skip(
     );
 
     await dialAdminTest.step(
-      'Click on "Back to publication request", approve it and verify app icon appears under "Organization" section on "Manage Attachments" modal',
+      'Click on "Back to publication request", approve it and verify app icon appears under "Organization" section on File Manager page',
       async () => {
         await adminPublishedApplicationReviewModal
           .getPublicationReviewControl()
@@ -359,13 +358,12 @@ dialAdminTest.skip(
           'hidden',
         );
 
-        await adminChatBar.openManageAttachmentsModal();
-        await adminManageAttachmentsAssertion.assertEntityState(
-          { name: filename },
-          FileModalSection.Organization,
+        await adminNavigationPanel.goToFileManager();
+        await adminFileManagerToolbar.organizationTab.click();
+        await adminFileManagerGridAssertion.assertGridRowByNameState(
+          filename,
           'visible',
         );
-        await adminAttachFilesModal.closeButton.click();
       },
     );
 
@@ -374,7 +372,9 @@ dialAdminTest.skip(
       async () => {
         await adminNavigationPanel.goToMarketplaceHome();
         await adminMarketplacePage.waitForPageLoaded();
-        await adminMarketplaceHeader.searchInput.fillInInput(appName);
+        await adminMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appName);
         appElement =
           await adminMarketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(appElement, 'visible');

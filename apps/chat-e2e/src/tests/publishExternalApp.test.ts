@@ -10,7 +10,7 @@ import {
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
-import { Attributes } from '@/src/ui/domData';
+import { AttributeValues, Attributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { ApplicationsUtil, GeneratorUtil, UserUtil } from '@/src/utils';
 
@@ -79,6 +79,7 @@ dialAdminTest(
       response: Publication;
     };
     let agentElement: BaseElement;
+    let searchInput: BaseElement;
 
     await dialAdminTest.step('Create an external app via API', async () => {
       const applicationModel = externalApplicationBuilder
@@ -98,7 +99,8 @@ dialAdminTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appEntity.name);
         agentElement = await marketplaceEntitiesSection.findEntityElement(
           appEntity,
           { isWorkspaceEntity: true, isEditable: true },
@@ -148,7 +150,7 @@ dialAdminTest(
         await adminApproveRequiredPrompts.selectRequest(publishRequestName);
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
           requestName: publishRequestName,
-          publishTo: PublishPath.Organization,
+          publishPath: PublishPath.Organization,
           author: defaultAuthor,
           requestCreated: publishApiModels.response,
         });
@@ -206,7 +208,7 @@ dialAdminTest(
           adminTalkToAgentDialog.noResultFound,
           'visible',
         );
-        await adminTalkToAgentDialog.cancelButton.click();
+        await adminTalkToAgentDialog.getCloseButton().click();
       },
     );
 
@@ -218,7 +220,9 @@ dialAdminTest(
           updateInstalledToolsets: false,
         });
         await adminMarketplacePage.waitForPageLoaded();
-        await adminMarketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await adminMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appEntity.name);
         agentElement = await adminMarketplaceEntitiesSection.findEntityElement(
           appEntity,
           { isWorkspaceEntity: false, isEditable: false },
@@ -254,7 +258,7 @@ dialAdminTest(
         await entityDetailsModalAssertion.assertElementAttribute(
           adminEntityDetailsModal.openInNewTabButton,
           Attributes.target,
-          Attributes.blank,
+          AttributeValues.blank,
         );
       },
     );
@@ -267,7 +271,7 @@ dialAdminTest(
           updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await searchInput.fillInInput(appEntity.name);
         agentElement = await marketplaceEntitiesSection.findEntityElement(
           appEntity,
           { isWorkspaceEntity: false, isEditable: false },
@@ -309,8 +313,8 @@ dialAdminTest(
         );
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
           requestName: unpublishRequestName,
-          publishToLabel: 'visible',
-          publishTo: PublishPath.Organization,
+          unpublishFromLabel: 'visible',
+          publishPath: PublishPath.Organization,
           authorLabel: 'visible',
           author: defaultAuthor,
           publicAuthorLabel: 'hidden',

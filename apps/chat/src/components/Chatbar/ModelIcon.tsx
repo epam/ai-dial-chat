@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/alt-text */
-
 /* eslint-disable @next/next/no-img-element */
 import {
   IconBlocks,
@@ -11,7 +9,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 
 import { getOpenAIEntityFullName } from '@/src/utils/app/conversation';
-import { constructPath } from '@/src/utils/app/file';
+import { constructPath, isAbsoluteUrl } from '@/src/utils/app/file';
 import { isApplicationId, isFileId, isToolsetId } from '@/src/utils/app/id';
 import { getThemeIconUrl } from '@/src/utils/app/themes';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -22,6 +20,7 @@ import { DialAIEntity } from '@/src/types/models';
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationTypesSchemasSelectors,
+  SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
 
@@ -40,7 +39,7 @@ interface FallbackIconProps {
   size: number;
 }
 
-export function FallbackIcon({ entityType, size }: FallbackIconProps) {
+function FallbackIcon({ entityType, size }: FallbackIconProps) {
   const Icon = entityType === EntityType.Toolset ? IconBlocks : IconMessage2;
   return (
     <Icon
@@ -64,6 +63,7 @@ interface Props extends ModelTooltipProps {
   animate?: boolean;
   isCustomTooltip?: boolean;
   enableShrinking?: boolean;
+  isTooltipDisabled?: boolean;
 }
 
 const ModelIconTemplate = memo(
@@ -77,6 +77,9 @@ const ModelIconTemplate = memo(
     const themesImages = useAppSelector(UISelectors.selectThemesImages);
     const applicationTypeSchemas = useAppSelector(
       ApplicationTypesSchemasSelectors.selectAllSchemas,
+    );
+    const isThemeHostDefined = useAppSelector(
+      SettingsSelectors.selectThemeHostDefined,
     );
 
     const [iconError, setIconError] = useState(false);
@@ -141,11 +144,17 @@ const ModelIconTemplate = memo(
         return constructPath('/api', ApiUtils.encodeApiUrl(entity.iconUrl));
       }
 
-      return `${getThemeIconUrl(entity.iconUrl)}?v2`;
+      const iconUrl = getThemeIconUrl(entity.iconUrl);
+      if (!isAbsoluteUrl(iconUrl) && !isThemeHostDefined) {
+        return null;
+      }
+
+      return `${iconUrl}?v2`;
     }, [
       entity?.iconUrl,
       entity?.id,
       fallbackUrl,
+      isThemeHostDefined,
       schemaApplicationFallbackUrl,
     ]);
 
@@ -171,7 +180,7 @@ const ModelIconTemplate = memo(
         data-qa="entity-icon"
       >
         <div
-          className="absolute z-0 size-full rounded-full border border-secondary bg-model-icon"
+          className="absolute z-0 size-full rounded-full border border-secondary bg-model-icon [-webkit-background-clip:padding-box]"
           style={{ height: `${size}px`, width: `${size}px` }}
         ></div>
         {showFallback ? (
@@ -185,7 +194,7 @@ const ModelIconTemplate = memo(
             onError={handleError}
             data-image-name={description}
             ref={ref}
-            className="absolute left-0 top-0 z-10 size-full"
+            className="absolute start-0 top-0 z-10 size-full"
             style={{ height: `${size}px`, width: `${size}px` }}
             id={entityId}
           />
@@ -202,19 +211,25 @@ export const ModelIcon = ({
   size,
   animate,
   isCustomTooltip,
+  isTooltipDisabled,
 }: Props) => {
-  return (
+  const icon = (
+    <ModelIconTemplate
+      entity={entity}
+      entityId={entityId}
+      size={size}
+      animate={animate}
+    />
+  );
+  return !isTooltipDisabled ? (
     <Tooltip
       hideTooltip={isCustomTooltip}
       tooltip={<ModelTooltip entity={entity} entityId={entityId} />}
       triggerClassName="flex shrink-0 relative select-none"
     >
-      <ModelIconTemplate
-        entity={entity}
-        entityId={entityId}
-        size={size}
-        animate={animate}
-      />
+      {icon}
     </Tooltip>
+  ) : (
+    icon
   );
 };

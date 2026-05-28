@@ -24,6 +24,7 @@ import { AppAction, AppEpic } from '@/src/types/store';
 import {
   ApplicationActions,
   ApplicationTypesSchemasActions,
+  ChatEventsActions,
   ConversationsActions,
   FilesActions,
   MarketplaceActions,
@@ -79,6 +80,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(PublicationActions.init()),
         of(ApplicationTypesSchemasActions.init()),
         of(ToolsetActions.init()),
+        of(ChatEventsActions.init()),
       ];
     case PageType.AppsEditor:
       return [
@@ -89,6 +91,7 @@ const getInitActions = (page?: PageType): Observable<AppAction>[] => {
         of(ConversationsActions.init()),
         of(ApplicationTypesSchemasActions.init()),
         of(ToolsetActions.init()),
+        of(ChatEventsActions.init()),
       ];
     default:
       return [
@@ -147,9 +150,9 @@ const initEpic: AppEpic = (action$, state$) =>
                 return EMPTY;
               } else {
                 return of(
-                  UIActions.showErrorToast(
-                    errorsMessages.errorGettingUserBucket,
-                  ),
+                  UIActions.showErrorToast({
+                    message: errorsMessages.errorGettingUserBucket,
+                  }),
                 );
               }
             }),

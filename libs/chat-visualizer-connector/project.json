@@ -34,7 +34,7 @@
       }
     },
     "publish": {
-      "command": "node tools/publish-lib.mjs chat-visualizer-connector --version={args.ver} --dry={args.dry} --tag={args.tag} --development={args.development}"
+      "command": "node tools/publish-lib.mjs chat-visualizer-connector --version={args.ver} --dry={args.dry} --tag={args.tag}"
     },
     "lint": {
       "options": {
@@ -53,7 +53,8 @@
       }
     },
     "format": {},
-    "format:fix": {}
+    "format:fix": {},
+    "unused-exports": {}
   },
   "tags": ["publishable"]
 }

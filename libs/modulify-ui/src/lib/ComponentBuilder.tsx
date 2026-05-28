@@ -178,6 +178,7 @@ export class ComponentBuilder<
 
       useEffect(() => {
         this.stateFn?.(componentState, setComponentState);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
       }, [this.stateFn]);
 
       this.useEffectsRunner(this.effectsFn, componentState, setComponentState);

@@ -34,6 +34,7 @@ import {
 } from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import {
   APPROVE_REQUIRED_SECTION_NAME,
   ORGANIZATION_SECTION_NAME,
@@ -177,12 +178,12 @@ const ChatFolderTemplate = ({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t('Folder with name "{{name}}" already exists at the root.', {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsAtRoot, {
               ns: Translation.Chat,
               name: folder.name,
             }),
-          ),
+          }),
         );
 
         return;
@@ -324,7 +325,7 @@ const ChatFolderTemplate = ({
   );
 };
 
-export const ChatSection = ({
+const ChatSection = ({
   name,
   filters,
   hideIfEmpty = true,
@@ -334,6 +335,7 @@ export const ChatSection = ({
   dataQa,
 }: FolderSectionProps) => {
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+  const { t } = useTranslation(Translation.Chat);
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const selectedPublication = useAppSelector(
@@ -418,7 +420,7 @@ export const ChatSection = ({
   return (
     <CollapsibleSection
       onToggle={handleToggle}
-      name={name}
+      name={t(name)}
       openByDefault={openByDefault ?? isExpanded}
       isExpanded={isExpanded}
       dataQa={dataQa}

@@ -29,6 +29,7 @@ import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conve
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import {
   addMessageAttachmentsToPublication$,
+  getDeletedEntities,
   getPublicationResourceEntityData,
   getSetUpdatedItemsToApproveAction$,
   getUpdateApplicationGeneralInfoAction$,
@@ -81,7 +82,7 @@ import {
   PublishedFileItem,
 } from '@/src/types/publication';
 import { AppAction, AppEpic } from '@/src/types/store';
-import { ToolsetModel } from '@/src/types/toolsets';
+import { Translation } from '@/src/types/translation';
 
 import {
   ConversationsActions,
@@ -102,8 +103,7 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
-import { errorsMessages } from '@/src/constants/errors';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 
 import {
   Conversation,
@@ -116,6 +116,7 @@ import {
 } from '@epam/ai-dial-shared';
 import groupBy from 'lodash-es/groupBy';
 import uniq from 'lodash-es/uniq';
+import uniqBy from 'lodash-es/uniqBy';
 import { lookup as lookupMime } from 'mime-types';
 
 const initEpic: AppEpic = (action$, state$) =>
@@ -156,7 +157,7 @@ const publishEpic: AppEpic = (action$) =>
       if (isPublishingExternalFiles) {
         return of(
           PublicationActions.publishFail(
-            errorsMessages.publicationWithExternalFilesFailed,
+            CommonI18nKeys.PublicationWithExternalFilesFailed,
           ),
         );
       }
@@ -167,7 +168,9 @@ const publishEpic: AppEpic = (action$) =>
         switchMap(() =>
           of(
             UIActions.showSuccessToast(
-              translate('Publication request created successfully'),
+              translate(CommonI18nKeys.PublicationRequestCreatedSuccessfully, {
+                ns: Translation.Common,
+              }),
             ),
           ),
         ),
@@ -183,9 +186,11 @@ const publishFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.publishFail.type),
     map(({ payload }) => {
-      return UIActions.showErrorToast(
-        translate(payload ?? errorsMessages.publicationFailed),
-      );
+      return UIActions.showErrorToast({
+        message: translate(payload ?? CommonI18nKeys.PublicationFailed, {
+          ns: Translation.Common,
+        }),
+      });
     }),
   );
 
@@ -221,9 +226,11 @@ const uploadPublicationsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(errorsMessages.publicationsUploadFailed),
-      ),
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.PublicationsUploadFailed, {
+          ns: Translation.Common,
+        }),
+      }),
     ),
   );
 
@@ -446,9 +453,11 @@ const uploadPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadPublicationsFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(errorsMessages.publicationUploadFailed),
-      ),
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.PublicationUploadFailed, {
+          ns: Translation.Common,
+        }),
+      }),
     ),
   );
 
@@ -643,9 +652,11 @@ const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadPublishedWithMeItemsFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(errorsMessages.publishedItemsUploadFailed),
-      ),
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.PublishedItemsUploadFailed, {
+          ns: Translation.Common,
+        }),
+      }),
     ),
   );
 
@@ -994,26 +1005,19 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
 
           if (toolsetResourcesToPublish.length) {
             const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
-            const toolsetsToReplace = toolsetResourcesToPublish
-              .map((r) =>
-                toolsetsMap[r.reviewUrl]
-                  ? ({
-                      ...toolsetsMap[r.reviewUrl],
-                      id: r.targetUrl,
-                    } as ToolsetModel)
-                  : undefined,
-              )
+            const toolsetsToRemove = toolsetResourcesToPublish
+              .map((r) => toolsetsMap[r.reviewUrl])
               .filter((t) => !!t);
 
             actions.push(
-              ...toolsetsToReplace.map((t) =>
+              ...toolsetsToRemove.map((t) =>
                 of(
                   ToolsetActions.deleteToolsetSuccess({
                     reference: t.reference,
                   }),
                 ),
               ),
-              of(ToolsetActions.setToolsets(toolsetsToReplace)),
+              of(ToolsetActions.getToolsets()),
             );
           }
 
@@ -1044,9 +1048,11 @@ const approvePublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.approvePublicationFail.type),
     map(({ payload }) =>
-      UIActions.showErrorToast(
-        translate(payload ?? errorsMessages.publicationApproveFailed),
-      ),
+      UIActions.showErrorToast({
+        message: translate(payload ?? CommonI18nKeys.PublicationApproveFailed, {
+          ns: Translation.Common,
+        }),
+      }),
     ),
   );
 
@@ -1070,9 +1076,11 @@ const rejectPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.rejectPublicationFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(errorsMessages.publicationRejectFailed),
-      ),
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.PublicationRejectFailed, {
+          ns: Translation.Common,
+        }),
+      }),
     ),
   );
 
@@ -1123,7 +1131,11 @@ const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
           ),
           of(
             ConversationsActions.createNewConversations({
-              names: [DEFAULT_CONVERSATION_NAME],
+              names: [
+                translate(ChatI18nKeys.NewConversation, {
+                  ns: Translation.Chat,
+                }),
+              ],
             }),
           ),
         );
@@ -1161,9 +1173,11 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadRulesFail.type),
     map(({ payload }) =>
-      UIActions.showErrorToast(
-        translate(payload ?? errorsMessages.rulesUploadingFailed),
-      ),
+      UIActions.showErrorToast({
+        message: translate(payload ?? CommonI18nKeys.RulesUploadingFailed, {
+          ns: Translation.Common,
+        }),
+      }),
     ),
   );
 
@@ -1284,9 +1298,11 @@ const uploadAllPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadAllPublishedWithMeItemsFail.type),
     map(() =>
-      UIActions.showErrorToast(
-        translate(errorsMessages.publishedItemsUploadFailed),
-      ),
+      UIActions.showErrorToast({
+        message: translate(CommonI18nKeys.PublishedItemsUploadFailed, {
+          ns: Translation.Common,
+        }),
+      }),
     ),
   );
 
@@ -1304,21 +1320,29 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
 
       if (!publication) {
         return of(
-          UIActions.showErrorToast(
-            translate(
-              `Cannot update ${isConversation ? 'conversation' : 'prompt'}, publication not found`,
+          UIActions.showErrorToast({
+            message: translate(
+              CommonI18nKeys.CannotUpdateEntityPublicationNotFound,
+              {
+                ns: Translation.Common,
+                entityType: isConversation ? 'conversation' : 'prompt',
+              },
             ),
-          ),
+          }),
         );
       }
 
       if (!publication.resources) {
         return of(
-          UIActions.showErrorToast(
-            translate(
-              `Cannot update ${isConversation ? 'conversation' : 'prompt'}, publication has no resources`,
+          UIActions.showErrorToast({
+            message: translate(
+              CommonI18nKeys.CannotUpdateEntityPublicationNoResources,
+              {
+                ns: Translation.Common,
+                entityType: isConversation ? 'conversation' : 'prompt',
+              },
             ),
-          ),
+          }),
         );
       }
 
@@ -1438,20 +1462,25 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.updateApplicationPublicationUrls.type),
     switchMap(({ payload }) => {
+      const { isSaveAndExit, publicationUrl, oldApplication, newApplication } =
+        payload;
       const publication = PublicationSelectors.selectPublicationByUrl(
         state$.value,
-        payload.publicationUrl,
+        publicationUrl,
       );
 
-      if (!publication || !publication?.resources || !payload.publicationUrl) {
+      if (!publication || !publication?.resources || !publicationUrl) {
         return of(
-          UIActions.showErrorToast(
-            translate('Cannot update application, publication not found'),
-          ),
+          UIActions.showErrorToast({
+            message: translate(
+              CommonI18nKeys.CannotUpdateApplicationPublicationNotFound,
+              {
+                ns: Translation.Common,
+              },
+            ),
+          }),
         );
       }
-
-      const { oldApplication, newApplication } = payload;
 
       const resources = publication.resources.map((resource) => ({
         action: resource.action,
@@ -1470,7 +1499,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
           ...publication,
           resources,
         },
-        url: payload.publicationUrl,
+        url: publicationUrl,
       }).pipe(
         switchMap((response) => {
           const state = state$.value;
@@ -1478,7 +1507,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
           const selectedPublicationItems =
             PublicationSelectors.selectSelectedPublicationItems(
               state,
-              payload.publicationUrl,
+              publicationUrl,
             );
 
           return concat(
@@ -1486,6 +1515,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
               // oldApplication is not exist after update, so we need to replace it with newApplication.id
               { ...oldApplication, id: newApplication.id },
               newApplication,
+              isSaveAndExit,
             ),
             of(
               PublicationActions.setPublicationItems({
@@ -1516,22 +1546,34 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
   action$.pipe(
     ofType(PublicationActions.updatePublicationRequestAndApplicationIcon.type),
     switchMap(({ payload }) => {
-      if (!payload.newApplication.iconUrl) {
+      const {
+        isSaveAndExit,
+        publicationUrl,
+        newApplication,
+        oldApplication,
+        tabToOpen,
+      } = payload;
+
+      if (!newApplication.iconUrl) {
         return EMPTY;
       }
 
       const state = state$.value;
-
       const publication = PublicationSelectors.selectPublicationByUrl(
         state,
-        payload.publicationUrl,
+        publicationUrl,
       );
 
       if (!publication) {
         return of(
-          UIActions.showErrorToast(
-            translate('Cannot update application icon, publication not found'),
-          ),
+          UIActions.showErrorToast({
+            message: translate(
+              CommonI18nKeys.CannotUpdateApplicationIconPublicationNotFound,
+              {
+                ns: Translation.Common,
+              },
+            ),
+          }),
         );
       }
 
@@ -1541,16 +1583,16 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
           sourceUrl: resource.sourceUrl ?? '',
         })) ?? [];
 
-      const newIconUrl = payload.newApplication.iconUrl.split('/');
+      const newIconUrl = newApplication.iconUrl.split('/');
       resources.push({
         action: PublishActions.ADD_IF_ABSENT,
-        sourceUrl: payload.newApplication.iconUrl,
+        sourceUrl: newApplication.iconUrl,
         targetUrl: ApiUtils.decodeApiUrl(
           constructPath(
             newIconUrl[0],
             publication.targetFolder,
             getFolderIdFromEntityId(
-              getIdWithoutRootPathSegments(payload.newApplication.id),
+              getIdWithoutRootPathSegments(newApplication.id),
             ),
             newIconUrl.at(-1),
           ),
@@ -1560,40 +1602,42 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
       return PublicationService.updatePublicationRequest({
         publicationData: {
           ...publication,
-          resources,
+          resources: uniqBy(resources, 'sourceUrl'),
         },
-        url: payload.publicationUrl,
+        url: publicationUrl,
       }).pipe(
         switchMap((response) => {
           const newIconUrl =
             response.resources.find(
-              ({ sourceUrl }) => sourceUrl === payload.newApplication.iconUrl,
+              ({ sourceUrl }) => sourceUrl === newApplication.iconUrl,
             )?.reviewUrl ?? '';
           const newApplicationWithMappedIconUrl = {
-            ...payload.newApplication,
+            ...newApplication,
             iconUrl: newIconUrl,
           };
 
           const selectedPublicationItems =
             PublicationSelectors.selectSelectedPublicationItems(
               state,
-              payload.publicationUrl,
+              publicationUrl,
             );
 
           return concat(
             getUpdateApplicationGeneralInfoAction$(
-              payload.oldApplication,
+              oldApplication,
               newApplicationWithMappedIconUrl,
+              isSaveAndExit,
+              tabToOpen,
             ),
             of(
               PublicationActions.setPublicationItems({
-                publicationUrl: payload.publicationUrl,
+                publicationUrl,
                 ids: [...selectedPublicationItems, newIconUrl],
               }),
             ),
             of(
               PublicationActions.uploadPublication({
-                url: payload.publicationUrl,
+                url: publicationUrl,
               }),
             ),
           );
@@ -1618,17 +1662,27 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
 
       if (!publication) {
         return of(
-          UIActions.showErrorToast(
-            translate('Cannot update folder, publication not found'),
-          ),
+          UIActions.showErrorToast({
+            message: translate(
+              CommonI18nKeys.CannotUpdateFolderPublicationNotFound,
+              {
+                ns: Translation.Common,
+              },
+            ),
+          }),
         );
       }
 
       if (!publication.resources) {
         return of(
-          UIActions.showErrorToast(
-            translate('Cannot update folder, publication has no resources'),
-          ),
+          UIActions.showErrorToast({
+            message: translate(
+              CommonI18nKeys.CannotUpdateFolderPublicationNoResources,
+              {
+                ns: Translation.Common,
+              },
+            ),
+          }),
         );
       }
 
@@ -2064,15 +2118,29 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
           state,
           selectedPublication.url,
         );
-      const filteredResources = selectedPublication.resources
-        .filter(({ reviewUrl }) => selectedPublicationItems.includes(reviewUrl))
-        .map((resource) => ({
-          ...resource,
-          publishCredentials:
-            resource.publishCredentials &&
-            selectedCredentialsItems.includes(resource.reviewUrl),
-          sourceUrl: resource.sourceUrl ?? '',
-        }));
+      const filteredResources = selectedPublicationItems.map((reviewUrl) => {
+        const resource = selectedPublication.resources.find(
+          (r) => r.reviewUrl === reviewUrl,
+        );
+
+        if (resource) {
+          return {
+            ...resource,
+            publishCredentials:
+              resource.publishCredentials &&
+              selectedCredentialsItems.includes(resource.reviewUrl),
+            sourceUrl: resource.sourceUrl ?? '',
+          };
+        }
+
+        // if new resources were added while unpublishing
+        return {
+          reviewUrl,
+          action: PublishActions.DELETE,
+          targetUrl: reviewUrl,
+          sourceUrl: reviewUrl,
+        };
+      });
 
       return PublicationService.updatePublicationRequest({
         url: selectedPublication.url,
@@ -2082,6 +2150,72 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
         },
       }).pipe(
         switchMap((response) => {
+          const resourcesIds = selectedPublication.resources.map(
+            (resource) => resource.reviewUrl,
+          );
+          if (
+            selectedPublicationItems.some(
+              (item) => !resourcesIds.includes(item),
+            )
+          ) {
+            const existingReviewedResources =
+              PublicationSelectors.selectResourcesToReviewByPublicationUrl(
+                state$.value,
+                selectedPublication.url,
+              );
+
+            const prompts = PromptsSelectors.selectPublicPrompts(state);
+            const conversations =
+              ConversationsSelectors.selectPublicConversations(state);
+
+            const resourcesToDelete = new Set(
+              response.resources
+                .filter((resource) => resource.action === PublishActions.DELETE)
+                .map((resource) => resource.reviewUrl),
+            );
+
+            return concat(
+              of(
+                UIActions.showInfoToast(
+                  'New items were added to the publication, please review them before approving',
+                ),
+              ),
+              of(
+                PublicationActions.uploadPublicationSuccess({
+                  publication: response,
+                }),
+              ),
+              of(
+                ConversationsActions.addConversations({
+                  conversations: getDeletedEntities(
+                    conversations,
+                    resourcesToDelete,
+                  ),
+                }),
+              ),
+              of(
+                PromptsActions.addPrompts({
+                  prompts: getDeletedEntities(prompts, resourcesToDelete),
+                }),
+              ),
+              of(
+                PublicationActions.setPublicationsToReview({
+                  items: response.resources.map((resource) => {
+                    const matched = existingReviewedResources.find(
+                      (r) => r.sourceUrl === resource.sourceUrl,
+                    );
+                    return {
+                      reviewed: matched?.reviewed ?? false,
+                      reviewUrl: resource.reviewUrl,
+                      sourceUrl: resource.sourceUrl ?? '',
+                    };
+                  }),
+                  publicationUrl: response.url,
+                }),
+              ),
+            );
+          }
+
           return of(
             PublicationActions.approvePublication({
               url: response.url,

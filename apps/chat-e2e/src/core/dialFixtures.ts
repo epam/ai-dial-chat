@@ -7,7 +7,7 @@ import {
 } from '../ui/pages';
 import {
   AgentInfo,
-  AttachFilesModal,
+  Breadcrumb,
   Chat,
   ChatBar,
   ChatHeader,
@@ -32,14 +32,15 @@ import {
   EntityEditorPreviewCard,
   ExternalAppEditorContainer,
   ExternalAppEditorViewForm,
+  FileConflictResolutionPopup,
   FileDropArea,
   FileManager,
   FileManagerCollapsibleSidebar,
   FileManagerContainer,
   FileManagerGrid,
   FileManagerModal,
+  FileManagerNavigationPanel,
   FileManagerToolbar,
-  FileModalSection,
   FoldersTree,
   InformationModal,
   ListboxMenu,
@@ -47,11 +48,14 @@ import {
   PromptBar,
   PublishingFilter,
   PublishingRules,
+  SelectFolderManagerModal,
   SelectFolderModal,
   SendMessage,
   ShareAppModal,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
+  ToolsetLoginModal,
+  TooltipPortal,
   TopicsTooltip,
   UploadProgressDialog,
 } from '../ui/webElements';
@@ -74,6 +78,7 @@ import {
   EntityTreeAssertion,
   FileManagerGridAssertion,
   FolderAssertion,
+  FoldersTreeAssertion,
   FooterAssertion,
   MenuAssertion,
   PlaybackAssertion,
@@ -92,19 +97,21 @@ import {
   SideBarAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
+  ToolsetApiAuthenticationAssertion,
   ToolsetAuthAssertion,
+  ToolsetLoginModalAssertion,
   TooltipAssertion,
+  TooltipPortalAssertion,
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
 import { ConfirmationPopupAssertion } from '@/src/assertions/common/confirmationPopupAssertion';
+import { FileConflictResolutionPopupAssertion } from '@/src/assertions/common/fileConflictResolutionPopupAssertion';
 import { EntityDetailsModalAssertion } from '@/src/assertions/entityDetailsModalAssertion';
 import { EntityEditorHeaderAssertion } from '@/src/assertions/entityEditorHeaderAssertion';
 import { InformationModalAssertion } from '@/src/assertions/informationModalAssertion';
 import { LocalStorageAssertion } from '@/src/assertions/localStorageAssertion';
-import { ManageAttachmentFoldersAssertion } from '@/src/assertions/manageAttachmentFoldersAssertion';
-import { ManageAttachmentsAssertion } from '@/src/assertions/manageAttachmentsAssertion';
 import { MessageTemplateModalAssertion } from '@/src/assertions/messageTemplateModalAssertion';
 import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModalAssertion';
 import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishingRulesAssertion';
@@ -140,7 +147,6 @@ import { ConfirmationDialog } from '@/src/ui/webElements/confirmationDialog';
 import { DropdownCheckboxMenu } from '@/src/ui/webElements/dropdownCheckboxMenu';
 import { DropdownMenu } from '@/src/ui/webElements/dropdownMenu';
 import {
-  AttachFilesTree,
   ConversationsTree,
   FolderConversations,
   FolderPrompts,
@@ -180,9 +186,9 @@ import { RenameConversationModal } from '@/src/ui/webElements/renameConversation
 import { ReplaceConfirmationModal } from '@/src/ui/webElements/replaceConfirmationModal';
 import { ReplaceConfirmationModalConversations } from '@/src/ui/webElements/replaceConfirmationModalConversations';
 import { ReplaceConfirmationModalFolders } from '@/src/ui/webElements/replaceConfirmationModalFolders';
-import { Search } from '@/src/ui/webElements/search';
 import { SettingsModal } from '@/src/ui/webElements/settingsModal';
 import { ShareModal } from '@/src/ui/webElements/shareModal';
+import { SidebarSearch } from '@/src/ui/webElements/sidebarSearch';
 import { TalkToAgentDialog } from '@/src/ui/webElements/talkToAgentDialog';
 import { TemperatureSlider } from '@/src/ui/webElements/temperatureSlider';
 import { Toast } from '@/src/ui/webElements/toast';
@@ -292,8 +298,8 @@ const dialTest = test.extend<{
   playbackControl: PlaybackControl;
   shareModal: ShareModal;
   shareAppModal: ShareAppModal;
-  chatBarSearch: Search;
-  promptBarSearch: Search;
+  chatBarSearch: SidebarSearch;
+  promptBarSearch: SidebarSearch;
   chatFilter: Filter;
   promptFilter: Filter;
   chatFilterDropdownMenu: DropdownCheckboxMenu;
@@ -330,14 +336,11 @@ const dialTest = test.extend<{
   additionalSecondUserShareApiHelper: ShareApiHelper;
   additionalSecondUserItemApiHelper: ItemApiHelper;
   chatNotFound: ChatNotFound;
-  attachFilesModal: AttachFilesModal;
   uploadFromDeviceModal: UploadFromDeviceModal;
   selectFolderModal: SelectFolderModal;
+  selectFolderManagerModal: SelectFolderManagerModal;
   selectFolders: Folders;
-  attachedAllFiles: Folders;
-  attachedOrganizationFiles: Folders;
   messageTemplateModal: MessageTemplateModal;
-  manageAttachmentsAssertion: ManageAttachmentsAssertion;
   settingsModal: SettingsModal;
   publishingRequestDialog: PublishingRequestDialog;
   conversationsToPublishTree: PublishConversationsTree;
@@ -356,8 +359,6 @@ const dialTest = test.extend<{
   informationModalAssertion: InformationModalAssertion;
   conversationAssertion: ConversationAssertion;
   chatBarFolderAssertion: FolderAssertion<FolderConversations>;
-  allFilesFolderAssertion: ManageAttachmentFoldersAssertion;
-  organizationFoldersAssertion: ManageAttachmentFoldersAssertion;
   organizationConversationAssertion: SideBarConversationAssertion<OrganizationConversationsTree>;
   organizationPromptAssertion: SideBarEntityAssertion<OrganizationPromptsTree>;
   toastAssertion: ToastAssertion;
@@ -415,7 +416,6 @@ const dialTest = test.extend<{
   promptPreviewVersionDropdownMenu: DropdownMenu;
   promptPreviewModalAssertion: PromptPreviewModalAssertion;
   entityDetailsModalAssertion: EntityDetailsModalAssertion;
-  attachAllFilesTreeAssertion: EntityTreeAssertion<AttachFilesTree>;
   adminCustomApplicationPublishingUtil: CustomApplicationPublishingUtil;
   customApplicationPublishingUtil: CustomApplicationPublishingUtil;
   organizationFolderPromptAssertions: FolderAssertion<Folders>;
@@ -439,6 +439,8 @@ const dialTest = test.extend<{
   fileManager: FileManager;
   fileManagerToolbar: FileManagerToolbar;
   fileManagerGrid: FileManagerGrid;
+  fileManagerNavigationPanel: FileManagerNavigationPanel;
+  fileManagerBreadcrumb: Breadcrumb;
   fileManagerCollapsibleSidebar: FileManagerCollapsibleSidebar;
   fileManagerFoldersTree: FoldersTree;
   fileManagerGridRowDropdownMenu: Dropdown;
@@ -449,12 +451,26 @@ const dialTest = test.extend<{
   fileManagerModalToolbar: FileManagerToolbar;
   fileManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
   fileManagerModalFoldersTree: FoldersTree;
+  selectFolderManagerModalManager: FileManager;
+  selectFolderManagerModalCollapsibleSidebar: FileManagerCollapsibleSidebar;
+  selectFolderManagerModalFoldersTree: FoldersTree;
+  selectFolderManagerModalGrid: FileManagerGrid;
+  selectFolderManagerModalGridAssertion: FileManagerGridAssertion;
+  selectFolderManagerModalFoldersTreeAssertion: FoldersTreeAssertion;
+  selectFolderManagerModalNavigationPanel: FileManagerNavigationPanel;
+  selectFolderManagerModalBreadcrumb: Breadcrumb;
   fileManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   fileManagerGridAssertion: FileManagerGridAssertion;
+  fileManagerFoldersTreeAssertion: FoldersTreeAssertion;
   fileManagerModalGridAssertion: FileManagerGridAssertion;
-  fileConflictConfirmationPopup: ConfirmationPopup;
-  fileConflictConfirmationPopupAssertion: ConfirmationPopupAssertion;
+  fileConflictConfirmationPopup: FileConflictResolutionPopup;
+  fileConflictConfirmationPopupAssertion: FileConflictResolutionPopupAssertion;
   uploadProgressDialog: UploadProgressDialog;
+  tooltipPortal: TooltipPortal;
+  tooltipPortalAssertion: TooltipPortalAssertion;
+  toolsetApiAuthenticationAssertion: ToolsetApiAuthenticationAssertion;
+  toolsetLoginModal: ToolsetLoginModal;
+  toolsetLoginModalAssertion: ToolsetLoginModalAssertion;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -752,7 +768,7 @@ const dialTest = test.extend<{
     await use(promptBar);
   },
   promptBarSearch: async ({ promptBar }, use) => {
-    const promptBarSearch = promptBar.getSearch();
+    const promptBarSearch = promptBar.getSidebarSearch();
     await use(promptBarSearch);
   },
   fileDropArea: async ({ appContainer }, use) => {
@@ -804,7 +820,7 @@ const dialTest = test.extend<{
     await use(folderConversations);
   },
   chatBarSearch: async ({ chatBar }, use) => {
-    const chatBarSearch = chatBar.getSearch();
+    const chatBarSearch = chatBar.getSidebarSearch();
     await use(chatBarSearch);
   },
   chatFilter: async ({ chatBarSearch }, use) => {
@@ -1157,10 +1173,6 @@ const dialTest = test.extend<{
     );
     await use(additionalSecondUserItemApiHelper);
   },
-  attachFilesModal: async ({ page }, use) => {
-    const attachFilesModal = new AttachFilesModal(page);
-    await use(attachFilesModal);
-  },
   uploadFromDeviceModal: async ({ page }, use) => {
     const uploadFromDeviceModal = new UploadFromDeviceModal(page);
     await use(uploadFromDeviceModal);
@@ -1169,18 +1181,78 @@ const dialTest = test.extend<{
     const selectFolderModal = new SelectFolderModal(page);
     await use(selectFolderModal);
   },
+  selectFolderManagerModal: async ({ page }, use) => {
+    const selectFolderManagerModal = new SelectFolderManagerModal(page);
+    await use(selectFolderManagerModal);
+  },
+  selectFolderManagerModalManager: async (
+    { selectFolderManagerModal },
+    use,
+  ) => {
+    const selectFolderManagerModalManager =
+      selectFolderManagerModal.getFileManager();
+    await use(selectFolderManagerModalManager);
+  },
+  selectFolderManagerModalCollapsibleSidebar: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalCollapsibleSidebar =
+      selectFolderManagerModalManager.getFileManagerCollapsibleSidebar();
+    await use(selectFolderManagerModalCollapsibleSidebar);
+  },
+  selectFolderManagerModalFoldersTree: async (
+    { selectFolderManagerModalCollapsibleSidebar },
+    use,
+  ) => {
+    const selectFolderManagerModalFoldersTree =
+      selectFolderManagerModalCollapsibleSidebar.getFoldersTree();
+    await use(selectFolderManagerModalFoldersTree);
+  },
+  selectFolderManagerModalGrid: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalGrid =
+      selectFolderManagerModalManager.getFileManagerGrid();
+    await use(selectFolderManagerModalGrid);
+  },
+  selectFolderManagerModalGridAssertion: async (
+    { selectFolderManagerModalGrid },
+    use,
+  ) => {
+    const selectFolderManagerModalGridAssertion = new FileManagerGridAssertion(
+      selectFolderManagerModalGrid,
+    );
+    await use(selectFolderManagerModalGridAssertion);
+  },
+  selectFolderManagerModalFoldersTreeAssertion: async (
+    { selectFolderManagerModalFoldersTree },
+    use,
+  ) => {
+    const selectFolderManagerModalFoldersTreeAssertion =
+      new FoldersTreeAssertion(selectFolderManagerModalFoldersTree);
+    await use(selectFolderManagerModalFoldersTreeAssertion);
+  },
+  selectFolderManagerModalNavigationPanel: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalNavigationPanel =
+      selectFolderManagerModalManager.getFileManagerNavigationPanel();
+    await use(selectFolderManagerModalNavigationPanel);
+  },
+  selectFolderManagerModalBreadcrumb: async (
+    { selectFolderManagerModalNavigationPanel },
+    use,
+  ) => {
+    const selectFolderManagerModalBreadcrumb =
+      selectFolderManagerModalNavigationPanel.getBreadcrumb();
+    await use(selectFolderManagerModalBreadcrumb);
+  },
   selectFolders: async ({ selectFolderModal }, use) => {
     const selectUploadFolder = selectFolderModal.getSelectFolders();
     await use(selectUploadFolder);
-  },
-  attachedAllFiles: async ({ attachFilesModal }, use) => {
-    const attachedAllFiles = attachFilesModal.getAllFolderFiles();
-    await use(attachedAllFiles);
-  },
-  attachedOrganizationFiles: async ({ attachFilesModal }, use) => {
-    const attachedOrganizationFiles =
-      attachFilesModal.getOrganizationFolderFiles();
-    await use(attachedOrganizationFiles);
   },
   messageTemplateModal: async ({ page }, use) => {
     const messageTemplateModal = new MessageTemplateModal(page);
@@ -1276,12 +1348,6 @@ const dialTest = test.extend<{
     const conversationAssertion = new ConversationAssertion(conversations);
     await use(conversationAssertion);
   },
-  manageAttachmentsAssertion: async ({ attachFilesModal }, use) => {
-    const manageAttachmentsAssertion = new ManageAttachmentsAssertion(
-      attachFilesModal,
-    );
-    await use(manageAttachmentsAssertion);
-  },
   organizationConversationAssertion: async (
     { organizationConversations },
     use,
@@ -1302,20 +1368,6 @@ const dialTest = test.extend<{
       folderConversations,
     );
     await use(chatBarFolderAssertion);
-  },
-  allFilesFolderAssertion: async ({ attachFilesModal }, use) => {
-    const allFilesFolderAssertion = new ManageAttachmentFoldersAssertion(
-      attachFilesModal,
-      FileModalSection.AllFiles,
-    );
-    await use(allFilesFolderAssertion);
-  },
-  organizationFoldersAssertion: async ({ attachFilesModal }, use) => {
-    const organizationFoldersAssertion = new ManageAttachmentFoldersAssertion(
-      attachFilesModal,
-      FileModalSection.Organization,
-    );
-    await use(organizationFoldersAssertion);
   },
   toastAssertion: async ({ toast }, use) => {
     const toastAssertion = new ToastAssertion(toast);
@@ -1589,13 +1641,6 @@ const dialTest = test.extend<{
     );
     await use(promptPreviewModalAssertion);
   },
-  attachAllFilesTreeAssertion: async ({ attachFilesModal }, use) => {
-    const attachAllFilesTreeAssertion =
-      new EntityTreeAssertion<AttachFilesTree>(
-        attachFilesModal.getAllFilesTree(),
-      );
-    await use(attachAllFilesTreeAssertion);
-  },
   adminCustomApplicationPublishingUtil: async (
     {
       customApplicationBuilder,
@@ -1788,6 +1833,15 @@ const dialTest = test.extend<{
     const fileManagerGrid = fileManager.getFileManagerGrid();
     await use(fileManagerGrid);
   },
+  fileManagerNavigationPanel: async ({ fileManager }, use) => {
+    const fileManagerNavigationPanel =
+      fileManager.getFileManagerNavigationPanel();
+    await use(fileManagerNavigationPanel);
+  },
+  fileManagerBreadcrumb: async ({ fileManagerNavigationPanel }, use) => {
+    const fileManagerBreadcrumb = fileManagerNavigationPanel.getBreadcrumb();
+    await use(fileManagerBreadcrumb);
+  },
   fileManagerGridRowDropdownMenu: async ({ fileManagerGrid }, use) => {
     const fileManagerGridRowDropdownMenu = fileManagerGrid.getRowDropdownMenu();
     await use(fileManagerGridRowDropdownMenu);
@@ -1856,6 +1910,12 @@ const dialTest = test.extend<{
     );
     await use(fileManagerGridAssertion);
   },
+  fileManagerFoldersTreeAssertion: async ({ fileManagerFoldersTree }, use) => {
+    const fileManagerFoldersTreeAssertion = new FoldersTreeAssertion(
+      fileManagerFoldersTree,
+    );
+    await use(fileManagerFoldersTreeAssertion);
+  },
   fileManagerModalGridAssertion: async ({ fileManagerModalGrid }, use) => {
     const fileManagerModalGridAssertion = new FileManagerGridAssertion(
       fileManagerModalGrid,
@@ -1863,10 +1923,7 @@ const dialTest = test.extend<{
     await use(fileManagerModalGridAssertion);
   },
   fileConflictConfirmationPopup: async ({ page }, use) => {
-    const fileConflictConfirmationPopup = new ConfirmationPopup(
-      page,
-      'Confirm',
-    );
+    const fileConflictConfirmationPopup = new FileConflictResolutionPopup(page);
     await use(fileConflictConfirmationPopup);
   },
   fileConflictConfirmationPopupAssertion: async (
@@ -1874,12 +1931,36 @@ const dialTest = test.extend<{
     use,
   ) => {
     const fileConflictConfirmationPopupAssertion =
-      new ConfirmationPopupAssertion(fileConflictConfirmationPopup);
+      new FileConflictResolutionPopupAssertion(fileConflictConfirmationPopup);
     await use(fileConflictConfirmationPopupAssertion);
   },
   uploadProgressDialog: async ({ page }, use) => {
     const uploadProgressDialog = new UploadProgressDialog(page);
     await use(uploadProgressDialog);
+  },
+  tooltipPortal: async ({ page }, use) => {
+    const tooltipPortal = new TooltipPortal(page);
+    await use(tooltipPortal);
+  },
+  tooltipPortalAssertion: async ({ tooltipPortal }, use) => {
+    const tooltipPortalAssertion = new TooltipPortalAssertion(tooltipPortal);
+    await use(tooltipPortalAssertion);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  toolsetApiAuthenticationAssertion: async ({}, use) => {
+    const toolsetApiAuthenticationAssertion =
+      new ToolsetApiAuthenticationAssertion();
+    await use(toolsetApiAuthenticationAssertion);
+  },
+  toolsetLoginModal: async ({ page }, use) => {
+    const toolsetLoginModal = new ToolsetLoginModal(page);
+    await use(toolsetLoginModal);
+  },
+  toolsetLoginModalAssertion: async ({ toolsetLoginModal }, use) => {
+    const toolsetLoginModalAssertion = new ToolsetLoginModalAssertion(
+      toolsetLoginModal,
+    );
+    await use(toolsetLoginModalAssertion);
   },
 });
 

@@ -1,11 +1,12 @@
 import { IconCheck, IconChevronUp, IconClipboardX } from '@tabler/icons-react';
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { MarketplaceFilters } from '@/src/types/marketplace';
+import { MarketplacePanelState } from '@/src/types/marketplace-panel-state';
 import { Translation } from '@/src/types/translation';
 
 import { UIActions } from '@/src/store/actions';
@@ -18,6 +19,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import {
   ENTITY_TYPES,
   FilterTypes,
@@ -25,10 +27,10 @@ import {
   SourceType,
 } from '@/src/constants/marketplace';
 
-import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 import { Loader } from '@/src/components/Common/Loader';
+import { ResizableSidebarWrapper } from '@/src/components/Sidebar/ResizableSidebarWrapper';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialButton, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { capitalize } from 'lodash';
 
 interface FilterItemProps {
@@ -61,19 +63,18 @@ const FilterItem = ({
         size={18}
         className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
       />
-      <span
-        className="ml-2 truncate whitespace-nowrap text-sm"
-        data-qa="option-label"
-      >
-        {displayValue ?? filterValue}
-      </span>
+
+      <DialEllipsisTooltip
+        text={displayValue ?? filterValue}
+        id="option-label"
+      />
     </label>
   );
 };
 
 interface FilterSectionProps {
   sectionName: string;
-  openedSections: Record<FilterTypes, boolean>;
+  panelCollapseState: MarketplacePanelState;
   selectedFilters: MarketplaceFilters;
   filterValues: string[];
   filterType: FilterTypes;
@@ -87,7 +88,7 @@ const FilterSection = ({
   sectionName,
   selectedFilters,
   filterValues,
-  openedSections,
+  panelCollapseState,
   onToggleFilterSection,
   onApplyFilter,
   getDisplayLabel,
@@ -95,25 +96,37 @@ const FilterSection = ({
   if (!filterValues.length) {
     return null;
   }
+
+  const sectionNameWithCount = (
+    <div className="flex items-center gap-1">
+      {sectionName}
+      {selectedFilters[filterType].length > 0 && (
+        <div className="flex h-[14px] min-w-[14px] items-center justify-center rounded bg-icon-accent-primary px-1 text-xxs font-semibold text-layer-3">
+          <div> {selectedFilters[filterType].length}</div>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="px-5 py-2.5" data-qa="marketplace-filter">
       <DialButton
         onClick={() => onToggleFilterSection(filterType)}
-        className="flex !min-h-0 w-full justify-between"
+        className="flex h-fit w-full justify-between px-0"
         data-qa="filter-property"
-        aria-expanded={openedSections[filterType]}
-        label={sectionName}
+        aria-expanded={panelCollapseState[filterType]}
+        label={sectionNameWithCount}
         iconAfter={
           <IconChevronUp
             className={classNames(
               'duration-200',
-              !openedSections[filterType] && 'rotate-180',
+              !panelCollapseState[filterType] && 'rotate-180',
             )}
             size={18}
           />
         }
       />
-      {openedSections[filterType] && (
+      {panelCollapseState[filterType] && (
         <div
           className="mt-3.5 flex flex-col gap-3.5"
           data-qa="filter-property-options"
@@ -134,17 +147,10 @@ const FilterSection = ({
   );
 };
 
-interface OpenedSections {
-  [FilterTypes.ENTITY_TYPE]: boolean;
-  // [FilterTypes.CAPABILITIES]: boolean;
-  // [FilterTypes.ENVIRONMENT]: boolean;
-  [FilterTypes.TOPICS]: boolean;
-  [FilterTypes.SOURCES]: boolean;
-}
 interface FiltersRendererProps {
   showEntityTypesSection: boolean;
   showLoader: boolean;
-  openedSections: OpenedSections;
+  panelCollapseState: MarketplacePanelState;
   selectedFilters: MarketplaceFilters;
   topics: string[];
   sourceTypes: SourceType[];
@@ -154,7 +160,7 @@ interface FiltersRendererProps {
 function FiltersRenderer({
   showLoader,
   showEntityTypesSection,
-  openedSections,
+  panelCollapseState,
   selectedFilters,
   topics,
   sourceTypes,
@@ -168,12 +174,12 @@ function FiltersRenderer({
   }
 
   return (
-    <>
+    <div className="flex grow flex-col divide-y divide-tertiary overflow-y-auto">
       {showEntityTypesSection && (
         <FilterSection
-          sectionName={t('Type')}
+          sectionName={t(SideBarI18nKeys.Type)}
           filterValues={ENTITY_TYPES}
-          openedSections={openedSections}
+          panelCollapseState={panelCollapseState}
           selectedFilters={selectedFilters}
           filterType={FilterTypes.ENTITY_TYPE}
           onToggleFilterSection={handleToggleFilterSection}
@@ -182,9 +188,9 @@ function FiltersRenderer({
         />
       )}
       <FilterSection
-        sectionName={t('Topics')}
+        sectionName={t(SideBarI18nKeys.Topics)}
         filterValues={topics}
-        openedSections={openedSections}
+        panelCollapseState={panelCollapseState}
         selectedFilters={selectedFilters}
         filterType={FilterTypes.TOPICS}
         onToggleFilterSection={handleToggleFilterSection}
@@ -192,16 +198,16 @@ function FiltersRenderer({
       />
       {sourceTypes.length > 1 && (
         <FilterSection
-          sectionName={t('Sources')}
+          sectionName={t(SideBarI18nKeys.Sources)}
           filterValues={sourceTypes}
-          openedSections={openedSections}
+          panelCollapseState={panelCollapseState}
           selectedFilters={selectedFilters}
           filterType={FilterTypes.SOURCES}
           onToggleFilterSection={handleToggleFilterSection}
           onApplyFilter={handleApplyFilter}
         />
       )}
-    </>
+    </div>
   );
 }
 
@@ -238,13 +244,11 @@ export const MarketplaceFilterbar = memo(() => {
 
   const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
 
-  const [openedSections, setOpenedSections] = useState<OpenedSections>({
-    [FilterTypes.ENTITY_TYPE]: true,
-    // [FilterTypes.CAPABILITIES]: false,
-    // [FilterTypes.ENVIRONMENT]: false,
-    [FilterTypes.TOPICS]: true,
-    [FilterTypes.SOURCES]: true,
-  });
+  const panelCollapseState = useAppSelector(
+    isAgentsTab
+      ? UISelectors.selectAgentsFilterPanelCollapseState
+      : UISelectors.selectToolsetFilterPanelCollapseState,
+  );
 
   const handleApplyFilter = useCallback(
     (type: FilterTypes, value: string) => {
@@ -260,12 +264,23 @@ export const MarketplaceFilterbar = memo(() => {
 
   const handleToggleFilterSection = useCallback(
     (filterType: FilterTypes) => {
-      setOpenedSections((state) => ({
-        ...openedSections,
-        [filterType]: !state[filterType],
-      }));
+      if (isAgentsTab) {
+        dispatch(
+          UIActions.setAgentsFilterPanelCollapseState({
+            ...panelCollapseState,
+            [filterType]: !panelCollapseState[filterType],
+          }),
+        );
+      } else {
+        dispatch(
+          UIActions.setToolsetFilterPanelCollapseState({
+            ...panelCollapseState,
+            [filterType]: !panelCollapseState[filterType],
+          }),
+        );
+      }
     },
-    [openedSections],
+    [isAgentsTab, dispatch, panelCollapseState],
   );
 
   const handleClose = useCallback(() => {
@@ -280,54 +295,56 @@ export const MarketplaceFilterbar = memo(() => {
     );
   }, [areModelsLoaded, areToolsetsLoaded, isAgentsTab, modelsMap, toolsetsMap]);
 
+  if (!showFilterbar) {
+    return null;
+  }
+
   return (
-    <nav
-      className={classNames(
-        showFilterbar ? 'w-[320px] xl:w-[260px]' : 'invisible',
-        'group/sidebar absolute left-0 top-0 z-40 flex h-full shrink-0 flex-col gap-px border-r border-tertiary bg-layer-3  xl:sticky xl:left-0 xl:z-0',
-        isOverlay ? 'md:left-[44px]' : 'md:left-[60px]',
-      )}
-      data-qa="marketplace-sidebar"
+    <ResizableSidebarWrapper
+      dataQa="marketplace-sidebar"
+      isLeftSidebar
+      handleClose={handleClose}
     >
-      <CloseSidebarButton isLeftSide onClose={handleClose} />
-      {showFilterbar && (
-        <div className="flex h-full flex-col divide-y divide-tertiary overflow-y-auto">
-          <div
-            className={classNames(
-              'flex items-center justify-between px-5',
-              isOverlay ? 'min-h-[35px]' : 'min-h-12',
-            )}
-          >
-            <p className="text-base font-semibold">{t('Filters')}</p>
-          </div>
-          {noEntities ? (
-            <div className="flex grow flex-col items-center justify-center gap-3">
-              <IconClipboardX
-                size={60}
-                strokeWidth={0.5}
-                className="text-secondary"
-              />
-              <p className="text-center text-sm leading-[24px] text-primary">
-                {t(
-                  `No filters as you currently have no ${isAgentsTab ? 'agents' : 'toolsets'}`,
-                )}
-              </p>
-            </div>
-          ) : (
-            <FiltersRenderer
-              showEntityTypesSection={isAgentsTab}
-              showLoader={showLoader}
-              openedSections={openedSections}
-              selectedFilters={selectedFilters}
-              topics={topicsFilters}
-              sourceTypes={sourcesFilters}
-              handleToggleFilterSection={handleToggleFilterSection}
-              handleApplyFilter={handleApplyFilter}
-            />
+      <>
+        <div
+          className={classNames(
+            'flex items-center justify-between px-5',
+            isOverlay ? 'min-h-[35px]' : 'min-h-12',
           )}
+        >
+          <p className="text-base font-semibold">
+            {t(SideBarI18nKeys.FiltersSideBar)}
+          </p>
         </div>
-      )}
-    </nav>
+        {noEntities ? (
+          <div className="flex grow flex-col items-center justify-center gap-3">
+            <IconClipboardX
+              size={60}
+              strokeWidth={0.5}
+              className="text-secondary"
+            />
+            <p className="text-center text-sm leading-[24px] text-primary">
+              {t(
+                isAgentsTab
+                  ? SideBarI18nKeys.NoFiltersAgents
+                  : SideBarI18nKeys.NoFiltersToolsets,
+              )}
+            </p>
+          </div>
+        ) : (
+          <FiltersRenderer
+            showEntityTypesSection={isAgentsTab}
+            showLoader={showLoader}
+            panelCollapseState={panelCollapseState}
+            selectedFilters={selectedFilters}
+            topics={topicsFilters}
+            sourceTypes={sourcesFilters}
+            handleToggleFilterSection={handleToggleFilterSection}
+            handleApplyFilter={handleApplyFilter}
+          />
+        )}
+      </>
+    </ResizableSidebarWrapper>
   );
 });
 

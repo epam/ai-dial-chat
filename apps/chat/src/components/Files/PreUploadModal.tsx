@@ -15,6 +15,7 @@ import {
   constructPath,
   getFileNameExtension,
   getFileNameWithoutExtension,
+  getFileWithType,
   getRelativePath,
   getShortExtensionsListFromMimeType,
   notAllowedSymbolsRegex,
@@ -33,6 +34,8 @@ import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors } from '@/src/store/selectors';
 
+import { REVIEW_FILES_SECTION } from '@/src/constants/fileManager';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 import { SHARED_WITH_ME_SECTION_NAME } from '@/src/constants/sections';
 
@@ -42,9 +45,11 @@ import { Modal } from '@/src/components/Common/Modal';
 import { SelectFolderModal } from './SelectFolderModal';
 
 import {
-  DialButton,
+  ButtonAppearance,
+  DialInput,
   DialLinkButton,
   DialPrimaryButton,
+  DialPrimaryIconButton,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -61,6 +66,7 @@ interface Props {
   uploadFolderId?: string;
   customUploadButtonLabel?: string;
   rootFolderId?: string;
+  reviewBucket?: string;
 }
 
 export const PreUploadDialog = ({
@@ -74,11 +80,13 @@ export const PreUploadDialog = ({
   uploadFolderId,
   customUploadButtonLabel,
   rootFolderId,
+  reviewBucket,
 }: Props) => {
   const dispatch = useAppDispatch();
   const { t } = useTranslation(Translation.Chat);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const attachments = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
@@ -106,7 +114,7 @@ export const PreUploadDialog = ({
   const folderPath = getRelativePath(selectedFolderId);
   const allowedExtensions = useMemo(() => {
     if (allowedTypes.includes('*/*')) {
-      return [t('all')];
+      return [t(ChatI18nKeys.all)];
     }
 
     return getShortExtensionsListFromMimeType(allowedTypes, t);
@@ -133,7 +141,7 @@ export const PreUploadDialog = ({
         oldFiles.concat(
           validFiles.map((file) => {
             return {
-              fileContent: file,
+              fileContent: getFileWithType(file),
               id: constructPath(
                 getFileRootId(bucket),
                 folderPath,
@@ -156,14 +164,10 @@ export const PreUploadDialog = ({
 
     if (attachments.length + selectedFiles.length > maximumAttachmentsAmount) {
       errors.push(
-        t(
-          `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{selectedAttachmentsAmount}}`,
-          {
-            maxAttachmentsAmount: maximumAttachmentsAmount,
-            selectedAttachmentsAmount:
-              selectedFiles.length + attachments.length,
-          },
-        ),
+        t(ChatI18nKeys.MaxAllowedAttachmentsNumberSelected, {
+          maxAttachmentsAmount: maximumAttachmentsAmount,
+          selectedAttachmentsAmount: selectedFiles.length + attachments.length,
+        }),
       );
     }
 
@@ -181,10 +185,9 @@ export const PreUploadDialog = ({
 
     if (localIncorrectSameNameFiles.length > 0) {
       errors.push(
-        t(
-          `${errors.length ? '\n' : ''}The files you're trying to upload already exist in the selected folder. Please rename them or remove them from your upload list: {{fileNames}}`,
-          { fileNames: localIncorrectSameNameFiles.join(', ') },
-        ),
+        t(ChatI18nKeys.FilesAlreadyExistInSelectedFolder, {
+          fileNames: localIncorrectSameNameFiles.join(', '),
+        }),
       );
     }
 
@@ -194,12 +197,9 @@ export const PreUploadDialog = ({
 
     if (duplicateNames.length) {
       errors.push(
-        t(
-          `${errors.length ? '\n' : ''}The files you're trying to upload have the same names. Please rename or remove them from your upload list: {{fileNames}}`,
-          {
-            fileNames: duplicateNames.join(', '),
-          },
-        ),
+        t(ChatI18nKeys.FilesHaveSameNamesInUploadList, {
+          fileNames: duplicateNames.join(', '),
+        }),
       );
     }
 
@@ -224,13 +224,8 @@ export const PreUploadDialog = ({
 
   const handleRenameFile = useCallback(
     (changedFileIndex: number) => {
-      return (e: ChangeEvent<HTMLInputElement>) => {
-        const input = e.target;
-        const rawValue = input.value;
-        const cursor = input.selectionStart ?? rawValue.length;
-
-        const sanitized = rawValue.replace(notAllowedSymbolsRegex, '');
-        const diff = rawValue.length - sanitized.length;
+      return (rawValue?: string) => {
+        const sanitized = rawValue?.replace(notAllowedSymbolsRegex, '') || '';
 
         const { name: oldName } = selectedFiles[changedFileIndex];
         const ext = oldName.includes('.')
@@ -238,7 +233,6 @@ export const PreUploadDialog = ({
           : '';
 
         const newName = prepareFileName(sanitized + ext);
-
         setSelectedFiles((files) =>
           files.map((file, i) =>
             i === changedFileIndex
@@ -250,10 +244,6 @@ export const PreUploadDialog = ({
               : file,
           ),
         );
-
-        requestAnimationFrame(() => {
-          input.setSelectionRange(cursor - diff, cursor - diff);
-        });
       };
     },
     [folderPath, selectedFiles],
@@ -307,6 +297,19 @@ export const PreUploadDialog = ({
     );
   }, [folderPath]);
 
+  const visiblePath = useMemo(() => {
+    const isReview = !!reviewBucket && bucket === reviewBucket;
+    let root: string = t(SHARED_WITH_ME_SECTION_NAME);
+
+    if (!bucket || isMyBucket(bucket)) root = t(ChatI18nKeys.MyFiles);
+    else if (isReview) root = t(REVIEW_FILES_SECTION);
+
+    return constructPath(
+      root,
+      folderPath ?? (isReview ? undefined : rootFolderName),
+    );
+  }, [bucket, reviewBucket, t, folderPath, rootFolderName]);
+
   return (
     <Modal
       portalId="theme-main"
@@ -319,19 +322,16 @@ export const PreUploadDialog = ({
       <div className="flex flex-col gap-2 overflow-auto">
         <div className="flex justify-between">
           <h2 id={headingId} className="text-base font-semibold">
-            {t('Upload from device')}
+            {t(ChatI18nKeys.UploadFromDevice)}
           </h2>
         </div>
         <p id={descriptionId} data-qa="supported-attributes">
-          {t(
-            'Max file size up to 512 Mb. Supported types: {{allowedExtensions}}.',
-            {
-              allowedExtensions:
-                allowedTypesLabel ||
-                allowedExtensions.join(', ') ||
-                'no available extensions',
-            },
-          )}
+          {t(ChatI18nKeys.MaxFileSizeSupportedTypes, {
+            allowedExtensions:
+              allowedTypesLabel ||
+              allowedExtensions.join(', ') ||
+              'no available extensions',
+          })}
         </p>
 
         <div>
@@ -344,26 +344,23 @@ export const PreUploadDialog = ({
         >
           <div className="flex flex-col gap-1">
             <div>
-              <span className="text-xs text-secondary">{t('Upload to')}</span>
+              <span className="text-xs text-secondary">
+                {t(ChatI18nKeys.UploadTo)}
+              </span>
               <span className="text-xs text-accent-primary">&nbsp;*</span>
             </div>
             <div
-              className="flex grow cursor-default items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+              className="flex min-w-0 grow cursor-default items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
               data-qa="change-path-container"
             >
-              <span className="truncate" data-qa="path">
-                {!bucket || isMyBucket(bucket)
-                  ? constructPath(t('All files'), folderPath ?? rootFolderName)
-                  : constructPath(
-                      t(SHARED_WITH_ME_SECTION_NAME),
-                      folderPath ?? rootFolderName,
-                    )}
+              <span className="min-w-0 truncate" data-qa="path">
+                {visiblePath}
               </span>
               <DialLinkButton
-                className="px-0"
+                className="shrink-0 px-0"
                 onClick={handleFolderChange}
                 data-qa="change-button"
-                label={t('Change')}
+                label={t(ChatI18nKeys.Change)}
               />
             </div>
           </div>
@@ -371,42 +368,38 @@ export const PreUploadDialog = ({
           {selectedFiles.length !== 0 && (
             <div className="flex flex-col gap-1">
               <div>
-                <span className="text-xs text-secondary">{t('Files')}</span>
+                <span className="text-xs text-secondary">
+                  {t(ChatI18nKeys.Files)}
+                </span>
                 <span className="text-xs text-accent-primary">&nbsp;*</span>
               </div>
               <div className="flex flex-col gap-3 overflow-auto text-sm">
                 {selectedFiles.map((file, index) => (
                   <div
                     key={index}
-                    className="flex items-center gap-3"
+                    className="flex items-center justify-between gap-3"
                     data-qa="uploaded-file"
                   >
-                    <div className="relative flex grow items-center">
-                      <IconFile
-                        className="absolute left-2 top-[calc(50%_-_9px)] shrink-0 text-secondary"
-                        size={18}
-                      />
-                      <input
-                        type="text"
-                        value={getFileNameWithoutExtension(file.name)}
+                    <div className="flex-1">
+                      <DialInput
+                        value={getFileNameWithoutExtension(file.name, {
+                          isExtensionIncluded: false,
+                        })}
                         onChange={handleRenameFile(index)}
-                        className="grow text-ellipsis rounded border border-primary bg-transparent py-2 pl-8 pr-12 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+                        postfix={getFileNameExtension(file.name, {
+                          isExtensionIncluded: true,
+                        })}
+                        iconBefore={
+                          <IconFile className="text-secondary" size={18} />
+                        }
                       />
-
-                      <span
-                        className="absolute right-2"
-                        data-qa="file-extension"
-                      >
-                        {getFileNameExtension(file.name)}
-                      </span>
                     </div>
 
-                    {/* TODO change to the DialRemoveButton when will be fixed on AI DIAL UI KIT */}
-                    <DialButton
+                    <DialPrimaryIconButton
+                      appearance={ButtonAppearance.Ghost}
                       onClick={handleUnselectFile(index)}
                       aria-label="remove-file"
-                      className="text-secondary hover:text-accent-primary"
-                      iconBefore={<IconTrashX />}
+                      icon={<IconTrashX stroke={1.5} />}
                     />
                   </div>
                 ))}
@@ -420,7 +413,7 @@ export const PreUploadDialog = ({
           className="cursor-pointer rounded py-2.5 text-accent-primary"
           data-qa="add-more-files"
         >
-          {t('Add more files...')}
+          {t(ChatI18nKeys.AddMoreFiles)}
           <input
             ref={uploadInputRef}
             id="file"
@@ -437,18 +430,29 @@ export const PreUploadDialog = ({
           disabled={selectedFiles.length === 0}
           data-qa="upload"
           label={
-            customUploadButtonLabel ? customUploadButtonLabel : t('Upload')
+            customUploadButtonLabel
+              ? customUploadButtonLabel
+              : t(ChatI18nKeys.Upload)
           }
         />
       </div>
 
       <SelectFolderModal
+        reviewBucket={reviewBucket}
         isOpen={isChangeFolderModalOpened}
         initialSelectedFolderId={selectedFolderId}
         rootFolderId={rootFolderId ?? getFileRootId(bucket)}
         onClose={(folderId) => {
           if (folderId) {
             setSelectedFolderId(folderId);
+          } else {
+            const root = rootFolderId ?? getFileRootId(bucket);
+            if (selectedFolderId && selectedFolderId !== root) {
+              const exists = folders.some((f) => f.id === selectedFolderId);
+              if (!exists) {
+                setSelectedFolderId(root);
+              }
+            }
           }
           setIsChangeFolderModalOpened(false);
         }}

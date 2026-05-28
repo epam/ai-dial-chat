@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useMemo, useState } from 'react';
+import { MouseEvent, useCallback, useEffect, useMemo, useState } from 'react';
 import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -7,6 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isApplicationType } from '@/src/utils/app/application';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isTruthyQuery } from '@/src/utils/app/route';
 
 import { ApplicationTypeSchemaProperties } from '@/src/types/application-type-schema';
 import { ApplicationType } from '@/src/types/applications';
@@ -22,6 +23,7 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
@@ -32,10 +34,10 @@ import capitalize from 'lodash/capitalize';
 
 const tabKeysInfo = {
   [MarketplaceEditorSteps.General]: {
-    label: 'General info',
+    label: MarketplaceI18nKeys.GeneralInfo,
   },
   [MarketplaceEditorSteps.Settings]: {
-    label: 'App settings',
+    label: MarketplaceI18nKeys.AppSettings,
   },
 };
 
@@ -64,8 +66,7 @@ export const AppsEditorHeader = ({
   } = useRouter();
 
   // 1 stands for true
-  const isCreatingApp =
-    !id || (typeof isCreating === 'string' && isCreating === '1');
+  const isCreatingApp = !id || isTruthyQuery(isCreating);
 
   const { t } = useTranslation(Translation.Marketplace);
 
@@ -73,6 +74,9 @@ export const AppsEditorHeader = ({
 
   const { control, trigger } = useFormContext<AppsEditorFormType>();
   const { errors, isValid } = useFormState<AppsEditorFormType>({ control });
+  const isAppLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
+  );
 
   const [saveDraftDialog, setSaveDraftDialog] = useState(false);
   const [redirectToChat, setRedirectToChat] = useState(false);
@@ -100,6 +104,7 @@ export const AppsEditorHeader = ({
     !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
 
   const agent = id ? modelsMap[id.toString()] : undefined;
+  const isPublicApp = agent && isEntityIdPublic(agent);
 
   const tabs = useMemo(
     () => [
@@ -131,7 +136,7 @@ export const AppsEditorHeader = ({
     return steps;
   }, [errors, isValid]);
 
-  const title = `${t(isCreatingApp ? 'Add' : 'Edit')} ${applicationTypeDisplayName}`;
+  const title = `${t(isCreatingApp ? MarketplaceI18nKeys.AddMarketplace : MarketplaceI18nKeys.EditMarketplace)} ${applicationTypeDisplayName}`;
 
   const handleTabClick = useCallback(
     (tab: { key: MarketplaceEditorSteps; disabled: boolean }) => {
@@ -141,13 +146,22 @@ export const AppsEditorHeader = ({
     [onTabClick],
   );
 
+  useEffect(() => {
+    if (isPublicApp && !isAppLoading) {
+      const timerId = setTimeout(() => {
+        trigger();
+      });
+      return () => clearTimeout(timerId);
+    }
+  }, [dispatch, isPublicApp, isAppLoading, trigger]);
+
   const handleLogoClick = useCallback(
     async (e: MouseEvent<HTMLAnchorElement>) => {
       e.preventDefault();
       if (isExistingApp) {
         const isValid = await trigger();
 
-        if (!isValid) {
+        if (!isValid && !isPublicApp) {
           setSaveDraftDialog(true);
           setRedirectToChat(true);
           return;
@@ -155,20 +169,20 @@ export const AppsEditorHeader = ({
       }
       onSave(false, true);
     },
-    [isExistingApp, trigger, onSave],
+    [isExistingApp, onSave, trigger, isPublicApp],
   );
 
   const handleSaveAndRedirect = useCallback(async () => {
     if (isExistingApp) {
       const isValid = await trigger();
 
-      if (!isValid) {
+      if (!isValid && !isPublicApp) {
         setSaveDraftDialog(true);
         return;
       }
     }
     onSave();
-  }, [isExistingApp, onSave, trigger]);
+  }, [isExistingApp, isPublicApp, onSave, trigger]);
 
   const handleCloseConfirmDialog = useCallback(
     (result: boolean) => {
@@ -204,9 +218,7 @@ export const AppsEditorHeader = ({
   );
 
   const saveLabel =
-    isExistingApp &&
-    !hasCustomEditor &&
-    (agent ? !isEntityIdPublic(agent) : false)
+    isExistingApp && !hasCustomEditor && !isPublicApp
       ? 'Save and exit'
       : 'Exit';
 
@@ -228,12 +240,10 @@ export const AppsEditorHeader = ({
 
       <ConfirmDialog
         isOpen={saveDraftDialog}
-        heading={t('Only valid data will be saved')}
-        description={t(
-          'Some fields are invalid or required fields are missing.\nChanges in those fields will not be saved.\nExit and save only valid information?',
-        )}
-        confirmLabel={t('Save valid data')}
-        cancelLabel={t('Continue editing')}
+        heading={t(MarketplaceI18nKeys.OnlyValidDataWillBeSaved)}
+        description={t(MarketplaceI18nKeys.SomeFieldsAreInvalid)}
+        confirmLabel={t(MarketplaceI18nKeys.SaveValidData)}
+        cancelLabel={t(MarketplaceI18nKeys.ContinueEditing)}
         onClose={handleCloseConfirmDialog}
       />
     </>

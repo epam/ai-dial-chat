@@ -35,6 +35,9 @@ export interface MarketplaceState {
 
   detailsEntity: DetailsEntity | undefined;
   deleteEntity: { entity: MarketplaceEntity; action: DeleteType } | undefined;
-  loginEntity: ToolsetModel | undefined;
+  loginEntity:
+    | { toolset: ToolsetModel; disableAdminView?: boolean }
+    | undefined;
+  connectLinkEntity: MarketplaceEntity | undefined;
   showLoader?: boolean;
 }

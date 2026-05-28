@@ -12,10 +12,13 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors } from '@/src/store/selectors';
 
 import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ReviewApplicationPropsSection } from '@/src/components/Chat/Publish/PublicationHandler/ReviewApplicationDialog/ReviewApplicationPropsSection';
-import { CodeEditor } from '@/src/components/Common/CodeEditor';
+import { CodeEditor } from '@/src/components/Common/CodeEditor/CodeEditor';
 import { Spinner } from '@/src/components/Common/Spinner';
+
+import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
 
 import isEmpty from 'lodash-es/isEmpty';
 
@@ -51,21 +54,19 @@ const ReviewCodeAppSectionView = ({
         />
       )}
 
-      <div className="flex gap-4">
-        <span className="w-[122px] shrink-0 text-secondary">
-          {t('Source folder: ')}
-        </span>
-
-        <div className="min-h-[400px] max-w-full shrink grow">
-          {isFilesLoading ? (
+      <MarketplaceEntityInfoRow
+        label={t(ChatI18nKeys.SourceFolder)}
+        value={
+          isFilesLoading ? (
             <div className="flex size-full items-center justify-center rounded border border-tertiary">
               <Spinner size={30} />
             </div>
           ) : (
             <CodeEditor sourcesFolderId={config.sourceFolder} readOnly />
-          )}
-        </div>
-      </div>
+          )
+        }
+        valueClassName="min-h-[400px] max-w-full shrink grow"
+      />
     </>
   );
 };
@@ -77,9 +78,7 @@ interface ReviewCodeAppSectionProps {
 export const ReviewCodeAppSection = ({
   application,
 }: ReviewCodeAppSectionProps) => {
-  const isCodeApp = isExecutableApp(application);
-
-  if (!isCodeApp || !application.function) return null;
+  if (!isExecutableApp(application) || !application.function) return null;
 
   return <ReviewCodeAppSectionView config={application.function} />;
 };

@@ -4,6 +4,8 @@ import { ApplicationStatus } from '@/src/types/applications';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { Badge } from '@/src/components/Badge';
 
 interface FunctionStatusIndicatorProps {
@@ -14,14 +16,15 @@ const getLabel = (entity: DialAIEntityModel) => {
   switch (entity.functionStatus) {
     case ApplicationStatus.UNDEPLOYED:
     case ApplicationStatus.FAILED:
-      return 'Undeployed';
+      return MarketplaceI18nKeys.Undeployed;
     case ApplicationStatus.DEPLOYED:
-      return 'Deployed';
+      return MarketplaceI18nKeys.Deployed;
     case ApplicationStatus.DEPLOYING:
+      return MarketplaceI18nKeys.DeployingMarketplace;
     case ApplicationStatus.REDEPLOYING:
-      return 'Deploying';
+      return MarketplaceI18nKeys.RedeployingMarketplace;
     case ApplicationStatus.UNDEPLOYING:
-      return 'Undeploying';
+      return MarketplaceI18nKeys.UndeployingMarketplace;
     default:
       return '';
   }
@@ -48,10 +51,12 @@ export const FunctionStatusIndicator = ({
   const { t } = useTranslation(Translation.Marketplace);
 
   return entity.functionStatus ? (
-    <Badge
-      label={t(getLabel(entity))}
-      type={getBadgeType(entity)}
-      className="shrink-0"
-    />
+    <div>
+      <Badge
+        label={t(getLabel(entity))}
+        type={getBadgeType(entity)}
+        className="shrink-0"
+      />
+    </div>
   ) : null;
 };

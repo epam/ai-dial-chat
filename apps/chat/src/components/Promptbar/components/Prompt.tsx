@@ -1,6 +1,6 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
 import { IconBulb, IconCheck } from '@tabler/icons-react';
-import {
+import React, {
   DragEvent,
   MouseEventHandler,
   memo,
@@ -35,11 +35,7 @@ import {
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
-import {
-  PromptsActions,
-  PublicationActions,
-  ShareActions,
-} from '@/src/store/actions';
+import { PromptsActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
@@ -51,12 +47,12 @@ import {
 import { stopBubbling } from '@/src/constants/chat';
 
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   item: PromptInfo;
@@ -114,7 +110,6 @@ export const PromptComponent = memo(
     const isNameOrPathInvalid = isNameInvalid || isInvalidPath;
 
     const [isContextMenu, setIsContextMenu] = useState(false);
-    const [isUnshared, setIsUnshared] = useState(false);
 
     const promptRef = useRef<HTMLButtonElement>(null);
 
@@ -146,6 +141,7 @@ export const PromptComponent = memo(
       handleDelete,
       handlePublish,
       handleUnpublish,
+      handleOpenUnshare,
     } = usePromptActions(prompt);
 
     const isChosen = useMemo(
@@ -213,26 +209,8 @@ export const PromptComponent = memo(
       [handleOpenViewModal],
     );
 
-    const handleOpenUnshareModal: MouseEventHandler<HTMLButtonElement> =
-      useCallback((e) => {
-        e.stopPropagation();
-        setIsUnshared(true);
-      }, []);
-
-    const handleUnsharing = useCallback(() => {
-      if (prompt.sharedWithMe) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: [prompt.id],
-            featureType: FeatureType.Prompt,
-          }),
-        );
-      }
-      setIsUnshared(false);
-    }, [dispatch, prompt.id, prompt.sharedWithMe]);
-
     const isHighlighted = !isSelectMode
-      ? !!deletingPromptId || isSelected || isContextMenu
+      ? prompt.id === deletingPromptId || isSelected || isContextMenu
       : isChosen;
 
     const handleSelect: MouseEventHandler<HTMLButtonElement> = useCallback(
@@ -353,7 +331,7 @@ export const PromptComponent = memo(
                 )}
                 hideTooltip={!isNameOrPathInvalid}
                 triggerClassName={classNames(
-                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                  'block max-h-5 min-w-0 flex-1 text-left',
                   (prompt.publicationInfo?.isNotExist || isNameOrPathInvalid) &&
                     'text-secondary',
                   !!additionalItemData?.publicationUrl &&
@@ -362,7 +340,10 @@ export const PromptComponent = memo(
                 )}
                 dataQa="entity-name"
               >
-                {prompt.name}
+                <DialEllipsisTooltip
+                  text={prompt.name}
+                  id="entity-name-value"
+                />
               </Tooltip>
             </div>
           </div>
@@ -384,7 +365,7 @@ export const PromptComponent = memo(
                 onExport={handleExport}
                 onOpenMoveToModal={handleMoveToFolder}
                 onShare={handleShare}
-                onUnshare={handleOpenUnshareModal}
+                onUnshare={handleOpenUnshare}
                 onPublish={handlePublish}
                 onUnpublish={
                   additionalItemData?.publicationUrl
@@ -405,20 +386,6 @@ export const PromptComponent = memo(
             </div>
           )}
         </button>
-
-        {isUnshared && (
-          <ConfirmDialog
-            isOpen
-            heading={t('Confirm unshare prompt')}
-            description={t('Are you sure that you want to unshare a prompt?')}
-            confirmLabel={t('Unshare')}
-            cancelLabel={t('Cancel')}
-            onClose={(result) => {
-              setIsUnshared(false);
-              if (result) handleUnsharing();
-            }}
-          />
-        )}
       </>
     );
   },

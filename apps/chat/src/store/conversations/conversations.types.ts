@@ -52,7 +52,7 @@ export interface ConversationsState {
   exportingConversationId?: string | undefined;
 }
 
-export interface BaseSendMessagePayload {
+interface BaseSendMessagePayload {
   message: Message;
   deleteCount: number;
   activeReplayIndex: number;
@@ -61,6 +61,8 @@ export interface BaseSendMessagePayload {
 
 export interface SendMessagePayload extends BaseSendMessagePayload {
   conversation: Conversation;
+  /** Pre-computed new name when dispatched as part of a multi-conversation batch (compare mode). */
+  precomputedName?: string;
 }
 
 export interface SendMessagesPayload extends BaseSendMessagePayload {

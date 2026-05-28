@@ -42,17 +42,12 @@ export const ChatInputAttachments = ({
         </Tooltip>
       ))}
       {files?.map((file) => (
-        <Tooltip
+        <ChatInputFileAttachment
           key={file.id}
-          tooltip={file.name}
-          triggerClassName={'truncate text-center shrink-0 min-w-o min-h-0'}
-        >
-          <ChatInputFileAttachment
-            file={file}
-            onUnselectFile={onUnselectFile}
-            onRetryFile={onRetryFile}
-          />
-        </Tooltip>
+          file={file}
+          onUnselectFile={onUnselectFile}
+          onRetryFile={onRetryFile}
+        />
       ))}
       {links?.map((link, index) => (
         <Tooltip

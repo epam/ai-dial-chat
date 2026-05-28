@@ -9,7 +9,7 @@ import {
 } from '@/src/ui/selectors';
 import { ChangePath } from '@/src/ui/webElements/changePath';
 import { Button } from '@/src/ui/webElements/common/button';
-import { FileManagerModalHeader } from '@/src/ui/webElements/fileManagerModalHeader';
+import { FileManagerModalHeader } from '@/src/ui/webElements/fileManager/fileManagerModalHeader';
 import { ModalError } from '@/src/ui/webElements/modalError';
 import { Page } from '@playwright/test';
 
@@ -151,7 +151,7 @@ export class UploadFromDeviceModal extends BaseElement {
       Attachment.attachmentPath,
       ...filenames,
     );
-    // eslint-disable-next-line playwright/no-wait-for-timeout
+
     await this.page.waitForTimeout(500);
   }
 }

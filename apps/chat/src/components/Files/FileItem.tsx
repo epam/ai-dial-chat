@@ -26,23 +26,17 @@ import { Translation } from '@/src/types/translation';
 import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
+import { FileItemEventIds } from '@/src/constants/file';
+import { FilesI18nKeys } from '@/src/constants/i18n';
+
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { FileItemContextMenu } from './FileItemContextMenu';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
-
-export enum FileItemEventIds {
-  Cancel = 'cancel',
-  Retry = 'retry',
-  Toggle = 'toggle',
-  ToggleFolder = 'toggleFolder',
-  Delete = 'delete',
-  Unshare = 'unshare',
-}
+import { DialIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   item: DialFile;
@@ -50,6 +44,8 @@ interface Props {
   additionalItemData?: AdditionalItemData;
   iconClassNames?: string;
   wrapperClassNames?: string;
+  isCodeEditorFile?: boolean;
+  readOnly?: boolean;
   onEvent?: (eventId: FileItemEventIds, data: string) => void;
   onSave?: (fileId: string) => void;
 }
@@ -65,6 +61,8 @@ export const FileItem = ({
   additionalItemData,
   iconClassNames,
   wrapperClassNames,
+  isCodeEditorFile,
+  readOnly,
   onEvent,
   onSave,
 }: Props) => {
@@ -75,8 +73,6 @@ export const FileItem = ({
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isSelected, setIsSelected] = useState(false);
   const [isHighlighted, setIsHighlighted] = useState(false);
-  const [isRemoveAccessConfirmOpened, setIsRemoveAccessConfirmOpened] =
-    useState(false);
 
   const fileRef = useRef<HTMLDivElement>(null);
 
@@ -117,9 +113,9 @@ export const FileItem = ({
 
   const handleRemoveAccess: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
-      setIsRemoveAccessConfirmOpened(true);
+      dispatch(ShareActions.setUnshareResourceId(item.id));
       setIsContextMenu(false);
-    }, []);
+    }, [dispatch, item]);
 
   const handleOpenUnpublishing: MouseEventHandler<HTMLButtonElement> =
     useCallback(() => {
@@ -192,7 +188,7 @@ export const FileItem = ({
             item.status === UploadStatus.FAILED && (
               <Tooltip
                 isTriggerClickable
-                tooltip={t('Uploading failed. Please, try again')}
+                tooltip={t(FilesI18nKeys.UploadingFailed)}
               >
                 <IconExclamationCircle
                   className="shrink-0 text-error"
@@ -256,10 +252,11 @@ export const FileItem = ({
           </div>
         )}
         {item.status === UploadStatus.FAILED && (
-          <DialButton
+          <DialIconButton
             onClick={handleRetry}
             data-qa="retry-upload"
-            iconBefore={
+            size={ElementSize.Small}
+            icon={
               <IconReload
                 className="shrink-0 text-secondary hover:text-accent-primary"
                 size={18}
@@ -268,10 +265,9 @@ export const FileItem = ({
           />
         )}
         {item.status && cancelAllowedStatuses.has(item.status) ? (
-          <DialCloseButton
-            onClose={handleCancelFile}
-            ariaLabel="remove-file"
-            size={18}
+          <CloseButtonSmall
+            onClick={handleCancelFile}
+            aria-label="remove-file"
           />
         ) : (
           <FileItemContextMenu
@@ -289,34 +285,11 @@ export const FileItem = ({
               isContextMenu ? 'block' : 'hidden',
             )}
             onSave={onSave}
+            isCodeEditorFile={isCodeEditorFile}
+            readOnly={readOnly}
           />
         )}
       </div>
-      {isRemoveAccessConfirmOpened && (
-        <ConfirmDialog
-          isOpen={isRemoveAccessConfirmOpened}
-          showHeadingTooltip
-          heading={t('Confirm removing access: {{fileName}}', {
-            fileName: item.name,
-          })}
-          description={t(
-            'Are you sure you want to remove access to the file for all users?',
-          )}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsRemoveAccessConfirmOpened(false);
-            if (result) {
-              dispatch(
-                ShareActions.revokeAccess({
-                  resourceId: item.id,
-                  featureType: FeatureType.File,
-                }),
-              );
-            }
-          }}
-        />
-      )}
     </div>
   );
 };

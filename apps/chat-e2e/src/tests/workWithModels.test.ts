@@ -383,7 +383,7 @@ dialTest(
     chatMessages,
     baseAssertion,
     sendMessage,
-    tooltip,
+    tooltipPortalAssertion,
     localStorageManager,
     iconApiHelper,
     talkToAgentDialog,
@@ -421,14 +421,8 @@ dialTest(
       'Verify no content received and model icon is visible',
       async () => {
         await dialHomePage.unRouteAllResponses();
-        const receivedContent = await chatMessages.getLastMessageContent();
-        expect
-          .soft(receivedContent, ExpectedMessages.messageContentIsValid)
-          .toBe('');
-        await chatMessagesAssertion.assertMessageIcon(
-          undefined,
-          expectedModelIcon,
-        );
+        await chatMessagesAssertion.assertMessageContent(2, '');
+        await chatMessagesAssertion.assertMessageIcon(2, expectedModelIcon);
         await baseAssertion.assertElementState(
           chatMessages.regenerate,
           'visible',
@@ -443,11 +437,12 @@ dialTest(
     await dialTest.step(
       'Hover over Send button and verify it is disabled and tooltip is shown',
       async () => {
+        //need to change focus to verify tooltip in the request textarea
+        await chatMessages.regenerate.hoverOver();
         await sendMessage.regenerate.hoverOver();
-        const tooltipContent = await tooltip.getContent();
-        expect
-          .soft(tooltipContent, ExpectedMessages.tooltipContentIsValid)
-          .toBe(ExpectedConstants.regenerateResponseTooltip);
+        await tooltipPortalAssertion.assertTooltipContent(
+          ExpectedConstants.regenerateResponseTooltip,
+        );
       },
     );
 

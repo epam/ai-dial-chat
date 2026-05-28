@@ -15,6 +15,7 @@ import { ConversationsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 
 import { Sidebar } from '@/src/components/Sidebar/Sidebar';
@@ -94,15 +95,12 @@ export const Chatbar = () => {
             )
           ) {
             dispatch(
-              UIActions.showErrorToast(
-                t(
-                  'Conversation with name "{{name}}" already exists at the root.',
-                  {
-                    ns: Translation.Chat,
-                    name: conversation.name,
-                  },
-                ),
-              ),
+              UIActions.showErrorToast({
+                message: t(ChatI18nKeys.ConversationNameExistsAtRoot, {
+                  ns: Translation.Chat,
+                  name: conversation.name,
+                }),
+              }),
             );
 
             return;
@@ -150,9 +148,12 @@ export const Chatbar = () => {
       featureType={FeatureType.Chat}
       side={SidebarSide.Left}
       isOpen={showChatbar}
-      itemComponent={
-        <Conversations conversations={rootFilteredConversations} />
-      }
+      itemComponent={(isDraggingOver: boolean) => (
+        <Conversations
+          conversations={rootFilteredConversations}
+          isDraggingOver={isDraggingOver}
+        />
+      )}
       folderComponent={<ChatFolders />}
       filteredItems={rootFilteredConversations}
       filteredFolders={filteredFolders}

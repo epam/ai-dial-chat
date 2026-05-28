@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import classNames from 'classnames';
 
@@ -19,6 +19,8 @@ import {
   ModelsSelectors,
   PromptsSelectors,
 } from '@/src/store/selectors';
+
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
@@ -46,9 +48,9 @@ const PromptField: React.FC<PromptFieldProps> = ({
   const { t } = useTranslation(Translation.PromptBar);
 
   return (
-    <li className="flex gap-2.5">
+    <li className="flex flex-col gap-x-2.5 gap-y-1 sm:flex-row">
       <p
-        className="mb-1 flex min-w-28 text-secondary"
+        className="flex min-w-28 text-secondary"
         data-qa={`prompt-${dataQa}-label`}
       >
         {`${t(label)}: `}
@@ -111,12 +113,12 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
   return (
     <>
       <ul className="flex max-h-[435px] flex-col gap-4 overflow-y-auto px-3 pb-4 md:px-6">
-        <PromptField label="Name" dataQa="name">
+        <PromptField label={PromptBarI18nKeys.Name} dataQa="name">
           {prompt.name}
         </PromptField>
         {prompt.description && (
           <PromptField
-            label="Description"
+            label={PromptBarI18nKeys.Description}
             dataQa="description"
             valueClassName="whitespace-pre-wrap"
           >
@@ -125,7 +127,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
         )}
         {prompt.content && (
           <PromptField
-            label="Prompt"
+            label={PromptBarI18nKeys.Prompt}
             dataQa="content"
             valueClassName="whitespace-pre-wrap"
           >
@@ -145,7 +147,8 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 )}
                 data-qa="version"
               >
-                {t('v.')} {prompt.publicationInfo?.version}
+                {t(PromptBarI18nKeys.VersionPrefix)}{' '}
+                {prompt.publicationInfo?.version}
               </p>
               <PublicationControls entity={prompt} />
             </>
@@ -155,6 +158,7 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 <PublicVersionSelector
                   publicVersionGroupId={publicVersionGroupId}
                   onChangeSelectedVersion={handleChangeSelectedVersion}
+                  btnClassNames="!text-primary"
                 />
               )}
               <DialPrimaryButton
@@ -163,7 +167,9 @@ export const ViewPrompt = ({ prompt, onEditMode }: Props) => {
                 data-qa="use-prompt"
                 iconBefore={<InsertPromptIcon className="size-[18px]" />}
                 label={
-                  screenState <= ScreenState.SM ? t('Use') : t('Use prompt')
+                  screenState <= ScreenState.SM
+                    ? t(PromptBarI18nKeys.Use)
+                    : t(PromptBarI18nKeys.UsePrompt)
                 }
               />
             </>

@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -28,6 +28,7 @@ import {
 } from '@/src/store/selectors';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import {
   CONVERSATIONS_DATE_SECTIONS,
   RECENT_PROMPTS_SECTION_NAME,
@@ -112,8 +113,8 @@ export const MoveToDialog: React.FC<Props> = ({
     [handleToggleFolder],
   );
 
-  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchQuery(e.target.value);
+  const handleSearch = useCallback((value: string) => {
+    setSearchQuery(value);
   }, []);
 
   const handleRenameFolder = useCallback(
@@ -235,7 +236,7 @@ export const MoveToDialog: React.FC<Props> = ({
       isOpen
       modalDataQa="select-folder-modal"
       onClose={handleClose}
-      title={t('Move to')}
+      title={t(CommonI18nKeys.MoveToCommon)}
     >
       <SelectFolderHeader
         errorMessage={errorMessage}
@@ -271,7 +272,7 @@ export const MoveToDialog: React.FC<Props> = ({
       <SelectFolderFooter
         onCreateNewFolder={handleAddFolder}
         onSelectFolderClick={handleSelect}
-        selectBtnText="Move"
+        selectBtnText={ChatI18nKeys.Move}
       />
     </SelectFolder>
   );

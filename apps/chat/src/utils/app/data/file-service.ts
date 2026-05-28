@@ -1,6 +1,7 @@
 import { Observable, map } from 'rxjs';
 
 import { DataService } from '@/src/utils/app/data/data-service';
+import { getDownloadName } from '@/src/utils/app/import-export';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import {
@@ -20,9 +21,10 @@ import {
 import { HTTPMethod } from '@/src/types/http';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
+import { FALLBACK_CONTENT_TYPE } from '@/src/constants/file';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
-import { constructPath } from '../file';
+import { constructPath, getMimeTypeByFileName } from '../file';
 import { getFileRootId } from '../id';
 import { BucketService } from './bucket-service';
 
@@ -33,6 +35,14 @@ import {
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
 import { saveAs } from 'file-saver';
+
+const fixContentType = (file: BackendFile): string => {
+  if (file.contentType !== FALLBACK_CONTENT_TYPE) {
+    return file.contentType;
+  }
+
+  return getMimeTypeByFileName(file.name);
+};
 
 const mapFileToDial = (file: BackendFile): DialFile => {
   const relativePath = file.parentPath
@@ -47,7 +57,7 @@ const mapFileToDial = (file: BackendFile): DialFile => {
     relativePath: relativePath,
     folderId: constructPath(getFileRootId(file.bucket), relativePath),
     contentLength: file.contentLength,
-    contentType: file.contentType,
+    contentType: fixContentType(file),
     serverSynced: true,
     updatedAt: file.updatedAt,
     permissions: file.permissions,
@@ -327,9 +337,14 @@ export class FileService {
 
   public static async downloadFilesAsArchive(
     files: UIKitDialFile[],
+    name?: string,
   ): Promise<void> {
     try {
-      const archiveName = files.length === 1 ? files[0].name : 'files';
+      const archiveName = getDownloadName({
+        name,
+        exportType: 'files',
+        extension: 'zip',
+      });
 
       const response = await fetch('/api/files/download', {
         method: HTTPMethod.POST,
@@ -372,7 +387,7 @@ export class FileService {
       const blob = new Blob([merged.buffer as ArrayBuffer], {
         type: contentType,
       });
-      saveAs(blob, `${archiveName}.zip`);
+      saveAs(blob, archiveName);
     } catch (error) {
       throw new Error(`Error downloading files: ${error}`);
     }

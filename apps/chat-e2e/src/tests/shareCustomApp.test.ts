@@ -8,7 +8,7 @@ import {
   ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { BaseElement, FileModalSection } from '@/src/ui/webElements';
+import { BaseElement } from '@/src/ui/webElements';
 import { UserUtil } from '@/src/utils';
 import { CustomAppAttributes } from '@/src/utils/customApplicationPublishingUtil';
 import { Conversation } from '@epam/ai-dial-shared';
@@ -17,7 +17,7 @@ let appData: CustomAppAttributes;
 const getIconName = (iconUrl: string) =>
   iconUrl.substring(iconUrl.lastIndexOf('/') + 1);
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Sharing custom app without editing permissions via context menu in DIAL Marketplace.\n' +
     'Share custom application via QR code without edit rights.\n' +
     'Share pop up: Message about not shared yet app for not shared app.\n' +
@@ -51,7 +51,6 @@ dialSharedWithMeTest.skip(
       customApplicationPublishingUtil,
       additionalShareUserLocalStorageManager,
       additionalShareUserMarketplacePage,
-      additionalShareUserDialHomePage,
       additionalShareUserMarketplace,
       additionalShareUserEntityDetailsModal,
       additionalShareUserEntityDetailsModalAssertion,
@@ -60,12 +59,13 @@ dialSharedWithMeTest.skip(
       additionalShareUserMarketplaceEntitiesSection,
       additionalShareUserMarketplaceEntities,
       additionalShareUserNavigationPanel,
-      additionalShareUserChatBar,
-      additionalShareUserAttachFilesModal,
-      additionalShareUserManageAttachmentsAssertion,
+      additionalShareUserFileManagerPage,
+      additionalShareUserFileManagerToolbar,
+      additionalShareUserFileManagerGridAssertion,
+      additionalShareUserFileManagerGrid,
+      additionalShareUserFileManagerGridRowDropdownMenu,
       baseAssertion,
       downloadAssertion,
-      modelApiHelper,
     },
     testInfo,
   ) => {
@@ -88,6 +88,7 @@ dialSharedWithMeTest.skip(
     let agentElement: BaseElement;
     let iconName: string;
     let shareLinkResponse: ShareByLinkResponseModel;
+    let searchInput: BaseElement;
 
     await dialSharedWithMeTest.step(
       'Create a custom app with icon via API',
@@ -105,7 +106,9 @@ dialSharedWithMeTest.skip(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appData.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appData.name);
         agentElement = await marketplaceEntitiesSection.findEntityElement(
           appData,
           { isWorkspaceEntity: true, isEditable: true },
@@ -181,13 +184,14 @@ dialSharedWithMeTest.skip(
       await additionalShareUserEntityDetailsModalAssertion.assertEntityAuthor(
         UserUtil.getE2EUser(testInfo.parallelIndex),
       );
-      const configApp = await modelApiHelper.getAgentByNameAndVersion({
-        name: appData.name,
-        version: appData.version,
-      });
-      await additionalShareUserEntityDetailsModalAssertion.assertEntityReleaseDate(
-        configApp.createdAt!,
-      );
+      //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/3218
+      // const configApp = await modelApiHelper.getAgentByNameAndVersion({
+      //   name: appData.name,
+      //   version: appData.version,
+      // });
+      // await additionalShareUserEntityDetailsModalAssertion.assertEntityReleaseDate(
+      //   configApp.createdAt!,
+      // );
       await additionalShareUserEntityDetailsModalAssertion.assertEntityVersion(
         appData.version!,
       );
@@ -205,9 +209,9 @@ dialSharedWithMeTest.skip(
       'Close the modal and verify app is listed, no bookmark icon is available on the card',
       async () => {
         await additionalShareUserEntityDetailsModal.closeButton.click();
-        await additionalShareUserMarketplaceHeader.searchInput.fillInInput(
-          appData.name,
-        );
+        searchInput =
+          additionalShareUserMarketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appData.name);
         const sharedAgentElement =
           await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
             appData,
@@ -238,35 +242,36 @@ dialSharedWithMeTest.skip(
     );
 
     await dialSharedWithMeTest.step(
-      'Open "Manage attachments" modal and verify app icon is displayed under "Shared with me" section',
+      'Open File manager and verify app icon is displayed on "Shared with me" tab',
       async () => {
-        await additionalShareUserNavigationPanel.backToChat();
-        await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserChatBar.openManageAttachmentsModal();
-        await additionalShareUserManageAttachmentsAssertion.assertElementState(
-          additionalShareUserAttachFilesModal,
-          'visible',
-        );
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: iconName },
-          FileModalSection.SharedWithMe,
+        await additionalShareUserNavigationPanel.goToFileManager();
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          iconName,
           'visible',
         );
       },
     );
 
     await dialSharedWithMeTest.step(
-      'Verify app icon can be downloaded via dropdown menu',
+      'Verify app icon can be downloaded via row dropdown menu',
       async () => {
-        await additionalShareUserAttachFilesModal.openFileDropdownMenu(
-          iconName,
-          FileModalSection.SharedWithMe,
-        );
+        await additionalShareUserFileManagerGrid
+          .gridRowByNameCell(iconName)
+          .hover();
+        const dotsMenu =
+          await additionalShareUserFileManagerGrid.gridDotsMenuByNameCell(
+            iconName,
+          );
+        await dotsMenu.click();
         const downloadedData =
-          await additionalShareUserDialHomePage.downloadData(() =>
-            additionalShareUserAttachFilesModal
-              .getFileDropdownMenu()
-              .selectMenuOption(MenuOptions.download),
+          await additionalShareUserFileManagerPage.downloadData(() =>
+            additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
+              MenuOptions.download,
+              {
+                isHttpMethodTriggered: false,
+              },
+            ),
           );
         await downloadAssertion.assertFileIsDownloaded(
           downloadedData,
@@ -324,12 +329,13 @@ dialSharedWithMeTest.skip(
           confirmationDialog,
           'visible',
         );
-        await confirmationDialogAssertion.assertConfirmationDialogTitle(
-          ExpectedConstants.removeAccessTitle,
-        );
-        await confirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.removeAccessForAllMessage(appData.name),
-        );
+        //TODO: unblock when fixed https://github.com/epam/ai-dial-chat/issues/6073
+        // await confirmationDialogAssertion.assertConfirmationDialogTitle(
+        //   ExpectedConstants.removeAccessTitle,
+        // );
+        // await confirmationDialogAssertion.assertConfirmationMessage(
+        //   ExpectedConstants.removeAccessForAllMessage(appData.name),
+        // );
       },
     );
 
@@ -356,21 +362,17 @@ dialSharedWithMeTest.skip(
     );
 
     await dialSharedWithMeTest.step(
-      'Refresh the page by additional user and verify app icon is still displayed under "Shared with me" section',
+      'Open File manager page by additional user and verify app icon is still displayed on "Shared with me" tab',
       async () => {
-        await additionalShareUserDialHomePage.reloadPage();
-        await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserChatBar.openManageAttachmentsModal();
-        await additionalShareUserManageAttachmentsAssertion.assertElementState(
-          additionalShareUserAttachFilesModal,
+        await additionalShareUserFileManagerPage.reloadPage();
+        await additionalShareUserFileManagerPage.waitForPageLoaded({
+          isGridVisible: false,
+        });
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          iconName,
           'visible',
         );
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: iconName },
-          FileModalSection.SharedWithMe,
-          'visible',
-        );
-        await additionalShareUserAttachFilesModal.closeButton.click();
       },
     );
 
@@ -379,9 +381,7 @@ dialSharedWithMeTest.skip(
       async () => {
         await additionalShareUserNavigationPanel.goToMarketplaceHome();
         await additionalShareUserMarketplacePage.waitForPageLoaded();
-        await additionalShareUserMarketplaceHeader.searchInput.fillInInput(
-          appData.name,
-        );
+        await searchInput.fillInInput(appData.name);
         await baseAssertion.assertElementState(
           additionalShareUserMarketplace.noResultsFound,
           'visible',
@@ -391,7 +391,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Sharing custom app with editing permissions for other users.\n' +
     'Share custom application via QR code with edit rights.\n' +
     `Sharing custom app without editing permissions via share icon on app's card pop-up in DIAL Marketplace.\n` +
@@ -402,6 +402,7 @@ dialSharedWithMeTest.skip(
     'Icon file stay in Manage attachments if recipient Unshare app',
   async ({
     marketplacePage,
+    additionalShareUserDialHomePage,
     marketplaceHeader,
     marketplaceEntitiesSection,
     entityDetailsModal,
@@ -410,7 +411,9 @@ dialSharedWithMeTest.skip(
     marketplaceUrlBuilder,
     setTestIds,
     customApplicationPublishingUtil,
-    additionalShareUserDialHomePage,
+    additionalShareUserFileManagerPage,
+    additionalShareUserFileManagerToolbar,
+    additionalShareUserFileManagerGridAssertion,
     additionalShareUserMarketplacePage,
     additionalShareUserNavigationPanel,
     additionalShareUserEntityDetailsModal,
@@ -429,9 +432,6 @@ dialSharedWithMeTest.skip(
     additionalShareUserConfirmationDialog,
     additionalShareUserConfirmationDialogAssertion,
     additionalShareUserTalkToAgents,
-    additionalShareUserChatBar,
-    additionalShareUserAttachFilesModal,
-    additionalShareUserManageAttachmentsAssertion,
     additionalShareUserTalkToAgentDialogAssertion,
     additionalShareUserChatAssertion,
   }) => {
@@ -469,7 +469,9 @@ dialSharedWithMeTest.skip(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appData.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appData.name);
         agentElement = await marketplaceEntitiesSection.findEntityElement(
           appData,
           { isWorkspaceEntity: true, isEditable: true },
@@ -537,9 +539,9 @@ dialSharedWithMeTest.skip(
       'Close the agent details modal and verify app card dropdown menu options',
       async () => {
         await additionalShareUserEntityDetailsModal.closeButton.click();
-        await additionalShareUserMarketplaceHeader.searchInput.fillInInput(
-          appData.name,
-        );
+        await additionalShareUserMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appData.name);
         const sharedAgentElement =
           await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
             appData,
@@ -570,27 +572,24 @@ dialSharedWithMeTest.skip(
     );
 
     await dialSharedWithMeTest.step(
-      'Navigate to the chat screen, open "Manage attachments" modal and verify app icon is displayed under "Shared with me" section',
+      'Open "File manager" page and verify app icon is displayed on "Shared with me" tab',
       async () => {
-        await additionalShareUserNavigationPanel.backToChat();
-        await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserChatBar.openManageAttachmentsModal();
-        await additionalShareUserManageAttachmentsAssertion.assertElementState(
-          additionalShareUserAttachFilesModal,
+        await additionalShareUserNavigationPanel.goToFileManager({
+          isFilesListingTriggered: false,
+        });
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          iconName,
           'visible',
         );
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: iconName },
-          FileModalSection.SharedWithMe,
-          'visible',
-        );
-        await additionalShareUserAttachFilesModal.closeButton.click();
       },
     );
 
     await dialSharedWithMeTest.step(
       'Select created conversation and click on app icon in the chat header',
       async () => {
+        await additionalShareUserNavigationPanel.backToChat();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserConversations.selectEntity(conversation.name);
         await additionalShareUserChatHeader.chatModelIcon.click();
       },
@@ -653,16 +652,18 @@ dialSharedWithMeTest.skip(
     );
 
     await dialSharedWithMeTest.step(
-      'Open "Manage attachments" modal and verify app icon is still displayed under "Shared with me" section',
+      'Open "File manager" and verify app icon is still displayed on "Shared with me" tab',
       async () => {
-        await additionalShareUserChatBar.openManageAttachmentsModal();
-        await additionalShareUserManageAttachmentsAssertion.assertElementState(
-          additionalShareUserAttachFilesModal,
-          'visible',
-        );
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: iconName },
-          FileModalSection.SharedWithMe,
+        await additionalShareUserFileManagerPage.openFileManagerPage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: true,
+          getStyles: false,
+        });
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          iconName,
           'visible',
         );
       },
@@ -670,7 +671,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Unshare option for Icon file from shared apps in Shared with me section in Manage attachments.\n' +
     'Default icon displayed for recipient of shared app if unshare icon file for app via Manage attachments.\n' +
     `Unshare custom app by user who received shared link via button on app's card in Marketplace`,
@@ -679,20 +680,20 @@ dialSharedWithMeTest.skip(
     additionalUserShareApiHelper,
     setTestIds,
     customApplicationPublishingUtil,
-    additionalShareUserDialHomePage,
+    additionalShareUserFileManagerPage,
+    additionalShareUserFileManagerGrid,
+    additionalShareUserFileManagerGridAssertion,
+    additionalShareUserFileManagerGridRowDropdownMenu,
     additionalShareUserMarketplacePage,
     additionalShareUserNavigationPanel,
     additionalShareUserMarketplaceHeader,
     additionalShareUserMarketplaceEntitiesSection,
     additionalShareUserMarketplaceEntities,
     baseAssertion,
-    additionalShareUserLocalStorageManager,
     additionalShareUserConfirmationDialog,
     additionalShareUserConfirmationDialogAssertion,
-    additionalShareUserChatBar,
-    additionalShareUserAttachFilesModal,
-    additionalShareUserManageAttachmentsAssertion,
     additionalShareUserEntityDetailsModal,
+    additionalShareUserFileManagerToolbar,
     shareApiAssertion,
   }) => {
     setTestIds('EPMRTC-5328', 'EPMRTC-5385', 'EPMRTC-5465');
@@ -711,52 +712,57 @@ dialSharedWithMeTest.skip(
           appData.iconUrl,
         );
         await additionalUserShareApiHelper.acceptInvite(shareByLinkResponse);
-        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
       },
     );
 
     await dialSharedWithMeTest.step(
-      'Open "Manage attachments" modal, select "Unshare" menu option for the app icon and verify confirmation popup is displayed',
+      'Open "File manager" page, select "Unshare" row menu option for the app icon and verify confirmation popup is displayed',
       async () => {
-        await additionalShareUserDialHomePage.openHomePage();
-        await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserChatBar.openManageAttachmentsModal();
-        await additionalShareUserManageAttachmentsAssertion.assertElementState(
-          additionalShareUserAttachFilesModal,
-          'visible',
+        await additionalShareUserFileManagerPage.openFileManagerPage({
+          updateInstalledDeployments: false,
+          updateInstalledToolsets: false,
+        });
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
+        const rowLocator =
+          await additionalShareUserFileManagerGrid.goToGridRowByNameCell(
+            iconName,
+          );
+        await rowLocator.hover();
+        const rowDotsMenu =
+          await additionalShareUserFileManagerGrid.gridDotsMenuByNameCell(
+            iconName,
+          );
+        await rowDotsMenu.click();
+        await additionalShareUserFileManagerGridRowDropdownMenu.selectItem(
+          MenuOptions.unshare,
+          {
+            isHttpMethodTriggered: false,
+          },
         );
-        await additionalShareUserAttachFilesModal.openFileDropdownMenu(
-          iconName,
-          FileModalSection.SharedWithMe,
-        );
-        await additionalShareUserAttachFilesModal
-          .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.unshare);
         await additionalShareUserConfirmationDialogAssertion.assertElementState(
           additionalShareUserConfirmationDialog,
           'visible',
         );
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationDialogTitle(
-          ExpectedConstants.unshareFileTitle,
+          ExpectedConstants.removeAccessTitle,
         );
         await additionalShareUserConfirmationDialogAssertion.assertConfirmationMessage(
-          ExpectedConstants.unshareFileMessage,
+          ExpectedConstants.removeYourAccessMessage(iconName),
         );
       },
     );
 
     await dialSharedWithMeTest.step(
-      'Confirm unsharing and verify the icon is removed from "Shared with me" section',
+      'Confirm unsharing and verify the icon is removed from "Shared with me" tab',
       async () => {
         await additionalShareUserConfirmationDialog.confirm({
           triggeredHttpMethod: 'POST',
+          triggeredHttpHost: API.discardShareWithMeItem,
         });
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: iconName },
-          FileModalSection.SharedWithMe,
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          iconName,
           'hidden',
         );
-        await additionalShareUserAttachFilesModal.closeButton.click();
       },
     );
 
@@ -765,9 +771,9 @@ dialSharedWithMeTest.skip(
       async () => {
         await additionalShareUserNavigationPanel.goToMyWorkspace();
         await additionalShareUserMarketplacePage.waitForPageLoaded();
-        await additionalShareUserMarketplaceHeader.searchInput.fillInInput(
-          appData.name,
-        );
+        await additionalShareUserMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appData.name);
         sharedAppElement =
           await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
             appData,
@@ -855,9 +861,9 @@ dialSharedWithMeTest(
           updateInstalledToolsets: false,
         });
         await additionalShareUserMarketplacePage.waitForPageLoaded();
-        await additionalShareUserMarketplaceHeader.searchInput.fillInInput(
-          appData.name,
-        );
+        await additionalShareUserMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appData.name);
         const agentElement =
           await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
             appData,

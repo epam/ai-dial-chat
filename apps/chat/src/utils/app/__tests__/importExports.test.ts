@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vitest';
 
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { getConversationRootId } from '@/src/utils/app/id';
@@ -22,6 +22,7 @@ import {
 
 import {
   Conversation,
+  ConversationResponseFormat,
   ExportFormatV1,
   ExportFormatV2,
   ExportFormatV4,
@@ -31,11 +32,11 @@ import {
 } from '@epam/ai-dial-shared';
 
 const bucket = '123';
-beforeAll(() => {
-  BucketService.setBucket(bucket);
-});
 
 describe('Export Format Functions', () => {
+  beforeAll(() => {
+    BucketService.setBucket(bucket);
+  });
   describe('isExportFormatV1', () => {
     it('should return true for v1 format', () => {
       const obj = [{ id: 1 }];
@@ -119,6 +120,7 @@ describe('cleanData Functions', () => {
     selectedAddons: [],
     folderId: getConversationRootId(bucket),
     updatedAt: expect.any(Number),
+    responseFormat: ConversationResponseFormat.Markdown,
   };
 
   describe('cleaning v1 data', () => {

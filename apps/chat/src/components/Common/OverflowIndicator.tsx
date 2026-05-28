@@ -6,7 +6,7 @@ import { stopBubbling } from '@/src/constants/chat';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { ButtonSize, DialLinkButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface OverflowIndicatorProps {
   count: number;
@@ -51,6 +51,8 @@ export const OverflowIndicator = ({
       open={open}
       onOpenChange={setOpen}
       placement={placement}
+      isTriggerClickable
+      isHoverDisabled
     >
       <DialLinkButton
         className={classNames(
@@ -58,13 +60,11 @@ export const OverflowIndicator = ({
           className,
         )}
         textClassName="leading-3"
-        size={ButtonSize.Small}
+        size={ElementSize.Small}
         onClick={(event) => {
           stopBubbling(event);
           handleDelayShow(!open);
         }}
-        onMouseEnter={() => handleDelayShow(true)}
-        onMouseLeave={() => handleDelayShow(false)}
         data-qa={dataQA}
         label={`+${count}`}
       />

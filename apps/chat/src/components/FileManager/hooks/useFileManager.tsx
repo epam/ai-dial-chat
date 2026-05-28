@@ -10,9 +10,11 @@ import { constructPath, prepareFileName } from '@/src/utils/app/file';
 import {
   buildFileTree,
   convertToUIKitFile,
+  convertToUIKitFolder,
   filterFilesByFilters,
   filterFoldersByFilters,
 } from '@/src/utils/app/file-manager-adapter';
+import { dispatchOpenFileManagerUnshareDialog } from '@/src/utils/app/file-manager-unshare-dispatch';
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import { getFileRootId, getRootId, isRootId } from '@/src/utils/app/id';
 import {
@@ -20,12 +22,15 @@ import {
   SharedWithMeFilters,
   defaultMyItemsFilters,
 } from '@/src/utils/app/search';
+import { hasWritePermission } from '@/src/utils/app/share';
 import { getEntityBucket } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 
+import { DialFile as LocalDialFileType } from '@/src/types/files';
+import type { RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
-import { ShareActions } from '@/src/store/actions';
+import { PublicationActions, ShareActions } from '@/src/store/actions';
 import { FilesActions } from '@/src/store/files/files.reducers';
 import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -33,18 +38,25 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   MY_FILES_SECTION,
   ORGANIZATION_FILES_SECTION,
+  REVIEW_FILES_SECTION,
   SHARED_WITH_ME_FILES_SECTION,
-} from '@/src/constants/file';
+} from '@/src/constants/fileManager';
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { getEntityNameSchema } from '@/src/constants/validation-helpers';
 
 import {
+  GridOptions,
   NavigationPanelOptions,
   ToolbarOptions,
 } from '@epam/ai-dial-ui-kit/dist/src/components/FileManager/FileManager';
 
 import { FilesUploadingModalOptions } from '../FilesUploadingModal';
 
-import { FeatureType, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  FeatureType,
+  FolderInterface,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import {
   ButtonVariant,
   DialCopiedItem,
@@ -54,15 +66,56 @@ import {
   DialFileNodeType,
   DialUploadFileItem,
   FileManagerColumnKey,
+  GridSelectionMode,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import cloneDeep from 'lodash-es/cloneDeep';
-import groupBy from 'lodash-es/groupBy';
+import uniqBy from 'lodash-es/uniqBy';
+
+const formatSharedPath = (
+  path: string | undefined | null,
+  sharedWithMeLabel: string,
+) => {
+  if (!path) return path;
+  return path.replace(/^files\/[^/]+/, sharedWithMeLabel);
+};
+
+function extractHiddenSharedPathPart(
+  rootFolderPath: string,
+  rootItemPath: string,
+  rootItemName: string,
+): string | null {
+  if (!rootItemPath.startsWith(rootFolderPath)) {
+    return null;
+  }
+
+  const afterRoot = rootItemPath
+    .slice(rootFolderPath.length)
+    .replace(/^\/+/, '');
+
+  if (!afterRoot.endsWith(rootItemName)) {
+    return null;
+  }
+
+  const hidden = afterRoot.slice(0, afterRoot.length - rootItemName.length);
+
+  return hidden.replace(/\/$/, '') || null;
+}
 
 const newActions = {
-  uploadFiles: { label: translate('Upload files') },
-  newFolder: { label: translate('New folder') },
-  uploadArchive: { label: translate('Upload archive') },
+  uploadFiles: {
+    label: translate(SideBarI18nKeys.UploadFiles, {
+      ns: Translation.SideBar,
+    }),
+  },
+  newFolder: {
+    label: translate(SideBarI18nKeys.NewFolder, { ns: Translation.SideBar }),
+  },
+  uploadArchive: {
+    label: translate(SideBarI18nKeys.UploadArchive, {
+      ns: Translation.SideBar,
+    }),
+  },
 };
 
 const dateOptions = {
@@ -71,16 +124,47 @@ const dateOptions = {
   day: '2-digit' as const,
 };
 
+const getInitialTab = (availableTabs?: Set<string>) => {
+  if (!availableTabs?.size) return DialFileManagerTabs.MyFiles;
+
+  const tabPriority = [
+    DialFileManagerTabs.MyFiles,
+    DialFileManagerTabs.Organization,
+    DialFileManagerTabs.Shared,
+    DialFileManagerTabs.Review,
+  ] as const;
+
+  return (
+    tabPriority.find((tab) => availableTabs.has(tab)) ??
+    DialFileManagerTabs.MyFiles
+  );
+};
+
+const defaultAvailableTabs = new Set([
+  DialFileManagerTabs.MyFiles,
+  DialFileManagerTabs.Shared,
+  DialFileManagerTabs.Organization,
+]);
+
 interface UseFileManagerOptions {
   actionLabelsOptions?: UseFileManagerActionLabelsOptions;
   toolbarOptions?: ToolbarOptions;
   availableTabs?: Set<string>;
+  reviewBucket?: string;
+  initialTab?: DialFileManagerTabs;
+  additionalFilesAndFolders?: {
+    files: LocalDialFileType[];
+    folders?: FolderInterface[];
+  };
 }
 
 export const useFileManager = ({
   actionLabelsOptions,
   toolbarOptions: externalToolbarOptions,
-  availableTabs,
+  availableTabs = defaultAvailableTabs,
+  reviewBucket,
+  initialTab,
+  additionalFilesAndFolders,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
 
@@ -100,10 +184,30 @@ export const useFileManager = ({
   const isCopyingFiles = useAppSelector(FilesSelectors.selectIsCopyingFiles);
   const isMovingFiles = useAppSelector(FilesSelectors.selectIsMovingFiles);
   const movingFilesCountRef = useRef<number>(0);
+  const prevIsCopyingRef = useRef(false);
+  const prevIsMovingRef = useRef(false);
 
   const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
-  const files = useAppSelector(FilesSelectors.selectFiles);
-  const folders = useAppSelector(FilesSelectors.selectFolders);
+  const _files = useAppSelector(FilesSelectors.selectFiles);
+  const _folders = useAppSelector(FilesSelectors.selectFolders);
+
+  const files = useMemo(
+    () =>
+      uniqBy([..._files, ...(additionalFilesAndFolders?.files ?? [])], 'id'),
+    [_files, additionalFilesAndFolders?.files],
+  );
+  const folders = useMemo(
+    () =>
+      uniqBy(
+        [..._folders, ...(additionalFilesAndFolders?.folders ?? [])],
+        'id',
+      ),
+    [_folders, additionalFilesAndFolders?.folders],
+  );
+
+  const sharedWithMeIds = useAppSelector(
+    FilesSelectors.selectSharedWithMeFilesAndFoldersIds,
+  );
 
   const isUploadingFiles = useAppSelector(
     FilesSelectors.selectIsUploadingFiles,
@@ -135,8 +239,8 @@ export const useFileManager = ({
       percent,
     }));
 
-    const title = t('Uploading items');
-    const text = t('{{done}} of {{total}} items uploaded...', {
+    const title = t(SideBarI18nKeys.UploadingItems);
+    const text = t(SideBarI18nKeys.ItemsUploaded, {
       done: files.filter((f) => f.status !== UploadStatus.LOADING).length,
       total: files.length,
     });
@@ -152,34 +256,114 @@ export const useFileManager = ({
   );
 
   const [currentPath, setCurrentPath] = useState<string | undefined>();
+  const [isSearching, setIsSearching] = useState(false);
   const [destinationPath, setDestinationPath] = useState<string | undefined>();
 
-  const searchResults = useAppSelector(
-    useCallback(
-      (state) => {
-        return currentPath
-          ? FilesSelectors.selectSearchResultsForFolder(state, currentPath)
-          : [];
-      },
-      [currentPath],
-    ),
-  );
+  const currentFolder = useMemo(() => {
+    return currentPath ? folders.find((f) => f.id === currentPath) : undefined;
+  }, [currentPath, folders]);
 
-  const searchResultsUIKit = useMemo(
-    () => searchResults.map(convertToUIKitFile),
-    [searchResults],
-  );
+  const canWriteCurrentFolder = hasWritePermission(currentFolder?.permissions);
 
   const [treeCollapsedState, setTreeCollapsedState] = useState<
     boolean | undefined
   >(false);
 
-  const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs({
-    my_files: MY_FILES_SECTION,
-    shared: SHARED_WITH_ME_FILES_SECTION,
-    organization: ORGANIZATION_FILES_SECTION,
-  });
+  const safeInitialTab =
+    initialTab && availableTabs?.size && !availableTabs.has(initialTab)
+      ? undefined
+      : initialTab;
+
+  const fallbackInitialTab =
+    availableTabs?.size && !availableTabs.has(DialFileManagerTabs.MyFiles)
+      ? getInitialTab(availableTabs)
+      : undefined;
+  const resolvedInitialTab = safeInitialTab ?? fallbackInitialTab;
+
+  const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs(
+    {
+      my_files: t(MY_FILES_SECTION),
+      shared: t(SHARED_WITH_ME_FILES_SECTION),
+      organization: t(ORGANIZATION_FILES_SECTION),
+      review: t(REVIEW_FILES_SECTION),
+    },
+    resolvedInitialTab,
+  );
+  const handleTabChangeWithRefresh = useCallback(
+    (tab: DialFileManagerTabs) => {
+      handleTabChange(tab);
+      if (tab === DialFileManagerTabs.MyFiles) {
+        dispatch(
+          FilesActions.getFilesWithFolders({ skipShareListingsRefresh: true }),
+        );
+      }
+
+      if (tab === DialFileManagerTabs.Shared) {
+        dispatch(ShareActions.triggerGettingSharedFilesListings());
+      }
+
+      if (tab === DialFileManagerTabs.Organization) {
+        dispatch(
+          PublicationActions.uploadPublishedWithMeItems({
+            featureType: FeatureType.File,
+          }),
+        );
+      }
+    },
+    [handleTabChange, dispatch],
+  );
+
   const previousActiveTabRef = useRef<DialFileManagerTabs | null>(null);
+
+  const searchSelector = useCallback(
+    (state: RootState) =>
+      currentPath && isSearching && !isLoadingSearchListing
+        ? FilesSelectors.selectSearchResultsForFolder(
+            state,
+            activeTab === DialFileManagerTabs.Shared && isRootId(currentPath)
+              ? undefined
+              : currentPath,
+            activeTab === DialFileManagerTabs.Shared,
+          )
+        : { files: [], folders: [] },
+    [currentPath, isSearching, isLoadingSearchListing, activeTab],
+  );
+
+  const searchResults = useAppSelector(searchSelector);
+
+  const searchResultsUIKit = useMemo(
+    () => [
+      ...searchResults.folders.map((f) => {
+        const uiFolder = convertToUIKitFolder(f, []);
+        if (activeTab === DialFileManagerTabs.Shared) {
+          uiFolder.parentPath = formatSharedPath(
+            uiFolder.parentPath,
+            t(SHARED_WITH_ME_FILES_SECTION),
+          );
+          uiFolder.folderId = formatSharedPath(
+            uiFolder.folderId,
+            t(SHARED_WITH_ME_FILES_SECTION),
+          ) as string;
+        }
+        return uiFolder;
+      }),
+      ...searchResults.files.map((f) => {
+        const uiFile = convertToUIKitFile(f);
+        if (activeTab === DialFileManagerTabs.Shared) {
+          uiFile.parentPath = formatSharedPath(
+            uiFile.parentPath,
+            t(SHARED_WITH_ME_FILES_SECTION),
+          );
+          uiFile.folderId = formatSharedPath(
+            uiFile.folderId,
+            t(SHARED_WITH_ME_FILES_SECTION),
+          ) as string;
+        }
+        return uiFile;
+      }),
+    ],
+    [searchResults, activeTab, t],
+  );
 
   const filteredTabs = useMemo(() => {
     if (!availableTabs || !availableTabs.size) {
@@ -189,9 +373,23 @@ export const useFileManager = ({
   }, [availableTabs, tabs]);
 
   useEffect(() => {
+    const copyJustFinished = prevIsCopyingRef.current && !isCopyingFiles;
+    const moveJustFinished = prevIsMovingRef.current && !isMovingFiles;
+    prevIsCopyingRef.current = isCopyingFiles;
+    prevIsMovingRef.current = isMovingFiles;
+
+    if ((copyJustFinished || moveJustFinished) && isSearching && currentPath) {
+      dispatch(FilesActions.getFullListing({ folderPath: currentPath }));
+    }
+  }, [isCopyingFiles, isMovingFiles, isSearching, currentPath, dispatch]);
+
+  useEffect(() => {
     if (currentPath && !isRootId(currentPath) && !isMovingFiles) {
       const folder = folders.find((folder) => folder.id === currentPath);
-      if (
+      if (!folder) {
+        const parentId = getFolderIdFromEntityId(currentPath);
+        setCurrentPath(parentId);
+      } else if (
         folder?.status !== UploadStatus.LOADED &&
         folder?.status !== UploadStatus.LOADING
       ) {
@@ -246,7 +444,7 @@ export const useFileManager = ({
   } = useMemo(() => {
     let filteredFiles = files;
     let filteredFolders = folders;
-    let pathRootAlias = MY_FILES_SECTION;
+    let pathRootAlias = t(MY_FILES_SECTION);
     let uploadEnabled = true;
     const visibleColumns: FileManagerColumnKey[] = [
       FileManagerColumnKey.Name,
@@ -266,12 +464,12 @@ export const useFileManager = ({
           folders,
           defaultMyItemsFilters,
         );
-        pathRootAlias = MY_FILES_SECTION;
+        pathRootAlias = t(MY_FILES_SECTION);
         break;
       case DialFileManagerTabs.Shared:
         filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
         filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
-        pathRootAlias = SHARED_WITH_ME_FILES_SECTION;
+        pathRootAlias = t(SHARED_WITH_ME_FILES_SECTION);
         visibleColumns.push(FileManagerColumnKey.Author);
         break;
       case DialFileManagerTabs.Organization:
@@ -280,7 +478,17 @@ export const useFileManager = ({
           folders,
           PublishedWithMeFilter,
         );
-        pathRootAlias = ORGANIZATION_FILES_SECTION;
+        pathRootAlias = t(ORGANIZATION_FILES_SECTION);
+        uploadEnabled = false;
+        break;
+      case DialFileManagerTabs.Review:
+        filteredFiles = files.filter(
+          (f) => getEntityBucket(f) === reviewBucket,
+        );
+        filteredFolders = folders.filter(
+          (f) => getEntityBucket(f) === reviewBucket,
+        );
+        pathRootAlias = t(REVIEW_FILES_SECTION);
         uploadEnabled = false;
         break;
       default:
@@ -329,13 +537,13 @@ export const useFileManager = ({
       currentPathRootAlias: pathRootAlias,
       uploadEnabled,
     };
-  }, [files, folders, activeTab, previousActiveTabRef, currentPath]);
+  }, [files, folders, activeTab, reviewBucket, currentPath, t]);
 
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
       return count === 1 && name
-        ? t('Copy "{{name}}" to', { name })
-        : t('Copy {{count}} items to', { count });
+        ? t(SideBarI18nKeys.CopyNameTo, { name })
+        : t(SideBarI18nKeys.CopyItemsTo, { count });
     },
     [t],
   );
@@ -343,8 +551,8 @@ export const useFileManager = ({
   const getDestinationFolderMoveHeader = useCallback(
     (count: number, name: string | undefined) => {
       return count === 1 && name
-        ? t('Move "{{name}}" to', { name })
-        : t('Move {{count}} items to', { count });
+        ? t(SideBarI18nKeys.MoveNameTo, { name })
+        : t(SideBarI18nKeys.MoveItemsTo, { count });
     },
     [t],
   );
@@ -356,8 +564,8 @@ export const useFileManager = ({
     (files: string[]) => {
       const count = files.length;
       return count === 1
-        ? t('Confirm Deleting Item')
-        : t('Confirm Deleting Items');
+        ? t(SideBarI18nKeys.ConfirmDeletingItem)
+        : t(SideBarI18nKeys.ConfirmDeletingItems);
     },
     [t],
   );
@@ -369,16 +577,16 @@ export const useFileManager = ({
           <p className="mb-3 text-secondary">
             {files.length === 1 ? (
               <>
-                {t('Are you sure you want to delete')}{' '}
+                {t(SideBarI18nKeys.AreYouSureDeleteItem)}{' '}
                 <span className="break-all text-primary">
                   “{files[0].split('/').pop()}”?
                 </span>
               </>
             ) : (
               <>
-                {t('Do you want to delete the following')}{' '}
+                {t(SideBarI18nKeys.DoYouWantToDeleteFollowing)}{' '}
                 <span className="text-primary">
-                  {files.length} {t('items?')}
+                  {files.length} {t(SideBarI18nKeys.ItemsQuestion)}
                 </span>
               </>
             )}
@@ -423,13 +631,29 @@ export const useFileManager = ({
 
   const handleSearchFiles = useCallback(
     (folder: string) => {
+      setIsSearching(true);
       if (folder !== currentPath) {
         setCurrentPath(folder);
       }
-      dispatch(FilesActions.getFullListing({ folderPath: folder }));
+
+      if (activeTab === DialFileManagerTabs.Shared && isRootId(folder)) {
+        const sharedSet = new Set(sharedWithMeIds);
+        dispatch(
+          FilesActions.getFullListing({
+            folderPath: folder,
+            paths: folders.filter((f) => sharedSet.has(f.id)).map((f) => f.id),
+          }),
+        );
+      } else {
+        dispatch(FilesActions.getFullListing({ folderPath: folder }));
+      }
     },
-    [dispatch, setCurrentPath, currentPath],
+    [dispatch, currentPath, activeTab, folders, sharedWithMeIds],
   );
+
+  const handleClearSearch = useCallback(() => {
+    setIsSearching(false);
+  }, []);
 
   const operationLoaderModalOptions = useMemo(() => {
     if (!isCopyingFiles && !isMovingFiles) {
@@ -441,8 +665,12 @@ export const useFileManager = ({
       : () => dispatch(FilesActions.cancelMovingFiles());
 
     return {
-      title: t(isCopyingFiles ? 'Copying files' : 'Moving items'),
-      text: t('{{count}} items are being {{action}}…', {
+      title: t(
+        isCopyingFiles
+          ? SideBarI18nKeys.CopyingFiles
+          : SideBarI18nKeys.MovingItems,
+      ),
+      text: t(SideBarI18nKeys.ItemsBeingAction, {
         count: movingFilesCountRef.current,
         action: isCopyingFiles ? 'copied' : 'moved',
       }),
@@ -455,8 +683,8 @@ export const useFileManager = ({
       actionLabels: bulkActionLabels,
       getSelectionLabel(selectedCount: number) {
         return selectedCount === 1
-          ? t('{{count}} item selected', { count: selectedCount })
-          : t('{{count}} items selected', { count: selectedCount });
+          ? t(SideBarI18nKeys.ItemSelected, { count: selectedCount })
+          : t(SideBarI18nKeys.ItemsSelected, { count: selectedCount });
       },
     }),
     [bulkActionLabels, t],
@@ -465,7 +693,7 @@ export const useFileManager = ({
   const treeOptions = useMemo(
     () => ({
       expandedPaths,
-      header: t('Folder tree'),
+      header: t(SideBarI18nKeys.FolderTree),
       collapsed: treeCollapsedState,
       onCollapseChange: setTreeCollapsedState,
       loadedPaths: loadedFoldersPaths,
@@ -497,43 +725,18 @@ export const useFileManager = ({
     }
 
     return {
-      title: t('Information'),
-      nameLabel: t('Name: '),
-      pathLabel: t('Path: '),
-      modifiedDateLabel: t('Modified: '),
-      sizeLabel: t('Size: '),
-      authorLabel: t('Author: '),
+      title: t(SideBarI18nKeys.InformationSidebar),
+      nameLabel: t(SideBarI18nKeys.NameLabel),
+      pathLabel: t(SideBarI18nKeys.PathLabel),
+      modifiedDateLabel: t(SideBarI18nKeys.ModifiedLabel),
+      sizeLabel: t(SideBarI18nKeys.SizeLabel),
+      authorLabel: t(SideBarI18nKeys.AuthorLabel),
       loading: isFileMetadataLoading,
       fileMetadata: adjustedMetadata ?? undefined,
     };
   }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias]);
 
-  function extractHiddenSharedPathPart(
-    rootFolderPath: string,
-    rootItemPath: string,
-    rootItemName: string,
-  ): string | null {
-    if (!rootItemPath.startsWith(rootFolderPath)) {
-      return null;
-    }
-
-    const afterRoot = rootItemPath
-      .slice(rootFolderPath.length)
-      .replace(/^\/+/, '');
-
-    if (!afterRoot.endsWith(rootItemName)) {
-      return null;
-    }
-
-    const hidden = afterRoot.slice(0, afterRoot.length - rootItemName.length);
-
-    return hidden.replace(/\/$/, '') || null;
-  }
-
-  const { navigationPanelOptions, isLocalSearch } = useMemo(() => {
-    const localSearch =
-      activeTab === DialFileManagerTabs.Shared &&
-      currentPath === rootFolder.path;
+  const navigationPanelOptions = useMemo<NavigationPanelOptions>(() => {
     const options: NavigationPanelOptions = {
       searchable: true,
     };
@@ -561,16 +764,17 @@ export const useFileManager = ({
       }
     }
 
-    return { navigationPanelOptions: options, isLocalSearch: localSearch };
+    return options;
   }, [currentPath, rootFolder, activeTab]);
 
-  const gridOptions = useMemo(
+  const gridOptions: GridOptions = useMemo(
     () => ({
       filterable: false,
       dateLocale: 'en-US',
       dateOptions: dateOptions,
       actionLabels: gridActionLabels,
       visibleColumns: visibleColumns,
+      selectionMode: GridSelectionMode.MULTIPLE,
     }),
     [gridActionLabels, visibleColumns],
   );
@@ -579,17 +783,24 @@ export const useFileManager = ({
     () => ({
       tabs: filteredTabs,
       activeTab: activeTab,
-      onTabChange: handleTabChange,
+      onTabChange: handleTabChangeWithRefresh,
       newButtonVariant: ButtonVariant.Primary,
       newActions,
       showHiddenFilesToggle: true,
-      isNewButtonDisabled: activeTab === DialFileManagerTabs.Organization,
-      disabledNewButtonTooltip: t(
-        'You do not have permission to create new items here',
-      ),
+      isNewButtonDisabled:
+        activeTab === DialFileManagerTabs.Organization ||
+        (activeTab === DialFileManagerTabs.Shared && !canWriteCurrentFolder),
+      disabledNewButtonTooltip: t(SideBarI18nKeys.NoPermissionToCreateItems),
       ...externalToolbarOptions,
     }),
-    [filteredTabs, activeTab, handleTabChange, externalToolbarOptions, t],
+    [
+      filteredTabs,
+      activeTab,
+      handleTabChangeWithRefresh,
+      canWriteCurrentFolder,
+      t,
+      externalToolbarOptions,
+    ],
   );
 
   const destinationFolderPopupOptions = useMemo(
@@ -689,24 +900,70 @@ export const useFileManager = ({
     (filesToUpload: DialUploadFileItem[], destinationUrl: string) => {
       if (filesToUpload.length === 0) return;
 
-      filesToUpload.forEach((file) => (file.name = prepareFileName(file.name)));
+      const existingInFolder = new Set(
+        files.filter((f) => f.folderId === destinationUrl).map((f) => f.name),
+      );
+
+      const namesInCurrentBatch = new Set<string>();
+
+      const processedFiles = filesToUpload.map((file) => {
+        const sanitizedName = prepareFileName(file.name);
+        let finalName = sanitizedName;
+
+        const isNameModified = sanitizedName !== file.name;
+        const conflictsWithBatch = namesInCurrentBatch.has(finalName);
+        const conflictsWithFolder = existingInFolder.has(finalName);
+
+        if (conflictsWithBatch || (isNameModified && conflictsWithFolder)) {
+          let counter = 1;
+          const extensionIndex = sanitizedName.lastIndexOf('.');
+          const baseName =
+            extensionIndex === -1
+              ? sanitizedName
+              : sanitizedName.substring(0, extensionIndex);
+          const extension =
+            extensionIndex === -1
+              ? ''
+              : sanitizedName.substring(extensionIndex);
+
+          while (
+            existingInFolder.has(finalName) ||
+            namesInCurrentBatch.has(finalName)
+          ) {
+            finalName = `${baseName} (${counter})${extension}`;
+            counter++;
+          }
+        }
+
+        namesInCurrentBatch.add(finalName);
+
+        return {
+          ...file,
+          name: finalName,
+        };
+      });
 
       dispatch(
         FilesActions.uploadFiles({
-          files: filesToUpload,
+          files: processedFiles,
           destinationUrl,
         }),
       );
 
       setUploadingFilesIds(
-        new Set(filesToUpload.map((f) => getFileId(f.name, destinationUrl))),
+        new Set(processedFiles.map((f) => getFileId(f.name, destinationUrl))),
       );
     },
-    [dispatch, setUploadingFilesIds, getFileId],
+    [dispatch, getFileId, files],
   );
 
+  const deduplicatedFileIdsRef = useRef<Set<string>>(new Set());
+
   const handleCreateFolder = useCallback(
-    (file: DialUploadFileItem, folderPath: string) => {
+    (file: DialUploadFileItem, folderPath: string, fileId: string) => {
+      if (deduplicatedFileIdsRef.current.has(fileId)) return;
+      deduplicatedFileIdsRef.current.add(fileId);
+
       dispatch(
         FilesActions.createNewFolder({
           files: [file],
@@ -731,31 +988,26 @@ export const useFileManager = ({
     [dispatch],
   );
 
-  const handleUnshareFiles = useCallback(
+  const handleOpenUnshareFilesDialog = useCallback(
     (items: { path: string; nodeType?: string }[]) => {
-      const grouped = groupBy(items, (item) =>
-        item.nodeType === DialFileNodeType.FOLDER ? 'folders' : 'files',
+      dispatchOpenFileManagerUnshareDialog(
+        dispatch,
+
+        items,
+        'unshare-files',
       );
+    },
+    [dispatch],
+  );
 
-      if (grouped.folders?.length) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: grouped.folders.map((f) => f.path),
-            featureType: FeatureType.File,
-            isFolder: true,
-          }),
-        );
-      }
+  const handleOpenRemoveFilesAccessDialog = useCallback(
+    (items: { path: string; nodeType?: string }[]) => {
+      dispatchOpenFileManagerUnshareDialog(
+        dispatch,
 
-      if (grouped.files?.length) {
-        dispatch(
-          ShareActions.discardSharedWithMe({
-            resourceIds: grouped.files.map((f) => f.path),
-            featureType: FeatureType.File,
-            isFolder: false,
-          }),
-        );
-      }
+        items,
+        'remove-access',
+      );
     },
     [dispatch],
   );
@@ -765,9 +1017,10 @@ export const useFileManager = ({
       const schema = getEntityNameSchema({
         name:
           item.nodeType === DialFileNodeType.FOLDER
-            ? t('folder name')
-            : t('file name'),
+            ? t(SideBarI18nKeys.FolderNameLabel)
+            : t(SideBarI18nKeys.FileNameLabel),
         checkDotsInTheEnd: true,
+        checkDotsInTheStart: true,
       });
 
       const validationResult = schema.safeParse(value);
@@ -781,9 +1034,27 @@ export const useFileManager = ({
     [t],
   );
 
-  const sharedWithMeIds = useAppSelector(
-    FilesSelectors.selectSharedWithMeFilesAndFoldersIds,
-  );
+  const emptyStateTitle = useMemo(() => {
+    switch (activeTab) {
+      case DialFileManagerTabs.Shared:
+        return t(SideBarI18nKeys.NoSharedFiles);
+      case DialFileManagerTabs.Organization:
+        return t(SideBarI18nKeys.NoOrganizationFiles);
+      default:
+        return t(SideBarI18nKeys.YouDontHaveAnyFiles);
+    }
+  }, [activeTab, t]);
+
+  const emptyStateDescription = useMemo(() => {
+    switch (activeTab) {
+      case DialFileManagerTabs.Shared:
+        return t(SideBarI18nKeys.SharedFilesWillAppear);
+      case DialFileManagerTabs.Organization:
+        return t(SideBarI18nKeys.PublicFilesWillAppear);
+      default:
+        return t(SideBarI18nKeys.UploadOrDragDropFiles);
+    }
+  }, [activeTab, t]);
 
   return {
     currentPath,
@@ -810,7 +1081,8 @@ export const useFileManager = ({
     destinationFolderPopupOptions,
     deleteConfirmationOptions,
 
-    handleSearchFiles: isLocalSearch ? undefined : handleSearchFiles,
+    handleSearchFiles,
+    handleClearSearch,
     handleCopyFiles,
     handleGetInfo,
     handleMoveFiles,
@@ -820,10 +1092,14 @@ export const useFileManager = ({
     handleUploadFiles,
     handleCreateFolder,
     handleUploadArchive,
-    handleUnshareFiles,
+    handleOpenUnshareFilesDialog,
+    handleOpenRemoveFilesAccessDialog,
     handleRenameValidation,
     sharedWithMeIds,
 
     uploadEnabled,
+
+    emptyStateDescription,
+    emptyStateTitle,
   };
 };

@@ -25,6 +25,7 @@ export const FolderTreeSelectors = {
   foldersTreeContainer: '[aria-label="folders-tree"]',
   folder: '[aria-label="folder"]',
   folderName: '#name',
+  folderGroup: '.dial-small-text.group\\/item',
 };
 
 export const NoDataContentSelectors = {
@@ -47,7 +48,6 @@ export const GridSelectors = {
     `${GridSelectors.gridHeaderContainer} [role="columnheader"]${GridSelectors.gridColumn(columnId)}`,
   gridHeaderColumnName: '.ag-header-cell-text',
   gridRowsContainer: '.ag-center-cols-container',
-  gridLoader: '.ag-overlay-loading-center',
   gridRow: () => `${GridSelectors.gridRowsContainer} [role="row"]`,
   gridColumn: (columnId: string) => `[col-id="${columnId}"]`,
   gridCell: (columnId: string) =>
@@ -59,12 +59,13 @@ export const GridSelectors = {
 };
 
 export const CheckboxSelectors = {
-  checkboxContainer: '[aria-description="checkbox-container"]',
-  checkbox: '[role="checkbox"]',
+  checkboxContainer: '.ag-checkbox-input-wrapper',
+  checkbox: `${Tags.input}[type="checkbox"]`,
 };
 
 export const PopupSelectors = {
   popupContainer: '[role="dialog"][aria-modal="true"]',
+  popupLabelledContainer: '[aria-labelledby="dial-popup-heading"]',
   popupHeader: '#dial-popup-heading',
   popupContent: '[aria-label="popup-description"]',
 };
@@ -74,7 +75,14 @@ export const LoaderSelectors = {
 };
 
 export const InputSelectors = {
+  inputContainer: '[aria-label="input-container"]',
   value: (value: string) => `[value="${RegexUtil.escapeSelectorValue(value)}"]`,
-  inputErrorIcon: (value: string) =>
-    `.dial-input-error:has(input[value="${RegexUtil.escapeSelectorValue(value)}"]) svg[aria-label="alert"]`,
+};
+
+export const TooltipSelectors = {
+  tooltipContainer: '[role="tooltip"]',
+};
+
+export const EntityIconSelectors = {
+  fileIcon: '[aria-label="File type icon"]',
 };

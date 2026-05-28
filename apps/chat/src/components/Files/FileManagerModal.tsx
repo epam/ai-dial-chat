@@ -2,15 +2,20 @@ import { useId } from '@floating-ui/react';
 import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
+import { UseFileManagerActionLabelsOptions } from '@/src/hooks/useFileManagerActionLabels';
+import { useReviewBucket } from '@/src/hooks/useReviewBucket';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
   formatFileSize,
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
+  isAllowedMimeType,
 } from '@/src/utils/app/file';
+import { isParentFolderSelected } from '@/src/utils/app/folders';
+import { isHiddenPath } from '@/src/utils/app/search';
 
-import { FileSourceType } from '@/src/types/files';
+import { DialFile, FileSourceType } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { ToastType } from '@/src/types/toasts';
 import { Translation } from '@/src/types/translation';
@@ -21,20 +26,24 @@ import { FilesSelectors } from '@/src/store/files/files.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
 import { FilesUploadingModal } from '@/src/components/FileManager/FilesUploadingModal';
 import { OperationLoaderModal } from '@/src/components/FileManager/OperationLoaderModal';
 
+import { FolderInterface } from '@epam/ai-dial-shared';
 import {
   ButtonVariant,
   DialFileAcceptType,
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
+  DialFileNodeType,
   DialLoader,
   DialPrimaryButton,
+  FileManagerGridRow,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -51,6 +60,10 @@ interface Props {
   sourceFilters?: Set<FileSourceType>;
   warningMessage?: string;
   maxSelectableFileSize?: number;
+  additionalFilesAndFolders?: {
+    files: DialFile[];
+    folders?: FolderInterface[];
+  };
 }
 
 export const FileManagerModal = memo(
@@ -68,6 +81,7 @@ export const FileManagerModal = memo(
     sourceFilters,
     warningMessage,
     maxSelectableFileSize,
+    additionalFilesAndFolders,
   }: Props) => {
     const dispatch = useAppDispatch();
     const { t } = useTranslation(Translation.Chat);
@@ -97,6 +111,14 @@ export const FileManagerModal = memo(
 
     const prevSelectionRef = useRef<Set<string>>(new Set());
 
+    const handleOnCloseFilesModal = useCallback(
+      (result: boolean | string[]) => {
+        dispatch(FilesActions.resetAllFoldersStatus());
+        onClose(result);
+      },
+      [dispatch, onClose],
+    );
+
     const pathSelectionHandler = useCallback(
       (paths: Set<string>) => {
         const prev = prevSelectionRef.current;
@@ -105,21 +127,30 @@ export const FileManagerModal = memo(
         const added = [...next].filter((id) => !prev.has(id));
         const removed = [...prev].filter((id) => !next.has(id));
 
-        prevSelectionRef.current = next;
+        const filteredNext = new Set(
+          [...next].filter((id) => !isHiddenPath(id)),
+        );
+        prevSelectionRef.current = filteredNext;
 
         for (const id of added) {
+          if (isHiddenPath(id)) continue;
+
           if (folderPaths.has(id)) {
-            dispatch(FilesActions.setChosenFolder({ folderId: id }));
+            dispatch(
+              FilesActions.addChosenFolder({
+                folderId: id,
+              }),
+            );
           } else {
-            dispatch(FilesActions.setChosenFiles({ ids: [id] }));
+            dispatch(FilesActions.addChosenFiles({ ids: [id] }));
           }
         }
 
         for (const id of removed) {
           if (folderPaths.has(id)) {
-            dispatch(FilesActions.setChosenFolder({ folderId: id }));
+            dispatch(FilesActions.removeChosenFolder({ folderId: id }));
           } else {
-            dispatch(FilesActions.setChosenFiles({ ids: [id] }));
+            dispatch(FilesActions.removeChosenFiles({ ids: [id] }));
           }
         }
       },
@@ -133,7 +164,7 @@ export const FileManagerModal = memo(
 
     const allowedExtensions = useMemo(() => {
       if (allowedTypesArray.includes('*/*')) {
-        return [t('all')];
+        return [t(ChatI18nKeys.all)];
       }
 
       return getShortExtensionsListFromMimeType(allowedTypesArray, t);
@@ -151,6 +182,15 @@ export const FileManagerModal = memo(
         return t(allowedTypesArray[0].replace('/*', 's'));
       }
     }, [allowedTypesArray, allowedTypesLabel, t]);
+
+    const getDisabledTooltip = useCallback(
+      (row: FileManagerGridRow) => {
+        return isHiddenPath(row.path)
+          ? t(ChatI18nKeys.AttachingHiddenFilesNotAllowed)
+          : undefined;
+      },
+      [t],
+    );
 
     useEffect(() => {
       if (isOpen) {
@@ -176,27 +216,39 @@ export const FileManagerModal = memo(
           (file) => file.id,
         ),
       );
+      const hiddenFilesIds = new Set(
+        selectedFiles
+          .filter((file) => isHiddenPath(file.id))
+          .map(({ id }) => id),
+      );
 
       if (invalidFileIds.size > 0) {
         dispatch(
           UIActions.showToast({
             type: ToastType.Info,
-            title: t('Unsupported files skipped'),
-            message: t(
-              'Some files in the selected folder(-s) weren’t attached because their type isn’t supported.',
-            ),
+            title: t(ChatI18nKeys.UnsupportedFilesSkipped),
+            message: t(ChatI18nKeys.UnsupportedFilesDescription),
           }),
         );
       }
 
       if (canAttachFolders) {
         selectedFolderIds.forEach((folderId) => {
-          accumulatedIds.add(folderId);
+          if (
+            !isParentFolderSelected({
+              currentFolderId: folderId,
+              selectedFolderIds: selectedFolderIds.filter(
+                (id) => id !== folderId,
+              ),
+            })
+          ) {
+            accumulatedIds.add(folderId);
+          }
         });
       }
 
       selectedFilesIds.forEach((fileId) => {
-        if (invalidFileIds.has(fileId)) {
+        if (invalidFileIds.has(fileId) || hiddenFilesIds.has(fileId)) {
           return;
         }
 
@@ -214,20 +266,17 @@ export const FileManagerModal = memo(
         dispatch(
           UIActions.showToast({
             type: ToastType.Error,
-            title: t('Too many files selected'),
-            message: t(
-              'You selected {{count}} files, including previously attached ones. You can attach up to {{limit}} files.',
-              {
-                count: accumulatedIds.size,
-                limit: maximumAttachmentsAmount,
-              },
-            ),
+            title: t(ChatI18nKeys.TooManyFilesSelected),
+            message: t(ChatI18nKeys.TooManyFilesDescription, {
+              count: accumulatedIds.size,
+              limit: maximumAttachmentsAmount,
+            }),
           }),
         );
         return;
       }
 
-      onClose(Array.from(accumulatedIds));
+      handleOnCloseFilesModal(Array.from(accumulatedIds));
     }, [
       allowedTypesArray,
       canAttachFolders,
@@ -235,7 +284,7 @@ export const FileManagerModal = memo(
       files,
       previousSelectedFilesIds,
       maximumAttachmentsAmount,
-      onClose,
+      handleOnCloseFilesModal,
       selectedFilesIds,
       selectedFolderIds,
       t,
@@ -248,7 +297,7 @@ export const FileManagerModal = memo(
         [FileSourceType.MY_FILES]: DialFileManagerTabs.MyFiles,
         [FileSourceType.SHARED_WITH_ME]: DialFileManagerTabs.Shared,
         [FileSourceType.PUBLIC]: DialFileManagerTabs.Organization,
-        [FileSourceType.REVIEW_FILES]: undefined,
+        [FileSourceType.REVIEW_FILES]: DialFileManagerTabs.Review,
       };
 
       return new Set(
@@ -257,6 +306,24 @@ export const FileManagerModal = memo(
           .filter((t): t is DialFileManagerTabs => Boolean(t)),
       );
     }, [sourceFilters]);
+
+    const reviewBucket = useReviewBucket();
+
+    const actionLabelsOptions = useMemo<UseFileManagerActionLabelsOptions>(
+      () => ({
+        actionsByTab: {
+          my_files: [
+            DialFileManagerActions.Delete,
+            DialFileManagerActions.Download,
+            DialFileManagerActions.Rename,
+          ],
+          shared: [DialFileManagerActions.Download],
+          organization: [DialFileManagerActions.Download],
+          review: [DialFileManagerActions.Download],
+        },
+      }),
+      [],
+    );
 
     const {
       currentPath,
@@ -278,7 +345,6 @@ export const FileManagerModal = memo(
       treeOptions,
       fileMetadataPopupOptions,
       navigationPanelOptions,
-      gridOptions,
       toolbarOptions,
       deleteConfirmationOptions,
 
@@ -294,29 +360,63 @@ export const FileManagerModal = memo(
       sharedWithMeIds,
 
       uploadEnabled,
+      gridOptions,
     } = useFileManager({
-      actionLabelsOptions: {
-        actionsByTab: {
-          my_files: [
-            DialFileManagerActions.Delete,
-            DialFileManagerActions.Download,
-            DialFileManagerActions.Rename,
-          ],
-          shared: [DialFileManagerActions.Download],
-          organization: [DialFileManagerActions.Download],
-        },
-      },
+      actionLabelsOptions,
       toolbarOptions: {
         newButtonVariant: ButtonVariant.Secondary,
       },
       availableTabs,
+      reviewBucket,
+      additionalFilesAndFolders,
     });
+
+    const mergedGridOptions = useMemo(
+      () => ({
+        ...gridOptions,
+        additionalGridOptions: {
+          rowSelection: {
+            mode: 'multiRow' as const,
+            isRowSelectable: (node: { data?: FileManagerGridRow | null }) => {
+              const row = node.data;
+              if (!row) return true;
+
+              // Disable hidden files/folders and items inside hidden folders.
+              if (isHiddenPath(row.path)) return false;
+
+              // Replicate the UI kit's internal type/size disabled check so
+              // those rows stay non-selectable when we override rowSelection.
+              if (row.nodeType !== DialFileNodeType.FOLDER) {
+                if (
+                  row.contentType &&
+                  !allowedTypes.includes('*/*') &&
+                  allowedTypes.length > 0 &&
+                  !isAllowedMimeType(allowedTypes, row.contentType)
+                ) {
+                  return false;
+                }
+                if (
+                  maxSelectableFileSize != null &&
+                  row.contentLength != null &&
+                  row.contentLength > maxSelectableFileSize
+                ) {
+                  return false;
+                }
+              }
+
+              return true;
+            },
+          },
+        },
+      }),
+      [allowedTypes, gridOptions, maxSelectableFileSize],
+    );
 
     return (
       <Modal
         portalId="theme-main"
         state={isOpen ? ModalState.OPENED : ModalState.CLOSED}
-        onClose={() => onClose(false)}
+        onClose={() => handleOnCloseFilesModal(false)}
         dataQa="file-manager-modal"
         containerClassName="flex flex-col gap-4 w-full sm:w-[1200px] h-[min(800px,100vh)] !bg-layer-2"
         dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
@@ -334,22 +434,19 @@ export const FileManagerModal = memo(
             </div>
             {(canAttachFiles || forceShowSelectCheckBox) && (
               <p id={descriptionId} data-qa="supported-attributes">
-                {t(
-                  'Maximum size: {{maxSelectableFileSize}}. Supported types: {{allowedExtensions}}.',
-                  {
-                    maxSelectableFileSize: maxSelectableFileSize
-                      ? formatFileSize(maxSelectableFileSize)
-                      : '512 MB',
-                    allowedExtensions:
-                      typesLabel ||
-                      allowedExtensions.join(', ') ||
-                      'no available extensions',
-                  },
-                )}
+                {t(ChatI18nKeys.MaxSizeSupportedTypes, {
+                  maxSelectableFileSize: maxSelectableFileSize
+                    ? formatFileSize(maxSelectableFileSize)
+                    : '512 MB',
+                  allowedExtensions:
+                    typesLabel ||
+                    allowedExtensions.join(', ') ||
+                    'no available extensions',
+                })}
                 &nbsp;
                 {maximumAttachmentsAmount !== Number.MAX_SAFE_INTEGER &&
                   !!maximumAttachmentsAmount &&
-                  t('Up to {{maxAttachmentsAmount}} files.', {
+                  t(ChatI18nKeys.UpToFiles, {
                     maxAttachmentsAmount: maximumAttachmentsAmount,
                   })}
               </p>
@@ -379,7 +476,7 @@ export const FileManagerModal = memo(
               treeOptions={treeOptions}
               fileMetadataPopupOptions={fileMetadataPopupOptions}
               navigationPanelOptions={navigationPanelOptions}
-              gridOptions={gridOptions}
+              gridOptions={mergedGridOptions}
               toolbarOptions={toolbarOptions}
               onDeleteFiles={handleDeleteFiles}
               onDownloadFiles={handleDownloadFiles}
@@ -390,12 +487,19 @@ export const FileManagerModal = memo(
               onUploadArchive={handleUploadArchive}
               onMoveToFiles={handleMoveFiles}
               onRenameValidate={handleRenameValidation}
+              onCreateFolderValidate={handleRenameValidation}
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
+              getDisabledTooltip={getDisabledTooltip}
+              hideSearchPathItemName
+              autoSelectUploadedItems
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
-                <DialLoader size={48} ariaLabel={t('Processing files...')} />
+                <DialLoader
+                  size={48}
+                  ariaLabel={t(ChatI18nKeys.ProcessingFiles)}
+                />
               </div>
             )}
             {operationLoaderModalOptions && !isRenaming && (
@@ -409,9 +513,13 @@ export const FileManagerModal = memo(
           <div className="flex justify-end">
             <DialPrimaryButton
               onClick={handleAttachFiles}
-              label={customButtonLabel ?? t('Attach')}
+              label={customButtonLabel ?? t(ChatI18nKeys.Attach)}
               disabled={
-                selectedFilesIds.length === 0 && selectedFolderIds.length === 0
+                (selectedFilesIds.length === 0 &&
+                  selectedFolderIds.length === 0) ||
+                isAnyOperationInProgress ||
+                areFilesLoading ||
+                areFoldersLoading
               }
             />
           </div>

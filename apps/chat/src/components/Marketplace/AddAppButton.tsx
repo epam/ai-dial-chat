@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -22,6 +22,8 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { AddMarketplaceEntityButton } from './AddMarketplaceEntityButton';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -31,25 +33,24 @@ export function AddAppButton() {
 
   const { t } = useTranslation(Translation.Marketplace);
 
+  const router = useRouter();
+
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-
-  const router = useRouter();
-
-  const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
-
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
+
+  const isCodeAppsEnabled = enabledFeatures.has(Feature.CodeApps);
+  const hideCustomAppCreation = enabledFeatures.has(
+    Feature.HideCustomAppCreation,
   );
 
   const openEditor = useCallback(
     (type: string) => {
       void router.push(getAppEditorCreateModeRoute(type));
-      dispatch(ApplicationActions.setAppDetails(undefined));
+      dispatch(ApplicationActions.setAppDetails());
       dispatch(
         ApplicationActions.setEditorStep(MarketplaceEditorSteps.General),
       );
@@ -61,50 +62,54 @@ export function AddAppButton() {
     () =>
       [
         {
-          name: t('Custom app'),
+          name: t(MarketplaceI18nKeys.CustomApp),
           type: ApplicationType.CUSTOM_APP,
           dataQa: 'add-custom-app',
-          display: true,
+          display: !hideCustomAppCreation,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(
+              ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+            );
             openEditor(ApplicationType.CUSTOM_APP);
           },
         },
         {
-          name: t('Code app'),
+          name: t(MarketplaceI18nKeys.CodeApp),
           dataQa: 'add-startable-app',
           type: ApplicationType.CODE_APP,
           display: isCodeAppsEnabled,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(
+              ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+            );
             openEditor(ApplicationType.CODE_APP);
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
-          name: t(schema.displayName),
+          name: schema.displayName,
           type: schema.displayName,
           dataQa: `add-${schema.displayName}`,
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
-            if (detailedApplicationTypeSchema?.$id !== schema.id) {
-              dispatch(
-                ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
-                  schema.id,
-                ),
-              );
-            }
+            dispatch(
+              ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
+                schema.id,
+              ),
+            );
             openEditor(schema.id);
           },
         })) ?? []),
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
     [
       t,
+      hideCustomAppCreation,
       isCodeAppsEnabled,
       applicationTypeSchemas,
-      openEditor,
-      detailedApplicationTypeSchema?.$id,
       dispatch,
+      openEditor,
     ],
   );
 

@@ -12,7 +12,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { useMarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/marketplaceEditorViewContext';
 
 import { DialButton } from '@epam/ai-dial-ui-kit';
@@ -23,9 +24,9 @@ const previewModeIcons = {
   [PreviewMode.half]: IconLayoutSidebarLeftCollapse,
 };
 const previewModeTooltips = {
-  [PreviewMode.full]: 'Expand preview',
-  [PreviewMode.closed]: 'Hide preview',
-  [PreviewMode.half]: 'Split preview',
+  [PreviewMode.full]: MarketplaceI18nKeys.ExpandPreview,
+  [PreviewMode.closed]: MarketplaceI18nKeys.HidePreview,
+  [PreviewMode.half]: MarketplaceI18nKeys.SplitPreview,
 };
 
 interface PreviewModeButtonProps {
@@ -59,12 +60,12 @@ export const PreviewModeButton = ({
         'text-secondary hover:text-accent-primary',
         className,
       )}
+      tooltipProps={{
+        tooltip: t(previewModeTooltips[mode]),
+        isTriggerClickable: true,
+      }}
       onClick={handlePreviewModeChange}
-      iconBefore={
-        <Tooltip tooltip={t(previewModeTooltips[mode])} isTriggerClickable>
-          <Icon size={size} />
-        </Tooltip>
-      }
+      iconBefore={<Icon size={size} />}
     />
   );
 };

@@ -8,6 +8,7 @@ dialTest(
   'Prompt exceeded the limit is not copied into input message field.\n' +
     'Amount of tokens in the message is calculated',
   async ({
+    page,
     dialHomePage,
     confirmationDialog,
     confirmationDialogAssertion,
@@ -60,6 +61,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
+        if (randomModel.tokenizer?.encoding) {
+          // eslint-disable-next-line playwright/no-networkidle
+          await page.waitForLoadState('networkidle');
+        }
         await sendMessage.fillRequestData(exceededTokensLengthRequest);
         await confirmationDialogAssertion.assertConfirmationDialogTitle(
           ExpectedConstants.promptLimitExceededTitle,

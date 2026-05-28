@@ -1,14 +1,16 @@
 import {
   doesHaveDotsInTheEnd,
-  isEntityNameInvalid,
+  doesHaveDotsInTheStart,
+  getUtf8BytesLength,
   isVersionPartSizeValid,
   isVersionValid,
 } from '@/src/utils/app/common';
+import { notAllowedSpaces, notAllowedSymbols } from '@/src/utils/app/file';
+import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
+import { getMarketplaceEntityApiKey } from '@/src/utils/server/api';
+import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
-import {
-  MAX_ENTITY_LENGTH,
-  MIN_ENTITY_LENGTH,
-} from '@/src/constants/default-ui-settings';
+import { MIN_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import { MIME_FORMAT_REGEX } from '@/src/constants/file';
 import {
   formErrors,
@@ -16,12 +18,20 @@ import {
   versionsErrors,
 } from '@/src/constants/form-errors';
 
-import { z as zodValidation } from 'zod';
+import escapeRegExp from 'lodash-es/escapeRegExp';
+
+const specialCharactersRegex = new RegExp(
+  `[${escapeRegExp(notAllowedSymbols)}]|${notAllowedSpaces}`,
+);
 
 export const getEntityNameSchema = (options: {
   name: string;
   checkDotsInTheEnd?: boolean;
   skipCheckRestrictedSymbols?: boolean;
+  checkDotsInTheStart?: boolean;
+  maxBytes?: number;
+  buildNameForByteValidation?: (preparedName: string) => string;
+  skipMaxBytesCheck?: boolean;
 }) =>
   zodValidation
     .string()
@@ -31,28 +41,58 @@ export const getEntityNameSchema = (options: {
       MIN_ENTITY_LENGTH,
       formErrors.tooShort(options.name, MIN_ENTITY_LENGTH),
     )
-    .max(MAX_ENTITY_LENGTH, formErrors.tooLong(options.name, MAX_ENTITY_LENGTH))
     .refine(
       (str) =>
-        options.skipCheckRestrictedSymbols || !isEntityNameInvalid(str, false),
+        options.skipMaxBytesCheck ||
+        getUtf8BytesLength(options.buildNameForByteValidation?.(str) ?? str) <=
+          (options.maxBytes ?? getResourceMaxSegmentBytes()),
+      formErrors.tooLong(options.name),
+    )
+    .refine(
+      (str) =>
+        options.skipCheckRestrictedSymbols || !specialCharactersRegex.test(str),
       formErrors.hasSpecialCharacters(options.name),
     )
     .refine(
       (str) => !options.checkDotsInTheEnd || !doesHaveDotsInTheEnd(str),
       formErrors.noDotInTheEnd(options.name),
+    )
+    .refine(
+      (str) => !options.checkDotsInTheStart || !doesHaveDotsInTheStart(str),
+      formErrors.noDotInTheStart(options.name),
     );
 
-export const MarketplaceEntityBaseSchema = zodValidation.object({
-  name: getEntityNameSchema({ name: 'Name', checkDotsInTheEnd: true }),
-  version: zodValidation
-    .string()
-    .nonempty(versionsErrors.required)
-    .refine(isVersionValid, versionsErrors.notValid)
-    .refine(isVersionPartSizeValid, versionsErrors.tooLongPart),
-  description: zodValidation.string(),
-  iconUrl: zodValidation.string(),
-  topics: zodValidation.array(zodValidation.string()),
-});
+export const MarketplaceEntityBaseSchema = zodValidation
+  .object({
+    name: getEntityNameSchema({
+      name: 'Name',
+      checkDotsInTheEnd: true,
+      skipMaxBytesCheck: true,
+    }),
+    version: zodValidation
+      .string()
+      .nonempty(versionsErrors.required)
+      .refine(isVersionValid, versionsErrors.notValid)
+      .refine(isVersionPartSizeValid, versionsErrors.tooLongPart),
+    description: zodValidation.string(),
+    iconUrl: zodValidation.string(),
+    topics: zodValidation.array(zodValidation.string()),
+  })
+  .superRefine((data, ctx) => {
+    const apiKey = getMarketplaceEntityApiKey({
+      name: data.name,
+      version: data.version,
+    });
+    const maxSegmentBytes = getResourceMaxSegmentBytes();
+
+    if (getUtf8BytesLength(apiKey) > maxSegmentBytes) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['name'],
+        message: formErrors.tooLong('Name'),
+      });
+    }
+  });
 
 export const AttachmentTypesSchema = zodValidation
   .array(zodValidation.string())

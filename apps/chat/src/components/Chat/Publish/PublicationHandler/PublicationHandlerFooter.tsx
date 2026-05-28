@@ -59,14 +59,15 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+import { ChatI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import {
   PublicationRequestFormData,
   PublishRequestFieldsNames,
 } from '@/src/components/Chat/Publish/form';
 import { IconButton } from '@/src/components/Common/IconButton';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import {
   Conversation,
@@ -93,6 +94,7 @@ interface Props {
   publication: Publication;
   isFormChanged: boolean;
   areRulesChanged: boolean;
+  isDraftRuleFilterOpen: boolean;
 }
 
 export const PublicationHandlerFooter = ({
@@ -100,6 +102,7 @@ export const PublicationHandlerFooter = ({
   publication,
   isFormChanged,
   areRulesChanged,
+  isDraftRuleFilterOpen,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -392,6 +395,7 @@ export const PublicationHandlerFooter = ({
 
       const isValidVersion =
         resource?.action === PublishActions.DELETE ||
+        publishModel?.action === PublishActions.DELETE ||
         isFileId(key) ||
         (isVersionValid(version.trim()) &&
           !isVersionExists(
@@ -449,13 +453,17 @@ export const PublicationHandlerFooter = ({
 
   const getSubmitTooltipText = useCallback(() => {
     if (publishModel) {
-      return !isValid
-        ? formError
-        : !selectedPublicationItems.length
-          ? 'Nothing is selected and rules have not changed'
-          : areNoChanges
-            ? 'Nothing is selected and rules have not changed'
-            : "Request can't be published as some items are invalid";
+      if (isDraftRuleFilterOpen) {
+        return ChatI18nKeys.AcceptOrRejectRulesChanges;
+      }
+      if (!isValid) {
+        return formError;
+      }
+      if (areNoChanges) {
+        return 'Nothing is selected and rules have not changed';
+      }
+
+      return "Request can't be published as some items are invalid";
     }
 
     return selectedInvalidEntities.length
@@ -475,13 +483,13 @@ export const PublicationHandlerFooter = ({
     areNoChanges,
     isValid,
     formError,
-    selectedPublicationItems.length,
+    isDraftRuleFilterOpen,
   ]);
 
   const isApproveOrSendDisabled =
     (isApproveDisabled && !publishModel) ||
     (publishModel &&
-      (isEditInvalid || !isValid || !selectedPublicationItems.length));
+      (isEditInvalid || !isValid || areNoChanges || isDraftRuleFilterOpen));
 
   const getSubmitBtnText = useCallback(() => {
     if (publishModel) {
@@ -505,22 +513,26 @@ export const PublicationHandlerFooter = ({
       {selectedInvalidEntities.length ? (
         <div className="flex items-center gap-3">
           <IconExclamationCircle
-            size={24}
+            size={DEFAULT_ICON_SIZES.STANDARD}
             className="shrink-0 text-error"
             stroke="1.5"
           />
           <p className="text-sm text-error" data-qa="duplicate-unpublishing">
-            {selectedInvalidEntities.map((e, idx) => (
-              <span key={e.id} className="italic">
+            {selectedInvalidEntities.map((entity, idx) => (
+              <span key={entity.id} className="italic">
                 &quot;
-                {e.name.substring(0, 50) === e.name
-                  ? e.name
-                  : `${e.name.substring(0, 50)}...`}
+                {entity.name.substring(0, 50) === entity.name
+                  ? entity.name
+                  : `${entity.name.substring(0, 50)}...`}{' '}
+                {t(ChatI18nKeys.VersionAbbr)}.{' '}
+                {entity.publicationInfo?.version ?? NA_VERSION}
                 &quot;{idx === selectedInvalidEntities.length - 1 ? ' ' : ', '}
               </span>
             ))}
             {t(
-              "have already been unpublished. You can't approve this request.",
+              selectedInvalidEntities.length > 1
+                ? ChatI18nKeys.EntitiesHaveAlreadyBeenUnpublishedCantApproveRequest
+                : ChatI18nKeys.EntityHasAlreadyBeenUnpublishedCantApproveRequest,
             )}
           </p>
         </div>
@@ -530,11 +542,12 @@ export const PublicationHandlerFooter = ({
           <DialLinkButton
             className="px-0"
             onClick={handlePublicationReview}
+            disabled={isPublicationUpdating}
             data-qa="go-to-review"
             label={t(
               resourcesToReview.some((r) => r.reviewed)
-                ? 'Continue review'
-                : 'Go to a review',
+                ? ChatI18nKeys.ContinueReviewPublication
+                : ChatI18nKeys.GoToAReview,
             )}
           />
         )
@@ -546,14 +559,15 @@ export const PublicationHandlerFooter = ({
               <>
                 {!selectedInvalidEntities.length && (
                   <IconButton
-                    name={t('Edit')}
+                    name={t(ChatI18nKeys.Edit)}
                     dataQa="edit"
                     onClick={handleToggleEditMode}
                     Icon={IconPencil}
+                    disabled={isPublicationUpdating}
                   />
                 )}
                 <DialNeutralButton
-                  label={t('Reject')}
+                  label={t(ChatI18nKeys.Reject)}
                   onClick={() =>
                     dispatch(
                       PublicationActions.rejectPublication({
@@ -562,47 +576,46 @@ export const PublicationHandlerFooter = ({
                     )
                   }
                   data-qa="reject"
+                  disabled={isPublicationUpdating}
                 />
               </>
             )}
-            <Tooltip
-              hideTooltip={!isApproveOrSendDisabled}
-              tooltip={t(getSubmitTooltipText())}
-            >
-              <DialPrimaryButton
-                label={t(getSubmitBtnText())}
-                textClassName="whitespace-nowrap"
-                onClick={publishModel ? undefined : handleApprovePublication}
-                type={publishModel ? 'submit' : 'button'}
-                disabled={isApproveOrSendDisabled}
-                data-qa="submit"
-              />
-            </Tooltip>
+            <DialPrimaryButton
+              tooltipProps={{
+                hideTooltip: !isApproveOrSendDisabled,
+                tooltip: t(getSubmitTooltipText()),
+              }}
+              label={t(getSubmitBtnText())}
+              textClassName="whitespace-nowrap"
+              onClick={publishModel ? undefined : handleApprovePublication}
+              type={publishModel ? 'submit' : 'button'}
+              disabled={isApproveOrSendDisabled}
+              data-qa="submit"
+            />
           </>
         ) : (
           <>
             <DialNeutralButton
-              label={t('Cancel')}
+              label={t(ChatI18nKeys.Cancel)}
               onClick={handleToggleEditMode}
               data-qa="cancel"
             />
 
-            <Tooltip
-              hideTooltip={!isEditDisabled}
-              tooltip={t(
-                isEditInvalid
-                  ? 'Request can not be updated as some resources are invalid'
-                  : 'Make any changes to update the request',
-              )}
-            >
-              <DialPrimaryButton
-                label={t('Update request')}
-                textClassName="whitespace-nowrap"
-                disabled={isEditDisabled}
-                type="submit"
-                data-qa="update"
-              />
-            </Tooltip>
+            <DialPrimaryButton
+              label={t(ChatI18nKeys.UpdateRequest)}
+              textClassName="whitespace-nowrap"
+              disabled={isEditDisabled}
+              type="submit"
+              data-qa="update"
+              tooltipProps={{
+                hideTooltip: !isEditDisabled,
+                tooltip: t(
+                  isEditInvalid
+                    ? ChatI18nKeys.RequestCannotBeUpdated
+                    : ChatI18nKeys.MakeChangesToUpdate,
+                ),
+              }}
+            />
           </>
         )}
       </div>

@@ -1,4 +1,10 @@
-import React, { ReactNode, useCallback, useEffect, useMemo } from 'react';
+import React, {
+  MouseEvent,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 
 import classNames from 'classnames';
 
@@ -8,6 +14,8 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { ScreenState } from '@/src/types/common';
 import { PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
+
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { TabButton } from '@/src/components/Buttons/TabButton';
 import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEditorView/PreviewModeButton';
@@ -21,7 +29,7 @@ interface MarketplaceEditorViewProps {
   onPreviewModeChange: (mode: PreviewMode) => void;
 
   defaultPreviewMode?: PreviewMode;
-  onLeftMouseLeave?: () => void;
+  onLeftMouseLeave?: (e?: MouseEvent<HTMLDivElement>) => void;
   rightQa?: string;
   closedPreviewLabel?: string;
   leftTabLabel?: string;
@@ -84,7 +92,7 @@ export const MarketplaceEditorView = ({
             onClick={onPreviewModeChange}
             className="w-full"
           >
-            {t('Preview')}
+            {t(MarketplaceI18nKeys.PreviewMarketplace)}
           </TabButton>
         </div>
 

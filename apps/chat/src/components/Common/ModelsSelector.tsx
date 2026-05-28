@@ -13,6 +13,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Combobox } from '@/src/components/Common/Combobox';
 import { DisableOverlay } from '@/src/components/Common/DisableOverlay';
@@ -48,7 +50,7 @@ const ModelSelectRow = ({
         <span>
           {getOpenAIEntityFullName(item)}
           {item.version && (
-            <span className="ml-2 text-secondary" data-qa="agent-version">
+            <span className="ms-2 text-secondary" data-qa="agent-version">
               {item.version}
             </span>
           )}
@@ -56,9 +58,7 @@ const ModelSelectRow = ({
         {isNotAllowed && (
           <span className="text-error" data-qa="talk-to-entity-descr">
             <EntityMarkdownDescription isShortDescription>
-              {t('chat.error.incorrect-selected', {
-                context: EntityType.Model,
-              })}
+              {t(ChatI18nKeys.IncorrectSelectedModel)}
             </EntityMarkdownDescription>
           </span>
         )}
@@ -77,6 +77,7 @@ interface ModelsSelectorProps {
   inputClassName?: string;
   panelClassName?: string;
   indexSeparator?: number;
+  showHiddenTagModels?: boolean;
 }
 
 export const ModelsSelector = memo(function ModelsSelector({
@@ -89,8 +90,11 @@ export const ModelsSelector = memo(function ModelsSelector({
   inputClassName,
   panelClassName,
   indexSeparator,
+  showHiddenTagModels,
 }: ModelsSelectorProps) {
-  const modelTypeAgents = useAppSelector(ModelsSelectors.selectModelTypeAgents);
+  const modelTypeAgents = useAppSelector((state) =>
+    ModelsSelectors.selectModelTypeAgents(state, showHiddenTagModels),
+  );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const displayedModels = models ?? modelTypeAgents;
 
@@ -108,7 +112,7 @@ export const ModelsSelector = memo(function ModelsSelector({
           panelClassName={panelClassName}
           indexSeparator={indexSeparator}
           items={displayedModels}
-          initialSelectedItem={
+          selectedItem={
             model || {
               name: value,
               isDefault: false,

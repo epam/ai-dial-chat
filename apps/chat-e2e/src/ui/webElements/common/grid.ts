@@ -22,8 +22,6 @@ export class Grid extends BaseElement {
 
   public gridRows = this.getChildElementBySelector(GridSelectors.gridRow());
 
-  public loader = this.getChildElementBySelector(GridSelectors.gridLoader);
-
   public gridRowByCellValue = (columnId: string, value: string) =>
     this.gridRows.getElementLocator().filter({
       has: this.page.locator(GridSelectors.gridCell(columnId), {
@@ -31,11 +29,13 @@ export class Grid extends BaseElement {
       }),
     });
 
-  public gridRowColumnByCellValue = (columnId: string, value: string) =>
+  public gridRowColumn = (columnId: string) =>
     this.gridRows
       .getChildElementBySelector(GridSelectors.gridCell(columnId))
-      .getElementLocator()
-      .filter({
-        hasText: new RegExp(`^${RegexUtil.escapeRegexChars(value)}$`),
-      });
+      .getElementLocator();
+
+  public gridRowColumnByCellValue = (columnId: string, value: string) =>
+    this.gridRowColumn(columnId).filter({
+      hasText: new RegExp(`^${RegexUtil.escapeRegexChars(value)}$`),
+    });
 }

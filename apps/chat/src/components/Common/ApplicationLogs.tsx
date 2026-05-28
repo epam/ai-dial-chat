@@ -13,23 +13,22 @@ import { ApplicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { Spinner } from '@/src/components/Common/Spinner';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import {
-  ButtonSize,
-  DialButton,
-  DialNeutralButton,
-} from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const LogsHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);
 
   return (
     <div className="px-3 pb-4 pt-6 md:px-6">
-      <h2 className="text-base font-semibold">{t('Application logs')}</h2>
+      <h2 className="text-base font-semibold">
+        {t(MarketplaceI18nKeys.ApplicationLogs)}
+      </h2>
     </div>
   );
 };
@@ -50,7 +49,7 @@ const LogsView = () => {
         {isLogsLoading ? (
           <Spinner size={30} className="mx-auto" />
         ) : (
-          t('No logs found')
+          t(MarketplaceI18nKeys.NoLogsFound)
         )}
       </div>
     );
@@ -92,38 +91,27 @@ const LogsFooter = () => {
 
   return (
     <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
-      <Tooltip tooltip={t('Reload logs')}>
-        <DialButton
-          onClick={uploadLogs}
-          data-qa="application-reload-logs"
+      <DialGhostIconButton
+        tooltipProps={{ tooltip: t(MarketplaceI18nKeys.ReloadLogs) }}
+        onClick={uploadLogs}
+        data-qa="application-reload-logs"
+        disabled={isLogsLoading}
+        icon={<IconRefresh />}
+      />
+      {applicationLogs && (
+        <DialNeutralButton
+          tooltipProps={{ tooltip: t(MarketplaceI18nKeys.DownloadLogs) }}
+          label={t(MarketplaceI18nKeys.Download)}
+          onClick={() => downloadApplicationLogs(applicationLogs)}
+          data-qa="application-download-logs"
           disabled={isLogsLoading}
           iconBefore={
-            <IconRefresh
-              className={classNames(
-                isLogsLoading
-                  ? 'text-controls-disable'
-                  : 'text-secondary hover:text-accent-primary',
-              )}
+            <IconDownload
+              className={classNames(isLogsLoading && 'button-secondary')}
+              size={18}
             />
           }
         />
-      </Tooltip>
-      {applicationLogs && (
-        <Tooltip tooltip={t('Download logs')}>
-          <DialNeutralButton
-            label={t('Download')}
-            size={ButtonSize.Small}
-            onClick={() => downloadApplicationLogs(applicationLogs)}
-            data-qa="application-download-logs"
-            disabled={isLogsLoading}
-            iconBefore={
-              <IconDownload
-                className={classNames(isLogsLoading && 'button-secondary')}
-                size={18}
-              />
-            }
-          />
-        </Tooltip>
       )}
     </div>
   );

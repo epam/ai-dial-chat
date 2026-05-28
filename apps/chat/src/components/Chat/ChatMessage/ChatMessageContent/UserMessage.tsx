@@ -1,17 +1,26 @@
 import { IconPaperclip } from '@tabler/icons-react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
 import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { useFilePaste } from '@/src/hooks/useFilePaste';
+import { useTextareaInsertInPosition } from '@/src/hooks/useTextareaInsertInPosition';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useVoiceRecorder } from '@/src/hooks/useVoiceRecorder';
 
 import {
+  getTranscriptTextToInsert,
   isEntityNameOrPathInvalid,
   replaceStringRange,
 } from '@/src/utils/app/common';
-import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import {
   getDialFilesFromAttachments,
   getDialFoldersFromAttachments,
@@ -34,9 +43,10 @@ import { DialFile, DialLink, FileFolderInterface } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { FilesActions } from '@/src/store/actions';
+import { ChatActions, FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
+  ChatSelectors,
   ConversationsSelectors,
   FilesSelectors,
   PublicationSelectors,
@@ -45,8 +55,13 @@ import {
 } from '@/src/store/selectors';
 
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ChatInputAttachments } from '@/src/components/Chat/ChatInput/ChatInputAttachments';
+import { MicrophoneButton } from '@/src/components/Chat/ChatInput/MicrophoneButton';
+import { TranscribingOverlay } from '@/src/components/Chat/ChatInput/TranscribingOverlay';
+import { VoiceRecordingOverlay } from '@/src/components/Chat/ChatInput/VoiceRecordingOverlay';
 import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
 import { MessageUserButtons } from '@/src/components/Chat/ChatMessage/MessageButtons';
 import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/MessageSchema';
@@ -74,6 +89,7 @@ interface UserMessageProps {
   allMessages: Message[];
   isEditing: boolean;
   isEditingTemplates: boolean;
+  isAlignedToEnd?: boolean;
   withButtons?: boolean;
   editDisabled?: boolean;
   onToggleEditing: (value: boolean) => void;
@@ -94,6 +110,7 @@ export const UserMessage = memo(function UserMessage({
   allMessages,
   isEditing,
   isEditingTemplates,
+  isAlignedToEnd,
   withButtons,
   editDisabled,
   onToggleEditing,
@@ -129,6 +146,22 @@ export const UserMessage = memo(function UserMessage({
   const canAttachLinks = useAppSelector(
     ConversationsSelectors.selectCanAttachLink,
   );
+  const canRecordAudio = useAppSelector(
+    ConversationsSelectors.selectCanRecordAudio,
+  );
+  const isAsrMode = useAppSelector(ConversationsSelectors.selectIsAsrMode);
+  const supportedAudioTypes = useAppSelector(
+    ConversationsSelectors.selectSupportedAudioRecordingTypes,
+  );
+  const userMessageTranscript = useAppSelector(
+    ChatSelectors.selectUserMessageTranscript,
+  );
+  const userMessageVoiceAttachmentId = useAppSelector(
+    ChatSelectors.selectUserMessageVoiceAttachmentId,
+  );
+  const isUserMessageTranscribing = useAppSelector(
+    ChatSelectors.selectIsUserMessageTranscribing,
+  );
   const isMessageTemplatesEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.MessageTemplates),
   );
@@ -153,10 +186,16 @@ export const UserMessage = memo(function UserMessage({
   );
 
   const [messageContent, setMessageContent] = useState(message.content);
+  const { insertTextAtCursor } = useTextareaInsertInPosition(
+    textareaRef,
+    messageContent,
+    setMessageContent,
+  );
   const [formValue, setFormValue] = useState(currentFormValue);
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [shouldScroll, setShouldScroll] = useState(false);
   const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
+  const micButtonRef = useRef<HTMLButtonElement>(null);
 
   const showUserButtons =
     (!isReplay && !isPlayback && !isEditing && withButtons && !isReadOnly) ||
@@ -262,6 +301,45 @@ export const UserMessage = memo(function UserMessage({
     !messageContent &&
     !newEditableAttachments.length &&
     !selectedDialLinks.length;
+
+  const {
+    isRecording,
+    startRecording,
+    stopRecording,
+    audioBlob,
+    analyserNode,
+    error: voiceError,
+    elapsedTime,
+    fileExtension: voiceFileExtension,
+    clearAudioBlob,
+  } = useVoiceRecorder(supportedAudioTypes);
+
+  const isMicDisabled = useMemo(
+    () =>
+      isInputDisabled ||
+      isReplay ||
+      isPlayback ||
+      isReadOnly ||
+      isUploadingAttachmentPresent ||
+      isUserMessageTranscribing ||
+      (isAsrMode && !!conversation.isMessageStreaming),
+    [
+      isInputDisabled,
+      isReplay,
+      isPlayback,
+      isReadOnly,
+      isUploadingAttachmentPresent,
+      isUserMessageTranscribing,
+      isAsrMode,
+      conversation.isMessageStreaming,
+    ],
+  );
+
+  const textareaRightPaddingClass = canRecordAudio
+    ? isOverlay
+      ? 'pr-[60px]'
+      : 'pr-[72px]'
+    : '';
 
   const handleInputChange = useCallback(
     (event: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -434,12 +512,20 @@ export const UserMessage = memo(function UserMessage({
       (m) => m.role === Role.User,
     ).length;
 
-    if (userMessagesCount <= 1) {
+    if (userMessagesCount <= 1 && !isApproveRequiredEntitySelected) {
       return undefined;
     }
 
     return onDelete;
-  }, [allMessages, isExternalChat, onDelete]);
+  }, [allMessages, isExternalChat, isApproveRequiredEntitySelected, onDelete]);
+
+  const handleStopRecording = useCallback(() => {
+    // To show the transcribing overlay when the user stops recording
+    if (isAsrMode) {
+      dispatch(ChatActions.startUserMessageTranscription());
+    }
+    stopRecording();
+  }, [isAsrMode, stopRecording, dispatch]);
 
   useEffect(() => {
     setMessageContent(message.content);
@@ -473,11 +559,81 @@ export const UserMessage = memo(function UserMessage({
     }
   }, [shouldScroll]);
 
-  const uploadPastedFiles = useChatUploadFiles(
-    getQuickAttachmentsSavingPath(),
-    newEditableAttachments.length,
-    true,
-  );
+  useEffect(() => {
+    if (!isEditing && isRecording) {
+      stopRecording();
+    }
+  }, [isEditing, isRecording, stopRecording]);
+
+  useEffect(() => {
+    if (!audioBlob) {
+      return;
+    }
+
+    if (!isEditing) {
+      clearAudioBlob();
+      return;
+    }
+    dispatch(
+      ChatActions.handleUserMessageVoiceRecording({
+        audioBlob,
+        fileExtension: voiceFileExtension,
+      }),
+    );
+    clearAudioBlob();
+  }, [audioBlob, isEditing, voiceFileExtension, dispatch, clearAudioBlob]);
+
+  useEffect(() => {
+    if (!userMessageTranscript) {
+      return;
+    }
+
+    const textarea = textareaRef.current;
+
+    if (textarea) {
+      const beforeCursor = messageContent.substring(0, textarea.selectionStart);
+      const textToInsert = getTranscriptTextToInsert(
+        beforeCursor,
+        userMessageTranscript,
+      );
+
+      if (textToInsert) {
+        insertTextAtCursor(textToInsert);
+      }
+    } else {
+      const trimmedTranscript = userMessageTranscript.trim();
+      if (trimmedTranscript) {
+        setMessageContent((prev) =>
+          prev.trim() ? `${prev} ${trimmedTranscript}` : trimmedTranscript,
+        );
+      }
+    }
+
+    dispatch(ChatActions.clearUserMessageTranscript());
+  }, [dispatch, insertTextAtCursor, messageContent, userMessageTranscript]);
+
+  useEffect(() => {
+    if (!userMessageVoiceAttachmentId) {
+      return;
+    }
+
+    setNewEditableAttachmentsIds((ids) =>
+      uniq(ids.concat(userMessageVoiceAttachmentId)),
+    );
+    dispatch(ChatActions.clearUserMessageVoiceAttachmentId());
+  }, [dispatch, userMessageVoiceAttachmentId]);
+
+  useEffect(() => {
+    if (!isEditing) {
+      dispatch(ChatActions.clearUserMessageTranscript());
+      dispatch(ChatActions.clearUserMessageVoiceAttachmentId());
+    }
+  }, [dispatch, isEditing]);
+
+  const uploadPastedFiles = useChatUploadFiles({
+    selectedAttachmentsAmount: newEditableAttachments.length,
+    skipSelect: true,
+  });
 
   const handleUploadPastedFiles = useCallback(
     (
@@ -533,7 +689,10 @@ export const UserMessage = memo(function UserMessage({
           >
             <AdjustedTextarea
               ref={textareaRef}
-              className="w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none"
+              className={classNames(
+                'w-full grow resize-none whitespace-pre-wrap bg-transparent focus-visible:outline-none',
+                textareaRightPaddingClass,
+              )}
               value={messageContent}
               onChange={handleInputChange}
               onKeyDown={handlePressEnter}
@@ -548,6 +707,26 @@ export const UserMessage = memo(function UserMessage({
                 overflow: 'hidden',
               }}
             />
+            {isRecording && (
+              <VoiceRecordingOverlay
+                analyserNode={analyserNode}
+                elapsedTime={elapsedTime}
+                isOverlay={isOverlay}
+              />
+            )}
+            {isUserMessageTranscribing && (
+              <TranscribingOverlay text={t(ChatI18nKeys.TranscribingAudio)} />
+            )}
+            {canRecordAudio && (
+              <MicrophoneButton
+                ref={micButtonRef}
+                isRecording={isRecording}
+                onStartRecording={startRecording}
+                onStopRecording={handleStopRecording}
+                error={voiceError}
+                disabled={isMicDisabled}
+              />
+            )}
 
             {(newEditableAttachments.length > 0 ||
               selectedDialLinks.length > 0) && (
@@ -583,9 +762,9 @@ export const UserMessage = memo(function UserMessage({
                 <div className="flex size-[34px] cursor-pointer items-center justify-center rounded hover:bg-accent-primary-alpha">
                   <IconPaperclip
                     strokeWidth="1.5"
-                    size={24}
-                    width={24}
-                    height={24}
+                    size={DEFAULT_ICON_SIZES.STANDARD}
+                    width={DEFAULT_ICON_SIZES.STANDARD}
+                    height={DEFAULT_ICON_SIZES.STANDARD}
                   />
                 </div>
               }
@@ -598,20 +777,25 @@ export const UserMessage = memo(function UserMessage({
 
           <div className="relative flex gap-3">
             <DialNeutralButton
-              label={t('Cancel')}
+              label={t(ChatI18nKeys.Cancel)}
               onClick={() => {
                 setMessageContent(message.content);
                 setNewEditableAttachmentsIds(mappedUserEditableAttachmentsIds);
+                if (isRecording) {
+                  stopRecording();
+                }
                 handleToggleEditing(false);
               }}
               data-qa="cancel"
             />
             {!isInputHidden && (
               <DialPrimaryButton
-                label={t('Save & Submit')}
+                label={t(ChatI18nKeys.SaveAndSubmit)}
                 onClick={() => handleEditMessage(formValue, messageContent)}
                 disabled={
-                  isUploadingAttachmentPresent || isContentEmptyAndNoAttachments
+                  isUploadingAttachmentPresent ||
+                  isContentEmptyAndNoAttachments ||
+                  isUserMessageTranscribing
                 }
                 data-qa="save-and-submit"
               />
@@ -624,7 +808,12 @@ export const UserMessage = memo(function UserMessage({
 
   return (
     <>
-      <div className="relative mr-2 flex w-full flex-col gap-5">
+      <div
+        className={classNames('relative flex w-full flex-col gap-5', {
+          'me-2': isAlignedToEnd,
+          'mr-2': !isAlignedToEnd,
+        })}
+      >
         <UserSchema
           formValue={currentFormValue}
           messageIndex={messageIndex}

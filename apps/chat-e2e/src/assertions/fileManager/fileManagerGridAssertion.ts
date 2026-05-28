@@ -1,5 +1,10 @@
 import { BaseAssertion } from '@/src/assertions';
-import { CheckboxState, ElementState, ExpectedMessages } from '@/src/testData';
+import {
+  CheckboxState,
+  ElementActionabilityState,
+  ElementState,
+  ExpectedMessages,
+} from '@/src/testData';
 import { FileManagerGrid } from '@/src/ui/webElements';
 
 export class FileManagerGridAssertion extends BaseAssertion {
@@ -49,21 +54,36 @@ export class FileManagerGridAssertion extends BaseAssertion {
     }
   }
 
-  public async assertGridCheckboxByNameState(
+  public async assertGridCheckboxByNameActionabilityState(
     name: string,
-    expectedState: CheckboxState,
+    expectedState: ElementActionabilityState,
   ) {
-    await this.assertCheckboxState(
-      await this.fileManagerGrid.gridCheckboxByNameCell(name),
+    const checkbox = await this.fileManagerGrid.gridCheckboxByNameCell(name);
+    await this.assertElementActionabilityState(
+      checkbox.checkboxInput,
       expectedState,
     );
   }
 
-  public async assertGridRowColor(name: string, expectedColor: string) {
+  public async assertGridCheckboxByNameState(
+    name: string,
+    expectedState: CheckboxState,
+  ) {
+    const checkbox = await this.fileManagerGrid.gridCheckboxByNameCell(name);
+    await this.assertCheckboxState(checkbox.checkboxInput, expectedState);
+  }
+
+  public async assertGridRowBackgroundColor(
+    name: string,
+    expectedColor: string,
+  ) {
     await this.fileManagerGrid.goTop();
     const gridRowByNameLocator =
       await this.fileManagerGrid.goToGridRowByNameCell(name);
-    await this.assertElementColor(gridRowByNameLocator, expectedColor);
+    await this.assertElementBackgroundColors(
+      gridRowByNameLocator,
+      expectedColor,
+    );
   }
 
   public async assertGridCheckboxColor(name: string, expectedColor: string) {
@@ -73,23 +93,105 @@ export class FileManagerGridAssertion extends BaseAssertion {
     );
   }
 
-  public async assertRenameInputError(
+  public async assertGridCheckboxBorderColors(
     name: string,
-    expectedState: ElementState = 'visible',
+    expectedColor: string,
   ) {
+    await this.assertElementBorderColors(
+      await this.fileManagerGrid.gridCheckboxByNameCell(name),
+      expectedColor,
+    );
+  }
+
+  public async assertInputError(
+    expectedState: ElementState = 'visible',
+    name?: string,
+  ) {
+    const locator = name
+      ? this.fileManagerGrid.getRowInputError(name)
+      : this.fileManagerGrid.gridNameCellInput.alertIcon;
     await this.assertElementState(
-      this.fileManagerGrid.getRenameInputError(name),
+      locator,
+      expectedState,
+      ExpectedMessages.errorIconIsShown,
+    );
+  }
+
+  public async assertInputWarning(
+    expectedState: ElementState = 'visible',
+    name?: string,
+  ) {
+    const locator = name
+      ? this.fileManagerGrid.getRowInputWarning(name)
+      : this.fileManagerGrid.gridNameCellInput.warningIcon;
+    await this.assertElementState(
+      locator,
+      expectedState,
+      ExpectedMessages.warningIconIsShown,
+    );
+  }
+
+  public async assertGridNameCellInputState(expectedState: ElementState) {
+    await this.assertElementState(
+      this.fileManagerGrid.gridNameCellInput,
       expectedState,
     );
   }
 
-  public async assertRenameInputState(
-    value: string,
+  public async assertGridNameCellInputValue(expectedValue: string) {
+    await this.assertInputValue(
+      this.fileManagerGrid.gridNameCellInput.inputField,
+      expectedValue,
+    );
+  }
+
+  public async assertGridFileSharedState(
+    name: string,
     expectedState: ElementState,
   ) {
+    const sharedIconLocator =
+      await this.fileManagerGrid.gridSharedFileIconByNameCell(name);
     await this.assertElementState(
-      this.fileManagerGrid.getRenameInput(value),
+      sharedIconLocator,
       expectedState,
+      ExpectedMessages.fileIsShared,
     );
+  }
+
+  public async assertGridFileSharedIconColor(
+    name: string,
+    expectedColor: string,
+  ) {
+    const sharedIconLocator =
+      await this.fileManagerGrid.gridSharedFileIconByNameCell(name);
+    await this.assertElementColor(
+      sharedIconLocator,
+      expectedColor,
+      ExpectedMessages.sharedIconColorIsValid,
+    );
+  }
+
+  public async assertGridFileIconClass(
+    name: string,
+    expectedClass: string | RegExp,
+  ) {
+    const svgLocator =
+      await this.fileManagerGrid.gridFileIconSvgByNameCell(name);
+    const pattern =
+      typeof expectedClass === 'string'
+        ? new RegExp(expectedClass)
+        : expectedClass;
+    await this.assertElementClass(svgLocator, pattern);
+  }
+
+  public async assertGridFileIconClassDuringRename(
+    expectedClass: string | RegExp,
+  ) {
+    const svgLocator = this.fileManagerGrid.getRenameRowFileIconSvg();
+    const pattern =
+      typeof expectedClass === 'string'
+        ? new RegExp(expectedClass)
+        : expectedClass;
+    await this.assertElementClass(svgLocator, pattern);
   }
 }

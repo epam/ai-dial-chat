@@ -22,11 +22,9 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  CodeEditorSelectors,
-  FilesSelectors,
-  SettingsSelectors,
-} from '@/src/store/selectors';
+import { FilesSelectors, SettingsSelectors } from '@/src/store/selectors';
+
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
@@ -48,6 +46,8 @@ interface ContextMenuProps {
   onSave?: (fileId: string) => void | MouseEventHandler<unknown>;
   onSelect?: MouseEventHandler<unknown>;
   isSelected?: boolean;
+  isCodeEditorFile?: boolean;
+  readOnly?: boolean;
 }
 
 export function FileItemContextMenu({
@@ -62,6 +62,8 @@ export function FileItemContextMenu({
   onSave,
   onSelect,
   isSelected,
+  isCodeEditorFile,
+  readOnly,
 }: ContextMenuProps) {
   const { t } = useTranslation(Translation.SideBar);
 
@@ -71,11 +73,6 @@ export function FileItemContextMenu({
   const isPublishingConversationEnabled = useAppSelector((state) =>
     SettingsSelectors.selectIsPublishingEnabled(state, FeatureType.Chat),
   );
-  const selectFileContentSelector = useMemo(
-    () => CodeEditorSelectors.selectFileContent(file.id),
-    [file.id],
-  );
-  const isCodeEditorFile = !!useAppSelector(selectFileContentSelector);
   const folders = useAppSelector(FilesSelectors.selectFolders);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
@@ -85,18 +82,18 @@ export function FileItemContextMenu({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t(isSelected ? 'Unselect' : 'Select'),
+        name: t(isSelected ? SideBarI18nKeys.Unselect : SideBarI18nKeys.Select),
         dataQa: 'select',
         display: !!onSelect && !isOverlay,
         Icon: isSelected ? IconSquareOff : IconSquareCheck,
         onClick: onSelect,
       },
       {
-        name: t('Save'),
+        name: t(SideBarI18nKeys.Save),
         dataQa: 'save',
         additionalNameNode: isCodeEditorFile ? (
           <span className="pl-2 text-secondary">
-            {isMacOs ? '⌘+S' : 'Ctrl+S'}
+            {isMacOs() ? '⌘+S' : 'Ctrl+S'}
           </span>
         ) : null,
         display: !!onSave,
@@ -104,7 +101,7 @@ export function FileItemContextMenu({
         onClick: handleSave,
       },
       {
-        name: t('Download'),
+        name: t(SideBarI18nKeys.Download),
         display:
           file.status !== UploadStatus.LOADING &&
           file.status !== UploadStatus.FAILED,
@@ -115,7 +112,7 @@ export function FileItemContextMenu({
         CustomTriggerRenderer: DownloadRenderer,
       },
       {
-        name: t('Remove access'),
+        name: t(SideBarI18nKeys.RemoveAccess),
         dataQa: 'unshare',
         display:
           isSharingConversationEnabled && !!onRemoveAccess && !!file.isShared,
@@ -123,14 +120,14 @@ export function FileItemContextMenu({
         onClick: onRemoveAccess,
       },
       {
-        name: t('Unshare'),
-        display: !!file.sharedWithMe,
+        name: t(SideBarI18nKeys.Unshare),
+        display: !readOnly && !!file.sharedWithMe && !isCodeEditorFile,
         dataQa: 'unshare-file',
         Icon: IconUserUnshare,
         onClick: onUnshare,
       },
       {
-        name: t('Unpublish'),
+        name: t(SideBarI18nKeys.Unpublish),
         dataQa: 'unpublish',
         display:
           isPublishingConversationEnabled &&
@@ -140,11 +137,13 @@ export function FileItemContextMenu({
         onClick: onUnpublish,
       },
       {
-        name: t('Delete'),
+        name: t(SideBarI18nKeys.Delete),
         dataQa: 'delete',
         display:
-          isMyEntity(file) ||
-          canEditSharedFolderOrParent(folders, file.folderId),
+          !readOnly &&
+          (!!isCodeEditorFile ||
+            isMyEntity(file) ||
+            canEditSharedFolderOrParent(folders, file.folderId)),
         Icon: IconTrashX,
         onClick: onDelete,
       },
@@ -152,6 +151,7 @@ export function FileItemContextMenu({
     [
       t,
       isCodeEditorFile,
+      readOnly,
       onSave,
       handleSave,
       file,

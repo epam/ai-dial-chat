@@ -1,3 +1,4 @@
+import { ErrorLabelSelectors } from '@/src/ui/selectors/chatSelectors';
 import { InputSelectors } from '@/src/ui/selectors/commonSelectors';
 
 export const ConfirmationDialogSelectors = {
@@ -104,6 +105,7 @@ export const ShareModalSelectors = {
   shareLink: '[data-qa="share-link"]',
   copyLink: '[data-qa="copy-link"]',
   entityName: '[data-qa="modal-entity-name"]',
+  leftEntityName: '.text-left',
   shareText: '[data-qa="share-message"]',
   removeAccessBtn: '[data-qa="remove-access-button"]',
   notSharedEntityLabel: '[data-qa="not-shared-entity-label"]',
@@ -117,7 +119,7 @@ export const UploadFromDeviceModalSelectors = {
   uploadButton: '[data-qa="upload"]',
   uploadedFile: '[data-qa="uploaded-file"]',
   addMoreFiles: '[data-qa="add-more-files"]',
-  fileExtension: '[data-qa="file-extension"]',
+  fileExtension: '.dial-small-text',
   uploadedFiles: '[data-qa="uploaded-files"]',
 };
 
@@ -212,7 +214,6 @@ export const ChatSettingsModalSelectors = {
 
 export const TalkToAgentDialogSelectors = {
   talkToAgentModal: '[data-qa="talk-to-agent"]',
-  searchAgent: '[data-qa="search-agents"]',
   goToMyWorkspaceButton: '[data-qa="go-to-my-workspace"]',
   goToDialMarketplaceButton: '[data-qa="go-to-marketplace"]',
   myAgentsTab: '[data-qa="workspace"]',
@@ -268,7 +269,7 @@ export const EntityEditorGeneralInfoPreviewSelectors = {
   fullContainer: '[data-qa="entity-preview-general-info-full-container"]',
   entityPreviewGeneralInfoContainer: '[data-qa="entity-preview-general-info"]',
   previewIconContainer: '[data-qa="icon-container"]',
-  previewEntityName: '[data-qa="entity-name"]',
+  previewEntityName: '#entity-name',
   previewTopicsContainer: '[data-qa="entity-topics"]',
   previewInformationSection: '[data-qa="entity-information"]',
   previewAuthorContainer: '[data-qa="author-container"]',
@@ -340,6 +341,12 @@ export const AddToolsetSettingsFormSelector = {
   oauthLabel: '[data-qa="oauth-label"]',
   authDetailsContainer: '[data-qa="auth-details-container"]',
   authLoginOption: '#auth-login-option',
+  authLoginForm: '[data-qa="login-form"]',
+  clientIdFieldContainer: '[data-qa="clientId"]',
+  clientSecretFieldContainer: '[data-qa="clientSecret"]',
+  apiKeyParameterNameFieldContainer: '[data-qa="keyHeader"]',
+  apiKeyParameterNameFieldErrorMessage: () =>
+    `${AddToolsetSettingsFormSelector.apiKeyParameterNameFieldContainer} + ${ErrorLabelSelectors.fieldError}`,
   apiKeyContainer: '[data-qa="api_key"]',
   apiKeyLabel: '[data-qa="api_key-label"]',
   withoutAuthContainer: '[data-qa="none"]',
@@ -377,7 +384,6 @@ export const ReplaceConfirmationModalSelectors = {
 export const UploadProgressDialogSelectors = {
   title: 'div:has-text("Uploading items")',
   itemName: '#name',
-  fileTypeIcon: '[aria-label="File type icon"]',
   uploadingIndicator: '[data-qa="uploading-indicator"]',
   uploadingItemsCount: '[data-qa="uploading-items-count"]',
 };

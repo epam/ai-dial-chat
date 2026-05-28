@@ -1,3 +1,8 @@
+import {
+  getApplicationMcpUrl,
+  isDialAiEntityModel,
+} from '@/src/utils/app/application';
+import { getToolsetMcpUrl } from '@/src/utils/app/toolsets';
 import { getModelIdWithoutVersion } from '@/src/utils/server/api';
 
 import {
@@ -13,7 +18,7 @@ import omit from 'lodash-es/omit';
 import uniqBy from 'lodash-es/uniqBy';
 
 export const getGroupMarketplaceEntityKey = (entity: MarketplaceEntity) => {
-  if (entity.id === entity.reference) {
+  if (!isCreatedMarketplaceEntity(entity)) {
     return entity.name;
   }
   const pathParts = getModelIdWithoutVersion(entity.id).split('/');
@@ -74,4 +79,15 @@ export const isMarketplaceEditorStep = (
     step === MarketplaceEditorSteps.General ||
     step === MarketplaceEditorSteps.Settings
   );
+};
+
+export const isCreatedMarketplaceEntity = (
+  entity: MarketplaceEntity,
+): boolean => {
+  return entity.id !== entity.reference;
+};
+
+export const getMarketplaceEntityMcpUrl = (entity: MarketplaceEntity) => {
+  if (isDialAiEntityModel(entity)) return getApplicationMcpUrl(entity.id);
+  else return getToolsetMcpUrl(entity.id);
 };

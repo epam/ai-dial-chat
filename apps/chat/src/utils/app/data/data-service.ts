@@ -1,8 +1,8 @@
-/* eslint-disable no-restricted-globals */
 import { Observable, map } from 'rxjs';
 
 import { ApiUtils } from '@/src/utils/server/api';
 
+import { MarketplacePanelState } from '@/src/types/marketplace-panel-state';
 import { EnterType, LastConversationSettings } from '@/src/types/settings';
 import { DialStorage, StorageType, UIStorageKeys } from '@/src/types/storage';
 import { ThemesConfig } from '@/src/types/themes';
@@ -96,6 +96,22 @@ export class DataService {
     return BrowserStorage.setData(UIStorageKeys.PromptbarWidth, promptBarWidth);
   }
 
+  public static getMarketplaceFilterbarWidth(): Observable<number> {
+    return BrowserStorage.getData(
+      UIStorageKeys.MarketplaceFilterbarWidth,
+      SIDEBAR_MIN_WIDTH,
+    );
+  }
+
+  public static setMarketplaceFilterbarWidth(
+    filterbarWidth: number,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.MarketplaceFilterbarWidth,
+      filterbarWidth,
+    );
+  }
+
   public static getIsChatFullWidth(): Observable<boolean> {
     return BrowserStorage.getData(UIStorageKeys.IsChatFullWidth, false);
   }
@@ -121,6 +137,42 @@ export class DataService {
 
   public static setShowPromptbar(showPromptbar: boolean): Observable<void> {
     return BrowserStorage.setData(UIStorageKeys.ShowPromptbar, showPromptbar);
+  }
+
+  public static setAgentsFilterPanelCollapseState(
+    value: MarketplacePanelState,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.AgentsFilterPanelCollapseState,
+      value,
+    );
+  }
+
+  public static getAgentsFilterPanelCollapseState(
+    defaultValue: MarketplacePanelState,
+  ): Observable<MarketplacePanelState> {
+    return BrowserStorage.getData(
+      UIStorageKeys.AgentsFilterPanelCollapseState,
+      defaultValue,
+    );
+  }
+
+  public static setToolsetFilterPanelCollapseState(
+    value: MarketplacePanelState,
+  ): Observable<void> {
+    return BrowserStorage.setData(
+      UIStorageKeys.ToolsetFilterPanelCollapseState,
+      value,
+    );
+  }
+
+  public static getToolsetFilterPanelCollapseState(
+    defaultValue: MarketplacePanelState,
+  ): Observable<MarketplacePanelState> {
+    return BrowserStorage.getData(
+      UIStorageKeys.ToolsetFilterPanelCollapseState,
+      defaultValue,
+    );
   }
 
   public static getShowMarketplaceFilterbar(
@@ -212,5 +264,15 @@ export class DataService {
       UIStorageKeys.LastConversationSettings,
       lastConversationSettings,
     );
+  }
+
+  public static getFileSizeCache(): Observable<Record<string, number>> {
+    return BrowserStorage.getData(UIStorageKeys.FileSizeCache, {});
+  }
+
+  public static setFileSizeCache(
+    cache: Record<string, number>,
+  ): Observable<void> {
+    return BrowserStorage.setData(UIStorageKeys.FileSizeCache, cache);
   }
 }

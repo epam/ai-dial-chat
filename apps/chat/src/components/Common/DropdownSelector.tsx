@@ -8,6 +8,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { Tooltip } from './Tooltip';
 
 import { DialButton } from '@epam/ai-dial-ui-kit';
@@ -65,7 +68,7 @@ export function DropdownSelector({
             >
               <IconX
                 className="cursor-pointer text-secondary group-hover:text-accent-primary"
-                size={16}
+                size={DEFAULT_ICON_SIZES.SMALL}
               />
             </components.MultiValueRemove>
           ),
@@ -153,7 +156,7 @@ export function DropdownSelector({
           }),
           control: (styles, state) => ({
             ...styles,
-            paddingLeft: state.hasValue ? 0 : '8px',
+            paddingLeft: state.hasValue ? '8px' : '8px',
             display: 'flex',
             cursor: 'text',
             backgroundColor: 'bg-transparent',
@@ -169,7 +172,7 @@ export function DropdownSelector({
             color: 'var(--text-primary)',
           }),
         }}
-        noOptionsMessage={() => t('No options')}
+        noOptionsMessage={() => t(CommonI18nKeys.NoOptions)}
       />
     </Tooltip>
   );

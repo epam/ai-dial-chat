@@ -1,4 +1,4 @@
-import {
+import React, {
   KeyboardEvent,
   MutableRefObject,
   useCallback,
@@ -11,9 +11,12 @@ import {
 import classNames from 'classnames';
 
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
+import { useTextareaInsertInPosition } from '@/src/hooks/useTextareaInsertInPosition';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useVoiceRecorder } from '@/src/hooks/useVoiceRecorder';
 
+import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { getUserCustomContent } from '@/src/utils/app/file';
 import {
   getConversationSchema,
@@ -41,6 +44,7 @@ import {
 } from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ChatControls } from '@/src/components/Chat/ChatInput/ChatControls';
 import { AdjustedTextarea } from '@/src/components/Chat/ChatMessage/AdjustedTextarea';
@@ -49,9 +53,12 @@ import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
 import { ChatInputAttachments } from './ChatInputAttachments';
+import { MicrophoneButton } from './MicrophoneButton';
 import { PromptList } from './PromptList';
 import { PromptVariablesDialog } from './PromptVariablesDialog';
 import { ReplayVariables } from './ReplayVariables';
+import { TranscribingOverlay } from './TranscribingOverlay';
+import { VoiceRecordingOverlay } from './VoiceRecordingOverlay';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature, Message, Role } from '@epam/ai-dial-shared';
@@ -65,6 +72,7 @@ interface Props {
   isLastMessageError: boolean;
   onRegenerate: () => void;
   showReplayControls: boolean;
+  isPreview?: boolean;
 }
 
 const MAX_HEIGHT = 320;
@@ -79,6 +87,7 @@ export const ChatInputMessage = Inversify.register(
     onStopConversation,
     onRegenerate,
     isLastMessageError,
+    isPreview,
     showReplayControls,
   }: Props) => {
     const { t } = useTranslation(Translation.Chat);
@@ -90,6 +99,8 @@ export const ChatInputMessage = Inversify.register(
     const [selectedDialLinks, setSelectedDialLinks] = useState<DialLink[]>([]);
 
     const promptTemplateMappingRef = useRef(new Map<string, string>());
+    const prevStreamingRef = useRef(false);
+    const micButtonRef = useRef<HTMLButtonElement>(null);
 
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
     const messageIsStreaming = useAppSelector(
@@ -106,6 +117,9 @@ export const ChatInputMessage = Inversify.register(
     );
     const isReplay = useAppSelector(
       ConversationsSelectors.selectIsReplaySelectedConversations,
+    );
+    const isPlayback = useAppSelector(
+      ConversationsSelectors.selectIsPlaybackSelectedConversations,
     );
     const canAttachFiles = useAppSelector(
       ConversationsSelectors.selectCanAttachFile,
@@ -143,15 +157,21 @@ export const ChatInputMessage = Inversify.register(
     const isChatInputDisabled = useAppSelector(
       ConversationsSelectors.selectIsSelectedConversationBlocksInput,
     );
+    const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
 
     const configurationSchema = useAppSelector((state) =>
       ChatSelectors.selectConfigurationSchemaByModelId(
         state,
         selectedConversations[0]?.model.id,
+        modelsMap,
       ),
     );
+
     const shouldFocusAndScroll = useAppSelector(
       ChatSelectors.selectShouldFocusAndScroll,
+    );
+    const inputContentTemplateMapping = useAppSelector(
+      ChatSelectors.selectInputContentTemplateMapping,
     );
     const isDisabledInputFeature = useAppSelector((state) =>
       SettingsSelectors.isFeatureEnabled(state, Feature.DisabledSend),
@@ -159,6 +179,31 @@ export const ChatInputMessage = Inversify.register(
     const disabledInputFeatureData = useAppSelector((state) =>
       SettingsSelectors.selectFeatureData(state, Feature.DisabledSend),
     );
+    const isChatInputBorderEnabled = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.ChatInputBorder),
+    );
+
+    const canRecordAudio = useAppSelector(
+      ConversationsSelectors.selectCanRecordAudio,
+    );
+    const isAsrMode = useAppSelector(ConversationsSelectors.selectIsAsrMode);
+    const isTranscribing = useAppSelector(ChatSelectors.selectIsTranscribing);
+    const isAsrFlowActive = useAppSelector(ChatSelectors.selectIsAsrFlowActive);
+    const supportedAudioTypes = useAppSelector(
+      ConversationsSelectors.selectSupportedAudioRecordingTypes,
+    );
+
+    const {
+      isRecording,
+      startRecording,
+      stopRecording,
+      audioBlob,
+      analyserNode,
+      error: voiceError,
+      elapsedTime,
+      fileExtension: voiceFileExtension,
+      clearAudioBlob,
+    } = useVoiceRecorder(supportedAudioTypes);
 
     const shouldRegenerate =
       isLastMessageError ||
@@ -185,6 +230,16 @@ export const ChatInputMessage = Inversify.register(
         );
       }
     }, [canAttachFiles, canAttachFolders, canAttachLinks, dispatch]);
+
+    useEffect(() => {
+      if (inputContentTemplateMapping) {
+        promptTemplateMappingRef.current.set(
+          inputContentTemplateMapping.substituted.trim(),
+          inputContentTemplateMapping.original.trim(),
+        );
+        dispatch(ChatActions.clearInputContentTemplateMapping());
+      }
+    }, [dispatch, inputContentTemplateMapping]);
 
     const isChatEmpty = !selectedConversations[0]?.messages?.length;
 
@@ -216,6 +271,34 @@ export const ChatInputMessage = Inversify.register(
       selectedPrompt,
     } = usePromptSelection(maxTokensLength, modelTokenizer, '');
 
+    const { getCursorPosition } = useTextareaInsertInPosition(
+      textareaRef,
+      content,
+      setContent,
+    );
+
+    useEffect(() => {
+      if (!audioBlob) return;
+
+      const selection = isAsrMode ? getCursorPosition() : undefined;
+
+      dispatch(
+        ChatActions.handleVoiceRecording({
+          audioBlob,
+          fileExtension: voiceFileExtension,
+          selection,
+        }),
+      );
+      clearAudioBlob();
+    }, [
+      audioBlob,
+      voiceFileExtension,
+      dispatch,
+      clearAudioBlob,
+      isAsrMode,
+      getCursorPosition,
+    ]);
+
     const isSchemaValueValid = useMemo(() => {
       const schema =
         selectedConversations.map(getConversationSchema)?.[0] ??
@@ -227,6 +310,14 @@ export const ChatInputMessage = Inversify.register(
 
       return isFormValueValid(schema, chatFormValue);
     }, [selectedConversations, configurationSchema, chatFormValue]);
+
+    const selectedAttachmentsIds = useMemo(
+      () =>
+        selectedFiles
+          .map((f) => f.id)
+          .concat(selectedFolders.map((f) => addTrailingSlashIfAbsent(f.id))),
+      [selectedFolders, selectedFiles],
+    );
 
     const isInputEmpty = useMemo(() => {
       return (
@@ -250,7 +341,8 @@ export const ChatInputMessage = Inversify.register(
       isUploadingFilePresent ||
       isConversationNameInvalid ||
       isConversationPathInvalid ||
-      !isSchemaValueValid;
+      !isSchemaValueValid ||
+      isTranscribing;
 
     const canAttach =
       (canAttachFiles || canAttachFolders || canAttachLinks) &&
@@ -471,28 +563,31 @@ export const ChatInputMessage = Inversify.register(
       );
     }, []);
 
+    const handleStopRecording = useCallback(() => {
+      if (isAsrMode) {
+        dispatch(ChatActions.setIsTranscribing(true));
+      }
+      stopRecording();
+    }, [isAsrMode, stopRecording, dispatch]);
+
     const tooltipContent = (): string => {
       if (isDisabledInputFeature && disabledInputFeatureData?.description) {
         return disabledInputFeatureData.description;
       }
       if (messageIsStreaming) {
-        return t('Stop generating');
+        return t(ChatI18nKeys.StopGenerating);
       }
       if (!areModelsLoaded) {
-        return t(
-          'Please wait for models will be loaded to continue working with conversation',
-        );
+        return t(ChatI18nKeys.WaitForModelsToLoad);
       }
       if (isReplay) {
-        return t(
-          'Please continue replay to continue working with conversation',
-        );
+        return t(ChatI18nKeys.ContinueReplayToWork);
       }
       if (shouldRegenerate) {
-        return t('Regenerate response');
+        return t(ChatI18nKeys.RegenerateResponse);
       }
       if (isUploadingFilePresent) {
-        return t('Please wait for the attachment to load');
+        return t(ChatI18nKeys.WaitForAttachmentToLoad);
       }
       if (isConversationNameInvalid) {
         return t(errorsMessages.entityNameInvalid);
@@ -501,45 +596,81 @@ export const ChatInputMessage = Inversify.register(
         return t(errorsMessages.entityPathInvalid);
       }
       if (!isSchemaValueValid) {
-        return t('Please select one of the options above');
+        return t(ChatI18nKeys.SelectOneOfOptions);
       }
-      return t('Please type a message');
+      return t(ChatI18nKeys.PleaseTypeMessage);
     };
 
     const chatInputPlaceholder = useMemo(() => {
       if (isChatInputDisabled) return '';
-      return t('Talk to your agent');
+      return t(ChatI18nKeys.TalkToYourAgent);
     }, [isChatInputDisabled, t]);
 
     const isDisabled = useMemo(
-      () => isLoading || isChatInputDisabled,
-      [isLoading, isChatInputDisabled],
+      () => isLoading || isChatInputDisabled || isTranscribing,
+      [isLoading, isChatInputDisabled, isTranscribing],
     );
+
+    const isMicDisabled = useMemo(
+      () => isDisabled || (isAsrMode && messageIsStreaming),
+      [isDisabled, isAsrMode, messageIsStreaming],
+    );
+
+    const isMicHidden = useMemo(
+      () => isPlayback || isReplay || !canRecordAudio || isMessageError,
+      [isPlayback, isReplay, canRecordAudio, isMessageError],
+    );
+
+    useEffect(() => {
+      const wasStreaming = prevStreamingRef.current;
+      prevStreamingRef.current = messageIsStreaming;
+
+      if (wasStreaming && !messageIsStreaming && isAsrFlowActive) {
+        dispatch(ChatActions.clearAsrFlow());
+        if (micButtonRef.current && !micButtonRef.current.disabled) {
+          micButtonRef.current.focus();
+        }
+      }
+    }, [messageIsStreaming, isAsrFlowActive, dispatch]);
 
     const paddingLeftClass = canAttach
       ? isOverlay
-        ? 'pl-11'
-        : 'pl-12'
+        ? 'ps-11'
+        : 'ps-12'
       : isOverlay
-        ? 'pl-3'
-        : 'pl-4';
+        ? 'ps-3'
+        : 'ps-4';
+
+    const paddingRightClass = canRecordAudio
+      ? isOverlay
+        ? 'pe-[60px]'
+        : 'pe-[72px]'
+      : isOverlay
+        ? 'pe-9'
+        : 'pe-10';
 
     return (
       <div
         className={classNames(
           'mx-3 mb-3 flex flex-row gap-3 md:mx-4 md:mb-0 md:last:mb-5',
           isChatFullWidth ? 'lg:ml-20 lg:mr-[84px]' : 'lg:mx-auto lg:max-w-3xl',
+          isPreview && 'px-5',
         )}
+        data-qa="send-message-container"
       >
         <div
-          className="relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary"
-          data-qa="message"
+          className={classNames(
+            'relative m-0 flex max-h-[400px] min-h-[38px] w-full grow flex-col rounded bg-layer-3 focus-within:border-accent-primary',
+            isChatInputBorderEnabled && 'border border-primary',
+            !isChatFullWidth && 'max-w-screen-md',
+          )}
         >
           <AdjustedTextarea
             ref={textareaRef}
             className={classNames(
               'm-0 min-h-[38px] w-full grow resize-none bg-transparent leading-[150%] outline-none placeholder:text-secondary',
-              isOverlay ? 'py-[7px] pr-9' : 'py-2.5 pr-10 text-base md:py-3',
+              isOverlay ? 'py-[7px]' : 'py-2.5 text-base md:py-3',
+              paddingRightClass,
               paddingLeftClass,
             )}
             maxHeight={MAX_HEIGHT}
@@ -552,28 +683,52 @@ export const ChatInputMessage = Inversify.register(
             onChange={handleChange}
             onKeyDown={handleKeyDown}
           />
-          <ChatControls
-            showReplayControls={showReplayControls}
-            onSend={handleSend}
-            tooltip={tooltipContent()}
-            isLastMessageError={isLastMessageError}
-            isLoading={isLoading}
-            isSendDisabled={isSendDisabled}
-          />
+          {isRecording && (
+            <VoiceRecordingOverlay
+              analyserNode={analyserNode}
+              elapsedTime={elapsedTime}
+              isOverlay={isOverlay}
+            />
+          )}
+          {isTranscribing && (
+            <TranscribingOverlay
+              text={t(ChatI18nKeys.TranscribingAudio)}
+              dataQa="transcribing-overlay"
+            />
+          )}
+          {!isMicHidden && (
+            <MicrophoneButton
+              ref={micButtonRef}
+              isRecording={isRecording}
+              onStartRecording={startRecording}
+              onStopRecording={handleStopRecording}
+              error={voiceError}
+              disabled={isMicDisabled}
+            />
+          )}
+          {!isRecording && (
+            <ChatControls
+              showReplayControls={showReplayControls}
+              onSend={handleSend}
+              tooltip={tooltipContent()}
+              isLastMessageError={isLastMessageError}
+              isLoading={isLoading}
+              isSendDisabled={isSendDisabled}
+              microphoneButtonHidden={isMicHidden}
+            />
+          )}
           {canAttach && (
             <>
               <div
                 className={classNames(
                   'absolute cursor-pointer rounded disabled:cursor-not-allowed',
                   isOverlay
-                    ? 'bottom-2 left-3'
-                    : 'bottom-2.5 left-4 md:bottom-3',
+                    ? 'bottom-2 start-3'
+                    : 'bottom-2.5 start-4 md:bottom-3',
                 )}
               >
                 <AttachButton
-                  selectedFilesIds={selectedFiles
-                    .map((f) => f.id)
-                    .concat(selectedFolders.map((f) => `${f.id}/`))}
+                  selectedFilesIds={selectedAttachmentsIds}
                   onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
                   onUploadFromDevice={handleUploadFromDevice}
                   onAddLinkToMessage={handleAddLinkToMessage}
@@ -583,7 +738,10 @@ export const ChatInputMessage = Inversify.register(
                 selectedDialLinks.length > 0 ||
                 selectedFolders.length > 0) && (
                 <div
-                  className="mb-2.5 flex max-h-[100px] min-h-0 min-w-0 flex-col gap-1 overflow-y-auto px-12 md:grid md:auto-rows-min md:[grid-template-columns:repeat(3,minmax(0,1fr))]"
+                  className={classNames(
+                    'mb-2.5 flex max-h-[100px] min-h-0 min-w-0 flex-col gap-1 overflow-y-auto ps-12 md:grid md:auto-rows-min md:[grid-template-columns:repeat(3,minmax(0,1fr))]',
+                    canRecordAudio ? paddingRightClass : 'pr-12',
+                  )}
                   data-qa="attachment-container"
                 >
                   <ChatInputAttachments
@@ -601,7 +759,7 @@ export const ChatInputMessage = Inversify.register(
 
           {showScrollDownButton && (
             <ScrollDownButton
-              className="-top-16 right-0 md:-top-20"
+              className="-top-16 end-0 md:-top-20"
               onScrollDownClick={onScrollDownClick}
             />
           )}
@@ -631,11 +789,15 @@ export const ChatInputMessage = Inversify.register(
 
         <ConfirmDialog
           isOpen={isPromptLimitModalOpen}
-          heading={t('Prompt limit exceeded')}
-          description={t(
-            `Prompt limit is ${maxTokensLength} tokens. ${getPromptLimitDescription(getTokensLength(content), maxTokensLength)}`,
-          )}
-          confirmLabel={t('Confirm')}
+          heading={t(ChatI18nKeys.PromptLimitExceeded)}
+          description={t(ChatI18nKeys.PromptLimitDescription, {
+            maxTokensLength,
+            limitDescription: getPromptLimitDescription(
+              getTokensLength(content),
+              maxTokensLength,
+            ),
+          })}
+          confirmLabel={t(ChatI18nKeys.Confirm)}
           onClose={() => {
             setIsPromptLimitModalOpen(false);
           }}

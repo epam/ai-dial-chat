@@ -1,5 +1,3 @@
-# false-positives in esbuild
-# https://github.com/evanw/esbuild/issues/4257
-CVE-2025-4674 exp:2026-01-01
-CVE-2025-47907 exp:2026-01-01
-CVE-2025-43865 exp:2026-01-01
+# node:24-alpine vulnerabilities in https://hub.docker.com/layers/library/node/24-alpine
+# picomatch
+CVE-2026-33671 exp:2026-08-20

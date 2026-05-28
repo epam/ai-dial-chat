@@ -1,8 +1,8 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import { prepareFileName } from '@/src/utils/app/file';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import {
   buildApiUrl,
@@ -11,12 +11,10 @@ import {
 } from '@/src/utils/server/file-manager-utils';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { DialAIError } from '@/src/types/error';
-
-import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import FormData from 'form-data';
 import JSZip from 'jszip';
@@ -81,8 +79,9 @@ const handler = async (
   req: NextApiRequest,
   res: NextApiResponse<UploadArchiveResponse | { error: string }>,
 ) => {
+  setTraceparentHeader(res);
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    throw new DialAIError('Method not allowed', 405, req);
   }
 
   const session = await getServerSession(req, res, authOptions);
@@ -94,14 +93,14 @@ const handler = async (
   try {
     const destinationParam = req.query.destination;
     if (!destinationParam || typeof destinationParam !== 'string') {
-      return res.status(400).json({ error: 'Missing destination parameter' });
+      throw new DialAIError('Missing destination parameter', 400, req);
     }
 
     const destinationUrl = decodeURIComponent(destinationParam);
 
     const archiveBuffer = await readRequestBody(req);
     if (!archiveBuffer.length) {
-      return res.status(400).json({ error: 'Empty archive body' });
+      throw new DialAIError('Empty archive body', 400, req);
     }
 
     const zip = await JSZip.loadAsync(archiveBuffer);
@@ -131,11 +130,10 @@ const handler = async (
     );
 
     if (!filesToUpload.length) {
-      return res.status(400).json({ error: 'Archive does not contain files' });
+      throw new DialAIError('Archive does not contain files', 400, req);
     }
 
-    const authToken = await getToken({ req });
-    const jwt = authToken?.access_token as string;
+    const jwt = await getToken({ req });
 
     const batchSize = 50;
 
@@ -158,7 +156,7 @@ const handler = async (
 
         const uploadUrl = buildApiUrl('v1', slugs);
 
-        logger.debug(`Uploading file to: ${uploadUrl}`);
+        logger.info(`Uploading file to: ${uploadUrl}`);
 
         const formData = new FormData();
         formData.append('file', file.content, {
@@ -213,13 +211,7 @@ const handler = async (
     return res.status(200).json({ succeeded, errors });
   } catch (error) {
     logger.error(error);
-
-    if (error instanceof DialAIError) {
-      const statusCode = parseInt(error.code, 10) || 500;
-      return res.status(statusCode).json({ error: error.message });
-    }
-
-    return res.status(500).json({ error: errorsMessages.generalServer });
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 

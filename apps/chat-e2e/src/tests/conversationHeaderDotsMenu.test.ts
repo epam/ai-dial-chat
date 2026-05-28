@@ -66,7 +66,7 @@ dialTest(
     const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(),
     );
-    const imageName = `${GeneratorUtil.randomString(7)}.jpg`;
+    const imageName = GeneratorUtil.randomFilename('jpg');
     let imageUrl: string;
     let conversation: Conversation;
     const updatedConversationName = GeneratorUtil.randomConversationName();
@@ -127,7 +127,7 @@ dialTest(
         );
         await downloadAssertion.assertPlainFileIsDownloaded(exportedData);
 
-        const archive = FileUtil.readArchive(exportedData.path);
+        const archive = FileUtil.readArchive(exportedData.path as string);
         const imageEntry = FileUtil.getArchiveEntry(
           archive,
           `${ExpectedConstants.exportedArchiveImageRootFolder}/${imageName}`,
@@ -171,7 +171,9 @@ dialTest(
           GeneratorUtil.exportedWithAttachmentsFilename(),
         );
         await downloadAssertion.assertJsonFileIsDownloaded(exportedData);
-        const conversationJson = FileUtil.readJsonFileData(exportedData.path);
+        const conversationJson = FileUtil.readJsonFileData(
+          exportedData.path as string,
+        );
         baseAssertion.assertValue(
           conversationJson.history[0].id,
           conversation.id,

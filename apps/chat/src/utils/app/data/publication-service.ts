@@ -85,7 +85,9 @@ export class PublicationService {
           resources: publication.resources.map((resource) => ({
             ...resource,
             targetUrl: ApiUtils.decodeApiUrl(resource.targetUrl),
-            reviewUrl: ApiUtils.decodeApiUrl(resource.reviewUrl),
+            reviewUrl: ApiUtils.decodeApiUrl(
+              resource.reviewUrl ?? resource.targetUrl,
+            ),
             sourceUrl: resource.sourceUrl
               ? ApiUtils.decodeApiUrl(resource.sourceUrl)
               : null,
@@ -169,15 +171,15 @@ export class PublicationService {
         ApiUtils.encodeApiUrl(parentPath),
       )}${resultQuery ? `?${resultQuery}` : ''}`,
     ).pipe(
-      map((publications: PublishedItem) => {
-        if (!publications.items) {
+      map((publication: PublishedItem) => {
+        if (!publication.items) {
           return {
             folders: [],
             items: [],
           };
         }
 
-        const mappedPublicationItems = publications.items.map((item) => ({
+        const mappedPublicationItems = publication.items.map((item) => ({
           ...item,
           url: ApiUtils.decodeApiUrl(item.url),
         }));

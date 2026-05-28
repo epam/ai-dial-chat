@@ -1,6 +1,3 @@
-import { IconSearch } from '@tabler/icons-react';
-import { ChangeEvent } from 'react';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
@@ -9,6 +6,7 @@ import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   MarketplaceEntitiesTabs,
   MarketplaceTabs,
@@ -19,6 +17,7 @@ import { AddToolsButton } from './AddToolsButton';
 import { ViewToggler } from './ViewToggler';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { DialSearch } from '@epam/ai-dial-ui-kit';
 
 export const SearchHeader = () => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -45,26 +44,20 @@ export const SearchHeader = () => {
   const searchTerm = useAppSelector(MarketplaceSelectors.selectSearchTerm);
   const selectedTab = useAppSelector(MarketplaceSelectors.selectSelectedTab);
 
-  const onSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
-    dispatch(MarketplaceActions.setSearchTerm(e.target.value));
+  const onSearchChange = (value: string) => {
+    dispatch(MarketplaceActions.setSearchTerm(value));
   };
 
   return (
     <div className="flex w-full grow items-center gap-2 sm:justify-end md:w-auto">
-      <div className="relative h-[38px] w-full grow sm:w-auto lg:max-w-[500px]">
-        <IconSearch
-          className="absolute left-3 top-1/2 -translate-y-1/2"
-          size={18}
-        />
-        <input
-          name="titleInput"
-          placeholder={t('Search')}
-          type="text"
-          value={searchTerm}
-          onChange={onSearchChange}
-          className="size-full rounded border border-primary bg-transparent py-2.5 pl-[38px] pr-3 leading-4 outline-none placeholder:text-secondary focus-visible:border-accent-primary"
-        />
-      </div>
+      <DialSearch
+        wrapperClassName="lg:max-w-[500px]"
+        containerClassName="flex-1 min-w-0 lg:max-w-[500px] lg:flex-none"
+        placeholder={t(MarketplaceI18nKeys.SearchMarketplace)}
+        value={searchTerm}
+        onChange={onSearchChange}
+      />
+
       {enabledFeatures.has(Feature.MarketplaceTableView) && <ViewToggler />}
       {selectedTab === MarketplaceTabs.MY_WORKSPACE &&
         isCustomApplicationsEnabled &&

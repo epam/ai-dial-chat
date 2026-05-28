@@ -9,6 +9,7 @@ import {
   ExpectedMessages,
   MenuOptions,
   PublishPath,
+  withTraceId,
 } from '@/src/testData';
 import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
@@ -90,6 +91,7 @@ dialAdminTest(
       request: PublicationRequestModel;
       response: Publication;
     };
+    let searchInput: BaseElement;
 
     await dialAdminTest.step(
       'Prepare and publish a custom application via API',
@@ -127,7 +129,8 @@ dialAdminTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appName);
         appElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -255,8 +258,8 @@ dialAdminTest(
       async () => {
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
           requestName: requestName,
-          publishToLabel: 'visible',
-          publishTo: PublishPath.Organization,
+          unpublishFromLabel: 'visible',
+          publishPath: PublishPath.Organization,
           authorLabel: 'visible',
           author: defaultAuthor,
           publicAuthorLabel: 'hidden',
@@ -360,7 +363,7 @@ dialAdminTest(
           updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await searchInput.fillInInput(appName);
         appElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -392,7 +395,10 @@ dialAdminTest(
         });
         await adminPublishingApprovalModalAssertion.assertElementText(
           adminPublishingApprovalModal.duplicatedUnpublishingError,
-          ExpectedConstants.duplicatedUnpublishingError(appName),
+          ExpectedConstants.duplicatedUnpublishingError({
+            name: appName,
+            version: appVersion,
+          }),
         );
       },
     );
@@ -451,6 +457,7 @@ dialAdminTest(
     const requestName = GeneratorUtil.randomUnpublishRequestName();
     let majorVersionApp: DialAIEntityModel;
     let conversation: Conversation;
+    let searchInput: BaseElement;
 
     await dialAdminTest.step(
       'Prepare and publish a custom application with two versions via API',
@@ -504,7 +511,8 @@ dialAdminTest(
           updateInstalledToolsets: false,
         });
         await adminMarketplacePage.waitForPageLoaded();
-        await adminMarketplaceHeader.searchInput.fillInInput(appName);
+        searchInput = adminMarketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appName);
         appElement = await adminMarketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -601,7 +609,7 @@ dialAdminTest(
         );
         await adminNavigationPanel.goToMarketplaceHome();
         await adminMarketplacePage.waitForPageLoaded();
-        await adminMarketplaceHeader.searchInput.fillInInput(appName);
+        await searchInput.fillInInput(appName);
         appElement = await adminMarketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -636,7 +644,7 @@ dialAdminTest(
         await chat.sendRequestWithButton(GeneratorUtil.randomString(5), false);
         await toastAssertion.assertToastIsVisible();
         await toastAssertion.assertToastMessage(
-          ExpectedConstants.agentNotFoundToastError,
+          withTraceId(ExpectedConstants.agentNotFoundToastError),
         );
         await chatAssertion.assertElementState(
           chat.notAllowedModelLabel,
@@ -688,6 +696,7 @@ dialAdminTest(
     let sortedAppVersions: string[];
     let appElement: BaseElement;
     const requestName = GeneratorUtil.randomUnpublishRequestName();
+    let searchInput: BaseElement;
 
     await dialAdminTest.step(
       'Prepare and publish a custom application with two versions via API',
@@ -715,7 +724,8 @@ dialAdminTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appName);
         appElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {
@@ -807,7 +817,7 @@ dialAdminTest(
         );
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await searchInput.fillInInput(appName);
         appElement = await marketplaceEntitiesSection.findEntityElement(
           appName,
           {

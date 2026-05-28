@@ -196,6 +196,11 @@ export class VisualizerConnector {
   protected process = (
     event: MessageEvent<VisualizerConnectorRequest>,
   ): void => {
+    // Only process messages from this specific iframe instance
+    if (event.source !== this.iframe.contentWindow) {
+      return;
+    }
+
     if (
       event.data.type ===
       `${this.options.visualizerName}/${VisualizerConnectorEvents.ready}`
@@ -258,13 +263,18 @@ export class VisualizerConnector {
     waitForReady = true,
   ): Promise<unknown> {
     if (waitForReady) {
-      await this.iframeInteraction.ready();
+      try {
+        await this.iframeInteraction.ready();
+      } catch (e) {
+        if (e === 'Chat Visualizer destroyed') {
+          return undefined;
+        }
+        throw e;
+      }
     }
 
-    if (!this.iframe.contentWindow) {
-      throw new Error(
-        `[${visualizerConnectorLibName}] There is no content window to send requests`,
-      );
+    if (!this.iframe.isConnected || !this.iframe.contentWindow) {
+      return undefined;
     }
 
     const request = new DeferredRequest(
@@ -317,6 +327,8 @@ export class VisualizerConnector {
    */
   destroy() {
     window.removeEventListener('message', this.process);
+    // So Task.fail() never surfaces as "unhandled" if nothing awaited ready() yet (e.g. Strict Mode).
+    void this.iframeInteraction.ready().catch(() => {});
     this.iframeInteraction.fail('Chat Visualizer destroyed');
     this.root.removeChild(this.iframe);
 

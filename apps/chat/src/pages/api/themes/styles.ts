@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
 import { isAbsoluteUrl } from '@/src/utils/app/file';
-import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { getImageUrl, getThemeIconUrl } from '@/src/utils/app/themes';
 import { logger } from '@/src/utils/server/logger';
 
 import { HTTPMethod } from '@/src/types/http';
@@ -16,6 +16,20 @@ import fetch from 'node-fetch';
 
 let cachedTheme = '';
 let cachedThemeExpiration: number | undefined;
+
+function generateUnitCssVariables(
+  variables: Record<string, string | undefined>,
+) {
+  let cssContent = '';
+  const unitRegex =
+    /^-?\d*\.?\d+(px|em|rem|vh|vw|%|cm|mm|in|pt|pc|vmin|vmax|ch|ex)?$/i;
+  Object.entries(variables).forEach(([variable, value]) => {
+    if (value && unitRegex.test(value)) {
+      cssContent += `--${cssEscape(variable)}: ${value};\n`;
+    }
+  });
+  return cssContent;
+}
 
 function generateColorsCssVariables(
   variables: Record<string, string> | undefined,
@@ -129,12 +143,20 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           generateColorsCssVariables(theme.colors),
           generateColorsCssVariables(theme.topicColors),
           generateColorsCssVariables(theme.authColors),
-          generateUrlsCssVariables({ 'app-logo': theme['app-logo'] }),
+          generateUrlsCssVariables({
+            'app-logo':
+              (theme.id == 'dark'
+                ? getImageUrl(json, 'chat-logo-dark')
+                : getImageUrl(json, 'chat-logo-light')) || theme['app-logo'],
+          }),
           generateUrlsCssVariables(theme.banners),
           generateFontCssVariables({
             'theme-font': theme['font-family'],
             'codeblock-font':
               theme['font-codeblock'] ?? inconsolata.style.fontFamily,
+          }),
+          generateUnitCssVariables({
+            'border-radius': theme['border-radius'],
           }),
         ]),
       ),

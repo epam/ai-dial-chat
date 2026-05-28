@@ -23,6 +23,7 @@ import { fromFetch } from 'rxjs/fetch';
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -36,6 +37,7 @@ import { ApplicationStatus } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
 import { DialAIEntityModel, InstalledModel } from '@/src/types/models';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
@@ -52,6 +54,7 @@ import {
 } from '@/src/store/selectors';
 
 import { DEFAULT_AGENT } from '@/src/constants/chat';
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import { DeleteType } from '@/src/constants/marketplace';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -391,17 +394,15 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
         payload.references,
       );
 
+      const modelsToInstall = models
+        .filter((model: DialAIEntityModel) =>
+          modelGroupKeys.has(getGroupMarketplaceEntityKey(model)),
+        )
+        .map((model: DialAIEntityModel) => ({
+          id: model.reference,
+        }));
       const newInstalledModels = uniqBy<InstalledModel>(
-        [
-          ...installedModels,
-          ...models
-            .filter((model: DialAIEntityModel) =>
-              modelGroupKeys.has(getGroupMarketplaceEntityKey(model)),
-            )
-            .map((model: DialAIEntityModel) => ({
-              id: model.reference,
-            })),
-        ],
+        [...installedModels, ...modelsToInstall],
         'id',
       );
 
@@ -416,17 +417,40 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
           return DataService.setRecentModelsIds(recentModelIds).pipe(
             switchMap(() => {
               const actions: Observable<AppAction>[] = [];
+              const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
 
-              if (payload.showSuccessToast) {
+              const failedReferences = payload.references.filter(
+                (payloadReference) =>
+                  !newInstalledModels.some(
+                    (installedModel) =>
+                      installedModel.id === payloadReference ||
+                      installedModel.id ===
+                        modelsMap[payloadReference]?.reference,
+                  ),
+              );
+              if (failedReferences.length > 0) {
                 actions.push(
                   of(
-                    UIActions.showSuccessToast(
-                      translate(
-                        `The agent${payload.references.length > 1 ? 's' : ''} added to my workspace`,
-                      ),
-                    ),
+                    ModelsActions.addInstalledModelsFail({
+                      references: failedReferences,
+                    }),
                   ),
                 );
+              } else {
+                if (payload.showSuccessToast) {
+                  actions.push(
+                    of(
+                      UIActions.showSuccessToast(
+                        translate(
+                          payload.references.length > 1
+                            ? CommonI18nKeys.AgentsAddedToMyWorkspace
+                            : CommonI18nKeys.AgentAddedToMyWorkspace,
+                          { ns: Translation.Common },
+                        ),
+                      ),
+                    ),
+                  );
+                }
               }
               if (payload.updateRecentModels) {
                 actions.push(
@@ -449,6 +473,30 @@ const addInstalledModelsEpic: AppEpic = (action$, state$) =>
               );
             }),
           );
+        }),
+      );
+    }),
+  );
+
+const addInstalledModelsFailEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ModelsActions.addInstalledModelsFail.type),
+    switchMap(({ payload }) => {
+      const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const failedNames = payload.references
+        .map((reference) => modelsMap[reference]?.name)
+        .join(', ');
+      return of(
+        UIActions.showErrorToast({
+          message: translate(
+            payload.references.length > 1
+              ? CommonI18nKeys.AgentsWasNotAddedToMyWorkspace
+              : CommonI18nKeys.AgentWasNotAddedToMyWorkspace,
+            {
+              ns: Translation.Common,
+              failedNames,
+            },
+          ),
         }),
       );
     }),
@@ -521,6 +569,27 @@ const setDefaultModelReferenceEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const getUsageStatsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ModelsActions.getUsageStats.type),
+    switchMap(({ payload }) => {
+      return ApplicationService.getAgentLimits(payload.id).pipe(
+        switchMap((stats) => {
+          if (stats) {
+            return of(
+              ModelsActions.getUsageStatsSuccess({ ...payload, stats }),
+            );
+          }
+          return of(ModelsActions.getUsageStatsFailure(payload));
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(ModelsActions.getUsageStatsFailure(payload));
+        }),
+      );
+    }),
+  );
+
 export const ModelsEpics = combineEpics(
   initEpic,
   getModelsEpic,
@@ -529,9 +598,11 @@ export const ModelsEpics = combineEpics(
   getInstalledModelIdsEpic,
   getInstalledModelIdsFailEpic,
   addInstalledModelsEpic,
+  addInstalledModelsFailEpic,
   removeInstalledModelsEpic,
   updateRecentModelsEpic,
   initRecentModelsEpic,
   initDefaultModelReferenceEpic,
   setDefaultModelReferenceEpic,
+  getUsageStatsEpic,
 );

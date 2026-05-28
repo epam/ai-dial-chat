@@ -1,17 +1,7 @@
-import { IconSearch } from '@tabler/icons-react';
-import {
-  MouseEvent,
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 
-import Link from 'next/link';
-
-import classNames from 'classnames';
+import { useRouter } from 'next/router';
 
 import { useFuseSearch } from '@/src/hooks/useFuseSearch';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -43,6 +33,7 @@ import {
 } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import {
   ChangeMarketplaceTabs,
   MarketplaceQueryParams,
@@ -59,6 +50,7 @@ import { TalkToNotFound } from '@/src/components/Common/TalkToNotFound';
 import { TalkToSliderItem, TalkToSliderItemProps } from './TalkToSliderItem';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { DialLinkButton, DialSearch } from '@epam/ai-dial-ui-kit';
 import orderBy from 'lodash-es/orderBy';
 
 interface TabButtonProps {
@@ -99,6 +91,7 @@ const TalkToModalView = ({
   const headerRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch();
+  const router = useRouter();
 
   const [tab, setTab] = useState(MarketplaceTabs.MY_WORKSPACE);
   const isMyWorkspace = tab === MarketplaceTabs.MY_WORKSPACE;
@@ -199,7 +192,7 @@ const TalkToModalView = ({
     if (isPlayback) {
       orderedModels.unshift({
         id: PseudoModel.Playback,
-        name: t('Playback'),
+        name: t(ChatI18nKeys.Playback),
         reference: PseudoModel.Playback,
         type: EntityType.Model,
         isDefault: false,
@@ -207,10 +200,8 @@ const TalkToModalView = ({
     } else if (isReplay) {
       orderedModels.unshift({
         id: REPLAY_AS_IS_MODEL,
-        name: t('Replay as is'),
-        description: t(
-          'This mode replicates user requests from the original conversation including settings set in each message.',
-        ),
+        name: t(ChatI18nKeys.ReplayAsIs),
+        description: t(ChatI18nKeys.ReplayAsIsDescription),
         reference: REPLAY_AS_IS_MODEL,
         type: EntityType.Model,
         isDefault: false,
@@ -220,7 +211,7 @@ const TalkToModalView = ({
         id: conversation.model.id,
         name: conversation.model.id,
         reference: conversation.model.id,
-        description: t('chat.error.incorrect-selected', {
+        description: t(ChatI18nKeys.IncorrectSelectedModel, {
           context: EntityType.Model,
         }),
         type: EntityType.Model,
@@ -289,16 +280,14 @@ const TalkToModalView = ({
     [conversation, dispatch, installedModelIdsSet, modelsMap, onClose],
   );
 
-  const handleGoToWorkspace = useCallback(
-    (e: MouseEvent<HTMLAnchorElement>) => {
-      if (isPlayback) {
-        e.preventDefault();
-      } else {
-        dispatch(ConversationsActions.setTalkToConversationId(null));
-      }
-    },
-    [isPlayback, dispatch],
-  );
+  const handleGoToWorkspace = useCallback(() => {
+    if (!isPlayback) {
+      const url = `/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`;
+
+      router.push(url);
+      dispatch(ConversationsActions.setTalkToConversationId(null));
+    }
+  }, [conversation.id, isMyWorkspace, tab, router, isPlayback, dispatch]);
 
   const sliderItemProps = useMemo(
     () => ({
@@ -319,29 +308,28 @@ const TalkToModalView = ({
     <>
       <h3 className="text-base font-semibold">
         {t(
-          `Select an agent for ${isCompareMode ? (isRight ? 'right side' : 'left side') : ''} conversation`,
+          isCompareMode
+            ? isRight
+              ? ChatI18nKeys.SelectAgentForRightSideConversation
+              : ChatI18nKeys.SelectAgentForLeftSideConversation
+            : ChatI18nKeys.SelectAgentForConversation,
         )}
       </h3>
       <div className="flex max-h-full min-h-0 w-full flex-1 flex-col">
         <div
           ref={headerRef}
-          className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse"
+          className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse sm:gap-4"
         >
-          <div className="relative flex grow">
-            <IconSearch
-              className="absolute left-3 top-1/2 -translate-y-1/2"
-              size={18}
-            />
-            <input
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder={t('Search')}
-              className="input-form peer m-0 pl-[38px]"
-              data-qa="search-agents"
-              autoFocus={isOverlay || !isSmallScreenOrTouchable()}
-            />
-          </div>
-          <div className="flex gap-2">
+          <DialSearch
+            containerClassName="flex-1"
+            data-qa="search-agents"
+            autoFocus={isOverlay || !isSmallScreenOrTouchable()}
+            placeholder={t(ChatI18nKeys.Search)}
+            value={searchTerm}
+            onChange={setSearchTerm}
+          />
+
+          <div className="flex gap-2 sm:gap-3">
             {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
               (marketplaceTab) => (
                 <AgentsTabButton
@@ -371,22 +359,28 @@ const TalkToModalView = ({
           prevActiveSlide={prevActiveSlide}
           onSetActiveSlide={setActiveSlide}
           onSetPrevActiveSlide={setPrevActiveSlide}
+          footerButton={
+            isMarketplaceEnabled && (
+              <DialLinkButton
+                onClick={handleGoToWorkspace}
+                tooltipProps={{
+                  tooltip: isPlayback
+                    ? t(ChatI18nKeys.EditingNotAvailableInPlayback)
+                    : undefined,
+                }}
+                data-qa={
+                  isMyWorkspace ? 'go-to-my-workspace' : 'go-to-marketplace'
+                }
+                label={t(
+                  isMyWorkspace
+                    ? ChatI18nKeys.GoToMyWorkspace
+                    : ChatI18nKeys.GoToDIALMarketplace,
+                )}
+              />
+            )
+          }
         />
       </div>
-      {isMarketplaceEnabled && (
-        <Link
-          href={`/marketplace?${MarketplaceQueryParams.fromConversation}=${encodeURIComponent(conversation.id)}${isMyWorkspace ? `&${MarketplaceQueryParams.tab}=${tab}` : ''}`}
-          shallow
-          onClick={handleGoToWorkspace}
-          className={classNames(
-            'm-auto mt-4 text-accent-primary md:absolute md:bottom-6 md:right-6',
-            isPlayback && 'cursor-not-allowed',
-          )}
-          data-qa={isMyWorkspace ? 'go-to-my-workspace' : 'go-to-marketplace'}
-        >
-          {t(`Go to ${isMyWorkspace ? 'My workspace' : 'DIAL Marketplace'}`)}
-        </Link>
-      )}
     </>
   );
 };

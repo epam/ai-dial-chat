@@ -1,26 +1,25 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import {
   deleteFilesInBatches,
   fetchAllFilesRecursive,
 } from '@/src/utils/server/file-delete-utils';
 import { logger } from '@/src/utils/server/logger';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { DialAIError } from '@/src/types/error';
 import { FileOperationsResult } from '@/src/types/files';
 
-import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
-
-import { DialDeletedItem } from '@epam/ai-dial-ui-kit';
+import { DialDeletedItem, DialFileNodeType } from '@epam/ai-dial-ui-kit';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  const traceparent = setTraceparentHeader(res);
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    throw new DialAIError('Method not allowed', 405, req);
   }
 
   const session = await getServerSession(req, res, authOptions);
@@ -44,10 +43,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     let allFilesToDelete: string[] = [];
     for (const item of files) {
-      if (item.nodeType === 'folder') {
+      if (item.nodeType === DialFileNodeType.FOLDER) {
         const folderFiles = await fetchAllFilesRecursive(
           item.sourceUrl,
-          authToken?.access_token as string,
+          authToken ?? '',
         );
         allFilesToDelete = allFilesToDelete.concat(
           folderFiles.map((f) => f.sourceUrl),
@@ -58,16 +57,19 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     if (allFilesToDelete.length === 0) {
-      throw new DialAIError(
-        'No files to delete after folder listing',
-        400,
-        req,
-      );
+      const emptyResult: FileOperationsResult<string> = {
+        success: true,
+        total: 0,
+        succeeded: 0,
+        failed: 0,
+        results: [],
+      };
+      return res.status(200).json(emptyResult);
     }
 
     const { succeeded, errors } = await deleteFilesInBatches(
       allFilesToDelete,
-      authToken?.access_token as string,
+      authToken ?? '',
       100,
     );
 
@@ -76,6 +78,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         success: false,
         message: 'All delete operations failed',
         errors,
+        traceparent,
       });
     }
 
@@ -91,11 +94,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).json(response);
   } catch (error) {
     logger.error(error);
-    if (error instanceof DialAIError) {
-      const statusCode = parseInt(error.code, 10) || 500;
-      return res.status(statusCode).json({ error: error.message });
-    }
-    return res.status(500).json(errorsMessages.generalServer);
+    ServerUtils.sendAPIError(res, error);
   }
 };
 

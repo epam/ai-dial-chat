@@ -23,6 +23,7 @@ export class FileManagerToolbar extends BaseElement {
   private copyToButton!: Button;
   private duplicateButton!: Button;
   private deleteButton!: Button;
+  private unshareButton!: Button;
   private selectedIconsButton!: Button;
 
   getToolbarTabs(): Tab {
@@ -92,6 +93,13 @@ export class FileManagerToolbar extends BaseElement {
     return this.deleteButton;
   }
 
+  getUnshareButton(): Button {
+    if (!this.unshareButton) {
+      this.unshareButton = new Button(this.page, 'Unshare', this.rootLocator);
+    }
+    return this.unshareButton;
+  }
+
   getSelectedIconsButton(count: number): Button {
     const ariaLabel =
       count === 1 ? `${count} item selected` : `${count} items selected`;
@@ -118,8 +126,18 @@ export class FileManagerToolbar extends BaseElement {
     }
   }
 
+  public async clearSelection(): Promise<void> {
+    await this.getChildElementBySelector(
+      FileManagerSelectors.selectedItemsButton,
+    ).click();
+  }
+
   public myFilesTab = this.getToolbarTabs().tabByName(
     FileManagerToolbarTabs.MyFiles,
+  );
+
+  public sharedWithMeTab = this.getToolbarTabs().tabByName(
+    FileManagerToolbarTabs.SharedWithMe,
   );
 
   public organizationTab = this.getToolbarTabs().tabByName(

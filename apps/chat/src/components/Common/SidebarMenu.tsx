@@ -1,4 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
+
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 
 import { MenuItemRendererProps, MenuProps } from '@/src/types/menu';
 
@@ -6,13 +8,18 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { ContextMenu } from './ContextMenu';
 
-import { DialSecondaryIconButton } from '@epam/ai-dial-ui-kit';
+import { FeatureType } from '@epam/ai-dial-shared';
+import {
+  DialSecondaryIconButton,
+  DialTertiaryIconButton,
+} from '@epam/ai-dial-ui-kit';
 
 const ICON_WIDTH = 24;
 const ITEM_PADDING = 8;
 const ITEMS_GAP_IN_PIXELS = 8;
 const ITEM_WIDTH = ITEM_PADDING * 2 + ICON_WIDTH + ITEMS_GAP_IN_PIXELS;
-export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
+
+function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
   const {
     Icon,
     dataQa,
@@ -23,8 +30,13 @@ export function SidebarMenuItemRenderer(props: MenuItemRendererProps) {
     childMenuItems,
   } = props;
 
+  const ItemComponent =
+    featureType === FeatureType.Chat
+      ? DialSecondaryIconButton
+      : DialTertiaryIconButton;
+
   const item = (
-    <DialSecondaryIconButton
+    <ItemComponent
       className={className}
       onClick={!childMenuItems ? onClick : undefined}
       data-qa={dataQa}
@@ -74,8 +86,8 @@ export function SidebarMenu({
     return [visibleItems, hiddenItems];
   }, [displayedItems, displayItemsCount]);
 
-  useEffect(() => {
-    const resizeObserver = new ResizeObserver((entries) => {
+  const handleResize = useCallback(
+    (entries: ResizeObserverEntry[]) => {
       for (const entry of entries) {
         if (entry.contentBoxSize) {
           const itemsContainerWidth = entry.contentBoxSize[0].inlineSize;
@@ -104,14 +116,11 @@ export function SidebarMenu({
           setDisplayItemsCount(count);
         }
       }
-    });
-    const containerElement = containerRef.current;
-    containerElement && resizeObserver.observe(containerElement);
+    },
+    [displayedItems.length],
+  );
 
-    return () => {
-      containerElement && resizeObserver.observe(containerElement);
-    };
-  }, [displayedItems.length]);
+  useResizeObserver(containerRef.current, handleResize);
 
   return (
     <div
@@ -143,7 +152,7 @@ export function SidebarMenu({
       })}
 
       <ContextMenu
-        triggerIconClassName="flex min-w-[34px] cursor-pointer items-center hover:bg-accent-primary-alpha rounded"
+        triggerIconClassName="flex w-[40px] cursor-pointer items-center hover:bg-accent-primary-alpha rounded"
         menuItems={hiddenItems}
         isOpen={isOpen}
         featureType={featureType}

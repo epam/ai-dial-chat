@@ -1,4 +1,3 @@
-import { IconSearch } from '@tabler/icons-react';
 import {
   useCallback,
   useEffect,
@@ -42,6 +41,7 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import {
   ChangeMarketplaceTabs,
   MarketplaceTabs,
@@ -64,7 +64,11 @@ import {
 } from './AgentAndToolsetSelectItem';
 import { SelectedItemsContainer } from './SelectedItemsContainer';
 
-import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialNeutralButton,
+  DialPrimaryButton,
+  DialSearch,
+} from '@epam/ai-dial-ui-kit';
 import sortBy from 'lodash-es/sortBy';
 
 type DisplayedMarketplaceEntity = MarketplaceEntity & {
@@ -164,7 +168,9 @@ const AgentAndToolsetModalView = ({
   const isMyWorkspace = scopeTab === MarketplaceTabs.MY_WORKSPACE;
 
   const allAgents = useAppSelector(ModelsSelectors.selectModels);
-  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
+  const allToolsets = useAppSelector((state) =>
+    ToolsetSelectors.selectToolsets(state, true),
+  );
   const widgetsSchemaIds = useAppSelector(
     WidgetsSelectors.selectWidgetsSchemaIds,
   );
@@ -445,43 +451,36 @@ const AgentAndToolsetModalView = ({
   return (
     <>
       <h3 className="w-full px-6 pt-6 text-base font-semibold">
-        {t('Select agents and toolsets')}
+        {t(ChatI18nKeys.SelectAgentsAndToolsets)}
       </h3>
       <div className="flex max-h-full min-h-0 w-full flex-1 flex-col px-5 pb-2">
         <div ref={headerRef} className="mb-2">
-          <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse">
-            <div className="relative flex grow">
-              <IconSearch
-                className="absolute left-3 top-1/2 -translate-y-1/2"
-                size={18}
-              />
-              <input
-                value={searchTerm}
-                onChange={(e) => handleSetSearchTerm(e.target.value)}
-                placeholder={t('Search')}
-                className="input-form peer m-0 pl-[38px]"
-                data-qa="search-agents"
-                autoFocus={isOverlay || !isSmallScreenOrTouchable()}
-              />
-            </div>
-            <div className="flex gap-2">
-              <div className="flex gap-2">
-                {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
-                  (tab) => (
-                    <ScopeTabButton
-                      key={tab}
-                      tab={tab}
-                      onSetTab={handleSetScopeTab}
-                      currentTab={scopeTab}
-                      textMap={ChangeMarketplaceTabs}
-                    />
-                  ),
-                )}
-              </div>
+          <div className="relative my-4 flex w-full gap-2 max-sm:flex-col-reverse sm:gap-4">
+            <DialSearch
+              containerClassName="flex-1"
+              data-qa="search-agents"
+              autoFocus={isOverlay || !isSmallScreenOrTouchable()}
+              placeholder={t(ChatI18nKeys.Search)}
+              value={searchTerm}
+              onChange={handleSetSearchTerm}
+            />
+
+            <div className="flex gap-2 sm:gap-3">
+              {[MarketplaceTabs.MY_WORKSPACE, MarketplaceTabs.HOME].map(
+                (tab) => (
+                  <ScopeTabButton
+                    key={tab}
+                    tab={tab}
+                    onSetTab={handleSetScopeTab}
+                    currentTab={scopeTab}
+                    textMap={ChangeMarketplaceTabs}
+                  />
+                ),
+              )}
             </div>
           </div>
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
-            {t('Selected')}
+            {t(ChatI18nKeys.SelectedLabel)}
           </span>
           <div className="my-2 flex h-[34px] items-center">
             {selectedIds.length ? (
@@ -493,12 +492,12 @@ const AgentAndToolsetModalView = ({
               />
             ) : (
               <span className="flex h-[34px] items-center text-xs">
-                {t('No resources selected')}
+                {t(ChatI18nKeys.NoResourcesSelected)}
               </span>
             )}
           </div>
           <span className="col-span-1 whitespace-pre-wrap break-words text-xs text-secondary">
-            {t('All')}
+            {t(ChatI18nKeys.All)}
           </span>
         </div>
         {!!(headerHeight && footerHeight) && (
@@ -533,8 +532,11 @@ const AgentAndToolsetModalView = ({
         ref={footerRef}
         className="absolute bottom-0 flex w-full justify-end gap-3 border-t border-tertiary px-6 py-[14px]"
       >
-        <DialNeutralButton label={t('Cancel')} onClick={onClose} />
-        <DialPrimaryButton label={t('Confirm')} onClick={handleConfirm} />
+        <DialNeutralButton label={t(ChatI18nKeys.Cancel)} onClick={onClose} />
+        <DialPrimaryButton
+          label={t(ChatI18nKeys.Confirm)}
+          onClick={handleConfirm}
+        />
       </div>
     </>
   );

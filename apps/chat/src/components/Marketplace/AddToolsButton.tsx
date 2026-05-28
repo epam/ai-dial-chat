@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import router from 'next/router';
 
@@ -11,7 +11,8 @@ import { Translation } from '@/src/types/translation';
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
-import { Routes } from '@/src/constants/routes';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { QUERY_VALUE_TRUE, Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 
 import { AddMarketplaceEntityButton } from './AddMarketplaceEntityButton';
@@ -27,20 +28,20 @@ export function AddToolsButton() {
     () =>
       [
         {
-          name: t('Toolset'),
+          name: t(MarketplaceI18nKeys.ToolsetMarketplace),
           dataQa: 'add-toolset',
           type: FeatureType.Toolset,
           display: true,
           onClick: (e: React.MouseEvent) => {
             e.stopPropagation();
+            dispatch(ToolsetActions.setToolsetDetails());
             dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.General));
-            dispatch(ToolsetActions.clearToolsetDetails());
             void router.push({
               pathname: Routes.ToolsetEditor,
               query: {
                 [ToolsetEditorQuery.ReturnUrl]:
                   window.location.pathname + window.location.search,
-                [ToolsetEditorQuery.IsCreating]: '1',
+                [ToolsetEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
               },
             });
           },

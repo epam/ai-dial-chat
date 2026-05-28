@@ -1,10 +1,11 @@
 import { OAuthOptions } from '@/src/testData';
-import { AttributeValues, Attributes } from '@/src/ui/domData';
+import { AttributeValues, Attributes, Tags } from '@/src/ui/domData';
 import {
   AddToolsetSettingsFormSelector,
   IconSelectors,
 } from '@/src/ui/selectors';
 import { Button, Combobox, EntityEditorViewForm } from '@/src/ui/webElements';
+import { Page } from '@playwright/test';
 
 export class ToolsetEditorViewForm extends EntityEditorViewForm {
   public definitionLabel = this.getChildElementBySelector(
@@ -49,6 +50,28 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     .filter({ has: this.page.getByRole('radio') });
   public oAuthOption = (loginOption: OAuthOptions) =>
     this.oAuthOptions.locator(`[${Attributes.id}="${loginOption}"]`);
+  public oAuthOptionRadioButton = (loginOption: OAuthOptions) =>
+    this.oAuthOption(loginOption)
+      .locator('~*')
+      .locator(IconSelectors.circleIcon);
+  public oAuthLoginForm = this.authDetailsContainer.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.authLoginForm,
+  );
+  public clientIdFieldContainer = this.oAuthLoginForm.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.clientIdFieldContainer,
+  );
+  public clientIdFieldInput =
+    this.clientIdFieldContainer.getChildElementBySelector(Tags.input);
+  public clientSecretFieldContainer =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.clientSecretFieldContainer,
+    );
+  public clientSecretFieldInput =
+    this.clientSecretFieldContainer.getChildElementBySelector(Tags.input);
+  public supportedScopes = new Combobox(
+    this.page,
+    this.oAuthLoginForm.getElementLocator(),
+  );
   public loginButton = new Button(
     this.page,
     AttributeValues.login,
@@ -77,6 +100,18 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
   public withoutAuthIcon = this.authContainer.getChildElementBySelector(
     IconSelectors.lockOffIcon,
   );
+  public apiKeyParameterNameFieldContainer =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.apiKeyParameterNameFieldContainer,
+    );
+  public apiKeyParameterNameFieldInput =
+    this.apiKeyParameterNameFieldContainer.getChildElementBySelector(
+      Tags.input,
+    );
+  public apiKeyParameterNameFieldError =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.apiKeyParameterNameFieldErrorMessage(),
+    );
   public allowedToolsLabel = this.getChildElementBySelector(
     AddToolsetSettingsFormSelector.allowedToolsLabel,
   );
@@ -85,7 +120,9 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
   );
   public allowedTools = new Combobox(this.page, this.rootLocator);
 
-  public async clickLoginButton(triggeredHttpHost?: string) {
+  public async clickLoginButton(
+    triggeredHttpHost?: string,
+  ): Promise<Page | void> {
     return this.initAuthentication(this.loginButton, triggeredHttpHost);
   }
 
@@ -93,14 +130,25 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     return this.initAuthentication(this.logoutButton, triggeredHttpHost);
   }
 
-  public async initAuthentication(button: Button, triggeredHttpHost?: string) {
+  // OAuth login now opens a popup instead of redirecting the main page.
+  // The mock route redirects the popup to the callback URL (302).
+  // We wait for the popup to load the callback page so the captured
+  // OAuth state is available right after this method returns.
+  public async initAuthentication(
+    button: Button,
+    triggeredHttpHost?: string,
+  ): Promise<Page | void> {
     if (triggeredHttpHost) {
-      const eventPromise = this.page.waitForEvent('requestfailed', {
-        predicate: (request) =>
-          request.url().startsWith(triggeredHttpHost.toLowerCase()),
-      });
+      const popupPromise = this.page.waitForEvent('popup');
       await button.click();
-      return eventPromise;
+      const popup = await popupPromise;
+      try {
+        // popup is redirected to /auth/toolset-signin — wait for it to load
+        await popup.waitForLoadState('domcontentloaded');
+      } catch {
+        // popup may close before DOM loads if the flow finishes very fast
+      }
+      return popup;
     }
     await button.click();
   }

@@ -6,15 +6,20 @@ import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { EntityInfo, EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 
-import { ChatState } from './chat.types';
+import { ChatState, TextSelection } from './chat.types';
 
 import { MessageFormSchema, MessageFormValueType } from '@epam/ai-dial-shared';
 
 const initialState: ChatState = {
   inputContent: '',
+  userMessageTranscript: undefined,
+  userMessageVoiceAttachmentId: undefined,
   configurationSchemasLoadingIds: [],
   infoModalState: ModalState.CLOSED,
   configurationSchemas: [],
+  isTranscribing: false,
+  isUserMessageTranscribing: false,
+  isAsrFlowActive: false,
 };
 
 const MAX_CONFIGURATION_SCHEMAS_AMOUNT = 10;
@@ -28,6 +33,16 @@ export const chatSlice = createSlice({
     },
     appendInputContent: (state, { payload }: PayloadAction<string>) => {
       state.inputContent = `${state.inputContent} ${payload}`;
+    },
+    appendInputContentWithMapping: (
+      state,
+      { payload }: PayloadAction<{ substituted: string; original: string }>,
+    ) => {
+      state.inputContent = `${state.inputContent} ${payload.substituted}`;
+      state.inputContentTemplateMapping = payload;
+    },
+    clearInputContentTemplateMapping: (state) => {
+      state.inputContentTemplateMapping = undefined;
     },
     setFormValue(
       state,
@@ -53,7 +68,7 @@ export const chatSlice = createSlice({
 
     getConfigurationSchema: (
       state,
-      _action: PayloadAction<{ modelId: string }>,
+      _action: PayloadAction<{ modelId: string; replaceExisting?: boolean }>,
     ) => state,
     startConfigurationSchemaUploading: (
       state,
@@ -67,11 +82,11 @@ export const chatSlice = createSlice({
         payload,
       }: PayloadAction<{ modelId: string; schema: MessageFormSchema }>,
     ) => {
-      if (
-        !state.configurationSchemas.find(
-          (schema) => schema.modelId === payload.modelId,
-        )
-      ) {
+      const existingSchemaIdx = state.configurationSchemas.findIndex(
+        (schema) => schema.modelId === payload.modelId,
+      );
+
+      if (existingSchemaIdx === -1) {
         state.configurationSchemas.push(payload);
 
         if (
@@ -79,7 +94,10 @@ export const chatSlice = createSlice({
         ) {
           state.configurationSchemas.shift();
         }
+      } else {
+        state.configurationSchemas[existingSchemaIdx] = payload;
       }
+
       state.configurationSchemasLoadingIds =
         state.configurationSchemasLoadingIds.filter(
           (modelId) => modelId !== payload.modelId,
@@ -149,6 +167,77 @@ export const chatSlice = createSlice({
     resetInfoModal: (state) => {
       state.selectedEntityInfo = undefined;
       state.infoModalState = ModalState.CLOSED;
+    },
+    handleVoiceRecording: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        audioBlob: Blob;
+        fileExtension: string;
+        selection?: TextSelection;
+      }>,
+    ) => {
+      state.asrInsertionContext = payload.selection
+        ? {
+            inputSnapshot: state.inputContent,
+            selection: payload.selection,
+          }
+        : undefined;
+    },
+    handleUserMessageVoiceRecording: (
+      state,
+      _action: PayloadAction<{ audioBlob: Blob; fileExtension: string }>,
+    ) => state,
+    startUserMessageTranscription: (state) => {
+      state.isUserMessageTranscribing = true;
+    },
+    setUserMessageTranscript: (state, { payload }: PayloadAction<string>) => {
+      state.userMessageTranscript = payload;
+      state.isUserMessageTranscribing = false;
+    },
+    clearUserMessageTranscript: (state) => {
+      state.userMessageTranscript = undefined;
+    },
+    setUserMessageVoiceAttachmentId: (
+      state,
+      { payload }: PayloadAction<string>,
+    ) => {
+      state.userMessageVoiceAttachmentId = payload;
+    },
+    clearUserMessageVoiceAttachmentId: (state) => {
+      state.userMessageVoiceAttachmentId = undefined;
+    },
+    userMessageTranscriptionFailed: (state) => {
+      state.isUserMessageTranscribing = false;
+    },
+    startTranscription: (
+      state,
+      _action: PayloadAction<{ audioData: string; mimeType: string }>,
+    ) => {
+      state.isTranscribing = true;
+      state.isAsrFlowActive = true;
+    },
+    transcriptionSuccess: (
+      state,
+      _action: PayloadAction<{ transcript: string }>,
+    ) => {
+      state.isTranscribing = false;
+    },
+    transcriptionFailed: (state) => {
+      state.isTranscribing = false;
+      state.isAsrFlowActive = false;
+      state.asrInsertionContext = undefined;
+    },
+    clearAsrFlow: (state) => {
+      state.isAsrFlowActive = false;
+      state.asrInsertionContext = undefined;
+    },
+    clearAsrInsertionContext: (state) => {
+      state.asrInsertionContext = undefined;
+    },
+    setIsTranscribing: (state, { payload }: PayloadAction<boolean>) => {
+      state.isTranscribing = payload;
     },
   },
 });

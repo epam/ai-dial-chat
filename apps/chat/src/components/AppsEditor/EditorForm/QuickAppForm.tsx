@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Controller,
   useController,
@@ -9,6 +9,7 @@ import {
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
+import { doesAgentSupportMcp } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Toolsets } from '@/src/types/applications';
@@ -22,6 +23,7 @@ import {
   CONFIRM_DOCUMENT_VALUES,
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
+import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { QuickAppForm as QuickAppFormType } from '@/src/components/AppsEditor/form';
 import { TemperatureSlider } from '@/src/components/Chat/ChatSettings/Temperature';
@@ -31,6 +33,7 @@ import { FieldTextArea } from '@/src/components/Common/Forms/FieldTextArea';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
+import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
 import uniq from 'lodash-es/uniq';
 
@@ -38,6 +41,7 @@ const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
 const ToolsetEditor = withErrorMessage(withLabel(MonacoEditor));
 const Slider = withLabel(TemperatureSlider, true);
 const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
+const CopyUrlButton = withLabel(ToolsetLinkButton);
 
 const myFilesFilter = new Set([FileSourceType.MY_FILES]);
 
@@ -123,7 +127,7 @@ export const QuickAppForm = () => {
         control={control}
         render={({ field }) => (
           <FilesSelectorField
-            label={t('Document relative URLs')}
+            label={t(MarketplaceI18nKeys.DocumentRelativeURLs)}
             onAddFiles={(documents) =>
               field.onChange(uniq([...(field.value ?? []), ...documents]))
             }
@@ -132,11 +136,13 @@ export const QuickAppForm = () => {
             }
             readonly={isSharedWithMe || isAppPublic}
             error={errors.documentRelativeUrl?.message}
-            fileManagerTitle={t('Select documents')}
+            fileManagerTitle={t(MarketplaceI18nKeys.SelectDocuments)}
             filesFilter={myFilesFilter}
             files={field.value ?? []}
             addBtnTooltip={
-              isSharedWithMe ? getSharedTooltip(t('documents')) : undefined
+              isSharedWithMe
+                ? getSharedTooltip(t(MarketplaceI18nKeys.DocumentsLowercase))
+                : undefined
             }
             confirmDialogValues={
               appDetails?.isShared ? CONFIRM_DOCUMENT_VALUES : undefined
@@ -151,19 +157,20 @@ export const QuickAppForm = () => {
         control={control}
         render={({ field }) => (
           <ModelsSelectorField
-            label={t('Model')}
+            label={t(MarketplaceI18nKeys.ModelMarketplace)}
             value={field.value}
             onChange={field.onChange}
             mandatory
             error={errors.model?.message}
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
+            showHiddenTagModels
           />
         )}
       />
 
       <ToolsetEditor
-        label={t('Configure toolsets')}
+        label={t(MarketplaceI18nKeys.ConfigureToolsets)}
         error={errors[activeTabId]?.message}
         height={200}
         allowFullScreen
@@ -176,10 +183,9 @@ export const QuickAppForm = () => {
 
       <FieldTextArea
         {...register('instructions')}
-        label={t('Instructions')}
-        placeholder={t('Instructions of your application')}
+        label={t(MarketplaceI18nKeys.InstructionsMarketplace)}
+        placeholder={t(MarketplaceI18nKeys.InstructionsPlaceholder)}
         rows={4}
-        className="resize-none"
         id="instructions"
         disabled={isAppPublic}
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
@@ -190,7 +196,7 @@ export const QuickAppForm = () => {
         control={control}
         render={({ field }) => (
           <Slider
-            label={t('Temperature')}
+            label={t(MarketplaceI18nKeys.TemperatureMarketplace)}
             temperature={field.value}
             disabled={isAppPublic}
             tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
@@ -198,6 +204,13 @@ export const QuickAppForm = () => {
           />
         )}
       />
+
+      {doesAgentSupportMcp(appDetails) && (
+        <CopyUrlButton
+          entity={appDetails}
+          label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
+        />
+      )}
     </div>
   );
 };

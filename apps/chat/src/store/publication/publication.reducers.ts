@@ -6,6 +6,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import {
   PublicVersionGroups,
   PublicVersionOption,
@@ -122,8 +123,9 @@ export const publicationSlice = createSlice({
     },
     uploadAllPublishedWithMeItemsFail: (state) => state,
     uploadPublishedWithMeItemsFail: (state) => state,
-    approvePublication: (state, _actions: PayloadAction<{ url: string }>) =>
-      state,
+    approvePublication: (state, _actions: PayloadAction<{ url: string }>) => {
+      state.isPublicationUpdating = true;
+    },
     approvePublicationSuccess: (
       state,
       {
@@ -134,22 +136,29 @@ export const publicationSlice = createSlice({
         triggerPublicFilesListing: boolean;
       }>,
     ) => {
+      state.isPublicationUpdating = false;
       state.publications = state.publications.filter(
         (p) => p.url !== payload.url,
       );
     },
-    approvePublicationFail: (state) => state,
-    rejectPublication: (state, _actions: PayloadAction<{ url: string }>) =>
-      state,
+    approvePublicationFail: (state) => {
+      state.isPublicationUpdating = false;
+    },
+    rejectPublication: (state, _actions: PayloadAction<{ url: string }>) => {
+      state.isPublicationUpdating = true;
+    },
     rejectPublicationSuccess: (
       state,
       { payload }: PayloadAction<{ url: string }>,
     ) => {
+      state.isPublicationUpdating = false;
       state.publications = state.publications.filter(
         (p) => p.url !== payload.url,
       );
     },
-    rejectPublicationFail: (state) => state,
+    rejectPublicationFail: (state) => {
+      state.isPublicationUpdating = false;
+    },
     selectPublication: (state, { payload }: PayloadAction<string | null>) => {
       state.selectedPublicationUrl = payload;
     },
@@ -256,6 +265,15 @@ export const publicationSlice = createSlice({
         state.selectedPublicationItems[payload.publicationUrl] ?? [],
         payload.ids,
       );
+    },
+    unselectPublicationItems: (
+      state,
+      { payload }: PayloadAction<{ publicationUrl: string; ids: string[] }>,
+    ) => {
+      state.selectedPublicationItems[payload.publicationUrl] =
+        state.selectedPublicationItems[payload.publicationUrl]?.filter(
+          (id) => !payload.ids.includes(id),
+        );
     },
     selectCredentialsItems: (
       state,
@@ -405,6 +423,7 @@ export const publicationSlice = createSlice({
     updateApplicationPublicationUrls: (
       state,
       _action: PayloadAction<{
+        isSaveAndExit: boolean;
         publicationUrl: string;
         oldApplication: CustomApplicationModel;
         newApplication: CustomApplicationModel;
@@ -413,9 +432,11 @@ export const publicationSlice = createSlice({
     updatePublicationRequestAndApplicationIcon: (
       state,
       _action: PayloadAction<{
+        isSaveAndExit: boolean;
         publicationUrl: string;
         oldApplication: CustomApplicationModel;
         newApplication: CustomApplicationModel;
+        tabToOpen?: MarketplaceEditorSteps;
       }>,
     ) => {
       state.isPublicationUpdating = true;

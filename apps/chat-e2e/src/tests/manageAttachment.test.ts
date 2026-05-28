@@ -7,19 +7,15 @@ import {
   CheckboxState,
   ExpectedConfirmationPopupData,
   ExpectedConstants,
-  ExpectedMessages,
   FileManagerToolbarTabs,
   MenuOptions,
   UploadMenuOptions,
 } from '@/src/testData';
-import {
-  AttributeValues,
-  Attributes,
-  ThemeColorAttributes,
-} from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
+import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors';
-import { BaseElement, FileModalSection, Tab } from '@/src/ui/webElements';
-import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { Checkbox, Tab } from '@/src/ui/webElements';
+import { GeneratorUtil, ModelsUtil, filenamePrefix } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Locator } from '@playwright/test';
 import { CDPSession } from 'playwright-chromium';
@@ -113,8 +109,10 @@ dialTest(
           isHttpMethodTriggered: false,
         });
         await fileManagerDeleteItemConfirmationPopup.confirm({
-          triggeredHttpMethod: 'POST',
-          triggeredHttpHost: API.deleteFileHost(),
+          expectedRequests: new Map([
+            [API.deleteFileHost(), 'POST'],
+            [API.filesListingHost(), 'GET'],
+          ]),
         });
         await fileManagerGridAssertion.assertGridRowByNameState(
           Attachment.sunImageName,
@@ -143,10 +141,16 @@ dialTest(
     fileManagerDeleteItemConfirmationPopupAssertion,
     localStorageManager,
     fileManagerModalGridAssertion,
+    fileManagerToolbar,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-3298', 'EPMRTC-3299');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
+    const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
+      modelsWithAttachments.filter(
+        (m) =>
+          m.inputAttachmentTypes?.length == 1 &&
+          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+      ),
     );
     let conversation: Conversation;
 
@@ -160,11 +164,11 @@ dialTest(
       'Create empty conversation that allow input attachments',
       async () => {
         conversation = conversationData.prepareEmptyConversation(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await localStorageManager.setShowSideBarPanels();
       },
@@ -185,6 +189,10 @@ dialTest(
             await fileManagerModalGrid.gridCheckboxByNameCell(file);
           await attachmentCheckbox.click();
         }
+        const selectedFilesCounter = fileManagerToolbar.getSelectedIconsButton(
+          attachedFiles.length,
+        );
+        await baseAssertion.assertElementState(selectedFilesCounter, 'visible');
       },
     );
 
@@ -225,8 +233,8 @@ dialTest(
       async () => {
         await fileManagerModalToolbar.getDeleteButton().click();
         await fileManagerDeleteItemConfirmationPopup.confirm({
-          triggeredHttpMethod: 'POST',
-          triggeredHttpHost: API.deleteFileHost(),
+          triggeredHttpMethod: 'GET',
+          triggeredHttpHost: API.filesListingHost(),
         });
         for (const file of attachedFiles) {
           await fileManagerModalGridAssertion.assertGridRowByNameState(
@@ -315,7 +323,7 @@ dialTest(
         await baseAssertion.assertElementBackgroundColors(
           cancelButton,
           ThemesUtil.getRgbColorByKey(
-            ThemeColorAttributes.controlsBgOutlinedNeutralHover,
+            ThemeColorAttributes.controlsBgNeutralHover,
           ),
         );
       },
@@ -335,153 +343,152 @@ dialTest(
   },
 );
 
-// TODO: Test skipped - file upload appears successful even when network is offline.
-// Despite network errors visible in DevTools, the file uploads successfully,
-// making it impossible to test error state handling (red text + error icon).
-dialTest.skip(
-  '[Manage attachments] Delete file after there was internet connection error',
+dialTest(
+  '[Manage attachments] Upload file after there was internet connection error',
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
-    uploadFromDeviceModal,
-    chatBar,
-    localStorageManager,
-    manageAttachmentsAssertion,
-    baseAssertion,
+    toast,
+    toastAssertion,
+    fileManagerPage,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
   }) => {
     setTestIds('EPMRTC-3304');
     let client: CDPSession;
 
     await dialTest.step(
-      'Open "Manage attachments" modal through chat side bar menu icon',
+      'Open "File manager" page and set offline mode',
       async () => {
-        await localStorageManager.setShowSideBarPanels();
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
-        await manageAttachmentsAssertion.assertElementState(
-          attachFilesModal,
-          'visible',
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Upload file from device in offline mode and verify filename is red and has error icon',
-      async () => {
-        await dialHomePage.uploadData(
-          { path: Attachment.sunImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDevice(),
-        );
-        await baseAssertion.assertElementState(
-          uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
-          'visible',
-        );
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded({ isGridVisible: false });
+        await fileManagerToolbar.getNewButton().click();
         client = await dialHomePage.emulateSlowNetworkConditions({
           offline: true,
         });
-        await uploadFromDeviceModal.uploadButton.click();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          FileModalSection.AllFiles,
-          'visible',
+      },
+    );
+
+    await dialTest.step(
+      'Upload file in offline mode and verify error toast is displayed',
+      async () => {
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          () =>
+            fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles),
         );
-        await baseAssertion.assertElementColor(
-          attachFilesModal
-            .getAllFilesTree()
-            .getEntityName(Attachment.sunImageName),
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textError),
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.uploadFailedMessage,
         );
-        await manageAttachmentsAssertion.assertElementState(
-          attachFilesModal
-            .getAllFilesTree()
-            .attachedFileErrorIcon(Attachment.sunImageName),
-          'visible',
-          ExpectedMessages.attachmentHasErrorIcon,
+        await toast.closeToast();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'hidden',
         );
       },
     );
 
     await dialTest.step(
-      'Set online mode, click on cancel button near loading indicator and verify file disappears from the list',
+      'Set online mode and verify file is successfully uploaded',
       async () => {
         await dialHomePage.stopNetworkConditionsEmulating(client);
-        await attachFilesModal
-          .getAllFilesTree()
-          .removeAttachedFileIcon(Attachment.sunImageName)
-          .click();
-        await manageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.sunImageName },
-          FileModalSection.AllFiles,
-          'hidden',
+        await fileManagerToolbar.getNewButton().click();
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          () =>
+            fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles),
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
         );
       },
     );
   },
 );
 
-// TODO: Test skipped - same issue as EPMRTC-3304 above.
-// File upload succeeds despite offline network conditions.
-dialTest.skip(
-  '[Manage attachments] Reload file after there was internet connection error',
+dialTest(
+  '[File Manager][My Files] Delete file after there was internet connection error',
   async ({
     dialHomePage,
     setTestIds,
-    attachFilesModal,
-    uploadFromDeviceModal,
-    chatBar,
-    localStorageManager,
-    manageAttachmentsAssertion,
-    baseAssertion,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridRowDropdownMenu,
+    fileManagerDeleteItemConfirmationPopup,
+    fileManagerGridAssertion,
+    toastAssertion,
   }) => {
-    setTestIds('EPMRTC-3303');
+    setTestIds('EPMRTC-8176');
     let client: CDPSession;
 
-    await dialTest.step(
-      'Open "Manage attachments" modal through chat side bar menu icon',
-      async () => {
-        await localStorageManager.setShowSideBarPanels();
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
-      },
-    );
+    await dialTest.step('Upload file to app via API', async () => {
+      await fileApiHelper.putFile(Attachment.sunImageName);
+    });
 
     await dialTest.step(
-      'Set offline mode before uploading attachment from device',
+      'Open "File Manager" page and set offline mode',
       async () => {
-        await dialHomePage.uploadData(
-          { path: Attachment.sunImageName, dataType: 'upload' },
-          () => attachFilesModal.uploadFromDevice(),
-        );
-        await baseAssertion.assertElementState(
-          uploadFromDeviceModal.getUploadedFile(Attachment.sunImageName),
-          'visible',
-        );
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
         client = await dialHomePage.emulateSlowNetworkConditions({
           offline: true,
         });
-        await uploadFromDeviceModal.uploadButton.click();
       },
     );
 
     await dialTest.step(
-      'Set online mode, click on Reload button near loading indicator and verify file displayed in the list and change color to blue',
+      'Open file context menu and select Delete option',
+      async () => {
+        const fileRow = fileManagerGrid.gridRowByNameCell(
+          Attachment.sunImageName,
+        );
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.sunImageName,
+        );
+        await fileRow.hover();
+        await dotsMenu.click();
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.delete, {
+          isHttpMethodTriggered: false,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'Confirm delete and verify error toast is shown',
+      async () => {
+        await fileManagerDeleteItemConfirmationPopup.getConfirmButton().click();
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.failedToDeleteFilesMessage,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify file is not deleted and restore network connection',
       async () => {
         await dialHomePage.stopNetworkConditionsEmulating(client);
-        const allFilesTreeElement = attachFilesModal.getAllFilesTree();
-        const loadingRetryElement =
-          allFilesTreeElement.attachedFileLoadingRetry(Attachment.sunImageName);
-        await loadingRetryElement.click();
-        await manageAttachmentsAssertion.assertElementState(
-          loadingRetryElement,
-          'hidden',
-          ExpectedMessages.attachmentLoadingIndicatorNotVisible,
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
         );
-        await manageAttachmentsAssertion.assertElementColor(
-          allFilesTreeElement.getEntityName(Attachment.sunImageName),
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textAccentPrimary),
+      },
+    );
+
+    await dialTest.step(
+      'Reload page and verify file is not deleted',
+      async () => {
+        await fileManagerPage.reloadPage();
+        await fileManagerPage.waitForPageLoaded();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
         );
       },
     );
@@ -500,7 +507,7 @@ dialTest(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-2015', 'EPMRTC-3187');
-    const filename = `${ExpectedConstants.allowedSpecialChars}.jpg`;
+    const filename = `${filenamePrefix}${ExpectedConstants.allowedSpecialChars}.jpg`;
 
     await dialTest.step(
       'Upload file with special symbols in the name',
@@ -583,13 +590,12 @@ dialTest(
       },
     );
 
-    //TODO they do not remain checked. Verify if it is intended
-    await dialTest.step.skip('Verify checkboxes remain checked', async () => {
+    await dialTest.step('Verify checkboxes are not checked', async () => {
       // Verify checkboxes remain checked
       for (const file of attachedFiles) {
         await fileManagerGridAssertion.assertGridCheckboxByNameState(
           file,
-          CheckboxState.checked,
+          CheckboxState.unchecked,
         );
       }
     });
@@ -604,6 +610,7 @@ dialTest(
     setTestIds,
     fileManagerPage,
     fileManagerGrid,
+    fileManagerToolbar,
     fileManagerGridAssertion,
     fileApiHelper,
     localStorageManager,
@@ -613,7 +620,7 @@ dialTest(
     setTestIds('EPMRTC-5396', 'EPMRTC-5526');
     const filesToTest = [
       {
-        name: `${GeneratorUtil.randomString(7)}.txt`,
+        name: GeneratorUtil.randomFilename('txt'),
         url: '',
         isText: true,
         folderName: '',
@@ -625,7 +632,7 @@ dialTest(
         folderName: '',
       },
       {
-        name: `${GeneratorUtil.randomString(7)}.txt`,
+        name: GeneratorUtil.randomFilename('txt'),
         url: '',
         isText: true,
         folderName: GeneratorUtil.randomString(7),
@@ -686,11 +693,13 @@ dialTest(
     );
 
     for (const file of filesToTest) {
-      //TODO this step doesn't work - files do not appear until you reload the page
+      //TODO enable when fixed https://github.com/epam/ai-dial-chat/issues/5706
       await dialTest.step.skip(
         `Delete ${file.isText ? 'text' : 'non-text'} file via API and verify it disappears without page refresh`,
         async () => {
           await fileApiHelper.deleteFromAllFiles(file.url);
+          await fileManagerToolbar.sharedWithMeTab.click();
+          await fileManagerToolbar.myFilesTab.click();
 
           // For files in folders, navigate into folder first
           if (file.folderName !== '') {
@@ -716,6 +725,252 @@ dialTest(
 );
 
 dialTest(
+  '[File Manager][MyFiles]: Search files in folders.\n' +
+    '[File Manager][My Files]: Search files when no folders in the structure.\n' +
+    '[File Manager][My files] Search files when nothing found',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerNavigationPanel,
+    fileManagerGridAssertion,
+    fileManager,
+    baseAssertion,
+  }) => {
+    setTestIds('EPMRTC-3301', 'EPMRTC-3306', 'EPMRTC-3307');
+
+    const folder1 = GeneratorUtil.randomString(7);
+    const folder2 = GeneratorUtil.randomString(7);
+    // EPMRTC-3301: files inside folders (case variants: lowercase 'n' and capital 'N')
+    const folderFile1 = GeneratorUtil.filename(' File name', 'png');
+    const folderFile2 = GeneratorUtil.filename(' File Name', 'txt');
+    // EPMRTC-3306 / EPMRTC-3307: files in root (three case variants)
+    const rootFile1 = GeneratorUtil.filename(' File Name', 'png');
+    const rootFile2 = GeneratorUtil.filename(' file name1 ', 'pdf');
+    const rootFile3 = GeneratorUtil.filename(' file Name', 'txt');
+    const rootFiles = [rootFile1, rootFile2, rootFile3];
+
+    await dialTest.step(
+      'Upload test files via API: 2 files in separate folders + 3 files in root',
+      async () => {
+        await fileApiHelper.putFileWithCustomName(
+          folderFile1,
+          Attachment.sunImageName,
+          { parentPath: folder1 },
+        );
+        await fileApiHelper.putFileWithCustomName(
+          folderFile2,
+          Attachment.sunImageName,
+          { parentPath: folder2 },
+        );
+        await fileApiHelper.putFileWithCustomName(
+          rootFile1,
+          Attachment.sunImageName,
+        );
+        await fileApiHelper.putFileWithCustomName(
+          rootFile2,
+          Attachment.flowerImageName,
+        );
+        await fileApiHelper.putFileWithCustomName(
+          rootFile3,
+          Attachment.sunImageName,
+        );
+      },
+    );
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-3301: search "name" and verify files inside folders are found',
+      async () => {
+        await fileManagerNavigationPanel
+          .getSearch()
+          .inputField.fillInInput('name');
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          folderFile1,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          folderFile2,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-3306: search "File Name" and verify all root files are found regardless of case',
+      async () => {
+        await fileManagerNavigationPanel
+          .getSearch()
+          .inputField.fillInInput('File Name');
+        for (const file of rootFiles) {
+          await fileManagerGridAssertion.assertGridRowByNameState(
+            file,
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-3307: search non-existent term and verify "No results found" is shown',
+      async () => {
+        await fileManagerNavigationPanel
+          .getSearch()
+          .inputField.fillInInput('ABC');
+        await baseAssertion.assertElementState(
+          fileManager.getNoDataContent(),
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Clear search and verify all files and folders are visible again',
+      async () => {
+        await fileManagerNavigationPanel.getSearch().inputField.fillInInput('');
+        for (const folder of [folder1, folder2]) {
+          await fileManagerGridAssertion.assertGridRowByNameState(
+            folder,
+            'visible',
+          );
+        }
+        for (const file of rootFiles) {
+          await fileManagerGridAssertion.assertGridRowByNameState(
+            file,
+            'visible',
+          );
+        }
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager][My Files]: files from hidden folders are displayed in search results when Hidden files toggle is on',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGridAssertion,
+    fileManagerNavigationPanel,
+    fileManagerToolbar,
+  }) => {
+    setTestIds('EPMRTC-8130');
+
+    const visibleFolder = 'Folder1';
+    const hiddenFolder = '.Folder2';
+    const hiddenFileInVisibleFolder =
+      '.' + GeneratorUtil.filename('Search1', 'txt');
+    const visibleFileInVisibleFolder = GeneratorUtil.filename('Search2', 'txt');
+    const hiddenFileInHiddenFolder =
+      '.' + GeneratorUtil.filename('Search3', 'txt');
+    const visibleFileInHiddenFolder = GeneratorUtil.filename('Search4', 'txt');
+    const searchTerm = 'Search';
+
+    await dialTest.step('Upload test files via API', async () => {
+      await fileApiHelper.putStringAsFile(
+        visibleFileInVisibleFolder,
+        'content',
+        { parentPath: visibleFolder },
+      );
+      await fileApiHelper.putStringAsFile(
+        hiddenFileInVisibleFolder,
+        'content',
+        { parentPath: visibleFolder },
+      );
+      await fileApiHelper.putStringAsFile(
+        visibleFileInHiddenFolder,
+        'content',
+        { parentPath: hiddenFolder },
+      );
+      await fileApiHelper.putStringAsFile(hiddenFileInHiddenFolder, 'content', {
+        parentPath: hiddenFolder,
+      });
+    });
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'Search "Search" and verify only visible file in visible folder is shown',
+      async () => {
+        await fileManagerNavigationPanel
+          .getSearch()
+          .inputField.fillInInput(searchTerm);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInVisibleFolder,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInVisibleFolder,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInHiddenFolder,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInHiddenFolder,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Turn on Hidden files toggle and verify all 4 files are shown',
+      async () => {
+        await fileManagerToolbar.getToolbarSwitcher().switcher.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInVisibleFolder,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInVisibleFolder,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInHiddenFolder,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInHiddenFolder,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Turn off Hidden files toggle and verify only visible file in visible folder is shown',
+      async () => {
+        await fileManagerToolbar.getToolbarSwitcher().switcher.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInVisibleFolder,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInVisibleFolder,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          visibleFileInHiddenFolder,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileInHiddenFolder,
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
   '[Manage attachments] Select files using file context menu.\n' +
     '[Manage attachments] Unselect files using file context menu',
   async ({
@@ -730,9 +985,9 @@ dialTest(
     setTestIds('EPMRTC-6091', 'EPMRTC-6092');
     const attachments = [Attachment.sunImageName, Attachment.flowerImageName];
     const expectedColor = ThemesUtil.getRgbColorByKey(
-      ThemeColorAttributes.textAccentPrimary,
+      ThemeColorAttributes.controlsBgAccent,
     );
-    let headerCheckboxInput: BaseElement;
+    let headerCheckbox: Checkbox;
     const bulkButtons = [
       fileManagerToolbar.getMoveToButton(),
       fileManagerToolbar.getCopyToButton(),
@@ -764,11 +1019,11 @@ dialTest(
         const checkbox = await fileManagerGrid.gridCheckboxByNameCell(
           attachments[0],
         );
-        await fileManagerGridAssertion.assertElementState(checkbox, 'visible');
-        await fileManagerGridAssertion.assertElementClass(
-          checkbox,
-          new RegExp(/before:border-hover/),
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          attachments[0],
+          'visible',
         );
+        await fileManagerGridAssertion.assertElementState(checkbox, 'visible');
       },
     );
 
@@ -779,34 +1034,27 @@ dialTest(
           const attachmentCheckbox =
             await fileManagerGrid.gridCheckboxByNameCell(attachments[i]);
           await attachmentCheckbox.click();
-          await fileManagerGridAssertion.assertCheckboxState(
-            attachmentCheckbox,
+          await fileManagerGridAssertion.assertGridCheckboxByNameState(
+            attachments[i],
             CheckboxState.checked,
           );
-          await fileManagerGridAssertion.assertElementBorderColors(
-            attachmentCheckbox,
+          await fileManagerGridAssertion.assertGridCheckboxBorderColors(
+            attachments[i],
             expectedColor,
           );
-          headerCheckboxInput =
-            fileManagerGrid.gridHeaderCheckbox.checkboxInput;
+          headerCheckbox = fileManagerGrid.gridHeaderCheckbox;
           await baseAssertion.assertElementBorderColors(
-            headerCheckboxInput,
+            headerCheckbox,
             expectedColor,
           );
           await baseAssertion.assertElementState(
             fileManagerToolbar.getSelectedIconsButton(i + 1),
             'visible',
           );
-          i === 0
-            ? await fileManagerGridAssertion.assertElementAttribute(
-                headerCheckboxInput,
-                Attributes.ariaChecked,
-                AttributeValues.mixed,
-              )
-            : await fileManagerGridAssertion.assertCheckboxState(
-                headerCheckboxInput,
-                CheckboxState.checked,
-              );
+          await baseAssertion.assertCheckboxState(
+            headerCheckbox.checkboxInput,
+            i === 0 ? CheckboxState.partiallyChecked : CheckboxState.checked,
+          );
         }
         for (const button of bulkButtons) {
           await baseAssertion.assertElementState(button, 'visible');
@@ -824,8 +1072,8 @@ dialTest(
           const attachmentCheckbox =
             await fileManagerGrid.gridCheckboxByNameCell(attachments[i]);
           await attachmentCheckbox.click();
-          await fileManagerGridAssertion.assertCheckboxState(
-            attachmentCheckbox,
+          await fileManagerGridAssertion.assertGridCheckboxByNameState(
+            attachments[i],
             CheckboxState.unchecked,
           );
           if (i === 0) {
@@ -833,13 +1081,12 @@ dialTest(
               fileManagerToolbar.getSelectedIconsButton(i + 1),
               'visible',
             );
-            await fileManagerGridAssertion.assertElementAttribute(
-              headerCheckboxInput,
-              Attributes.ariaChecked,
-              AttributeValues.mixed,
+            await baseAssertion.assertCheckboxState(
+              headerCheckbox.checkboxInput,
+              CheckboxState.partiallyChecked,
             );
             await baseAssertion.assertElementBorderColors(
-              headerCheckboxInput,
+              headerCheckbox,
               expectedColor,
             );
             for (const button of bulkButtons) {
@@ -857,9 +1104,9 @@ dialTest(
               fileManagerToolbar.getSelectedIconsButton(i + 1),
               'hidden',
             );
-            await fileManagerGridAssertion.assertElementState(
-              headerCheckboxInput,
-              'hidden',
+            await fileManagerGridAssertion.assertCheckboxState(
+              headerCheckbox.checkboxInput,
+              CheckboxState.unchecked,
             );
             for (const button of bulkButtons) {
               await baseAssertion.assertElementState(button, 'hidden');
@@ -871,6 +1118,877 @@ dialTest(
             }
           }
         }
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager][My Files]: Duplicate folder.\n' +
+    '[File Manager][My Files]: Duplicate file',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridAssertion,
+    fileManagerGridRowDropdownMenu,
+    fileManager,
+    toastAssertion,
+    toast,
+  }) => {
+    setTestIds('EPMRTC-8644', 'EPMRTC-8642');
+
+    const folderName = GeneratorUtil.randomString(7);
+    const duplicatedFolderName = `${folderName} (1)`;
+    const duplicatedFileName = ExpectedConstants.duplicatedFileName(
+      Attachment.flowerImageName,
+    );
+
+    await dialTest.step('Upload test files via API', async () => {
+      await fileApiHelper.putFile(Attachment.sunImageName, {
+        parentPath: folderName,
+      });
+      await fileApiHelper.putFile(Attachment.flowerImageName);
+    });
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8644: open folder context menu and select Duplicate option',
+      async () => {
+        const folderRow = fileManagerGrid.gridRowByNameCell(folderName);
+        const folderDotsMenu =
+          await fileManagerGrid.gridDotsMenuByNameCell(folderName);
+        await folderRow.hover();
+        await folderDotsMenu.click();
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+          apiHost: API.copyFilesHost,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8644: verify success toast is shown and duplicated folder appears in grid',
+      async () => {
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.itemCopiedToMyFilesMessage(duplicatedFolderName),
+        );
+        await toast.closeToast();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          duplicatedFolderName,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8644: navigate into duplicated folder and verify content is copied',
+      async () => {
+        await fileManagerGrid.openFolder(duplicatedFolderName);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await fileManager
+          .getFileManagerNavigationPanel()
+          .getBreadcrumb()
+          .itemByName(FileManagerToolbarTabs.MyFiles)
+          .click();
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8642: open file context menu and select Duplicate option',
+      async () => {
+        const fileRow = fileManagerGrid.gridRowByNameCell(
+          Attachment.flowerImageName,
+        );
+        const fileDotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.flowerImageName,
+        );
+        await fileRow.hover();
+        await fileDotsMenu.click();
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.duplicate, {
+          triggeredHttpMethod: 'POST',
+          apiHost: API.copyFilesHost,
+        });
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8642: verify success toast is shown and duplicated file appears in grid',
+      async () => {
+        await toastAssertion.assertToastIsVisible();
+        await toastAssertion.assertToastMessage(
+          ExpectedConstants.itemCopiedToMyFilesMessage(duplicatedFileName),
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          duplicatedFileName,
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager]: restricted symbols are replaced with symbol _ while upload',
+  async ({
+    setTestIds,
+    dialHomePage,
+    fileManagerPage,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
+  }) => {
+    setTestIds('EPMRTC-8300');
+
+    const expectedFilename = ExpectedConstants.replacedRestrictedCharsName(
+      Attachment.restrictedCharsFilename.toLowerCase(),
+    );
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded({ isGridVisible: false });
+    });
+
+    await dialTest.step(
+      'Upload file with restricted symbols via New > Upload Files',
+      async () => {
+        await dialHomePage.uploadData(
+          { path: Attachment.restrictedCharsFilename, dataType: 'upload' },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify file appears in grid with restricted symbols replaced by "_"',
+      async () => {
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          expectedFilename,
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager]: File icon is displayed for all types of files, also for files without extension',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGridAssertion,
+  }) => {
+    setTestIds('EPMRTC-8158');
+
+    const iconFiles = [
+      { name: Attachment.sunImageName, extension: 'jpg' },
+      { name: Attachment.fileToCopyName, extension: 'png' },
+      { name: Attachment.pdfName, extension: 'pdf' },
+      { name: Attachment.fileWithoutExtension, extension: null },
+    ];
+
+    await dialTest.step(
+      'Upload files with different extensions and file without extension via API',
+      async () => {
+        for (const file of iconFiles) {
+          await fileApiHelper.putFile(file.name);
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Open File Manager and verify each file has an icon with correct extension class',
+      async () => {
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
+        for (const file of iconFiles) {
+          await fileManagerGridAssertion.assertGridFileIconClass(
+            file.name,
+            file.extension
+              ? IconSelectors.fileTypeIcon(file.extension)
+              : IconSelectors.defaultFileIconClass,
+          );
+        }
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager]: Informational hint appears when adding a dot at the beginning of file name; disappears when removing.\n' +
+    '[File Manager]: Informational hint appears when adding a dot at the beginning of folder name; disappears when removing.\n' +
+    '[File Manager]: Rename: File icon is not changed while renaming.\n' +
+    '[File Manager]: Dot at the beginning of file name makes file hidden.\n' +
+    '[File Manager]: Dot at the beginning of folder name makes folder hidden',
+  async ({
+    page,
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridAssertion,
+    fileManagerGridRowDropdownMenu,
+    fileManagerToolbar,
+  }) => {
+    setTestIds(
+      'EPMRTC-8360',
+      'EPMRTC-8596',
+      'EPMRTC-8389',
+      'EPMRTC-8363',
+      'EPMRTC-8362',
+    );
+    const folderName = GeneratorUtil.randomString(7);
+    const renamedBaseName = GeneratorUtil.randomFilename('jpg');
+    const renamedFileName = `${renamedBaseName}.txt`;
+    const hiddenFileName = '.' + renamedFileName;
+    const hiddenFolderName = '.' + folderName;
+
+    await dialTest.step('Upload file and create folder via API', async () => {
+      await fileApiHelper.putStringAsFile(Attachment.textName, 'content');
+      await fileApiHelper.putFile(Attachment.sunImageName, {
+        parentPath: folderName,
+      });
+    });
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8360: Open rename for file, type dot at beginning and verify warning icon appears',
+      async () => {
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.textName,
+        );
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid
+          .getRenameInput()
+          .fillInInput('.' + Attachment.textName);
+        await fileManagerGridAssertion.assertInputWarning();
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8360: Remove dot from file name and verify warning icon disappears',
+      async () => {
+        await fileManagerGrid.getRenameInput().fillInInput(Attachment.textName);
+        await fileManagerGridAssertion.assertInputWarning('hidden');
+        await page.keyboard.press(keys.escape);
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8596: Open rename for folder, type dot at beginning and verify warning icon appears',
+      async () => {
+        const dotsMenu =
+          await fileManagerGrid.gridDotsMenuByNameCell(folderName);
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid.getRenameInput().fillInInput('.' + folderName);
+        await fileManagerGridAssertion.assertInputWarning();
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8596: Remove dot from folder name and verify warning icon disappears',
+      async () => {
+        await fileManagerGrid.getRenameInput().fillInInput(folderName);
+        await fileManagerGridAssertion.assertInputWarning('hidden');
+        await page.keyboard.press(keys.escape);
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8389: Verify txt icon before rename; open rename, verify icon unchanged while editing; save and verify icon unchanged after',
+      async () => {
+        await fileManagerGridAssertion.assertGridFileIconClass(
+          Attachment.textName,
+          IconSelectors.fileTypeIcon('txt'),
+        );
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.textName,
+        );
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid.getRenameInput().fillInInput(renamedBaseName);
+        await fileManagerGridAssertion.assertGridFileIconClassDuringRename(
+          IconSelectors.fileTypeIcon('txt'),
+        );
+        await fileManagerGrid.saveRename();
+        await fileManagerGridAssertion.assertGridFileIconClass(
+          renamedFileName,
+          IconSelectors.fileTypeIcon('txt'),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8363: Rename file with dot prefix and verify it disappears from grid',
+      async () => {
+        await fileManagerGrid.renameFile(renamedFileName, hiddenFileName);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileName,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8362: Rename folder with dot prefix and verify it disappears from grid',
+      async () => {
+        await fileManagerGrid.renameFile(folderName, hiddenFolderName);
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFolderName,
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8362, EPMRTC-8363: Turn on Hidden toggle and verify both hidden items become visible',
+      async () => {
+        await fileManagerToolbar.getToolbarSwitcher().switcher.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFolderName,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8362, EPMRTC-8363: Turn off Hidden toggle and verify both items are hidden again',
+      async () => {
+        await fileManagerToolbar.getToolbarSwitcher().switcher.click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFileName,
+          'hidden',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          hiddenFolderName,
+          'hidden',
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager]: each opening of Replace/Duplicate form default value is selected for one file\n' +
+    '[File Manager]: upload one file with the same name as exist. Select Replace\n' +
+    '[File Manager]: upload one file with the same name as exist. Select Duplicate',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridRowDropdownMenu,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
+    fileConflictConfirmationPopup,
+    fileConflictConfirmationPopupAssertion,
+    downloadAssertion,
+    dialHomePage,
+  }) => {
+    setTestIds('EPMRTC-8532', 'EPMRTC-8291', 'EPMRTC-8295');
+
+    const duplicatedFilename = ExpectedConstants.duplicatedFileName(
+      Attachment.sunImageName,
+    );
+
+    const radioDefaults: Array<['replace' | 'duplicate', CheckboxState]> = [
+      ['replace', CheckboxState.checked],
+      ['duplicate', CheckboxState.unchecked],
+    ];
+
+    await dialTest.step(
+      'Upload cloud.jpg content as sun.jpg name via API (different file to verify replace later)',
+      async () => {
+        await fileApiHelper.putFileWithCustomName(
+          Attachment.sunImageName,
+          Attachment.cloudImageName,
+        );
+      },
+    );
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8532: Upload conflict — verify header and Replace is default, Cancel',
+      async () => {
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConstants.replaceAttachmentConfirmationTitle,
+        );
+        for (const [value, state] of radioDefaults) {
+          await fileConflictConfirmationPopupAssertion.assertSingleFileRadioChecked(
+            value,
+            state,
+          );
+        }
+        await fileConflictConfirmationPopup.getCancelButton().click();
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8532 + EPMRTC-8291: Upload conflict — verify Replace is still default, confirm Replace and verify content',
+      async () => {
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConstants.replaceAttachmentConfirmationTitle,
+        );
+        for (const [value, state] of radioDefaults) {
+          await fileConflictConfirmationPopupAssertion.assertSingleFileRadioChecked(
+            value,
+            state,
+          );
+        }
+        await fileConflictConfirmationPopup.confirm({
+          triggeredHttpMethod: 'PUT',
+          triggeredHttpHost: API.fileHost(),
+        });
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          duplicatedFilename,
+          'hidden',
+        );
+        await fileManagerGrid
+          .gridRowByNameCell(Attachment.sunImageName)
+          .hover();
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.sunImageName,
+        );
+        await dotsMenu.click();
+        const downloadedData = await fileManagerPage.downloadData(() =>
+          fileManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
+            isHttpMethodTriggered: false,
+          }),
+        );
+        await downloadAssertion.assertJpgFileIsDownloaded(
+          downloadedData,
+          Attachment.sunImageName,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8532 + EPMRTC-8295: Upload conflict — verify Replace is still default, select Duplicate and verify duplicate content',
+      async () => {
+        await dialHomePage.uploadData(
+          { path: Attachment.sunImageName, dataType: 'upload' },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+        for (const [value, state] of radioDefaults) {
+          await fileConflictConfirmationPopupAssertion.assertSingleFileRadioChecked(
+            value,
+            state,
+          );
+        }
+        await fileConflictConfirmationPopup.selectSingleFileAction('duplicate');
+        await fileConflictConfirmationPopup.confirm({
+          triggeredHttpMethod: 'PUT',
+          triggeredHttpHost: API.fileHost(),
+        });
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          duplicatedFilename,
+          'visible',
+        );
+        await fileManagerGrid.gridRowByNameCell(duplicatedFilename).hover();
+        const dotsMenu =
+          await fileManagerGrid.gridDotsMenuByNameCell(duplicatedFilename);
+        await dotsMenu.click();
+        const downloadedData = await fileManagerPage.downloadData(() =>
+          fileManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
+            isHttpMethodTriggered: false,
+          }),
+        );
+        await downloadAssertion.assertJpgFileIsDownloaded(
+          downloadedData,
+          Attachment.sunImageName,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager]: upload group of files where one has with same name as exist. Select Cancel\n' +
+    '[File Manager]: each opening of Replace/Duplicate form default value is selected for group of files\n' +
+    '[File Manager]: upload group of files where one has with same name as exist. Select Replace',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridRowDropdownMenu,
+    fileManagerToolbar,
+    fileManagerGridAssertion,
+    fileConflictConfirmationPopup,
+    fileConflictConfirmationPopupAssertion,
+    downloadAssertion,
+    dialHomePage,
+  }) => {
+    setTestIds('EPMRTC-8465', 'EPMRTC-8531', 'EPMRTC-8292');
+
+    const radioDefaults: Array<['replace' | 'duplicate', CheckboxState]> = [
+      ['replace', CheckboxState.checked],
+      ['duplicate', CheckboxState.unchecked],
+    ];
+
+    await dialTest.step(
+      'Upload cloud.jpg content as sun.jpg name via API (different file to verify replace later)',
+      async () => {
+        await fileApiHelper.putFileWithCustomName(
+          Attachment.sunImageName,
+          Attachment.cloudImageName,
+        );
+      },
+    );
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8465: Upload group with one conflict, click Cancel — conflicting file stays, others are uploaded',
+      async () => {
+        await dialHomePage.uploadData(
+          {
+            path: [
+              Attachment.sunImageName,
+              Attachment.cloudImageName,
+              Attachment.flowerImageName,
+            ],
+            dataType: 'upload',
+          },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConstants.replaceAttachmentConfirmationTitle,
+        );
+        for (const [value, state] of radioDefaults) {
+          await fileConflictConfirmationPopupAssertion.assertSingleFileRadioChecked(
+            value,
+            state,
+          );
+        }
+        await fileConflictConfirmationPopup.getCancelButton().click();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.cloudImageName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.flowerImageName,
+          'visible',
+        );
+        await fileManagerToolbar.clearSelection();
+        await fileApiHelper.putFileWithCustomName(
+          Attachment.cloudImageName,
+          Attachment.sunImageName,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8531, EPMRTC-8292: Upload group with multiple conflicts — verify Replace all is default, confirm and verify files are replaced',
+      async () => {
+        await dialHomePage.uploadData(
+          {
+            path: [Attachment.sunImageName, Attachment.cloudImageName],
+            dataType: 'upload',
+          },
+          async () => {
+            await fileManagerToolbar.getNewButton().click();
+            await fileManagerToolbar
+              .getNewButtonDropdownMenu()
+              .selectItem(UploadMenuOptions.uploadFiles);
+          },
+        );
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConstants.replaceGroupAttachmentConfirmationTitle,
+        );
+        await fileConflictConfirmationPopupAssertion.assertMultipleFilesRadioChecked(
+          'replaceAll',
+          CheckboxState.checked,
+        );
+        await fileConflictConfirmationPopupAssertion.assertMultipleFilesRadioChecked(
+          'duplicateAll',
+          CheckboxState.unchecked,
+        );
+        await fileConflictConfirmationPopupAssertion.assertMultipleFilesRadioChecked(
+          'decideForEach',
+          CheckboxState.unchecked,
+        );
+        await fileConflictConfirmationPopup.confirm({
+          triggeredHttpMethod: 'PUT',
+          triggeredHttpHost: API.fileHost(),
+        });
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.sunImageName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.cloudImageName,
+          'visible',
+        );
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.flowerImageName,
+          'visible',
+        );
+        await fileManagerToolbar.clearSelection();
+        for (const file of [
+          Attachment.sunImageName,
+          Attachment.cloudImageName,
+        ]) {
+          await fileManagerGrid.gridRowByNameCell(file).hover();
+          const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(file);
+          await dotsMenu.click();
+          const downloaded = await fileManagerPage.downloadData(() =>
+            fileManagerGridRowDropdownMenu.selectItem(MenuOptions.download, {
+              isHttpMethodTriggered: false,
+            }),
+          );
+          await downloadAssertion.assertJpgFileIsDownloaded(downloaded, file);
+        }
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager][My Files]: Validation happen when add dot to the end of folder name\n' +
+    '[File Manager][My Files]: Validation happen when add dot to the end of file name for file without extension',
+  async ({
+    page,
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridAssertion,
+    fileManagerGridRowDropdownMenu,
+    tooltipPortalAssertion,
+  }) => {
+    setTestIds('EPMRTC-8184', 'EPMRTC-8183');
+
+    const folderName = GeneratorUtil.randomString(7);
+
+    await dialTest.step(
+      'Upload file without extension and create folder via API',
+      async () => {
+        await fileApiHelper.putStringAsFile(
+          Attachment.fileWithoutExtension,
+          'content',
+        );
+        await fileApiHelper.putFile(Attachment.sunImageName, {
+          parentPath: folderName,
+        });
+      },
+    );
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8184: Rename folder, add dot at the end, verify error icon appears and tooltip shows correct message',
+      async () => {
+        const dotsMenu =
+          await fileManagerGrid.gridDotsMenuByNameCell(folderName);
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid.getRenameInput().fillInInput(folderName + '.');
+        await fileManagerGridAssertion.assertInputError();
+        await fileManagerGrid.gridNameCellInput.alertIcon.hoverOver();
+        await tooltipPortalAssertion.assertTooltipContent(
+          ExpectedConstants.folderNameWithDotErrorMessage,
+        );
+        await page.keyboard.press(keys.escape);
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8183: Rename file without extension, add dot at the end, verify error icon appears and tooltip shows correct message',
+      async () => {
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.fileWithoutExtension,
+        );
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid
+          .getRenameInput()
+          .fillInInput(Attachment.fileWithoutExtension + '.');
+        await fileManagerGridAssertion.assertInputError();
+        await fileManagerGrid.gridNameCellInput.alertIcon.hoverOver();
+        await tooltipPortalAssertion.assertTooltipContent(
+          ExpectedConstants.fileNameWithDotErrorMessage,
+        );
+      },
+    );
+  },
+);
+
+dialTest(
+  '[File Manager]: Rename folder from grid\n' +
+    '[File Manager]: Rename folder from folder tree when selected the same folder\n' +
+    '[File Manager]: Rename folder from folder tree when selected another folder',
+  async ({
+    setTestIds,
+    fileApiHelper,
+    fileManagerPage,
+    fileManagerGrid,
+    fileManagerGridAssertion,
+    fileManagerGridRowDropdownMenu,
+    fileManagerFoldersTree,
+    fileManagerFoldersTreeAssertion,
+  }) => {
+    setTestIds('EPMRTC-8175', 'EPMRTC-8173', 'EPMRTC-8174');
+
+    const folderA = GeneratorUtil.randomString(7);
+    const folderARenamedName = GeneratorUtil.randomString(7);
+    const folderB = GeneratorUtil.randomString(7);
+    const folderBRenamedName = GeneratorUtil.randomString(7);
+    const folderC = GeneratorUtil.randomString(7);
+
+    await dialTest.step('Create three folders via API', async () => {
+      await fileApiHelper.putStringAsFile('.dial_folder', '', {
+        parentPath: folderA,
+      });
+      await fileApiHelper.putStringAsFile('.dial_folder', '', {
+        parentPath: folderB,
+      });
+      await fileApiHelper.putStringAsFile('.dial_folder', '', {
+        parentPath: folderC,
+      });
+    });
+
+    await dialTest.step('Open File Manager page', async () => {
+      await fileManagerPage.openFileManagerPage();
+      await fileManagerPage.waitForPageLoaded();
+    });
+
+    await dialTest.step(
+      'EPMRTC-8175: Rename folder from grid context menu and verify updated name in grid and folder tree',
+      async () => {
+        const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(folderA);
+        await dotsMenu.click({ force: true });
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerGrid.getRenameInput().fillInInput(folderARenamedName);
+        await fileManagerGrid.saveRename();
+        await fileManagerGridAssertion.assertGridRowByNameState(
+          folderARenamedName,
+          'visible',
+        );
+        await fileManagerFoldersTreeAssertion.assertFolderState(
+          'visible',
+          folderARenamedName,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8173: Select folderB in tree, rename it from tree context menu, verify updated name in grid and tree',
+      async () => {
+        await fileManagerFoldersTree.folderNameByPath(folderB).click();
+        await fileManagerFoldersTree.openFolderDotsMenu(folderB);
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerFoldersTree
+          .getRenameInput()
+          .fillInInput(folderBRenamedName);
+        await fileManagerGrid.saveRename();
+        await fileManagerFoldersTreeAssertion.assertFolderState(
+          'visible',
+          folderBRenamedName,
+        );
+      },
+    );
+
+    // TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/6483
+    await dialTest.step.skip(
+      'EPMRTC-8173: After rename it from tree context menu folder stays selected',
+      async () => {
+        await fileManagerFoldersTreeAssertion.assertFolderSelectedState(
+          true,
+          folderBRenamedName,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'EPMRTC-8174: Select folderC in tree, rename folderARenamedName from tree context menu, verify folderA renamed and folderC stays selected',
+      async () => {
+        await fileManagerFoldersTree.folderNameByPath(folderC).click();
+        const folderAFinalName = GeneratorUtil.randomString(7);
+        await fileManagerFoldersTree.openFolderDotsMenu(folderARenamedName);
+        await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
+        await fileManagerFoldersTree
+          .getRenameInput()
+          .fillInInput(folderAFinalName);
+        await fileManagerGrid.saveRename();
+        await fileManagerFoldersTreeAssertion.assertFolderState(
+          'visible',
+          folderAFinalName,
+        );
+        await fileManagerFoldersTreeAssertion.assertFolderSelectedState(
+          true,
+          folderC,
+        );
       },
     );
   },

@@ -1,21 +1,18 @@
-import { translate } from '@/src/utils/app/translation';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
-export const ORGANIZATION_SECTION_NAME = translate('Organization');
-export const APPROVE_REQUIRED_SECTION_NAME = translate('Approve required');
-export const SHARED_WITH_ME_SECTION_NAME = translate('Shared with me');
-export const ROOT_SECTION_NAME = translate('All files');
-
-export const PINNED_PROMPTS_SECTION_NAME = translate('Pinned prompts');
-export const RECENT_PROMPTS_SECTION_NAME = translate('Recent');
-
-export const PINNED_CONVERSATIONS_SECTION_NAME = translate(
-  'Pinned conversations',
-);
+export const ORGANIZATION_SECTION_NAME = ChatI18nKeys.Organization;
+export const APPROVE_REQUIRED_SECTION_NAME = ChatI18nKeys.ApproveRequired;
+export const SHARED_WITH_ME_SECTION_NAME = ChatI18nKeys.SharedWithMe;
+export const ROOT_SECTION_NAME = ChatI18nKeys.MyFiles;
+export const PINNED_PROMPTS_SECTION_NAME = ChatI18nKeys.PinnedPrompts;
+export const RECENT_PROMPTS_SECTION_NAME = ChatI18nKeys.Recent;
+export const PINNED_CONVERSATIONS_SECTION_NAME =
+  ChatI18nKeys.PinnedConversations;
 export const CONVERSATIONS_DATE_SECTIONS = {
-  today: translate('Today'),
-  yesterday: translate('Yesterday'),
-  lastSevenDays: translate('Last 7 days'),
-  lastThirtyDays: translate('Last 30 days'),
-  older: translate('Older'),
-  other: translate('Other'),
+  today: ChatI18nKeys.Today,
+  yesterday: ChatI18nKeys.Yesterday,
+  lastSevenDays: ChatI18nKeys.Last7Days,
+  lastThirtyDays: ChatI18nKeys.Last30Days,
+  older: ChatI18nKeys.Older,
+  other: ChatI18nKeys.Other,
 };

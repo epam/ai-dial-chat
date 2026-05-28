@@ -1,4 +1,5 @@
 import { Icon } from '@tabler/icons-react';
+import React from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -14,6 +15,7 @@ interface Props {
   disabled?: boolean;
   Icon?: Icon;
   className?: string;
+  size?: number;
   onClick?: (e: React.MouseEvent) => void;
 }
 
@@ -23,6 +25,7 @@ export const IconButton: React.FC<Props> = ({
   disabled,
   Icon,
   className,
+  size = 24,
   onClick,
 }) => {
   const { t } = useTranslation(Translation.Common);
@@ -33,7 +36,11 @@ export const IconButton: React.FC<Props> = ({
         appearance={ButtonAppearance.Ghost}
         onClick={onClick}
         disabled={disabled}
-        icon={Icon && <Icon className="size-6" strokeWidth="1.5" />}
+        icon={
+          Icon && (
+            <Icon size={size} width={size} height={size} strokeWidth="1.5" />
+          )
+        }
         data-qa={dataQa}
         className={className}
       />

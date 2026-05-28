@@ -1,9 +1,10 @@
-import { ReactNode, RefObject, useCallback, useEffect, useRef } from 'react';
+import { ReactNode, RefObject, useCallback, useRef } from 'react';
 
 import classNames from 'classnames';
 
 import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { useFilePaste } from '@/src/hooks/useFilePaste';
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 
 import { replaceStringRange } from '@/src/utils/app/common';
 
@@ -24,6 +25,7 @@ interface Props {
   isLastMessageError: boolean;
   showReplayControls: boolean;
   children?: ReactNode;
+  isPreview?: boolean;
   onSend: (message: Message) => void;
   onScrollDownClick: () => void;
   onStopConversation: () => void;
@@ -36,6 +38,7 @@ export const ChatInput = Inversify.register(
   ({
     isLastMessageError,
     textareaRef,
+    isPreview,
     showScrollDownButton,
     isShowInput,
     isWideLayout,
@@ -88,21 +91,11 @@ export const ChatInput = Inversify.register(
 
     useFilePaste(textareaRef, handlePaste);
 
-    useEffect(() => {
-      if (!inputRef) {
-        return;
-      }
+    const handleResize = useCallback(() => {
+      inputRef.current?.clientHeight && onResize(inputRef.current.clientHeight);
+    }, [onResize]);
 
-      const resizeObserver = new ResizeObserver(() => {
-        inputRef.current?.clientHeight &&
-          onResize(inputRef.current.clientHeight);
-      });
-      inputRef.current && resizeObserver.observe(inputRef.current);
-
-      return () => {
-        resizeObserver.disconnect();
-      };
-    }, [inputRef, onResize]);
+    useResizeObserver(inputRef.current, handleResize);
 
     return (
       <div
@@ -120,6 +113,7 @@ export const ChatInput = Inversify.register(
             showScrollDownButton={showScrollDownButton}
             onScrollDownClick={onScrollDownClick}
             onSend={onSend}
+            isPreview={isPreview}
             onStopConversation={onStopConversation}
             showReplayControls={showReplayControls}
           />

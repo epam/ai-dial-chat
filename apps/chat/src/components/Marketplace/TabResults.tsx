@@ -1,5 +1,5 @@
 import { IconBlocks, IconMessage2 } from '@tabler/icons-react';
-import { memo } from 'react';
+import React, { memo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -59,6 +59,7 @@ const NoMarketplaceEntitiesFound = ({
 export interface ResultsViewProps<T> {
   entities: T[];
   suggestedResults: T[];
+  featuredEntities: T[];
   selectedTab: MarketplaceTabs;
   areAllFiltersEmpty: boolean;
   selectedViewType: ViewTypes;
@@ -72,6 +73,7 @@ export const ResultsView = memo(
     selectedViewType,
     entities,
     suggestedResults,
+    featuredEntities,
     ...props
   }: ResultsViewProps<MarketplaceEntity>) => {
     const selectedEntitiesTab = useAppSelector(
@@ -88,7 +90,7 @@ export const ResultsView = memo(
         <MarketplaceEntitiesListComponent
           entities={entities}
           suggestedResults={suggestedResults}
-          separator="Suggested results from DIAL Marketplace"
+          featuredEntities={featuredEntities}
           {...props}
         />
       );

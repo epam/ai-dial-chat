@@ -11,13 +11,15 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { ScrollDownButton } from '@/src/components/Common/ScrollDownButton';
 
 import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 const ICON_SIZE = 24;
 const BUTTON_CLASS_NAME =
-  'border-0 px-0 text-primary underline underline-offset-2 transition-colors hover:text-primary';
+  'border-0 px-0 text-primary underline underline-offset-2 transition-colors hover:text-primary leading-5';
 const INTERNAL_CLICK_MARKER = '__INTERNAL_CLICK_ACTION_MARKER__';
 
 interface NotAllowedModelProps {
@@ -49,7 +51,7 @@ const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
 
   if (items.length === 1) {
     const [item] = items;
-    const messageWithMarker = t('chat.error.agent-not-available', {
+    const messageWithMarker = t(ChatI18nKeys.AgentNotAvailable, {
       click: INTERNAL_CLICK_MARKER,
       agentId: ` "${item.agentName}" `,
     });
@@ -64,16 +66,14 @@ const ErrorMessageContent: FC<ErrorMessageContentProps> = ({
           onClick={() => handleChangeModel(item.conversationId)}
           className={BUTTON_CLASS_NAME}
           data-qa="change-agent-btn"
-          label={t('change the agent')}
+          label={t(ChatI18nKeys.ChangeTheAgent)}
         />
         {afterText && <span>{afterText}</span>}
       </>
     );
   }
 
-  const messageParts = t('chat.error.agents-not-available').split(
-    '{{agentId}}',
-  );
+  const messageParts = t(ChatI18nKeys.AgentsNotAvailable).split('{{agentId}}');
   const [firstItem, secondItem] = items;
 
   return (

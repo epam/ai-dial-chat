@@ -43,6 +43,7 @@ export interface ToolsetModel extends ShareEntity {
     clientId?: string;
     clientSecret?: string;
     authorizationEndpoint?: string;
+    // TODO: remove redirectUri after toolset login is stable with new flow (redirectUri will be sent in login request)
     redirectUri?: string;
     scopesSupported?: string[];
     tokenEndpoint?: string;
@@ -59,6 +60,7 @@ export interface ToolsetAuthPayloadBase {
 
 interface ToolsetOAuthPayload extends ToolsetAuthPayloadBase {
   code: string;
+  redirectUri: string;
 }
 interface ToolsetApiKeyPayload extends ToolsetAuthPayloadBase {
   apiKey: string;
@@ -99,4 +101,5 @@ export type ToolsetContextMenuDisabledActions = Partial<{
   unpublish: boolean;
   delete: boolean;
   login: boolean;
+  connect: boolean;
 }>;

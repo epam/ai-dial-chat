@@ -6,6 +6,7 @@ import {
   DialAIEntityModel,
   ModelsMap,
 } from '@/src/types/models';
+import { ToolsetModel } from '@/src/types/toolsets';
 
 import { Conversation, Role } from '@epam/ai-dial-shared';
 
@@ -83,6 +84,7 @@ export const mergeFeatures = (
     configuration = false,
     tools = true,
     assistant_attachments_in_request: assistantAttachmentsInRequest = false,
+    mcp = false,
     ...otherFeatures
   } = features || {};
   return {
@@ -95,6 +97,27 @@ export const mergeFeatures = (
     configuration,
     tools,
     assistantAttachmentsInRequest,
+    mcp,
     ...otherFeatures,
   };
 };
+
+export const filterHiddenEntities = <
+  T extends DialAIEntityModel | ToolsetModel,
+>(
+  entities: T[],
+  hiddenEntityTag?: string,
+): T[] => {
+  return entities.filter(
+    (entity) => !entity.topics?.some((topic) => topic === hiddenEntityTag),
+  );
+};
+
+export const shouldShowHiddenEntities = (
+  hiddenEntityTag?: string,
+  showHidden?: boolean,
+) => !hiddenEntityTag || !hiddenEntityTag.length || showHidden;
+
+export const doesAgentSupportMcp = (
+  entity?: DialAIEntityModel,
+): entity is DialAIEntityModel => !!entity?.mcp || !!entity?.features?.mcp;

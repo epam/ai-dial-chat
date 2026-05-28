@@ -1,4 +1,4 @@
-import { FC, memo, useCallback, useEffect, useState } from 'react';
+import React, { FC, memo, useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -15,12 +15,15 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { SelectFolderModal } from '@/src/components/Files/SelectFolderModal';
 
-import { DialCloseButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface SourceFilesEditorProps {
   value?: string;
@@ -106,33 +109,35 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
         className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2 hover:border-primary"
         data-qa="change-source-files-path-container"
       >
-        <div className="flex w-full justify-between truncate whitespace-pre break-all">
+        <div className="flex w-full min-w-0 items-center justify-between">
           <Tooltip
             tooltip={getIdWithoutRootPathSegments(value ?? '')}
             contentClassName="break-all"
             triggerClassName={classNames(
-              'truncate whitespace-pre',
+              'block min-w-0 truncate whitespace-pre text-left',
               !value && 'text-secondary',
             )}
             hideTooltip={!value}
             dataQa="path"
           >
-            {value ? getIdWithoutRootPathSegments(value) : t('No folder')}
+            {value
+              ? getIdWithoutRootPathSegments(value)
+              : t(MarketplaceI18nKeys.NoFolder)}
           </Tooltip>
-          <Tooltip tooltip={tooltip}>
-            <div className="flex items-center gap-3">
+          <Tooltip tooltip={tooltip} triggerClassName="shrink-0">
+            <div className="flex shrink-0 items-center gap-3">
               <DialLinkButton
                 data-qa="change-button"
                 disabled={disabled}
                 onClick={handleToggleFileManager}
-                label={value ? t('Change') : t('Add')}
+                label={
+                  value
+                    ? t(MarketplaceI18nKeys.Change)
+                    : t(MarketplaceI18nKeys.AddMarketplace)
+                }
               />
               {value && (
-                <DialCloseButton
-                  onClose={handleDelete}
-                  disabled={disabled}
-                  size={18}
-                />
+                <CloseButtonSmall onClick={handleDelete} disabled={disabled} />
               )}
             </div>
           </Tooltip>
@@ -158,8 +163,8 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
           isOpen
           heading={t(confirmDialogValues.heading)}
           description={t(confirmDialogValues.description)}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
+          confirmLabel={t(MarketplaceI18nKeys.ConfirmMarketplace)}
+          cancelLabel={t(MarketplaceI18nKeys.CancelMarketplace)}
           onClose={handleConfirmDialogClose}
         />
       )}

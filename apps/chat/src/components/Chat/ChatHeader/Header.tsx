@@ -7,6 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useFloatingPanelTogglePadding } from '@/src/hooks/useFloatingPanelTogglePadding';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -35,10 +36,13 @@ import {
 } from '@/src/store/selectors';
 
 import { FALLBACK_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import { ChatI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ConversationContextMenu } from '@/src/components/Chat/ConversationContextMenu';
 import { PublicVersionSelector } from '@/src/components/Chat/Publish/PublicVersionSelector';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -46,11 +50,16 @@ import { HeaderModelTooltip } from './HeaderModelTooltip';
 import { HeaderSettingsTooltip } from './HeaderSettingsTooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
-import { Feature, PublishActions } from '@epam/ai-dial-shared';
+import {
+  ConversationResponseFormat,
+  Feature,
+  PublishActions,
+} from '@epam/ai-dial-shared';
 import {
   DialButton,
-  DialCloseButton,
+  DialGhostIconButton,
   DialLinkButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
 interface Props {
@@ -100,6 +109,7 @@ export const ChatHeader = Inversify.register(
     const enabledFeatures = useAppSelector(
       SettingsSelectors.selectEnabledFeatures,
     );
+    const floatingPanelTogglePadding = useFloatingPanelTogglePadding();
     const selectedConversations = useAppSelector(
       ConversationsSelectors.selectSelectedConversations,
     );
@@ -123,6 +133,9 @@ export const ChatHeader = Inversify.register(
       Feature.DisallowChangeAgent,
     );
     const isChatbarEnabled = enabledFeatures.has(Feature.ConversationsSection);
+    const isChatHeaderBorderEnabled = enabledFeatures.has(
+      Feature.ChatHeaderBorder,
+    );
 
     const [model, setModel] = useState<DialAIEntityModel | undefined>(() => {
       return modelsMap[conversation.model.id];
@@ -162,7 +175,6 @@ export const ChatHeader = Inversify.register(
       [dispatch],
     );
 
-    const iconSize = screenState === ScreenState.SM ? 20 : 18;
     const isConversationInvalid = isEntityNameOrPathInvalid(conversation);
 
     const disallowChangeAgent =
@@ -183,7 +195,9 @@ export const ChatHeader = Inversify.register(
         <div
           className={classNames(
             'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 px-3 py-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
+            isChatHeaderBorderEnabled && 'border-b border-secondary',
             isChatFullWidth && 'px-3 md:px-5 lg:flex-nowrap',
+            floatingPanelTogglePadding,
           )}
           data-qa="chat-header"
         >
@@ -211,26 +225,28 @@ export const ChatHeader = Inversify.register(
                 </span>
               </Tooltip>
               {publicVersionGroupId && (
-                <span className="h-[18px] border-l border-l-primary pl-2">
+                <span className="h-[18px] min-w-fit border-s border-s-primary ps-2">
                   {!isApproveRequiredEntitySelected ? (
                     <PublicVersionSelector
                       publicVersionGroupId={publicVersionGroupId}
                       onChangeSelectedVersion={handleChangeSelectedVersion}
                       selectedEntityId={conversation.id}
+                      btnClassNames="!text-primary"
                     />
                   ) : (
                     <p
                       className={classNames(isUnpublishing && 'text-error')}
                       data-qa="version"
                     >
-                      {t('v.')} {conversation.publicationInfo?.version}
+                      {t(ChatI18nKeys.VersionPrefix)}{' '}
+                      {conversation.publicationInfo?.version}
                     </p>
                   )}
                 </span>
               )}
             </>
           )}
-          <div className="flex lg:[&>*:first-child]:border-l lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
+          <div className="flex lg:[&>*:first-child]:border-s lg:[&>*:not(:first-child)]:ps-2 [&>*:not(:last-child)]:border-e [&>*:not(:last-child)]:pe-2 [&>*]:border-x-primary [&>*]:ps-2">
             {isShowChatInfo && (
               <>
                 <span className="flex items-center" data-qa="chat-model">
@@ -247,13 +263,14 @@ export const ChatHeader = Inversify.register(
                     }
                   >
                     <DialButton
+                      className="h-fit px-0"
                       disabled={isMessageStreaming || disallowChangeAgent}
                       onClick={() => onModelClick(conversation.id)}
                       iconBefore={
                         <ModelIcon
                           entityId={conversation.model.id}
                           entity={model}
-                          size={iconSize}
+                          size={screenState === ScreenState.SM ? 20 : 18}
                           isCustomTooltip
                         />
                       }
@@ -271,6 +288,10 @@ export const ChatHeader = Inversify.register(
                   tooltip={
                     <HeaderSettingsTooltip
                       disallowChangeSettings={disallowChangeSettings}
+                      responseFormat={
+                        conversation.responseFormat ??
+                        ConversationResponseFormat.Markdown
+                      }
                       hasSettings={!!doesModelHaveSettings(model)}
                       systemPrompt={
                         model?.type === EntityType.Model &&
@@ -288,12 +309,12 @@ export const ChatHeader = Inversify.register(
                     />
                   }
                 >
-                  <DialButton
-                    className="cursor-pointer text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                  <DialGhostIconButton
+                    size={ElementSize.Small}
                     onClick={() => setShowSettings(!isShowSettings)}
                     data-qa="conversation-setting"
                     disabled={isMessageStreaming || disallowChangeSettings}
-                    iconBefore={<IconSettings size={iconSize} />}
+                    icon={<IconSettings size={DEFAULT_ICON_SIZES.SMALL} />}
                   />
                 </Tooltip>
               )}
@@ -304,14 +325,14 @@ export const ChatHeader = Inversify.register(
                 !conversation.publishedWithMe && (
                   <Tooltip
                     isTriggerClickable={!isMessageStreaming}
-                    tooltip={t('Clear conversation messages')}
+                    tooltip={t(ChatI18nKeys.ClearConversationMessages)}
                   >
-                    <DialButton
-                      className="text-secondary hover:text-accent-primary"
+                    <DialGhostIconButton
+                      size={ElementSize.Small}
                       onClick={() => setIsClearConversationModalOpen(true)}
                       data-qa="clear-conversation"
                       disabled={isMessageStreaming}
-                      iconBefore={<IconEraser size={iconSize} />}
+                      icon={<IconEraser size={DEFAULT_ICON_SIZES.SMALL} />}
                     />
                   </Tooltip>
                 )}
@@ -336,8 +357,8 @@ export const ChatHeader = Inversify.register(
                   data-qa="cancel-playback-mode"
                   label={
                     screenState === ScreenState.SM
-                      ? t('Stop')
-                      : t('Stop playback')
+                      ? t(ChatI18nKeys.Stop)
+                      : t(ChatI18nKeys.StopPlayback)
                   }
                 />
               )}
@@ -345,13 +366,12 @@ export const ChatHeader = Inversify.register(
               {isCompareMode && selectedConversationIds.length > 1 && (
                 <Tooltip
                   isTriggerClickable
-                  tooltip={t('Delete conversation from compare mode')}
+                  tooltip={t(ChatI18nKeys.DeleteConversationFromCompare)}
                 >
-                  <DialCloseButton
-                    onClose={() => onUnselectConversation(conversation.id)}
+                  <CloseButtonSmall
+                    onClick={() => onUnselectConversation(conversation.id)}
                     disabled={isMessageStreaming}
                     data-qa="delete-from-compare"
-                    size={18}
                   />
                 </Tooltip>
               )}
@@ -360,10 +380,10 @@ export const ChatHeader = Inversify.register(
         </div>
         <ConfirmDialog
           isOpen={isClearConversationModalOpen}
-          heading={t('Confirm deleting all messages in the conversation')}
-          description={t('Are you sure that you want to delete all messages?')}
-          confirmLabel={t('Delete')}
-          cancelLabel={t('Cancel')}
+          heading={t(ChatI18nKeys.ConfirmDeletingAllMessages)}
+          description={t(ChatI18nKeys.AreYouSureDeleteAllMessages)}
+          confirmLabel={t(ChatI18nKeys.Delete)}
+          cancelLabel={t(ChatI18nKeys.Cancel)}
           onClose={(result) => {
             setIsClearConversationModalOpen(false);
             if (result) {

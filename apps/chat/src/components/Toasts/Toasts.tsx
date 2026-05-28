@@ -10,7 +10,9 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { ToastType } from '@/src/types/toasts';
 
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
+import { CloseButton } from '@/src/components/Common/CloseButtons';
 
 const getToastConfigByType = (toastType: ToastType) => {
   switch (toastType) {
@@ -57,6 +59,7 @@ export const Toasts = () => (
             borderWidth: '1px',
             maxWidth: isSmallScreen() ? '100%' : '730px',
             padding: '12px',
+            zIndex: 9999,
           }}
           toast={toast}
         >
@@ -64,21 +67,31 @@ export const Toasts = () => (
             <>
               <span>
                 {!toast.icon ? (
-                  <Icon size={24} className={iconClass} stroke={1.5} />
+                  <Icon
+                    size={DEFAULT_ICON_SIZES.STANDARD}
+                    className={iconClass}
+                    stroke={1.5}
+                  />
                 ) : (
                   toast.icon
                 )}
               </span>
-              <div
-                style={{ wordBreak: 'break-word' }}
-                className="mx-0.5 whitespace-pre-wrap text-sm leading-[21px] text-primary *:!whitespace-pre-wrap"
-              >
-                {message}
+              <div className="flex flex-col px-0.5">
+                <div
+                  style={{ wordBreak: 'break-word' }}
+                  className="whitespace-pre-wrap text-sm leading-[21px] text-primary *:!whitespace-pre-wrap [&>div]:justify-start"
+                >
+                  {message}
+                </div>
+                {'traceId' in toast && !!toast.traceId && (
+                  <div className="mx-[10px] text-sm text-secondary">
+                    Trace ID: {toast.traceId as string}
+                  </div>
+                )}
               </div>
-              <DialCloseButton
+              <CloseButton
                 className="mt-0.5 self-start"
-                onClose={() => hotToast.dismiss(toast.id)}
-                size={24}
+                onClick={() => hotToast.dismiss(toast.id)}
               />
             </>
           )}

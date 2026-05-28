@@ -24,6 +24,7 @@ export interface FilesState {
   newAddedFolderId?: string;
   lastRenamedParentFolder?: { oldId: string; newId: string };
   sharedFileIds: string[];
+  sharedFolderIds: string[];
 
   loadingFileMetadata: boolean;
   fileMetadata: UIKitDialFile | null;
@@ -42,4 +43,6 @@ export interface FilesState {
   searchListingMetadata: Record<string, SearchListingMetadata>;
 
   sharedWithMeFilesAndFoldersIds: string[];
+
+  localFileSizeCache: Record<string, number>;
 }

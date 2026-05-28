@@ -4,18 +4,32 @@ import {
   addTrailingSlashIfAbsent,
   combineEntities,
 } from '@/src/utils/app/common';
-import { constructPath } from '@/src/utils/app/file';
+import {
+  constructPath,
+  getFileWithType,
+  getNestedEmptyFolderIdsForChosenParent,
+  isPathUnderPrefix,
+  removeTrailingSlash,
+} from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
+  getEmptyLeafFolderIds,
   getFolderFromId,
-  getNextDefaultName,
+  getParentFolderIdsFromFolderId,
   getPartialAndFullyChosenFolders,
-  isFolderEmpty,
+  getSelectedEntitiesByFolderId,
+  getStorageSafeUniqueFolderName,
   renameFolderAndMoveEntity,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
-import { getFileRootId, isFolderId, isRootId } from '@/src/utils/app/id';
+import {
+  getEntityBucket,
+  getFileRootId,
+  isFolderId,
+  isMyEntity,
+  isRootId,
+} from '@/src/utils/app/id';
 
 import { FeatureType, MoveModel } from '@/src/types/common';
 import {
@@ -25,11 +39,11 @@ import {
 } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 
 import { FilesState } from './files.types';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialCopiedItem,
   DialDeletedItem,
@@ -43,7 +57,6 @@ import xor from 'lodash-es/xor';
 
 const invalidateSearchCacheForFile = (state: FilesState, fileId: string) => {
   const parts = fileId.split('/');
-
   for (let i = parts.length - 1; i >= 0; i--) {
     const folderPath = parts.slice(0, i).join('/');
     if (folderPath && state.searchListingMetadata[folderPath]) {
@@ -52,12 +65,23 @@ const invalidateSearchCacheForFile = (state: FilesState, fileId: string) => {
   }
 };
 
+const invalidateSearchCacheForFolder = (
+  state: FilesState,
+  folderId: string,
+) => {
+  if (state.searchListingMetadata[folderId]) {
+    delete state.searchListingMetadata[folderId];
+  }
+  invalidateSearchCacheForFile(state, folderId);
+};
+
 const initialState: FilesState = {
   initialized: false,
   files: [],
   folders: [],
   selectedFilesIds: [],
   sharedFileIds: [],
+  sharedFolderIds: [],
 
   chosenFileIds: [],
   chosenEmptyFoldersIds: [],
@@ -80,6 +104,7 @@ const initialState: FilesState = {
   isLoadingSearchListing: false,
   searchListingMetadata: {},
   sharedWithMeFilesAndFoldersIds: [],
+  localFileSizeCache: {},
 };
 
 export const filesSlice = createSlice({
@@ -89,6 +114,12 @@ export const filesSlice = createSlice({
     init: (state) => state,
     initFinish: (state) => {
       state.initialized = true;
+    },
+    initFileSizeCache: (
+      state,
+      { payload }: PayloadAction<Record<string, number>>,
+    ) => {
+      state.localFileSizeCache = payload;
     },
     uploadFile: (
       state,
@@ -105,6 +136,7 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.id);
+      const fileContent = getFileWithType(payload.fileContent);
       state.files.push({
         id: payload.id,
         name: payload.name,
@@ -113,9 +145,9 @@ export const filesSlice = createSlice({
 
         status: UploadStatus.LOADING,
         percent: 0,
-        fileContent: payload.fileContent,
+        fileContent,
         contentLength: payload.fileContent.size,
-        contentType: payload.fileContent.type,
+        contentType: fileContent.type,
       });
     },
     uploadFileCancel: (
@@ -170,7 +202,16 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.files = state.files.map((file) => {
-        return file.id === payload.apiResult.id ? payload.apiResult : file;
+        if (file.id === payload.apiResult.id) {
+          delete state.localFileSizeCache[file.id];
+          return {
+            ...payload.apiResult,
+            contentLength:
+              payload.apiResult.contentLength || file.contentLength,
+            contentType: payload.apiResult.contentType || file.contentType,
+          };
+        }
+        return file;
       });
       invalidateSearchCacheForFile(state, payload.apiResult.id);
     },
@@ -230,12 +271,24 @@ export const filesSlice = createSlice({
       );
 
       const mergedMappedFiles: DialFile[] = mappedFiles.map((newFile) => {
+        const cachedSize = state.localFileSizeCache[newFile.id];
+        if (newFile.contentLength) {
+          delete state.localFileSizeCache[newFile.id];
+        }
+
         const oldFile = prevById[newFile.id];
-        if (!oldFile) return newFile;
+        if (!oldFile) {
+          return {
+            ...newFile,
+            contentLength: newFile.contentLength || cachedSize,
+          };
+        }
 
         const merged: DialFile = {
           ...oldFile,
           ...newFile,
+          contentLength:
+            newFile.contentLength || oldFile.contentLength || cachedSize,
         };
 
         return merged;
@@ -249,14 +302,21 @@ export const filesSlice = createSlice({
       state.filesStatus = UploadStatus.LOADED;
 
       if (!isRootId(parentFolderId)) {
+        const parentFolder = getFolderFromId(
+          parentFolderId,
+          FeatureType.File,
+          UploadStatus.LOADED,
+        );
+
+        const parentFolderWithPermissions: FileFolderInterface = {
+          ...parentFolder,
+          ...(isMyEntity({ id: parentFolder.id }) && {
+            permissions: [SharePermission.WRITE, SharePermission.READ],
+          }),
+        };
+
         state.folders = combineEntities(
-          [
-            getFolderFromId(
-              parentFolderId,
-              FeatureType.File,
-              UploadStatus.LOADED,
-            ),
-          ],
+          [parentFolderWithPermissions],
           state.folders,
         );
       }
@@ -324,6 +384,8 @@ export const filesSlice = createSlice({
       state,
       _action: PayloadAction<{
         folderPath?: string;
+        paths?: string[];
+        autoChoseFiles?: boolean;
       }>,
     ) => {
       state.isLoadingSearchListing = true;
@@ -335,15 +397,59 @@ export const filesSlice = createSlice({
       }: PayloadAction<{
         folderPath: string;
         files: DialFile[];
+        fromCache?: boolean;
       }>,
     ) => {
       state.isLoadingSearchListing = false;
 
-      const existingFileIds = new Set(state.files.map((f) => f.id));
-      const newFiles = payload.files.filter((f) => !existingFileIds.has(f.id));
+      if (payload.fromCache) {
+        return;
+      }
 
-      if (newFiles.length > 0) {
-        state.files = [...state.files, ...newFiles];
+      const folderPath = payload.folderPath;
+
+      if (payload.files.length > 0) {
+        const freshFileIds = new Set(
+          payload.files
+            .filter((f) => !f.folderId.endsWith(`/${CLIENTDATA_PATH}`))
+            .map((f) => f.id),
+        );
+        const outsideFiles = state.files.filter(
+          (f) =>
+            f.folderId !== folderPath &&
+            !f.folderId.startsWith(`${folderPath}/`),
+        );
+        const inScopeFiles = payload.files.filter(
+          (f) => !f.folderId.endsWith(`/${CLIENTDATA_PATH}`),
+        );
+        const uploadingInScope = state.files.filter(
+          (f) =>
+            !f.serverSynced &&
+            (f.folderId === folderPath ||
+              f.folderId.startsWith(`${folderPath}/`)) &&
+            !freshFileIds.has(f.id),
+        );
+
+        state.files = [...outsideFiles, ...inScopeFiles, ...uploadingInScope];
+
+        const existingFolderIds = new Set(state.folders.map((f) => f.id));
+        const newFolders = uniq(
+          inScopeFiles.flatMap((f) =>
+            getParentFolderIdsFromFolderId(f.folderId),
+          ),
+        )
+          .filter((id) => !existingFolderIds.has(id))
+          .map((id) => getFolderFromId(id, FeatureType.File));
+
+        if (newFolders.length > 0) {
+          state.folders = [...state.folders, ...newFolders];
+        }
+      } else {
+        state.files = state.files.filter(
+          (f) =>
+            f.folderId !== folderPath &&
+            !f.folderId.startsWith(`${folderPath}/`),
+        );
       }
 
       state.searchListingMetadata[payload.folderPath] = {
@@ -352,7 +458,10 @@ export const filesSlice = createSlice({
         folderPath: payload.folderPath,
       };
     },
-    getFullListingFail: (state) => {
+    getFullListingFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.isLoadingSearchListing = false;
     },
     invalidateSearchCache: (
@@ -406,8 +515,15 @@ export const filesSlice = createSlice({
           f.temporary,
       );
 
+      const sharedFolderIdSet = new Set(state.sharedFolderIds);
+      const foldersWithSharedFlag = payload.folders.map((folder) =>
+        sharedFolderIdSet.has(folder.id)
+          ? { ...folder, isShared: true }
+          : folder,
+      );
+
       state.folders = combineEntities(
-        payload.folders,
+        foldersWithSharedFlag,
         filteredState.map((f) =>
           f.id === payload.folderId ? { ...f, status: UploadStatus.LOADED } : f,
         ),
@@ -442,6 +558,7 @@ export const filesSlice = createSlice({
       state,
       _action: PayloadAction<{
         id?: string;
+        skipShareListingsRefresh?: boolean;
       }>,
     ) => state,
     addNewFolder: (
@@ -453,16 +570,13 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       const rootFileId = getFileRootId();
-      const folderName = getNextDefaultName(
-        DEFAULT_FOLDER_NAME,
-        state.folders.filter(
-          (folder) => folder.folderId === (payload.parentId ?? rootFileId), // only folders on the same level
-        ),
-        0,
-        false,
-        false,
-        payload.parentId,
-      );
+      const parentId = payload.parentId ?? rootFileId;
+      const folderName = getStorageSafeUniqueFolderName({
+        folderId: parentId,
+        existingNames: state.folders
+          .filter((folder) => folder.folderId === parentId) // only folders on the same level
+          .map((folder) => folder.name),
+      });
 
       const newAddedFolderId = constructPath(payload.parentId, folderName);
       state.folders.push(
@@ -486,7 +600,10 @@ export const filesSlice = createSlice({
       state,
       { payload }: PayloadAction<{ folders: FolderInterface[] }>,
     ) => {
-      state.folders = combineEntities(state.folders, payload.folders);
+      const existingIds = new Set(state.folders.map((f) => f.id));
+      const newFolders = payload.folders.filter((f) => !existingIds.has(f.id));
+      if (newFolders.length === 0) return;
+      state.folders = state.folders.concat(newFolders);
     },
     renameFolder: (
       state,
@@ -520,6 +637,8 @@ export const filesSlice = createSlice({
         newId: newFolderId,
         oldId: targetFolder.id,
       };
+      invalidateSearchCacheForFolder(state, payload.folderId);
+      invalidateSearchCacheForFolder(state, newFolderId);
     },
     renameFolderSuccess: (
       state,
@@ -623,6 +742,26 @@ export const filesSlice = createSlice({
         return folder;
       });
     },
+    updateFolder: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        folderId: string;
+        values: Partial<FolderInterface>;
+      }>,
+    ) => {
+      state.folders = state.folders.map((folder) => {
+        if (folder.id === payload.folderId) {
+          return {
+            ...folder,
+            ...payload.values,
+          };
+        }
+
+        return folder;
+      });
+    },
     setSharedFileIds: (
       state,
       {
@@ -633,16 +772,60 @@ export const filesSlice = createSlice({
     ) => {
       state.sharedFileIds = payload.ids;
     },
+    setSharedFolderIds: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        ids: string[];
+      }>,
+    ) => {
+      const prevSet = new Set(state.sharedFolderIds);
+      const nextSet = new Set(payload.ids);
+      state.sharedFolderIds = payload.ids;
+      state.folders = state.folders.map((folder) => {
+        if (nextSet.has(folder.id)) {
+          return { ...folder, isShared: true };
+        }
+        if (prevSet.has(folder.id) && !nextSet.has(folder.id)) {
+          return { ...folder, isShared: false };
+        }
+        return folder;
+      });
+    },
     addSharedFiles: (
       state,
-      { payload }: PayloadAction<{ files: DialFile[]; reviewFolder?: string }>,
+      {
+        payload,
+      }: PayloadAction<{ files: DialFile[]; reviewBuckets?: string[] }>,
     ) => {
-      //remove sharedWithMe files from state except those on review to have the latest state from API
-      const filteredFiles = state.files.filter(
-        (file) =>
-          !file.sharedWithMe ||
-          (payload.reviewFolder && file.id.startsWith(payload.reviewFolder)),
-      );
+      const sharedWithMeRootIds = new Set(state.sharedWithMeFilesAndFoldersIds);
+      const belongsToActiveSharedRoot = (file: DialFile) =>
+        Array.from(sharedWithMeRootIds).some((rootId) =>
+          file.id.startsWith(`${rootId}/`),
+        );
+
+      // Keep nested shared descendants under active roots, but always replace root shared items
+      // with latest API payload to avoid stale root-level data after tab switches.
+      const filteredFiles = state.files.filter((file) => {
+        if (!file.sharedWithMe) {
+          return true;
+        }
+
+        if (
+          payload.reviewBuckets?.some(
+            (reviewBucket) => getEntityBucket(file) === reviewBucket,
+          )
+        ) {
+          return true;
+        }
+
+        if (file.isRootSharedItem) {
+          return false;
+        }
+
+        return belongsToActiveSharedRoot(file);
+      });
       state.files = combineEntities(payload.files, filteredFiles);
     },
     resetAllFoldersStatus: (state) => {
@@ -653,8 +836,16 @@ export const filesSlice = createSlice({
       }));
     },
 
-    setChosenFiles: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
-      state.chosenFileIds = xor(state.chosenFileIds, payload.ids);
+    addChosenFiles: (state, { payload }: PayloadAction<{ ids: string[] }>) => {
+      state.chosenFileIds = uniq(state.chosenFileIds.concat(payload.ids));
+    },
+    removeChosenFiles: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.chosenFileIds = state.chosenFileIds.filter(
+        (id) => !payload.ids.includes(id),
+      );
     },
     resetChosenFiles: (state) => {
       state.chosenFileIds = [];
@@ -699,19 +890,17 @@ export const filesSlice = createSlice({
       state.chosenEmptyFoldersIds = emptyFolderIds;
       state.chosenFileIds = fileIdsToSelect;
     },
-    setChosenFolder: (
+
+    addChosenFolder: (
       state,
       { payload }: PayloadAction<{ folderId: string }>,
     ) => {
       const { folderId } = payload;
-      const emptyFolderIds = state.folders
-        .filter(({ id }) =>
-          isFolderEmpty({ id, folders: state.folders, entities: state.files }),
-        )
-        .map(({ id }) => id);
+      const emptyFolderIds = getEmptyLeafFolderIds(state.folders, state.files);
 
       if (emptyFolderIds.includes(folderId)) {
-        state.chosenEmptyFoldersIds = xor(state.chosenEmptyFoldersIds, [
+        state.chosenEmptyFoldersIds = uniq([
+          ...state.chosenEmptyFoldersIds,
           folderId,
         ]);
         return;
@@ -724,22 +913,61 @@ export const filesSlice = createSlice({
         emptyFolderIds,
         state.chosenEmptyFoldersIds,
       );
-      const newChosenFileIds = state.files
-        .filter(
-          (file) =>
-            file.id.startsWith(folderId) &&
-            (!partialChosenFolderIds.includes(folderId) ||
-              !state.chosenFileIds.includes(file.id)),
-        )
-        .map(({ id }) => id);
-      const newChosenEmptyFolderIds = emptyFolderIds
-        .filter((id) => `${id}/`.startsWith(folderId))
-        .map((id) => `${id}/`);
+      const affectedFileIds = getSelectedEntitiesByFolderId({
+        entities: state.files,
+        folderId,
+        partialChosenFolderIds,
+        chosenItemsIds: state.chosenFileIds,
+      });
+      const nestedEmptyFolderChosenIds = getNestedEmptyFolderIdsForChosenParent(
+        emptyFolderIds,
+        folderId,
+      );
 
-      state.chosenFileIds = xor(state.chosenFileIds, newChosenFileIds);
-      state.chosenEmptyFoldersIds = xor(
+      state.chosenFileIds = uniq([...state.chosenFileIds, ...affectedFileIds]);
+      state.chosenEmptyFoldersIds = uniq([
+        ...state.chosenEmptyFoldersIds,
+        ...nestedEmptyFolderChosenIds,
+      ]);
+    },
+    removeChosenFolder: (
+      state,
+      { payload }: PayloadAction<{ folderId: string }>,
+    ) => {
+      const { folderId } = payload;
+      const emptyFolderIds = getEmptyLeafFolderIds(state.folders, state.files);
+
+      if (emptyFolderIds.includes(folderId)) {
+        state.chosenEmptyFoldersIds = state.chosenEmptyFoldersIds.filter(
+          (id) => id !== folderId,
+        );
+        return;
+      }
+
+      const { partialChosenFolderIds } = getPartialAndFullyChosenFolders(
+        state.folders,
+        state.files,
+        state.chosenFileIds,
+        emptyFolderIds,
         state.chosenEmptyFoldersIds,
-        newChosenEmptyFolderIds,
+      );
+      const fileIdsToRemove = getSelectedEntitiesByFolderId({
+        entities: state.files,
+        folderId,
+        partialChosenFolderIds,
+        chosenItemsIds: state.chosenFileIds,
+      });
+
+      const emptyFolderIdsToRemove = getNestedEmptyFolderIdsForChosenParent(
+        emptyFolderIds,
+        folderId,
+      );
+
+      state.chosenFileIds = state.chosenFileIds.filter(
+        (id) => !fileIdsToRemove.includes(id),
+      );
+      state.chosenEmptyFoldersIds = state.chosenEmptyFoldersIds.filter(
+        (id) => id !== folderId && !emptyFolderIdsToRemove.includes(id),
       );
     },
 
@@ -754,7 +982,9 @@ export const filesSlice = createSlice({
     },
     copyFilesSuccess: (
       state,
-      _action: PayloadAction<{
+      {
+        payload,
+      }: PayloadAction<{
         result: FileOperationsResult<MoveModel>;
         request: {
           files: DialCopiedItem[];
@@ -764,6 +994,13 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.isCopyingFiles = false;
+      invalidateSearchCacheForFolder(state, payload.request.destinationFolder);
+      if (payload.request.sourceFolder) {
+        invalidateSearchCacheForFolder(state, payload.request.sourceFolder);
+      }
+      payload.result.results.forEach((file) => {
+        invalidateSearchCacheForFile(state, file.data.destinationUrl);
+      });
     },
     copyFilesFail: (
       state,
@@ -830,6 +1067,18 @@ export const filesSlice = createSlice({
       }>,
     ) => {
       state.isMovingFiles = false;
+      const movedFileSourceUrls = new Set(
+        payload.request.files
+          .filter((f) => f.nodeType !== DialFileNodeType.FOLDER)
+          .map((f) => f.sourceUrl),
+      );
+
+      if (movedFileSourceUrls.size > 0) {
+        state.files = state.files.filter((f) => !movedFileSourceUrls.has(f.id));
+      }
+
+      invalidateSearchCacheForFolder(state, payload.request.sourceFolder);
+      invalidateSearchCacheForFolder(state, payload.request.destinationFolder);
       payload.result.results.forEach((file) => {
         invalidateSearchCacheForFile(state, file.data.sourceUrl);
         invalidateSearchCacheForFile(state, file.data.destinationUrl);
@@ -881,6 +1130,72 @@ export const filesSlice = createSlice({
       payload.deletedItems.forEach((file) => {
         invalidateSearchCacheForFile(state, file.sourceUrl);
       });
+
+      const succeededFileIds = new Set(
+        payload.result.results.map((r) => removeTrailingSlash(r.data)),
+      );
+      const deletedFolderPrefixes = payload.request.files
+        .filter((item) => item.nodeType === DialFileNodeType.FOLDER)
+        .map((item) => removeTrailingSlash(item.sourceUrl));
+      const fullBatchSuccess = payload.result.failed === 0;
+
+      const isUnderDeletedFolderTree = (entityId: string) => {
+        const id = removeTrailingSlash(entityId);
+        if (!fullBatchSuccess || deletedFolderPrefixes.length === 0) {
+          return false;
+        }
+        return deletedFolderPrefixes.some((p) => isPathUnderPrefix(id, p));
+      };
+
+      const fileShouldBeRemoved = (file: DialFile) => {
+        const id = removeTrailingSlash(file.id);
+        const folderId = removeTrailingSlash(file.folderId);
+        if (succeededFileIds.has(id)) {
+          return true;
+        }
+        if (!fullBatchSuccess) {
+          return false;
+        }
+        return deletedFolderPrefixes.some(
+          (p) => isPathUnderPrefix(id, p) || isPathUnderPrefix(folderId, p),
+        );
+      };
+
+      const folderShouldBeRemoved = (folder: FileFolderInterface) => {
+        const id = removeTrailingSlash(folder.id);
+        const parentFolderId = removeTrailingSlash(folder.folderId);
+        if (succeededFileIds.has(id)) {
+          return true;
+        }
+        if (!fullBatchSuccess) {
+          return false;
+        }
+        return deletedFolderPrefixes.some(
+          (p) =>
+            isPathUnderPrefix(id, p) || isPathUnderPrefix(parentFolderId, p),
+        );
+      };
+
+      state.files = state.files.filter((f) => !fileShouldBeRemoved(f));
+      state.folders = state.folders.filter((f) => !folderShouldBeRemoved(f));
+
+      const selectionIdRemoved = (rawId: string) => {
+        const id = removeTrailingSlash(rawId);
+        if (succeededFileIds.has(id)) {
+          return true;
+        }
+        return isUnderDeletedFolderTree(id);
+      };
+
+      state.chosenFileIds = state.chosenFileIds.filter(
+        (id) => !selectionIdRemoved(id),
+      );
+      state.chosenEmptyFoldersIds = state.chosenEmptyFoldersIds.filter(
+        (id) => !selectionIdRemoved(id),
+      );
+      state.selectedFilesIds = state.selectedFilesIds.filter(
+        (id) => !selectionIdRemoved(id),
+      );
     },
     deleteFilesFail: (
       state,
@@ -942,6 +1257,7 @@ export const filesSlice = createSlice({
         );
         state.files = state.files.filter((f) => f.id !== id);
 
+        const fileContent = getFileWithType(file.fileContent);
         state.files.push({
           id,
           name: file.name,
@@ -949,10 +1265,14 @@ export const filesSlice = createSlice({
           folderId: constructPath(getFileRootId(bucket), relativePath),
           status: UploadStatus.LOADING,
           percent: 0,
-          fileContent: file.fileContent,
+          fileContent,
           contentLength: file.fileContent.size,
-          contentType: file.fileContent.type,
+          contentType: fileContent.type,
         });
+
+        if (file.fileContent.size) {
+          state.localFileSizeCache[id] = file.fileContent.size;
+        }
       });
     },
 

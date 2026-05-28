@@ -11,13 +11,27 @@ import {
   MockedChatApiResponseBodies,
   UploadMenuOptions,
 } from '@/src/testData';
-import { Cursors, ThemeColorAttributes } from '@/src/ui/domData';
+import {
+  AttributeValues,
+  Cursors,
+  ThemeColorAttributes,
+} from '@/src/ui/domData';
+import { Button } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
+import { Locator } from '@playwright/test';
 
 let modelsWithAttachments: DialAIEntityModel[];
+let randomModelWithImageAttachment: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
+  randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
+    modelsWithAttachments.filter(
+      (m) =>
+        m.inputAttachmentTypes?.length == 1 &&
+        m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+    ),
+  );
 });
 
 dialTest(
@@ -161,15 +175,12 @@ dialTest(
     chatHeaderAssertion,
   }) => {
     setTestIds('EPMRTC-1640');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
     const request = 'Describe the picture';
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName);
       await localStorageManager.setRecentModelsIdsAndUseLastModel(
-        randomModelWithAttachment,
+        randomModelWithImageAttachment,
       );
       await localStorageManager.setShowSideBarPanels();
     });
@@ -216,7 +227,7 @@ dialTest(
     dialHomePage,
     setTestIds,
     sendMessage,
-    tooltip,
+    tooltipPortalAssertion,
     uploadFromDeviceModal,
     attachmentDropdownMenu,
     sendMessageInputAttachments,
@@ -224,15 +235,12 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-1767', 'EPMRTC-1904');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
 
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device',
       async () => {
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
@@ -268,8 +276,7 @@ dialTest(
           'disabled',
         );
         await sendMessage.sendMessageButton.hoverOver();
-        await baseAssertion.assertElementText(
-          tooltip,
+        await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.sendMessageAttachmentLoadingTooltip,
         );
       },
@@ -281,7 +288,9 @@ dialTest(
   'Long attachment name is cut with three dots at the end in message box.\n' +
     'Attachment name is shown fully if to click on it. Text attachment.\n' +
     '[Manage attachments] Long file name is cut with three dots at the end.\n' +
+    `Expanded button is not available when 'Image' is collapsed.\n` +
     'Attached picture is shown if to click on the button.\n' +
+    'Expand and collapsed a picture at the full screen.\n' +
     'Download attached file from user message',
   async ({
     dialHomePage,
@@ -305,18 +314,23 @@ dialTest(
       'EPMRTC-1896',
       'EPMRTC-1897',
       'EPMRTC-3297',
+      'EPMRTC-8414',
       'EPMRTC-1898',
+      'EPMRTC-8310',
       'EPMRTC-1899',
     );
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
     const request = 'Describe the picture';
+    const attachmentIndex = 1;
+    let maximizeButton: Button;
+    let minimizeButton: Button;
+    let expandedAttachment: Locator;
+    let attachmentTitle: Locator;
+    let downloadAttachmentIcon: Locator;
 
     await dialTest.step('Upload file to app', async () => {
       await fileApiHelper.putFile(Attachment.longImageName);
       await localStorageManager.setRecentModelsIdsAndUseLastModel(
-        randomModelWithAttachment,
+        randomModelWithImageAttachment,
       );
       await localStorageManager.setShowSideBarPanels();
     });
@@ -367,26 +381,129 @@ dialTest(
         );
         await chat.sendRequestWithButton(request);
         await chatMessagesAssertion.assertElementTextIsTruncated(
-          chatMessages.getChatMessageAttachment(1, Attachment.longImageName),
+          chatMessages.getChatMessageAttachment(
+            attachmentIndex,
+            Attachment.longImageName,
+          ),
         );
       },
     );
 
     await dialTest.step(
-      'Click on attachment name and verify full name is visible, attachment is expanded',
+      'Verify attachment is collapsed, no Maximize btn is available',
+      async () => {
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getCollapsedChatMessageAttachment(attachmentIndex),
+          'visible',
+          ExpectedMessages.attachmentIsCollapsed,
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getCollapsedAttachmentMaximizeButton(attachmentIndex),
+          'hidden',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on attachment name and verify full name is visible, attachment is expanded, Maximize btn is available',
       async () => {
         await page.unrouteAll();
         await chatMessages.expandChatMessageAttachment(
-          1,
+          attachmentIndex,
           Attachment.longImageName,
         );
         await chatMessagesAssertion.assertElementTextIsTruncated(
-          chatMessages.getChatMessageAttachment(1, Attachment.longImageName),
+          chatMessages.getChatMessageAttachment(
+            attachmentIndex,
+            Attachment.longImageName,
+          ),
+        );
+        expandedAttachment =
+          chatMessages.getOpenedChatMessageImageAttachment(attachmentIndex);
+        await chatMessagesAssertion.assertMessageImageAttachmentState(
+          expandedAttachment,
+          'visible',
+        );
+        maximizeButton =
+          chatMessages.getExpandedAttachmentMaximizeButton(attachmentIndex);
+        await chatMessagesAssertion.assertElementState(
+          maximizeButton,
+          'visible',
         );
         await chatMessagesAssertion.assertElementState(
-          chatMessages.getOpenedChatMessageAttachment(1),
+          chatMessages.getExpandedAttachmentMaximizeButtonIcon(maximizeButton),
           'visible',
-          ExpectedMessages.attachmentIsExpanded,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Maximize btn and verify attachment is opened on full screen, Minimize btn is available',
+      async () => {
+        await maximizeButton.click();
+        await chatMessagesAssertion.assertMessageImageAttachmentState(
+          expandedAttachment,
+          'visible',
+        );
+        await chatMessagesAssertion.assertFullScreenMessageImageAttachment(
+          attachmentIndex,
+        );
+
+        attachmentTitle = chatMessages.getChatMessageAttachmentTitle(
+          attachmentIndex,
+          Attachment.longImageName,
+        );
+        await chatMessagesAssertion.assertElementState(
+          attachmentTitle,
+          'visible',
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getChatMessageAttachmentIcon(attachmentIndex),
+          'visible',
+        );
+        await chatMessagesAssertion.assertElementClass(
+          attachmentTitle,
+          new RegExp(AttributeValues.textLeft),
+        );
+
+        minimizeButton =
+          chatMessages.getExpandedAttachmentMinimizeButton(attachmentIndex);
+        await chatMessagesAssertion.assertElementState(
+          minimizeButton,
+          'visible',
+        );
+        await chatMessagesAssertion.assertElementState(
+          chatMessages.getExpandedAttachmentMinimizeButtonIcon(minimizeButton),
+          'visible',
+        );
+        downloadAttachmentIcon =
+          chatMessages.getDownloadAttachmentIcon(attachmentIndex);
+        await chatMessagesAssertion.assertElementState(
+          downloadAttachmentIcon,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click on Minimize btn and verify attachment is opened within chat and stays expanded',
+      async () => {
+        await minimizeButton.click();
+        await chatMessagesAssertion.assertMessageImageAttachmentState(
+          expandedAttachment,
+          'visible',
+        );
+        await chatMessagesAssertion.assertElementClass(
+          expandedAttachment,
+          new RegExp(AttributeValues.aspectAuto),
+        );
+        await chatMessagesAssertion.assertElementState(
+          maximizeButton,
+          'visible',
+        );
+        await chatMessagesAssertion.assertElementState(
+          minimizeButton,
+          'hidden',
         );
       },
     );
@@ -395,16 +512,18 @@ dialTest(
       'Click on attachment name again and verify name is truncated, attachment is collapsed',
       async () => {
         await chatMessages.collapseChatMessageAttachment(
-          1,
+          attachmentIndex,
           Attachment.longImageName,
         );
         await chatMessagesAssertion.assertElementTextIsTruncated(
-          chatMessages.getChatMessageAttachment(1, Attachment.longImageName),
+          chatMessages.getChatMessageAttachment(
+            attachmentIndex,
+            Attachment.longImageName,
+          ),
         );
-        await chatMessagesAssertion.assertElementState(
-          chatMessages.getOpenedChatMessageAttachment(1),
+        await chatMessagesAssertion.assertMessageImageAttachmentState(
+          expandedAttachment,
           'hidden',
-          ExpectedMessages.attachmentIsCollapsed,
         );
       },
     );
@@ -413,7 +532,7 @@ dialTest(
       'Click on download attachment button and verify it is successfully downloaded',
       async () => {
         const downloadedData = await dialHomePage.downloadData(() =>
-          chatMessages.getDownloadAttachmentIcon(1).click(),
+          downloadAttachmentIcon.click(),
         );
         await downloadAssertion.assertJpgFileIsDownloaded(
           downloadedData,
@@ -438,15 +557,12 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-1905');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
 
     await dialTest.step(
       'Create new conversation based on model with input attachments and upload attachment from device in offline mode',
       async () => {
         await localStorageManager.setRecentModelsIdsAndUseLastModel(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
@@ -537,13 +653,6 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-3118', 'EPMRTC-3283');
-    const randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments.filter(
-        (m) =>
-          m.inputAttachmentTypes?.length == 1 &&
-          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
-      ),
-    );
     let conversation: Conversation;
 
     await dialTest.step('Upload txt file to app', async () => {
@@ -583,7 +692,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over txt file and verify not allowed cursor is shown, checkbox is disabled, dots menu is not available',
+      'Hover over txt file and verify not allowed cursor is shown, checkbox is disabled, dots menu is hidden',
       async () => {
         const attachmentLocator =
           await fileManagerModalGrid.goToGridRowByNameCell(Attachment.textName);
@@ -592,10 +701,8 @@ dialTest(
           fileManagerModalGrid.gridNameCellValue(Attachment.textName),
           Cursors.notAllowed,
         );
-        await fileManagerModalGridAssertion.assertElementActionabilityState(
-          await fileManagerModalGrid.gridCheckboxByNameCell(
-            Attachment.textName,
-          ),
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameActionabilityState(
+          Attachment.textName,
           'disabled',
         );
         // hover is cancelled here by the inner call of goTop()
@@ -608,7 +715,7 @@ dialTest(
           'hidden',
         );
         await fileManagerModalGridAssertion.assertElementActionabilityState(
-          fileManagerModalGrid.gridHeaderCheckbox,
+          fileManagerModalGrid.gridHeaderCheckbox.checkboxInput,
           'disabled',
         );
       },
@@ -644,7 +751,9 @@ dialTest(
         modelsWithAttachments.filter(
           (m) =>
             m.features?.folderAttachments == false &&
-            m.features.urlAttachments == false,
+            m.features.urlAttachments == false &&
+            m.inputAttachmentTypes?.length == 1 &&
+            m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
         ),
       );
     const folderName = GeneratorUtil.randomString(7);
@@ -698,7 +807,8 @@ dialTest(
       },
     );
 
-    await dialTest.step(
+    //TODO: enable when fixed https://github.com/epam/ai-dial-chat/issues/6109
+    await dialTest.step.skip(
       'Open "Attach files" modal from request input and verify folder content can be checked',
       async () => {
         await attachmentDropdownMenu.selectMenuOption(
@@ -710,13 +820,13 @@ dialTest(
         await folderRowLocator.hover();
         const folderCheckboxElement =
           await fileManagerModalGrid.gridCheckboxByNameCell(folderName);
-        await fileManagerModalGridAssertion.assertCheckboxState(
-          folderCheckboxElement,
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
+          folderName,
           CheckboxState.unchecked,
         );
         await folderCheckboxElement.click();
-        await fileManagerModalGridAssertion.assertCheckboxState(
-          folderCheckboxElement,
+        await fileManagerModalGridAssertion.assertGridCheckboxByNameState(
+          folderName,
           CheckboxState.checked,
         );
         await baseAssertion.assertElementActionabilityState(

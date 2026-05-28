@@ -9,7 +9,8 @@
       "executor": "@nx/next:build",
       "outputs": ["{options.outputPath}"],
       "options": {
-        "outputPath": "dist/apps/custom-viewer-test"
+        "outputPath": "dist/apps/custom-viewer-test",
+        "webpack": true
       },
       "configurations": {
         "production": {}
@@ -30,7 +31,8 @@
       "options": {
         "buildTarget": "custom-viewer-test:build:development",
         "dev": true,
-        "port": 5500
+        "port": 5500,
+        "webpack": true
       }
     },
     "serve:sandbox:production": {
@@ -39,7 +41,8 @@
       "options": {
         "dev": false,
         "buildTarget": "custom-viewer-test:build:production",
-        "port": 5500
+        "port": 5500,
+        "webpack": true
       }
     },
     "serve-chat": {
@@ -52,7 +55,8 @@
     "lint": {},
     "lint:fix": {},
     "format": {},
-    "format:fix": {}
+    "format:fix": {},
+    "unused-exports": {}
   },
   "tags": ["example"],
   "implicitDependencies": ["chat"]

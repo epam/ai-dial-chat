@@ -1,4 +1,4 @@
-import { MouseEvent, useCallback, useState } from 'react';
+import React, { MouseEvent, useCallback, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -8,12 +8,14 @@ import { ConfirmDialogValueTypes } from '@/src/types/common';
 import { FileSourceType } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
+import { SettingsI18nKeys } from '@/src/constants/i18n';
+
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { Label } from '@/src/components/Common/Forms/Label';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { FileManagerModal } from '@/src/components/Files/FileManagerModal';
 
-import { DialCloseButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
+import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface CustomLogoSelectProps {
   localLogo?: string;
@@ -134,29 +136,26 @@ export const CustomLogoSelect = ({
       >
         <div
           className={classNames(
-            'block w-full max-w-full truncate',
+            'block w-full max-w-full truncate text-start',
             localLogo ? 'text-primary' : 'text-secondary',
           )}
         >
-          {localLogo || customPlaceholder || t('No custom logo')}
+          {localLogo || customPlaceholder || t(SettingsI18nKeys.NoCustomLogo)}
         </div>
-        <Tooltip tooltip={tooltip}>
-          <div className="flex gap-3">
-            <DialLinkButton
-              onClick={onClickAddHandler}
-              disabled={disabled}
-              data-qa={localLogo ? 'change-icon' : 'add-icon'}
-              label={localLogo ? t('Change') : t('Add')}
-            />
-            {localLogo && (
-              <DialCloseButton
-                onClose={handleDeleteLogo}
-                disabled={disabled}
-                size={18}
-              />
-            )}
-          </div>
-        </Tooltip>
+        <div className="flex gap-3">
+          <DialLinkButton
+            tooltipProps={{ tooltip: tooltip }}
+            onClick={onClickAddHandler}
+            disabled={disabled}
+            data-qa={localLogo ? 'change-icon' : 'add-icon'}
+            label={
+              localLogo ? t(SettingsI18nKeys.Change) : t(SettingsI18nKeys.Add)
+            }
+          />
+          {localLogo && (
+            <CloseButtonSmall onClick={handleDeleteLogo} disabled={disabled} />
+          )}
+        </div>
       </div>
 
       {isSelectFilesDialogOpened && (
@@ -165,8 +164,10 @@ export const CustomLogoSelect = ({
           allowedTypes={allowedTypes ?? ['image/*']}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           onClose={handleOnClose}
-          headerLabel={fileManagerModalTitle || t('Select custom logo')}
-          customButtonLabel={t('Select file')}
+          headerLabel={
+            fileManagerModalTitle || t(SettingsI18nKeys.SelectCustomLogo)
+          }
+          customButtonLabel={t(SettingsI18nKeys.SelectFile)}
           forceShowSelectCheckBox
           sourceFilters={sourceFilters}
           warningMessage={warningMessage}
@@ -179,8 +180,8 @@ export const CustomLogoSelect = ({
           isOpen
           heading={t(confirmDialogValues.heading)}
           description={t(confirmDialogValues.description)}
-          confirmLabel={t('Confirm')}
-          cancelLabel={t('Cancel')}
+          confirmLabel={t(SettingsI18nKeys.ConfirmSettings)}
+          cancelLabel={t(SettingsI18nKeys.CancelSettings)}
           onClose={handleConfirmClose}
         />
       )}

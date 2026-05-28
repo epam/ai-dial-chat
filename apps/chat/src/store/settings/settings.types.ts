@@ -1,6 +1,9 @@
 import { OAuthProviderType } from 'next-auth/providers';
 
-import { CustomVisualizer } from '@/src/types/custom-visualizers';
+import {
+  ApplicationVisualizers,
+  CustomVisualizer,
+} from '@/src/types/custom-visualizers';
 import { StorageType } from '@/src/types/storage';
 
 import { Feature, FeatureData, UploadStatus } from '@epam/ai-dial-shared';
@@ -25,16 +28,21 @@ export interface SettingsState {
   preselectedConversationId?: string;
   preselectedAction?: string;
   customRenderers?: CustomVisualizer[];
+  applicationVisualizers?: ApplicationVisualizers;
   isSignInInSameWindow?: boolean;
   allowVisualizerSendMessages?: boolean;
   topics: string[];
+  hiddenEntityTag?: string;
   codeEditorPythonVersions: string[];
   quickAppsHost?: string;
   quickAppsModel?: string;
   quickAppsSchemaId?: string;
   externalAppsSchemaId?: string;
   dialApiHost?: string;
+  dialCoreExternalUrl?: string;
   defaultSystemPrompt?: string;
+  asrModelId: string | null;
+  audioTypesDefaultOrder: string[];
   providerId: string | null;
   initialDataStatus?: UploadStatus;
   defaultAuthProvider?: OAuthProviderType | null;
@@ -45,4 +53,6 @@ export interface SettingsState {
     borderlessTypes: string[];
     withoutTitleTypes: string[];
   };
+  stageContentLimit: number;
+  resourceMaxSegmentBytes: number;
 }

@@ -19,16 +19,18 @@ import {
   isSmallScreen,
   isTabletScreen,
   isTabletScreenOrMobile,
+  shouldShowConversationsSectionByDefault,
 } from '@/src/utils/app/mobile';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { ToastType } from '@/src/types/toasts';
 
-import { UIActions } from '@/src/store/actions';
+import { SettingsActions, UIActions } from '@/src/store/actions';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
+import { FilterTypes } from '@/src/constants/marketplace';
 import { FALLBACK_THEME_CONFIG } from '@/src/constants/themes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -43,11 +45,12 @@ const initEpic: AppEpic = (action$, state$) =>
     switchMap(() => {
       const state = state$.value;
       const enabledFeatures = SettingsSelectors.selectEnabledFeatures(state);
+      const isOverlay = SettingsSelectors.selectIsOverlay(state);
 
       return forkJoin({
         showChatbar: DataService.getShowChatbar(
           enabledFeatures.has(Feature.ShowConversationsSectionByDefault) &&
-            !isTabletScreenOrMobile(),
+            shouldShowConversationsSectionByDefault(isOverlay),
         ),
         showPromptbar: DataService.getShowPromptbar(
           enabledFeatures.has(Feature.ShowPromptsSectionByDefault) &&
@@ -59,12 +62,26 @@ const initEpic: AppEpic = (action$, state$) =>
         textOfClosedAnnouncement: DataService.getClosedAnnouncement(),
         chatbarWidth: DataService.getChatbarWidth(),
         promptbarWidth: DataService.getPromptbarWidth(),
+        marketplaceFilterbarWidth: DataService.getMarketplaceFilterbarWidth(),
         isChatFullWidth: DataService.getIsChatFullWidth(),
         customLogo: DataService.getCustomLogo(),
         chatCollapsedSections: DataService.getChatCollapsedSections(),
         promptCollapsedSections: DataService.getPromptCollapsedSections(),
         fileCollapsedSections: DataService.getFileCollapsedSections(),
         enterType: DataService.getEnterType(),
+        agentsFilterPanelState: DataService.getAgentsFilterPanelCollapseState({
+          [FilterTypes.ENTITY_TYPE]: true,
+          [FilterTypes.TOPICS]: true,
+          [FilterTypes.SOURCES]: true,
+        }),
+
+        toolsetFilterPanelState: DataService.getToolsetFilterPanelCollapseState(
+          {
+            [FilterTypes.ENTITY_TYPE]: false,
+            [FilterTypes.TOPICS]: true,
+            [FilterTypes.SOURCES]: true,
+          },
+        ),
       });
     }),
     switchMap(
@@ -75,12 +92,15 @@ const initEpic: AppEpic = (action$, state$) =>
         textOfClosedAnnouncement,
         chatbarWidth,
         promptbarWidth,
+        marketplaceFilterbarWidth,
         isChatFullWidth,
         customLogo,
         chatCollapsedSections,
         promptCollapsedSections,
         fileCollapsedSections,
         enterType,
+        agentsFilterPanelState,
+        toolsetFilterPanelState,
       }) => {
         const actions: AppAction[] = [UIActions.initTheme()];
 
@@ -92,6 +112,12 @@ const initEpic: AppEpic = (action$, state$) =>
         actions.push(UIActions.setShowChatbar(showChatbar));
         actions.push(UIActions.setShowPromptbar(showPromptbar));
         actions.push(
+          UIActions.setAgentsFilterPanelCollapseState(agentsFilterPanelState),
+        );
+        actions.push(
+          UIActions.setToolsetFilterPanelCollapseState(toolsetFilterPanelState),
+        );
+        actions.push(
           UIActions.setShowMarketplaceFilterbar(showMarketplaceFilterbar),
         );
         actions.push(
@@ -101,6 +127,9 @@ const initEpic: AppEpic = (action$, state$) =>
         );
         actions.push(UIActions.setChatbarWidth(chatbarWidth));
         actions.push(UIActions.setPromptbarWidth(promptbarWidth));
+        actions.push(
+          UIActions.setMarketplaceFilterbarWidth(marketplaceFilterbarWidth),
+        );
         actions.push(UIActions.setIsChatFullWidth(isChatFullWidth));
         actions.push(
           UIActions.setCollapsedSections({
@@ -127,6 +156,23 @@ const initEpic: AppEpic = (action$, state$) =>
     ),
   );
 
+/** Overlay sends enabledFeatures after UI init; apply sidebar default when the feature arrives. */
+const applyShowConversationsSectionByDefaultEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(SettingsActions.setEnabledFeatures.type),
+    filter(
+      ({ payload }) =>
+        payload.includes(Feature.ShowConversationsSectionByDefault) &&
+        SettingsSelectors.selectIsOverlay(state$.value),
+    ),
+    filter(() =>
+      shouldShowConversationsSectionByDefault(
+        SettingsSelectors.selectIsOverlay(state$.value),
+      ),
+    ),
+    switchMap(() => of(UIActions.setShowChatbar(true))),
+  );
+
 const initThemeEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(UIActions.initTheme.type),
@@ -148,6 +194,27 @@ const initThemeEpic: AppEpic = (action$, state$) =>
           : of(FALLBACK_THEME_CONFIG),
       }).pipe(
         switchMap(({ savedTheme, themesConfig }) => {
+          const isOverlay = SettingsSelectors.selectIsOverlay(state);
+
+          // In overlay, host theme is applied after listing loads (applyOverlayThemeEpic).
+          // Only restore a theme already saved in local storage (repeat visits).
+          if (isOverlay) {
+            const actions: Observable<AppAction>[] = [
+              of(UIActions.setAvailableThemes(themesConfig)),
+            ];
+
+            if (
+              savedTheme &&
+              themesConfig.themes.some(
+                (availableTheme) => availableTheme.id === savedTheme,
+              )
+            ) {
+              actions.unshift(of(UIActions.setTheme(savedTheme)));
+            }
+
+            return concat(...actions);
+          }
+
           const actions: Observable<AppAction>[] = [];
           // if no saved theme, take the first available theme (dark) - new users
           const theme = savedTheme || themesConfig.themes[0]?.id;
@@ -182,8 +249,7 @@ const saveThemeEpic: AppEpic = (action$) =>
     ofType(UIActions.setTheme.type),
     tap(({ payload }) => {
       // Needed for fast work with theme initial load
-      document.documentElement.className =
-        `${payload} ${payload.startsWith('dark') ? 'dark' : 'light'}` || '';
+      document.documentElement.className = `${payload} ${payload.startsWith('dark') ? 'dark' : 'light'}`;
     }),
     switchMap(({ payload }) => DataService.setTheme(payload)),
     ignoreElements(),
@@ -223,7 +289,7 @@ const showErrorToastEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(UIActions.showErrorToast.type),
     switchMap(({ payload }) =>
-      of(UIActions.showToast({ message: payload, type: ToastType.Error })),
+      of(UIActions.showToast({ ...payload, type: ToastType.Error })),
     ),
   );
 
@@ -287,10 +353,11 @@ const showToastEpic: AppEpic = (action$) =>
         message = responseMessage;
       }
 
-      const toastConfig: ToastOptions = {
+      const toastConfig: ToastOptions & { traceId?: string } = {
         id: 'toast',
         className: 'chat-toast',
         icon: payload.icon,
+        traceId: payload.traceId,
       };
 
       let content: Renderable = message;
@@ -344,10 +411,37 @@ const savePromptbarWidthEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const saveMarketplaceFilterbarWidthEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setMarketplaceFilterbarWidth.type),
+    switchMap(({ payload }) =>
+      DataService.setMarketplaceFilterbarWidth(payload),
+    ),
+    ignoreElements(),
+  );
+
 const saveIsChatFullWidthEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(UIActions.setIsChatFullWidth.type),
     switchMap(({ payload }) => DataService.setIsChatFullWidth(payload)),
+    ignoreElements(),
+  );
+
+const setAgentsFilterPanelCollapseEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setAgentsFilterPanelCollapseState.type),
+    switchMap(({ payload }) =>
+      DataService.setAgentsFilterPanelCollapseState(payload),
+    ),
+    ignoreElements(),
+  );
+
+const setToolsetFilterPanelCollapseEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setToolsetFilterPanelCollapseState.type),
+    switchMap(({ payload }) =>
+      DataService.setToolsetFilterPanelCollapseState(payload),
+    ),
     ignoreElements(),
   );
 
@@ -428,6 +522,7 @@ const setCollapsedSectionsEpic: AppEpic = (action$) =>
 
 export const UIEpics = combineEpics(
   initEpic,
+  applyShowConversationsSectionByDefaultEpic,
   initThemeEpic,
   saveThemeEpic,
   saveEnterTypeEpic,
@@ -443,7 +538,10 @@ export const UIEpics = combineEpics(
   closeAnnouncementEpic,
   saveChatbarWidthEpic,
   savePromptbarWidthEpic,
+  saveMarketplaceFilterbarWidthEpic,
   saveIsChatFullWidthEpic,
+  setAgentsFilterPanelCollapseEpic,
+  setToolsetFilterPanelCollapseEpic,
   setCustomLogoEpic,
   setCollapsedSectionsEpic,
   deleteCustomLogoEpic,

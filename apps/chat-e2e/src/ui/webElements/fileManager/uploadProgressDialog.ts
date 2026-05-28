@@ -1,5 +1,8 @@
 import { Tags } from '@/src/ui/domData';
-import { UploadProgressDialogSelectors } from '@/src/ui/selectors';
+import {
+  EntityIconSelectors,
+  UploadProgressDialogSelectors,
+} from '@/src/ui/selectors';
 import { Popup } from '@/src/ui/webElements/common/popup';
 import { Page } from '@playwright/test';
 
@@ -24,7 +27,7 @@ export class UploadProgressDialog extends Popup {
    * when filenames are unknown or for verifying icon presence
    */
   public fileTypeIcon = this.content
-    .getChildElementBySelector(UploadProgressDialogSelectors.fileTypeIcon)
+    .getChildElementBySelector(EntityIconSelectors.fileIcon)
     .getChildElementBySelector(Tags.svg);
 
   /**

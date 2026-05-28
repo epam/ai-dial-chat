@@ -1,4 +1,3 @@
-import { Routes } from '@/chat/constants/routes';
 import { ToolsetCredentialsLevel } from '@/chat/types/toolsets';
 import dialTest from '@/src/core/dialFixtures';
 import {
@@ -7,7 +6,6 @@ import {
   EntityEditorToolsetTypes,
   ExpectedConstants,
   OAuthOptions,
-  OAuthQueryParams,
   SignInButtonTitles,
 } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
@@ -15,6 +13,7 @@ import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { Toolset, ToolsetAuthTypes } from '@epam/ai-dial-shared';
+import { Page } from '@playwright/test';
 
 dialTest(
   'Create toolset with OAuth (without configuration).\n' +
@@ -38,6 +37,7 @@ dialTest(
     confirmationDialogAssertion,
     toolsetApiHelper,
     itemApiHelper,
+    toolsetApiAuthenticationAssertion,
     page,
   }) => {
     setTestIds('EPMRTC-6969', 'EPMRTC-7107', 'EPMRTC-7027');
@@ -53,6 +53,7 @@ dialTest(
     let realToolset: Toolset;
     let oauthMockHelper: OAuthMockHelper;
     let initialToolset: Toolset;
+    let loginPopup: Page;
 
     await dialTest.step('Open toolset creation page directly', async () => {
       await marketplacePage.openCreateToolsetPage();
@@ -106,45 +107,26 @@ dialTest(
       async () => {
         // need to enable mocking before clicking 'Log In'
         oauthMockHelper.enableMocking();
-        await toolsetEditorViewForm.clickLoginButton(
+        // store popup — it's needed in the 'Navigate to OAuth callback' step below
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
+        ))!;
       },
     );
 
     await dialTest.step('Verify OAuth redirect query', async () => {
-      const state = oauthMockHelper.getState();
-      const redirectUrl = new URL(state.capturedOAuthUrl!);
-      const params = redirectUrl.searchParams;
+      const state = oauthMockHelper.getOAuthState();
       const mockConfig = oauthMockHelper.getMockConfig();
-
-      baseAssertion.assertValueIsNotUndefined(state.capturedState);
-      baseAssertion.assertValue(
-        params.get(OAuthQueryParams.responseType),
-        'code',
-      );
-      baseAssertion.assertValue(
-        params.get(OAuthQueryParams.codeChallengeMethod),
-        mockConfig.code_challenge_method,
-      );
-      baseAssertion.assertValue(
-        params.get(OAuthQueryParams.clientId),
-        mockConfig.client_id,
-      );
-      baseAssertion.assertStringIncludes(
-        params.get(OAuthQueryParams.redirectUri)!,
-        Routes.ToolsetSignIn,
-      );
-      baseAssertion.assertValue(
-        params.get(OAuthQueryParams.scope),
-        mockConfig.scopes_supported.join(' '),
+      toolsetApiAuthenticationAssertion.assertOAuthRedirectRequest(
+        state,
+        mockConfig,
       );
     });
 
     await dialTest.step(
       'Navigate to OAuth callback and wait for sign-in API was called',
       async () => {
-        await oauthMockHelper.navigateToCallback();
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
@@ -153,19 +135,12 @@ dialTest(
 
     await dialTest.step('Validate sign-in request payload', async () => {
       const signInRequest = oauthMockHelper.getSignInRequest()!;
-      baseAssertion.assertValue(signInRequest.url, initialToolset.id);
-      baseAssertion.assertValue(
-        signInRequest.authenticationType,
-        ToolsetAuthTypes.OAUTH,
-      );
-      baseAssertion.assertValue(
-        signInRequest.credentialsLevel,
-        ToolsetCredentialsLevel.GLOBAL,
-      );
-      baseAssertion.assertValue(
-        signInRequest.code,
-        oauthMockHelper.getAuthorizationCode(),
-      );
+      toolsetApiAuthenticationAssertion.assertSignInRequest(signInRequest, {
+        url: initialToolset.id!,
+        authType: ToolsetAuthTypes.OAUTH,
+        credentialsLevel: ToolsetCredentialsLevel.GLOBAL,
+        authorizationCode: oauthMockHelper.getAuthorizationCode(),
+      });
     });
 
     await dialTest.step(
@@ -274,24 +249,20 @@ dialTest(
 
     await dialTest.step('Verify log-out request body', async () => {
       const signOutRequest = oauthMockHelper.getSignOutRequest()!;
-      baseAssertion.assertValue(signOutRequest.url, updatedId);
-      baseAssertion.assertValue(
-        signOutRequest.authenticationType,
-        ToolsetAuthTypes.OAUTH,
-      );
-      baseAssertion.assertValue(
-        signOutRequest.credentialsLevel,
-        ToolsetCredentialsLevel.GLOBAL,
-      );
+      toolsetApiAuthenticationAssertion.assertSignOutRequest(signOutRequest, {
+        url: updatedId,
+        authType: ToolsetAuthTypes.OAUTH,
+        credentialsLevel: ToolsetCredentialsLevel.GLOBAL,
+      });
     });
 
     await dialTest.step(
       "Click on 'Login in' button again and verify toolset is successfully logged-in",
       async () => {
-        await toolsetEditorViewForm.clickLoginButton(
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
-        await oauthMockHelper.navigateToCallback();
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
@@ -351,10 +322,10 @@ dialTest(
     await dialTest.step(
       "Click on 'Login in' button again and verify toolset is successfully logged-in",
       async () => {
-        await toolsetEditorViewForm.clickLoginButton(
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
-        await oauthMockHelper.navigateToCallback();
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
@@ -393,10 +364,10 @@ dialTest(
         //update real toolset endpoint
         realToolset.endpoint = updatedEndpoint;
         await toolsetApiHelper.createToolset(realToolset);
-        await toolsetEditorViewForm.clickLoginButton(
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
-        await oauthMockHelper.navigateToCallback();
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
@@ -444,6 +415,7 @@ dialTest(
     };
     let oauthMockHelper: OAuthMockHelper;
     let initialToolset: Toolset;
+    let loginPopup: Page;
 
     await dialTest.step('Open toolset creation page directly', async () => {
       await marketplacePage.openCreateToolsetPage();
@@ -536,10 +508,10 @@ dialTest(
 
         await oauthMockHelper.setupMocks();
 
-        await toolsetEditorViewForm.clickLoginButton(
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
-        await oauthMockHelper.navigateToCallback();
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
@@ -567,10 +539,10 @@ dialTest(
     await dialTest.step(
       'Login the toolset again and verify it is successful',
       async () => {
-        await toolsetEditorViewForm.clickLoginButton(
+        loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
-        );
-        await oauthMockHelper.navigateToCallback();
+        ))!;
+        await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );

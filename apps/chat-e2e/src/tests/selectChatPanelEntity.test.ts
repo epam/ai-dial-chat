@@ -11,6 +11,7 @@ import {
   ThemeId,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
+import { GeneratorUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
 const fourNestedLevels = 4;
@@ -1575,9 +1576,9 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(singleConversation.name);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.select);
-        await chatBar.getSearch().setSearchValue('test');
+        await chatBar.getSidebarSearch().setSearchValue('test');
         await chatBarAssertion.assertUnselectAllButtonState('hidden');
-        await chatBar.getSearch().setSearchValue('');
+        await chatBar.getSidebarSearch().setSearchValue('');
       },
     );
 
@@ -1615,8 +1616,8 @@ dialTest(
     let nestedFolders: FolderInterface[];
     let nestedConversations: Conversation[] = [];
     let lowLevelFolderConversation: Conversation;
-    const duplicatedConversationName =
-      ExpectedConstants.newConversationWithIndexTitle(1);
+    const duplicatedConversationName = GeneratorUtil.randomConversationName();
+    const nonDuplicatedConversationName = GeneratorUtil.randomString(7);
 
     await dialTest.step(
       'Prepare nested folders with conversations inside each one and one more conversation on the lowest folder level',
@@ -1625,7 +1626,7 @@ dialTest(
         nestedConversations =
           conversationData.prepareConversationsForNestedFolders(nestedFolders, {
             1: duplicatedConversationName,
-            2: ExpectedConstants.newConversationWithIndexTitle(2),
+            2: nonDuplicatedConversationName,
           });
         conversationData.resetData();
 
@@ -1671,7 +1672,7 @@ dialTest(
         }
         await chatBarFolderAssertion.assertFolderEntityState(
           { name: nestedFolders[twoNestedLevels - 1].name },
-          { name: ExpectedConstants.newConversationWithIndexTitle(2) },
+          { name: nonDuplicatedConversationName },
           'hidden',
         );
 
@@ -1700,11 +1701,21 @@ dialTest(
       async () => {
         await chatBar.deleteAllEntities();
         await confirmationDialog.confirm({ triggeredHttpMethod: 'DELETE' });
+        for (let i = 0; i < nestedFolders.length; i++) {
+          await chatBarFolderAssertion.assertFolderEntityState(
+            { name: nestedFolders[i].name },
+            {
+              name: duplicatedConversationName,
+              index: twoNestedLevels - i,
+            },
+            'hidden',
+          );
+        }
         await chatBarSearch.setSearchValue('');
 
         await chatBarFolderAssertion.assertFolderEntityState(
           { name: nestedFolders[twoNestedLevels - 1].name },
-          { name: ExpectedConstants.newConversationWithIndexTitle(2) },
+          { name: nonDuplicatedConversationName },
           'visible',
         );
 

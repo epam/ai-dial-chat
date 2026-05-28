@@ -5,6 +5,7 @@ import {
   IconLogin,
   IconLogout,
   IconPencilMinus,
+  IconPlugConnected,
   IconTrashX,
   IconWorldShare,
 } from '@tabler/icons-react';
@@ -33,8 +34,9 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { AuthSelectors } from '@/src/store/selectors';
+import { AuthSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import UnpublishIcon from '@/public/images/icons/unpublish.svg';
@@ -58,6 +60,9 @@ export const useToolsetMenuItems = ({
   //   SettingsSelectors.isFeatureEnabled(state, Feature.ApplicationsSharing),
   // );
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
+  const { dialCoreExternalUrl } = useAppSelector(
+    SettingsSelectors.selectDefaults,
+  );
 
   const {
     handleCopy,
@@ -68,6 +73,7 @@ export const useToolsetMenuItems = ({
     // handleOpenUnshare,
     handlePublish,
     handleUnpublish,
+    handleConnect,
   } = useToolsetMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
@@ -75,41 +81,20 @@ export const useToolsetMenuItems = ({
   const isAppIdPublic = isEntityIdPublic(entity);
   const canWrite = canWriteSharedWithMe(entity);
   const isMyAppOrPreview = isMyApp || isPreview;
-  const isPublicAndAdmin = isAppIdPublic && isAdmin;
   const isWithAuth = isToolsetWithAuth(entity);
   const authAction = getToolsetAuthAction(entity, isAdmin);
 
-  const canEditOrView = isMyApp || canWrite || isPublicAndAdmin;
+  const canEditOrView = isMyApp || canWrite || (isAppIdPublic && isAdmin);
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Copy link'),
-        dataQa: 'toolset-copy-link',
-        display: isPublicApp && disabledActions.copyLink !== true,
-        Icon: IconLink,
-        onClick: handleCopy,
-      },
-      {
-        name: t(isAppIdPublic ? 'View' : 'Edit'),
-        dataQa: 'edit',
-        display: canEditOrView && disabledActions.edit !== true,
-        Icon: isAppIdPublic ? IconEye : IconPencilMinus,
-        onClick: handleEdit,
-      },
-      {
-        name: t('Manage creds'),
-        dataQa: 'toolset-login',
-        display:
-          disabledActions.login !== true && isWithAuth && isPublicAndAdmin,
-        Icon: IconKey,
-        onClick: handleLogin,
-      },
-      {
         name: t(getToolsetAuthActionLabel(authAction, screenState)),
         dataQa: 'toolset-login',
         display:
-          disabledActions.login !== true && isWithAuth && !isPublicAndAdmin,
+          disabledActions.login !== true &&
+          isWithAuth &&
+          !(isPublicApp && isAdmin),
         Icon: authAction === ToolsetAuthAction.LogOut ? IconLogout : IconLogin,
         iconClassName:
           authAction === ToolsetAuthAction.LogOut
@@ -117,6 +102,43 @@ export const useToolsetMenuItems = ({
             : 'stroke-accent-secondary',
         onClick: handleLogin,
       },
+      {
+        name: t(MarketplaceI18nKeys.ManageCreds),
+        dataQa: 'toolset-login',
+        display:
+          disabledActions.login !== true &&
+          isWithAuth &&
+          isPublicApp &&
+          isAdmin,
+        Icon: IconKey,
+        onClick: handleLogin,
+      },
+      {
+        name: t(MarketplaceI18nKeys.Connect),
+        dataQa: 'toolset-connect',
+        display: disabledActions?.connect !== true && !!dialCoreExternalUrl,
+        Icon: IconPlugConnected,
+        onClick: handleConnect,
+      },
+      {
+        name: t(MarketplaceI18nKeys.CopyLink),
+        dataQa: 'toolset-copy-link',
+        display: isPublicApp && disabledActions.copyLink !== true,
+        Icon: IconLink,
+        onClick: handleCopy,
+      },
+      {
+        name: t(
+          isAppIdPublic
+            ? MarketplaceI18nKeys.ViewMarketplace
+            : MarketplaceI18nKeys.EditMarketplace,
+        ),
+        dataQa: 'edit',
+        display: canEditOrView && disabledActions.edit !== true,
+        Icon: isAppIdPublic ? IconEye : IconPencilMinus,
+        onClick: handleEdit,
+      },
+
       // {
       //   name: t('Share'),
       //   dataQa: 'share',
@@ -138,21 +160,21 @@ export const useToolsetMenuItems = ({
       //   onClick: handleOpenUnshare,
       // },
       {
-        name: t('Publish'),
+        name: t(MarketplaceI18nKeys.PublishMarketplace),
         dataQa: 'publish',
         display: isMyAppOrPreview && disabledActions.publish !== true,
         Icon: IconWorldShare,
         onClick: handlePublish,
       },
       {
-        name: t('Unpublish'),
+        name: t(MarketplaceI18nKeys.UnpublishMarketplace),
         dataQa: 'unpublish',
         display: isAppIdPublic && disabledActions.unpublish !== true,
         Icon: UnpublishIcon,
         onClick: handleUnpublish,
       },
       {
-        name: t('Delete'),
+        name: t(MarketplaceI18nKeys.DeleteMarketplace),
         dataQa: 'delete',
         display: isMyAppOrPreview && disabledActions.delete !== true,
         Icon: IconTrashX,
@@ -161,19 +183,21 @@ export const useToolsetMenuItems = ({
     ],
     [
       t,
-      isPublicApp,
+      handleConnect,
+      disabledActions?.connect,
       disabledActions.copyLink,
       disabledActions.edit,
       disabledActions.login,
       disabledActions.publish,
       disabledActions.unpublish,
       disabledActions.delete,
+      isPublicApp,
       handleCopy,
       isAppIdPublic,
       canEditOrView,
       handleEdit,
       isWithAuth,
-      isPublicAndAdmin,
+      isAdmin,
       handleLogin,
       authAction,
       screenState,
@@ -181,6 +205,7 @@ export const useToolsetMenuItems = ({
       handlePublish,
       handleUnpublish,
       handleDelete,
+      dialCoreExternalUrl,
     ],
   );
 

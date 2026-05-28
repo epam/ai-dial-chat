@@ -10,6 +10,7 @@ import {
   DeleteMessageResponse,
   ExportConversationRequest,
   ExportConversationResponse,
+  Feature,
   GetConversationsResponse,
   GetMessagesResponse,
   GetSelectedConversationsResponse,
@@ -105,6 +106,35 @@ export class ChatOverlay {
   }
 
   /**
+   * Builds the iframe permissions policy string based on enabled features
+   * @returns {string} permissions policy string for the iframe `allow` attribute
+   */
+  protected getIframePermissions(): string {
+    const permissions = ['clipboard-write'];
+
+    if (this.hasFeature(Feature.VoiceInput)) {
+      permissions.push('microphone');
+    }
+
+    return permissions.join('; ');
+  }
+
+  /**
+   * Checks if a specific feature is included in the enabled features list
+   * @param feature {Feature} feature to check
+   * @returns {boolean} true if the feature is enabled
+   */
+  protected hasFeature(feature: Feature): boolean {
+    const features = this.options.enabledFeatures;
+
+    if (Array.isArray(features)) {
+      return features.includes(feature);
+    }
+
+    return typeof features === 'string' && features.includes(feature);
+  }
+
+  /**
    * Creates iframe add set initial options to it
    * @returns {HTMLIFrameElement} reference to iframe element
    */
@@ -112,7 +142,7 @@ export class ChatOverlay {
     const iframe = document.createElement('iframe');
 
     iframe.src = this.options.domain;
-    iframe.allow = 'clipboard-write';
+    iframe.allow = this.getIframePermissions();
     iframe.name = 'overlay';
     iframe.ariaLabel = 'Chat overlay';
 
@@ -239,6 +269,11 @@ export class ChatOverlay {
    * @param event {MessageEvent} post message event
    */
   protected process = (event: MessageEvent<OverlayRequest>): void => {
+    // Only process messages from this specific iframe instance
+    if (event.source !== this.iframe.contentWindow) {
+      return;
+    }
+
     if (event.data.type === `${overlayAppName}/${OverlayEvents.initReady}`) {
       this.showLoader();
 
@@ -341,7 +376,10 @@ export class ChatOverlay {
     );
     this.requests.push(request);
 
-    this.iframe.contentWindow.postMessage(request.toPostMessage(), '*');
+    this.iframe.contentWindow.postMessage(
+      request.toPostMessage(),
+      new URL(this.options.domain).origin,
+    );
 
     return request.promise;
   }
@@ -637,6 +675,7 @@ export class ChatOverlay {
    */
   destroy() {
     window.removeEventListener('message', this.process);
+    void this.iframeInteraction.ready().catch(() => {});
     this.iframeInteraction.fail('Chat Overlay destroyed');
     this.root.removeChild(this.iframe);
 

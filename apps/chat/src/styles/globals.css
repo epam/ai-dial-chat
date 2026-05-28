@@ -2,6 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 @import '@epam/ai-dial-ui-kit/styles.css';
+@import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css';
 
 @layer utilities {
   .no-scrollbar::-webkit-scrollbar {
@@ -14,40 +15,6 @@
 }
 
 @layer base {
-  ::-webkit-scrollbar-track {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply cursor-pointer rounded bg-layer-4;
-  }
-
-  :not(:hover)::-webkit-scrollbar-thumb {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-track:hover {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar-corner {
-    @apply bg-transparent;
-  }
-
-  ::-webkit-scrollbar {
-    @apply h-[4px] w-[4px];
-  }
-
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: transparent transparent;
-  }
-
-  :hover {
-    scrollbar-color: theme('backgroundColor.layer-4')
-      theme('colors.transparent');
-  }
-
   /* TODO: fix calendar color for different themes */
   ::-webkit-calendar-picker-indicator {
     background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://ww.w3.org/2000/svg" width="16" height="15" viewBox="0 0 24 24"><path fill="var(--icon-color)" d="M20 3h-1V1h-2v2H7V1H5v2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 18H4V8h16v13z"/></svg>');
@@ -65,6 +32,27 @@
   .break-words {
     word-break: break-word;
     overflow-wrap: break-word;
+  }
+  /* light */
+  .light input::selection {
+    background: #b3d4fc;
+    color: #000;
+  }
+
+  .light input::-moz-selection {
+    background: #b3d4fc;
+    color: #000;
+  }
+
+  /* dark */
+  .dark input::selection {
+    background: #1d63a9;
+    color: #fff;
+  }
+
+  .dark input::-moz-selection {
+    background: #1d63a9;
+    color: #fff;
   }
 }
 
@@ -204,7 +192,7 @@ pre:has(div.codeblock) {
 
 @layer components {
   .checkbox {
-    @apply relative m-0 mr-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-accent-primary indeterminate:border-accent-primary hover:border-accent-primary focus-visible:outline-none;
+    @apply relative m-0 me-2 inline h-4 w-4 shrink-0 appearance-none rounded-sm border border-primary text-accent-primary checked:border-accent-primary indeterminate:border-accent-primary hover:border-accent-primary focus-visible:outline-none;
   }
 }
 
@@ -221,18 +209,26 @@ pre:has(div.codeblock) {
   .context-menu-prompt {
     --text-accent-primary: var(--text-accent-tertiary, #a972ff);
     --stroke-accent-primary: var(--stroke-accent-tertiary, #a972ff);
-    --bg-accent-primary-alpha: var(--bg-accent-tertiary-alpha, #a972ff26);
+    --bg-accent-primary-alpha: var(--bg-accent-tertiary-alpha, #a972ff2e);
     --bg-accent-primary: var(--bg-accent-tertiary, #a972ff);
   }
 }
 
 .h-screen {
-  height: 100vh; /* Fallback for browsers that do not support Custom Properties */
+  /* Fallback for browsers not supporting dvh */
   min-height: 100vh;
-  min-height: calc(var(--vh, 1vh) * 100);
-  height: calc(var(--vh, 1vh) * 100);
+  height: 100vh;
+
+  min-height: 100dvh;
+  height: 100dvh;
 }
 
 span.katex-mathml {
   display: none;
+}
+
+@layer components {
+  .link-icon-button-small {
+    @apply flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-secondary outline-offset-0 hover:bg-accent-primary-alpha hover:text-accent-primary focus-visible:outline;
+  }
 }

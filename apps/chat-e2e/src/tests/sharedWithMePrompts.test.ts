@@ -7,7 +7,8 @@ import {
   ExpectedPromptModalConst,
   MenuOptions,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 
 dialSharedWithMeTest(
   'Shared with me. Share prompt.\n' +
@@ -67,7 +68,9 @@ dialSharedWithMeTest(
         );
         await additionalShareUserSharedWithMePromptAssertion.assertSharedEntityBackgroundColor(
           { name: prompt.name },
-          Colors.backgroundAccentTertiaryAlphaDark,
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.bgAccentTertiaryAlpha,
+          ),
         );
         await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
@@ -90,7 +93,7 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Create new conversation, type "/" in the request field, select shared prompt and verify it applied',
       async () => {
-        await additionalShareUserPromptPreviewModal.closeButton.click();
+        await additionalShareUserPromptPreviewModal.getCloseButton().click();
         await additionalShareUserSendMessage.messageInput.fillInInput('/');
         await additionalShareUserSendMessage
           .getPromptList()

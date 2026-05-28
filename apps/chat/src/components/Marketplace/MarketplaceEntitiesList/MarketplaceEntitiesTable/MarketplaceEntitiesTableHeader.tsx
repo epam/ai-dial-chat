@@ -1,4 +1,9 @@
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
+import React, {
+  forwardRef,
+  useCallback,
+  useImperativeHandle,
+  useRef,
+} from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 
@@ -13,10 +18,10 @@ import { TableColumnSortKeys } from '@/src/constants/marketplace';
 import { HeaderItem } from './HeaderItem';
 
 const headerItems = [
-  { label: 'Version', size: 100 },
+  { label: 'Version', size: 114 },
   { label: 'Topics', size: 161 },
   { label: 'Author', size: 130, sortKey: TableColumnSortKeys.OWNER },
-  { label: 'Released', size: 86, sortKey: TableColumnSortKeys.RELEASED },
+  { label: 'Released', size: 114, sortKey: TableColumnSortKeys.RELEASED },
 ];
 
 export const MarketplaceEntitiesTableHeader = forwardRef<
@@ -61,7 +66,7 @@ export const MarketplaceEntitiesTableHeader = forwardRef<
     <div className="flex min-w-full items-center px-0 md:px-5 xl:px-16">
       <div
         ref={leftColumnHeaderRef}
-        className="min-w-[195px] flex-1 cursor-pointer items-center pb-3 pl-4 pr-3 pt-5 md:min-w-[316px] md:pl-4 xl:min-w-[245px]"
+        className="min-w-[195px] flex-1 cursor-pointer items-center pb-3 pl-1.5 pr-3 md:min-w-[316px] xl:min-w-[245px]"
       >
         <HeaderItem
           label={
@@ -78,7 +83,7 @@ export const MarketplaceEntitiesTableHeader = forwardRef<
       </div>
       <div ref={rightColumnHeaderRef} className="no-scrollbar overflow-x-auto">
         <div className="inline-flex flex-col divide-y divide-secondary">
-          <div className="flex shrink-0 grow gap-3 pb-3 pl-4 pr-3 pt-5 md:gap-5 md:px-4">
+          <div className="flex shrink-0 grow gap-3 pb-3 pl-4 pr-3 md:gap-5 md:px-4">
             {headerItems.map((item) => (
               <HeaderItem
                 {...item}

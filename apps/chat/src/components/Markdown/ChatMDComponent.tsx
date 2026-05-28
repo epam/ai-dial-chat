@@ -6,6 +6,7 @@ import classnames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
+import { dataToBlobUrl } from '@/src/utils/app/dataUrl';
 import { preprocessLaTeX } from '@/src/utils/app/latex';
 
 import { ScreenState } from '@/src/types/common';
@@ -14,6 +15,7 @@ import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import {
+  mathMLTags,
   modelCursorSign,
   modelCursorSignWithBackquote,
 } from '@/src/constants/chat';
@@ -32,6 +34,7 @@ import rehypeExternalLinks from 'rehype-external-links';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 
@@ -42,6 +45,7 @@ interface ChatMDComponentProps {
   isShowResponseLoader: boolean;
   content: string;
   isInner?: boolean;
+  plainTextMode?: boolean;
 }
 
 const transformUri = (src: string): string => {
@@ -126,8 +130,18 @@ const getMDComponents = (
       // In order to style the contents paddings correctly, we need to wrap them into container
       // Contents of <details> element follow the summary element unwrapped by default,
       // so styling them otherwise would be hacky.
+      let showCursor = false;
+      const childrenArray = Children.toArray(children).map((child) => {
+        if (typeof child === 'string' && child?.length) {
+          if (child.includes(modelCursorSignWithBackquote)) {
+            showCursor = true;
+            return child.replaceAll(modelCursorSignWithBackquote, '');
+          }
+        }
+        return child;
+      });
       const [summary, content] = partition(
-        Children.toArray(children),
+        childrenArray,
         (child: ReactNode) =>
           isObject(child) &&
           'type' in child &&
@@ -140,12 +154,16 @@ const getMDComponents = (
         <details
           className={classnames(
             'rounded bg-layer-3 [&_details]:bg-layer-1 [&_details_details]:bg-layer-3',
-            ' [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b [&_.codeblock>*]:!bg-layer-1 [&_details>summary]:border-secondary [&_details]:border [&_details]:border-secondary [&_details_.codeblock>*]:!bg-layer-3 [&_details_.codeblock>div]:border-tertiary [&_details_.codeblock]:border-0 [&_details_details>summary]:border-tertiary [&_details_details]:border-0 [&_details_details_.codeblock>*]:!bg-layer-1 [&_details_details_.codeblock>div]:border-secondary [&_details_details_.codeblock]:border',
+            'mb-1 [&>summary]:border-tertiary [&[open]>summary>svg]:rotate-180 [&[open]>summary]:border-b [&_.codeblock>*]:!bg-layer-1 [&_details>summary]:border-secondary [&_details]:border [&_details]:border-secondary [&_details_.codeblock>*]:!bg-layer-3 [&_details_.codeblock>div]:border-tertiary [&_details_.codeblock]:border-0 [&_details_details>summary]:border-tertiary [&_details_details]:border-0 [&_details_details_.codeblock>*]:!bg-layer-1 [&_details_details_.codeblock>div]:border-secondary [&_details_details_.codeblock]:border',
           )}
           {...props}
+          open={showCursor || props.open}
         >
           {summary}
-          <div className="p-3">{content}</div>
+          <div className="p-3">
+            {content}
+            {showCursor && <BlinkingCursor isShowing={isShowResponseLoader} />}
+          </div>
         </details>
       );
     },
@@ -163,12 +181,25 @@ const getMDComponents = (
         </summary>
       );
     },
+    a({ href, children, ...props }) {
+      if (href?.startsWith('data:image')) {
+        const blobUrl = dataToBlobUrl(href);
+        return <a href={blobUrl ?? href}>{children}</a>;
+      }
+
+      return (
+        <a href={href} {...props}>
+          {children}
+        </a>
+      );
+    },
   };
 };
 
 const remarkPlugins: Options['remarkPlugins'] = [
   remarkGfm,
-  [remarkMath, { singleDollarTextMath: true }],
+  remarkBreaks,
+  [remarkMath, { singleDollarTextMath: false }],
 ];
 const rehypePlugins: Options['rehypePlugins'] = [
   rehypeRaw,
@@ -177,6 +208,7 @@ const rehypePlugins: Options['rehypePlugins'] = [
     rehypeSanitize,
     {
       ...defaultSchema,
+      tagNames: [...(defaultSchema.tagNames || []), ...mathMLTags],
       attributes: {
         ...defaultSchema.attributes,
         code: [
@@ -198,6 +230,7 @@ export const ChatMDComponent = memo(
     isShowResponseLoader,
     content,
     isInner = false,
+    plainTextMode = false,
   }: ChatMDComponentProps) => {
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
@@ -217,6 +250,14 @@ export const ChatMDComponent = memo(
     );
 
     const processedContent = preprocessLaTeX(content);
+
+    if (plainTextMode) {
+      return (
+        <div className={mdClassNames}>
+          {`${processedContent}${isShowResponseLoader ? modelCursorSignWithBackquote : ''}`}
+        </div>
+      );
+    }
 
     return (
       <MemoizedReactMarkdown

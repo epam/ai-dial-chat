@@ -5,6 +5,7 @@ declare global {
     interface ProcessEnv {
       DIAL_API_KEY: string;
       DIAL_API_HOST: string;
+      DIAL_CORE_EXTERNAL_URL?: string;
 
       QUICK_APPS_HOST?: string;
       QUICK_APPS_MODEL?: string;
@@ -16,11 +17,14 @@ declare global {
       APP_BASE_PATH?: string;
       APP_BASE_ORIGIN?: string;
       ALLOWED_IFRAME_ORIGINS?: string;
+      ALLOWED_IFRAME_SOURCES?: string;
+      ALLOWED_SCRIPT_SOURCES?: string;
       IS_IFRAME?: string;
       ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME?: string;
-      ALLOWED_IFRAME_SOURCES?: string;
       CUSTOM_VISUALIZERS?: string;
+      APPLICATION_VISUALIZERS?: string;
       ALLOW_VISUALIZER_SEND_MESSAGES?: boolean;
+      ALLOW_TOKEN_IN_SESSION?: boolean;
       ENABLED_FEATURES?: string;
       PUBLICATION_FILTERS?: string;
       ADMIN_ROLE_NAMES?: string;
@@ -29,6 +33,7 @@ declare global {
       NEXT_PUBLIC_APP_NAME?: string;
       NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT?: string;
       NEXT_PUBLIC_DEFAULT_TEMPERATURE?: string;
+      NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES?: string;
       DEFAULT_MODEL?: string;
       RECENT_MODELS_IDS?: string;
       E2E_HOST?: string;
@@ -49,9 +54,12 @@ declare global {
       MAX_PROMPT_TOKENS_DEFAULT_PERCENT?: string;
       MAX_PROMPT_TOKENS_DEFAULT_VALUE?: string;
       TOPICS?: string;
+      HIDDEN_ENTITY_TAG?: string;
       CODE_EDITOR_PYTHON_VERSIONS?: string;
       WIDGETS_SCHEMA_IDS?: string;
       NEXT_PUBLIC_STAGE_CONTENT_LIMIT?: string;
+
+      ASR_MODEL?: string;
 
       ATTACHMENT_TYPES_EXPANDED?: string;
       ATTACHMENT_TYPES_BORDERLESS?: string;
@@ -99,6 +107,7 @@ declare global {
       AUTH_OKTA_CLIENT_SECRET?: string;
       AUTH_OKTA_ISSUER?: string;
       AUTH_OKTA_SCOPE?: string;
+      AUTH_OKTA_NAME?: string;
     }
   }
 }

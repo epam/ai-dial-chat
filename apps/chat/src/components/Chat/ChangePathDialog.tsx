@@ -1,323 +1,532 @@
-import { ChangeEvent, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
+import { UseFileManagerActionLabelsOptions } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { constructPath } from '@/src/utils/app/file';
 import {
-  getChildAndCurrentFoldersIdsById,
   getFolderIdFromEntityId,
-  getNextDefaultName,
-  getPathToFolderById,
-  sortByName,
-  updateChildAndCurrentFoldersIds,
-  validateFolderRenaming,
+  updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
-  getIdWithoutFeatureType,
-  getIdWithoutRootPathSegments,
-} from '@/src/utils/app/id';
-import { isHiddenEntity } from '@/src/utils/app/search';
+  getOrganizationPublishPathDepth,
+  organizationFolderIdToPublishPathSuffix,
+  publishToUrlToOrganizationFolderId,
+  remapPublicFolderToFilesNamespace,
+} from '@/src/utils/app/publications';
 
+import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { FoldersActions, UIActions } from '@/src/store/actions';
-import { FoldersSelectors } from '@/src/store/folders/folders.selectors';
+import { FilesActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
   ConversationsSelectors,
   FilesSelectors,
   PromptsSelectors,
+  ToolsetSelectors,
 } from '@/src/store/selectors';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
+import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+
 import {
-  MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH,
-  TEMPORARY_FOLDER_ROOT_ID,
-} from '@/src/constants/folders';
-import { ORGANIZATION_SECTION_NAME } from '@/src/constants/sections';
-
-import { SelectFolder } from '@/src/components/Common/SelectFolder/SelectFolder';
-import { SelectFolderFooter } from '@/src/components/Common/SelectFolder/SelectFolderFooter';
-import { SelectFolderHeader } from '@/src/components/Common/SelectFolder/SelectFolderHeader';
-import { SelectFolderList } from '@/src/components/Common/SelectFolder/SelectFolderList';
-
-import { FolderInterface } from '@epam/ai-dial-shared';
+  FeatureType,
+  SharePermission,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
+import {
+  type DialCopiedItem,
+  type DialDeletedItem,
+  DialDestinationFolderPopup,
+  type DialFile,
+  DialFileManagerActions,
+  type DialFileManagerActionsRef,
+  DialFileManagerTabs,
+  DialUploadFileItem,
+  FileManagerGridRow,
+} from '@epam/ai-dial-ui-kit';
+import {
+  CellEditingStartedEvent,
+  CellEditingStoppedEvent,
+  GridApi,
+} from 'ag-grid-community';
 import uniqBy from 'lodash-es/uniqBy';
+
+const createTemporaryFolder = (folderPath: string): FolderInterface => {
+  const segments = folderPath.split('/');
+  return {
+    id: folderPath,
+    folderId: getFolderIdFromEntityId(folderPath),
+    name: segments[segments.length - 1],
+    type: FeatureType.File,
+    status: UploadStatus.LOADED,
+    temporary: true,
+    publishedWithMe: true,
+    permissions: [SharePermission.READ, SharePermission.WRITE],
+  };
+};
+
+const buildMissingFolderChain = (
+  targetPath: string,
+  rootId: string,
+  existingIds: Set<string>,
+): FolderInterface[] => {
+  if (targetPath === rootId || !targetPath.startsWith(`${rootId}/`)) return [];
+
+  const relativePath = targetPath.slice(rootId.length + 1);
+  const segments = relativePath.split('/');
+  const result: FolderInterface[] = [];
+  let currentPath = rootId;
+
+  for (const segment of segments) {
+    currentPath = `${currentPath}/${segment}`;
+    if (!existingIds.has(currentPath)) {
+      result.push(createTemporaryFolder(currentPath));
+    }
+  }
+
+  return result;
+};
 
 interface Props {
   isOpen: boolean;
-  initiallySelectedFolderId: string;
+  initiallySelectedFolderId?: string;
   depth?: number;
-  onClose: (path?: string) => void;
+  onClose: (path: string | false) => void;
+  onRenamePath?: (newPath: string) => void;
 }
-
-const additionalItemData = {
-  isChangePathFolder: true,
-};
 
 export const ChangePathDialog = ({
   isOpen,
   initiallySelectedFolderId,
   depth = 0,
   onClose,
+  onRenamePath,
 }: Props) => {
   const dispatch = useAppDispatch();
-
   const { t } = useTranslation(Translation.Chat);
 
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isAllFoldersOpened, setIsAllFoldersOpened] = useState(true);
-  const [areHiddenFoldersVisible, setAreHiddenFoldersVisible] = useState(false);
-  const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
-  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    TEMPORARY_FOLDER_ROOT_ID,
+  const [collapsedTree, setCollapsedTree] = useState(false);
+  const fileManagerActionRef = useRef<DialFileManagerActionsRef>(null);
+  const addedTempFolderIdsRef = useRef<Set<string>>(new Set());
+  const [gridApi, setGridApi] = useState<GridApi<FileManagerGridRow> | null>(
+    null,
   );
-  const [errorMessage, setErrorMessage] = useState<string>();
+  const [newlyAddedFolderId, setNewlyAddedFolderId] = useState<string | null>(
+    null,
+  );
 
-  const conversationFolders = useAppSelector(
+  const [isGridEditing, setIsGridEditing] = useState(false);
+  const deduplicatedFileIdsRef = useRef<Set<string>>(new Set());
+
+  const filesFolders = useAppSelector(FilesSelectors.selectFolders);
+  const filesFoldersRef = useRef(filesFolders);
+  filesFoldersRef.current = filesFolders;
+
+  const lastRenamedParentFolder = useAppSelector(
+    FilesSelectors.selectLastRenamedParentFolder,
+  );
+
+  const resolvedInitialFolderId = useMemo(
+    () =>
+      publishToUrlToOrganizationFolderId(
+        initiallySelectedFolderId ?? PUBLIC_URL_PREFIX,
+      ),
+    [initiallySelectedFolderId],
+  );
+
+  const conversationPublicFolders = useAppSelector(
     ConversationsSelectors.selectPublicFolders,
   );
-  const promptFolders = useAppSelector(PromptsSelectors.selectPublicFolders);
-  const applicationFolders = useAppSelector(
+  const promptPublicFolders = useAppSelector(
+    PromptsSelectors.selectPublicFolders,
+  );
+  const applicationPublicFolders = useAppSelector(
     ApplicationSelectors.selectPublicFolders,
   );
-  const fileFolders = useAppSelector(FilesSelectors.selectPublicFolders);
-  const temporaryFolders = useAppSelector(
-    FoldersSelectors.selectTemporaryFolders,
-  );
-  const newAddedTemporaryFolderId = useAppSelector(
-    FoldersSelectors.selectNewAddedTemporaryFolderId,
+  const filesPublicFolders = useAppSelector(FilesSelectors.selectPublicFolders);
+  const toolsetPublicFolders = useAppSelector(
+    ToolsetSelectors.selectPublicFolders,
   );
 
-  const allFolders = useMemo(() => {
-    const filteredFolders = uniqBy(
-      [
-        ...conversationFolders,
-        ...promptFolders,
-        ...applicationFolders,
-        ...fileFolders,
-        ...temporaryFolders,
-      ],
-      ({ id }) => getIdWithoutFeatureType(id),
-    )
-      .filter((folder) => areHiddenFoldersVisible || !isHiddenEntity(folder))
-      .map((folder) => ({
-        ...folder,
-        // Mark root path segments as temporary to avoid featureType binding
-        id: constructPath(
-          TEMPORARY_FOLDER_ROOT_ID,
-          getIdWithoutRootPathSegments(folder.id),
-        ),
-        folderId: constructPath(
-          TEMPORARY_FOLDER_ROOT_ID,
-          getIdWithoutRootPathSegments(folder.folderId),
-        ),
-      }));
+  const additionalOrganizationFolders = useMemo(
+    () =>
+      uniqBy(
+        [
+          ...conversationPublicFolders,
+          ...promptPublicFolders,
+          ...applicationPublicFolders,
+          ...filesPublicFolders,
+          ...toolsetPublicFolders,
+        ].map(remapPublicFolderToFilesNamespace),
+        'id',
+      ),
+    [
+      conversationPublicFolders,
+      promptPublicFolders,
+      applicationPublicFolders,
+      filesPublicFolders,
+      toolsetPublicFolders,
+    ],
+  );
 
-    return sortByName(filteredFolders) as FolderInterface[];
-  }, [
-    conversationFolders,
-    promptFolders,
-    applicationFolders,
-    fileFolders,
-    temporaryFolders,
-    areHiddenFoldersVisible,
-  ]);
+  const actionLabelsOptions = useMemo<UseFileManagerActionLabelsOptions>(
+    () => ({
+      actionsByTab: {
+        my_files: [],
+        shared: [],
+        organization: [
+          DialFileManagerActions.Rename,
+          DialFileManagerActions.Delete,
+        ],
+        review: [],
+      },
+    }),
+    [],
+  );
+
+  const {
+    currentPath,
+    setCurrentPath,
+    areFoldersLoading,
+    fileTreeItems,
+    rootFolder,
+    treeOptions,
+    gridOptions,
+    navigationPanelOptions,
+    handleRenameValidation,
+  } = useFileManager({
+    initialTab: DialFileManagerTabs.Organization,
+    actionLabelsOptions,
+    toolbarOptions: {
+      tabs: [],
+      showHiddenFilesToggle: false,
+      isNewButtonDisabled: true,
+    },
+    availableTabs: new Set([DialFileManagerTabs.Organization]),
+    additionalFilesAndFolders: {
+      files: [],
+      folders: additionalOrganizationFolders,
+    },
+  });
+
+  const isTempFolder = useCallback(
+    (id: string) =>
+      addedTempFolderIdsRef.current.has(id) ||
+      [...addedTempFolderIdsRef.current].some((rootId) =>
+        id.startsWith(`${rootId}/`),
+      ),
+    [],
+  );
+
+  const handleOrganizationRenameValidation = useCallback(
+    (value: string, item: DialFile) =>
+      item.path && !isTempFolder(item.path)
+        ? ''
+        : handleRenameValidation(value, item),
+    [isTempFolder, handleRenameValidation],
+  );
+
+  const handleOrganizationMoveFiles = useCallback(
+    (
+      movedItems: DialCopiedItem[],
+      sourceFolder: string,
+      destinationFolder: string,
+    ) => {
+      if (sourceFolder !== destinationFolder) return;
+
+      for (const { sourceUrl, destinationUrl } of movedItems) {
+        if (!isTempFolder(sourceUrl)) continue;
+        const newName = destinationUrl.split('/').pop();
+        if (!newName) continue;
+        dispatch(FilesActions.renameFolder({ folderId: sourceUrl, newName }));
+        addedTempFolderIdsRef.current.delete(sourceUrl);
+        addedTempFolderIdsRef.current.add(destinationUrl);
+      }
+    },
+    [dispatch, isTempFolder],
+  );
+
+  const handleDeleteTempFolders = useCallback(
+    (items: DialDeletedItem[], _sourceFolder: string) => {
+      const tempRootIds = items
+        .map((i) => i.sourceUrl)
+        .filter((id) => addedTempFolderIdsRef.current.has(id));
+
+      if (!tempRootIds.length) return;
+
+      deduplicatedFileIdsRef.current.clear();
+
+      [...addedTempFolderIdsRef.current]
+        .filter((id) =>
+          tempRootIds.some(
+            (rootId) => id === rootId || id.startsWith(`${rootId}/`),
+          ),
+        )
+        .forEach((id) => addedTempFolderIdsRef.current.delete(id));
+
+      dispatch(
+        FilesActions.setFolders({
+          folders: filesFoldersRef.current.filter(
+            (f) =>
+              !tempRootIds.some(
+                (rootId) => f.id === rootId || f.id.startsWith(`${rootId}/`),
+              ),
+          ),
+        }),
+      );
+
+      setCurrentPath((prev) => {
+        if (!prev) return prev;
+        return tempRootIds.some(
+          (id) => prev === id || prev.startsWith(`${id}/`),
+        )
+          ? resolvedInitialFolderId
+          : prev;
+      });
+    },
+    [dispatch, resolvedInitialFolderId, setCurrentPath],
+  );
 
   useEffect(() => {
+    if (isOpen) {
+      for (const folder of filesFoldersRef.current) {
+        if (folder.temporary && !addedTempFolderIdsRef.current.has(folder.id)) {
+          addedTempFolderIdsRef.current.add(folder.id);
+        }
+      }
+
+      setCurrentPath(resolvedInitialFolderId);
+    }
+  }, [isOpen, resolvedInitialFolderId, setCurrentPath]);
+
+  useEffect(() => {
+    if (!lastRenamedParentFolder) return;
+
+    const { oldId, newId } = lastRenamedParentFolder;
+    if (!newId || !oldId) return;
+
+    const initialPath = initiallySelectedFolderId ?? PUBLIC_URL_PREFIX;
+    let newInitialPath = initialPath;
+    if (initialPath === oldId) newInitialPath = newId;
+    else if (initialPath.startsWith(`${oldId}/`))
+      newInitialPath = updateMovedFolderId(oldId, newId, initialPath);
+
+    if (newInitialPath !== initialPath) {
+      onRenamePath?.(
+        organizationFolderIdToPublishPathSuffix(newInitialPath) ?? '',
+      );
+    }
+
+    setCurrentPath((prevPath) => {
+      if (!prevPath) return prevPath;
+
+      if (prevPath === oldId) return newId;
+      if (prevPath.startsWith(`${oldId}/`))
+        return updateMovedFolderId(oldId, newId, prevPath);
+      return prevPath;
+    });
+
+    dispatch(FilesActions.resetLastRenamedParentFolder());
+  }, [
+    dispatch,
+    lastRenamedParentFolder,
+    setCurrentPath,
+    initiallySelectedFolderId,
+    onRenamePath,
+  ]);
+  useEffect(() => {
     if (!isOpen) {
-      setSearchQuery('');
-      setErrorMessage(undefined);
-      dispatch(FoldersActions.resetNewTemporaryFolderId());
+      return;
+    }
+
+    dispatch(FilesActions.getFoldersList({ paths: [undefined] }));
+
+    if (!resolvedInitialFolderId) return;
+
+    const rootId = publishToUrlToOrganizationFolderId(PUBLIC_URL_PREFIX);
+    const existingIds = new Set(filesFoldersRef.current.map((f) => f.id));
+    const missingFolders = buildMissingFolderChain(
+      resolvedInitialFolderId,
+      rootId,
+      existingIds,
+    );
+
+    if (missingFolders.length === 0) return;
+
+    for (const folder of missingFolders) {
+      addedTempFolderIdsRef.current.add(folder.id);
+    }
+    dispatch(FilesActions.addFolders({ folders: missingFolders }));
+  }, [dispatch, isOpen, resolvedInitialFolderId]);
+
+  useEffect(() => {
+    if (isOpen) {
+      return;
+    }
+
+    deduplicatedFileIdsRef.current.clear();
+    dispatch(FilesActions.resetNewFolderId());
+
+    if (addedTempFolderIdsRef.current.size > 0) {
+      const tempIds = addedTempFolderIdsRef.current;
+      dispatch(
+        FilesActions.setFolders({
+          folders: filesFoldersRef.current.filter(
+            (f) =>
+              !tempIds.has(f.id) &&
+              ![...tempIds].some((tempId) => f.id.startsWith(`${tempId}/`)),
+          ),
+        }),
+      );
+      addedTempFolderIdsRef.current.clear();
     }
   }, [dispatch, isOpen]);
 
-  const handleSearch = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setSearchQuery(e.target.value);
-      dispatch(FoldersActions.resetNewTemporaryFolderId());
+  useEffect(() => {
+    if (newlyAddedFolderId && gridApi) {
+      const timeoutId = setTimeout(() => {
+        let found = false;
+        gridApi.forEachNode((node) => {
+          if (node.data && node.data.id === newlyAddedFolderId) {
+            gridApi.ensureNodeVisible(node, 'middle');
+            found = true;
+          }
+        });
+        if (found) {
+          setNewlyAddedFolderId(null);
+        }
+      }, 100);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [newlyAddedFolderId, gridApi, filesFolders]);
+
+  const handleCreateOrganizationFolder = useCallback(
+    (_file: DialUploadFileItem, folderPath: string, fileId: string) => {
+      if (deduplicatedFileIdsRef.current.has(fileId)) return;
+      deduplicatedFileIdsRef.current.add(fileId);
+
+      if (filesFoldersRef.current.some((f) => f.id === folderPath)) return;
+
+      const folder = createTemporaryFolder(folderPath);
+      if (!folder.name) return;
+
+      addedTempFolderIdsRef.current.add(folderPath);
+      dispatch(FilesActions.addFolders({ folders: [folder] }));
+      setNewlyAddedFolderId(folderPath);
     },
     [dispatch],
   );
 
-  const handleToggleHiddenFolders = useCallback(() => {
-    setAreHiddenFoldersVisible((prev) => !prev);
-  }, []);
-
-  const handleToggleFolder = useCallback(
-    (folderId?: string) => {
-      if (!folderId) {
-        setIsAllFoldersOpened((value) => !value);
-        setOpenedFoldersIds([]);
-        setSelectedFolderId(folderId);
-
-        return;
+  const handleCreateFolderValidate = useCallback(
+    (name: string, parentFolder: DialFile) => {
+      const pathDepth = getOrganizationPublishPathDepth(parentFolder.id);
+      if (pathDepth + 1 + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
+        return t(ChatI18nKeys.NotAllowedMoreNestedFolders);
       }
-
-      if (openedFoldersIds.includes(folderId)) {
-        const childFoldersIds = getChildAndCurrentFoldersIdsById(
-          folderId,
-          allFolders,
-        );
-        setOpenedFoldersIds(
-          openedFoldersIds.filter((id) => !childFoldersIds.includes(id)),
-        );
-      } else {
-        setOpenedFoldersIds(openedFoldersIds.concat(folderId));
-      }
+      return handleRenameValidation(name, parentFolder);
     },
-    [allFolders, openedFoldersIds],
+    [depth, handleRenameValidation, t],
   );
 
-  const handleFolderSelect = useCallback(
-    (folderId?: string | undefined) => {
-      setSelectedFolderId(folderId);
-      handleToggleFolder(folderId);
-    },
-    [handleToggleFolder],
-  );
+  const frozenFileTreeItemsRef = useRef(fileTreeItems);
+  useEffect(() => {
+    if (!isGridEditing) {
+      frozenFileTreeItemsRef.current = fileTreeItems;
+    }
+  }, [fileTreeItems, isGridEditing]);
 
-  const handleRenameFolder = useCallback(
-    (newName: string, folderId: string) => {
-      const error = validateFolderRenaming(
-        allFolders,
-        newName,
-        folderId,
-        false,
-      );
-      const newFolderId = constructPath(
-        getFolderIdFromEntityId(folderId),
-        newName,
-      );
-      const mappedFolderIds = allFolders.map(({ id }) => id);
+  const itemsToRender = isGridEditing
+    ? frozenFileTreeItemsRef.current
+    : fileTreeItems;
 
-      if (
-        mappedFolderIds.some(
-          (id) => id === newFolderId && id !== newAddedTemporaryFolderId,
-        )
-      ) {
-        dispatch(FoldersActions.resetNewTemporaryFolderId());
-        return;
-      }
+  const handleClose = useCallback(() => onClose(false), [onClose]);
 
-      setSelectedFolderId(newFolderId);
-
-      if (error) {
-        setErrorMessage(t(error));
-        return;
-      }
-
-      dispatch(
-        FoldersActions.renameTemporaryFolder({ folderId, name: newName }),
-      );
-      setOpenedFoldersIds(
-        updateChildAndCurrentFoldersIds(
-          openedFoldersIds,
-          folderId,
-          newFolderId,
-        ),
-      );
-    },
-    [allFolders, dispatch, newAddedTemporaryFolderId, openedFoldersIds, t],
-  );
-
-  const handleAddFolder = useCallback(
-    (parentFolderId = TEMPORARY_FOLDER_ROOT_ID) => {
-      const folderName = getNextDefaultName(
-        t(DEFAULT_FOLDER_NAME),
-        allFolders.filter((f) => f.folderId === parentFolderId),
-        0,
-        false,
-        true,
-      );
-      const id = constructPath(parentFolderId, folderName);
-
-      setSelectedFolderId(id);
-
-      dispatch(
-        FoldersActions.createTemporaryFolder({
-          folderId: parentFolderId,
-          name: folderName,
-          id,
-        }),
-      );
-
-      if (parentFolderId && !openedFoldersIds.includes(parentFolderId)) {
-        setOpenedFoldersIds(openedFoldersIds.concat(parentFolderId));
-      }
-    },
-    [dispatch, allFolders, openedFoldersIds, t],
-  );
-
-  const handleDeleteFolder = useCallback(
-    (folderId: string) =>
-      dispatch(
-        FoldersActions.deleteTemporaryFolder({
-          folderId,
-        }),
-      ),
-    [dispatch],
-  );
-
-  const getPath = useCallback(() => {
-    const { path, pathDepth } = getPathToFolderById(
-      allFolders,
-      selectedFolderId,
-    );
+  const handleConfirm = useCallback(() => {
+    const folderId = currentPath ?? resolvedInitialFolderId;
+    const suffix = organizationFolderIdToPublishPathSuffix(folderId);
+    const pathDepth = getOrganizationPublishPathDepth(folderId);
 
     if (pathDepth + depth > MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH) {
       dispatch(
-        UIActions.showErrorToast(
-          t("It's not allowed to have more nested folders"),
-        ),
+        UIActions.showErrorToast({
+          message: t(ChatI18nKeys.NotAllowedMoreNestedFolders),
+        }),
       );
       return;
     }
 
-    return onClose(path);
-  }, [depth, dispatch, allFolders, onClose, selectedFolderId, t]);
+    onClose(suffix ?? '');
+  }, [currentPath, resolvedInitialFolderId, depth, dispatch, onClose, t]);
+
+  const modalTreeOptions = useMemo(
+    () => ({
+      collapsed: collapsedTree,
+      onCollapseChange: setCollapsedTree,
+      header: treeOptions.header,
+    }),
+    [collapsedTree, treeOptions.header],
+  );
+
+  const modalGridOptions = useMemo(
+    () => ({
+      ...gridOptions,
+      showFiles: false,
+      additionalGridOptions: {
+        ...gridOptions.additionalGridOptions,
+        suppressRowVirtualisation: true,
+        onCellEditingStarted: (params: CellEditingStartedEvent) => {
+          setIsGridEditing(true);
+          if (params.api) {
+            setTimeout(() => {
+              params.api.ensureIndexVisible(params.rowIndex as number);
+            }, 0);
+          }
+          gridOptions.additionalGridOptions?.onCellEditingStarted?.(params);
+        },
+        onCellEditingStopped: (params: CellEditingStoppedEvent) => {
+          setIsGridEditing(false);
+          gridOptions.additionalGridOptions?.onCellEditingStopped?.(params);
+        },
+      },
+    }),
+    [gridOptions],
+  );
 
   return (
-    <SelectFolder
-      isOpen={isOpen}
-      modalDataQa="select-folder-modal"
-      onClose={onClose}
-      title={t('Change path')}
-    >
-      <SelectFolderHeader
-        onSearch={handleSearch}
-        searchQuery={searchQuery}
-        errorMessage={errorMessage}
-      >
-        <SelectFolderList
-          searchTerm={searchQuery}
-          allFolders={allFolders}
-          isInitialRenameEnabled
-          openedFoldersIds={openedFoldersIds}
-          newAddedFolderId={newAddedTemporaryFolderId}
-          additionalItemData={additionalItemData}
-          onClickFolder={handleFolderSelect}
-          onRenameFolder={handleRenameFolder}
-          onDeleteFolder={handleDeleteFolder}
-          onAddFolder={handleAddFolder}
-          onFolderSelect={handleFolderSelect}
-          isAllEntitiesOpened={isAllFoldersOpened}
-          initiallySelectedFolderId={initiallySelectedFolderId}
-          selectedFolderId={selectedFolderId}
-          highlightTemporaryFolders
-          rootFolderName={ORGANIZATION_SECTION_NAME}
-          rootFolderId={TEMPORARY_FOLDER_ROOT_ID}
-          showAllRootFolders
-          onShowError={setErrorMessage}
-        />
-      </SelectFolderHeader>
-      <SelectFolderFooter
-        onCreateNewFolder={handleAddFolder}
-        onSelectFolderClick={getPath}
-        onToggleHiddenFolders={handleToggleHiddenFolders}
-        areHiddenFoldersVisible={areHiddenFoldersVisible}
+    <div>
+      <DialDestinationFolderPopup
+        className="min-h-[500px] min-w-[700px]"
+        open={isOpen}
+        onClose={handleClose}
+        onConfirm={handleConfirm}
+        mode="move"
+        moveLabel={t(CommonI18nKeys.SelectFolder)}
+        addFolderLabel={t(CommonI18nKeys.AddFolder)}
+        header={t(ChatI18nKeys.ChangePath)}
+        path={currentPath}
+        onFolderPopupPathChange={setCurrentPath}
+        items={itemsToRender}
+        rootItem={rootFolder}
+        filesLoading={areFoldersLoading}
+        treeOptions={modalTreeOptions}
+        gridOptions={modalGridOptions}
+        navigationPanelOptions={navigationPanelOptions}
+        collapsedFileTree={collapsedTree}
+        allowedFileTypes={[]}
+        actionsRef={fileManagerActionRef}
+        onGridApiChange={setGridApi}
+        onCreateFolder={handleCreateOrganizationFolder}
+        onMoveToFiles={handleOrganizationMoveFiles}
+        onCreateFolderValidate={handleCreateFolderValidate}
+        onRenameValidate={handleOrganizationRenameValidation}
+        onDeleteFiles={handleDeleteTempFolders}
+        uploadEnabled={false}
+        showHiddenFileSwitcher
       />
-    </SelectFolder>
+    </div>
   );
 };

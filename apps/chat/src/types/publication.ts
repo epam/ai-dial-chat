@@ -9,13 +9,14 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 
+// Dial Core uses and returns uppercase function names, so we need to keep PublicationFunctions in sync with it to fix validation
 export enum PublicationFunctions {
-  Equal = 'Equal',
-  Contain = 'Contain',
-  Regex = 'Regex',
+  Equal = 'EQUAL',
+  Contain = 'CONTAIN',
+  Regex = 'REGEX',
   // TODO: uncomment when it will be supported on core
-  // True = 'True',
-  // False = 'False',
+  // True = 'TRUE',
+  // False = 'FALSE',
 }
 
 export interface PublicationRule {
@@ -118,14 +119,14 @@ export interface PublishedList {
   items?: PublishedItem[];
 }
 
-export interface TargetAudienceFilterItem {
+export interface TargetAudienceFilter {
   id: string;
-}
-
-export interface TargetAudienceFilter extends TargetAudienceFilterItem {
   filterFunction: PublicationFunctions;
   filterParams: string[];
+  source: string;
 }
+
+export type TargetAudienceFilterData = Omit<TargetAudienceFilter, 'id'>;
 
 export interface ResourceToReview {
   publicationUrl: string;

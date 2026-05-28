@@ -4,9 +4,16 @@ export enum Feature {
   Footer = 'footer', // Display app footer
   ConversationsSection = 'conversations-section', // Display conversations sidebar
   PromptsSection = 'prompts-section', // Display prompts sidebar
+  ConversationsPanelToggle = 'conversations-panel-toggle', // Show conversations panel toggle in the corner without app header
+  PromptsPanelToggle = 'prompts-panel-toggle', // Show prompts panel toggle in the corner without app header
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault', // show conversations sidebar by default on desktop
   ShowPromptsSectionByDefault = 'showPromptsSectionByDefault', // show prompts sidebar by default on desktop
+  ShowLayoutDividers = 'show-layout-dividers', // show dividers between chat and sidebars
   AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation
+  ChatFullWidthByDefault = 'chat-full-width-by-default', // Enforce chat full-width
+
+  // Chat Header
+  ChatHeaderBorder = 'chat-header-border', // Display a separator line below the chat header
 
   // Conversation Header
   HideNewConversation = 'hide-new-conversation', // hide "New conversation" button
@@ -23,12 +30,14 @@ export enum Feature {
   InputFiles = 'input-files', // Allow attach files to conversation
   InputLinks = 'input-links', // Allow attach links to conversation
   MessageTemplates = 'message-templates', // message templates
+  LiveChatInteraction = 'live-chat-interaction', // Enable interactive tool login flow during chat completion when agent tools are logged out
 
   // Edit assistant message
   EditLastAssistantContent = 'edit-last-assistant-message', // allow edit last assistant message only
   EditAllAssistantContent = 'edit-all-assistant-message', // allow edit all assistant messages
 
   // Edit user message
+  UserMessageAlignEnd = 'user-message-align-end', // Align user messages to the inline end (right in LTR)
   HideEditUserMessage = 'hide-edit-user-message', // Hide editing button of user message
 
   // Regenerate assistant message
@@ -39,6 +48,7 @@ export enum Feature {
 
   // Chat input
   SkipFocusChatInputOnLoad = 'skip-focus-chat-input-onload', // Skip default focusing chat input when on screen onload or after navigation
+  ChatInputBorder = 'chat-input-border', // Display border around chat input area
 
   // Send button
   DisabledSend = 'disabled-send', // Disable input
@@ -71,6 +81,7 @@ export enum Feature {
 
   // Applications
   CustomApplications = 'custom-applications', // Enable creating of applications ('Add app' button/menu)
+  HideCustomAppCreation = 'hide-custom-app-creation', // Hide "Custom app" option in 'Add app' button/menu
   CodeApps = 'code-apps', // Enable creating of Code apps (into the 'Add app' menu)
   CodeInterpreter = 'code-interpreter', // Enable Code Interpreter feature
 
@@ -80,6 +91,9 @@ export enum Feature {
 
   //Toolsets
   Toolsets = 'toolsets', //Enable toolsets
+
+  // Voice input
+  VoiceInput = 'voice-input', // Enable voice recording input button
 }
 
 export interface FeatureData {

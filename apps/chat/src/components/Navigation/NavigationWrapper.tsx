@@ -2,6 +2,8 @@ import { ReactNode } from 'react';
 
 import { useRouter } from 'next/router';
 
+import classNames from 'classnames';
+
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
@@ -11,7 +13,7 @@ import { ChatModalsManager } from '@/src/components/Chat/ChatModalsManager';
 import { Chatbar } from '@/src/components/Chatbar/Chatbar';
 import { ConversationDialogs } from '@/src/components/Chatbar/ConversationDialogs';
 import { MarketplaceFilterbar } from '@/src/components/Marketplace/MarketplaceFilterbar';
-import { Promptbar } from '@/src/components/Promptbar';
+import { Promptbar } from '@/src/components/Promptbar/Promptbar';
 import { PromptDialogs } from '@/src/components/Promptbar/components/PromptDialogs';
 
 import { Navigation } from './Navigation';
@@ -40,7 +42,13 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
 
   return (
     <div className="size-full">
-      <div className="flex size-full flex-col md:flex-row ">
+      <div
+        className={classNames(
+          'flex size-full flex-col md:flex-row',
+          enabledFeatures.has(Feature.ShowLayoutDividers) &&
+            'sidebar-overlay:[&>*+*]:border-s-[15px] sidebar-overlay:[&>*+*]:border-s-tertiary',
+        )}
+      >
         {shouldShowNavigation && <Navigation />}
         {router.route === Routes.Chat &&
           enabledFeatures.has(Feature.ConversationsSection) && (

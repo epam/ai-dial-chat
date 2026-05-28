@@ -1,6 +1,7 @@
 import config from '@/config/chat.playwright.config';
 import test from '@/src/core/baseFixtures';
 import { overlayStateFilePath } from '@/src/core/dialOverlayFixtures';
+import { writeModelsFile } from '@/src/core/testPaths';
 import { API, OverlaySandboxUrls } from '@/src/testData';
 import { LoginPage } from '@/src/ui/pages';
 import { Auth0Page } from '@/src/ui/pages/auth0Page';
@@ -15,7 +16,6 @@ if (process.env.E2E_ADMIN) {
 }
 
 for (let i = 0; i < overlayUsernames.length; i++) {
-  // eslint-disable-next-line playwright/expect-expect
   test(`[Overlay] Login: ${overlayUsernames[i]}`, async ({
     page,
     setTestIds,
@@ -52,7 +52,8 @@ for (let i = 0; i < overlayUsernames.length; i++) {
         options,
       );
     if (options?.setEntitiesEnvVars) {
-      process.env.MODELS = retrievedResponses.get(API.modelsHost);
+      writeModelsFile(retrievedResponses.get(API.modelsHost) ?? '[]');
+      process.env.THEMES = retrievedResponses.get(API.themesListingHost);
     }
     process.env['BUCKET' + i] = retrievedResponses.get(API.bucketHost);
 

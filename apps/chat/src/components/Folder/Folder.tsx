@@ -1,6 +1,6 @@
 import { useDismiss, useFloating, useInteractions } from '@floating-ui/react';
-import { IconCheck, IconFolder, IconMinus, IconX } from '@tabler/icons-react';
-import {
+import { IconCheck, IconFolder, IconMinus } from '@tabler/icons-react';
+import React, {
   ChangeEvent,
   DragEvent,
   FC,
@@ -37,7 +37,7 @@ import {
   isParentFolderSelected,
   sortByName,
 } from '@/src/utils/app/folders';
-import { isEntityIdExternal, isRootId } from '@/src/utils/app/id';
+import { isEntityIdExternal, isMyEntity, isRootId } from '@/src/utils/app/id';
 import { isTabletScreen } from '@/src/utils/app/mobile';
 import {
   hasParentWithAttribute,
@@ -76,10 +76,12 @@ import {
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/selectors';
 
-import { SidebarActionButton } from '@/src/components/Buttons/SidebarActionButton';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
+
 import { ReviewDot } from '@/src/components/Chat/Publish/ReviewDot';
 import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
 import { Checkbox } from '@/src/components/Common/Checkbox';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FolderContextMenu } from '@/src/components/Common/FolderContextMenu';
 import { ShareIcon } from '@/src/components/Common/ShareIcon';
@@ -91,6 +93,7 @@ import {
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 export interface FolderProps<T, P = unknown> {
   currentFolder: FolderInterface;
@@ -100,6 +103,7 @@ export interface FolderProps<T, P = unknown> {
     readonly?: boolean;
     additionalItemData?: AdditionalItemData;
     onEvent?: (eventId: string, data: P) => void;
+    isDraggingOver?: boolean;
   }>;
   allItems?: T[];
   allFolders: FolderInterface[];
@@ -438,33 +442,30 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(
-              'Folder with name "{{folderName}}" already exists in this folder.',
-              {
-                ns: Translation.Chat,
-                folderName: newName,
-              },
-            ),
-          ),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsInFolder, {
+              ns: Translation.Chat,
+              folderName: newName,
+            }),
+          }),
         );
         return;
       }
 
       if (doesHaveDotsInTheEnd(newName)) {
         dispatch(
-          UIActions.showErrorToast(
-            t('Using a dot at the end of a name is not permitted.'),
-          ),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.DotAtEndNotPermitted),
+          }),
         );
         return;
       }
 
       if (newName.startsWith('.')) {
         dispatch(
-          UIActions.showErrorToast(
-            t('Using a dot at the start of a name is not permitted.'),
-          ),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.DotAtStartNotPermitted),
+          }),
         );
         return;
       }
@@ -526,9 +527,9 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       if (childIds.has(currentFolder.id)) {
         dispatch(
-          UIActions.showErrorToast(
-            t("It's not allowed to move parent folder in child folder"),
-          ),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.NotAllowedMoveParentToChild),
+          }),
         );
         return;
       }
@@ -537,9 +538,9 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       if (maxDepth && level + foldersDepth > maxDepth) {
         dispatch(
-          UIActions.showErrorToast(
-            t("It's not allowed to have more nested folders"),
-          ),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.NotAllowedMoreNestedFolders),
+          }),
         );
         return;
       }
@@ -552,15 +553,12 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(
-              'Folder with name "{{folderName}}" already exists in this folder.',
-              {
-                ns: Translation.Chat,
-                folderName: droppedFolder.name,
-              },
-            ),
-          ),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsInFolder, {
+              ns: Translation.Chat,
+              folderName: droppedFolder.name,
+            }),
+          }),
         );
         return;
       }
@@ -623,19 +621,16 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )
           ) {
             dispatch(
-              UIActions.showErrorToast(
-                t(
-                  '{{entityType}} with name "{{entityName}}" already exists in this folder.',
-                  {
-                    ns: Translation.Common,
-                    entityType:
-                      featureType === FeatureType.Chat
-                        ? 'Conversation'
-                        : 'Prompt',
-                    entityName: droppedEntity.name,
-                  },
-                ),
-              ),
+              UIActions.showErrorToast({
+                message: t(CommonI18nKeys.EntityNameExistsInFolder, {
+                  ns: Translation.Common,
+                  entityType:
+                    featureType === FeatureType.Chat
+                      ? 'Conversation'
+                      : 'Prompt',
+                  entityName: droppedEntity.name,
+                }),
+              }),
             );
             return;
           }
@@ -764,7 +759,6 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       if (!onUnshareFolder) {
         return;
       }
-
       e.stopPropagation();
       setIsUnshareConfirmDialog(true);
     },
@@ -791,14 +785,12 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       e.stopPropagation();
 
       if (maxDepth && level + 1 > maxDepth) {
-        const nestedErrorMessage = t(
-          "It's not allowed to have more nested folders",
-        );
+        const nestedErrorMessage = t(ChatI18nKeys.NotAllowedMoreNestedFolders);
 
         if (onShowError) {
           onShowError(nestedErrorMessage);
         } else {
-          dispatch(UIActions.showErrorToast(nestedErrorMessage));
+          dispatch(UIActions.showErrorToast({ message: nestedErrorMessage }));
         }
         return;
       }
@@ -880,6 +872,25 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   const isTemporaryFolder =
     'temporary' in currentFolder && currentFolder.temporary;
 
+  const isAuthor = isMyEntity(currentFolder);
+
+  const unshareDescription = t(
+    isAuthor
+      ? ChatI18nKeys.ConfirmRemoveAllUsersAccess
+      : ChatI18nKeys.ConfirmRemoveYourAccess,
+    { name: currentFolder.name },
+  );
+
+  const handleCloseUnshareConfirmation = useCallback(
+    (result: boolean) => {
+      setIsUnshareConfirmDialog(false);
+      if (result) {
+        onUnshareFolder?.(currentFolder.id);
+      }
+    },
+    [currentFolder.id, onUnshareFolder],
+  );
+
   return (
     <div
       id="folder"
@@ -954,7 +965,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 {!isSelected && (
                   <ShareIcon
                     {...currentFolder}
-                    isHighlighted
+                    isHighlighted={!!isHighlighted}
+                    isDraggingOver={isDraggingOver}
                     featureType={featureType}
                     containerClassName={classNames(
                       (!isExternal || !additionalItemData?.isSidePanelItem) &&
@@ -1099,7 +1111,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   (!isSelected && !isPartialSelected)) && (
                   <ShareIcon
                     {...currentFolder}
-                    isHighlighted={isContextMenu}
+                    isHighlighted={isContextMenu || !!isHighlighted}
+                    isDraggingOver={isDraggingOver}
                     featureType={featureType}
                     containerClassName={classNames(
                       (!isExternal || !additionalItemData?.isSidePanelItem) &&
@@ -1231,28 +1244,24 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         )}
         {isRenaming && (
           <div className="absolute right-1 z-10 flex" data-qa="actions">
-            <SidebarActionButton
-              handleClick={(e) => {
+            <DialGhostIconButton
+              data-qa="confirm-edit"
+              onClick={(e) => {
                 e.stopPropagation();
                 if (isRenaming) {
                   handleRename();
                 }
               }}
-              dataQA="confirm-edit"
-              iconBefore={
-                <IconCheck size={18} className="hover:text-accent-primary" />
-              }
+              size={ElementSize.Small}
+              icon={<IconCheck size={18} />}
             />
-            <SidebarActionButton
-              handleClick={(e) => {
+            <CloseButtonSmall
+              onClick={(e) => {
                 e.stopPropagation();
                 setIsRenaming(false);
                 handleNewFolderRename();
               }}
-              dataQA="cancel-edit"
-              iconBefore={
-                <IconX size={18} className="hover:text-accent-primary" />
-              }
+              data-qa="cancel-edit"
             />
           </div>
         )}
@@ -1315,6 +1324,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   level: level + 1,
                   readonly,
                   additionalItemData,
+                  isDraggingOver,
                   ...(!!onItemEvent && { onEvent: onItemEvent }),
                 })}
               </div>
@@ -1324,14 +1334,14 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {onDeleteFolder && (
         <ConfirmDialog
           isOpen={isDeletingConfirmDialog}
-          heading={t('Confirm deleting folder')}
-          description={`${t('Are you sure that you want to delete a folder with all nested elements?')}${t(
+          heading={t(ChatI18nKeys.ConfirmDeletingFolder)}
+          description={`${t(ChatI18nKeys.ConfirmDeleteFolderDescription)}${t(
             currentFolder.isShared
-              ? '\nDeleting will stop sharing and other users will no longer see this folder.'
+              ? ChatI18nKeys.DeletingWillStopSharingFolder
               : '',
           )}`}
-          confirmLabel={t('Delete')}
-          cancelLabel={t('Cancel')}
+          confirmLabel={t(CommonI18nKeys.Delete)}
+          cancelLabel={t(CommonI18nKeys.Cancel)}
           onClose={(result) => {
             setIsDeletingConfirmDialog(false);
             if (result) {
@@ -1343,29 +1353,19 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {onUnshareFolder && (
         <ConfirmDialog
           isOpen={isUnshareConfirmDialog}
-          showHeadingTooltip
-          heading={t('Confirm unsharing: {{folderName}}', {
-            folderName: currentFolder.name,
-          })}
-          description={`${t('Are you sure that you want to unshare this folder?')}`}
-          confirmLabel={t('Unshare')}
-          cancelLabel={t('Cancel')}
-          onClose={(result) => {
-            setIsUnshareConfirmDialog(false);
-            if (result) {
-              onUnshareFolder(currentFolder.id);
-            }
-          }}
+          heading={t(ChatI18nKeys.ConfirmUnsharing)}
+          description={unshareDescription}
+          confirmLabel={t(ChatI18nKeys.Unshare)}
+          cancelLabel={t(ChatI18nKeys.Cancel)}
+          onClose={handleCloseUnshareConfirmation}
         />
       )}
       <ConfirmDialog
         isOpen={isConfirmRenaming}
-        heading={t('Confirm renaming folder')}
-        confirmLabel={t('Rename')}
-        cancelLabel={t('Cancel')}
-        description={t(
-          'Renaming will stop sharing and other users will no longer see this folder.',
-        )}
+        heading={t(ChatI18nKeys.ConfirmRenamingFolder)}
+        confirmLabel={t(ChatI18nKeys.Rename)}
+        cancelLabel={t(ChatI18nKeys.Cancel)}
+        description={t(ChatI18nKeys.RenamingWillStopSharing)}
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) {
@@ -1382,12 +1382,10 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       {sharedFolderDropModel && (
         <ConfirmDialog
           isOpen
-          heading={t('Confirm Moving Folder')}
-          confirmLabel={t('Move')}
-          cancelLabel={t('Cancel')}
-          description={t(
-            'Moving this folder will stop sharing and other users will no longer see this folder.',
-          )}
+          heading={t(ChatI18nKeys.ConfirmMovingFolder)}
+          confirmLabel={t(ChatI18nKeys.Move)}
+          cancelLabel={t(ChatI18nKeys.Cancel)}
+          description={t(ChatI18nKeys.MovingWillStopSharing)}
           onClose={(result) => {
             if (result) {
               handleFolderDrop(

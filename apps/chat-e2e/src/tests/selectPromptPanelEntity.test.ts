@@ -1422,7 +1422,7 @@ dialTest(
         await promptDropdownMenu.selectMenuOption(MenuOptions.select);
         await promptBar.createNewEntity();
         await promptBarAssertion.assertUnselectAllButtonState('hidden');
-        await promptModalDialog.closeButton.click();
+        await promptModalDialog.getCloseButton().click();
       },
     );
 
@@ -1431,9 +1431,9 @@ dialTest(
       async () => {
         await prompts.openEntityDropdownMenu(singlePrompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.select);
-        await promptBar.getSearch().setSearchValue('test');
+        await promptBar.getSidebarSearch().setSearchValue('test');
         await promptBarAssertion.assertUnselectAllButtonState('hidden');
-        await promptBar.getSearch().setSearchValue('');
+        await promptBar.getSidebarSearch().setSearchValue('');
       },
     );
 

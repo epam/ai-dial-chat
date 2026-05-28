@@ -5,6 +5,7 @@ import { FormProvider, useForm } from 'react-hook-form';
 import { useTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
 
+import { isPredefinedEntity } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
@@ -21,6 +22,8 @@ import {
   ToolsetSelectors,
 } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { NA_VERSION } from '@/src/constants/publication';
 import { Routes } from '@/src/constants/routes';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
@@ -43,31 +46,36 @@ import { zodResolver } from '@hookform/resolvers/zod';
 const credsTabs = [
   {
     key: ToolsetCredentialsLevel.USER,
-    label: 'My credentials',
+    label: MarketplaceI18nKeys.MyCredentials,
     Icon: IconUser,
   },
   {
     key: ToolsetCredentialsLevel.GLOBAL,
-    label: 'Entire organization credentials',
+    label: MarketplaceI18nKeys.EntireOrganizationCredentials,
     Icon: IconLayoutGrid,
   },
 ];
 
 interface ToolsetLoginDialogProps {
-  entity: ToolsetModel;
+  toolset: ToolsetModel;
 }
 
-export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
-  entity,
-}) => {
+const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
   const { route } = useRouter();
 
+  const loginEntity = useAppSelector(MarketplaceSelectors.selectLoginEntity);
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
-  const allToolsets = useAppSelector(ToolsetSelectors.selectToolsets);
-  const authType = entity.authSettings.authenticationType;
-  const isPublic = isEntityIdPublic(entity);
+  // Select all toolsets including with `hiddenEntityTag` ones to show all versions in the dropdown
+  const allToolsets = useAppSelector((state) =>
+    ToolsetSelectors.selectToolsets(state, true),
+  );
+  const isToolsetLoading = useAppSelector(
+    ToolsetSelectors.selectIsToolsetDetailsLoading,
+  );
+  const authType = toolset.authSettings.authenticationType;
+  const isPublic = isEntityIdPublic(toolset) || isPredefinedEntity(toolset);
 
   const [authLevel, setAuthLevel] = useState<
     ToolsetCredentialsLevel | undefined
@@ -76,65 +84,66 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
   const isAppsEditor = route === Routes.AppsEditor;
 
   const formMethods = useForm<ToolsetLoginFormType>({
-    defaultValues: getDefaultLoginFormData(
-      authType,
-      entity,
-      {
-        withLogin: WithLogin.WithLogin,
-      },
+    defaultValues: getDefaultLoginFormData({
+      authenticationType: authType,
+      toolset,
+      prevData: { withLogin: WithLogin.WithLogin },
       authLevel,
-    ),
+    }),
     mode: 'onChange',
     reValidateMode: 'onChange',
     resolver: zodResolver(ToolsetLoginFormSchema),
   });
 
-  const isOrganizationView = isAdmin && isPublic;
-  const isSignedIn = isToolsetSignedIn(entity, ToolsetCredentialsLevel.GLOBAL);
+  const isOrganizationView =
+    isAdmin && isPublic && !loginEntity?.disableAdminView;
+  const isSignedIn = isToolsetSignedIn(
+    toolset,
+    isPublic ? ToolsetCredentialsLevel.USER : ToolsetCredentialsLevel.GLOBAL,
+  );
 
   const fieldsInfo = useMemo(
     () => ({
-      apiKey: t('Enter your API key value for "{{header}}" header', {
-        header: entity.authSettings.apiKeyHeader,
+      apiKey: t(MarketplaceI18nKeys.EnterApiKeyForHeader, {
+        header: toolset.authSettings.apiKeyHeader,
       }),
     }),
-    [entity.authSettings.apiKeyHeader, t],
+    [toolset.authSettings.apiKeyHeader, t],
   );
 
   const organizationFormTitle = useMemo(() => {
+    const isSignedIn = isToolsetSignedIn(toolset, authLevel);
     switch (authLevel) {
       case ToolsetCredentialsLevel.USER:
-        return isToolsetSignedIn(entity, authLevel)
-          ? t('Log out of the toolset using personal credentials.')
-          : t('Log in with personal credentials.');
+        return isSignedIn
+          ? t(MarketplaceI18nKeys.LogOutToolsetPersonal)
+          : t(MarketplaceI18nKeys.LogInWithPersonalCreds);
       case ToolsetCredentialsLevel.GLOBAL:
-        return isToolsetSignedIn(entity, authLevel) ? (
+        return isSignedIn ? (
           <>
-            {t('Log out of the toolset ')}
-            <strong>{t('for all users in the organization ')}</strong>
-            {t('using these credentials.')}
+            {t(MarketplaceI18nKeys.LogOutToolsetAll)}
+            <strong>{t(MarketplaceI18nKeys.ForAllUsersInOrg)}</strong>
+            {t(MarketplaceI18nKeys.UsingTheseCreds)}
           </>
         ) : (
           <>
-            {t(
-              'Log in with credentials that will be available to other users in the ',
-            )}
-            <strong>{t('organization.')}</strong>
+            {t(MarketplaceI18nKeys.LogInWithCredsForOrg)}
+            <strong>{t(MarketplaceI18nKeys.OrganizationMarketplace)}</strong>
           </>
         );
       default:
         return '';
     }
-  }, [authLevel, entity, t]);
+  }, [authLevel, toolset, t]);
 
   const allVersions = useMemo(
     () =>
       allToolsets.filter(
         (t) =>
           getGroupMarketplaceEntityKey(t) ===
-          getGroupMarketplaceEntityKey(entity),
+          getGroupMarketplaceEntityKey(toolset),
       ),
-    [allToolsets, entity],
+    [allToolsets, toolset],
   );
 
   const handleClose = useCallback(() => {
@@ -145,36 +154,45 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
     (data: ToolsetLoginFormType) => {
       dispatch(
         ToolsetActions.startSignInProcess({
-          authLevel: authLevel ?? ToolsetCredentialsLevel.GLOBAL,
+          authLevel:
+            authLevel ??
+            (isPublic
+              ? ToolsetCredentialsLevel.USER
+              : ToolsetCredentialsLevel.GLOBAL),
           apiKey: data.apiKey,
-          toolset: entity,
+          toolset,
         }),
       );
       handleClose();
     },
-    [dispatch, entity, handleClose, authLevel],
+    [dispatch, authLevel, isPublic, toolset, handleClose],
   );
 
   const handleLogout = useCallback(() => {
     dispatch(
       ToolsetActions.logOutToolset({
-        authLevel: authLevel ?? ToolsetCredentialsLevel.GLOBAL,
-        authType: entity.authSettings.authenticationType,
-        toolsetId: entity.id,
+        authLevel:
+          authLevel ??
+          (isPublic
+            ? ToolsetCredentialsLevel.USER
+            : ToolsetCredentialsLevel.GLOBAL),
+        authType: toolset.authSettings.authenticationType,
+        toolsetId: toolset.id,
       }),
     );
     handleClose();
   }, [
+    isPublic,
     dispatch,
-    entity.authSettings.authenticationType,
-    entity.id,
+    toolset.authSettings.authenticationType,
+    toolset.id,
     handleClose,
     authLevel,
   ]);
 
   const handleVersionChange = useCallback(
     (toolset: ToolsetModel) => {
-      dispatch(MarketplaceActions.setLoginEntity(toolset));
+      dispatch(MarketplaceActions.setLoginEntity({ toolset }));
     },
     [dispatch],
   );
@@ -183,17 +201,15 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
     (value: ToolsetCredentialsLevel) => {
       setAuthLevel(value);
       formMethods.reset(
-        getDefaultLoginFormData(
-          authType,
-          entity,
-          {
-            withLogin: WithLogin.WithLogin,
-          },
-          value,
-        ),
+        getDefaultLoginFormData({
+          authenticationType: authType,
+          toolset,
+          prevData: { withLogin: WithLogin.WithLogin },
+          authLevel: value,
+        }),
       );
     },
-    [authType, entity, formMethods],
+    [authType, toolset, formMethods],
   );
 
   const handleCloseLogoutModal = useCallback(
@@ -214,10 +230,10 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
     return (
       <ConfirmDialog
         isOpen
-        heading={t('Logging out')}
-        description={t('Are you sure you want to log out?') as string}
-        confirmLabel={t('Log out')}
-        cancelLabel={t('Cancel')}
+        heading={t(MarketplaceI18nKeys.LoggingOut)}
+        description={t(MarketplaceI18nKeys.AreYouSureLogOut) as string}
+        confirmLabel={t(MarketplaceI18nKeys.LogOutMarketplace)}
+        cancelLabel={t(MarketplaceI18nKeys.CancelMarketplace)}
         onClose={handleCloseLogoutModal}
       />
     );
@@ -232,25 +248,43 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
       onClose={handleClose}
     >
       <div className="px-6 py-4">
-        <p className="text-base font-semibold text-primary">
-          {t(isOrganizationView ? 'Manage credentials' : 'Login')}
+        <p
+          className="text-base font-semibold text-primary"
+          data-qa={isOrganizationView ? 'manage-creds-header' : 'login-header'}
+        >
+          {t(
+            isOrganizationView
+              ? MarketplaceI18nKeys.ManageCredentials
+              : MarketplaceI18nKeys.LoginMarketplace,
+          )}
         </p>
       </div>
 
       <div className="flex gap-2 px-6 py-4">
-        <ModelIcon size={40} entityId={entity.id} entity={entity} />
+        <ModelIcon size={40} entityId={toolset.id} entity={toolset} />
         <div className="flex flex-col justify-between">
-          <h3 className="text-sm font-semibold text-primary">{entity.name}</h3>
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-primary">{t('Version: ')}</span>
+          <h3
+            className="text-sm font-semibold text-primary"
+            data-qa="toolset-name"
+          >
+            {toolset.name}
+          </h3>
+          <div className="flex items-center gap-1" data-qa="toolset-version">
+            <span className="text-xs text-primary">
+              {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
+            </span>
 
-            <ModelVersionSelect
-              entities={isAppsEditor ? [entity] : allVersions}
-              currentEntity={entity}
-              onSelect={handleVersionChange}
-              className="truncate"
-              triggerClassName="!text-xs bg-layer-4 rounded p-1"
-            />
+            {toolset.version ? (
+              <ModelVersionSelect
+                entities={isAppsEditor ? [toolset] : allVersions}
+                currentEntity={toolset}
+                onSelect={handleVersionChange}
+                className="truncate"
+                triggerClassName="!text-xs bg-layer-4 rounded p-1"
+              />
+            ) : (
+              <span className="text-xs text-secondary">{t(NA_VERSION)}</span>
+            )}
           </div>
         </div>
       </div>
@@ -268,17 +302,19 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
                 onClick={() => handleCredsTabClick(key)}
                 statusBadge={{
                   label: t(
-                    isToolsetSignedIn(entity, key) ? 'LOGGED IN' : 'LOGGED OUT',
+                    isToolsetSignedIn(toolset, key)
+                      ? MarketplaceI18nKeys.LoggedIn
+                      : MarketplaceI18nKeys.LoggedOut,
                   ),
-                  type: isToolsetSignedIn(entity, key) ? 'success' : 'error',
+                  type: isToolsetSignedIn(toolset, key) ? 'success' : 'error',
                 }}
               >
                 <p className="text-sm text-primary">{organizationFormTitle}</p>
 
                 <ToolsetLoginForm
                   credentialsLevel={authLevel}
-                  type={entity.authSettings.authenticationType}
-                  toolset={entity}
+                  type={toolset.authSettings.authenticationType}
+                  toolset={toolset}
                   buttonClassName="ml-auto"
                   onLogin={handleLogin}
                   onLogout={handleLogout}
@@ -289,14 +325,19 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
             ))
           ) : (
             <ToolsetLoginForm
-              credentialsLevel={ToolsetCredentialsLevel.GLOBAL}
-              type={entity.authSettings.authenticationType}
-              toolset={entity}
+              credentialsLevel={
+                isPublic
+                  ? ToolsetCredentialsLevel.USER
+                  : ToolsetCredentialsLevel.GLOBAL
+              }
+              type={toolset.authSettings.authenticationType}
+              toolset={toolset}
               buttonClassName="ml-auto"
               onLogin={handleLogin}
               onLogout={handleLogout}
               hideConfigFields
               fieldsInfo={fieldsInfo}
+              disabled={isToolsetLoading}
             />
           )}
         </div>
@@ -307,5 +348,5 @@ export const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({
 
 export const ToolsetLoginDialog =
   withRenderWhenEntities<ToolsetLoginDialogProps>({
-    entity: MarketplaceSelectors.selectLoginEntity,
+    toolset: (state) => MarketplaceSelectors.selectLoginEntity(state)?.toolset,
   })(ToolsetLoginDialogView);

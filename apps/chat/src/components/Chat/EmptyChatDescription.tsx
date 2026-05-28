@@ -25,6 +25,9 @@ import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -124,7 +127,7 @@ const EmptyChatDescriptionView = ({
   if (models.length === 0) {
     return (
       <div className="flex w-full items-center justify-center rounded-t p-4">
-        <Spinner size={16} className="mx-auto" />
+        <Spinner size={DEFAULT_ICON_SIZES.SMALL} className="mx-auto" />
       </div>
     );
   }
@@ -184,7 +187,6 @@ const EmptyChatDescriptionView = ({
               >
                 {getModelName(conversation, model)}
               </span>
-              {model && <FunctionStatusIndicator entity={model} />}
             </div>
           </div>
           {isReplayAsIs && (
@@ -197,9 +199,7 @@ const EmptyChatDescriptionView = ({
                   className="!text-base"
                   isShortDescription
                 >
-                  {t(
-                    'This mode replicates user requests from the original conversation including settings set in each message.',
-                  )}
+                  {t(ChatI18nKeys.ReplayAsIsDescription)}
                 </EntityMarkdownDescription>
               </span>
               {isOldReplay && (
@@ -208,9 +208,7 @@ const EmptyChatDescriptionView = ({
                     className="!text-sm"
                     isShortDescription
                   >
-                    {t(
-                      'Some messages were created in an older DIAL version and may not replay as expected.',
-                    )}
+                    {t(ChatI18nKeys.OldReplayWarning)}
                   </EntityMarkdownDescription>
                 </span>
               )}
@@ -218,13 +216,16 @@ const EmptyChatDescriptionView = ({
           )}
           {model && !(isPlayback || isReplayAsIs) && (
             <>
-              <ModelVersionSelect
-                className="h-max w-fit self-center"
-                entities={versions}
-                onSelect={handleSelectVersion}
-                currentEntity={model}
-                showVersionPrefix
-              />
+              <div className="flex items-center justify-center gap-2">
+                <ModelVersionSelect
+                  className="h-max w-fit self-center"
+                  entities={versions}
+                  onSelect={handleSelectVersion}
+                  currentEntity={model}
+                  showVersionPrefix
+                />
+                {model && <FunctionStatusIndicator entity={model} />}
+              </div>
               {!!getModelDescription(model) && (
                 <span
                   className="whitespace-pre-wrap text-secondary"
@@ -243,12 +244,12 @@ const EmptyChatDescriptionView = ({
         </div>
       </div>
       {(!isReadOnly || !isExternal) && (
-        <div className="flex gap-3 divide-x divide-primary leading-4">
+        <div className="flex gap-3 divide-x divide-primary leading-4 rtl:divide-x-reverse">
           {!isEmptyChatChangeAgentHidden && (
             <DialLinkButton
               data-qa="change-agent"
               onClick={handleOpenChangeModel}
-              label={t('Change agent')}
+              label={t(ChatI18nKeys.ChangeAgent)}
               className="px-0"
             />
           )}
@@ -256,7 +257,7 @@ const EmptyChatDescriptionView = ({
             <DialLinkButton
               data-qa="configure-settings"
               onClick={handleOpenSettings}
-              label={t('Configure settings')}
+              label={t(ChatI18nKeys.ConfigureSettings)}
               className="rounded-none border-y-0 px-3"
             />
           )}

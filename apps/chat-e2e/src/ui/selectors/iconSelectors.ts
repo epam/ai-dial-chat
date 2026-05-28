@@ -13,6 +13,7 @@ export const IconSelectors = {
   checkIcon: '.tabler-icon-check',
   filledDotCircleIcon: '.tabler-icon-circle-dot-filled',
   dotCircleIcon: '.tabler-icon-circle-dot',
+  circleIcon: '.tabler-icon-circle',
   filledPointIcon: '.tabler-icon-point-filled',
   exclamationCircleIcon: '.tabler-icon-exclamation-circle',
   externalAppIcon: '.tabler-icon-external-link',
@@ -29,4 +30,10 @@ export const IconSelectors = {
   chevronsRightIcon: '.tabler-icon-chevrons-right',
   fileTypeIcon: (extension: string) =>
     `tabler-icon tabler-icon-file-type-${extension} `,
+  defaultFileIconClass: 'tabler-icon tabler-icon-file ',
+  alertIcon: '.tabler-icon-alert-circle-filled.text-error',
+  warningIcon: '.tabler-icon-alert-triangle-filled.text-warning-icon',
+  sharedEntityIcon: '.tabler-icon-arrow-up-right',
+  eyeIcon: '.tabler-icon.tabler-icon-eye',
+  eyeOffIcon: '.tabler-icon.tabler-icon-eye-off',
 };

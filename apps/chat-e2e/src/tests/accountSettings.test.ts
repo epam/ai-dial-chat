@@ -6,7 +6,7 @@ import {
   ToggleState,
   toTitleCase,
 } from '@/src/testData';
-import { Styles, ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemeColorAttributes, getElementWidth } from '@/src/ui/domData';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 
@@ -24,21 +24,18 @@ dialTest(
     setTestIds('EPMRTC-812');
 
     await dialTest.step(
-      'Open account menu and verify icon is changed to expanded',
+      'Open account menu and verify menu options',
       async () => {
         await localStorageManager.setShowSideBarPanels();
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await accountSettings.openAccountDropdownMenu();
-        await accountSettingsAssertion.assertCaretState('expanded');
+        await accountDropdownMenuAssertion.assertMenuState('visible');
+        await accountDropdownMenuAssertion.assertMenuOptions(
+          Object.values(AccountMenuOptions),
+        );
       },
     );
-
-    await dialTest.step('Verify account menu options', async () => {
-      await accountDropdownMenuAssertion.assertMenuOptions(
-        Object.values(AccountMenuOptions),
-      );
-    });
 
     await dialTest.step(
       'Click out of account menu and verify it is closed',
@@ -159,9 +156,7 @@ dialTest(
     await dialTest.step(
       'Save changes and verify width of chat message box, history messages, chat name become wider',
       async () => {
-        sendMessageInputInitWidth = await sendMessage
-          .getComputedStyleProperty(Styles.width)
-          .then((w) => +w[0].replace('px', ''));
+        sendMessageInputInitWidth = await getElementWidth(sendMessage);
         await settingsModal.saveButton.click();
         await chatHeaderAssertion.assertHeaderWidth({ hasFullWidth: true });
         await chatMessagesAssertion.assertMessagesWidth({ hasFullWidth: true });

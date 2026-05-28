@@ -1,9 +1,10 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { useFormContext, useFormState, useWatch } from 'react-hook-form';
 
 import { usePreventSpaceHandlers } from '@/src/hooks/usePreventSpaceHandlers';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { doesAgentSupportMcp } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { Translation } from '@/src/types/translation';
@@ -12,12 +13,17 @@ import { useAppSelector } from '@/src/store/hooks';
 import { ApplicationSelectors } from '@/src/store/selectors';
 
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
+import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import {
   ExternalAppForm as ExternalAppFormType,
   MANDATORY_FIELD_PLACEHOLDER,
 } from '@/src/components/AppsEditor/form';
 import { Field } from '@/src/components/Common/Forms/Field';
+import { withLabel } from '@/src/components/Common/Forms/Label';
+import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
+
+const CopyUrlButton = withLabel(ToolsetLinkButton);
 
 export const ExternalAppForm = () => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -54,9 +60,9 @@ export const ExternalAppForm = () => {
     >
       <Field
         {...register('externalUrl')}
-        label={t('External URL')}
+        label={t(MarketplaceI18nKeys.ExternalURL)}
         mandatory
-        placeholder={t('Type chat external URL')}
+        placeholder={t(MarketplaceI18nKeys.TypeChatExternalURL)}
         id="externalUrl"
         error={errors.externalUrl?.message}
         data-qa="external-url"
@@ -67,6 +73,13 @@ export const ExternalAppForm = () => {
         disabled={isAppPublic}
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
       />
+
+      {doesAgentSupportMcp(appDetails) && (
+        <CopyUrlButton
+          entity={appDetails}
+          label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
+        />
+      )}
     </div>
   );
 };

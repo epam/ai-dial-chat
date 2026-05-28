@@ -1,9 +1,13 @@
+import { NextRouter } from 'next/router';
+
 import { EMPTY, catchError, map, of, switchMap } from 'rxjs';
 
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
+  getEntityBucket,
   getIdWithoutRootPathSegments,
   isConversationId,
   isFileId,
@@ -17,19 +21,43 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
   PublicationActions,
   UIActions,
 } from '@/src/store/actions';
-import { PublicationSelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  PublicationSelectors,
+} from '@/src/store/selectors';
+
+import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import { getFolderIdFromEntityId } from '../folders';
 
 import { Message, PublishActions } from '@epam/ai-dial-shared';
+import uniq from 'lodash-es/uniq';
+
+export const getDeletedEntities = <
+  T extends { id: string; publicationInfo?: unknown },
+>(
+  entities: T[],
+  resourcesToDelete: Set<string>,
+) =>
+  entities
+    .filter((entity) => resourcesToDelete.has(entity.id))
+    .map((entity) => ({
+      ...entity,
+      publicationInfo: {
+        ...(entity.publicationInfo || {}),
+        action: PublishActions.DELETE,
+      },
+    }));
 
 export const getSetUpdatedItemsToApproveAction$ = (
   state: RootState,
@@ -140,6 +168,8 @@ export const addMessageAttachmentsToPublication$ = (
 export const getUpdateApplicationGeneralInfoAction$ = (
   oldApplication: CustomApplicationModel,
   newApplication: CustomApplicationModel,
+  isSaveAndExit?: boolean,
+  tabToOpen?: MarketplaceEditorSteps,
 ) => {
   return ApplicationService.get(newApplication.id).pipe(
     switchMap((application) => {
@@ -153,6 +183,13 @@ export const getUpdateApplicationGeneralInfoAction$ = (
           application.applicationProperties;
       }
 
+      const shaderUpdatePayload = {
+        oldApplication,
+        applicationData,
+        isSaveAndExit,
+        tabToOpen,
+      };
+
       if (newApplication.applicationTypeSchemaId) {
         return ApplicationTypesSchemasService.getApplicationTypeSchema(
           newApplication.applicationTypeSchemaId,
@@ -160,31 +197,30 @@ export const getUpdateApplicationGeneralInfoAction$ = (
           switchMap((schema) => {
             return of(
               ApplicationActions.update({
-                oldApplication,
-                applicationData,
+                ...shaderUpdatePayload,
                 schema,
               }),
             );
           }),
           catchError((err) => {
             console.error(err);
+            const { traceId } = parseApiError(err);
             return of(
-              UIActions.showErrorToast(
-                translate(
-                  'Cannot fetch application schema. Please try again later.',
+              UIActions.showErrorToast({
+                message: translate(
+                  CommonI18nKeys.CannotFetchApplicationSchema,
+                  {
+                    ns: Translation.Common,
+                  },
                 ),
-              ),
+                traceId,
+              }),
             );
           }),
         );
       }
 
-      return of(
-        ApplicationActions.update({
-          oldApplication,
-          applicationData,
-        }),
-      );
+      return of(ApplicationActions.update(shaderUpdatePayload));
     }),
   );
 };
@@ -237,3 +273,35 @@ export function getPublicationResourceEntityData<T>(
     } as T;
   });
 }
+
+export const getCurrentReviewBucket = (
+  state: RootState,
+  router: NextRouter,
+) => {
+  const queryPublicationUrl = router.query.publicationUrl?.toString();
+  const storePublicationUrl =
+    PublicationSelectors.selectSelectedPublicationUrl(state);
+  const publicationUrl = queryPublicationUrl || storePublicationUrl;
+  const publication = publicationUrl
+    ? PublicationSelectors.selectPublicationByUrl(state, publicationUrl)
+    : undefined;
+  const selectedConversations =
+    ConversationsSelectors.selectSelectedConversations(state);
+
+  if (!publication) return undefined;
+
+  const areAllReviewConversations =
+    selectedConversations.length &&
+    selectedConversations.every((c) => !!c.publicationInfo?.publicationUrl);
+  const buckets = selectedConversations.map(getEntityBucket);
+  const areBucketsSame = uniq(buckets).length === 1;
+  const areAllSamePublicationConversations =
+    areAllReviewConversations && areBucketsSame;
+  const publicationResources = publication?.resources ?? [];
+  const firstReviewUrl = publicationResources[0]?.reviewUrl;
+
+  if (!publicationResources.length && !areAllSamePublicationConversations) {
+    return undefined;
+  }
+  return firstReviewUrl ? getEntityBucket({ id: firstReviewUrl }) : buckets[0];
+};

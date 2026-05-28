@@ -15,7 +15,6 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { hasParentWithAttribute } from '@/src/utils/app/modals';
 import { parseVariablesFromContent } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
 
@@ -26,25 +25,25 @@ import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
+import { SettingsI18nKeys } from '@/src/constants/i18n';
 
 import { TemplateRenderer } from '@/src/components/Chat/ChatMessage/ChatMessageTemplatesModal/TemplateRenderer';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { DialCloseButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   prompt: Prompt;
   onSubmit: (updatedContent: string) => void;
   onClose: () => void;
-  ignoreOutsideClicks?: string;
 }
 
 export const PromptVariablesDialog: FC<Props> = ({
   prompt,
   onSubmit,
   onClose,
-  ignoreOutsideClicks,
 }) => {
   const variables = useMemo(
     () => parseVariablesFromContent(prompt.content),
@@ -127,26 +126,6 @@ export const PromptVariablesDialog: FC<Props> = ({
   );
 
   useEffect(() => {
-    const handleOutsideClick = (e: MouseEvent) => {
-      if (
-        ignoreOutsideClicks &&
-        hasParentWithAttribute(e.target as Element, ignoreOutsideClicks)
-      ) {
-        return;
-      }
-      if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-        onClose();
-      }
-    };
-
-    window.addEventListener('click', handleOutsideClick);
-
-    return () => {
-      window.removeEventListener('click', handleOutsideClick);
-    };
-  }, [ignoreOutsideClicks, onClose]);
-
-  useEffect(() => {
     inputsRefs.current?.[0]?.focus?.();
   }, []);
 
@@ -186,9 +165,9 @@ export const PromptVariablesDialog: FC<Props> = ({
           </div>
         )}
 
-        <DialCloseButton
-          className="absolute right-2 top-2 rounded"
-          onClose={onClose}
+        <CloseButtonSmall
+          className="absolute right-2 top-2"
+          onClick={onClose}
         />
 
         {updatedVariables.map((variable, index) => (
@@ -213,7 +192,7 @@ export const PromptVariablesDialog: FC<Props> = ({
               style={{ resize: 'none' }}
               required
               title=""
-              placeholder={t('Enter a value for {{key}}...', {
+              placeholder={t(SettingsI18nKeys.EnterAValueForKey, {
                 key: variable.key,
               })}
               value={variable.value}
@@ -225,13 +204,15 @@ export const PromptVariablesDialog: FC<Props> = ({
               }}
               rows={3}
             />
-            <EmptyRequiredInputMessage text="Please fill out all variables" />
+            <EmptyRequiredInputMessage
+              text={SettingsI18nKeys.PleaseFillOutAllVariables}
+            />
           </div>
         ))}
 
         <div className="mt-1 flex justify-end">
           <DialPrimaryButton
-            label={t('Submit')}
+            label={t(SettingsI18nKeys.Submit)}
             type="submit"
             data-qa="submit-variable"
           />

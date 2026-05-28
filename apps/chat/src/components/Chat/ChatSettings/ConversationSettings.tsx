@@ -17,10 +17,15 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
+import { ResponseFormat } from '@/src/components/Chat/ChatSettings/ResponseFormat';
+
 import { SystemPrompt } from './SystemPrompt';
 import { TemperatureSlider } from './Temperature';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
+import { ConversationResponseFormat } from '@epam/ai-dial-shared';
 
 interface SettingContainerProps {
   children: ReactNode;
@@ -29,13 +34,15 @@ interface SettingContainerProps {
 interface Props {
   prompt: string | undefined;
   temperature: number | undefined;
+  responseFormat: ConversationResponseFormat;
   prompts: Prompt[];
   conversation: Conversation;
   onChangePrompt: (prompt: string) => void;
   onChangeTemperature: (temperature: number) => void;
+  onChangeResponseFormat: (responseFormat: ConversationResponseFormat) => void;
 }
 
-export function FieldContainer({ children }: SettingContainerProps) {
+function FieldContainer({ children }: SettingContainerProps) {
   if (!children) {
     return null;
   }
@@ -43,7 +50,7 @@ export function FieldContainer({ children }: SettingContainerProps) {
   return <div className="px-3 py-4 md:px-6">{children}</div>;
 }
 
-export function SettingContainer({ children }: SettingContainerProps) {
+function SettingContainer({ children }: SettingContainerProps) {
   if (!children) {
     return <EmptySettings />;
   }
@@ -60,9 +67,7 @@ function EmptySettings() {
 
   return (
     <SettingContainer>
-      <FieldContainer>
-        {t('There are no conversation settings for this agent ')}
-      </FieldContainer>
+      <FieldContainer>{t(ChatI18nKeys.NoConversationSettings)}</FieldContainer>
     </SettingContainer>
   );
 }
@@ -72,10 +77,12 @@ export const ConversationSettings = Inversify.register(
   ({
     prompts,
     prompt,
+    responseFormat,
     temperature,
     conversation,
     onChangePrompt,
     onChangeTemperature,
+    onChangeResponseFormat,
   }: Props) => {
     const { t } = useTranslation(Translation.Chat);
 
@@ -87,17 +94,34 @@ export const ConversationSettings = Inversify.register(
     if (!model) {
       return (
         <SettingContainer>
-          <FieldContainer>{t('Agent is not available')}</FieldContainer>
+          <FieldContainer>{t(ChatI18nKeys.AgentIsNotAvailable)}</FieldContainer>
         </SettingContainer>
       );
     }
 
     if (!doesModelHaveSettings(model)) {
-      return <EmptySettings />;
+      return (
+        <SettingContainer>
+          <FieldContainer>
+            <ResponseFormat
+              value={responseFormat}
+              onChange={onChangeResponseFormat}
+              disabled={isPlayback}
+            />
+          </FieldContainer>
+        </SettingContainer>
+      );
     }
 
     return (
       <SettingContainer>
+        <FieldContainer>
+          <ResponseFormat
+            value={responseFormat}
+            onChange={onChangeResponseFormat}
+            disabled={isPlayback}
+          />
+        </FieldContainer>
         {model.type === EntityType.Model &&
           doesModelAllowSystemPrompt(model) && (
             <FieldContainer>
@@ -114,7 +138,7 @@ export const ConversationSettings = Inversify.register(
         {doesModelAllowTemperature(model) && (
           <FieldContainer>
             <TemperatureSlider
-              label={t('Temperature')}
+              label={t(ChatI18nKeys.Temperature)}
               onChangeTemperature={onChangeTemperature}
               temperature={temperature}
               disabled={isPlayback}

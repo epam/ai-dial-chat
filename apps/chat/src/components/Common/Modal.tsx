@@ -22,10 +22,10 @@ import classNames from 'classnames';
 
 import { ModalState } from '@/src/types/modal';
 
+import { CloseButtonSmall } from './CloseButtons';
 import { Spinner } from './Spinner';
-import { Tooltip } from './Tooltip';
 
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 export interface Props extends FormHTMLAttributes<HTMLFormElement> {
   children: ReactNode | ReactNode[];
@@ -107,7 +107,7 @@ function ModalView({
           >
             <Tag
               className={classNames(
-                'relative max-h-full rounded bg-layer-3 text-left',
+                'relative max-h-full rounded bg-layer-3 text-start',
                 containerClassName,
               )}
               role="dialog"
@@ -115,29 +115,27 @@ function ModalView({
               {...getFloatingProps()}
               data-qa={dataQa}
               {...(form && { ...form })}
+              aria-modal="true"
             >
               {!hideClose && (
-                <DialCloseButton
-                  onClose={handleClose}
-                  className="absolute right-2 top-2 z-50"
-                  ariaLabel="close"
+                <CloseButtonSmall
+                  onClick={handleClose}
+                  className="absolute end-2 top-2 z-50"
+                  aria-label="Close dialog"
                 />
               )}
               {heading && typeof heading === 'string' ? (
                 <h4
                   className={classNames(
-                    'mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold',
+                    'mb-2 max-h-[50px] whitespace-pre-wrap text-start text-base font-semibold',
                     headingClassName,
                   )}
+                  data-qa="modal-entity-name"
                 >
-                  <Tooltip tooltip={heading} hideTooltip={!showHeadingTooltip}>
-                    <div
-                      className="line-clamp-2 w-full break-words"
-                      data-qa="modal-entity-name"
-                    >
-                      {heading}
-                    </div>
-                  </Tooltip>
+                  <DialEllipsisTooltip
+                    text={heading}
+                    hideTooltip={!showHeadingTooltip}
+                  />
                 </h4>
               ) : (
                 heading

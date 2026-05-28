@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
@@ -23,6 +23,7 @@ import {
 } from '@/src/store/selectors';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { AppEditorPreview } from '@/src/components/AppsEditor/AppEditorPreview/AppEditorPreview';
 import { EditorForm } from '@/src/components/AppsEditor/EditorForm/EditorForm';
@@ -30,8 +31,8 @@ import { AppsEditorFormType } from '@/src/components/AppsEditor/form';
 import { MarketplaceEditorView } from '@/src/components/Marketplace/MarketplaceEditorView/MarketplaceEditorView';
 
 const mobileTabLabels = {
-  [MarketplaceEditorSteps.General]: 'Info',
-  [MarketplaceEditorSteps.Settings]: 'Settings',
+  [MarketplaceEditorSteps.General]: MarketplaceI18nKeys.InfoMarketplace,
+  [MarketplaceEditorSteps.Settings]: MarketplaceI18nKeys.SettingsMarketplace,
 };
 
 const getDefaultPreviewMode = (
@@ -116,6 +117,8 @@ export const AppsEditorView = ({
     [onAutoSave],
   );
 
+  const handlePureAutoSave = useCallback(() => onAutoSave(), [onAutoSave]);
+
   useEffect(() => {
     if (
       editorStep === MarketplaceEditorSteps.Settings &&
@@ -132,10 +135,10 @@ export const AppsEditorView = ({
       rightContent={RightContent}
       previewMode={previewMode}
       onPreviewModeChange={setPreviewMode}
-      closedPreviewLabel={`${t('Preview')}: ${name} v. ${version}`}
+      closedPreviewLabel={`${t(MarketplaceI18nKeys.PreviewMarketplace)}: ${name} v. ${version}`}
       leftTabLabel={t(mobileTabLabels[editorStep])}
       rightQa="entity-preview-settings"
-      onLeftMouseLeave={onAutoSave}
+      onLeftMouseLeave={handlePureAutoSave}
     />
   );
 };

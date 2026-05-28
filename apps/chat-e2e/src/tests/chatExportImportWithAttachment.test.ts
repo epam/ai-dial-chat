@@ -40,7 +40,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-1980');
     let cancelExportConversation: Conversation;
-    const filename = `${GeneratorUtil.randomString(8)}.jpg`;
+    const filename = GeneratorUtil.randomFilename('jpg');
 
     await dialTest.step(
       'Upload image to root folder and prepare conversation containing this image',
@@ -73,7 +73,6 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(
           MenuOptions.withAttachments,
         );
-        // eslint-disable-next-line playwright/no-force-option
         await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
@@ -123,7 +122,6 @@ dialTest(
           { path: Import.importedAttachmentsFilename },
           () => chatBar.importButton.click(),
         );
-        // eslint-disable-next-line playwright/no-force-option
         await importExportLoader.stopLoading.click({ force: true });
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();

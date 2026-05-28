@@ -6,20 +6,30 @@ import { logger } from '@/src/utils/server/logger';
 import { Token } from '@/src/types/auth';
 
 import { safeParseJSON } from '../json';
+import {
+  CREDENTIALS_PROVIDER_ID,
+  getProviderConfigById,
+  isCredentialsProvider,
+} from './auth-providers';
+import {
+  getTokenExpirationMs,
+  validateProviderAccessToken,
+} from './auth-token-utils';
 import NextClient, { RefreshToken } from './nextauth-client';
 
 import { Feature } from '@epam/ai-dial-shared';
-import { decodeJwt } from 'jose';
+import { JWTPayload, decodeJwt } from 'jose';
 import get from 'lodash-es/get';
 import intersection from 'lodash-es/intersection';
 import snakeCase from 'lodash-es/snakeCase';
 import { TokenSet } from 'openid-client';
 
 const waitRefreshTokenTimeout = 5;
+const CREDENTIALS_ACCOUNT_TYPE = 'credentials';
 
-const safeDecodeJwt = (accessToken: string) => {
+const safeDecodeJwt = (jwtToken: string) => {
   try {
-    return decodeJwt(accessToken);
+    return decodeJwt(jwtToken);
   } catch (err) {
     console.error("Token couldn't be parsed as JWT", err);
     // TODO: read roles from GCP token format
@@ -27,7 +37,28 @@ const safeDecodeJwt = (accessToken: string) => {
   }
 };
 
-const getUser = (accessToken: string | undefined, providerId: string) => {
+const providersWithNotJWTToken = ['gitlab', 'google'];
+
+const getJWTPayload = (
+  accessToken: string | undefined,
+  idToken: string | undefined,
+  providerId: string,
+): JWTPayload => {
+  const useIdTokenForProviders = parseCommaSeparatedList(
+    process.env.AUTH_IDTOKEN_PROVIDERS,
+  );
+  const useIdToken = useIdTokenForProviders.includes(providerId);
+  const token = useIdToken ? idToken : accessToken;
+  const skipDecoding =
+    !useIdToken && providersWithNotJWTToken.includes(providerId);
+  return token && !skipDecoding ? safeDecodeJwt(token) : {};
+};
+
+const getUser = (
+  accessToken: string | undefined,
+  idToken: string | undefined,
+  providerId: string,
+) => {
   const rolesFieldName =
     process.env[
       `AUTH_${snakeCase(providerId).toUpperCase()}_DIAL_ROLES_FIELD`
@@ -40,7 +71,8 @@ const getUser = (accessToken: string | undefined, providerId: string) => {
     ] ?? process.env.ADMIN_ROLE_NAMES,
     ['admin'],
   );
-  const decodedPayload = accessToken ? safeDecodeJwt(accessToken) : {};
+
+  const decodedPayload = getJWTPayload(accessToken, idToken, providerId);
   const dialRoles = get(decodedPayload, rolesFieldName, []) as string[];
   const roles = Array.isArray(dialRoles) ? dialRoles : [dialRoles];
   const isAdmin =
@@ -89,13 +121,12 @@ async function refreshAccessToken(token: Token) {
     if (!token.providerId) {
       throw new Error(`No provider information exists in token`);
     }
-    const client = NextClient.getClient(token.providerId);
+    const client = await NextClient.getOrDiscoverClient(token.providerId);
     if (!client) {
       throw new Error(`No client for appropriate provider set`);
     }
 
     let msWaiting = 0;
-    // eslint-disable-next-line no-constant-condition
     while (true) {
       const refresh = NextClient.getRefreshToken(token.userId);
 
@@ -148,14 +179,27 @@ async function refreshAccessToken(token: Token) {
     if (!refreshedTokens.refresh_token && !token.refreshToken) {
       throw new Error('No refresh tokens exists');
     }
-
+    const idToken = refreshedTokens.id_token ?? token.idToken;
+    const access_token = refreshedTokens.access_token;
+    const decodedPayload = getJWTPayload(
+      access_token,
+      idToken,
+      token.providerId,
+    );
     const returnToken = {
       ...token,
-      user: getUser(refreshedTokens.access_token, token.providerId),
-      access_token: refreshedTokens.access_token,
-      accessTokenExpires: refreshedTokens.expires_in
-        ? Date.now() + refreshedTokens.expires_in * 1000
-        : (refreshedTokens.expires_at as number) * 1000,
+      user: getUser(
+        refreshedTokens.access_token,
+        refreshedTokens.id_token,
+        token.providerId,
+      ),
+      access_token,
+      accessTokenExpires: decodedPayload.exp
+        ? decodedPayload.exp * 1000
+        : refreshedTokens.expires_in
+          ? Date.now() + refreshedTokens.expires_in * 1000
+          : (refreshedTokens.expires_at as number) * 1000,
+      idToken,
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
 
@@ -179,37 +223,185 @@ async function refreshAccessToken(token: Token) {
   }
 }
 
+type JwtCallbackOptions = Parameters<
+  NonNullable<
+    CallbacksOptions<Profile & { job_title?: string }, Account>['jwt']
+  >
+>[0];
+
+const handleCredentialsAccountJwt = async (options: JwtCallbackOptions) => {
+  const credUser = options.user as
+    | { accessToken?: string; provider?: string }
+    | undefined;
+  const credentialsAccessToken =
+    typeof credUser?.accessToken === 'string'
+      ? credUser.accessToken
+      : undefined;
+  const signInProvider =
+    typeof credUser?.provider === 'string' && credUser.provider
+      ? credUser.provider
+      : undefined;
+
+  const providerConfig = getProviderConfigById(signInProvider);
+
+  if (!credentialsAccessToken) {
+    logger.warn('[Credentials] Missing access token in jwt callback');
+    return {
+      ...options.token,
+      providerId: CREDENTIALS_PROVIDER_ID,
+      error: 'CredentialsAccessTokenValidationError',
+    };
+  }
+
+  if (!signInProvider || !providerConfig) {
+    logger.warn(
+      `[Credentials] Missing or unsupported signInProvider in jwt callback: ${signInProvider ?? 'undefined'}`,
+    );
+    return {
+      ...options.token,
+      providerId: CREDENTIALS_PROVIDER_ID,
+      error: 'CredentialsAccessTokenValidationError',
+    };
+  }
+  const tokenValidationResult = await validateProviderAccessToken({
+    token: credentialsAccessToken,
+    provider: providerConfig,
+  });
+
+  if (!tokenValidationResult.ok) {
+    logger.warn(
+      `[Credentials] Token validation failed (provider=${signInProvider}): ${tokenValidationResult.error.message}`,
+    );
+    return {
+      ...options.token,
+      providerId: CREDENTIALS_PROVIDER_ID,
+      error: 'CredentialsAccessTokenValidationError',
+    };
+  }
+  const accessTokenExpires = getTokenExpirationMs(
+    tokenValidationResult.payload,
+  );
+
+  if (typeof accessTokenExpires !== 'number') {
+    logger.warn(
+      `[Credentials] Token validation succeeded but exp claim is missing/non-numeric (provider=${signInProvider})`,
+    );
+    return {
+      ...options.token,
+      providerId: CREDENTIALS_PROVIDER_ID,
+      error: 'CredentialsAccessTokenValidationError',
+    };
+  }
+
+  const validatedPayload = tokenValidationResult.payload as Record<
+    string,
+    unknown
+  >;
+  const validatedSub =
+    typeof validatedPayload.sub === 'string' ? validatedPayload.sub : undefined;
+  const validatedName =
+    typeof validatedPayload.name === 'string'
+      ? validatedPayload.name
+      : typeof validatedPayload.preferred_username === 'string'
+        ? validatedPayload.preferred_username
+        : undefined;
+  const validatedEmail =
+    typeof validatedPayload.email === 'string'
+      ? validatedPayload.email
+      : typeof validatedPayload.upn === 'string'
+        ? validatedPayload.upn
+        : typeof validatedPayload.preferred_username === 'string'
+          ? validatedPayload.preferred_username
+          : undefined;
+
+  return {
+    ...options.token,
+    sub: validatedSub ?? options.token.sub,
+    name: validatedName,
+    email: validatedEmail,
+    user: getUser(credentialsAccessToken, undefined, CREDENTIALS_PROVIDER_ID),
+    access_token: credentialsAccessToken,
+    accessTokenExpires,
+    refreshToken: undefined,
+    providerId: CREDENTIALS_PROVIDER_ID,
+    userId: validatedSub ?? options.user?.id ?? options.token.sub ?? '',
+    idToken: undefined,
+  };
+};
+
 export const callbacks: Partial<
   CallbacksOptions<Profile & { job_title?: string }, Account>
 > = {
   jwt: async (options) => {
     if (options.account) {
+      if (options.account.type === CREDENTIALS_ACCOUNT_TYPE) {
+        return handleCredentialsAccountJwt(options);
+      }
+
+      const idToken = options.account.id_token;
+      const access_token = options.account.access_token;
+      const providerId = options.account.provider;
+      const decodedPayload = getJWTPayload(access_token, idToken, providerId);
       return {
         ...options.token,
-        user: getUser(options.account.access_token, options.account.provider),
+        user: getUser(
+          options.account.access_token,
+          options.account.id_token,
+          options.account.provider,
+        ),
         jobTitle: options.profile?.job_title,
-        access_token: options.account.access_token,
-        accessTokenExpires:
-          typeof options.account.expires_in === 'number'
+        access_token,
+        accessTokenExpires: decodedPayload.exp
+          ? decodedPayload.exp * 1000
+          : typeof options.account.expires_in === 'number'
             ? Date.now() + options.account.expires_in * 1000
             : (options.account.expires_at as number) * 1000,
         refreshToken: options.account.refresh_token,
-        providerId: options.account.provider,
+        providerId,
         userId: options.user.id,
-        idToken: options.account.id_token,
+        idToken,
+      };
+    }
+
+    const providerId =
+      typeof options.token.providerId === 'string'
+        ? options.token.providerId
+        : undefined;
+
+    // Credentials tokens cannot be refreshed server-side; once expired, we must re-run sign-in.
+    if (isCredentialsProvider(providerId)) {
+      const expiresAt =
+        typeof options.token.accessTokenExpires === 'number'
+          ? options.token.accessTokenExpires
+          : undefined;
+
+      if (typeof expiresAt === 'number' && Date.now() >= expiresAt) {
+        return {
+          ...options.token,
+          error: 'CredentialsAccessTokenExpired',
+        };
+      }
+
+      return {
+        ...options.token,
+        user: getUser(
+          options.token.access_token,
+          options.token.idToken,
+          CREDENTIALS_PROVIDER_ID,
+        ),
       };
     }
 
     // Return previous token if the access token has not expired yet
     if (
-      options.token.providerId === 'credentials' ||
-      (typeof options.token.accessTokenExpires === 'number' &&
-        Date.now() < options.token.accessTokenExpires)
+      typeof options.token.accessTokenExpires === 'number' &&
+      Date.now() < options.token.accessTokenExpires
     ) {
       return {
         ...options.token,
         user: getUser(
           options.token.access_token,
+          options.token.idToken,
           typeof options.token.providerId === 'string'
             ? options.token.providerId
             : '',
@@ -221,6 +413,16 @@ export const callbacks: Partial<
     return refreshAccessToken(typedToken);
   },
   signIn: async (options) => {
+    if (options.account?.type === CREDENTIALS_ACCOUNT_TYPE) {
+      const credentialsAccessToken =
+        typeof (options.user as { accessToken?: unknown } | undefined)
+          ?.accessToken === 'string'
+          ? (options.user as { accessToken?: string }).accessToken
+          : undefined;
+
+      return Boolean(credentialsAccessToken);
+    }
+
     if (!options.account?.access_token) {
       return false;
     }
@@ -250,6 +452,12 @@ export const callbacks: Partial<
         : '';
     options.session.providerId = providerId;
 
+    if (process.env.ALLOW_TOKEN_IN_SESSION) {
+      const accessToken = options.token?.access_token;
+      if (accessToken) {
+        options.session.accessToken = accessToken;
+      }
+    }
     return options.session;
   },
 };

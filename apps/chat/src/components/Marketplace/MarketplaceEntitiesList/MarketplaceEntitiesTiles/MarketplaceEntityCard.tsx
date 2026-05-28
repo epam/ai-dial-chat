@@ -11,6 +11,7 @@ import {
   isExternalApp,
 } from '@/src/utils/app/application';
 import { isMyApplication, isMyToolset } from '@/src/utils/app/id';
+import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 
 import { FeatureType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
@@ -19,10 +20,12 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   CardIconSizes,
   MarketplaceEntitiesTabs,
 } from '@/src/constants/marketplace';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
@@ -33,6 +36,7 @@ import { MarketplaceEntityIndicator } from '@/src/components/Marketplace/Marketp
 import { TopicsList } from '@/src/components/Marketplace/TopicsList';
 
 import { PublishActions } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface CardFooterProps<T> {
   entity: T;
@@ -49,7 +53,7 @@ const CardFooter = <T extends MarketplaceEntity>({
       >
         {getModelShortDescription(entity)}
       </EntityMarkdownDescription>
-      <div className="flex flex-col gap-2 pt-3 md:pt-4">
+      <div className="flex flex-col gap-2 pt-3 xl:pt-4">
         <div className="w-full">
           {entity.topics && <TopicsList topics={entity.topics} />}
         </div>
@@ -97,14 +101,14 @@ export const MarketplaceEntityCard = memo(
       <div
         onClick={() => onClick(entity)}
         className={classNames(
-          'group relative h-[98px] rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5',
+          'group relative flex h-[98px] flex-col rounded-md bg-layer-2 p-3 shadow-card hover:bg-layer-3 md:h-[162px] md:p-4 xl:h-[164px] xl:p-5',
           !isPreview && 'cursor-pointer',
         )}
         data-qa="entity"
         aria-details={dataQA}
       >
         <div>
-          <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
+          <div className="absolute end-4 top-4 flex gap-1 xl:end-5 xl:top-5">
             {!isPreview && (
               <>
                 <MarketplaceEntityContextMenu
@@ -127,6 +131,7 @@ export const MarketplaceEntityCard = memo(
                 size={shareIconSize}
                 featureType={FeatureType.Application}
                 iconClassName="bg-layer-2 group-hover:bg-transparent"
+                containerClassName="flex"
                 isMyEntity={isMyEntity}
                 isExternal={
                   isAgentsTab && isDialAiEntityModel(entity)
@@ -138,38 +143,39 @@ export const MarketplaceEntityCard = memo(
                   entityId={entity.id}
                   entity={entity}
                   size={iconSize}
+                  isTooltipDisabled
                 />
               </ShareIcon>
             </div>
             <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
-              {entity.version && (
-                <div
-                  className={classNames(
-                    'mr-6 flex items-center gap-1 text-xs leading-[14px] text-secondary',
-                    !isMyEntity && '!mr-12',
-                  )}
-                >
-                  {t('Version: ')}
-                  <span
-                    className="mr-1 max-w-full overflow-hidden truncate whitespace-nowrap"
-                    data-qa="version"
-                  >
-                    {entity.version}
-                  </span>
+              <div
+                className={classNames(
+                  'me-10 flex items-center gap-1 text-xs leading-[14px] text-secondary',
+                )}
+              >
+                {(isCreatedMarketplaceEntity(entity) || entity.version) && (
+                  <>
+                    {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
+                    <span className="me-1 truncate" data-qa="version">
+                      {entity.version || t(NA_VERSION)}
+                    </span>
+                  </>
+                )}
 
-                  <MarketplaceEntityIndicator entity={entity} />
-                </div>
-              )}
-              <div className="flex whitespace-nowrap">
+                <MarketplaceEntityIndicator entity={entity} />
+              </div>
+              <div
+                className={classNames(
+                  'flex whitespace-nowrap',
+                  !isMyEntity && !entity.version && '!me-12',
+                )}
+              >
                 <div
                   className={classNames(
-                    'mr-6 flex shrink truncate text-base font-semibold leading-[20px] text-primary',
-                    !isMyEntity && !entity.version && '!mr-12',
+                    'me-6 flex w-full shrink text-base font-semibold leading-[20px] text-primary',
                   )}
                 >
-                  <span className="truncate" data-qa="entity-name">
-                    {entity.name}
-                  </span>
+                  <DialEllipsisTooltip text={entity.name} id="entity-name" />
                 </div>
               </div>
               <div data-qa="entity-description" className="hidden xl:block">

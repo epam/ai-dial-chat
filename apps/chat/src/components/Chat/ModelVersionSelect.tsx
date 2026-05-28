@@ -4,31 +4,39 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
+
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
 import { stopBubbling } from '@/src/constants/chat';
+import { ChatI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const VersionPrefix = () => {
   const { t } = useTranslation(Translation.Chat);
 
   return (
     <div className="mr-2 flex items-center">
-      <span className="hidden md:block">{t('Version: ')}</span>
-      <span className="md:hidden">{t('v. ')}</span>
+      <span className="hidden md:block">{t(ChatI18nKeys.VersionColon)}</span>
+      <span className="md:hidden">{t(ChatI18nKeys.VersionPrefixShort)}</span>
     </div>
   );
 };
 
-const getDisplayValue = <T extends MarketplaceEntity>(entity: T) =>
-  entity.version || entity.id;
-
+const getDisplayValue = <T extends MarketplaceEntity>(entity: T) => {
+  if (isCreatedMarketplaceEntity(entity) || entity.version) {
+    return entity.version || NA_VERSION;
+  }
+  return entity.id;
+};
 interface EntityVersionSelectProps<T extends MarketplaceEntity> {
   entities: T[];
   currentEntity: T;
@@ -50,6 +58,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
   triggerClassName,
   selectedBaseIdsSet,
 }: EntityVersionSelectProps<T>) => {
+  const { t } = useTranslation(Translation.Marketplace);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (entity: T) => {
@@ -58,7 +67,10 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
   };
 
   if (entities.length < 2) {
-    if (entities.length && entities[0].version) {
+    if (
+      entities.length &&
+      (isCreatedMarketplaceEntity(entities[0]) || entities[0].version)
+    ) {
       return (
         <div
           className={classNames('flex truncate font-theme text-sm', className)}
@@ -68,7 +80,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
             className="max-w-full overflow-hidden truncate whitespace-nowrap"
             data-qa="version"
           >
-            {entities[0].version}
+            {entities[0].version ?? t(MarketplaceI18nKeys.NA)}
           </span>
         </div>
       );
@@ -117,20 +129,22 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
         <MenuItem
           key={entity.id}
           className={classNames(
-            'max-w-[350px] overflow-hidden text-nowrap border-l border-transparent hover:bg-accent-primary-alpha',
-            (currentEntity.id === entity.id ||
-              selectedBaseIdsSet?.has(entity.id)) &&
-              '!border-accent-primary bg-accent-primary-alpha',
+            'max-w-[350px] overflow-hidden text-nowrap border-l hover:bg-accent-primary-alpha',
+            currentEntity.id === entity.id || selectedBaseIdsSet?.has(entity.id)
+              ? '!border-accent-primary bg-accent-primary-alpha'
+              : '!border-transparent',
           )}
           item={
             <div className="flex w-full items-center gap-2">
-              <ModelIcon entityId={entity.id} entity={entity} size={16} />
-              <Tooltip
-                tooltip={getDisplayValue(entity)}
-                triggerClassName="truncate"
-              >
-                {getDisplayValue(entity)}
-              </Tooltip>
+              <ModelIcon
+                entityId={entity.id}
+                entity={entity}
+                size={DEFAULT_ICON_SIZES.SMALL}
+              />
+              <DialEllipsisTooltip
+                text={getDisplayValue(entity)}
+                contentClassName="!z-[10000]"
+              />
             </div>
           }
           disabled={readonly}

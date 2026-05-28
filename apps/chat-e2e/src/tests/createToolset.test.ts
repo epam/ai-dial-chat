@@ -14,10 +14,16 @@ import {
   ToggleState,
 } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
-import { Attributes, Cursors, StyleValues, Styles } from '@/src/ui/domData';
+import { Attributes, Cursors } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { BaseElement } from '@/src/ui/webElements';
-import { DateUtil, GeneratorUtil, SortingUtil, UserUtil } from '@/src/utils';
+import {
+  DateUtil,
+  GeneratorUtil,
+  SortingUtil,
+  UserUtil,
+  filenamePrefix,
+} from '@/src/utils';
 import {
   Toolset,
   ToolsetAuthTypes,
@@ -88,7 +94,7 @@ dialTest(
       author: UserUtil.getE2EUsername(testInfo.parallelIndex),
     };
 
-    const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
+    const filename = `${filenamePrefix}${ExpectedConstants.allowedSpecialChars}.svg`;
     const iconUrl = await fileApiHelper.putFileWithCustomName(
       filename,
       Attachment.appIconSvg,
@@ -184,7 +190,7 @@ dialTest(
           await baseAssertion.assertElementState(
             fieldRequiredIndicator,
             'visible',
-            ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+            ExpectedMessages.entityFormFieldShouldHaveAsterisk,
           );
         }
       },
@@ -291,18 +297,15 @@ dialTest(
     await dialTest.step(
       'Check that the required fields of Tools settings step form are marked with asterisks',
       async () => {
-        for (const field of [
-          ExpectedConstants.endpointLabel,
-          ExpectedConstants.transportProtocol,
-        ]) {
-          const fieldRequiredIndicator =
-            toolsetEditorViewForm.getRequiredIndicator(field);
-          await baseAssertion.assertElementState(
-            fieldRequiredIndicator,
-            'visible',
-            ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+        const fieldRequiredIndicator =
+          toolsetEditorViewForm.getRequiredIndicator(
+            ExpectedConstants.endpointLabel,
           );
-        }
+        await baseAssertion.assertElementState(
+          fieldRequiredIndicator,
+          'visible',
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
+        );
       },
     );
 
@@ -420,7 +423,9 @@ dialTest(
     await dialTest.step(
       'Open toolset card menu and verify "Login with my creds" option is not available',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(toolsetEntity.name);
         const toolsetElement =
           await marketplaceEntitiesSection.findEntityElement(
             toolsetEntity.name,
@@ -487,6 +492,7 @@ dialTest(
       toolsetEntity.version,
       secondToolsetVersion,
     ]);
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Precondition: Create toolset via API to avoid inconsistent naming. Issue 4236',
@@ -599,14 +605,15 @@ dialTest(
         );
         await marketplacePage.waitForPageLoaded();
         await entityDetailsModal.closeButton.click();
-        await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(toolsetEntity.name);
         const toolsetElement =
           await marketplaceEntitiesSection.findEntityElement(
             toolsetEntity.name,
             { isWorkspaceEntity: true, isEditable: true },
           );
         await baseAssertion.assertElementState(toolsetElement, 'visible');
-        await marketplaceHeader.searchInput.fillInInput(defaultName);
+        await searchInput.fillInInput(defaultName);
         await baseAssertion.assertElementText(
           marketplace.noResultsFound,
           ExpectedConstants.noResults,
@@ -630,7 +637,7 @@ dialTest(
       async () => {
         await marketplacePage.reloadPage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
+        await searchInput.fillInInput(toolsetEntity.name);
         const toolsetElement =
           await marketplaceEntitiesSection.findEntityElement(
             toolsetEntity.name,
@@ -713,6 +720,7 @@ dialTest(
     toastAssertion,
     customAppEditorAppSettingsPreviewBody,
     entityEditorGeneralForm,
+    tooltip,
     tooltipAssertion,
     page,
   }) => {
@@ -726,6 +734,7 @@ dialTest(
     let checkedOption: string;
     let toolsetElement: BaseElement;
     let oauthMockHelper: OAuthMockHelper;
+    let searchInput: BaseElement;
 
     await dialTest.step(
       `Precondition: Create toolset via API to make filter's panel available`,
@@ -748,7 +757,8 @@ dialTest(
         });
         await marketplacePage.waitForPageLoaded();
         await marketplaceHeader.toolsetsTab.click();
-        await marketplaceHeader.searchInput.fillInInput(toolsetEntity.name);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(toolsetEntity.name);
         //TODO: replace Topics filter with Sources when fixed https://github.com/epam/ai-dial-chat/issues/5085
         const filterOptions =
           await marketplaceFilter.filterByPropertyOptionLabels(
@@ -795,7 +805,7 @@ dialTest(
           page,
           initialToolset,
           toolsetEntity.endpoint,
-          { expectedStatusCodes: { updateToolsetCode: 400 } },
+          { updateToolsetCode: 400 },
         );
         await oauthMockHelper.setupToolsetRoutes();
         oauthMockHelper.enableMocking();
@@ -835,7 +845,7 @@ dialTest(
       async () => {
         await entityDetailsModal.closeButton.click();
         await baseAssertion.assertElementAttribute(
-          marketplaceHeader.searchInput,
+          searchInput,
           Attributes.value,
           toolsetEntity.name,
         );
@@ -850,7 +860,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Find created toolset, hover over the icon and verify name displaying on the tooltip',
+      'Find created toolset, hover over the icon and verify no tooltip is displayed',
       async () => {
         await marketplaceFilter
           .filterByPropertyOptionInput(
@@ -865,14 +875,7 @@ dialTest(
         await marketplaceEntities
           .getToolsetDefaultIcon(toolsetElement)
           .hoverOver();
-        await tooltipAssertion.assertTooltipStyle(
-          Styles.overflow_wrap,
-          StyleValues.breakWord,
-        );
-        await tooltipAssertion.assertTooltipStyle(
-          Styles.wordBreak,
-          StyleValues.breakWord,
-        );
+        await tooltipAssertion.assertElementState(tooltip, 'hidden');
       },
     );
 

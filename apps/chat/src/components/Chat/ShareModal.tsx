@@ -23,6 +23,8 @@ import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, ShareSelectors } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -31,7 +33,12 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import IconUserUnshare from '@/public/images/icons/unshare-user.svg';
 import { SharePermission } from '@epam/ai-dial-shared';
-import { DialButton, DialLinkButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialEllipsisTooltip,
+  DialGhostIconButton,
+  DialLinkButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 
 interface ShareAccessOptionProps {
   filterValue: string;
@@ -91,7 +98,7 @@ function ShareAccessSection({
   );
 }
 
-export function ShareModalView() {
+function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 
@@ -190,30 +197,29 @@ export function ShareModalView() {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-full max-w-[424px]"
+      containerClassName="flex flex-col w-full max-w-[424px]"
       dataQa="share-modal"
       state={modalState}
       onClose={handleClose}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
-      <div className="px-3 py-4 md:p-6">
+      <div className="flex min-h-0 flex-1 flex-col px-3 py-4 md:p-6">
         <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
-          <Tooltip tooltip={t(`${t('Share')}: ${shareResourceName?.trim()}`)}>
-            <div
-              className="line-clamp-2 w-full break-words pr-6"
-              data-qa="modal-entity-name"
-            >
-              {t(`${t('Share')}: ${shareResourceName?.trim()}`)}
-            </div>
-          </Tooltip>
+          <div
+            className="flex w-full items-center gap-2 pr-6"
+            data-qa="modal-entity-name"
+          >
+            <p>{t(SideBarI18nKeys.Share)}:</p>
+            <DialEllipsisTooltip text={shareResourceName?.trim()} />
+          </div>
         </h4>
 
-        <div className="flex flex-col justify-between gap-2">
+        <div className="flex flex-col justify-between gap-2 overflow-auto">
           {entity?.version && (
             <span data-qa="entity-version">Version: {entity.version}</span>
           )}
           <p className="text-sm text-secondary" data-qa="share-message">
-            {t('share.modal.link.description')}
+            {t(SideBarI18nKeys.LinkDescription)}
           </p>
           <p className="text-sm text-secondary" data-qa="share-message">
             {t('share.modal.link', { context: sharingType })}
@@ -221,7 +227,7 @@ export function ShareModalView() {
           {shareFeatureType === FeatureType.Application && (
             <div className="mt-2 flex gap-2">
               <ShareAccessOption
-                filterValue={t('Allow editing by other users')}
+                filterValue={t(SideBarI18nKeys.AllowEditingByOtherUsers)}
                 selected={editAccess}
                 onSelect={onChangeSharePermissionHandler}
               />
@@ -249,22 +255,17 @@ export function ShareModalView() {
             </Tooltip>
             <div className="absolute right-3 top-3">
               {urlCopied ? (
-                <Tooltip tooltip={t('Copied!')}>
+                <Tooltip tooltip={t(SideBarI18nKeys.CopiedSideBar)}>
                   <IconCheck size={20} className="text-secondary" />
                 </Tooltip>
               ) : (
-                <Tooltip tooltip={t('Copy URL')}>
-                  <DialButton
-                    onClick={handleCopy}
-                    aria-label="copy-link"
-                    iconBefore={
-                      <IconCopy
-                        size={20}
-                        className="text-secondary hover:text-accent-primary"
-                      />
-                    }
-                  />
-                </Tooltip>
+                <DialGhostIconButton
+                  tooltipProps={{ tooltip: t(SideBarI18nKeys.CopyURL) }}
+                  size={ElementSize.Small}
+                  onClick={handleCopy}
+                  aria-label="copy-link"
+                  icon={<IconCopy size={DEFAULT_ICON_SIZES.SMALL} />}
+                />
               )}
             </div>
           </div>
@@ -274,18 +275,16 @@ export function ShareModalView() {
         <ShareAccessSection
           isShared={!!entity?.isShared}
           onUnshare={handleOpenUnshare}
-          notSharedMessage={t('This app has not been shared with anyone yet.')}
-          unshareLabel={t('Remove access for all users')}
+          notSharedMessage={t(SideBarI18nKeys.NotSharedAppYet)}
+          unshareLabel={t(SideBarI18nKeys.RemoveAccessForAllUsers)}
         />
       )}
       {isFolder ? (
         <ShareAccessSection
           isShared={!!isResourceShared}
           onUnshare={handleOpenUnshareResource}
-          notSharedMessage={t(
-            'This folder has not been shared with anyone yet.',
-          )}
-          unshareLabel={t('Remove access for all users')}
+          notSharedMessage={t(SideBarI18nKeys.NotSharedFolderYet)}
+          unshareLabel={t(SideBarI18nKeys.RemoveAccessForAllUsers)}
         />
       ) : (
         (shareFeatureType === FeatureType.Chat ||
@@ -294,9 +293,11 @@ export function ShareModalView() {
             isShared={!!isResourceShared}
             onUnshare={handleOpenUnshareResource}
             notSharedMessage={t(
-              `This ${shareFeatureType} has not been shared with anyone yet.`,
+              shareFeatureType === FeatureType.Chat
+                ? SideBarI18nKeys.NotSharedChatYet
+                : SideBarI18nKeys.NotSharedPromptYet,
             )}
-            unshareLabel={t('Remove access for all users')}
+            unshareLabel={t(SideBarI18nKeys.RemoveAccessForAllUsers)}
           />
         )
       )}

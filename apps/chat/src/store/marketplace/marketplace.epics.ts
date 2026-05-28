@@ -1,6 +1,6 @@
 import Router from 'next/router';
 
-import { EMPTY, concat, filter, first, map, of, switchMap } from 'rxjs';
+import { EMPTY, concat, filter, of, switchMap } from 'rxjs';
 
 import { combineEpics, ofType } from 'redux-observable';
 
@@ -98,17 +98,16 @@ const setQueryParamsEpic: AppEpic = (action$, state$) =>
       MarketplaceActions.setSelectedView.type,
       MarketplaceActions.setTableSort.type,
     ),
-    switchMap((action) =>
-      state$.pipe(
-        filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)), // Wait until true
-        first(),
-        map(() => action), // Emit the stored action
-      ),
-    ),
-    switchMap(() => {
+    filter(() => ModelsSelectors.selectAreModelsLoaded(state$.value)),
+    switchMap((action) => {
       const state = state$.value;
       const query = parse(window.location.search.slice(1));
       const pathname = window.location.pathname;
+
+      // remove 'share' from query after application sharing link accepted
+      if (action.type === MarketplaceActions.setDetailsEntity.type) {
+        addToQuery(query, 'share', undefined);
+      }
       // workspace tab
       const selectedTab = MarketplaceSelectors.selectSelectedTab(state);
 
@@ -234,12 +233,22 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
 
       if (isAgentsTab) {
         // set model details
-        const modelsMap = ModelsSelectors.selectModelsMap(state);
-        detailsEntity = getDetailsEntity({
-          entitiesMap: modelsMap,
-          reference: modelReference,
-          type: selectedEntitiesTab,
-        });
+        if (modelReference) {
+          const modelsMap = ModelsSelectors.selectModelsMap(state);
+
+          detailsEntity = getDetailsEntity({
+            entitiesMap: modelsMap,
+            reference: modelReference,
+            type: selectedEntitiesTab,
+          });
+        } else {
+          const stateDetailsEntity =
+            MarketplaceSelectors.selectDetailsEntity(state);
+          detailsEntity =
+            stateDetailsEntity?.type === MarketplaceEntitiesTabs.AGENTS
+              ? stateDetailsEntity
+              : undefined;
+        }
 
         // agents filters
         statePropertyName = 'selectedAgentsFilters';
@@ -249,13 +258,21 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
         filters = getFilters(query, existingAgentsTopics, sourceTypes);
       } else {
         // set toolset details
-
-        const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
-        detailsEntity = getDetailsEntity({
-          entitiesMap: toolsetsMap,
-          reference: toolsetReference,
-          type: selectedEntitiesTab!,
-        });
+        if (toolsetReference) {
+          const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state);
+          detailsEntity = getDetailsEntity({
+            entitiesMap: toolsetsMap,
+            reference: toolsetReference,
+            type: selectedEntitiesTab!,
+          });
+        } else {
+          const stateDetailsEntity =
+            MarketplaceSelectors.selectDetailsEntity(state);
+          detailsEntity =
+            stateDetailsEntity?.type === MarketplaceEntitiesTabs.TOOLSETS
+              ? stateDetailsEntity
+              : undefined;
+        }
 
         // toolsets filters
         statePropertyName = 'selectedToolsetsFilters';
@@ -291,7 +308,7 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       return concat(
         of(MarketplaceActions.setState(updatedMarketplaceState)),
         linkErrorMessage
-          ? of(UIActions.showErrorToast(linkErrorMessage))
+          ? of(UIActions.showErrorToast({ message: linkErrorMessage }))
           : EMPTY,
       );
     }),

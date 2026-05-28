@@ -3,6 +3,8 @@ import { ComponentType, FC, forwardRef } from 'react';
 
 import { DefaultTFuncReturn } from 'i18next';
 
+import classNames from 'classnames';
+
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import omit from 'lodash-es/omit';
@@ -11,6 +13,7 @@ interface LabelProps {
   children?: string | DefaultTFuncReturn;
   htmlFor?: string;
   mandatory?: boolean;
+  isSubgroup?: boolean;
   info?: string | DefaultTFuncReturn;
 }
 
@@ -18,10 +21,14 @@ export const Label: FC<LabelProps> = ({
   children,
   htmlFor,
   mandatory,
+  isSubgroup = false,
   info,
 }) => (
   <label
-    className="mb-2 flex items-center gap-1 text-xs text-secondary"
+    className={classNames(
+      'flex items-center gap-1 text-xs text-secondary',
+      isSubgroup ? 'mb-1' : 'mb-2',
+    )}
     data-qa={htmlFor?.concat('-label')}
     htmlFor={htmlFor}
   >
@@ -30,10 +37,10 @@ export const Label: FC<LabelProps> = ({
     {info && (
       <Tooltip
         tooltip={info}
-        triggerClassName="flex shrink-0 text-secondary hover:text-accent-primary"
+        triggerClassName="flex shrink-0 p-1 text-secondary hover:text-accent-primary"
         contentClassName="z-[2000]"
       >
-        <IconHelp size={18} />
+        <IconHelp size={16} />
       </Tooltip>
     )}
   </label>
@@ -43,6 +50,7 @@ interface WithLabelProps {
   id?: string;
   label?: LabelProps['children'];
   mandatory?: boolean;
+  isSubgroup?: boolean;
   info?: LabelProps['info'];
 }
 
@@ -51,9 +59,14 @@ export function withLabel<T extends object, R>(
   excludeLabel?: boolean,
 ) {
   const LabelWrapper = forwardRef<R, WithLabelProps & T>(
-    ({ info, mandatory, ...props }, ref) => (
+    ({ info, mandatory, isSubgroup, ...props }, ref) => (
       <div className="flex flex-col" data-qa={props.id}>
-        <Label htmlFor={props?.id} mandatory={mandatory} info={info}>
+        <Label
+          htmlFor={props?.id}
+          mandatory={mandatory}
+          info={info}
+          isSubgroup={isSubgroup}
+        >
           {props.label}
         </Label>
 

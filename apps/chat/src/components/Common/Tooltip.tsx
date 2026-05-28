@@ -6,7 +6,9 @@ import {
   autoUpdate,
   flip,
   offset,
+  safePolygon,
   shift,
+  useClick,
   useDismiss,
   useFloating,
   useFocus,
@@ -36,6 +38,8 @@ interface TooltipContainerOptions {
   initialOpen?: boolean;
   placement?: Placement;
   isTriggerClickable?: boolean;
+  isHoverDisabled?: boolean;
+  interactive?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
@@ -44,6 +48,8 @@ function useTooltip({
   initialOpen = false,
   placement = 'bottom',
   isTriggerClickable = false,
+  isHoverDisabled = false,
+  interactive = false,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: TooltipContainerOptions = {}) {
@@ -77,22 +83,31 @@ function useTooltip({
 
   const context = data.context;
 
+  const uncontrolled = controlledOpen == null;
+
   const hover = useHover(context, {
     move: false,
-    enabled: controlledOpen == null,
+    enabled: uncontrolled && !isHoverDisabled,
     mouseOnly: isTriggerClickable,
     delay: {
       open: 500,
-      close: 0,
+      close: interactive ? 150 : 0,
     },
+    handleClose: interactive ? safePolygon() : null,
   });
+
   const focus = useFocus(context, {
-    enabled: controlledOpen == null,
+    enabled: uncontrolled && !isHoverDisabled,
   });
+
+  const click = useClick(context, {
+    enabled: uncontrolled && isHoverDisabled,
+  });
+
   const dismiss = useDismiss(context);
   const role = useRole(context, { role: 'tooltip' });
 
-  const interactions = useInteractions([hover, focus, dismiss, role]);
+  const interactions = useInteractions([hover, focus, click, dismiss, role]);
 
   return useMemo(
     () => ({
@@ -120,7 +135,7 @@ const useTooltipContext = () => {
   return context;
 };
 
-export function TooltipContainer({
+function TooltipContainer({
   children,
   ...options
 }: { children: ReactNode } & TooltipContainerOptions) {
@@ -134,7 +149,7 @@ export function TooltipContainer({
   );
 }
 
-export const TooltipTrigger = forwardRef<
+const TooltipTrigger = forwardRef<
   HTMLElement,
   HTMLProps<HTMLElement> & { asChild?: boolean }
 >(function TooltipTrigger({ children, asChild = false, ...props }, propRef) {
@@ -182,42 +197,41 @@ export const TooltipTrigger = forwardRef<
   );
 });
 
-export const TooltipContent = forwardRef<
-  HTMLDivElement,
-  HTMLProps<HTMLDivElement>
->(function TooltipContent({ style, ...props }, propRef) {
-  const context = useTooltipContext();
-  const ref = useMergeRefs([context.refs.setFloating, propRef]);
+const TooltipContent = forwardRef<HTMLDivElement, HTMLProps<HTMLDivElement>>(
+  function TooltipContent({ style, ...props }, propRef) {
+    const context = useTooltipContext();
+    const ref = useMergeRefs([context.refs.setFloating, propRef]);
 
-  if (!context.open) return null;
+    if (!context.open) return null;
 
-  return (
-    <FloatingPortal id="theme-main">
-      <div
-        ref={ref}
-        style={{
-          ...context.floatingStyles,
-          ...style,
-        }}
-        {...context.getFloatingProps(props)}
-        className={classNames(
-          'z-[100] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
-          context.getFloatingProps(props).className as string,
-        )}
-        data-qa="tooltip"
-      >
-        {props.children}
-        <FloatingArrow
-          ref={context.arrowRef}
-          context={context.context}
-          fill="currentColor"
-          strokeWidth={1}
-          className="stroke-primary text-[var(--bg-layer-0,_#000000)]"
-        />
-      </div>
-    </FloatingPortal>
-  );
-});
+    return (
+      <FloatingPortal id="theme-main">
+        <div
+          ref={ref}
+          style={{
+            ...context.floatingStyles,
+            ...style,
+          }}
+          {...context.getFloatingProps(props)}
+          className={classNames(
+            '!z-[10000] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
+            context.getFloatingProps(props).className as string,
+          )}
+          data-qa="tooltip"
+        >
+          {props.children}
+          <FloatingArrow
+            ref={context.arrowRef}
+            context={context.context}
+            fill="currentColor"
+            strokeWidth={1}
+            className="stroke-primary text-[var(--bg-layer-0,_#000000)]"
+          />
+        </div>
+      </FloatingPortal>
+    );
+  },
+);
 
 export interface TooltipOptions extends TooltipContainerOptions {
   hideTooltip?: boolean;
@@ -241,7 +255,7 @@ export function Tooltip({
 }: TooltipOptions) {
   if (hideTooltip || !tooltip)
     return (
-      <span className={triggerClassName} data-qa={dataQa}>
+      <span className={triggerClassName} data-qa={dataQa} data-state="closed">
         {children}
       </span>
     );
@@ -256,7 +270,7 @@ export function Tooltip({
       </TooltipTrigger>
       <TooltipContent
         className={classNames(
-          'max-w-[250px] break-words sm:max-w-[400px]',
+          '!z-[10000] max-w-[250px] break-words sm:max-w-[400px]',
           contentClassName,
         )}
       >

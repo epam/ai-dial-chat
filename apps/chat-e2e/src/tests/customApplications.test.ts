@@ -18,14 +18,16 @@ import {
   UploadMenuOptions,
 } from '@/src/testData';
 import { ItemApiHelper } from '@/src/testData/api';
-import { Cursors, StyleValues, Styles } from '@/src/ui/domData';
+import { Cursors, StyleValues } from '@/src/ui/domData';
 import { BaseElement, EntityEditSteps } from '@/src/ui/webElements';
 import {
   DateUtil,
   GeneratorUtil,
+  ItemUtil,
   SortingUtil,
   UserUtil,
   applicationNamePrefix,
+  filenamePrefix,
 } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
@@ -97,6 +99,7 @@ dialTest(
     let agentElement: BaseElement;
     let generalInfoStep: BaseElement;
     let appSettingsStep: BaseElement;
+    let searchInput: BaseElement;
     await localStorageManager.setShowSideBarPanels();
 
     await dialTest.step(
@@ -246,7 +249,8 @@ dialTest(
           'hidden',
         );
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appEntity.name);
         await baseAssertion.assertElementText(
           marketplace.noResultsFound,
           ExpectedConstants.noResults,
@@ -331,7 +335,7 @@ dialTest(
         await baseAssertion.assertElementState(
           nameRequiredIndicator,
           'visible',
-          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
         );
 
         const versionRequiredIndicator =
@@ -341,7 +345,7 @@ dialTest(
         await baseAssertion.assertElementState(
           versionRequiredIndicator,
           'visible',
-          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
         );
       },
     );
@@ -421,7 +425,7 @@ dialTest(
         await baseAssertion.assertElementState(
           chatCompletionUrlRequiredIndicator,
           'visible',
-          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
         );
       },
     );
@@ -468,7 +472,7 @@ dialTest(
     await dialTest.step(
       'Find card of created custom app on My workspace page',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await searchInput.fillInInput(appEntity.name);
         agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
@@ -516,7 +520,7 @@ dialTest(
           updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await searchInput.fillInInput(appEntity.name);
         agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
 
@@ -593,7 +597,7 @@ dialTest(
       'Navigate to DIAL Marketplace and verify custom app card was deleted',
       async () => {
         await marketplaceContainer.getNavigationPanel().goToMarketplaceHome();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await searchInput.fillInInput(appEntity.name);
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
@@ -873,6 +877,7 @@ dialTest(
     let agentElementInDialog: BaseElement;
     let agentElement1: BaseElement;
     let agentElement2: BaseElement;
+    let searchInput: BaseElement;
 
     const appEntity1 = {
       name: GeneratorUtil.randomApplicationName(),
@@ -929,7 +934,8 @@ dialTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity1.name);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appEntity1.name);
         agentElement1 =
           await marketplaceEntitiesSection.findEntityElement(appEntity1);
         await baseAssertion.assertElementState(agentElement1, 'visible');
@@ -981,7 +987,7 @@ dialTest(
       'Navigate to DIAL Marketplace and verify custom app card was deleted',
       async () => {
         await marketplaceContainer.getNavigationPanel().goToMarketplaceHome();
-        await marketplaceHeader.searchInput.fillInInput(appEntity1.name);
+        await searchInput.fillInInput(appEntity1.name);
         const actualAgents = await marketplaceEntitiesSection.getAllEntities();
         baseAssertion.assertValue(
           actualAgents.length,
@@ -1002,7 +1008,7 @@ dialTest(
       async () => {
         await marketplaceContainer.getNavigationPanel().goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity2_v2.name);
+        await searchInput.fillInInput(appEntity2_v2.name);
         const allAgents = await marketplaceEntitiesSection.getAllEntities();
         const workspaceAgentsWithName = allAgents.filter(
           (agent) =>
@@ -1711,7 +1717,7 @@ dialTest(
       name: GeneratorUtil.randomApplicationName(),
       version: GeneratorUtil.randomEntityVersion(),
     } as DialAIEntityModel;
-    const newIconFileName = `${ExpectedConstants.allowedSpecialChars}.svg`;
+    const newIconFileName = `${filenamePrefix}${ExpectedConstants.allowedSpecialChars}.svg`;
     let agentElement: BaseElement;
     let expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
       newIconFileName,
@@ -1890,6 +1896,7 @@ dialTest(
     tooltipAssertion,
     customAppEditorAppSettingsPreview,
     customAppEditorAppSettingsPreviewBody,
+    fileManagerToolbar,
   }) => {
     setTestIds('EPMRTC-4131', 'EPMRTC-4290');
     const appName = GeneratorUtil.randomApplicationName();
@@ -1970,7 +1977,9 @@ dialTest(
     await dialTest.step(
       'Find the created application and verify tooltips',
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appEntity.name);
         const agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await agentElement.click();
@@ -2029,6 +2038,12 @@ dialTest(
             await fileManagerModalGrid.gridCheckboxByNameCell(pdfFile);
           await attachmentCheckbox.click();
         }
+        const selectedFilesCounter = fileManagerToolbar.getSelectedIconsButton(
+          pdfFilesToUpload.length,
+        );
+
+        await baseAssertion.assertElementState(selectedFilesCounter, 'visible');
+
         await fileManagerModal.getAttachButton().click();
         for (const pdfFile of pdfFilesToUpload) {
           await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
@@ -2088,7 +2103,7 @@ dialAdminTest(
     let reviewIconUrl: string;
     let targetIconUrl: string;
 
-    const filename = `${ExpectedConstants.allowedSpecialChars}.svg`;
+    const filename = `${filenamePrefix}${ExpectedConstants.allowedSpecialChars}.svg`;
     const expectedNewIconUrl = await fileApiHelper.putFileWithCustomName(
       filename,
       Attachment.appIconSvg,
@@ -2158,7 +2173,7 @@ dialAdminTest(
 
         await adminPublishedApplicationReviewModal
           .getPublicationReviewControl()
-          .click();
+          .backToPublicationRequest();
         await adminPublishingApprovalModal.approveButton.click();
         await itemApiHelper.deleteBackendItem(createdAppBackendEntity); //delete the original app
       },
@@ -2169,7 +2184,7 @@ dialAdminTest(
       async () => {
         await marketplacePage.openMarketplacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await marketplaceHeader.getSearch().inputField.fillInInput(appName);
         agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await baseAssertion.assertElementState(agentElement, 'visible');
@@ -2212,7 +2227,8 @@ dialAdminTest(
 
 dialTest(
   'Long names of apps without spaces displayed in several lines on preview screen of Add editor and on start screen of new conversation\n' + // EPMRTC-5945
-    'Create two custom apps consecutively', // EPMRTC-6263
+    'Create two custom apps consecutively.\n' + // EPMRTC-6263
+    '[Select an agent for conversation] Tooltip appears on long name only',
   async ({
     marketplacePage,
     entityEditorPage,
@@ -2235,13 +2251,23 @@ dialTest(
     agentInfoAssertion,
     addAppDropdownMenu,
     toastAssertion,
+    chat,
+    talkToAgentDialog,
+    talkToAgents,
+    tooltip,
+    tooltipAssertion,
   }) => {
-    setTestIds('EPMRTC-5945', 'EPMRTC-6263');
+    setTestIds('EPMRTC-5945', 'EPMRTC-6263', 'EPMRTC-8693');
+    const version = GeneratorUtil.randomEntityVersion();
+    const maxRandomNameLength =
+      ExpectedConstants.maxEntityNameLength -
+      ItemUtil.getUtf8ByteLength(`${ItemUtil.entityIdSeparator}${version}`) -
+      ItemUtil.getUtf8ByteLength(applicationNamePrefix);
     const appEntity = {
       name: `${applicationNamePrefix}${GeneratorUtil.randomString(
-        ExpectedConstants.maxEntityNameLength - 7,
+        Math.max(maxRandomNameLength, 1),
       )}`,
-      version: GeneratorUtil.randomEntityVersion(),
+      version,
     } as DialAIEntityModel;
 
     await dialTest.step('Open create a custom app page', async () => {
@@ -2253,7 +2279,7 @@ dialTest(
     });
 
     await dialTest.step(
-      "Input app's name (159 symbols, no spaces) and version on General Info step",
+      "Input app's name (max UTF-8 bytes without spaces, accounting for version) and version on General Info step",
       async () => {
         await entityEditorGeneralForm.fillInEntityFields({
           name: appEntity.name,
@@ -2352,7 +2378,9 @@ dialTest(
     await dialTest.step(
       `On My Workspace page, click on app's card and then "Use application" button`,
       async () => {
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(appEntity.name);
         const agentElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await agentElement.click();
@@ -2374,6 +2402,21 @@ dialTest(
         );
       },
     );
+
+    await dialTest.step(
+      'Click on "Change agent" and verify tooltip appears only on hover over the agent name',
+      async () => {
+        await chat.changeAgentButton.click();
+        await baseAssertion.assertElementState(talkToAgentDialog, 'visible');
+        const agentElement = talkToAgents.getEntity(appEntity);
+        const agentIcon = await talkToAgents.getEntityIcon(agentElement);
+        const agentNameElement = talkToAgents.getEntityName(agentElement);
+        await agentIcon.hover();
+        await tooltipAssertion.assertElementState(tooltip, 'hidden');
+        await agentNameElement.hoverOver();
+        await tooltipAssertion.assertTooltipContent(appEntity.name);
+      },
+    );
   },
 );
 
@@ -2390,6 +2433,7 @@ dialTest(
     setTestIds,
     baseAssertion,
     tooltipAssertion,
+    tooltip,
     entityDetailsModal,
     entityEditorPage,
     entityEditorGeneralForm,
@@ -2429,7 +2473,9 @@ dialTest(
     });
 
     await dialTest.step("Find app's card", async () => {
-      await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+      await marketplaceHeader
+        .getSearch()
+        .inputField.fillInInput(appEntity.name);
       reusableAgentElement =
         await marketplaceEntitiesSection.findEntityElement(appEntity);
       await baseAssertion.assertElementState(
@@ -2440,25 +2486,12 @@ dialTest(
     });
 
     await dialTest.step(
-      "Hover over app's icon - tooltip is displayed in several lines",
+      "Hover over app's icon - tooltip is not displayed",
       async () => {
         const agentIcon =
           await marketplaceEntities.getEntityIcon(reusableAgentElement);
         await agentIcon.hover();
-        await tooltipAssertion.assertTooltipContent(
-          ExpectedConstants.agentIconTooltip(
-            appEntity.name,
-            appEntity.version!,
-          ),
-        );
-        await tooltipAssertion.assertTooltipStyle(
-          Styles.wordBreak,
-          StyleValues.breakWord,
-        );
-        await tooltipAssertion.assertTooltipStyle(
-          Styles.textWrapMode,
-          StyleValues.wrap,
-        );
+        await tooltipAssertion.assertElementState(tooltip, 'hidden');
       },
     );
 

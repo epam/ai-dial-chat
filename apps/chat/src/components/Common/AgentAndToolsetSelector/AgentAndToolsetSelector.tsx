@@ -1,5 +1,5 @@
 import { IconLayoutGrid, IconPlus } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useState } from 'react';
+import React, { MouseEvent, useCallback, useState } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 
@@ -8,10 +8,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import { AgentsAndToolsetsModalQueryParams } from '@/src/constants/quick-apps';
 
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ToolsetLoginDialog } from '@/src/components/Marketplace/ToolsetLoginDialog';
 
 import { AgentAndToolsetChip } from './AgentAndToolsetChip';
@@ -24,7 +24,7 @@ const NoAgentsAndToolsets: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center rounded border border-primary py-4">
       <IconLayoutGrid size={60} className="mb-2 text-secondary" stroke={0.5} />
-      <span>{t('No Agents & Toolsets added')}</span>
+      <span>{t(CommonI18nKeys.NoAgentsAndToolsetsAdded)}</span>
     </div>
   );
 };
@@ -38,6 +38,7 @@ interface AgentAndToolsetSelectorProps {
   tooltip?: string;
   onItemClick?: (id: string) => void;
   onJsonSwitchClick?: () => void;
+  onConfigureClick?: (item: MarketplaceEntity) => void;
 }
 
 export const AgentAndToolsetSelector: React.FC<
@@ -51,6 +52,7 @@ export const AgentAndToolsetSelector: React.FC<
   onChange,
   onItemClick,
   onJsonSwitchClick,
+  onConfigureClick,
 }) => {
   const { t } = useTranslation(Translation.Common);
 
@@ -88,16 +90,18 @@ export const AgentAndToolsetSelector: React.FC<
     <div className="relative grow space-y-4">
       <div className="flex flex-col">
         <div className="absolute right-0 top-[-29px] flex items-center">
-          <Tooltip
-            tooltip={addBtnTooltip ?? tooltip ?? t('Add Agents and Toolsets')}
-          >
-            <DialLinkButton
-              disabled={readonly}
-              onClick={handleOpenSelectModal}
-              iconBefore={<IconPlus size={18} />}
-              label={t('Add')}
-            />
-          </Tooltip>
+          <DialLinkButton
+            tooltipProps={{
+              tooltip:
+                addBtnTooltip ??
+                tooltip ??
+                t(CommonI18nKeys.AddAgentsAndToolsets),
+            }}
+            disabled={readonly}
+            onClick={handleOpenSelectModal}
+            iconBefore={<IconPlus size={18} />}
+            label={t(CommonI18nKeys.AddCommon)}
+          />
           {!!onJsonSwitchClick && (
             <>
               <div className="ml-1 mr-3 h-3 w-0 border-l border-primary" />
@@ -105,10 +109,14 @@ export const AgentAndToolsetSelector: React.FC<
                 isOn={false}
                 handleSwitch={onJsonSwitchClick}
                 disabled={readonly}
-                switchOFFText={t('OFF')}
-                additionalText={t('JSON')}
+                switchOFFText={t(CommonI18nKeys.OFFCommon)}
+                additionalText={t(CommonI18nKeys.JSONCommon)}
                 className="flex w-fit items-center gap-2"
-                tooltip={t('Switch to JSON view for Agents and Toolsets')}
+                tooltip={t(
+                  !readonly
+                    ? CommonI18nKeys.SwitchToJsonView
+                    : CommonI18nKeys.AppIsPublicCannotBeEdited,
+                )}
               />
             </>
           )}
@@ -116,7 +124,7 @@ export const AgentAndToolsetSelector: React.FC<
         {!value.length ? (
           <NoAgentsAndToolsets />
         ) : (
-          <div className="flex flex-wrap gap-2 rounded border border-primary p-2">
+          <div className="flex flex-wrap gap-1 rounded border border-primary p-2">
             {value.map((id) => (
               <AgentAndToolsetChip
                 key={id}
@@ -125,6 +133,7 @@ export const AgentAndToolsetSelector: React.FC<
                 onRemove={readonly ? undefined : handleRemoveItem}
                 readonly={readonly}
                 onItemClick={onItemClick}
+                onConfigure={onConfigureClick}
               />
             ))}
           </div>

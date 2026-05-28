@@ -40,8 +40,12 @@ export class BaseAssertion {
   ) {
     const elementLocator = BaseElement.getElementLocator(icon);
     //assert icon is loaded and displayed
-    await expect.soft(elementLocator).toHaveJSProperty('complete', true);
-    await expect.soft(elementLocator).not.toHaveJSProperty('naturalWidth', 0);
+    await expect
+      .soft(elementLocator, ExpectedMessages.imageIsLoaded)
+      .toHaveJSProperty('complete', true);
+    await expect
+      .soft(elementLocator, ExpectedMessages.imageIsLoaded)
+      .not.toHaveJSProperty('naturalWidth', 0);
 
     const actualIconSource = await elementLocator
       .getAttribute(Attributes.src)
@@ -204,7 +208,7 @@ export class BaseAssertion {
   public async assertElementAttribute(
     element: BaseElement | Locator,
     attribute: string,
-    expectedValue: string,
+    expectedValue: string | RegExp,
     expectedMessage?: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
@@ -281,10 +285,14 @@ export class BaseAssertion {
   public async assertElementColor(
     element: BaseElement | Locator,
     expectedColor: string,
+    expectedMessage?: string,
   ) {
     const elementLocator = BaseElement.getElementLocator(element);
     await expect
-      .soft(elementLocator, ExpectedMessages.entityBackgroundColorIsValid)
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.entityBackgroundColorIsValid,
+      )
       .toHaveCSS(Styles.color, expectedColor);
   }
 
@@ -329,11 +337,11 @@ export class BaseAssertion {
       .toHaveCSS(Styles.cursor, cursor);
   }
 
-  public async assertStringTruncatedTo160(
+  public async assertStringTruncatedTo255(
     originalString: string | null | undefined,
     truncatedString: string | null | undefined,
   ) {
-    const maxLength = 160;
+    const maxLength = 255;
 
     // Handle null or undefined input
     if (originalString == null || truncatedString == null) {
@@ -361,7 +369,7 @@ export class BaseAssertion {
     expect
       .soft(
         truncatedString.length,
-        'Truncated string should have a length of 160',
+        'Truncated string should have a length of 255',
       )
       .toBe(maxLength);
     // Assert that the truncated string is a substring of the original
@@ -410,6 +418,19 @@ export class BaseAssertion {
         expectedMessage ?? ExpectedMessages.elementsCountIsValid,
       )
       .toBeGreaterThanOrEqual(expectedNumber);
+  }
+
+  public assertNumberIsLessThanOrEqual(
+    actualNumber: number,
+    expectedNumber: number,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(
+        actualNumber,
+        expectedMessage ?? ExpectedMessages.elementsCountIsValid,
+      )
+      .toBeLessThanOrEqual(expectedNumber);
   }
 
   public assertValue(
@@ -496,6 +517,31 @@ export class BaseAssertion {
     );
   }
 
+  /**
+   * <input> element specific assertion.
+   * The input value is truncated with dots when the following CSS props are applied:
+   * - text-overflow: ellipsis
+   * - overflow-x:clip
+   */
+  public async assertInputValueIsTruncated(
+    element: BaseElement | Locator,
+    expectedMessage?: string,
+  ) {
+    const elementLocator = BaseElement.getElementLocator(element);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
+      )
+      .toHaveCSS(Styles.text_overflow, Overflow.ellipsis);
+    await expect
+      .soft(
+        elementLocator,
+        expectedMessage ?? ExpectedMessages.elementTextIsTruncated,
+      )
+      .toHaveCSS(Styles.overflow_x, Overflow.clip);
+  }
+
   public async assertElementDisplayStyle(
     element: BaseElement | Locator,
     expectedDisplay: Overflow | StyleValues,
@@ -504,6 +550,20 @@ export class BaseAssertion {
     await expect
       .soft(elementLocator, ExpectedMessages.elementTextWrapIsValid)
       .toHaveCSS(Styles.display, expectedDisplay);
+  }
+
+  public async assertElementWidthStyle(
+    element: BaseElement | Locator,
+    option: { hasFullWidth: boolean },
+  ) {
+    const elementLocator = BaseElement.getElementLocator(element);
+    option.hasFullWidth
+      ? await expect
+          .soft(elementLocator, ExpectedMessages.elementWidthIsValid)
+          .toHaveCSS(Styles.maxWidth, StyleValues.none)
+      : await expect
+          .soft(elementLocator, ExpectedMessages.elementWidthIsValid)
+          .not.toHaveCSS(Styles.maxWidth, StyleValues.none);
   }
 
   public assertBooleanCondition(
@@ -546,5 +606,25 @@ export class BaseAssertion {
         ExpectedMessages.scrollPositionIsCorrect,
       )
       .toHaveJSProperty(scrollProperty, expectedValue);
+  }
+
+  public assertValueMatchObject(
+    actualValue: unknown,
+    expectedObject: Record<string, unknown> | Array<unknown>,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? ExpectedMessages.valuesAreEqual)
+      .toMatchObject(expectedObject);
+  }
+
+  public assertValueMatchPattern(
+    actualValue: unknown,
+    expectedObject: RegExp | string,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(actualValue, expectedMessage ?? ExpectedMessages.valueMatchPattern)
+      .toMatch(expectedObject);
   }
 }

@@ -1,12 +1,13 @@
 import { API, FileManagerColumnKey, MenuOptions } from '@/src/testData';
+import { Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { ExpectedApiResponse } from '@/src/ui/pages';
 import {
+  EntityIconSelectors,
   GridSelectors,
   IconSelectors,
-  InputSelectors,
 } from '@/src/ui/selectors';
-import { Checkbox, Dropdown, Grid } from '@/src/ui/webElements';
-import { FileUtil } from '@/src/utils';
+import { Checkbox, Dropdown, Grid, Input } from '@/src/ui/webElements';
 import { Locator, Page } from '@playwright/test';
 
 export const scrollingTimeout = 1000;
@@ -28,6 +29,11 @@ export class FileManagerGrid extends Grid {
   public gridHeaderCheckbox = new Checkbox(
     this.page,
     this.gridHeaderColumn(FileManagerColumnKey.Select).getElementLocator(),
+  );
+
+  public gridNameCellInput = new Input(
+    this.page,
+    this.gridRowColumn(FileManagerColumnKey.Name),
   );
 
   public gridRowByNameCell = (name: string) =>
@@ -52,11 +58,44 @@ export class FileManagerGrid extends Grid {
     );
   }
 
+  public async gridFileIconByNameCell(name: string) {
+    await this.goTop();
+    const gridRowByNameCellLocator = await this.goToGridRowByNameCell(name);
+    return gridRowByNameCellLocator.locator(EntityIconSelectors.fileIcon);
+  }
+
+  public async gridFileIconSvgByNameCell(name: string): Promise<Locator> {
+    const iconLocator = await this.gridFileIconByNameCell(name);
+    return iconLocator.locator(Tags.svg).first();
+  }
+
+  public getRenameRowFileIcon(): Locator {
+    const renameRow = this.gridRows.getElementLocator().filter({
+      has: this.page.locator(Tags.input),
+    });
+    return renameRow.locator(EntityIconSelectors.fileIcon);
+  }
+
+  public getRenameRowFileIconSvg(): Locator {
+    return this.getRenameRowFileIcon().locator(Tags.svg).first();
+  }
+
+  public async gridSharedFileIconByNameCell(name: string) {
+    const fileIcon = await this.gridFileIconByNameCell(name);
+    return fileIcon.locator(IconSelectors.sharedEntityIcon);
+  }
+
   public gridNameCell = (name: string) =>
     this.gridRowColumnByCellValue(FileManagerColumnKey.Name, name);
 
   public gridNameCellValue = (name: string) =>
     this.gridNameCell(name).locator(GridSelectors.gridCellValue);
+
+  public async getNameColumnValues(): Promise<string[]> {
+    return this.gridRowColumn(FileManagerColumnKey.Name)
+      .locator(GridSelectors.gridCellValue)
+      .allTextContents();
+  }
 
   /**
    * Opens a folder by clicking on its name cell
@@ -80,28 +119,82 @@ export class FileManagerGrid extends Grid {
     }
   }
 
-  public async renameFile(currentName: string, newName: string) {
+  public async setFolderName(folderName: string, waitForRequest = true) {
+    await this.getRenameInput().fillInInput(folderName);
+    await this.confirmNewFolderName(folderName, waitForRequest);
+  }
+
+  /**
+   * Confirms the rename input value as-is by pressing Enter — used when the
+   * default pre-filled name ("New folder N") is accepted without changes.
+   */
+  public async confirmNewFolderName(
+    folderName?: string,
+    waitForRequest = true,
+  ) {
+    if (waitForRequest) {
+      const requestPromise = this.page.waitForResponse((resp) => {
+        const urlMatches = folderName
+          ? resp.url().endsWith(API.folderFilesListingHost(folderName))
+          : resp.url().includes(API.folderFilesListingHost());
+        return urlMatches && resp.request().method() === 'GET' && resp.ok();
+      });
+      await this.page.keyboard.press(keys.enter);
+      await requestPromise;
+    } else {
+      await this.page.keyboard.press(keys.enter);
+    }
+  }
+
+  public async renameFile(
+    currentName: string,
+    newName: string,
+    { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
+  ) {
     const dotsMenu = await this.gridDotsMenuByNameCell(currentName);
-    // eslint-disable-next-line playwright/no-force-option
     await dotsMenu.click({ force: true });
     await this.getRowDropdownMenu().selectItem(MenuOptions.rename);
-    const nameWithoutExtension =
-      FileUtil.getFilenameWithoutExtension(currentName);
-    const input = this.getElementLocator().locator(
-      InputSelectors.value(nameWithoutExtension),
-    );
-    await input.fill(newName);
-    await this.click();
+    await this.getRenameInput().fillInInput(newName);
+    if (isHttpMethodTriggered) {
+      const hostsMap = new Map([
+        [API.moveFilesHost, 'POST'],
+        [API.folderFilesListingHost(), 'GET'],
+      ]);
+      const responses = [];
+      for (const [host, method] of hostsMap) {
+        const resp = this.page.waitForResponse(
+          (response) =>
+            response.url().includes(host) &&
+            response.request().method() === method &&
+            response.status() === 200,
+        );
+        responses.push(resp);
+      }
+      await this.click();
+      for (const resp of responses) {
+        await resp;
+      }
+    } else {
+      await this.click();
+    }
   }
 
-  public getRenameInputError(name: string) {
-    return this.getElementLocator().locator(
-      InputSelectors.inputErrorIcon(name),
-    );
+  public getRowInputError(name?: string) {
+    if (name) {
+      return this.gridNameCellInput.alertIconByValue(name);
+    }
+    return this.gridNameCellInput.alertIcon.getElementLocator();
   }
 
-  public getRenameInput(value: string) {
-    return this.getElementLocator().locator(InputSelectors.value(value));
+  public getRowInputWarning(name?: string) {
+    if (name) {
+      return this.gridNameCellInput.warningIconByValue(name);
+    }
+    return this.gridNameCellInput.warningIcon.getElementLocator();
+  }
+
+  public getRenameInput() {
+    return this.gridNameCellInput.inputField;
   }
 
   public async goToGridRowByNameCell(
@@ -109,6 +202,7 @@ export class FileManagerGrid extends Grid {
     pageNumber = 1,
   ): Promise<Locator> {
     await this.loadingIndicator.waitForState({ state: 'hidden' });
+    await this.gridRows.getNthElement(1).waitFor();
     const gridRowByNameCellLocator = this.gridRowByNameCell(name);
     const scrollFullHeight = await this.gridViewPort
       .getElementLocator()
@@ -117,8 +211,10 @@ export class FileManagerGrid extends Grid {
       .getElementLocator()
       .evaluate((p) => p.scrollHeight);
     const pagesCount = Math.round(scrollFullHeight / scrollBodyHeight);
-    //try to scroll into grid record if it is visible on the page
+    // -- wait for ag grid to finish rendering and animation, etc
+    await this.page.waitForTimeout(500);
     try {
+      //try to scroll into grid record if it is visible on the page
       await gridRowByNameCellLocator.scrollIntoViewIfNeeded({
         timeout: scrollingTimeout,
       });
@@ -160,5 +256,30 @@ export class FileManagerGrid extends Grid {
         });
       });
     }
+  }
+
+  public async saveRename() {
+    const expectedApiResponses: ExpectedApiResponse[] = [
+      { apiMethod: 'POST', urlPattern: API.moveFilesHost },
+      { apiMethod: 'GET', urlPattern: API.folderFilesListingHost() },
+    ];
+    const responsePromises = expectedApiResponses.map((expected) =>
+      this.page.waitForResponse((response) => {
+        const methodMatch = expected.apiMethod
+          ? response.request().method() === expected.apiMethod
+          : true;
+        const statusMatch = response.status() === (expected.status ?? 200);
+        const urlPattern = expected.urlPattern;
+        const responseUrl = response.url();
+        const urlMatch = urlPattern
+          ? urlPattern instanceof RegExp
+            ? urlPattern.test(responseUrl)
+            : responseUrl.includes(urlPattern)
+          : true;
+        return methodMatch && statusMatch && urlMatch;
+      }),
+    );
+    await this.page.keyboard.press(keys.enter);
+    await Promise.all(responsePromises);
   }
 }

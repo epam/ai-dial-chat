@@ -5,7 +5,7 @@ export const layoutContainer = '#theme-main';
 export const overlayFrame = '[name="overlay"]';
 
 export const SendMessageSelectors = {
-  message: '[data-qa="message"]',
+  sendMessageContainer: '[data-qa="send-message-container"]',
   stopGenerating: '[data-qa="stop-generating"]',
   proceedGenerating: '[data-qa="proceed-reply"]',
   sendMessage: '[data-qa="send"]',
@@ -135,6 +135,7 @@ export const ChatSelectors = {
   footer: '[data-qa="footer-message"]',
   rate: (rate: Rate) => `[data-qa="${rate}"]`,
   codeBlock: '.codeblock',
+  codeBlockTitleContainer: '[data-qa="code-title-container"]',
   duplicate: '[data-qa="duplicate"]',
   chatScrollableArea: '[data-qa="scrollable-area"]',
   attachmentExpanded: '[data-qa="attachment-expanded"]',
@@ -147,6 +148,11 @@ export const ChatSelectors = {
   showLess: '[data-qa="show-less"]',
   iconSelector: '[data-qa="entity-icon"]',
   addModelToWorkspace: '[data-qa="add-model-to-workspace"]',
+  messageImageAttachment: 'Attachment image',
+  copyCodeButton: 'Copy-code',
+  downloadButton: 'Download',
+  copyTextButton: 'Copy text',
+  copyMarkdownButton: 'Copy markdown',
 };
 
 export const DragFileSelectors = {

@@ -1,5 +1,5 @@
 import { IconPlayerPlay } from '@tabler/icons-react';
-import {
+import React, {
   memo,
   useCallback,
   useEffect,
@@ -15,6 +15,7 @@ import classNames from 'classnames';
 
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import {
@@ -41,6 +42,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationTypesSchemasSelectors,
   AuthSelectors,
+  ChatEventsSelectors,
   ChatSelectors,
   ConversationsSelectors,
   ModelsSelectors,
@@ -49,6 +51,7 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { Routes } from '@/src/constants/routes';
 
 import { ChatDropArea } from '@/src/components/Chat/ChatDropArea';
@@ -66,6 +69,7 @@ import { ChatInputFooter } from './ChatInput/ChatInputFooter';
 import { ChatSettings } from './ChatSettings/ChatSettingsModal';
 import { EmptyChatDescription } from './EmptyChatDescription';
 import { ErrorMessageDiv } from './ErrorMessageDiv';
+import { IntroText } from './IntroText';
 import { MemoizedChatMessage } from './MemoizedChatMessage';
 import { NotAllowedModel } from './NotAllowedModel';
 import { PlaybackControls } from './Playback/PlaybackControls';
@@ -98,10 +102,11 @@ interface CustomViewerType {
 }
 
 interface ChatViewProps {
+  isPreview?: boolean;
   customViewer?: CustomViewerType;
 }
 
-const ChatView = memo(({ customViewer }: ChatViewProps) => {
+const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
 
@@ -117,6 +122,9 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+  const isAsrFlowActive = useAppSelector(ChatSelectors.selectIsAsrFlowActive);
+  const asrFlowRef = useRef(false);
+  asrFlowRef.current = isAsrFlowActive;
   const conversations = useAppSelector(
     ConversationsSelectors.selectConversations,
   );
@@ -370,8 +378,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
   }, [isCompareMode, mergedMessages.length]);
 
   useResizeObserver(chatMessagesRef.current, handleChatMessagesResize);
-
-  useResizeObserver(document.body, handleChatResize);
+  useWindowResizeEvent(handleChatResize);
 
   useEffect(() => {
     const lastMergedMessages = mergedMessages.length
@@ -499,6 +506,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
               prompt: temporarySettings.prompt,
               temperature: temporarySettings.temperature,
               isShared: temporarySettings.isShared,
+              responseFormat: temporarySettings.responseFormat,
             },
           }),
         );
@@ -615,8 +623,17 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
       !(isSomeConversationWithSchema && selectedConversations.length > 1)) ||
     (isValidApproveRequiredConversation && isApproveRequiredInput);
 
+  const shouldShowIntroText =
+    selectedConversations.length === 1 &&
+    !selectedConversations[0].messages.find(
+      (userMessage) => userMessage.role === Role.User,
+    );
+
   useEffect(() => {
-    if (!enabledFeatures.has(Feature.SkipFocusChatInputOnLoad)) {
+    if (
+      !enabledFeatures.has(Feature.SkipFocusChatInputOnLoad) &&
+      !asrFlowRef.current
+    ) {
       textareaRef.current?.focus();
     }
   }, [enabledFeatures, selectedConversationsIds]);
@@ -633,11 +650,7 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
 
   return (
     <ChatDropArea isSettingsModalOpen={isShowChatSettings}>
-      <div
-        className="relative size-full min-w-0 overflow-y-auto"
-        data-qa="chat"
-        id="chat"
-      >
+      <div className="relative size-full" data-qa="chat" id="chat">
         {modelError ? (
           <ErrorMessageDiv error={modelError} />
         ) : customViewer ? (
@@ -907,10 +920,18 @@ const ChatView = memo(({ customViewer }: ChatViewProps) => {
                       />
                     ) : (
                       <>
+                        {shouldShowIntroText && (
+                          <IntroText
+                            isWideLayout={isWideLayout}
+                            modelId={selectedConversations[0].model.id}
+                          />
+                        )}
+
                         {!isWideLayout && <ChatStarters />}
 
                         {!isPlayback && (
                           <ChatInput
+                            isPreview={isPreview}
                             isWideLayout={isWideLayout}
                             showReplayControls={showReplayControls}
                             textareaRef={textareaRef}
@@ -1048,7 +1069,7 @@ const CustomViewerChatView: React.FC<CustomChatViewerProps> = ({
             <div className="flex w-full flex-col items-center pt-3 md:pt-5">
               <DialPrimaryButton
                 className="mb-2 flex items-center md:mx-4 md:mb-0 md:last:mb-6 lg:mx-auto lg:max-w-3xl"
-                label={t('Start working with the {{viewerTitle}}', {
+                label={t(ChatI18nKeys.StartWorkingWithViewer, {
                   ns: Translation.Chat,
                   viewerTitle: customViewer.title,
                 })}
@@ -1114,6 +1135,12 @@ export function Chat({ isPreview }: ChatProps) {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
+  const isChatEventsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.LiveChatInteraction),
+  );
+  const isSubscribing = useAppSelector(ChatEventsSelectors.selectIsSubscribing);
+
+  const showIsSubscribingLoader = isChatEventsEnabled && isSubscribing;
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
@@ -1188,8 +1215,8 @@ export function Chat({ isPreview }: ChatProps) {
     return (
       <div className="h-screen pt-2">
         <NotFoundEntity
-          entity={t('Agent is')}
-          additionalText={t('Please contact your administrator.')}
+          entity={t(ChatI18nKeys.AgentIs)}
+          additionalText={t(ChatI18nKeys.PleaseContactAdministrator)}
         />
       </div>
     );
@@ -1199,7 +1226,8 @@ export function Chat({ isPreview }: ChatProps) {
     !areSelectedConversationsLoaded ||
     !isInstalledModelsInitialized ||
     loadingConfigurationSchemas.length ||
-    isPublicationUpdating
+    isPublicationUpdating ||
+    showIsSubscribingLoader
   ) {
     return <Loader />;
   }
@@ -1209,8 +1237,8 @@ export function Chat({ isPreview }: ChatProps) {
   ) {
     return (
       <NotFoundEntity
-        entity={t('Conversation')}
-        additionalText={t('Please select another conversation.')}
+        entity={t(ChatI18nKeys.ConversationEntity)}
+        additionalText={t(ChatI18nKeys.PleaseSelectAnotherConversation)}
       />
     );
   }
@@ -1233,7 +1261,7 @@ export function Chat({ isPreview }: ChatProps) {
 
   return (
     <>
-      <ChatView customViewer={customViewer} />
+      <ChatView isPreview={isPreview} customViewer={customViewer} />
       {!isPreview && <ChatInputFooter />}
     </>
   );

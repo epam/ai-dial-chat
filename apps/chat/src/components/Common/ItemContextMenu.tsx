@@ -34,6 +34,9 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { ContextMenu } from './ContextMenu';
 
 import InsertPromptIcon from '@/public/images/icons/insert-prompt.svg';
@@ -126,7 +129,7 @@ export function ItemContextMenu({
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Use'),
+        name: t(SideBarI18nKeys.Use),
         display: !!onUse,
         disabled: disableUse,
         dataQa: 'use',
@@ -134,21 +137,25 @@ export function ItemContextMenu({
         onClick: onUse,
       },
       {
-        name: t('View'),
+        name: t(SideBarI18nKeys.View),
         display: !!onView,
         dataQa: 'view',
         Icon: IconEye,
         onClick: onView,
       },
       {
-        name: t('Select'),
+        name: t(SideBarI18nKeys.Select),
         display: !isExternal && !!onSelect,
         dataQa: 'select',
         Icon: IconSquareCheck,
         onClick: onSelect,
       },
       {
-        name: t(featureType === FeatureType.Chat ? 'Rename' : 'Edit'),
+        name: t(
+          featureType === FeatureType.Chat
+            ? SideBarI18nKeys.Rename
+            : SideBarI18nKeys.Edit,
+        ),
         display:
           (!isExternal || isApproveRequiredEntity) &&
           entity.publicationInfo?.action !== PublishActions.DELETE &&
@@ -159,7 +166,7 @@ export function ItemContextMenu({
         disabled: disableAll && !isNameInvalid,
       },
       {
-        name: t('Compare'),
+        name: t(SideBarI18nKeys.Compare),
         display: !!onCompare && !isFormSchemaConversation,
         dataQa: 'compare',
         Icon: IconScale,
@@ -167,7 +174,7 @@ export function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Duplicate'),
+        name: t(SideBarI18nKeys.Duplicate),
         display: !isEmptyConversation && !!onDuplicate,
         dataQa: 'duplicate',
         Icon: IconCopy,
@@ -175,7 +182,7 @@ export function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Replay'),
+        name: t(SideBarI18nKeys.Replay),
         display:
           !isEmptyConversation && !!onReplay && !isFormSchemaConversation,
         dataQa: 'replay',
@@ -184,7 +191,7 @@ export function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Playback'),
+        name: t(SideBarI18nKeys.Playback),
         display: !isEmptyConversation && !!onPlayback,
         dataQa: 'playback',
         Icon: IconPlayerPlay,
@@ -192,14 +199,14 @@ export function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Export'),
+        name: t(SideBarI18nKeys.Export),
         dataQa: 'export-prompt',
         display: featureType === FeatureType.Prompt,
         Icon: IconFileArrowRight,
         onClick: onExport,
       },
       {
-        name: t('Export'),
+        name: t(SideBarI18nKeys.Export),
         dataQa: 'export-chat-mobile',
         display: !isEmptyConversation && featureType === FeatureType.Chat,
         Icon: IconFileArrowRight,
@@ -207,14 +214,14 @@ export function ItemContextMenu({
         className: 'md:hidden',
       },
       {
-        name: t('Export'),
+        name: t(SideBarI18nKeys.Export),
         display: !isEmptyConversation && featureType === FeatureType.Chat,
         dataQa: 'export-chat',
         Icon: IconFileArrowRight,
         className: 'max-md:hidden',
         childMenuItems: [
           {
-            name: t('With attachments'),
+            name: t(SideBarI18nKeys.WithAttachments),
             dataQa: 'with-attachments',
             onClick: () => {
               onExport({ withAttachments: true });
@@ -222,7 +229,7 @@ export function ItemContextMenu({
             className: 'invisible md:visible',
           },
           {
-            name: t('Without attachments'),
+            name: t(SideBarI18nKeys.WithoutAttachments),
             dataQa: 'without-attachments',
             onClick: () => {
               onExport();
@@ -232,7 +239,7 @@ export function ItemContextMenu({
         ],
       },
       {
-        name: t('Move to'),
+        name: t(SideBarI18nKeys.MoveTo),
         display: !isExternal,
         dataQa: 'move-to-modal',
         Icon: IconFolderShare,
@@ -240,7 +247,7 @@ export function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Share'),
+        name: t(SideBarI18nKeys.Share),
         dataQa: 'share',
         display:
           !isEmptyConversation && isSharingEnabled && !!onShare && !isExternal,
@@ -249,7 +256,7 @@ export function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Unshare'),
+        name: t(SideBarI18nKeys.Unshare),
         dataQa: 'unshare',
         display: !!entity.sharedWithMe,
         Icon: IconUserUnshare,
@@ -257,7 +264,7 @@ export function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Publish'),
+        name: t(SideBarI18nKeys.Publish),
         dataQa: 'publish',
         display:
           !isEmptyConversation &&
@@ -270,7 +277,7 @@ export function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Unpublish'),
+        name: t(SideBarI18nKeys.Unpublish),
         dataQa: 'unpublish',
         display:
           isPublishingEnabled && !!onUnpublish && isEntityIdPublic(entity),
@@ -279,14 +286,14 @@ export function ItemContextMenu({
         disabled: disableAll,
       },
       {
-        name: t('Info'),
+        name: t(SideBarI18nKeys.Info),
         display: !!onShowInfo,
         dataQa: 'info',
         Icon: IconInfoCircle,
         onClick: onShowInfo,
       },
       {
-        name: t('Delete'),
+        name: t(SideBarI18nKeys.Delete),
         dataQa: 'delete',
         display: !isExternal,
         Icon: IconTrashX,
@@ -332,7 +339,7 @@ export function ItemContextMenu({
       isLoading={isLoading}
       TriggerIcon={TriggerIcon ?? IconDots}
       hideTriggerIcon={hideTriggerIcon}
-      triggerIconSize={18}
+      triggerIconSize={DEFAULT_ICON_SIZES.SMALL}
       className={className}
       featureType={featureType}
       isOpen={isOpen}

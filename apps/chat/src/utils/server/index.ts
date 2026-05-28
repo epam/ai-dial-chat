@@ -7,6 +7,7 @@ import {
   DIAL_API_VERSION,
 } from '@/src/constants/default-server-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { HeadersNames } from '@/src/constants/server';
 
 import { ApiUtils } from './api';
 import { hardLimitMessages } from './chat';
@@ -59,17 +60,21 @@ export const OpenAIStream = async ({
   chatReference,
   userJWT,
   jobTitle,
+  language,
   maxRequestTokens,
   configurationSchemaValue,
+  channelId,
 }: {
   model: DialAIEntityModel;
-  temperature: number | undefined;
   messages: Message[];
   userJWT: string;
   chatReference: string;
   jobTitle: string | undefined;
+  language?: string;
   maxRequestTokens: number | undefined;
   configurationSchemaValue?: MessageFormValue;
+  temperature?: number;
+  channelId?: string;
 }) => {
   let messagesToSend = messages;
   const url = getUrl(model);
@@ -78,7 +83,12 @@ export const OpenAIStream = async ({
     chatReference,
     jwt: userJWT,
     jobTitle,
+    language,
   });
+
+  if (channelId) {
+    requestHeaders[HeadersNames.X_DIAL_CLIENT_CHANNEL_ID] = channelId;
+  }
 
   let retries = 0;
   let body;
@@ -107,15 +117,25 @@ export const OpenAIStream = async ({
       let result: DialAIErrorResponse;
       try {
         result = JSON.parse(await res.text()) as DialAIErrorResponse;
-      } catch (e) {
+      } catch {
         throw new DialAIError(res.statusText, res.status, url, {
           displayMessage: res.statusText,
         });
       }
 
       if (!result.error) {
-        throw new Error(
-          `Core API returned an error: ${JSON.stringify(result, null, 2)}`,
+        if (!res.statusText || !('detail' in result)) {
+          throw new Error(
+            `Core API returned an error: ${JSON.stringify(result, null, 2)}`,
+          );
+        }
+        throw new DialAIError(
+          res.statusText || (result.detail as string),
+          res.status,
+          url,
+          {
+            displayMessage: res.statusText || (result.detail as string),
+          },
         );
       }
 
@@ -126,7 +146,7 @@ export const OpenAIStream = async ({
         {
           type: result.error.type,
           param: result.error.param,
-          displayMessage: result.error.display_message,
+          displayMessage: result.error.display_message || result.error.message,
         },
       );
 
@@ -149,7 +169,6 @@ export const OpenAIStream = async ({
     }
 
     break;
-    // eslint-disable-next-line no-constant-condition
   } while (true);
 
   let idSend = false;
@@ -216,7 +235,7 @@ export const OpenAIStream = async ({
       try {
         abortController.abort();
       } catch (error) {
-        logger.debug(
+        logger.error(
           { error },
           'AbortController: abort was called but the request was already aborted',
         );
@@ -226,7 +245,7 @@ export const OpenAIStream = async ({
         const nodeBody = res.body as Readable | null;
         nodeBody?.destroy?.();
       } catch (error) {
-        logger.debug(
+        logger.error(
           { error },
           'Stream body: destroy was called but the stream was already closed',
         );

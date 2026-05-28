@@ -1,5 +1,10 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
-import { isMyEntity, splitEntityId } from '@/src/utils/app/shared-utils';
+import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
+import {
+  isFolderId,
+  isMyEntity,
+  splitEntityId,
+} from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -12,25 +17,39 @@ import {
   FileValidationErrors,
 } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
+import { Translation } from '@/src/types/translation';
 
 import {
   BYTES_IN_KB,
   BYTES_IN_MB,
+  FALLBACK_CONTENT_TYPE,
   MAX_FILE_SIZE_IN_BYTES,
+  TEMP_FILE_NAME_IN_FILE_MANAGER,
 } from '@/src/constants/file';
 import {
   FOLDER_ATTACHMENT_CONTENT_TYPE,
   METADATA_PREFIX,
 } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
-import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
-import { isFolderId } from './shared-utils';
+import {
+  doesHaveDotsInTheEnd,
+  getUtf8BytesLength,
+  prepareEntityName,
+} from './common';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  NOT_ALLOWED_SPACES,
+  NOT_ALLOWED_SPACES_REGEXP,
+  NOT_ALLOWED_SYMBOLS,
+  NOT_ALLOWED_SYMBOLS_REGEXP,
+} from '@epam/ai-dial-ui-kit';
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
-import { extensions } from 'mime-types';
+import uniqBy from 'lodash-es/uniqBy';
+import { extensions, lookup } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
@@ -50,6 +69,23 @@ export const constructPath = (
   return path.startsWith('api/') ? path.replace('api/', '/api/') : path;
 };
 
+export function removeTrailingSlash(path: string): string {
+  return path.replace(/\/+$/, '');
+}
+
+/** True if `path` equals `prefix` or is a strict descendant (`prefix/…`). Trailing slashes ignored. */
+export function isPathUnderPrefix(path: string, prefix: string): boolean {
+  const normalizedPath = removeTrailingSlash(path);
+  const normalizedPrefix = removeTrailingSlash(prefix);
+  if (!normalizedPath || !normalizedPrefix) {
+    return false;
+  }
+  if (normalizedPath === normalizedPrefix) {
+    return true;
+  }
+  return normalizedPath.startsWith(`${normalizedPrefix}/`);
+}
+
 export const getRelativePath = (
   absolutePath: string | undefined,
 ): string | undefined => {
@@ -60,6 +96,14 @@ export const getRelativePath = (
 export const getFileName = (path: string | undefined): string | undefined => {
   return path?.split('/').slice(-1)?.[0] || undefined;
 };
+
+export const getNestedEmptyFolderIdsForChosenParent = (
+  emptyFolderIds: string[],
+  parentFolderId: string,
+): string[] =>
+  emptyFolderIds
+    .filter((id) => `${id}/`.startsWith(parentFolderId))
+    .map((id) => `${id}/`);
 
 export const getUserCustomContent = (
   files?: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
@@ -140,9 +184,48 @@ export const getDialFilesWithInvalidFileType = (
   return allowedFileTypes.includes('*/*')
     ? []
     : files.filter(
-        (file) => !isAllowedMimeType(allowedFileTypes, file.contentType),
+        (file) =>
+          file.name !== TEMP_FILE_NAME_IN_FILE_MANAGER &&
+          !isAllowedMimeType(allowedFileTypes, file.contentType),
       );
 };
+
+const isFileManagerPlaceholderLastSegment = (
+  segment: string | undefined,
+): boolean => {
+  if (!segment) {
+    return false;
+  }
+  return (
+    segment === TEMP_FILE_NAME_IN_FILE_MANAGER ||
+    segment.startsWith(TEMP_FILE_NAME_IN_FILE_MANAGER)
+  );
+};
+
+const lastSegmentOrWhole = (value: string | undefined): string => {
+  if (value === undefined || value === '') {
+    return '';
+  }
+  return getFileName(value) ?? value;
+};
+
+/**
+ * Drops UI Kit FileManager folder markers from lists.
+ * Matches exact `.dial_folder` or suffix variants (e.g. `.dial_folder__`) on the
+ * last path segment of `name` and/or `id`.
+ */
+export function withoutFileManagerPlaceholderByName<
+  T extends { name?: string; id?: string },
+>(items: T[]): T[] {
+  return items.filter((item) => {
+    const nameTail = lastSegmentOrWhole(item.name);
+    const idTail = lastSegmentOrWhole(item.id);
+    return (
+      !isFileManagerPlaceholderLastSegment(nameTail) &&
+      !isFileManagerPlaceholderLastSegment(idTail)
+    );
+  });
+}
 
 export const getFilesWithInvalidFileType = (
   files: File[],
@@ -150,15 +233,24 @@ export const getFilesWithInvalidFileType = (
 ): File[] => {
   return allowedFileTypes.includes('*/*')
     ? []
-    : files.filter((file) => !isAllowedMimeType(allowedFileTypes, file.type));
+    : files.filter(
+        (file) => !isAllowedMimeType(allowedFileTypes, getFileMimeType(file)),
+      );
 };
-export const notAllowedSymbols = ':;,=/{}%&\\"';
-export const notAllowedSpaces = '(\r\n|\n|\r|\t)|[\x00-\x1F]';
+
+// Regular expressions and restricted symbols from DIAL UI Kit
+export const notAllowedSymbols = NOT_ALLOWED_SYMBOLS;
+export const notAllowedSpaces = NOT_ALLOWED_SPACES;
 export const notAllowedSymbolsRegex = new RegExp(
-  `[${escapeRegExp(notAllowedSymbols)}]|${notAllowedSpaces}`,
+  NOT_ALLOWED_SYMBOLS_REGEXP.source,
   'gm',
 );
-export const notAllowedSpacesRegex = new RegExp(notAllowedSpaces, 'gm');
+
+export const notAllowedSpacesRegex = new RegExp(
+  NOT_ALLOWED_SPACES_REGEXP.source,
+  'gm',
+);
+
 export const doesHaveNotAllowedSymbols = (name: string) =>
   !!name.match(notAllowedSymbolsRegex);
 
@@ -178,7 +270,7 @@ export const getFilesWithInvalidFileSize = (
   return files.filter((file) => file.size > sizeLimit);
 };
 
-const parseAttachmentUrl = (url: string) => {
+export const parseAttachmentUrl = (url: string) => {
   const decodedUrl = ApiUtils.decodeApiUrl(url);
   const lastIndexSlash = decodedUrl.lastIndexOf('/');
 
@@ -310,15 +402,34 @@ export const getShortExtensionsListFromMimeType = (
   );
 };
 
-export const getFileNameWithoutExtension = (filename: string) =>
-  filename.lastIndexOf('.') > 0
-    ? filename.slice(0, filename.lastIndexOf('.'))
-    : filename;
+export const getFileNameWithoutExtension = (
+  filename: string,
+  options: { isExtensionIncluded?: boolean } = { isExtensionIncluded: true },
+) => {
+  const index = filename.lastIndexOf('.');
+  if (index > 0) {
+    return filename.slice(0, index);
+  }
 
-export const getFileNameExtension = (filename: string) =>
-  filename.lastIndexOf('.') > 0
-    ? filename.slice(filename.lastIndexOf('.')).toLowerCase()
+  return options?.isExtensionIncluded && index !== 0
+    ? filename
+    : index === -1 // -1 - in case when file without extension
+      ? filename
+      : '';
+};
+
+export const getFileNameExtension = (
+  filename: string,
+  options: { isExtensionIncluded?: boolean } = { isExtensionIncluded: false },
+) => {
+  if (filename.lastIndexOf('.') > 0) {
+    return filename.slice(filename.lastIndexOf('.')).toLowerCase();
+  }
+
+  return options?.isExtensionIncluded && filename.lastIndexOf('.') === 0
+    ? filename
     : '';
+};
 
 export const getNextFileName = (
   defaultName: string,
@@ -373,10 +484,29 @@ export const getNextFileName = (
   return `${prefix}${maxNumber + 1}${defaultFileExtension}`;
 };
 
-export const prepareFileName = (filename: string) =>
-  prepareEntityName(
-    getFileNameWithoutExtension(filename) + getFileNameExtension(filename),
+export const prepareFileName = (filename: string) => {
+  const trimmedFilename = filename.trim();
+  const extension = getFileNameExtension(trimmedFilename);
+
+  if (!extension || extension === '.') {
+    return prepareEntityName(trimmedFilename);
+  }
+
+  const maxBaseNameLength = Math.max(
+    getResourceMaxSegmentBytes() - getUtf8BytesLength(extension),
+    0,
   );
+  const preparedBaseName = prepareEntityName(
+    getFileNameWithoutExtension(trimmedFilename),
+    {
+      forRenaming: true,
+      replaceWithSpacesForRenaming: true,
+      maxNameLength: maxBaseNameLength,
+    },
+  );
+
+  return `${preparedBaseName}${extension}`;
+};
 
 export const isAbsoluteUrl = (url: string): boolean => {
   const urlLower = url.toLowerCase();
@@ -426,6 +556,24 @@ export const isConversationHasExternalAttachments = (
   });
 };
 
+export const getMimeTypeByFileName = (filename: string): string => {
+  const extension = getFileNameExtension(filename);
+  return extension
+    ? lookup(extension) || FALLBACK_CONTENT_TYPE
+    : FALLBACK_CONTENT_TYPE;
+};
+
+export const getFileMimeType = (file: File): string => {
+  return file.type || getMimeTypeByFileName(file.name);
+};
+
+export const getFileWithType = (file: File): File => {
+  return new File([file], file.name, {
+    type: getFileMimeType(file),
+    lastModified: file.lastModified,
+  });
+};
+
 export const validatePreUploadFiles = (
   files: File[],
   allowedTypes: string[] = [],
@@ -441,7 +589,7 @@ export const validatePreUploadFiles = (
       ];
       return;
     }
-    if (!isAllowedMimeType(allowedTypes, file.type)) {
+    if (!isAllowedMimeType(allowedTypes, getFileMimeType(file))) {
       byError[FileValidationErrors.IncorrectType] = [
         ...(byError[FileValidationErrors.IncorrectType] ?? []),
         file.name,
@@ -458,14 +606,14 @@ export const validatePreUploadFiles = (
       switch (error as FileValidationErrors) {
         case FileValidationErrors.IncorrectSize:
           return translate(
-            "Max file size up to 512 Mb. Next files haven't been uploaded: {{fileNames}}",
-            { fileNames },
+            ChatI18nKeys.MaxFileSizeUpTo512MbNextFilesHaventBeenUploaded,
+            { ns: Translation.Chat, fileNames },
           );
         case FileValidationErrors.IncorrectType:
-          return translate(
-            "You're trying to upload files with incorrect type: {{fileNames}}",
-            { fileNames },
-          );
+          return translate(ChatI18nKeys.TryingToUploadFilesWithIncorrectType, {
+            ns: Translation.Chat,
+            fileNames,
+          });
         default:
           return '';
       }
@@ -488,7 +636,7 @@ export const validateUploadFiles = <T extends File | { name: string }>(
 
     if (file instanceof File) {
       const renamedFile = new File([file], sanitizedName, {
-        type: file.type,
+        type: getFileMimeType(file),
         lastModified: file.lastModified,
       });
       validFiles.push(renamedFile as T);
@@ -513,10 +661,10 @@ export const getFilesFromDataTransferItems = (
 
 export const formatFileSize = (sizeInBytes: number): string => {
   if (sizeInBytes >= BYTES_IN_MB) {
-    return `${Math.ceil(sizeInBytes / BYTES_IN_MB)} ${translate('MB')}`;
+    return `${Math.ceil(sizeInBytes / BYTES_IN_MB)} ${translate(ChatI18nKeys.MBUnit, { ns: Translation.Chat })}`;
   }
 
-  return `${Math.ceil(sizeInBytes / BYTES_IN_KB)} ${translate('KB')}`;
+  return `${Math.ceil(sizeInBytes / BYTES_IN_KB)} ${translate(ChatI18nKeys.KBUnit, { ns: Translation.Chat })}`;
 };
 
 export const getMyBucketAttachments = (
@@ -530,11 +678,52 @@ export const getMyBucketAttachments = (
 export const getRootFolderPlaceholderName = (bucket: string): string => {
   const userBucket = BucketService.getBucket();
   if (userBucket === bucket) {
-    return translate('My Files');
+    return translate(ChatI18nKeys.MyFiles, { ns: Translation.Chat });
   }
   if (bucket === PUBLIC_URL_PREFIX) {
-    return translate('Organization');
+    return translate(ChatI18nKeys.Organization, { ns: Translation.Chat });
   }
 
-  return translate('Shared with Me');
+  return translate(ChatI18nKeys.SharedWithMeFiles, { ns: Translation.Chat });
+};
+
+export const getFilesAndFoldersFromUrls = (
+  urls: string[],
+  featureType: FeatureType,
+  uploadStatus?: UploadStatus,
+) => {
+  const files: DialFile[] = [];
+  const folders: FolderInterface[] = [];
+
+  urls.forEach((url) => {
+    const { absolutePath, name } = parseAttachmentUrl(url);
+
+    files.push({
+      id: url,
+      name,
+      contentType: getMimeTypeByFileName(name),
+      folderId: absolutePath,
+      absolutePath,
+    } as DialFile);
+
+    const {
+      apiKey,
+      bucket,
+      name: folderName,
+      parentPath,
+    } = splitEntityId(absolutePath);
+
+    folders.push({
+      id: absolutePath,
+      name: folderName,
+      type: featureType,
+      folderId: constructPath(apiKey, bucket, parentPath),
+      status: uploadStatus,
+    });
+  });
+
+  return {
+    files: uniqBy(files, 'id'),
+    folders: uniqBy(folders, 'id'),
+  };
 };

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { useMarketplaceDisplayedEntities } from '@/src/hooks/useMarketplaceDisplayedEntities';
 
@@ -14,6 +14,8 @@ import {
   MarketplaceEntitiesTabs,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
+
+import { ConnectToolsetModal } from '@/src/components/Marketplace/ConnectToolsetModal';
 
 import { ResultsView, ResultsViewProps } from './TabResults';
 import { ToolsetDetails } from './ToolsetsDetails/ToolsetDetails';
@@ -52,12 +54,15 @@ export function ToolsTabRenderer() {
     ? toolsetsMap[detailsToolset.reference]
     : undefined;
 
-  const { displayedEntities: displayedToolsets, suggestedResults } =
-    useMarketplaceDisplayedEntities(
-      allToolsets,
-      installedToolsetsSet,
-      selectedFilters,
-    );
+  const {
+    displayedEntities: displayedToolsets,
+    suggestedResults,
+    featuredEntities,
+  } = useMarketplaceDisplayedEntities(
+    allToolsets,
+    installedToolsetsSet,
+    selectedFilters,
+  );
 
   const handleSetDetailsToolset = useCallback(
     (toolset: ToolsetModel) => {
@@ -119,6 +124,7 @@ export function ToolsTabRenderer() {
       <ToolsetResultsView
         entities={displayedToolsets}
         suggestedResults={suggestedResults}
+        featuredEntities={featuredEntities}
         selectedTab={selectedTab}
         areAllFiltersEmpty={areAllFiltersEmpty}
         selectedViewType={selectedViewType}
@@ -139,6 +145,8 @@ export function ToolsTabRenderer() {
           isSuggested={detailsToolset?.isSuggested}
         />
       )}
+
+      <ConnectToolsetModal />
     </>
   );
 }

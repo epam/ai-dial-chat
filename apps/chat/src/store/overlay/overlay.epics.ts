@@ -114,7 +114,7 @@ import {
 import isEqual from 'lodash-es/isEqual';
 import uniq from 'lodash-es/uniq';
 
-export const postMessageMapperEpic: AppEpic = (_, state$) =>
+const postMessageMapperEpic: AppEpic = (_, state$) =>
   typeof window === 'object'
     ? fromEvent<MessageEvent>(window, 'message').pipe(
         filter(isPostMessageOverlayRequest),
@@ -1205,11 +1205,14 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       if (theme && isOptionChanged('theme')) {
         if (availableThemes.some(({ id }) => id === theme)) {
           actions.push(of(UIActions.setTheme(theme)));
-        } else {
+        } else if (availableThemes.length) {
           console.warn(
             `[Overlay](Theme) No such theme: ${theme}.\nTheme isn't set.`,
           );
         }
+        // When listing is still empty (cold start), theme is stored in
+        // requestedOverlayTheme and applied in applyOverlayThemeEpic on
+        // setAvailableThemes — no polling or timeout.
       }
 
       if (signInInSameWindow && isOptionChanged('signInInSameWindow')) {
@@ -1235,6 +1238,9 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
           );
 
           if (!shouldLogIn) {
+            // Trigger sharing and publication listings
+
+            // Conversations
             if (features.includes(Feature.ConversationsSharing)) {
               actions.push(
                 of(ShareActions.triggerGettingSharedConversationListings()),
@@ -1251,6 +1257,13 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
               );
             }
 
+            // Prompts
+            if (features.includes(Feature.PromptsSharing)) {
+              actions.push(
+                of(ShareActions.triggerGettingSharedPromptListings()),
+              );
+            }
+
             if (features.includes(Feature.PromptsPublishing)) {
               actions.push(
                 of(
@@ -1261,6 +1274,14 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
               );
             }
 
+            // Applications
+            if (features.includes(Feature.ApplicationsSharing)) {
+              actions.push(
+                of(ShareActions.triggerGettingSharedApplicationsListings()),
+              );
+            }
+
+            // Admin publications
             if (
               AuthSelectors.selectIsAdmin(state$.value) &&
               (features.includes(Feature.ConversationsPublishing) ||
@@ -1353,6 +1374,46 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+/** Applies host theme after theme listing is loaded (fixes cold-start race with initTheme). */
+const applyOverlayThemeEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(UIActions.setAvailableThemes.type),
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    switchMap(() => {
+      const state = state$.value;
+      const overlayThemeId = OverlaySelectors.selectOverlayTheme(state);
+      const availableThemes = UISelectors.selectAvailableThemes(state);
+      const currentTheme = UISelectors.selectThemeState(state);
+
+      if (!availableThemes.length) {
+        return EMPTY;
+      }
+
+      const optionsReceived = OverlaySelectors.selectOptionsReceived(state);
+
+      const themeToApply =
+        overlayThemeId &&
+        availableThemes.some(({ id }) => id === overlayThemeId)
+          ? overlayThemeId
+          : !overlayThemeId && !currentTheme && optionsReceived
+            ? availableThemes[0]?.id
+            : undefined;
+
+      if (overlayThemeId && !themeToApply) {
+        console.warn(
+          `[Overlay](Theme) No such theme: ${overlayThemeId}.\nTheme isn't set.`,
+        );
+        return EMPTY;
+      }
+
+      if (!themeToApply || themeToApply === currentTheme) {
+        return EMPTY;
+      }
+
+      return of(UIActions.setTheme(themeToApply));
+    }),
+  );
+
 const signInOptionsSet: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(OverlayActions.signInOptionsSet.type),
@@ -1376,7 +1437,6 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
         }
       };
 
-      const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
       const isShouldLogout =
         signInOptions?.validationUserEmail &&
         AuthSelectors.selectIsShouldLogout(
@@ -1391,7 +1451,20 @@ const signInOptionsSet: AppEpic = (action$, state$) =>
 
         return;
       }
+      const explicitToken =
+        typeof signInOptions?.explicitToken === 'string'
+          ? signInOptions.explicitToken.trim()
+          : '';
+      if (explicitToken) {
+        await signIn('credentials', {
+          accessToken: explicitToken,
+          redirect: false,
+          provider: signInOptions?.signInProvider,
+        });
+        return;
+      }
 
+      const isShouldLogin = AuthSelectors.selectIsShouldLogin(state$.value);
       if (isShouldLogin) {
         login();
       }
@@ -1753,6 +1826,7 @@ export const OverlayEpics = combineEpics(
   sendStopGeneratingEvent,
   notifyHostAboutReadyEpic,
   setOverlayOptionsEpic,
+  applyOverlayThemeEpic,
   sendMessageEpic,
   deleteMessageEpic,
   deleteMessageEffectEpic,

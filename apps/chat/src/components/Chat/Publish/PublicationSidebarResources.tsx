@@ -90,7 +90,9 @@ export const PromptPublicationSidebarResources = ({
     },
     [dispatch, publicationUrl],
   );
-
+  if (rootPublicationFolders.length === 0 && itemsToDisplay.length === 0) {
+    return null;
+  }
   return (
     <div className={classNames(!isOpen && 'hidden')}>
       {rootPublicationFolders.map((folder) => (
@@ -161,7 +163,9 @@ export const ConversationPublicationSidebarResources = ({
     (folderId: string) => {
       dispatch(ConversationsActions.toggleFolder({ id: folderId }));
 
-      const folder = allPublicationFolders.find((f) => f.id === folderId);
+      const folder = allPublicationFolders.find(
+        (folder) => folder.id === folderId,
+      );
       if (folder?.status !== UploadStatus.LOADED) {
         dispatch(
           ConversationsActions.uploadConversationsWithFoldersRecursive({
@@ -189,6 +193,9 @@ export const ConversationPublicationSidebarResources = ({
     [dispatch, publicationUrl],
   );
 
+  if (rootPublicationFolders.length === 0 && itemsToDisplay.length === 0) {
+    return null;
+  }
   return (
     <div className={classNames(!isOpen && 'hidden')}>
       {rootPublicationFolders.map((folder) => (

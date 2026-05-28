@@ -5,24 +5,25 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 
 import { useRouteHistory } from '@/src/hooks/useRouteHistory';
-import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPageType } from '@/src/utils/app/route';
 import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
-import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { AuthActions, SettingsActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   AuthSelectors,
+  ChatEventsSelectors,
   MarketplaceSelectors,
   SettingsSelectors,
   UISelectors,
 } from '@/src/store/selectors';
 import { SettingsState } from '@/src/store/settings/settings.types';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { NavigationWrapper } from '@/src/components/Navigation/NavigationWrapper';
 
@@ -49,6 +50,8 @@ export function Layout({
 
   const dispatch = useAppDispatch();
 
+  const isSubscribed = useAppSelector(ChatEventsSelectors.selectIsSubscribed);
+  const channelId = useAppSelector(ChatEventsSelectors.selectChannelId);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const shouldLogin = useAppSelector(AuthSelectors.selectIsShouldLogin);
   const authStatus = useAppSelector(AuthSelectors.selectStatus);
@@ -64,12 +67,9 @@ export function Layout({
   );
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
-  const screenState = useScreenState();
-
   const [loading, setLoading] = useState(isApplyingModel);
 
-  const showFloatingOverlay =
-    screenState <= ScreenState.MD && isAnyMenuOpen && !isIsolatedView;
+  const showFloatingOverlay = isAnyMenuOpen && !isIsolatedView;
 
   const handleCloseOverlay = useCallback(() => {
     dispatch(UIActions.closeAllPanels());
@@ -88,6 +88,12 @@ export function Layout({
       dispatch(UIActions.setPreviousRoute(previousRoute));
     }
   }, [dispatch, previousRoute]);
+
+  useEffect(() => {
+    dispatch(
+      UIActions.setLocale(router.locale ?? router.defaultLocale ?? 'en'),
+    );
+  }, [dispatch, router.defaultLocale, router.locale]);
   useEffect(() => {
     setLoading(isApplyingModel);
   }, [isApplyingModel]);
@@ -114,23 +120,40 @@ export function Layout({
   // ON LOAD --------------------------------------------
 
   useEffect(() => {
-    // Hack for ios 100vh issue
-    const handleSetProperVHPoints = () => {
-      document.documentElement.style.setProperty(
-        '--vh',
-        window.innerHeight * 0.01 + 'px',
-      );
+    const handleResize = () => {
       dispatch(UIActions.resize());
     };
-    handleSetProperVHPoints();
-    window.addEventListener('resize', handleSetProperVHPoints);
 
+    handleResize();
     dispatch(SettingsActions.initApp(getPageType(router.route)));
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, [dispatch, settings, router.route]);
 
   const handleOverlayAuth = async () => {
     signInInOverlay(`/api/auth/signin`, isSignInInSameWindow);
   };
+
+  useEffect(() => {
+    let unsubscribed = false;
+
+    const handleCloseTab = () => {
+      if (unsubscribed || !isSubscribed) return;
+      navigator.sendBeacon(
+        '/api/client-channels/unsubscribe',
+        JSON.stringify({ channelId }),
+      );
+      unsubscribed = true;
+    };
+    window.addEventListener('beforeunload', handleCloseTab);
+    window.addEventListener('pagehide', handleCloseTab);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleCloseTab);
+      window.removeEventListener('pagehide', handleCloseTab);
+    };
+  }, [channelId, isSubscribed]);
 
   return (
     <>
@@ -138,20 +161,19 @@ export function Layout({
       {shouldOverlayLogin ? (
         <div className="grid h-screen w-full place-items-center bg-auth-layer-0 text-sm text-primary">
           <DialNeutralButton
-            label={t('Login')}
+            label={t(ChatI18nKeys.Login)}
             onClick={handleOverlayAuth}
             disabled={authStatus === 'loading'}
           />
         </div>
       ) : (
         <main
-          // eslint-disable-next-line tailwindcss/enforces-shorthand
           className="h-screen w-screen flex-col bg-layer-1 text-sm text-primary"
           id="theme-main"
         >
           {showFloatingOverlay && (
             <FloatingOverlay
-              className="z-30 bg-blackout"
+              className="z-40 bg-blackout sidebar-overlay:hidden"
               onClick={handleCloseOverlay}
             />
           )}

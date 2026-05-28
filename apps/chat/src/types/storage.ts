@@ -1,6 +1,7 @@
 import { Observable } from 'rxjs';
 
 import { Conversation } from '@/src/types/chat';
+import { AgentUsageStats } from '@/src/types/models';
 
 import { ApiDetailedApplicationTypeSchema } from './application-type-schema';
 import {
@@ -39,6 +40,7 @@ export enum UIStorageKeys {
   ShowMarketplaceFilterbar = 'showMarketplaceFilterbar',
   ChatbarWidth = 'chatbarWidth',
   PromptbarWidth = 'promptbarWidth',
+  MarketplaceFilterbarWidth = 'marketplaceFilterbarWidth',
   IsChatFullWidth = 'isChatFullWidth',
   OpenedFoldersIds = 'openedFoldersIds',
   OpenedConversationFoldersIds = 'openedConversationFoldersIds',
@@ -52,6 +54,9 @@ export enum UIStorageKeys {
   SelectedWidget = 'selectedWidget',
   DefaultModelReference = 'defaultModelReference',
   EnterType = 'enterType',
+  AgentsFilterPanelCollapseState = 'agentsFilterPanelCollapseState',
+  ToolsetFilterPanelCollapseState = 'toolsetFilterPanelCollapseState',
+  FileSizeCache = 'dialFilesSizeCache',
 }
 
 export enum MigrationStorageKeys {
@@ -211,6 +216,8 @@ export interface DialStorage {
   getApplicationLogs(path: string): Observable<ApplicationLogsType>;
 
   getApplicationConfig(name: string): Observable<MessageFormSchema>;
+
+  getAgentLimits(id: string): Observable<AgentUsageStats>;
 
   // Toolsets methods
   getToolsetById(id: string): Observable<ToolsetModel | null>;

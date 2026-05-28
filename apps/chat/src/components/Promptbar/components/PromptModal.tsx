@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -16,6 +16,8 @@ import { Translation } from '@/src/types/translation';
 import { PromptsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/selectors';
+
+import { PromptBarI18nKeys } from '@/src/constants/i18n';
 
 import { Modal } from '@/src/components/Common/Modal';
 import { NotFoundEntity } from '@/src/components/Common/NotFoundEntity';
@@ -41,6 +43,9 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
 }) => {
   const isNewPromptCreating = useAppSelector(
     PromptsSelectors.selectIsNewPromptCreating,
+  );
+  const { isQuickAppEditPrompt } = useAppSelector(
+    PromptsSelectors.selectSelectedPromptId,
   );
 
   const dispatch = useAppDispatch();
@@ -69,9 +74,19 @@ const PromptModalContent: React.FC<PromptModalViewProps> = ({
         }
       }
 
+      if (isQuickAppEditPrompt) {
+        dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
+      }
+
       onToggleEditMode(true);
     },
-    [dispatch, isNewPromptCreating, onToggleEditMode, prompt],
+    [
+      dispatch,
+      isNewPromptCreating,
+      onToggleEditMode,
+      prompt,
+      isQuickAppEditPrompt,
+    ],
   );
 
   const handleGoToEditMode = useCallback(() => {
@@ -105,10 +120,10 @@ const PromptModalView = () => {
   );
 
   const promptModalTitle = isViewMode
-    ? 'View prompt'
+    ? PromptBarI18nKeys.ViewPrompt
     : isNewPromptCreating
-      ? 'Create prompt'
-      : 'Edit prompt';
+      ? PromptBarI18nKeys.CreatePrompt
+      : PromptBarI18nKeys.EditPrompt;
 
   const dispatch = useAppDispatch();
 
@@ -123,7 +138,7 @@ const PromptModalView = () => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="flex flex-col gap-4 w-full py-4 md:py-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="flex flex-col gap-4 w-full py-4 md:py-6 xl:max-w-[720px] 2xl:max-w-[1000px]"
       dataQa={
         prompt?.content === '' || !isViewMode
           ? 'prompt-modal'

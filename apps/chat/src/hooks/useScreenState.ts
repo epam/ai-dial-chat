@@ -1,18 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { getScreenState } from '@/src/utils/app/mobile';
+
+import { useWindowResizeEvent } from './useWindowResizeEvent';
 
 export const useScreenState = () => {
   const [screenState, setScreenState] = useState(getScreenState());
 
-  useEffect(() => {
-    const handleResize = () => setScreenState(getScreenState());
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    resizeObserver.observe(document.body);
-
-    return () => resizeObserver.disconnect();
-  }, []);
+  const handleResize = useCallback(() => setScreenState(getScreenState()), []);
+  useWindowResizeEvent(handleResize);
 
   return screenState;
 };

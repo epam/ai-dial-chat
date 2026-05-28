@@ -1,4 +1,4 @@
-import {
+import React, {
   FC,
   ReactNode,
   forwardRef,
@@ -80,6 +80,7 @@ interface SliderProps<T, P> {
   sliderDotsClassName?: string;
   activeSlide: number;
   prevActiveSlide: number;
+  footerButton?: ReactNode;
   onSetActiveSlide: (slide: number) => void;
   onSetPrevActiveSlide: (slide: number) => void;
 }
@@ -102,6 +103,7 @@ const SliderGridInner = <T extends { id: string }, P>(
     prevActiveSlide,
     onSetActiveSlide,
     onSetPrevActiveSlide,
+    footerButton,
   }: SliderProps<T, P>,
   ref: React.Ref<SliderGridRef>,
 ) => {
@@ -230,7 +232,7 @@ const SliderGridInner = <T extends { id: string }, P>(
     <div ref={containerRef} className="flex min-h-0 flex-1 flex-col">
       <div
         ref={sliderRef}
-        className="flex w-full flex-1 items-center overflow-hidden"
+        className="flex w-full flex-1 items-center overflow-y-auto overflow-x-hidden"
         style={{
           minHeight: `${
             sliderRowsCount * (maxChunksCountConfig.cardHeight + gridGap) -
@@ -286,13 +288,21 @@ const SliderGridInner = <T extends { id: string }, P>(
           )}
         </div>
       </div>
-      <div ref={footerRef}>
+      <div
+        ref={footerRef}
+        className="flex flex-col items-center justify-center md:relative"
+      >
         <SliderDots
           activeSlide={activeSlide}
           slidesCount={sliderGroups.length}
           onSetActiveSlide={handleSetActiveSlide}
           className={sliderDotsClassName}
         />
+        {footerButton && (
+          <div className="mt-4 w-auto md:absolute md:right-[-8px]">
+            {footerButton}
+          </div>
+        )}
       </div>
     </div>
   );

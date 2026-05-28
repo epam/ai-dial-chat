@@ -51,6 +51,10 @@ export interface EntityPlusAttachmentRequest extends Entity {
   response: string;
 }
 
+export interface SttRequestEntity extends Entity {
+  response?: string;
+}
+
 export enum MarketplaceFilterTypes {
   type = 'Type',
   topics = 'Topics',
@@ -80,6 +84,7 @@ export enum ImportResolutionOption {
 export enum OAuthOptions {
   WithLogin = 'With login',
   WithLoginAndConfig = 'With login & config',
+  WithoutLogin = 'Without login',
 }
 
 export enum FileManagerToolbarTabs {
@@ -96,7 +101,7 @@ export enum FileManagerColumnKey {
   Owner = 'owner',
   Path = 'path',
   Actions = '__actions',
-  Select = '__select',
+  Select = 'ag-Grid-SelectionColumn',
 }
 
 export enum ModelTopic {

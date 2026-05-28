@@ -23,10 +23,11 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
+import { MarkdownI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import Download from '@/public/images/icons/download.svg';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   language: string;
@@ -59,7 +60,10 @@ export const CodeBlock: FC<Props> = memo(
       const suggestedFileName =
         languageFilenameMapping[displayLanguage] ??
         `ai-chat-code-${getDownLoadCurrentDate()}${fileExtension}`;
-      const fileName = window.prompt(t('Enter file name'), suggestedFileName);
+      const fileName = window.prompt(
+        t(MarkdownI18nKeys.EnterFileName),
+        suggestedFileName,
+      );
 
       if (!fileName) {
         // User pressed cancel on prompt
@@ -92,37 +96,50 @@ export const CodeBlock: FC<Props> = memo(
               ? 'border-primary bg-layer-3'
               : 'border-secondary bg-layer-1',
           )}
+          data-qa="code-title-container"
         >
           <span>{lowercaseLanguage}</span>
 
           {!isLastMessageStreaming && (
             <div
               data-no-context-menu
-              className="flex items-center gap-3 text-secondary"
+              className="flex items-center gap-2 text-secondary"
             >
-              <DialButton
-                className="flex items-center [&:not(:disabled)]:hover:text-accent-primary"
+              <DialGhostIconButton
+                tooltipProps={{
+                  isTriggerClickable: !isCopied,
+                  tooltip: isCopied
+                    ? t(MarkdownI18nKeys.Copied)
+                    : t(MarkdownI18nKeys.Copy),
+                }}
+                size={ElementSize.Small}
                 onClick={copyToClipboard}
                 disabled={isCopied}
-                iconBefore={
+                aria-label="Copy-code"
+                icon={
                   isCopied ? (
-                    <Tooltip tooltip={t('Copied!')}>
-                      <IconCheck size={18} />
-                    </Tooltip>
+                    <IconCheck size={DEFAULT_ICON_SIZES.SMALL} />
                   ) : (
-                    <Tooltip isTriggerClickable tooltip={t('Copy code')}>
-                      <IconCopy size={18} />
-                    </Tooltip>
+                    <IconCopy size={DEFAULT_ICON_SIZES.SMALL} />
                   )
                 }
               />
-              <Tooltip isTriggerClickable tooltip={t('Download')}>
-                <DialButton
-                  className="flex items-center rounded bg-none hover:text-accent-primary"
-                  onClick={downloadAsFile}
-                  iconBefore={<Download width={18} height={18} />}
-                />
-              </Tooltip>
+              <DialGhostIconButton
+                size={ElementSize.Small}
+                tooltipProps={{
+                  isTriggerClickable: true,
+                  tooltip: t(MarkdownI18nKeys.Download),
+                }}
+                className="flex items-center rounded bg-none hover:text-accent-primary"
+                onClick={downloadAsFile}
+                icon={
+                  <Download
+                    width={DEFAULT_ICON_SIZES.SMALL}
+                    height={DEFAULT_ICON_SIZES.SMALL}
+                  />
+                }
+                aria-label="Download"
+              />
             </div>
           )}
         </div>

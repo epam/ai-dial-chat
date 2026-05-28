@@ -11,6 +11,7 @@ import { ChatActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ChatSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { DateRenderer } from './DateRenderer';
@@ -42,7 +43,7 @@ function InfoRow({ dataQa, infoLabel, children }: infoRowProps) {
   );
 }
 
-export function InfoModalView() {
+function InfoModalView() {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
@@ -60,26 +61,26 @@ export function InfoModalView() {
       dataQa="info-modal"
       containerClassName="inline-block w-full min-w-[90%] px-3 py-4 md:p-6 md:min-w-[300px] md:max-w-[400px]"
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
-      heading={t('Information')}
+      heading={t(ChatI18nKeys.Information)}
       headingClassName="mb-4"
       loaderClassName="min-h-[80px]"
     >
       <div className="flex flex-col justify-between gap-4">
         {!entityInfo?.isPublic && entityInfo?.updatedAt && (
-          <InfoRow infoLabel={t('Last updated')} dataQa="updated-at">
+          <InfoRow infoLabel={t(ChatI18nKeys.LastUpdated)} dataQa="updated-at">
             <DateRenderer dateValue={entityInfo.updatedAt} />
           </InfoRow>
         )}
 
         {entityInfo?.createdAt && (
-          <InfoRow infoLabel={t('Creation date')} dataQa="created-at">
+          <InfoRow infoLabel={t(ChatI18nKeys.CreationDate)} dataQa="created-at">
             <DateRenderer dateValue={entityInfo.createdAt} />
           </InfoRow>
         )}
 
         {entityInfo && isEntityIdExternal({ id: entityInfo.id }) && (
-          <InfoRow infoLabel={t('Author')} dataQa="author">
-            {entityInfo.author ?? t('Unknown')}
+          <InfoRow infoLabel={t(ChatI18nKeys.Author)} dataQa="author">
+            {entityInfo.author ?? t(ChatI18nKeys.Unknown)}
           </InfoRow>
         )}
       </div>

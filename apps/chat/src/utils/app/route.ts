@@ -4,11 +4,12 @@ import { PageType } from '@/src/types/common';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 
 import { AppsEditorQuery } from '@/src/constants/applications';
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import {
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
-import { Routes } from '@/src/constants/routes';
+import { QUERY_VALUE_TRUE, Routes } from '@/src/constants/routes';
 
 import { cleanSchemaId } from './application-type-schema';
 
@@ -31,20 +32,29 @@ export const getPageName = ({ route, query }: BaseRouter) => {
   switch (route) {
     case Routes.Marketplace:
       return query[MarketplaceQueryParams.tab] === MarketplaceTabs.MY_WORKSPACE
-        ? 'My Workspace'
-        : 'Marketplace';
+        ? CommonI18nKeys.PageMyWorkspace
+        : CommonI18nKeys.PageMarketplace;
     case Routes.AppsEditor:
-      return 'App Editor';
+      return CommonI18nKeys.PageAppEditor;
+    case Routes.ToolsetEditor:
+      return CommonI18nKeys.PageToolsetEditor;
+    case Routes.ToolsetSignIn:
+      return CommonI18nKeys.PageToolsetSignIn;
+    case Routes.FileManager:
+      return CommonI18nKeys.PageFiles;
     case Routes.Widgets:
-      return 'Widgets';
+      return CommonI18nKeys.PageWidgets;
     case Routes.SelectedWidget:
-      return 'Selected Widget';
+      return CommonI18nKeys.PageSelectedWidget;
     case Routes.NotFound:
-      return 'Not Found';
+      return CommonI18nKeys.PageNotFoundTitle;
     default:
       return '';
   }
 };
+
+export const isTruthyQuery = (value?: string | string[]) =>
+  value?.toString() === QUERY_VALUE_TRUE;
 
 export const getAppEditorCreateModeRoute = (type: string) => ({
   pathname: Routes.AppsEditor,
@@ -53,6 +63,6 @@ export const getAppEditorCreateModeRoute = (type: string) => ({
     [AppsEditorQuery.Schema]: cleanSchemaId(type),
     [AppsEditorQuery.ReturnUrl]:
       window.location.pathname + window.location.search,
-    [AppsEditorQuery.IsCreating]: '1',
+    [AppsEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
   },
 });

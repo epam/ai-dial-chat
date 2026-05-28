@@ -25,8 +25,10 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { MenuItem } from '@/src/components/Common/DropdownMenu';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { OverlayMessageCustomButton } from './ChatMessageContent/OverlayMessageCustomButtons';
 import { MessageLikes } from './MessageLikes';
@@ -39,8 +41,8 @@ import {
 } from '@epam/ai-dial-shared';
 import {
   ButtonAppearance,
-  ButtonSize,
   DialPrimaryIconButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
 interface MessageUserButtonsProps {
@@ -78,7 +80,7 @@ export const MessageUserButtons = ({
   return (
     <div
       className={classNames(
-        'flex h-[18px] w-full select-none items-center justify-end gap-2',
+        'flex h-[24px] w-full select-none items-center justify-end gap-2',
         isOverlay ? 'mt-3' : 'mt-4',
       )}
     >
@@ -93,39 +95,45 @@ export const MessageUserButtons = ({
             />
           ))}
           {isEditTemplatesAvailable && !isConversationsWithSchema && (
-            <Tooltip
-              placement="top"
-              isTriggerClickable
-              tooltip={t('Set message template')}
-            >
-              <DialPrimaryIconButton
-                appearance={ButtonAppearance.Ghost}
-                size={ButtonSize.Small}
-                onClick={onToggleTemplatesEditing}
-                icon={<IconListDetails size={16} stroke={1.5} />}
-              />
-            </Tooltip>
+            <DialPrimaryIconButton
+              appearance={ButtonAppearance.Ghost}
+              size={ElementSize.Small}
+              onClick={onToggleTemplatesEditing}
+              tooltipProps={{
+                placement: 'top',
+                isTriggerClickable: true,
+                tooltip: t(ChatI18nKeys.SetMessageTemplate),
+              }}
+              icon={
+                <IconListDetails size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+              }
+            />
           )}
           {isEditAvailable && (
-            <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
-              <DialPrimaryIconButton
-                appearance={ButtonAppearance.Ghost}
-                size={ButtonSize.Small}
-                onClick={onToggleEditing}
-                icon={<IconEdit size={16} stroke={1.5} />}
-              />
-            </Tooltip>
+            <DialPrimaryIconButton
+              appearance={ButtonAppearance.Ghost}
+              size={ElementSize.Small}
+              onClick={onToggleEditing}
+              tooltipProps={{
+                placement: 'top',
+                isTriggerClickable: true,
+                tooltip: t(ChatI18nKeys.Edit),
+              }}
+              icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+            />
           )}
           {onDelete && (
-            <Tooltip placement="top" isTriggerClickable tooltip={t('Delete')}>
-              {/* TODO change to the DialRemoveButton when will be fixed on AI DIAL UI KIT */}
-              <DialPrimaryIconButton
-                appearance={ButtonAppearance.Ghost}
-                size={ButtonSize.Small}
-                onClick={onDelete}
-                icon={<IconTrashX size={16} stroke={1.5} />}
-              />
-            </Tooltip>
+            <DialPrimaryIconButton
+              tooltipProps={{
+                placement: 'top',
+                isTriggerClickable: true,
+                tooltip: t(ChatI18nKeys.Delete),
+              }}
+              appearance={ButtonAppearance.Ghost}
+              size={ElementSize.Small}
+              onClick={onDelete}
+              icon={<IconTrashX size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+            />
           )}
         </>
       )}
@@ -145,39 +153,38 @@ const CopyButton = ({
   keyPostfix = '',
   content,
   convertFromMarkdown = false,
-  copyLabel = 'Copy',
-  copiedLabel = 'Copied',
+  copyLabel = ChatI18nKeys.Copy as string,
+  copiedLabel = ChatI18nKeys.Copied as string,
   Icon = IconCopy,
 }: CopyButtonProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const { copied, onCopy } = useCopy(content, convertFromMarkdown);
-  if (copied) {
-    return (
-      <Tooltip
-        key={`copied${keyPostfix}`}
-        placement="top"
-        tooltip={t(copiedLabel)}
-      >
-        <IconCheck size={18} className="text-secondary" />
-      </Tooltip>
-    );
-  }
 
   return (
-    <Tooltip
-      key={`copy${keyPostfix}`}
-      placement="top"
-      isTriggerClickable
-      tooltip={t(copyLabel)}
-    >
-      <DialPrimaryIconButton
-        appearance={ButtonAppearance.Ghost}
-        size={ButtonSize.Small}
-        onClick={onCopy}
-        icon={<Icon size={18} stroke={1.5} />}
-      />
-    </Tooltip>
+    <DialPrimaryIconButton
+      appearance={ButtonAppearance.Ghost}
+      key={`${copied ? 'copied' : 'copy'}${keyPostfix}`}
+      size={ElementSize.Small}
+      onClick={onCopy}
+      disabled={copied}
+      tooltipProps={{
+        placement: 'top',
+        isTriggerClickable: true,
+        tooltip: t(copied ? copiedLabel : copyLabel),
+      }}
+      icon={
+        copied ? (
+          <IconCheck
+            size={DEFAULT_ICON_SIZES.SMALL}
+            className="text-secondary"
+          />
+        ) : (
+          <Icon size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+        )
+      }
+      aria-label={copyLabel}
+    />
   );
 };
 
@@ -226,42 +233,48 @@ export const MessageAssistantButtons = ({
         />
       ))}
       {onRegenerate && (
-        <Tooltip placement="top" isTriggerClickable tooltip={t('Regenerate')}>
-          <DialPrimaryIconButton
-            appearance={ButtonAppearance.Ghost}
-            size={ButtonSize.Small}
-            onClick={onRegenerate}
-            icon={<IconRefresh size={16} stroke={1.5} />}
-            data-qa="regenerate"
-          />
-        </Tooltip>
+        <DialPrimaryIconButton
+          tooltipProps={{
+            placement: 'top',
+            isTriggerClickable: true,
+            tooltip: t(ChatI18nKeys.Regenerate),
+          }}
+          appearance={ButtonAppearance.Ghost}
+          size={ElementSize.Small}
+          onClick={onRegenerate}
+          icon={<IconRefresh size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+          data-qa="regenerate"
+        />
       )}
       {hasMessageContent && (
         <>
           <CopyButton
             content={message.content}
-            copyLabel="Copy text"
-            copiedLabel="Text copied"
+            copyLabel={ChatI18nKeys.CopyText}
+            copiedLabel={ChatI18nKeys.TextCopied}
             convertFromMarkdown
           />
           <CopyButton
             content={message.content}
-            copyLabel="Copy markdown"
-            copiedLabel="Markdown copied"
+            copyLabel={ChatI18nKeys.CopyMarkdown}
+            copiedLabel={ChatI18nKeys.MarkdownCopied}
             Icon={IconMarkdown}
           />
         </>
       )}
       {onToggleEditing && (
-        <Tooltip placement="top" isTriggerClickable tooltip={t('Edit')}>
-          <DialPrimaryIconButton
-            appearance={ButtonAppearance.Ghost}
-            size={ButtonSize.Small}
-            onClick={onToggleEditing}
-            data-qa="edit"
-            icon={<IconEdit size={16} stroke={1.5} />}
-          />
-        </Tooltip>
+        <DialPrimaryIconButton
+          tooltipProps={{
+            placement: 'top',
+            isTriggerClickable: true,
+            tooltip: t(ChatI18nKeys.Edit),
+          }}
+          appearance={ButtonAppearance.Ghost}
+          size={ElementSize.Small}
+          onClick={onToggleEditing}
+          data-qa="edit"
+          icon={<IconEdit size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+        />
       )}
       {isLikesEnabled &&
         onLike &&
@@ -278,8 +291,8 @@ const MobileCopyButton = ({
   keyPostfix = '',
   content,
   convertFromMarkdown = false,
-  copyLabel = 'Copy',
-  copiedLabel = 'Copied',
+  copyLabel = ChatI18nKeys.Copy as string,
+  copiedLabel = ChatI18nKeys.Copied as string,
   Icon = IconCopy,
 }: CopyButtonProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -392,14 +405,14 @@ export const MessageMobileButtons = ({
             <>
               <MobileCopyButton
                 content={message.content}
-                copyLabel="Copy text"
-                copiedLabel="Copied text"
+                copyLabel={ChatI18nKeys.CopyText}
+                copiedLabel={ChatI18nKeys.CopiedText}
                 convertFromMarkdown
               />
               <MobileCopyButton
                 content={message.content}
-                copyLabel="Copy markdown"
-                copiedLabel="Copied markdown"
+                copyLabel={ChatI18nKeys.CopyMarkdown}
+                copiedLabel={ChatI18nKeys.CopiedMarkdown}
                 Icon={IconMarkdown}
               />
             </>
@@ -412,7 +425,7 @@ export const MessageMobileButtons = ({
                 item={
                   <div className="flex items-center gap-3">
                     <IconEdit className="text-secondary" size={18} />
-                    {t('Edit')}
+                    {t(ChatI18nKeys.Edit)}
                   </div>
                 }
                 data-qa="edit"
@@ -424,7 +437,7 @@ export const MessageMobileButtons = ({
               item={
                 <div className="flex items-center gap-3">
                   <IconRefresh className="text-secondary" size={18} />
-                  {t('Regenerate')}
+                  {t(ChatI18nKeys.Regenerate)}
                 </div>
               }
               data-qa="regenerate"
@@ -475,7 +488,9 @@ export const MessageMobileButtons = ({
                   height={18}
                   width={18}
                 />
-                <p className="whitespace-nowrap">{t('Set template')}</p>
+                <p className="whitespace-nowrap">
+                  {t(ChatI18nKeys.SetTemplate)}
+                </p>
               </div>
             }
           />
@@ -487,7 +502,7 @@ export const MessageMobileButtons = ({
             item={
               <div className="flex items-center gap-3">
                 <IconEdit className="text-secondary" size={18} />
-                <p>{t('Edit')}</p>
+                <p>{t(ChatI18nKeys.Edit)}</p>
               </div>
             }
           />
@@ -499,7 +514,7 @@ export const MessageMobileButtons = ({
             item={
               <div className="flex items-center gap-3">
                 <IconTrashX className="text-secondary" size={18} />
-                <p>{t('Delete')}</p>
+                <p>{t(ChatI18nKeys.Delete)}</p>
               </div>
             }
           />

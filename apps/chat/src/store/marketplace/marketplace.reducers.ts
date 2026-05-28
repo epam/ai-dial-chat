@@ -43,6 +43,7 @@ const initialState: MarketplaceState = {
   deleteEntity: undefined,
   detailsEntity: undefined,
   loginEntity: undefined,
+  connectLinkEntity: undefined,
 };
 
 export const marketplaceSlice = createSlice({
@@ -168,12 +169,22 @@ export const marketplaceSlice = createSlice({
     },
     setLoginEntity: (
       state,
-      { payload }: PayloadAction<ToolsetModel | undefined>,
+      {
+        payload,
+      }: PayloadAction<
+        { toolset: ToolsetModel; disableAdminView?: boolean } | undefined
+      >,
     ) => {
       state.loginEntity = payload;
     },
     setShowLoader: (state, { payload }: PayloadAction<boolean>) => {
       state.showLoader = payload;
+    },
+    setConnectLinkEntity: (
+      state,
+      { payload }: PayloadAction<MarketplaceEntity | undefined>,
+    ) => {
+      state.connectLinkEntity = payload;
     },
   },
 });

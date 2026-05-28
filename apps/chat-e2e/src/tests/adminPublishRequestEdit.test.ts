@@ -149,7 +149,6 @@ dialAdminTest(
               adminModelInfoTooltip.versionInfo,
               'hidden',
             );
-        // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.chatAgent.click({ force: true });
         await baseAssertion.assertElementState(
           adminTalkToAgentDialog,
@@ -174,7 +173,6 @@ dialAdminTest(
         await adminTooltipAssertion.assertTooltipContains(
           ExpectedConstants.settingsTooltipWithoutChanges(agent.type),
         );
-        // eslint-disable-next-line playwright/no-force-option
         await adminChatHeader.conversationSettings.click({ force: true });
         await baseAssertion.assertElementState(
           adminConversationSettings,
@@ -199,7 +197,7 @@ dialAdminTest(
         await adminChatHeaderDropdownMenu.selectMenuOption(MenuOptions.info, {
           triggeredHttpMethod: 'GET',
         });
-        await adminInformationModal.cancelButton.click();
+        await adminInformationModal.getCloseButton().click();
         await adminChatAssertion.assertAddAgentButtonState('hidden');
         await baseAssertion.assertElementState(
           adminPublicationReviewControl.backToPublicationRequestButton,
@@ -447,8 +445,7 @@ dialAdminTest(
       },
     );
 
-    //TODO: blocked by issue https://github.com/epam/ai-dial-chat/issues/5526
-    await dialAdminTest.step.skip(
+    await dialAdminTest.step(
       'Remove all messages, go back to publication request and verify Approve button is disabled',
       async () => {
         const messagesCount =
@@ -576,7 +573,11 @@ dialAdminTest(
     let conversation: Conversation;
     const requestName = GeneratorUtil.randomPublicationRequestName();
     const model = GeneratorUtil.randomArrayElement(
-      ModelsUtil.getLatestModelsWithAttachment(),
+      ModelsUtil.getLatestModelsWithAttachment().filter(
+        (m) =>
+          m.inputAttachmentTypes?.length == 1 &&
+          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+      ),
     );
     const newPrompt = 'what is on the picture?';
 
@@ -1348,7 +1349,7 @@ dialAdminTest(
           createdDate: currentDate,
           author: publicAuthorName,
         });
-        await informationModal.cancelButton.click();
+        await informationModal.getCloseButton().click();
       },
     );
   },
@@ -1567,7 +1568,7 @@ dialAdminTest(
   },
 );
 
-dialAdminTest.skip(
+dialAdminTest(
   "Edit folder's name for publish request for folder with chat\n" +
     '[Admin view][Edit request] Rename the folder several times in a row\n' +
     "Update folder's name for publish request for folder with chat with attached file. Input different names for chat's folder and file's folder",
@@ -1732,7 +1733,10 @@ dialAdminTest.skip(
           updatedFileFolderName,
           'visible',
         );
-        await fileManagerFoldersTree.expandFolders(...updatedFileFolderName);
+        await fileManagerFoldersTree.expandFolders(
+          { isFilesListingTriggered: true },
+          updatedFileFolderName,
+        );
         await fileManagerGridAssertion.assertGridRowByNameState(
           imageName,
           'visible',

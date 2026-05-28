@@ -1,4 +1,5 @@
 import { IconArrowNarrowDown, IconArrowNarrowUp } from '@tabler/icons-react';
+import React from 'react';
 
 import classNames from 'classnames';
 
@@ -9,6 +10,7 @@ import { fakeCallback } from '@/src/utils/app/common';
 import { SortOrder } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { TableColumnSortKeys } from '@/src/constants/marketplace';
 
 import { DialButton } from '@epam/ai-dial-ui-kit';
@@ -37,7 +39,7 @@ export const HeaderItem: React.FC<Props> = ({
     <DialButton
       onClick={() => (!sortKey ? fakeCallback() : onApplySorting(sortKey))}
       className={classNames(
-        'group flex items-center',
+        'group flex items-center px-2.5',
         !size && 'w-full min-w-full',
         !sortKey && 'cursor-default',
       )}
@@ -51,7 +53,7 @@ export const HeaderItem: React.FC<Props> = ({
                 ? 'text-primary'
                 : 'invisible text-secondary group-hover:visible'
             }
-            size={16}
+            size={DEFAULT_ICON_SIZES.SMALL}
           />
         )
       }

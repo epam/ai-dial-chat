@@ -32,7 +32,7 @@ export const ChatDropArea = ({
     ConversationsSelectors.selectTalkToConversationId,
   );
 
-  const handleUploadFiles = useChatUploadFiles();
+  const handleUploadFiles = useChatUploadFiles({ preUploadFiles: true });
 
   const areModelsInstalled = selectedConversations.every((conv) =>
     installedModelIds.has(conv.model.id),
@@ -43,7 +43,7 @@ export const ChatDropArea = ({
 
   return (
     <FileDropArea
-      className="min-w-0 shrink grow basis-0 overflow-hidden"
+      className="min-h-0 min-w-0 flex-1"
       onDrop={handleUploadFiles}
       droppable={isDroppable}
       disabled={!!talkToConversationId || isSettingsModalOpen}

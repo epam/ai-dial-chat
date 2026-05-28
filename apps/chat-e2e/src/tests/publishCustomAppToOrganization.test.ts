@@ -24,8 +24,9 @@ dialAdminTest(
       customApplicationBuilder,
       applicationApiHelper,
       publishingRequestDialog,
-      selectFolderModal,
-      selectFolders,
+      selectFolderManagerModal,
+      selectFolderManagerModalGrid,
+      selectFolderManagerModalFoldersTree,
       publishingRequestDialogAssertion,
       fileApiHelper,
       adminDialHomePage,
@@ -48,8 +49,9 @@ dialAdminTest(
       adminConversations,
       adminConversationDropdownMenu,
       adminPublishingRequestDialog,
-      adminSelectFolderModal,
-      adminSelectFoldersAssertion,
+      adminSelectFolderManagerModal,
+      adminSelectFolderManagerModalFoldersTree,
+      adminSelectFolderManagerModalFoldersTreeAssertion,
     },
     testInfo,
   ) => {
@@ -70,7 +72,8 @@ dialAdminTest(
     let expectedPublishedIconUrl: string;
     let appElement: BaseElement;
     const defaultAuthor = UserUtil.getE2EUsername(testInfo.parallelIndex);
-    const filename = `${GeneratorUtil.randomString(7)}.svg`;
+    const filename = GeneratorUtil.randomFilename('svg');
+    let searchInput: BaseElement;
 
     let conversation: Conversation;
 
@@ -116,7 +119,8 @@ dialAdminTest(
         await adminLocalStorageManager.setShowSideBarPanels();
         await marketplacePage.openMyWorkspacePage();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        searchInput = marketplaceHeader.getSearch().inputField;
+        await searchInput.fillInInput(appName);
         appElement =
           await marketplaceEntitiesSection.findEntityElement(appEntity);
         await appElement.click();
@@ -133,14 +137,17 @@ dialAdminTest(
     );
 
     await dialTest.step(
-      'Click on "Change" link, create a new folder, rename it and select',
+      'Click on "Change" link, create a new folder and select',
       async () => {
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFolderModal.newFolderButton.click();
-        await selectFolders.renameEmptyFolderWithEnter(orgFolder);
-        await selectFolderModal.clickSelectFolderButton({
+        await selectFolderManagerModal.getAddFolderButton().click();
+        await selectFolderManagerModalGrid.setFolderName(orgFolder, false);
+        await selectFolderManagerModalFoldersTree
+          .folderByPath(orgFolder)
+          .click();
+        await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
         await publishingRequestDialogAssertion.assertElementText(
@@ -182,7 +189,7 @@ dialAdminTest(
           'visible',
         );
         await adminPublishingApprovalModalAssertion.assertGeneralInfo({
-          publishTo: publicationPath,
+          publishPath: publicationPath,
           author: defaultAuthor,
           publicAuthor: defaultAuthor,
         });
@@ -220,7 +227,7 @@ dialAdminTest(
           updateInstalledToolsets: false,
         });
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appEntity.name);
+        await searchInput.fillInInput(appEntity.name);
         appElement = await marketplaceEntitiesSection.findEntityElement(
           appEntity,
           { isWorkspaceEntity: false, isEditable: false },
@@ -275,12 +282,14 @@ dialAdminTest(
         await adminPublishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await adminSelectFoldersAssertion.assertFolderState(
-          { name: orgFolder },
+        await adminSelectFolderManagerModalFoldersTreeAssertion.assertFolderState(
           'visible',
+          orgFolder,
         );
-        await adminSelectFolderModal.selectFolder(orgFolder);
-        await adminSelectFolderModal.clickSelectFolderButton({
+        await adminSelectFolderManagerModalFoldersTree
+          .folderByPath(orgFolder)
+          .click();
+        await adminSelectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
         await adminPublishingRequestDialog.requestName.fillInInput(requestName);

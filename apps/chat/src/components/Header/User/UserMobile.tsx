@@ -1,4 +1,3 @@
-/*eslint-disable @next/next/no-img-element*/
 import { IconLogout, IconSettings } from '@tabler/icons-react';
 import { useSession } from 'next-auth/react';
 import { useCallback, useState } from 'react';
@@ -16,41 +15,30 @@ import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
+import { HeaderI18nKeys } from '@/src/constants/i18n';
+
 import { CloseSidebarButton } from '@/src/components/Buttons/CloseSidebarButton';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { FooterMessage } from '@/src/components/Common/FooterMessage';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { withRenderForScreen } from '@/src/components/Common/ScreenRender';
 
-import UserIcon from '@/public/images/icons/user.svg';
+import { UserIcon } from './UserIcon';
+
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
-import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const UserInfo = () => {
-  const { t } = useTranslation(Translation.Header);
-
   const { data: session } = useSession();
 
   return (
-    <div className="w-full border-b border-tertiary p-2 text-primary">
-      <div className="flex h-[42px] items-center">
-        {session?.user?.image ? (
-          <img
-            className="mx-2 rounded"
-            src={session?.user?.image}
-            width={18}
-            height={18}
-            alt={t('User avatar')}
-          />
-        ) : (
-          <UserIcon className="mx-2 text-secondary" width={18} height={18} />
-        )}
+    <div className="w-full border-b border-tertiary p-4 text-primary">
+      <div className="flex items-start gap-2">
+        <UserIcon className="mx-2" />
 
-        <DialEllipsisTooltip
-          contentClassName="grow"
-          text={<span data-qa="username">{session?.user?.name ?? ''}</span>}
-        />
+        <span className="self-center break-words" data-qa="username">
+          {session?.user?.name ?? ''}
+        </span>
       </div>
     </div>
   );
@@ -71,7 +59,7 @@ const UserSettings = () => {
       onClick={onClick}
     >
       <IconSettings className="text-secondary" size={18} />
-      <span>{t('Settings')}</span>
+      <span>{t(HeaderI18nKeys.Settings)}</span>
     </div>
   );
 };
@@ -96,14 +84,16 @@ const Logout = () => {
         }}
       >
         <IconLogout className="text-secondary" size={18} />
-        <span>{session ? t('Log out') : t('Login')}</span>
+        <span>
+          {session ? t(HeaderI18nKeys.LogOut) : t(HeaderI18nKeys.Login)}
+        </span>
       </div>
       <ConfirmDialog
         isOpen={isLogoutConfirmationOpened}
-        heading={t('Confirm logging out')}
-        description={t('Are you sure that you want to log out?')}
-        confirmLabel={t('Log out')}
-        cancelLabel={t('Cancel')}
+        heading={t(HeaderI18nKeys.ConfirmLogout)}
+        description={t(HeaderI18nKeys.ConfirmLogoutDescription)}
+        confirmLabel={t(HeaderI18nKeys.LogOut)}
+        cancelLabel={t(HeaderI18nKeys.Cancel)}
         onClose={(result) => {
           setIsLogoutConfirmationOpened(false);
           if (result) {
@@ -127,6 +117,7 @@ const UserMenu = () => {
 };
 
 const UserMobileView = Inversify.register('UserMobile', () => {
+  const { t } = useTranslation(Translation.Header);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
   const dispatch = useAppDispatch();
@@ -152,6 +143,9 @@ const UserMobileView = Inversify.register('UserMobile', () => {
       data-qa="profile-panel"
     >
       <CloseSidebarButton onClose={handleClose} isLeftSide={false} />
+      <div className="border-b border-tertiary p-4 text-[16px]/[24px] font-semibold">
+        {t(HeaderI18nKeys.UserProfile)}
+      </div>
       <UserInfo />
       <UserMenu />
       <div className="grow"></div>

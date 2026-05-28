@@ -9,6 +9,7 @@ import { DialLink } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS } from '@/src/constants/modal';
 
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
@@ -60,8 +61,8 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
       onClose={handleClose}
       dataQa="attach-link-dialog"
       overlayClassName="fixed inset-0"
-      containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[780px]"
-      heading={t('Attach link')}
+      containerClassName="inline-block w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[780px]"
+      heading={t(ChatI18nKeys.AttachLink)}
       dismissProps={OUTSIDE_PRESS}
     >
       <form onSubmit={submitWrapper(handleSubmit)}>
@@ -70,12 +71,12 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
             className="mb-1 flex text-xs text-secondary"
             htmlFor="addressNameInput"
           >
-            {t('Address')}
+            {t(ChatI18nKeys.Address)}
             <span className="ml-1 inline text-accent-primary">*</span>
           </label>
           <input
             title=""
-            placeholder={t('Paste link')}
+            placeholder={t(ChatI18nKeys.PasteLink)}
             type="url"
             className={getFieldClassnames<Inputs>('href', 'input', {
               errors,
@@ -98,11 +99,11 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
             className="mb-1 flex text-xs text-secondary"
             htmlFor="titleInput"
           >
-            {t('Title')}
+            {t(ChatI18nKeys.Title)}
           </label>
           <input
             title=""
-            placeholder={t('Write text')}
+            placeholder={t(ChatI18nKeys.WriteText)}
             type="text"
             className={getFieldClassnames<Inputs>('title', 'input', {
               errors,
@@ -114,7 +115,7 @@ export const AttachLinkDialog = ({ onClose }: Props) => {
         </div>
         <div className="flex justify-end">
           <DialPrimaryButton
-            label={t('Attach')}
+            label={t(ChatI18nKeys.Attach)}
             data-qa="attach"
             disabled={!isValid}
             type="submit"

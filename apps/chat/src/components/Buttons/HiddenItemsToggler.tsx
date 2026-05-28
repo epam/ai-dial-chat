@@ -1,15 +1,14 @@
 import { IconEye, IconEyeOff } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
-import classNames from 'classnames';
-
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
-import { Tooltip } from '@/src/components/Common/Tooltip';
+import { FilesI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 
 interface HiddenItemsTogglerProps {
   onClick: () => void;
@@ -29,23 +28,22 @@ export const HiddenItemsToggler = ({
   const [Icon, tooltip] = useMemo(
     () =>
       areItemsVisible
-        ? [IconEyeOff, 'Hide technical items']
-        : [IconEye, 'Show technical items'],
+        ? [IconEyeOff, FilesI18nKeys.HideTechnicalItems]
+        : [IconEye, FilesI18nKeys.ShowTechnicalItems],
     [areItemsVisible],
   );
 
   return (
-    <DialButton
+    <DialGhostIconButton
       onClick={onClick}
-      className={classNames(
-        'size-[34px] min-h-[34px] min-w-[34px] justify-center p-0 text-secondary hover:bg-accent-primary-alpha  hover:text-accent-primary',
-        className,
-      )}
       data-qa={dataQa}
-      iconBefore={
-        <Tooltip tooltip={t(tooltip)} isTriggerClickable>
-          <Icon height={24} width={24} />
-        </Tooltip>
+      tooltipProps={{ tooltip: t(tooltip), isTriggerClickable: true }}
+      className={className}
+      icon={
+        <Icon
+          height={DEFAULT_ICON_SIZES.STANDARD}
+          width={DEFAULT_ICON_SIZES.STANDARD}
+        />
       }
     />
   );

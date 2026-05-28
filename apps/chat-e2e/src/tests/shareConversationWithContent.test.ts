@@ -8,12 +8,11 @@ import {
   Attachment,
   ExpectedConstants,
   ExpectedMessages,
+  FileManagerToolbarTabs,
   FolderConversation,
   MenuOptions,
-  UploadMenuOptions,
 } from '@/src/testData';
 import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
-import { FileModalSection } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
@@ -29,10 +28,11 @@ dialTest.beforeAll(async () => {
   );
 });
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Share with me. Chats with different context.\n' +
     'Shared chat history is updated in Shared with me if to generate new picture.\n' +
-    'Publish chat with file, file is from "Shared with me" section',
+    'Publish chat with file, file is from "Shared with me" section.\n' +
+    'Error message appears if to Publish the conversation with an attachment from Shared with me',
   async ({
     conversationData,
     fileApiHelper,
@@ -52,7 +52,7 @@ dialSharedWithMeTest.skip(
     setTestIds,
     additionalShareUserLocalStorageManager,
   }) => {
-    setTestIds('EPMRTC-1933', 'EPMRTC-2896', 'EPMRTC-4705');
+    setTestIds('EPMRTC-1933', 'EPMRTC-2896', 'EPMRTC-4705', 'EPMRTC-4122');
     let responseImageConversation: Conversation;
     let requestImageConversation: Conversation;
     let stageConversation: Conversation;
@@ -330,7 +330,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Share with me. Folder with chats with different context',
   async ({
     conversationData,
@@ -557,45 +557,45 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Arrow icon appears for file in Manage attachments if it was shared along with chat. The files are located in root "All files" and in folder. The files are used in the prompt request.\n' +
     'Unshare image file. Arrow icon disappears after Unshare on the confirmation message\n' +
     'Unshared by the owner file disappears from "Shared with me". User1 shares two files, unshares one file.\n' +
     'Unshared by the owner file disappears from "Shared with me". User1 shares one file, unshares one file.',
   async ({
-    dialHomePage,
+    fileManagerPage,
+    fileManagerGridAssertion,
+    fileManagerFoldersTree,
+    fileManagerGrid,
+    fileManagerGridRowDropdownMenu,
     conversationData,
-    chatBar,
-    attachFilesModal,
-    attachedAllFiles,
+    fileManagerBreadcrumb,
     fileApiHelper,
     dataInjector,
     mainUserShareApiHelper,
     additionalUserShareApiHelper,
     shareApiAssertion,
-    confirmationDialog,
-    manageAttachmentsAssertion,
     setTestIds,
     additionalShareUserDataInjector,
     additionalShareUserDialHomePage,
-    additionalShareUserConversations,
-    additionalShareUserSendMessage,
-    additionalShareUserAttachmentDropdownMenu,
     additionalShareUserLocalStorageManager,
-    additionalShareUserAttachFilesModal,
-    additionalShareUserManageAttachmentsAssertion,
+    additionalShareUserFileManagerPage,
+    additionalShareUserFileManagerToolbar,
+    additionalShareUserFileManager,
+    additionalShareUserFileManagerGridAssertion,
     additionalShareUserSharedWithMeConversations,
     additionalShareUserChatMessages,
     localStorageManager,
+    confirmationDialog,
   }) => {
     dialSharedWithMeTest.slow();
     setTestIds('EPMRTC-3518', 'EPMRTC-3102', 'EPMRTC-3101', 'EPMRTC-5524');
+
     let imageConversation: Conversation;
     let firstImageUrl: string;
     let secondImageUrl: string;
     const firstFilePath = API.modelFilePath(defaultModel.id);
     const pathSegment = firstFilePath.split('/');
-    const lowestFileFolder = pathSegment[pathSegment.length - 1];
     let secondUserEmptyConversation: Conversation;
     const attachmentModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment(),
@@ -649,79 +649,60 @@ dialSharedWithMeTest.skip(
     );
 
     await dialSharedWithMeTest.step(
-      'Open "Manage attachments" modal and verify shared files have arrow icons',
+      'Open "File manager" page and verify shared files have arrow icons',
       async () => {
-        await localStorageManager.setShowSideBarPanels();
-        await dialHomePage.openHomePage();
-        await dialHomePage.waitForPageLoaded();
-        await chatBar.openManageAttachmentsModal();
         const expectedArrowColor = ThemesUtil.getRgbColorByKey(
           ThemeColorAttributes.textAccentPrimary,
         );
-
-        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-          { name: Attachment.sunImageName },
-          'visible',
-        );
-        await manageAttachmentsAssertion.assertEntityArrowIconColor(
-          { name: Attachment.sunImageName },
-          expectedArrowColor,
-        );
-
-        for (const segment of pathSegment) {
-          await attachedAllFiles.expandFolder(segment, {
-            isHttpMethodTriggered: true,
-          });
+        await localStorageManager.setShowSideBarPanels();
+        await fileManagerPage.openFileManagerPage();
+        await fileManagerPage.waitForPageLoaded();
+        for (const file of [
+          Attachment.sunImageName,
+          Attachment.cloudImageName,
+        ]) {
+          if (file === Attachment.cloudImageName) {
+            await fileManagerFoldersTree.expandFolders(
+              { isFilesListingTriggered: true },
+              ...pathSegment,
+            );
+          }
+          await fileManagerGridAssertion.assertGridFileSharedState(
+            file,
+            'visible',
+          );
+          await fileManagerGridAssertion.assertGridFileSharedIconColor(
+            file,
+            expectedArrowColor,
+          );
         }
-        await attachFilesModal.closeButton.hoverOver();
-
-        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-          { name: Attachment.cloudImageName },
-          'visible',
-        );
-        await manageAttachmentsAssertion.assertEntityArrowIconColor(
-          { name: Attachment.cloudImageName },
-          expectedArrowColor,
-        );
       },
     );
 
     await dialSharedWithMeTest.step(
-      'User 2 open the attach modal and verifies that the file is visible',
+      'Select "Remove access" option for the first file and verify arrow icon disappears for file',
       async () => {
-        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
-        await additionalShareUserDialHomePage.openHomePage();
-        await additionalShareUserDialHomePage.waitForPageLoaded();
-        await additionalShareUserConversations.selectEntity(
-          secondUserEmptyConversation.name,
-        );
-        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
-
-        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.attachUploadedFiles,
-        );
-
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.cloudImageName },
-          FileModalSection.SharedWithMe,
-          'visible',
-        );
-      },
-    );
-
-    await dialSharedWithMeTest.step(
-      'Select "Unshare" option for the first file and verify arrow icon disappears for file',
-      async () => {
-        await attachedAllFiles.openFolderEntityDropdownMenu(
-          lowestFileFolder,
+        const rowLocator = await fileManagerGrid.goToGridRowByNameCell(
           Attachment.cloudImageName,
         );
-        await attachFilesModal
-          .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.removeAccess);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-          { name: Attachment.cloudImageName },
+        await rowLocator.hover();
+        const rowDotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.cloudImageName,
+        );
+        await rowLocator.hover();
+        +(await rowDotsMenu.click());
+        await fileManagerGridRowDropdownMenu.selectItem(
+          MenuOptions.removeAccess,
+          {
+            isHttpMethodTriggered: false,
+          },
+        );
+        await confirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+          triggeredHttpHost: API.revokeAccessHost,
+        });
+        await fileManagerGridAssertion.assertGridFileSharedState(
+          Attachment.cloudImageName,
           'hidden',
         );
       },
@@ -730,7 +711,9 @@ dialSharedWithMeTest.skip(
     await dialSharedWithMeTest.step(
       'User2 opens the file in the shared chat and verifies the picture is shown in requests',
       async () => {
-        await additionalShareUserAttachFilesModal.closeButton.click();
+        await additionalShareUserLocalStorageManager.setShowSideBarPanels();
+        await additionalShareUserDialHomePage.openHomePage();
+        await additionalShareUserDialHomePage.waitForPageLoaded();
         await additionalShareUserSharedWithMeConversations.selectEntity(
           imageConversation.name,
         );
@@ -749,23 +732,23 @@ dialSharedWithMeTest.skip(
     );
 
     await dialSharedWithMeTest.step(
-      'User 2 open the attach modal and verifies that the file is not visible',
+      'User 2 opens "File manager" and verifies that the file is not visible',
       async () => {
-        await additionalShareUserConversations.selectEntity(
-          secondUserEmptyConversation.name,
-        );
-        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
-
-        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.attachUploadedFiles,
-        );
-
-        await additionalShareUserManageAttachmentsAssertion.assertEntityState(
-          { name: Attachment.cloudImageName },
-          FileModalSection.SharedWithMe,
+        await additionalShareUserFileManagerPage.openFileManagerPage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: true,
+          getStyles: false,
+        });
+        await additionalShareUserFileManagerPage.waitForPageLoaded({
+          isGridVisible: false,
+        });
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerGridAssertion.assertGridRowByNameState(
+          Attachment.cloudImageName,
           'hidden',
         );
-        await additionalShareUserAttachFilesModal.closeButton.click();
       },
     );
 
@@ -796,35 +779,48 @@ dialSharedWithMeTest.skip(
     );
 
     await dialSharedWithMeTest.step(
-      'Select "Unshare" option for the second file and verify arrow icon disappears for file',
+      'Select "Remove access" option for the second file and verify arrow icon disappears for file',
       async () => {
-        await attachFilesModal.openFileDropdownMenu(
-          Attachment.sunImageName,
-          FileModalSection.AllFiles,
+        await fileManagerBreadcrumb.clickBreadcrumbByName(
+          FileManagerToolbarTabs.MyFiles,
         );
-        await attachFilesModal
-          .getFileDropdownMenu()
-          .selectMenuOption(MenuOptions.removeAccess);
-        await confirmationDialog.confirm({ triggeredHttpMethod: 'POST' });
-        await manageAttachmentsAssertion.assertSharedFileArrowIconState(
-          { name: Attachment.sunImageName },
+        const rowLocator = await fileManagerGrid.goToGridRowByNameCell(
+          Attachment.sunImageName,
+        );
+        await rowLocator.hover();
+        const rowDotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
+          Attachment.sunImageName,
+        );
+        await rowLocator.hover();
+        await rowDotsMenu.click();
+        await fileManagerGridRowDropdownMenu.selectItem(
+          MenuOptions.removeAccess,
+          {
+            isHttpMethodTriggered: false,
+          },
+        );
+        await confirmationDialog.confirm({
+          triggeredHttpMethod: 'POST',
+          triggeredHttpHost: API.revokeAccessHost,
+        });
+        await fileManagerGridAssertion.assertGridFileSharedState(
+          Attachment.sunImageName,
           'hidden',
         );
       },
     );
 
     await dialSharedWithMeTest.step(
-      'User 2 open the attach modal and verifies "Shared with me" section is not visible',
+      'User 2 opens the "File manager" and verifies "Shared with me" tab is empty',
       async () => {
-        await additionalShareUserSendMessage.attachmentMenuTrigger.click();
-        await additionalShareUserAttachmentDropdownMenu.selectMenuOption(
-          UploadMenuOptions.attachUploadedFiles,
-        );
-        await additionalShareUserManageAttachmentsAssertion.assertElementState(
-          additionalShareUserAttachFilesModal.getSectionElement(
-            FileModalSection.SharedWithMe,
-          ),
-          'hidden',
+        await additionalShareUserFileManagerPage.reloadPage();
+        await additionalShareUserFileManagerPage.waitForPageLoaded({
+          isGridVisible: false,
+        });
+        await additionalShareUserFileManagerToolbar.sharedWithMeTab.click();
+        await additionalShareUserFileManagerGridAssertion.assertElementState(
+          additionalShareUserFileManager.getNoDataContent(),
+          'visible',
         );
       },
     );
@@ -849,7 +845,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Sharing of a chat in Playback mode',
   async ({
     conversationData,
@@ -1045,7 +1041,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Sharing of a chat with plotly graph',
   async ({
     conversationData,
@@ -1123,7 +1119,7 @@ dialSharedWithMeTest.skip(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Sharing of a chat with attached link',
   async ({
     conversationData,
@@ -1175,7 +1171,7 @@ dialSharedWithMeTest.skip(
         for (let i = 1; i <= chatResponseIndex; i++) {
           await expect
             .soft(
-              additionalShareUserChatMessages.getAttachmentLinkIcon(i),
+              additionalShareUserChatMessages.getAttachmentLink(i),
               ExpectedMessages.attachmentLinkIsValid,
             )
             .toHaveAttribute(Attributes.href, attachmentLink);

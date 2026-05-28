@@ -1,33 +1,27 @@
-import { IconExternalLink, IconPlayerPlay } from '@tabler/icons-react';
-import { useEffect, useMemo } from 'react';
+import { IconExternalLink } from '@tabler/icons-react';
+import { useMemo } from 'react';
 
 import Link from 'next/link';
 
 import classNames from 'classnames';
 
 import { useAgentMenuItems } from '@/src/hooks/useAgentMenuItems';
+import { useApplicationDeployment } from '@/src/hooks/useApplicationDeployment';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import {
-  getApplicationSimpleStatus,
-  isExecutableApp,
-  isExternalApp,
-  isMarketplaceEntityPublic,
-} from '@/src/utils/app/application';
+import { isExternalApp } from '@/src/utils/app/application';
 
-import {
-  ApplicationStatus,
-  ExternalAppConfig,
-  SimpleApplicationStatus,
-} from '@/src/types/applications';
+import { ApplicationStatus, ExternalAppConfig } from '@/src/types/applications';
 import { ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions } from '@/src/store/actions';
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ApplicationSelectors, AuthSelectors } from '@/src/store/selectors';
+import { useAppSelector } from '@/src/store/hooks';
+import { ApplicationSelectors } from '@/src/store/selectors';
+
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ModelVersionSelect } from '@/src/components/Chat/ModelVersionSelect';
 import { IconButton } from '@/src/components/Common/IconButton';
@@ -42,6 +36,7 @@ const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
     case ApplicationStatus.UNDEPLOYING:
     case ApplicationStatus.DEPLOYING:
+    case ApplicationStatus.REDEPLOYING:
       return `Application is ${entity.functionStatus.toLowerCase()}`;
     case ApplicationStatus.DEPLOYED:
       return `Undeploy application to ${normal.toLowerCase()}`;
@@ -59,9 +54,6 @@ export const ApplicationDetailsFooter = ({
 }: ApplicationDetailsFooterProps) => {
   const { t } = useTranslation(Translation.Marketplace);
 
-  const dispatch = useAppDispatch();
-
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const isAppLoading = useAppSelector(
     ApplicationSelectors.selectIsApplicationLoading,
   );
@@ -70,9 +62,17 @@ export const ApplicationDetailsFooter = ({
   );
 
   const screenState = useScreenState();
-  const isScreenSmall = screenState === ScreenState.SM;
 
+  const isScreenSmall = screenState === ScreenState.SM;
   const showContextMenu = entity.reference !== entity.id && isScreenSmall;
+
+  const {
+    showAsUseButton,
+    isButtonDisabled,
+    buttonTooltip,
+    createButtonClickHandler,
+    DeployIcon,
+  } = useApplicationDeployment(entity);
 
   const agentMenuItemsParams = useMemo(
     () => ({
@@ -81,6 +81,7 @@ export const ApplicationDetailsFooter = ({
         copyLink: !isScreenSmall,
         share: !showContextMenu,
         unshare: !entity?.sharedWithMe,
+        deploy: ApplicationStatus.DEPLOYED !== entity.functionStatus,
       },
     }),
     [entity, isScreenSmall, showContextMenu],
@@ -92,14 +93,14 @@ export const ApplicationDetailsFooter = ({
     [menuItems],
   );
 
-  const isPublicApp = isMarketplaceEntityPublic(entity);
-  const playerStatus = getApplicationSimpleStatus(entity);
-
-  useEffect(() => {
-    if (isExternalApp(entity)) {
-      dispatch(ApplicationActions.get({ applicationId: entity.id }));
-    }
-  }, [dispatch, entity]);
+  const buttonLabel = showAsUseButton
+    ? isScreenSmall
+      ? t(MarketplaceI18nKeys.UseMarketplace)
+      : t(MarketplaceI18nKeys.UseModelType, {
+          ns: Translation.Marketplace,
+          modelType: entity.type,
+        })
+    : t(MarketplaceI18nKeys.DeployMarketplace);
 
   return (
     <section className="flex px-3 py-4 md:px-6">
@@ -109,7 +110,7 @@ export const ApplicationDetailsFooter = ({
             <button className="icon-button">
               <MarketplaceEntityContextMenu
                 className="xl:invisible group-hover:xl:visible"
-                triggerIconSize={24}
+                triggerIconSize={DEFAULT_ICON_SIZES.STANDARD}
                 entity={entity}
               />
             </button>
@@ -129,7 +130,7 @@ export const ApplicationDetailsFooter = ({
           {onBookmarkClick && (
             <MarketplaceEntityBookmark
               entity={entity}
-              size={24}
+              size={DEFAULT_ICON_SIZES.STANDARD}
               className="icon-button group/bookmark"
               onBookmarkClick={onBookmarkClick}
             />
@@ -144,34 +145,17 @@ export const ApplicationDetailsFooter = ({
             onSelect={onChangeVersion}
           />
           <Tooltip
-            hideTooltip={
-              !isExecutableApp(entity) ||
-              playerStatus === SimpleApplicationStatus.UNDEPLOY
-            }
+            hideTooltip={!buttonTooltip}
             triggerClassName="shrink-0"
-            tooltip={t(
-              isPublicApp && !isAdmin
-                ? 'Ask your administrator to deploy this application to be able to use it'
-                : 'Deploy the application to be able to use it',
-            )}
+            tooltip={buttonTooltip}
           >
             {!isExternalApp(entity) ? (
               <DialPrimaryButton
-                onClick={onUseEntity}
+                onClick={createButtonClickHandler(onUseEntity)}
                 data-qa="use-button"
-                disabled={
-                  isExecutableApp(entity) &&
-                  playerStatus !== SimpleApplicationStatus.UNDEPLOY
-                }
-                iconBefore={<IconPlayerPlay size={18} />}
-                label={
-                  isScreenSmall
-                    ? t('Use')
-                    : t('Use {{modelType}}', {
-                        ns: Translation.Marketplace,
-                        modelType: entity.type,
-                      })
-                }
+                disabled={isButtonDisabled}
+                iconBefore={<DeployIcon size={18} />}
+                label={buttonLabel}
               />
             ) : (
               <Link
@@ -187,8 +171,12 @@ export const ApplicationDetailsFooter = ({
                 data-qa="external-link"
               >
                 <IconExternalLink size={18} />
-                <span className="hidden md:block">{t('Open in New Tab')}</span>
-                <span className="block md:hidden">{t('Open')}</span>
+                <span className="hidden md:block">
+                  {t(MarketplaceI18nKeys.OpenInNewTab)}
+                </span>
+                <span className="block md:hidden">
+                  {t(MarketplaceI18nKeys.OpenMarketplace)}
+                </span>
               </Link>
             )}
           </Tooltip>

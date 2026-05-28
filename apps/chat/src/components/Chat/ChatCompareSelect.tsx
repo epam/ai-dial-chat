@@ -18,11 +18,14 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { Loader } from '@/src/components/Common/Loader';
 
 import { ConversationCompareItem } from './ConversationCompareItem';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
+import { DialSearch } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   conversations: ConversationInfo[];
@@ -141,14 +144,10 @@ export const ChatCompareSelect = ({
         <div className="px-6">
           <div className="flex flex-col gap-2">
             <h5 className="text-base font-semibold">
-              {t('Select conversation to compare with')}
+              {t(ChatI18nKeys.SelectConversationToCompareWith)}
             </h5>
             <span className="text-secondary">
-              (
-              {t(
-                'Only conversations containing the same number of messages can be compared.',
-              )}
-              )
+              ({t(ChatI18nKeys.OnlyConversationsWithSameMessages)})
             </span>
           </div>
           <div className="relative mt-4 flex items-center">
@@ -164,19 +163,18 @@ export const ChatCompareSelect = ({
               className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
             />
             <label htmlFor="showAllCheckbox">
-              {t('Show all conversations')}
+              {t(ChatI18nKeys.ShowAllConversations)}
             </label>
           </div>
         </div>
         <div className="overflow-auto px-6 pt-4">
           {comparableConversations.length ? (
             <>
-              <input
-                value={searchValue}
-                onChange={(e) => setSearchValue(e.target.value)}
-                placeholder={t('Search conversations')}
-                className="input-form peer"
+              <DialSearch
                 data-qa="search-compare-conversation"
+                placeholder={t(ChatI18nKeys.SearchConversations)}
+                value={searchValue}
+                onChange={setSearchValue}
               />
               <div className="mt-4">
                 {filteredComparableConversations.length ? (
@@ -192,7 +190,7 @@ export const ChatCompareSelect = ({
                   ))
                 ) : (
                   <p className="mt-4 text-secondary">
-                    {t('No conversations found')}
+                    {t(ChatI18nKeys.NoConversationsFound)}
                   </p>
                 )}
               </div>
@@ -202,7 +200,7 @@ export const ChatCompareSelect = ({
               className="mt-4 text-secondary"
               data-qa="no-conversations-available"
             >
-              {t('No conversations available')}
+              {t(ChatI18nKeys.NoConversationsAvailable)}
             </p>
           )}
         </div>

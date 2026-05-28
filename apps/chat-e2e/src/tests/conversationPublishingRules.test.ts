@@ -4,6 +4,7 @@ import {
   PublicationFunctions,
   PublicationRequestModel,
 } from '@/chat/types/publication';
+import { getFilterLabel } from '@/chat/utils/app/rules';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
@@ -69,8 +70,8 @@ dialAdminTest(
     conversations,
     conversationDropdownMenu,
     publishingRequestDialog,
-    selectFolderModal,
-    selectFolders,
+    selectFolderManagerModal,
+    selectFolderManagerModalFoldersTree,
     publishingRules,
     publishingFilter,
     publishingRulesAssertion,
@@ -104,8 +105,10 @@ dialAdminTest(
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFolders.selectFolder(organizationFolderName);
-        await selectFolderModal.clickSelectFolderButton({
+        await selectFolderManagerModalFoldersTree
+          .folderByPath(organizationFolderName)
+          .click();
+        await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
         await publishingRulesAssertion.assertLabels({
@@ -132,7 +135,7 @@ dialAdminTest(
           filterTargetState: 'visible',
           filterTargetValue: ExpectedConstants.publishingFilterDefaultValue,
           filterFunctionState: 'visible',
-          filterFunctionValue: ExpectedConstants.publishingFilterDefaultValue,
+          filterFunctionValue: PublicationFunctions.Contain,
           filterValues: [],
           saveButtonState: 'visible',
           cancelButtonState: 'visible',
@@ -148,20 +151,19 @@ dialAdminTest(
     await dialTest.step(
       'Set filter condition to: `Dial Roles` Contain `age`',
       async () => {
-        await publishingFilter.filterTarget.click();
         await publishingFilter
           .getFilterTargetDropdownMenu()
           .selectMenuOption(PublishingRulesFilterTarget.dialRoles);
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Contain);
+          .selectMenuOption(getFilterLabel(PublicationFunctions.Contain));
         await publishingFilter.setFilterValue(filterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Contain,
+          filterFunctionValue: getFilterLabel(PublicationFunctions.Contain),
           filterValues: [filterValue],
         });
         await publishingFilter.saveFilterButton.click();
@@ -323,8 +325,8 @@ dialAdminTest(
     conversations,
     conversationDropdownMenu,
     publishingRequestDialog,
-    selectFolderModal,
-    selectFolders,
+    selectFolderManagerModal,
+    selectFolderManagerModalFoldersTree,
     publishingRules,
     publishingFilter,
     publishingRulesAssertion,
@@ -359,26 +361,27 @@ dialAdminTest(
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFolders.selectFolder(organizationFolderName);
-        await selectFolderModal.clickSelectFolderButton({
+        await selectFolderManagerModalFoldersTree
+          .folderByPath(organizationFolderName)
+          .click();
+        await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
         await publishingRules.addRuleButton.click();
-        await publishingFilter.filterTarget.click();
         await publishingFilter
           .getFilterTargetDropdownMenu()
           .selectMenuOption(PublishingRulesFilterTarget.dialRoles);
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Contain);
+          .selectMenuOption(getFilterLabel(PublicationFunctions.Contain));
         await publishingFilter.setFilterValue(firstFilterValue);
         await publishingFilter.setFilterValue(secondFilterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Contain,
+          filterFunctionValue: getFilterLabel(PublicationFunctions.Contain),
           filterValues: [firstFilterValue, secondFilterValue],
         });
       },
@@ -490,8 +493,8 @@ dialAdminTest(
     conversations,
     conversationDropdownMenu,
     publishingRequestDialog,
-    selectFolderModal,
-    selectFolders,
+    selectFolderManagerModal,
+    selectFolderManagerModalFoldersTree,
     publishingRules,
     publishingFilter,
     publishingRulesAssertion,
@@ -530,8 +533,10 @@ dialAdminTest(
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFolders.selectFolder(organizationFolderName);
-        await selectFolderModal.clickSelectFolderButton({
+        await selectFolderManagerModalFoldersTree
+          .folderByPath(organizationFolderName)
+          .click();
+        await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
       },
@@ -542,14 +547,13 @@ dialAdminTest(
       async () => {
         for (const [target, value] of conditionsEntries) {
           await publishingRules.addRuleButton.click();
-          await publishingFilter.filterTarget.click();
           await publishingFilter
             .getFilterTargetDropdownMenu()
             .selectMenuOption(target);
           await publishingFilter.filterFunction.click();
           await publishingFilter
             .getFilterFunctionDropdownMenu()
-            .selectMenuOption(PublicationFunctions.Contain);
+            .selectMenuOption(getFilterLabel(PublicationFunctions.Contain));
           await publishingFilter.setFilterValue(value);
           await publishingFilter.saveFilterButton.click();
           await publishingRulesAssertion.assertRule(
@@ -798,20 +802,19 @@ dialAdminTest(
       'Set filter condition to: `Dial Roles` Equal `QA`',
       async () => {
         await publishingRules.addRuleButton.click();
-        await publishingFilter.filterTarget.click();
         await publishingFilter
           .getFilterTargetDropdownMenu()
           .selectMenuOption(PublishingRulesFilterTarget.dialRoles);
         await publishingFilter.filterFunction.click();
         await publishingFilter
           .getFilterFunctionDropdownMenu()
-          .selectMenuOption(PublicationFunctions.Equal);
+          .selectMenuOption(getFilterLabel(PublicationFunctions.Equal));
         await publishingFilter.setFilterValue(filterValue);
         await publishingRulesAssertion.assertFilterFields({
           filterTargetState: 'visible',
           filterTargetValue: PublishingRulesFilterTarget.dialRoles,
           filterFunctionState: 'visible',
-          filterFunctionValue: PublicationFunctions.Equal,
+          filterFunctionValue: getFilterLabel(PublicationFunctions.Equal),
           filterValues: [filterValue],
         });
         await publishingFilter.saveFilterButton.click();

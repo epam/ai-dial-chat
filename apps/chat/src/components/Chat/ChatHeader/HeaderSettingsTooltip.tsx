@@ -4,10 +4,13 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 interface Props {
   systemPrompt: string;
   temperature: number | null;
   disallowChangeSettings: boolean;
+  responseFormat?: string;
   hasSettings: boolean;
 }
 
@@ -24,6 +27,7 @@ export const HeaderSettingsTooltip = ({
   temperature,
   disallowChangeSettings,
   hasSettings,
+  responseFormat,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -40,20 +44,22 @@ export const HeaderSettingsTooltip = ({
       <div className="font-semibold">
         {t(
           disallowChangeSettings || !hasSettings
-            ? 'Conversation settings'
-            : 'Change conversation settings',
+            ? ChatI18nKeys.ConversationSettings
+            : ChatI18nKeys.ChangeConversationSettings,
         )}
         :
       </div>
       <div className="mt-3 grid max-w-full grid-cols-[auto,1fr] gap-x-4 gap-y-2">
-        {!systemPrompt && temperature === null && (
+        {!systemPrompt && temperature === null && !responseFormat && (
           <span className="text-secondary">
-            {t('There are no conversation settings for this agent ')}
+            {t(ChatI18nKeys.NoConversationSettings)}
           </span>
         )}
         {systemPrompt && (
           <>
-            <span className="text-secondary">{t('System prompt')}:</span>
+            <span className="text-secondary">
+              {t(ChatI18nKeys.SystemPrompt)}:
+            </span>
             <div
               className={classNames('whitespace-pre-wrap', lineClampClass)}
               data-qa="prompt-info"
@@ -64,8 +70,19 @@ export const HeaderSettingsTooltip = ({
         )}
         {temperature !== null && (
           <>
-            <span className="text-secondary">{t('Temperature')}:</span>
+            <span className="text-secondary">
+              {t(ChatI18nKeys.Temperature)}:
+            </span>
             <div data-qa="temp-info">{temperature}</div>
+          </>
+        )}
+
+        {responseFormat && (
+          <>
+            <span className="text-secondary">
+              {t(ChatI18nKeys.ResponseFormat)}:
+            </span>
+            <div data-qa="response-format">{responseFormat}</div>
           </>
         )}
       </div>

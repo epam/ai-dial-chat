@@ -3,6 +3,7 @@ import {
   IconFileDescription,
   IconLink,
   IconPencilMinus,
+  IconPlugConnected,
   IconTrashX,
   IconUserShare,
   IconWorldShare,
@@ -12,16 +13,19 @@ import { useMemo } from 'react';
 import { useTranslation } from 'next-i18next';
 
 import { useAgentMenuActions } from '@/src/hooks/useAgentActions';
+import { useHasDeployAccess } from '@/src/hooks/useHasDeployAccess';
 
 import {
   getApplicationSimpleStatus,
   getPlayerCaption,
+  isApplicationDeployed,
   isApplicationStatusUpdating,
   isExecutableApp,
   isMarketplaceEntityPublic,
   isQuickApp2,
 } from '@/src/utils/app/application';
 import { isMyApplication } from '@/src/utils/app/id';
+import { doesAgentSupportMcp } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { canWriteSharedWithMe } from '@/src/utils/app/share';
 
@@ -37,6 +41,7 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   PlayerContextButtonClasses,
   PlayerContextIconClasses,
@@ -59,6 +64,7 @@ interface Props {
     unpublish?: boolean;
     logs?: boolean;
     delete?: boolean;
+    connect?: boolean;
   };
   isPreview?: boolean;
   triggerIconSize?: number;
@@ -78,6 +84,9 @@ export const useAgentMenuItems = ({
   const schemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
+  const { dialCoreExternalUrl } = useAppSelector(
+    SettingsSelectors.selectDefaults,
+  );
 
   const {
     handleCopy,
@@ -89,6 +98,8 @@ export const useAgentMenuItems = ({
     handlePublish,
     handleUnpublish,
     handleUpdateFunctionStatus,
+    handleRedeploy,
+    handleConnect,
   } = useAgentMenuActions(entity);
 
   const isMyApp = isMyApplication(entity);
@@ -97,8 +108,8 @@ export const useAgentMenuItems = ({
   const canWrite = canWriteSharedWithMe(entity);
   const isModifyDisabled = isApplicationStatusUpdating(entity);
   const playerStatus = getApplicationSimpleStatus(entity);
-  const isExecutable =
-    isExecutableApp(entity) && (isMyApp || canWrite || isAdmin);
+  const hasDeployAccess = useHasDeployAccess(entity);
+  const isExecutable = isExecutableApp(entity) && hasDeployAccess;
   const isMyAppOrPreview = isMyApp || isPreview;
   const isPublicAndAdmin = isAppIdPublic && isAdmin;
   const hasCustomEditor = schemas.some(
@@ -110,10 +121,22 @@ export const useAgentMenuItems = ({
     canWrite ||
     (isPublicAndAdmin && (!hasCustomEditor || isQuickApp2(entity)));
 
+  const showRedeploy = isExecutable && isApplicationDeployed(entity);
+
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () => [
       {
-        name: t('Copy link'),
+        name: t(MarketplaceI18nKeys.Connect),
+        dataQa: 'toolset-connect',
+        display:
+          disabledActions?.connect !== true &&
+          doesAgentSupportMcp(entity) &&
+          !!dialCoreExternalUrl,
+        Icon: IconPlugConnected,
+        onClick: handleConnect,
+      },
+      {
+        name: t(MarketplaceI18nKeys.CopyLink),
         dataQa: 'application-copy-link',
         display: isPublicApp && disabledActions.copyLink !== true,
         Icon: IconLink,
@@ -130,14 +153,30 @@ export const useAgentMenuItems = ({
         onClick: handleUpdateFunctionStatus,
       },
       {
-        name: t(isAppIdPublic ? 'View' : 'Edit'),
+        name: t(MarketplaceI18nKeys.Redeploy),
+        dataQa: 'redeploy',
+        display: showRedeploy && disabledActions.deploy !== true,
+        Icon: PlayerContextIcons[SimpleApplicationStatus.REDEPLOY],
+        className: PlayerContextButtonClasses[SimpleApplicationStatus.REDEPLOY],
+        iconClassName:
+          PlayerContextIconClasses[SimpleApplicationStatus.REDEPLOY],
+        onClick: handleRedeploy,
+      },
+      {
+        name: t(
+          isAppIdPublic
+            ? MarketplaceI18nKeys.ViewMarketplace
+            : MarketplaceI18nKeys.EditMarketplace,
+        ),
         dataQa: 'edit',
+        disabled:
+          isExecutable && playerStatus === SimpleApplicationStatus.UPDATING,
         display: canEditOrView && disabledActions.edit !== true,
         Icon: isAppIdPublic ? IconEye : IconPencilMinus,
         onClick: handleEdit,
       },
       {
-        name: t('Share'),
+        name: t(MarketplaceI18nKeys.ShareMarketplace),
         dataQa: 'share',
         display:
           isMyApp &&
@@ -147,7 +186,7 @@ export const useAgentMenuItems = ({
         onClick: handleOpenSharing,
       },
       {
-        name: t('Unshare'),
+        name: t(MarketplaceI18nKeys.UnshareMarketplace),
         dataQa: 'unshare',
         display:
           !!entity.sharedWithMe &&
@@ -157,21 +196,21 @@ export const useAgentMenuItems = ({
         onClick: handleOpenUnshare,
       },
       {
-        name: t('Publish'),
+        name: t(MarketplaceI18nKeys.PublishMarketplace),
         dataQa: 'publish',
         display: isMyAppOrPreview && disabledActions.publish !== true,
         Icon: IconWorldShare,
         onClick: handlePublish,
       },
       {
-        name: t('Unpublish'),
+        name: t(MarketplaceI18nKeys.UnpublishMarketplace),
         dataQa: 'unpublish',
         display: isAppIdPublic && disabledActions.unpublish !== true,
         Icon: UnpublishIcon,
         onClick: handleUnpublish,
       },
       {
-        name: t('Logs'),
+        name: t(MarketplaceI18nKeys.Logs),
         dataQa: 'app-logs',
         display:
           !!isExecutable &&
@@ -181,7 +220,7 @@ export const useAgentMenuItems = ({
         onClick: handleOpenApplicationLogs,
       },
       {
-        name: t('Delete'),
+        name: t(MarketplaceI18nKeys.DeleteMarketplace),
         dataQa: 'delete',
         display: isMyAppOrPreview && disabledActions.delete !== true,
         disabled: isModifyDisabled,
@@ -190,8 +229,9 @@ export const useAgentMenuItems = ({
       },
     ],
     [
+      dialCoreExternalUrl,
       t,
-      isPublicApp,
+      disabledActions?.connect,
       disabledActions.copyLink,
       disabledActions.deploy,
       disabledActions.edit,
@@ -201,11 +241,15 @@ export const useAgentMenuItems = ({
       disabledActions.unpublish,
       disabledActions.logs,
       disabledActions.delete,
+      handleConnect,
+      isPublicApp,
       handleCopy,
       entity,
       playerStatus,
       isExecutable,
       handleUpdateFunctionStatus,
+      showRedeploy,
+      handleRedeploy,
       isAppIdPublic,
       canEditOrView,
       handleEdit,

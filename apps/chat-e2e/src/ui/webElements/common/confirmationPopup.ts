@@ -1,3 +1,4 @@
+import { PopupSelectors } from '@/src/ui/selectors';
 import { Button, Popup } from '@/src/ui/webElements';
 import { Page } from '@playwright/test';
 import { Response } from 'playwright-core';
@@ -6,7 +7,7 @@ export class ConfirmationPopup extends Popup {
   private confirmButton: Button;
 
   constructor(page: Page, confirmButtonAreaLabel: string) {
-    super(page);
+    super(page, PopupSelectors.popupLabelledContainer);
     this.confirmButton = new Button(
       this.page,
       confirmButtonAreaLabel,
@@ -49,6 +50,8 @@ export class ConfirmationPopup extends Popup {
       }
       await this.confirmButton.click();
       await Promise.all(responsePromises);
+    } else {
+      await this.confirmButton.click();
     }
   }
 }

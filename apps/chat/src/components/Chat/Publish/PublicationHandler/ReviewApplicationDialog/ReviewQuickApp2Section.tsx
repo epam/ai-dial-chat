@@ -1,10 +1,13 @@
-import { IconDownload, IconFile } from '@tabler/icons-react';
 import { useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getQuickApp2Config, isQuickApp2 } from '@/src/utils/app/application';
-import { constructPath } from '@/src/utils/app/file';
+import {
+  getQuickApp2Config,
+  getQuickAppItemNameFromConfig,
+  isQuickApp2,
+  migrateMCPToolsetIdName,
+} from '@/src/utils/app/application';
 import { isApplicationId } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
@@ -14,6 +17,7 @@ import {
   DialDeploymentSimpleTool,
   MCPToolset,
   QuickApp2Config,
+  UnknownToolset,
   isCodeInterpreterToolset,
   isDialDeploymentToolset,
   isMcpToolset,
@@ -25,54 +29,22 @@ import {
   ModelsSelectors,
   SettingsSelectors,
   ToolsetSelectors,
+  UISelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
-import { Tooltip } from '@/src/components/Common/Tooltip';
+import {
+  DialMarkdownEditor,
+  EditorThemes,
+} from '@/src/components/Common/MarkdownEditor/MarkdownEditor';
+
+import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
+import { DocumentField } from './DocumentField';
 
 import { Feature } from '@epam/ai-dial-shared';
-
-interface DocumentFieldProps {
-  url?: string;
-}
-
-const DocumentField = ({ url }: DocumentFieldProps) => {
-  const urlParts = url ? splitEntityId(url) : null;
-
-  if (!url || !urlParts) return null;
-
-  return (
-    <div className="flex items-center gap-4">
-      <div className="flex grow items-center gap-2 overflow-hidden">
-        <div className="flex grow items-center gap-2 truncate">
-          <span className="flex shrink-0">
-            <IconFile size={18} className="text-secondary" />
-          </span>
-
-          <Tooltip
-            tooltip={urlParts.name}
-            triggerClassName="truncate whitespace-pre"
-            contentClassName="break-all"
-            dataQa="entity-name"
-          >
-            {urlParts.name}
-          </Tooltip>
-        </div>
-
-        <a
-          download={urlParts.name}
-          href={constructPath('api', ApiUtils.encodeApiUrl(url))}
-          data-qa="download"
-        >
-          <IconDownload
-            className="shrink-0 text-secondary hover:text-accent-primary"
-            size={18}
-          />
-        </a>
-      </div>
-    </div>
-  );
-};
+import groupBy from 'lodash-es/groupBy';
 
 interface ReviewQuickApp2SectionViewProps {
   config: QuickApp2Config;
@@ -85,156 +57,180 @@ const ReviewQuickApp2SectionView = ({
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
-
   const isCodeInterpreterEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CodeInterpreter),
   );
+  const theme = useAppSelector(UISelectors.selectThemeState);
 
-  const { agents, toolsets, isCodeInterpreter } = useMemo(
+  const { agents, toolsets, unknownToolsets, isCodeInterpreter } = useMemo(
     () =>
       (config.tool_sets ?? []).reduce<{
         agents: (DialDeploymentSimpleTool & { name: string })[];
         toolsets: (MCPToolset & { name: string })[];
+        unknownToolsets: (UnknownToolset & { name: string })[];
         isCodeInterpreter: boolean;
       }>(
         (acc, toolset) => {
           if (isDialDeploymentToolset(toolset)) {
-            acc.agents = toolset.tools.map((tool) => ({
+            const { appTools = [], otherTools = [] } = groupBy(
+              toolset.tools,
+              (tool) =>
+                modelsMap[ApiUtils.decodeApiUrl(tool.deployment_id)]
+                  ? 'appTools'
+                  : 'otherTools',
+            );
+            acc.agents = appTools.map((tool) => ({
               ...tool,
-              name: isApplicationId(tool.deployment_id)
-                ? ApiUtils.decodeApiUrl(
-                    parseEntityApiKey(splitEntityId(tool.deployment_id).name, {
-                      parseVersion: true,
-                    }).name,
-                  )
-                : tool.deployment_id,
+              name: getQuickAppItemNameFromConfig(tool),
             }));
+            acc.unknownToolsets.push(
+              ...otherTools.map((tool) => ({
+                ...tool,
+                name: getQuickAppItemNameFromConfig(tool),
+              })),
+            );
           } else if (isMcpToolset(toolset)) {
             acc.toolsets.push({
               ...toolset,
-              name:
-                toolset.name ||
-                ApiUtils.decodeApiUrl(
-                  parseEntityApiKey(splitEntityId(toolset.dial_id).name, {
-                    parseVersion: true,
-                  }).name,
-                ),
+              name: getQuickAppItemNameFromConfig(
+                migrateMCPToolsetIdName(toolset),
+              ),
             });
           } else if (isCodeInterpreterToolset(toolset)) {
             acc.isCodeInterpreter = true;
+          } else {
+            acc.unknownToolsets.push({
+              ...toolset,
+              name: getQuickAppItemNameFromConfig(
+                toolset as unknown as MCPToolset,
+              ),
+            });
           }
           return acc;
         },
-        { agents: [], toolsets: [], isCodeInterpreter: false },
+        {
+          agents: [],
+          toolsets: [],
+          unknownToolsets: [],
+          isCodeInterpreter: false,
+        },
       ),
-    [config.tool_sets],
+    [config.tool_sets, modelsMap],
   );
 
-  const orchestratorModel = modelsMap[config.orchestrator.deployment.name];
+  const orchestratorModel =
+    modelsMap[config.orchestrator.deployment.deployment_id];
   const orchestratorName = orchestratorModel
     ? orchestratorModel.name
-    : !isApplicationId(config.orchestrator.deployment.name)
+    : !isApplicationId(config.orchestrator.deployment.deployment_id)
       ? ApiUtils.decodeApiUrl(
           parseEntityApiKey(
-            splitEntityId(config.orchestrator.deployment.name).name,
-            {
-              parseVersion: true,
-            },
+            splitEntityId(config.orchestrator.deployment.deployment_id).name,
+            { parseVersion: true },
           ).name,
         )
-      : config.orchestrator.deployment.name;
+      : config.orchestrator.deployment.deployment_id;
+  const hasToolsets = toolsets.length > 0 || unknownToolsets.length > 0;
 
   return (
     <>
       {isCodeInterpreterEnabled && isCodeInterpreter && (
-        <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">
-            {t('Code Interpreter: ')}
-          </span>
-          <span className="max-w-[414px] break-all text-primary">
-            {t(isCodeInterpreter ? 'On' : 'Off')}
-          </span>
-        </div>
+        <MarketplaceEntityInfoRow
+          label={t(ChatI18nKeys.CodeInterpreter)}
+          value={t(ChatI18nKeys.On)}
+          valueClassName="max-w-[414px] break-all text-primary"
+        />
       )}
-      <div className="flex gap-4">
-        <span className="w-[122px] text-secondary">{t('Model: ')}</span>
-        <span className="max-w-[414px] break-all text-primary">
-          {orchestratorName}
-        </span>
-      </div>
-
-      <div className="flex gap-4">
-        <span className="w-[122px] text-secondary">{t('Temperature: ')}</span>
-        <span className="max-w-[414px] break-all text-primary">
-          {config.orchestrator.deployment.parameters.temperature}
-        </span>
-      </div>
-
-      {(config.contexts?.length ?? 0) > 0 && (
-        <div className="flex items-center gap-4">
-          <span className="w-[122px] shrink-0 self-start text-secondary">
-            {t('Document URLs: ')}
-          </span>
-          <span className="flex min-w-0 flex-col gap-2">
-            {config.contexts.map(({ url }) => (
-              <DocumentField key={url} url={url} />
-            ))}
-          </span>
-        </div>
+      <MarketplaceEntityInfoRow
+        label={t(ChatI18nKeys.Model)}
+        value={orchestratorName}
+        valueClassName="max-w-[414px] break-all text-primary"
+      />
+      {config.orchestrator.deployment.parameters?.temperature && (
+        <MarketplaceEntityInfoRow
+          label={t(ChatI18nKeys.Temperature)}
+          value={config.orchestrator.deployment.parameters.temperature}
+          valueClassName="max-w-[414px] break-all text-primary"
+        />
       )}
-
-      {config.orchestrator.system_prompt.content && (
-        <div className="flex gap-4">
-          <span className="w-[122px] shrink-0 text-secondary">
-            {t('Instructions: ')}
-          </span>
-          <span className="grow break-all text-primary">
-            {config.orchestrator.system_prompt.content}
-          </span>
-        </div>
-      )}
-
-      {agents.length > 0 && (
-        <div className="flex items-center gap-4">
-          <span className="w-[122px] shrink-0 text-secondary">
-            {t('Agents: ')}
-          </span>
-          <div className="flex flex-wrap gap-2 text-primary">
-            {agents.map((agent) => {
-              const decodedId = ApiUtils.decodeApiUrl(agent.deployment_id);
-              return (
+      <MarketplaceEntityInfoRow
+        label={t(ChatI18nKeys.DocumentUrls)}
+        value={
+          config.contexts?.length ? (
+            <div className="flex min-w-0 flex-col gap-2">
+              {config.contexts.map(({ url }) => (
+                <DocumentField key={url} url={url} />
+              ))}
+            </div>
+          ) : null
+        }
+        valueClassName=""
+      />
+      <MarketplaceEntityInfoRow
+        label={t(ChatI18nKeys.Instructions)}
+        valueClassName=""
+        noTooltip
+        value={
+          <DialMarkdownEditor
+            value={config.orchestrator.system_prompt.content}
+            height={200}
+            theme={theme as EditorThemes}
+            preview="preview"
+            commands={[]}
+            className="rounded-[5px]"
+          />
+        }
+      />
+      <MarketplaceEntityInfoRow
+        label={t(ChatI18nKeys.Agents)}
+        value={
+          agents.length ? (
+            <div className="flex flex-wrap gap-2 text-primary">
+              {agents.map((agent) => {
+                const decodedId = ApiUtils.decodeApiUrl(agent.deployment_id);
+                return (
+                  <AgentAndToolsetChip
+                    key={decodedId}
+                    item={modelsMap[decodedId]}
+                    id={decodedId}
+                    readonly
+                  />
+                );
+              })}
+            </div>
+          ) : null
+        }
+        valueClassName=""
+      />
+      <MarketplaceEntityInfoRow
+        label={t(ChatI18nKeys.Toolsets)}
+        value={
+          hasToolsets ? (
+            <div className="flex flex-wrap gap-2 text-primary">
+              {toolsets.map((toolset) => {
+                const decodedId = ApiUtils.decodeApiUrl(toolset.deployment_id);
+                return (
+                  <AgentAndToolsetChip
+                    key={decodedId}
+                    item={toolsetsMap[decodedId]}
+                    id={decodedId}
+                    readonly
+                  />
+                );
+              })}
+              {unknownToolsets.map((toolset) => (
                 <AgentAndToolsetChip
-                  key={decodedId}
-                  item={modelsMap[decodedId]}
-                  id={decodedId}
+                  key={toolset.name}
+                  id={toolset.name}
+                  item={undefined}
                   readonly
                 />
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {toolsets.length > 0 && (
-        <div className="flex items-center gap-4">
-          <span className="w-[122px] shrink-0 text-secondary">
-            {t('Toolsets: ')}
-          </span>
-          <div className="flex flex-wrap gap-2 text-primary">
-            {toolsets.map((toolset) => {
-              const decodedId = ApiUtils.decodeApiUrl(toolset.dial_id);
-              return (
-                <AgentAndToolsetChip
-                  key={decodedId}
-                  item={toolsetsMap[decodedId]}
-                  id={decodedId}
-                  readonly
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
+              ))}
+            </div>
+          ) : null
+        }
+        valueClassName=""
+      />
     </>
   );
 };
@@ -246,10 +242,11 @@ interface ReviewQuickApp2SectionProps {
 export const ReviewQuickApp2Section = ({
   application,
 }: ReviewQuickApp2SectionProps) => {
-  const isQuickApplication = isQuickApp2(application);
-  const config = isQuickApplication ? getQuickApp2Config(application) : null;
+  const config = isQuickApp2(application)
+    ? getQuickApp2Config(application)
+    : null;
 
-  if (!isQuickApplication || !config) return null;
+  if (!config) return null;
 
   return <ReviewQuickApp2SectionView config={config} />;
 };

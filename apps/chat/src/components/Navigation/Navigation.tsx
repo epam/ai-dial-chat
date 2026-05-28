@@ -18,6 +18,7 @@ import {
 } from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { Routes } from '@/src/constants/routes';
 
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
@@ -57,18 +58,18 @@ const NavigationView = () => {
   return (
     <div
       className={classNames(
-        'order-last flex w-full shrink-0 flex-row items-center justify-around gap-2 border-tertiary bg-layer-3 md:z-40 md:order-none md:h-full md:flex-col md:justify-start md:border-r md:py-2',
+        'order-last flex w-full shrink-0 flex-row items-center justify-around border-tertiary bg-layer-3 sm:gap-2 md:z-40 md:order-none md:h-full md:flex-col md:justify-start md:border-r md:py-2',
         isOverlay ? 'h-[36px] md:w-[44px]' : 'h-[52px] md:w-[60px]',
       )}
       data-qa="navigation-panel"
     >
       <NavigationButton
         onClick={handleChatClick}
-        tooltip={t('Chat')}
+        tooltip={t(SideBarI18nKeys.Chat)}
         Icon={IconMessage2}
         selected={router.route === Routes.Chat}
         dataQa="back-to-chat"
-        caption={t('Chat')}
+        caption={t(SideBarI18nKeys.Chat)}
       />
       <MarketplaceNavigation />
       <FilesNavigation />

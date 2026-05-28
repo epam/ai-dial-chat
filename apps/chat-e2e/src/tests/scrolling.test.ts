@@ -9,9 +9,10 @@ import {
   MockedChatApiResponseBodies,
   ScrollState,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { Properties } from '@/src/ui/domData/properties';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
@@ -287,7 +288,9 @@ dialTest(
           {
             name: replayConversationName,
           },
-          Colors.backgroundAccentSecondary,
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.bgAccentSecondaryAlpha,
+          ),
         );
         await conversationAssertion.assertEntityBackgroundColor({
           name: firstConversation.name,
@@ -497,7 +500,7 @@ dialTest(
           Attachment.sunImageName,
         );
         await chatMessagesAssertion.assertEntityIcon(
-          chatMessages.getOpenedChatMessageAttachment(2),
+          chatMessages.getOpenedChatMessageImageAttachment(2),
         );
         await sendMessageAssertion.assertScrollDownButtonState('visible');
       },

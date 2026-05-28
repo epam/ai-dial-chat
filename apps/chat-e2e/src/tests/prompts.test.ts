@@ -231,7 +231,7 @@ dialTest(
         await promptPreviewModalAssertion.assertElementBackgroundColors(
           promptPreviewModal.usePromptButton,
           ThemesUtil.getRgbColorByKey(
-            ThemeColorAttributes.controlsBgSolidPrimary,
+            ThemeColorAttributes.controlsBgAccentPrimary,
           ),
         );
         await promptPreviewModalAssertion.assertElementTextWrap(
@@ -248,7 +248,7 @@ dialTest(
         await promptPreviewModalAssertion.assertElementBackgroundColors(
           promptPreviewModal.usePromptButton,
           ThemesUtil.getRgbColorByKey(
-            ThemeColorAttributes.controlsBgSolidPrimaryHover,
+            ThemeColorAttributes.controlsBgAccentPrimaryHover,
           ),
         );
       },
@@ -327,7 +327,7 @@ dialTest(
           createdDate: currentDate,
           lastUpdatedDate: currentDate,
         });
-        await informationModal.cancelButton.click();
+        await informationModal.getCloseButton().click();
       },
     );
   },
@@ -364,7 +364,7 @@ dialTest(
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
         await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
 
-        await promptModalDialog.closeButton.click();
+        await promptModalDialog.getCloseButton().click();
         await confirmationDialog.cancelButton.click();
         await promptModalAssertion.assertElementState(
           promptModalDialog,
@@ -383,7 +383,7 @@ dialTest(
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectMenuOption(MenuOptions.edit);
         await promptModalDialog.fillPromptDetails(newName, newDescr, newValue);
-        await promptModalDialog.closeButton.click();
+        await promptModalDialog.getCloseButton().click();
         await confirmationDialogAssertion.assertElementState(
           confirmationDialog,
           'visible',

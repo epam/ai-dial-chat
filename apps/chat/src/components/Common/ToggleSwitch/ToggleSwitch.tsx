@@ -1,3 +1,4 @@
+import { IconAlertTriangleFilled } from '@tabler/icons-react';
 import { useId } from 'react';
 
 import classNames from 'classnames';
@@ -8,13 +9,20 @@ import { ToggleSwitchProps } from './view-props';
 interface SwitchStateTextProps {
   switchText: string;
   isOn: boolean;
+  disabled?: boolean;
 }
 
-const SwitchStateText = ({ switchText, isOn }: SwitchStateTextProps) => (
+const SwitchStateText = ({
+  switchText,
+  isOn,
+  disabled,
+}: SwitchStateTextProps) => (
   <span
     className={classNames(
-      'h-[15px] w-6 text-xs',
-      isOn && 'text-controls-permanent',
+      'h-4 text-xs',
+      isOn && 'px-1',
+      isOn && !disabled ? 'text-controls-permanent' : 'text-primary',
+      disabled && '!text-controls-accent-disable',
     )}
   >
     {switchText}
@@ -28,15 +36,17 @@ export function ToggleSwitch({
   additionalText,
   className,
   tooltip,
+  warning,
   disabled,
   handleSwitch,
 }: ToggleSwitchProps) {
   const id = useId();
   const switchText = isOn ? switchOnText : switchOFFText;
   const switchClassName = classNames(
-    'flex h-[22px] min-w-[50px] shrink-0 items-center gap-1 rounded-full p-1.5 transition-all duration-200',
+    'flex h-[22px] w-[50px] min-w-[50px] shrink-0 items-center justify-between rounded-full px-[5px] py-1 transition-all duration-200',
     isOn ? 'flex-row bg-accent-primary' : 'flex-row-reverse bg-layer-4',
     disabled ? 'cursor-not-allowed' : 'cursor-pointer',
+    disabled && '!bg-controls-disable-accent',
   );
 
   return (
@@ -52,12 +62,36 @@ export function ToggleSwitch({
         />
         <label htmlFor={id} className={switchClassName}>
           {switchText && (
-            <SwitchStateText switchText={switchText} isOn={isOn} />
+            <SwitchStateText
+              switchText={switchText}
+              isOn={isOn}
+              disabled={disabled}
+            />
           )}
-          <span className="size-3 rounded-full bg-controls-permanent"></span>
+          <span
+            className={classNames(
+              'size-3 rounded-full',
+              disabled ? 'bg-layer-4' : 'bg-controls-enable-primary',
+            )}
+          ></span>
         </label>
       </div>
-      {additionalText && <span>{additionalText}</span>}
+      {additionalText && (
+        <span
+          className={classNames(disabled && 'text-controls-primary-disable')}
+        >
+          {additionalText}
+        </span>
+      )}
+      {warning && (
+        <Tooltip
+          tooltip={warning}
+          triggerClassName="flex shrink-0 text-warning"
+          contentClassName="z-[2000]"
+        >
+          <IconAlertTriangleFilled size={20} />
+        </Tooltip>
+      )}
     </Tooltip>
   );
 }

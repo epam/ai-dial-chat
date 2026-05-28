@@ -38,12 +38,12 @@ export function PublicationInfoSection({
       </h3>
       <Tooltip
         contentClassName="my-1 text-sm"
-        triggerClassName="truncate whitespace-pre"
+        triggerClassName="truncate whitespace-pre block"
         tooltip={<div className="flex break-words">{tooltip}</div>}
         hideTooltip={!tooltip}
         dataQa={valueDataQa}
       >
-        <span className="w-full">{valueToDisplay}</span>
+        {valueToDisplay}
       </Tooltip>
     </section>
   );

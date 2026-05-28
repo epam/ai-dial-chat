@@ -8,7 +8,7 @@ import type { AppProps } from 'next/app';
 import { Inconsolata, Inter } from 'next/font/google';
 import Head from 'next/head';
 
-import { getThemeIconUrl } from '@/src/utils/app/themes';
+import { faviconUrl } from '@/src/utils/app/themes';
 
 import { SettingsState } from '@/src/store/settings/settings.types';
 
@@ -45,8 +45,9 @@ type AppPropsWithLayout = AppProps<SessionProviderProps & HomeProps> & {
 };
 
 function App({ Component, ...rest }: AppPropsWithLayout) {
+  const initialSettingsState = rest.pageProps.initialState?.settings;
   const store = createStore({
-    settings: rest.pageProps.initialState?.settings,
+    settings: initialSettingsState,
   });
 
   const getPage = Component.getLayout ?? ((page) => page);
@@ -60,17 +61,8 @@ function App({ Component, ...rest }: AppPropsWithLayout) {
         />
         {process.env.NODE_ENV !== 'development' && (
           <>
-            <link
-              rel="icon"
-              href={getThemeIconUrl('favicon')}
-              sizes="any"
-              type="image/png"
-            />
-            <link
-              rel="apple-touch-icon"
-              href={getThemeIconUrl('favicon')}
-              type="image/png"
-            />
+            <link rel="icon" href={faviconUrl} sizes="any" type="image/png" />
+            <link rel="apple-touch-icon" href={faviconUrl} type="image/png" />
           </>
         )}
       </Head>

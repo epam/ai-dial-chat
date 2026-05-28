@@ -16,7 +16,7 @@ import {
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
-  createFoldersFilesTargetUrl,
+  buildDedupedPublicationFileTargetsFromConversations,
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
 import { NotReplayFilter } from '@/src/utils/app/search';
@@ -46,6 +46,7 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { Modal } from '@/src/components/Common/Modal';
@@ -53,46 +54,12 @@ import { Modal } from '@/src/components/Common/Modal';
 import { CreatePublicationHandler } from './PublicationHandler/CreatePublicationHandler';
 
 import { Conversation, PublishActions } from '@epam/ai-dial-shared';
-import compact from 'lodash-es/compact';
-import escapeRegExp from 'lodash-es/escapeRegExp';
-import flatMapDeep from 'lodash-es/flatMapDeep';
 
 interface PublishDialogContainerProps {
   publicationModel: PublicationModel;
   resourceType: BackendResourceType;
   filteredConversationFiles: DialFile[];
 }
-
-const transformFoldersFilesIds = (
-  conversations: Conversation[],
-  entityFolderId: string,
-) => {
-  const folderOldPathPartsRegExp = new RegExp(
-    escapeRegExp(getIdWithoutRootPathSegments(entityFolderId)),
-  );
-
-  return conversations.flatMap((c) => {
-    const urls = compact(
-      flatMapDeep(c.playback?.messagesStack || c.messages, (m) =>
-        m.custom_content?.attachments?.map((a) => a.url),
-      ),
-    );
-
-    return urls.map((oldUrl) => {
-      const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
-
-      return {
-        oldUrl: decodedOldUrl,
-        newUrl: createFoldersFilesTargetUrl(
-          constructPath(
-            getFolderIdFromEntityId(c.id),
-            ...decodedOldUrl.split('/').slice(-1),
-          ).replace(folderOldPathPartsRegExp, ''),
-        ),
-      };
-    });
-  });
-};
 
 const PublishDialogContainer = ({
   publicationModel,
@@ -140,7 +107,9 @@ const PublishDialogContainer = ({
       action !== PublishActions.DELETE
     ) {
       dispatch(
-        UIActions.showErrorToast(t('There are no valid items to publish')),
+        UIActions.showErrorToast({
+          message: t(ChatI18nKeys.NoValidItemsToPublish),
+        }),
       );
       dispatch(PublicationActions.setPublishModel());
     }
@@ -173,32 +142,35 @@ const PublishDialogContainer = ({
       };
     });
 
-    const mappedWithConversationsFiles = transformFoldersFilesIds(
-      filteredEntities as Conversation[],
-      entity.folderId,
-    );
+    const mappedWithConversationsFiles =
+      buildDedupedPublicationFileTargetsFromConversations(
+        filteredEntities as Conversation[],
+        entity.folderId,
+        isFolder,
+      );
 
     const fileResources =
       action === PublishActions.DELETE
         ? []
-        : filteredConversationFiles.map(({ id }) => {
-            const decodedId = ApiUtils.decodeApiUrl(id);
-
-            const url =
-              (isFolder
-                ? mappedWithConversationsFiles.find(
-                    (file) => file.oldUrl === decodedId,
-                  )?.newUrl
-                : transformIdToRootEntityId(decodedId)) ??
-              transformIdToRootEntityId(decodedId);
-
-            return {
+        : isFolder
+          ? mappedWithConversationsFiles.map(({ oldUrl, newUrl }) => ({
               action: PublishActions.ADD_IF_ABSENT,
-              sourceUrl: decodedId,
-              reviewUrl: decodedId,
-              targetUrl: replaceIdWithBucket(url, PUBLIC_URL_PREFIX),
-            };
-          });
+              sourceUrl: oldUrl,
+              reviewUrl: oldUrl,
+              targetUrl: replaceIdWithBucket(newUrl, PUBLIC_URL_PREFIX),
+            }))
+          : filteredConversationFiles.map(({ id }) => {
+              const decodedId = ApiUtils.decodeApiUrl(id);
+
+              const url = transformIdToRootEntityId(decodedId);
+
+              return {
+                action: PublishActions.ADD_IF_ABSENT,
+                sourceUrl: decodedId,
+                reviewUrl: decodedId,
+                targetUrl: replaceIdWithBucket(url, PUBLIC_URL_PREFIX),
+              };
+            });
 
     const iconResource = [];
     if (
@@ -307,7 +279,7 @@ const PublishDialogView = ({ publicationModel }: PublishDialogViewProps) => {
       state={ModalState.OPENED}
       onClose={handleClose}
       dataQa="publish-dialog"
-      containerClassName="flex md:h-[747px] z-40 min-w-full max-w-[1100px] md:min-w-[550px] lg:min-w-[1000px] xl:w-[1000px]"
+      containerClassName="flex md:h-[747px] z-40 min-w-full max-w-[1100px] md:min-w-[550px] lg:min-w-[1200px] xl:w-[1200px]"
     >
       <PublishDialogContainer
         publicationModel={publicationModel}

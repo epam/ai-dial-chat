@@ -1,23 +1,27 @@
 import { IconCheck } from '@tabler/icons-react';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { translate } from '@/src/utils/app/translation';
+import { getFilterLabel } from '@/src/utils/app/rules';
 
 import { ModalState } from '@/src/types/modal';
 import {
   PublicationFunctions,
-  TargetAudienceFilter,
+  TargetAudienceFilterData,
 } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys, SideBarI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 import { Modal } from '@/src/components/Common/Modal';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
@@ -25,15 +29,15 @@ import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
 
 import {
-  DialButton,
-  DialCloseButton,
   DialPrimaryButton,
+  DialPrimaryIconButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 
-const emptySelector = translate('Select');
+const emptySelector: string = SideBarI18nKeys.Select;
 
 interface Props {
-  onSaveFilter: (filter: TargetAudienceFilter) => void;
+  onSaveFilter: (filter: TargetAudienceFilterData) => void;
   onCloseFilter: () => void;
 }
 
@@ -50,10 +54,6 @@ const getPreparedFilterParams = (
   switch (filterFunction) {
     case PublicationFunctions.Regex:
       return [filterRegexParam];
-    // TODO: uncomment when it will be supported on core
-    // case PublicationFunctions.True:
-    // case PublicationFunctions.False:
-    //   return [];
     default:
       return filterParams.map((param) => param.trim());
   }
@@ -65,9 +65,6 @@ const filterFunctionValues = [
   PublicationFunctions.Contain,
   PublicationFunctions.Equal,
   PublicationFunctions.Regex,
-  // TODO: uncomment when it will be supported on core
-  // PublicationFunctions.True,
-  // PublicationFunctions.False,
 ];
 
 export function TargetAudienceFilterComponent({
@@ -75,13 +72,21 @@ export function TargetAudienceFilterComponent({
   onCloseFilter,
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
+  const { t: tChat } = useTranslation(Translation.Chat);
 
-  const [filterFunction, setFilterFunction] = useState<
-    PublicationFunctions | typeof emptySelector
-  >(emptySelector);
+  const [filterFunction, setFilterFunction] = useState<PublicationFunctions>(
+    PublicationFunctions.Contain,
+  );
   const [filterParams, setFilterParams] = useState<string[]>([]);
   const [filterRegexParam, setFilterRegexParam] = useState<string>('');
-  const [selectedTarget, setSelectedTarget] = useState(emptySelector);
+  const [selectedTarget, setSelectedTarget] = useState(t(emptySelector));
+  const [targetMenuOpen, setTargetMenuOpen] = useState(true);
+
+  const filterRowRef = useRef<HTMLDivElement>(null);
+  const valuesInputRef = useRef<HTMLInputElement>(null);
+  const regexInputRef = useRef<HTMLInputElement>(null);
+  const prevSelectedTargetRef = useRef(selectedTarget);
+  const isSaveBtnDisabledRef = useRef(true);
 
   const publicationFilters = useAppSelector(
     SettingsSelectors.selectPublicationFilters,
@@ -90,17 +95,14 @@ export function TargetAudienceFilterComponent({
   const handleSaveFilter = useCallback(() => {
     if (!onSaveFilter) return;
 
-    const preparedFilterParams = getPreparedFilterParams(
-      filterFunction as PublicationFunctions,
-      {
-        filterParams,
-        filterRegexParam,
-      },
-    );
+    const preparedFilterParams = getPreparedFilterParams(filterFunction, {
+      filterParams,
+      filterRegexParam,
+    });
 
     onSaveFilter({
-      id: selectedTarget,
-      filterFunction: filterFunction as PublicationFunctions,
+      source: selectedTarget,
+      filterFunction,
       filterParams: preparedFilterParams,
     });
   }, [
@@ -113,17 +115,18 @@ export function TargetAudienceFilterComponent({
 
   const handleChangeTarget = useCallback((target: string) => {
     setSelectedTarget(target);
+    setTargetMenuOpen(false);
   }, []);
 
   const handleChangeFilterFunction = useCallback(
-    (filterFunction: PublicationFunctions) => {
-      setFilterFunction(filterFunction);
+    (next: PublicationFunctions) => {
+      setFilterFunction(next);
     },
     [],
   );
 
-  const handleChangeFilterParams = useCallback((filterParams: string[]) => {
-    setFilterParams(filterParams);
+  const handleChangeFilterParams = useCallback((params: string[]) => {
+    setFilterParams(params);
   }, []);
 
   const handleChangeFilterRegexParam = useCallback(
@@ -133,8 +136,7 @@ export function TargetAudienceFilterComponent({
     [],
   );
 
-  const isTargetAndFunctionSelected =
-    selectedTarget !== emptySelector && filterFunction !== emptySelector;
+  const isTargetSelected = selectedTarget !== emptySelector;
   const areSomeFilterParamSelected = filterParams.length || filterRegexParam;
   const isRegexFilledInButNotSelected = !!(
     filterRegexParam &&
@@ -147,21 +149,63 @@ export function TargetAudienceFilterComponent({
     !filterRegexParam
   );
   const isSaveBtnDisabled =
-    !isTargetAndFunctionSelected ||
+    !isTargetSelected ||
     !areSomeFilterParamSelected ||
     isRegexFilledInButNotSelected ||
     isParamsFilledInButRegexIsSelected;
 
-  // TODO: uncomment when it will be supported on core
-  // const isTrueOrFalseFilterSelected =
-  //   filterFunction === PublicationFunctions.True ||
-  //   filterFunction === PublicationFunctions.False;
-  // const isSaveBtnDisabled = isTrueOrFalseFilterSelected
-  //   ? !isTargetAndFunctionSelected
-  //   : !isTargetAndFunctionSelected ||
-  //     !areSomeFilterParamSelected ||
-  //     isRegexFilledInButNotSelected ||
-  //     isParamsFilledInButRegexIsSelected;
+  isSaveBtnDisabledRef.current = isSaveBtnDisabled;
+
+  const targetMenuControlProps =
+    selectedTarget === emptySelector
+      ? {
+          isMenuOpen: targetMenuOpen,
+          onMenuOpenChange: setTargetMenuOpen,
+        }
+      : {};
+
+  useEffect(() => {
+    const wasEmpty = prevSelectedTargetRef.current === emptySelector;
+    const nowSet = selectedTarget !== emptySelector;
+    if (wasEmpty && nowSet) {
+      queueMicrotask(() => {
+        if (filterFunction === PublicationFunctions.Regex) {
+          regexInputRef.current?.focus();
+        } else {
+          valuesInputRef.current?.focus();
+        }
+      });
+    }
+    prevSelectedTargetRef.current = selectedTarget;
+  }, [selectedTarget, filterFunction]);
+
+  useEffect(() => {
+    if (isSmallScreen()) {
+      return;
+    }
+
+    // Outside the filter row: commit if valid, otherwise discard. Clicks inside
+    // portaled dropdown lists are ignored so items stay selectable. If a menu is
+    // open but the row is incomplete, this still discards per product rules.
+    const onPointerDown = (e: PointerEvent) => {
+      const el = e.target as HTMLElement;
+      if (filterRowRef.current?.contains(el)) {
+        return;
+      }
+      if (el.closest('[data-qa="dropdown-menu"]')) {
+        return;
+      }
+      if (!isSaveBtnDisabledRef.current) {
+        handleSaveFilter();
+      } else {
+        onCloseFilter();
+      }
+    };
+
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () =>
+      document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [handleSaveFilter, onCloseFilter]);
 
   if (isSmallScreen()) {
     return (
@@ -170,28 +214,28 @@ export function TargetAudienceFilterComponent({
         dataQa="mobile-filters-select"
         containerClassName="inline-block flex flex-col w-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 h-full xl:max-w-[720px] 2xl:max-w-[780px]"
         state={ModalState.OPENED}
-        heading={t('Add filter')}
+        heading={t(SideBarI18nKeys.AddFilter)}
         onClose={onCloseFilter}
       >
         <div className="flex h-full flex-col justify-between">
           <div className="flex flex-col gap-4">
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
-                {t('Category')}
+                {t(SideBarI18nKeys.Category)}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <RulesSelect
                 triggerClassName="h-[38px] items-center rounded border border-primary font-semibold"
                 filters={publicationFilters}
                 selectedFilter={selectedTarget}
-                capitalizeFirstLetters
                 onChangeFilter={handleChangeTarget}
                 id="targets"
+                {...targetMenuControlProps}
               />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
-                {t('Condition')}
+                {t(SideBarI18nKeys.Condition)}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               <RulesSelect
@@ -199,14 +243,13 @@ export function TargetAudienceFilterComponent({
                 filters={filterFunctionValues}
                 selectedFilter={filterFunction}
                 onChangeFilter={handleChangeFilterFunction}
+                formattingFunction={(fn) => getFilterLabel(fn)}
                 id="filterFns"
               />
             </div>
-            {/* TODO: uncomment when it will be supported on core */}
-            {/* {!isTrueOrFalseFilterSelected && ( */}
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
-                {t('Options')}
+                {t(SideBarI18nKeys.Options)}
                 <span className="ml-1 inline text-accent-primary">*</span>
               </label>
               {filterFunction === PublicationFunctions.Regex ? (
@@ -214,23 +257,28 @@ export function TargetAudienceFilterComponent({
                   regEx={filterRegexParam}
                   onRegExChange={handleChangeFilterRegexParam}
                   className="h-[38px] rounded border border-primary"
+                  inputRef={regexInputRef}
                 />
               ) : (
                 <MultipleComboBox
-                  className="flex min-h-[38px] items-center rounded border border-primary"
+                  className="flex min-h-[38px] items-start rounded  border border-primary sm:items-center"
                   initialSelectedItems={filterParams}
                   getItemLabel={getItemLabel}
                   getItemValue={getItemLabel}
                   onChangeSelectedItems={handleChangeFilterParams}
-                  placeholder={t('Enter one or more options...')}
+                  placeholder={t(SideBarI18nKeys.EnterOneOrMoreOptions)}
+                  inputRef={valuesInputRef}
+                  hasDeleteAll
+                  closeButtonClassName="pt-1 pr-1"
+                  showConnectorBetweenSelectedItems
+                  connectorLabel={tChat(ChatI18nKeys.Or)}
                 />
               )}
             </div>
           </div>
-          {/* )} */}
           <div className="flex justify-end">
             <DialPrimaryButton
-              label={t('Add filter')}
+              label={t(SideBarI18nKeys.AddFilter)}
               onClick={handleSaveFilter}
               disabled={isSaveBtnDisabled}
             />
@@ -241,33 +289,32 @@ export function TargetAudienceFilterComponent({
   }
 
   return (
-    <div className="flex gap-px" data-qa="publish-audience-filter-selectors">
+    <div
+      ref={filterRowRef}
+      className="flex gap-px"
+      data-qa="publish-audience-filter-selectors"
+    >
       <RulesSelect
         menuClassName="max-w-full font-semibold md:max-w-[145px]"
         filters={publicationFilters}
         selectedFilter={selectedTarget}
-        capitalizeFirstLetters
         onChangeFilter={handleChangeTarget}
         id="targets"
+        {...targetMenuControlProps}
       />
       <RulesSelect
         menuClassName="max-w-full italic md:max-w-[100px]"
-        // TODO: uncomment when it will be supported on core
-        // menuClassName={classNames(
-        //   'max-w-full italic',
-        //   !isTrueOrFalseFilterSelected && 'md:max-w-[100px]',
-        // )}
         filters={filterFunctionValues}
         selectedFilter={filterFunction}
+        formattingFunction={(filterType) => getFilterLabel(filterType)}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
       />
-      {/* TODO: uncomment when it will be supported on core */}
-      {/* {!isTrueOrFalseFilterSelected && */}
       {filterFunction === PublicationFunctions.Regex ? (
         <RegexParamInput
           regEx={filterRegexParam}
           onRegExChange={handleChangeFilterRegexParam}
+          inputRef={regexInputRef}
         />
       ) : (
         <MultipleComboBox
@@ -277,35 +324,36 @@ export function TargetAudienceFilterComponent({
           getItemValue={getItemLabel}
           onChangeSelectedItems={handleChangeFilterParams}
           fontSize="text-xs"
-          placeholder={t('Enter one or more options...')}
+          placeholder={t(SideBarI18nKeys.EnterOneOrMoreOptions)}
           dataQa="filter-values-container"
+          inputRef={valuesInputRef}
+          showConnectorBetweenSelectedItems
+          connectorLabel={tChat(ChatI18nKeys.Or)}
         />
       )}
-      {/* } */}
-      <div className="flex min-h-[31px] items-start justify-center bg-layer-3 px-2 py-[5.5px]">
-        <div className="flex gap-2">
-          <DialButton
-            data-qa="save-filter"
-            onClick={handleSaveFilter}
-            disabled={isSaveBtnDisabled}
-            iconBefore={
-              <IconCheck
-                size={18}
-                className={classNames(
-                  isSaveBtnDisabled
-                    ? 'text-controls-disable'
-                    : 'text-secondary hover:text-accent-primary',
-                )}
-              />
-            }
-          />
-          <DialCloseButton
-            onClose={onCloseFilter}
-            className="text-secondary hover:text-accent-primary"
-            size={18}
-            data-qa="cancel-filter"
-          />
-        </div>
+      <div className="flex min-h-[31px] gap-2 bg-layer-3 px-2 py-[3.5px]">
+        <CloseButtonSmall onClick={onCloseFilter} data-qa="cancel-filter" />
+        <DialPrimaryIconButton
+          size={ElementSize.Small}
+          data-qa="save-filter"
+          onClick={handleSaveFilter}
+          tooltipProps={{
+            tooltip: t(SideBarI18nKeys.AddFilter),
+            isTriggerClickable: true,
+            triggerClassName: classNames(
+              isSaveBtnDisabled && 'hover:text-controls-disable',
+            ),
+          }}
+          disabled={isSaveBtnDisabled}
+          icon={
+            <IconCheck
+              size={DEFAULT_ICON_SIZES.SMALL}
+              className={classNames(
+                isSaveBtnDisabled && 'hover:text-controls-disable',
+              )}
+            />
+          }
+        />
       </div>
     </div>
   );

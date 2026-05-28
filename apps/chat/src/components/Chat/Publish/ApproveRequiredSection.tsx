@@ -20,6 +20,8 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { CaretIconComponent } from '@/src/components/Common/CaretIconComponent';
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
 
@@ -30,6 +32,7 @@ import {
 import { ReviewDot } from './ReviewDot';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
@@ -53,7 +56,6 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
       publication.url,
     ),
   );
-
   const isMessageStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -114,10 +116,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         <div
           className={classNames(
             'group/button flex size-full items-center gap-1 py-2 pr-3',
-            {
-              'cursor-pointer': !isMessageStreaming,
-              'cursor-not-allowed': isMessageStreaming,
-            },
+            isMessageStreaming ? 'cursor-not-allowed' : 'cursor-pointer',
           )}
         >
           <CaretIconComponent hidden={!showCaretIcon} isOpen={isOpen} />
@@ -125,8 +124,8 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
             <IconClipboard
               className="text-secondary"
               strokeWidth={1.5}
-              width={24}
-              height={24}
+              width={DEFAULT_ICON_SIZES.STANDARD}
+              height={DEFAULT_ICON_SIZES.STANDARD}
             />
             {(!itemsToReview
               .filter((item) => !isFileId(item.reviewUrl))
@@ -144,13 +143,18 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
           </div>
           <div
             className={classNames(
-              'relative max-h-5 flex-1 truncate break-all text-left',
+              'relative max-h-5 min-w-0 flex-1 flex-1 text-left',
               selectedPublicationUrl === publication.url &&
                 'text-accent-primary',
             )}
             data-qa="folder-name"
           >
-            {publication.name || getPublicationId(publication.url)}
+            <div className="w-full">
+              <DialEllipsisTooltip
+                text={publication.name || getPublicationId(publication.url)}
+                id="folder-name-value"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -247,7 +251,7 @@ export const ApproveRequiredSection = ({
       isHighlighted={isSectionHighlighted}
       additionalNode={
         !!publicationsToReviewCount && (
-          <span className="absolute right-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded bg-accent-secondary px-[2px] text-xxs font-semibold text-layer-3">
+          <span className="absolute right-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded bg-accent-primary-alpha px-[2px] text-xxs font-semibold text-accent-primary">
             {publicationsToReviewCount}
           </span>
         )

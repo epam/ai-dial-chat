@@ -20,11 +20,15 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { SelectOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { FieldErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
-import { DialButton, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { CloseButtonSmall } from '../CloseButtons';
+
+import { DialButton } from '@epam/ai-dial-ui-kit';
 import { nanoid } from 'nanoid';
 
 export interface DynamicField extends SelectOption<string, string> {
@@ -166,11 +170,10 @@ export const DynamicFormFields = <
               </div>
             </div>
 
-            <DialCloseButton
+            <CloseButtonSmall
               disabled={field.static || disabled}
               className={classNames(field.static && 'invisible')}
-              onClose={() => handleRemove(i)}
-              size={18}
+              onClick={() => handleRemove(i)}
             />
           </div>
         ))}
@@ -188,7 +191,7 @@ export const DynamicFormFields = <
                     : undefined
                 }
                 iconBefore={<IconPlus size={18} />}
-                label={t(addLabel ?? 'Add')}
+                label={t(addLabel ?? ChatI18nKeys.AddChat)}
               />
             }
           >

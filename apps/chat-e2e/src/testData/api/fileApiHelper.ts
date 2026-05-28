@@ -203,6 +203,8 @@ export class FileApiHelper extends BaseApiHelper {
           return 'application/pdf';
         case 'svg':
           return 'image/svg+xml';
+        case 'mp3':
+          return 'audio/mpeg';
         default:
           return 'text/plain';
       }

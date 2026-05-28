@@ -8,6 +8,7 @@ import {
 } from '@tabler/icons-react';
 import { JSX, useCallback, useMemo, useState } from 'react';
 
+import { useIsPublicationReview } from '@/src/hooks/useIsPublicationReview';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
@@ -18,12 +19,10 @@ import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import {
-  AuthSelectors,
-  ConversationsSelectors,
-  ModelsSelectors,
-  PublicationSelectors,
-} from '@/src/store/selectors';
+import { ConversationsSelectors, ModelsSelectors } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ContextMenu } from '@/src/components/Common/ContextMenu';
 
@@ -31,7 +30,15 @@ import { AttachLinkDialog } from './AttachLinkDialog';
 import { FileManagerModal } from './FileManagerModal';
 import { PreUploadDialog } from './PreUploadModal';
 
-const myFilesFilter = new Set([FileSourceType.MY_FILES]);
+const reviewFilesFilter = new Set([
+  FileSourceType.MY_FILES,
+  FileSourceType.REVIEW_FILES,
+]);
+const defaultFilesFilter = new Set([
+  FileSourceType.MY_FILES,
+  FileSourceType.PUBLIC,
+  FileSourceType.SHARED_WITH_ME,
+]);
 
 interface Props {
   selectedFilesIds?: string[];
@@ -54,14 +61,6 @@ export const AttachButton = ({
   onAddLinkToMessage,
 }: Props) => {
   const { t } = useTranslation(Translation.Chat);
-
-  const selectedConversationIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
-  );
-  const resourcesToReview = useAppSelector(
-    PublicationSelectors.selectResourcesToReview,
-  );
-  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
   const messageIsStreaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
@@ -81,6 +80,8 @@ export const AttachButton = ({
   const canAttachLinks = useAppSelector(
     ConversationsSelectors.selectCanAttachLink,
   );
+
+  const isPublicationReview = useIsPublicationReview();
 
   const [isPreUploadDialogOpened, setIsPreUploadDialogOpened] = useState(false);
   const [isSelectFilesDialogOpened, setIsSelectFilesDialogOpened] =
@@ -111,23 +112,20 @@ export const AttachButton = ({
     [onSelectAlreadyUploaded],
   );
 
-  const isApproveRequiredEntity = useMemo(
-    () =>
-      resourcesToReview.some((r) =>
-        selectedConversationIds.includes(r.reviewUrl),
-      ),
-    [resourcesToReview, selectedConversationIds],
-  );
-
-  const sourceFilters =
-    isApproveRequiredEntity && isAdmin ? myFilesFilter : undefined;
+  const sourceFilters = isPublicationReview
+    ? reviewFilesFilter
+    : defaultFilesFilter;
 
   const menuItems: DisplayMenuItemProps[] = useMemo(
     () =>
       [
         {
           name: t(
-            `Attach ${canAttachFolders ? 'folders' : ''}${canAttachFiles && canAttachFolders ? ' and ' : ''}${canAttachFiles ? ' uploaded files' : ''}`,
+            canAttachFiles && canAttachFolders
+              ? ChatI18nKeys.AttachFoldersAndUploadedFiles
+              : canAttachFolders
+                ? ChatI18nKeys.AttachFolders
+                : ChatI18nKeys.AttachUploadedFiles,
           ),
           dataQa: 'attach_uploaded',
           display: canAttachFiles || canAttachFolders,
@@ -135,14 +133,14 @@ export const AttachButton = ({
           onClick: handleOpenAttachmentsModal,
         },
         {
-          name: t('Upload from device'),
+          name: t(ChatI18nKeys.UploadFromDevice),
           dataQa: 'upload_from_device',
           display: canAttachFiles,
           Icon: IconUpload,
           onClick: handleAttachFromComputer,
         },
         {
-          name: t('Attach link'),
+          name: t(ChatI18nKeys.AttachLink),
           dataQa: 'attach_link',
           display: canAttachLinks,
           Icon: IconLink,
@@ -163,9 +161,9 @@ export const AttachButton = ({
   if (!canAttachFiles && !canAttachFolders && !canAttachLinks) return null;
 
   const label = canAttachFiles
-    ? 'Attach files'
+    ? ChatI18nKeys.AttachFiles
     : canAttachFolders
-      ? 'Attach folders'
+      ? ChatI18nKeys.AttachFolders
       : '';
 
   return (
@@ -175,7 +173,7 @@ export const AttachButton = ({
         menuItems={menuItems}
         TriggerCustomRenderer={TriggerCustomRenderer}
         TriggerIcon={IconPaperclip}
-        triggerIconSize={24}
+        triggerIconSize={DEFAULT_ICON_SIZES.STANDARD}
         triggerTooltip={t(label)}
         disabled={messageIsStreaming || !isModelLoaded}
         triggerIconHighlight
@@ -188,7 +186,7 @@ export const AttachButton = ({
           allowedTypes={availableAttachmentsTypes}
           maximumAttachmentsAmount={maximumAttachmentsAmount}
           headerLabel={t(label)}
-          customButtonLabel={t('Attach')}
+          customButtonLabel={t(ChatI18nKeys.Attach)}
           selectedFilesIds={selectedFilesIds}
           onClose={handleCloseFileManagerModal}
         />

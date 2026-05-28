@@ -1,10 +1,13 @@
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isPredefinedEntity } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetSignedIn, isToolsetWithAuth } from '@/src/utils/app/toolsets';
 
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
+
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { Badge } from '@/src/components/Badge';
 
@@ -24,13 +27,19 @@ export const CredentialsStatusIndicator = ({
     entity,
     ToolsetCredentialsLevel.USER,
   );
-  const isPublic = isEntityIdPublic(entity);
+  const isPublic = isEntityIdPublic(entity) || isPredefinedEntity(entity);
   const isSignedIn = isSignedInUser || isSignedInGlobal;
 
-  const loginLabel = isSignedInUser || !isPublic ? 'MY CREDS' : 'ORG CREDS';
-  const label = isSignedIn ? loginLabel : 'LOGGED OUT';
+  const loginLabel =
+    isSignedInUser || !isPublic
+      ? MarketplaceI18nKeys.MyCreds
+      : MarketplaceI18nKeys.OrgCreds;
+  const label = isSignedIn ? loginLabel : MarketplaceI18nKeys.LoggedOut;
   const additionalBadge =
-    isPublic && isSignedInGlobal && isSignedInUser && 'ORG CREDS';
+    isPublic &&
+    isSignedInGlobal &&
+    isSignedInUser &&
+    MarketplaceI18nKeys.OrgCreds;
 
   if (!isToolsetWithAuth(entity)) {
     return null;

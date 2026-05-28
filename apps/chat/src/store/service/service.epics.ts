@@ -11,7 +11,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ServiceActions, UIActions } from '@/src/store/actions';
 
-import { errorsMessages } from '@/src/constants/errors';
+import { CommonI18nKeys } from '@/src/constants/i18n';
 
 const reportIssueEpic: AppEpic = (action$) =>
   action$.pipe(
@@ -37,7 +37,13 @@ const reportIssueSuccessEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ServiceActions.reportIssueSuccess.type),
     switchMap(() =>
-      of(UIActions.showSuccessToast(translate('Issue reported successfully'))),
+      of(
+        UIActions.showSuccessToast(
+          translate(CommonI18nKeys.IssueReportedSuccessfully, {
+            ns: Translation.Common,
+          }),
+        ),
+      ),
     ),
   );
 
@@ -46,11 +52,11 @@ const reportIssueFailEpic: AppEpic = (action$) =>
     ofType(ServiceActions.reportIssueFail.type),
     switchMap(() =>
       of(
-        UIActions.showErrorToast(
-          translate(errorsMessages.generalServer, {
+        UIActions.showErrorToast({
+          message: translate(CommonI18nKeys.GeneralServerError, {
             ns: Translation.Common,
           }),
-        ),
+        }),
       ),
     ),
   );
@@ -80,7 +86,11 @@ const requestApiKeySuccessEpic: AppEpic = (action$) =>
     ofType(ServiceActions.requestApiKeySuccess.type),
     switchMap(() =>
       of(
-        UIActions.showSuccessToast(translate('API Key requested successfully')),
+        UIActions.showSuccessToast(
+          translate(CommonI18nKeys.ApiKeyRequestedSuccessfully, {
+            ns: Translation.Common,
+          }),
+        ),
       ),
     ),
   );
@@ -90,11 +100,11 @@ const requestApiKeyFailEpic: AppEpic = (action$) =>
     ofType(ServiceActions.requestApiKeyFail.type),
     switchMap(() =>
       of(
-        UIActions.showErrorToast(
-          translate(errorsMessages.generalServer, {
+        UIActions.showErrorToast({
+          message: translate(CommonI18nKeys.GeneralServerError, {
             ns: Translation.Common,
           }),
-        ),
+        }),
       ),
     ),
   );

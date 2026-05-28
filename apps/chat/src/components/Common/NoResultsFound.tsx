@@ -1,8 +1,12 @@
+import React from 'react';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
+
+import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import Magnifier from '@/public/images/icons/search-alt.svg';
 
@@ -35,7 +39,7 @@ export const NoResultsFound = ({
         className="font-semibold text-secondary"
       />
       <span>
-        {t('No results found')}
+        {t(CommonI18nKeys.NoResultsFound)}
         {additionalText}
       </span>
       {children && <span>{children}</span>}

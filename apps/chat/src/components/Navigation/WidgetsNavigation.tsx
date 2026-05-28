@@ -1,5 +1,5 @@
 import { IconBrowser, IconProps } from '@tabler/icons-react';
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -17,6 +17,7 @@ import {
   WidgetsSelectors,
 } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { Routes } from '@/src/constants/routes';
 
 import { ModelIcon, ModelTooltip } from '@/src/components/Chatbar/ModelIcon';
@@ -96,8 +97,8 @@ const WidgetsNavigationView = () => {
           router.route === Routes.SelectedWidget
         }
         dataQa="widgets-sidebar-trigger"
-        caption={t('Widgets')}
-        tooltip={t('Widgets')}
+        caption={t(SideBarI18nKeys.Widgets)}
+        tooltip={t(SideBarI18nKeys.Widgets)}
         allowClickSelected={router.route === Routes.SelectedWidget}
       />
     );

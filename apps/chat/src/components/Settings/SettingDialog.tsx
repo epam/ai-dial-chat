@@ -3,6 +3,7 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isTouchable } from '@/src/utils/app/mobile';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { ScreenState } from '@/src/types/common';
@@ -20,6 +21,8 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
+import { BYTES_IN_MB } from '@/src/constants/file';
+import { SettingsI18nKeys } from '@/src/constants/i18n';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
 import { withLabel } from '@/src/components/Common/Forms/Label';
@@ -49,6 +52,9 @@ const SettingDialogView: FC = () => {
   const customLogoId = useAppSelector(UISelectors.selectCustomLogo);
   const isCustomLogoFeatureEnabled: boolean = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.CustomLogo),
+  );
+  const isChatFullWidthByDefault: boolean = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ChatFullWidthByDefault),
   );
   const savedDefaultModelReference = useAppSelector(
     ModelsSelectors.selectDefaultModelOption,
@@ -177,15 +183,17 @@ const SettingDialogView: FC = () => {
   return (
     <Modal
       portalId="theme-main"
-      containerClassName="inline-block w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[509px] md:p-6"
+      containerClassName="flex flex-col w-[400px] overflow-y-auto px-3 py-4 align-bottom transition-all md:max-h-[531px] md:p-6"
       dataQa="settings-modal"
       state={ModalState.OPENED}
       onClose={handleClose}
       initialFocus={saveBtnRef}
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
-      <div className="mb-4 text-base font-bold">{t('Settings')}</div>
-      <div className="mb-4 flex flex-col gap-4">
+      <div className="mb-4 text-base font-bold">
+        {t(SettingsI18nKeys.Settings)}
+      </div>
+      <div className="mb-4 flex min-h-0 flex-1 flex-col gap-4">
         <ThemeSelect
           localTheme={localTheme}
           onThemeChangeHandler={onThemeChangeHandler}
@@ -200,7 +208,8 @@ const SettingDialogView: FC = () => {
                 : ((localLogoFile && localLogoFile.name) ??
                   customLogoLocalStoreName)
             }
-            title={t('Custom logo')}
+            title={t(SettingsI18nKeys.CustomLogo)}
+            maxSelectableFileSize={BYTES_IN_MB * 0.5}
             isFormView
           />
         )}
@@ -210,31 +219,31 @@ const SettingDialogView: FC = () => {
           onModelChange={onModelChange}
         />
 
-        {screenState > ScreenState.SM && (
+        {screenState > ScreenState.SM && !isChatFullWidthByDefault && (
           <ToggleSwitchLabel
-            label={t('Chat width')}
+            label={t(SettingsI18nKeys.ChatWidth)}
             isOn={isChatFullWidthLocal}
-            labelText={t('Show chat full screen width')}
+            labelText={t(SettingsI18nKeys.ShowChatFullScreen)}
             labelClassName="grow"
             handleSwitch={onChangeHandlerFullWidth}
-            switchOnText={t('ON')}
-            switchOFFText={t('OFF')}
+            switchOnText={t(SettingsI18nKeys.ON)}
+            switchOFFText={t(SettingsI18nKeys.OFF)}
             isLabelOnRight
             className="mt-1"
           />
         )}
-        {screenState > ScreenState.MD && (
+        {!isTouchable() && (
           <EnterTypeSelectLabeled
-            label={t('Keyboard shortcuts')}
+            label={t(SettingsI18nKeys.KeyboardShortcuts)}
             value={enterType}
             onValueChange={(value) => setEnterType(value as EnterType)}
           />
         )}
       </div>
 
-      <div className="flex justify-end">
+      <div className="mt-4 flex justify-end">
         <DialPrimaryButton
-          label={t('Save')}
+          label={t(SettingsI18nKeys.Save)}
           onClick={handleSave}
           data-qa="save"
           ref={saveBtnRef}

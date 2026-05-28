@@ -13,6 +13,7 @@ import {
 import { getFolderIdFromEntityId } from '@/src/utils/app/folders';
 import {
   getIdWithoutFeatureType,
+  getIdWithoutTemporaryBucket,
   isApplicationId,
   isConversationId,
   isFileId,
@@ -36,6 +37,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import { PublicationActions } from '@/src/store/actions';
+import { FoldersSelectors } from '@/src/store/folders/folders.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   AuthSelectors,
@@ -43,6 +45,7 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
@@ -73,9 +76,6 @@ import { ReviewToolsetDialog } from './ReviewToolsetDialog/ReviewToolsetDialog';
 import { PublishActions } from '@epam/ai-dial-shared';
 import { zodResolver } from '@hookform/resolvers/zod';
 import isEqual from 'lodash-es/isEqual';
-
-const AUTHOR_PUBLIC_NAME_TOOLTIP =
-  "This name will be displayed instead of the author's name for this publication.";
 
 const entityNamePreprocessor = {
   setValueAs: (name: string) => {
@@ -134,6 +134,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   const publicationModel = useAppSelector(
     PublicationSelectors.selectPublishModel,
   );
+
   const isReview = !publicationModel;
   const isRulesLoading = useAppSelector(
     PublicationSelectors.selectIsRulesLoading,
@@ -161,12 +162,16 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   const areConversationsWithContentUploading = useAppSelector(
     ConversationsSelectors.selectAreConversationsWithContentUploading,
   );
+  const temporaryFolders = useAppSelector(
+    FoldersSelectors.selectTemporaryFolders,
+  );
 
   const [isCompareModalOpened, setIsCompareModalOpened] = useState(false);
   const [isFormChanged, setIsFormChanged] = useState(false);
+  const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
 
   const publicationAuthor = useMemo(() => {
-    return extractNameFromEmail(publication.author) ?? t('Unknown');
+    return extractNameFromEmail(publication.author) ?? t(ChatI18nKeys.Unknown);
   }, [publication.author, t]);
   const initialState = useMemo(() => {
     const { entities, folders } = getDefaultAllEditEntities(
@@ -226,12 +231,21 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     PublishRequestFieldsNames.PUBLISH_TO_URL,
   );
 
+  const rulesPath =
+    !isReview || isEditMode ? editedPublishToUrl : publication.targetFolder;
+
   const rules = useAppSelector((state) =>
-    PublicationSelectors.selectRulesByPath(
-      state,
-      !isReview ? editedPublishToUrl : publication.targetFolder,
-    ),
+    PublicationSelectors.selectRulesByPath(state, rulesPath),
   );
+
+  useEffect(() => {
+    if (rules && (!isReview || isEditMode)) {
+      formMethods.setValue(
+        PublishRequestFieldsNames.RULES,
+        rules[rulesPath] ?? [],
+      );
+    }
+  }, [formMethods, rulesPath, rules, isReview, isEditMode]);
 
   useEffect(() => {
     if (!isEditMode) {
@@ -344,17 +358,27 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   ]);
 
   const hasUserChangedRules = useMemo(() => {
-    return !isEqual(
-      rules[isReview ? publication.targetFolder : editedPublishToUrl] ?? [],
-      (isReview ? newRules : rulesOnEdit) ?? [],
+    const isTemporaryFolder = temporaryFolders.some(
+      (folder) =>
+        getIdWithoutTemporaryBucket(folder.id) ===
+        getIdWithoutFeatureType(editedPublishToUrl),
+    );
+    return (
+      (initialState.publishToUrl !== editedPublishToUrl && isTemporaryFolder) ||
+      !isEqual(
+        rules[isReview ? publication.targetFolder : editedPublishToUrl] ?? [],
+        (isReview ? newRules : rulesOnEdit) ?? [],
+      )
     );
   }, [
     editedPublishToUrl,
+    initialState.publishToUrl,
     isReview,
     newRules,
     publication.targetFolder,
     rules,
     rulesOnEdit,
+    temporaryFolders,
   ]);
 
   const maxPublishToDepth = useMemo(() => {
@@ -388,9 +412,24 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   const isSomeResourceIsUnpublish = publication.resources.some(
     (resource) => resource.action === PublishActions.DELETE,
   );
+
+  const isSomeResourceIsPublish = publication.resources.some(
+    (resource) => resource.action === PublishActions.ADD,
+  );
   const doesPublicationContainFiles = publication.resources.some(
     ({ reviewUrl }) => isFileId(reviewUrl),
   );
+
+  const isUnpublishAction =
+    publicationModel?.action === PublishActions.DELETE ||
+    (isSomeResourceIsUnpublish && !isSomeResourceIsPublish);
+
+  const publishLabel = isUnpublishAction
+    ? ChatI18nKeys.UnpublishFrom
+    : isSomeResourceIsUnpublish && isSomeResourceIsPublish
+      ? ChatI18nKeys.Path
+      : ChatI18nKeys.PublishTo;
+
   const showPublicDisplayAuthor =
     !isPublicationHasOnlyUnpublishEntities ||
     (publicationModel && publicationModel.action !== PublishActions.DELETE);
@@ -411,7 +450,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
         )}
       >
         <div
-          className="relative flex size-full flex-col divide-y divide-tertiary rounded 2xl:max-w-[1000px]"
+          className="relative flex size-full flex-col divide-y divide-tertiary rounded 2xl:max-w-[1200px]"
           data-qa="publish-approval-modal"
         >
           <div className="flex w-full flex-col justify-center rounded-t bg-layer-2 px-3 py-4 md:px-5">
@@ -436,7 +475,9 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                   entityNamePreprocessor,
                 )}
                 placeholder={t(
-                  `Type ${publicationModel.action === PublishActions.ADD ? 'publication' : 'unpublish'} request name...`,
+                  publicationModel.action === PublishActions.ADD
+                    ? ChatI18nKeys.TypePublicationRequestName
+                    : ChatI18nKeys.TypeUnpublishRequestName,
                 )}
                 id={PublishRequestFieldsNames.PUBLISH_REQUEST_NAME}
                 error={formMethods.formState.errors.publishRequestName?.message}
@@ -458,7 +499,9 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
               <div className="relative size-full gap-px divide-y divide-tertiary overflow-auto md:grid md:grid-cols-2 md:grid-rows-1 md:divide-y-0">
                 <div className="flex shrink flex-col divide-y divide-tertiary overflow-auto bg-layer-2 md:py-4">
                   <div className="flex flex-col px-3 pb-4 md:px-5">
-                    <h2 className="mb-4 font-semibold">{t('General info')}</h2>
+                    <h2 className="mb-4 font-semibold">
+                      {t(ChatI18nKeys.GeneralInfo)}
+                    </h2>
                     {(publicationModel &&
                       publicationModel.action !== PublishActions.DELETE) ||
                     (isEditMode && !isSomeResourceIsUnpublish) ? (
@@ -469,12 +512,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     ) : (
                       <PublicationInfoSection
                         labelDataQa="publish-label"
-                        label={t(
-                          publicationModel &&
-                            publicationModel.action === PublishActions.DELETE
-                            ? 'Unpublish from'
-                            : 'Publish to',
-                        )}
+                        label={t(publishLabel)}
                         valueDataQa="publish-path"
                         valueToDisplay={displayPublishToUrl}
                         tooltip={
@@ -488,7 +526,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     {isReview && (
                       <PublicationInfoSection
                         labelDataQa="publication-author-label"
-                        label={t('Author')}
+                        label={t(ChatI18nKeys.Author)}
                         valueDataQa="publication-author"
                         valueToDisplay={publicationAuthor}
                       />
@@ -498,10 +536,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                       (isEditMode || !isReview ? (
                         <Field
                           info={
-                            isReview ? t(AUTHOR_PUBLIC_NAME_TOOLTIP) : undefined
+                            isReview
+                              ? t(ChatI18nKeys.AuthorPublicNameTooltip)
+                              : undefined
                           }
                           label={t(
-                            isReview ? "Author's public name" : 'Author',
+                            isReview
+                              ? ChatI18nKeys.AuthorPublicName
+                              : ChatI18nKeys.Author,
                           )}
                           {...formMethods.register(
                             PublishRequestFieldsNames.PUBLICATION_AUTHOR,
@@ -517,17 +559,17 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                       ) : (
                         <PublicationInfoSection
                           labelDataQa="publication-display-author-label"
-                          label={t("Author's public name")}
+                          label={t(ChatI18nKeys.AuthorPublicName)}
                           valueDataQa="publication-display-author"
                           valueToDisplay={publication.displayAuthor ?? ''}
-                          infoTooltip={t(AUTHOR_PUBLIC_NAME_TOOLTIP)}
+                          infoTooltip={t(ChatI18nKeys.AuthorPublicNameTooltip)}
                         />
                       ))}
 
                     {isReview && (
                       <PublicationInfoSection
                         labelDataQa="creation-date-label"
-                        label={t('Request created')}
+                        label={t(ChatI18nKeys.RequestCreated)}
                         valueDataQa="creation-date"
                         valueToDisplay={formatDate(publication.createdAt)}
                       />
@@ -540,7 +582,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     <h2 className="mb-4 flex items-center gap-2 text-sm">
                       <div className="flex w-full justify-between">
                         <p data-qa="allow-access-label">
-                          {t('Allow access if all match')}
+                          {t(ChatI18nKeys.AllowAccessIfAllMatch)}
                         </p>
                         {isReview && (
                           <>
@@ -550,14 +592,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                 className="cursor-pointer text-accent-primary"
                                 data-qa="see-changes"
                               >
-                                {t('See changes')}
+                                {t(ChatI18nKeys.SeeChanges)}
                               </span>
                             ) : (
                               <span
                                 className="text-secondary"
                                 data-qa="no-changes-label"
                               >
-                                {t('No changes')}
+                                {t(ChatI18nKeys.NoChanges)}
                               </span>
                             )}
                           </>
@@ -570,6 +612,13 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                       newRules={newRules}
                       publication={publication}
                       editedPublishToUrl={editedPublishToUrl}
+                      isRulesSetterVisible={isRulesSetterVisible}
+                      onRulesSetterOpenChange={setIsRulesSetterVisible}
+                      error={
+                        formMethods.formState.errors.rules
+                          ? t(ChatI18nKeys.PleaseFixRulesToProceed)
+                          : undefined
+                      }
                     />
                   </section>
                 </div>
@@ -583,13 +632,21 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                           ItemComponent,
                           featureType,
                         }) => {
-                          const filteredResources =
-                            publication.resources.filter(({ reviewUrl }) => {
+                          const filteredResources = publication.resources
+                            .filter(({ reviewUrl }) => {
                               const { apiKey } = splitEntityId(reviewUrl);
                               const itemFeatureType =
                                 EnumMapper.getFeatureTypeByApiKey(apiKey);
                               return itemFeatureType === featureType;
-                            });
+                            })
+                            .sort((a, b) =>
+                              splitEntityId(a.reviewUrl)
+                                .name.toLowerCase()
+                                .localeCompare(
+                                  splitEntityId(b.reviewUrl).name.toLowerCase(),
+                                ),
+                            );
+
                           const isConversationSectionAndNoFiles =
                             !isReview &&
                             featureType === FeatureType.File &&
@@ -618,10 +675,10 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                               sectionTooltip={
                                 isReview && (
                                   <>
-                                    {t('Publish')},
+                                    {t(ChatI18nKeys.Publish)},
                                     <span className="text-error">
                                       {' '}
-                                      {t('Unpublish')}
+                                      {t(ChatI18nKeys.Unpublish)}
                                     </span>
                                   </>
                                 )
@@ -644,8 +701,8 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                       ({ reviewUrl }) =>
                                         isConversationId(reviewUrl),
                                     ).length < 2
-                                      ? "This conversation doesn't contain any files"
-                                      : "These conversations don't contain any files",
+                                      ? ChatI18nKeys.ConversationNoFiles
+                                      : ChatI18nKeys.ConversationsNoFiles,
                                   )}
                                 </p>
                               )}
@@ -654,7 +711,19 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                   <ErrorMessage
                                     type="warning"
                                     error={t(
-                                      `The icon used for this ${errorMessageEntityType} is in the "${isEntityIdPublic({ id: publicationModel.entity.iconUrl ?? '' }) ? 'Organization' : 'Shared with me'}" section and cannot be published. Please replace the icon, otherwise the ${errorMessageEntityType} will be published with the default one.`,
+                                      ChatI18nKeys.IconUsedForEntityIsInSectionCannotBePublished,
+                                      {
+                                        entityType: errorMessageEntityType,
+                                        section: t(
+                                          isEntityIdPublic({
+                                            id:
+                                              publicationModel.entity.iconUrl ??
+                                              '',
+                                          })
+                                            ? ChatI18nKeys.Organization
+                                            : ChatI18nKeys.SharedWithMe,
+                                        ),
+                                      },
                                     )}
                                   />
                                 )}
@@ -665,7 +734,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                     </>
                   ) : (
                     <p className="my-3">
-                      {t('This publication has no resources')}
+                      {t(ChatI18nKeys.PublicationNoResources)}
                     </p>
                   )}
                 </div>
@@ -677,6 +746,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
             isFormChanged={isFormChanged}
             areRulesChanged={hasUserChangedRules}
             initialState={initialState}
+            isDraftRuleFilterOpen={isRulesSetterVisible}
           />
         </div>
         {isCompareModalOpened && publication.targetFolder && (

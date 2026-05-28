@@ -1,5 +1,6 @@
 import { getEntityBucket, getFileRootId } from '@/src/utils/app/id';
 
+import { ApiKeys } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 import { EntityFilters } from '@/src/types/search';
 
@@ -12,6 +13,7 @@ import {
   DialFileResourceType,
   DialFile as UIKitDialFile,
 } from '@epam/ai-dial-ui-kit';
+import { sortBy } from 'lodash-es';
 
 export interface DialRootFolder extends UIKitDialFile {
   label: string;
@@ -80,6 +82,7 @@ const PermissionMap: Record<SharePermission, DialFilePermission> = {
 
 export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
   const fullPath = file.id;
+  const folderId = file.isRootSharedItem ? '' : file.folderId;
 
   const parentPath = file.folderId || null;
 
@@ -87,7 +90,7 @@ export const convertToUIKitFile = (file: DialFile): UIKitDialFile => {
     id: file.id,
     name: file.name,
     path: fullPath,
-    folderId: file.folderId || '',
+    folderId,
     nodeType: DialFileNodeType.ITEM,
     resourceType: DialFileResourceType.FILE,
     contentLength: file.contentLength,
@@ -120,6 +123,11 @@ export const convertToUIKitFolder = (
     permissions: folder.permissions?.map((p) => PermissionMap[p]),
   };
 };
+
+const sortItemsByName = (items: UIKitDialFile[]): UIKitDialFile[] =>
+  sortBy(items, (item) => item.name.toLowerCase()).map((item) =>
+    item.items ? { ...item, items: sortItemsByName(item.items) } : item,
+  );
 
 export const buildFileTree = (
   files: DialFile[],
@@ -206,19 +214,44 @@ export const buildFileTree = (
     getFileRootId(getEntityBucket({ id: rootItems?.[0]?.id || '' })) ||
     getFileRootId();
 
+  const allRootBucketIds = new Set<string>();
+  allRootBucketIds.add(effectiveRootId);
+
+  files.forEach((file) => {
+    const bucket = getEntityBucket({ id: file.id });
+    if (bucket) {
+      allRootBucketIds.add(getFileRootId(bucket));
+    }
+  });
+  folders.forEach((folder) => {
+    const bucket = getEntityBucket({ id: folder.id });
+    if (bucket) {
+      allRootBucketIds.add(getFileRootId(bucket));
+    }
+  });
+
   uikitFiles.forEach((file) => {
     const parentFolderId = file.folderId;
     const parentFolder = folderMap.get(parentFolderId);
 
     if (parentFolder && parentFolder.items && file.id) {
-      parentFolder.items.push(file);
-      placedFileIds.add(file.id);
+      if (allRootBucketIds.has(parentFolderId)) {
+        rootItems.push(file);
+        placedFileIds.add(file.id);
+      } else {
+        parentFolder.items.push(file);
+        placedFileIds.add(file.id);
+      }
     }
   });
 
   uikitFiles.forEach((file) => {
     if (file.id && !placedFileIds.has(file.id)) {
-      if (file.folderId === effectiveRootId || !file.folderId) {
+      if (
+        allRootBucketIds.has(file.folderId) ||
+        file.folderId === effectiveRootId ||
+        !file.folderId
+      ) {
         rootItems.push(file);
       }
     }
@@ -232,11 +265,11 @@ export const buildFileTree = (
     path: effectiveRootId,
     folderId: '',
     nodeType: DialFileNodeType.FOLDER,
-    items: rootItems,
+    items: sortItemsByName(rootItems),
     parentPath: null,
     label: pathRootAlias || 'Files',
     permissions:
-      effectiveRootId === `files/${BucketService.getBucket()}`
+      effectiveRootId === `${ApiKeys.Files}/${BucketService.getBucket()}`
         ? [DialFilePermission.READ, DialFilePermission.WRITE]
         : [],
   };

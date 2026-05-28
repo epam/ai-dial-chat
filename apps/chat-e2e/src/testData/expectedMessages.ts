@@ -15,10 +15,13 @@ export const ExpectedMessages = {
   sendMessageButtonIsNotVisible:
     'Send message button is not visible in chat input',
   conversationsCountIsValid: 'Conversations count is valid',
+  conversationsListIsValid: 'Conversations list is valid',
   notAllowedToMoveParentToChild:
     "It's not allowed to move parent folder in child folder",
-  folderIsNotVisible: 'Folder is not visible in chat bar',
+  folderIsNotVisible: 'Folder is not visible',
   folderIsVisible: 'Folder is visible',
+  folderIsSelected: 'Folder is selected',
+  folderIsNotSelected: 'Folder is not selected',
   newFolderCreated: 'New folder is created',
   folderCollapsed: 'Folder is collapsed',
   folderExpanded: 'Folder is expanded',
@@ -240,6 +243,7 @@ export const ExpectedMessages = {
   dotsMenuIsVisible: 'Three dots menu is visible',
   iconColorIsValid: 'Icon color is valid',
   iconIsHidden: 'Icon is hidden',
+  imageIsLoaded: 'Image is loaded',
   bannerMessageIsValid: 'Announcement banner message is valid',
   bannerWidthIsValid: 'Announcement banner width is valid',
   bannerIsClosed: 'Announcement banner is closed',
@@ -252,10 +256,14 @@ export const ExpectedMessages = {
   responseTextIsValid: 'Response text is valid for entity: ',
   imageUrlReturnedInResponse:
     'Image url is returned in the response for model: ',
+  audioUrlReturnedInResponse:
+    'Audio url is returned in the response for model: ',
   attachmentUrlIsValid: 'Conversation attachment url is valid',
   attachmentIsSuccessfullyDownloaded:
     'Conversation attachment is successfully downloaded',
   attachmentIsExpanded: 'Conversation attachment is expanded',
+  attachmentIsOpenedOnFullScreen:
+    'Conversation attachment is opened on full screen',
   attachmentIsCollapsed: 'Conversation attachment is collapsed',
   attachmentNameColorIsValid: 'Attachment name color is valid',
   attachmentHasErrorIcon: 'Attachment has error icon',
@@ -296,7 +304,6 @@ export const ExpectedMessages = {
   attachmentsAreGrouped: 'Attachments are grouped',
   attachmentIsVisible: 'Attachment is visible',
   attachmentIsHidden: 'Attachment is hidden',
-  attachFilesModalIsOpened: 'Attach files modal dialog is opened',
   supportedTypesLabelIsCorrect: 'Supported types label is valid',
   fileIsUploaded: 'File is uploaded',
   fileIsNotUploaded: 'File is not uploaded',
@@ -304,10 +311,12 @@ export const ExpectedMessages = {
   fileExtensionIsValid: 'File extension is valid',
   elementAttributeValueIsValid: 'Element attribute value is valid',
   elementAttributeValueShouldBe: 'Element attribute value should be: ',
+  elementAttributeValueShouldNotBe: 'Element attribute value should not be: ',
   uploadedFilesAreaIsScrollable: 'Uploaded files area is scrollable vertically',
   elementIsInFocus: 'Element is in focus',
   elementIsNotInFocus: 'Element is not in focus',
-  errorMessageIsShown: 'Error message is shown',
+  errorIconIsShown: 'Error icon is shown',
+  warningIconIsShown: 'Warning icon is shown',
   errorTextColorIsValid: 'Error text color is valid',
   errorMessageContentIsValid: 'Error message content is valid',
   folderEditModeIsActive: 'Folder edit mode is active',
@@ -382,8 +391,8 @@ export const ExpectedMessages = {
   noData: 'No data in the conversation section',
   agentNameIsValid: 'Agent name is valid',
   agentIsVisible: 'Agent is visible',
-  applicationFormFieldShouldHaveAsterisk:
-    'Application form field should be marked as required',
+  entityFormFieldShouldHaveAsterisk:
+    'Entity form field should be marked as required',
   FormFieldShouldRetainUpdatedValue:
     'Chat Completion URL should retain updated value',
   dropdownMenuIsHidden: 'The dropdown menu is hidden',
@@ -417,6 +426,7 @@ export const ExpectedMessages = {
   myAgentsListIsValid: 'My Agents list is valid',
   allAgentsListIsValid: 'All Agents list is valid',
   valuesAreEqual: 'Values are equal',
+  valueMatchPattern: 'Value match pattern',
   requestCannotBeApproved:
     "Request can't be approved as some conversations have no messages",
   shareLinkIsUpdated: 'Share link is updated',
@@ -478,4 +488,27 @@ export const MarketplaceExpectedMessages = {
   agentIsVisible: (name: string) => `Agent ${name} is visible in Marketplace`,
   filteredAgentsAreValid: 'Filtered agents are valid',
   filterOptionsAreValid: 'Filter options are valid',
+  agentMenuOptionsAreValid: 'Agent menu options are valid',
+  toolsetSupportedScopesAreValid: 'Toolset supported scopes are valid',
+  toolsetOAuthRedirectStateIsDefined:
+    'Toolset OAuth redirect request state is defined',
+  toolsetOAuthRedirectResponseTypeIsValid:
+    'Toolset OAuth redirect request response type is valid',
+  toolsetOAuthRedirectCodeChallengeMethodIsValid:
+    'Toolset OAuth redirect request code challenge method is valid',
+  toolsetOAuthRedirectClientIdIsValid:
+    'Toolset OAuth redirect request client id is valid',
+  toolsetOAuthRedirectUriIsValid: 'Toolset OAuth redirect request URI is valid',
+  toolsetSignInUrlValid: 'Toolset Sign-in request URL is valid',
+  toolsetSignInAuthTypeIsValid:
+    'Toolset Sign-in request authentication type is valid',
+  toolsetSignInCredentialsLevelIsValid:
+    'Toolset Sign-in request credentials level is valid',
+  toolsetSignInCodeIsValid: 'Toolset Sign-in request code is valid',
+  toolsetSignInApiKeyIsValid: 'Toolset Sign-in request api key is valid',
+  toolsetSignOutUrlValid: 'Toolset Sign-out request URL is valid',
+  toolsetSignOutAuthTypeIsValid:
+    'Toolset Sign-out request authentication type is valid',
+  toolsetSignOutCredentialsLevelIsValid:
+    'Toolset Sign-out request credentials level is valid',
 };

@@ -4,12 +4,17 @@ import { isSmallScreen } from '@/src/utils/app/mobile';
 
 import { UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
+import {
+  MarketplaceSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import {
   DEFAULT_HEADER_ICON_SIZE,
   OVERLAY_HEADER_ICON_SIZE,
 } from '@/src/constants/default-ui-settings';
+import { HeaderI18nKeys } from '@/src/constants/i18n';
 
 import { ToggleSidebarButton } from '@/src/components/Buttons/ToggleSidebarButton';
 import { BaseHeader } from '@/src/components/Header/BaseHeader';
@@ -33,16 +38,23 @@ export const MarketplaceHeader = () => {
     ? OVERLAY_HEADER_ICON_SIZE
     : DEFAULT_HEADER_ICON_SIZE;
 
+  const { selectedFilters } = useAppSelector(
+    MarketplaceSelectors.selectFiltersContent,
+  );
+
   return (
     <BaseHeader
       LeftItems={
         <ToggleSidebarButton
           iconSize={headerIconSize}
-          tooltip="Control panel"
+          tooltip={HeaderI18nKeys.Filters}
           isOpened={showFilterbar}
           onToggle={handleToggleFilterbar}
           dataQa="left-panel-toggle"
           isOverlay={isOverlay}
+          filterIndicator={Object.values(selectedFilters).some(
+            (filters) => filters.length > 0,
+          )}
         />
       }
     />

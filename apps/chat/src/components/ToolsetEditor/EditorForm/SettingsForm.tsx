@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Controller,
   useFormContext,
@@ -13,6 +13,10 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { ToolsetSelectors } from '@/src/store/selectors';
+
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_TOOLSET_TOOLTIP } from '@/src/constants/toolsets';
 
 import { DropdownSelector } from '@/src/components/Common/DropdownSelector';
@@ -20,6 +24,7 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 import { AuthField } from '@/src/components/ToolsetEditor/EditorForm/AuthField';
 import {
   ENDPOINT_PLACEHOLDER,
@@ -30,6 +35,7 @@ import { ToolsetTransportType } from '@epam/ai-dial-shared';
 
 const SelectorField = withLabel(DropdownSelector);
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
+const CopyUrlButton = withLabel(ToolsetLinkButton);
 
 const getComboBoxLabel = (item: unknown): string => item as string;
 
@@ -58,7 +64,7 @@ const FormSection = ({
   return (
     <div className={classNames('flex flex-col gap-4', className)}>
       {(!!title || !!subtitle) && (
-        <div>
+        <div className="flex flex-col gap-2">
           {!!title && (
             <h5
               className="text-base font-semibold text-primary"
@@ -97,6 +103,7 @@ interface SettingsFormProps {
 export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
+  const toolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const { register, clearErrors, setValue, control } =
     useFormContext<ToolsetEditorForm>();
   const { errors } = useFormState<ToolsetEditorForm>({ control });
@@ -114,15 +121,18 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
 
   return (
     <div
-      className="flex size-full grow flex-col space-y-4 divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5"
+      className="flex size-full grow flex-col space-y-4 divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2 py-4 xl:py-5"
       data-qa="entity-view-form"
     >
-      <FormSection title={t('Definition')}>
+      <FormSection
+        title={t(CommonI18nKeys.Definition)}
+        className="px-3 md:px-5"
+      >
         <Field
           {...register('endpoint')}
-          label={t('Endpoint')}
+          label={t(CommonI18nKeys.Endpoint)}
           mandatory
-          placeholder={t('Enter endpoint')}
+          placeholder={t(CommonI18nKeys.EnterEndpoint)}
           id="endpoint"
           error={errors.endpoint?.message}
           tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
@@ -133,7 +143,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
           control={control}
           render={({ field }) => (
             <SelectorField
-              label={t('Transport protocol')}
+              label={t(CommonI18nKeys.TransportProtocol)}
               isSearchable={false}
               isClearable={false}
               value={toOption(field.value)}
@@ -142,7 +152,6 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
                   (option as unknown as DropdownSelectorOption).value,
                 )
               }
-              mandatory
               id="protocol"
               options={protocolOptions}
               closeMenuOnSelect
@@ -154,11 +163,9 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
       </FormSection>
 
       <FormSection
-        title={t('Authentication')}
-        subtitle={t(
-          'Select one of the methods below that will be used to authenticate',
-        )}
-        className="pt-4"
+        title={t(CommonI18nKeys.AuthenticationCommon)}
+        subtitle={t(CommonI18nKeys.SelectAuthMethod)}
+        className="px-3 pt-4 md:px-5"
       >
         <AuthField
           tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
@@ -167,11 +174,8 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
       </FormSection>
 
       <FormSection
-        title={t('Allowed tools')}
-        subtitle={t(
-          'The list of tools will be available after filling in the definition and authentication section',
-        )}
-        className="pt-4"
+        title={t(CommonI18nKeys.AllowedTools)}
+        className="px-3 pt-4 md:px-5"
       >
         <Controller
           name="allowedTools"
@@ -182,7 +186,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
               getItemLabel={getComboBoxLabel}
               getItemValue={getComboBoxLabel}
               onChangeSelectedItems={field.onChange}
-              placeholder={t('Enter one or more tools')}
+              placeholder={t(CommonI18nKeys.EnterOneOrMoreTools)}
               id="allowedTools"
               disabled={isToolsetPublic}
               className={classNames(
@@ -196,6 +200,16 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
               dataQa="combobox"
             />
           )}
+        />
+      </FormSection>
+
+      <FormSection
+        title={t(CommonI18nKeys.ConnectToolset)}
+        className="px-3 pt-4 md:px-5"
+      >
+        <CopyUrlButton
+          entity={toolset}
+          label={t(CommonI18nKeys.CopyToolsetEndpointURL)}
         />
       </FormSection>
     </div>

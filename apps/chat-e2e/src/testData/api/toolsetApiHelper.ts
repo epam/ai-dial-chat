@@ -15,7 +15,7 @@ export class ToolsetApiHelper extends BaseApiHelper {
         data: toolsetModel,
       },
     );
-    this.apiAssertion.assertResponseCode(
+    await this.apiAssertion.assertResponseCode(
       response,
       toolsetModel.display_name,
       200,
@@ -25,7 +25,7 @@ export class ToolsetApiHelper extends BaseApiHelper {
 
   public async listToolsets() {
     const response = await this.request.get(this.getHost(API.toolsetsHost()));
-    this.apiAssertion.assertResponseCode(response, undefined, 200);
+    await this.apiAssertion.assertResponseCode(response, undefined, 200);
     const toolsets = await response.json();
     return toolsets.data as Toolset[];
   }
@@ -57,6 +57,10 @@ export class ToolsetApiHelper extends BaseApiHelper {
   public async deleteToolset(toolset: Toolset) {
     const path = `${API.api}/${toolset.id}`;
     const response = await this.request.delete(this.getHost(path));
-    this.apiAssertion.assertResponseCode(response, toolset.display_name, 200);
+    await this.apiAssertion.assertResponseCode(
+      response,
+      toolset.display_name,
+      200,
+    );
   }
 }

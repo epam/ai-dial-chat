@@ -1,9 +1,11 @@
 import { FeatureType } from '@/src/types/common';
+import { MarketplacePanelState } from '@/src/types/marketplace-panel-state';
 import { EnterType } from '@/src/types/settings';
 import { Theme, ThemesImages } from '@/src/types/themes';
 
 export interface UIState {
   initialized: boolean;
+  locale: string;
   theme: string;
   availableThemes: Theme[];
   themesImages: ThemesImages;
@@ -30,4 +32,6 @@ export interface UIState {
   };
   isEditorLoader?: boolean;
   enterType: EnterType;
+  agentsFilterPanelCollapseState: MarketplacePanelState;
+  toolsetFilterPanelCollapseState: MarketplacePanelState;
 }

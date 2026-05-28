@@ -1,4 +1,8 @@
-import { IconMessages, IconPlayerPlay, IconRefresh } from '@tabler/icons-react';
+import {
+  IconCloudUpload,
+  IconMessages,
+  IconRefresh,
+} from '@tabler/icons-react';
 import { FocusEvent, useCallback, useEffect, useMemo } from 'react';
 import { useFormContext, useFormState } from 'react-hook-form';
 
@@ -6,6 +10,7 @@ import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
+import { useApplicationStatusActions } from '@/src/hooks/useApplicationStatusActions';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -22,7 +27,7 @@ import { ScreenState } from '@/src/types/common';
 import { MarketplaceEditorSteps, PreviewMode } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions, ConversationsActions } from '@/src/store/actions';
+import { ConversationsActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -34,6 +39,7 @@ import {
 
 import { AppsEditorQuery } from '@/src/constants/applications';
 import { CHAT_TEXT_FIELD_ID } from '@/src/constants/chat';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { GeneralPreview } from '@/src/components/AppsEditor/AppEditorPreview/GeneralPreview';
 import { Chat } from '@/src/components/Chat/Chat';
@@ -46,8 +52,6 @@ import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 const ChatPreview = () => {
   const { t } = useTranslation(Translation.Chat);
-
-  const dispatch = useAppDispatch();
 
   const router = useRouter();
   const {
@@ -79,6 +83,8 @@ const ChatPreview = () => {
   );
 
   const applicationId = appDetails?.id;
+  const { handleDeploy } = useApplicationStatusActions(applicationId);
+
   const modelFromState = appReference ? modelsMap[appReference] : null;
   const isAppDeployed = useMemo(
     () => !!modelFromState && isApplicationDeployed(modelFromState),
@@ -88,17 +94,6 @@ const ChatPreview = () => {
     () => !!modelFromState && isApplicationDeploymentInProgress(modelFromState),
     [modelFromState],
   );
-
-  const handleDeployClick = useCallback(() => {
-    if (applicationId) {
-      dispatch(
-        ApplicationActions.startUpdatingFunctionStatus({
-          id: applicationId,
-          status: ApplicationStatus.DEPLOYING,
-        }),
-      );
-    }
-  }, [applicationId, dispatch]);
 
   if (
     !areSelectedConversationLoaded ||
@@ -122,29 +117,34 @@ const ChatPreview = () => {
         isAppDeploymentInProgress ? (
           <div className="flex size-full flex-col items-center justify-center gap-4">
             <Spinner size={60} />
-            <span>{t('Deploying...')}</span>
+            <span>
+              {modelFromState?.functionStatus === ApplicationStatus.REDEPLOYING
+                ? t(ChatI18nKeys.Redeploying)
+                : modelFromState?.functionStatus ===
+                    ApplicationStatus.UNDEPLOYING
+                  ? t(ChatI18nKeys.Undeploying)
+                  : t(ChatI18nKeys.Deploying)}
+            </span>
           </div>
         ) : (
           <div className="flex size-full flex-col items-center justify-center gap-4">
             <div className="flex items-center justify-center text-secondary">
-              <IconMessages size={45} />
-            </div>
-            <div className="w-full max-w-[420px] items-center justify-center text-center text-primary">
-              {t(
-                'Please fill the mandatory fields and deploy the application to enable preview. To keep your preview up-to-date,',
-              )}
-              <span className="font-semibold">
-                {t(' make sure to redeploy ')}
-              </span>
-              {t('after making changes.')}
+              <IconMessages size={60} stroke={0.5} />
             </div>
             <DialLinkButton
-              label={t('Deploy code app')}
-              onClick={handleDeployClick}
+              label={t(ChatI18nKeys.DeployCodeApp)}
+              onClick={handleDeploy}
               disabled={!isApplicationValid}
               data-qa="deploy-code-app"
-              iconBefore={<IconPlayerPlay size={18} />}
+              iconBefore={<IconCloudUpload size={18} />}
             />
+            <div className="w-full max-w-[420px] items-center justify-center text-center text-primary">
+              {t(ChatI18nKeys.FillMandatoryFieldsAndDeploy)}
+              <span className="font-semibold">
+                {t(ChatI18nKeys.MakeSureToRedeploy)}
+              </span>
+              {t(ChatI18nKeys.AfterMakingChanges)}
+            </div>
           </div>
         )
       ) : (
@@ -189,6 +189,8 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
     ConversationsSelectors.selectPreviewConversationId,
   );
 
+  const { handleRedeploy } = useApplicationStatusActions(appDetails?.id);
+
   const isExternalAppEditing = useMemo(() => isExternalAppEditor(type), [type]);
 
   const isPreviewHalf = previewMode === PreviewMode.half;
@@ -209,15 +211,6 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
 
   const showRedeployButton =
     type === ApplicationType.CODE_APP && isAppDeployed && !isAppPublic;
-
-  const handleRedeploy = () => {
-    dispatch(
-      ApplicationActions.startUpdatingFunctionStatus({
-        id: appDetails?.id ?? '',
-        status: ApplicationStatus.REDEPLOYING,
-      }),
-    );
-  };
 
   const handleFocusChat = useCallback(
     (e: FocusEvent<HTMLDivElement>) => {
@@ -272,12 +265,12 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
         data-qa="preview-header"
       >
         <div className="mr-2 hidden min-w-0 shrink gap-2 text-primary md:flex">
-          <span>{t('Preview')}:</span>
+          <span>{t(ChatI18nKeys.Preview)}:</span>
           <span data-qa="preview-app-name" className="min-w-0 shrink truncate">
             {appDetails?.name}
           </span>
           <span data-qa="preview-app-version" className="text-nowrap">
-            {t('v.')} {appDetails?.version}
+            {t(ChatI18nKeys.VersionPrefix)} {appDetails?.version}
           </span>
         </div>
 
@@ -288,7 +281,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
               disabled={!isApplicationValid}
               onClick={handleRedeploy}
               iconBefore={<IconRefresh size={18} />}
-              label={t('Redeploy')}
+              label={t(ChatI18nKeys.Redeploy)}
             />
           )}
           {isPreviewHalf && (

@@ -27,6 +27,7 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import {
+  fitApplicationNameToStorageLimits,
   isApplicationType,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
@@ -35,6 +36,7 @@ import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
+import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
 import {
   isEntityIdExternal,
   isEntityIdLocal,
@@ -52,13 +54,16 @@ import {
 } from '@/src/types/applications';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { AppAction, AppEpic } from '@/src/types/store';
+import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
   ApplicationTypesSchemasActions,
+  ChatActions,
   ConversationsActions,
   MarketplaceActions,
   ModelsActions,
+  PromptsActions,
   PublicationActions,
   ShareActions,
   UIActions,
@@ -75,12 +80,14 @@ import {
 import { AppsEditorQuery } from '@/src/constants/applications';
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
+import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   DeleteType,
   MarketplaceEntitiesTabs,
   MarketplaceQueryParams,
   MarketplaceTabs,
 } from '@/src/constants/marketplace';
+import { DEFAULT_QUICK_APPS_SCHEMA_2_ID } from '@/src/constants/quick-apps';
 import { Routes } from '@/src/constants/routes';
 
 import { parse } from 'querystring';
@@ -119,7 +126,12 @@ const createApplicationEpic: AppEpic = (action$) =>
       }
 
       return ApplicationService.create(
-        regenerateApplicationId({ ...applicationData, reference: '' }),
+        regenerateApplicationId(
+          fitApplicationNameToStorageLimits({
+            ...applicationData,
+            reference: '',
+          }),
+        ),
         schema,
       ).pipe(
         switchMap((application) =>
@@ -174,11 +186,14 @@ const createApplicationEpic: AppEpic = (action$) =>
             iif(
               () => err.status === 412,
               of(
-                UIActions.showErrorToast(
-                  translate(
-                    'An application with this name and this version already exists.',
+                UIActions.showErrorToast({
+                  message: translate(
+                    CommonI18nKeys.ApplicationNameVersionAlreadyExists,
+                    {
+                      ns: Translation.Common,
+                    },
                   ),
-                ),
+                }),
               ),
               EMPTY,
             ),
@@ -193,11 +208,11 @@ const createFailEpic: AppEpic = (action$) =>
     ofType(ApplicationActions.createFail.type),
     switchMap(() =>
       of(
-        UIActions.showErrorToast(
-          translate(errorsMessages.createFailed, {
+        UIActions.showErrorToast({
+          message: translate(errorsMessages.createFailed, {
             entity: 'application',
           }),
-        ),
+        }),
       ),
     ),
   );
@@ -247,16 +262,18 @@ const updateApplicationEpic: AppEpic = (action$) =>
       }
 
       const updatedCustomApplication = regenerateApplicationId(
-        payload.applicationData,
+        fitApplicationNameToStorageLimits(payload.applicationData),
       ) as CustomApplicationModel;
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
 
       if (payload.publicationUrl) {
         const payloadToUpdatePublication = {
+          isSaveAndExit: !!payload.isSaveAndExit,
           publicationUrl: payload.publicationUrl,
           oldApplication: payload.oldApplication,
           newApplication: updatedCustomApplication,
+          tabToOpen: payload.tabToOpen,
         };
 
         if (isMoved) {
@@ -293,18 +310,25 @@ const updateApplicationEpic: AppEpic = (action$) =>
             .pipe(
               map(() => ({ success: true as const })),
               catchError((err) => {
+                const failActions = [
+                  ApplicationActions.updateFail({
+                    oldApplication: payload.oldApplication,
+                  }),
+                  UIActions.setEditorLoader(false),
+                ];
                 if (err.status === 412) {
                   return of({
                     success: false as const,
                     actions: [
-                      ApplicationActions.updateFail({
-                        oldApplication: payload.oldApplication,
-                      }),
-                      UIActions.showErrorToast(
-                        translate(
-                          'An application with this name and this version already exists.',
+                      ...failActions,
+                      UIActions.showErrorToast({
+                        message: translate(
+                          CommonI18nKeys.ApplicationNameVersionAlreadyExists,
+                          {
+                            ns: Translation.Common,
+                          },
                         ),
-                      ),
+                      }),
                     ],
                   });
                 }
@@ -312,12 +336,15 @@ const updateApplicationEpic: AppEpic = (action$) =>
                 return of({
                   success: false as const,
                   actions: [
-                    ApplicationActions.updateFail({
-                      oldApplication: payload.oldApplication,
+                    ...failActions,
+                    UIActions.showErrorToast({
+                      message: translate(
+                        CommonI18nKeys.FailedToMoveApplication,
+                        {
+                          ns: Translation.Common,
+                        },
+                      ),
                     }),
-                    UIActions.showErrorToast(
-                      translate('Failed to move application'),
-                    ),
                   ],
                 });
               }),
@@ -380,6 +407,19 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   }
                 }
 
+                const schemaId =
+                  updatedCustomApplication.applicationTypeSchemaId;
+                if (schemaId && schemaId === DEFAULT_QUICK_APPS_SCHEMA_2_ID) {
+                  actions.push(
+                    of(
+                      ChatActions.getConfigurationSchema({
+                        modelId: updatedCustomApplication.id,
+                        replaceExisting: true,
+                      }),
+                    ),
+                  );
+                }
+
                 return concat(...actions);
               }),
               catchError((err) => {
@@ -391,20 +431,31 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     }),
                   ),
                   of(
-                    UIActions.showErrorToast(
-                      translate('Failed to update application'),
-                    ),
+                    UIActions.showErrorToast({
+                      message: translate(
+                        CommonI18nKeys.FailedToUpdateApplication,
+                        {
+                          ns: Translation.Common,
+                        },
+                      ),
+                    }),
                   ),
                   iif(
                     () => !!payload.shouldSetEditorError,
                     of(
                       ApplicationActions.setEditorError(
                         err.message ??
-                          translate('App settings are not matching the schema'),
+                          translate(
+                            MarketplaceI18nKeys.AppSettingsNotMatchingSchema,
+                            {
+                              ns: Translation.Marketplace,
+                            },
+                          ),
                       ),
                     ),
                     EMPTY,
                   ),
+                  of(UIActions.setEditorLoader(false)),
                 );
               }),
               endWith(ApplicationActions.updateComplete()),
@@ -459,7 +510,11 @@ const editApplicationEpic: AppEpic = (action$) =>
             ApplicationActions.editFail({
               oldApplication: payload.oldApplication,
             }),
-            UIActions.showErrorToast(translate('Failed to update application')),
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.FailedToUpdateApplication, {
+                ns: Translation.Common,
+              }),
+            }),
           );
         }),
       );
@@ -481,19 +536,58 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
           const modelFromState = modelsMap[application.reference];
 
-          actions.push(
-            of(
-              ApplicationActions.getSuccess({
+          const acceptSharedWithMe = payload.acceptSharePermissions?.length
+            ? true
+            : undefined;
+
+          const successAction = acceptSharedWithMe
+            ? ApplicationActions.setAppDetails() // Avoid to set app details on accepting share. We need them only for the editor.
+            : ApplicationActions.getSuccess({
                 ...application,
                 sharedWithMe: modelFromState?.sharedWithMe,
                 permissions: modelFromState?.permissions,
                 isShared: modelFromState?.isShared,
-              }),
-            ),
-          );
+              });
+
+          actions.push(of(successAction));
 
           if (!modelFromState) {
-            actions.push(of(ModelsActions.addModelToMap(application)));
+            actions.push(
+              of(
+                ModelsActions.addModels({
+                  models: [
+                    {
+                      ...application,
+                      sharedWithMe: acceptSharedWithMe,
+                      permissions: payload.acceptSharePermissions,
+                    },
+                  ],
+                }),
+              ),
+            );
+          }
+
+          if (payload.acceptSharePermissions) {
+            actions.push(
+              of(
+                ModelsActions.addInstalledModels({
+                  references: [application.reference],
+                }),
+              ),
+              of(ShareActions.triggerGettingSharedApplicationsListings()),
+            );
+          }
+
+          if (payload.showCard) {
+            actions.push(
+              of(
+                MarketplaceActions.setDetailsEntity({
+                  reference: application.reference,
+                  type: MarketplaceEntitiesTabs.AGENTS,
+                  isSuggested: false,
+                }),
+              ),
+            );
           }
 
           if (payload.isForSharing) {
@@ -513,6 +607,10 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           return concat(...actions);
         }),
         catchError(() => {
+          console.error(
+            'NotFound',
+            `Application is not found: ${payload.applicationId}`,
+          );
           Router.push(Routes.NotFound);
           return of(ApplicationActions.getFail());
         }),
@@ -592,8 +690,15 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
 
               if (
                 application.function?.status === ApplicationStatus.DEPLOYED ||
+                application.function?.status === ApplicationStatus.REDEPLOYED ||
                 application.function?.status === ApplicationStatus.UNDEPLOYED
               ) {
+                const status =
+                  payload.status === ApplicationStatus.REDEPLOYING &&
+                  application.function.status === ApplicationStatus.DEPLOYED
+                    ? ApplicationStatus.REDEPLOYED
+                    : application.function.status;
+
                 return concat(
                   of(
                     ModelsActions.updateFunctionStatus({
@@ -604,7 +709,7 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
                   of(
                     ApplicationActions.updateFunctionStatus({
                       id: payload.id,
-                      status: application.function.status,
+                      status,
                     }),
                   ),
                 );
@@ -630,6 +735,7 @@ const continueUpdatingApplicationStatusEpic: AppEpic = (action$) =>
                   (ApplicationActions.updateFunctionStatus.match(action) &&
                     [
                       ApplicationStatus.DEPLOYED,
+                      ApplicationStatus.REDEPLOYED,
                       ApplicationStatus.UNDEPLOYED,
                     ].includes(action.payload.status))) &&
                 payload.id === action.payload.id,
@@ -644,9 +750,11 @@ const updateApplicationStatusSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ApplicationActions.updateFunctionStatus.type),
     filter(({ payload }) =>
-      [ApplicationStatus.DEPLOYED, ApplicationStatus.UNDEPLOYED].includes(
-        payload.status,
-      ),
+      [
+        ApplicationStatus.DEPLOYED,
+        ApplicationStatus.REDEPLOYED,
+        ApplicationStatus.UNDEPLOYED,
+      ].includes(payload.status),
     ),
     switchMap(({ payload }) => {
       const { name } = parseEntityApiKey(payload.id, { parseVersion: true });
@@ -682,9 +790,9 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
           }),
         ),
         of(
-          UIActions.showErrorToast(
-            `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase()} failed`,
-          ),
+          UIActions.showErrorToast({
+            message: `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase().replace(/ing$/, '')} failed`,
+          }),
         ),
       );
     }),
@@ -710,13 +818,12 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ApplicationActions.enterEditMode.type),
     switchMap(({ payload }) => {
-      const { entity, applicationType, detailedApplicationTypeSchemaId } =
-        payload;
+      const { entity, applicationType } = payload;
 
       const selectedConversationIds =
         ConversationsSelectors.selectSelectedConversationsIds(state$.value);
 
-      const initialActions$ = of(
+      const initialAction$ = of(
         ApplicationActions.setReturnConversationIds(
           selectedConversationIds.filter((id) => !isEntityIdLocal({ id })),
         ),
@@ -726,19 +833,13 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         ApplicationActions.get({ applicationId: entity.id }),
       ];
 
-      const needSchema =
-        !isApplicationType(applicationType) &&
-        detailedApplicationTypeSchemaId !== applicationType;
+      const needSchema = !isApplicationType(applicationType);
 
       if (needSchema) {
         actions.push(
           ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchema(
             applicationType,
           ),
-        );
-      } else if (isApplicationType(applicationType)) {
-        actions.push(
-          ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
         );
       }
 
@@ -782,11 +883,15 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         map(() => ApplicationActions.enterEditModeComplete()),
       );
 
-      return concat(initialActions$, dispatchActions$, waitForData$).pipe(
+      return concat(initialAction$, dispatchActions$, waitForData$).pipe(
         catchError((err) => {
           console.error('Failed to enter edit mode:', err);
           return of(
-            UIActions.showErrorToast(translate('Failed to enter edit mode')),
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.FailedToEnterEditMode, {
+                ns: Translation.Common,
+              }),
+            }),
           );
         }),
       );
@@ -831,7 +936,9 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
               },
             });
 
-      const actions: Observable<AppAction>[] = [];
+      const actions: Observable<AppAction>[] = [
+        of(PromptsActions.clearSkillValidations()),
+      ];
 
       if (hasCustomEditor) {
         actions.push(
@@ -884,7 +991,16 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
 
       actions.push(of(UIActions.setEditorLoader(false)));
 
-      return from(router.push(route)).pipe(concatMap(() => concat(...actions)));
+      if (!publicationUrl) {
+        actions.push(
+          of(
+            ApplicationTypesSchemasActions.resetDetailedApplicationTypeSchema(),
+          ),
+        );
+        actions.push(of(ApplicationActions.setAppDetails()));
+      }
+
+      return navigateAndThen(router, route, concat(...actions));
     }),
   );
 

@@ -1,9 +1,13 @@
+import { AttributeValues, Attributes, Tags } from '@/src/ui/domData';
+
 export const marketplaceContainer = '[data-qa="marketplace"]';
 
 export const MarketplaceSelectors = {
   header: '[data-qa="marketplace-header"]',
   addApp: '[data-qa="add-app"]',
   addToolset: '[data-qa="add-toolset"]',
+  cardViewToggle: '[data-qa="card-view"]',
+  tableViewToggle: '[data-qa="table-view"]',
   noWorkspaceResultsFound: '[data-qa="no-workspace-results-found"]',
   noDataHeader: '[data-qa="no-data-header"]',
   noResultsFoundDescription: '[data-qa="no-data-description"]',
@@ -15,7 +19,7 @@ export const MarketplaceSelectors = {
 
 export const MarketplaceEntitySelectors = {
   entity: '[data-qa="entity"]',
-  entityName: '[data-qa="entity-name"]',
+  entityName: '#entity-name',
   version: '[data-qa="version"]',
   agentVersionMenuTrigger: '[data-qa="agent-version-select-trigger"]',
   header: '[data-qa="marketplace-header"]',
@@ -41,7 +45,7 @@ export const MarketplaceDetailsModal = {
   entityContentContainer: '[data-qa="entity-content"]',
   entityDescription: '[data-qa="entity-description"]',
   entityInformation: '[data-qa="entity-information"]',
-  entityName: '[data-qa="entity-name"]',
+  entityName: '#entity-name',
   entityVersion: '[data-qa="version"]',
   entityAuthor: '[data-qa="author"]',
   entityReleaseDate: '[data-qa="created-at"]',
@@ -57,17 +61,28 @@ export const MarketplaceDetailsModal = {
   unpublishButton: '[data-qa="unpublish"]',
   shareButton: '[data-qa="share"]',
   unshareButton: '[data-qa="unshare"]',
-  loginButton: '[data-qa="login-button"]',
+  loginButton: 'Log in',
+  logoutButton: 'Log out',
 };
 
 export const MarketplaceSideBarSelectors = {
   sidebar: '[data-qa="marketplace-sidebar"]',
-  searchInput: '[name="titleInput"]',
   agentsTab: '[data-qa="agents-tab"]',
   toolsetsTab: '[data-qa="toolsets-tab"]',
   marketplaceFilter: '[data-qa="marketplace-filter"]',
   filterProperty: '[data-qa="filter-property"]',
   filterPropertyOptions: '[data-qa="filter-property-options"]',
   filterPropertyOption: '[data-qa="filter-option"]',
-  optionLabel: '[data-qa="option-label"]',
+  optionLabel: '#option-label',
+};
+
+export const ToolsetLoginModalSelectors = {
+  modalContainer: '[data-qa="marketplace-toolset-signin"]',
+  header: '[data-qa="login-header"]',
+  toolsetName: '[data-qa="toolset-name"]',
+  toolsetVersion: '[data-qa="toolset-version"]',
+  apiKeyFieldContainer: '[data-qa="apiKey"]',
+  apiKeyMaskedFieldInput: `${Tags.input}[${Attributes.type} = "${AttributeValues.password}"]`,
+  apiKeyUnmaskedFieldInput: `${Tags.input}[${Attributes.type} = "${AttributeValues.text}"]`,
+  loginButton: 'Log in',
 };

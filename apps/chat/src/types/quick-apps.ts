@@ -30,10 +30,23 @@ export interface DialDeploymentToolset {
   tools: DialDeploymentSimpleTool[];
 }
 
+export enum DialAppTransportType {
+  MCP = 'mcp',
+  ChatCompletion = 'chat-completion',
+  Auto = 'auto',
+}
+
+export interface DialAppToolset {
+  name: string;
+  deployment_id: string;
+  type?: ToolsetTypes.DialApp;
+  transport?: DialAppTransportType;
+}
+
 export interface MCPToolset {
   name?: string;
   type?: ToolsetTypes.DialMcp;
-  dial_id: string;
+  deployment_id: string;
   transport?: ToolsetTransportType;
   description?: string;
 }
@@ -56,13 +69,31 @@ export type AnyToolset =
   | DialDeploymentToolset
   | MCPToolset
   | CodeInterpreterToolset
+  | DialAppToolset
   | UnknownToolset;
+
+export interface ConversationStarter {
+  title: string;
+  text: string;
+}
+
+export interface ConversationStarters {
+  intro_text?: string;
+  chat_message_input_disabled?: boolean;
+  auto_submit?: boolean;
+  starters: ConversationStarter[];
+}
+
+export interface DialPromptSkill {
+  type: 'dial-prompt';
+  url: string;
+}
 
 export interface QuickApp2Config {
   orchestrator: {
     deployment: {
-      name: string;
-      parameters: {
+      deployment_id: string;
+      parameters?: {
         temperature: number;
       };
     };
@@ -74,14 +105,27 @@ export interface QuickApp2Config {
   };
   contexts: FileContext[];
   tool_sets: AnyToolset[];
+  conversation_starters: ConversationStarters;
   input_attachment_types?: string[];
   max_input_attachments?: number;
+  skills?: DialPromptSkill[];
+  features?: {
+    timestamp?: {
+      injection_strategy: 'tool_call';
+    } | null;
+  };
 }
 
 export function isDialDeploymentToolset(
   toolset: AnyToolset,
 ): toolset is DialDeploymentToolset {
   return toolset.type === ToolsetTypes.DialDeployment;
+}
+
+export function isDialDeploymentSimpleTool(tool: {
+  type?: unknown;
+}): tool is DialDeploymentSimpleTool {
+  return tool.type === DialDeploymentToolsetToolTypes.DialDeploymentSimple;
 }
 
 export function isMcpToolset(toolset: AnyToolset): toolset is MCPToolset {
@@ -94,12 +138,19 @@ export function isCodeInterpreterToolset(
   return toolset.type === ToolsetTypes.CodeInterpreter;
 }
 
+export function isDialAppToolset(
+  toolset: AnyToolset,
+): toolset is DialAppToolset {
+  return toolset.type === ToolsetTypes.DialApp;
+}
+
 export function isUnknownToolset(
   toolset: AnyToolset,
 ): toolset is UnknownToolset {
   return (
     !isDialDeploymentToolset(toolset) &&
     !isMcpToolset(toolset) &&
-    !isCodeInterpreterToolset(toolset)
+    !isCodeInterpreterToolset(toolset) &&
+    !isDialAppToolset(toolset)
   );
 }

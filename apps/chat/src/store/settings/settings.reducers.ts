@@ -3,6 +3,8 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { PageType } from '@/src/types/common';
 import { StorageType } from '@/src/types/storage';
 
+import { DEFAULT_RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-settings';
+
 import { SettingsState } from './settings.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -25,12 +27,16 @@ const initialState: SettingsState = {
   topics: [],
   codeEditorPythonVersions: [],
   providerId: null,
+  asrModelId: null,
+  audioTypesDefaultOrder: [],
   initialDataStatus: UploadStatus.UNINITIALIZED,
   attachmentsSettings: {
     expandedTypes: [],
     borderlessTypes: [],
     withoutTitleTypes: [],
   },
+  stageContentLimit: 40,
+  resourceMaxSegmentBytes: DEFAULT_RESOURCE_MAX_SEGMENT_BYTES,
 };
 
 export const settingsSlice = createSlice({

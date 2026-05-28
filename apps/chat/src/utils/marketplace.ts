@@ -16,12 +16,14 @@ import {
 } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
+import { Translation } from '@/src/types/translation';
 
 import {
   MarketplaceState,
   TableSort,
 } from '@/src/store/marketplace/marketplace.types';
 
+import { CommonI18nKeys } from '@/src/constants/i18n';
 import {
   ApplicationTypeToSourceType,
   ENTITY_TYPES,
@@ -46,6 +48,9 @@ export interface EntityStatus {
   isInvalid: boolean;
   isLoggedOut: boolean;
   isUndeployed: boolean;
+  isDeploying: boolean;
+  isUndeploying: boolean;
+  isRedeploying: boolean;
   isError: boolean;
 }
 
@@ -58,12 +63,18 @@ export const getEntityStatus = (
       isInvalid,
       isLoggedOut: false,
       isUndeployed: false,
+      isDeploying: false,
+      isUndeploying: false,
+      isRedeploying: false,
       isError: true,
     };
   }
 
   let isLoggedOut = false;
   let isUndeployed = false;
+  let isDeploying = false;
+  let isUndeploying = false;
+  let isRedeploying = false;
 
   if (isToolsetEntityModel(entity)) {
     if (entity.authSettings?.authenticationType !== ToolsetAuthTypes.NONE) {
@@ -77,9 +88,15 @@ export const getEntityStatus = (
   }
 
   if (isDialAiEntityModel(entity)) {
+    isDeploying = entity.functionStatus === ApplicationStatus.DEPLOYING;
+    isUndeploying = entity.functionStatus === ApplicationStatus.UNDEPLOYING;
+    isRedeploying = entity.functionStatus === ApplicationStatus.REDEPLOYING;
     isUndeployed =
       !!entity.functionStatus &&
-      entity.functionStatus !== ApplicationStatus.DEPLOYED;
+      entity.functionStatus !== ApplicationStatus.DEPLOYED &&
+      !isDeploying &&
+      !isUndeploying &&
+      !isRedeploying;
   }
 
   const isError = isInvalid || isLoggedOut || isUndeployed;
@@ -88,6 +105,9 @@ export const getEntityStatus = (
     isInvalid,
     isLoggedOut,
     isUndeployed,
+    isDeploying,
+    isUndeploying,
+    isRedeploying,
     isError,
   };
 };
@@ -269,7 +289,10 @@ export const getLinkErrorMessage = (
 ) => {
   if (!detailsEntity && reference) {
     return translate(
-      `${isAgentsTab ? 'Agent' : 'Toolset'} by this link not found`,
+      isAgentsTab
+        ? CommonI18nKeys.AgentByThisLinkNotFound
+        : CommonI18nKeys.ToolsetByThisLinkNotFound,
+      { ns: Translation.Common },
     );
   }
 };

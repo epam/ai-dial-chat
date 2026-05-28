@@ -2,6 +2,28 @@ import { API, ExpectedConstants } from '@/src/testData';
 import { BasePage, ExpectedApiResponse } from '@/src/ui/pages/basePage';
 import { FileManagerContainer } from '@/src/ui/webElements/fileManager/fileManagerContainer';
 
+interface FileManagerPageOptions {
+  updateInstalledDeployments?: boolean;
+  getInstalledDeployments?: boolean;
+  getPublishedApplications?: boolean;
+  updateInstalledToolsets?: boolean;
+  getInstalledToolsets?: boolean;
+  getPublishedFiles?: boolean;
+  getToolsets?: boolean;
+  getStyles?: boolean;
+}
+
+const DEFAULT_FILE_MANAGER_OPTIONS: FileManagerPageOptions = {
+  updateInstalledDeployments: true,
+  getInstalledDeployments: false,
+  getPublishedApplications: true,
+  updateInstalledToolsets: true,
+  getInstalledToolsets: false,
+  getPublishedFiles: true,
+  getToolsets: true,
+  getStyles: true,
+};
+
 export class FileManagerPage extends BasePage {
   private fileManagerContainer!: FileManagerContainer;
 
@@ -12,32 +34,59 @@ export class FileManagerPage extends BasePage {
     return this.fileManagerContainer;
   }
 
-  public async openFileManagerPage() {
+  public async openFileManagerPage(
+    options: Partial<FileManagerPageOptions> = {},
+  ) {
+    const mergedOptions = { ...DEFAULT_FILE_MANAGER_OPTIONS, ...options };
     const expectedResponses: ExpectedApiResponse[] = [];
-    expectedResponses.push({
-      apiMethod: 'PUT',
-      urlPattern: API.installedDeploymentsHost(),
-    });
-    expectedResponses.push({
-      apiMethod: 'GET',
-      urlPattern: API.publishedApplicationsHost(),
-    });
-    expectedResponses.push({
-      apiMethod: 'PUT',
-      urlPattern: API.installedToolsetsHost(),
-    });
-    expectedResponses.push({
-      apiMethod: 'GET',
-      urlPattern: API.toolsetsHost(),
-    });
-    expectedResponses.push({
-      apiMethod: 'GET',
-      urlPattern: API.themeStylesHost,
-    });
-    expectedResponses.push({
-      apiMethod: 'GET',
-      urlPattern: API.publishedFiles(),
-    });
+    if (mergedOptions.updateInstalledDeployments) {
+      expectedResponses.push({
+        apiMethod: 'PUT',
+        urlPattern: API.installedDeploymentsHost(),
+      });
+    }
+    if (mergedOptions.getInstalledDeployments) {
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.installedDeploymentsHost(),
+      });
+    }
+    if (mergedOptions.updateInstalledToolsets) {
+      expectedResponses.push({
+        apiMethod: 'PUT',
+        urlPattern: API.installedToolsetsHost(),
+      });
+    }
+    if (mergedOptions.getInstalledToolsets) {
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.installedToolsetsHost(),
+      });
+    }
+    if (mergedOptions.getPublishedApplications) {
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.publishedApplicationsHost(),
+      });
+    }
+    if (mergedOptions.getPublishedFiles) {
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.publishedFiles(),
+      });
+    }
+    if (mergedOptions.getToolsets) {
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.toolsetsHost(),
+      });
+    }
+    if (mergedOptions.getStyles) {
+      expectedResponses.push({
+        apiMethod: 'GET',
+        urlPattern: API.themeStylesHost,
+      });
+    }
     await this.waitForExpectedResponses(
       () => this.navigateToUrl(ExpectedConstants.fileManagerPath),
       expectedResponses,
@@ -46,7 +95,7 @@ export class FileManagerPage extends BasePage {
 
   async waitForPageLoaded({
     isGridVisible = true,
-  }: { isGridVisible?: boolean } = {}) {
+  }: { isGridVisible?: boolean | undefined } = {}) {
     const fileManagerContainer = this.getFileManagerContainer();
     const fileManager = fileManagerContainer.getFileManager();
     await fileManager.waitForState();
@@ -54,12 +103,19 @@ export class FileManagerPage extends BasePage {
     await fileManager.getFileManagerToolbar().waitForState();
     await fileManager.getFileManagerNavigationPanel().waitForState();
     await fileManager.getFileManagerCollapsibleSidebar().waitForState();
-    if (isGridVisible) {
+    if (isGridVisible === true) {
       const fileManagerGrid = fileManager.getFileManagerGrid();
       await fileManagerGrid.waitForState();
-      await fileManagerGrid.loader.waitForState({ state: 'hidden' });
-    } else {
+      await fileManagerGrid.loadingIndicator.waitForState({ state: 'hidden' });
+    } else if (isGridVisible === false) {
       await fileManager.getNoDataContent().waitForState();
+    } else {
+      // unknown state: wait for either grid or no-data content
+      const fileManagerGrid = fileManager.getFileManagerGrid();
+      await Promise.race([
+        fileManagerGrid.waitForState(),
+        fileManager.getNoDataContent().waitForState(),
+      ]);
     }
   }
 }

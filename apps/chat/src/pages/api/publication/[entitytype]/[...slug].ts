@@ -1,19 +1,18 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { getServerSession } from 'next-auth';
-import { getToken } from 'next-auth/jwt';
 
 import { constructPath } from '@/src/utils/app/file';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { isValidEntityApiType } from '@/src/utils/server/api';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { ServerUtils } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
 
 import { DialAIError } from '@/src/types/error';
+import { PublishedItem } from '@/src/types/publication';
 
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { sanitizeUri } from 'micromark-util-sanitize-uri';
 import fetch from 'node-fetch';
@@ -60,7 +59,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return;
   }
 
-  const token = await getToken({ req });
+  const jwt = await getToken({ req });
 
   const searchParams = new URLSearchParams();
   searchParams.set('recursive', recursive);
@@ -68,26 +67,50 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   searchParams.set('permissions', 'true');
 
   try {
-    const proxyRes = await fetch(`${sanitizeUri(url)}/?${searchParams}`, {
-      headers: getApiHeaders({ jwt: token?.access_token as string }),
-    });
+    const baseUrl = `${sanitizeUri(url)}/?${searchParams}`;
 
-    let json: unknown;
-    if (!proxyRes.ok) {
-      try {
-        json = await proxyRes.json();
-      } catch (err) {
-        json = undefined;
+    const allItems: PublishedItem[] = [];
+    let nextToken: string | undefined;
+    let json: PublishedItem & { nextToken?: string } = {} as PublishedItem & {
+      nextToken?: string;
+    };
+
+    do {
+      const fetchUrl = nextToken ? `${baseUrl}&token=${nextToken}` : baseUrl;
+
+      const proxyRes = await fetch(fetchUrl, {
+        headers: getApiHeaders({ jwt }),
+      });
+
+      if (proxyRes.status === 404) {
+        break;
       }
 
-      throw new DialAIError(
-        (typeof json === 'string' && json) || proxyRes.statusText,
-        proxyRes.status,
-        req,
-      );
-    }
-    json = await proxyRes.json();
-    return res.status(200).send(json);
+      if (!proxyRes.ok) {
+        let errorBody: unknown;
+        try {
+          errorBody = await proxyRes.json();
+        } catch {
+          errorBody = undefined;
+        }
+
+        throw new DialAIError(
+          (typeof errorBody === 'string' && errorBody) || proxyRes.statusText,
+          proxyRes.status,
+          req,
+        );
+      }
+
+      json = (await proxyRes.json()) as PublishedItem & { nextToken?: string };
+
+      if (json.items) {
+        allItems.push(...json.items);
+      }
+
+      nextToken = json.nextToken;
+    } while (nextToken);
+
+    return res.status(200).send({ ...json, items: allItems });
   } catch (error: unknown) {
     logger.error(error);
     if (error instanceof DialAIError) {

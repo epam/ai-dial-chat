@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { pages } from '@/src/utils/auth/auth-pages';
 import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
 import { isServerSessionValid } from '@/src/utils/auth/session';
@@ -18,6 +19,7 @@ import {
   ISOLATED_MODEL_QUERY_PARAM,
 } from '@/src/constants/chat';
 import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
+import { resolveResourceMaxSegmentBytes } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
@@ -25,8 +27,6 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 import { HeadersNames } from '@/src/constants/server';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { safeParseJSON } from '../json';
 import {
@@ -59,10 +59,13 @@ export const getCommonPageProps: GetServerSideProps = async ({
 }) => {
   const requestCSPHeaders = req.headers[HeadersNames.CONTENT_SECURITY_POLICY];
 
-  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : getFrameContentSecurityPolicyDirectives(process.env.ALLOWED_IFRAME_ORIGINS, process.env.ALLOWED_IFRAME_SOURCES)}`;
+  const [cspHeader, nonce] = getFrameContentSecurityPolicyDirectives();
+
+  const cspHeaders = `${requestCSPHeaders ? requestCSPHeaders : cspHeader}`;
 
   const contentSecurityPolicyHeaderValue = cleanHeaderDirectives(cspHeaders);
 
+  res.setHeader('x-nonce', nonce);
   res.setHeader(
     HeadersNames.CONTENT_SECURITY_POLICY,
     contentSecurityPolicyHeaderValue,
@@ -100,6 +103,10 @@ export const getCommonPageProps: GetServerSideProps = async ({
   const customRenderers =
     process.env.CUSTOM_VISUALIZERS &&
     JSON.parse(process.env.CUSTOM_VISUALIZERS);
+
+  const applicationVisualizers =
+    process.env.APPLICATION_VISUALIZERS &&
+    JSON.parse(process.env.APPLICATION_VISUALIZERS);
 
   const isIsolatedView = params?.has(ISOLATED_MODEL_QUERY_PARAM);
   const isPreselectedConversation = params?.has(CONVERSATION_QUERY_PARAM);
@@ -153,11 +160,13 @@ export const getCommonPageProps: GetServerSideProps = async ({
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
     customRenderers: customRenderers || [],
+    applicationVisualizers: applicationVisualizers || {},
     allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
     topics: parseCommaSeparatedList(
       process.env.TOPICS ??
         'Business,Development,User Experience,Analysis,SQL,SDLC,Talk-To-Your-Data,RAG,Text Generation,Image Generation,Image Recognition',
     ),
+    hiddenEntityTag: process.env.HIDDEN_ENTITY_TAG ?? '',
     quickAppsHost: process.env.QUICK_APPS_HOST || DEFAULT_QUICK_APPS_HOST,
     quickAppsModel: process.env.QUICK_APPS_MODEL || DEFAULT_QUICK_APPS_MODEL,
     quickAppsSchemaId:
@@ -165,7 +174,13 @@ export const getCommonPageProps: GetServerSideProps = async ({
     externalAppsSchemaId:
       process.env.EXTERNAL_APPS_SCHEMA_ID || DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
     dialApiHost: process.env.DIAL_API_HOST || '',
+    dialCoreExternalUrl: process.env.DIAL_CORE_EXTERNAL_URL || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
+    asrModelId: process.env.ASR_MODEL || null,
+    audioTypesDefaultOrder: parseCommaSeparatedList(
+      process.env.AUDIO_TYPES_DEFAULT_ORDER,
+      [],
+    ),
     providerId: session?.providerId ?? null,
     attachmentsSettings: {
       expandedTypes: parseCommaSeparatedList(
@@ -181,6 +196,12 @@ export const getCommonPageProps: GetServerSideProps = async ({
         [],
       ),
     },
+    stageContentLimit: parseFloat(
+      process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT || '40',
+    ),
+    resourceMaxSegmentBytes: resolveResourceMaxSegmentBytes(
+      process.env.NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES,
+    ),
   };
 
   if (isIsolatedView) {

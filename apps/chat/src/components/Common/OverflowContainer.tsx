@@ -26,7 +26,7 @@ export function OverflowContainer<T>({
   renderOverflow,
   getKey,
   overflowIndicatorWidth = 50,
-  className = 'flex w-full flex-nowrap items-center gap-2',
+  className = 'flex w-full flex-nowrap items-center gap-1',
   dataQA,
 }: OverflowContainerProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -97,20 +97,19 @@ export function OverflowContainer<T>({
         {hiddenItems.length > 0 && renderOverflow(hiddenItems)}
       </div>
 
-      <div
-        className="invisible fixed top-0 flex w-max gap-2"
-        aria-hidden="true"
-      >
-        {items.map((item, index) => (
-          <span
-            key={getKey(item)}
-            ref={(el) => {
-              itemRefs.current[index] = el;
-            }}
-          >
-            {renderItem(item)}
-          </span>
-        ))}
+      <div className="absolute left-0 top-0 size-0 overflow-hidden">
+        <div className="invisible flex w-max gap-2" aria-hidden="true">
+          {items.map((item, index) => (
+            <span
+              key={getKey(item)}
+              ref={(el) => {
+                itemRefs.current[index] = el;
+              }}
+            >
+              {renderItem(item)}
+            </span>
+          ))}
+        </div>
       </div>
     </>
   );

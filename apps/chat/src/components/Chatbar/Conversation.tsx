@@ -1,4 +1,4 @@
-import { DragEvent, memo, useCallback, useMemo, useRef, useState } from 'react';
+import { DragEvent, memo, useCallback, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -51,23 +51,28 @@ import {
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface ViewProps {
   conversation: ConversationInfo;
   isHighlighted: boolean;
+  isSelected: boolean;
   isChosen?: boolean;
   isSelectMode?: boolean;
   additionalItemData?: AdditionalItemData;
   isContextMenu: boolean;
+  isDraggingOver?: boolean;
 }
 
-export function ConversationView({
+function ConversationView({
   conversation,
   isHighlighted,
+  isSelected,
   isChosen = false,
   isSelectMode,
   additionalItemData,
   isContextMenu,
+  isDraggingOver,
 }: ViewProps) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -81,9 +86,6 @@ export function ConversationView({
       conversation.id,
       additionalItemData?.publicationUrl,
     ),
-  );
-  const selectedConversationIds = useAppSelector(
-    ConversationsSelectors.selectSelectedConversationsIds,
   );
 
   const handleToggle = useCallback(() => {
@@ -126,6 +128,7 @@ export function ConversationView({
       <ShareIcon
         {...conversation}
         isHighlighted={isHighlighted}
+        isDraggingOver={isDraggingOver}
         featureType={FeatureType.Chat}
         containerClassName={classNames(
           isSelectMode && !isExternal && 'group-hover:hidden',
@@ -136,8 +139,7 @@ export function ConversationView({
           <ReviewDot
             className={classNames(
               'group-hover:bg-accent-secondary-alpha',
-              (selectedConversationIds.includes(conversation.id) ||
-                isContextMenu) &&
+              (isSelected || isContextMenu) &&
                 isPartOfSelectedPublication &&
                 'bg-accent-secondary-alpha',
             )}
@@ -163,14 +165,14 @@ export function ConversationView({
           />
         )}
       </ShareIcon>
-      <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
+      <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-start">
         <Tooltip
           tooltip={t(
             getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
           )}
           hideTooltip={!isNameOrPathInvalid}
           triggerClassName={classNames(
-            'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+            'block max-h-5 min-w-0 flex-1 text-start',
             conversation.publicationInfo?.isNotExist && 'text-secondary',
             !!additionalItemData?.publicationUrl &&
               conversation.publicationInfo?.action === PublishActions.DELETE &&
@@ -178,7 +180,10 @@ export function ConversationView({
           )}
           dataQa="entity-name"
         >
-          {conversation.name}
+          <DialEllipsisTooltip
+            text={conversation.name}
+            id="entity-name-value"
+          />
         </Tooltip>
       </div>
     </>
@@ -189,17 +194,22 @@ interface Props {
   item: ConversationInfo;
   level?: number;
   additionalItemData?: AdditionalItemData;
+  isDraggingOver?: boolean;
 }
 
 export const ConversationComponent = memo(
-  ({ item: conversation, level, additionalItemData }: Props) => {
+  ({
+    item: conversation,
+    level,
+    additionalItemData,
+    isDraggingOver,
+  }: Props) => {
     const dispatch = useAppDispatch();
 
-    const selectedConversationIds = useAppSelector(
-      ConversationsSelectors.selectSelectedConversationsIds,
-    );
-    const messageIsStreaming = useAppSelector(
-      ConversationsSelectors.selectIsConversationsStreaming,
+    const isSelected = useAppSelector((state) =>
+      ConversationsSelectors.selectSelectedConversationsIds(state).includes(
+        conversation.id,
+      ),
     );
     const isSelectMode = useAppSelector(
       ConversationsSelectors.selectIsSelectMode,
@@ -207,8 +217,10 @@ export const ConversationComponent = memo(
     const isConversationsStreaming = useAppSelector(
       ConversationsSelectors.selectIsConversationsStreaming,
     );
-    const chosenConversationIds = useAppSelector(
-      ConversationsSelectors.selectSelectedItems,
+    const isChosen = useAppSelector((state) =>
+      ConversationsSelectors.selectSelectedItems(state).includes(
+        conversation.id,
+      ),
     );
     const selectedPublicationUrl = useAppSelector(
       PublicationSelectors.selectSelectedPublicationUrl,
@@ -239,13 +251,6 @@ export const ConversationComponent = memo(
     });
 
     useContextMenuTrigger(handleContextMenuOpen, conversationRef);
-
-    const isSelected = selectedConversationIds.includes(conversation.id);
-
-    const isChosen = useMemo(
-      () => chosenConversationIds.includes(conversation.id),
-      [chosenConversationIds, conversation.id],
-    );
 
     const isExternal = isEntityIdExternal(conversation);
 
@@ -279,10 +284,10 @@ export const ConversationComponent = memo(
     return (
       <div
         className={classNames(
-          'group relative flex items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          'group relative flex items-center rounded border-s-2 hover:bg-accent-primary-alpha',
           !isSelectMode && isHighlighted
-            ? 'border-l-accent-primary'
-            : 'border-l-transparent',
+            ? 'border-s-accent-primary'
+            : 'border-s-transparent',
           (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
           isNameOrPathInvalid && 'text-secondary',
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
@@ -292,14 +297,14 @@ export const ConversationComponent = memo(
       >
         <button
           className={classNames(
-            'group flex size-full items-center gap-2 pr-3 disabled:cursor-not-allowed',
-            !isSelectMode && '[&:not(:disabled)]:group-hover:pr-9',
-            shouldShowPadding && 'pr-9',
+            'group flex size-full items-center gap-2 pe-3 disabled:cursor-not-allowed',
+            !isSelectMode && '[&:not(:disabled)]:group-hover:pe-9',
+            shouldShowPadding && 'pe-9',
           )}
           style={{
-            paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
+            paddingInlineStart: (level && `${level * 30 + 16}px`) || '0.875rem',
           }}
-          disabled={messageIsStreaming || (isSelectMode && isExternal)}
+          disabled={isConversationsStreaming || (isSelectMode && isExternal)}
           draggable={
             !isExternal &&
             !isNameOrPathInvalid &&
@@ -335,20 +340,23 @@ export const ConversationComponent = memo(
           <ConversationView
             conversation={conversation}
             isHighlighted={isHighlighted || isContextMenu}
+            isSelected={isSelected}
             isChosen={isChosen}
             isSelectMode={isSelectMode}
             additionalItemData={additionalItemData}
             isContextMenu={isContextMenu}
+            isDraggingOver={isDraggingOver}
           />
         </button>
 
-        {!isSelectMode && !messageIsStreaming && (
+        {!isSelectMode && !isConversationsStreaming && (
           <div
             className={classNames(
-              'absolute right-0 z-50 flex cursor-pointer justify-end group-hover:visible',
-              (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
-                'invisible',
-              isContextMenu && 'md:visible',
+              'invisible absolute end-0 z-50 flex cursor-pointer justify-end group-hover:visible',
+              isContextMenu &&
+                (isMobileOrTablet
+                  ? conversation.status !== UploadStatus.LOADED && 'visible'
+                  : 'visible'),
             )}
           >
             <ConversationContextMenu

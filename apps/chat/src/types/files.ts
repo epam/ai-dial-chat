@@ -24,6 +24,7 @@ export type DialFile = Omit<
   BaseDialEntity & {
     percent?: number;
     fileContent?: File;
+    isRootSharedItem?: boolean;
   } & ShareEntity;
 
 // For file folders folderId is relative path and id is relative path + '/' + name
@@ -35,8 +36,6 @@ export type FileFolderInterface = FolderInterface & {
 export type FileFolderAttachment = FileFolderInterface & {
   contentType: typeof FOLDER_ATTACHMENT_CONTENT_TYPE;
 };
-
-export type Status = undefined | 'LOADING' | 'LOADED' | 'FAILED';
 
 export interface DialLink {
   title?: string;

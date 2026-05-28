@@ -9,8 +9,9 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Colors } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { BucketUtil, DateUtil, ModelsUtil } from '@/src/utils';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 let defaultModel: DialAIEntityModel;
@@ -91,7 +92,7 @@ dialSharedWithMeTest(
           createdDate: currentDate,
           lastUpdatedDate: currentDate,
         });
-        await additionalShareUserInformationModal.cancelButton.click();
+        await additionalShareUserInformationModal.getCloseButton().click();
       },
     );
 
@@ -372,7 +373,9 @@ dialSharedWithMeTest(
         ]) {
           await additionalShareUserConversationAssertion.assertEntityBackgroundColor(
             { name: conversationName },
-            Colors.backgroundAccentSecondary,
+            ThemesUtil.getRgbColorByKey(
+              ThemeColorAttributes.bgAccentSecondaryAlpha,
+            ),
           );
         }
         await additionalShareUserConversationAssertion.assertEntityState(

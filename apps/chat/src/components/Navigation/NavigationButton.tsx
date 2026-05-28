@@ -3,12 +3,18 @@ import { ReactNode } from 'react';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
+
+import { ScreenState } from '@/src/types/common';
+
 import { useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
   ModelsSelectors,
   SettingsSelectors,
 } from '@/src/store/selectors';
+
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
@@ -37,12 +43,15 @@ export const NavigationButton = ({
   const streaming = useAppSelector(
     ConversationsSelectors.selectIsConversationsStreaming,
   );
+
+  const state = useScreenState();
+  const isSmallScreen = state === ScreenState.SM || state === ScreenState.MD;
   const disabled = isLoading || streaming;
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
   const isClickAllowed = (!selected || allowClickSelected) && !disabled;
   return (
     <Tooltip
-      tooltip={tooltip}
+      tooltip={!isSmallScreen ? tooltip : undefined}
       isTriggerClickable
       triggerClassName={classNames(
         'flex shrink-0 select-none rounded transition-colors duration-200 md:min-w-min',
@@ -55,7 +64,6 @@ export const NavigationButton = ({
           : 'cursor-pointer hover:bg-accent-primary-alpha active:bg-accent-primary-alpha',
       )}
     >
-      {/* eslint-disable jsx-a11y/role-supports-aria-props */}
       <button
         data-qa={dataQa}
         onClick={isClickAllowed ? onClick : undefined}
@@ -67,15 +75,14 @@ export const NavigationButton = ({
         aria-selected={selected}
         aria-label={caption}
       >
-        {/* eslint-enable jsx-a11y/role-supports-aria-props */}
         <Icon
           className={classNames(
             'min-h-[24px] min-w-[24px]',
             selected ? 'text-accent-primary' : 'text-secondary',
           )}
-          width={24}
-          height={24}
-          size={24}
+          width={DEFAULT_ICON_SIZES.STANDARD}
+          height={DEFAULT_ICON_SIZES.STANDARD}
+          size={DEFAULT_ICON_SIZES.STANDARD}
         />
 
         {!isOverlay && (

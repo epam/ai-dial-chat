@@ -1,5 +1,8 @@
-import { getNextDefaultName } from '@/src/utils/app/folders';
-import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
+import {
+  getStorageSafeUniqueToolsetName,
+  isToolsetSignedIn,
+} from '@/src/utils/app/toolsets';
+import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 import { ToolsetCredentialsLevel, ToolsetModel } from '@/src/types/toolsets';
 
@@ -9,7 +12,6 @@ import { DEFAULT_VERSION } from '@/src/constants/publication';
 import { MarketplaceEntityBaseSchema } from '@/src/constants/validation-helpers';
 
 import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
-import { z as zodValidation } from 'zod';
 
 export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
 
@@ -108,19 +110,30 @@ export type ToolsetEditorForm = zodValidation.infer<
   typeof ToolsetEditorFormSchema
 >;
 
-export const getDefaultLoginFormData = (
-  authenticationType: ToolsetAuthTypes,
-  toolset?: ToolsetModel,
-  prevData?: Partial<ToolsetLoginFormType>,
-  authLevel?: ToolsetCredentialsLevel,
-): ToolsetLoginFormType => {
+export const getDefaultLoginFormData = ({
+  authenticationType,
+  toolset,
+  prevData,
+  authLevel,
+  isAdminReview,
+}: {
+  authenticationType: ToolsetAuthTypes;
+  toolset?: ToolsetModel;
+  prevData?: Partial<ToolsetLoginFormType>;
+  authLevel?: ToolsetCredentialsLevel;
+  isAdminReview?: boolean;
+}): ToolsetLoginFormType => {
   const isLoggedIn = toolset ? isToolsetSignedIn(toolset, authLevel) : false;
+
   switch (authenticationType) {
     case ToolsetAuthTypes.API_KEY:
       return {
         authenticationType,
         isLoggedIn,
-        withLogin: prevData?.withLogin ?? WithLogin.WithLogin,
+        withLogin:
+          isAdminReview && !isLoggedIn
+            ? WithLogin.WithoutLogin
+            : (prevData?.withLogin ?? WithLogin.WithLogin),
         keyHeader: toolset?.authSettings?.apiKeyHeader ?? '',
         apiKey: prevData?.apiKey ?? '',
       };
@@ -151,27 +164,45 @@ export const getDefaultLoginFormData = (
   }
 };
 
-export const getDefaultFormData = (
-  toolset?: ToolsetModel,
-  toolsets?: ToolsetModel[],
-  prevData?: ToolsetEditorForm,
-): ToolsetEditorForm => {
+export const getDefaultFormData = ({
+  toolset,
+  toolsets,
+  prevData,
+  isAdminReview,
+}: {
+  toolset?: ToolsetModel;
+  toolsets?: ToolsetModel[];
+  prevData?: ToolsetEditorForm;
+  isAdminReview?: boolean;
+}): ToolsetEditorForm => {
   return {
     name:
       toolset?.name ??
-      getNextDefaultName(DEFAULT_TOOLSET_NAME, toolsets ?? [], 0, true),
-    endpoint: toolset?.endpoint ?? ENDPOINT_PLACEHOLDER,
+      getStorageSafeUniqueToolsetName({
+        toolset: {
+          name: '',
+          version: toolset?.version ?? DEFAULT_VERSION,
+          folderId: toolset?.folderId,
+          id: toolset?.id,
+        },
+        defaultName: DEFAULT_TOOLSET_NAME,
+        existingNames: (toolsets ?? []).map((t) => t.name),
+      }) ??
+      DEFAULT_TOOLSET_NAME,
+    endpoint: toolset ? (toolset.endpoint ?? '') : ENDPOINT_PLACEHOLDER,
     protocol: toolset?.transport ?? ToolsetTransportType.HTTP,
     description: toolset?.description ?? '',
     allowedTools: toolset?.allowedTools ?? [],
     iconUrl: toolset?.iconUrl ?? '',
-    version: toolset?.version ?? DEFAULT_VERSION,
+    version: toolset ? (toolset.version ?? '') : DEFAULT_VERSION,
     topics: toolset?.topics ?? [],
 
-    ...getDefaultLoginFormData(
-      toolset?.authSettings?.authenticationType ?? ToolsetAuthTypes.NONE,
+    ...getDefaultLoginFormData({
+      authenticationType:
+        toolset?.authSettings?.authenticationType ?? ToolsetAuthTypes.NONE,
       toolset,
       prevData,
-    ),
+      isAdminReview,
+    }),
   };
 };

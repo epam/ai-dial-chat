@@ -33,7 +33,8 @@ dialTest(
     '[Select an agent for conversation] Short description on custom app with colour and link.\n' +
     '[Select an agent for conversation] Long custom app name, description are cut with three dots.\n' +
     '[Select an agent for conversation] Topics are shown on the card in the order as selected, not collapsed [+1].\n' +
-    '[Select an agent for conversation] Tooltip on hover over the icon is shown.\n' +
+    '[Select an agent for conversation] Tooltip on the icon is not shown.\n' +
+    '[Select an agent for conversation] Tooltip appears on long name only.\n' +
     '[Select agent] Context menu is not available for published custom app and for models.\n' +
     '[Select an agent for conversation] Version is shown for agents added through config (models). Expand to see several versions. Select a version from the list.\n' +
     '[Select an agent for conversation] Version. Descending sorting. Custom app.\n' +
@@ -48,7 +49,7 @@ dialTest(
     agentInfo,
     agentInfoAssertion,
     setTestIds,
-    tooltipAssertion,
+    tooltip,
     customApplicationBuilder,
     adminApplicationApiHelper,
     adminPublicationApiHelper,
@@ -65,6 +66,7 @@ dialTest(
       'EPMRTC-5154',
       'EPMRTC-1063',
       'EPMRTC-1031',
+      'EPMRTC-8693',
       'EPMRTC-5084',
       'EPMRTC-1037',
       'EPMRTC-5908',
@@ -231,16 +233,16 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over agent icon and verify tooltip is shown, dots menu is not available',
+      'Hover over agent icon and name and verify tooltip is not shown, dots menu is not available',
       async () => {
         await actualIcon.hover();
-        await tooltipAssertion.assertTooltipContent(
-          ExpectedConstants.agentIconTooltip(appName, appSecondVersion),
-        );
+        await talkToAgentDialogAssertion.assertElementState(tooltip, 'hidden');
         await talkToAgentDialogAssertion.assertElementState(
           talkToAgents.getEntityElementDotsMenu(agentElement),
           'hidden',
         );
+        await actualNameElement.hoverOver();
+        await talkToAgentDialogAssertion.assertElementState(tooltip, 'hidden');
       },
     );
 
@@ -386,6 +388,7 @@ dialTest(
     let visibleTopicsCount: number;
     const hiddenTopicsCountRegExp = /\+\d+/;
     let randomModel: DialAIEntityModel | undefined;
+    let searchInput: BaseElement;
 
     await dialTest.step(
       'Create a custom application with one version and four topics',
@@ -493,9 +496,9 @@ dialTest(
     );
 
     await dialTest.step(
-      'Hover over collapsed icon and verify colorful topics are displayed on the tooltip',
+      'Click on collapsed icon and verify colorful topics are displayed on the tooltip',
       async () => {
-        await hiddenTopicsElement.hoverOver();
+        await hiddenTopicsElement.click();
         await tooltipAssertion.assertElementState(topicsTooltip, 'visible');
         await tooltipAssertion.assertTooltipContent(
           topics.slice(visibleTopicsCount).join('\n'),
@@ -550,7 +553,8 @@ dialTest(
         if (randomModel !== undefined) {
           await talkToAgentDialog.goToMyWorkspace();
           await marketplacePage.waitForPageLoaded();
-          await marketplaceHeader.searchInput.fillInInput(randomModel.name);
+          searchInput = marketplaceHeader.getSearch().inputField;
+          await searchInput.fillInInput(randomModel.name);
           const randomModelElement =
             await marketplaceEntitiesSection.findEntityElement(randomModel, {
               isWorkspaceEntity: true,
@@ -635,7 +639,7 @@ dialTest(
       async () => {
         await talkToAgentDialog.goToMyWorkspace();
         await marketplacePage.waitForPageLoaded();
-        await marketplaceHeader.searchInput.fillInInput(appName);
+        await marketplaceHeader.getSearch().inputField.fillInInput(appName);
         await marketplaceEntitiesSection.findAndUseAgent(agent, {
           isWorkspaceAgent: true,
           isEditable: true,
@@ -684,7 +688,7 @@ dialTest(
           visibleTopicsElement,
           topics.slice(0, visibleTopicsCount),
         );
-        await talkToAgentDialog.cancelButton.click();
+        await talkToAgentDialog.getCloseButton().click();
       },
     );
 

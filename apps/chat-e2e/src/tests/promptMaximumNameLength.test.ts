@@ -2,16 +2,14 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   CollapsedSections,
   ExpectedConstants,
-  ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Overflow, Styles } from '@/src/ui/domData';
-import { expect } from '@playwright/test';
+import { GeneratorUtil } from '@/src/utils';
 
 dialTest(
-  'Prompt name consists of a maximum of 160 symbols.\n' +
+  'Prompt name consists of a maximum of 255 bytes (UTF-8).\n' +
     'Long prompt name is cut in the panel.\n' +
-    'Prompt folder name consists of a maximum of 160 symbols',
+    'Prompt folder name consists of a maximum of 255 bytes (UTF-8)',
   async ({
     dialHomePage,
     promptData,
@@ -31,8 +29,7 @@ dialTest(
     setTestIds('EPMRTC-3171', 'EPMRTC-958', 'EPMRTC-3168');
     const prompt = promptData.prepareDefaultPrompt();
     await dataInjector.createPrompts([prompt]);
-    const longName =
-      'Lorem ipsum dolor sit amett consectetur adipiscing elit. Nullam ultricies ipsum nullaa nec viverra lectus rutrum id. Sed volutpat ante ac fringilla turpis duis!ABC';
+    const longName = GeneratorUtil.randomString(300);
     const expectedName = longName.substring(
       0,
       ExpectedConstants.maxEntityNameLength,
@@ -41,7 +38,7 @@ dialTest(
       'This prompt is renamed to very long-long-long name to see how the system cuts the name';
 
     await dialTest.step(
-      'Create a prompt and enter text longer than 160 symbols',
+      'Create a prompt and enter text longer than 255 bytes (UTF-8)',
       async () => {
         await localStorageManager.setPromptCollapsedSection(
           CollapsedSections.Organization,
@@ -61,11 +58,11 @@ dialTest(
 
     await dialTest.step('Save the prompt', async () => {
       await promptModalDialog.saveButton.click();
-      await promptPreviewModal.closeButton.click();
+      await promptPreviewModal.getCloseButton().click();
     });
 
     await dialTest.step(
-      'Verify the prompt name is cut to 160 symbols and no error toast is shown',
+      'Verify the prompt name is cut to 255 bytes (UTF-8) and no error toast is shown',
       async () => {
         await promptAssertion.assertEntityState(
           { name: expectedName },
@@ -88,13 +85,10 @@ dialTest(
     });
 
     await dialTest.step('Check the prompt name in the panel', async () => {
-      const promptNameElement = prompts.getEntityName(prompt.name);
-      const promptNameOverflow =
-        await promptNameElement.getComputedStyleProperty(Styles.text_overflow);
-      expect
-        .soft(promptNameOverflow[0], ExpectedMessages.entityNameIsTruncated)
-        .toBe(Overflow.ellipsis);
-      await promptPreviewModal.closeButton.click();
+      await promptAssertion.assertElementTextIsTruncated(
+        prompts.getEntityNameValue(prompt.name),
+      );
+      await promptPreviewModal.getCloseButton().click();
     });
 
     await dialTest.step(
@@ -131,7 +125,7 @@ dialTest(
     );
 
     await dialTest.step(
-      'Edit both folder names with more than 160 symbols names',
+      'Edit both folder names with more than 255 bytes (UTF-8) names',
       async () => {
         // Rename Folder_parent
         await folderPrompts.openFolderDropdownMenu(
@@ -150,24 +144,15 @@ dialTest(
     );
 
     await dialTest.step(
-      'Check that the folder names are cut to 160 symbols and no error message appears',
+      'Check that the folder names are cut to 255 bytes (UTF-8) and no error message appears',
       async () => {
         // Get the actual folder names
-        const parentFolderName = await folderPrompts
-          .getFolderName(expectedName, 1)
-          .getElementInnerContent();
-        const childFolderName = await folderPrompts
-          .getFolderName(expectedName, 2)
-          .getElementInnerContent();
-
-        // Assert that the names are truncated to the expectedName
-        expect
-          .soft(parentFolderName, ExpectedMessages.folderNameUpdated)
-          .toBe(expectedName);
-        expect
-          .soft(childFolderName, ExpectedMessages.folderNameUpdated)
-          .toBe(expectedName);
-
+        for (let i = 1; i <= 2; i++) {
+          await promptBarFolderAssertion.assertFolderState(
+            { name: expectedName, index: i },
+            'visible',
+          );
+        }
         // Assert that no error toast is shown
         await toastAssertion.assertToastIsHidden();
       },

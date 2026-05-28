@@ -109,6 +109,10 @@ export class BaseElement {
     return this.rootLocator.allInnerTexts();
   }
 
+  async getElementsInnerHtml() {
+    return this.rootLocator.innerHTML();
+  }
+
   async isVisible(options?: { timeout?: number }) {
     return this.rootLocator.isVisible(options);
   }

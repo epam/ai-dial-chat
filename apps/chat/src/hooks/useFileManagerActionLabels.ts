@@ -2,6 +2,8 @@ import { useMemo } from 'react';
 
 import { TranslationOptions } from '@/src/types/translation';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
+
 import {
   DialFileManagerActions,
   DialFileManagerTabs,
@@ -10,14 +12,15 @@ import {
 type TranslationFn = (key: string, options?: TranslationOptions) => string;
 
 const ACTION_LABELS = {
-  duplicate: (t: TranslationFn) => t('Duplicate'),
-  copy: (t: TranslationFn) => t('Copy to'),
-  move: (t: TranslationFn) => t('Move to'),
-  delete: (t: TranslationFn) => t('Delete'),
-  download: (t: TranslationFn) => t('Download'),
-  rename: (t: TranslationFn) => t('Rename'),
-  unshare: (t: TranslationFn) => t('Unshare'),
-  info: (t: TranslationFn) => t('Info'),
+  duplicate: (t: TranslationFn) => t(SideBarI18nKeys.Duplicate),
+  copy: (t: TranslationFn) => t(SideBarI18nKeys.CopyTo),
+  move: (t: TranslationFn) => t(SideBarI18nKeys.MoveTo),
+  delete: (t: TranslationFn) => t(SideBarI18nKeys.Delete),
+  download: (t: TranslationFn) => t(SideBarI18nKeys.Download),
+  rename: (t: TranslationFn) => t(SideBarI18nKeys.Rename),
+  unshare: (t: TranslationFn) => t(SideBarI18nKeys.Unshare),
+  info: (t: TranslationFn) => t(SideBarI18nKeys.Info),
+  removeAccess: (t: TranslationFn) => t(SideBarI18nKeys.RemoveAccess),
 } as const;
 
 type FileAction = keyof typeof ACTION_LABELS;
@@ -27,6 +30,7 @@ type ActionsByTab = Record<DialFileManagerTabs, FileAction[]>;
 const DEFAULT_TAB_ACTIONS: ActionsByTab = {
   my_files: [
     DialFileManagerActions.Duplicate,
+    DialFileManagerActions.RemoveAccess,
     DialFileManagerActions.Copy,
     DialFileManagerActions.Move,
     DialFileManagerActions.Delete,
@@ -37,10 +41,10 @@ const DEFAULT_TAB_ACTIONS: ActionsByTab = {
   shared: [
     DialFileManagerActions.Download,
     DialFileManagerActions.Unshare,
-    DialFileManagerActions.Delete,
     DialFileManagerActions.Info,
   ],
   organization: [DialFileManagerActions.Download, DialFileManagerActions.Info],
+  review: [DialFileManagerActions.Download, DialFileManagerActions.Info],
 };
 
 const buildLabelMap = (actions: FileAction[], t: TranslationFn) =>

@@ -18,3 +18,4 @@ export { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 export { ShareSelectors } from '@/src/store/share/share.selectors';
 export { UISelectors } from '@/src/store/ui/ui.selectors';
 export { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
+export { ChatEventsSelectors } from '@/src/store/chat-events/chat-events.selectors';

@@ -42,7 +42,6 @@ dialAdminTest(
       publishConversationAssertion,
       publishingRequestDialogAssertion,
       iconApiHelper,
-      tooltipAssertion,
       adminDialHomePage,
       adminApproveRequiredConversations,
       chatBar,
@@ -61,15 +60,15 @@ dialAdminTest(
       adminPublishConversationsTreeAssertion,
       conversationDropdownMenuAssertion,
       downloadAssertion,
-      adminTooltip,
       adminChatHeaderAssertion,
       adminChatMessagesAssertion,
       adminApproveRequiredConversationDropdownMenuAssertion,
-      adminTooltipAssertion,
+      adminTooltipPortalAssertion,
       baseAssertion,
       setTestIds,
       localStorageManager,
       adminLocalStorageManager,
+      tooltipPortalAssertion,
     },
     testInfo,
   ) => {
@@ -130,7 +129,7 @@ dialAdminTest(
       'Verify tooltip on hover "Send request" button',
       async () => {
         await publishingRequestDialog.sendRequestButton.hoverOver();
-        await tooltipAssertion.assertTooltipContent(
+        await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.noPublishNameTooltip,
         );
       },
@@ -142,7 +141,7 @@ dialAdminTest(
         await publishingRequestDialog.requestName.fillInInput(' '.repeat(3));
         await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
         await publishingRequestDialog.sendRequestButton.hoverOver();
-        await tooltipAssertion.assertTooltipContent(
+        await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.noPublishNameTooltip,
         );
       },
@@ -157,7 +156,7 @@ dialAdminTest(
           .click();
         await publishingRequestDialogAssertion.assertSendRequestButtonIsDisabled();
         await publishingRequestDialog.sendRequestButton.hoverOver();
-        await tooltipAssertion.assertTooltipContent(
+        await tooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.nothingToPublishTooltip,
         );
       },
@@ -235,7 +234,7 @@ dialAdminTest(
           lastUpdatedDate: currentDate,
           author: author,
         });
-        await adminInformationModal.cancelButton.click();
+        await adminInformationModal.getCloseButton().click();
       },
     );
 
@@ -302,8 +301,7 @@ dialAdminTest(
       'Hover over "Approve" button and verify tooltip is displayed',
       async () => {
         await adminPublishingApprovalModal.approveButton.hoverOver();
-        await adminTooltipAssertion.assertElementState(adminTooltip, 'visible');
-        await adminTooltipAssertion.assertTooltipContent(
+        await adminTooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.reviewResourcesTooltip,
         );
       },
@@ -682,7 +680,7 @@ dialTest(
           createdDate: currentDate,
           author: author,
         });
-        await informationModal.cancelButton.click();
+        await informationModal.getCloseButton().click();
       },
     );
 
@@ -720,7 +718,7 @@ dialTest(
           createdDate: currentDate,
           author: author,
         });
-        await informationModal.cancelButton.click();
+        await informationModal.getCloseButton().click();
       },
     );
 
@@ -742,7 +740,7 @@ dialTest(
           createdDate: currentDate,
           lastUpdatedDate: currentDate,
         });
-        await informationModal.cancelButton.click();
+        await informationModal.getCloseButton().click();
       },
     );
 

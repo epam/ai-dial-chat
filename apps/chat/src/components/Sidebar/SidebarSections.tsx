@@ -1,4 +1,11 @@
-import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
+import React, {
+  ReactNode,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import classNames from 'classnames';
 
@@ -26,7 +33,7 @@ interface Props<T> {
   filteredFolders: FolderInterface[];
   featureType: FeatureType.Chat | FeatureType.Prompt;
   searchTerm: string;
-  itemComponent: React.ReactNode;
+  itemComponent: ReactNode | ((isDraggingOver: boolean) => ReactNode);
   folderComponent: React.ReactNode;
   onDrop: (e: React.DragEvent<HTMLDivElement>) => void;
   allowDrop: (e: React.DragEvent<HTMLDivElement>) => void;
@@ -160,7 +167,9 @@ const SidebarFlatListView = forwardRef(function SidebarFlatListView<T>(
         onDragLeave={removeHighlight}
         data-qa="draggable-area"
       >
-        {itemComponent}
+        {typeof itemComponent === 'function'
+          ? itemComponent(isDraggingOver)
+          : itemComponent}
 
         <div
           style={{

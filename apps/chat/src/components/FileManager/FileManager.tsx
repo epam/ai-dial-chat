@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -9,11 +9,24 @@ import { FilesActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { SettingsSelectors } from '@/src/store/selectors';
 
+import { SideBarI18nKeys } from '@/src/constants/i18n';
+
 import { FilesUploadingModal } from './FilesUploadingModal';
 import { OperationLoaderModal } from './OperationLoaderModal';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
-import { DialFileManager, DialLoader } from '@epam/ai-dial-ui-kit';
+import {
+  DialFileManager,
+  DialFileManagerActions,
+  DialFileManagerTabs,
+  DialLoader,
+} from '@epam/ai-dial-ui-kit';
+
+const availableTabs = new Set([
+  DialFileManagerTabs.MyFiles,
+  DialFileManagerTabs.Organization,
+  DialFileManagerTabs.Shared,
+]);
 
 export const FileManager: React.FC = () => {
   const { t } = useTranslation(Translation.SideBar);
@@ -50,6 +63,7 @@ export const FileManager: React.FC = () => {
     deleteConfirmationOptions,
 
     handleSearchFiles,
+    handleClearSearch,
     handleCopyFiles,
     handleGetInfo,
     handleMoveFiles,
@@ -59,13 +73,47 @@ export const FileManager: React.FC = () => {
     handleUploadFiles,
     handleCreateFolder,
     handleUploadArchive,
-    handleUnshareFiles,
+    handleOpenUnshareFilesDialog,
+    handleOpenRemoveFilesAccessDialog,
     handleRenameValidation,
 
     sharedWithMeIds,
 
     uploadEnabled,
-  } = useFileManager();
+
+    emptyStateDescription,
+    emptyStateTitle,
+  } = useFileManager({
+    availableTabs,
+  });
+
+  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
+
+  const allSelectedItemsShared = useMemo(() => {
+    if (selectedPaths.size === 0) return false;
+    for (const path of selectedPaths) {
+      if (!sharedByMePaths?.has(path)) {
+        return false;
+      }
+    }
+    return true;
+  }, [selectedPaths, sharedByMePaths]);
+
+  const customBulkActionsToolbarOptions = useMemo(() => {
+    if (!bulkActionsToolbarOptions) return bulkActionsToolbarOptions;
+
+    if (allSelectedItemsShared) {
+      return bulkActionsToolbarOptions;
+    }
+
+    const { [DialFileManagerActions.RemoveAccess]: __, ...restLabels } =
+      bulkActionsToolbarOptions.actionLabels || {};
+
+    return {
+      ...bulkActionsToolbarOptions,
+      actionLabels: restLabels,
+    };
+  }, [bulkActionsToolbarOptions, allSelectedItemsShared]);
 
   useEffect(() => {
     if (initialDataStatus === UploadStatus.LOADED) {
@@ -88,7 +136,8 @@ export const FileManager: React.FC = () => {
           onSearchFiles={handleSearchFiles}
           searchInProgress={isLoadingSearchListing}
           searchResults={searchResultsUIKit}
-          bulkActionsToolbarOptions={bulkActionsToolbarOptions}
+          onSelectedPathsChange={setSelectedPaths}
+          bulkActionsToolbarOptions={customBulkActionsToolbarOptions}
           treeOptions={treeOptions}
           fileMetadataPopupOptions={fileMetadataPopupOptions}
           navigationPanelOptions={navigationPanelOptions}
@@ -105,15 +154,25 @@ export const FileManager: React.FC = () => {
           onUploadFiles={handleUploadFiles}
           onCreateFolder={handleCreateFolder}
           onUploadArchive={handleUploadArchive}
-          onUnshareFiles={handleUnshareFiles}
+          onUnshareFiles={handleOpenUnshareFilesDialog}
+          onRemoveFilesAccess={handleOpenRemoveFilesAccessDialog}
           onRenameValidate={handleRenameValidation}
+          onCreateFolderValidate={handleRenameValidation}
           sharedWithMeIds={sharedWithMeIds}
           uploadEnabled={uploadEnabled}
+          clearSearchResults={handleClearSearch}
+          emptyStateTitle={emptyStateTitle}
+          emptyStateDescription={emptyStateDescription}
+          hideSearchPathItemName
+          autoSelectUploadedItems
         />
       )}
       {isAnyOperationInProgress && (
         <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
-          <DialLoader size={48} ariaLabel={t('Processing files...')} />
+          <DialLoader
+            size={48}
+            ariaLabel={t(SideBarI18nKeys.ProcessingFiles)}
+          />
         </div>
       )}
       {operationLoaderModalOptions && !isRenaming && (

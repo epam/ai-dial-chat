@@ -9,6 +9,8 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
 
+import { SettingsI18nKeys } from '@/src/constants/i18n';
+
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Label } from '@/src/components/Common/Forms/Label';
 
@@ -47,7 +49,7 @@ export const ThemeSelect = ({
 
   return (
     <div className="flex flex-col">
-      <Label>{t('Theme')}</Label>
+      <Label>{t(SettingsI18nKeys.Theme)}</Label>
       <div
         className="h-[38px] grow rounded border border-primary focus-within:border-accent-primary focus:border-accent-primary"
         data-qa="theme"

@@ -4,6 +4,11 @@ import { translate } from '@/src/utils/app/translation';
 
 import { EntityType } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
+import { Translation } from '@/src/types/translation';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
+import { AudioMimeType } from './audio';
 
 import { ImageMIMEType } from '@epam/ai-dial-shared';
 
@@ -18,6 +23,7 @@ export const stopBubbling = <T>(e: MouseEvent<T>) => {
 export const CHAT_TEXT_FIELD_ID = 'chat-text-field';
 
 export const PLOTLY_CONTENT_TYPE = 'application/vnd.plotly.v1+json';
+export const PDF_CONTENT_TYPE = 'application/pdf';
 
 export const ISOLATED_MODEL_QUERY_PARAM = 'isolated-model-id';
 export const CONVERSATION_QUERY_PARAM = 'conversation-id';
@@ -25,8 +31,8 @@ export const ACTION_QUERY_PARAM = 'action';
 
 export const DEFAULT_CUSTOM_ATTACHMENT_WIDTH = 150;
 export const DEFAULT_CUSTOM_ATTACHMENT_HEIGHT = 150;
+export const DEFAULT_CUSTOM_ATTACHMENT_MOBILE_HEIGHT = 100;
 
-export const MIN_TWO_CAL_CHAT_SETTINGS_WIDTH = 510;
 export const CENTRAL_CHAT_MIN_WIDTH = 800;
 
 export const REPLAY_AS_IS_MODEL = 'REPLAY_AS_IS_MODEL';
@@ -61,9 +67,15 @@ export const VIDEO_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
 );
 
 export const AUDIO_TYPES: ImageMIMEType[] = [
-  'audio/mpeg',
-  'audio/ogg',
-  'audio/wav',
+  AudioMimeType.MPEG,
+  AudioMimeType.OGG,
+  AudioMimeType.WEBM,
+  AudioMimeType.MP4,
+  AudioMimeType.WAV,
+  AudioMimeType.OPUS,
+  AudioMimeType.FLAC,
+  AudioMimeType.AAC,
+  AudioMimeType.WMA,
 ];
 
 export const AUDIO_TYPES_SET: Set<ImageMIMEType> = new Set<ImageMIMEType>(
@@ -78,7 +90,7 @@ export const LAST_USED_AGENT = 'last-used-agent';
 export const DEFAULT_MODEL_OPTION: DialAIEntityModel = {
   id: DEFAULT_AGENT,
   reference: DEFAULT_AGENT,
-  name: translate('Default agent'),
+  name: translate(ChatI18nKeys.DefaultAgent, { ns: Translation.Chat }),
   type: EntityType.Model,
   isDefault: true,
 };
@@ -86,7 +98,7 @@ export const DEFAULT_MODEL_OPTION: DialAIEntityModel = {
 export const LAST_USED_MODEL_OPTION: DialAIEntityModel = {
   id: LAST_USED_AGENT,
   reference: LAST_USED_AGENT,
-  name: translate('Last used agent'),
+  name: translate(ChatI18nKeys.LastUsedAgent, { ns: Translation.Chat }),
   type: EntityType.Model,
   isDefault: false,
 };
@@ -95,3 +107,38 @@ export const SPECIAL_DEFAULT_MODEL_DIC: Record<string, DialAIEntityModel> = {
   [DEFAULT_AGENT]: DEFAULT_MODEL_OPTION,
   [LAST_USED_AGENT]: LAST_USED_MODEL_OPTION,
 };
+
+// taken from https://developer.mozilla.org/en-US/docs/Web/MathML/Reference/Element
+export const mathMLTags = [
+  'math',
+  'maction',
+  'annotation',
+  'annotation-xml',
+  'menclose',
+  'merror',
+  'mfenced',
+  'mfrac',
+  'mi',
+  'mmultiscripts',
+  'mn',
+  'mo',
+  'mover',
+  'mpadded',
+  'mphantom',
+  'mroot',
+  'mrow',
+  'ms',
+  'semantics',
+  'mspace',
+  'msqrt',
+  'mstyle',
+  'msub',
+  'msup',
+  'msubsup',
+  'mtable',
+  'mtd',
+  'mtext',
+  'mtr',
+  'munder',
+  'munderover',
+];

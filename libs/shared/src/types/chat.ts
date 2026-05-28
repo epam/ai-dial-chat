@@ -145,6 +145,7 @@ export interface FolderInterface extends ShareEntity {
   type: FeatureType;
   temporary?: boolean;
   serverSynced?: boolean;
+  isRootSharedItem?: boolean;
 }
 
 export interface TemporaryFolderInterface
@@ -176,10 +177,16 @@ export interface Playback {
   customViewState?: Record<string, unknown>;
 }
 
+export enum ConversationResponseFormat {
+  PlainText = 'Plain text',
+  Markdown = 'Markdown',
+}
+
 export interface Conversation extends ShareEntity, ConversationInfo {
   messages: Message[];
   prompt: string;
   temperature: number;
+  responseFormat?: ConversationResponseFormat;
   /**
    * @deprecated but required by core validation
    */

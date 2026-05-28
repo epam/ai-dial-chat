@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import {
   Controller,
   useFormContext,
@@ -12,6 +12,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip } from '@/src/utils/app/application';
 import { castToString } from '@/src/utils/app/common';
+import { doesAgentSupportMcp } from '@/src/utils/app/models';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 
 import { FileFolderInterface } from '@/src/types/files';
@@ -30,6 +31,7 @@ import {
   PUBLIC_APP_TOOLTIP,
 } from '@/src/constants/applications';
 import { CODE_APPS_ENDPOINTS } from '@/src/constants/code-apps';
+import { CommonI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import {
   CodeAppForm as CodeAppFormType,
@@ -45,6 +47,7 @@ import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
+import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
@@ -55,6 +58,7 @@ const RuntimeSelector = withController(withLabel(RuntimeVersionSelector));
 const MappingsForm = withLabel(
   DynamicFormFields<CodeAppFormType, 'endpoints' | 'env'>,
 );
+const CopyUrlButton = withLabel(ToolsetLinkButton);
 
 const checkIsTargetFolderLoaded = (
   folders: FileFolderInterface[],
@@ -128,13 +132,13 @@ export const CodeAppForm = () => {
         control={control}
         render={({ field }) => (
           <ComboBoxField
-            label={t('Attachment types')}
-            info={t("Input the MIME type and press 'Enter' to add")}
+            label={t(MarketplaceI18nKeys.AttachmentTypes)}
+            info={t(MarketplaceI18nKeys.InputMIMEType)}
             initialSelectedItems={field.value}
             getItemLabel={castToString}
             getItemValue={castToString}
             onChangeSelectedItems={field.onChange}
-            placeholder={t('Enter one or more attachment types')}
+            placeholder={t(MarketplaceI18nKeys.EnterAttachmentTypes)}
             className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
             hasDeleteAll
             hideSuggestions
@@ -148,8 +152,8 @@ export const CodeAppForm = () => {
       />
 
       <ControlledField
-        label={t('Max. attachments number')}
-        placeholder={t('Enter the maximum number of attachments')}
+        label={t(MarketplaceI18nKeys.MaxAttachmentsNumber)}
+        placeholder={t(MarketplaceI18nKeys.EnterMaxAttachments)}
         id="maxInputAttachments"
         error={errors.maxInputAttachments?.message}
         control={control}
@@ -166,7 +170,7 @@ export const CodeAppForm = () => {
             mandatory
             value={getActualSource(field.value)}
             onChange={field.onChange}
-            label={t('Select folder with source files')}
+            label={t(MarketplaceI18nKeys.SelectFolderWithSourceFiles)}
             error={errors.sources?.message || errors.sourceFiles?.message}
             disabled={isSharedWithMe || isAppPublic}
             tooltip={
@@ -191,15 +195,15 @@ export const CodeAppForm = () => {
       <RuntimeSelector
         control={control}
         name="runtime"
-        label={t('Runtime version')}
+        label={t(MarketplaceI18nKeys.RuntimeVersion)}
         disabled={isAppPublic}
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
       />
 
       <MappingsForm
-        label={t('Endpoints')}
-        addLabel={t('Add endpoint')}
-        valueLabel={t('Endpoint')}
+        label={t(MarketplaceI18nKeys.Endpoints)}
+        addLabel={t(MarketplaceI18nKeys.AddEndpoint)}
+        valueLabel={t(MarketplaceI18nKeys.Endpoint)}
         options={CODE_APPS_ENDPOINTS}
         name="endpoints"
         errors={errors.endpoints}
@@ -209,13 +213,20 @@ export const CodeAppForm = () => {
 
       <MappingsForm
         creatable
-        label={t('Environment variables')}
-        addLabel={t('Add variable')}
+        label={t(MarketplaceI18nKeys.EnvironmentVariables)}
+        addLabel={t(MarketplaceI18nKeys.AddVariable)}
         name="env"
         errors={errors.env}
         disabled={isAppPublic}
         tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
       />
+
+      {doesAgentSupportMcp(appDetails) && (
+        <CopyUrlButton
+          entity={appDetails}
+          label={t(CommonI18nKeys.CopyApplicationEndpointURL)}
+        />
+      )}
     </div>
   );
 };

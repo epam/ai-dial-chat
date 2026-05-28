@@ -17,8 +17,10 @@ import {
   SettingsSelectors,
 } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { Spinner } from '@/src/components/Common/Spinner';
-import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { DialButton } from '@epam/ai-dial-ui-kit';
@@ -29,11 +31,19 @@ interface Props {
   isLastMessageError: boolean;
   tooltip?: string;
   isLoading?: boolean;
+  microphoneButtonHidden?: boolean;
 }
 
 export const SendMessageButton = Inversify.register(
   'SendMessageButton',
-  ({ isLastMessageError, onSend, isDisabled, tooltip, isLoading }: Props) => {
+  ({
+    isLastMessageError,
+    onSend,
+    isDisabled,
+    tooltip,
+    isLoading,
+    microphoneButtonHidden,
+  }: Props) => {
     const { t } = useTranslation(Translation.Chat);
 
     const areModelsLoading = useAppSelector(
@@ -49,6 +59,19 @@ export const SendMessageButton = Inversify.register(
       ConversationsSelectors.selectIsLastAssistantMessageEmpty,
     );
 
+    const canRecordAudio = useAppSelector(
+      ConversationsSelectors.selectCanRecordAudio,
+    );
+
+    const rightClass =
+      canRecordAudio && !isLastMessageError && !microphoneButtonHidden
+        ? isOverlay
+          ? 'end-10'
+          : 'end-11'
+        : isOverlay
+          ? 'end-3'
+          : 'end-4';
+
     if (
       isLastMessageError ||
       (isLastAssistantMessageEmpty && !messageIsStreaming)
@@ -56,17 +79,23 @@ export const SendMessageButton = Inversify.register(
       return (
         <DialButton
           className={classNames(
-            'absolute max-h-[24px] !px-0 hover:text-accent-primary',
+            'max-h-[24px] !px-0 text-secondary hover:text-accent-primary',
             isLastMessageError && 'text-error',
-            isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
           )}
-          aria-label={t('Send a message')}
+          aria-label={t(ChatI18nKeys.SendAMessage)}
           onClick={onSend}
           data-qa="regenerate"
+          tooltipProps={{
+            tooltip: tooltip,
+            isTriggerClickable: true,
+            triggerClassName: classNames(
+              'absolute max-h-[24px]',
+              isOverlay ? 'bottom-2' : 'bottom-2.5 md:bottom-3',
+              rightClass,
+            ),
+          }}
           iconBefore={
-            <Tooltip tooltip={tooltip} isTriggerClickable>
-              <IconRefresh size={24} stroke="1.5" />
-            </Tooltip>
+            <IconRefresh size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
           }
         />
       );
@@ -79,26 +108,27 @@ export const SendMessageButton = Inversify.register(
 
     return (
       <DialButton
-        className={classNames(
-          'absolute max-h-[24px] !px-0 hover:text-accent-primary disabled:text-controls-disable',
-          isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
-        )}
+        className="max-h-[24px] !px-0 text-secondary hover:text-accent-primary disabled:text-controls-disable"
         onClick={onSend}
         disabled={disabled}
         data-qa={dataQa}
-        aria-label={t('Send a message')}
+        aria-label={t(ChatI18nKeys.SendAMessage)}
+        tooltipProps={{
+          hideTooltip: !disabled && !messageIsStreaming,
+          tooltip,
+          isTriggerClickable: true,
+          triggerClassName: classNames(
+            'absolute max-h-[24px]',
+            isOverlay ? 'bottom-2' : 'bottom-2.5 md:bottom-3',
+            rightClass,
+          ),
+        }}
         iconBefore={
-          <Tooltip
-            hideTooltip={!disabled && !messageIsStreaming}
-            tooltip={tooltip}
-            isTriggerClickable
-          >
-            {isSpinner ? (
-              <Spinner size={20} />
-            ) : (
-              <Icon size={24} stroke="1.5" />
-            )}
-          </Tooltip>
+          isSpinner ? (
+            <Spinner size={20} />
+          ) : (
+            <Icon size={DEFAULT_ICON_SIZES.STANDARD} stroke="1.5" />
+          )
         }
       />
     );

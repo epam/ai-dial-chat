@@ -14,6 +14,8 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState) => state.ui;
 
+const selectLocale = (state: RootState) => rootSelector(state).locale;
+
 const selectThemeState = (state: RootState) => rootSelector(state).theme;
 
 const selectEnterType = (state: RootState) => rootSelector(state).enterType;
@@ -23,6 +25,12 @@ const selectAvailableThemes = (state: RootState) =>
 
 const selectThemesImages = (state: RootState) =>
   rootSelector(state).themesImages;
+
+const selectAgentsFilterPanelCollapseState = (state: RootState) =>
+  rootSelector(state).agentsFilterPanelCollapseState;
+
+const selectToolsetFilterPanelCollapseState = (state: RootState) =>
+  rootSelector(state).toolsetFilterPanelCollapseState;
 
 const selectCodeEditorTheme = createSelector(
   [selectThemeState, selectAvailableThemes],
@@ -70,8 +78,18 @@ const selectChatbarWidth = (state: RootState) =>
 const selectPromptbarWidth = (state: RootState) =>
   rootSelector(state).promptbarWidth;
 
-const selectIsChatFullWidth = (state: RootState) =>
-  rootSelector(state).isChatFullWidth;
+const selectMarketplaceFilterbarWidth = (state: RootState) =>
+  rootSelector(state).marketplaceFilterbarWidth;
+
+const selectIsChatFullWidth = createSelector(
+  [rootSelector, SettingsSelectors.selectEnabledFeatures],
+  (state, enabledFeatures) => {
+    return (
+      enabledFeatures.has(Feature.ChatFullWidthByDefault) ||
+      state.isChatFullWidth
+    );
+  },
+);
 
 const selectCustomLogo = (state: RootState) => rootSelector(state).customLogo;
 
@@ -126,12 +144,12 @@ const selectVisibleSidebarItems = createSelector(
 const selectIsEditorLoader = (state: RootState) =>
   rootSelector(state).isEditorLoader;
 
-const selectAllowEnterToSend = createSelector(
-  [selectEnterType, SettingsSelectors.selectIsOverlay],
-  (enterType, isOverlay) => allowEnterClick(enterType, isOverlay),
+const selectAllowEnterToSend = createSelector([selectEnterType], (enterType) =>
+  allowEnterClick(enterType),
 );
 
 export const UISelectors = {
+  selectLocale,
   selectThemeState,
   selectEnterType,
   selectShowChatbar,
@@ -160,4 +178,7 @@ export const UISelectors = {
   selectVisibleSidebarItems,
   selectIsEditorLoader,
   selectAllowEnterToSend,
+  selectMarketplaceFilterbarWidth,
+  selectAgentsFilterPanelCollapseState,
+  selectToolsetFilterPanelCollapseState,
 };

@@ -5,6 +5,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useToolsetMenuActions } from '@/src/hooks/useToolsetActions';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isPredefinedEntity } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import {
   getToolsetAuthAction,
@@ -18,6 +19,7 @@ import { Translation } from '@/src/types/translation';
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 import { useAppSelector } from '@/src/store/hooks';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetAuthAction } from '@/src/constants/toolsets';
 
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
@@ -32,7 +34,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
 
   const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
-  const isPublic = isEntityIdPublic(entity);
+  const isPublic = isEntityIdPublic(entity) || isPredefinedEntity(entity);
   const withAuth = isToolsetWithAuth(entity);
   const { handleLogin } = useToolsetMenuActions(entity);
   const authAction = getToolsetAuthAction(entity, isAdmin);
@@ -51,7 +53,7 @@ export const LoginButton: FC<LoginButtonProps> = ({ entity }) => {
       <DialPrimaryButton
         iconBefore={<IconKey size={18} />}
         onClick={handleLogin}
-        label={t('Manage creds')}
+        label={t(MarketplaceI18nKeys.ManageCreds)}
         data-qa="login-button"
       />
     );

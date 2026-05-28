@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -15,13 +15,17 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { RulesInput } from '@/src/components/Chat/Publish/RulesInput';
+import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { RuleListItem } from '../RuleListItem';
 import { PublicationRequestFormData, PublishRequestFieldsNames } from '../form';
+
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface FilterComponentProps {
   filteredRuleEntries: [string, PublicationRule[]][];
@@ -29,6 +33,8 @@ interface FilterComponentProps {
   publication: Publication;
   isRulesLoading: boolean;
   editedPublishToUrl: string;
+  isRulesSetterVisible: boolean;
+  onRulesSetterOpenChange: (visible: boolean) => void;
 }
 
 const showNoRulesLabel = (
@@ -47,12 +53,14 @@ const showNoRulesLabel = (
   return isNoRulesToDisplay;
 };
 
-export function PublicationFilters({
+function PublicationFiltersView({
   filteredRuleEntries,
   newRules,
   publication,
   isRulesLoading,
   editedPublishToUrl,
+  isRulesSetterVisible,
+  onRulesSetterOpenChange,
 }: FilterComponentProps) {
   const { t } = useTranslation(Translation.Chat);
 
@@ -60,8 +68,6 @@ export function PublicationFilters({
     PublicationSelectors.selectPublishModel,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
-
-  const [isRulesSetterVisible, setIsRulesSetterVisible] = useState(false);
 
   const { setValue } = useFormContext<PublicationRequestFormData>();
 
@@ -116,9 +122,7 @@ export function PublicationFilters({
         isEditMode || publicationModel ? editedPublishToUrl : undefined,
       ) && (
         <p className="text-sm text-secondary" data-qa="availability-label">
-          {t(
-            'This publication will be available to all users in the organization',
-          )}
+          {t(ChatI18nKeys.PublicationAvailableToAll)}
         </p>
       )}
       {oldRules.map(([path, rules]) => (
@@ -131,17 +135,21 @@ export function PublicationFilters({
         <>
           {publicationModel && (
             <p className="mb-1 text-xs text-secondary" data-qa="published-path">
-              {editedPublishToUrl.split('/').pop()}
+              <DialEllipsisTooltip
+                text={editedPublishToUrl.split('/').pop() || ''}
+              />
             </p>
           )}
           <RulesInput
             isOpen={isRulesSetterVisible}
             filters={filters}
             setFilters={handleFilterUpdate}
-            onSwitchRulesSetter={setIsRulesSetterVisible}
+            onSwitchRulesSetter={onRulesSetterOpenChange}
           />
         </>
       )}
     </>
   );
 }
+
+export const PublicationFilters = withErrorMessage(PublicationFiltersView);

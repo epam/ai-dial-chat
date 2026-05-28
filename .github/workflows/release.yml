@@ -3,6 +3,18 @@ name: Release Workflow
 on:
   push:
     branches: [development, release-*]
+  workflow_dispatch:
+    inputs:
+      promote:
+        type: boolean
+        default: false
+        description: Promote release to stable (for release-* branches only)
+
+permissions:
+  id-token: write
+  contents: write
+  packages: write
+  security-events: write
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -10,8 +22,10 @@ concurrency:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@3.1.1
-    secrets: inherit
+    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@4.3.0
     with:
+      promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
       node-version: 24
       maximize-build-space: true
+      draft-stable-releases: true
+    secrets: inherit

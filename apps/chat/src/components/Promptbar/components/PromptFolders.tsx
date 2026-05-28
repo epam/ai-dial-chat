@@ -30,6 +30,7 @@ import {
 } from '@/src/store/selectors';
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import {
   APPROVE_REQUIRED_SECTION_NAME,
   ORGANIZATION_SECTION_NAME,
@@ -84,7 +85,6 @@ const PromptFolderTemplate = ({
   const isFolderEmpty = useAppSelector((state) =>
     PromptsSelectors.selectIsFolderEmpty(state, folder.id),
   );
-
   const filteredPromptsSelector = useMemo(
     () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
     [filters, searchTerm],
@@ -160,12 +160,12 @@ const PromptFolderTemplate = ({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t('Folder with name "{{name}}" already exists at the root.', {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsAtRoot, {
               ns: Translation.Chat,
               name: folder.name,
             }),
-          ),
+          }),
         );
 
         return;
@@ -318,6 +318,7 @@ const PromptSectionView = ({
   dataQa,
 }: FolderSectionProps) => {
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+  const { t } = useTranslation(Translation.Chat);
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const selectedPublication = useAppSelector(
@@ -401,7 +402,7 @@ const PromptSectionView = ({
   return (
     <CollapsibleSection
       onToggle={handleToggle}
-      name={name}
+      name={t(name)}
       openByDefault={openByDefault ?? isExpanded}
       isExpanded={isExpanded}
       dataQa={dataQa}
@@ -436,7 +437,7 @@ const PromptSectionView = ({
   );
 };
 
-export const PromptSection = memo(PromptSectionView);
+const PromptSection = memo(PromptSectionView);
 
 export function PromptFolders() {
   const isFilterEmpty = useAppSelector(

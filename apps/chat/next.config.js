@@ -1,8 +1,15 @@
 // @ts-check
 
+const fs = require('fs');
+const path = require('path');
 const { i18n } = require('./next-i18next.config');
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { composePlugins, withNx } = require('@nx/next');
+
+if (!process.env.THEMES_CONFIG_HOST && process.env.NODE_ENV !== 'development') {
+  console.warn('\x1b[33mwarn\x1b[0m  - THEMES_CONFIG_HOST is not provided. Using fallback themes.');
+  console.warn('\x1b[33m     \x1b[0m  - Set THEMES_CONFIG_HOST in your environment for production themes.');
+}
 
 class BasePathResolver {
   /**
@@ -34,7 +41,7 @@ class BasePathResolver {
    * @param {string} str
    */
   startsWith(str) {
-    return this.valueOf().startsWith(str)
+    return this.valueOf().startsWith(str);
   }
 
   /**
@@ -49,7 +56,7 @@ class BasePathResolver {
    * @param {string} str
    */
   endsWith(str) {
-    return this.valueOf().endsWith(str)
+    return this.valueOf().endsWith(str);
   }
 
   toJSON() {
@@ -61,54 +68,45 @@ class BasePathResolver {
  * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
  **/
 const nextConfig = {
-  experimental: {
-    reactCompiler: true,
-  },
+  reactCompiler: false,
   devIndicators: false,
-  nx: {
-    // Set this to true if you would like to use SVGR
-    // See: https://github.com/gregberge/svgr
-    svgr: false,
-  },
+  nx: {},
   productionBrowserSourceMaps: process.env.NODE_ENV !== 'production',
 
   i18n,
   poweredByHeader: false,
   reactStrictMode: true,
   // @ts-ignore
-  basePath: process.env.NODE_ENV !== 'development' ? new BasePathResolver() : '',
+  basePath:
+    process.env.NODE_ENV !== 'development' ? new BasePathResolver() : '',
 
   async redirects() {
     return [
       {
-        source: '/marketplace/share/:slug([A-Za-z0-9-]+)',
+        source: '/marketplace/share/:slug([^/]+)',
         destination: '/marketplace/?share=:slug',
         permanent: false,
       },
       {
-        source: '/share/:slug([A-Za-z0-9-]+)',
+        source: '/share/:slug([^/]+)',
         destination: '/?share=:slug',
         permanent: false,
       },
       {
-        source: '/models/:slug([A-Za-z0-9@.-]+)',
+        source: '/models/:slug([^/]+)',
         destination: '/?isolated-model-id=:slug',
         permanent: false,
       },
       // Support old two route app editor links
       {
         source: '/apps-editor/:slug/settings',
-        has: [
-          { type: 'query', key: 'id', value: '(?<id>.*)' }
-        ],
+        has: [{ type: 'query', key: 'id', value: '(?<id>.*)' }],
         destination: '/apps-editor?step=General&schema=:slug&id=:id',
         permanent: false,
       },
       {
         source: '/apps-editor/:slug',
-        has: [
-          { type: 'query', key: 'id', value: '(?<id>.*)' }
-        ],
+        has: [{ type: 'query', key: 'id', value: '(?<id>.*)' }],
         destination: '/apps-editor?step=General&schema=:slug&id=:id',
         permanent: false,
       },
@@ -121,6 +119,21 @@ const nextConfig = {
   },
 
   webpack(config, { isServer }) {
+    if (!isServer) {
+      // Copy pdfjs worker to public/ so it's served locally instead of falling
+      // back to an external CDN (which is blocked by script-src CSP).
+      const workerSrc = path.join(
+        __dirname,
+        '../../node_modules/pdfjs-dist/build/pdf.worker.min.mjs',
+      );
+      if (fs.existsSync(workerSrc)) {
+        fs.copyFileSync(
+          workerSrc,
+          path.join(__dirname, 'public/pdf.worker.min.mjs'),
+        );
+      }
+    }
+
     config.experiments = {
       asyncWebAssembly: true,
       layers: true,
@@ -136,8 +149,9 @@ const nextConfig = {
 
     //SVGR config
     // Grab the existing rule that handles SVG imports
-    const fileLoaderRule = config.module.rules.find((/** @type {{ test: { test: (arg0: string) => any; }; }} */ rule) =>
-      rule.test?.test?.('.svg'),
+    const fileLoaderRule = config.module.rules.find(
+      (/** @type {{ test: { test: (arg0: string) => any; }; }} */ rule) =>
+        rule.test?.test?.('.svg'),
     );
 
     config.module.rules.push(
@@ -170,6 +184,23 @@ const nextConfig = {
     // Modify the file loader rule to ignore *.svg, since we have it handled now.
     fileLoaderRule.exclude = /\.svg$/i;
 
+    config.resolve.alias = {
+      ...config.resolve.alias,
+      'micromark-extension-math': 'micromark-extension-llm-math',
+      '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css': path.join(
+        __dirname,
+        '../../node_modules/@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css',
+      ),
+    };
+
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      {
+        module: /protobufjs[\\/]src[\\/]util[\\/]inquire\.js/,
+        message: /Critical dependency: the request of a dependency is an expression/,
+      },
+    ];
+
     return config;
   },
 
@@ -193,7 +224,6 @@ const nextConfig = {
       },
     ];
   },
-
 };
 
 const plugins = [

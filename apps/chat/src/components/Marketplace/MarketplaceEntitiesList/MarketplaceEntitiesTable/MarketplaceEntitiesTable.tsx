@@ -1,5 +1,5 @@
-import { VirtualItem, useVirtualizer } from '@tanstack/react-virtual';
-import {
+import { useVirtualizer } from '@tanstack/react-virtual';
+import React, {
   ReactNode,
   forwardRef,
   useCallback,
@@ -12,6 +12,7 @@ import {
 import classNames from 'classnames';
 
 import { useMarketplaceBannerVisibility } from '@/src/hooks/useMarketplaceBannerVisibility';
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useSyncXScroll } from '@/src/hooks/useSyncXScroll';
 
@@ -20,90 +21,49 @@ import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityModel } from '@/src/types/models';
 import { ToolsetModel } from '@/src/types/toolsets';
 
-import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
 import {
+  ALL_APPS_HEADER_SENTINEL,
+  FEATURED_HEADER_SENTINEL,
   MarketplaceEntitiesTabs,
+  SUGGESTED_HEADER_SENTINEL,
   TableColumnSortKeys,
 } from '@/src/constants/marketplace';
 
 import { MarketplaceEntitiesListWrapper } from '@/src/components/Marketplace/MarketplaceEntitiesList/MarketplaceEntitiesListWrapper';
 import { MarketplaceEntitiesTableHeader } from '@/src/components/Marketplace/MarketplaceEntitiesList/MarketplaceEntitiesTable/MarketplaceEntitiesTableHeader';
 import { SuggestedMessage } from '@/src/components/Marketplace/MarketplaceEntitiesList/SuggestedMessage';
-import { MarketplaceEntitiesListProps } from '@/src/components/Marketplace/MarketplaceEntitiesList/view-props';
+import {
+  MarketplaceEntitiesListProps,
+  MarketplaceEntitiesListWrapperRef,
+} from '@/src/components/Marketplace/MarketplaceEntitiesList/view-props';
 
-import { MarketplaceEntitiesTableLeftSideRow } from './MarketplaceEntitiesTableLeftSideRow';
-import { MarketplaceEntitiesTableRightSideRow } from './MarketplaceEntitiesTableRightSideRow';
+import { VirtualRowsRenderer } from './VirtualRowsRenderer';
 
 import isString from 'lodash-es/isString';
 import orderBy from 'lodash-es/orderBy';
 
-interface DataRowContainerProps {
-  children: ReactNode;
-  width: number;
-  height: number;
-}
-
-const DataRowContainer = forwardRef<HTMLDivElement, DataRowContainerProps>(
-  ({ children, width, height }, ref) => {
-    return (
-      <div
-        ref={ref}
-        style={{
-          height: `${height}px`,
-          width: `${width}px`,
-        }}
-        className="no-scrollbar relative flex w-full shrink divide-y divide-secondary overflow-x-auto overflow-y-hidden"
-      >
-        {children}
-      </div>
-    );
-  },
-);
-DataRowContainer.displayName = 'DataRowContainer';
-
-interface DataRowItemProps {
-  suggestedResults: MarketplaceEntity[];
-  entity: MarketplaceEntity | string;
-  virtualRow: VirtualItem;
-  children: ReactNode;
-}
-
-const DataRowItem: React.FC<DataRowItemProps> = ({
-  entity,
-  suggestedResults,
-  virtualRow,
-  children,
-}) => {
-  return (
-    <div
-      className={classNames(
-        suggestedResults.length &&
-          !isString(entity) &&
-          entity.id === suggestedResults[0].id &&
-          '!border-t-0',
-        isString(entity) && 'flex items-center !border-t-0',
-        'absolute left-0 top-0 min-w-full',
-      )}
-      style={{
-        height: `${virtualRow.size}px`,
-        transform: `translateY(${virtualRow.start}px)`,
-      }}
-    >
-      {children}
-    </div>
-  );
-};
-
 const ROW_SIZES = {
   [ScreenState.SM]: 55,
-  [ScreenState.MD]: 115,
-  [ScreenState.XL]: 115,
-  [ScreenState.XL3]: 115,
-  [ScreenState.XL4]: 115,
-  [ScreenState.XL5]: 115,
+  [ScreenState.MD]: 114,
+  [ScreenState.XL]: 114,
+  [ScreenState.XL3]: 114,
+  [ScreenState.XL4]: 114,
+  [ScreenState.XL5]: 114,
 };
+
+const SECTION_HEADER_ROW_SIZE: Record<ScreenState, number> = {
+  [ScreenState.SM]: 52,
+  [ScreenState.MD]: 56,
+  [ScreenState.XL]: 64,
+  [ScreenState.XL3]: 64,
+  [ScreenState.XL4]: 64,
+  [ScreenState.XL5]: 64,
+};
+
+const FEATURED_HEADER_ROW_SIZE = 48;
 
 const SORT_KEY_MAP = {
   [TableColumnSortKeys.RELEASED]: 'createdAt',
@@ -122,21 +82,44 @@ const TOOLSETS_SORT_KEY_MAP: ToolsetsSortKeyMap = {
   [TableColumnSortKeys.OWNER]: 'author',
 };
 
+interface DataRowContainerProps {
+  children: ReactNode;
+  width: number;
+  height: number;
+  className?: string;
+}
+
+const DataRowContainer = forwardRef<HTMLDivElement, DataRowContainerProps>(
+  ({ children, width, height, className }, ref) => {
+    return (
+      <div
+        ref={ref}
+        style={{
+          height: `${height}px`,
+          width: `${width}px`,
+        }}
+        className={classNames(
+          'no-scrollbar relative flex w-full shrink divide-y divide-secondary overflow-x-auto overflow-y-hidden',
+          className,
+        )}
+      >
+        {children}
+      </div>
+    );
+  },
+);
+DataRowContainer.displayName = 'DataRowContainer';
+
 export const MarketplaceEntitiesTable: React.FC<
   MarketplaceEntitiesListProps<MarketplaceEntity>
 > = ({
   entities,
   suggestedResults,
-  separator,
+  featuredEntities,
   onCardClick,
   onBookmarkClick,
 }) => {
-  const dispatch = useAppDispatch();
-
-  const wrapperRefs = useRef<{
-    parentRef: React.RefObject<HTMLDivElement>;
-    suggestedRowRef: React.RefObject<HTMLSpanElement>;
-  }>(null);
+  const wrapperRefs = useRef<MarketplaceEntitiesListWrapperRef>(null);
   const headerRefs = useRef<{
     leftColumnHeaderRef: React.RefObject<HTMLDivElement>;
     rightColumnHeaderRef: React.RefObject<HTMLDivElement>;
@@ -145,7 +128,6 @@ export const MarketplaceEntitiesTable: React.FC<
   const rightColumnDataRef = useRef<HTMLDivElement>(null);
 
   const currentParentRef = wrapperRefs.current?.parentRef.current ?? null;
-  const suggestedRowRef = wrapperRefs.current?.suggestedRowRef;
 
   const tableSort = useAppSelector(MarketplaceSelectors.selectTableSort);
 
@@ -189,77 +171,93 @@ export const MarketplaceEntitiesTable: React.FC<
         [tableSort.order],
       );
     };
-    const sortedEntities = isAgentsTab
-      ? sortEntities<DialAIEntityModel>(
-          entities as DialAIEntityModel[],
-          agentsSortField,
-        )
-      : sortEntities<ToolsetModel>(
-          entities as ToolsetModel[],
-          toolsetsSortField,
-        );
-    const sortedSuggestedEntities = isAgentsTab
-      ? sortEntities<DialAIEntityModel>(
-          suggestedResults as DialAIEntityModel[],
-          agentsSortField,
-        )
-      : sortEntities<ToolsetModel>(
-          suggestedResults as ToolsetModel[],
-          toolsetsSortField,
-        );
 
-    if (!suggestedResults.length) return sortedEntities;
-    if (!entities.length && suggestedResults.length)
-      return sortedSuggestedEntities;
+    const sortField = (
+      isAgentsTab ? agentsSortField : toolsetsSortField
+    ) as keyof MarketplaceEntity;
+    const sortedEntities = sortEntities(entities, sortField);
+    const sortedSuggestedEntities = sortEntities(suggestedResults, sortField);
 
-    return [...sortedEntities, separator, ...sortedSuggestedEntities];
+    const result: (MarketplaceEntity | string)[] = [];
+
+    if (featuredEntities.length) {
+      const sortedFeaturedEntities = sortEntities(featuredEntities, sortField);
+      result.push(FEATURED_HEADER_SENTINEL, ...sortedFeaturedEntities);
+    }
+
+    if (
+      featuredEntities.length &&
+      (entities.length || suggestedResults.length)
+    ) {
+      result.push(ALL_APPS_HEADER_SENTINEL);
+    }
+
+    if (!suggestedResults.length) {
+      result.push(...sortedEntities);
+    } else if (!entities.length) {
+      result.push(...sortedSuggestedEntities);
+    } else {
+      result.push(
+        ...sortedEntities,
+        SUGGESTED_HEADER_SENTINEL,
+        ...sortedSuggestedEntities,
+      );
+    }
+
+    return result;
   }, [
     entities,
+    featuredEntities,
     isAgentsTab,
-    separator,
     suggestedResults,
     tableSort.column,
     tableSort.order,
   ]);
 
+  const allEntitiesRef = useRef(allEntities);
+  allEntitiesRef.current = allEntities;
+
   const rowVirtualizer = useVirtualizer({
     count: allEntities.length,
     getScrollElement: () => currentParentRef,
-    estimateSize: () => ROW_SIZES[screenState],
+    estimateSize: (index) => {
+      const entity = allEntitiesRef.current[index];
+
+      if (entity === FEATURED_HEADER_SENTINEL) {
+        return FEATURED_HEADER_ROW_SIZE;
+      }
+
+      if (
+        entity === ALL_APPS_HEADER_SENTINEL ||
+        entity === SUGGESTED_HEADER_SENTINEL
+      ) {
+        return SECTION_HEADER_ROW_SIZE[screenState];
+      }
+
+      return ROW_SIZES[screenState];
+    },
+    getItemKey: (index) => {
+      const entity = allEntitiesRef.current[index];
+      if (!entity) return `_${index}`;
+      if (isString(entity)) return entity;
+      return entity.id;
+    },
     overscan: screenState === ScreenState.SM ? 9 : 3,
   });
 
   useMarketplaceBannerVisibility(currentParentRef);
 
-  useEffect(() => {
-    const headerCurrentRefs = headerRefs.current ? headerRefs.current : null;
-    let leftObserver: ResizeObserver | undefined,
-      rightObserver: ResizeObserver | undefined;
+  const { leftColumnHeaderRef, rightColumnHeaderRef } =
+    headerRefs.current ?? {};
+  const handleLeftResize = useCallback(() => {
+    setLeftColumnWidth(leftColumnHeaderRef?.current?.offsetWidth ?? 0);
+  }, [leftColumnHeaderRef]);
+  const handleRightResize = useCallback(() => {
+    setRightColumnWidth(rightColumnHeaderRef?.current?.offsetWidth ?? 0);
+  }, [rightColumnHeaderRef]);
 
-    if (headerCurrentRefs) {
-      const { leftColumnHeaderRef, rightColumnHeaderRef } = headerCurrentRefs;
-      const leftObserver = new ResizeObserver(() => {
-        setLeftColumnWidth(leftColumnHeaderRef.current?.offsetWidth ?? 0);
-      });
-
-      if (leftColumnHeaderRef.current) {
-        leftObserver.observe(leftColumnHeaderRef.current);
-      }
-
-      const rightObserver = new ResizeObserver(() => {
-        setRightColumnWidth(rightColumnHeaderRef.current?.offsetWidth ?? 0);
-      });
-
-      if (rightColumnHeaderRef.current) {
-        rightObserver.observe(rightColumnHeaderRef.current);
-      }
-    }
-
-    return () => {
-      leftObserver?.disconnect();
-      rightObserver?.disconnect();
-    };
-  }, [dispatch]);
+  useResizeObserver(leftColumnHeaderRef?.current ?? null, handleLeftResize);
+  useResizeObserver(rightColumnHeaderRef?.current ?? null, handleRightResize);
 
   useEffect(() => {
     rowVirtualizer.measure();
@@ -275,15 +273,41 @@ export const MarketplaceEntitiesTable: React.FC<
 
   const virtualRows = rowVirtualizer.getVirtualItems();
   const listHeight = rowVirtualizer.getTotalSize();
-  const separatorRowId = allEntities.findIndex(isString);
+  const sentinelWidth = leftColumnWidth + rightColumnWidth;
+  const virtualRowsProps = useMemo(
+    () => ({
+      virtualRows,
+      allEntities,
+      suggestedResults,
+      measureElement: rowVirtualizer.measureElement,
+      sentinelWidth,
+      rowProps: {
+        hoveredRowId,
+        onClick: onCardClick,
+        onBookmarkClick,
+        onRowHover: handleRowHover,
+        onRowHoverOver: handleRowHoverOver,
+      },
+    }),
+    [
+      virtualRows,
+      allEntities,
+      suggestedResults,
+      rowVirtualizer.measureElement,
+      sentinelWidth,
+      hoveredRowId,
+      onCardClick,
+      onBookmarkClick,
+      handleRowHover,
+      handleRowHoverOver,
+    ],
+  );
 
   return (
     <>
       <SuggestedMessage shouldRender={!entities.length} className="md:ml-3" />
       <MarketplaceEntitiesTableHeader ref={headerRefs} />
       <MarketplaceEntitiesListWrapper
-        separatorRowId={separatorRowId}
-        rowsHeight={ROW_SIZES[screenState]}
         ref={wrapperRefs}
         className={screenState === ScreenState.SM ? '!px-0' : ''}
       >
@@ -291,63 +315,16 @@ export const MarketplaceEntitiesTable: React.FC<
           ref={leftColumnDataRef}
           width={leftColumnWidth}
           height={listHeight}
+          className="!overflow-visible"
         >
-          {virtualRows.map((virtualRow) => {
-            const entity = allEntities[virtualRow.index];
-
-            return (
-              <DataRowItem
-                key={virtualRow.key}
-                suggestedResults={suggestedResults}
-                entity={entity}
-                virtualRow={virtualRow}
-              >
-                {isString(entity) ? (
-                  <span ref={suggestedRowRef}></span>
-                ) : (
-                  <MarketplaceEntitiesTableLeftSideRow
-                    entity={entity}
-                    isHovered={entity.id === hoveredRowId}
-                    onClick={onCardClick}
-                    onBookmarkClick={onBookmarkClick}
-                    onRowHover={handleRowHover}
-                    onRowHoverOver={handleRowHoverOver}
-                  />
-                )}
-              </DataRowItem>
-            );
-          })}
+          <VirtualRowsRenderer {...virtualRowsProps} isLeftSide />
         </DataRowContainer>
         <DataRowContainer
           ref={rightColumnDataRef}
           width={rightColumnWidth}
           height={listHeight}
         >
-          {virtualRows.map((virtualRow) => {
-            const entity = allEntities[virtualRow.index];
-
-            return (
-              <DataRowItem
-                key={virtualRow.key}
-                suggestedResults={suggestedResults}
-                entity={entity}
-                virtualRow={virtualRow}
-              >
-                {isString(entity) ? (
-                  <span></span>
-                ) : (
-                  <MarketplaceEntitiesTableRightSideRow
-                    entity={entity}
-                    isHovered={entity.id === hoveredRowId}
-                    onClick={onCardClick}
-                    onBookmarkClick={onBookmarkClick}
-                    onRowHover={handleRowHover}
-                    onRowHoverOver={handleRowHoverOver}
-                  />
-                )}
-              </DataRowItem>
-            );
-          })}
+          <VirtualRowsRenderer {...virtualRowsProps} />
         </DataRowContainer>
       </MarketplaceEntitiesListWrapper>
     </>

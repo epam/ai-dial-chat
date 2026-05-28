@@ -2,6 +2,7 @@ import { DialAIEntityModel } from '@/chat/types/models';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import { ExpectedMessages } from '@/src/testData';
 import { AgentInfo } from '@/src/ui/webElements';
+import { decode } from 'he';
 
 export class AgentInfoAssertion extends BaseAssertion {
   readonly agentInfo: AgentInfo;
@@ -29,9 +30,20 @@ export class AgentInfoAssertion extends BaseAssertion {
       );
     } else {
       if (expectedModel.description) {
-        await this.assertElementText(
-          this.agentInfo.agentDescription,
-          expectedModel.description.split(/\s*\n\s*\n\s*/g)[0] ?? '',
+        const rawDescription =
+          expectedModel.description.split(/\s*\n\s*\n\s*/g)[0] ?? '';
+        let expectedText = rawDescription;
+        if (rawDescription.includes('<') && rawDescription.includes('>')) {
+          expectedText = rawDescription
+            .replaceAll(/'/g, '"')
+            .replaceAll(/">/g, ';">')
+            .replaceAll(/:(?=\S)/g, ': ');
+        }
+        const actualHtml =
+          await this.agentInfo.agentDescription.getElementsInnerHtml();
+        this.assertValue(
+          decode(actualHtml),
+          expectedText,
           ExpectedMessages.agentDescriptionIsValid,
         );
       } else {

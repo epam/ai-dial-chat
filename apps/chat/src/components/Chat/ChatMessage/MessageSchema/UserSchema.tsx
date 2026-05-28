@@ -15,6 +15,8 @@ import { FormButtonType } from '@/src/types/chat';
 import { FormSchemaPropertyType } from '@/src/types/form-schema';
 import { Translation } from '@/src/types/translation';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Checkbox } from '@/src/components/Common/Forms/Checkbox';
@@ -26,7 +28,7 @@ import {
   MessageFormValue,
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import { DialButton, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const emptyHandler = () => undefined;
 
@@ -83,7 +85,7 @@ const UserSchemaView = memo(function UserSchemaView({
   );
 
   if (!schema && formValue)
-    return <ErrorMessage error={t('Form schema is missing')} />;
+    return <ErrorMessage error={t(ChatI18nKeys.FormSchemaMissing)} />;
 
   if (!formValue || !schema) return null;
 
@@ -98,7 +100,7 @@ const UserSchemaView = memo(function UserSchemaView({
       />
     );
 
-  return schemaPropertiesWithUserResponse ? (
+  return schemaPropertiesWithUserResponse.length ? (
     <div className="flex flex-col gap-6">
       {schemaPropertiesWithUserResponse.map((row) => (
         <div key={row.property}>
@@ -114,11 +116,11 @@ const UserSchemaView = memo(function UserSchemaView({
                 <DialButton
                   key={String(option.value)}
                   className={classNames(
-                    'chat-button',
+                    'chat-button truncate',
                     option.selected && 'button-accent-primary',
                   )}
                   disabled
-                  label={option.label}
+                  label={<DialEllipsisTooltip text={option.label} />}
                 />
               ))}
             </div>
@@ -156,7 +158,7 @@ export const UserSchema = memo(function UserSchema(props: UserSchemaProps) {
   if (schema && !isFormSchemaValid(schema))
     return (
       <div className="mt-2">
-        <ErrorMessage error={t('Form schema is invalid')} />
+        <ErrorMessage error={t(ChatI18nKeys.FormSchemaInvalid)} />
       </div>
     );
 

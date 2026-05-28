@@ -158,7 +158,10 @@ dialTest(
     //TODO: update when fixed https://github.com/epam/ai-dial-chat/issues/4985
     const expectedModel = GeneratorUtil.randomArrayElement(
       ModelsUtil.getLatestModelsWithAttachment().filter(
-        (m) => !m.id.includes(':'),
+        (m) =>
+          !m.id.includes(':') &&
+          m.inputAttachmentTypes?.length == 1 &&
+          m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
       ),
     )!;
     const testMessage = 'Test message with attachment';
@@ -228,7 +231,7 @@ dialTest(
 
     await dialTest.step('Check model-response actions', async () => {
       await chatMessagesAssertion.assertElementState(
-        chatMessages.messageCopyIcon(2),
+        chatMessages.messageCopyTextButton(2),
         'visible',
       );
       await chatMessagesAssertion.assertElementState(
@@ -465,7 +468,6 @@ dialTest(
     await dialTest.step(
       'Click on the model icon and verify model change is not available',
       async () => {
-        // eslint-disable-next-line playwright/no-force-option
         await chatHeader.chatModelIcon.click({ force: true });
         await baseAssertion.assertElementState(
           talkToAgentDialog.getElementLocator(),

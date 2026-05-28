@@ -13,6 +13,11 @@ import {
 import { ToolsetActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import {
+  TOOLSET_AUTH_POPUP_NAME,
+  ToolsetLoginQuery,
+} from '@/src/constants/toolsets';
+
 import { Spinner } from '@/src/components/Common/Spinner';
 
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
@@ -22,8 +27,14 @@ function ToolsetSignin() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const { code = '', state = '' } = router.query;
+    const {
+      code = '',
+      state = '',
+      [ToolsetLoginQuery.LoginComplete]: loginComplete,
+    } = router.query;
     let parsedState: ToolsetRedirectState;
+
+    if (loginComplete) return;
 
     window.history.replaceState({}, document.title, window.location.pathname);
 
@@ -63,6 +74,10 @@ function ToolsetSignin() {
         callbackUrl,
         code: code.toString(),
         isAdmin: parsedState.isAdmin,
+        isPopup:
+          !!window.opener &&
+          window.opener !== window &&
+          window.name === TOOLSET_AUTH_POPUP_NAME,
       }),
     );
   }, [dispatch, router]);

@@ -4,7 +4,7 @@
     <p align="center">
         <p align="center">
         <a href="https://dialx.ai/">
-          <img src="https://dialx.ai/dialx_logo.svg" alt="About DIALX">
+          <img src="https://dialx.ai/logo/dialx_logo.svg" alt="About DIALX">
         </a>
     </p>
 <h4 align="center">
@@ -14,14 +14,14 @@
 </h4>
 
 - [Overview](#overview)
-- [Documentations](#documentations-)
-- [Development](#development-)
+- [Documentations 📄](#documentations-)
+- [Development 🛠️](#development-️)
   - [Install](#install)
   - [Build](#build)
   - [Serve](#serve)
   - [Tests](#tests)
   - [Publish](#publish)
-  - [Dry Mode](#dry-mode)
+    - [Dry Mode](#dry-mode)
 
 ---
 
@@ -94,16 +94,15 @@ npm run test
 Run this command to initiate npm publish for all publishable libraries:
 
 ```bash
-npm run publish -- --ver=*.*.* --tag=* --dry --development
+npm run publish -- --ver=*.*.* --tag=* --dry
 ```
 
 Parameters (all optional):
 
 ```
 ver - version to publish
+tag - distribution tag to publish with (default: 'next')
 dry - dry run
-tag - tag to publish with (default: 'next')
-development - if set without a version provided, will increment a version automatically according to the current version of the global package.json version (e.g. 0.5.0-rc.1, 0.5.0-rc.2, etc.)
 ```
 
 #### Dry Mode

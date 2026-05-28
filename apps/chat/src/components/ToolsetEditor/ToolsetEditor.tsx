@@ -1,9 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
 import { getValidFormFields } from '@/src/utils/app/forms';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
+import { isTruthyQuery } from '@/src/utils/app/route';
 import { getToolsetPayload, isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ToolsetEditorSteps } from '@/src/types/toolsets';
@@ -19,6 +21,7 @@ import { ToolsetEditorQuery } from '@/src/constants/toolsets';
 import { ToolsetEditorHeader } from '@/src/components/ToolsetEditor/ToolsetEditorHeader';
 import { ToolsetEditorView } from '@/src/components/ToolsetEditor/ToolsetEditorView';
 import {
+  ENDPOINT_PLACEHOLDER,
   ToolsetEditorForm,
   ToolsetEditorFormSchema,
   getDefaultFormData,
@@ -35,8 +38,7 @@ export const ToolsetEditor = () => {
     [ToolsetEditorQuery.Id]: idQuery,
     [ToolsetEditorQuery.IsCreating]: isCreating,
   } = router.query;
-  const isCreatingToolset =
-    !idQuery || (typeof isCreating === 'string' && isCreating === '1');
+  const isCreatingToolset = !idQuery || isTruthyQuery(isCreating);
   const toolsetDetails = useAppSelector(ToolsetSelectors.selectToolsetDetails);
   const toolsets = useAppSelector(ToolsetSelectors.selectToolsets);
   const editorStep = useAppSelector(ToolsetSelectors.selectEditorStep);
@@ -44,27 +46,36 @@ export const ToolsetEditor = () => {
   const changeEditorTabRef = useRef<ToolsetEditorSteps | null>(null);
   const saveAndExitRef = useRef(false);
   const redirectToChatRef = useRef(false);
+  const firstValidationPerformedRef = useRef(false);
+
+  const isAdminReview = toolsetDetails && isEntityIdPublic(toolsetDetails);
 
   const [isExiting, setIsExiting] = useState(false);
 
   const formMethods = useForm<ToolsetEditorForm>({
-    defaultValues: getDefaultFormData(toolsetDetails, toolsets),
+    defaultValues: getDefaultFormData({
+      toolset: toolsetDetails,
+      toolsets,
+      isAdminReview,
+    }),
     mode: 'onChange',
     reValidateMode: 'onChange',
     resolver: zodResolver(ToolsetEditorFormSchema),
   });
   const lastSubmittedValuesRef = useRef<ToolsetEditorForm>(
-    getDefaultFormData(toolsetDetails, toolsets),
+    getDefaultFormData({ toolset: toolsetDetails, toolsets }),
   );
 
   const isDirty = formMethods.formState.isDirty;
+  const isToolsetPublic = !!toolsetDetails && isEntityIdPublic(toolsetDetails);
 
   const submitHandler = useCallback(
     (data: ToolsetEditorForm) => {
       const payloadToolset = getToolsetPayload(
         {
           name: data.name,
-          endpoint: data.endpoint.trim(),
+          endpoint:
+            data.endpoint === ENDPOINT_PLACEHOLDER ? '' : data.endpoint.trim(),
           iconUrl: data.iconUrl,
           transport: data.protocol,
           description: data.description,
@@ -110,7 +121,9 @@ export const ToolsetEditor = () => {
         keepIsValid: true,
         keepErrors: true,
       });
-      lastSubmittedValuesRef.current = getDefaultFormData(payloadToolset);
+      lastSubmittedValuesRef.current = getDefaultFormData({
+        toolset: payloadToolset,
+      });
     },
     [dispatch, formMethods, isCreatingToolset, toolsetDetails],
   );
@@ -148,7 +161,7 @@ export const ToolsetEditor = () => {
   const handleSaveAndExit = useCallback(
     (saveDraft = false, redirectToChat = false) => {
       setIsExiting(true);
-      if ((!isDirty && toolsetDetails) || !toolsetDetails) {
+      if ((!isDirty && toolsetDetails) || !toolsetDetails || isToolsetPublic) {
         dispatch(
           ToolsetActions.exitEditor({
             redirectUrl: redirectToChat ? Routes.Chat : undefined,
@@ -163,12 +176,23 @@ export const ToolsetEditor = () => {
       dispatch(UIActions.setEditorLoader(true));
       handleSubmit(undefined, saveDraft);
     },
-    [dispatch, handleSubmit, isCreatingToolset, isDirty, toolsetDetails],
+    [
+      dispatch,
+      handleSubmit,
+      isCreatingToolset,
+      isDirty,
+      isToolsetPublic,
+      toolsetDetails,
+    ],
   );
 
   const handleTabClick = useCallback(
     (tab: ToolsetEditorSteps) => {
       if (tab === editorStep) return;
+      if (isToolsetPublic) {
+        dispatch(ToolsetActions.setEditorStep(tab));
+        return;
+      }
       if (!isDirty && toolsetDetails) {
         handleSubmit(() => dispatch(ToolsetActions.setEditorStep(tab)), true);
       } else {
@@ -176,12 +200,23 @@ export const ToolsetEditor = () => {
         handleSubmit(undefined, true);
       }
     },
-    [dispatch, editorStep, handleSubmit, isDirty, toolsetDetails],
+    [
+      dispatch,
+      editorStep,
+      handleSubmit,
+      isDirty,
+      isToolsetPublic,
+      toolsetDetails,
+    ],
   );
 
   const handleNextClick = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      if (isToolsetPublic) {
+        dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings));
+        return;
+      }
       if (!isDirty && toolsetDetails) {
         handleSubmit(() =>
           dispatch(ToolsetActions.setEditorStep(ToolsetEditorSteps.Settings)),
@@ -191,7 +226,7 @@ export const ToolsetEditor = () => {
         handleSubmit(undefined, !!toolsetDetails);
       }
     },
-    [dispatch, handleSubmit, isDirty, toolsetDetails],
+    [dispatch, handleSubmit, isDirty, isToolsetPublic, toolsetDetails],
   );
 
   useEffect(() => {
@@ -206,6 +241,14 @@ export const ToolsetEditor = () => {
       });
     }
   }, [formMethods, toolsetDetails]);
+
+  useEffect(() => {
+    if (idQuery && !firstValidationPerformedRef.current && !isToolsetPublic) {
+      void formMethods.trigger();
+    }
+    firstValidationPerformedRef.current = true;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [idQuery, formMethods.trigger, isToolsetPublic]);
 
   return (
     <FormProvider {...formMethods}>

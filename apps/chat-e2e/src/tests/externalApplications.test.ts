@@ -12,7 +12,7 @@ import {
   MarketplaceFilterTypes,
   SourcesFilterOptions,
 } from '@/src/testData';
-import { Attributes, StyleValues } from '@/src/ui/domData';
+import { AttributeValues, Attributes, StyleValues } from '@/src/ui/domData';
 import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, UserUtil } from '@/src/utils';
 
@@ -132,7 +132,7 @@ dialTest(
           await baseAssertion.assertElementState(
             entityEditorGeneralForm.getRequiredIndicator(field),
             'visible',
-            ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+            ExpectedMessages.entityFormFieldShouldHaveAsterisk,
           );
         }
         for (const field of [
@@ -199,7 +199,7 @@ dialTest(
             EntityEditorViewFormFields.externalUrl,
           ),
           'visible',
-          ExpectedMessages.applicationFormFieldShouldHaveAsterisk,
+          ExpectedMessages.entityFormFieldShouldHaveAsterisk,
         );
         await externalAppEditorSettingsPreviewCardAssertion.assertPreviewCardAttributes(
           {
@@ -311,7 +311,7 @@ dialTest(
       await entityDetailsModalAssertion.assertElementAttribute(
         entityDetailsModal.openInNewTabButton,
         Attributes.target,
-        Attributes.blank,
+        AttributeValues.blank,
       );
       await entityDetailsModalAssertion.assertEntityIcon(
         entityDetailsModal.icon,

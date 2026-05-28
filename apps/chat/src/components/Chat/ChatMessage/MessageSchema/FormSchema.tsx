@@ -3,6 +3,7 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -19,6 +20,8 @@ import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
@@ -158,23 +161,14 @@ const HiddenButtonsProperty = ({
     onSetHiddenOptions(hidden.map((item) => item.option));
   }, [onCloseModal, onSetHiddenOptions, onSetVisibleOptions, options]);
 
+  useResizeObserver(hiddenContainerRef.current, determineVisibility);
+
   useEffect(() => {
-    const handleResize = () => {
-      determineVisibility();
-    };
-
-    const resizeObserver = new ResizeObserver(handleResize);
-
-    if (hiddenContainerRef.current) {
-      resizeObserver.observe(hiddenContainerRef.current);
-    }
-
     return () => {
-      resizeObserver.disconnect();
       onSetHiddenOptions([]);
       onSetVisibleOptions(options);
     };
-  }, [determineVisibility, onSetHiddenOptions, onSetVisibleOptions, options]);
+  }, [onSetHiddenOptions, onSetVisibleOptions, options]);
 
   return (
     <div
@@ -323,12 +317,13 @@ const ButtonsProperty = ({
       <ConfirmDialog
         isOpen={!!confirmation}
         showHeadingTooltip
-        heading={t(
+        heading={t(ChatI18nKeys.ConfirmHeader)}
+        description={t(
           confirmation?.[DialSchemaProperties.DialWidgetOptions]
             ?.confirmationMessage ?? '',
         )}
-        confirmLabel={t('Yes')}
-        cancelLabel={t('No')}
+        confirmLabel={t(ChatI18nKeys.Yes)}
+        cancelLabel={t(ChatI18nKeys.No)}
         onClose={handleCloseConfirmation}
       />
     </>
@@ -433,15 +428,20 @@ const PropertyRenderer = ({
     return getFormCheckboxDefinitionOptions(schema, name);
   }, [name, schema]);
 
+  if (
+    !property.description &&
+    propertyType !== FormSchemaPropertyType.Button &&
+    propertyType !== FormSchemaPropertyType.Checkbox
+  )
+    return null;
+
   return (
     <div
       className={classNames('flex flex-col gap-3 overflow-hidden', className)}
     >
-      {property.description && (
-        <p className="whitespace-pre-line text-base text-primary">
-          {property.description}
-        </p>
-      )}
+      <p className="whitespace-pre-line text-base text-primary">
+        {property.description}
+      </p>
 
       {propertyType === FormSchemaPropertyType.Button && (
         <ButtonsProperty
@@ -485,7 +485,7 @@ interface FormSchemaProps {
   buttonClassName?: string;
 }
 
-export const FormSchemaMemo = memo(function FormSchema({
+const FormSchemaMemo = memo(function FormSchema({
   schema,
   formValue,
   onChange,

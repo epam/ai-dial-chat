@@ -2,7 +2,8 @@ import { CENTRAL_CHAT_MIN_WIDTH } from '@/chat/constants/chat';
 import { SIDEBAR_MIN_WIDTH } from '@/chat/constants/default-ui-settings';
 import dialTest from '@/src/core/dialFixtures';
 import { ExpectedMessages } from '@/src/testData';
-import { Colors, Styles } from '@/src/ui/domData';
+import { Colors, Styles, ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
 
 dialTest(
@@ -58,6 +59,7 @@ dialTest(
     conversationData,
     dataInjector,
     localStorageManager,
+    baseAssertion,
   }) => {
     setTestIds('EPMRTC-1642', 'EPMRTC-1650', 'EPMRTC-1641', 'EPMRTC-1647');
     let appBounding;
@@ -224,13 +226,12 @@ dialTest(
           .toBeHidden();
 
         await chatBar.bottomDotsMenuIcon.hoverOver();
-        const dotsMenuIconColor =
-          await chatBar.bottomDotsMenuIcon.getComputedStyleProperty(
-            Styles.color,
-          );
-        expect
-          .soft(dotsMenuIconColor[0], ExpectedMessages.iconColorIsValid)
-          .toBe(Colors.controlsBackgroundDisable);
+        await baseAssertion.assertElementBackgroundColors(
+          chatBar.bottomDotsMenuIcon,
+          ThemesUtil.getRgbColorByKey(
+            ThemeColorAttributes.bgAccentSecondaryAlpha,
+          ),
+        );
       },
     );
 

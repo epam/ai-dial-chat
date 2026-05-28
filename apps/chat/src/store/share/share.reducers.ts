@@ -8,9 +8,9 @@ import { DialFile } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
 import { ModalState } from '@/src/types/modal';
 import { Prompt } from '@/src/types/prompt';
-import { ShareRelations } from '@/src/types/share';
+import { InvitationDetails, ShareRelations } from '@/src/types/share';
 
-import { ShareState } from './share.types';
+import { ShareState, UnshareFileManagerItem } from './share.types';
 
 import {
   ConversationInfo,
@@ -32,6 +32,7 @@ const initialState: ShareState = {
   isPrompt: undefined,
   unshareResourceId: undefined,
   unshareEntity: undefined,
+  unshareFileManagerItems: undefined,
 
   shareResourceName: undefined,
   shareResourceId: undefined,
@@ -121,7 +122,12 @@ export const shareSlice = createSlice({
       state.shareModalState = ModalState.OPENED;
       state.sharePermissions = undefined;
     },
-    shareFail: (state, _action: PayloadAction<string | undefined>) => {
+    shareFail: (
+      state,
+      _action: PayloadAction<
+        { message?: string; traceId?: string } | undefined
+      >,
+    ) => {
       state.invitationId = undefined;
       state.shareModalState = ModalState.CLOSED;
       state.sharePermissions = undefined;
@@ -129,7 +135,7 @@ export const shareSlice = createSlice({
     revokeAccess: (
       state,
       _action: PayloadAction<{
-        resourceId: string;
+        resourceIds: string[];
         featureType: FeatureType;
         isFolder?: boolean;
       }>,
@@ -137,12 +143,15 @@ export const shareSlice = createSlice({
     revokeAccessSuccess: (
       state,
       _action: PayloadAction<{
-        resourceId: string;
+        resourceIds: string[];
         featureType: FeatureType;
         isFolder?: boolean;
       }>,
     ) => state,
-    revokeAccessFail: (state) => state,
+    revokeAccessFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
 
     discardSharedWithMe: (
       state,
@@ -160,7 +169,10 @@ export const shareSlice = createSlice({
         isFolder?: boolean;
       }>,
     ) => state,
-    discardSharedWithMeFail: (state) => state,
+    discardSharedWithMeFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
     setModalState: (
       state,
       {
@@ -176,12 +188,28 @@ export const shareSlice = createSlice({
       { payload }: PayloadAction<Omit<ShareEntity, 'folderId'> | undefined>,
     ) => {
       state.unshareEntity = payload;
+      if (payload) {
+        state.unshareFileManagerItems = undefined;
+      }
     },
     setUnshareResourceId: (
       state,
       { payload }: PayloadAction<string | undefined>,
     ) => {
       state.unshareResourceId = payload;
+      if (payload) {
+        state.unshareFileManagerItems = undefined;
+      }
+    },
+    setUnshareFileManagerItems: (
+      state,
+      { payload }: PayloadAction<UnshareFileManagerItem[] | undefined>,
+    ) => {
+      state.unshareFileManagerItems = payload;
+      if (payload?.length) {
+        state.unshareEntity = undefined;
+        state.unshareResourceId = undefined;
+      }
     },
     acceptShareInvitation: (
       state,
@@ -195,6 +223,7 @@ export const shareSlice = createSlice({
         payload,
       }: PayloadAction<{
         acceptedId: string;
+        permissions: SharePermission[];
         isFolder: boolean;
         isConversation?: boolean;
         isPrompt?: boolean;
@@ -214,6 +243,8 @@ export const shareSlice = createSlice({
       state,
       _action: PayloadAction<{
         message?: string;
+        details?: InvitationDetails;
+        traceId?: string;
       }>,
     ) => state,
     resetAcceptedEntityInfo: (state) => {
@@ -246,7 +277,10 @@ export const shareSlice = createSlice({
         };
       }>,
     ) => state,
-    getSharedListingFail: (state) => state,
+    getSharedListingFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
   },
 });
 

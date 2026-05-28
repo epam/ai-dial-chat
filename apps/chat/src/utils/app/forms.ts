@@ -8,18 +8,20 @@ import {
 
 import classNames from 'classnames';
 
+import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
+
+import { MIN_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import {
-  MAX_ENTITY_LENGTH,
-  MIN_ENTITY_LENGTH,
-} from '@/src/constants/default-ui-settings';
-import { formErrors, versionsErrors } from '@/src/constants/form-errors';
+  formErrors,
+  urlErrors,
+  versionsErrors,
+} from '@/src/constants/form-errors';
 
 import {
   doesHaveDotsInTheEnd,
-  isEntityNameInvalid,
+  getUtf8BytesLength,
   isVersionPartSizeValid,
   isVersionValid,
-  replaceSpacesFromString,
 } from './common';
 import { doesHaveNotAllowedSymbols } from './file';
 
@@ -74,14 +76,14 @@ export const getFieldClassnames = <T extends FieldValues>(
 export const FormValidations = {
   checkUrl: (v: string | undefined): boolean | string => {
     if (!v) {
-      return formErrors.notValidUrl;
+      return urlErrors.notValidUrl;
     }
 
     try {
       new URL(v);
       return true;
-    } catch (e) {
-      return formErrors.notValidUrl;
+    } catch {
+      return urlErrors.notValidUrl;
     }
   },
   notEmpty: (v: string | undefined): boolean | string => {
@@ -104,63 +106,37 @@ export const getValidFormFields = <T extends object>(
   return validValues;
 };
 
-export function createFormValidationRules(
-  fields: { name: string; label: string; checkDotsInTheEnd?: boolean }[],
-) {
-  const result: Record<string, object> = {};
-
-  fields.forEach(({ name, label, checkDotsInTheEnd }) => {
-    result[name] = {
-      required: formErrors.required,
-      validate: (valueToValidate: string) => {
-        if (isEntityNameInvalid(valueToValidate, false)) {
-          return formErrors.hasSpecialCharacters(label);
-        }
-
-        if (checkDotsInTheEnd && doesHaveDotsInTheEnd(valueToValidate)) {
-          return formErrors.noDotInTheEnd(label);
-        }
-
-        return true;
-      },
-      maxLength: {
-        value: MAX_ENTITY_LENGTH,
-        message: formErrors.tooLong(label),
-      },
-      minLength: {
-        value: MIN_ENTITY_LENGTH,
-        message: formErrors.tooShort(label),
-      },
-      setValueAs: (valueToValidate: string) =>
-        replaceSpacesFromString(valueToValidate.trim()),
-    };
-  });
-
-  return result;
-}
-
 export const getStringValidationErrors = ({
   value,
   label,
   checkDotsInTheEnd,
-  maxLength = MAX_ENTITY_LENGTH,
+  maxBytes,
   minLength = MIN_ENTITY_LENGTH,
   isNotUniqName,
+  buildNameForByteValidation,
 }: {
   value: string;
   label: string;
-  maxLength?: number;
+  maxBytes?: number;
   minLength?: number;
   checkDotsInTheEnd?: boolean;
   isNotUniqName?: boolean;
+  buildNameForByteValidation?: (preparedName: string) => string;
 }) => {
+  const resolvedMaxBytes = maxBytes ?? getResourceMaxSegmentBytes();
   const errors: string[] = [];
   const trimmedValue = value.trim();
   if (!trimmedValue) errors.push(formErrors.required);
 
   if (trimmedValue.length > 0 && trimmedValue.length < minLength)
     errors.push(formErrors.tooShort(label));
-  if (trimmedValue.length > maxLength) errors.push(formErrors.tooLong(label));
+  if (
+    getUtf8BytesLength(
+      buildNameForByteValidation?.(trimmedValue) ?? trimmedValue,
+    ) > resolvedMaxBytes
+  ) {
+    errors.push(formErrors.tooLong(label));
+  }
 
   if (doesHaveNotAllowedSymbols(trimmedValue)) {
     errors.push(formErrors.hasSpecialCharacters(label));
@@ -199,8 +175,14 @@ export const getVersionValidationErrors = (
 };
 
 export const preventEnterDown = (e: KeyboardEvent<HTMLFormElement>) => {
-  if (e.key === 'Enter') {
-    e.preventDefault();
-    e.stopPropagation();
+  if (
+    e.key !== 'Enter' ||
+    !e.target ||
+    (e.target as HTMLElement).tagName !== 'INPUT'
+  ) {
+    return;
   }
+
+  e.preventDefault();
+  e.stopPropagation();
 };

@@ -1,7 +1,7 @@
 import { ToolsetAuthPayloadBase } from '@/chat/types/toolsets';
 import { BaseAssertion } from '@/src/assertions';
 import { Creds, SignInButtonTitles } from '@/src/testData';
-import { ToolsetSignInRequest } from '@/src/testData/toolsets/oauthMockConfig';
+import { ToolsetOAuthSignInRequest } from '@/src/testData/toolsets/authMockConfig';
 import {
   EntityEditorPreviewCard,
   ToolsetEditorViewForm,
@@ -21,12 +21,12 @@ export class ToolsetAuthAssertion extends BaseAssertion {
   }
 
   public async assertAuthState(
-    request: ToolsetSignInRequest | ToolsetAuthPayloadBase,
+    request: ToolsetOAuthSignInRequest | ToolsetAuthPayloadBase,
     expectedId: string,
     expectedCredsLabel: Creds,
     expectedSignInButtonTitle: SignInButtonTitles,
   ) {
-    this.assertValue(request.url, expectedId);
+    this.assertValue(request.url, decodeURIComponent(expectedId));
     await this.assertElementText(
       this.entityEditorPreviewCard.credsLabel,
       expectedCredsLabel,

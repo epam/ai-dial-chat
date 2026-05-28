@@ -158,7 +158,8 @@ export function getCurrentDate() {
   const date = new Date();
   const month = date.getMonth() + 1;
   const day = date.getDate();
-  return `${month}-${day}`;
+  const year = date.getFullYear();
+  return `${year}-${month}-${day}`;
 }
 
 type ExportType =
@@ -170,7 +171,23 @@ type ExportType =
 export const getDownloadFileName = (fileName?: string): string =>
   !fileName ? 'ai_dial' : fileName.toLowerCase().replaceAll(' ', '_');
 
-function downloadChatPromptData(
+export const getDownloadName = ({
+  extension,
+  name,
+  exportType,
+}: {
+  extension?: string;
+  name?: string;
+  exportType?: string;
+}) => {
+  const namePart = getDownloadFileName(name);
+  const typePart = exportType ? `_${exportType}` : '';
+  const extensionPart = extension ? `.${extension}` : '';
+
+  return `${getCurrentDate()}_${namePart}${typePart}${extensionPart}`;
+};
+
+function downloadChatEntityData(
   data: LatestExportConversationsFormat | Prompt[] | ExportPromptsFormat,
   exportType: ExportType,
   fileName?: string,
@@ -179,18 +196,22 @@ function downloadChatPromptData(
     type: 'application/json',
   });
   const url = URL.createObjectURL(blob);
-  const downloadName = getDownloadFileName(fileName);
 
   triggerDownload(
     url,
-    `${downloadName}_chat_${exportType}_${getCurrentDate()}.json`,
+    getDownloadName({
+      name: fileName,
+      exportType: `chat_${exportType}`,
+      extension: 'json',
+    }),
   );
 }
 
 export function downloadApplicationLogs(data: string, fileName?: string) {
-  const exportedFileName = [fileName, 'application_logs', getCurrentDate()]
-    .filter(Boolean)
-    .join('_');
+  const exportedFileName = getDownloadName({
+    name: fileName,
+    exportType: 'application_logs',
+  });
 
   const blob = new Blob([data], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
@@ -202,24 +223,24 @@ const triggerDownloadConversation = (
   data: LatestExportConversationsFormat,
   appName?: string,
 ) => {
-  downloadChatPromptData(data, 'conversation', appName);
+  downloadChatEntityData(data, 'conversation', appName);
 };
 const triggerDownloadConversationsHistory = (
   data: LatestExportConversationsFormat,
   appName?: string,
 ) => {
-  downloadChatPromptData(data, 'conversations_history', appName);
+  downloadChatEntityData(data, 'conversations_history', appName);
 };
 
 const triggerDownloadPromptsHistory = (
   data: ExportPromptsFormat,
   appName?: string,
 ) => {
-  downloadChatPromptData(data, 'prompts_history', appName);
+  downloadChatEntityData(data, 'prompts_history', appName);
 };
 
 const triggerDownloadPrompt = (data: ExportPromptsFormat, appName?: string) => {
-  downloadChatPromptData(data, 'prompt', appName);
+  downloadChatEntityData(data, 'prompt', appName);
 };
 
 export const getExportConversationInfo = (
@@ -472,7 +493,7 @@ export const getToastAction = (
   const successMessage = `${featureType}(s) ${successMessages.importSuccess}`;
 
   if (errorList.length > 0) {
-    return of(UIActions.showErrorToast(translate(errorMessage)));
+    return of(UIActions.showErrorToast({ message: translate(errorMessage) }));
   } else {
     return of(UIActions.showSuccessToast(translate(successMessage)));
   }

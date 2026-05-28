@@ -4,9 +4,9 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { doesModelHaveSettings } from '@/src/utils/app/models';
+import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
 
-import { Conversation } from '@/src/types/chat';
+import { Conversation, ConversationsTemporarySettings } from '@/src/types/chat';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
@@ -14,25 +14,23 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { ModelsSelectors, PromptsSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
 import { MOUSE_OUTSIDE_PRESS_EVENT } from '@/src/constants/modal';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Modal } from '@/src/components/Common/Modal';
 
 import { ConversationSettings } from './ConversationSettings';
 
+import { ConversationResponseFormat } from '@epam/ai-dial-shared';
 import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 interface ChatSettingsViewProps {
   conversation: Conversation;
   onChangeSettings: (
     conv: Conversation,
-    args: {
-      modelId: string;
-      prompt: string;
-      temperature: number;
-      isShared: boolean;
-    },
+    args: ConversationsTemporarySettings,
   ) => void;
 }
 
@@ -44,6 +42,9 @@ const ChatSettingsView = ({
   const [currentTemperature, setCurrentTemperature] = useState(
     conversation.temperature,
   );
+  const [responseFormat, setResponseFormat] = useState(
+    conversation.responseFormat ?? ConversationResponseFormat.Markdown,
+  );
 
   const prompts = useAppSelector(PromptsSelectors.selectPrompts);
 
@@ -53,8 +54,15 @@ const ChatSettingsView = ({
       prompt: currentPrompt,
       temperature: currentTemperature,
       isShared: !!conversation.isShared,
+      responseFormat,
     });
-  }, [conversation, currentPrompt, currentTemperature, onChangeSettings]);
+  }, [
+    conversation,
+    currentPrompt,
+    currentTemperature,
+    onChangeSettings,
+    responseFormat,
+  ]);
 
   useEffect(() => {
     handleChangeSettings();
@@ -68,6 +76,8 @@ const ChatSettingsView = ({
       temperature={currentTemperature}
       onChangePrompt={setCurrentPrompt}
       onChangeTemperature={setCurrentTemperature}
+      responseFormat={responseFormat}
+      onChangeResponseFormat={setResponseFormat}
     />
   );
 };
@@ -79,12 +89,7 @@ interface Props {
   onClose: () => void;
   onChangeSettings: (
     conv: Conversation,
-    args: {
-      modelId: string;
-      prompt: string;
-      temperature: number;
-      isShared: boolean;
-    },
+    args: ConversationsTemporarySettings,
   ) => void;
   onApplySettings: () => void;
 }
@@ -111,7 +116,7 @@ export const ChatSettings = ({
       .map((conv) => modelsMap[conv.model.id])
       .filter(Boolean) as DialAIEntityModel[];
 
-    return allowedModels.some((model) => doesModelHaveSettings(model));
+    return !!allowedModels.length;
   }, [conversations, modelsMap]);
 
   return (
@@ -132,7 +137,7 @@ export const ChatSettings = ({
       dismissProps={MOUSE_OUTSIDE_PRESS_EVENT}
     >
       <div className="mb-3 !border-t-0 px-3 text-base font-semibold md:px-6">
-        {t('Conversation settings')}
+        {t(ChatI18nKeys.ConversationSettings)}
       </div>
 
       {conversations.length === 2 && (
@@ -153,13 +158,15 @@ export const ChatSettings = ({
                   />
                 </div>
                 <div className="flex grow flex-col justify-center gap-2 overflow-hidden leading-4">
-                  {model?.version && (
-                    <div className="flex items-center">
-                      <p className="mr-1 text-xs text-secondary">
-                        {t('Version')}: {model.version}
-                      </p>
-                    </div>
-                  )}
+                  {model &&
+                    (isCreatedMarketplaceEntity(model) || model.version) && (
+                      <div className="flex items-center">
+                        <p className="mr-1 text-xs text-secondary">
+                          {t(ChatI18nKeys.Version)}:{' '}
+                          {model.version || t(NA_VERSION)}
+                        </p>
+                      </div>
+                    )}
                   <div className="flex whitespace-nowrap">
                     <div
                       className={classNames(
@@ -199,7 +206,7 @@ export const ChatSettings = ({
       {isSomethingConfigurable && (
         <div className="flex w-full items-center justify-end px-3 pt-4 md:px-5">
           <DialPrimaryButton
-            label={t('Apply changes')}
+            label={t(ChatI18nKeys.ApplyChanges)}
             onClick={handleOnApplySettings}
             data-qa="apply-changes"
           />

@@ -19,16 +19,17 @@ import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import {
-  ApplicationTypesSchemasSelectors,
-  PublicationSelectors,
-} from '@/src/store/selectors';
+import { PublicationSelectors } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
+import { NA_VERSION } from '@/src/constants/publication';
 
 import { PublicationControls } from '@/src/components/Chat/Publish/PublicationControls/PublicationControls';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { IconButton } from '@/src/components/Common/IconButton';
 import { MarketplaceEntityTopic } from '@/src/components/Marketplace/MarketplaceEntityTopic';
 
+import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
 import { ReviewCodeAppSection } from './ReviewCodeAppSection';
 import { ReviewExternalAppSection } from './ReviewExternalAppSection';
 import { ReviewQuickApp2Section } from './ReviewQuickApp2Section';
@@ -44,12 +45,8 @@ export function ReviewApplicationDialogView({
   application,
 }: ReviewApplicationDialogViewProps) {
   const { t } = useTranslation(Translation.Chat);
-
   const dispatch = useAppDispatch();
 
-  const detailedApplicationTypeSchema = useAppSelector(
-    ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
   const selectedPublicationUrl = useAppSelector(
     PublicationSelectors.selectSelectedPublicationUrl,
   );
@@ -61,8 +58,9 @@ export function ReviewApplicationDialogView({
     ),
   );
 
-  const isCodeApp = application && isExecutableApp(application);
-  const isQuickAppTwo = application && isQuickApp2(application);
+  const isCodeApp = isExecutableApp(application);
+  const isQuickAppTwo = isQuickApp2(application);
+  const description = getModelDescription(application);
 
   const controlsEntity = useMemo(
     () => ({
@@ -70,153 +68,128 @@ export function ReviewApplicationDialogView({
       name: application.name,
       folderId: getFolderIdFromEntityId(application.id),
     }),
-    [application],
+    [application.id, application.name],
   );
 
   const handleEditApplication = useCallback(() => {
-    if (!application) return;
-
     const applicationType = getApplicationType(application);
     dispatch(
       ApplicationActions.enterEditMode({
         entity: application,
         applicationType,
-        detailedApplicationTypeSchemaId: detailedApplicationTypeSchema?.$id,
         publicationUrl: selectedPublicationUrl as string,
       }),
     );
     dispatch(PublicationActions.setIsApplicationReview(false));
-  }, [
-    application,
-    detailedApplicationTypeSchema?.$id,
-    dispatch,
-    selectedPublicationUrl,
-  ]);
+  }, [application, dispatch, selectedPublicationUrl]);
+
+  const featuresValue =
+    !isCodeApp && !isQuickAppTwo && !isEmpty(application.features)
+      ? Object.entries(application.features ?? {}).map(
+          ([key, value], index, array) => (
+            <Fragment key={key}>
+              {`"${key}" : "${value}"${index !== array.length - 1 ? ',\n' : ''}`}
+            </Fragment>
+          ),
+        )
+      : null;
+
+  const attachmentTypesValue = !isEmpty(application.inputAttachmentTypes) ? (
+    <div className="flex flex-wrap">
+      {application.inputAttachmentTypes?.map((item) => (
+        <span
+          key={item}
+          className="m-1 items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
+          data-qa="app-attach-type"
+        >
+          {item}
+        </span>
+      ))}
+    </div>
+  ) : null;
+
+  const completionUrl =
+    application.completionUrl && isEmpty(application.function?.mapping)
+      ? application.completionUrl
+      : null;
 
   return (
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
-        <div className="flex justify-between">
-          <h2 className="text-base font-semibold">{t('Application')}</h2>
-        </div>
-        <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">{t('Name: ')}</span>
-          <span className="max-w-[414px] text-primary" data-qa="app-name">
-            {application.name}
-          </span>
-        </div>
-        <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">{t('Version: ')}</span>
-          <span className="max-w-[414px] text-primary" data-qa="app-version">
-            {application.version}
-          </span>
-        </div>
-        <div className="flex gap-4">
-          <span className="w-[122px] text-secondary">{t('Icon: ')}</span>
-          <ModelIcon entity={application} entityId={application.id} size={60} />
-        </div>
-        {!!getModelDescription(application) && (
-          <div className="flex gap-4">
-            <span className="w-[122px] shrink-0 text-secondary">
-              {t('Description: ')}
-            </span>
-            <span className="grow text-primary" data-qa="app-description">
-              {getModelDescription(application)}
-            </span>
-          </div>
-        )}
-        {!!application.topics?.length && (
-          <div className="flex gap-4">
-            <span className="w-[122px] text-secondary">{t('Topics: ')}</span>
-            <div className="flex max-w-[414px] flex-wrap gap-1">
-              {application.topics.map((topic) => (
-                <MarketplaceEntityTopic key={topic} topic={topic} />
-              ))}
-            </div>
-          </div>
-        )}
-        {application.features &&
-          !isCodeApp &&
-          !isQuickAppTwo &&
-          Object.keys(application.features).length !== 0 && (
-            <div className="flex gap-4">
-              <span className="w-[122px] text-secondary">
-                {t('Features data:')}
-              </span>
-              <div className="flex flex-col justify-start break-all">
-                <div
-                  className="max-w-[414px] whitespace-pre-wrap leading-5 text-primary"
-                  data-qa="app-feature"
-                >
-                  {Object.entries(application.features || {}).map(
-                    ([key, value], index, array) => (
-                      <Fragment key={key}>
-                        {`"${key}" : "${value}"${index !== array.length - 1 ? ',\n' : ''}`}
-                      </Fragment>
-                    ),
-                  )}
+        <h2 className="text-base font-semibold">
+          {t(ChatI18nKeys.Application)}
+        </h2>
+
+        <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.Name)}
+            value={application.name}
+            dataQa="app-name"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.Version)}
+            value={application.version ?? NA_VERSION}
+            dataQa="app-version"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.Icon)}
+            value={
+              <ModelIcon
+                entity={application}
+                entityId={application.id}
+                size={60}
+                isTooltipDisabled
+              />
+            }
+            valueClassName=""
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.Description)}
+            value={description}
+            dataQa="app-description"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.Topics)}
+            value={
+              application.topics?.length ? (
+                <div className="flex flex-wrap gap-1">
+                  {application.topics.map((topic) => (
+                    <MarketplaceEntityTopic key={topic} topic={topic} />
+                  ))}
                 </div>
-              </div>
-            </div>
-          )}
-        {application.inputAttachmentTypes &&
-          application.inputAttachmentTypes.length !== 0 && (
-            <div className="flex gap-4">
-              <span className="w-[122px] text-secondary">
-                {t('Attachment types:')}
-              </span>
-              <div className="flex max-w-[414px] flex-wrap text-primary">
-                {application.inputAttachmentTypes.map((item) => (
-                  <span
-                    key={item}
-                    className="m-1 h-[31] items-center justify-between gap-2 rounded bg-accent-primary-alpha px-2 py-1.5"
-                    data-qa="app-attach-type"
-                  >
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          )}
-        {application.maxInputAttachments && (
-          <div className="flex gap-4">
-            <span className="w-[122px] text-secondary">
-              {t(' Max. attachments number:')}
-            </span>
-            <span
-              className="max-w-[414px] text-primary"
-              data-qa="app-max-attach"
-            >
-              {application.maxInputAttachments}
-            </span>
-          </div>
-        )}
-        {application.completionUrl &&
-          isEmpty(application.function?.mapping) && (
-            <div className="flex gap-4">
-              <span
-                className="w-[122px] text-secondary"
-                data-qa="app-completion-url-label"
-              >
-                {t('Completion URL:')}
-              </span>
-              <span
-                className="max-w-[414px] break-all text-primary"
-                data-qa="app-completion-url"
-              >
-                {application.completionUrl}
-              </span>
-            </div>
-          )}
+              ) : null
+            }
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.FeaturesData)}
+            value={featuresValue}
+            dataQa="app-feature"
+            valueClassName="max-w-[414px] whitespace-pre-wrap leading-5 text-primary break-all"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.AttachmentTypes)}
+            value={attachmentTypesValue}
+            valueClassName="max-w-[414px]"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.MaxAttachmentsNumber)}
+            value={application.maxInputAttachments}
+            dataQa="app-max-attach"
+          />
+          <MarketplaceEntityInfoRow
+            label={t(ChatI18nKeys.CompletionUrl)}
+            value={completionUrl}
+            dataQa="app-completion-url"
+            valueClassName="max-w-[414px] break-all text-primary"
+          />
 
-        <ReviewCodeAppSection application={application} />
-
-        <ReviewQuickAppSection application={application} />
-
-        <ReviewQuickApp2Section application={application} />
-
-        <ReviewExternalAppSection application={application} />
+          <ReviewCodeAppSection application={application} />
+          <ReviewQuickAppSection application={application} />
+          <ReviewQuickApp2Section application={application} />
+          <ReviewExternalAppSection application={application} />
+        </div>
       </div>
+
       <div
         className={classNames(
           'flex w-full items-center border-t border-tertiary px-3 py-4 md:px-5',
@@ -225,19 +198,16 @@ export function ReviewApplicationDialogView({
       >
         {!isResourceUnpublishing && (
           <IconButton
-            name={t('Edit application')}
+            name={t(ChatI18nKeys.EditApplication)}
             dataQa="admin-edit-application"
             Icon={IconPencilMinus}
             onClick={handleEditApplication}
           />
         )}
-
-        {controlsEntity && (
-          <PublicationControls
-            entity={controlsEntity}
-            controlsClassNames="text-sm"
-          />
-        )}
+        <PublicationControls
+          entity={controlsEntity}
+          controlsClassNames="text-sm"
+        />
       </div>
     </>
   );

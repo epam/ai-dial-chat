@@ -27,9 +27,12 @@ export class AuthApiHelper extends BaseApiHelper {
     csrfToken: string;
     urlCsrfToken: string;
   }> {
-    const response = await this.request.get(`${baseUrl}/api/auth/signin`);
+    const signinUrl = `${baseUrl}/api/auth/signin`;
+    const response = await this.request.get(signinUrl);
     if (response.status() !== 200) {
-      throw new Error(`Failed to get sign-in page: ${response.status()}`);
+      throw new Error(
+        `Failed to get sign-in page: ${response.status()} (URL: ${signinUrl})`,
+      );
     }
 
     const storage = await this.request.storageState();

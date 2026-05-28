@@ -23,6 +23,9 @@ import { ServiceActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ServiceSelectors } from '@/src/store/selectors';
 
+import { SettingsI18nKeys } from '@/src/constants/i18n';
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
+
 import { EmptyRequiredInputMessage } from '@/src/components/Common/EmptyRequiredInputMessage';
 import { Modal } from '@/src/components/Common/Modal';
 
@@ -171,7 +174,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
       ];
       if (checkValidity(inputs)) {
         dispatch(
-          UIActions.showLoadingToast(t('Requesting API key in progress...')),
+          UIActions.showLoadingToast(
+            t(SettingsI18nKeys.RequestingApiKeyInProgress),
+          ),
         );
         dispatch(
           ServiceActions.requestApiKey({
@@ -219,14 +224,14 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
       onClose={handleClose}
       dataQa="request-api-key-dialog"
       overlayClassName="fixed inset-0"
-      containerClassName="inline-block h-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-h-[800px] xl:max-w-[720px] 2xl:max-w-[1000px]"
+      containerClassName="inline-block h-full overflow-y-auto px-3 py-4 align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[1000px]"
       form={{
         noValidate: true,
         onSubmit: handleSubmit,
       }}
     >
       <div className="flex justify-between pb-4 text-base font-bold">
-        {t('Request API Key')}
+        {t(SettingsI18nKeys.RequestApiKey)}
       </div>
 
       <div>
@@ -235,9 +240,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           htmlFor="formDescription"
         >
           <span className="ml-1">
-            {t(
-              'We are glad to provide API access for PoC, research, accelerators development purposes, and internal projects. It is also possible to use this as a very short-term solution for early development stages while you are spinning up your dedicated environment. Any kind of client external must use their own dedicated infrastructure, not this API - you can install DIAL there, see instructions at ',
-            )}
+            {t(SettingsI18nKeys.RequestApiKeyDescription)}
             <a
               href="https://github.com/epam/ai-dial"
               className="underline"
@@ -256,9 +259,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           htmlFor="projectNameInput"
         >
           <span>1.</span>
-          <span className="ml-1">
-            {t('Project name (use one from Delivery Central)')}
-          </span>
+          <span className="ml-1">{t(SettingsI18nKeys.ProjectName)}</span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <input
@@ -281,11 +282,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           htmlFor="streamNameInput"
         >
           <span>2.</span>
-          <span className="ml-1">
-            {t(
-              'Stream Name (use one from Delivery Central). Must be unique per key request.',
-            )}
-          </span>
+          <span className="ml-1">{t(SettingsI18nKeys.StreamName)}</span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <input
@@ -310,11 +307,11 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           <span>
             <span>3.</span>
             <span className="ml-1">
-              {t('Project Tech Lead responsible for API token usage.')}
+              {t(SettingsI18nKeys.ProjectTechLeadResponsible)}
             </span>
           </span>
           <span className="ml-1">
-            {t('Please provide email')}
+            {t(SettingsI18nKeys.PleaseProvideEmail)}
             <span className="ml-1 inline text-accent-primary">*</span>
           </span>
         </label>
@@ -338,7 +335,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           htmlFor="businessJustificationInput"
         >
           <span>4.</span>
-          <span className="ml-1">{t('Business justification')}</span>
+          <span className="ml-1">
+            {t(SettingsI18nKeys.BusinessJustification)}
+          </span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <textarea
@@ -360,7 +359,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           htmlFor="projectEndDateInput"
         >
           <span>5.</span>
-          <span className="ml-1">{t('End date of the project')}</span>
+          <span className="ml-1">
+            {t(SettingsI18nKeys.EndDateOfTheProject)}
+          </span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <input
@@ -379,12 +380,13 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
       </div>
 
       <div>
-        <label className="mb-1 text-xs text-secondary" htmlFor="scenarioInput">
+        <label
+          className="mb-1 flex text-xs text-secondary"
+          htmlFor="scenarioInput"
+        >
           <span>6.</span>
           <span className="ml-1">
-            {t(
-              'By default, access to the model is available from EPAM VPN only. If you want to deploy your solution anywhere beyond your personal laptop, please describe your scenario.',
-            )}
+            {t(SettingsI18nKeys.AccessScenarioDescription)}
           </span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
@@ -409,9 +411,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           <span>
             <span>7.</span>
             <span className="ml-1">
-              {t(
-                'We need to understand, how much cost your solution will generate monthly, and your workload pattern in terms of requests quantity and tokens usage during standard and peak workloads. Please describe this. Ensure you provided "max X USD/month" metric. More information is available at ',
-              )}
+              {t(SettingsI18nKeys.CostAndWorkloadDescription)}
             </span>
           </span>
           <a
@@ -447,7 +447,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
       </div>
 
       <div className="mb-4 mt-1 font-bold">
-        {t('Also please acknowledge that your API usage should comply with:')}
+        {t(SettingsI18nKeys.AcknowledgeApiUsageCompliance)}
       </div>
 
       <div className="peer mb-4  flex text-sm">
@@ -465,7 +465,7 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
         <label className="inline-block text-xs" htmlFor="azureAgreementInput">
           <span>1.</span>
           <span className="ml-1">
-            {t('Azure cognitive service terms and conditions')}
+            {t(SettingsI18nKeys.AzureCognitiveServiceTermsAndConditions)}
           </span>
           <a
             href="https://learn.microsoft.com/en-us/legal/cognitive-services/openai/code-of-conduct"
@@ -478,9 +478,9 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <IconCheck
-          width={16}
-          height={16}
-          size={16}
+          width={DEFAULT_ICON_SIZES.SMALL}
+          height={DEFAULT_ICON_SIZES.SMALL}
+          size={DEFAULT_ICON_SIZES.SMALL}
           className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
@@ -499,14 +499,14 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
         <label className="inline-block text-xs " htmlFor="EPAMAgreementInput">
           <span>2.</span>
           <span className="ml-1">
-            {t('Usage is complaint to EPAM company policies')}
+            {t(SettingsI18nKeys.UsageIsComplaintToEpamCompanyPolicies)}
           </span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <IconCheck
-          width={16}
-          height={16}
-          size={16}
+          width={DEFAULT_ICON_SIZES.SMALL}
+          height={DEFAULT_ICON_SIZES.SMALL}
+          size={DEFAULT_ICON_SIZES.SMALL}
           className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
@@ -522,19 +522,20 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
           type="checkbox"
           className={checkboxClassName}
         ></input>
-        <label className="inline-block" htmlFor="EPAMAgreementInput">
+        <label
+          className="inline-block"
+          htmlFor="notClientProjectUsageAgreementInput"
+        >
           <span>3.</span>
           <span className="ml-1">
-            {t(
-              'Confirm that this key will not be used for client project production load.',
-            )}
+            {t(SettingsI18nKeys.ConfirmKeyNotForClientProjectProductionLoad)}
           </span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <IconCheck
-          width={16}
-          height={16}
-          size={16}
+          width={DEFAULT_ICON_SIZES.SMALL}
+          height={DEFAULT_ICON_SIZES.SMALL}
+          size={DEFAULT_ICON_SIZES.SMALL}
           className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
@@ -552,19 +553,24 @@ export const RequestAPIKeyDialog: FC<Props> = ({ onClose }) => {
         ></input>
         <label className="inline-block" htmlFor="localAgreementInput">
           <span>4.</span>
-          <span className="ml-1">{t('Local law regulations (if some)')}</span>
+          <span className="ml-1">
+            {t(SettingsI18nKeys.LocalLawRegulationsIfSome)}
+          </span>
           <span className="ml-1 inline text-accent-primary">*</span>
         </label>
         <IconCheck
-          width={16}
-          height={16}
-          size={16}
+          width={DEFAULT_ICON_SIZES.SMALL}
+          height={DEFAULT_ICON_SIZES.SMALL}
+          size={DEFAULT_ICON_SIZES.SMALL}
           className="pointer-events-none invisible absolute text-accent-primary peer-checked:visible"
         />
       </div>
 
       <div className="flex justify-end">
-        <DialPrimaryButton type="submit" label={t('Send request')} />
+        <DialPrimaryButton
+          type="submit"
+          label={t(SettingsI18nKeys.SendRequest)}
+        />
       </div>
     </Modal>
   );

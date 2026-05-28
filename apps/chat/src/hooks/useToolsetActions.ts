@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -17,6 +17,7 @@ import {
 } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { DeleteType } from '@/src/constants/marketplace';
 import { Routes } from '@/src/constants/routes';
 import { ToolsetEditorQuery } from '@/src/constants/toolsets';
@@ -55,7 +56,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
       e.stopPropagation();
       const link = getToolsetLink(toolset);
       writeTextToClipboard(link, () => {
-        dispatch(UIActions.showSuccessToast(t('Link copied!')));
+        dispatch(UIActions.showSuccessToast(t(MarketplaceI18nKeys.LinkCopied)));
       });
     },
     [dispatch, t, toolset],
@@ -76,7 +77,7 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
         },
       });
     },
-    [dispatch, router, toolset.reference],
+    [router, toolset.reference, dispatch],
   );
 
   const handlePublish = useCallback(
@@ -126,7 +127,16 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     (e: React.MouseEvent) => {
       e.preventDefault();
       e.stopPropagation();
-      dispatch(MarketplaceActions.setLoginEntity(toolset));
+      dispatch(MarketplaceActions.setLoginEntity({ toolset }));
+    },
+    [dispatch, toolset],
+  );
+
+  const handleConnect = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dispatch(MarketplaceActions.setConnectLinkEntity(toolset));
     },
     [dispatch, toolset],
   );
@@ -140,5 +150,6 @@ export const useToolsetMenuActions = (toolset: ToolsetModel) => {
     handleOpenSharing,
     handleOpenUnshare,
     handleLogin,
+    handleConnect,
   };
 };

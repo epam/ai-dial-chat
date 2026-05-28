@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 
 import { isAbsoluteUrl } from '@/src/utils/app/file';
+import { getImageUrl } from '@/src/utils/app/themes';
 import { logger } from '@/src/utils/server/logger';
 
 import { HTTPMethod } from '@/src/types/http';
@@ -13,22 +14,24 @@ import fetch from 'node-fetch';
 let cachedTheme: ThemesConfig | undefined = undefined;
 let cachedThemeExpiration: number | undefined;
 
-const getImageUrl = (theme: ThemesConfig, name: string): string | undefined => {
-  return theme.images[name as keyof ThemesConfig['images']];
-};
-
 const getImage = async (
-  req: NextApiRequest,
+  _req: NextApiRequest,
   res: NextApiResponse,
   cachedTheme: ThemesConfig,
   name: string,
 ) => {
   const imageUrl = getImageUrl(cachedTheme, name);
 
+  // Block absolute URLs passed directly as name to prevent SSRF
+  if (!imageUrl && isAbsoluteUrl(name)) {
+    return res.status(404).send('Image not found');
+  }
+
   let finalUrl = imageUrl || name;
   if (!isAbsoluteUrl(finalUrl)) {
     finalUrl = `${process.env.THEMES_CONFIG_HOST}/${finalUrl}`;
   }
+
   const response = await fetch(finalUrl);
   const contentType = response.headers.get('content-type');
 

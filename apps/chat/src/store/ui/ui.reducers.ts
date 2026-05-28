@@ -3,11 +3,13 @@ import { JSX } from 'react';
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 
 import { FeatureType } from '@/src/types/common';
+import { MarketplacePanelState } from '@/src/types/marketplace-panel-state';
 import { EnterType } from '@/src/types/settings';
 import { ThemesConfig } from '@/src/types/themes';
 import { ToastType } from '@/src/types/toasts';
 
 import { SIDEBAR_MIN_WIDTH } from '@/src/constants/default-ui-settings';
+import { FilterTypes } from '@/src/constants/marketplace';
 import { DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT } from '@/src/constants/sidebars';
 
 import { UIState } from './ui.types';
@@ -24,6 +26,7 @@ const openFoldersInitialState = {
 
 const initialState: UIState = {
   initialized: false,
+  locale: 'en',
   theme: '',
   availableThemes: [],
   themesImages: {},
@@ -47,6 +50,16 @@ const initialState: UIState = {
     [FeatureType.Prompt]: DEFAULT_SIDEBAR_DISPLAY_ITEM_COUNT,
   },
   enterType: EnterType.Enter,
+  agentsFilterPanelCollapseState: {
+    [FilterTypes.ENTITY_TYPE]: true,
+    [FilterTypes.TOPICS]: true,
+    [FilterTypes.SOURCES]: true,
+  },
+  toolsetFilterPanelCollapseState: {
+    [FilterTypes.ENTITY_TYPE]: false,
+    [FilterTypes.TOPICS]: true,
+    [FilterTypes.SOURCES]: true,
+  },
 };
 
 export const uiSlice = createSlice({
@@ -61,6 +74,9 @@ export const uiSlice = createSlice({
     setTheme: (state, { payload }: PayloadAction<string>) => {
       state.theme = payload;
     },
+    setLocale: (state, { payload }: PayloadAction<string>) => {
+      state.locale = payload;
+    },
     setEnterType: (state, { payload }: PayloadAction<EnterType>) => {
       state.enterType = payload;
     },
@@ -73,6 +89,12 @@ export const uiSlice = createSlice({
     },
     setPromptbarWidth: (state, { payload }: PayloadAction<number>) => {
       state.promptbarWidth = payload;
+    },
+    setMarketplaceFilterbarWidth: (
+      state,
+      { payload }: PayloadAction<number>,
+    ) => {
+      state.marketplaceFilterbarWidth = payload;
     },
     setShowChatbar: (
       state,
@@ -134,9 +156,13 @@ export const uiSlice = createSlice({
         type?: ToastType;
         response?: Response;
         icon?: JSX.Element;
+        traceId?: string;
       }>,
     ) => state,
-    showErrorToast: (state, _action: PayloadAction<string>) => state,
+    showErrorToast: (
+      state,
+      _action: PayloadAction<{ message: string; traceId?: string }>,
+    ) => state,
     showWarningToast: (state, _action: PayloadAction<string>) => state,
     showInfoToast: (state, _action: PayloadAction<string>) => state,
     showSuccessToast: (state, _action: PayloadAction<string>) => state,
@@ -231,6 +257,18 @@ export const uiSlice = createSlice({
     },
     setEditorLoader: (state, { payload }: PayloadAction<boolean>) => {
       state.isEditorLoader = payload;
+    },
+    setAgentsFilterPanelCollapseState: (
+      state,
+      { payload }: PayloadAction<MarketplacePanelState>,
+    ) => {
+      state.agentsFilterPanelCollapseState = payload;
+    },
+    setToolsetFilterPanelCollapseState: (
+      state,
+      { payload }: PayloadAction<MarketplacePanelState>,
+    ) => {
+      state.toolsetFilterPanelCollapseState = payload;
     },
   },
 });

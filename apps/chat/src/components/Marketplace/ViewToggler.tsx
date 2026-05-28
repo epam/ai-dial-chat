@@ -1,5 +1,5 @@
 import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
-import { useCallback } from 'react';
+import React, { useCallback } from 'react';
 
 import classNames from 'classnames';
 
@@ -41,6 +41,7 @@ export const ViewToggler: React.FC = () => {
               ? 'border-accent-primary text-accent-primary'
               : 'border-primary text-secondary',
           )}
+          data-qa={view.toLowerCase().concat('-view')}
           onClick={() => handleToggleView(view)}
           iconBefore={<Icon />}
         />

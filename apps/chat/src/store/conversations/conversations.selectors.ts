@@ -12,16 +12,20 @@ import {
   isReplayConversation,
   sortByDateAndName,
 } from '@/src/utils/app/conversation';
-import { constructPath } from '@/src/utils/app/file';
+import {
+  constructPath,
+  isAllowedMimeType,
+  withoutFileManagerPlaceholderByName,
+} from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
   getFilteredFolders,
-  getNextDefaultName,
   getParentAndChildFolders,
   getParentAndCurrentFoldersById,
   getParentFolderIdsFromEntityId,
   getPartialAndFullyChosenFolders,
+  getStorageSafeUniqueFolderName,
   isFolderEmpty,
 } from '@/src/utils/app/folders';
 import {
@@ -44,7 +48,6 @@ import {
   isSearchTermMatched,
 } from '@/src/utils/app/search';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
-import { translate } from '@/src/utils/app/translation';
 
 import { Conversation, NotAllowedItem } from '@/src/types/chat';
 import { DialFile } from '@/src/types/files';
@@ -58,10 +61,11 @@ import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import { AudioMimeType } from '@/src/constants/audio';
 
 import {
   ConversationInfo,
+  DialSchemaProperties,
   Feature,
   Role,
   ShareEntity,
@@ -72,8 +76,9 @@ import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState) => state.conversations;
 
-const selectConversations = (state: RootState): ConversationInfo[] =>
-  rootSelector(state).conversations;
+const selectConversations = createSelector([rootSelector], (state) =>
+  withoutFileManagerPlaceholderByName(state.conversations),
+);
 
 const selectNotExternalConversations = createSelector(
   [selectConversations],
@@ -512,9 +517,86 @@ const selectCanAttachFile = createSelector(
   },
 );
 
+const RECORDABLE_AUDIO_MIME_TYPES: string[] = [
+  AudioMimeType.OGG,
+  AudioMimeType.MP4,
+  AudioMimeType.WEBM,
+  AudioMimeType.WAV,
+];
+
+const selectCanRecordAudio = createSelector(
+  [
+    SettingsSelectors.selectEnabledFeatures,
+    selectAvailableAttachmentsTypes,
+    SettingsSelectors.selectAsrModelId,
+  ],
+  (enabledFeatures, availableTypes, asrModelId) => {
+    if (!enabledFeatures.has(Feature.VoiceInput)) {
+      return false;
+    }
+    if (asrModelId) {
+      return true;
+    }
+    if (!availableTypes || availableTypes.length === 0) {
+      return false;
+    }
+    return RECORDABLE_AUDIO_MIME_TYPES.some((mimeType) =>
+      isAllowedMimeType(availableTypes, mimeType),
+    );
+  },
+);
+
+// Voice recording works in two modes:
+// - ASR mode: an ASR model is configured and the model does NOT accept audio attachments natively.
+//   The recording is transcribed server-side and the text is auto-sent.
+// - Native attachment mode: the model accepts audio MIME types directly.
+//   The recording is uploaded as a file attachment.
+const selectIsAsrMode = createSelector(
+  [
+    SettingsSelectors.selectEnabledFeatures,
+    selectAvailableAttachmentsTypes,
+    SettingsSelectors.selectAsrModelId,
+  ],
+  (enabledFeatures, availableTypes, asrModelId) => {
+    if (!enabledFeatures.has(Feature.VoiceInput) || !asrModelId) {
+      return false;
+    }
+    if (!availableTypes || availableTypes.length === 0) {
+      return true;
+    }
+    return !RECORDABLE_AUDIO_MIME_TYPES.some((mimeType) =>
+      isAllowedMimeType(availableTypes, mimeType),
+    );
+  },
+);
+
+const selectSupportedAudioRecordingTypes = createSelector(
+  [selectIsAsrMode, selectAvailableAttachmentsTypes],
+  (isAsrMode, availableTypes) => {
+    if (isAsrMode) {
+      return RECORDABLE_AUDIO_MIME_TYPES;
+    }
+    if (!availableTypes || availableTypes.length === 0) {
+      return [];
+    }
+    return RECORDABLE_AUDIO_MIME_TYPES.filter((mimeType) =>
+      isAllowedMimeType(availableTypes, mimeType),
+    );
+  },
+);
+
 const selectPublicFolders = createSelector([selectFolders], (folders) => {
   return folders.filter((folder) => isEntityIdPublic({ id: folder.id }));
 });
+
+const selectPublicConversations = createSelector(
+  [selectConversations],
+  (conversations) => {
+    return conversations.filter((conversation) =>
+      isEntityIdPublic({ id: conversation.id }),
+    );
+  },
+);
 
 const selectNewAddedFolderId = (state: RootState) =>
   rootSelector(state).newAddedFolderId;
@@ -582,10 +664,11 @@ const selectNewFolderName = createSelector(
     (_state: RootState, folderId: string | undefined) => folderId,
   ],
   (folders, folderId) => {
-    return getNextDefaultName(
-      translate(DEFAULT_FOLDER_NAME),
-      folders.filter((f) => f.folderId === folderId),
-    );
+    const siblings = folders.filter((f) => f.folderId === folderId);
+    return getStorageSafeUniqueFolderName({
+      folderId: folderId ?? '',
+      existingNames: siblings.map((f) => f.name),
+    });
   },
 );
 
@@ -751,6 +834,7 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     selectIsNotAllowed,
     selectAreSelectedConversationsReadOnly,
     AuthSelectors.selectIsAdmin,
+    ChatSelectors.selectUploadedConfigurationSchemas,
     (state: RootState) => state,
   ],
   (
@@ -759,21 +843,30 @@ const selectIsSelectedConversationBlocksInput = createSelector(
     isNotAllowedModels,
     areReadOnly,
     isAdmin,
+    uploadedConfigurationSchemas,
     state,
   ) => {
     const conversationsModelsIds = conversations.map(
       (conversation) => conversation.model.id,
     );
+    const modelsMap = ModelsSelectors.selectModelsMap(state);
     const isConfigurationBlocksInput =
       ChatSelectors.selectIsConfigurationBlocksInput(
         state,
         conversationsModelsIds,
+        modelsMap,
       );
     const isReviewEntity = conversations.some((conversation) =>
       resourcesToReview.some(
         (resource) => resource.reviewUrl === conversation.id,
       ),
     );
+    const schema = uploadedConfigurationSchemas.find((schema) =>
+      conversations.some(
+        (conversation) =>
+          modelsMap[conversation.model.id]?.id === schema.modelId,
+      ),
+    )?.schema;
 
     return conversations.some(
       (conversation) =>
@@ -788,7 +881,9 @@ const selectIsSelectedConversationBlocksInput = createSelector(
         isMessageInputDisabled(
           conversation.messages.length,
           conversation.messages,
-        ),
+        ) ||
+        (!conversation.messages.length &&
+          !!schema?.[DialSchemaProperties.DialChatMessageInputDisabled]),
     );
   },
 );
@@ -862,13 +957,18 @@ export const ConversationsSelectors = {
   selectIsStartedCustomViewerConversation,
   selectCanAttachFolders,
   selectCanAttachFile,
+  selectCanRecordAudio,
+  selectIsAsrMode,
+  selectSupportedAudioRecordingTypes,
   selectPublicFolders,
+  selectPublicConversations,
   selectNewAddedFolderId,
   selectLoadingFolderIds,
   selectIsCompareLoading,
   selectDuplicatedConversation,
   selectCustomAttachmentLoading,
   selectCustomAttachmentData,
+  selectLoadedCustomAttachments,
   selectIsSelectMode,
   selectSelectedItems,
   selectChosenFolderIds,

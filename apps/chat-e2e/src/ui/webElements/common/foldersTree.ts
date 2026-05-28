@@ -1,6 +1,6 @@
 import { API } from '@/src/testData';
 import { FolderTreeSelectors, IconSelectors } from '@/src/ui/selectors';
-import { BaseElement, Dropdown } from '@/src/ui/webElements';
+import { BaseElement, Dropdown, Input } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
@@ -41,28 +41,57 @@ export class FoldersTree extends BaseElement {
     return currentLocator;
   };
 
+  public folderByPathCaret = (...path: string[]) =>
+    this.folderByPath(...path)
+      .locator(IconSelectors.caretIcon)
+      .nth(0);
+
   public folderNameByPath = (...path: string[]): Locator => {
     return this.folderByPath(...path).locator(FolderTreeSelectors.folderName);
   };
 
-  public async expandFolder(...path: string[]) {
-    const respPromise = this.page.waitForResponse(
-      (resp) =>
-        resp
-          .url()
-          .endsWith(API.folderFilesListingHost(path[path.length - 1])) &&
-        resp.ok(),
-    );
-    await this.folderByPath(...path)
-      .locator(IconSelectors.caretIcon)
-      .click();
-    await respPromise;
+  public folderGroupByPath = (...path: string[]): Locator => {
+    return this.folderByPath(...path)
+      .locator(FolderTreeSelectors.folderGroup)
+      .first();
+  };
+
+  public async expandFolder(
+    options: { isFilesListingTriggered: boolean },
+    ...path: string[]
+  ) {
+    if (options.isFilesListingTriggered) {
+      const respPromise = this.page.waitForResponse(
+        (resp) =>
+          resp
+            .url()
+            .endsWith(API.folderFilesListingHost(path[path.length - 1])) &&
+          resp.ok(),
+      );
+      await this.folderByPathCaret(...path).click();
+      await respPromise;
+    } else {
+      await this.folderByPathCaret(...path).click();
+    }
   }
 
-  public async expandFolders(...path: string[]) {
+  public getRenameInput(): BaseElement {
+    return new Input(this.page, this.rootLocator).inputField;
+  }
+
+  public async openFolderDotsMenu(...path: string[]) {
+    const folderItem = this.folderByPath(...path);
+    await folderItem.hover();
+    await folderItem.locator(IconSelectors.dotsMenuIcon).click();
+  }
+
+  public async expandFolders(
+    options: { isFilesListingTriggered: boolean },
+    ...path: string[]
+  ) {
     const folderToExpandPath = [path[0]];
     for (let i = 0; i < path.length; i++) {
-      await this.expandFolder(...folderToExpandPath);
+      await this.expandFolder(options, ...folderToExpandPath);
       folderToExpandPath.push(path[i + 1]);
     }
   }

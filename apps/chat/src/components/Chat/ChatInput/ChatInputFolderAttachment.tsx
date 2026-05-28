@@ -2,7 +2,9 @@ import { IconFolder } from '@tabler/icons-react';
 
 import { FileFolderInterface } from '@/src/types/files';
 
-import { DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
+
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   folder: FileFolderInterface;
@@ -17,18 +19,15 @@ export const ChatInputFolderAttachment = ({ folder, onUnselect }: Props) => {
       <div className="flex grow justify-between gap-3 overflow-hidden">
         <div className="flex grow flex-col overflow-hidden text-sm">
           <span
-            className="block max-w-full truncate text-start"
+            className="block max-w-full text-start"
             data-qa="attached-folder-name"
           >
-            {folder.name || folder.id}
+            <DialEllipsisTooltip text={folder.name} />
           </span>
         </div>
         {onUnselect && (
           <div className="flex gap-3">
-            <DialCloseButton
-              onClose={() => onUnselect(`${folder.id}/`)}
-              size={18}
-            />
+            <CloseButtonSmall onClick={() => onUnselect(`${folder.id}/`)} />
           </div>
         )}
       </div>

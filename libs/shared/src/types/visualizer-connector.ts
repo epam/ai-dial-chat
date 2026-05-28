@@ -16,12 +16,28 @@ export type VisualizerConnectorRequest = DialLibRequest;
 export interface CustomVisualizerDataLayout {
   width: number;
   height: number;
+  mobileHeight?: number;
   themeId?: string;
+  logInHint?: string;
+  providerId?: string;
+  accessToken?: string;
 }
 export interface CustomVisualizerData {
   layout: CustomVisualizerDataLayout;
 }
+
 export interface AttachmentData {
   mimeType: string;
   visualizerData: CustomVisualizerData;
+}
+
+export interface AttachmentItem {
+  url: string;
+  mimeType: string;
+  visualizerData: CustomVisualizerData;
+}
+
+export interface GroupedAttachmentsData {
+  attachments: AttachmentItem[];
+  layout: CustomVisualizerDataLayout;
 }

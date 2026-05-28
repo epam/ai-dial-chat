@@ -1,7 +1,7 @@
 import { TokenSet } from 'next-auth';
 import { JWT } from 'next-auth/jwt';
 
-import { z as zodValidation } from 'zod';
+import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
 export interface Token extends JWT {
   providerId?: string;
@@ -19,6 +19,7 @@ export enum SupportedProviders {
   OKTA = 'OKTA',
   GITLAB = 'GITLAB',
   PING_ID = 'PING_ID',
+  CREDENTIALS = 'CREDENTIALS',
 }
 
 export enum ProviderConfigFields {

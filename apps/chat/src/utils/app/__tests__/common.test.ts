@@ -1,8 +1,9 @@
-import { describe, expect, vi } from 'vitest';
+import { beforeAll, describe, expect, it, vi } from 'vitest';
 
 import {
   addTrailingSlashIfAbsent,
   arraysHaveSameElements,
+  buildContentWithTranscriptAtSelection,
   combineEntities,
   doesHaveDotsInTheEnd,
   extractNameFromEmail,
@@ -13,6 +14,7 @@ import {
   getDefaultEntityProps,
   getLastPathSegment,
   getSafeRedirectUrl,
+  getTranscriptTextToInsert,
   groupAllVersions,
   hasInvalidNameInPath,
   isEntityNameInvalid,
@@ -128,11 +130,21 @@ describe('utils/app/common.ts', () => {
     });
 
     it('isEntityNameValid: trims + checks invalid + length limits', () => {
-      expect(isEntityNameValid(' a ')).toBe(false);
+      expect(isEntityNameValid('  ')).toBe(false);
+      expect(isEntityNameValid(' a ')).toBe(true);
       expect(isEntityNameValid(' ab ')).toBe(true);
       expect(isEntityNameValid('ab,')).toBe(false);
-      expect(isEntityNameValid('abc.', true)).toBe(false);
-      expect(isEntityNameValid('abc.', false)).toBe(true);
+      expect(isEntityNameValid('abc.', { checkDotsInTheEnd: true })).toBe(
+        false,
+      );
+      expect(isEntityNameValid('abc.', { checkDotsInTheEnd: false })).toBe(
+        true,
+      );
+    });
+
+    it('isEntityNameValid: applies maxBytes using UTF-8 length', () => {
+      expect(isEntityNameValid('я'.repeat(3), { maxBytes: 6 })).toBe(true);
+      expect(isEntityNameValid('я'.repeat(3), { maxBytes: 5 })).toBe(false);
     });
 
     it('hasInvalidNameInPath: checks every path segment', () => {
@@ -225,6 +237,75 @@ describe('utils/app/common.ts', () => {
 
     it('replaceStringRange: replaces [start, end) range', () => {
       expect(replaceStringRange('hello world', 'X', 6, 11)).toBe('hello X');
+    });
+
+    describe('getTranscriptTextToInsert', () => {
+      it('returns empty string when transcript is whitespace only', () => {
+        expect(getTranscriptTextToInsert('hello', '   \n  ')).toBe('');
+      });
+
+      it('returns trimmed transcript when nothing precedes cursor', () => {
+        expect(getTranscriptTextToInsert('', '  hi there ')).toBe('hi there');
+      });
+
+      it('returns trimmed transcript when preceding text is whitespace only', () => {
+        expect(getTranscriptTextToInsert('   ', 'hi')).toBe('hi');
+      });
+
+      it('prepends a space when preceding text ends without a space', () => {
+        expect(getTranscriptTextToInsert('hello', 'world')).toBe(' world');
+      });
+
+      it('does not prepend a space when preceding text already ends with a space', () => {
+        expect(getTranscriptTextToInsert('hello ', 'world')).toBe('world');
+      });
+    });
+
+    describe('buildContentWithTranscriptAtSelection', () => {
+      it('inserts transcript at the cursor with leading space when needed', () => {
+        expect(
+          buildContentWithTranscriptAtSelection('hello world', 'there', {
+            start: 5,
+            end: 5,
+          }),
+        ).toBe('hello there world');
+      });
+
+      it('replaces the selected range with the transcript', () => {
+        expect(
+          buildContentWithTranscriptAtSelection('hello brave world', 'new', {
+            start: 6,
+            end: 11,
+          }),
+        ).toBe('hello new world');
+      });
+
+      it('appends without leading space when text already ends with a space', () => {
+        expect(
+          buildContentWithTranscriptAtSelection('hello ', 'world', {
+            start: 6,
+            end: 6,
+          }),
+        ).toBe('hello world');
+      });
+
+      it('returns the input when the transcript is empty', () => {
+        expect(
+          buildContentWithTranscriptAtSelection('hello', '   ', {
+            start: 5,
+            end: 5,
+          }),
+        ).toBe('hello');
+      });
+
+      it('clamps out-of-range selection indices to the input length', () => {
+        expect(
+          buildContentWithTranscriptAtSelection('hi', 'there', {
+            start: 50,
+            end: 80,
+          }),
+        ).toBe('hi there');
+      });
     });
 
     it('getLastPathSegment: returns last segment or empty string', () => {
@@ -424,16 +505,33 @@ describe('utils/app/common.ts', () => {
   });
 
   describe('misc helpers', () => {
-    it('extractNameFromEmail: returns undefined for non-string; extracts part before @ for email-looking strings', () => {
+    it('extractNameFromEmail: extracts local part only for valid email-like strings', () => {
       expect(extractNameFromEmail(undefined)).toBeUndefined();
-      expect(extractNameFromEmail('john@doe.com')).toBe('john');
-      expect(extractNameFromEmail('not-an-email')).toBe('not-an-email');
+      expect(extractNameFromEmail('palina@example.com')).toBe('palina');
+      expect(extractNameFromEmail('palina@example')).toBe('palina@example');
+      expect(extractNameFromEmail('palina @@@')).toBe('palina @@@');
+      expect(extractNameFromEmail('palina @ test')).toBe('palina @ test');
+      expect(extractNameFromEmail('palina@')).toBe('palina@');
+      expect(extractNameFromEmail('palina@q')).toBe('palina@q');
+      expect(
+        extractNameFromEmail(
+          'OpenAI"s o3-mini is a cost-efficient reasoning model optimized for coding, math, and science tasks, offering faster responses and improved accuracy over its predecessors.',
+        ),
+      ).toBe(
+        'OpenAI"s o3-mini is a cost-efficient reasoning model optimized for coding, math, and science tasks, offering faster responses and improved accuracy over its predecessors.',
+      );
+      expect(extractNameFromEmail("test_user10_(\\~!@#$^*-_+[]'|<>.?)")).toBe(
+        "test_user10_(\\~!@#$^*-_+[]'|<>.?)",
+      );
     });
 
     it('parseCommaSeparatedList: trims items; returns default when undefined', () => {
       expect(parseCommaSeparatedList('a, b ,c')).toEqual(['a', 'b', 'c']);
       expect(parseCommaSeparatedList(undefined)).toEqual([]);
       expect(parseCommaSeparatedList(undefined, ['x'])).toEqual(['x']);
+      expect(
+        parseCommaSeparatedList('123,234\\,345\\,456,567\\,678,789'),
+      ).toEqual(['123', '234,345,456', '567,678', '789']);
     });
 
     it('arraysHaveSameElements: true when arrays have same multiset of elements', () => {

@@ -1,7 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import {
   downloadFileAsStream,
@@ -9,19 +9,18 @@ import {
   waitForStream,
 } from '@/src/utils/server/file-download-utils';
 import { logger } from '@/src/utils/server/logger';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { DialAIError } from '@/src/types/error';
-
-import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
 
 import { DialFile } from '@epam/ai-dial-ui-kit';
 import archiver from 'archiver';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    throw new DialAIError('Method not allowed', 405, req);
   }
 
   const session = await getServerSession(req, res, authOptions);
@@ -82,7 +81,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           if (item.nodeType === 'folder') {
             const folderFiles = await fetchAllFilesForDownload(
               item.path,
-              authToken?.access_token as string,
+              authToken ?? '',
               item.name,
             );
             filesToDownload.push(...folderFiles);
@@ -103,13 +102,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           try {
             const fileStream = await downloadFileAsStream(
               file.url,
-              authToken?.access_token as string,
+              authToken ?? '',
             );
 
             archive.append(fileStream, { name: file.path });
 
             await waitForStream(fileStream);
-          } catch (err) {
+          } catch {
             logger.error(`Failed to add file to archive: ${file.path}`);
           }
         }
@@ -118,22 +117,18 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       } catch (err) {
         try {
           archive.abort();
-        } catch (e) {
+        } catch {
           logger.error(err);
         }
 
         if (!res.headersSent) {
-          res.status(500).json({ error: 'Failed to create archive' });
+          throw new DialAIError('Failed to create archive', 500, req);
         }
       }
     })();
   } catch (error) {
     logger.error(error);
-    if (error instanceof DialAIError) {
-      const statusCode = parseInt(error.code, 10) || 500;
-      return res.status(statusCode).json({ error: error.message });
-    }
-    return res.status(500).json(errorsMessages.generalServer);
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 

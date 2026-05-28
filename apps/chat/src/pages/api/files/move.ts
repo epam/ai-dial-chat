@@ -1,27 +1,26 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import {
   fetchAllFilesRecursive,
   moveFilesInBatches,
 } from '@/src/utils/server/file-copy-utils';
 import { logger } from '@/src/utils/server/logger';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { MoveModel } from '@/src/types/common';
 import { DialAIError } from '@/src/types/error';
 import { FileOperationsResult } from '@/src/types/files';
 
-import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from '@/src/pages/api/auth/[...nextauth]';
-
 import { DialCopiedItem } from '@epam/ai-dial-ui-kit';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  const traceparent = setTraceparentHeader(res);
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    throw new DialAIError('Method not allowed', 405, req);
   }
 
   const session = await getServerSession(req, res, authOptions);
@@ -49,7 +48,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         const parentDest = item.destinationUrl;
         const folderFiles = await fetchAllFilesRecursive(
           item.sourceUrl,
-          authToken?.access_token as string,
+          authToken ?? '',
           parentDest,
         );
         allFilesToMove = allFilesToMove.concat(folderFiles);
@@ -79,7 +78,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const { succeeded, errors } = await moveFilesInBatches(
       allFilesToMove,
-      authToken?.access_token as string,
+      authToken ?? '',
       100,
     );
 
@@ -88,6 +87,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         success: false,
         message: 'All move operations failed',
         errors,
+        traceparent,
       });
     }
 
@@ -103,11 +103,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     return res.status(200).json(response);
   } catch (error) {
     logger.error(error);
-    if (error instanceof DialAIError) {
-      const statusCode = parseInt(error.code, 10) || 500;
-      return res.status(statusCode).json({ error: error.message });
-    }
-    return res.status(500).json(errorsMessages.generalServer);
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 

@@ -97,7 +97,13 @@ export const useAppEditorValidation = () => {
           ),
         )
     ) {
-      // if slug is not equal to application type)
+      // if slug is not equal to application type
+      console.error('application', application);
+      console.error('applicationData', applicationData);
+      console.error(
+        'NotFound',
+        `slug is not equal to application type. type: ${type.toString()}, cleanSchemaId(${application ? 'application' : 'applicationData'}): ${cleanSchemaId(getApplicationType((application ?? applicationData) as DialAIEntityModel))}`,
+      );
       void router.push(Routes.NotFound);
       return;
     }
@@ -115,6 +121,10 @@ export const useAppEditorValidation = () => {
       !applicationId ||
       (!isAdmin && isAppPublic) // check if the application is public
     ) {
+      console.error(
+        'NotFound',
+        `application is not found or is not public. applicationId: ${applicationId}, isAppPublic: ${isAppPublic}`,
+      );
       void router.push(Routes.NotFound);
       return;
     }
@@ -129,6 +139,10 @@ export const useAppEditorValidation = () => {
       !isMyApplication({ id: applicationId }) &&
       !canWriteSharedWithMe(application)
     ) {
+      console.error(
+        'NotFound',
+        `application is not public or not my application or not shared with me. applicationData: ${applicationData}, isAppPublic: ${isAppPublic}, isMyApplication: ${isMyApplication({ id: applicationId })}, canWriteSharedWithMe: ${canWriteSharedWithMe(application)}`,
+      );
       void router.push(Routes.NotFound);
       return;
     }

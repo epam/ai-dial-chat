@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from 'next';
-import { getToken } from 'next-auth/jwt';
 import { getServerSession } from 'next-auth/next';
 
 import {
@@ -11,6 +10,7 @@ import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
 } from '@/src/utils/app/models';
+import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { OpenAIStream } from '@/src/utils/server';
 import {
@@ -18,22 +18,23 @@ import {
   getUserMessageCustomContent,
   limitMessagesByTokens,
 } from '@/src/utils/server/chat';
+import { getFullToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { ChatBody } from '@/src/types/chat';
 import { EntityType } from '@/src/types/common';
 
 import { DEFAULT_SYSTEM_PROMPT } from '@/src/constants/default-server-settings';
-import {
-  DEFAULT_TEMPERATURE,
-  FALLBACK_TEMPERATURE,
-} from '@/src/constants/default-ui-settings';
+import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
 import { errorsMessages } from '@/src/constants/errors';
-
-import { authOptions } from './auth/[...nextauth]';
+import { HeadersNames } from '@/src/constants/server';
 
 import { Message, Role } from '@epam/ai-dial-shared';
 
+const KEEPALIVE_INTERVAL_MS = 15_000;
+
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
@@ -44,7 +45,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     req.body as ChatBody;
 
   try {
-    const token = await getToken({ req });
+    const token = await getFullToken({ req });
 
     if (!id || !model || (!prompt && !messages?.length)) {
       return res.status(400).send(errorsMessages[400]);
@@ -65,9 +66,8 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
 
     let temperatureToUse = temperature;
-    if (!doesModelAllowTemperature(model)) {
-      temperatureToUse = FALLBACK_TEMPERATURE;
-    } else if (
+    if (
+      doesModelAllowTemperature(model) &&
       !temperatureToUse &&
       temperatureToUse !== 0 &&
       model.type !== EntityType.Application
@@ -109,19 +109,31 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
             ...messagesToSend,
           ];
 
+    const rawLanguageHeader = req.headers['x-language'];
+    const languageHeaderValue = Array.isArray(rawLanguageHeader)
+      ? rawLanguageHeader[0]
+      : rawLanguageHeader;
+    const language = languageHeaderValue?.trim() || undefined;
+
     const stream = await OpenAIStream({
       model,
-      temperature: temperatureToUse,
       messages: messagesToSend,
-      userJWT: token?.access_token as string,
+      userJWT: token?.token ?? '',
       chatReference: reference ?? id,
-      jobTitle: token?.jobTitle as string,
+      jobTitle: token?.jobTitle,
+      language: language,
       maxRequestTokens: features?.truncatePrompt
         ? limits?.maxRequestTokens
         : undefined,
       configurationSchemaValue: configurationValue,
+      ...(temperatureToUse !== undefined && { temperature: temperatureToUse }),
+      channelId:
+        req.headers[HeadersNames.X_DIAL_CLIENT_CHANNEL_ID]?.toString?.() ??
+        undefined,
     });
     res.setHeader('Transfer-Encoding', 'chunked');
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.flushHeaders();
 
     const reader = stream.getReader();
 
@@ -131,9 +143,17 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       reader.cancel();
     });
 
+    const keepalivePayload = new TextEncoder().encode('{}\0');
+
     const processStream = async () => {
+      let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
       try {
-        // eslint-disable-next-line no-constant-condition
+        keepaliveTimer = setInterval(() => {
+          if (!clientAborted && !res.writableEnded) {
+            res.write(keepalivePayload);
+          }
+        }, KEEPALIVE_INTERVAL_MS);
+
         while (true) {
           if (clientAborted) {
             break;
@@ -155,6 +175,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
           isStreamingError: true,
         });
       } finally {
+        if (keepaliveTimer) clearInterval(keepaliveTimer);
         res.end();
       }
     };
@@ -167,6 +188,14 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       msg: `Error while sending chat request to '${model?.id}'`,
     });
   }
+};
+
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb',
+    },
+  },
 };
 
 export default handler;

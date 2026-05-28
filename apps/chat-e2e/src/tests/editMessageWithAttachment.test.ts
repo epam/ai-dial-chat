@@ -18,8 +18,16 @@ import { expect } from '@playwright/test';
 import { CDPSession } from 'playwright-chromium';
 
 let modelsWithAttachments: DialAIEntityModel[];
+let randomModelWithImageAttachment: DialAIEntityModel;
 dialTest.beforeAll(async () => {
   modelsWithAttachments = ModelsUtil.getLatestModelsWithAttachment();
+  randomModelWithImageAttachment = GeneratorUtil.randomArrayElement(
+    modelsWithAttachments.filter(
+      (m) =>
+        m.inputAttachmentTypes?.length == 1 &&
+        m.inputAttachmentTypes[0] === Attachment.imageTypesExtension,
+    ),
+  );
 });
 
 dialTest(
@@ -41,9 +49,6 @@ dialTest(
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-1613', 'EPMRTC-1776');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
     let conversation: Conversation;
     let client: CDPSession;
 
@@ -51,11 +56,13 @@ dialTest(
       'Create conversation with model that accept attachments only with text in request',
       async () => {
         conversation = conversationData.prepareDefaultConversation(
-          randomModelWithAttachment,
+          randomModelWithImageAttachment,
         );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
-        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setRecentModelsIds(
+          randomModelWithImageAttachment,
+        );
       },
     );
 
@@ -266,9 +273,6 @@ dialTest(
     editMessageInputAttachments,
   }) => {
     setTestIds('EPMRTC-1903');
-    const randomModelWithAttachment = GeneratorUtil.randomArrayElement(
-      modelsWithAttachments,
-    );
     let conversation: Conversation;
     const allAttachedFiles = [
       Attachment.sunImageName,
@@ -298,14 +302,16 @@ dialTest(
       async () => {
         conversation =
           conversationData.prepareConversationWithAttachmentsInRequest(
-            randomModelWithAttachment,
+            randomModelWithImageAttachment,
             false,
             undefined,
             ...attachmentUrls.slice(0, 2),
           );
         await dataInjector.createConversations([conversation]);
         await localStorageManager.setShowSideBarPanels();
-        await localStorageManager.setRecentModelsIds(randomModelWithAttachment);
+        await localStorageManager.setRecentModelsIds(
+          randomModelWithImageAttachment,
+        );
       },
     );
 

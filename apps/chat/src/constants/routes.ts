@@ -9,3 +9,6 @@ export enum Routes {
   Chat = '/',
   NotFound = '/404',
 }
+
+export const QUERY_VALUE_TRUE = '1';
+export const QUERY_VALUE_FALSE = '0';

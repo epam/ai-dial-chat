@@ -12,6 +12,7 @@ import {
   FolderConversation,
   MenuOptions,
   MockedChatApiResponseBodies,
+  withTraceId,
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
@@ -93,7 +94,7 @@ dialSharedWithMeTest(
           ),
         );
         await additionalShareUserToastAssertion.assertToastMessage(
-          ExpectedConstants.shareInviteDoesNotExist,
+          withTraceId(ExpectedConstants.shareInviteDoesNotExist),
         );
       },
     );
@@ -256,7 +257,7 @@ dialSharedWithMeTest(
   },
 );
 
-dialSharedWithMeTest.skip(
+dialSharedWithMeTest(
   'Shared with me. Share root Folder.\n' +
     'Shared with me. Folder with folder/chat inside is unshared.\n' +
     'Shared with me. No delete option in context menu for chat/folder in shared folder.\n' +
@@ -1035,7 +1036,7 @@ dialSharedWithMeTest(
         const errorMessage = await additionalShareUserToast.getElementContent();
         expect
           .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
-          .toBe(ExpectedConstants.shareInviteDoesNotExist);
+          .toMatch(withTraceId(ExpectedConstants.shareInviteDoesNotExist));
       },
     );
   },
@@ -1231,7 +1232,7 @@ dialSharedWithMeTest(
           lastUpdatedDate: currentDate,
           author: author,
         });
-        await additionalShareUserInformationModal.cancelButton.click();
+        await additionalShareUserInformationModal.getCloseButton().click();
       },
     );
 

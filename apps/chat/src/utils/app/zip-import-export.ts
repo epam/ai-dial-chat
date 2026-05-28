@@ -4,15 +4,18 @@ import { FolderInterface } from '@/src/types/folder';
 
 import { AttachmentToUpload } from '@/src/store/import-export/importExport.reducers';
 
-import { constructPath, getNextFileName, triggerDownload } from './file';
 import {
-  getCurrentDate,
-  getDownloadFileName,
+  constructPath,
+  getMimeTypeByFileName,
+  getNextFileName,
+  triggerDownload,
+} from './file';
+import {
+  getDownloadName,
   prepareConversationsForExport,
 } from './import-export';
 
 import JSZip from 'jszip';
-import { contentType } from 'mime-types';
 
 interface GetZippedFile {
   files: DialFile[];
@@ -35,16 +38,12 @@ const splitFolderId = (folderId: string) => {
   return parentPath;
 };
 
-export const getRelativeParentPath = (folderId: string) => {
+const getRelativeParentPath = (folderId: string) => {
   const parentPath = splitFolderId(folderId);
   return parentPath;
 };
 
-export async function getZippedFile({
-  files,
-  conversations,
-  folders,
-}: GetZippedFile) {
+async function getZippedFile({ files, conversations, folders }: GetZippedFile) {
   const zip = new JSZip();
   files.forEach((file) => {
     const fileBlob = getAttachmentFromApi(file);
@@ -63,10 +62,13 @@ export async function getZippedFile({
 }
 
 export const downloadExportZip = (content: string, fileName?: string) => {
-  const downloadName = getDownloadFileName(fileName);
   triggerDownload(
     `data:application/zip;base64,${content}`,
-    `${downloadName}_chat_with_attachments_${getCurrentDate()}.dial`,
+    getDownloadName({
+      name: fileName,
+      extension: 'dial',
+      exportType: 'chat_with_attachments',
+    }),
   );
 };
 
@@ -162,7 +164,7 @@ export const getUnZipAttachments = async ({
     const fileContent = fileContentBlob.type.length
       ? fileContentBlob
       : new File([fileContentBlob], fileName, {
-          type: contentType(fileName) || 'application/octet-stream',
+          type: getMimeTypeByFileName(fileName),
         });
 
     if (!fileContent) {

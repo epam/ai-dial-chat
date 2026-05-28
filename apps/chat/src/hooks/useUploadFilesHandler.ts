@@ -6,6 +6,7 @@ import { prepareEntityName } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import {
   constructPath,
+  getFileMimeType,
   getNextFileName,
   getRelativePath,
   prepareFileName,
@@ -20,6 +21,10 @@ import { Translation } from '@/src/types/translation';
 import { FilesActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors } from '@/src/store/selectors';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
+import { UploadStatus } from '@epam/ai-dial-shared';
 
 const validateFiles = (
   files: File[],
@@ -58,27 +63,32 @@ export const useUploadFilesHandler = (
   );
 
   const folderPath = getRelativePath(folderId);
+  const folderStatus = useAppSelector((state) =>
+    FilesSelectors.selectFolderStatusById(state, folderId),
+  );
 
   useEffect(() => {
-    if (folderId && !isRootId(folderId) && preUploadFiles) {
+    if (
+      folderId &&
+      !isRootId(folderId) &&
+      preUploadFiles &&
+      (!folderStatus || folderStatus === UploadStatus.UNINITIALIZED)
+    ) {
       dispatch(FilesActions.getFiles({ id: folderId }));
     }
-  }, [dispatch, folderId, preUploadFiles]);
+  }, [dispatch, folderId, folderStatus, preUploadFiles]);
 
   const handleUpload = useCallback(
     (files: File[]) => {
       const attachmentsAmount = selectedAttachmentsAmount + files.length;
       if (attachmentsAmount > maximumAttachmentsAmount) {
         dispatch(
-          UIActions.showErrorToast(
-            t(
-              `Maximum allowed attachments number is {{maxAttachmentsAmount}}. With your uploading amount will be {{attachmentsAmount}}`,
-              {
-                maxAttachmentsAmount: maximumAttachmentsAmount,
-                attachmentsAmount,
-              },
-            ),
-          ),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.MaxAllowedAttachmentsNumber, {
+              maxAttachmentsAmount: maximumAttachmentsAmount,
+              attachmentsAmount,
+            }),
+          }),
         );
         return;
       }
@@ -88,7 +98,7 @@ export const useUploadFilesHandler = (
         return file.name === cleanName
           ? file
           : new File([file], cleanName, {
-              type: file.type,
+              type: getFileMimeType(file),
               lastModified: file.lastModified,
             });
       });
@@ -98,7 +108,7 @@ export const useUploadFilesHandler = (
         allowedTypes,
       );
 
-      if (errorMsg) dispatch(UIActions.showErrorToast(errorMsg));
+      if (errorMsg) dispatch(UIActions.showErrorToast({ message: errorMsg }));
       if (!validFiles?.length) return;
 
       const sameLevelFiles = allFiles.filter(
