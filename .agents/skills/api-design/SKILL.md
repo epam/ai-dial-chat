@@ -16,6 +16,12 @@ Use this skill before implementing or reviewing any HTTP API contract. It adapts
    - Backend DTOs: `apps/chat-api/src/**/dto/*.dto.ts`
    - Frontend API helpers: `apps/chat/src/server-api/`
    - Shared interfaces: `libs/chat-shared/`
+4. If a UI lib consumes the behavior, design the app-level adapter explicitly. API paths,
+   generated clients, server-api wrappers, auth/session/cookie/env details, feature flags,
+   routing/navigation, storage keys/schemas, analytics/telemetry/logging clients, SDK setup,
+   platform bridges, and download/upload URL construction stay in apps, not in `libs/*`.
+   Exception: `libs/chat-api-client` is the generated OpenAPI client package and may contain
+   generated endpoint paths, DTOs, runtime transport code, and OpenAPI artifacts.
 
 ## Contract Checklist
 
@@ -30,6 +36,7 @@ For every new or changed endpoint, define these before coding:
 - Rate limiting requirements. Public unauthenticated endpoints should usually tighten the global default.
 - Cache behavior when applicable: TTL, invalidation, and key naming (`<domain>:<resource>[:<param>]`).
 - Frontend impact: thin domain wrapper in `apps/chat/src/server-api/` that delegates to generated `@epam/chat-api-client`, shared type in `libs/chat-shared/` if needed, and user-visible i18n strings if errors surface in UI.
+- Library impact: if a hand-authored lib needs the data or behavior, define the prop/callback/resolved value it receives. Do not put endpoint paths, generated clients, server-api imports, app/backend DTO dependencies, or any other host-owned integration details inside hand-authored `libs/*`. `libs/chat-api-client` is the generated OpenAPI-client exception.
 - Generated client impact: expected SDK class, method name, request type, response type, and whether callers need `Raw` access for headers/status. The SDK method name comes from the controller handler name via `operationIdFactory`.
 - OpenAPI annotation plan: request DTO class, response DTO class, path/query param metadata, and success/error `@ApiResponse` coverage.
 
@@ -86,6 +93,8 @@ When writing or reviewing an OpenSpec change that touches API behavior:
 - Tasks must name concrete files, not vague "update API" wording.
 - Include dedicated tasks for Swagger DTO/annotation updates, `npm run openapi`, `npm run openapi:check`, `chat-api-client` build/lint, backend controller/service tests, generated API singleton updates in `apps/chat/src/server-api/api-client.ts`, and frontend wrappers that use generated `@epam/chat-api-client`.
 - Generated-client frontend usage is required for new or changed business REST endpoints. Direct `base.ts` get/post/put/del usage is allowed only for documented generator gaps, streaming calls, or infrastructure endpoints.
+- If endpoint behavior is surfaced through a lib component, tasks must keep the generated-client/server-api call and any related host/external integration in `apps/chat`, then pass only resolved data, resolved values, or callbacks into the lib.
+- Changes under `libs/chat-api-client` must come from OpenAPI generation (`npm run openapi`, `npm run openapi:sdk`, or the specific documented check), not manual edits to generated files.
 - Include rate-limit and cache requirements when relevant.
 - Reference `apps/chat-api/AGENTS.md` instead of duplicating NestJS implementation rules.
 
@@ -94,6 +103,8 @@ When writing or reviewing an OpenSpec change that touches API behavior:
 - Returning `200` for error cases.
 - Designing backend-only contracts without checking the frontend `server-api` layer.
 - Adding new handwritten frontend REST helpers over `base.ts` for business endpoints when the generated client can represent the contract.
+- Adding host-owned integration details to hand-authored `libs/*`, including `/api` URL construction, generated API clients, `server-api` imports, backend DTO imports, auth/session/cookie/env knowledge, feature flags, routing/navigation, analytics/telemetry/logging clients, storage keys/schemas, SDK setup, platform bridges, or app-specific URL schemes.
+- Hand-editing generated files under `libs/chat-api-client/src/generated`.
 - Adding unversioned business endpoints.
 - Introducing a generic `{ data }` envelope unless the domain already uses it or the change explicitly standardizes responses.
 - Mixing API redesign with unrelated implementation refactors.

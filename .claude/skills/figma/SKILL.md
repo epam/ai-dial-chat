@@ -56,6 +56,11 @@ Grep("ComponentName", path="libs/")
 - Match the naming conventions of surrounding files (PascalCase components, kebab-case files)
 - Name React event callback props `onEvent` and component-local handlers `handleEvent`
 - Keep components small and focused — split at logical boundaries, not at line count
+- When implementing under `libs/*`, keep the component host-agnostic: no host-owned integration
+  details such as `/api` URLs, generated clients, server-api imports, app contexts,
+  auth/session/cookie/env access, feature flags, route/navigation knowledge, analytics/telemetry,
+  SDK setup, platform bridges, app-specific URL schemes, or storage keys/schemas. Expose
+  props/callbacks/resolved values for app behavior instead.
 
 ### Step 4 — Verify
 
