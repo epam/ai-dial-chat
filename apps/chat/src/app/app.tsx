@@ -1,5 +1,6 @@
-import { lazy, Suspense } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { lazy, Suspense, useCallback, useState } from 'react';
+import { Route, Routes, useMatch } from 'react-router-dom';
+import ConversationSourcesPanelView from '../components/ConversationSourcesPanel/ConversationSourcesPanelView.js';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -14,15 +15,23 @@ const ConversationPage = lazy(async () => {
 });
 
 function App() {
+  const [isNavOpen, setIsNavOpen] = useState(false);
+  const closeNav = useCallback(() => setIsNavOpen(false), []);
+  const toggleNav = useCallback(() => setIsNavOpen((prev) => !prev), []);
+
+  const matchRoot = useMatch(ROUTES.ROOT);
+  const matchConversation = useMatch('/conversations/*');
+  const isConversationRoute = !!(matchRoot ?? matchConversation);
+
   return (
     <div className="flex size-full flex-row">
-      <Navigation />
+      <Navigation isOpen={isNavOpen} onClose={closeNav} />
       <main
         id="main-content"
         role="main"
-        className="flex min-h-0 flex-1 flex-col bg-layer-1"
+        className="flex min-h-0 min-w-0 flex-1 flex-col bg-layer-1"
       >
-        <Header />
+        <Header onMenuToggle={toggleNav} />
         <Routes>
           <Route path={ROUTES.ROOT} element={<ConversationRoute />} />
           <Route
@@ -43,6 +52,7 @@ function App() {
           />
         </Routes>
       </main>
+      {isConversationRoute && <ConversationSourcesPanelView />}
     </div>
   );
 }

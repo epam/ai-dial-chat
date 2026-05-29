@@ -1,6 +1,5 @@
-import { StreamChunk } from '@epam/ai-dial-chat-shared';
-import type { AttachmentDto } from '@epam/chat-api-client';
-import { ApiEndpoints, getCsrfToken } from './base';
+import { MessageCustomContent, StreamChunk } from '@epam/ai-dial-chat-shared';
+import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
 
 export interface StreamCompletionOptions {
   onChunk: (chunk: StreamChunk) => void;
@@ -14,8 +13,7 @@ export const streamCompletion = (
   message: string,
   model: string,
   options: StreamCompletionOptions,
-  attachments?: AttachmentDto[],
-  configurationValue?: Record<string, unknown>,
+  customContent?: MessageCustomContent,
 ): void => {
   const { onChunk, onComplete, onError, signal } = options;
 
@@ -36,8 +34,7 @@ export const streamCompletion = (
           path,
           message,
           model,
-          ...(attachments?.length ? { attachments } : {}),
-          ...(configurationValue ? { configurationValue } : {}),
+          custom_content: customContent || {},
         }),
       });
     } catch (err) {
@@ -45,6 +42,9 @@ export const streamCompletion = (
       onError(err instanceof Error ? err : new Error(String(err)));
       return;
     }
+
+    const rotatedCsrf = response.headers.get('x-csrf-token');
+    if (rotatedCsrf) setCsrfToken(rotatedCsrf);
 
     if (!response.ok) {
       onError(
@@ -61,13 +61,19 @@ export const streamCompletion = (
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let hadError = false;
+
+    const handleError = (err: Error) => {
+      hadError = true;
+      onError(err);
+    };
 
     try {
       while (true) {
         const { done, value } = await reader.read();
 
         if (done) {
-          if (buffer.trim()) parseSSELine(buffer, onChunk, onError);
+          if (buffer.trim()) parseSSELine(buffer, onChunk, handleError);
           break;
         }
 
@@ -77,10 +83,10 @@ export const streamCompletion = (
         buffer = lines.pop() ?? '';
 
         for (const line of lines) {
-          parseSSELine(line, onChunk, onError);
+          parseSSELine(line, onChunk, handleError);
         }
       }
-      onComplete();
+      if (!hadError) onComplete();
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
       onError(err instanceof Error ? err : new Error(String(err)));

@@ -4,8 +4,16 @@ export enum ChatI18nKeys {
   StreamError = 'chat.streamError',
   DeleteMessageTitle = 'chat.deleteMessageTitle',
   DeleteMessageDescription = 'chat.deleteMessageDescription',
-  DeleteMessageError = 'chat.deleteMessageError',
-  StarterConfirmationTitle = 'chat.starterConfirmationTitle',
+  StarterConfirmTitle = 'chat.starterConfirmTitle',
+  ConversationMessages = 'chat.conversationMessages',
+  ScrollToBottom = 'chat.scrollToBottom',
+  MessageInput = 'chat.messageInput',
+  WelcomeScreen = 'chat.welcomeScreen',
+  Logo = 'chat.logo',
+  ConversationStarters = 'chat.conversationStarters',
+  SendMessage = 'chat.sendMessage',
+  StopStreaming = 'chat.stopStreaming',
+  QuickReplyButtons = 'chat.quickReplyButtons',
 }
 
 export enum ActionsI18nKeys {
@@ -18,12 +26,21 @@ export enum ActionsI18nKeys {
   Copied = 'actions.copied',
   Like = 'actions.like',
   Dislike = 'actions.dislike',
+  EditMessage = 'actions.editMessage',
+  DeleteMessage = 'actions.deleteMessage',
+  RegenerateResponse = 'actions.regenerateResponse',
+  CopyResponse = 'actions.copyResponse',
+  CopyAsMarkdown = 'actions.copyAsMarkdown',
+  LikeResponse = 'actions.likeResponse',
+  DislikeResponse = 'actions.dislikeResponse',
 }
 
 export enum NavigationI18nKeys {
   AriaLabel = 'navigation.ariaLabel',
   Home = 'navigation.home',
   Catalog = 'navigation.catalog',
+  OpenMenu = 'navigation.openMenu',
+  CloseMenu = 'navigation.closeMenu',
 }
 
 export enum CatalogI18nKeys {
@@ -34,4 +51,29 @@ export enum CatalogI18nKeys {
 export enum StagesI18nKeys {
   PanelHeader = 'stages.panel.header',
   CollapseAriaLabel = 'stages.panel.collapseAriaLabel',
+}
+
+export enum DeploymentsI18nKeys {
+  Empty = 'deployments.empty',
+  TypeModel = 'deployments.type.model',
+  TypeApplication = 'deployments.type.application',
+  SelectorAriaLabel = 'deployments.selector.ariaLabel',
+  SelectorLoading = 'deployments.selector.loading',
+  SelectorError = 'deployments.selector.error',
+  SelectorEmpty = 'deployments.selector.empty',
+  SelectorSearchPlaceholder = 'deployments.selector.searchPlaceholder',
+  SelectorCloseLabel = 'deployments.selector.closeLabel',
+}
+
+export enum SidebarI18nKeys {
+  ToggleOpen = 'sidebar.base.toggleOpen',
+  ToggleClose = 'sidebar.base.toggleClose',
+  Close = 'sidebar.base.close',
+  AriaLabel = 'sidebar.sources.ariaLabel',
+  SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
+  SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
+  SectionSources = 'sidebar.sources.sections.sources',
+  EmptyUploadedFiles = 'sidebar.sources.empty.uploadedFiles',
+  EmptyGeneratedFiles = 'sidebar.sources.empty.generatedFiles',
+  EmptySources = 'sidebar.sources.empty.sources',
 }

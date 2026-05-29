@@ -2,7 +2,6 @@ import {
   MessageRole,
   type Attachment,
   type MessageRating,
-  type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
@@ -21,15 +20,19 @@ import {
 import { useTranslation } from 'react-i18next';
 import {
   ActionsI18nKeys,
+  ChatI18nKeys,
+  DeploymentsI18nKeys,
   StagesI18nKeys,
 } from '../../constants/translation-keys.js';
+import { useDeployments } from '../../context/DeploymentsContext.js';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
-import {
-  isMessageStreaming,
-  messageHasStages,
-} from '../../utils/message-utils.js';
-import StarterButtons from '../StarterButtons/StarterButtons';
+import { resolveCatalogIconUrl } from '../../utils/icon-path.js';
+import { messageHasStages } from '../../utils/message-utils.js';
 import { buildMessageActions } from './buildMessageActions.js';
+import {
+  getMessageStarterProps,
+  isStreamingMessage,
+} from './message-display.js';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -44,6 +47,11 @@ interface Props {
   onRegenerateMessage?: (messageId: string) => void;
   onRateMessage?: (messageId: string, rating: MessageRating | null) => void;
   onAttachmentsChange?: (attachments: Attachment[]) => void;
+  onSelectStarter?: (
+    starter: StarterOption,
+    propertyKey?: string,
+    description?: string,
+  ) => void;
   placeholder: string;
   isAssistantTyping?: boolean;
   starters?: StarterOption[];
@@ -67,6 +75,7 @@ const ConversationView: FC<Props> = ({
   onRegenerateMessage,
   onRateMessage,
   onAttachmentsChange,
+  onSelectStarter,
   placeholder,
   isAssistantTyping = false,
   starters,
@@ -75,6 +84,8 @@ const ConversationView: FC<Props> = ({
   populateText,
 }) => {
   const { t } = useTranslation();
+  const { items, selectedItemId, setSelectedItemId, isLoading, error } =
+    useDeployments();
   const tooltips = {
     edit: t(ActionsI18nKeys.Edit),
     delete: t(ActionsI18nKeys.Delete),
@@ -85,6 +96,16 @@ const ConversationView: FC<Props> = ({
     copiedMarkdown: t(ActionsI18nKeys.Copied),
     like: t(ActionsI18nKeys.Like),
     dislike: t(ActionsI18nKeys.Dislike),
+  };
+
+  const ariaLabels = {
+    editMessage: t(ActionsI18nKeys.EditMessage),
+    deleteMessage: t(ActionsI18nKeys.DeleteMessage),
+    regenerateResponse: t(ActionsI18nKeys.RegenerateResponse),
+    copyResponse: t(ActionsI18nKeys.CopyResponse),
+    copyAsMarkdown: t(ActionsI18nKeys.CopyAsMarkdown),
+    likeResponse: t(ActionsI18nKeys.LikeResponse),
+    dislikeResponse: t(ActionsI18nKeys.DislikeResponse),
   };
 
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -171,24 +192,35 @@ const ConversationView: FC<Props> = ({
 
   return (
     <>
-      <div className="relative flex w-[748px] flex-1 flex-col overflow-hidden">
+      <div className="relative flex w-full max-w-[748px] flex-1 flex-col overflow-hidden">
         <div
           ref={containerRef}
           role="log"
-          aria-label="Conversation messages"
+          aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
           className="flex flex-1 flex-col overflow-y-auto px-4 py-8"
         >
           <div className="flex flex-1 flex-col gap-6">
             {messages.map((msg, index) => {
-              const isStreaming = isMessageStreaming(
-                msg,
+              const isStreaming = isStreamingMessage(
+                msg.role,
                 index,
                 messages.length,
                 isAssistantTyping,
               );
               const hasStages = messageHasStages(msg);
+              const {
+                starters: activeStarters,
+                onSelectStarter: handleSelectStarter,
+              } = getMessageStarterProps(
+                msg,
+                index,
+                messages.length,
+                isAssistantTyping,
+                onSelectStarter,
+              );
+
               return (
                 <div key={msg.id} className="flex flex-col gap-2">
                   <MessageBubble
@@ -207,12 +239,16 @@ const ConversationView: FC<Props> = ({
                         onRate: onRateMessage,
                       },
                       tooltips,
+                      ariaLabels,
                     )}
                     className={
                       msg.role === MessageRole.User
                         ? 'justify-end'
                         : 'justify-start'
                     }
+                    starters={activeStarters}
+                    onSelectStarter={handleSelectStarter}
+                    startersAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
                   />
                   {hasStages && (
                     <StagesPanel
@@ -231,21 +267,18 @@ const ConversationView: FC<Props> = ({
 
         {showScrollButton && (
           <DialFabButton
-            aria-label="Scroll to bottom"
+            aria-label={t(ChatI18nKeys.ScrollToBottom)}
             onClick={handleScrollToBottom}
             className="absolute bottom-4 left-1/2 -translate-x-1/2"
           />
         )}
       </div>
 
-      {starters && starters.length > 0 && onStarterSelect && (
-        <StarterButtons
-          starters={starters}
-          onSelect={onStarterSelect}
-          propertyKey={startersPropertyKey}
-        />
-      )}
-      <div role="region" aria-label="Message input" className="w-full">
+      <div
+        role="region"
+        aria-label={t(ChatI18nKeys.MessageInput)}
+        className="w-full"
+      >
         <Suspense fallback={null}>
           <ConversationInput
             onSend={onSend}
@@ -253,7 +286,27 @@ const ConversationView: FC<Props> = ({
             isStreaming={isAssistantTyping}
             onAttachmentsChange={onAttachmentsChange}
             placeholder={placeholder}
-            populateText={populateText}
+            deployments={items}
+            selectedDeploymentId={selectedItemId}
+            onDeploymentChange={setSelectedItemId}
+            resolveDeploymentIconUrl={resolveCatalogIconUrl}
+            modelSelectorLabels={{
+              ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
+              loading: isLoading
+                ? t(DeploymentsI18nKeys.SelectorLoading)
+                : undefined,
+              error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
+              empty:
+                !isLoading && !error && items.length === 0
+                  ? t(DeploymentsI18nKeys.SelectorEmpty)
+                  : undefined,
+              searchPlaceholder: t(
+                DeploymentsI18nKeys.SelectorSearchPlaceholder,
+              ),
+              closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
+            }}
+            sendLabel={t(ChatI18nKeys.SendMessage)}
+            stopLabel={t(ChatI18nKeys.StopStreaming)}
           />
         </Suspense>
       </div>

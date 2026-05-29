@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useFavicon } from './useFavicon';
 
 // Mock getIconPath
-vi.mock('../utils/icon-path', () => ({
+vi.mock('../../utils/icon-path', () => ({
   getIconPath: vi.fn(
     (url) => `/api/theme-icon?iconName=${encodeURIComponent(url || '')}`,
   ),
@@ -39,9 +39,9 @@ describe('useFavicon', () => {
     });
 
     // Spy on console methods
-    vi.spyOn(console, 'log').mockImplementation(() => {});
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    vi.spyOn(console, 'info').mockImplementation(() => {});
     vi.spyOn(console, 'warn').mockImplementation(() => {});
-    vi.spyOn(console, 'debug').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -51,7 +51,7 @@ describe('useFavicon', () => {
   it('should handle undefined URL gracefully', () => {
     renderHook(() => useFavicon(undefined));
 
-    expect(console.debug).toHaveBeenCalledWith(
+    expect(console.error).toHaveBeenCalledWith(
       'No favicon URL provided, using default',
     );
     expect(imageInstances).toHaveLength(0);

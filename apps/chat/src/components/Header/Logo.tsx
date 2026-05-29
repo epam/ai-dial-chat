@@ -1,5 +1,7 @@
 import { DialLoader } from '@epam/ai-dial-ui-kit';
 import { FC, memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ChatI18nKeys } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
 import { getIconPath } from '../../utils/icon-path';
 
@@ -8,6 +10,7 @@ import { getIconPath } from '../../utils/icon-path';
  * Shows loading skeleton while theme is being loaded.
  */
 const Logo: FC = () => {
+  const { t } = useTranslation();
   const { currentThemeLogo, isLoading } = useTheme();
 
   // Show loading skeleton while theme is loading
@@ -18,7 +21,7 @@ const Logo: FC = () => {
   return currentThemeLogo ? (
     <a
       href="/"
-      aria-label="logo"
+      aria-label={t(ChatI18nKeys.Logo)}
       style={{ backgroundImage: `url(${getIconPath(currentThemeLogo)})` }}
       className="h-[48px] min-w-[125px] bg-contain bg-right bg-no-repeat"
     />

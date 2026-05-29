@@ -6,3 +6,4 @@ export * from './models/deployment-configuration.js';
 export * from './types/attachment.js';
 export * from './types/mime-type.js';
 export * from './utils/merge-class.js';
+export * from './utils/build-css-vars.js';

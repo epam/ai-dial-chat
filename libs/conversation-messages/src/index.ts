@@ -14,6 +14,7 @@ export type {
 export type {
   MessageActionsProps,
   MessageActionTooltips,
+  MessageActionAriaLabels,
 } from './models/MessageActions.js';
 export type {
   MessageSourceProps,

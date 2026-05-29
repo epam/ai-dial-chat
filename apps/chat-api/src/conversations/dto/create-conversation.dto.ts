@@ -1,14 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
-  IsArray,
-  IsObject,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { AttachmentDto } from './attachment.dto';
+import { MessageCustomContentDto } from './message-custom-content.dto';
 
 export class CreateConversationDto {
   @ApiProperty({
@@ -20,23 +19,25 @@ export class CreateConversationDto {
   @MaxLength(4000)
   firstMessage!: string;
 
-  @ApiPropertyOptional({
-    description: 'DIAL API attachments to include with the first user message',
-    type: [AttachmentDto],
+  @ApiProperty({
+    description:
+      'ID of the catalog item (model or application) to use for this conversation',
+    example: 'anthropic.claude-v3-sonnet',
+    minLength: 1,
+    maxLength: 256,
   })
-  @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => AttachmentDto)
-  attachments?: AttachmentDto[];
+  @IsString()
+  @MinLength(1)
+  @MaxLength(256)
+  @Matches(/^[\w.\-:@/]+$/)
+  deploymentId!: string;
 
   @ApiPropertyOptional({
-    description:
-      'Configuration form values submitted with the first message. ' +
-      'Keys match the property names in the deployment JSON Schema (e.g. { button: 1 }).',
-    example: { button: 1 },
+    description: 'Extra DIAL payload attached to the first user message',
+    type: MessageCustomContentDto,
   })
   @IsOptional()
-  @IsObject()
-  configurationValue?: Record<string, unknown>;
+  @ValidateNested()
+  @Type(() => MessageCustomContentDto)
+  custom_content?: MessageCustomContentDto;
 }

@@ -1,21 +1,22 @@
 import {
   Conversation,
   ConversationMetadata,
-  MessageAttachment,
-  MessageRole,
   Message,
+  MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
+import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import { getConversationName } from './conversation.utils';
+import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 
 @Injectable()
 export class ConversationService extends AppService {
-  protected logger = new Logger(ConversationService.name);
+  protected override logger = new Logger(ConversationService.name);
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     super(configService);
@@ -25,8 +26,8 @@ export class ConversationService extends AppService {
     firstMessage: string,
     token: string,
     bucket: string,
-    attachments?: MessageAttachment[],
-    configurationValue?: Record<string, unknown>,
+    deploymentId: string,
+    customContent?: MessageCustomContentDto,
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
@@ -34,37 +35,27 @@ export class ConversationService extends AppService {
     const conversationPath = `${uuid}__${name}`;
     const folderId = `${bucket}`; // TODO: check
 
-    const customContent = {
-      ...(attachments?.length ? { attachments } : {}),
-      ...(configurationValue
-        ? { configuration_value: configurationValue }
-        : {}),
-    };
-
-    const userMessage: Message = {
+    const userMessage: MessageDto = {
       id: crypto.randomUUID(),
-      role: MessageRole.User,
+      role: ChatMessageRole.User,
       content: firstMessage,
       timestamp: new Date(now).toISOString(),
-      ...(Object.keys(customContent).length
-        ? { custom_content: customContent }
-        : {}),
+      custom_content: customContent,
     };
 
-    // TODO: remove hardcoded - add model info
     // TODO: add temperature and other conversation settings
     const conversation: Conversation = {
       id: `${folderId}/${conversationPath}`,
       folderId,
       name,
-      model: { id: 'form-example' },
+      model: { id: deploymentId },
       prompt: '',
       temperature: 1,
       messages: [userMessage],
       lastActivityDate: now,
       updatedAt: now,
       selectedAddons: [],
-      assistantModelId: 'form-example',
+      assistantModelId: deploymentId,
     };
 
     try {
@@ -189,8 +180,7 @@ export class ConversationService extends AppService {
     bucket: string,
     message: string,
     model: string,
-    attachments?: MessageAttachment[],
-    configurationValue?: Record<string, unknown>,
+    customContent?: MessageCustomContentDto,
   ): Promise<ReadableStream<Uint8Array>> {
     const conversation = await this.getConversation(
       conversationPath,
@@ -198,21 +188,22 @@ export class ConversationService extends AppService {
       bucket,
     );
 
-    const customContent = {
-      ...(attachments?.length ? { attachments } : {}),
-      ...(configurationValue
-        ? { configuration_value: configurationValue }
-        : {}),
-    };
+    this.logger.log(
+      `[streamCompletion] model from request: "${model}", conversation.model.id: "${conversation.model?.id}", assistantModelId: "${conversation.assistantModelId}"`,
+    );
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: MessageRole.User,
       content: message,
       timestamp: new Date().toISOString(),
-      ...(Object.keys(customContent).length
-        ? { custom_content: customContent }
-        : {}),
+      ...(customContent &&
+        Object.keys(customContent).length > 0 && {
+          custom_content: {
+            attachments: customContent.attachments,
+            form_value: customContent.form_value,
+          },
+        }),
     };
 
     // If the conversation already ends with a user turn (e.g. first-message auto-stream),
@@ -223,34 +214,39 @@ export class ConversationService extends AppService {
         ? conversation.messages
         : [...conversation.messages, userMessage];
 
+    // configuration_value is sent as top-level custom_fields.configuration,
+    // not inside the messages array.
+    const configuration = customContent?.configuration_value;
+
     const messages = messagesForCompletion.map((m) => {
       const validAttachments = (m.custom_content?.attachments ?? []).filter(
         (a) => a.data ?? a.url,
       );
-      const configValue = m.custom_content?.configuration_value;
-      const msgCustomContent = {
-        ...(validAttachments.length ? { attachments: validAttachments } : {}),
-        ...(m.role === MessageRole.User && configValue
-          ? { form_value: configValue }
-          : {}),
-      };
+      const content = Object.fromEntries(
+        Object.entries({
+          ...m.custom_content,
+          attachments: validAttachments.length ? validAttachments : undefined,
+          configuration_value: undefined, // configuration_value is sent as top-level custom_fields.configuration, not inside messages[].custom_content
+        }).filter(([, value]) => value != null),
+      );
       return {
         role: m.role,
         content: m.content,
-        ...(Object.keys(msgCustomContent).length
-          ? { custom_content: msgCustomContent }
-          : {}),
+        ...(Object.keys(content).length > 0 ? { custom_content: content } : {}),
       };
     });
 
-    console.log(
-      'Messages sent to DIAL Core for completion:',
-      messages[0].custom_content,
-      messages[0],
+    this.logger.log(
+      `[streamCompletion] POST /openai/deployments/${model}/chat/completions`,
     );
+
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
-        body: { messages, stream: true },
+        body: {
+          messages,
+          stream: true,
+          ...(configuration ? { custom_fields: { configuration } } : {}),
+        },
         headers: {
           ...getBearerAuthHeaders(token),
           Accept: 'text/event-stream',

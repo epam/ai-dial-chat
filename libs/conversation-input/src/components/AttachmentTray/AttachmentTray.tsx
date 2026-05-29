@@ -7,6 +7,7 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
   attachments,
   onRemove,
   onRetry,
+  onExpand,
   ariaLabel = 'Attached files',
   removeLabel,
   retryLabel,
@@ -18,7 +19,10 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
     <div
       role="list"
       aria-label={ariaLabel}
-      className={mergeClasses('flex w-full gap-2 overflow-x-auto', className)}
+      className={mergeClasses(
+        'flex w-full min-w-0 gap-2 overflow-x-auto',
+        className,
+      )}
     >
       {attachments.map((attachment) => (
         <div key={attachment.id} role="listitem">
@@ -26,6 +30,7 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
             attachment={attachment}
             onRemove={onRemove}
             onRetry={onRetry}
+            onExpand={onExpand}
             removeLabel={removeLabel}
             retryLabel={retryLabel}
           />

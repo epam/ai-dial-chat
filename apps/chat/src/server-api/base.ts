@@ -2,7 +2,6 @@ export enum ApiEndpoints {
   THEMES = '/api/themes',
   THEME_ICON = '/api/themes/icon',
   CONVERSATIONS = '/api/v1/conversations',
-  DEPLOYMENTS = '/api/deployments',
   MODELS = '/api/v1/models',
   AUTH_LOGOUT = '/api/v1/auth/logout',
 }
@@ -107,6 +106,9 @@ const request = async <TResponse>(
     },
     body: body == null ? undefined : isFormData ? body : JSON.stringify(body),
   });
+
+  const rotatedCsrf = response.headers.get('x-csrf-token');
+  if (rotatedCsrf) _csrfToken = rotatedCsrf;
 
   if (!response.ok) {
     if (response.status === 401) {

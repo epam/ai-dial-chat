@@ -29,6 +29,9 @@ import {
 } from './dto/save-conversation.dto';
 import { SendCompletionDto } from './dto/send-completion.dto';
 
+const SSE_KEEPALIVE_INTERVAL_MS = 15_000;
+const SSE_KEEPALIVE_PAYLOAD = ': keepalive\n\n';
+
 @ApiTags('conversations')
 @Controller({ path: 'conversations', version: '1' })
 export class ConversationController {
@@ -51,7 +54,8 @@ export class ConversationController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid request body — firstMessage missing or out of range',
+    description:
+      'Invalid request body — firstMessage or deploymentId missing or out of range',
   })
   @ApiResponse({
     status: 500,
@@ -63,8 +67,8 @@ export class ConversationController {
       dto.firstMessage,
       at,
       bucket,
-      dto.attachments,
-      dto.configurationValue,
+      dto.deploymentId,
+      dto.custom_content,
     );
   }
 
@@ -132,13 +136,13 @@ export class ConversationController {
       query.path,
       at,
       bucket,
-      body.conversation as never,
+      body.conversation,
     );
   }
 
   @Post('completions')
   @HttpCode(200)
-  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   @ApiOperation({
     summary: 'Stream a chat completion',
     description:
@@ -167,8 +171,7 @@ export class ConversationController {
       bucket,
       dto.message,
       dto.model,
-      dto.attachments,
-      dto.configurationValue,
+      dto.custom_content,
     );
 
     res.setHeader('Content-Type', 'text/event-stream');
@@ -177,18 +180,51 @@ export class ConversationController {
     res.flushHeaders();
 
     const reader = stream.getReader();
+
+    let clientAborted = false;
+    let readerReleased = false;
+    let readerCancelRequested = false;
+
+    const handleClose = () => {
+      clientAborted = true;
+      if (readerReleased || readerCancelRequested) {
+        return;
+      }
+
+      readerCancelRequested = true;
+      void reader.cancel().catch(() => undefined);
+    };
+
+    res.on('close', handleClose);
+
+    let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
     try {
+      keepaliveTimer = setInterval(() => {
+        if (!clientAborted && !res.writableEnded) {
+          res.write(SSE_KEEPALIVE_PAYLOAD);
+        }
+      }, SSE_KEEPALIVE_INTERVAL_MS);
+
       while (true) {
+        if (clientAborted) break;
+
         const { done, value } = await reader.read();
         if (done) break;
 
         res.write(value);
       }
     } catch (err) {
-      this.logger.error('Error while streaming completion to client', err);
+      if (!clientAborted) {
+        this.logger.error('Error while streaming completion to client', err);
+      }
     } finally {
+      if (keepaliveTimer) clearInterval(keepaliveTimer);
+      res.off('close', handleClose);
+      readerReleased = true;
       reader.releaseLock();
-      res.end();
+      if (!res.writableEnded) {
+        res.end();
+      }
     }
   }
 

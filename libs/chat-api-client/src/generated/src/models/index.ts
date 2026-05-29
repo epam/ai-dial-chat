@@ -3,6 +3,74 @@
 /**
  *
  * @export
+ * @interface ApplicationDto
+ */
+export interface ApplicationDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  object: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  displayVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationDto
+   */
+  maxInputAttachments?: number;
+}
+/**
+ *
+ * @export
+ * @interface ApplicationsResponseDto
+ */
+export interface ApplicationsResponseDto {
+  /**
+   *
+   * @type {Array<ApplicationDto>}
+   * @memberof ApplicationsResponseDto
+   */
+  data: Array<ApplicationDto>;
+}
+/**
+ *
+ * @export
  * @interface AttachmentDto
  */
 export interface AttachmentDto {
@@ -364,6 +432,42 @@ export interface ConversationResponseDto {
   assistantModelId: string;
 }
 /**
+ * Permitted scalar/array types for a single form field value.
+ * @export
+ */
+export type MessageFormValueType = number | string | boolean | string[];
+
+/**
+ * Key-value map submitted from a form widget embedded in a message.
+ * @export
+ */
+export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
+
+/**
+ *
+ * @export
+ * @interface MessageCustomContentDto
+ */
+export interface MessageCustomContentDto {
+  /**
+   * @type {Array<AttachmentDto>}
+   * @memberof MessageCustomContentDto
+   */
+  attachments?: Array<AttachmentDto>;
+  /**
+   * Form/button submission value (e.g. { button: 1 })
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  configuration_value?: Record<string, unknown>;
+  /**
+   * Key-value map of form field values submitted via an embedded form widget.
+   * @type {MessageFormValue}
+   * @memberof MessageCustomContentDto
+   */
+  form_value?: MessageFormValue;
+}
+/**
  *
  * @export
  * @interface CreateConversationDto
@@ -376,43 +480,85 @@ export interface CreateConversationDto {
    */
   firstMessage: string;
   /**
-   * DIAL API attachments to include with the first user message
-   * @type {Array<AttachmentDto>}
+   * ID of the catalog item (model or application) to use for this conversation
+   * @type {string}
    * @memberof CreateConversationDto
    */
-  attachments?: Array<AttachmentDto>;
+  deploymentId: string;
   /**
-   * Configuration form values submitted with the first message.
-   * Keys match the property names in the deployment JSON Schema (e.g. { button: 1 }).
-   * @type {Record<string, unknown>}
+   * Extra DIAL payload attached to the first user message
+   * @type {MessageCustomContentDto}
    * @memberof CreateConversationDto
    */
-  configurationValue?: Record<string, unknown>;
+  custom_content?: MessageCustomContentDto;
 }
 /**
  *
  * @export
- * @interface DialDeploymentDto
+ * @interface DeploymentItemDto
  */
-export interface DialDeploymentDto {
+export interface DeploymentItemDto {
   /**
-   *
+   * Unique stable identifier from DIAL Core
    * @type {string}
-   * @memberof DialDeploymentDto
+   * @memberof DeploymentItemDto
    */
   id: string;
   /**
-   *
+   * Display name, falls back to id when absent
    * @type {string}
-   * @memberof DialDeploymentDto
+   * @memberof DeploymentItemDto
    */
-  name?: string;
+  displayName: string;
   /**
    *
    * @type {string}
-   * @memberof DialDeploymentDto
+   * @memberof DeploymentItemDto
    */
-  type?: string;
+  type: DeploymentItemDtoTypeEnum;
+  /**
+   * Icon URL from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  iconUrl?: string;
+  /**
+   * Description from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  description?: string;
+  /**
+   * Interface types supported by this deployment
+   * @type {Array<string>}
+   * @memberof DeploymentItemDto
+   */
+  interfaces?: Array<string>;
+}
+
+/**
+ * @export
+ */
+export const DeploymentItemDtoTypeEnum = {
+  Model: 'model',
+  Application: 'application',
+  Toolset: 'toolset',
+} as const;
+export type DeploymentItemDtoTypeEnum =
+  (typeof DeploymentItemDtoTypeEnum)[keyof typeof DeploymentItemDtoTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface DeploymentsResponseDto
+ */
+export interface DeploymentsResponseDto {
+  /**
+   *
+   * @type {Array<DeploymentItemDto>}
+   * @memberof DeploymentsResponseDto
+   */
+  deployments: Array<DeploymentItemDto>;
 }
 /**
  *
@@ -789,9 +935,28 @@ export interface DialModelPricingDto {
 /**
  *
  * @export
+ * @interface FileUploadResponseDto
+ */
+export interface FileUploadResponseDto {
+  /**
+   * DIAL Core URL of the uploaded file
+   * @type {string}
+   * @memberof FileUploadResponseDto
+   */
+  url: string;
+}
+/**
+ *
+ * @export
  * @interface MessageDto
  */
 export interface MessageDto {
+  /**
+   * Unique message identifier
+   * @type {string}
+   * @memberof MessageDto
+   */
+  id?: string;
   /**
    * Message author role
    * @type {string}
@@ -804,6 +969,18 @@ export interface MessageDto {
    * @memberof MessageDto
    */
   content: string;
+  /**
+   * ISO-8601 timestamp of when the message was created
+   * @type {string}
+   * @memberof MessageDto
+   */
+  timestamp?: string;
+  /**
+   * Extra DIAL payload attached to the message
+   * @type {MessageCustomContentDto}
+   * @memberof MessageDto
+   */
+  custom_content?: MessageCustomContentDto;
 }
 
 /**
@@ -922,11 +1099,11 @@ export interface SendCompletionDto {
    */
   model: string;
   /**
-   * DIAL API attachments to include with the user message
-   * @type {Array<AttachmentDto>}
+   * Extra DIAL payload attached to the user message
+   * @type {MessageCustomContentDto}
    * @memberof SendCompletionDto
    */
-  attachments?: Array<AttachmentDto>;
+  custom_content?: MessageCustomContentDto;
 }
 /**
  *

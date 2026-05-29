@@ -1,5 +1,6 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { CSSProperties, type FC } from 'react';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { useCallback, useState, type FC } from 'react';
+import { useDropzone } from 'react-dropzone';
 import type { ConversationInputProps } from '../../models/ConversationInput.js';
 import { Input } from '../Input/Input.js';
 import styles from './ConversationInput.module.scss';
@@ -9,42 +10,62 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   onStop,
   isStreaming = false,
   onAttachmentsChange,
-  initialMessage = '',
-  placeholder = 'Type a new prompt or use "/" to select one',
+  message,
+  placeholder = 'Type a prompt or use "/" to select one',
   welcomeText,
   colors,
   typography,
   className,
-  populateText,
+  dropLabel = 'Drop files here',
+  dropOverlayClassName = 'rounded',
+  pasteTextThreshold,
+  deployments,
+  selectedDeploymentId,
+  onDeploymentChange,
+  modelSelectorLabels,
+  resolveDeploymentIconUrl,
+  sendLabel,
+  stopLabel,
 }) => {
-  const cssVars = {
-    ...(colors?.background && { '--ci-root-bg': colors.background }),
-    ...(colors?.welcomeText && { '--ci-welcome-color': colors.welcomeText }),
-    ...(!typography?.welcomeClassName &&
-      typography?.welcomeFontFamily && {
-        '--ci-welcome-font-family': typography.welcomeFontFamily,
-      }),
-    ...(!typography?.welcomeClassName &&
-      typography?.welcomeFontSize && {
-        '--ci-welcome-font-size': typography.welcomeFontSize,
-      }),
-    ...(!typography?.welcomeClassName &&
-      typography?.welcomeFontWeight && {
-        '--ci-welcome-font-weight': String(typography.welcomeFontWeight),
-      }),
-    ...(!typography?.welcomeClassName &&
-      typography?.welcomeLineHeight && {
-        '--ci-welcome-line-height': String(typography.welcomeLineHeight),
-      }),
-  } as CSSProperties;
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+
+  const handleDropFilesConsumed = useCallback(() => {
+    setPendingFiles([]);
+  }, []);
+
+  const { getRootProps, isDragActive } = useDropzone({
+    onDrop: (files) => setPendingFiles(files),
+    noClick: true,
+    noKeyboard: true,
+  });
+
+  const noCustomClass = !typography?.welcomeClassName;
+  const cssVars = buildCssVars({
+    '--ci-root-bg': colors?.background,
+    '--ci-welcome-color': colors?.welcomeText,
+    '--ci-welcome-font-family': noCustomClass
+      ? typography?.welcomeFontFamily
+      : undefined,
+    '--ci-welcome-font-size': noCustomClass
+      ? typography?.welcomeFontSize
+      : undefined,
+    '--ci-welcome-font-weight': noCustomClass
+      ? typography?.welcomeFontWeight
+      : undefined,
+    '--ci-welcome-line-height': noCustomClass
+      ? typography?.welcomeLineHeight
+      : undefined,
+  });
 
   return (
     <div
-      style={cssVars}
-      className={mergeClasses(
-        'relative flex w-full flex-col items-center gap-6 p-4',
-        className,
-      )}
+      {...getRootProps({
+        style: cssVars,
+        className: mergeClasses(
+          'relative flex w-full flex-col items-center gap-6 py-4 desktop:p-4',
+          className,
+        ),
+      })}
     >
       {welcomeText && (
         <h1
@@ -57,17 +78,43 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           {welcomeText}
         </h1>
       )}
-      <Input
-        initialMessage={initialMessage}
-        onSend={onSend}
-        onStop={onStop}
-        isStreaming={isStreaming}
-        onAttachmentsChange={onAttachmentsChange}
-        placeholder={placeholder}
-        colors={colors?.input}
-        typography={typography?.input}
-        populateText={populateText}
-      />
+      <div className="relative w-full max-w-[748px]">
+        <Input
+          message={message}
+          onSend={onSend}
+          onStop={onStop}
+          isStreaming={isStreaming}
+          onAttachmentsChange={onAttachmentsChange}
+          placeholder={placeholder}
+          colors={colors?.input}
+          typography={typography?.input}
+          pendingDropFiles={pendingFiles}
+          onDropFilesConsumed={handleDropFilesConsumed}
+          pasteTextThreshold={pasteTextThreshold}
+          deployments={deployments}
+          selectedDeploymentId={selectedDeploymentId}
+          onDeploymentChange={onDeploymentChange}
+          modelSelectorLabels={modelSelectorLabels}
+          resolveDeploymentIconUrl={resolveDeploymentIconUrl}
+          sendLabel={sendLabel}
+          stopLabel={stopLabel}
+        />
+        {isDragActive && (
+          <div
+            className={mergeClasses(
+              styles.dropOverlay,
+              'pointer-events-none absolute inset-0 z-10 flex items-center justify-center border border-dashed',
+              dropOverlayClassName,
+            )}
+          >
+            <span
+              className={typography?.dropLabelClassName ?? 'dial-tiny-text'}
+            >
+              {dropLabel}
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

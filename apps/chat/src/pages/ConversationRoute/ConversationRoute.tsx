@@ -1,5 +1,4 @@
 import type { Attachment, StarterOption } from '@epam/ai-dial-chat-shared';
-import { DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   lazy,
@@ -15,10 +14,17 @@ import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
-import { ChatI18nKeys } from '../../constants/translation-keys';
-import { useModels } from '../../context/ModelsContext';
+import {
+  ChatI18nKeys,
+  DeploymentsI18nKeys,
+} from '../../constants/translation-keys';
+import { useDeployments } from '../../context/DeploymentsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
+import {
+  getStarterPopulateText,
+  getStartersFromSchema,
+} from '../../utils/starter-option';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -31,32 +37,21 @@ const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
-  const [populateText, setPopulateText] = useState<string | undefined>();
-  const [pendingStarter, setPendingStarter] = useState<{
-    text: string;
-    submit: boolean;
-    confirmationMessage: string;
-    configurationValue?: Record<string, unknown>;
-  } | null>(null);
+  const [inputMessage, setInputMessage] = useState<string | undefined>();
   const inputRef = useRef<HTMLDivElement>(null);
-  const { selectedModelConfiguration } = useModels();
+  const {
+    items,
+    selectedItemId,
+    setSelectedItemId,
+    selectedDeploymentConfiguration,
+    isLoading,
+    error,
+  } = useDeployments();
 
-  const { starters, startersPropertyKey } = useMemo<{
-    starters: StarterOption[];
-    startersPropertyKey: string | undefined;
-  }>(() => {
-    const properties = selectedModelConfiguration?.properties;
-    const key = properties?.starter
-      ? 'starter'
-      : properties?.button
-        ? 'button'
-        : undefined;
-    const oneOf = key ? properties?.[key]?.oneOf : undefined;
-    if (!Array.isArray(oneOf)) {
-      return { starters: [], startersPropertyKey: undefined };
-    }
-    return { starters: oneOf as StarterOption[], startersPropertyKey: key };
-  }, [selectedModelConfiguration]);
+  const { starters, propertyKey, description } = useMemo(
+    () => getStartersFromSchema(selectedDeploymentConfiguration),
+    [selectedDeploymentConfiguration],
+  );
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -72,17 +67,14 @@ const ConversationRoute: FC = () => {
   }, []);
 
   const handleSend = useCallback(
-    async (
-      message: string,
-      attachments?: Attachment[],
-      configurationValue?: Record<string, unknown>,
-    ) => {
-      if (isSending) return;
+    async (message: string, attachments: Attachment[]) => {
+      if (isSending || !selectedItemId) return;
       setIsSending(true);
       try {
         const attachmentDtos = await attachmentsToDtos(attachments || []);
         const conversation = await apiCreateConversation(
           message,
+          selectedItemId,
           attachmentDtos,
           configurationValue,
         );
@@ -91,7 +83,33 @@ const ConversationRoute: FC = () => {
         setIsSending(false);
       }
     },
-    [navigate, isSending],
+    [navigate, isSending, selectedItemId],
+  );
+
+  const handleStarterSelect = useCallback(
+    (starter: StarterOption) => {
+      // For button widgets the description is the message content;
+      // for starter widgets fall back to populateText / title.
+      const text = description ?? getStarterPopulateText(starter);
+
+      if (starter['dial:widgetOptions'].submit) {
+        const configurationValue = propertyKey
+          ? { [propertyKey]: starter.const }
+          : undefined;
+        void apiCreateConversation(
+          text,
+          selectedItemId,
+          [],
+          undefined,
+          configurationValue,
+        ).then((conversation) => {
+          navigate(getConversationRoute(conversation.id));
+        });
+      } else {
+        setInputMessage(text);
+      }
+    },
+    [description, propertyKey, selectedItemId, navigate],
   );
 
   const executeStarter = useCallback(
@@ -149,22 +167,34 @@ const ConversationRoute: FC = () => {
     <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
       <Suspense fallback={<RouteFallback />}>
         <div
-          className="flex h-full flex-col items-center justify-center p-8"
+          className="flex h-full flex-col items-center justify-center p-4 desktop:p-8"
           role="region"
-          aria-label="Welcome screen"
+          aria-label={t(ChatI18nKeys.WelcomeScreen)}
         >
           <ConversationInput
             onSend={handleSend}
+            message={inputMessage}
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
             typography={{ welcomeClassName: 'dial-display2-text' }}
-            populateText={populateText}
+            deployments={items}
+            selectedDeploymentId={selectedItemId}
+            onDeploymentChange={setSelectedItemId}
+            modelSelectorLabels={{
+              ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
+              loading: isLoading
+                ? t(DeploymentsI18nKeys.SelectorLoading)
+                : undefined,
+              error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
+              empty:
+                !isLoading && !error && items.length === 0
+                  ? t(DeploymentsI18nKeys.SelectorEmpty)
+                  : undefined,
+            }}
+            sendLabel={t(ChatI18nKeys.SendMessage)}
+            stopLabel={t(ChatI18nKeys.StopStreaming)}
           />
-          <StarterButtons
-            starters={starters}
-            onSelect={handleStarterSelect}
-            propertyKey={startersPropertyKey}
-          />
+          <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
       </Suspense>
       <DialConfirmationPopup

@@ -22,6 +22,9 @@
       "path": "./libs/chat-api-client"
     },
     {
+      "path": "./libs/sidebar"
+    },
+    {
       "path": "./libs/conversation-stages"
     }
   ]

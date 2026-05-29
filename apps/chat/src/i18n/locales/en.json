@@ -1,21 +1,48 @@
 {
   "chat": {
     "welcomeText": "Hello World, good day for prompting!",
-    "placeholder": "Type a new prompt or use '/' to select one",
+    "placeholder": "Type a prompt or use '/' to select one",
     "streamError": "Something went wrong while generating the response.",
     "deleteMessageTitle": "Confirm deleting message?",
     "deleteMessageDescription": "Are you sure that you want to delete the message?",
-    "deleteMessageError": "Failed to delete the message. Please try again.",
-    "starterConfirmationTitle": "Are you sure?"
+    "starterConfirmTitle": "Confirm action",
+    "conversationMessages": "Conversation messages",
+    "scrollToBottom": "Scroll to bottom",
+    "messageInput": "Message input",
+    "welcomeScreen": "Welcome screen",
+    "logo": "Logo",
+    "conversationStarters": "Conversation starters",
+    "sendMessage": "Send message",
+    "stopStreaming": "Stop streaming",
+    "quickReplyButtons": "Quick reply buttons"
   },
   "navigation": {
     "ariaLabel": "Main navigation",
     "home": "Home",
-    "catalog": "Catalog"
+    "catalog": "Catalog",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu"
   },
   "catalog": {
     "ariaLabel": "Catalog",
-    "comingSoon": "Catalog coming soon"
+    "comingSoon": "Catalog coming soon",
+    "loading": "Loading catalog…",
+    "error": "Failed to load catalog. Please try again."
+  },
+  "deployments": {
+    "empty": "No models or applications available.",
+    "type": {
+      "model": "Model",
+      "application": "Application"
+    },
+    "selector": {
+      "ariaLabel": "Select model",
+      "loading": "Loading models…",
+      "error": "Failed to load models",
+      "empty": "No models available",
+      "searchPlaceholder": "Search models",
+      "closeLabel": "Close model selector"
+    }
   },
   "actions": {
     "add": "Add",
@@ -27,7 +54,14 @@
     "copy": "Copy",
     "copied": "Copied!",
     "like": "Like",
-    "dislike": "Dislike"
+    "dislike": "Dislike",
+    "editMessage": "Edit message",
+    "deleteMessage": "Delete message",
+    "regenerateResponse": "Regenerate response",
+    "copyResponse": "Copy response",
+    "copyAsMarkdown": "Copy as markdown",
+    "likeResponse": "Like response",
+    "dislikeResponse": "Dislike response"
   },
   "errors": {
     "generic": "Something went wrong",
@@ -42,10 +76,31 @@
     "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
     "attachmentTray": { "label": "Attached files" }
   },
+<<<<<<< HEAD
   "stages": {
     "panel": {
       "header": "Steps",
       "collapseAriaLabel": "Toggle steps panel"
+=======
+  "sidebar": {
+    "base": {
+      "toggleOpen": "Open sidebar",
+      "toggleClose": "Close sidebar",
+      "close": "Close"
+    },
+    "sources": {
+      "ariaLabel": "Conversation sources",
+      "sections": {
+        "uploadedFiles": "Uploaded Files",
+        "generatedFiles": "Generated Files",
+        "sources": "Sources"
+      },
+      "empty": {
+        "uploadedFiles": "No uploaded files in this conversation.",
+        "generatedFiles": "No generated files in this conversation.",
+        "sources": "No sources available."
+      }
+>>>>>>> development-1.0
     }
   },
   "auth": {

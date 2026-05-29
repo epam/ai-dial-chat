@@ -1,4 +1,8 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  AttachmentType,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
@@ -7,7 +11,7 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconRefresh, IconX } from '@tabler/icons-react';
-import { type CSSProperties, type FC, useMemo } from 'react';
+import { type FC, type KeyboardEvent, type MouseEvent, useMemo } from 'react';
 import type { AttachmentCardProps } from '../../models/AttachmentCard.js';
 import { getAttachmentCardState } from '../../utils/getAttachmentCardState.js';
 import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension.js';
@@ -17,6 +21,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   attachment,
   onRemove,
   onRetry,
+  onExpand,
   selected,
   alwaysShowActions,
   removeLabel = 'Remove attachment',
@@ -27,16 +32,19 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   className,
 }) => {
   const { id, name } = attachment;
-  const nameWithoutExtension = useMemo(() => {
-    return getNameWithoutExtension(name);
-  }, [name]);
+  const isPasted = attachment.type === AttachmentType.Pasted;
+  const isExpandable = isPasted && onExpand !== undefined;
 
-  const cssVars = {
-    ...(colors?.border && { '--ci-card-border': colors.border }),
-    ...(colors?.background && { '--ci-card-bg': colors.background }),
-    ...(colors?.nameText && { '--ci-card-name': colors.nameText }),
-    ...(colors?.metaText && { '--ci-card-meta': colors.metaText }),
-  } as CSSProperties;
+  const displayName = useMemo(() => {
+    return isPasted ? name : getNameWithoutExtension(name);
+  }, [isPasted, name]);
+
+  const cssVars = buildCssVars({
+    '--ci-card-border': colors?.border,
+    '--ci-card-bg': colors?.background,
+    '--ci-card-name': colors?.nameText,
+    '--ci-card-meta': colors?.metaText,
+  });
 
   const {
     isLoading,
@@ -57,6 +65,13 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     [attachment, selected, alwaysShowActions],
   );
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (isExpandable && (e.key === 'Enter' || e.key === ' ')) {
+      e.preventDefault();
+      onExpand(id);
+    }
+  };
+
   return (
     <div
       style={cssVars}
@@ -65,8 +80,13 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         roundedClassName,
         cardColorClass,
         !isImage && 'flex-col gap-3 p-3',
+        isExpandable && 'cursor-pointer',
         className,
       )}
+      onClick={isExpandable ? () => onExpand(id) : undefined}
+      onKeyDown={isExpandable ? handleKeyDown : undefined}
+      tabIndex={isExpandable ? 0 : undefined}
+      role={isExpandable ? 'button' : undefined}
     >
       {isImage ? (
         <img
@@ -88,7 +108,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
                 styles.name,
               )}
             >
-              {nameWithoutExtension}
+              {displayName}
             </span>
           </div>
 
@@ -133,7 +153,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             'absolute right-1 top-1 flex gap-1 transition-opacity',
             actionsVisible
               ? 'opacity-100'
-              : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100',
+              : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 mobile:opacity-100',
           )}
         >
           {isError && onRetry && (
@@ -145,7 +165,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
                 styles.actionBtn,
               )}
               aria-label={retryLabel}
-              onClick={() => onRetry(id)}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                onRetry(id);
+              }}
             />
           )}
           {onRemove && (
@@ -154,7 +177,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               size={ElementSize.Small}
               className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
               aria-label={removeLabel}
-              onClick={() => onRemove(id)}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                onRemove?.(id);
+              }}
             />
           )}
         </div>

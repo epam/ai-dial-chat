@@ -26,7 +26,13 @@
 
 Full tech stack, path aliases, commands, and architecture layout live in `openspec/config.yaml` — read it before designing or implementing features. The `opsx:*` skills use it as their primary context.
 
-For lib styling conventions (CSS vars, SCSS modules, Tailwind split, `colors`/`typography` props pattern) — read `openspec/lib-styling-guide.md` before implementing or reviewing any `libs/*` component.
+## Library isolation
+
+Libraries under `libs/*` must stay maximally isolated from host applications and external interfaces. A lib must not know host-owned integration details such as REST paths, `/api` routes, generated API clients, `apps/chat/src/server-api`, app contexts, auth/session/cookies, environment variables, feature flags, routing/navigation, analytics/telemetry, logging transports, persistence/storage keys and schemas, deployment/tenant/provider details, third-party SDK setup, platform bridges, or app-specific URL schemes.
+
+Put application, backend, platform, and external-system knowledge at the application edge (`apps/chat/src/server-api`, app-level containers, providers, route handlers, or other app adapters). Pass data, resolved values, and behavior into libs through props, typed callbacks, or narrow interfaces. For example, a lib may accept `iconUrl`, `resolveIconUrl`, or `onDownloadFile`; it must not construct `/api/v1/files/download?...`, read app storage keys, initialize analytics, or decide navigation targets itself.
+
+Exception: `libs/chat-api-client` is a generated OpenAPI client package. It may contain generated endpoint paths, DTOs, runtime transport code, and OpenAPI artifacts because that is its only purpose. Do not hand-edit generated client files or add app-specific behavior there; update the backend Swagger/OpenAPI source and regenerate with the repository OpenAPI scripts. Other hand-authored libs still must not import or wrap `@epam/chat-api-client`; apps consume it through app-level adapters such as `apps/chat/src/server-api`.
 
 ## Cross-agent feature research
 
@@ -48,39 +54,11 @@ Use these local skills directly:
 - `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
 - `./.claude/skills/feature-research/SKILL.md` for broad feature research and trade-off analysis
 - `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components
+- `./.claude/skills/responsive-design/SKILL.md` for any UI work that must support both mobile and desktop, or any review of mobile parity
 
 Default behavior:
 
 - Implementation work should follow incremental slices with per-slice verification.
 - Before merge (or on explicit review requests), run the five-axis quality review.
-
-## Local coding conventions
-
-- In `libs/**/*.tsx` files, **never** use `useTranslation` or `t()` from `react-i18next`. Pass all user-visible strings as props with English default values instead. i18n is the responsibility of the consuming app, not the lib.
-- In all `**/*.{ts,tsx}` files, **never** write ternary-in-ternary (nested conditional expressions). Use `if`/`else` blocks, early returns, or a `switch` statement instead.
-
-- In `utils` files, prefer arrow-function declarations (`const fn = (...) => {}`) over `function fn(...) {}`.
-- In `apps/*` React component files, name the component props type/interface `Props`.
-- In `apps/*` React component files, prefer `export default` for component exports.
-- In frontend code, prefer `async`/`await` with `try`/`catch`/`finally` over Promise chains with `.then()`/`.catch()`; use async dynamic imports for `React.lazy` wrappers too.
-- In frontend code, use the `void` operator before Promise-returning calls only for intentional fire-and-forget work where errors are handled; do not add it as a routine prefix for local async helpers.
-- In `libs/*` React component files, always use `FC<Props>` syntax: `export const MyComponent: FC<MyComponentProps> = ({ ... }) => { ... }`.
-- Component folders under `src/components/` must use PascalCase and match the component name (e.g., `RequireAuth/RequireAuth.tsx`). Tests go in a `tests/` subfolder inside the component folder.
-- Every exported symbol in `libs/*` (interfaces, enums, types, functions) must have a JSDoc comment. Each interface/type property must also have an inline `/** ... */` doc. Keep comments factual — describe what the value represents, not how it is used.
-
-## When working with @epam/ai-dial-ui-kit
-
-When implementing or modifying components, forms, or UI built with `@epam/ai-dial-ui-kit`, the `ai-dial-ui-kit` MCP server enables you to discover components, read exact prop signatures, access code examples, and understand design tokens and available utilities.
-
-## Component-First Development
-
-**Always prefer UI kit components over raw HTML elements.** Before reaching for native `<button>`, `<input>`, `<select>`, or other HTML elements:
-
-1. **Look for a UI kit component** — Check if a suitable `Dial*` component exists for your use case
-2. **Use raw elements only as last resort** — If and only if no UI kit component meets the requirements, use native HTML (and document why)
-
-## MCP Tools
-
-Use these two tools for all UI kit discovery and documentation needs: `searchEntity(entity, query?)` and `getEntityDetails(entity, name?)`. If you need to look up **ANYTHING** about the ui kit, use the MCP server. **Never** use rg/ls commands for the ui kit module inspection.
-
-> **Note:** Do not use `grep`, `glob`, `find`, or similar file system tools to discover components. The MCP tools provide accurate, structured metadata. File system searches miss examples, miss type information, and are slower.
+- Before changing anything under `libs/*`, explicitly check the library isolation rule: host/external contracts are adapted by apps, not embedded in libs.
+- UI work is mobile-first by default. The project's named Tailwind breakpoints (`mobile`, `small_tablet`, `large_tablet`, `desktop`, `large_desktop`) live in `tailwind.config.js`; do not introduce `sm:`/`md:`/`lg:`/`xl:` defaults. When a component must branch in JS, use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts` rather than reading `window.innerWidth`.

@@ -97,3 +97,92 @@ describe('AttachmentCard', () => {
     expect(onRetry).toHaveBeenCalledWith('a1');
   });
 });
+
+describe('AttachmentCard — pasted type', () => {
+  const makePasted = (name = 'Hello world. This is pasted text.') =>
+    makeAttachment({ name, type: AttachmentType.Pasted });
+
+  it('renders the full name including dots without stripping extension', () => {
+    render(<AttachmentCard attachment={makePasted()} onRemove={vi.fn()} />);
+    expect(screen.getByText('Hello world. This is pasted text.')).toBeTruthy();
+  });
+
+  it('has role="button" and tabIndex=0 when onExpand is provided', () => {
+    const { container } = render(
+      <AttachmentCard
+        attachment={makePasted()}
+        onRemove={vi.fn()}
+        onExpand={vi.fn()}
+      />,
+    );
+    const card = container.firstElementChild as HTMLElement;
+    expect(card.getAttribute('role')).toBe('button');
+    expect(card.getAttribute('tabindex')).toBe('0');
+  });
+
+  it('calls onExpand with attachment id when card is clicked', () => {
+    const onExpand = vi.fn();
+    const { container } = render(
+      <AttachmentCard
+        attachment={makePasted()}
+        onRemove={vi.fn()}
+        onExpand={onExpand}
+      />,
+    );
+    fireEvent.click(container.firstElementChild!);
+    expect(onExpand).toHaveBeenCalledWith('a1');
+  });
+
+  it('calls onExpand when Enter is pressed on the card', () => {
+    const onExpand = vi.fn();
+    const { container } = render(
+      <AttachmentCard
+        attachment={makePasted()}
+        onRemove={vi.fn()}
+        onExpand={onExpand}
+      />,
+    );
+    fireEvent.keyDown(container.firstElementChild!, { key: 'Enter' });
+    expect(onExpand).toHaveBeenCalledWith('a1');
+  });
+
+  it('calls onExpand when Space is pressed on the card', () => {
+    const onExpand = vi.fn();
+    const { container } = render(
+      <AttachmentCard
+        attachment={makePasted()}
+        onRemove={vi.fn()}
+        onExpand={onExpand}
+      />,
+    );
+    fireEvent.keyDown(container.firstElementChild!, { key: ' ' });
+    expect(onExpand).toHaveBeenCalledWith('a1');
+  });
+
+  it('remove button click does not propagate to onExpand', () => {
+    const onExpand = vi.fn();
+    const onRemove = vi.fn();
+    render(
+      <AttachmentCard
+        attachment={makePasted()}
+        onRemove={onRemove}
+        onExpand={onExpand}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText('Remove attachment'));
+    expect(onRemove).toHaveBeenCalledWith('a1');
+    expect(onExpand).not.toHaveBeenCalled();
+  });
+
+  it('non-pasted card does not get role="button" even when onExpand is provided', () => {
+    const { container } = render(
+      <AttachmentCard
+        attachment={makeAttachment()}
+        onRemove={vi.fn()}
+        onExpand={vi.fn()}
+      />,
+    );
+    const card = container.firstElementChild as HTMLElement;
+    expect(card.getAttribute('role')).toBeNull();
+  });
+});

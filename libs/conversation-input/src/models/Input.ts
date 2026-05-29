@@ -1,4 +1,5 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
+import type { DeploymentItemDto } from '@epam/chat-api-client';
 
 /** CSS custom-property overrides for the `Input` component. */
 export interface InputColors {
@@ -30,10 +31,29 @@ export interface InputTypography {
   lineHeight?: string;
 }
 
+/** Status labels displayed inside the model selector dropdown and mobile bottom-sheet. */
+export interface ModelSelectorLabels {
+  /** Accessible label for the selector trigger button (e.g. `"Select model"`). */
+  ariaLabel?: string;
+  /** Shown as a disabled item while deployments are loading. */
+  loading?: string;
+  /** Shown as a disabled item when the deployments fetch failed. */
+  error?: string;
+  /** Shown as a disabled item when the deployments list is empty. */
+  empty?: string;
+  /** Placeholder for the search input. Defaults to `'Search'`. */
+  searchPlaceholder?: string;
+  /** Accessible label for the close button in the mobile bottom-sheet. Defaults to `'Close'`. */
+  closeLabel?: string;
+}
+
 /** Props accepted by the `Input` component. */
 export interface InputProps {
-  /** Pre-filled message shown when the component mounts. */
-  initialMessage?: string;
+  /**
+   * Message value. Sets the initial textarea content on mount and syncs the
+   * textarea whenever the value changes to a non-empty string.
+   */
+  message?: string;
   /** Called on every keystroke with the current textarea value. */
   onChange?: (message: string) => void;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
@@ -60,12 +80,34 @@ export interface InputProps {
   removeLabel?: string;
   /** Accessible label for each attachment card's retry button (error state only). */
   retryLabel?: string;
+  /** Accessible label for the send button. */
+  sendLabel?: string;
+  /** Accessible label for the stop button. */
+  stopLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
+  /** Files dropped onto the parent that should be processed as attachments. Reset to `[]` after processing. */
+  pendingDropFiles?: File[];
+  /** Called after `pendingDropFiles` have been consumed so the parent can reset its state. */
+  onDropFilesConsumed?: () => void;
+  /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
+  pasteTextThreshold?: number;
+  /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
+  deployments?: DeploymentItemDto[];
   /**
-   * Text injected into the textarea from an external source (e.g. a starter
-   * button with `submit: false`). Whenever this prop changes to a non-empty
-   * string the current input value is replaced with it.
+   * Converts a raw `DeploymentItemDto.iconUrl` value to a URL usable in an `<img src>`.
+   * When omitted, the default resolver handles absolute URLs, root-relative paths, and `files/` IDs.
+   * Pass a custom resolver (e.g. from the host app) to also support theme-relative icon names.
    */
-  populateText?: string;
+  resolveDeploymentIconUrl?: (iconUrl: string) => string | undefined;
+  /** ID of the currently selected deployment. When `null` or `undefined` and `deployments` is defined, the send button is disabled. */
+  selectedDeploymentId?: string | null;
+  /** Called when the user selects a different deployment from the dropdown. Receives the selected item's `id`. */
+  onDeploymentChange?: (id: string) => void;
+  /** Labels shown inside the model selector dropdown for the trigger and various loading states. */
+  modelSelectorLabels?: ModelSelectorLabels;
+  /** Heading text shown in the mobile bottom-sheet add-menu. Defaults to `'Menu'`. */
+  menuTitle?: string;
+  /** Accessible label for the bottom-sheet close button. Defaults to `'Close'`. */
+  menuCloseLabel?: string;
 }

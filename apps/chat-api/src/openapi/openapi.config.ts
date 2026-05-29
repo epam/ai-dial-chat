@@ -12,9 +12,12 @@ export const createOpenApiConfig = (port: string | number) =>
     .addTag('health', 'Health check and application status')
     .addTag('themes', 'Theme configuration and icon management')
     .addTag('auth', 'Authentication and session management')
-    .addTag('deployments', 'List and inspect available AI DIAL deployments')
     .addTag('chat', 'Chat completion proxy to DIAL Core')
     .addTag('rate', 'Submit assistant message ratings to DIAL Core')
+    .addTag(
+      'deployments',
+      'List deployments available to the authenticated user',
+    )
     .addCookieAuth('session')
     .build();
 

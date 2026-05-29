@@ -1,5 +1,6 @@
 import { AttachmentType } from '../types/attachment.js';
 import { MIMEType } from '../types/mime-type.js';
+import type { DeploymentConfigurationSchema } from './deployment-configuration.js';
 
 /** Metadata returned by the DIAL file/conversation listing API for a single resource node. */
 export interface ConversationMetadata {
@@ -49,6 +50,33 @@ export enum StageStatus {
   Failed = 'failed',
 }
 
+/** Permitted scalar/array types for a single form field value. */
+export type MessageFormValueType = number | string | boolean | string[];
+
+/**
+ * A key-value map submitted from a form widget embedded in a message.
+ * Keys are field identifiers; values are typed form field values (or `undefined` for unset fields).
+ */
+export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
+
+/** Extra DIAL API payload attached to a message. */
+export interface MessageCustomContent {
+  /** Files or media items associated with this message. */
+  attachments?: MessageAttachment[];
+  /** Form field values submitted via an embedded form widget. */
+  form_value?: MessageFormValue;
+  /**
+   * JSON Schema for a button/form widget embedded in an assistant response.
+   * Populated from the streaming delta's `custom_content.form_schema`.
+   */
+  form_schema?: DeploymentConfigurationSchema;
+  /**
+   * Configuration value submitted with the next user turn when a button is selected.
+   * Keys match the `propertyKey` from the `form_schema` (e.g. `{ button: 3 }`).
+   */
+  configuration_value?: Record<string, unknown>;
+}
+
 /** A single message in a conversation. */
 export interface Message {
   /** Unique message identifier. */
@@ -60,26 +88,19 @@ export interface Message {
   /** ISO-8601 timestamp of when the message was created. */
   timestamp: string;
   /**
-   *    * Extra DIAL API payload attached to the message.
+   * Extra DIAL API payload attached to the message.
    * Present on both user requests (uploaded files) and assistant responses
    * (generated/referenced files).
    */
-  custom_content?: {
-    /** Files or media items associated with this message. */
-    attachments?: MessageAttachment[];
-    /**
-     * Configuration form value submitted alongside the message.
-     * Keys match the property names in the deployment's JSON Schema
-     * (e.g. `{ button: 1 }`).
-     */
-    configuration_value?: Record<string, unknown>;
-  };
+  custom_content?: MessageCustomContent;
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
   /** Accumulated agent stages for this message.
    * Only present on assistant messages that received stage data during streaming.
    */
   stages?: Stage[];
+  /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
+  [key: string]: unknown;
 }
 
 /**
@@ -101,10 +122,17 @@ export interface StreamChunkDelta {
   content?: string;
   /** Role field — only present in the first chunk of a response. */
   role?: string;
-  /** Agent stage updates delivered alongside text tokens. */
+  /**
+   * Partial custom content carried in this chunk.
+   * `form_schema`, `attachments`, and `stages` may arrive in separate chunks or together in the final chunk.
+   */
   custom_content?: {
     /** Incremental stage updates; merge by `index` into the accumulating stage list. */
     stages?: Stage[];
+    /** JSON Schema for a button/form widget; arrives once the model decides to embed a form. */
+    form_schema?: DeploymentConfigurationSchema;
+    /** AI-generated files produced by the model; typically present in the final chunk. */
+    attachments?: MessageAttachment[];
   };
 }
 

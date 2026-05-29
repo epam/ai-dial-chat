@@ -13,14 +13,14 @@
  */
 
 import * as runtime from '../runtime';
-import type { DialDeploymentDto } from '../models/index';
-
-export interface GetDeploymentRequest {
-  deployment: string;
-}
+import type { DeploymentsResponseDto } from '../models/index';
 
 export interface GetDeploymentConfigurationRequest {
   deployment: string;
+}
+
+export interface ListDeploymentsRequest {
+  interfaceType?: Array<ListDeploymentsInterfaceTypeEnum>;
 }
 
 /**
@@ -28,64 +28,13 @@ export interface GetDeploymentConfigurationRequest {
  */
 export class DeploymentsApi extends runtime.BaseAPI {
   /**
-   * Get a single deployment by name
-   */
-  async getDeploymentRaw(
-    requestParameters: GetDeploymentRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<DialDeploymentDto>> {
-    if (requestParameters['deployment'] == null) {
-      throw new runtime.RequiredError(
-        'deployment',
-        'Required parameter "deployment" was null or undefined when calling getDeployment().',
-      );
-    }
-
-    const queryParameters: runtime.HTTPQuery = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    let urlPath = `/api/deployments/{deployment}`;
-    urlPath = urlPath.replace(
-      `{${'deployment'}}`,
-      encodeURIComponent(String(requestParameters['deployment'])),
-    );
-
-    const response = await this.request(
-      {
-        path: urlPath,
-        method: 'GET',
-        headers: headerParameters,
-        query: queryParameters,
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse<DialDeploymentDto>(response);
-  }
-
-  /**
-   * Get a single deployment by name
-   */
-  async getDeployment(
-    requestParameters: GetDeploymentRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<DialDeploymentDto> {
-    const response = await this.getDeploymentRaw(
-      requestParameters,
-      initOverrides,
-    );
-    return await response.value();
-  }
-
-  /**
    * Returns the JSON Schema of configuration supported by the deployment. Only available for deployments whose `features.configuration` flag is `true`. Results are cached server-side for 60 seconds per user.
    * Get JSON Schema configuration for a deployment
    */
   async getDeploymentConfigurationRaw(
     requestParameters: GetDeploymentConfigurationRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<{ [key: string]: any }>> {
+  ): Promise<runtime.ApiResponse<{ [key: string]: unknown }>> {
     if (requestParameters['deployment'] == null) {
       throw new runtime.RequiredError(
         'deployment',
@@ -97,7 +46,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/deployments/{deployment}/configuration`;
+    let urlPath = `/api/v1/deployments/{deployment}/configuration`;
     urlPath = urlPath.replace(
       `{${'deployment'}}`,
       encodeURIComponent(String(requestParameters['deployment'])),
@@ -113,7 +62,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse<any>(response);
+    return new runtime.JSONApiResponse<{ [key: string]: unknown }>(response);
   }
 
   /**
@@ -123,7 +72,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
   async getDeploymentConfiguration(
     requestParameters: GetDeploymentConfigurationRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<{ [key: string]: any }> {
+  ): Promise<{ [key: string]: unknown }> {
     const response = await this.getDeploymentConfigurationRaw(
       requestParameters,
       initOverrides,
@@ -132,16 +81,21 @@ export class DeploymentsApi extends runtime.BaseAPI {
   }
 
   /**
-   * List all available deployments
+   * List deployments by interface type
    */
-  async getDeploymentsRaw(
+  async listDeploymentsRaw(
+    requestParameters: ListDeploymentsRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<Array<DialDeploymentDto>>> {
+  ): Promise<runtime.ApiResponse<DeploymentsResponseDto>> {
     const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['interfaceType'] != null) {
+      queryParameters['interface_type'] = requestParameters['interfaceType'];
+    }
 
     const headerParameters: runtime.HTTPHeaders = {};
 
-    let urlPath = `/api/deployments`;
+    let urlPath = `/api/v1/deployments`;
 
     const response = await this.request(
       {
@@ -153,16 +107,20 @@ export class DeploymentsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse<Array<DialDeploymentDto>>(response);
+    return new runtime.JSONApiResponse<DeploymentsResponseDto>(response);
   }
 
   /**
-   * List all available deployments
+   * List deployments by interface type
    */
-  async getDeployments(
+  async listDeployments(
+    requestParameters: ListDeploymentsRequest = {},
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<Array<DialDeploymentDto>> {
-    const response = await this.getDeploymentsRaw(initOverrides);
+  ): Promise<DeploymentsResponseDto> {
+    const response = await this.listDeploymentsRaw(
+      requestParameters,
+      initOverrides,
+    );
     return await response.value();
   }
 
@@ -221,3 +179,16 @@ export class DeploymentsApi extends runtime.BaseAPI {
     return await response.value();
   }
 }
+
+/**
+ * @export
+ */
+export const ListDeploymentsInterfaceTypeEnum = {
+  Chat: 'chat',
+  Embeddings: 'embeddings',
+  Mcp: 'mcp',
+  CustomUi: 'custom_ui',
+  All: 'all',
+} as const;
+export type ListDeploymentsInterfaceTypeEnum =
+  (typeof ListDeploymentsInterfaceTypeEnum)[keyof typeof ListDeploymentsInterfaceTypeEnum];

@@ -1,8 +1,10 @@
 import {
+  ApplicationsApi,
   AuthApi,
   Configuration,
   ConversationsApi,
   DeploymentsApi,
+  FilesApi,
   Middleware,
   ModelsApi,
   RateApi,
@@ -40,7 +42,7 @@ const unauthorizedMiddleware: Middleware = {
 
 const telemetryMiddleware: Middleware = {
   post: async (context) => {
-    console.debug(
+    console.info(
       `[api] ${context.init.method ?? 'GET'} ${context.url} → ${context.response.status}`,
     );
     return context.response;
@@ -56,8 +58,10 @@ export const createApiConfiguration = (): Configuration =>
 
 const config = createApiConfiguration();
 
-export const modelsApi = new ModelsApi(config);
+export const applicationsApi = new ApplicationsApi(config);
 export const deploymentsApi = new DeploymentsApi(config);
+export const filesApi = new FilesApi(config);
+export const modelsApi = new ModelsApi(config);
 export const conversationsApi = new ConversationsApi(config);
 export const authApi = new AuthApi(config);
 export const rateApi = new RateApi(config);
