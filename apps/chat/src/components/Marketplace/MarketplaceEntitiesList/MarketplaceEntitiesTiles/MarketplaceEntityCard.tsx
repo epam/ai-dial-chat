@@ -108,7 +108,7 @@ export const MarketplaceEntityCard = memo(
         aria-details={dataQA}
       >
         <div>
-          <div className="absolute right-4 top-4 flex gap-1 xl:right-5 xl:top-5">
+          <div className="absolute end-4 top-4 flex gap-1 xl:end-5 xl:top-5">
             {!isPreview && (
               <>
                 <MarketplaceEntityContextMenu
@@ -150,13 +150,13 @@ export const MarketplaceEntityCard = memo(
             <div className="flex grow flex-col justify-center gap-2 overflow-hidden">
               <div
                 className={classNames(
-                  'mr-10 flex items-center gap-1 text-xs leading-[14px] text-secondary',
+                  'me-10 flex items-center gap-1 text-xs leading-[14px] text-secondary',
                 )}
               >
                 {(isCreatedMarketplaceEntity(entity) || entity.version) && (
                   <>
                     {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
-                    <span className="mr-1 truncate" data-qa="version">
+                    <span className="me-1 truncate" data-qa="version">
                       {entity.version || t(NA_VERSION)}
                     </span>
                   </>
@@ -167,12 +167,12 @@ export const MarketplaceEntityCard = memo(
               <div
                 className={classNames(
                   'flex whitespace-nowrap',
-                  !isMyEntity && !entity.version && '!mr-12',
+                  !isMyEntity && !entity.version && '!me-12',
                 )}
               >
                 <div
                   className={classNames(
-                    'mr-6 flex w-full shrink text-base font-semibold leading-[20px] text-primary',
+                    'me-6 flex w-full shrink text-base font-semibold leading-[20px] text-primary',
                   )}
                 >
                   <DialEllipsisTooltip text={entity.name} id="entity-name" />

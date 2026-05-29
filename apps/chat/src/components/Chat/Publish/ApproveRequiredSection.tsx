@@ -32,6 +32,7 @@ import {
 import { ReviewDot } from './ReviewDot';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface PublicationProps {
   publication: PublicationInfo & Partial<Publication>;
@@ -142,13 +143,18 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
           </div>
           <div
             className={classNames(
-              'relative max-h-5 flex-1 truncate break-all text-left',
+              'relative max-h-5 min-w-0 flex-1 flex-1 text-left',
               selectedPublicationUrl === publication.url &&
                 'text-accent-primary',
             )}
             data-qa="folder-name"
           >
-            {publication.name || getPublicationId(publication.url)}
+            <div className="w-full">
+              <DialEllipsisTooltip
+                text={publication.name || getPublicationId(publication.url)}
+                id="folder-name-value"
+              />
+            </div>
           </div>
         </div>
       </div>

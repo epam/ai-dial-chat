@@ -252,13 +252,9 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     [allEntitiesMap, dispatch, getValues, resetField, setValue],
   );
 
-  const handleOpenDetails = useCallback(
-    (entity: MarketplaceEntity) => {
-      setSelectedEntityId(entity.id);
-      onAutoSave();
-    },
-    [onAutoSave],
-  );
+  const handleOpenDetails = useCallback((entity: MarketplaceEntity) => {
+    setSelectedEntityId(entity.id);
+  }, []);
 
   const handleCloseDetails = useCallback(() => {
     setSelectedEntityId(null);
@@ -428,30 +424,31 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                   onConfigureClick={handleConfigureClick}
                 />
               </div>
-              {detailedViewEntity && (
-                <div data-qa="entity-details-panel">
-                  {isDialAiEntityModel(detailedViewEntity) && (
-                    <ApplicationDetails
-                      entity={detailedViewEntity}
-                      allEntities={allModels}
-                      FooterComponent={SimpleApplicationDetailsFooter}
-                      {...commonDetailsProps}
-                    />
-                  )}
-                  {isToolsetEntityModel(detailedViewEntity) && (
-                    <ToolsetDetails
-                      entity={detailedViewEntity}
-                      allEntities={allToolsets}
-                      FooterComponent={SimpleToolsetDetailsFooter}
-                      {...commonDetailsProps}
-                    />
-                  )}
-                </div>
-              )}
             </>
           );
         }}
       />
+
+      {detailedViewEntity && (
+        <div data-qa="entity-details-panel">
+          {isDialAiEntityModel(detailedViewEntity) && (
+            <ApplicationDetails
+              entity={detailedViewEntity}
+              allEntities={allModels}
+              FooterComponent={SimpleApplicationDetailsFooter}
+              {...commonDetailsProps}
+            />
+          )}
+          {isToolsetEntityModel(detailedViewEntity) && (
+            <ToolsetDetails
+              entity={detailedViewEntity}
+              allEntities={allToolsets}
+              FooterComponent={SimpleToolsetDetailsFooter}
+              {...commonDetailsProps}
+            />
+          )}
+        </div>
+      )}
 
       <DialConfirmationPopup
         variant={ConfirmationPopupVariant.Danger}
