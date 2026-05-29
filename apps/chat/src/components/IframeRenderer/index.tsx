@@ -72,6 +72,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           domain: iframeUrl,
           hostDomain: window.location.origin,
           visualizerName: title,
+          loaderClass: 'bg-layer-1',
         });
 
         return () => {
