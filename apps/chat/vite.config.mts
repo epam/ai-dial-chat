@@ -57,6 +57,14 @@ export default defineConfig(() => ({
     commonjsOptions: {
       transformMixedEsModules: true,
     },
+    rollupOptions: {
+      output: {
+        manualChunks: (id) =>
+          id.includes('classnames') || id.includes('tailwind-merge')
+            ? 'vendor-utils'
+            : undefined,
+      },
+    },
   },
   test: {
     name: '@epam/chat',
