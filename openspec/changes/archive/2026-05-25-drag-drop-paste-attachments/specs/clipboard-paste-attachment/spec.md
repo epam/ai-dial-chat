@@ -57,14 +57,14 @@ The `Input` component SHALL intercept `paste` events containing plain text whose
 - **WHEN** a long-text paste creates an attachment
 - **THEN** `onAttachmentsChange` is called with the updated attachment list
 
-#### Scenario: Default threshold is 2000 characters
+#### Scenario: Default threshold is 4000 characters
 
 - **WHEN** `pasteTextThreshold` is not provided and the pasted text is exactly 2001 characters
 - **THEN** it is treated as an attachment, not inline text
 
 #### Scenario: Default threshold — text at limit inserts inline
 
-- **WHEN** `pasteTextThreshold` is not provided and the pasted text is exactly 2000 characters
+- **WHEN** `pasteTextThreshold` is not provided and the pasted text is exactly 4000 characters
 - **THEN** the text is inserted into the textarea normally
 
 #### Scenario: Custom threshold respected
@@ -81,7 +81,7 @@ The `Input` component SHALL intercept `paste` events containing plain text whose
 
 ### Requirement: `pasteTextThreshold` prop on `ConversationInput` and `Input`
 
-Both `ConversationInput` and `Input` SHALL accept an optional `pasteTextThreshold?: number` prop (default `2000`) that controls the character count above which a pasted plain-text string is converted into an `AttachmentType.Pasted` attachment rather than inserted into the textarea. `ConversationInput` SHALL forward this value to `Input`.
+Both `ConversationInput` and `Input` SHALL accept an optional `pasteTextThreshold?: number` prop (default `4000`) that controls the character count above which a pasted plain-text string is converted into an `AttachmentType.Pasted` attachment rather than inserted into the textarea. `ConversationInput` SHALL forward this value to `Input`.
 
 #### Scenario: Prop forwarded from ConversationInput to Input
 

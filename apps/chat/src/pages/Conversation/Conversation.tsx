@@ -8,10 +8,10 @@ import {
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
-  AlertVariant,
   ConfirmationPopupVariant,
-  DialAlert,
   DialConfirmationPopup,
+  DialNotification,
+  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -22,6 +22,7 @@ import {
   ActionsI18nKeys,
   ChatI18nKeys,
 } from '../../constants/translation-keys';
+import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
 import { streamCompletion } from '../../server-api/chat-stream.api';
 import {
   deleteConversation as apiDeleteConversation,
@@ -45,6 +46,13 @@ export const ConversationPage: FC = () => {
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { handleClose: handleCloseSourcesSidebar, setMessages } =
+    useSourcesSidebar();
+
+  useEffect(() => {
+    setMessages(conversation?.messages ?? []);
+    return () => handleCloseSourcesSidebar();
+  }, [handleCloseSourcesSidebar, conversation?.messages, setMessages]);
 
   const startStream = useCallback(
     (
@@ -183,7 +191,7 @@ export const ConversationPage: FC = () => {
         const next = {
           ...prev,
           messages: prev.messages.map((m, i) =>
-            i === idx ? { ...m, content: '' } : m,
+            i === idx ? { ...m, content: '', custom_content: undefined } : m,
           ),
         };
         conversationRef.current = next;
@@ -416,8 +424,8 @@ export const ConversationPage: FC = () => {
       <div className="flex h-full flex-col items-center justify-center overflow-hidden">
         {streamError && (
           <div className="absolute left-1/2 top-4 z-50 w-[400px] -translate-x-1/2">
-            <DialAlert
-              variant={AlertVariant.Error}
+            <DialNotification
+              variant={NotificationVariant.Error}
               message={t(ChatI18nKeys.StreamError)}
               closable
               onClose={() => setStreamError(false)}

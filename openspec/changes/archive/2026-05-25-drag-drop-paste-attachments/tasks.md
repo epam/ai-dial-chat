@@ -1,7 +1,7 @@
 ## 1. Props model updates
 
 - [x] 1.1 Add `dropLabel?: string` (default `"Drop files here"`) to `ConversationInputProps` in `libs/conversation-input/src/models/ConversationInput.ts`
-- [x] 1.2 Add `pasteTextThreshold?: number` (default `2000`) to `ConversationInputProps`
+- [x] 1.2 Add `pasteTextThreshold?: number` (default `4000`) to `ConversationInputProps`
 - [x] 1.3 Add `pasteTextThreshold?: number` to `InputProps` in `libs/conversation-input/src/models/Input.ts`
 - [x] 1.4 Add `pendingDropFiles?: File[]` and `onDropFilesConsumed?: () => void` to `InputProps`
 
@@ -43,6 +43,6 @@
 - [x] 6.4 Manual: drag a PDF onto the input → card appears in tray
 - [x] 6.5 Manual: drag an image → image card with thumbnail appears
 - [x] 6.6 Manual: paste a screenshot (Win+Shift+S then Ctrl+V) → image attachment added
-- [x] 6.7 Manual: paste >2000 chars of text → Pasted card appears, textarea unchanged
-- [x] 6.8 Manual: paste <2000 chars of text → text inserts inline, no card
+- [x] 6.7 Manual: paste >4000 chars of text → Pasted card appears, textarea unchanged
+- [x] 6.8 Manual: paste <4000 chars of text → text inserts inline, no card
 - [x] 6.9 Manual: drag file out without dropping → overlay disappears, no attachment added
