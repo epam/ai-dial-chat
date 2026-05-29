@@ -1,12 +1,15 @@
 import { Routes } from '@/chat/constants/routes';
 import { ApplicationType } from '@/chat/types/applications';
-import { BaseUrlBuilder } from '@/src/testData';
+import { BaseUrlBuilder, MarketplaceEditorSteps } from '@/src/testData';
 import { EntityEditSteps } from '@/src/ui/webElements';
 
 export class EntityEditorUrlBuilder extends BaseUrlBuilder {
   private readonly entityPath: Routes;
 
-  constructor(entityEditorPath: Routes, step: EntityEditSteps) {
+  constructor(
+    entityEditorPath: Routes,
+    step: EntityEditSteps | MarketplaceEditorSteps,
+  ) {
     super('');
     this.entityPath = entityEditorPath;
     this.addParam('step', step);

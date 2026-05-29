@@ -1,3 +1,5 @@
+import { EntityType } from '@/chat/types/common';
+import { DialAIEntityModel } from '@/chat/types/models';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -502,6 +504,115 @@ dialTest(
       'Click the toolset chip and verify the entity details modal opens with version displayed',
       async () => {
         await quickApp2EditorViewForm.clickChipByName(toolsetName);
+        await baseAssertion.assertElementState(
+          marketplaceEntityDetailsModal,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          marketplaceEntityDetailsModal.version,
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialTest.only(
+  "[Quick app 2.0]: Application's version is displayed on card on click on toolset's bar in Agents&toolsets field\n" +
+    "[Quick app 2.0]: Model's version is displayed on card on click on toolset's bar in Agents&toolsets field", // EPMRTC-7946 + EPMRTC-7947
+  async ({
+    marketplacePage,
+    entityEditorPage,
+    quickApp2EditorViewForm,
+    marketplaceEntityDetailsModal,
+    entityDetailsModal,
+    customApplicationBuilder,
+    quickApp2Builder,
+    applicationApiHelper,
+    modelApiHelper,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-7946', 'EPMRTC-7947');
+    const appName = GeneratorUtil.randomApplicationName();
+    const quickAppName = GeneratorUtil.randomApplicationName();
+    let appId: string;
+    let modelWithVersion: DialAIEntityModel;
+
+    await dialTest.step(
+      'Precondition: create a custom application via API and pick a model that has a version',
+      async () => {
+        await applicationApiHelper.createApplication(
+          customApplicationBuilder.withDisplayName(appName).build(),
+        );
+        const allEntities = await modelApiHelper.getModels();
+        appId = (
+          await modelApiHelper.getAgentByNameAndVersion(
+            { name: appName },
+            allEntities,
+          )
+        ).id;
+        modelWithVersion = allEntities.find(
+          (entity) =>
+            entity.type === EntityType.Model && entity.version !== undefined,
+        )!;
+      },
+    );
+
+    await dialTest.step(
+      'Precondition: create Quick app 2.0 via API with the application and the model added to Agents & Toolsets',
+      async () => {
+        await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(quickAppName)
+            .withOrchestratorModel(modelWithVersion.id)
+            .addApp({ id: appId, name: appName })
+            .addModel(modelWithVersion.id)
+            .build(),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Open the created Quick app 2.0 directly in edit mode',
+      async () => {
+        const quickApp = await modelApiHelper.getAgentByNameAndVersion({
+          name: quickAppName,
+        });
+        await marketplacePage.openEditQuickApp2Page(quickApp.reference);
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialTest.step(
+      "Click the application's bar and verify the details modal opens with the application's version displayed",
+      async () => {
+        await quickApp2EditorViewForm.clickChipByName(appName);
+        await baseAssertion.assertElementState(
+          marketplaceEntityDetailsModal,
+          'visible',
+        );
+        await baseAssertion.assertElementState(
+          marketplaceEntityDetailsModal.version,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step('Close the application details modal', async () => {
+      await entityDetailsModal.closeButton.click();
+      await baseAssertion.assertElementState(
+        marketplaceEntityDetailsModal,
+        'hidden',
+      );
+    });
+
+    await dialTest.step(
+      "Click the model's bar and verify the details modal opens with the model's version displayed",
+      async () => {
+        await quickApp2EditorViewForm.clickChipByName(modelWithVersion.name);
         await baseAssertion.assertElementState(
           marketplaceEntityDetailsModal,
           'visible',

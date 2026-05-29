@@ -4,6 +4,7 @@ import config from '@/config/chat.playwright.config';
 import {
   API,
   ExpectedConstants,
+  MarketplaceEditorSteps,
   MarketplaceEntitiesTabs,
   MarketplaceTabs,
   MarketplaceUrlBuilder,
@@ -125,14 +126,25 @@ export class MarketplacePage extends BasePage {
     );
   }
 
-  async openEditAgentPage(id: string) {
+  /**
+   * Opens an existing Quick App 2.0 directly in edit mode.
+   * The apps-editor resolves the app by its `reference` (UUID), not the
+   * resource-path id, and needs the schema + the `Settings` step in the URL.
+   */
+  async openEditQuickApp2Page(
+    reference: string,
+    options: MarketplaceEntityOptions = {
+      updateInstalledEntities: false,
+      getInstalledEntities: false,
+      getEntities: false,
+    },
+  ) {
     await this.openEditEntityPage(
-      id,
+      reference,
       MarketplaceEntitiesTabs.AGENTS,
-      undefined,
-      {
-        getEntities: true,
-      },
+      QuickApp2SchemaId,
+      options,
+      MarketplaceEditorSteps.Settings,
     );
   }
 
@@ -154,11 +166,13 @@ export class MarketplacePage extends BasePage {
     entityTab: MarketplaceEntitiesTabs,
     appTypeSchema?: ApplicationType | string,
     options: MarketplaceEntityOptions = {},
+    stepOverride?: MarketplaceEditorSteps,
   ): Promise<void> {
     const entityEditorAttributes = this.getEditEntityEditorAttributes(
       entityTab,
       id,
       appTypeSchema,
+      stepOverride,
     );
     await this.navigateToEntityEditorPage(options, entityEditorAttributes);
   }
@@ -180,7 +194,7 @@ export class MarketplacePage extends BasePage {
       entityTab,
       config,
     );
-    let entityEditorUrlBuilder = new EntityEditorUrlBuilder(config.route, step)
+    let entityEditorUrlBuilder = new  EntityEditorUrlBuilder(config.route, step)
       .withReturnUrl(returnUrl)
       .withIsCreating();
     if (appTypeSchema) {
@@ -196,6 +210,7 @@ export class MarketplacePage extends BasePage {
     entityTab: MarketplaceEntitiesTabs,
     id: string,
     appTypeSchema?: ApplicationType | string,
+    stepOverride?: MarketplaceEditorSteps,
   ): {
     entityEditorPath: string;
     entityApiHosts: {
@@ -210,9 +225,10 @@ export class MarketplacePage extends BasePage {
       config,
     );
     const step =
-      entityTab === MarketplaceEntitiesTabs.TOOLSETS
+      stepOverride ??
+      (entityTab === MarketplaceEntitiesTabs.TOOLSETS
         ? EntityEditSteps.toolsetSettings
-        : EntityEditSteps.appSettings;
+        : EntityEditSteps.appSettings);
     let entityEditorUrlBuilder = new EntityEditorUrlBuilder(config.route, step)
       .withReturnUrl(returnUrl)
       .withId(id);
