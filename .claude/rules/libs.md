@@ -36,12 +36,14 @@ interface MyProps {
   /** Typography class applied to the title. Defaults to `'dial-body-semi-bold-text'`. */
   titleClassName?: string;
 }
-export const MyComponent: FC<MyProps> = ({ titleClassName = 'dial-body-semi-bold-text' }) => (
-  <span className={mergeClasses(styles.title, titleClassName)}>…</span>
-);
+export const MyComponent: FC<MyProps> = ({
+  titleClassName = 'dial-body-semi-bold-text',
+}) => <span className={mergeClasses(styles.title, titleClassName)}>…</span>;
 
 // ❌ wrong — hardcoded in JSX
-<span className={mergeClasses(styles.title, 'dial-body-semi-bold-text')}>…</span>
+<span className={mergeClasses(styles.title, 'dial-body-semi-bold-text')}>
+  …
+</span>;
 ```
 
 Name the prop `<element>ClassName` (e.g. `titleClassName`, `labelClassName`, `itemLabelClassName`). Layout helpers (`truncate`, `min-w-0`, `flex-1`) that are structural rather than typographic may remain hardcoded.

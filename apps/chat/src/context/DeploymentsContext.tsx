@@ -42,7 +42,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    const signal = { cancelled: false };
+    const signal = { isCancelled: false };
 
     const loadDeployments = async () => {
       setIsLoading(true);
@@ -52,7 +52,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         const response = await getDeployments([
           ListDeploymentsInterfaceTypeEnum.Chat,
         ]);
-        if (!signal.cancelled) {
+        if (!signal.isCancelled) {
           const deployments = response.deployments ?? [];
           setItems(deployments);
           setSelectedItemId((prev) => {
@@ -63,11 +63,11 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
           });
         }
       } catch (err: unknown) {
-        if (!signal.cancelled) {
+        if (!signal.isCancelled) {
           setError(err instanceof Error ? err : new Error(String(err)));
         }
       } finally {
-        if (!signal.cancelled) {
+        if (!signal.isCancelled) {
           setIsLoading(false);
         }
       }
@@ -76,7 +76,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     loadDeployments();
 
     return () => {
-      signal.cancelled = true;
+      signal.isCancelled = true;
     };
   }, []);
 
@@ -86,16 +86,16 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    const signal = { cancelled: false };
+    const signal = { isCancelled: false };
 
     const loadConfiguration = async () => {
       try {
         const configuration = await getDeploymentConfiguration(selectedItemId);
-        if (!signal.cancelled) {
+        if (!signal.isCancelled) {
           setSelectedDeploymentConfiguration(configuration);
         }
       } catch {
-        if (!signal.cancelled) {
+        if (!signal.isCancelled) {
           setSelectedDeploymentConfiguration(null);
         }
       }
@@ -104,7 +104,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     loadConfiguration();
 
     return () => {
-      signal.cancelled = true;
+      signal.isCancelled = true;
     };
   }, [selectedItemId]);
 

@@ -33,7 +33,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
   onLike,
   onDislike,
   activeRating,
-  alwaysVisible,
+  isAlwaysVisible,
   className,
   tooltips,
   ariaLabels,
@@ -56,7 +56,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
     <div
       className={mergeClasses(
         'flex gap-1',
-        !alwaysVisible && 'opacity-0 group-hover:opacity-100',
+        !isAlwaysVisible && 'opacity-0 group-hover:opacity-100',
         className,
       )}
     >

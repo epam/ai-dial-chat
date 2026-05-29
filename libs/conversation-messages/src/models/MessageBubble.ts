@@ -45,7 +45,7 @@ interface BaseMessageBubbleProps {
   /** Props forwarded to the `MessageActions` bar rendered below the bubble. */
   actions?: MessageActionsProps;
   /** When `true`, the actions bar is always visible instead of appearing only on group hover. */
-  alwaysVisibleActions?: boolean;
+  hasAlwaysVisibleActions?: boolean;
   /** Display attachments associated with the message. Rendered above text for user messages and below text for assistant messages. */
   attachments?: DisplayAttachment[];
 }
