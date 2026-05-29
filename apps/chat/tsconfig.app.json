@@ -38,7 +38,7 @@
   "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
   "references": [
     {
-      "path": "../../libs/chat-shared/tsconfig.lib.json"
+      "path": "../../libs/chat-api-client/tsconfig.lib.json"
     },
     {
       "path": "../../libs/conversation-messages/tsconfig.lib.json"
@@ -47,7 +47,10 @@
       "path": "../../libs/conversation-input/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/chat-api-client/tsconfig.lib.json"
+      "path": "../../libs/sidebar/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/chat-shared/tsconfig.lib.json"
     }
   ]
 }

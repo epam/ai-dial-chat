@@ -55,3 +55,16 @@ export enum DeploymentsI18nKeys {
   SelectorError = 'deployments.selector.error',
   SelectorEmpty = 'deployments.selector.empty',
 }
+
+export enum SidebarI18nKeys {
+  ToggleOpen = 'sidebar.base.toggleOpen',
+  ToggleClose = 'sidebar.base.toggleClose',
+  Close = 'sidebar.base.close',
+  AriaLabel = 'sidebar.sources.ariaLabel',
+  SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
+  SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
+  SectionSources = 'sidebar.sources.sections.sources',
+  EmptyUploadedFiles = 'sidebar.sources.empty.uploadedFiles',
+  EmptyGeneratedFiles = 'sidebar.sources.empty.generatedFiles',
+  EmptySources = 'sidebar.sources.empty.sources',
+}

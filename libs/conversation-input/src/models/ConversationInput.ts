@@ -73,6 +73,12 @@ export interface ConversationInputProps {
   onDeploymentChange?: (id: string) => void;
   /** Labels shown inside the model selector dropdown for the trigger and various loading states. */
   modelSelectorLabels?: ModelSelectorLabels;
+  /**
+   * Converts a raw `DeploymentItemDto.iconUrl` value to a URL usable in an `<img src>`.
+   * When omitted, the default resolver handles absolute URLs, root-relative paths, and `files/` IDs.
+   * Pass a custom resolver (e.g. from the host app) to also support theme-relative icon names.
+   */
+  resolveDeploymentIconUrl?: (iconUrl: string) => string | undefined;
   /** Accessible label for the send button. */
   sendLabel?: string;
   /** Accessible label for the stop button. */
