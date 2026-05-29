@@ -439,10 +439,7 @@ dialTest.only(
           agentAndToolsetSelectModal,
           'hidden',
         );
-        await baseAssertion.assertElementState(
-          entityDetailsModal,
-          'visible',
-        );
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
       },
     );
   },
