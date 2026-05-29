@@ -318,6 +318,7 @@ const PromptSectionView = ({
   dataQa,
 }: FolderSectionProps) => {
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+  const { t } = useTranslation(Translation.Chat);
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const selectedPublication = useAppSelector(
@@ -401,7 +402,7 @@ const PromptSectionView = ({
   return (
     <CollapsibleSection
       onToggle={handleToggle}
-      name={name}
+      name={t(name)}
       openByDefault={openByDefault ?? isExpanded}
       isExpanded={isExpanded}
       dataQa={dataQa}

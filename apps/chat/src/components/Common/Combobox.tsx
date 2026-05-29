@@ -187,7 +187,7 @@ export const Combobox = <T,>({
             {!inputValue && itemRow && !!selectedItem && (
               <div
                 ref={selectedItemRef}
-                className="pointer-events-none absolute left-3 top-0 flex w-full items-center"
+                className="pointer-events-none absolute start-3 top-0 flex w-full items-center"
               >
                 {itemRow({ item: selectedItem })}
               </div>
@@ -244,6 +244,7 @@ export const Combobox = <T,>({
                     itemRow?.({ item, truncate: false }) ?? getItemLabel(item)
                   }
                   triggerClassName="w-full"
+                  hideTooltip={isMobile()}
                 >
                   {itemRow?.({ item }) ?? getItemLabel(item)}
                 </Tooltip>

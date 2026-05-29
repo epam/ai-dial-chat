@@ -59,7 +59,12 @@ function ReviewToolsetDialogContent({
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Icon)}
             value={
-              <ModelIcon entity={toolset} entityId={toolset.id} size={60} />
+              <ModelIcon
+                entity={toolset}
+                entityId={toolset.id}
+                size={60}
+                isTooltipDisabled
+              />
             }
             valueClassName=""
           />
