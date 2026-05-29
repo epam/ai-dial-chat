@@ -19,7 +19,9 @@
   "navigation": {
     "ariaLabel": "Main navigation",
     "home": "Home",
-    "catalog": "Catalog"
+    "catalog": "Catalog",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu"
   },
   "catalog": {
     "ariaLabel": "Catalog",
@@ -37,7 +39,9 @@
       "ariaLabel": "Select model",
       "loading": "Loading models…",
       "error": "Failed to load models",
-      "empty": "No models available"
+      "empty": "No models available",
+      "searchPlaceholder": "Search models",
+      "closeLabel": "Close model selector"
     }
   },
   "actions": {

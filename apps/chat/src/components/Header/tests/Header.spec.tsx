@@ -31,7 +31,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 const renderHeader = () =>
   render(
     <SourcesSidebarProvider>
-      <Header />
+      <Header onMenuToggle={vi.fn()} />
     </SourcesSidebarProvider>,
   );
 
@@ -54,6 +54,11 @@ describe('Header', () => {
     expect(container.querySelector('header')).toBeTruthy();
   });
 
+  it('renders Logo component inside Header', () => {
+    renderHeader();
+    expect(screen.getByLabelText('chat.logo')).toBeTruthy();
+  });
+
   it('applies expected container classes', () => {
     const { container } = renderHeader();
     const header = container.querySelector('header');
@@ -65,7 +70,6 @@ describe('Header', () => {
 
   it('renders the sidebar toggle button with open label when closed', () => {
     renderHeader();
-    // i18n returns key as-is in tests
     expect(
       screen.getByRole('button', { name: 'sidebar.base.toggleOpen' }),
     ).toBeTruthy();

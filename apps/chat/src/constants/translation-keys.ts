@@ -39,6 +39,8 @@ export enum NavigationI18nKeys {
   AriaLabel = 'navigation.ariaLabel',
   Home = 'navigation.home',
   Catalog = 'navigation.catalog',
+  OpenMenu = 'navigation.openMenu',
+  CloseMenu = 'navigation.closeMenu',
 }
 
 export enum CatalogI18nKeys {
@@ -54,6 +56,8 @@ export enum DeploymentsI18nKeys {
   SelectorLoading = 'deployments.selector.loading',
   SelectorError = 'deployments.selector.error',
   SelectorEmpty = 'deployments.selector.empty',
+  SelectorSearchPlaceholder = 'deployments.selector.searchPlaceholder',
+  SelectorCloseLabel = 'deployments.selector.closeLabel',
 }
 
 export enum SidebarI18nKeys {

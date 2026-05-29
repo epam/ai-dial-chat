@@ -31,7 +31,7 @@ export interface InputTypography {
   lineHeight?: string;
 }
 
-/** Status labels displayed inside the model selector dropdown. */
+/** Status labels displayed inside the model selector dropdown and mobile bottom-sheet. */
 export interface ModelSelectorLabels {
   /** Accessible label for the selector trigger button (e.g. `"Select model"`). */
   ariaLabel?: string;
@@ -41,6 +41,10 @@ export interface ModelSelectorLabels {
   error?: string;
   /** Shown as a disabled item when the deployments list is empty. */
   empty?: string;
+  /** Placeholder for the search input. Defaults to `'Search'`. */
+  searchPlaceholder?: string;
+  /** Accessible label for the close button in the mobile bottom-sheet. Defaults to `'Close'`. */
+  closeLabel?: string;
 }
 
 /** Props accepted by the `Input` component. */

@@ -27,8 +27,9 @@ import { useModelSelector } from '../../hooks/useModelSelector.js';
 import type { InputProps } from '../../models/Input.js';
 import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
 import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
-import { AddMenuBottomSheet } from '../AddMenuBottomSheet/AddMenuBottomSheet.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
+import { BottomSheet } from '../BottomSheet/BottomSheet.js';
+import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet.js';
 import styles from './Input.module.scss';
 import { SendButton } from './SendButton.js';
 import { StopButton } from './StopButton.js';
@@ -81,6 +82,7 @@ export const Input: FC<InputProps> = ({
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [modelSearchQuery, setModelSearchQuery] = useState('');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
 
   useEffect(() => {
     if (messageProp) {
@@ -277,7 +279,7 @@ export const Input: FC<InputProps> = ({
                 className="size-10 flex-shrink-0"
                 onClick={() => setIsSheetOpen(true)}
               />
-              <AddMenuBottomSheet
+              <BottomSheet
                 open={isSheetOpen}
                 title={menuTitle}
                 closeLabel={menuCloseLabel}
@@ -328,23 +330,51 @@ export const Input: FC<InputProps> = ({
             attachments.length === 0 && 'order-3 ml-auto desktop:ml-0',
           )}
         >
-          {deployments !== undefined && (
-            <DialDropdownIcon
-              icon={selectorIcon}
-              ariaLabel={selectorAriaLabel}
-              menu={{
-                items: menuItems,
-                header: menuHeader,
-              }}
-              placement="bottom-end"
-              matchReferenceWidth={false}
-              listClassName="!w-[240px] !max-h-80"
-              onOpenChange={handleModelSelectorOpenChange}
-              buttonClassName={
-                isStreaming ? 'pointer-events-none opacity-50' : undefined
-              }
-            />
-          )}
+          {deployments !== undefined &&
+            (isMobile ? (
+              <>
+                <DialGhostIconButton
+                  icon={selectorIcon}
+                  aria-label={selectorAriaLabel}
+                  onClick={() => setIsModelSheetOpen(true)}
+                  className={
+                    isStreaming ? 'pointer-events-none opacity-50' : undefined
+                  }
+                />
+                <ModelSelectorBottomSheet
+                  open={isModelSheetOpen}
+                  title={modelSelectorLabels?.ariaLabel ?? 'Select model'}
+                  closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
+                  searchPlaceholder={
+                    modelSelectorLabels?.searchPlaceholder ?? 'Search'
+                  }
+                  onClose={() => setIsModelSheetOpen(false)}
+                  deployments={deployments}
+                  selectedDeploymentId={selectedDeploymentId}
+                  onSelect={(id) => onDeploymentChange?.(id)}
+                  loadingLabel={modelSelectorLabels?.loading}
+                  errorLabel={modelSelectorLabels?.error}
+                  emptyLabel={modelSelectorLabels?.empty}
+                  style={cssVars}
+                />
+              </>
+            ) : (
+              <DialDropdownIcon
+                icon={selectorIcon}
+                ariaLabel={selectorAriaLabel}
+                menu={{
+                  items: menuItems,
+                  header: menuHeader,
+                }}
+                placement="bottom-end"
+                matchReferenceWidth={false}
+                listClassName="!w-[240px] !max-h-80"
+                onOpenChange={handleModelSelectorOpenChange}
+                buttonClassName={
+                  isStreaming ? 'pointer-events-none opacity-50' : undefined
+                }
+              />
+            ))}
           {isStreaming ? (
             <StopButton onStop={onStop} ariaLabel={stopLabel} />
           ) : (

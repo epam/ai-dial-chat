@@ -6,10 +6,10 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { type CSSProperties, type FC, type ReactNode, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import styles from './AddMenuBottomSheet.module.scss';
+import styles from './BottomSheet.module.scss';
 
 /** A single action entry in the bottom-sheet menu. */
-export interface AddMenuItem {
+export interface BottomSheetItem {
   /** Unique identifier for the item. */
   key: string;
   /** Display label. */
@@ -20,8 +20,8 @@ export interface AddMenuItem {
   onClick: () => void;
 }
 
-/** Props for the mobile bottom-sheet add-menu. */
-export interface AddMenuBottomSheetProps {
+/** Props for the generic mobile bottom-sheet menu. */
+export interface BottomSheetProps {
   /** Controls sheet visibility. */
   open: boolean;
   /** Heading text rendered in the sheet header. */
@@ -33,20 +33,26 @@ export interface AddMenuBottomSheetProps {
   /** Inline CSS custom properties forwarded to the sheet root for theming. */
   style?: CSSProperties;
   /** Actions displayed in the sheet body. */
-  items: AddMenuItem[];
+  items: BottomSheetItem[];
+  /** Typography class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
+  titleClassName?: string;
+  /** Typography class applied to each item label. Defaults to `'dial-small-text'`. */
+  itemLabelClassName?: string;
 }
 
 /**
- * A bottom-sheet overlay for the add-file menu on mobile viewports.
+ * A generic bottom-sheet overlay for mobile viewports.
  * Renders via a React portal so it sits above all other content.
  */
-export const AddMenuBottomSheet: FC<AddMenuBottomSheetProps> = ({
+export const BottomSheet: FC<BottomSheetProps> = ({
   open,
   title,
   closeLabel,
   onClose,
   style,
   items,
+  titleClassName = 'dial-body-semi-bold-text',
+  itemLabelClassName = 'dial-small-text',
 }) => {
   useEffect(() => {
     if (!open) return;
@@ -91,9 +97,7 @@ export const AddMenuBottomSheet: FC<AddMenuBottomSheetProps> = ({
       >
         {/* Header: title centered, close button pinned right */}
         <div className="relative flex h-[60px] items-center justify-center gap-3 pb-2 pl-4 pr-4 pt-3">
-          <span
-            className={mergeClasses(styles.title, 'dial-body-semi-bold-text')}
-          >
+          <span className={mergeClasses(styles.title, titleClassName)}>
             {title}
           </span>
           <div className="absolute right-2">
@@ -112,10 +116,10 @@ export const AddMenuBottomSheet: FC<AddMenuBottomSheetProps> = ({
                 type="button"
                 className={mergeClasses(
                   styles.item,
-                  'flex h-[60px] w-full items-center gap-3 px-4 text-left',
+                  'flex w-full items-center gap-3 px-4 py-[10px] text-left',
                 )}
                 iconBefore={<span className={styles.itemIcon}>{icon}</span>}
-                label={<span className="dial-small-text">{label}</span>}
+                label={<span className={itemLabelClassName}>{label}</span>}
                 onClick={() => handleItemClick(onClick)}
               />
             </li>
