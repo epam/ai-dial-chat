@@ -34,7 +34,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
   async getDeploymentConfigurationRaw(
     requestParameters: GetDeploymentConfigurationRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<{ [key: string]: any }>> {
+  ): Promise<runtime.ApiResponse<{ [key: string]: unknown }>> {
     if (requestParameters['deployment'] == null) {
       throw new runtime.RequiredError(
         'deployment',
@@ -62,7 +62,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse<any>(response);
+    return new runtime.JSONApiResponse<{ [key: string]: unknown }>(response);
   }
 
   /**
@@ -72,7 +72,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
   async getDeploymentConfiguration(
     requestParameters: GetDeploymentConfigurationRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<{ [key: string]: any }> {
+  ): Promise<{ [key: string]: unknown }> {
     const response = await this.getDeploymentConfigurationRaw(
       requestParameters,
       initOverrides,

@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
-import { Route, Routes } from 'react-router-dom';
+import { Route, Routes, useMatch } from 'react-router-dom';
+import ConversationSourcesPanelView from '../components/ConversationSourcesPanel/ConversationSourcesPanelView.js';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -14,6 +15,10 @@ const ConversationPage = lazy(async () => {
 });
 
 function App() {
+  const matchRoot = useMatch(ROUTES.ROOT);
+  const matchConversation = useMatch('/conversations/*');
+  const isConversationRoute = !!(matchRoot ?? matchConversation);
+
   return (
     <div className="flex size-full flex-row">
       <Navigation />
@@ -43,6 +48,7 @@ function App() {
           />
         </Routes>
       </main>
+      {isConversationRoute && <ConversationSourcesPanelView />}
     </div>
   );
 }
