@@ -33,6 +33,7 @@ import {
   AnyToolset,
   CodeInterpreterToolset,
   DialAppToolset,
+  DialAppTransportType,
   DialDeploymentSimpleTool,
   DialPromptSkill,
   MCPToolset,
@@ -726,6 +727,9 @@ export const getQuickApp2Toolsets = ({
             deployment_id: ApiUtils.encodeApiUrl(
               agentAndToolset[AgentOrToolsetSchemaKeys.id],
             ),
+            transport:
+              (toolData as DialAppToolset).transport ??
+              DialAppTransportType.MCP,
           });
         } else if (isToolsetId(agentAndToolset[AgentOrToolsetSchemaKeys.id])) {
           acc.dialMCPToolsets.push({
@@ -763,6 +767,8 @@ export const getQuickApp2Toolsets = ({
           name: entity.name,
           type: ToolsetTypes.DialApp,
           deployment_id: ApiUtils.encodeApiUrl(entity.id),
+          transport:
+            (toolData as DialAppToolset).transport ?? DialAppTransportType.MCP,
         });
       } else {
         acc.dialMCPToolsets.push({
