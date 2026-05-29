@@ -100,9 +100,13 @@ describe('MessageBubble', () => {
     ).toBeTruthy();
   });
 
-  it('makes actions always visible when alwaysVisible is true', () => {
+  it('makes actions always visible when hasAlwaysVisibleActions is true', () => {
     const { container } = render(
-      <MessageBubble text="msg" role={MessageRole.User} alwaysVisibleActions />,
+      <MessageBubble
+        text="msg"
+        role={MessageRole.User}
+        hasAlwaysVisibleActions
+      />,
     );
     const actionsWrapper = container.querySelector('[class*="gap-1"]');
     expect(actionsWrapper?.className).not.toContain('opacity-0');

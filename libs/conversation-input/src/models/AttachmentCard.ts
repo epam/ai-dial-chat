@@ -29,9 +29,9 @@ export interface AttachmentCardProps {
   /** Called when the user clicks or activates a pasted-text card to expand its content back into the input. */
   onExpand?: (id: string) => void;
   /** Renders the card in selected state (accent border + tinted background). */
-  selected?: boolean;
+  isSelected?: boolean;
   /** Forces action buttons to be always visible regardless of hover/focus state. */
-  alwaysShowActions?: boolean;
+  shouldAlwaysShowActions?: boolean;
   /** Accessible label for the remove button. */
   removeLabel?: string;
   /** Accessible label for the retry button (error state only). */

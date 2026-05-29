@@ -17,7 +17,7 @@ import styles from './ModelSelectorBottomSheet.module.scss';
 /** Props for the mobile bottom-sheet model selector. */
 export interface ModelSelectorBottomSheetProps {
   /** Controls sheet visibility. */
-  open: boolean;
+  isOpen: boolean;
   /** Title displayed in the sheet header and used as the dialog accessible name. */
   title: string;
   /** Accessible label for the close (×) button. */
@@ -52,7 +52,7 @@ export interface ModelSelectorBottomSheetProps {
  * Includes a search input that filters the list as the user types.
  */
 export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
-  open,
+  isOpen,
   title,
   closeLabel,
   searchPlaceholder = 'Search',
@@ -70,28 +70,28 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
   const [query, setQuery] = useState('');
 
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [open]);
+  }, [isOpen]);
 
   // Reset search query each time the sheet closes
   useEffect(() => {
-    if (!open) setQuery('');
-  }, [open]);
+    if (!isOpen) setQuery('');
+  }, [isOpen]);
 
-  if (!open || typeof document === 'undefined') return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const hasDeployments = deployments && deployments.length > 0;
 
