@@ -31,7 +31,7 @@ export interface UseModelSelectorResult {
   /** Sticky search header rendered above the menu items. */
   menuHeader: ReactNode;
   /** Should be passed to `DialDropdownIcon.onOpenChange` to reset the search on close. */
-  onOpenChange: (open: boolean) => void;
+  onOpenChange: (isOpen: boolean) => void;
 }
 
 const buildDeploymentIcon = (
@@ -132,8 +132,8 @@ export const useModelSelector = ({
       </div>
     ) : undefined;
 
-  const onOpenChange = (open: boolean) => {
-    if (!open) setSearchQuery('');
+  const handleOpenChange = (isOpen: boolean) => {
+    if (!isOpen) setSearchQuery('');
   };
 
   return {
@@ -141,6 +141,6 @@ export const useModelSelector = ({
     selectorAriaLabel,
     menuItems: buildMenuItems(),
     menuHeader,
-    onOpenChange,
+    onOpenChange: handleOpenChange,
   };
 };

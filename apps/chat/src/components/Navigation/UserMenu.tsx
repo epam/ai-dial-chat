@@ -14,7 +14,7 @@ export const UserMenu = memo(() => {
 
   const email = (user.claims['email'] as string) ?? user.sub;
   const image = user.claims['image'] as string | undefined;
-  const [showFallbackIcon, setShowFallbackIcon] = useState(!image);
+  const [isFallbackIconShown, setIsFallbackIconShown] = useState(!image);
 
   const bg = randomColor({
     luminosity: 'bright',
@@ -37,7 +37,7 @@ export const UserMenu = memo(() => {
     <div className="flex size-[60px] items-center justify-center">
       <button className="flex size-[44px] items-center justify-center rounded-full border border-transparent focus-within:border-focus hover:bg-accent-primary-alpha">
         <DialTooltip tooltip={email}>
-          {showFallbackIcon ? (
+          {isFallbackIconShown ? (
             <div
               className="flex size-[28px] items-center justify-center rounded-full text-[12px]/[16px] font-normal"
               style={{ backgroundColor: bg, color: textColor }}
@@ -51,7 +51,7 @@ export const UserMenu = memo(() => {
               width={28}
               height={28}
               alt="User avatar"
-              onError={() => setShowFallbackIcon(true)}
+              onError={() => setIsFallbackIconShown(true)}
             />
           )}
         </DialTooltip>

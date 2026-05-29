@@ -26,16 +26,16 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   const [status, setStatus] = useState<AuthStatus>('loading');
   const [user, setUser] = useState<UserProfile | null>(null);
 
-  const bootstrap = useCallback(async (signal: { cancelled: boolean }) => {
+  const bootstrap = useCallback(async (signal: { isCancelled: boolean }) => {
     setStatus('loading');
     try {
       const profile = await getMe();
-      if (!signal.cancelled) {
+      if (!signal.isCancelled) {
         setUser(profile);
         setStatus('authenticated');
       }
     } catch (err) {
-      if (!signal.cancelled) {
+      if (!signal.isCancelled) {
         if (!(err instanceof UnauthorizedError)) {
           console.error('UserContext bootstrap failed', err);
         }
@@ -46,10 +46,10 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   useEffect(() => {
-    const signal = { cancelled: false };
+    const signal = { isCancelled: false };
     bootstrap(signal);
     return () => {
-      signal.cancelled = true;
+      signal.isCancelled = true;
     };
   }, [bootstrap]);
 
@@ -66,7 +66,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const refresh = useCallback(async () => {
-    await bootstrap({ cancelled: false });
+    await bootstrap({ isCancelled: false });
   }, [bootstrap]);
 
   return (

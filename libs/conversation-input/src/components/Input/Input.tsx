@@ -80,7 +80,6 @@ export const Input: FC<InputProps> = ({
 
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [modelSearchQuery, setModelSearchQuery] = useState('');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
 
@@ -203,6 +202,10 @@ export const Input: FC<InputProps> = ({
     [onAttachmentsChange],
   );
 
+  const handleDeploymentSelect = (id: string) => {
+    onDeploymentChange?.(id);
+  };
+
   const handleExpand = useCallback(
     async (id: string) => {
       const target = attachments.find((a) => a.id === id);
@@ -286,7 +289,7 @@ export const Input: FC<InputProps> = ({
                 onClick={() => setIsSheetOpen(true)}
               />
               <BottomSheet
-                open={isSheetOpen}
+                isOpen={isSheetOpen}
                 title={menuTitle}
                 closeLabel={menuCloseLabel}
                 onClose={() => setIsSheetOpen(false)}
@@ -348,7 +351,7 @@ export const Input: FC<InputProps> = ({
                   }
                 />
                 <ModelSelectorBottomSheet
-                  open={isModelSheetOpen}
+                  isOpen={isModelSheetOpen}
                   title={modelSelectorLabels?.ariaLabel ?? 'Select model'}
                   closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
                   searchPlaceholder={
@@ -357,7 +360,7 @@ export const Input: FC<InputProps> = ({
                   onClose={() => setIsModelSheetOpen(false)}
                   deployments={deployments}
                   selectedDeploymentId={selectedDeploymentId}
-                  onSelect={(id) => onDeploymentChange?.(id)}
+                  onSelect={handleDeploymentSelect}
                   loadingLabel={modelSelectorLabels?.loading}
                   errorLabel={modelSelectorLabels?.error}
                   emptyLabel={modelSelectorLabels?.empty}
@@ -387,7 +390,7 @@ export const Input: FC<InputProps> = ({
             canSend && (
               <SendButton
                 onSend={handleSend}
-                disabled={!hasModelSelected}
+                isDisabled={!hasModelSelected}
                 ariaLabel={sendLabel}
               />
             )

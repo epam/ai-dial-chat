@@ -6,17 +6,17 @@ export const DeploymentIcon: FC<{
   size: number;
   fallback: ReactNode;
 }> = ({ src, size, fallback }) => {
-  const [failed, setFailed] = useState(false);
+  const [hasFailed, setHasFailed] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
 
   useEffect(() => {
     const el = ref.current;
     if (!el) return;
-    const handler = () => setFailed(true);
+    const handler = () => setHasFailed(true);
     el.addEventListener('error', handler);
     return () => el.removeEventListener('error', handler);
   }, [src]);
 
-  if (failed) return <>{fallback}</>;
+  if (hasFailed) return <>{fallback}</>;
   return <img ref={ref} src={src} alt="" width={size} height={size} />;
 };

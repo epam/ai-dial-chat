@@ -47,7 +47,7 @@ export interface MessageActionsProps {
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
   /** When `true`, actions are always visible instead of appearing only on group hover. */
-  alwaysVisible?: boolean;
+  isAlwaysVisible?: boolean;
   /** Override tooltip labels for individual action buttons. */
   tooltips?: MessageActionTooltips;
   /** Override accessible labels (aria-label) for individual action buttons. */
