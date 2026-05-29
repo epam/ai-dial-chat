@@ -1,5 +1,6 @@
 export const EntitySelectors = {
   entityName: '[data-qa="entity-name"]',
+  entityNameValue: '#entity-name-value',
   conversation: '[data-qa="conversation"]',
   prompt: '[data-qa="prompt"]',
   file: '[data-qa="file"]',

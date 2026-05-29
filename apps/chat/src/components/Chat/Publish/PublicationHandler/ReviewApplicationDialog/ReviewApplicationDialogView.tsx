@@ -138,6 +138,7 @@ export function ReviewApplicationDialogView({
                 entity={application}
                 entityId={application.id}
                 size={60}
+                isTooltipDisabled
               />
             }
             valueClassName=""

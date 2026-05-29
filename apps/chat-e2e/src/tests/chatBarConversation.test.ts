@@ -12,7 +12,7 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Overflow, Styles, ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { ChatBarSelectors } from '@/src/ui/selectors';
 import { DateUtil, GeneratorUtil, ItemUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
@@ -106,6 +106,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    conversationAssertion,
     conversationDropdownMenu,
     conversationData,
     dataInjector,
@@ -134,12 +135,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
-        const chatNameOverflow = await conversations
-          .getEntityName(conversationName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await conversationAssertion.assertElementTextIsTruncated(
+          conversations.getEntityNameValue(conversationName),
+          ExpectedMessages.chatNameIsTruncated,
+        );
       },
     );
 
@@ -147,12 +146,10 @@ dialTest(
       'Hover over conversation name and verify it is truncated when menu dots appear',
       async () => {
         await conversations.getEntityByName(conversationName).hover();
-        const chatNameOverflow = await conversations
-          .getEntityName(conversationName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await conversationAssertion.assertElementTextIsTruncated(
+          conversations.getEntityNameValue(conversationName),
+          ExpectedMessages.chatNameIsTruncated,
+        );
       },
     );
 
@@ -165,13 +162,11 @@ dialTest(
         await renameConversationModalAssertion.assertModalTitle(
           ExpectedConstants.renameConversationModalTitle,
         );
-        const modalInputValue = await renameConversationModal.getInputValue();
-        expect
-          .soft(
-            modalInputValue,
-            'Modal input should contain the initial conversation name',
-          )
-          .toBe(conversationName);
+        await conversationAssertion.assertInputValue(
+          renameConversationModal.nameInput,
+          conversationName,
+          'Modal input should contain the initial conversation name',
+        );
       },
     );
 
@@ -180,12 +175,10 @@ dialTest(
       async () => {
         await renameConversationModal.nameInput.fillInInput(newName);
         await renameConversationModal.cancelButton.click();
-        await expect
-          .soft(
-            conversations.getEntityByName(newName),
-            ExpectedMessages.conversationNameNotUpdated,
-          )
-          .toBeHidden();
+        await conversationAssertion.assertEntityState(
+          { name: newName },
+          'hidden',
+        );
       },
     );
 
@@ -194,12 +187,10 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(conversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        const chatNameOverflow = await conversations
-          .getEntityName(conversationName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await conversationAssertion.assertElementTextIsTruncated(
+          conversations.getEntityNameValue(conversationName),
+          ExpectedMessages.chatNameIsTruncated,
+        );
       },
     );
   },
@@ -211,6 +202,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    conversationAssertion,
     conversationDropdownMenu,
     chat,
     conversationData,
@@ -232,30 +224,17 @@ dialTest(
     await renameConversationModal.editConversationNameWithSaveButton(newName, {
       isHttpMethodTriggered: false,
     });
-    await expect
-      .soft(
-        conversations.getEntityByName(newName),
-        ExpectedMessages.conversationNameUpdated,
-      )
-      .toBeVisible();
-
-    const chatNameOverflow = await conversations
-      .getEntityName(newName)
-      .getComputedStyleProperty(Styles.text_overflow);
-    expect
-      .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
-      .toBe(Overflow.ellipsis);
+    await conversationAssertion.assertEntityState({ name: newName }, 'visible');
+    await conversationAssertion.assertElementTextIsTruncated(
+      conversations.getEntityNameValue(newName),
+      ExpectedMessages.chatNameIsTruncated,
+    );
 
     await dialHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
     );
     await chat.sendRequestWithButton('one more test message');
-    await expect
-      .soft(
-        conversations.getEntityByName(newName),
-        ExpectedMessages.conversationNameUpdated,
-      )
-      .toBeVisible();
+    await conversationAssertion.assertEntityState({ name: newName }, 'visible');
   },
 );
 

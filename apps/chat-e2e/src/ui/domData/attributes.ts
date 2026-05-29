@@ -47,4 +47,5 @@ export enum AttributeValues {
   maxWFull = 'max-w-full',
   password = 'password',
   text = 'text',
+  textEllipsis = 'text-ellipsis',
 }
