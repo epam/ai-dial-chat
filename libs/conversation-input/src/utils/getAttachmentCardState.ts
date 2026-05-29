@@ -13,7 +13,7 @@ export interface AttachmentCardState {
   isLoading: boolean;
   isError: boolean;
   isImage: boolean;
-  actionsVisible: boolean;
+  areActionsVisible: boolean;
   BottomIcon: Icon;
   bottomLabel: string;
   cardColorClass: string;
@@ -43,8 +43,8 @@ const getBottomLabel = (attachment: DisplayAttachment): string => {
 
 export const getAttachmentCardState = (
   attachment: DisplayAttachment,
-  selected: boolean,
-  alwaysShowActions: boolean,
+  isSelected: boolean,
+  shouldAlwaysShowActions: boolean,
 ): AttachmentCardState => {
   const { type, status, previewUrl } = attachment;
 
@@ -55,13 +55,13 @@ export const getAttachmentCardState = (
   const cardColorClass = mergeClasses(
     styles.card,
     isError && styles.cardError,
-    selected && styles.cardSelected,
+    isSelected && styles.cardSelected,
     !isError &&
-      !selected &&
+      !isSelected &&
       type === AttachmentType.Prompt &&
       styles.cardPrompt,
     !isError &&
-      !selected &&
+      !isSelected &&
       type === AttachmentType.Pasted &&
       styles.cardPasted,
   );
@@ -70,7 +70,7 @@ export const getAttachmentCardState = (
     isLoading,
     isError,
     isImage,
-    actionsVisible: isError || alwaysShowActions,
+    areActionsVisible: isError || shouldAlwaysShowActions,
     BottomIcon: getBottomIcon(attachment),
     bottomLabel: getBottomLabel(attachment),
     cardColorClass,

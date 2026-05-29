@@ -18,7 +18,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   colors,
   typography,
   actions,
-  alwaysVisibleActions,
+  hasAlwaysVisibleActions,
   attachments,
 }) => {
   const noCustomClass = !typography?.fontClassName;
@@ -57,7 +57,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
         </div>
         <MessageActions
           {...actions}
-          alwaysVisible={alwaysVisibleActions}
+          isAlwaysVisible={hasAlwaysVisibleActions}
           role={MessageRole.User}
         />
       </div>

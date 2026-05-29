@@ -181,17 +181,17 @@ export class ConversationController {
 
     const reader = stream.getReader();
 
-    let clientAborted = false;
-    let readerReleased = false;
-    let readerCancelRequested = false;
+    let isClientAborted = false;
+    let isReaderReleased = false;
+    let isCancelRequested = false;
 
     const handleClose = () => {
-      clientAborted = true;
-      if (readerReleased || readerCancelRequested) {
+      isClientAborted = true;
+      if (isReaderReleased || isCancelRequested) {
         return;
       }
 
-      readerCancelRequested = true;
+      isCancelRequested = true;
       void reader.cancel().catch(() => undefined);
     };
 
@@ -200,13 +200,13 @@ export class ConversationController {
     let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
     try {
       keepaliveTimer = setInterval(() => {
-        if (!clientAborted && !res.writableEnded) {
+        if (!isClientAborted && !res.writableEnded) {
           res.write(SSE_KEEPALIVE_PAYLOAD);
         }
       }, SSE_KEEPALIVE_INTERVAL_MS);
 
       while (true) {
-        if (clientAborted) break;
+        if (isClientAborted) break;
 
         const { done, value } = await reader.read();
         if (done) break;
@@ -214,13 +214,13 @@ export class ConversationController {
         res.write(value);
       }
     } catch (err) {
-      if (!clientAborted) {
+      if (!isClientAborted) {
         this.logger.error('Error while streaming completion to client', err);
       }
     } finally {
       if (keepaliveTimer) clearInterval(keepaliveTimer);
       res.off('close', handleClose);
-      readerReleased = true;
+      isReaderReleased = true;
       reader.releaseLock();
       if (!res.writableEnded) {
         res.end();

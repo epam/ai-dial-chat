@@ -17,7 +17,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   colors,
   typography,
   actions,
-  alwaysVisibleActions,
+  hasAlwaysVisibleActions,
   attachments,
   starters,
   onSelectStarter,
@@ -54,7 +54,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           <AttachmentTray attachments={attachments ?? []} />
           <MessageActions
             {...actions}
-            alwaysVisible={alwaysVisibleActions}
+            isAlwaysVisible={hasAlwaysVisibleActions}
             role={MessageRole.Assistant}
           />
         </div>

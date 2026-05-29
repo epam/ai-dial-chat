@@ -41,7 +41,7 @@ export const ConversationPage: FC = () => {
   const [isFetching, setIsFetching] = useState(!!conversationId);
   const [isStreaming, setIsStreaming] = useState(false);
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
-  const [streamError, setStreamError] = useState(false);
+  const [hasStreamError, setHasStreamError] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
@@ -102,7 +102,7 @@ export const ConversationPage: FC = () => {
           onError: () => {
             setIsStreaming(false);
             abortRef.current = null;
-            setStreamError(true);
+            setHasStreamError(true);
           },
         },
         customContent,
@@ -422,13 +422,13 @@ export const ConversationPage: FC = () => {
   return (
     <>
       <div className="flex h-full flex-col items-center justify-center overflow-hidden">
-        {streamError && (
+        {hasStreamError && (
           <div className="absolute left-1/2 top-4 z-50 w-[400px] -translate-x-1/2">
             <DialNotification
               variant={NotificationVariant.Error}
               message={t(ChatI18nKeys.StreamError)}
               closable
-              onClose={() => setStreamError(false)}
+              onClose={() => setHasStreamError(false)}
             />
           </div>
         )}

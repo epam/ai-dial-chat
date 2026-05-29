@@ -19,11 +19,11 @@ mobile: { max: '768px' },   // ≤768 px  — phones and small tablets
 desktop: { min: '769px' },  // ≥769 px  — tablets landscape, laptops, monitors
 ```
 
-| Prefix        | Range    | When to use                          |
-| ------------- | -------- | ------------------------------------ |
-| _(no prefix)_ | always   | mobile-first base — smallest layout  |
-| `mobile:`     | ≤768 px  | overrides that apply **only** mobile |
-| `desktop:`    | ≥769 px  | overrides that kick in on desktop    |
+| Prefix        | Range   | When to use                          |
+| ------------- | ------- | ------------------------------------ |
+| _(no prefix)_ | always  | mobile-first base — smallest layout  |
+| `mobile:`     | ≤768 px | overrides that apply **only** mobile |
+| `desktop:`    | ≥769 px | overrides that kick in on desktop    |
 
 **`desktop:` is a min-width prefix** — styles cascade upward to all wider viewports.
 

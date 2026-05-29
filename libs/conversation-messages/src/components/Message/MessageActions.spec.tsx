@@ -149,8 +149,8 @@ describe('MessageActions', () => {
     expect(container.firstElementChild?.className).toContain('opacity-0');
   });
 
-  it('does not apply opacity-0 when alwaysVisible is true', () => {
-    const { container } = render(<MessageActions alwaysVisible />);
+  it('does not apply opacity-0 when isAlwaysVisible is true', () => {
+    const { container } = render(<MessageActions isAlwaysVisible />);
     expect(container.firstElementChild?.className).not.toContain('opacity-0');
   });
 

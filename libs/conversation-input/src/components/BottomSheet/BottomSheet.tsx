@@ -23,7 +23,7 @@ export interface BottomSheetItem {
 /** Props for the generic mobile bottom-sheet menu. */
 export interface BottomSheetProps {
   /** Controls sheet visibility. */
-  open: boolean;
+  isOpen: boolean;
   /** Heading text rendered in the sheet header. */
   title: string;
   /** Accessible label for the close (×) button. */
@@ -45,7 +45,7 @@ export interface BottomSheetProps {
  * Renders via a React portal so it sits above all other content.
  */
 export const BottomSheet: FC<BottomSheetProps> = ({
-  open,
+  isOpen,
   title,
   closeLabel,
   onClose,
@@ -55,23 +55,23 @@ export const BottomSheet: FC<BottomSheetProps> = ({
   itemLabelClassName = 'dial-small-text',
 }) => {
   useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [open, onClose]);
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!isOpen) return;
     document.body.style.overflow = 'hidden';
     return () => {
       document.body.style.overflow = '';
     };
-  }, [open]);
+  }, [isOpen]);
 
-  if (!open || typeof document === 'undefined') return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
   const handleItemClick = (onClick: () => void) => {
     onClick();

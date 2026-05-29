@@ -93,7 +93,7 @@ const ConversationView: FC<Props> = ({
     dislikeResponse: t(ActionsI18nKeys.DislikeResponse),
   };
 
-  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
@@ -155,7 +155,7 @@ const ConversationView: FC<Props> = ({
       const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
       const isNearBottom = distanceFromBottom < NEAR_BOTTOM_THRESHOLD;
 
-      setShowScrollButton(!isNearBottom);
+      setIsScrollButtonVisible(!isNearBottom);
 
       if (isProgrammaticRef.current) return;
 
@@ -188,7 +188,7 @@ const ConversationView: FC<Props> = ({
         >
           <div className="flex flex-1 flex-col gap-6">
             {messages.map((msg, index) => {
-              const streaming = isStreamingMessage(
+              const isStreaming = isStreamingMessage(
                 msg.role,
                 index,
                 messages.length,
@@ -213,7 +213,7 @@ const ConversationView: FC<Props> = ({
                   attachments={attachmentDtosToDisplayAttachments(
                     msg.custom_content?.attachments,
                   )}
-                  alwaysVisibleActions={!streaming}
+                  hasAlwaysVisibleActions={!isStreaming}
                   actions={buildMessageActions(
                     msg,
                     {
@@ -239,7 +239,7 @@ const ConversationView: FC<Props> = ({
           <div ref={endRef} />
         </div>
 
-        {showScrollButton && (
+        {isScrollButtonVisible && (
           <DialFabButton
             aria-label={t(ChatI18nKeys.ScrollToBottom)}
             onClick={handleScrollToBottom}

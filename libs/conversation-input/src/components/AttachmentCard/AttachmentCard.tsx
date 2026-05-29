@@ -22,8 +22,8 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   onRemove,
   onRetry,
   onExpand,
-  selected,
-  alwaysShowActions,
+  isSelected,
+  shouldAlwaysShowActions,
   removeLabel = 'Remove attachment',
   retryLabel = 'Retry upload',
   colors,
@@ -50,7 +50,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     isLoading,
     isError,
     isImage,
-    actionsVisible,
+    areActionsVisible,
     BottomIcon,
     bottomLabel,
     cardColorClass,
@@ -59,10 +59,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     () =>
       getAttachmentCardState(
         attachment,
-        selected ?? false,
-        alwaysShowActions ?? false,
+        isSelected ?? false,
+        shouldAlwaysShowActions ?? false,
       ),
-    [attachment, selected, alwaysShowActions],
+    [attachment, isSelected, shouldAlwaysShowActions],
   );
 
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
@@ -151,7 +151,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         <div
           className={mergeClasses(
             'absolute right-1 top-1 flex gap-1 transition-opacity',
-            actionsVisible
+            areActionsVisible
               ? 'opacity-100'
               : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 mobile:opacity-100',
           )}
