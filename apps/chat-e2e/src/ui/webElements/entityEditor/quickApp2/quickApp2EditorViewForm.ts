@@ -60,7 +60,7 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
       AddQuickApp2SettingsFormSelector.agentsAndToolsetsJsonToggle,
     );
 
-  // Entity details panel (inline, opens when a chip is clicked)
+  // Inline entity details panel
   public entityDetailsPanel =
     this.agentsAndToolsetsField.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.entityDetailsPanel,

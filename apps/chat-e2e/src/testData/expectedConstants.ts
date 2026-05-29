@@ -767,6 +767,8 @@ export enum MarketplaceTabs {
   WORKSPACE = 'workspace',
 }
 
+// Test-side copies of chat's editor step enums — can't import them, the chat
+// module pulls in an SVG that the test runtime can't parse.
 export enum MarketplaceEditorSteps {
   General = 'General',
   Settings = 'Settings',

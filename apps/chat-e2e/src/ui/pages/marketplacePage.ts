@@ -126,11 +126,8 @@ export class MarketplacePage extends BasePage {
     );
   }
 
-  /**
-   * Opens an existing Quick App 2.0 directly in edit mode.
-   * The apps-editor resolves the app by its `reference` (UUID), not the
-   * resource-path id, and needs the schema + the `Settings` step in the URL.
-   */
+  // Opens an existing QA 2.0 in edit mode. The apps editor finds the app by
+  // reference (not id) and needs the schema + Settings step in the URL.
   async openEditQuickApp2Page(
     reference: string,
     options: MarketplaceEntityOptions = {
@@ -236,8 +233,7 @@ export class MarketplacePage extends BasePage {
     };
   }
 
-  // Sets the `step` URL param using the editor-specific enum, so apps and
-  // toolset values can never be mixed up.
+  // Picks the step enum that matches the editor, so the values can't be mixed up.
   private withEditorStep(
     builder: EntityEditorUrlBuilder,
     entityTab: MarketplaceEntitiesTabs,

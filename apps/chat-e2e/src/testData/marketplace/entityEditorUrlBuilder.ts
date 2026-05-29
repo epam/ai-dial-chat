@@ -1,5 +1,7 @@
 import { Routes } from '@/chat/constants/routes';
 import { ApplicationType } from '@/chat/types/applications';
+// Import from source files, not the '@/src/testData' barrel: this file is
+// re-exported there, so a barrel import would be circular.
 import {
   MarketplaceEditorSteps,
   ToolsetEditorSteps,
@@ -14,13 +16,13 @@ export class EntityEditorUrlBuilder extends BaseUrlBuilder {
     this.entityPath = entityEditorPath;
   }
 
-  /** Sets the `step` for the apps editor (Quick app / custom app / etc.). */
+  // step for the apps editor
   withAppStep(step: MarketplaceEditorSteps): EntityEditorUrlBuilder {
     this.addParam('step', step);
     return this;
   }
 
-  /** Sets the `step` for the toolset editor. */
+  // step for the toolset editor
   withToolsetStep(step: ToolsetEditorSteps): EntityEditorUrlBuilder {
     this.addParam('step', step);
     return this;

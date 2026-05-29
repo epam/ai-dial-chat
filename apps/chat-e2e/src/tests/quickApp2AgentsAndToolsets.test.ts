@@ -267,10 +267,8 @@ dialTest(
     let oauthMockHelper!: OAuthMockHelper;
     let loginPopup!: Page;
 
-    //TODO
-    // BUG-WORKAROUND: two ToolsetLoginDialog instances render the confirmation dialog
-    // (one in AgentAndToolsetSelector inside the QA2 form, another in the global ToolsetDialogs),
-    // so confirmationDialog.confirm() fails. replace the call with confirmationDialog.confirm({...}).
+    // TODO: workaround — two confirm dialogs render at once (QA2 form + global
+    // ToolsetDialogs), so confirmationDialog.confirm() fails; click directly.
     const clickConfirmButton = async (
       confirmButton: Locator,
       {
@@ -297,14 +295,14 @@ dialTest(
     await dialTest.step(
       'Precondition: create toolset via API, convert it to OAuth via UI edit, set up mocks, complete the OAuth login flow and save & exit',
       async () => {
-        // 1) Create the base toolset via API
+        // Create the base toolset via API
         await toolsetApiHelper.createToolset(
           toolsetBuilder.withDisplayName(toolsetName).build(),
         );
         const initialToolset =
           (await toolsetApiHelper.getToolset(toolsetName))!;
 
-        // 2) Open the toolset edit page, fill endpoint and switch authentication to OAuth
+        // Open it for edit, set the endpoint, switch auth to OAuth
         await marketplacePage.openEditToolsetPage(initialToolset.id!);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
@@ -312,7 +310,7 @@ dialTest(
         await toolsetEditorViewForm.endpoint.fillInInput(toolsetEndpoint);
         await toolsetEditorViewForm.oauthContainer.click();
 
-        // 3) Setup OAuth mocks
+        // Set up OAuth mocks
         oauthMockHelper = new OAuthMockHelper(
           page,
           initialToolset,
@@ -320,19 +318,19 @@ dialTest(
         );
         await oauthMockHelper.setupMocks();
 
-        // 4) Click Login — opens popup to the (mocked) authorization endpoint
+        // Log in via the mocked OAuth popup
         oauthMockHelper.enableMocking();
         loginPopup = (await toolsetEditorViewForm.clickLoginButton(
           oauthMockHelper.getMockConfig().authorization_endpoint,
         ))!;
 
-        // 5) Navigate the popup to the OAuth callback to complete sign-in
+        // Finish sign-in through the callback
         await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
         );
 
-        // 6) Save & Exit back to marketplace — toolset is now persisted as OAuth with global creds
+        // Save & Exit — toolset is now saved as OAuth with global creds
         await entityEditorHeader.saveAndExitButton.click();
         await marketplacePage.waitForPageLoaded();
       },
@@ -369,7 +367,7 @@ dialTest(
       },
     );
 
-    //TODO workaround for the 6530 issue
+    // TODO: workaround for #6530 — save and reopen so the chip details work
     await dialTest.step(
       'Save and exit, then reopen the app via Edit button in the details modal',
       async () => {
@@ -410,9 +408,8 @@ dialTest(
       async () => {
         oauthMockHelper.enableMocking();
         await entityDetailsModal.loginButton.click();
-        // BUG-WORKAROUND: same duplicate-dialog bug as above — two marketplace-toolset-signin
-        // modals render simultaneously; instantiate a scoped ToolsetLoginModal pointing to the
-        // second instance (the interactive one).
+        // TODO: same duplicate-dialog bug — two sign-in modals render, so scope
+        // to the second (interactive) one.
         const signinModal = new ToolsetLoginModal(page);
         signinModal.setElementLocator(signinModal.getElementLocator().nth(1));
         signinModal.loginButton.setElementLocator(
@@ -518,7 +515,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   "[Quick app 2.0]: Application's version is displayed on card on click on toolset's bar in Agents&toolsets field\n" +
     "[Quick app 2.0]: Model's version is displayed on card on click on toolset's bar in Agents&toolsets field", // EPMRTC-7946 + EPMRTC-7947
   async (
@@ -617,17 +614,20 @@ dialTest.only(
     });
 
     await dialTest.step(
-      "Click the model's bar and verify the details modal opens with the model's version displayed",
+      "Click the model's bar and verify the details modal shows the model's name, version, author, release date and description",
       async () => {
         await quickApp2EditorViewForm.clickChipByName(modelWithVersion.name);
         await baseAssertion.assertElementState(
           marketplaceEntityDetailsModal,
           'visible',
         );
-        await baseAssertion.assertElementState(
-          marketplaceEntityDetailsModal.version,
-          'visible',
-        );
+        await entityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedName: modelWithVersion.name,
+          expectedVersion: modelWithVersion.version,
+          expectedAuthor: modelWithVersion.owner,
+          expectedReleaseDate: modelWithVersion.createdAt,
+          expectedDescription: modelWithVersion.description,
+        });
       },
     );
   },

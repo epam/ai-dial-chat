@@ -14,14 +14,8 @@ import {
 import { ApplicationBuilderBase } from '@/src/testData/applications/applicationBuilderBase';
 import { ItemUtil } from '@/src/utils';
 
-/**
- * Builds an API payload for a Quick App 2.0 (schema-based application).
- * Mirrors the structure produced by the chat UI (`getApplicationPayload` /
- * `getQuickApp2Toolsets`): a model goes into the `dial-deployment-tool-set`
- * `tools` array, an application becomes a `dial-app` toolset and a toolset
- * becomes a `dial-mcp` toolset. `deployment_id` values are encoded the same way
- * the UI encodes them, so the editor can resolve the chips back to entities.
- */
+// Builds a Quick App 2.0 API payload. Items go into tool_sets the same way the
+// chat form does: model → dial-deployment tool, app → dial-app, toolset → dial-mcp.
 export class QuickApp2Builder extends ApplicationBuilderBase<ApiTypeSchemaApplication> {
   protected reset(): ApiTypeSchemaApplication {
     super.reset();
@@ -35,8 +29,7 @@ export class QuickApp2Builder extends ApplicationBuilderBase<ApiTypeSchemaApplic
     return this.application;
   }
 
-  // conversation_starters is intentionally omitted — the chat UI also omits it
-  // from the payload when no starters are configured.
+  // No conversation_starters when there are none — same as the chat form.
   private getDefaultConfig(): Omit<QuickApp2Config, 'conversation_starters'> {
     return {
       orchestrator: {
