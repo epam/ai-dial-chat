@@ -91,12 +91,6 @@ export const Input: FC<InputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (populateText) {
-      setMessage(populateText);
-    }
-  }, [populateText]);
-
-  useEffect(() => {
     return () => {
       attachments.forEach((a) => {
         if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);

@@ -76,12 +76,12 @@
     "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
     "attachmentTray": { "label": "Attached files" }
   },
-<<<<<<< HEAD
   "stages": {
     "panel": {
       "header": "Steps",
       "collapseAriaLabel": "Toggle steps panel"
-=======
+    }
+  },
   "sidebar": {
     "base": {
       "toggleOpen": "Open sidebar",
@@ -100,7 +100,6 @@
         "generatedFiles": "No generated files in this conversation.",
         "sources": "No sources available."
       }
->>>>>>> development-1.0
     }
   },
   "auth": {

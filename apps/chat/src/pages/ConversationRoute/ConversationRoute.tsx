@@ -76,7 +76,6 @@ const ConversationRoute: FC = () => {
           message,
           selectedItemId,
           attachmentDtos,
-          configurationValue,
         );
         navigate(getConversationRoute(conversation.id));
       } finally {
@@ -112,57 +111,6 @@ const ConversationRoute: FC = () => {
     [description, propertyKey, selectedItemId, navigate],
   );
 
-  const executeStarter = useCallback(
-    (
-      text: string,
-      submit: boolean,
-      configurationValue?: Record<string, unknown>,
-    ) => {
-      if (submit) {
-        void handleSend(text, undefined, configurationValue);
-      } else {
-        setPopulateText(text);
-      }
-    },
-    [handleSend],
-  );
-
-  const handleStarterSelect = useCallback(
-    (
-      text: string,
-      submit: boolean,
-      confirmationMessage: string | null,
-      configurationValue?: Record<string, unknown>,
-    ) => {
-      if (confirmationMessage) {
-        setPendingStarter({
-          text,
-          submit,
-          confirmationMessage,
-          configurationValue,
-        });
-      } else {
-        executeStarter(text, submit, configurationValue);
-      }
-    },
-    [executeStarter],
-  );
-
-  const handleConfirmStarter = useCallback(() => {
-    if (pendingStarter) {
-      executeStarter(
-        pendingStarter.text,
-        pendingStarter.submit,
-        pendingStarter.configurationValue,
-      );
-      setPendingStarter(null);
-    }
-  }, [pendingStarter, executeStarter]);
-
-  const handleCancelStarter = useCallback(() => {
-    setPendingStarter(null);
-  }, []);
-
   return (
     <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
       <Suspense fallback={<RouteFallback />}>
@@ -197,14 +145,6 @@ const ConversationRoute: FC = () => {
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
       </Suspense>
-      <DialConfirmationPopup
-        open={!!pendingStarter}
-        header={t(ChatI18nKeys.StarterConfirmationTitle)}
-        description={pendingStarter?.confirmationMessage}
-        onConfirm={handleConfirmStarter}
-        onCancel={handleCancelStarter}
-        onClose={handleCancelStarter}
-      />
     </div>
   );
 };
