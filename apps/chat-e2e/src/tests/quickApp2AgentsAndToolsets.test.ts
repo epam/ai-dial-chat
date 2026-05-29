@@ -7,7 +7,9 @@ import {
 } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { keys } from '@/src/ui/keyboard';
+import { ButtonSelectors } from '@/src/ui/selectors/commonSelectors';
 import { ConfirmationDialogSelectors } from '@/src/ui/selectors/dialogSelectors';
+import { ToolsetLoginModalSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { ToolsetLoginModal } from '@/src/ui/webElements';
 import { GeneratorUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
@@ -409,15 +411,20 @@ dialTest.only(
         // second instance (the interactive one).
         const signinModal = new ToolsetLoginModal(page);
         signinModal.setElementLocator(signinModal.getElementLocator().nth(1));
+        signinModal.loginButton.setElementLocator(
+          signinModal
+            .getElementLocator()
+            .locator(
+              ButtonSelectors.buttonContainer(
+                ToolsetLoginModalSelectors.loginButton,
+              ),
+            ),
+        );
         await baseAssertion.assertElementState(signinModal, 'visible');
         const popupPromise = page.waitForEvent('popup');
         await signinModal.loginButton.click();
         loginPopup = await popupPromise;
-        try {
-          await loginPopup.waitForLoadState('domcontentloaded');
-        } catch {
-          // popup may close before DOM loads if OAuth flow finishes fast
-        }
+        await loginPopup.waitForLoadState('domcontentloaded');
         await oauthMockHelper.navigateToCallback(loginPopup);
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorAppTypes.QuickApp2,
@@ -431,6 +438,10 @@ dialTest.only(
         await baseAssertion.assertElementState(
           agentAndToolsetSelectModal,
           'hidden',
+        );
+        await baseAssertion.assertElementState(
+          entityDetailsModal,
+          'visible',
         );
       },
     );
