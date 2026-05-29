@@ -47,7 +47,10 @@ const ModelSelectRow = ({
         className={classNames('flex items-center', truncate && 'min-w-0')}
         data-qa="agent-attributes"
       >
-        <span className={classNames(truncate && 'truncate')}>
+        <span
+          className={classNames(truncate && 'truncate')}
+          data-qa="agent-name"
+        >
           {getOpenAIEntityFullName(item)}
         </span>
         {item.version && (
