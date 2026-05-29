@@ -19,7 +19,7 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
     <div
       role="list"
       aria-label={ariaLabel}
-      className={mergeClasses('flex w-full gap-2 overflow-x-auto', className)}
+      className={mergeClasses('flex min-w-0 w-full gap-2 overflow-x-auto', className)}
     >
       {attachments.map((attachment) => (
         <div key={attachment.id} role="listitem">

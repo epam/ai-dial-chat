@@ -177,7 +177,7 @@ const ConversationView: FC<Props> = ({
 
   return (
     <>
-      <div className="relative flex w-[748px] flex-1 flex-col overflow-hidden">
+      <div className="relative flex w-full max-w-[748px] flex-1 flex-col overflow-hidden">
         <div
           ref={containerRef}
           role="log"

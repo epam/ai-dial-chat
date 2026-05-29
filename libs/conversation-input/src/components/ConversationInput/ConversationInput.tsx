@@ -11,7 +11,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   isStreaming = false,
   onAttachmentsChange,
   message,
-  placeholder = 'Type a new prompt or use "/" to select one',
+  placeholder = 'Type a prompt or use "/" to select one',
   welcomeText,
   colors,
   typography,
@@ -61,7 +61,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
       {...getRootProps({
         style: cssVars,
         className: mergeClasses(
-          'relative flex w-full flex-col items-center gap-6 p-4',
+          'relative flex w-full flex-col items-center gap-6 py-4 desktop:p-4',
           className,
         ),
       })}

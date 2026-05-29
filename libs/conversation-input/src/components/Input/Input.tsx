@@ -30,9 +30,11 @@ import {
   useState,
 } from 'react';
 import { useClipboardPaste } from '../../hooks/useClipboardPaste.js';
+import { useIsMobile } from '../../hooks/useIsMobile.js';
 import type { InputProps } from '../../models/Input.js';
 import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
 import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
+import { AddMenuBottomSheet } from '../AddMenuBottomSheet/AddMenuBottomSheet.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import styles from './Input.module.scss';
 import { SendButton } from './SendButton.js';
@@ -49,6 +51,8 @@ export const Input: FC<InputProps> = ({
   ariaLabel,
   attachLabel = 'Attach file',
   addMenuLabel = 'Add',
+  menuTitle = 'Menu',
+  menuCloseLabel = 'Close',
   removeLabel,
   retryLabel,
   sendLabel,
@@ -64,6 +68,7 @@ export const Input: FC<InputProps> = ({
   onDeploymentChange,
   modelSelectorLabels,
 }) => {
+  const isMobile = useIsMobile();
   const cssVars = buildCssVars({
     '--ci-bg': colors?.background,
     '--ci-text': colors?.text,
@@ -81,6 +86,7 @@ export const Input: FC<InputProps> = ({
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [modelSearchQuery, setModelSearchQuery] = useState('');
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   useEffect(() => {
     if (messageProp) {
@@ -264,7 +270,7 @@ export const Input: FC<InputProps> = ({
     <textarea
       className={mergeClasses(
         styles.textarea,
-        'max-h-[272px] flex-1 resize-none overflow-y-auto bg-transparent outline-none [field-sizing:content]',
+        'max-h-[272px] w-full resize-none overflow-y-auto bg-transparent outline-none [field-sizing:content]',
       )}
       value={message}
       onChange={(e) => {
@@ -303,10 +309,17 @@ export const Input: FC<InputProps> = ({
       <div
         className={classNames(
           'flex items-center gap-2',
-          attachments.length > 0 && 'justify-between',
+          attachments.length > 0
+            ? 'justify-between'
+            : 'flex-wrap desktop:flex-nowrap',
         )}
       >
-        <div className="flex">
+        <div
+          className={classNames(
+            'flex',
+            attachments.length === 0 && 'order-2 desktop:order-1',
+          )}
+        >
           <input
             ref={fileInputRef}
             type="file"
@@ -316,30 +329,65 @@ export const Input: FC<InputProps> = ({
             tabIndex={-1}
             onChange={handleFileChange}
           />
-          <DialDropdown
-            matchReferenceWidth={false}
-            placement="bottom-start"
-            listClassName="!w-[240px]"
-            menu={{
-              items: [
-                {
-                  key: 'attach',
-                  label: attachLabel,
-                  icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
-                  onClick: () => fileInputRef.current?.click(),
-                },
-              ],
-            }}
-          >
-            <DialGhostIconButton
-              icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
-              aria-label={addMenuLabel}
-              className="size-10 flex-shrink-0"
-            />
-          </DialDropdown>
+          {isMobile ? (
+            <>
+              <DialGhostIconButton
+                icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
+                aria-label={addMenuLabel}
+                className="size-10 flex-shrink-0"
+                onClick={() => setIsSheetOpen(true)}
+              />
+              <AddMenuBottomSheet
+                open={isSheetOpen}
+                title={menuTitle}
+                closeLabel={menuCloseLabel}
+                onClose={() => setIsSheetOpen(false)}
+                style={cssVars}
+                items={[
+                  {
+                    key: 'attach',
+                    label: attachLabel,
+                    icon: <IconPaperclip size={18} aria-hidden />,
+                    onClick: () => fileInputRef.current?.click(),
+                  },
+                ]}
+              />
+            </>
+          ) : (
+            <DialDropdown
+              matchReferenceWidth={false}
+              placement="bottom-start"
+              listClassName="!w-[240px]"
+              menu={{
+                items: [
+                  {
+                    key: 'attach',
+                    label: attachLabel,
+                    icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
+                    onClick: () => fileInputRef.current?.click(),
+                  },
+                ],
+              }}
+            >
+              <DialGhostIconButton
+                icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
+                aria-label={addMenuLabel}
+                className="size-10 flex-shrink-0"
+              />
+            </DialDropdown>
+          )}
         </div>
-        {attachments.length === 0 && textarea}
-        <div className="flex flex-shrink-0 items-center gap-2">
+        {attachments.length === 0 && (
+          <div className="order-1 w-full min-w-0 desktop:order-2 desktop:w-auto desktop:flex-1">
+            {textarea}
+          </div>
+        )}
+        <div
+          className={classNames(
+            'flex flex-shrink-0 items-center gap-2',
+            attachments.length === 0 && 'order-3 ml-auto desktop:ml-0',
+          )}
+        >
           {deployments !== undefined && (
             <DialDropdownIcon
               icon={selectorIcon}

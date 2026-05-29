@@ -7,31 +7,36 @@ description: Responsive (mobile + desktop) layout workflow. Use whenever a UI ch
 
 ## Overview
 
-The chat app must render correctly on mobile (≥360px), tablet, and desktop. Desktop is the historical baseline — most existing code is desktop-only. Treat **mobile-first** as the authoring default for new and changed UI: write the base classes for the smallest supported viewport and add larger-screen overrides via the project's named breakpoint prefixes.
+The chat app must render correctly on mobile (≤768px) and desktop (≥769px). Desktop is the historical baseline — most existing code is desktop-only. Treat **mobile-first** as the authoring default for new and changed UI: write the base classes for the smallest supported viewport and add desktop overrides via `desktop:`.
 
 ## Project breakpoints
 
-Defined once in `tailwind.config.js` and consumed by `apps/chat/tailwind.config.js` (which presets the root) and the libs under `libs/*/tailwind.config.js` (which must also preset the root — see "Library Tailwind configs" below).
+Defined in `tailwind.config.js` (`extend.screens`) and inherited by all lib Tailwind configs via preset:
 
-| Prefix           | Range                 | Typical device             |
-| ---------------- | --------------------- | -------------------------- |
-| _(no prefix)_    | base — applies to all | mobile-first default       |
-| `mobile:`        | 360px – 767px         | phones                     |
-| `small_tablet:`  | 768px – 1023px        | small tablets / portrait   |
-| `large_tablet:`  | 1024px – 1279px       | tablets / landscape        |
-| `desktop:`       | 1280px – 2559px       | laptops + standard desktop |
-| `large_desktop:` | ≥2560px               | 4K and ultra-wide          |
+```js
+// tailwind.config.js — extend.screens
+mobile: { max: '768px' },   // ≤768 px  — phones and small tablets
+desktop: { min: '769px' },  // ≥769 px  — tablets landscape, laptops, monitors
+```
 
-Each breakpoint is a **bounded `min/max` range**, not a Tailwind-default min-width prefix. `desktop:` styles apply **only** in the 1280–2559 band — they do not cascade to `large_desktop`. When a rule must apply from a threshold upward (e.g. "≥1024 and above"), repeat it on each band or write the base style for the smaller bands and override on the narrower ones. Do not introduce ad-hoc `min-w-[…]` arbitrary-value media queries; use the named breakpoints.
+| Prefix        | Range    | When to use                          |
+| ------------- | -------- | ------------------------------------ |
+| _(no prefix)_ | always   | mobile-first base — smallest layout  |
+| `mobile:`     | ≤768 px  | overrides that apply **only** mobile |
+| `desktop:`    | ≥769 px  | overrides that kick in on desktop    |
 
-Do not introduce `sm:`/`md:`/`lg:`/`xl:` Tailwind defaults — they are not in scope for this project and will not be picked up.
+**`desktop:` is a min-width prefix** — styles cascade upward to all wider viewports.
+
+> **Do not use `small_tablet:`, `large_tablet:`, `large_desktop:`** — these prefixes are not in the config and Tailwind will silently ignore any class that uses them.
+>
+> **Do not use `sm:` / `md:` / `lg:` / `xl:`** — the default Tailwind breakpoints exist in the config (via `extend`) but are out of scope for this project and should not be used.
 
 ## When to use Tailwind prefixes vs. a JS hook
 
 **Default: Tailwind utility prefixes.** They are SSR-safe, avoid first-paint flicker, and keep layout decisions in markup.
 
 ```tsx
-<aside className="hidden desktop:block large_desktop:block large_tablet:block">…</aside>
+<aside className="hidden desktop:block">…</aside>
 <button className="h-12 mobile:h-14">…</button>
 ```
 
@@ -58,7 +63,7 @@ module.exports = {
 
 Libs build their own CSS in isolation (via `vite build` on the lib) and that CSS is what consumers may ultimately ship. Without the preset, an isolated lib build:
 
-- compiles `mobile:` / `small_tablet:` / `desktop:` etc. as **unknown prefixes** and silently drops them — responsive utilities authored in the lib disappear from the emitted CSS;
+- compiles `mobile:` / `desktop:` as **unknown prefixes** and silently drops them — responsive utilities authored in the lib disappear from the emitted CSS;
 - loses every project token (`bg-layer-1`, `text-primary`, the entire `controls-*` family, fonts, shadows) because those live on the root config's `theme` — classes referencing them fall back to Tailwind defaults, which means the lib ships visibly wrong colors in any context that does not also run the host app's Tailwind pass over the lib's source.
 
 Re-declaring the theme inline per lib would duplicate ~150 lines of tokens and introduce silent drift the next time someone adds a colour to the root config. The preset keeps a single source of truth.
@@ -87,14 +92,14 @@ When a Figma file has separate mobile and desktop frames:
 
 1. Fetch **both** frames in the design context call — never implement one without inspecting the other
 2. If the design provides only desktop, ask before deriving a mobile version; do not guess
-3. Map Figma's responsive frame sizes to the closest named breakpoint (375/390 → `mobile`, 768 → `small_tablet`, 1024 → `large_tablet`, 1440/1920 → `desktop`)
+3. Map Figma's responsive frame sizes to the closest named breakpoint (375/390 → `mobile` ≤768px, 769+ → `desktop`)
 4. Capture the divergences (drawer vs. sidebar, vertical vs. horizontal toolbar, hidden sections) before writing code; these drive whether you need the hook
 
 ## Verification
 
 For any responsive change:
 
-1. **DevTools** — exercise the feature at 360, 768, 1024, 1280, and 2560 CSS px
+1. **DevTools** — exercise the feature at 360 (mobile) and 769, 1280, 1920 (desktop)
 2. **Touch** — verify interactive elements work without hover (use the DevTools touch simulator)
 3. **Unit tests** — when a component branches on `useBreakpoint`, add a test per branch by mocking the hook
 4. **Lint / typecheck** — `npm exec nx lint chat`, `npm exec nx test chat` for the projects you touched
@@ -117,7 +122,7 @@ Playwright MCP is pre-configured in `.mcp.json` — no manual setup needed. It s
 1. **Navigate** to `http://localhost:4207` — the browser window opens visibly (Chrome, headed by default)
 2. **If redirected to Keycloak login**, tell the user: "A Chrome window opened — please log in so I can proceed", then wait with `mcp__playwright__browser_wait_for` (textGone: "Sign in to dial", time: 120)
 3. **Navigate to the specific page/feature** the user asked about (or the one touched by the current branch)
-4. **For each relevant viewport** — 360, 768, 1024, 1280 (add 2560 only if user asks):
+4. **For each relevant viewport** — 360 and 768 for mobile, 769 and 1280 for desktop (add 1920 only if user asks):
    - `mcp__playwright__browser_resize` to set width × height
    - Screenshot the specific screen/component under review
    - Run `mcp__playwright__browser_evaluate` to detect horizontal overflow:
@@ -169,5 +174,6 @@ Playwright MCP is pre-configured in `.mcp.json` — no manual setup needed. It s
 - Hiding mobile UI with `display:none` while still mounting heavy subtrees — branch with the hook
 - Authoring desktop-first and then trying to reset on `mobile:` — invert it
 - Using `sm:` / `md:` / `lg:` / `xl:` — they are not configured here
-- Adding `min-[820px]:` arbitrary queries — extend the named breakpoints in the root config instead
+- Using `small_tablet:`, `large_tablet:`, or `large_desktop:` — these prefixes do not exist and are silently ignored by Tailwind
+- Adding `min-[820px]:` arbitrary queries — use the named breakpoints in the root config instead
 - Implementing a Figma desktop frame without checking whether a mobile variant exists
