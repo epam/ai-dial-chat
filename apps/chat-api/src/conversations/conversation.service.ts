@@ -205,7 +205,6 @@ export class ConversationService extends AppService {
           },
         }),
     };
-    console.log(userMessage, 'userMessage');
 
     // If the conversation already ends with a user turn (e.g. first-message auto-stream),
     // don't append again — the message is already in the persisted history.
