@@ -97,7 +97,7 @@ function useTooltip({
   });
 
   const focus = useFocus(context, {
-    enabled: uncontrolled && !isHoverDisabled,
+    enabled: uncontrolled && !isHoverDisabled && !isTriggerClickable,
   });
 
   const click = useClick(context, {
