@@ -6,6 +6,7 @@ import {
   AddAppMenuOptions,
   EntityEditorAppTypes,
   EntityEditorToolsetTypes,
+  ExpectedConstants,
 } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { keys } from '@/src/ui/keyboard';
@@ -13,7 +14,7 @@ import { ButtonSelectors } from '@/src/ui/selectors/commonSelectors';
 import { ConfirmationDialogSelectors } from '@/src/ui/selectors/dialogSelectors';
 import { ToolsetLoginModalSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { ToolsetLoginModal } from '@/src/ui/webElements';
-import { GeneratorUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, UserUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 import { Response } from 'playwright-core';
 
@@ -520,19 +521,23 @@ dialTest(
 dialTest.only(
   "[Quick app 2.0]: Application's version is displayed on card on click on toolset's bar in Agents&toolsets field\n" +
     "[Quick app 2.0]: Model's version is displayed on card on click on toolset's bar in Agents&toolsets field", // EPMRTC-7946 + EPMRTC-7947
-  async ({
-    marketplacePage,
-    entityEditorPage,
-    quickApp2EditorViewForm,
-    marketplaceEntityDetailsModal,
-    entityDetailsModal,
-    customApplicationBuilder,
-    quickApp2Builder,
-    applicationApiHelper,
-    modelApiHelper,
-    baseAssertion,
-    setTestIds,
-  }) => {
+  async (
+    {
+      marketplacePage,
+      entityEditorPage,
+      quickApp2EditorViewForm,
+      marketplaceEntityDetailsModal,
+      entityDetailsModal,
+      entityDetailsModalAssertion,
+      customApplicationBuilder,
+      quickApp2Builder,
+      applicationApiHelper,
+      modelApiHelper,
+      baseAssertion,
+      setTestIds,
+    },
+    testInfo,
+  ) => {
     setTestIds('EPMRTC-7946', 'EPMRTC-7947');
     const appName = GeneratorUtil.randomApplicationName();
     const quickAppName = GeneratorUtil.randomApplicationName();
@@ -587,17 +592,19 @@ dialTest.only(
     );
 
     await dialTest.step(
-      "Click the application's bar and verify the details modal opens with the application's version displayed",
+      "Click the application's bar and verify the details modal shows the application's name, version, author and release date",
       async () => {
         await quickApp2EditorViewForm.clickChipByName(appName);
         await baseAssertion.assertElementState(
           marketplaceEntityDetailsModal,
           'visible',
         );
-        await baseAssertion.assertElementState(
-          marketplaceEntityDetailsModal.version,
-          'visible',
-        );
+        await entityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedName: appName,
+          expectedVersion: ExpectedConstants.defaultEntityVersion,
+          expectedAuthor: UserUtil.getE2EUsername(testInfo.parallelIndex),
+          expectedReleaseDate: DateUtil.getCurrentLocalDate(),
+        });
       },
     );
 
