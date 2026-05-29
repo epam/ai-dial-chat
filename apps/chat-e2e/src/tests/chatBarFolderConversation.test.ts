@@ -9,7 +9,7 @@ import {
   FolderConversation,
   MenuOptions,
 } from '@/src/testData';
-import { Overflow, Styles } from '@/src/ui/domData';
+import { AttributeValues } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { EditInput } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -344,9 +344,10 @@ dialTest(
     dialHomePage,
     conversationData,
     folderConversations,
+    chatBarFolderAssertion,
+    toastAssertion,
     dataInjector,
     folderDropdownMenu,
-    toast,
     setTestIds,
     localStorageManager,
   }) => {
@@ -376,12 +377,10 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        const folderNameOverflow = await folderConversations
-          .getFolderName(folderName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(folderNameOverflow[0], ExpectedMessages.folderNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await chatBarFolderAssertion.assertElementTextIsTruncated(
+          folderConversations.getFolderName(folderName),
+          ExpectedMessages.folderNameIsTruncated,
+        );
       },
     );
 
@@ -389,12 +388,10 @@ dialTest(
       'Hover over folder name and verify it is truncated when menu dots appear',
       async () => {
         await folderConversations.getFolderByName(folderName).hover();
-        const folderNameOverflow = await folderConversations
-          .getFolderName(folderName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(folderNameOverflow[0], ExpectedMessages.folderNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await chatBarFolderAssertion.assertElementTextIsTruncated(
+          folderConversations.getFolderName(folderName),
+          ExpectedMessages.folderNameIsTruncated,
+        );
       },
     );
 
@@ -403,12 +400,11 @@ dialTest(
       async () => {
         await folderConversations.openFolderDropdownMenu(folderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const folderInputOverflow = await folderConversations
-          .getEditFolderInput()
-          .editInput.getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(folderInputOverflow[0], ExpectedMessages.folderNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await chatBarFolderAssertion.assertElementClass(
+          folderConversations.getEditFolderInput().editInput,
+          new RegExp(AttributeValues.textEllipsis),
+          ExpectedMessages.folderNameIsTruncated,
+        );
       },
     );
 
@@ -418,17 +414,11 @@ dialTest(
         await folderConversations.renameFolderWithContentWithTick(
           newFolderNameToSet,
         );
-        await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.noErrorToastIsShown)
-          .toBeHidden();
-        expect
-          .soft(
-            await folderConversations
-              .getFolderName(expectedNewFolderName)
-              .getElementInnerContent(),
-            ExpectedMessages.folderNameUpdated,
-          )
-          .toBe(expectedNewFolderName);
+        await toastAssertion.assertToastIsHidden();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: expectedNewFolderName },
+          'visible',
+        );
       },
     );
   },
