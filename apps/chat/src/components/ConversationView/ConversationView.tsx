@@ -2,6 +2,7 @@ import {
   MessageRole,
   type Attachment,
   type MessageRating,
+  type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
@@ -54,15 +55,6 @@ interface Props {
   ) => void;
   placeholder: string;
   isAssistantTyping?: boolean;
-  starters?: StarterOption[];
-  onStarterSelect?: (
-    text: string,
-    submit: boolean,
-    confirmationMessage: string | null,
-    configurationValue?: Record<string, unknown>,
-  ) => void;
-  startersPropertyKey?: string;
-  populateText?: string;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -78,10 +70,6 @@ const ConversationView: FC<Props> = ({
   onSelectStarter,
   placeholder,
   isAssistantTyping = false,
-  starters,
-  onStarterSelect,
-  startersPropertyKey,
-  populateText,
 }) => {
   const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId, isLoading, error } =

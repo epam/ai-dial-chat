@@ -4,7 +4,6 @@ import {
   Message,
   MessageCustomContent,
   MessageRole,
-  Stage,
   type MessageRating,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
@@ -35,18 +34,6 @@ import { applyChunkToMessages } from '../../utils/apply-chunk';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { createMessagePair } from '../../utils/message-factory';
 import { getStarterPopulateText } from '../../utils/starter-option';
-
-/**
- * Merges incoming stage updates into the existing accumulated list.
- * Upserts by `index` (replaces matching entry, appends new ones), then sorts ascending.
- */
-const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
-  const map = new Map<number, Stage>(existing.map((s) => [s.index, s]));
-  for (const stage of incoming) {
-    map.set(stage.index, stage);
-  }
-  return Array.from(map.values()).sort((a, b) => a.index - b.index);
-};
 
 export const ConversationPage: FC = () => {
   const { '*': conversationId } = useParams<{ '*': string }>();
@@ -112,8 +99,7 @@ export const ConversationPage: FC = () => {
               }
             }
           },
-          onError: (e) => {
-            console.error('Stream error', e);
+          onError: () => {
             setIsStreaming(false);
             abortRef.current = null;
             setHasStreamError(true);
@@ -393,17 +379,13 @@ export const ConversationPage: FC = () => {
   }, [pendingStarterContext, submitStarter]);
 
   const handleSend = useCallback(
-    async (
-      message: string,
-      attachments: Attachment[],
-      configurationValue?: Record<string, unknown>,
-    ) => {
+    async (message: string, attachments: Attachment[]) => {
       if (!conversationId || !conversation) return;
 
       const attachmentDtos = await attachmentsToDtos(attachments);
 
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(message, attachmentDtos, configurationValue);
+        createMessagePair(message, attachmentDtos);
 
       const conversationPath = conversationId.substring(
         conversationId.indexOf('/') + 1,
@@ -429,57 +411,6 @@ export const ConversationPage: FC = () => {
     },
     [conversation, conversationId, startStream],
   );
-
-  const executeStarter = useCallback(
-    (
-      text: string,
-      submit: boolean,
-      configurationValue?: Record<string, unknown>,
-    ) => {
-      if (submit) {
-        void handleSend(text, [], configurationValue);
-      } else {
-        setPopulateText(text);
-      }
-    },
-    [handleSend],
-  );
-
-  const handleStarterSelect = useCallback(
-    (
-      text: string,
-      submit: boolean,
-      confirmationMessage: string | null,
-      configurationValue?: Record<string, unknown>,
-    ) => {
-      if (confirmationMessage) {
-        setPendingStarter({
-          text,
-          submit,
-          confirmationMessage,
-          configurationValue,
-        });
-      } else {
-        executeStarter(text, submit, configurationValue);
-      }
-    },
-    [executeStarter],
-  );
-
-  const handleConfirmStarter = useCallback(() => {
-    if (pendingStarter) {
-      executeStarter(
-        pendingStarter.text,
-        pendingStarter.submit,
-        pendingStarter.configurationValue,
-      );
-      setPendingStarter(null);
-    }
-  }, [pendingStarter, executeStarter]);
-
-  const handleCancelStarter = useCallback(() => {
-    setPendingStarter(null);
-  }, []);
 
   if (isFetching) return null;
 
