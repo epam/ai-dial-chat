@@ -23,7 +23,8 @@
     "@epam/chat-api-client": "0.0.1",
     "@tabler/icons-react": "^3.44.0",
     "classnames": "2.5.1",
-    "react": "^19.0.0"
+    "react": "^19.0.0",
+    "react-dom": "^19.2.6"
   },
   "dependencies": {
     "react-dropzone": "^15.0.0"

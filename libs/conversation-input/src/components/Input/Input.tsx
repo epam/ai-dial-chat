@@ -22,11 +22,14 @@ import {
   useState,
 } from 'react';
 import { useClipboardPaste } from '../../hooks/useClipboardPaste.js';
+import { useIsMobile } from '../../hooks/useIsMobile.js';
 import { useModelSelector } from '../../hooks/useModelSelector.js';
 import type { InputProps } from '../../models/Input.js';
 import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
 import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
+import { BottomSheet } from '../BottomSheet/BottomSheet.js';
+import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet.js';
 import styles from './Input.module.scss';
 import { SendButton } from './SendButton.js';
 import { StopButton } from './StopButton.js';
@@ -42,6 +45,8 @@ export const Input: FC<InputProps> = ({
   ariaLabel,
   attachLabel = 'Attach file',
   addMenuLabel = 'Add',
+  menuTitle = 'Menu',
+  menuCloseLabel = 'Close',
   removeLabel,
   retryLabel,
   sendLabel,
@@ -58,6 +63,7 @@ export const Input: FC<InputProps> = ({
   modelSelectorLabels,
   resolveDeploymentIconUrl = resolveIconUrl,
 }) => {
+  const isMobile = useIsMobile();
   const cssVars = buildCssVars({
     '--ci-bg': colors?.background,
     '--ci-text': colors?.text,
@@ -74,6 +80,9 @@ export const Input: FC<InputProps> = ({
 
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [modelSearchQuery, setModelSearchQuery] = useState('');
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
 
   useEffect(() => {
     if (messageProp) {
@@ -203,7 +212,7 @@ export const Input: FC<InputProps> = ({
     <textarea
       className={mergeClasses(
         styles.textarea,
-        'max-h-[272px] flex-1 resize-none overflow-y-auto bg-transparent outline-none [field-sizing:content]',
+        'max-h-[272px] w-full resize-none overflow-y-auto bg-transparent outline-none [field-sizing:content]',
       )}
       value={message}
       onChange={(e) => {
@@ -242,10 +251,17 @@ export const Input: FC<InputProps> = ({
       <div
         className={classNames(
           'flex items-center gap-2',
-          attachments.length > 0 && 'justify-between',
+          attachments.length > 0
+            ? 'justify-between'
+            : 'flex-wrap desktop:flex-nowrap',
         )}
       >
-        <div className="flex">
+        <div
+          className={classNames(
+            'flex',
+            attachments.length === 0 && 'order-2 desktop:order-1',
+          )}
+        >
           <input
             ref={fileInputRef}
             type="file"
@@ -255,47 +271,110 @@ export const Input: FC<InputProps> = ({
             tabIndex={-1}
             onChange={handleFileChange}
           />
-          <DialDropdown
-            matchReferenceWidth={false}
-            placement="bottom-start"
-            listClassName="!w-[240px]"
-            menu={{
-              items: [
-                {
-                  key: 'attach',
-                  label: attachLabel,
-                  icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
-                  onClick: () => fileInputRef.current?.click(),
-                },
-              ],
-            }}
-          >
-            <DialGhostIconButton
-              icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
-              aria-label={addMenuLabel}
-              className="size-10 flex-shrink-0"
-            />
-          </DialDropdown>
-        </div>
-        {attachments.length === 0 && textarea}
-        <div className="flex flex-shrink-0 items-center gap-2">
-          {deployments !== undefined && (
-            <DialDropdownIcon
-              icon={selectorIcon}
-              ariaLabel={selectorAriaLabel}
-              menu={{
-                items: menuItems,
-                header: menuHeader,
-              }}
-              placement="bottom-end"
+          {isMobile ? (
+            <>
+              <DialGhostIconButton
+                icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
+                aria-label={addMenuLabel}
+                className="size-10 flex-shrink-0"
+                onClick={() => setIsSheetOpen(true)}
+              />
+              <BottomSheet
+                open={isSheetOpen}
+                title={menuTitle}
+                closeLabel={menuCloseLabel}
+                onClose={() => setIsSheetOpen(false)}
+                style={cssVars}
+                items={[
+                  {
+                    key: 'attach',
+                    label: attachLabel,
+                    icon: <IconPaperclip size={18} aria-hidden />,
+                    onClick: () => fileInputRef.current?.click(),
+                  },
+                ]}
+              />
+            </>
+          ) : (
+            <DialDropdown
               matchReferenceWidth={false}
-              listClassName="!w-[240px] !max-h-80"
-              onOpenChange={handleModelSelectorOpenChange}
-              buttonClassName={
-                isStreaming ? 'pointer-events-none opacity-50' : undefined
-              }
-            />
+              placement="bottom-start"
+              listClassName="!w-[240px]"
+              menu={{
+                items: [
+                  {
+                    key: 'attach',
+                    label: attachLabel,
+                    icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
+                    onClick: () => fileInputRef.current?.click(),
+                  },
+                ],
+              }}
+            >
+              <DialGhostIconButton
+                icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
+                aria-label={addMenuLabel}
+                className="size-10 flex-shrink-0"
+              />
+            </DialDropdown>
           )}
+        </div>
+        {attachments.length === 0 && (
+          <div className="order-1 w-full min-w-0 desktop:order-2 desktop:w-auto desktop:flex-1">
+            {textarea}
+          </div>
+        )}
+        <div
+          className={classNames(
+            'flex flex-shrink-0 items-center gap-2',
+            attachments.length === 0 && 'order-3 ml-auto desktop:ml-0',
+          )}
+        >
+          {deployments !== undefined &&
+            (isMobile ? (
+              <>
+                <DialGhostIconButton
+                  icon={selectorIcon}
+                  aria-label={selectorAriaLabel}
+                  onClick={() => setIsModelSheetOpen(true)}
+                  className={
+                    isStreaming ? 'pointer-events-none opacity-50' : undefined
+                  }
+                />
+                <ModelSelectorBottomSheet
+                  open={isModelSheetOpen}
+                  title={modelSelectorLabels?.ariaLabel ?? 'Select model'}
+                  closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
+                  searchPlaceholder={
+                    modelSelectorLabels?.searchPlaceholder ?? 'Search'
+                  }
+                  onClose={() => setIsModelSheetOpen(false)}
+                  deployments={deployments}
+                  selectedDeploymentId={selectedDeploymentId}
+                  onSelect={(id) => onDeploymentChange?.(id)}
+                  loadingLabel={modelSelectorLabels?.loading}
+                  errorLabel={modelSelectorLabels?.error}
+                  emptyLabel={modelSelectorLabels?.empty}
+                  style={cssVars}
+                />
+              </>
+            ) : (
+              <DialDropdownIcon
+                icon={selectorIcon}
+                ariaLabel={selectorAriaLabel}
+                menu={{
+                  items: menuItems,
+                  header: menuHeader,
+                }}
+                placement="bottom-end"
+                matchReferenceWidth={false}
+                listClassName="!w-[240px] !max-h-80"
+                onOpenChange={handleModelSelectorOpenChange}
+                buttonClassName={
+                  isStreaming ? 'pointer-events-none opacity-50' : undefined
+                }
+              />
+            ))}
           {isStreaming ? (
             <StopButton onStop={onStop} ariaLabel={stopLabel} />
           ) : (

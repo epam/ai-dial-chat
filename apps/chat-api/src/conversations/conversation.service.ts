@@ -16,7 +16,7 @@ import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 
 @Injectable()
 export class ConversationService extends AppService {
-  protected logger = new Logger(ConversationService.name);
+  protected override logger = new Logger(ConversationService.name);
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     super(configService);
@@ -197,9 +197,13 @@ export class ConversationService extends AppService {
       role: MessageRole.User,
       content: message,
       timestamp: new Date().toISOString(),
-      ...(customContent?.attachments && {
-        custom_content: { attachments: customContent.attachments },
-      }),
+      ...(customContent &&
+        Object.keys(customContent).length > 0 && {
+          custom_content: {
+            attachments: customContent.attachments,
+            form_value: customContent.form_value,
+          },
+        }),
     };
 
     // If the conversation already ends with a user turn (e.g. first-message auto-stream),
@@ -218,12 +222,17 @@ export class ConversationService extends AppService {
       const validAttachments = (m.custom_content?.attachments ?? []).filter(
         (a) => a.data ?? a.url,
       );
+      const content = Object.fromEntries(
+        Object.entries({
+          ...m.custom_content,
+          attachments: validAttachments.length ? validAttachments : undefined,
+          configuration_value: undefined, // configuration_value is sent as top-level custom_fields.configuration, not inside messages[].custom_content
+        }).filter(([, value]) => value != null),
+      );
       return {
         role: m.role,
         content: m.content,
-        ...(validAttachments.length
-          ? { custom_content: { attachments: validAttachments } }
-          : {}),
+        ...(Object.keys(content).length > 0 ? { custom_content: content } : {}),
       };
     });
 

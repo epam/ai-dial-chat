@@ -99,6 +99,7 @@ const ConversationRoute: FC = () => {
           text,
           selectedItemId,
           [],
+          undefined,
           configurationValue,
         ).then((conversation) => {
           navigate(getConversationRoute(conversation.id));
@@ -114,7 +115,7 @@ const ConversationRoute: FC = () => {
     <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
       <Suspense fallback={<RouteFallback />}>
         <div
-          className="flex h-full flex-col items-center justify-center p-8"
+          className="flex h-full flex-col items-center justify-center p-4 desktop:p-8"
           role="region"
           aria-label={t(ChatI18nKeys.WelcomeScreen)}
         >
