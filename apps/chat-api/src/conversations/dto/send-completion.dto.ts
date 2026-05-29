@@ -25,9 +25,11 @@ export class SendCompletionDto {
   @ApiProperty({
     description: 'The new user message to send',
     example: 'What is the capital of France?',
+    minLength: 1,
     maxLength: 4000,
   })
   @IsString()
+  @MinLength(1)
   @MaxLength(4000)
   message!: string;
 

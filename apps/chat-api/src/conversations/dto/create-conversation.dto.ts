@@ -5,6 +5,7 @@ import {
   IsString,
   Matches,
   MaxLength,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { MessageCustomContentDto } from './message-custom-content.dto';
@@ -13,9 +14,11 @@ export class CreateConversationDto {
   @ApiProperty({
     description: 'The first message to start the conversation',
     example: 'Hello, how can you help me today?',
+    minLength: 1,
     maxLength: 4000,
   })
   @IsString()
+  @MinLength(1)
   @MaxLength(4000)
   firstMessage!: string;
 
