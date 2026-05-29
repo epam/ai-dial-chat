@@ -235,7 +235,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Quick app 2.0]: Select Agents & Toolsets form is NOT open when login to selected toolset from card detailed view', // EPMRTC-7326
   async ({
     page,
@@ -257,6 +257,7 @@ dialTest.only(
     setTestIds,
   }) => {
     setTestIds('EPMRTC-7326');
+    dialTest.slow();
     const appName = GeneratorUtil.randomApplicationName();
     const toolsetName = GeneratorUtil.randomToolsetName();
     const toolsetEndpoint = GeneratorUtil.randomUrl();
