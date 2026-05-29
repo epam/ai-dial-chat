@@ -80,7 +80,6 @@ export const Input: FC<InputProps> = ({
 
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [modelSearchQuery, setModelSearchQuery] = useState('');
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
 
