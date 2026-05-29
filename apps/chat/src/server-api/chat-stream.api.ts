@@ -61,13 +61,19 @@ export const streamCompletion = (
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
+    let hadError = false;
+
+    const handleError = (err: Error) => {
+      hadError = true;
+      onError(err);
+    };
 
     try {
       while (true) {
         const { done, value } = await reader.read();
 
         if (done) {
-          if (buffer.trim()) parseSSELine(buffer, onChunk, onError);
+          if (buffer.trim()) parseSSELine(buffer, onChunk, handleError);
           break;
         }
 
@@ -77,10 +83,10 @@ export const streamCompletion = (
         buffer = lines.pop() ?? '';
 
         for (const line of lines) {
-          parseSSELine(line, onChunk, onError);
+          parseSSELine(line, onChunk, handleError);
         }
       }
-      onComplete();
+      if (!hadError) onComplete();
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
       onError(err instanceof Error ? err : new Error(String(err)));
