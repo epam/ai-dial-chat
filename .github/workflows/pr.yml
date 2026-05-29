@@ -19,4 +19,3 @@ jobs:
     with:
       node-version: 24
       maximize-build-space: true
-      ort-config-revision: "5650fed55a20397b9abb9017a0c6bb674dc8481d"
