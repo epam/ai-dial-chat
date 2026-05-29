@@ -9,10 +9,10 @@ import {
   MarketplaceTabs,
   MarketplaceUrlBuilder,
   QuickApp2SchemaId,
+  ToolsetEditorSteps,
 } from '@/src/testData';
 import { EntityEditorUrlBuilder } from '@/src/testData/marketplace/entityEditorUrlBuilder';
 import { BasePage, ExpectedApiResponse } from '@/src/ui/pages/basePage';
-import { EntityEditSteps } from '@/src/ui/webElements';
 import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketplaceContainer';
 
 interface MarketplacePageOptions {
@@ -144,7 +144,6 @@ export class MarketplacePage extends BasePage {
       MarketplaceEntitiesTabs.AGENTS,
       QuickApp2SchemaId,
       options,
-      MarketplaceEditorSteps.Settings,
     );
   }
 
@@ -155,7 +154,6 @@ export class MarketplacePage extends BasePage {
   ): Promise<void> {
     const entityEditorAttributes = this.getCreateEntityEditorAttributes(
       entityTab,
-      EntityEditSteps.generalInfo,
       appTypeSchema,
     );
     await this.navigateToEntityEditorPage(options, entityEditorAttributes);
@@ -166,20 +164,17 @@ export class MarketplacePage extends BasePage {
     entityTab: MarketplaceEntitiesTabs,
     appTypeSchema?: ApplicationType | string,
     options: MarketplaceEntityOptions = {},
-    stepOverride?: MarketplaceEditorSteps,
   ): Promise<void> {
     const entityEditorAttributes = this.getEditEntityEditorAttributes(
       entityTab,
       id,
       appTypeSchema,
-      stepOverride,
     );
     await this.navigateToEntityEditorPage(options, entityEditorAttributes);
   }
 
   private getCreateEntityEditorAttributes(
     entityTab: MarketplaceEntitiesTabs,
-    step: EntityEditSteps,
     appTypeSchema?: ApplicationType | string,
   ): {
     entityEditorPath: string;
@@ -194,9 +189,11 @@ export class MarketplacePage extends BasePage {
       entityTab,
       config,
     );
-    let entityEditorUrlBuilder = new  EntityEditorUrlBuilder(config.route, step)
-      .withReturnUrl(returnUrl)
-      .withIsCreating();
+    let entityEditorUrlBuilder = this.withEditorStep(
+      new EntityEditorUrlBuilder(config.route).withReturnUrl(returnUrl),
+      entityTab,
+      'General',
+    ).withIsCreating();
     if (appTypeSchema) {
       entityEditorUrlBuilder = entityEditorUrlBuilder.withSchema(appTypeSchema);
     }
@@ -210,7 +207,6 @@ export class MarketplacePage extends BasePage {
     entityTab: MarketplaceEntitiesTabs,
     id: string,
     appTypeSchema?: ApplicationType | string,
-    stepOverride?: MarketplaceEditorSteps,
   ): {
     entityEditorPath: string;
     entityApiHosts: {
@@ -224,14 +220,13 @@ export class MarketplacePage extends BasePage {
       entityTab,
       config,
     );
-    const step =
-      stepOverride ??
-      (entityTab === MarketplaceEntitiesTabs.TOOLSETS
-        ? EntityEditSteps.toolsetSettings
-        : EntityEditSteps.appSettings);
-    let entityEditorUrlBuilder = new EntityEditorUrlBuilder(config.route, step)
-      .withReturnUrl(returnUrl)
-      .withId(id);
+    let entityEditorUrlBuilder = this.withEditorStep(
+      new EntityEditorUrlBuilder(config.route)
+        .withReturnUrl(returnUrl)
+        .withId(id),
+      entityTab,
+      'Settings',
+    );
     if (appTypeSchema) {
       entityEditorUrlBuilder = entityEditorUrlBuilder.withSchema(appTypeSchema);
     }
@@ -239,6 +234,18 @@ export class MarketplacePage extends BasePage {
       entityEditorPath: entityEditorUrlBuilder.build(),
       entityApiHosts: config.apiHosts,
     };
+  }
+
+  // Sets the `step` URL param using the editor-specific enum, so apps and
+  // toolset values can never be mixed up.
+  private withEditorStep(
+    builder: EntityEditorUrlBuilder,
+    entityTab: MarketplaceEntitiesTabs,
+    section: 'General' | 'Settings',
+  ): EntityEditorUrlBuilder {
+    return entityTab === MarketplaceEntitiesTabs.TOOLSETS
+      ? builder.withToolsetStep(ToolsetEditorSteps[section])
+      : builder.withAppStep(MarketplaceEditorSteps[section]);
   }
 
   private getEntityConfig(entityTab: MarketplaceEntitiesTabs) {

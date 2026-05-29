@@ -1,18 +1,29 @@
 import { Routes } from '@/chat/constants/routes';
 import { ApplicationType } from '@/chat/types/applications';
-import { BaseUrlBuilder, MarketplaceEditorSteps } from '@/src/testData';
-import { EntityEditSteps } from '@/src/ui/webElements';
+import {
+  MarketplaceEditorSteps,
+  ToolsetEditorSteps,
+} from '@/src/testData/expectedConstants';
+import { BaseUrlBuilder } from '@/src/testData/marketplace/baseUrlBuilder';
 
 export class EntityEditorUrlBuilder extends BaseUrlBuilder {
   private readonly entityPath: Routes;
 
-  constructor(
-    entityEditorPath: Routes,
-    step: EntityEditSteps | MarketplaceEditorSteps,
-  ) {
+  constructor(entityEditorPath: Routes) {
     super('');
     this.entityPath = entityEditorPath;
+  }
+
+  /** Sets the `step` for the apps editor (Quick app / custom app / etc.). */
+  withAppStep(step: MarketplaceEditorSteps): EntityEditorUrlBuilder {
     this.addParam('step', step);
+    return this;
+  }
+
+  /** Sets the `step` for the toolset editor. */
+  withToolsetStep(step: ToolsetEditorSteps): EntityEditorUrlBuilder {
+    this.addParam('step', step);
+    return this;
   }
 
   withSchema(schema: ApplicationType | string): EntityEditorUrlBuilder {

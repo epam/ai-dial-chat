@@ -767,12 +767,14 @@ export enum MarketplaceTabs {
   WORKSPACE = 'workspace',
 }
 
-// Mirrors chat's MarketplaceEditorSteps (the `step` URL query param value).
-// Duplicated here because '@/chat/types/marketplace' transitively imports an
-// SVG, which the test runtime cannot parse.
 export enum MarketplaceEditorSteps {
   General = 'General',
   Settings = 'Settings',
+}
+
+export enum ToolsetEditorSteps {
+  General = 'General info',
+  Settings = 'Toolset settings',
 }
 
 export enum MarketplaceEntitiesTabs {
