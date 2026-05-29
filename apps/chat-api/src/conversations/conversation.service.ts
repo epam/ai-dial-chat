@@ -16,7 +16,7 @@ import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 
 @Injectable()
 export class ConversationService extends AppService {
-  protected logger = new Logger(ConversationService.name);
+  protected override logger = new Logger(ConversationService.name);
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     super(configService);
@@ -188,15 +188,6 @@ export class ConversationService extends AppService {
       bucket,
     );
 
-    console.log(
-      '[DEBUG] stored msgs:',
-      conversation.messages.map((m) => ({
-        role: m.role,
-        fv: m.custom_content?.form_value ?? null,
-        fs: !!m.custom_content?.form_schema,
-      })),
-    );
-
     this.logger.log(
       `[streamCompletion] model from request: "${model}", conversation.model.id: "${conversation.model?.id}", assistantModelId: "${conversation.assistantModelId}"`,
     );
@@ -250,32 +241,6 @@ export class ConversationService extends AppService {
       `[streamCompletion] POST /openai/deployments/${model}/chat/completions`,
     );
 
-    console.log(
-      '[DEBUG] customContent from request:',
-      JSON.stringify(customContent, null, 2),
-    );
-    console.log(
-      '[DEBUG] stored conversation messages count:',
-      conversation.messages.length,
-      '| last role:',
-      lastMessage?.role,
-      '| last has form_value:',
-      !!lastMessage?.custom_content?.form_value,
-    );
-    console.log(
-      '[DEBUG] messages summary:',
-      JSON.stringify(
-        messages.map((m, i) => ({
-          i,
-          role: m.role,
-          content_preview: String(m.content).slice(0, 60),
-          form_value: m.custom_content?.form_value ?? null,
-          has_form_schema: !!m.custom_content?.form_schema,
-        })),
-        null,
-        2,
-      ),
-    );
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
         body: {
