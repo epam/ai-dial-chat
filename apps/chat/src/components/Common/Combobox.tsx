@@ -164,7 +164,7 @@ export const Combobox = <T,>({
                   ? itemRow({ item: selectedItem, truncate: false })
                   : null
               }
-              hideTooltip={!!isOpen}
+              hideTooltip={!!isOpen || !!inputValue}
               triggerClassName="w-full"
               isTriggerClickable
             >
