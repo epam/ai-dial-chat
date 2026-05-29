@@ -532,6 +532,8 @@ export enum ChatI18nKeys {
   Redeploying = 'Redeploying...',
   Undeploying = 'Undeploying...',
   Reference = 'Reference...',
+  OpenLink = 'Open link',
+  OpenPdf = 'Open PDF',
   Deploying = 'Deploying...',
   Attachments = 'Attachments',
   DeployCodeApp = 'Deploy code app',

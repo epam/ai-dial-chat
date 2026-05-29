@@ -427,6 +427,7 @@ export const publicationSlice = createSlice({
         publicationUrl: string;
         oldApplication: CustomApplicationModel;
         newApplication: CustomApplicationModel;
+        tabToOpen?: MarketplaceEditorSteps;
       }>,
     ) => state,
     updatePublicationRequestAndApplicationIcon: (
