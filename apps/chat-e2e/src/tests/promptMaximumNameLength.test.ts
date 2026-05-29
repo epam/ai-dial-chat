@@ -2,12 +2,9 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   CollapsedSections,
   ExpectedConstants,
-  ExpectedMessages,
   MenuOptions,
 } from '@/src/testData';
-import { Overflow, Styles } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
-import { expect } from '@playwright/test';
 
 dialTest(
   'Prompt name consists of a maximum of 255 bytes (UTF-8).\n' +
@@ -88,12 +85,9 @@ dialTest(
     });
 
     await dialTest.step('Check the prompt name in the panel', async () => {
-      const promptNameElement = prompts.getEntityName(prompt.name);
-      const promptNameOverflow =
-        await promptNameElement.getComputedStyleProperty(Styles.text_overflow);
-      expect
-        .soft(promptNameOverflow[0], ExpectedMessages.entityNameIsTruncated)
-        .toBe(Overflow.ellipsis);
+      await promptAssertion.assertElementTextIsTruncated(
+        prompts.getEntityNameValue(prompt.name),
+      );
       await promptPreviewModal.getCloseButton().click();
     });
 
@@ -153,21 +147,12 @@ dialTest(
       'Check that the folder names are cut to 255 bytes (UTF-8) and no error message appears',
       async () => {
         // Get the actual folder names
-        const parentFolderName = await folderPrompts
-          .getFolderName(expectedName, 1)
-          .getElementInnerContent();
-        const childFolderName = await folderPrompts
-          .getFolderName(expectedName, 2)
-          .getElementInnerContent();
-
-        // Assert that the names are truncated to the expectedName
-        expect
-          .soft(parentFolderName, ExpectedMessages.folderNameUpdated)
-          .toBe(expectedName);
-        expect
-          .soft(childFolderName, ExpectedMessages.folderNameUpdated)
-          .toBe(expectedName);
-
+        for (let i = 1; i <= 2; i++) {
+          await promptBarFolderAssertion.assertFolderState(
+            { name: expectedName, index: i },
+            'visible',
+          );
+        }
         // Assert that no error toast is shown
         await toastAssertion.assertToastIsHidden();
       },

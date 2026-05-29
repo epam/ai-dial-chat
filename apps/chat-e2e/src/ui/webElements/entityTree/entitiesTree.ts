@@ -103,6 +103,12 @@ export class EntitiesTree extends BaseElement {
     );
   }
 
+  getEntityNameValue(name: string, index?: number) {
+    return this.getEntityName(name, index).getChildElementBySelector(
+      EntitySelectors.entityNameValue,
+    );
+  }
+
   getEntityCheckbox(name: string, index?: number) {
     return this.getEntityByName(name, index).getByRole('checkbox');
   }

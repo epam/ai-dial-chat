@@ -669,6 +669,7 @@ export enum ChatI18nKeys {
   BelowYouCanSeeActionSelection = 'Below you can see your action selection.',
   Yes = 'Yes',
   No = 'No',
+  ConfirmHeader = 'Confirm action',
   FormSchemaMissing = 'Form schema is missing',
   AgentIsNotAvailable = 'Agent is not available',
   ApplyChanges = 'Apply changes',
