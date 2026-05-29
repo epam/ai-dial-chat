@@ -12,7 +12,11 @@ import {
   isReplayConversation,
   sortByDateAndName,
 } from '@/src/utils/app/conversation';
-import { constructPath, isAllowedMimeType } from '@/src/utils/app/file';
+import {
+  constructPath,
+  isAllowedMimeType,
+  withoutFileManagerPlaceholderByName,
+} from '@/src/utils/app/file';
 import {
   getChildAndCurrentFoldersIdsById,
   getConversationAttachmentWithPath,
@@ -72,8 +76,9 @@ import uniqBy from 'lodash-es/uniqBy';
 
 const rootSelector = (state: RootState) => state.conversations;
 
-const selectConversations = (state: RootState): ConversationInfo[] =>
-  rootSelector(state).conversations;
+const selectConversations = createSelector([rootSelector], (state) =>
+  withoutFileManagerPlaceholderByName(state.conversations),
+);
 
 const selectNotExternalConversations = createSelector(
   [selectConversations],

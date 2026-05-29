@@ -635,19 +635,19 @@ export const ChatInputMessage = Inversify.register(
 
     const paddingLeftClass = canAttach
       ? isOverlay
-        ? 'pl-11'
-        : 'pl-12'
+        ? 'ps-11'
+        : 'ps-12'
       : isOverlay
-        ? 'pl-3'
-        : 'pl-4';
+        ? 'ps-3'
+        : 'ps-4';
 
     const paddingRightClass = canRecordAudio
       ? isOverlay
-        ? 'pr-[60px]'
-        : 'pr-[72px]'
+        ? 'pe-[60px]'
+        : 'pe-[72px]'
       : isOverlay
-        ? 'pr-9'
-        : 'pr-10';
+        ? 'pe-9'
+        : 'pe-10';
 
     return (
       <div
@@ -723,8 +723,8 @@ export const ChatInputMessage = Inversify.register(
                 className={classNames(
                   'absolute cursor-pointer rounded disabled:cursor-not-allowed',
                   isOverlay
-                    ? 'bottom-2 left-3'
-                    : 'bottom-2.5 left-4 md:bottom-3',
+                    ? 'bottom-2 start-3'
+                    : 'bottom-2.5 start-4 md:bottom-3',
                 )}
               >
                 <AttachButton
@@ -739,7 +739,7 @@ export const ChatInputMessage = Inversify.register(
                 selectedFolders.length > 0) && (
                 <div
                   className={classNames(
-                    'mb-2.5 flex max-h-[100px] min-h-0 min-w-0 flex-col gap-1 overflow-y-auto pl-12 md:grid md:auto-rows-min md:[grid-template-columns:repeat(3,minmax(0,1fr))]',
+                    'mb-2.5 flex max-h-[100px] min-h-0 min-w-0 flex-col gap-1 overflow-y-auto ps-12 md:grid md:auto-rows-min md:[grid-template-columns:repeat(3,minmax(0,1fr))]',
                     canRecordAudio ? paddingRightClass : 'pr-12',
                   )}
                   data-qa="attachment-container"
@@ -759,7 +759,7 @@ export const ChatInputMessage = Inversify.register(
 
           {showScrollDownButton && (
             <ScrollDownButton
-              className="-top-16 right-0 md:-top-20"
+              className="-top-16 end-0 md:-top-20"
               onScrollDownClick={onScrollDownClick}
             />
           )}
