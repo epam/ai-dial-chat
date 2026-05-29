@@ -244,6 +244,7 @@ export const Combobox = <T,>({
                     itemRow?.({ item, truncate: false }) ?? getItemLabel(item)
                   }
                   triggerClassName="w-full"
+                  hideTooltip={isMobile()}
                 >
                   {itemRow?.({ item }) ?? getItemLabel(item)}
                 </Tooltip>
