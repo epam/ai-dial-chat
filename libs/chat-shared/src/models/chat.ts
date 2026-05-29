@@ -99,11 +99,13 @@ export interface StreamChunkDelta {
   role?: string;
   /**
    * Partial custom content carried in this chunk.
-   * Currently only `form_schema` is propagated; the field may be absent on most chunks.
+   * `form_schema` and `attachments` may arrive in separate chunks or together in the final chunk.
    */
   custom_content?: {
     /** JSON Schema for a button/form widget; arrives once the model decides to embed a form. */
     form_schema?: DeploymentConfigurationSchema;
+    /** AI-generated files produced by the model; typically present in the final chunk. */
+    attachments?: MessageAttachment[];
   };
 }
 
