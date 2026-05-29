@@ -47,6 +47,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ConversationsSelectors,
   FilesSelectors,
+  ModelsSelectors,
   PublicationSelectors,
   SettingsSelectors,
   UISelectors,
@@ -569,7 +570,6 @@ interface AssistantMessageProps {
   isLikesEnabled: boolean;
   isEditing: boolean;
   withButtons?: boolean;
-  editDisabled?: boolean;
   onLike?: onLikeMessageHandler;
   onRegenerate?: () => void;
   onToggleEditing: (value: boolean) => void;
@@ -593,7 +593,6 @@ export const AssistantMessage = memo(function AssistantMessage({
   onLike,
   onRegenerate,
   onToggleEditing,
-  editDisabled,
   onEdit,
 }: AssistantMessageProps) {
   const { t } = useTranslation(Translation.Chat);
@@ -620,6 +619,16 @@ export const AssistantMessage = memo(function AssistantMessage({
   const isPublishingConversation = useMemo(
     () => !!resourcesToReview.find((r) => r.reviewUrl === conversation.id),
     [conversation.id, resourcesToReview],
+  );
+
+  const installedModelIds = useAppSelector(
+    ModelsSelectors.selectInstalledModelIds,
+  );
+  const selectedConversations = useAppSelector(
+    ConversationsSelectors.selectSelectedConversations,
+  );
+  const areModelsInstalled = selectedConversations.every((conv) =>
+    installedModelIds.has(conv.model.id),
   );
 
   const [throttledContent, setThrottledContent] = useState(message.content);
@@ -733,7 +742,7 @@ export const AssistantMessage = memo(function AssistantMessage({
               (isAllLastMessageEnabled ||
                 (isLastMessage && isEditLastMessageEnabled)) &&
               (!isReadOnlyConversation || isPublishingConversation) &&
-              !editDisabled
+              !areModelsInstalled
                 ? handleToggleEditing
                 : undefined
             }
