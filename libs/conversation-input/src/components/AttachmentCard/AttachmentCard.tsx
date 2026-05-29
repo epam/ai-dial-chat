@@ -153,7 +153,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             'absolute right-1 top-1 flex gap-1 transition-opacity',
             actionsVisible
               ? 'opacity-100'
-              : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100',
+              : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 mobile:opacity-100',
           )}
         >
           {isError && onRetry && (
