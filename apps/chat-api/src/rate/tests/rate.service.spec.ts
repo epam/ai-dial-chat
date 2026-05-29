@@ -1,5 +1,8 @@
 import { MessageRating } from '@epam/ai-dial-chat-shared';
-import { ServiceUnavailableException } from '@nestjs/common';
+import {
+  BadGatewayException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
@@ -128,12 +131,12 @@ describe('RateService', () => {
       );
     });
 
-    it('throws ServiceUnavailableException on DIAL Core server error', async () => {
+    it('throws BadGatewayException on DIAL Core server error', async () => {
       fetchSpy.mockResolvedValue({ ok: false, status: 500 } as Response);
       const service = makeService();
 
       await expect(service.rateMessage(validDto, ACCESS_TOKEN)).rejects.toThrow(
-        ServiceUnavailableException,
+        BadGatewayException,
       );
     });
   });

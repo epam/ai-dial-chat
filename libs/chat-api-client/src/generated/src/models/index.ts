@@ -935,6 +935,19 @@ export interface DialModelPricingDto {
 /**
  *
  * @export
+ * @interface FileUploadResponseDto
+ */
+export interface FileUploadResponseDto {
+  /**
+   * DIAL Core URL of the uploaded file
+   * @type {string}
+   * @memberof FileUploadResponseDto
+   */
+  url: string;
+}
+/**
+ *
+ * @export
  * @interface MessageDto
  */
 export interface MessageDto {

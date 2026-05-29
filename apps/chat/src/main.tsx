@@ -6,6 +6,7 @@ import App from './app/app';
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import { UserProvider } from './context/auth/UserContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
+import { SourcesSidebarProvider } from './context/SourcesSidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './i18n/config';
 import './styles.scss';
@@ -22,19 +23,21 @@ root.render(
       <UserProvider>
         <ThemeProvider>
           <DeploymentsProvider>
-            <Suspense fallback={null}>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route
-                  path="*"
-                  element={
-                    <RequireAuth>
-                      <App />
-                    </RequireAuth>
-                  }
-                />
-              </Routes>
-            </Suspense>
+            <SourcesSidebarProvider>
+              <Suspense fallback={null}>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route
+                    path="*"
+                    element={
+                      <RequireAuth>
+                        <App />
+                      </RequireAuth>
+                    }
+                  />
+                </Routes>
+              </Suspense>
+            </SourcesSidebarProvider>
           </DeploymentsProvider>
         </ThemeProvider>
       </UserProvider>

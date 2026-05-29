@@ -15,7 +15,6 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
 import {
-  CatalogI18nKeys,
   ChatI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';

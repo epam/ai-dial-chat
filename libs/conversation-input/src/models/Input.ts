@@ -90,6 +90,12 @@ export interface InputProps {
   pasteTextThreshold?: number;
   /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
   deployments?: DeploymentItemDto[];
+  /**
+   * Converts a raw `DeploymentItemDto.iconUrl` value to a URL usable in an `<img src>`.
+   * When omitted, the default resolver handles absolute URLs, root-relative paths, and `files/` IDs.
+   * Pass a custom resolver (e.g. from the host app) to also support theme-relative icon names.
+   */
+  resolveDeploymentIconUrl?: (iconUrl: string) => string | undefined;
   /** ID of the currently selected deployment. When `null` or `undefined` and `deployments` is defined, the send button is disabled. */
   selectedDeploymentId?: string | null;
   /** Called when the user selects a different deployment from the dropdown. Receives the selected item's `id`. */

@@ -22,6 +22,7 @@ import {
   ActionsI18nKeys,
   ChatI18nKeys,
 } from '../../constants/translation-keys';
+import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
 import { streamCompletion } from '../../server-api/chat-stream.api';
 import {
   deleteConversation as apiDeleteConversation,
@@ -45,6 +46,13 @@ export const ConversationPage: FC = () => {
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { handleClose: handleCloseSourcesSidebar, setMessages } =
+    useSourcesSidebar();
+
+  useEffect(() => {
+    setMessages(conversation?.messages ?? []);
+    return () => handleCloseSourcesSidebar();
+  }, [handleCloseSourcesSidebar, conversation?.messages, setMessages]);
 
   const startStream = useCallback(
     (
@@ -183,7 +191,7 @@ export const ConversationPage: FC = () => {
         const next = {
           ...prev,
           messages: prev.messages.map((m, i) =>
-            i === idx ? { ...m, content: '' } : m,
+            i === idx ? { ...m, content: '', custom_content: undefined } : m,
           ),
         };
         conversationRef.current = next;

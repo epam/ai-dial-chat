@@ -72,6 +72,12 @@ Re-declaring the theme inline per lib would duplicate ~150 lines of tokens and i
 
 The `require('../../tailwind.config.js')` import crosses the Nx project boundary into the workspace root — exactly the kind of import the `@nx/enforce-module-boundaries` rule normally rejects. We do **not** punch a per-path `allow` hole for it. Instead, the rule is scoped in `eslint.config.mjs` to source files only (`**/src/**/*.{ts,tsx,js,jsx,…}`). Project-root build configs (`tailwind.config.js`, `vite.config.ts`, `eslint.config.mjs`) are workspace-level tooling, not application source code, so the boundary rule does not police them — which matches what that rule was designed to enforce. If you add a new lib that ships Tailwind classes, just author its `tailwind.config.js` with the same preset; no eslint changes are needed.
 
+This tooling exception does not weaken source-code isolation. Hand-authored files under `libs/*/src`
+must still avoid host-owned integration knowledge (API/server-api/generated-client/auth/session/env/
+feature flags/routing/storage/analytics/telemetry/SDKs/platform bridges/etc.) and receive app
+behavior through props, callbacks, or resolved values. `libs/chat-api-client/src/generated` is the
+generated OpenAPI-client exception.
+
 ## Mobile-first authoring checklist
 
 When implementing or modifying a component:

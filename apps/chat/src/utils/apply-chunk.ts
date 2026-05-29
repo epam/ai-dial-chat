@@ -3,11 +3,15 @@ import type { Message, StreamChunk } from '@epam/ai-dial-chat-shared';
 /**
  * Applies a single SSE stream chunk to the message list.
  *
- * Extracts the text delta and optional `form_schema` from the chunk and
- * merges them into the assistant message identified by `assistantMessageId`.
+ * Extracts the text delta, optional `form_schema`, and optional `attachments`
+ * from the chunk and merges them into the assistant message identified by
+ * `assistantMessageId`.
+ *
+ * Attachments are accumulated: each chunk's attachments are appended to the
+ * existing array rather than replacing it.
  *
  * @returns Updated message array, or `null` when the chunk carries no
- *   actionable data (empty content and no form_schema).
+ *   actionable data (empty content, no form_schema, and no attachments).
  */
 export const applyChunkToMessages = (
   messages: Message[],
@@ -17,18 +21,28 @@ export const applyChunkToMessages = (
   const delta = chunk.choices[0]?.delta;
   const content = delta?.content ?? '';
   const formSchema = delta?.custom_content?.form_schema;
+  const attachments = delta?.custom_content?.attachments;
 
-  if (!content && !formSchema) return null;
+  if (!content && !formSchema && !attachments?.length) return null;
 
   return messages.map((message) => {
     if (message.id !== assistantMessageId) return message;
+
+    const hasCustomContentUpdate = formSchema || attachments?.length;
+
     return {
       ...message,
       content: content ? message.content + content : message.content,
-      ...(formSchema && {
+      ...(hasCustomContentUpdate && {
         custom_content: {
           ...message.custom_content,
-          form_schema: formSchema,
+          ...(formSchema && { form_schema: formSchema }),
+          ...(attachments?.length && {
+            attachments: [
+              ...(message.custom_content?.attachments ?? []),
+              ...attachments,
+            ],
+          }),
         },
       }),
     };
