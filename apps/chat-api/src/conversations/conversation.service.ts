@@ -188,6 +188,15 @@ export class ConversationService extends AppService {
       bucket,
     );
 
+    console.log(
+      '[DEBUG] stored msgs:',
+      conversation.messages.map((m) => ({
+        role: m.role,
+        fv: m.custom_content?.form_value ?? null,
+        fs: !!m.custom_content?.form_schema,
+      })),
+    );
+
     this.logger.log(
       `[streamCompletion] model from request: "${model}", conversation.model.id: "${conversation.model?.id}", assistantModelId: "${conversation.assistantModelId}"`,
     );
@@ -197,10 +206,15 @@ export class ConversationService extends AppService {
       role: MessageRole.User,
       content: message,
       timestamp: new Date().toISOString(),
-      ...(customContent?.attachments && {
-        custom_content: { attachments: customContent.attachments },
-      }),
+      ...(customContent &&
+        Object.keys(customContent).length > 0 && {
+          custom_content: {
+            attachments: customContent.attachments,
+            form_value: customContent.form_value,
+          },
+        }),
     };
+    console.log(userMessage, 'userMessage');
 
     // If the conversation already ends with a user turn (e.g. first-message auto-stream),
     // don't append again — the message is already in the persisted history.
@@ -218,12 +232,17 @@ export class ConversationService extends AppService {
       const validAttachments = (m.custom_content?.attachments ?? []).filter(
         (a) => a.data ?? a.url,
       );
+      const content = Object.fromEntries(
+        Object.entries({
+          ...m.custom_content,
+          attachments: validAttachments.length ? validAttachments : undefined,
+          configuration_value: undefined, // configuration_value is sent as top-level custom_fields.configuration, not inside messages[].custom_content
+        }).filter(([, value]) => value != null),
+      );
       return {
         role: m.role,
         content: m.content,
-        ...(validAttachments.length
-          ? { custom_content: { attachments: validAttachments } }
-          : {}),
+        ...(Object.keys(content).length > 0 ? { custom_content: content } : {}),
       };
     });
 
@@ -231,6 +250,32 @@ export class ConversationService extends AppService {
       `[streamCompletion] POST /openai/deployments/${model}/chat/completions`,
     );
 
+    console.log(
+      '[DEBUG] customContent from request:',
+      JSON.stringify(customContent, null, 2),
+    );
+    console.log(
+      '[DEBUG] stored conversation messages count:',
+      conversation.messages.length,
+      '| last role:',
+      lastMessage?.role,
+      '| last has form_value:',
+      !!lastMessage?.custom_content?.form_value,
+    );
+    console.log(
+      '[DEBUG] messages summary:',
+      JSON.stringify(
+        messages.map((m, i) => ({
+          i,
+          role: m.role,
+          content_preview: String(m.content).slice(0, 60),
+          form_value: m.custom_content?.form_value ?? null,
+          has_form_schema: !!m.custom_content?.form_schema,
+        })),
+        null,
+        2,
+      ),
+    );
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
         body: {

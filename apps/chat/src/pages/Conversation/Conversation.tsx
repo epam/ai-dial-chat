@@ -312,7 +312,7 @@ export const ConversationPage: FC = () => {
         : undefined;
 
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(text);
+        createMessagePair(text, undefined, configurationValue);
 
       const conversationPath = conversationId.substring(
         conversationId.indexOf('/') + 1,

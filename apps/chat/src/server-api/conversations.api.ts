@@ -9,18 +9,20 @@ export const createConversation = (
   deploymentId: string | null,
   attachments?: AttachmentDto[],
   configurationValue?: Record<string, unknown>,
+  formValue?: Record<string, unknown>,
 ) =>
   conversationsApi.createConversation({
     createConversationDto: {
       firstMessage,
       deploymentId,
-      ...(attachments?.length || configurationValue
+      ...(attachments?.length || configurationValue || formValue
         ? {
             custom_content: {
               ...(attachments?.length ? { attachments } : {}),
               ...(configurationValue
                 ? { configuration_value: configurationValue }
                 : {}),
+              ...(formValue ? { form_value: formValue } : {}),
             },
           }
         : {}),

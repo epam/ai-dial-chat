@@ -100,6 +100,7 @@ const ConversationRoute: FC = () => {
           text,
           selectedItemId,
           [],
+          undefined,
           configurationValue,
         ).then((conversation) => {
           navigate(getConversationRoute(conversation.id));
