@@ -7,6 +7,7 @@ import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js';
+import { MDMessageViewer } from '../Markdown/MDMessageViewer.js';
 import { MessageActions } from '../Message/MessageActions.js';
 import styles from './MessageBubble.module.scss';
 
@@ -50,7 +51,9 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             bubbleClassName,
           )}
         >
-          <p className={mergeClasses(textClass, 'text-left')}>{text}</p>
+          <div className={mergeClasses(textClass, 'text-left')}>
+            <MDMessageViewer content={text} />
+          </div>
           <AttachmentTray attachments={attachments ?? []} />
           <MessageActions
             {...actions}
