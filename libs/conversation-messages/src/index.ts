@@ -1,3 +1,8 @@
+export {
+  MarkdownRenderer,
+  defaultMarkdownComponents,
+} from './components/Markdown/MarkdownRenderer.js';
+export type { MarkdownRendererClassNames } from './components/Markdown/MarkdownRenderer.js';
 export { MessageBubble } from './components/MessageBubble/MessageBubble.js';
 export { UserMessageBubble } from './components/MessageBubble/UserMessageBubble.js';
 export { AssistantMessageBubble } from './components/MessageBubble/AssistantMessageBubble.js';

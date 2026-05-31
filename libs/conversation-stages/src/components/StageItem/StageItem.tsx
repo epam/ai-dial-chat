@@ -4,6 +4,7 @@ import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import { StageIcon } from '../StageIcon/StageIcon.js';
+import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent.js';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 
 /** A single stage row — plain when no content, collapsible when content is present. */
@@ -54,14 +55,11 @@ export const StageItem: FC<{
         )}
       >
         <div className="overflow-hidden">
-          <div
-            className={mergeClasses(
-              'mt-3 pl-7',
-              styles.stageContent,
-              typographyClassName,
-            )}
-          >
-            {stage.content}
+          <div className="mt-3 flex flex-col gap-3 pl-7">
+            <StageMarkdownContent
+              content={stage.content}
+              typographyClassName={typographyClassName}
+            />
           </div>
         </div>
       </div>
