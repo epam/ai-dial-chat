@@ -33,26 +33,26 @@ AI DIAL Chat is a comprehensive chat application platform featuring:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                   AI DIAL Chat                      │
+│                   AI DIAL Chat                  │
 ├─────────────────────────────────────────────────┤
 │                                                 │
-│  ┌─────────────────┐      ┌─────────────────┐ │
-│  │   React App     │◄────►│   NestJS API    │ │
-│  │   (Port 4207)   │      │   (Port 3005)   │ │
-│  │                 │      │                 │ │
-│  │  - Vite         │      │  - REST API     │ │
-│  │  - Tailwind     │      │  - Swagger      │ │
-│  │  - i18next      │      │  - Static Files │ │
-│  │  - React Router │      │  - DIAL Core    │ │
-│  └─────────────────┘      └─────────────────┘ │
-│         │                         │            │
-│         └─────────┬───────────────┘            │
-│                   │                            │
-│          ┌────────▼────────┐                   │
-│          │  Shared Libs    │                   │
-│          │  - UI Components│                   │
-│          │  - Utilities    │                   │
-│          └─────────────────┘                   │
+│  ┌─────────────────┐      ┌─────────────────┐   │
+│  │   React App     │◄────►│   NestJS API    │   │
+│  │   (Port 4207)   │      │   (Port 3005)   │   │
+│  │                 │      │                 │   │
+│  │  - Vite         │      │  - REST API     │   │
+│  │  - Tailwind     │      │  - Swagger      │   │
+│  │  - i18next      │      │  - Static Files │   │
+│  │  - React Router │      │  - DIAL Core    │   │
+│  └─────────────────┘      └─────────────────┘   │
+│         │                         │             │
+│         └─────────┬───────────────┘             │
+│                   │                             │
+│          ┌────────▼────────┐                    │
+│          │  Shared Libs    │                    │
+│          │  - UI Components│                    │
+│          │  - Utilities    │                    │
+│          └─────────────────┘                    │
 │                                                 │
 └─────────────────────────────────────────────────┘
 ```
