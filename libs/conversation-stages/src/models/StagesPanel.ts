@@ -33,4 +33,6 @@ export interface StagesPanelProps {
   colors?: StagesPanelColors;
   /** Typography class applied to the stage content block. Defaults to `'dial-small-text'`. */
   typographyClassName?: string;
+  /** Accessible label for the copy button on each stage's content. Defaults to `'Copy'`. */
+  copyAriaLabel?: string;
 }

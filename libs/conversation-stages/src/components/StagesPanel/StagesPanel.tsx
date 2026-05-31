@@ -14,6 +14,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   className,
   colors,
   typographyClassName = 'dial-small-text',
+  copyAriaLabel,
 }) => {
   const cssVars = buildCssVars({
     '--cs-bg': colors?.background,
@@ -46,6 +47,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
               stage={stage}
               isLive={lastRunningStageIndex === index}
               typographyClassName={typographyClassName}
+              copyAriaLabel={copyAriaLabel}
             />
           </li>
         ))}

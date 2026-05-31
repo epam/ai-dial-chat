@@ -12,7 +12,8 @@ export const StageItem: FC<{
   stage: Stage;
   isLive: boolean;
   typographyClassName: string;
-}> = ({ stage, isLive, typographyClassName }) => {
+  copyAriaLabel?: string;
+}> = ({ stage, isLive, typographyClassName, copyAriaLabel }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const header = (
@@ -59,6 +60,7 @@ export const StageItem: FC<{
             <StageMarkdownContent
               content={stage.content}
               typographyClassName={typographyClassName}
+              copyAriaLabel={copyAriaLabel}
             />
           </div>
         </div>
