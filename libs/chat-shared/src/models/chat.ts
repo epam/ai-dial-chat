@@ -112,6 +112,8 @@ export interface Stage {
   name: string;
   /** `null` while the stage is running; a `StageStatus` value when it has settled. */
   status: StageStatus | null;
+  /** Additional text content for this stage, accumulated from streaming chunks. */
+  content?: string;
 }
 
 /** Incremental content delta inside a streaming SSE chunk. */

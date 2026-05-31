@@ -9,6 +9,8 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
         ...result[idx],
         ...stage,
         name: (result[idx].name ?? '') + (stage.name ?? ''),
+        content:
+          (result[idx].content ?? '') + (stage.content ?? '') || undefined,
       };
     } else {
       result.push(stage);

@@ -31,4 +31,6 @@ export interface StagesPanelProps {
   className?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: StagesPanelColors;
+  /** Typography class applied to the stage content block. Defaults to `'dial-small-text'`. */
+  typographyClassName?: string;
 }
