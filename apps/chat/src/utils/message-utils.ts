@@ -21,5 +21,4 @@ export const isMessageStreaming = (
  */
 export const messageHasStages = (message: Message): boolean =>
   message.role === MessageRole.Assistant &&
-  message.stages != null &&
-  message.stages.length > 0;
+  (message.custom_content?.stages?.length ?? 0) > 0;

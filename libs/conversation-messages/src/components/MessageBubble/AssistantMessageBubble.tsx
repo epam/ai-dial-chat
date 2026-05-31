@@ -20,6 +20,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   actions,
   hasAlwaysVisibleActions,
   attachments,
+  afterContent,
   starters,
   onSelectStarter,
   startersAriaLabel = 'Quick reply buttons',
@@ -55,6 +56,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             <MDMessageViewer content={text} />
           </div>
           <AttachmentTray attachments={attachments ?? []} />
+          {afterContent}
           <MessageActions
             {...actions}
             isAlwaysVisible={hasAlwaysVisibleActions}

@@ -27,21 +27,6 @@ export interface StagesPanelProps {
   stages: Stage[];
   /** When `true` the last stage with `status: null` shows a live spinner. */
   isStreaming: boolean;
-  /**
-   * Whether the panel is expanded on first render.
-   * @default true
-   */
-  defaultOpen?: boolean;
-  /**
-   * Label shown in the panel header row.
-   * @default "Steps"
-   */
-  headerLabel?: string;
-  /**
-   * `aria-label` for the toggle button.
-   * @default "Toggle steps panel"
-   */
-  toggleAriaLabel?: string;
   /** Extra class name(s) merged onto the outer wrapper. */
   className?: string;
   /** Color overrides applied as CSS custom properties. */

@@ -23,7 +23,6 @@ import {
   ActionsI18nKeys,
   ChatI18nKeys,
   DeploymentsI18nKeys,
-  StagesI18nKeys,
 } from '../../constants/translation-keys.js';
 import { useDeployments } from '../../context/DeploymentsContext.js';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
@@ -210,43 +209,41 @@ const ConversationView: FC<Props> = ({
               );
 
               return (
-                <div key={msg.id} className="flex flex-col gap-2">
-                  <MessageBubble
-                    key={msg.id}
-                    role={msg.role}
-                    text={msg.content}
-                    attachments={attachmentDtosToDisplayAttachments(
-                      msg.custom_content?.attachments,
-                    )}
-                    hasAlwaysVisibleActions={!isStreaming}
-                    actions={buildMessageActions(
-                      msg,
-                      {
-                        onDelete: onDeleteMessage,
-                        onRegenerate: onRegenerateMessage,
-                        onRate: onRateMessage,
-                      },
-                      tooltips,
-                      ariaLabels,
-                    )}
-                    className={
-                      msg.role === MessageRole.User
-                        ? 'justify-end'
-                        : 'justify-start'
-                    }
-                    starters={activeStarters}
-                    onSelectStarter={handleSelectStarter}
-                    startersAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
-                  />
-                  {hasStages && (
-                    <StagesPanel
-                      stages={msg.stages ?? []}
-                      isStreaming={isStreaming}
-                      headerLabel={t(StagesI18nKeys.PanelHeader)}
-                      toggleAriaLabel={t(StagesI18nKeys.CollapseAriaLabel)}
-                    />
+                <MessageBubble
+                  key={msg.id}
+                  role={msg.role}
+                  text={msg.content}
+                  attachments={attachmentDtosToDisplayAttachments(
+                    msg.custom_content?.attachments,
                   )}
-                </div>
+                  hasAlwaysVisibleActions={!isStreaming}
+                  actions={buildMessageActions(
+                    msg,
+                    {
+                      onDelete: onDeleteMessage,
+                      onRegenerate: onRegenerateMessage,
+                      onRate: onRateMessage,
+                    },
+                    tooltips,
+                    ariaLabels,
+                  )}
+                  className={
+                    msg.role === MessageRole.User
+                      ? 'justify-end'
+                      : 'justify-start'
+                  }
+                  afterContent={
+                    hasStages ? (
+                      <StagesPanel
+                        stages={msg.custom_content?.stages ?? []}
+                        isStreaming={isStreaming}
+                      />
+                    ) : undefined
+                  }
+                  starters={activeStarters}
+                  onSelectStarter={handleSelectStarter}
+                  startersAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
+                />
               );
             })}
           </div>

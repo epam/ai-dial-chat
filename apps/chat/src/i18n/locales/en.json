@@ -76,12 +76,6 @@
     "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
     "attachmentTray": { "label": "Attached files" }
   },
-  "stages": {
-    "panel": {
-      "header": "Steps",
-      "collapseAriaLabel": "Toggle steps panel"
-    }
-  },
   "sidebar": {
     "base": {
       "toggleOpen": "Open sidebar",

@@ -48,11 +48,6 @@ export enum CatalogI18nKeys {
   ComingSoon = 'catalog.comingSoon',
 }
 
-export enum StagesI18nKeys {
-  PanelHeader = 'stages.panel.header',
-  CollapseAriaLabel = 'stages.panel.collapseAriaLabel',
-}
-
 export enum DeploymentsI18nKeys {
   Empty = 'deployments.empty',
   TypeModel = 'deployments.type.model',

@@ -75,6 +75,8 @@ export interface MessageCustomContent {
    * Keys match the `propertyKey` from the `form_schema` (e.g. `{ button: 3 }`).
    */
   configuration_value?: Record<string, unknown>;
+  /** Accumulated agent execution stages streamed via `custom_content.stages`. */
+  stages?: Stage[];
 }
 
 /** A single message in a conversation. */
@@ -95,10 +97,6 @@ export interface Message {
   custom_content?: MessageCustomContent;
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
-  /** Accumulated agent stages for this message.
-   * Only present on assistant messages that received stage data during streaming.
-   */
-  stages?: Stage[];
   /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
   [key: string]: unknown;
 }

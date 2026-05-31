@@ -1,30 +1,30 @@
-import { mergeClasses, StageStatus } from '@epam/ai-dial-chat-shared';
 import type { Stage } from '@epam/ai-dial-chat-shared';
-import {
-  IconCheck,
-  IconChevronDown,
-  IconChevronRight,
-  IconLoader2,
-  IconX,
-} from '@tabler/icons-react';
-import { CSSProperties, FC, KeyboardEvent, useState } from 'react';
+import { buildCssVars, mergeClasses, StageStatus } from '@epam/ai-dial-chat-shared';
+import { DIAL_ICON_SIZE, DialSpinner } from '@epam/ai-dial-ui-kit';
+import { IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
+import { FC } from 'react';
 import type { StagesPanelProps } from '../../models/StagesPanel.js';
 import styles from './StagesPanel.module.scss';
 
 /** Maps a stage status to the appropriate icon element. */
 const StageIcon: FC<{ status: Stage['status'] }> = ({ status }) => {
-  if (status === null) {
+  if (!status) {
+    return <DialSpinner />;
+  }
+  if (status === StageStatus.Completed) {
     return (
-      <IconLoader2
-        size={14}
-        className={mergeClasses('animate-spin', styles.iconRunning)}
+      <IconCircleCheck
+        size={DIAL_ICON_SIZE.MD}
+        className={styles.iconSecondary}
       />
     );
   }
-  if (status === StageStatus.Completed) {
-    return <IconCheck size={14} className={styles.iconCompleted} />;
-  }
-  return <IconX size={14} className={styles.iconFailed} />;
+  return (
+    <IconAlertCircle
+      size={DIAL_ICON_SIZE.MD}
+      className={styles.iconSecondary}
+    />
+  );
 };
 
 /**
@@ -33,80 +33,40 @@ const StageIcon: FC<{ status: Stage['status'] }> = ({ status }) => {
  */
 export const StagesPanel: FC<StagesPanelProps> = ({
   stages,
-  defaultOpen = true,
-  headerLabel = 'Steps',
-  toggleAriaLabel = 'Toggle steps panel',
   className,
   colors,
 }) => {
-  const [isOpen, setIsOpen] = useState(defaultOpen);
-
-  const cssVars = {
-    ...(colors?.background && { '--cs-bg': colors.background }),
-    ...(colors?.border && { '--cs-border': colors.border }),
-    ...(colors?.text && { '--cs-text': colors.text }),
-    ...(colors?.stageTextColor && { '--cs-stage-text': colors.stageTextColor }),
-    ...(colors?.runningColor && { '--cs-running': colors.runningColor }),
-    ...(colors?.completedColor && { '--cs-completed': colors.completedColor }),
-    ...(colors?.failedColor && { '--cs-failed': colors.failedColor }),
-  } as CSSProperties;
-
-  const handleToggle = () => {
-    setIsOpen((prev) => !prev);
-  };
-
-  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      handleToggle();
-    }
-  };
+  const cssVars = buildCssVars({
+    '--cs-bg': colors?.background,
+    '--cs-border': colors?.border,
+    '--cs-text': colors?.text,
+    '--cs-stage-text': colors?.stageTextColor,
+    '--cs-running': colors?.runningColor,
+    '--cs-completed': colors?.completedColor,
+    '--cs-failed': colors?.failedColor,
+  });
 
   return (
     <div
       style={cssVars}
       className={mergeClasses('w-full', styles.panel, className)}
     >
-      <div
-        role="button"
-        tabIndex={0}
-        aria-expanded={isOpen}
-        aria-label={toggleAriaLabel}
-        className={mergeClasses(
-          'flex cursor-pointer select-none items-center gap-2 px-3 py-2',
-          styles.header,
-        )}
-        onClick={handleToggle}
-        onKeyDown={handleKeyDown}
-      >
-        {isOpen ? (
-          <IconChevronDown size={14} />
-        ) : (
-          <IconChevronRight size={14} />
-        )}
-        <span className="font-medium">{headerLabel}</span>
-        <span className="ml-auto text-xs opacity-60">{stages.length}</span>
-      </div>
-
-      {isOpen && (
-        <ul
-          role="list"
-          className={mergeClasses('border-t px-3 py-2', styles.divider)}
-        >
-          {stages.map((stage) => (
-            <li
-              key={stage.index}
-              role="listitem"
-              className="flex items-center gap-2 py-1"
+      <ul role="list" className="py-2">
+        {stages.map((stage) => (
+          <li
+            key={stage.index}
+            role="listitem"
+            className="flex items-center gap-2 py-1"
+          >
+            <StageIcon status={stage.status} />
+            <span
+              className={mergeClasses('truncate capitalize', styles.stageName)}
             >
-              <StageIcon status={stage.status} />
-              <span className={mergeClasses('truncate', styles.stageName)}>
-                {stage.name}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+              {stage.name || stage.status}
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 };
