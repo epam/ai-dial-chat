@@ -1097,7 +1097,7 @@ const autoValidateSkillEpic: AppEpic = (action$, state$) =>
     ofType(PromptsActions.uploadPromptSuccess.type),
     mergeMap(({ payload }) => {
       const { prompt } = payload;
-      if (!prompt?.id || !prompt?.content) {
+      if (!prompt?.id) {
         return EMPTY;
       }
 
@@ -1112,7 +1112,7 @@ const autoValidateSkillEpic: AppEpic = (action$, state$) =>
         PromptsActions.validateSkill({
           promptId: prompt.id,
           deploymentId: appDetails.id,
-          content: prompt.content,
+          content: prompt.content ?? '',
         }),
       );
     }),
