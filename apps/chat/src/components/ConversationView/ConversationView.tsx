@@ -1,11 +1,12 @@
 import {
   MessageRole,
   type Attachment,
-  type Message as MessageType,
   type MessageRating,
+  type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
+import { StagesPanel } from '@epam/ai-dial-conversation-stages';
 import { DialFabButton } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -26,6 +27,7 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext.js';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
 import { resolveCatalogIconUrl } from '../../utils/icon-path.js';
+import { messageHasStages } from '../../utils/message-utils.js';
 import { buildMessageActions } from './buildMessageActions.js';
 import {
   getMessageStarterProps,
@@ -194,6 +196,7 @@ const ConversationView: FC<Props> = ({
                 messages.length,
                 isAssistantTyping,
               );
+              const hasStages = messageHasStages(msg);
               const {
                 starters: activeStarters,
                 onSelectStarter: handleSelectStarter,
@@ -228,6 +231,14 @@ const ConversationView: FC<Props> = ({
                     msg.role === MessageRole.User
                       ? 'justify-end'
                       : 'justify-start'
+                  }
+                  afterContent={
+                    hasStages ? (
+                      <StagesPanel
+                        stages={msg.custom_content?.stages ?? []}
+                        isStreaming={isStreaming}
+                      />
+                    ) : undefined
                   }
                   starters={activeStarters}
                   onSelectStarter={handleSelectStarter}

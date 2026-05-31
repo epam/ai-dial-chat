@@ -47,6 +47,9 @@
       "path": "../../libs/conversation-input/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/conversation-stages/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/sidebar/tsconfig.lib.json"
     },
     {

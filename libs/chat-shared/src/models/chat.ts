@@ -42,6 +42,14 @@ export enum MessageRating {
   Dislike = -1,
 }
 
+/** Status of a single agent stage. */
+export enum StageStatus {
+  /** The stage completed successfully. */
+  Completed = 'completed',
+  /** The stage encountered an error. */
+  Failed = 'failed',
+}
+
 /** Permitted scalar/array types for a single form field value. */
 export type MessageFormValueType = number | string | boolean | string[];
 
@@ -67,6 +75,8 @@ export interface MessageCustomContent {
    * Keys match the `propertyKey` from the `form_schema` (e.g. `{ button: 3 }`).
    */
   configuration_value?: Record<string, unknown>;
+  /** Accumulated agent execution stages streamed via `custom_content.stages`. */
+  stages?: Stage[];
 }
 
 /** A single message in a conversation. */
@@ -91,6 +101,21 @@ export interface Message {
   [key: string]: unknown;
 }
 
+/**
+ * A single stage entry produced by an agent during a streaming response.
+ * Stages are delivered incrementally via `StreamChunkDelta.custom_content.stages`.
+ */
+export interface Stage {
+  /** Zero-based ordering key; used to merge/upsert incoming stage updates. */
+  index: number;
+  /** Human-readable label for this stage (e.g. `"Lookup available terms"`). */
+  name: string;
+  /** `null` while the stage is running; a `StageStatus` value when it has settled. */
+  status: StageStatus | null;
+  /** Additional text content for this stage, accumulated from streaming chunks. */
+  content?: string;
+}
+
 /** Incremental content delta inside a streaming SSE chunk. */
 export interface StreamChunkDelta {
   /** Partial text token appended to the assistant message. */
@@ -99,9 +124,11 @@ export interface StreamChunkDelta {
   role?: string;
   /**
    * Partial custom content carried in this chunk.
-   * `form_schema` and `attachments` may arrive in separate chunks or together in the final chunk.
+   * `form_schema`, `attachments`, and `stages` may arrive in separate chunks or together in the final chunk.
    */
   custom_content?: {
+    /** Incremental stage updates; merge by `index` into the accumulating stage list. */
+    stages?: Stage[];
     /** JSON Schema for a button/form widget; arrives once the model decides to embed a form. */
     form_schema?: DeploymentConfigurationSchema;
     /** AI-generated files produced by the model; typically present in the final chunk. */

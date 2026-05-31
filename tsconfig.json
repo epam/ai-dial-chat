@@ -23,6 +23,9 @@
     },
     {
       "path": "./libs/sidebar"
+    },
+    {
+      "path": "./libs/conversation-stages"
     }
   ]
 }

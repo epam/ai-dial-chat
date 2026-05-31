@@ -1,6 +1,6 @@
 # Auth Architecture: Stateless BFF with Encrypted Cookie Session
 
-**Project:** Chat 2.0 (React/Vite + NestJS)
+**Project:** AI DIAL Chat (React/Vite + NestJS)
 **Version:** 1.0 | **Date:** 2026-05-14 | **Status:** Implemented
 
 ---

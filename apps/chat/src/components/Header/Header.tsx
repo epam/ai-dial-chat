@@ -3,6 +3,8 @@ import { IconFileDescription, IconMenu2 } from '@tabler/icons-react';
 import { memo } from 'react';
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useMatch } from 'react-router-dom';
+import { ROUTES } from '../../constants/routes.js';
 import {
   NavigationI18nKeys,
   SidebarI18nKeys,
@@ -16,6 +18,7 @@ interface Props {
 
 const Header: FC<Props> = ({ onMenuToggle }) => {
   const { t } = useTranslation();
+  const isConversationRoute = !!useMatch(`${ROUTES.CONVERSATIONS}/*`);
   const { isOpen: isSourcesSidebarOpen, handleOpen: handleOpenSourcesSidebar } =
     useSourcesSidebar();
 
@@ -31,7 +34,7 @@ const Header: FC<Props> = ({ onMenuToggle }) => {
       </div>
       <Logo />
       <div className="flex justify-end pr-2">
-        {!isSourcesSidebarOpen && (
+        {isConversationRoute && !isSourcesSidebarOpen && (
           <DialGhostIconButton
             icon={<IconFileDescription size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
             aria-label={t(SidebarI18nKeys.ToggleOpen)}

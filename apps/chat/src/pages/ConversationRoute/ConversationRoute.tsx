@@ -71,7 +71,7 @@ const ConversationRoute: FC = () => {
       if (isSending || !selectedItemId) return;
       setIsSending(true);
       try {
-        const attachmentDtos = await attachmentsToDtos(attachments);
+        const attachmentDtos = await attachmentsToDtos(attachments || []);
         const conversation = await apiCreateConversation(
           message,
           selectedItemId,
