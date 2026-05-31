@@ -84,6 +84,7 @@ interface ModelsSelectorProps {
   panelClassName?: string;
   indexSeparator?: number;
   showHiddenTagModels?: boolean;
+  hideInlineError?: boolean;
 }
 
 export const ModelsSelector = memo(function ModelsSelector({
@@ -97,6 +98,7 @@ export const ModelsSelector = memo(function ModelsSelector({
   panelClassName,
   indexSeparator,
   showHiddenTagModels,
+  hideInlineError,
 }: ModelsSelectorProps) {
   const modelTypeAgents = useAppSelector((state) =>
     ModelsSelectors.selectModelTypeAgents(state, showHiddenTagModels),
@@ -134,7 +136,7 @@ export const ModelsSelector = memo(function ModelsSelector({
           itemRow={({ item, truncate }) => (
             <ModelSelectRow
               item={item}
-              isNotAllowed={item.id === value && !model}
+              isNotAllowed={!hideInlineError && item.id === value && !model}
               truncate={truncate}
             />
           )}
