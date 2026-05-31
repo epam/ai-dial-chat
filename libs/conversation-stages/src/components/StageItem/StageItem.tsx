@@ -48,11 +48,11 @@ export const StageItem: FC<{ stage: Stage; typographyClassName: string }> = ({
       </button>
       <div
         className={mergeClasses(
-          styles.contentWrapper,
-          isOpen && styles.contentWrapperOpen,
+          'grid overflow-hidden transition-[grid-template-rows] duration-[250ms] ease-in-out',
+          isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
         )}
       >
-        <div className={styles.contentInner}>
+        <div className="overflow-hidden">
           <div
             className={mergeClasses(
               'mt-3 pl-7',

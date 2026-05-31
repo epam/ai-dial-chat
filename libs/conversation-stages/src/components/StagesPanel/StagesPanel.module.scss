@@ -12,21 +12,6 @@
   color: var(--text-secondary, #9fa6bd);
 }
 
-.contentWrapper {
-  display: grid;
-  grid-template-rows: 0fr;
-  overflow: hidden;
-  transition: grid-template-rows 0.25s ease;
-}
-
-.contentWrapperOpen {
-  grid-template-rows: 1fr;
-}
-
-.contentInner {
-  overflow: hidden;
-}
-
 .stageContent {
   color: var(--cs-stage-text, var(--text-secondary, #9fa6bd));
 }
