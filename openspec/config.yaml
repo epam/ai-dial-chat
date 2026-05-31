@@ -1,7 +1,7 @@
 schema: spec-driven
 
 context: |
-  # Chat 2.0
+  # AI DIAL Chat
 
   ## Tech Stack
   - Monorepo: Nx 22

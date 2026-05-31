@@ -3,7 +3,7 @@
 Before this change, the `ConversationInput` allowed users to pick files and see them in the `AttachmentTray`, but the files were never forwarded to the backend — `onSend` only passed the text string. Message bubbles had no concept of attached files at all. This change wires the full end-to-end path: client encoding → API DTO → DIAL Core forwarding → response rendering.
 
 Current constraints:
-- DIAL Core accepts attachments as inline base64 (`data` field) or by URL (`url` field); the Chat 2.0 backend acts as a thin proxy — it does not store files itself
+- DIAL Core accepts attachments as inline base64 (`data` field) or by URL (`url` field); the AI DIAL Chat backend acts as a thin proxy — it does not store files itself
 - The `libs/conversation-input` library must not call `fetch` directly; encoding is its own concern and the result is handed to the consuming app
 - `libs/chat-shared` is types-only — no logic, no imports from other libs
 
@@ -37,7 +37,7 @@ Current constraints:
 
 **Decision:** All user-attached files are serialised to base64 and sent as `DialAttachment.data`. The `url` path is defined in the DTO but not used on the send side.
 
-**Why:** Chat 2.0 has no file-upload endpoint. Using `data` requires no extra round-trip and matches DIAL Core's capability for small payloads. The `url` path can be enabled later (e.g. for a future `/attachments` upload endpoint) without changing the receiving contract.
+**Why:** AI DIAL Chat has no file-upload endpoint. Using `data` requires no extra round-trip and matches DIAL Core's capability for small payloads. The `url` path can be enabled later (e.g. for a future `/attachments` upload endpoint) without changing the receiving contract.
 
 **Risk:** Large files increase request body size. Mitigation: file size limits should be enforced in a later spec; for now the constraint is acknowledged and documented.
 

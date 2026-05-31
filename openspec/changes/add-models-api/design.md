@@ -1,6 +1,6 @@
 ## Context
 
-The Chat 2.0 BFF (`apps/chat-api`) already proxies DIAL Core for conversations and themes. The session cookie architecture (encrypted JWT, `SessionGuard`) prevents direct browser-to-DIAL communication. We need to extend the same pattern to model listing so the SPA can discover available deployments without ever seeing a DIAL API key.
+The AI DIAL Chat BFF (`apps/chat-api`) already proxies DIAL Core for conversations and themes. The session cookie architecture (encrypted JWT, `SessionGuard`) prevents direct browser-to-DIAL communication. We need to extend the same pattern to model listing so the SPA can discover available deployments without ever seeing a DIAL API key.
 
 DIAL Core exposes two Deployment Listing endpoints:
 

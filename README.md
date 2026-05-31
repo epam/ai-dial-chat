@@ -1,4 +1,4 @@
-# Chat 2.0
+# AI DIAL Chat
 
 A modern full-stack chat application built with Nx monorepo, featuring a React frontend and NestJS backend with DIAL Core integration.
 
@@ -21,7 +21,7 @@ A modern full-stack chat application built with Nx monorepo, featuring a React f
 
 ## Overview
 
-Chat 2.0 is a comprehensive chat application platform featuring:
+AI DIAL Chat is a comprehensive chat application platform featuring:
 
 - **Frontend**: Modern React application with TypeScript, Vite, and Tailwind CSS
 - **Backend**: NestJS REST API with Swagger documentation
@@ -33,7 +33,7 @@ Chat 2.0 is a comprehensive chat application platform featuring:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                   Chat 2.0                      │
+│                   AI DIAL Chat                      │
 ├─────────────────────────────────────────────────┤
 │                                                 │
 │  ┌─────────────────┐      ┌─────────────────┐ │
