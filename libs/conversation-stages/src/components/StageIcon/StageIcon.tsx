@@ -6,8 +6,19 @@ import { FC } from 'react';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 
 /** Maps a stage status to the appropriate icon element. */
-export const StageIcon: FC<{ status: Stage['status'] }> = ({ status }) => {
+export const StageIcon: FC<{ status: Stage['status']; isLive: boolean }> = ({
+  status,
+  isLive,
+}) => {
   if (!status) {
+    if (!isLive) {
+      return (
+        <IconAlertCircle
+          size={DIAL_ICON_SIZE.MD}
+          className={styles.iconSecondary}
+        />
+      );
+    }
     return <DialSpinner />;
   }
   if (status === StageStatus.Completed) {

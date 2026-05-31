@@ -7,15 +7,16 @@ import { StageIcon } from '../StageIcon/StageIcon.js';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 
 /** A single stage row — plain when no content, collapsible when content is present. */
-export const StageItem: FC<{ stage: Stage; typographyClassName: string }> = ({
-  stage,
-  typographyClassName,
-}) => {
+export const StageItem: FC<{
+  stage: Stage;
+  isLive: boolean;
+  typographyClassName: string;
+}> = ({ stage, isLive, typographyClassName }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const header = (
     <>
-      <StageIcon status={stage.status} />
+      <StageIcon status={stage.status} isLive={isLive} />
       <span className={mergeClasses('truncate capitalize', styles.stageName)}>
         {stage.name || stage.status}
       </span>

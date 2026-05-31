@@ -1,7 +1,12 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { StagesPanel } from './StagesPanel.js';
+
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: { MD: 16 },
+  DialSpinner: () => <span data-testid="stage-spinner" />,
+}));
 
 const stageRunning = { index: 0, name: 'Running step', status: null };
 const stageCompleted = {
@@ -20,6 +25,7 @@ const stageWithContent = {
   status: StageStatus.Completed,
   content: 'Detailed stage output',
 };
+const stageRunningSecond = { index: 4, name: 'Running step 2', status: null };
 
 describe('StagesPanel', () => {
   it('renders all stage rows', () => {
@@ -99,5 +105,27 @@ describe('StagesPanel', () => {
 
     expect(screen.queryByRole('button')).toBeNull();
     expect(screen.getByText('Running step')).not.toBeNull();
+  });
+
+  it('does not show spinner for null-status stages when not streaming', () => {
+    render(
+      <StagesPanel
+        stages={[stageRunning, stageRunningSecond]}
+        isStreaming={false}
+      />,
+    );
+
+    expect(screen.queryByTestId('stage-spinner')).toBeNull();
+  });
+
+  it('shows spinner only for the last null-status stage when streaming', () => {
+    render(
+      <StagesPanel
+        stages={[stageRunning, stageCompleted, stageRunningSecond]}
+        isStreaming
+      />,
+    );
+
+    expect(screen.getAllByTestId('stage-spinner')).toHaveLength(1);
   });
 });

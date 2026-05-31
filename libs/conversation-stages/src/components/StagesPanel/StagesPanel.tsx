@@ -10,6 +10,7 @@ import styles from './StagesPanel.module.scss';
  */
 export const StagesPanel: FC<StagesPanelProps> = ({
   stages,
+  isStreaming,
   className,
   colors,
   typographyClassName = 'dial-small-text',
@@ -24,16 +25,26 @@ export const StagesPanel: FC<StagesPanelProps> = ({
     '--cs-failed': colors?.failedColor,
   });
 
+  const lastRunningStageIndex = isStreaming
+    ? stages.reduce<number>((lastIndex, stage, index) => {
+        if (!stage.status) {
+          return index;
+        }
+        return lastIndex;
+      }, -1)
+    : -1;
+
   return (
     <div
       style={cssVars}
       className={mergeClasses('w-full', styles.panel, className)}
     >
       <ul role="list" className="flex flex-col gap-4">
-        {stages.map((stage) => (
+        {stages.map((stage, index) => (
           <li key={stage.index} role="listitem" className={typographyClassName}>
             <StageItem
               stage={stage}
+              isLive={lastRunningStageIndex === index}
               typographyClassName={typographyClassName}
             />
           </li>
