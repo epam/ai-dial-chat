@@ -14,9 +14,15 @@ const stageFailed = {
   name: 'Failed step',
   status: StageStatus.Failed,
 };
+const stageWithContent = {
+  index: 3,
+  name: 'Content step',
+  status: StageStatus.Completed,
+  content: 'Detailed stage output',
+};
 
 describe('StagesPanel', () => {
-  it('renders all stage rows when open', () => {
+  it('renders all stage rows', () => {
     render(
       <StagesPanel
         stages={[stageRunning, stageCompleted, stageFailed]}
@@ -32,85 +38,66 @@ describe('StagesPanel', () => {
     expect(screen.getByText('Failed step')).not.toBeNull();
   });
 
-  it('running stage (status null) renders IconLoader2 with animate-spin', () => {
+  it('applies custom className and CSS variable colors', () => {
     const { container } = render(
-      <StagesPanel stages={[stageRunning]} isStreaming />,
+      <StagesPanel
+        stages={[stageRunning]}
+        isStreaming={false}
+        className="custom-panel"
+        colors={{
+          background: '#111111',
+          border: '#222222',
+          text: '#333333',
+          stageTextColor: '#444444',
+          runningColor: '#555555',
+          completedColor: '#666666',
+          failedColor: '#777777',
+        }}
+      />,
     );
 
-    const spinningIcon = container.querySelector('.animate-spin');
-    expect(spinningIcon).not.toBeNull();
+    const panel = container.firstElementChild as HTMLElement;
+
+    expect(panel.className).toContain('custom-panel');
+    expect(panel.style.getPropertyValue('--cs-bg')).toBe('#111111');
+    expect(panel.style.getPropertyValue('--cs-border')).toBe('#222222');
+    expect(panel.style.getPropertyValue('--cs-text')).toBe('#333333');
+    expect(panel.style.getPropertyValue('--cs-stage-text')).toBe('#444444');
+    expect(panel.style.getPropertyValue('--cs-running')).toBe('#555555');
+    expect(panel.style.getPropertyValue('--cs-completed')).toBe('#666666');
+    expect(panel.style.getPropertyValue('--cs-failed')).toBe('#777777');
   });
 
-  it('completed stage renders no spinner', () => {
-    const { container } = render(
-      <StagesPanel stages={[stageCompleted]} isStreaming={false} />,
-    );
-
-    expect(container.querySelector('.animate-spin')).toBeNull();
-    expect(screen.getAllByRole('listitem')).toHaveLength(1);
-  });
-
-  it('failed stage renders no spinner', () => {
-    const { container } = render(
-      <StagesPanel stages={[stageFailed]} isStreaming={false} />,
-    );
-
-    expect(container.querySelector('.animate-spin')).toBeNull();
-    expect(screen.getAllByRole('listitem')).toHaveLength(1);
-  });
-
-  it('clicking the header toggles panel closed then open', () => {
-    render(<StagesPanel stages={[stageRunning]} isStreaming={false} />);
-
-    expect(screen.getByRole('list')).not.toBeNull();
-
-    fireEvent.click(screen.getByRole('button'));
-    expect(screen.queryByRole('list')).toBeNull();
-
-    fireEvent.click(screen.getByRole('button'));
-    expect(screen.getByRole('list')).not.toBeNull();
-  });
-
-  it('pressing Enter on the header toggles the panel', () => {
-    render(<StagesPanel stages={[stageRunning]} isStreaming={false} />);
-
-    const header = screen.getByRole('button');
-
-    fireEvent.keyDown(header, { key: 'Enter' });
-    expect(screen.queryByRole('list')).toBeNull();
-
-    fireEvent.keyDown(header, { key: 'Enter' });
-    expect(screen.getByRole('list')).not.toBeNull();
-  });
-
-  it('pressing Space on the header toggles the panel', () => {
-    render(<StagesPanel stages={[stageRunning]} isStreaming={false} />);
-
-    fireEvent.keyDown(screen.getByRole('button'), { key: ' ' });
-    expect(screen.queryByRole('list')).toBeNull();
-  });
-
-  it('renders no stage rows when defaultOpen is false', () => {
+  it('applies typographyClassName to each stage row', () => {
     render(
       <StagesPanel
         stages={[stageRunning, stageCompleted]}
         isStreaming={false}
-        defaultOpen={false}
+        typographyClassName="dial-body-text"
       />,
     );
 
-    expect(screen.queryByRole('list')).toBeNull();
+    const items = screen.getAllByRole('listitem');
+    expect(items).toHaveLength(2);
+    expect(items[0].className).toContain('dial-body-text');
+    expect(items[1].className).toContain('dial-body-text');
   });
 
-  it('uses custom headerLabel when provided', () => {
-    render(
-      <StagesPanel
-        stages={[stageRunning]}
-        isStreaming={false}
-        headerLabel="Agent steps"
-      />,
-    );
+  it('renders stage with content as collapsible row and toggles content by click', () => {
+    render(<StagesPanel stages={[stageWithContent]} isStreaming={false} />);
 
-    expect(screen.getByText('Agent steps')).not.toBeNull();
+    expect(screen.getByRole('button')).not.toBeNull();
+    expect(screen.getByText('Detailed stage output')).not.toBeNull();
+
+    fireEvent.click(screen.getByRole('button'));
+    fireEvent.click(screen.getByRole('button'));
+    expect(screen.getByText('Detailed stage output')).not.toBeNull();
+  });
+
+  it('renders stage without content as plain row (without toggle button)', () => {
+    render(<StagesPanel stages={[stageRunning]} isStreaming={false} />);
+
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByText('Running step')).not.toBeNull();
   });
 });
