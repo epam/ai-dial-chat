@@ -50,7 +50,7 @@ const StageCodeBlock: FC<CodeBlockProps> = ({
   return (
     <pre
       className={mergeClasses(
-        'relative max-h-[300px] overflow-auto rounded border p-3 pt-8 text-sm',
+        'relative max-h-[300px] overflow-auto rounded border p-3 text-sm',
         styles.codeBlock,
       )}
     >
