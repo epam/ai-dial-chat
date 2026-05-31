@@ -9,8 +9,8 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { PublicationSelectors, ToolsetSelectors } from '@/src/store/selectors';
 import { useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
