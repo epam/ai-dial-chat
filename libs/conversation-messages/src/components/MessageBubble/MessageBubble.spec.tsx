@@ -92,7 +92,7 @@ describe('MessageBubble', () => {
       <MessageBubble
         text="msg"
         role={MessageRole.Assistant}
-        actions={{ role: MessageRole.Assistant }}
+        actions={{ role: MessageRole.Assistant, onRegenerate: vi.fn() }}
       />,
     );
     expect(
