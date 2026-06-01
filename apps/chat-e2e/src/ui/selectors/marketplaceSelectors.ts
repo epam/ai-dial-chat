@@ -38,6 +38,7 @@ export const MarketplaceEntitySelectors = {
   pencilIcon: '[data-qa="pencil-icon"]',
   arrowIcon: '[data-qa="arrow-icon"]',
   openInNewTab: '[data-qa="external-link"]',
+  credsLabel: '[data-qa="creds-label"]',
 };
 
 export const MarketplaceDetailsModal = {
