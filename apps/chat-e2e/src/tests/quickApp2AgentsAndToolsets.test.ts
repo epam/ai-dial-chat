@@ -250,7 +250,6 @@ dialTest(
     entityEditorGeneralForm,
     quickApp2EditorViewForm,
     agentAndToolsetSelectModal,
-    marketplaceEntityDetailsModal,
     entityDetailsModal,
     toolsetEditorViewForm,
     confirmationDialog,
@@ -385,10 +384,7 @@ dialTest(
       'Click the toolset chip, verify the details modal opens, then log out so the toolset requires user-level login',
       async () => {
         await quickApp2EditorViewForm.clickChipByName(toolsetName);
-        await baseAssertion.assertElementState(
-          marketplaceEntityDetailsModal,
-          'visible',
-        );
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
         await entityDetailsModal.logoutButton.click();
         await clickConfirmButton(
           confirmationDialog
@@ -454,7 +450,7 @@ dialTest(
     entityEditorGeneralForm,
     quickApp2EditorViewForm,
     agentAndToolsetSelectModal,
-    marketplaceEntityDetailsModal,
+    entityDetailsModal,
     toolsetBuilder,
     toolsetApiHelper,
     baseAssertion,
@@ -502,12 +498,9 @@ dialTest(
       'Click the toolset chip and verify the entity details modal opens with version displayed',
       async () => {
         await quickApp2EditorViewForm.clickChipByName(toolsetName);
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
         await baseAssertion.assertElementState(
-          marketplaceEntityDetailsModal,
-          'visible',
-        );
-        await baseAssertion.assertElementState(
-          marketplaceEntityDetailsModal.version,
+          entityDetailsModal.entityVersion,
           'visible',
         );
       },
@@ -523,7 +516,6 @@ dialTest(
       marketplacePage,
       entityEditorPage,
       quickApp2EditorViewForm,
-      marketplaceEntityDetailsModal,
       entityDetailsModal,
       entityDetailsModalAssertion,
       customApplicationBuilder,
@@ -592,10 +584,7 @@ dialTest(
       "Click the application's bar and verify the details modal shows the application's name, version, author and release date",
       async () => {
         await quickApp2EditorViewForm.clickChipByName(appName);
-        await baseAssertion.assertElementState(
-          marketplaceEntityDetailsModal,
-          'visible',
-        );
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
         await entityDetailsModalAssertion.assertEntityCommonAttributes({
           expectedName: appName,
           expectedVersion: ExpectedConstants.defaultEntityVersion,
@@ -607,20 +596,14 @@ dialTest(
 
     await dialTest.step('Close the application details modal', async () => {
       await entityDetailsModal.closeButton.click();
-      await baseAssertion.assertElementState(
-        marketplaceEntityDetailsModal,
-        'hidden',
-      );
+      await baseAssertion.assertElementState(entityDetailsModal, 'hidden');
     });
 
     await dialTest.step(
       "Click the model's bar and verify the details modal shows the model's name, version, author, release date and description",
       async () => {
         await quickApp2EditorViewForm.clickChipByName(modelWithVersion.name);
-        await baseAssertion.assertElementState(
-          marketplaceEntityDetailsModal,
-          'visible',
-        );
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
         await entityDetailsModalAssertion.assertEntityCommonAttributes({
           expectedName: modelWithVersion.name,
           expectedVersion: modelWithVersion.version,

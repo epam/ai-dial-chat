@@ -357,11 +357,6 @@ export const AddQuickApp2SettingsFormSelector = {
 
   // Code Interpreter toggle
   codeInterpreterToggle: '[data-qa="toggle-switch"]',
-
-  // Entity details panel (opens on chip click)
-  entityDetailsPanel: '[data-qa="entity-details-panel"]',
-  entityDetailsVersionSelect: '[data-qa="model-version-select"]',
-  entityDetailsLoginButton: '[data-qa="login-button"]',
 };
 
 export const AgentAndToolsetModalSelector = {
@@ -372,13 +367,6 @@ export const AgentAndToolsetModalSelector = {
   marketplaceTab: '[data-qa="marketplace"]',
   entity: '[data-qa="entity"]',
   entityName: '#entity-name',
-};
-
-export const MarketplaceEntityDetailsModalSelector = {
-  container: '[data-qa="marketplace-entity-details"]',
-  version: '[data-qa="version"]',
-  entityName: '#entity-name',
-  loginButton: '[data-qa="login-button"]',
 };
 
 export const AddToolsetSettingsFormSelector = {

@@ -60,20 +60,6 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
       AddQuickApp2SettingsFormSelector.agentsAndToolsetsJsonToggle,
     );
 
-  // Inline entity details panel
-  public entityDetailsPanel =
-    this.agentsAndToolsetsField.getChildElementBySelector(
-      AddQuickApp2SettingsFormSelector.entityDetailsPanel,
-    );
-  public entityDetailsVersionSelect =
-    this.entityDetailsPanel.getChildElementBySelector(
-      AddQuickApp2SettingsFormSelector.entityDetailsVersionSelect,
-    );
-  public entityDetailsLoginButton =
-    this.entityDetailsPanel.getChildElementBySelector(
-      AddQuickApp2SettingsFormSelector.entityDetailsLoginButton,
-    );
-
   public getChipByName(name: string): BaseElement {
     return this.agentsAndToolsetsList.getChildElementBySelector(
       `${AddQuickApp2SettingsFormSelector.agentChip}:has(${AddQuickApp2SettingsFormSelector.chipName}:text-is("${name}"))`,
