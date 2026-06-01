@@ -11,6 +11,13 @@
   color: var(--ch-text, var(--text-primary, #eef1f7));
 }
 
+.headerTitle {
+  font-family: var(--ch-title-font-family, var(--theme-font, sans-serif));
+  font-size: var(--ch-title-font-size, 0.875rem);
+  font-weight: var(--ch-title-font-weight, 600);
+  line-height: var(--ch-title-line-height, 1.25rem);
+}
+
 .item {
   color: var(--ch-text, var(--text-primary, #eef1f7));
 

@@ -14,9 +14,11 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     emptyLabel,
     formatDate,
     colors,
+    typography,
     className,
     onBackdropClick,
   }) => {
+    const hasTypographyClass = Boolean(typography?.fontClassName);
     const cssVars = buildCssVars({
       '--ch-bg': colors?.background,
       '--ch-border': colors?.border,
@@ -25,6 +27,18 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--ch-item-active': colors?.itemActive,
       '--ch-text': colors?.text,
       '--ch-text-secondary': colors?.textSecondary,
+      '--ch-title-font-family': hasTypographyClass
+        ? undefined
+        : typography?.fontFamily,
+      '--ch-title-font-size': hasTypographyClass
+        ? undefined
+        : typography?.fontSize,
+      '--ch-title-font-weight': hasTypographyClass
+        ? undefined
+        : typography?.fontWeight?.toString(),
+      '--ch-title-line-height': hasTypographyClass
+        ? undefined
+        : typography?.lineHeight,
     });
 
     return (
@@ -39,10 +53,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
 
         <aside
           aria-label={title}
-          aria-expanded={isOpen}
+          aria-hidden={!isOpen}
           style={cssVars}
           className={mergeClasses(
-            'relative z-50 flex h-full flex-shrink-0 flex-col overflow-hidden border-r',
+            'relative z-50 flex h-full flex-shrink-0 flex-col overflow-hidden border-l border-r',
             'transition-[width] duration-200 ease-in-out',
             isOpen ? 'w-[288px]' : 'w-0',
             styles.panel,
@@ -56,7 +70,15 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
               styles.header,
             )}
           >
-            <span className="truncate px-2 text-sm font-semibold">{title}</span>
+            <span
+              className={mergeClasses(
+                'truncate px-2',
+                styles.headerTitle,
+                typography?.fontClassName,
+              )}
+            >
+              {title}
+            </span>
           </div>
 
           {/* Body */}

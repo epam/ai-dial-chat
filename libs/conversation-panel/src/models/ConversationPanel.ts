@@ -8,6 +8,23 @@ export interface ConversationHistoryItem {
   updatedAt: string;
 }
 
+/** Font overrides for the header title in `ConversationPanel`. */
+export interface ConversationHistoryTypography {
+  /** Font family applied to the panel title. */
+  fontFamily?: string;
+  /** Font size applied to the panel title. */
+  fontSize?: string;
+  /** Font weight applied to the panel title. */
+  fontWeight?: string | number;
+  /** Line height applied to the panel title. */
+  lineHeight?: string;
+  /**
+   * A single utility class (e.g. `'dial-body-semi-bold-text'`) applied to the title span.
+   * When provided, individual font CSS vars are ignored in favour of this class.
+   */
+  fontClassName?: string;
+}
+
 /** CSS custom-property overrides for `ConversationPanel`. */
 export interface ConversationHistoryColors {
   /** Panel background color. */
@@ -47,6 +64,8 @@ export interface ConversationPanelProps {
   formatDate: (isoDate: string) => string;
   /** CSS custom-property overrides for theming. */
   colors?: ConversationHistoryColors;
+  /** Font overrides for the panel header title. */
+  typography?: ConversationHistoryTypography;
   /** Extra class name(s) merged onto the panel root element. */
   className?: string;
   /**
