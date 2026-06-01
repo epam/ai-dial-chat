@@ -1,0 +1,61 @@
+/** A single conversation entry shown in the history panel. */
+export interface ConversationHistoryItem {
+  /** Unique conversation identifier (path or UUID). */
+  id: string;
+  /** Human-readable title — typically the first user message. */
+  title: string;
+  /** ISO-8601 timestamp of the last update. */
+  updatedAt: string;
+}
+
+/** CSS custom-property overrides for `ConversationHistoryPanel`. */
+export interface ConversationHistoryColors {
+  /** Panel background color. */
+  background?: string;
+  /** Inner-edge divider border color. */
+  border?: string;
+  /** Header bar bottom-border color. */
+  headerBorder?: string;
+  /** Hover background for a conversation row. */
+  itemHover?: string;
+  /** Active/selected background for a conversation row. */
+  itemActive?: string;
+  /** Primary text color. */
+  text?: string;
+  /** Secondary text color (dates, metadata). */
+  textSecondary?: string;
+}
+
+/** Props accepted by `ConversationHistoryPanel`. */
+export interface ConversationHistoryPanelProps {
+  /** Ordered list of conversations to display. */
+  conversations: ConversationHistoryItem[];
+  /** Whether the panel is currently expanded. */
+  isOpen: boolean;
+  /** Called when the toggle button is activated. */
+  onToggle: () => void;
+  /** Called with the conversation `id` when a row is clicked. */
+  onSelectConversation: (id: string) => void;
+  /** `id` of the currently viewed conversation; that row gets `aria-current="page"`. */
+  activeConversationId?: string;
+  /** Panel heading text (e.g. `"Conversations"`). */
+  title: string;
+  /** Accessible label for the collapse/expand toggle button. */
+  toggleAriaLabel: string;
+  /** Message shown when `conversations` is empty. */
+  emptyLabel: string;
+  /**
+   * Formats a raw ISO-8601 `updatedAt` string into the display string shown on each row.
+   * Called by the lib; formatting locale/logic is the caller's responsibility.
+   */
+  formatDate: (isoDate: string) => string;
+  /** CSS custom-property overrides for theming. */
+  colors?: ConversationHistoryColors;
+  /** Extra class name(s) merged onto the panel root element. */
+  className?: string;
+  /**
+   * When provided and `isOpen` is `true`, a backdrop overlay is rendered behind the panel.
+   * Clicking the backdrop calls this callback (used for mobile drawer close).
+   */
+  onBackdropClick?: () => void;
+}

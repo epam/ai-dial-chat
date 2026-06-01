@@ -1,0 +1,28 @@
+// CSS custom-property references and their hex fallbacks.
+// Layout, spacing, and transitions live in Tailwind classes in the TSX file.
+
+.panel {
+  background: var(--ch-bg, var(--bg-layer-3, #1d2439));
+  border-color: var(--ch-border, var(--stroke-tertiary, #0c101d));
+}
+
+.header {
+  border-color: var(--ch-header-border, var(--stroke-tertiary, #0c101d));
+  color: var(--ch-text, var(--text-primary, #eef1f7));
+}
+
+.item {
+  color: var(--ch-text, var(--text-primary, #eef1f7));
+
+  &:hover {
+    background: var(--ch-item-hover, var(--bg-layer-4, #252c42));
+  }
+
+  &.itemActive {
+    background: var(--ch-item-active, var(--bg-accent, #335cad));
+  }
+}
+
+.itemDate {
+  color: var(--ch-text-secondary, var(--text-secondary, #9fa6bd));
+}

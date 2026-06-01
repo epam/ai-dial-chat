@@ -60,6 +60,12 @@ export enum DeploymentsI18nKeys {
   SelectorCloseLabel = 'deployments.selector.closeLabel',
 }
 
+export enum ConversationHistoryI18nKeys {
+  Title = 'conversationHistory.title',
+  ToggleAriaLabel = 'conversationHistory.toggleAriaLabel',
+  Empty = 'conversationHistory.empty',
+}
+
 export enum SidebarI18nKeys {
   ToggleOpen = 'sidebar.base.toggleOpen',
   ToggleClose = 'sidebar.base.toggleClose',

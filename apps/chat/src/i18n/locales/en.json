@@ -96,6 +96,11 @@
       }
     }
   },
+  "conversationHistory": {
+    "title": "Conversations",
+    "toggleAriaLabel": "Toggle conversation history panel",
+    "empty": "No conversations yet"
+  },
   "auth": {
     "signOut": "Sign out",
     "signedInAs": "Signed in as {{email}}",

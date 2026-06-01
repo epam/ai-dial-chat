@@ -41,19 +41,22 @@
       "path": "../../libs/chat-api-client/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/conversation-stages/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/conversation-messages/tsconfig.lib.json"
     },
     {
       "path": "../../libs/conversation-input/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/conversation-stages/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/sidebar/tsconfig.lib.json"
     },
     {
       "path": "../../libs/chat-shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/conversation-history/tsconfig.lib.json"
     }
   ]
 }
