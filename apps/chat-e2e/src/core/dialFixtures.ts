@@ -45,7 +45,6 @@ import {
   FoldersTree,
   InformationModal,
   ListboxMenu,
-  MarketplaceEntityDetailsModal,
   MessageTemplateModal,
   PromptBar,
   PublishingFilter,
@@ -232,7 +231,6 @@ const dialTest = test.extend<{
   quickApp2EditorContainer: QuickApp2EditorContainer;
   quickApp2EditorViewForm: QuickApp2EditorViewForm;
   agentAndToolsetSelectModal: AgentAndToolsetSelectModal;
-  marketplaceEntityDetailsModal: MarketplaceEntityDetailsModal;
   externalAppEditorAppSettingsPreviewBody: EntityEditorEntitySettingsCardPreviewBody;
   externalAppEditorAppSettingsPreviewCard: EntityEditorPreviewCard;
   toolsetEditorContainer: ToolsetEditorContainer;
@@ -692,9 +690,6 @@ const dialTest = test.extend<{
   },
   agentAndToolsetSelectModal: async ({ page }, use) => {
     await use(new AgentAndToolsetSelectModal(page));
-  },
-  marketplaceEntityDetailsModal: async ({ page }, use) => {
-    await use(new MarketplaceEntityDetailsModal(page));
   },
   toolsetEditorContainer: async ({ entityEditorPage }, use) => {
     const toolsetEditorContainer = entityEditorPage.getToolsetEditorContainer();
