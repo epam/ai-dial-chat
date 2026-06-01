@@ -64,6 +64,8 @@ export default defineConfig(() => ({
             return 'vendor-utils';
           if (id.includes('@tabler/icons-react'))
             return 'tabler-icons';
+          if (id.includes('@epam/ai-dial-ui-kit'))
+            return 'ui-kit';
           return undefined;
         },
       },
