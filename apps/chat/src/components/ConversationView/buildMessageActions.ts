@@ -29,15 +29,21 @@ export const buildMessageActions = (
     };
   }
 
+  const onRegenerate = handlers.onRegenerate
+    ? () => handlers.onRegenerate?.(msg.id)
+    : void 0;
+
+  if (msg.wasStoppedByUser || msg.hasStreamError) {
+    return { onRegenerate, tooltips, ariaLabels };
+  }
+
   const copyToClipboard = () =>
     navigator.clipboard.writeText(msg.content).catch(() => {
       console.error('Failed to copy message content to clipboard');
     });
 
   return {
-    onRegenerate: handlers.onRegenerate
-      ? () => handlers.onRegenerate?.(msg.id)
-      : void 0,
+    onRegenerate,
     onCopy: copyToClipboard,
     onCopyMarkdown: copyToClipboard, // TODO: add implementation for markdown formatting
     onLike: handlers.onRate
