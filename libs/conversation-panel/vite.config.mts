@@ -5,7 +5,7 @@ import * as path from 'path';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
-  cacheDir: '../../node_modules/.vite/libs/conversation-history',
+  cacheDir: '../../node_modules/.vite/libs/conversation-panel',
   plugins: [
     dts({
       entryRoot: 'src',
@@ -21,7 +21,7 @@ export default defineConfig(() => ({
     },
     lib: {
       entry: 'src/index.ts',
-      name: '@epam/ai-dial-conversation-history',
+      name: '@epam/ai-dial-conversation-panel',
       fileName: 'index',
       formats: ['es' as const],
     },
@@ -38,7 +38,7 @@ export default defineConfig(() => ({
     },
   },
   test: {
-    name: '@epam/ai-dial-conversation-history',
+    name: '@epam/ai-dial-conversation-panel',
     watch: false,
     globals: true,
     environment: 'jsdom',

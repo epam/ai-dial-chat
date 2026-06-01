@@ -57,7 +57,7 @@
       "path": "../../libs/chat-shared/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/conversation-history/tsconfig.lib.json"
+      "path": "../../libs/conversation-panel/tsconfig.lib.json"
     }
   ]
 }

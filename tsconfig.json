@@ -28,7 +28,7 @@
       "path": "./libs/conversation-stages"
     },
     {
-      "path": "./libs/conversation-history"
+      "path": "./libs/conversation-panel"
     }
   ]
 }

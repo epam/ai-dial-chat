@@ -8,7 +8,7 @@ export interface ConversationHistoryItem {
   updatedAt: string;
 }
 
-/** CSS custom-property overrides for `ConversationHistoryPanel`. */
+/** CSS custom-property overrides for `ConversationPanel`. */
 export interface ConversationHistoryColors {
   /** Panel background color. */
   background?: string;
@@ -26,8 +26,8 @@ export interface ConversationHistoryColors {
   textSecondary?: string;
 }
 
-/** Props accepted by `ConversationHistoryPanel`. */
-export interface ConversationHistoryPanelProps {
+/** Props accepted by `ConversationPanel`. */
+export interface ConversationPanelProps {
   /** Ordered list of conversations to display. */
   conversations: ConversationHistoryItem[];
   /** Whether the panel is currently expanded. */

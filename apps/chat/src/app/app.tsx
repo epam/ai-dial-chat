@@ -1,16 +1,11 @@
-import {
-  ConversationHistoryPanel,
-  type ConversationHistoryItem,
-} from '@epam/ai-dial-conversation-history';
 import { lazy, Suspense, useCallback, useState } from 'react';
 import { Route, Routes, useMatch, useNavigate } from 'react-router-dom';
-import { useTranslation } from 'react-i18next';
+import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView.js';
 import ConversationSourcesPanelView from '../components/ConversationSourcesPanel/ConversationSourcesPanelView.js';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
 import { ROUTES, getConversationRoute } from '../constants/routes';
-import { ConversationHistoryI18nKeys } from '../constants/translation-keys.js';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint.js';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 
@@ -21,10 +16,7 @@ const ConversationPage = lazy(async () => {
   return { default: module.ConversationPage };
 });
 
-const EMPTY_CONVERSATIONS: ConversationHistoryItem[] = [];
-
 function App() {
-  const { t } = useTranslation();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
 
@@ -56,18 +48,11 @@ function App() {
     <div className="flex size-full flex-row">
       <Navigation isOpen={isNavOpen} onClose={closeNav} />
 
-      <ConversationHistoryPanel
-        conversations={EMPTY_CONVERSATIONS}
+      <ConversationPanelView
         isOpen={isHistoryPanelOpen}
-        onSelectConversation={handleSelectConversation}
         activeConversationId={activeConversationId}
-        title={t(ConversationHistoryI18nKeys.Title)}
-        emptyLabel={t(ConversationHistoryI18nKeys.Empty)}
-        formatDate={(iso: string) => new Date(iso).toLocaleDateString()}
-        onBackdropClick={isMobile ? closeHistoryPanel : undefined}
-        className={
-          isMobile ? 'fixed inset-y-0 left-0 z-50 w-[280px]' : undefined
-        }
+        onClose={closeHistoryPanel}
+        onSelectConversation={handleSelectConversation}
       />
 
       <main

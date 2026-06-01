@@ -1,14 +1,10 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  IconLayoutSidebarLeftCollapse,
-  IconLayoutSidebarLeftExpand,
-} from '@tabler/icons-react';
 import { type FC, memo } from 'react';
-import type { ConversationHistoryPanelProps } from '../../models/ConversationHistoryPanel.js';
-import styles from './ConversationHistoryPanel.module.scss';
+import type { ConversationPanelProps } from '../../models/ConversationPanel.js';
+import styles from './ConversationPanel.module.scss';
 
 /** Collapsible left-side panel showing the user's conversation history. */
-export const ConversationHistoryPanel: FC<ConversationHistoryPanelProps> = memo(
+export const ConversationPanel: FC<ConversationPanelProps> = memo(
   ({
     conversations,
     isOpen,
@@ -31,10 +27,6 @@ export const ConversationHistoryPanel: FC<ConversationHistoryPanelProps> = memo(
       '--ch-text-secondary': colors?.textSecondary,
     });
 
-    const ToggleIcon = isOpen
-      ? IconLayoutSidebarLeftCollapse
-      : IconLayoutSidebarLeftExpand;
-
     return (
       <>
         {isOpen && onBackdropClick && (
@@ -52,7 +44,7 @@ export const ConversationHistoryPanel: FC<ConversationHistoryPanelProps> = memo(
           className={mergeClasses(
             'relative z-50 flex h-full flex-shrink-0 flex-col overflow-hidden border-r',
             'transition-[width] duration-200 ease-in-out',
-            isOpen ? 'w-[280px]' : 'w-0',
+            isOpen ? 'w-[288px]' : 'w-0',
             styles.panel,
             className,
           )}

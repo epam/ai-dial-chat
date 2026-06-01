@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "../../dist/libs/conversation-history",
+    "outDir": "../../dist/libs/conversation-panel",
 
     "jsx": "react-jsx",
 

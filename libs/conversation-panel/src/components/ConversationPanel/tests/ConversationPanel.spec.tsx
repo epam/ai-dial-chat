@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { ConversationHistoryPanel } from '../ConversationHistoryPanel.js';
-import type { ConversationHistoryItem } from '../../../models/ConversationHistoryPanel.js';
+import { ConversationPanel } from '../ConversationPanel.js';
+import type { ConversationHistoryItem } from '../../../models/ConversationPanel.js';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { LG: 24 },
@@ -39,9 +39,9 @@ const items: ConversationHistoryItem[] = [
   { id: 'c3', title: 'Third chat', updatedAt: '2026-01-03T00:00:00Z' },
 ];
 
-describe('ConversationHistoryPanel', () => {
+describe('ConversationPanel', () => {
   it('renders all conversation rows when open', () => {
-    render(<ConversationHistoryPanel {...BASE_PROPS} conversations={items} />);
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
     expect(screen.getByRole('list')).toBeTruthy();
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
     expect(screen.getByText('First chat')).toBeTruthy();
@@ -49,14 +49,14 @@ describe('ConversationHistoryPanel', () => {
   });
 
   it('shows empty label when conversations is empty', () => {
-    render(<ConversationHistoryPanel {...BASE_PROPS} conversations={[]} />);
+    render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
     expect(screen.queryByRole('list')).toBeNull();
     expect(screen.getByText('No conversations yet')).toBeTruthy();
   });
 
   it('marks the active conversation with aria-current="page"', () => {
     render(
-      <ConversationHistoryPanel
+      <ConversationPanel
         {...BASE_PROPS}
         conversations={items}
         activeConversationId="c2"
@@ -73,7 +73,7 @@ describe('ConversationHistoryPanel', () => {
   it('calls onSelectConversation with the correct id', () => {
     const onSelect = vi.fn();
     render(
-      <ConversationHistoryPanel
+      <ConversationPanel
         {...BASE_PROPS}
         conversations={items}
         onSelectConversation={onSelect}
@@ -86,7 +86,7 @@ describe('ConversationHistoryPanel', () => {
   it('calls onToggle when the toggle button is clicked', () => {
     const onToggle = vi.fn();
     render(
-      <ConversationHistoryPanel
+      <ConversationPanel
         {...BASE_PROPS}
         conversations={items}
         onToggle={onToggle}
@@ -98,7 +98,7 @@ describe('ConversationHistoryPanel', () => {
 
   it('sets aria-expanded to false when isOpen is false', () => {
     render(
-      <ConversationHistoryPanel
+      <ConversationPanel
         {...BASE_PROPS}
         conversations={items}
         isOpen={false}
@@ -111,7 +111,7 @@ describe('ConversationHistoryPanel', () => {
   it('calls onBackdropClick when the backdrop is clicked', () => {
     const onBackdropClick = vi.fn();
     render(
-      <ConversationHistoryPanel
+      <ConversationPanel
         {...BASE_PROPS}
         conversations={items}
         onBackdropClick={onBackdropClick}
@@ -125,7 +125,7 @@ describe('ConversationHistoryPanel', () => {
 
   it('does not render backdrop when isOpen is false', () => {
     render(
-      <ConversationHistoryPanel
+      <ConversationPanel
         {...BASE_PROPS}
         conversations={items}
         isOpen={false}
