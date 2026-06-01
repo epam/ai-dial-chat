@@ -57,17 +57,6 @@ export default defineConfig(() => ({
     commonjsOptions: {
       transformMixedEsModules: true,
     },
-    rollupOptions: {
-      output: {
-        manualChunks: (id) => {
-          if (id.includes('classnames') || id.includes('tailwind-merge'))
-            return 'vendor-utils';
-          if (id.includes('@tabler/icons-react'))
-            return 'tabler-icons';
-          return undefined;
-        },
-      },
-    },
   },
   test: {
     name: '@epam/chat',
