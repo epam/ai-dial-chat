@@ -59,10 +59,15 @@ export default defineConfig(() => ({
     },
     rollupOptions: {
       output: {
-        manualChunks: (id) =>
-          id.includes('classnames') || id.includes('tailwind-merge')
-            ? 'vendor-utils'
-            : undefined,
+        manualChunks: (id) => {
+          if (id.includes('classnames') || id.includes('tailwind-merge'))
+            return 'vendor-utils';
+          if (id.includes('@tabler/icons-react'))
+            return 'tabler-icons';
+          if (id.includes('@epam/ai-dial-ui-kit'))
+            return 'ui-kit';
+          return undefined;
+        },
       },
     },
   },
