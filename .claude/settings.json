@@ -1,14 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(Select-Object -First 10)",
-      "Bash(node -e \"const tw = require\\('tailwindcss'\\); console.log\\(typeof tw\\);\")",
-      "Bash(node -e \"console.log\\(require\\('./node_modules/tailwindcss/package.json'\\).version\\)\")",
-      "Bash(node -e \"console.log\\(require\\('./node_modules/@testing-library/react/package.json'\\).version\\)\")",
-      "PowerShell(cd c:\\\\projects\\\\ai-dial-chat\\\\apps\\\\chat; npx tsc -p tsconfig.app.json --noEmit 2>&1 | Where-Object { $_ -match \"app\\\\.tsx|Header\\\\.tsx|conversation-history|translation-keys\" } | Select-Object -First 20)",
-      "PowerShell(cd c:\\\\projects\\\\ai-dial-chat\\\\apps\\\\chat; npx tsc -p tsconfig.app.json --noEmit 2>&1 | Where-Object { $_ -match \"app\\\\.tsx|Header\\\\.tsx|conversation-history|translation-keys|ConversationHistoryI18nKeys\" } | Select-Object -First 15)",
-      "PowerShell(cd c:\\\\projects\\\\ai-dial-chat\\\\apps\\\\chat; npx tsc -p tsconfig.app.json --noEmit 2>&1 | Where-Object { $_ -match \"app\\\\.tsx|Header\\\\.tsx|conversation-history\" } | Select-Object -First 10)"
-    ]
+    "allow": ["Bash(Select-Object -First 10)"]
   },
   "enabledPlugins": {
     "nx@nx-claude-plugins": true
