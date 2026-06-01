@@ -34,7 +34,11 @@ import { PromptRow } from '@/src/components/Common/PromptRow';
 
 import { NoData } from '../NoData';
 
-import { DialLinkButton, DialPrimaryButton, DialSearch } from '@epam/ai-dial-ui-kit';
+import {
+  DialLinkButton,
+  DialPrimaryButton,
+  DialSearch,
+} from '@epam/ai-dial-ui-kit';
 
 interface SkillsSectionProps {
   sectionName: string;
@@ -184,7 +188,9 @@ export const AgentSkillsModal = ({
   useEffect(() => {
     if (!preCreateSnapshotRef.current) return;
 
-    const newId = allPrompts.find((p) => !preCreateSnapshotRef.current!.has(p.id))?.id;
+    const newId = allPrompts.find(
+      (p) => !preCreateSnapshotRef.current!.has(p.id),
+    )?.id;
     if (!newId) return;
 
     preCreateSnapshotRef.current = null;
@@ -241,7 +247,11 @@ export const AgentSkillsModal = ({
     preCreateSnapshotRef.current = new Set(allPrompts.map((p) => p.id));
     dispatch(PromptsActions.setIsNewPromptCreating(true));
     dispatch(
-      PromptsActions.setIsPromptModalOpen({ isOpen: true, isInitModeEdit: true, isQuickAppEditPrompt: true }),
+      PromptsActions.setIsPromptModalOpen({
+        isOpen: true,
+        isInitModeEdit: true,
+        isQuickAppEditPrompt: true,
+      }),
     );
   }, [dispatch, allPrompts]);
 

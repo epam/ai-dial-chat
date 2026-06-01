@@ -305,7 +305,13 @@ export const promptsSlice = createSlice({
     },
     setIsPromptModalOpen: (
       state,
-      { payload }: PayloadAction<{ isOpen: boolean; isInitModeEdit?: boolean; isQuickAppEditPrompt?: boolean }>,
+      {
+        payload,
+      }: PayloadAction<{
+        isOpen: boolean;
+        isInitModeEdit?: boolean;
+        isQuickAppEditPrompt?: boolean;
+      }>,
     ) => {
       state.isPromptModalOpen = payload.isOpen;
       state.isPromptModalInitModeEdit = !!payload.isInitModeEdit;
