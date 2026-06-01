@@ -10,17 +10,18 @@ import { BubblePosition } from '../../types/bubble-position.js';
 import { MessageActions } from '../Message/MessageActions.js';
 import styles from './MessageBubble.module.scss';
 
+/** User-authored message bubble, right-aligned with configurable radius based on group position. */
 export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   text,
   position = BubblePosition.Bottom,
   className,
   bubbleClassName,
-  colors,
-  typography,
+  styles: bubbleStyles,
   actions,
   hasAlwaysVisibleActions,
   attachments,
 }) => {
+  const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
     '--cm-bubble-user-bg': colors?.userBackground,
