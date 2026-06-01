@@ -83,7 +83,9 @@ export const MessageActions: FC<MessageActionsProps> = ({
             <DialGhostIconButton
               icon={<IconRefresh size={DIAL_ICON_SIZE.SM} />}
               size={ElementSize.Small}
-              aria-label={ariaLabels?.regenerateResponse ?? 'Regenerate response'}
+              aria-label={
+                ariaLabels?.regenerateResponse ?? 'Regenerate response'
+              }
               tooltipProps={{ tooltip: tooltips?.regenerate ?? 'Regenerate' }}
               onClick={onRegenerate}
             />

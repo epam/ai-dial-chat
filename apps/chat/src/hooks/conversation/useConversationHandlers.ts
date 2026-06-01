@@ -76,11 +76,23 @@ export const useConversationHandlers = ({
         return next;
       });
 
-      startStream(conversationPath, message, assistantMessageId, conversation.model.id, {
-        attachments: attachmentDtos,
-      });
+      startStream(
+        conversationPath,
+        message,
+        assistantMessageId,
+        conversation.model.id,
+        {
+          attachments: attachmentDtos,
+        },
+      );
     },
-    [conversation, conversationId, conversationRef, setConversation, startStream],
+    [
+      conversation,
+      conversationId,
+      conversationRef,
+      setConversation,
+      startStream,
+    ],
   );
 
   const handleRegenerateMessage = useCallback(
@@ -88,7 +100,11 @@ export const useConversationHandlers = ({
       if (isStreaming || !conversationId || !conversation) return;
 
       const idx = conversation.messages.findIndex((m) => m.id === messageId);
-      if (idx === -1 || conversation.messages[idx].role !== MessageRole.Assistant) return;
+      if (
+        idx === -1 ||
+        conversation.messages[idx].role !== MessageRole.Assistant
+      )
+        return;
 
       const userMsg = conversation.messages[idx - 1];
       if (!userMsg || userMsg.role !== MessageRole.User) return;
@@ -124,7 +140,14 @@ export const useConversationHandlers = ({
         userMsg.custom_content,
       );
     },
-    [conversation, conversationId, conversationRef, isStreaming, setConversation, startStream],
+    [
+      conversation,
+      conversationId,
+      conversationRef,
+      isStreaming,
+      setConversation,
+      startStream,
+    ],
   );
 
   const handleDeleteMessage = useCallback(
@@ -162,7 +185,13 @@ export const useConversationHandlers = ({
       saveConversation(conversationPath, updated);
       return updated;
     });
-  }, [conversationId, conversationRef, navigate, pendingDeleteId, setConversation]);
+  }, [
+    conversationId,
+    conversationRef,
+    navigate,
+    pendingDeleteId,
+    setConversation,
+  ]);
 
   const handleRateMessage = useCallback(
     async (messageId: string, rating: MessageRating | null) => {
@@ -202,17 +231,19 @@ export const useConversationHandlers = ({
           });
         }
       } else {
-        await saveConversation(conversationPath, updatedConversation).catch(() => {
-          setConversation((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              messages: prev.messages.map((m) =>
-                m.id === messageId ? { ...m, rating: previousRating } : m,
-              ),
-            };
-          });
-        });
+        await saveConversation(conversationPath, updatedConversation).catch(
+          () => {
+            setConversation((prev) => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                messages: prev.messages.map((m) =>
+                  m.id === messageId ? { ...m, rating: previousRating } : m,
+                ),
+              };
+            });
+          },
+        );
       }
     },
     [conversation, conversationId, setConversation],
@@ -249,7 +280,13 @@ export const useConversationHandlers = ({
         configurationValue ? { form_value: configurationValue } : undefined,
       );
     },
-    [conversation, conversationId, conversationRef, setConversation, startStream],
+    [
+      conversation,
+      conversationId,
+      conversationRef,
+      setConversation,
+      startStream,
+    ],
   );
 
   const handleButtonSelect = useCallback(

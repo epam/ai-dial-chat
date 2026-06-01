@@ -159,5 +159,11 @@ export const useConversationStream = ({
     });
   }, [conversationId, stoppedGeneratingText, conversationRef]);
 
-  return { startStream, handleStop, isStreaming, hasStreamError, setHasStreamError };
+  return {
+    startStream,
+    handleStop,
+    isStreaming,
+    hasStreamError,
+    setHasStreamError,
+  };
 };
