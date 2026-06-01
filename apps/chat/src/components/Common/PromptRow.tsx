@@ -1,5 +1,5 @@
 import { IconBulb } from '@tabler/icons-react';
-import { FC } from 'react';
+import { forwardRef } from 'react';
 
 import classNames from 'classnames';
 
@@ -14,21 +14,20 @@ interface PromptRowProps {
   onToggle: (id: string) => void;
 }
 
-export const PromptRow: FC<PromptRowProps> = ({
-  item: prompt,
-  level = 0,
-  isSelected,
-  onToggle,
-}) => {
+export const PromptRow = forwardRef<
+  HTMLDivElement,
+  PromptRowProps
+>(({ item: prompt, level = 0, isSelected, onToggle }, ref) => {
   return (
     <div
+      ref={ref}
       className={classNames(
         'group relative flex h-[32px] w-full shrink-0 cursor-pointer select-none items-center rounded border-l-2 border-l-transparent pr-3 hover:bg-accent-primary-alpha',
         isSelected && 'bg-accent-primary-alpha',
       )}
       style={{ paddingLeft: `${level * 24 + 16}px` }}
       onClick={() => onToggle(prompt.id)}
-      data-qa="skill"
+      data-qa="prompt-row"
     >
       <div className="flex size-full items-center gap-2">
         <div className="relative flex size-[18px] shrink-0 items-center justify-center">
@@ -60,4 +59,6 @@ export const PromptRow: FC<PromptRowProps> = ({
       </div>
     </div>
   );
-};
+});
+
+PromptRow.displayName = 'PromptRow';
