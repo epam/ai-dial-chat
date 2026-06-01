@@ -42,7 +42,7 @@ export const ConversationHistoryPanel: FC<ConversationHistoryPanelProps> = memo(
       <>
         {isOpen && onBackdropClick && (
           <div
-            className="fixed inset-0 z-40 bg-black/40"
+            className="bg-black/40 fixed inset-0 z-40"
             aria-hidden="true"
             onClick={onBackdropClick}
           />
@@ -68,12 +68,6 @@ export const ConversationHistoryPanel: FC<ConversationHistoryPanelProps> = memo(
             )}
           >
             <span className="truncate px-2 text-sm font-semibold">{title}</span>
-            <DialGhostIconButton
-              icon={<ToggleIcon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-              aria-label={toggleAriaLabel}
-              tooltipProps={{ tooltip: toggleAriaLabel }}
-              onClick={onToggle}
-            />
           </div>
 
           {/* Body */}
@@ -106,7 +100,9 @@ export const ConversationHistoryPanel: FC<ConversationHistoryPanelProps> = memo(
                         <span className="truncate text-sm font-medium">
                           {item.title}
                         </span>
-                        <span className={mergeClasses('text-xs', styles.itemDate)}>
+                        <span
+                          className={mergeClasses('text-xs', styles.itemDate)}
+                        >
                           {formatDate(item.updatedAt)}
                         </span>
                       </button>

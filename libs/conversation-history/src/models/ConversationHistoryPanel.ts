@@ -32,16 +32,12 @@ export interface ConversationHistoryPanelProps {
   conversations: ConversationHistoryItem[];
   /** Whether the panel is currently expanded. */
   isOpen: boolean;
-  /** Called when the toggle button is activated. */
-  onToggle: () => void;
   /** Called with the conversation `id` when a row is clicked. */
   onSelectConversation: (id: string) => void;
   /** `id` of the currently viewed conversation; that row gets `aria-current="page"`. */
   activeConversationId?: string;
   /** Panel heading text (e.g. `"Conversations"`). */
   title: string;
-  /** Accessible label for the collapse/expand toggle button. */
-  toggleAriaLabel: string;
   /** Message shown when `conversations` is empty. */
   emptyLabel: string;
   /**

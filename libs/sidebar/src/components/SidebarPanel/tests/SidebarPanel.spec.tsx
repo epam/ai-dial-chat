@@ -129,14 +129,13 @@ describe('SidebarPanel', () => {
   });
 
   it('close button calls onClose', async () => {
-    const user = userEvent.setup();
     const onClose = vi.fn();
     render(
       <SidebarPanel {...defaultProps} onClose={onClose}>
         <span />
       </SidebarPanel>,
     );
-    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 

@@ -59,18 +59,14 @@ function App() {
       <ConversationHistoryPanel
         conversations={EMPTY_CONVERSATIONS}
         isOpen={isHistoryPanelOpen}
-        onToggle={toggleHistoryPanel}
         onSelectConversation={handleSelectConversation}
         activeConversationId={activeConversationId}
         title={t(ConversationHistoryI18nKeys.Title)}
-        toggleAriaLabel={t(ConversationHistoryI18nKeys.ToggleAriaLabel)}
         emptyLabel={t(ConversationHistoryI18nKeys.Empty)}
         formatDate={(iso: string) => new Date(iso).toLocaleDateString()}
         onBackdropClick={isMobile ? closeHistoryPanel : undefined}
         className={
-          isMobile
-            ? 'fixed inset-y-0 left-0 z-50 w-[280px]'
-            : undefined
+          isMobile ? 'fixed inset-y-0 left-0 z-50 w-[280px]' : undefined
         }
       />
 
