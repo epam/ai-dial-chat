@@ -239,13 +239,22 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   );
 
   useEffect(() => {
-    if (rules && (!isReview || isEditMode)) {
+    if (rules && (!isReview || !isEditMode)) {
       formMethods.setValue(
         PublishRequestFieldsNames.RULES,
         rules[rulesPath] ?? [],
       );
     }
   }, [formMethods, rulesPath, rules, isReview, isEditMode]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      formMethods.setValue(
+        PublishRequestFieldsNames.RULES,
+        publication.rules ?? [],
+      );
+    }
+  }, [formMethods, isEditMode, publication.rules]);
 
   useEffect(() => {
     if (!isEditMode) {
@@ -268,7 +277,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     return !publication.rules && isReview
       ? rulesEntries
       : rulesEntries.filter(([path]) =>
-          isReview
+          isReview && !isEditMode
             ? path !== publication.targetFolder
             : path !== editedPublishToUrl,
         );
@@ -277,19 +286,19 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     publication.rules,
     publication.targetFolder,
     isReview,
+    isEditMode,
     editedPublishToUrl,
   ]);
-
   const newRules: PublicationRule[] = useMemo(
     () =>
-      (!isReview
+      (!isReview || isEditMode
         ? rulesOnEdit
         : publication.rules?.map((rule) => ({
             source: rule.source,
             function: rule.function,
             targets: rule.targets,
           }))) ?? [],
-    [isReview, publication.rules, rulesOnEdit],
+    [isReview, isEditMode, publication.rules, rulesOnEdit],
   );
 
   const isPublicationHasOnlyUnpublishEntities = useMemo(
@@ -321,6 +330,9 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     ? editedPublishToUrl.replace(/^[^/]+/, 'Organization')
     : '';
   const publicationName = publication.name || getPublicationId(publication.url);
+  const comparePath = isEditMode
+    ? editedPublishToUrl
+    : publication.targetFolder;
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -363,21 +375,20 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
         getIdWithoutTemporaryBucket(folder.id) ===
         getIdWithoutFeatureType(editedPublishToUrl),
     );
+    const baselinePath =
+      isReview && !isEditMode ? publication.targetFolder : editedPublishToUrl;
     return (
       (initialState.publishToUrl !== editedPublishToUrl && isTemporaryFolder) ||
-      !isEqual(
-        rules[isReview ? publication.targetFolder : editedPublishToUrl] ?? [],
-        (isReview ? newRules : rulesOnEdit) ?? [],
-      )
+      !isEqual(rules[baselinePath] ?? [], newRules ?? [])
     );
   }, [
     editedPublishToUrl,
     initialState.publishToUrl,
     isReview,
+    isEditMode,
     newRules,
     publication.targetFolder,
     rules,
-    rulesOnEdit,
     temporaryFolders,
   ]);
 
@@ -749,13 +760,13 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
             isDraftRuleFilterOpen={isRulesSetterVisible}
           />
         </div>
-        {isCompareModalOpened && publication.targetFolder && (
+        {isCompareModalOpened && comparePath && (
           <CompareRulesModal
             allRuleEntries={filteredRuleEntries}
             newRulesToCompare={newRules}
-            oldRulesToCompare={rules[publication.targetFolder]}
+            oldRulesToCompare={rules[comparePath]}
             onClose={handleCloseCompareModal}
-            newRulesPath={publication.targetFolder}
+            newRulesPath={comparePath}
           />
         )}
         {isApplicationReview && <ReviewApplicationDialog />}

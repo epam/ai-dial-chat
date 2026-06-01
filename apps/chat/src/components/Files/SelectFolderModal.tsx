@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
+import { UseFileManagerActionLabelsOptions } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { updateMovedFolderId } from '@/src/utils/app/folders';
@@ -21,6 +22,10 @@ import {
   type DialFileManagerActionsRef,
   DialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
+import {
+  CellEditingStartedEvent,
+  CellEditingStoppedEvent,
+} from 'ag-grid-community';
 
 const defaultTabs = new Set([DialFileManagerTabs.MyFiles]);
 const reviewTabs = new Set([DialFileManagerTabs.Review]);
@@ -56,15 +61,28 @@ export const SelectFolderModal = ({
     );
   }, [disallowSelectRootFolder, initialSelectedFolderId, rootFolderId]);
 
-  const [selectedFolderId, setSelectedFolderId] = useState<string | undefined>(
-    defaultSelectedFolder,
-  );
-
   const lastRenamedParentFolder = useAppSelector(
     FilesSelectors.selectLastRenamedParentFolder,
   );
 
+  const [isGridEditing, setIsGridEditing] = useState(false);
+
   const isReview = splitEntityId(rootFolderId).bucket === reviewBucket;
+
+  const actionLabelsOptions = useMemo<UseFileManagerActionLabelsOptions>(
+    () => ({
+      actionsByTab: {
+        my_files: [
+          DialFileManagerActions.Rename,
+          DialFileManagerActions.Delete,
+        ],
+        shared: [],
+        organization: [],
+        review: [],
+      },
+    }),
+    [],
+  );
 
   const {
     currentPath,
@@ -80,17 +98,7 @@ export const SelectFolderModal = ({
     handleRenameValidation,
     handleDeleteFiles,
   } = useFileManager({
-    actionLabelsOptions: {
-      actionsByTab: {
-        my_files: [
-          DialFileManagerActions.Rename,
-          DialFileManagerActions.Delete,
-        ],
-        shared: [],
-        organization: [],
-        review: [],
-      },
-    },
+    actionLabelsOptions,
     toolbarOptions: {
       tabs: [],
       showHiddenFilesToggle: false,
@@ -101,8 +109,14 @@ export const SelectFolderModal = ({
   });
 
   useEffect(() => {
+    if (isOpen) {
+      setCurrentPath(defaultSelectedFolder);
+    }
+  }, [isOpen, defaultSelectedFolder, setCurrentPath]);
+
+  useEffect(() => {
     if (lastRenamedParentFolder?.newId) {
-      setSelectedFolderId((id) => {
+      setCurrentPath((id) => {
         if (!id) return id;
 
         if (id === lastRenamedParentFolder.oldId)
@@ -121,6 +135,7 @@ export const SelectFolderModal = ({
     dispatch,
     lastRenamedParentFolder?.newId,
     lastRenamedParentFolder?.oldId,
+    setCurrentPath,
   ]);
 
   useEffect(() => {
@@ -131,7 +146,7 @@ export const SelectFolderModal = ({
         }),
       );
     }
-  }, [dispatch, isOpen, rootFolderId]);
+  }, [dispatch, isOpen]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -140,19 +155,29 @@ export const SelectFolderModal = ({
   }, [dispatch, isOpen]);
 
   useEffect(() => {
-    if (currentPath) {
-      setSelectedFolderId(currentPath);
+    if (isOpen && rootFolderId) {
+      dispatch(FilesActions.getFolders({ id: rootFolderId }));
     }
-  }, [currentPath]);
+  }, [dispatch, isOpen, rootFolderId]);
+
+  const frozenFileTreeItemsRef = useRef(fileTreeItems);
+  useEffect(() => {
+    if (!isGridEditing) {
+      frozenFileTreeItemsRef.current = fileTreeItems;
+    }
+  }, [fileTreeItems, isGridEditing]);
+
+  const itemsToRender = isGridEditing
+    ? frozenFileTreeItemsRef.current
+    : fileTreeItems;
 
   const handleClose = useCallback(() => {
     onClose(undefined);
-    setSelectedFolderId(defaultSelectedFolder);
-  }, [onClose, defaultSelectedFolder]);
+  }, [onClose]);
 
   const handleConfirm = useCallback(() => {
-    onClose(selectedFolderId);
-  }, [onClose, selectedFolderId]);
+    onClose(currentPath ?? defaultSelectedFolder);
+  }, [onClose, currentPath, defaultSelectedFolder]);
 
   const modalTreeOptions = useMemo(
     () => ({
@@ -164,39 +189,66 @@ export const SelectFolderModal = ({
     [collapsedTree, treeOptions.header],
   );
 
+  const modalGridOptions = useMemo(
+    () => ({
+      ...gridOptions,
+      showFiles: false,
+      additionalGridOptions: {
+        ...gridOptions.additionalGridOptions,
+        suppressRowVirtualisation: true,
+        onCellEditingStarted: (params: CellEditingStartedEvent) => {
+          setIsGridEditing(true);
+          if (params.api) {
+            setTimeout(() => {
+              params.api.ensureIndexVisible(params.rowIndex as number);
+            }, 0);
+          }
+          gridOptions.additionalGridOptions?.onCellEditingStarted?.(params);
+        },
+        onCellEditingStopped: (params: CellEditingStoppedEvent) => {
+          setIsGridEditing(false);
+          gridOptions.additionalGridOptions?.onCellEditingStopped?.(params);
+        },
+      },
+    }),
+    [gridOptions],
+  );
+
   return (
-    <DialDestinationFolderPopup
-      open={isOpen}
-      onClose={handleClose}
-      onConfirm={handleConfirm}
-      mode="move"
-      moveLabel={t(CommonI18nKeys.SelectFolder)}
-      addFolderLabel={t(CommonI18nKeys.AddFolder)}
-      header={t(CommonI18nKeys.SelectFolder)}
-      path={currentPath}
-      onFolderPopupPathChange={setCurrentPath}
-      sourceFolder={rootFolderId}
-      disabledPathTooltip={t(CommonI18nKeys.RootFolderCannotBeSelected)}
-      items={fileTreeItems}
-      rootItem={rootFolder}
-      filesLoading={areFoldersLoading}
-      treeOptions={modalTreeOptions}
-      gridOptions={{ ...gridOptions, showFiles: false }}
-      navigationPanelOptions={navigationPanelOptions}
-      collapsedFileTree={collapsedTree}
-      allowedFileTypes={[]}
-      actionsRef={fileManagerActionRef}
-      onCreateFolder={handleCreateFolder}
-      onMoveToFiles={handleMoveFiles}
-      onCreateFolderValidate={handleRenameValidation}
-      onRenameValidate={handleRenameValidation}
-      onDeleteFiles={handleDeleteFiles}
-      uploadEnabled={false}
-      alertProps={
-        warningMessage
-          ? { message: warningMessage, variant: AlertVariant.Warning }
-          : undefined
-      }
-    />
+    <div>
+      <DialDestinationFolderPopup
+        open={isOpen}
+        onClose={handleClose}
+        onConfirm={handleConfirm}
+        mode="move"
+        moveLabel={t(CommonI18nKeys.SelectFolder)}
+        addFolderLabel={t(CommonI18nKeys.AddFolder)}
+        header={t(CommonI18nKeys.SelectFolder)}
+        path={currentPath}
+        onFolderPopupPathChange={setCurrentPath}
+        sourceFolder={rootFolderId}
+        disabledPathTooltip={t(CommonI18nKeys.RootFolderCannotBeSelected)}
+        items={itemsToRender}
+        rootItem={rootFolder}
+        filesLoading={areFoldersLoading}
+        treeOptions={modalTreeOptions}
+        gridOptions={modalGridOptions}
+        navigationPanelOptions={navigationPanelOptions}
+        collapsedFileTree={collapsedTree}
+        allowedFileTypes={[]}
+        actionsRef={fileManagerActionRef}
+        onCreateFolder={handleCreateFolder}
+        onMoveToFiles={handleMoveFiles}
+        onCreateFolderValidate={handleRenameValidation}
+        onRenameValidate={handleRenameValidation}
+        onDeleteFiles={handleDeleteFiles}
+        uploadEnabled={false}
+        alertProps={
+          warningMessage
+            ? { message: warningMessage, variant: AlertVariant.Warning }
+            : undefined
+        }
+      />
+    </div>
   );
 };

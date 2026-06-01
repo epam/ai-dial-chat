@@ -16,10 +16,12 @@ import {
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isMobile } from '@/src/utils/app/mobile';
 
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { CommonI18nKeys } from '@/src/constants/i18n';
@@ -64,6 +66,9 @@ export const Combobox = <T,>({
 
   const [displayedItems, setDisplayedItems] = useState(items);
   const [floatingWidth, setFloatingWidth] = useState(0);
+
+  const screenState = useScreenState();
+  const isMobileView = screenState === ScreenState.SM;
 
   const selectedItemRef = useRef<HTMLDivElement>(null);
 
@@ -164,7 +169,7 @@ export const Combobox = <T,>({
                   ? itemRow({ item: selectedItem, truncate: false })
                   : null
               }
-              hideTooltip={!!isOpen}
+              hideTooltip={!!isOpen || !!inputValue || isMobileView}
               triggerClassName="w-full"
               isTriggerClickable
             >
@@ -187,7 +192,7 @@ export const Combobox = <T,>({
             {!inputValue && itemRow && !!selectedItem && (
               <div
                 ref={selectedItemRef}
-                className="pointer-events-none absolute left-3 top-0 flex w-full items-center"
+                className="pointer-events-none absolute start-3 top-0 flex w-full items-center"
               >
                 {itemRow({ item: selectedItem })}
               </div>
@@ -244,6 +249,7 @@ export const Combobox = <T,>({
                     itemRow?.({ item, truncate: false }) ?? getItemLabel(item)
                   }
                   triggerClassName="w-full"
+                  hideTooltip={isMobileView}
                 >
                   {itemRow?.({ item }) ?? getItemLabel(item)}
                 </Tooltip>

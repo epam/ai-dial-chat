@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -10,7 +11,7 @@ import {
   isSearchFilterSelected,
 } from '@/src/utils/app/search';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ScreenState } from '@/src/types/common';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { SearchFilters } from '@/src/types/search';
 import { Translation } from '@/src/types/translation';
@@ -44,6 +45,8 @@ export function SearchFiltersView({
       : Translation.PromptBar,
   );
   const [isOpen, setIsOpen] = useState(false);
+  const screenState = useScreenState();
+  const isMobileView = screenState === ScreenState.SM;
 
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
@@ -92,12 +95,12 @@ export function SearchFiltersView({
     <ContextMenu
       menuItems={filterItems}
       featureType={featureType}
-      triggerIconClassName="absolute right-4 cursor-pointer max-h-[18px]"
+      triggerIconClassName="absolute end-4 cursor-pointer max-h-[18px]"
       onOpenChange={setIsOpen}
       TriggerCustomRenderer={
         <Tooltip
           tooltip={t(PromptBarI18nKeys.SearchFilters)}
-          hideTooltip={isOpen}
+          hideTooltip={isOpen || isMobileView}
         >
           <IconFilter
             size={18}
@@ -107,7 +110,7 @@ export function SearchFiltersView({
             <IconCircleFilled
               size={8}
               className={classNames(
-                'absolute right-0 top-0 bg-layer-0 p-[0.3px] text-accent-primary',
+                'absolute end-0 top-0 bg-layer-0 p-[0.3px] text-accent-primary',
               )}
             />
           )}

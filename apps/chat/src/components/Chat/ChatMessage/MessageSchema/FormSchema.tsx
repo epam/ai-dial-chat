@@ -317,7 +317,8 @@ const ButtonsProperty = ({
       <ConfirmDialog
         isOpen={!!confirmation}
         showHeadingTooltip
-        heading={t(
+        heading={t(ChatI18nKeys.ConfirmHeader)}
+        description={t(
           confirmation?.[DialSchemaProperties.DialWidgetOptions]
             ?.confirmationMessage ?? '',
         )}

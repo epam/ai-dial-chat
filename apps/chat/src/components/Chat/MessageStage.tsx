@@ -90,7 +90,7 @@ const DownloadStageView = ({ content, limit }: DownloadStageViewProps) => {
   }, [content]);
 
   return (
-    <div className="flex justify-between gap-1 ps-1">
+    <div data-no-context-menu className="flex justify-between gap-1 ps-1">
       {t(ChatI18nKeys.ContentTooLarge, { limit })}
       <div className="flex items-center gap-2 text-secondary">
         <DialGhostIconButton
@@ -159,6 +159,7 @@ export const MessageStage = ({ stage }: MessageStageProps) => {
           onClick={() => {
             setIsOpened((opened) => !opened);
           }}
+          data-no-context-menu
           data-qa="message-stage"
         >
           <StageTitle isOpened={isOpened} stage={stage} />

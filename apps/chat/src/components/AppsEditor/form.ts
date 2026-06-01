@@ -33,6 +33,7 @@ import {
   AnyToolset,
   CodeInterpreterToolset,
   DialAppToolset,
+  DialAppTransportType,
   DialDeploymentSimpleTool,
   DialPromptSkill,
   MCPToolset,
@@ -45,6 +46,7 @@ import {
   isMcpToolset,
   isUnknownToolset,
 } from '@/src/types/quick-apps';
+import { Translation } from '@/src/types/translation';
 
 import {
   CODEAPPS_REQUIRED_FILES,
@@ -57,7 +59,7 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
-import { CommonI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -239,6 +241,7 @@ export const QuickApp2Schema = zodValidation
     toolSupportingModelIds: zodValidation
       .array(zodValidation.string())
       .optional(),
+    availableModelIds: zodValidation.array(zodValidation.string()).optional(),
     agentSkills: zodValidation.array(zodValidation.string()),
     timestamp: zodValidation.boolean(),
   })
@@ -262,10 +265,21 @@ export const QuickApp2Schema = zodValidation
         });
       }
     }
-    if (
-      data.toolSupportingModelIds &&
-      !data.toolSupportingModelIds.includes(data.model)
-    ) {
+    const modelExists =
+      !data.availableModelIds || data.availableModelIds.includes(data.model);
+
+    if (!modelExists) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['model'],
+        message: translate(ChatI18nKeys.IncorrectSelectedModel, {
+          ns: Translation.Chat,
+        }),
+      });
+      return;
+    }
+
+    if (data.toolSupportingModelIds?.includes(data.model) === false) {
       ctx.addIssue({
         code: 'custom',
         path: ['model'],
@@ -463,6 +477,7 @@ export const getAgentsAndToolsetsFormValue = (
 const getQuickApp2FormData = (
   app?: CustomApplicationModel,
   toolSupportingModelIds?: string[],
+  availableModelIds?: string[],
 ): QuickApp2Form => {
   const appProperties = app?.applicationProperties as QuickApp2Config;
   // show selected model for existing Quick Apps
@@ -515,6 +530,7 @@ const getQuickApp2FormData = (
     ],
     isJsonView: false,
     toolSupportingModelIds,
+    availableModelIds,
     agentSkills: (appProperties?.skills ?? [])
       .filter((s): s is DialPromptSkill => s.type === 'dial-prompt')
       .map((s) => ApiUtils.decodeApiUrl(s.url)),
@@ -592,11 +608,13 @@ const getSettingsFormData = ({
   type,
   runtime,
   toolSupportingModelIds,
+  availableModelIds,
 }: {
   app?: CustomApplicationModel;
   type: AppsEditorSchemaTypes;
   runtime?: string;
   toolSupportingModelIds?: string[];
+  availableModelIds?: string[];
 }) => {
   switch (type) {
     case AppsEditorSchemaTypes.ExternalApp:
@@ -606,7 +624,11 @@ const getSettingsFormData = ({
     case AppsEditorSchemaTypes.QuickApp:
       return getQuickAppFormData(app);
     case AppsEditorSchemaTypes.QuickApp2:
-      return getQuickApp2FormData(app, toolSupportingModelIds);
+      return getQuickApp2FormData(
+        app,
+        toolSupportingModelIds,
+        availableModelIds,
+      );
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return getCustomAppFormData(app);
@@ -632,6 +654,7 @@ export const getDefaultFormData = ({
     runtime,
     type: getEditorSchemaType(type),
     toolSupportingModelIds,
+    availableModelIds: models?.map((model) => model.id),
   }),
 });
 
@@ -726,6 +749,9 @@ export const getQuickApp2Toolsets = ({
             deployment_id: ApiUtils.encodeApiUrl(
               agentAndToolset[AgentOrToolsetSchemaKeys.id],
             ),
+            transport:
+              (toolData as DialAppToolset).transport ??
+              DialAppTransportType.MCP,
           });
         } else if (isToolsetId(agentAndToolset[AgentOrToolsetSchemaKeys.id])) {
           acc.dialMCPToolsets.push({
@@ -763,6 +789,8 @@ export const getQuickApp2Toolsets = ({
           name: entity.name,
           type: ToolsetTypes.DialApp,
           deployment_id: ApiUtils.encodeApiUrl(entity.id),
+          transport:
+            (toolData as DialAppToolset).transport ?? DialAppTransportType.MCP,
         });
       } else {
         acc.dialMCPToolsets.push({
