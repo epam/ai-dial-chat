@@ -195,30 +195,38 @@ export const useConversationHandlers = ({
 
   const handleRateMessage = useCallback(
     async (messageId: string, rating: MessageRating | null) => {
-      if (!conversationId || !conversation) return;
-      const msg = conversation.messages.find((m) => m.id === messageId);
-      if (!msg) return;
+      if (!conversationId) return;
 
-      const previousRating = msg.rating;
+      let previousRating: MessageRating | undefined;
+      setConversation((prev) => {
+        if (!prev) return prev;
+        const msg = prev.messages.find((m) => m.id === messageId);
+        if (!msg) return prev;
+        previousRating = msg.rating;
+        const next: Conversation = {
+          ...prev,
+          messages: prev.messages.map((m) =>
+            m.id === messageId ? { ...m, rating: rating ?? undefined } : m,
+          ),
+        };
+        conversationRef.current = next;
+        return next;
+      });
+
+      const updated = conversationRef.current;
+      if (!updated) return;
+
       const conversationPath = getConversationPath(conversationId);
-
-      const updatedConversation: Conversation = {
-        ...conversation,
-        messages: conversation.messages.map((m) =>
-          m.id === messageId ? { ...m, rating: rating ?? undefined } : m,
-        ),
-      };
-      setConversation(updatedConversation);
 
       if (rating !== null) {
         try {
           await rateMessage({
-            conversationId: conversation.id,
+            conversationId: updated.id,
             responseId: messageId,
-            modelId: conversation.model.id,
+            modelId: updated.model.id,
             rate: rating,
           });
-          await saveConversation(conversationPath, updatedConversation);
+          await saveConversation(conversationPath, updated);
         } catch {
           setConversation((prev) => {
             if (!prev) return prev;
@@ -231,22 +239,20 @@ export const useConversationHandlers = ({
           });
         }
       } else {
-        await saveConversation(conversationPath, updatedConversation).catch(
-          () => {
-            setConversation((prev) => {
-              if (!prev) return prev;
-              return {
-                ...prev,
-                messages: prev.messages.map((m) =>
-                  m.id === messageId ? { ...m, rating: previousRating } : m,
-                ),
-              };
-            });
-          },
-        );
+        await saveConversation(conversationPath, updated).catch(() => {
+          setConversation((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              messages: prev.messages.map((m) =>
+                m.id === messageId ? { ...m, rating: previousRating } : m,
+              ),
+            };
+          });
+        });
       }
     },
-    [conversation, conversationId, setConversation],
+    [conversationId, conversationRef, setConversation],
   );
 
   const submitStarter = useCallback(
