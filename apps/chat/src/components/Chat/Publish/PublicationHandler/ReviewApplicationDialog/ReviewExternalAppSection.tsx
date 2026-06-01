@@ -40,11 +40,15 @@ export const ReviewExternalAppSection = ({
           href={externalUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="flex flex-nowrap items-center gap-1 break-all text-accent-primary"
+          className="inline-flex max-w-full flex-nowrap items-center gap-1 break-all text-accent-primary"
           data-qa="app-external-url"
         >
-          <p className="min-w-0 flex-1 truncate"> {externalUrl}</p>
-          <IconExternalLink size={DEFAULT_ICON_SIZES.SMALL} />
+          <p className="min-w-0 flex-1 truncate" title={externalUrl}>
+            {externalUrl}
+          </p>
+          <div className="size-[16px]">
+            <IconExternalLink size={DEFAULT_ICON_SIZES.SMALL} />
+          </div>
         </Link>
       }
       valueClassName="max-w-[414px]"
