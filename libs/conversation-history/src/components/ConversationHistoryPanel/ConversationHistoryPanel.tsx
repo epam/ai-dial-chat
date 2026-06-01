@@ -1,5 +1,4 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import {
   IconLayoutSidebarLeftCollapse,
   IconLayoutSidebarLeftExpand,
@@ -13,11 +12,9 @@ export const ConversationHistoryPanel: FC<ConversationHistoryPanelProps> = memo(
   ({
     conversations,
     isOpen,
-    onToggle,
     onSelectConversation,
     activeConversationId,
     title,
-    toggleAriaLabel,
     emptyLabel,
     formatDate,
     colors,
