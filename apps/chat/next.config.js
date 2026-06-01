@@ -198,6 +198,14 @@ const nextConfig = {
       // statically resolve. The `$` suffix makes the alias exact (deep imports
       // like `monaco-editor/esm/...` are unaffected).
       'monaco-editor$': 'monaco-editor/esm/vs/editor/editor.api',
+      // On the client only: route protobufjs to its 'minimal' build, which
+      // omits the runtime codegen path (`new Function(source)()` in
+      // protobufjs/src/util/codegen.js) that violates our CSP. The server
+      // bundle keeps the full protobufjs so OpenTelemetry's OTLP-proto trace
+      // exporter still works. Exact match via `$` — deep imports unaffected.
+      ...(!isServer
+        ? { 'protobufjs$': 'protobufjs/minimal' }
+        : {}),
     };
 
     config.ignoreWarnings = [
