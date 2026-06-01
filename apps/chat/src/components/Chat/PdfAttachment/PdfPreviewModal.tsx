@@ -12,16 +12,11 @@ import { PdfHighlightViewerLazy } from './PdfHighlightViewer.dynamic';
 interface Props {
   url: string;
   title?: string;
-  isOpen: boolean;
   onClose: () => void;
 }
 
-export const PdfPreviewModal = ({ url, title, isOpen, onClose }: Props) => {
+export const PdfPreviewModal = ({ url, title, onClose }: Props) => {
   const { t } = useTranslation(Translation.Chat);
-
-  if (!isOpen) {
-    return null;
-  }
 
   return (
     <Modal

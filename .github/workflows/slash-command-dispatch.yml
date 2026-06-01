@@ -18,11 +18,7 @@ jobs:
               repo: context.repo.repo,
               pull_number: context.payload.issue.number
             })
-            const static_args =
-              pull.base.ref == "development-1.0"
-                ? ["application=ai-dial-chat-ng", "skip-e2e"]
-                : ["application=ai-dial-chat", "test-applications=chat,overlay"]
-            core.setOutput("static_args", static_args)
+            core.setOutput('base-ref', pull.base.ref)
       - name: Slash Command Dispatch
         id: scd
         uses: peter-evans/slash-command-dispatch@9bdcd7914ec1b75590b790b844aa3b8eee7c683a # v5.0.2
@@ -36,6 +32,10 @@ jobs:
                 "permission": "write",
                 "issue_type": "pull-request",
                 "repository": "epam/ai-dial-ci",
-                "static_args": ${{ steps.pr.outputs.static_args }}
+                "static_args": [
+                  "application=${{ steps.pr.outputs.base-ref == 'development-1.0' && 'ai-dial-chat-ng' || github.event.repository.name }}",
+                  "test-applications=chat,overlay",
+                  "${{ steps.pr.outputs.base-ref == 'development-1.0' && 'skip-e2e' || '' }}"
+                ]
               }
             ]
