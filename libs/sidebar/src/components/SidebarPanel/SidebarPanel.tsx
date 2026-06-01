@@ -4,7 +4,10 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
 import { type FC, useMemo } from 'react';
-import type { SidebarPanelProps } from '../../models/SidebarPanel.js';
+import {
+  SidebarSide,
+  type SidebarPanelProps,
+} from '../../models/SidebarPanel.js';
 import styles from './SidebarPanel.module.scss';
 
 export const SidebarPanel: FC<SidebarPanelProps> = ({
@@ -15,10 +18,10 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   ariaLabel,
   closeLabel,
   children,
-  colors,
-  typography,
+  styles: panelStyles,
   className,
 }) => {
+  const { colors, typography } = panelStyles ?? {};
   const noCustomFont = !typography?.fontClassName;
 
   const cssVars = useMemo(
@@ -66,7 +69,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
       >
         {/* Left group: close button here when side=left, then leftActions */}
         <div className="flex items-center gap-1">
-          {side === 'left' && closeButton}
+          {side === SidebarSide.Left && closeButton}
           {leftActions}
         </div>
 
@@ -75,7 +78,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
         {/* Right group: rightActions, then close button when side=right */}
         <div className="flex items-center gap-1">
           {rightActions}
-          {side === 'right' && closeButton}
+          {side === SidebarSide.Right && closeButton}
         </div>
       </div>
 
