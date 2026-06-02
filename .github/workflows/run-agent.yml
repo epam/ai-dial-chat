@@ -160,3 +160,4 @@ jobs:
           allowed_tools: ${{ steps.manifest.outputs.allowed_tools }}
           agent_version: ${{ steps.manifest.outputs.agent_version }}
           model: ${{ steps.manifest.outputs.model }}
+          upstream_artifacts: ${{ inputs.upstream_artifacts }}

@@ -4,7 +4,10 @@ You are running the **{{stage}}** agent on a pull request.
 
 - Working tree: the current checkout (repo root).
 - PR diff: `git diff origin/{{base_ref}}...HEAD`.
-- Upstream agent outputs (when declared in `needs:`): `upstream/<agent-name>/stage-output.json`.
+- Upstream agent outputs:
+{{upstream_inputs}}
+
+If an upstream artifact is listed above but missing at runtime, treat it as a platform-level race: write `status: "passed"` with a `summary` naming the absent artifact — do not search the workspace for substitutes, and do not run the upstream agent's tooling yourself. If the file exists but is malformed (unparseable JSON, missing the expected `payload`), write `status: "passed_with_findings"` with one `info`-severity finding explaining the parse failure rather than guessing at the contents.
 
 ## Tool constraints (read this before invoking the skill)
 

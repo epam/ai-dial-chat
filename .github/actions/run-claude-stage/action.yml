@@ -27,6 +27,10 @@ inputs:
     description: 'When "true", claude-code-action streams full Claude prompts/responses to the GHA log. Useful for debugging on a sandbox base; set to "false" before agents see real secrets in their prompts.'
     required: false
     default: 'false'
+  upstream_artifacts:
+    description: 'Comma-separated names of upstream agents whose stage-output.json artifacts have been downloaded into upstream/<name>/ (same value the calling workflow passes to the gh run download step). Used to render the per-agent upstream-inputs section of the composed prompt.'
+    required: false
+    default: ''
 
 outputs:
   message:
@@ -57,6 +61,7 @@ runs:
         MAX_TURNS: ${{ inputs.max_turns }}
         MODEL: ${{ inputs.model }}
         SHOW_FULL_OUTPUT: ${{ inputs.show_full_output }}
+        UPSTREAM_ARTIFACTS: ${{ inputs.upstream_artifacts }}
         RUNNER_TEMP: ${{ runner.temp }}
       run: |
         set -euo pipefail
@@ -98,12 +103,30 @@ runs:
         # literal. So we expand the base ref at compose time and Claude sees
         # `git diff origin/<actual-branch>...HEAD`.
         base_ref = os.environ.get('GITHUB_BASE_REF', 'main')
+
+        # Render the upstream-inputs section from the comma-separated `needs`
+        # list the calling workflow plumbs through (same value used by the
+        # gh-run-download step). Explicit per-agent lines beat a generic
+        # placeholder: the agent is told the exact file(s) to read rather than
+        # having to discover them. Skills stay agnostic of CI plumbing.
+        upstream_raw = os.environ.get('UPSTREAM_ARTIFACTS', '')
+        upstream_names = [n.strip() for n in upstream_raw.split(',') if n.strip()]
+        if upstream_names:
+            upstream_inputs = '\n'.join(
+                f'  - `upstream/{n}/stage-output.json` — the `{n}` agent\'s output '
+                f'envelope; its agent-specific data (findings, reports, etc.) is under `payload`.'
+                for n in upstream_names
+            )
+        else:
+            upstream_inputs = '  - none declared; this agent runs independently on the PR diff and working tree.'
+
         with open(os.environ['WRAPPER_PATH']) as f:
             template = f.read()
         composed = (template
                     .replace('{{stage}}', stage)
                     .replace('{{skill}}', os.environ['SKILL'])
-                    .replace('{{base_ref}}', base_ref))
+                    .replace('{{base_ref}}', base_ref)
+                    .replace('{{upstream_inputs}}', upstream_inputs))
         with open(os.environ['COMPOSED_PROMPT_PATH'], 'w') as f:
             f.write(composed)
         PY
