@@ -225,6 +225,11 @@ const ConversationView: FC<Props> = ({
                   key={msg.id}
                   role={msg.role}
                   text={msg.content}
+                  colors={
+                    msg.stoppedWithoutContent
+                      ? { text: 'var(--text-secondary, #9FA6BD)' }
+                      : undefined
+                  }
                   attachments={attachmentDtosToDisplayAttachments(
                     msg.custom_content?.attachments,
                   )}
