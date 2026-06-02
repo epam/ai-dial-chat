@@ -9,6 +9,7 @@ interface Props {
   activeConversationId?: string;
   onClose: () => void;
   onSelectConversation: (id: string) => void;
+  onNewChat: () => void;
 }
 
 const EMPTY_CONVERSATIONS: never[] = [];
@@ -18,6 +19,7 @@ const ConversationPanelView: FC<Props> = ({
   activeConversationId,
   onClose,
   onSelectConversation,
+  onNewChat,
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -30,7 +32,19 @@ const ConversationPanelView: FC<Props> = ({
       activeConversationId={activeConversationId}
       title={t(ConversationHistoryI18nKeys.Title)}
       emptyLabel={t(ConversationHistoryI18nKeys.Empty)}
-      formatDate={(iso) => new Date(iso).toLocaleDateString()}
+      onNewChat={onNewChat}
+      newChatLabel={t(ConversationHistoryI18nKeys.NewChat)}
+      searchPlaceholder={t(ConversationHistoryI18nKeys.SearchPlaceholder)}
+      filterLabels={{
+        all: t(ConversationHistoryI18nKeys.FilterAll),
+        myChats: t(ConversationHistoryI18nKeys.FilterMyChats),
+        shared: t(ConversationHistoryI18nKeys.FilterShared),
+        organization: t(ConversationHistoryI18nKeys.FilterOrganization),
+      }}
+      groupLabels={{
+        pinned: t(ConversationHistoryI18nKeys.PinnedSection),
+        myChats: t(ConversationHistoryI18nKeys.MyChatsSection),
+      }}
       onBackdropClick={isMobile ? onClose : undefined}
       className={isMobile ? 'fixed inset-y-0 left-0 z-50 w-[288px]' : undefined}
     />

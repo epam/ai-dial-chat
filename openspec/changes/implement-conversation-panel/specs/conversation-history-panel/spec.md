@@ -1,4 +1,4 @@
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: `libs/conversation-history` library exposes `ConversationHistoryPanel`
 
@@ -32,17 +32,26 @@ A new library `@epam/ai-dial-conversation-history` SHALL exist at `libs/conversa
 
 ---
 
-### Requirement: Panel body renders a list of conversation items
+### Requirement: Panel body renders conversations grouped into Pinned and My chats sections
 
-When `isOpen` is `true`, `ConversationHistoryPanel` SHALL render a scrollable list (`role="list"`) of conversation items. Each item (`role="listitem"`) SHALL display:
+When `isOpen` is `true`, `ConversationHistoryPanel` SHALL render conversation items split into two collapsible sections:
+
+- **Pinned** — items where `isPinned === true`, shown first.
+- **My chats** — remaining items.
+
+Each section SHALL render a disclosure button (chevron icon) as its header that toggles the section open/closed. Both sections start expanded by default. A section with zero items after active search and tab filter is applied SHALL be hidden entirely.
+
+Each item (`role="listitem"`) SHALL display:
+- A model/conversation icon passed via `item.iconUrl` or a default icon.
 - The conversation `title` (truncated with ellipsis if too long).
-- A formatted date string (`updatedAt`), formatted by the caller via the `formatDate` prop callback.
 - The item SHALL be a button or link that calls `onSelectConversation(id)` when activated.
 - The currently active conversation (matching `activeConversationId`) SHALL receive `aria-current="page"`.
 
-#### Scenario: Renders all provided conversations
-- **WHEN** `ConversationHistoryPanel` receives 5 conversation items and `isOpen={true}`
-- **THEN** 5 list items are visible
+i18n keys: `conversationHistory.pinnedSection`, `conversationHistory.myChatsSection`.
+
+#### Scenario: Renders pinned conversations in Pinned section
+- **WHEN** `conversations` contains 2 items with `isPinned: true` and 3 without
+- **THEN** the Pinned section shows 2 items and the My chats section shows 3 items
 
 #### Scenario: Active conversation is marked
 - **WHEN** `activeConversationId` matches one item's `id`
@@ -54,7 +63,11 @@ When `isOpen` is `true`, `ConversationHistoryPanel` SHALL render a scrollable li
 
 #### Scenario: Empty state is shown when no conversations
 - **WHEN** `conversations` is an empty array
-- **THEN** the empty-state message (`emptyLabel` prop) is rendered instead of a list
+- **THEN** the empty-state message (`emptyLabel` prop) is rendered instead of sections
+
+#### Scenario: Collapsing a section hides its items
+- **WHEN** the user clicks the Pinned section disclosure button
+- **THEN** the Pinned section items are no longer visible
 
 ---
 
@@ -90,4 +103,75 @@ The panel SHALL accept `onBackdropClick?: () => void`; when provided and `isOpen
 
 ### Requirement: `ConversationHistoryPanel` has unit tests
 
-Tests SHALL be in `libs/conversation-history/src/components/ConversationHistoryPanel/tests/ConversationHistoryPanel.spec.tsx`. They MUST cover: rendering items, toggle button interaction, active item marking, empty state, aria-expanded, and backdrop click.
+Tests SHALL be in `libs/conversation-history/src/components/ConversationHistoryPanel/tests/ConversationHistoryPanel.spec.tsx`. They MUST cover: rendering items, toggle button interaction, active item marking, empty state, aria-expanded, backdrop click, new-chat button callback, search filtering, filter tab switching, and section collapse/expand.
+
+---
+
+## ADDED Requirements
+
+### Requirement: Panel renders a New chat button
+
+`ConversationHistoryPanel` SHALL render a full-width "New chat" button (with a `+` / `IconPlus` icon) directly below the header. Clicking it SHALL call the `onNewChat: () => void` required prop. The button SHALL be keyboard-accessible (Enter / Space triggers `onNewChat`). Its accessible label is provided via the `newChatLabel` prop.
+
+i18n key: `conversationHistory.newChat`.
+
+#### Scenario: New chat button is visible when panel is open
+- **WHEN** `ConversationHistoryPanel` renders with `isOpen={true}`
+- **THEN** a button labelled by `newChatLabel` is visible
+
+#### Scenario: Clicking New chat calls onNewChat
+- **WHEN** the user clicks the New chat button
+- **THEN** `onNewChat` is called once
+
+#### Scenario: New chat button is keyboard accessible
+- **WHEN** the New chat button has focus and the user presses Enter
+- **THEN** `onNewChat` is called once
+
+---
+
+### Requirement: Panel renders a search input to filter conversations
+
+`ConversationHistoryPanel` SHALL render a text input below the New chat button with a search icon and placeholder provided via `searchPlaceholder` prop. The search value is internal `useState<string>` — no external prop. Typing in the input SHALL filter conversation items by case-insensitive title substring match. Sections with zero matching items SHALL be hidden. Clearing the input SHALL restore the full list.
+
+i18n key: `conversationHistory.searchPlaceholder`.
+
+#### Scenario: Search filters conversation list
+- **WHEN** the user types "foo" in the search input
+- **THEN** only conversations whose title contains "foo" (case-insensitive) are shown
+
+#### Scenario: Clearing search restores full list
+- **WHEN** the user clears the search input
+- **THEN** all conversations matching the active tab filter are shown
+
+#### Scenario: No match shows empty state
+- **WHEN** the user types a string that matches no conversation title
+- **THEN** the empty-state message is rendered
+
+---
+
+### Requirement: Panel renders filter tabs — All / My chats / Shared / Organization
+
+`ConversationHistoryPanel` SHALL render a segmented tab control below the search input with four tabs: **All**, **My chats**, **Shared**, **Organization**. Tab state is internal `useState<FilterTab>` (default: `'all'`). Selecting a tab filters visible items:
+
+- `'all'` — shows all items.
+- `'my-chats'` — shows items where `source === 'my-chats'`.
+- `'shared'` — shows items where `source === 'shared'`.
+- `'organization'` — shows items where `source === 'organization'`.
+
+Filtering combines with the active search query (both conditions must match). Tab labels are provided via the `filterLabels` prop (`{ all, myChats, shared, organization }: Record<string, string>`).
+
+i18n keys: `conversationHistory.filterAll`, `conversationHistory.filterMyChats`, `conversationHistory.filterShared`, `conversationHistory.filterOrganization`.
+
+The active tab button SHALL have `aria-selected="true"` and `role="tab"`. The tab list SHALL have `role="tablist"`.
+
+#### Scenario: Active tab is marked aria-selected
+- **WHEN** "My chats" tab is selected
+- **THEN** the My chats tab button has `aria-selected="true"` and the others have `aria-selected="false"`
+
+#### Scenario: Selecting a tab filters by source
+- **WHEN** the user clicks the "Shared" tab
+- **THEN** only conversations with `source === 'shared'` are shown
+
+#### Scenario: Tab filter combines with search
+- **WHEN** "My chats" tab is active and the user types "foo" in the search input
+- **THEN** only conversations with `source === 'my-chats'` AND title containing "foo" are shown

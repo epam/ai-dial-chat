@@ -31,7 +31,7 @@ const Header: FC<Props> = ({
   const { isOpen: isSourcesSidebarOpen, handleOpen: handleOpenSourcesSidebar } =
     useSourcesSidebar();
 
-  const Icon = isHistoryPanelOpen ? SideBarLeft : SideBarRight;
+  const Icon = !isHistoryPanelOpen ? SideBarLeft : SideBarRight;
 
   return (
     <header className="relative z-30 grid min-h-[49px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-secondary">

@@ -53,6 +53,7 @@ function App() {
         activeConversationId={activeConversationId}
         onClose={closeHistoryPanel}
         onSelectConversation={handleSelectConversation}
+        onNewChat={() => navigate(ROUTES.ROOT)}
       />
 
       <main

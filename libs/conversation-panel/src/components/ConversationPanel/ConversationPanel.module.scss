@@ -2,34 +2,47 @@
 // Layout, spacing, and transitions live in Tailwind classes in the TSX file.
 
 .panel {
-  background: var(--ch-bg, var(--bg-layer-3, #1d2439));
-  border-color: var(--ch-border, var(--stroke-tertiary, #0c101d));
+  background: var(--cp-bg, var(--bg-layer-3, #1d2439));
+  border-color: var(--cp-border, var(--stroke-tertiary, #0c101d));
 }
 
 .header {
-  border-color: var(--ch-header-border, var(--stroke-tertiary, #0c101d));
-  color: var(--ch-text, var(--text-primary, #eef1f7));
+  border-color: var(--cp-header-border, var(--stroke-tertiary, #0c101d));
+  color: var(--cp-text, var(--text-primary, #eef1f7));
 }
 
 .headerTitle {
-  font-family: var(--ch-title-font-family, var(--theme-font, sans-serif));
-  font-size: var(--ch-title-font-size, 0.875rem);
-  font-weight: var(--ch-title-font-weight, 600);
-  line-height: var(--ch-title-line-height, 1.25rem);
+  font-family: var(--cp-title-font-family, var(--theme-font, sans-serif));
+  font-size: var(--cp-title-font-size, 0.875rem);
+  font-weight: var(--cp-title-font-weight, 600);
+  line-height: var(--cp-title-line-height, 1.25rem);
 }
 
 .item {
-  color: var(--ch-text, var(--text-primary, #eef1f7));
+  color: var(--cp-text, var(--text-primary, #eef1f7));
 
   &:hover {
-    background: var(--ch-item-hover, var(--bg-layer-4, #252c42));
+    background: var(--cp-item-hover, var(--bg-layer-4, #252c42));
   }
 
   &.itemActive {
-    background: var(--ch-item-active, var(--bg-accent, #335cad));
+    background: var(--cp-item-active, var(--bg-accent, #335cad));
   }
 }
 
 .itemDate {
-  color: var(--ch-text-secondary, var(--text-secondary, #9fa6bd));
+  color: var(--cp-text-secondary, var(--text-secondary, #9fa6bd));
+}
+
+.groupHeader {
+  color: var(--cp-text-secondary, var(--text-secondary, #9fa6bd));
+}
+
+.divider {
+  border-color: var(--cp-new-chat-divider, var(--stroke-tertiary, #0c101d));
+}
+
+.itemIcon {
+  background: var(--cp-item-hover, var(--bg-layer-4, #252c42));
+  color: var(--cp-text, var(--text-primary, #eef1f7));
 }

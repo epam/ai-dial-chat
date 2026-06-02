@@ -1,56 +1,120 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
+import {
+  ConversationSource,
+  type ConversationHistoryItem,
+} from '../../../models/ConversationPanel.js';
 import { ConversationPanel } from '../ConversationPanel.js';
-import type { ConversationHistoryItem } from '../../../models/ConversationPanel.js';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { LG: 24 },
-  DialGhostIconButton: ({
+  DialGhostButton: ({
     onClick,
-    'aria-label': ariaLabel,
+    label,
   }: {
     onClick: () => void;
-    'aria-label': string;
+    label: string;
+  }) => <button onClick={onClick}>{label}</button>,
+  DialSearch: ({
+    onChange,
+    placeholder,
+    value,
+  }: {
+    onChange: (v: string) => void;
+    placeholder: string;
+    value: string;
   }) => (
-    <button onClick={onClick} aria-label={ariaLabel}>
-      toggle
+    <input
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  ),
+  DialRoundedButton: ({
+    onClick,
+    label,
+    selected,
+  }: {
+    onClick: () => void;
+    label: string;
+    selected?: boolean;
+  }) => (
+    <button onClick={onClick} aria-selected={selected} role="tab">
+      {label}
     </button>
   ),
+  ElementSize: { Small: 'small', Standard: 'standard' },
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconLayoutSidebarLeftCollapse: () => <span>collapse-icon</span>,
-  IconLayoutSidebarLeftExpand: () => <span>expand-icon</span>,
+  IconCirclePlus: () => <span>plus-icon</span>,
+  IconChevronDown: () => <span>chevron-down</span>,
+  IconChevronRight: () => <span>chevron-right</span>,
 }));
+
+const FILTER_LABELS = {
+  all: 'All',
+  myChats: 'My chats',
+  shared: 'Shared',
+  organization: 'Organization',
+};
 
 const BASE_PROPS = {
   isOpen: true,
-  onToggle: vi.fn(),
   onSelectConversation: vi.fn(),
-  title: 'Conversations',
-  toggleAriaLabel: 'Toggle panel',
+  onNewChat: vi.fn(),
+  title: 'Chats',
   emptyLabel: 'No conversations yet',
-  formatDate: (d: string) => d,
+  newChatLabel: 'New chat',
+  searchPlaceholder: 'Search chat…',
+  filterLabels: FILTER_LABELS,
 };
 
 const items: ConversationHistoryItem[] = [
-  { id: 'c1', title: 'First chat', updatedAt: '2026-01-01T00:00:00Z' },
-  { id: 'c2', title: 'Second chat', updatedAt: '2026-01-02T00:00:00Z' },
-  { id: 'c3', title: 'Third chat', updatedAt: '2026-01-03T00:00:00Z' },
+  {
+    id: 'c1',
+    title: 'First chat',
+    updatedAt: '2026-01-01T00:00:00Z',
+    source: ConversationSource.MyChats,
+  },
+  {
+    id: 'c2',
+    title: 'Second chat',
+    updatedAt: '2026-01-02T00:00:00Z',
+    source: ConversationSource.MyChats,
+  },
+  {
+    id: 'c3',
+    title: 'Third chat',
+    updatedAt: '2026-01-03T00:00:00Z',
+    source: ConversationSource.Shared,
+  },
+  {
+    id: 'c4',
+    title: 'Pinned chat',
+    updatedAt: '2026-01-04T00:00:00Z',
+    isPinned: true,
+    source: ConversationSource.MyChats,
+  },
+  {
+    id: 'c5',
+    title: 'Shared chat',
+    updatedAt: '2026-01-05T00:00:00Z',
+    source: ConversationSource.Shared,
+  },
 ];
 
 describe('ConversationPanel', () => {
   it('renders all conversation rows when open', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
-    expect(screen.getByRole('list')).toBeTruthy();
-    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(screen.getAllByRole('listitem')).toHaveLength(items.length);
     expect(screen.getByText('First chat')).toBeTruthy();
     expect(screen.getByText('Second chat')).toBeTruthy();
   });
 
   it('shows empty label when conversations is empty', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
-    expect(screen.queryByRole('list')).toBeNull();
+    expect(screen.queryByRole('listitem')).toBeNull();
     expect(screen.getByText('No conversations yet')).toBeTruthy();
   });
 
@@ -62,10 +126,9 @@ describe('ConversationPanel', () => {
         activeConversationId="c2"
       />,
     );
-    const buttons = screen.getAllByRole('button');
-    const activeBtn = buttons.find(
-      (b) => b.getAttribute('aria-current') === 'page',
-    );
+    const activeBtn = screen
+      .getAllByRole('button')
+      .find((b) => b.getAttribute('aria-current') === 'page');
     expect(activeBtn).toBeTruthy();
     expect(activeBtn?.textContent).toContain('Second chat');
   });
@@ -83,20 +146,7 @@ describe('ConversationPanel', () => {
     expect(onSelect).toHaveBeenCalledWith('c3');
   });
 
-  it('calls onToggle when the toggle button is clicked', () => {
-    const onToggle = vi.fn();
-    render(
-      <ConversationPanel
-        {...BASE_PROPS}
-        conversations={items}
-        onToggle={onToggle}
-      />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: 'Toggle panel' }));
-    expect(onToggle).toHaveBeenCalledTimes(1);
-  });
-
-  it('sets aria-expanded to false when isOpen is false', () => {
+  it('sets aria-hidden to true when isOpen is false', () => {
     render(
       <ConversationPanel
         {...BASE_PROPS}
@@ -104,8 +154,8 @@ describe('ConversationPanel', () => {
         isOpen={false}
       />,
     );
-    const aside = screen.getByRole('complementary');
-    expect(aside.getAttribute('aria-expanded')).toBe('false');
+    const aside = screen.getByRole('complementary', { hidden: true });
+    expect(aside.getAttribute('aria-hidden')).toBe('true');
   });
 
   it('calls onBackdropClick when the backdrop is clicked', () => {
@@ -113,11 +163,11 @@ describe('ConversationPanel', () => {
     render(
       <ConversationPanel
         {...BASE_PROPS}
-        conversations={items}
+        conversations={[]}
         onBackdropClick={onBackdropClick}
       />,
     );
-    const backdrop = document.querySelector('[aria-hidden="true"]');
+    const backdrop = document.querySelector('div[aria-hidden="true"]');
     expect(backdrop).toBeTruthy();
     fireEvent.click(backdrop!);
     expect(onBackdropClick).toHaveBeenCalledTimes(1);
@@ -127,11 +177,88 @@ describe('ConversationPanel', () => {
     render(
       <ConversationPanel
         {...BASE_PROPS}
-        conversations={items}
+        conversations={[]}
         isOpen={false}
         onBackdropClick={vi.fn()}
       />,
     );
-    expect(document.querySelector('[aria-hidden="true"]')).toBeNull();
+    expect(document.querySelector('div[aria-hidden="true"]')).toBeNull();
+  });
+
+  it('calls onNewChat when the New chat button is clicked', () => {
+    const onNewChat = vi.fn();
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={items}
+        onNewChat={onNewChat}
+      />,
+    );
+    fireEvent.click(screen.getByText('New chat'));
+    expect(onNewChat).toHaveBeenCalledTimes(1);
+  });
+
+  it('filters conversations by search query', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+    const input = screen.getByPlaceholderText('Search chat…');
+    fireEvent.change(input, { target: { value: 'First' } });
+    expect(screen.getByText('First chat')).toBeTruthy();
+    expect(screen.queryByText('Second chat')).toBeNull();
+  });
+
+  it('shows empty state when search matches nothing', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+    const input = screen.getByPlaceholderText('Search chat…');
+    fireEvent.change(input, { target: { value: 'zzznomatch' } });
+    expect(screen.getByText('No conversations yet')).toBeTruthy();
+  });
+
+  it('filters by Shared tab', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Shared' }));
+    expect(screen.getByText('Third chat')).toBeTruthy();
+    expect(screen.getByText('Shared chat')).toBeTruthy();
+    expect(screen.queryByText('First chat')).toBeNull();
+  });
+
+  it('combines tab filter and search query', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+    fireEvent.click(screen.getByRole('tab', { name: 'Shared' }));
+    const input = screen.getByPlaceholderText('Search chat…');
+    fireEvent.change(input, { target: { value: 'Third' } });
+    expect(screen.getByText('Third chat')).toBeTruthy();
+    expect(screen.queryByText('Shared chat')).toBeNull();
+  });
+
+  it('puts isPinned items in Pinned group and others in My chats group', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+    expect(screen.getByText('Pinned')).toBeTruthy();
+    expect(screen.getAllByText('My chats').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByText('Pinned chat')).toBeTruthy();
+    expect(screen.getByText('First chat')).toBeTruthy();
+  });
+
+  it('collapses a group when its header is clicked', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+    const pinnedHeader = screen.getByText('Pinned').closest('button');
+    expect(pinnedHeader).toBeTruthy();
+    expect(screen.getByText('Pinned chat')).toBeTruthy();
+    fireEvent.click(pinnedHeader!);
+    expect(screen.queryByText('Pinned chat')).toBeNull();
+  });
+
+  it('renders filter tabs with correct aria-selected state', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
+    const allTab = screen.getByRole('tab', { name: 'All' });
+    expect(allTab.getAttribute('aria-selected')).toBe('true');
+    const sharedTab = screen.getByRole('tab', { name: 'Shared' });
+    expect(sharedTab.getAttribute('aria-selected')).toBe('false');
+    fireEvent.click(sharedTab);
+    expect(
+      screen.getByRole('tab', { name: 'Shared' }).getAttribute('aria-selected'),
+    ).toBe('true');
+    expect(
+      screen.getByRole('tab', { name: 'All' }).getAttribute('aria-selected'),
+    ).toBe('false');
   });
 });

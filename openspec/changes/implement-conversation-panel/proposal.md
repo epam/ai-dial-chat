@@ -14,15 +14,19 @@ Users have no way to revisit or switch between past conversations — every sess
 
 ### New Capabilities
 
-- `conversation-history-panel`: Collapsible left sidebar listing past conversations — expand/collapse toggle in the header, conversation rows with title and date, responsive (desktop persistent panel, mobile drawer overlay).
+- `conversation-history-panel`: Collapsible left sidebar listing past conversations — "Chats" header with expand/collapse toggle, **New chat** button, **search input**, **filter tabs** (All / My chats / Shared / Organization), grouped sections (Pinned + My chats), conversation rows with icon and title; responsive (desktop persistent panel, mobile drawer overlay).
+- `conversation-search`: Controlled text input inside the panel that filters the visible conversation list client-side by title match.
+- `new-chat-button`: Prominent button at the top of the panel that calls `onNewChat` to create a new conversation.
+- `conversation-filter-tabs`: Segmented tab control (All / My chats / Shared / Organization) that switches which subset of conversations is shown.
+- `conversation-groups`: Conversation list rendered in collapsible named sections — **Pinned** (conversations flagged `isPinned: true`) and **My chats** (the rest) — each section can be toggled open/closed independently.
 
 ### Modified Capabilities
 
-- `conversations-api`: New `GET /api/v1/conversations` list endpoint returning paginated `ConversationMetadataDto[]`.
+- `conversations-api`: New `GET /api/v1/conversations` list endpoint returning paginated `ConversationMetadataDto[]`; response items gain optional `isPinned` and `source` fields to support grouping and filter tabs.
 
 ## Impact
 
-- **`libs/conversation-history`**: new library — `ConversationHistoryPanel`, `ConversationHistoryItem`, `ConversationHistoryPanelProps` / `ConversationHistoryColors` model types.
-- **`apps/chat-api`**: `src/conversations/` — new list handler, DTO, service method.
-- **`apps/chat`**: `server-api/conversations.api.ts` (new `listConversations`), new `ConversationsContext`, `app.tsx` layout change, `Header` toggle button.
+- **`libs/conversation-history`**: new library — `ConversationHistoryPanel`, `ConversationHistoryItem` (gains `isPinned`, `source`), `ConversationHistoryPanelProps` / `ConversationHistoryColors` model types; new internal `SearchInput`, `FilterTabs`, `ConversationGroup` sub-components.
+- **`apps/chat-api`**: `src/conversations/` — new list handler, DTO (gains `isPinned`, `source`), service method.
+- **`apps/chat`**: `server-api/conversations.api.ts` (new `listConversations`), new `ConversationsContext`, `app.tsx` layout change, `Header` toggle button; new i18n keys for search placeholder, filter tab labels, group headings, and new-chat button.
 - **No breaking changes** — new endpoint and new component; existing routes and data shapes unchanged.

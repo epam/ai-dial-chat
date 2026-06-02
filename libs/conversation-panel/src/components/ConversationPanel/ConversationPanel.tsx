@@ -1,7 +1,25 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { type FC, memo } from 'react';
-import type { ConversationPanelProps } from '../../models/ConversationPanel.js';
+import { type FC, memo, useMemo, useState } from 'react';
+import type {
+  ConversationHistoryItem,
+  ConversationPanelProps,
+  FilterTab,
+} from '../../models/ConversationPanel.js';
+import { ConversationGroup } from '../ConversationGroup/ConversationGroup.js';
+import { FilterTabs } from '../FilterTabs/FilterTabs.js';
+import { NewChatButton } from '../NewChatButton/NewChatButton.js';
+import { SearchInput } from '../SearchInput/SearchInput.js';
 import styles from './ConversationPanel.module.scss';
+
+function matchesTab(item: ConversationHistoryItem, tab: FilterTab): boolean {
+  if (tab === 'all') return true;
+  return item.source === tab;
+}
+
+function matchesSearch(item: ConversationHistoryItem, query: string): boolean {
+  if (!query) return true;
+  return item.title.toLowerCase().includes(query.toLowerCase());
+}
 
 /** Collapsible left-side panel showing the user's conversation history. */
 export const ConversationPanel: FC<ConversationPanelProps> = memo(
@@ -12,34 +30,70 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     activeConversationId,
     title,
     emptyLabel,
-    formatDate,
-    colors,
-    typography,
+    onNewChat,
+    newChatLabel,
+    searchPlaceholder,
+    filterLabels,
+    groupLabels,
+    styles: panelStyles,
     className,
     onBackdropClick,
   }) => {
+    const { colors, typography } = panelStyles ?? {};
+    const [searchQuery, setSearchQuery] = useState('');
+    const [activeTab, setActiveTab] = useState<FilterTab>('all');
+
     const hasTypographyClass = Boolean(typography?.fontClassName);
     const cssVars = buildCssVars({
-      '--ch-bg': colors?.background,
-      '--ch-border': colors?.border,
-      '--ch-header-border': colors?.headerBorder,
-      '--ch-item-hover': colors?.itemHover,
-      '--ch-item-active': colors?.itemActive,
-      '--ch-text': colors?.text,
-      '--ch-text-secondary': colors?.textSecondary,
-      '--ch-title-font-family': hasTypographyClass
+      '--cp-bg': colors?.background,
+      '--cp-border': colors?.border,
+      '--cp-header-border': colors?.headerBorder,
+      '--cp-item-hover': colors?.itemHover,
+      '--cp-item-active': colors?.itemActive,
+      '--cp-text': colors?.text,
+      '--cp-text-secondary': colors?.textSecondary,
+      '--cp-new-chat-hover': colors?.newChatHoverBackground,
+      '--cp-new-chat-active': colors?.newChatActiveBackground,
+      '--cp-new-chat-icon-bg': colors?.newChatIconBackground,
+      '--cp-new-chat-icon-bg-hover': colors?.newChatIconBackgroundHover,
+      '--cp-new-chat-icon-bg-active': colors?.newChatIconBackgroundActive,
+      '--cp-new-chat-icon': colors?.newChatIconColor,
+      '--cp-new-chat-radius': colors?.newChatBorderRadius,
+      '--cp-new-chat-divider': colors?.newChatDivider,
+      '--cp-title-font-family': hasTypographyClass
         ? undefined
         : typography?.fontFamily,
-      '--ch-title-font-size': hasTypographyClass
+      '--cp-title-font-size': hasTypographyClass
         ? undefined
         : typography?.fontSize,
-      '--ch-title-font-weight': hasTypographyClass
+      '--cp-title-font-weight': hasTypographyClass
         ? undefined
         : typography?.fontWeight?.toString(),
-      '--ch-title-line-height': hasTypographyClass
+      '--cp-title-line-height': hasTypographyClass
         ? undefined
         : typography?.lineHeight,
     });
+
+    const filteredItems = useMemo(
+      () =>
+        conversations.filter(
+          (item) =>
+            matchesTab(item, activeTab) && matchesSearch(item, searchQuery),
+        ),
+      [conversations, activeTab, searchQuery],
+    );
+
+    const pinnedItems = useMemo(
+      () => filteredItems.filter((item) => item.isPinned),
+      [filteredItems],
+    );
+
+    const myChatsItems = useMemo(
+      () => filteredItems.filter((item) => !item.isPinned),
+      [filteredItems],
+    );
+
+    const isEmpty = filteredItems.length === 0;
 
     return (
       <>
@@ -81,46 +135,60 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             </span>
           </div>
 
-          {/* Body */}
+          {/* New chat button */}
+          <NewChatButton
+            label={newChatLabel}
+            onClick={onNewChat}
+            labelClassName={typography?.newChatLabelClassName}
+          />
+
+          {/* Search */}
+          <SearchInput
+            placeholder={searchPlaceholder}
+            value={searchQuery}
+            onChange={setSearchQuery}
+          />
+
+          {/* Filter tabs */}
+          <FilterTabs
+            activeTab={activeTab}
+            labels={filterLabels}
+            onChange={setActiveTab}
+          />
+
+          {/* Conversation list */}
           <div className="min-h-0 flex-1 overflow-y-auto">
-            {conversations.length === 0 ? (
+            {isEmpty ? (
               <p
                 className={mergeClasses(
-                  'flex h-full items-center justify-center gap-2 px-4 py-6 text-center text-sm',
+                  'flex h-full items-center justify-center gap-2 px-4 py-6 text-center',
+                  typography?.emptyLabelClassName ?? 'text-sm',
                   styles.itemDate,
                 )}
               >
                 {emptyLabel}
               </p>
             ) : (
-              <ul role="list" className="flex flex-col py-1">
-                {conversations.map((item) => {
-                  const isActive = item.id === activeConversationId;
-                  return (
-                    <li key={item.id} role="listitem">
-                      <button
-                        type="button"
-                        aria-current={isActive ? 'page' : undefined}
-                        onClick={() => onSelectConversation(item.id)}
-                        className={mergeClasses(
-                          'flex w-full flex-col gap-0.5 px-4 py-2.5 text-left',
-                          styles.item,
-                          isActive && styles.itemActive,
-                        )}
-                      >
-                        <span className="truncate text-sm font-medium">
-                          {item.title}
-                        </span>
-                        <span
-                          className={mergeClasses('text-xs', styles.itemDate)}
-                        >
-                          {formatDate(item.updatedAt)}
-                        </span>
-                      </button>
-                    </li>
-                  );
-                })}
-              </ul>
+              <>
+                <ConversationGroup
+                  label={groupLabels?.pinned ?? 'Pinned'}
+                  items={pinnedItems}
+                  activeConversationId={activeConversationId}
+                  onSelectConversation={onSelectConversation}
+                  groupHeaderClassName={typography?.groupHeaderClassName}
+                  itemIconClassName={typography?.itemIconClassName}
+                  itemTitleClassName={typography?.itemTitleClassName}
+                />
+                <ConversationGroup
+                  label={groupLabels?.myChats ?? 'My chats'}
+                  items={myChatsItems}
+                  activeConversationId={activeConversationId}
+                  onSelectConversation={onSelectConversation}
+                  groupHeaderClassName={typography?.groupHeaderClassName}
+                  itemIconClassName={typography?.itemIconClassName}
+                  itemTitleClassName={typography?.itemTitleClassName}
+                />
+              </>
             )}
           </div>
         </aside>

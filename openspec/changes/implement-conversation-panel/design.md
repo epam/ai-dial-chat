@@ -6,17 +6,21 @@ The app currently has a `Navigation` icon bar on the left (`libs/sidebar` → `S
 
 **Goals:**
 - A left-side `ConversationHistoryPanel` component in a new `libs/conversation-history` lib.
-- Header contains: panel title and a collapse/expand icon button (chevron or sidebar icon).
+- Header contains: "Chats" panel title and a collapse/expand icon button.
+- **New chat button** — full-width button below the header to start a new conversation.
+- **Search input** — "Search chat…" text field that filters the visible list by title client-side.
+- **Filter tabs** — segmented control: All / My chats / Shared / Organization.
+- **Grouped sections** — Pinned (conversations with `isPinned: true`) and My chats; each section is collapsible with a chevron.
+- Conversation rows show an icon and title; clicking navigates to the conversation.
 - On desktop: persistent panel, 280px wide, pushes `<main>` content.
 - On mobile: full-height drawer overlay, triggered from the `Header` hamburger/menu button.
-- Conversation rows show title and relative/absolute date; clicking navigates to the conversation.
-- New backend list endpoint `GET /api/v1/conversations` returns paginated metadata.
+- New backend list endpoint `GET /api/v1/conversations` returns paginated metadata (gains `isPinned`, `source`).
 - Responsive: uses `useIsMobile` / `useBreakpoint` from `apps/chat/src/hooks/breakpoint/`.
 
 **Non-Goals:**
-- No conversation search or filtering in this slice.
 - No conversation rename or delete from the panel.
 - No infinite scroll — first page (20 items) only in this change.
+- No server-side search — filtering is client-side over the loaded page.
 - No persistence of panel open/closed preference across sessions.
 
 ## Decisions
@@ -56,7 +60,7 @@ The `ConversationsApi` client has no list operation. Options:
 
 **Decision: A** — add a NestJS endpoint that returns persisted conversations from the in-memory store (current persistence layer). This stays consistent with the existing `createConversation` / `getConversation` pattern. A real DB layer is a follow-up.
 
-Response shape: `ConversationMetadataDto[]` with `{ id, title, updatedAt }`. Paginated via `?limit` and `?offset` query params; default limit 20.
+Response shape: `ConversationMetadataDto[]` with `{ id, title, updatedAt, isPinned?, source? }`. Paginated via `?limit` and `?offset` query params; default limit 20.
 
 ### 6. Data fetching — context vs hook
 
@@ -64,9 +68,43 @@ Conversation list is needed in the layout (`app.tsx`), not deep in a route. A `C
 
 **Decision:** `ConversationsContext` in `apps/chat/src/context/ConversationsContext.tsx`, consumed by `app.tsx` and by `ConversationHistoryPanel` via a passed prop.
 
+### 7. New chat button — lib prop vs app-level button
+
+The "New chat" button triggers navigation/mutation (app-owned). Options:
+- **A.** Button rendered by `ConversationHistoryPanel`, fires `onNewChat` prop — lib stays declarative.
+- **B.** Button rendered by the app above the panel.
+
+**Decision: A** — `onNewChat: () => void` required prop. The lib renders the button with the correct styling; the app wires the handler. This keeps the full panel visual self-contained in one component.
+
+### 8. Search — client-side vs server-side
+
+The initial load cap is 20 items. Options:
+- **A.** Filter locally in the component over the loaded items (simple, zero latency).
+- **B.** Debounce and re-fetch with a `?search=` query param.
+
+**Decision: A** — local filter for this slice. Search state is `useState<string>` inside the lib; no prop needed. Server-side search can be added later when pagination beyond 20 is introduced.
+
+### 9. Filter tabs — lib-managed vs app-managed state
+
+The active tab controls which subset of items is displayed:
+- **A.** Tab state lives inside the lib; `ConversationHistoryPanel` receives all items and filters internally.
+- **B.** Tab state lives in the app; the app passes pre-filtered items and the active tab as a prop.
+
+**Decision: A** — tab state (`useState<FilterTab>`) inside the lib. The app passes the full list; the component applies the active-tab filter itself. This minimises the surface area of props and keeps filtering co-located with the UI. The lib does NOT know about REST endpoints — it receives `source` values as plain strings.
+
+`FilterTab = 'all' | 'my-chats' | 'shared' | 'organization'`. An item matches a tab when `item.source === tab` (or tab is `'all'`).
+
+### 10. Grouped sections — Pinned + My chats
+
+Pinned items are those with `isPinned: true`; the rest go into "My chats". Each group is rendered as a collapsible `<section>` with a disclosure button. Collapse state for each group is `useState<boolean>` inside the lib (default: expanded). Groups with zero matching items after search+tab filter are hidden.
+
+**Decision:** Group collapse state lives inside the lib. No prop needed — groups always start expanded.
+
 ## Risks / Trade-offs
 
 - **[Risk] No list endpoint yet — in-memory store returns all conversations** → Mitigation: cap at 20 with pagination params from day one so the UI won't need changes when a DB layer is added.
 - **[Risk] Mobile drawer and Navigation drawer both use overlay** → Mitigation: they are mutually exclusive (conversation panel on conversation routes only); `app.tsx` closes one before opening the other.
 - **[Trade-off] `libs/conversation-history` uses `libs/sidebar` as a dep** — adds a cross-lib dependency. Acceptable since `libs/sidebar` is a stable, generic panel shell with no app-specific knowledge.
 - **[Trade-off] Panel hidden via CSS rather than unmounted** — keeps scroll position on re-open but keeps the list mounted even when hidden. Acceptable for 20 items.
+- **[Trade-off] Client-side search over 20 items** — fast but stale after the initial load. Acceptable for this slice; server-side search is a follow-up when pagination grows.
+- **[Trade-off] Tab and group-collapse state is internal to the lib** — state is reset when the panel unmounts on mobile. Acceptable since the panel stays mounted on desktop (CSS hide).

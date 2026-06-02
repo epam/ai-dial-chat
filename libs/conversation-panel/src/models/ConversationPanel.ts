@@ -1,3 +1,25 @@
+/** Source/ownership of a conversation — used by filter tabs. */
+export enum ConversationSource {
+  MyChats = 'my-chats',
+  Shared = 'shared',
+  Organization = 'organization',
+}
+
+/** Active filter tab value. */
+export type FilterTab = 'all' | ConversationSource;
+
+/** Labels for each filter tab — provided as props so the app supplies i18n strings. */
+export interface FilterLabels {
+  /** Label for the "All" tab. */
+  all: string;
+  /** Label for the "My chats" tab. */
+  myChats: string;
+  /** Label for the "Shared" tab. */
+  shared: string;
+  /** Label for the "Organization" tab. */
+  organization: string;
+}
+
 /** A single conversation entry shown in the history panel. */
 export interface ConversationHistoryItem {
   /** Unique conversation identifier (path or UUID). */
@@ -6,6 +28,12 @@ export interface ConversationHistoryItem {
   title: string;
   /** ISO-8601 timestamp of the last update. */
   updatedAt: string;
+  /** When true the item is shown in the Pinned section. */
+  isPinned?: boolean;
+  /** Ownership/share source — used to filter by tab. */
+  source?: ConversationSource;
+  /** URL of the model or conversation icon. When absent a default icon is shown. */
+  iconUrl?: string;
 }
 
 /** Font overrides for the header title in `ConversationPanel`. */
@@ -23,6 +51,16 @@ export interface ConversationHistoryTypography {
    * When provided, individual font CSS vars are ignored in favour of this class.
    */
   fontClassName?: string;
+  /** Typography class applied to collapsible group header buttons. Defaults to `'text-xs font-semibold'`. */
+  groupHeaderClassName?: string;
+  /** Typography class applied to the initial-letter icon fallback inside conversation rows. Defaults to `'text-xs font-bold'`. */
+  itemIconClassName?: string;
+  /** Typography class applied to conversation title text in each row. Defaults to `'text-sm'`. */
+  itemTitleClassName?: string;
+  /** Typography class applied to the empty-state label. Defaults to `'text-sm'`. */
+  emptyLabelClassName?: string;
+  /** Typography class applied to the New chat button label. Defaults to `'dial-small-text'`. */
+  newChatLabelClassName?: string;
 }
 
 /** CSS custom-property overrides for `ConversationPanel`. */
@@ -41,6 +79,30 @@ export interface ConversationHistoryColors {
   text?: string;
   /** Secondary text color (dates, metadata). */
   textSecondary?: string;
+  /** Hover background of the New chat button. */
+  newChatHoverBackground?: string;
+  /** Active/pressed background of the New chat button. */
+  newChatActiveBackground?: string;
+  /** Background of the plus-icon circle inside the New chat button. */
+  newChatIconBackground?: string;
+  /** Background of the plus-icon circle on button hover. */
+  newChatIconBackgroundHover?: string;
+  /** Background of the plus-icon circle on button active/press. */
+  newChatIconBackgroundActive?: string;
+  /** Color of the plus icon inside the New chat button. */
+  newChatIconColor?: string;
+  /** Border-radius of the New chat button. Defaults to `0.25rem`. */
+  newChatBorderRadius?: string;
+  /** Bottom-border color of the New chat button container divider. */
+  newChatDivider?: string;
+}
+
+/** Combined style overrides (colors and typography) for `ConversationPanel`. */
+export interface ConversationPanelStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ConversationHistoryColors;
+  /** Typography overrides for the panel and its children. */
+  typography?: ConversationHistoryTypography;
 }
 
 /** Props accepted by `ConversationPanel`. */
@@ -53,19 +115,32 @@ export interface ConversationPanelProps {
   onSelectConversation: (id: string) => void;
   /** `id` of the currently viewed conversation; that row gets `aria-current="page"`. */
   activeConversationId?: string;
-  /** Panel heading text (e.g. `"Conversations"`). */
+  /** Panel heading text (e.g. `"Chats"`). */
   title: string;
-  /** Message shown when `conversations` is empty. */
+  /** Message shown when `conversations` is empty or no items match the current filter. */
   emptyLabel: string;
   /**
    * Formats a raw ISO-8601 `updatedAt` string into the display string shown on each row.
    * Called by the lib; formatting locale/logic is the caller's responsibility.
    */
-  formatDate: (isoDate: string) => string;
-  /** CSS custom-property overrides for theming. */
-  colors?: ConversationHistoryColors;
-  /** Font overrides for the panel header title. */
-  typography?: ConversationHistoryTypography;
+  formatDate?: (isoDate: string) => string;
+  /** Called when the New chat button is clicked. */
+  onNewChat: () => void;
+  /** Label for the New chat button (e.g. `"New chat"`). */
+  newChatLabel: string;
+  /** Placeholder text for the search input (e.g. `"Search chat…"`). */
+  searchPlaceholder: string;
+  /** Labels for the four filter tabs. */
+  filterLabels: FilterLabels;
+  /** Labels for collapsible group section headings. */
+  groupLabels?: {
+    /** Heading for the Pinned section. Defaults to `"Pinned"`. */
+    pinned?: string;
+    /** Heading for the My chats section. Defaults to `"My chats"`. */
+    myChats?: string;
+  };
+  /** Color and typography overrides applied as CSS custom properties. */
+  styles?: ConversationPanelStyles;
   /** Extra class name(s) merged onto the panel root element. */
   className?: string;
   /**
