@@ -1,8 +1,11 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Mock declarations (hoisted – must appear before any module imports)
+// Module under test (imported after mocks)
 // ---------------------------------------------------------------------------
+import { callbacks } from '../auth-callbacks';
+
+// Mock declarations (hoisted – must appear before any module imports)
 
 const mockGetOrDiscoverClient = vi.fn();
 const mockGetRefreshToken = vi.fn();
@@ -28,7 +31,12 @@ vi.mock('jose', () => ({
 
 vi.mock('@/src/utils/app/common', () => ({
   parseCommaSeparatedList: (val: string | undefined) =>
-    val ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+    val
+      ? val
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      : [],
 }));
 
 // safeParseJSON is imported as '../json' in auth-callbacks.ts which resolves
@@ -57,10 +65,8 @@ vi.mock('lodash-es/intersection', () => ({ default: () => [] }));
 vi.mock('lodash-es/snakeCase', () => ({ default: (s: string) => s }));
 
 // ---------------------------------------------------------------------------
-// Module under test (imported after mocks)
-// ---------------------------------------------------------------------------
 
-import { callbacks } from '../auth-callbacks';
+// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -100,11 +106,19 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
 
   describe('successful refresh', () => {
     it('acquires the lock, calls client.refresh, and stores the refreshed token', async () => {
-      const client = { refresh: mockClientRefresh.mockResolvedValue(makeValidRefreshResponse()) };
+      const client = {
+        refresh: mockClientRefresh.mockResolvedValue(
+          makeValidRefreshResponse(),
+        ),
+      };
       mockGetOrDiscoverClient.mockResolvedValue(client);
 
       const token = makeExpiredToken();
-      await callbacks.jwt!({ token, trigger: undefined as never, account: null } as never);
+      await callbacks.jwt!({
+        token,
+        trigger: undefined as never,
+        account: null,
+      } as never);
 
       // Lock acquired
       expect(mockSetIsRefreshTokenStart).toHaveBeenCalledWith(
@@ -121,7 +135,11 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
     });
 
     it('returns the refreshed token without an error field', async () => {
-      const client = { refresh: mockClientRefresh.mockResolvedValue(makeValidRefreshResponse()) };
+      const client = {
+        refresh: mockClientRefresh.mockResolvedValue(
+          makeValidRefreshResponse(),
+        ),
+      };
       mockGetOrDiscoverClient.mockResolvedValue(client);
 
       const result = await callbacks.jwt!({
@@ -136,7 +154,11 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
 
   describe('failed refresh – lock cleanup', () => {
     it('calls clearRefreshToken when client.refresh() throws', async () => {
-      const client = { refresh: mockClientRefresh.mockRejectedValue(new Error('invalid_grant')) };
+      const client = {
+        refresh: mockClientRefresh.mockRejectedValue(
+          new Error('invalid_grant'),
+        ),
+      };
       mockGetOrDiscoverClient.mockResolvedValue(client);
 
       const result = await callbacks.jwt!({
@@ -145,7 +167,9 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
         account: null,
       } as never);
 
-      expect((result as { error?: string }).error).toBe('RefreshAccessTokenError');
+      expect((result as { error?: string }).error).toBe(
+        'RefreshAccessTokenError',
+      );
       // Lock must be cleared so the next request can retry
       expect(mockClearRefreshToken).toHaveBeenCalledWith('u1');
     });
@@ -165,7 +189,9 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
         account: null,
       } as never);
 
-      expect((result as { error?: string }).error).toBe('RefreshAccessTokenError');
+      expect((result as { error?: string }).error).toBe(
+        'RefreshAccessTokenError',
+      );
       expect(mockClearRefreshToken).toHaveBeenCalledWith('u1');
     });
 
@@ -178,7 +204,9 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
         account: null,
       } as never);
 
-      expect((result as { error?: string }).error).toBe('RefreshAccessTokenError');
+      expect((result as { error?: string }).error).toBe(
+        'RefreshAccessTokenError',
+      );
       // Lock was never set because we exited before the while loop's break
       expect(mockClearRefreshToken).not.toHaveBeenCalled();
       // Ensure we also never set the lock
@@ -187,7 +215,10 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
 
     it('does NOT call clearRefreshToken for a waiter that times out', async () => {
       // Simulate another request already holding the lock
-      mockGetRefreshToken.mockReturnValue({ isRefreshing: true, token: makeExpiredToken() });
+      mockGetRefreshToken.mockReturnValue({
+        isRefreshing: true,
+        token: makeExpiredToken(),
+      });
 
       // Waiter will poll and eventually time out (5 * 1000 / 50 = 100 iterations)
       // delay is mocked to return immediately, so this will loop quickly
@@ -197,7 +228,9 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
         account: null,
       } as never);
 
-      expect((result as { error?: string }).error).toBe('RefreshAccessTokenError');
+      expect((result as { error?: string }).error).toBe(
+        'RefreshAccessTokenError',
+      );
       // The waiter must NOT clear the lock – that belongs to the refresher
       expect(mockClearRefreshToken).not.toHaveBeenCalled();
       // The waiter must NOT set the lock either
@@ -207,9 +240,14 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
 
   describe('cached valid token in refresh map', () => {
     it('returns the cached map token without calling client.refresh()', async () => {
-      const cachedToken = makeExpiredToken({ accessTokenExpires: FUTURE_EXPIRY_MS });
+      const cachedToken = makeExpiredToken({
+        accessTokenExpires: FUTURE_EXPIRY_MS,
+      });
       // Map already has a valid token
-      mockGetRefreshToken.mockReturnValue({ isRefreshing: false, token: cachedToken });
+      mockGetRefreshToken.mockReturnValue({
+        isRefreshing: false,
+        token: cachedToken,
+      });
       mockGetOrDiscoverClient.mockResolvedValue({ refresh: mockClientRefresh });
 
       await callbacks.jwt!({

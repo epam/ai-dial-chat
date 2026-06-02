@@ -1,7 +1,8 @@
-import { describe, expect, it, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it } from 'vitest';
+
+import { Token } from '@/src/types/auth';
 
 import NextClient from '../nextauth-client';
-import { Token } from '@/src/types/auth';
 
 // Helper to build a minimal Token for testing
 const makeToken = (overrides: Partial<Token> = {}): Token => ({

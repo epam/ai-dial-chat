@@ -216,9 +216,7 @@ async function refreshAccessToken(token: Token) {
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
 
-    logger.debug(
-      `[Auth] Token refresh succeeded. Sub: ${displayedTokenSub}`,
-    );
+    logger.debug(`[Auth] Token refresh succeeded. Sub: ${displayedTokenSub}`);
     NextClient.setIsRefreshTokenStart(token.userId, {
       isRefreshing: false,
       token: returnToken,

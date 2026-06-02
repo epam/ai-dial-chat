@@ -1,10 +1,7 @@
-import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-// Mock auth-providers so we control isAuthDisabled without loading real providers
-vi.mock('../auth-providers', () => ({
-  isAuthDisabled: false,
-  authProviders: [],
-}));
+import type { NextApiRequest, NextApiResponse } from 'next';
+import type { Session } from 'next-auth';
 
 import {
   isClientSessionValid,
@@ -12,8 +9,11 @@ import {
   validateServerSession,
 } from '../session';
 
-import type { Session } from 'next-auth';
-import type { NextApiRequest, NextApiResponse } from 'next';
+// Mock auth-providers so we control isAuthDisabled without loading real providers
+vi.mock('../auth-providers', () => ({
+  isAuthDisabled: false,
+  authProviders: [],
+}));
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -96,10 +96,7 @@ describe('isServerSessionValid', () => {
     it('returns false for expired session when checkForOverlay=true (strict mode)', () => {
       // Passing true opts out of the bypass – used by validateServerSession
       expect(
-        isServerSessionValid(
-          makeErrorSession('RefreshAccessTokenError'),
-          true,
-        ),
+        isServerSessionValid(makeErrorSession('RefreshAccessTokenError'), true),
       ).toBe(false);
     });
 

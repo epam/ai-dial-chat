@@ -1,8 +1,11 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // ---------------------------------------------------------------------------
-// Module mocks (must be hoisted before the module under test is imported)
+// Module under test (imported after mocks)
 // ---------------------------------------------------------------------------
+import { getFullToken } from '../server';
+
+// Module mocks (must be hoisted before the module under test is imported)
 
 const mockGetJWTToken = vi.fn();
 vi.mock('next-auth/jwt', () => ({ getToken: mockGetJWTToken }));
@@ -14,7 +17,12 @@ vi.mock('@/src/utils/auth/nextauth-client', () => ({
 
 vi.mock('@/src/utils/app/common', () => ({
   parseCommaSeparatedList: (val: string | undefined) =>
-    val ? val.split(',').map((s: string) => s.trim()).filter(Boolean) : [],
+    val
+      ? val
+          .split(',')
+          .map((s: string) => s.trim())
+          .filter(Boolean)
+      : [],
 }));
 
 vi.mock('@/src/utils/auth/auth-providers', () => ({
@@ -27,10 +35,8 @@ vi.mock('@/src/utils/app/file', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Module under test (imported after mocks)
-// ---------------------------------------------------------------------------
 
-import { getFullToken } from '../server';
+// ---------------------------------------------------------------------------
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -86,7 +92,10 @@ describe('getFullToken', () => {
     mockGetJWTToken.mockResolvedValue(makeJWT());
     mockGetRefreshToken.mockReturnValue({
       isRefreshing: true,
-      token: { access_token: 'fresh-access-token', accessTokenExpires: FUTURE_EXPIRY },
+      token: {
+        access_token: 'fresh-access-token',
+        accessTokenExpires: FUTURE_EXPIRY,
+      },
     });
 
     // Should NOT use the map entry while a refresh is in flight
@@ -97,7 +106,10 @@ describe('getFullToken', () => {
   it('returns the stale token when the refresh map entry is expired', async () => {
     mockGetJWTToken.mockResolvedValue(makeJWT());
     mockGetRefreshToken.mockReturnValue(
-      makeRefreshState({ access_token: 'old-fresh-token', accessTokenExpires: PAST_EXPIRY }),
+      makeRefreshState({
+        access_token: 'old-fresh-token',
+        accessTokenExpires: PAST_EXPIRY,
+      }),
     );
 
     const result = await getFullToken({ req: {} as never });
