@@ -1,7 +1,11 @@
-import { ConversationPanel } from '@epam/ai-dial-conversation-panel';
-import { type FC } from 'react';
+import {
+  ConversationPanel,
+  type ConversationHistoryItem,
+} from '@epam/ai-dial-conversation-panel';
+import { type FC, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ConversationHistoryI18nKeys } from '../../constants/translation-keys.js';
+import { useConversations } from '../../context/ConversationsContext.js';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint.js';
 
 interface Props {
@@ -12,8 +16,6 @@ interface Props {
   onNewChat: () => void;
 }
 
-const EMPTY_CONVERSATIONS: never[] = [];
-
 const ConversationPanelView: FC<Props> = ({
   isOpen,
   activeConversationId,
@@ -23,10 +25,21 @@ const ConversationPanelView: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const { items } = useConversations();
+
+  const conversations: ConversationHistoryItem[] = useMemo(
+    () =>
+      items.map((item) => ({
+        id: item.id,
+        title: item.title,
+        updatedAt: new Date(item.updatedAt).toISOString(),
+      })),
+    [items],
+  );
 
   return (
     <ConversationPanel
-      conversations={EMPTY_CONVERSATIONS}
+      conversations={conversations}
       isOpen={isOpen}
       onSelectConversation={onSelectConversation}
       activeConversationId={activeConversationId}

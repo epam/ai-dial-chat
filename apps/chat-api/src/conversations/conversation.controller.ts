@@ -20,9 +20,11 @@ import {
   ConversationResponseDto,
 } from '../openapi/openapi-response.dto';
 import { ConversationService } from './conversation.service';
+import { ConversationListResponseDto } from './dto/conversation-list.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { GetConversationMetadataDto } from './dto/get-conversation-metadata.dto';
+import { ListConversationsQueryDto } from './dto/list-conversations-query.dto';
 import {
   SaveConversationBodyDto,
   SaveConversationQueryDto,
@@ -69,6 +71,34 @@ export class ConversationController {
       bucket,
       dto.deploymentId,
       dto.custom_content,
+    );
+  }
+
+  @Get('list')
+  @ApiOperation({
+    summary: 'List conversations',
+    description:
+      'Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of conversation metadata',
+    type: ConversationListResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid query params' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 502, description: 'DIAL Core error' })
+  @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
+  listConversations(
+    @Req() req: Request,
+    @Query() query: ListConversationsQueryDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.listConversations(
+      at,
+      bucket,
+      query.limit,
+      query.nextToken,
     );
   }
 

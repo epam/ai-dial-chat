@@ -35,7 +35,7 @@ export const NewChatButton: FC<NewChatButtonProps> = memo(
         >
           <IconPlus size={DIAL_ICON_SIZE.SM} className={styles.iconColor} />
         </div>
-        <p className={labelClassName}>{label}</p>
+        <span className={labelClassName}>{label}</span>
       </button>
     </div>
   ),

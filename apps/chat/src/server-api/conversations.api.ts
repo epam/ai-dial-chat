@@ -52,3 +52,12 @@ export const getConversationMetadata = (
     path: conversationPath,
     permissions: options?.permissions,
   });
+
+export const listConversations = (params?: {
+  limit?: number;
+  nextToken?: string;
+}) =>
+  conversationsApi.listConversations({
+    limit: params?.limit,
+    nextToken: params?.nextToken,
+  });

@@ -92,7 +92,11 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
                         {item.title.charAt(0).toUpperCase()}
                       </span>
                     )}
-                    <span className={mergeClasses('truncate', itemTitleClassName)}>{item.title}</span>
+                    <span
+                      className={mergeClasses('truncate', itemTitleClassName)}
+                    >
+                      {item.title}
+                    </span>
                   </button>
                 </li>
               );

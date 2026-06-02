@@ -6,6 +6,7 @@ import type {
   FilterTab,
 } from '../../models/ConversationPanel.js';
 import { ConversationGroup } from '../ConversationGroup/ConversationGroup.js';
+import { EmptyState } from '../EmptyState/EmptyState.js';
 import { FilterTabs } from '../FilterTabs/FilterTabs.js';
 import { NewChatButton } from '../NewChatButton/NewChatButton.js';
 import { SearchInput } from '../SearchInput/SearchInput.js';
@@ -157,17 +158,12 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           />
 
           {/* Conversation list */}
-          <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="min-h-0 flex-1 overflow-y-auto px-2 py-1">
             {isEmpty ? (
-              <p
-                className={mergeClasses(
-                  'flex h-full items-center justify-center gap-2 px-4 py-6 text-center',
-                  typography?.emptyLabelClassName ?? 'text-sm',
-                  styles.itemDate,
-                )}
-              >
-                {emptyLabel}
-              </p>
+              <EmptyState
+                label={emptyLabel}
+                labelClassName={typography?.emptyLabelClassName}
+              />
             ) : (
               <>
                 <ConversationGroup
