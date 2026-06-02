@@ -1,18 +1,20 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import { IconPlayerStopFilled } from '@tabler/icons-react';
+import { IconArrowNarrowRight } from '@tabler/icons-react';
 import { type FC } from 'react';
-import styles from './Input.module.scss';
+import styles from '../Input.module.scss';
 
 interface Props {
-  onStop?: () => void;
-  /** Accessible label for the stop button. */
+  onSend?: () => void;
+  isDisabled?: boolean;
+  /** Accessible label for the send button. */
   ariaLabel?: string;
 }
 
-export const StopButton: FC<Props> = ({
-  onStop,
-  ariaLabel = 'Stop streaming',
+export const SendButton: FC<Props> = ({
+  onSend,
+  isDisabled = false,
+  ariaLabel = 'Send message',
 }) => {
   return (
     <button
@@ -21,10 +23,11 @@ export const StopButton: FC<Props> = ({
         'flex size-[32px] cursor-pointer items-center justify-center rounded-full disabled:cursor-not-allowed',
       )}
       aria-label={ariaLabel}
-      onClick={() => onStop?.()}
+      onClick={() => onSend?.()}
       type="button"
+      disabled={isDisabled}
     >
-      <IconPlayerStopFilled size={DIAL_ICON_SIZE.SM} />
+      <IconArrowNarrowRight size={DIAL_ICON_SIZE.LG} />
     </button>
   );
 };

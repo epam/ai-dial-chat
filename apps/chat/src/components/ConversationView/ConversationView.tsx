@@ -15,6 +15,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -73,6 +74,17 @@ const ConversationView: FC<Props> = ({
   const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId, isLoading, error } =
     useDeployments();
+
+  const deploymentItems = useMemo(
+    () =>
+      items.map(({ id, displayName, iconUrl, type }) => ({
+        id,
+        displayName,
+        iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
+        type,
+      })),
+    [items],
+  );
   const tooltips = {
     edit: t(ActionsI18nKeys.Edit),
     delete: t(ActionsI18nKeys.Delete),
@@ -213,6 +225,11 @@ const ConversationView: FC<Props> = ({
                   key={msg.id}
                   role={msg.role}
                   text={msg.content}
+                  colors={
+                    msg.stoppedWithoutContent
+                      ? { text: 'var(--text-secondary, #9FA6BD)' }
+                      : undefined
+                  }
                   attachments={attachmentDtosToDisplayAttachments(
                     msg.custom_content?.attachments,
                   )}
@@ -271,10 +288,9 @@ const ConversationView: FC<Props> = ({
             isStreaming={isAssistantTyping}
             onAttachmentsChange={onAttachmentsChange}
             placeholder={placeholder}
-            deployments={items}
+            deployments={deploymentItems}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
-            resolveDeploymentIconUrl={resolveCatalogIconUrl}
             modelSelectorLabels={{
               ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
               loading: isLoading
