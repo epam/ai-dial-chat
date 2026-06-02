@@ -11,7 +11,10 @@ import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
-import { getConversationName } from './conversation.utils';
+import {
+  getConversationName,
+  getConversationTitleFromName,
+} from './conversation.utils';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
@@ -168,7 +171,7 @@ export class ConversationService extends AppService {
         .filter((item) => item.nodeType !== 'FOLDER')
         .map((item) => ({
           id: item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`,
-          title: item.name ?? '',
+          title: getConversationTitleFromName(item.name ?? ''),
           updatedAt: item.updatedAt ?? 0,
         }));
 

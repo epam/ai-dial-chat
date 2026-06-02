@@ -39,9 +39,9 @@ function App() {
   );
 
   const matchRoot = useMatch(ROUTES.ROOT);
-  const matchConversation = useMatch('/conversations/:id');
+  const matchConversation = useMatch('/conversations/*');
   const isConversationRoute = !!(matchRoot ?? matchConversation);
-  const activeConversationId = matchConversation?.params.id;
+  const activeConversationId = matchConversation?.params['*'];
 
   const handleSelectConversation = useCallback(
     (id: string) => {

@@ -1,110 +1,80 @@
 ## Context
 
-The app currently has a `Navigation` icon bar on the left (`libs/sidebar` → `SidebarPanel`, used for right-side source panel too) and a `ConversationSourcesPanelView` on the right. There is no panel listing past conversations. The `ConversationsApi` generated client exposes `getConversation`, `saveConversation`, and `deleteConversation` but no list endpoint. The `SidebarPanel` base component already provides a fixed-width `<aside>` with a 48px header bar and a scrollable body — the new panel can reuse it or replicate its pattern inside the lib.
+The app has a `Navigation` icon bar on the left and a `ConversationSourcesPanelView` on the right. There was no panel listing past conversations. The `ConversationsApi` generated client previously exposed only `getConversation`, `saveConversation`, and `deleteConversation` — no list endpoint. The `SidebarPanel` component in `libs/sidebar` provides a generic panel shell but has no domain content.
 
 ## Goals / Non-Goals
 
 **Goals:**
-- A left-side `ConversationHistoryPanel` component in a new `libs/conversation-history` lib.
-- Header contains: "Chats" panel title and a collapse/expand icon button.
+- A left-side `ConversationPanel` component in a new `libs/conversation-panel` lib.
 - **New chat button** — full-width button below the header to start a new conversation.
-- **Search input** — "Search chat…" text field that filters the visible list by title client-side.
+- **Search input** — text field that filters the visible list by title client-side.
 - **Filter tabs** — segmented control: All / My chats / Shared / Organization.
 - **Grouped sections** — Pinned (conversations with `isPinned: true`) and My chats; each section is collapsible with a chevron.
-- Conversation rows show an icon and title; clicking navigates to the conversation.
-- On desktop: persistent panel, 280px wide, pushes `<main>` content.
-- On mobile: full-height drawer overlay, triggered from the `Header` hamburger/menu button.
-- New backend list endpoint `GET /api/v1/conversations` returns paginated metadata (gains `isPinned`, `source`).
+- Conversation rows show an optional icon and title; clicking navigates to the conversation.
+- On desktop: persistent panel, 288px wide, pushes `<main>` content.
+- On mobile: full-height drawer overlay, triggered from the `Header` toggle button.
+- New backend list endpoint `GET /api/v1/conversations/list` returns cursor-paginated metadata backed by DIAL Core.
 - Responsive: uses `useIsMobile` / `useBreakpoint` from `apps/chat/src/hooks/breakpoint/`.
+- Panel open/closed state persisted to `localStorage` via `useLocalStorage` hook.
 
 **Non-Goals:**
 - No conversation rename or delete from the panel.
 - No infinite scroll — first page (20 items) only in this change.
 - No server-side search — filtering is client-side over the loaded page.
-- No persistence of panel open/closed preference across sessions.
 
 ## Decisions
 
-### 1. New lib (`libs/conversation-history`) vs extending `libs/sidebar`
+### 1. New lib (`libs/conversation-panel`) — standalone, not extending `libs/sidebar`
 
-`SidebarPanel` is a generic panel shell. The conversation-history panel has domain-specific content (conversation rows, date formatting, navigation). Mixing domain content into a generic lib violates lib isolation. A dedicated `libs/conversation-history` lib keeps domain knowledge co-located and keeps `libs/sidebar` generic.
+`SidebarPanel` is a generic panel shell. The conversation panel has domain-specific content (conversation rows, search, filter tabs, grouped sections). A dedicated `libs/conversation-panel` lib keeps domain knowledge co-located and avoids a cross-lib dependency on `libs/sidebar`.
 
-**Decision:** New `libs/conversation-history` lib. It may use `SidebarPanel` from `libs/sidebar` as its structural shell, or replicate the pattern if the dependency is not desirable.
+**Decision:** New `libs/conversation-panel` lib at `@epam/ai-dial-conversation-panel`. It does not depend on `libs/sidebar`.
 
-### 2. Collapse/expand — `isOpen` in app vs inside lib
+### 2. Collapse/expand — `isOpen` in app, no `onToggle` on the lib
 
-The panel's visibility state must be shared between the `Header` (toggle button) and the panel itself. Both live in `apps/chat`. The lib receives `isOpen` and `onToggle` as props — it owns no open/closed state itself. This keeps the lib stateless w.r.t. visibility and lets the app control layout (add/remove panel from DOM or CSS-hide it).
+The panel's visibility state must be shared between the `Header` (toggle button) and the panel itself. Both live in `apps/chat`. The lib receives `isOpen` as a prop only; it does not own open/closed state and does not expose `onToggle`.
 
-**Decision:** `isOpen: boolean` and `onToggle: () => void` as required props. On desktop the panel uses CSS (`hidden` / `flex`) to show/hide without unmounting. On mobile the app conditionally renders the drawer overlay.
+**Decision:** `isOpen: boolean` prop on `ConversationPanel`. The app manages the state via `useLocalStorage('conversationPanelOpen', false)` and passes it down.
 
-### 3. Toggle icon placement — inside `ConversationHistoryPanel` header vs `Header` component
+### 3. Toggle icon placement — in app `Header`, not inside the panel
 
-Two options:
-- **A.** Toggle icon in the panel's own header (visible only when panel is open).
-- **B.** Toggle icon always in the app `Header` bar (visible regardless of panel state).
-
-**Decision: A** — the toggle icon lives in the `ConversationHistoryPanel` header. When the panel is collapsed on desktop, the icon button is the only visible element (narrow strip or the header collapses to icon-only width). On mobile, the `Header` already has the hamburger for the Navigation drawer; a separate tap target in the panel header avoids crowding the top bar.
+**Decision:** The toggle icon button lives in `apps/chat/src/components/Header/Header.tsx` (`isHistoryPanelOpen` + `onHistoryPanelToggle` props), desktop-only (`hidden desktop:flex`). The panel header does not contain a toggle. This keeps the panel header focused on content and avoids a collapsed-strip layout complexity.
 
 ### 4. Panel width and collapse behaviour on desktop
 
-- **Expanded:** 280px, `flex-shrink-0`, pushes `<main>` via flex row layout.
-- **Collapsed:** 0px wide (panel hidden with `w-0 overflow-hidden`) OR icon-only strip (48px). Icon-only strip is friendlier UX but more complex.
+- **Expanded:** `w-[288px]`, `border-l border-r`, pushes `<main>` via flex row.
+- **Collapsed:** `w-[0px] overflow-hidden` — panel content hidden; no icon-only strip.
+- CSS transition on width for smooth open/close.
 
-**Decision:** Start with full hide (`w-0 overflow-hidden` with CSS transition) for simplicity. Icon-only strip can be added as a follow-up.
+### 5. Backend list endpoint — `GET /api/v1/conversations/list`
 
-### 5. Backend list endpoint — `GET /api/v1/conversations`
+`@Get('list')` avoids a route conflict with the existing `@Get()` handler. DIAL Core metadata endpoint is called with `recursive: true` and the user's bucket, returning all conversations flat. Pagination uses DIAL Core's cursor (`token` → `nextToken` in the response). An optional `path` query parameter scopes the listing to a subfolder.
 
-The `ConversationsApi` client has no list operation. Options:
-- **A.** Add the endpoint to `apps/chat-api`, regenerate the client.
-- **B.** Call a DIAL Core listing API from the backend and proxy it.
+**Decision:** `GET /api/v1/conversations/list` with `ListConversationsQueryDto { limit?, nextToken?, path? }`. Response: `ConversationListResponseDto { items: ConversationListItemDto[], nextToken? }`. No `isPinned` or `source` fields on items in this slice — those require DIAL Core support that is out of scope.
 
-**Decision: A** — add a NestJS endpoint that returns persisted conversations from the in-memory store (current persistence layer). This stays consistent with the existing `createConversation` / `getConversation` pattern. A real DB layer is a follow-up.
+### 6. Data fetching — `ConversationsContext`
 
-Response shape: `ConversationMetadataDto[]` with `{ id, title, updatedAt, isPinned?, source? }`. Paginated via `?limit` and `?offset` query params; default limit 20.
+`ConversationsContext` in `apps/chat/src/context/ConversationsContext.tsx` fetches once on mount. It exposes `{ conversations, isLoading, error }`. The context uses the `cancelled` flag pattern (per `useFavicon` reference). The provider is placed in `apps/chat/src/main.tsx`.
 
-### 6. Data fetching — context vs hook
+### 7. `ConversationPanelView` — app-level adapter component
 
-Conversation list is needed in the layout (`app.tsx`), not deep in a route. A `ConversationsContext` (matching the `DeploymentsContext` pattern) fetches on mount and re-fetches after `createConversation` / `saveConversation` mutations.
+Rather than wiring `ConversationsContext`, i18n, and routing callbacks directly in `app.tsx`, a dedicated `ConversationPanelView` component in `apps/chat/src/components/ConversationPanel/` owns the translation calls and context consumption. This keeps `app.tsx` lean.
 
-**Decision:** `ConversationsContext` in `apps/chat/src/context/ConversationsContext.tsx`, consumed by `app.tsx` and by `ConversationHistoryPanel` via a passed prop.
+### 8. `FilterTab` and `ConversationSource` — string enums
 
-### 7. New chat button — lib prop vs app-level button
+Both are domain value sets that belong in a string enum per project convention, not plain union literal types. `FilterTab` uses values `All = 'all'`, `MyChats = 'my-chats'`, `Shared = 'shared'`, `Organization = 'organization'`. `ConversationSource` uses the same values minus `All`.
 
-The "New chat" button triggers navigation/mutation (app-owned). Options:
-- **A.** Button rendered by `ConversationHistoryPanel`, fires `onNewChat` prop — lib stays declarative.
-- **B.** Button rendered by the app above the panel.
+### 9. Search and filter — lib-internal state
 
-**Decision: A** — `onNewChat: () => void` required prop. The lib renders the button with the correct styling; the app wires the handler. This keeps the full panel visual self-contained in one component.
+Search (`useState<string>`) and active tab (`useState<FilterTab>`) state live inside `ConversationPanel`. The app passes the full unfiltered list; filtering is applied inside the component. This minimises props and keeps filtering logic co-located with the UI.
 
-### 8. Search — client-side vs server-side
+### 10. Panel open/closed state — `useLocalStorage`
 
-The initial load cap is 20 items. Options:
-- **A.** Filter locally in the component over the loaded items (simple, zero latency).
-- **B.** Debounce and re-fetch with a `?search=` query param.
-
-**Decision: A** — local filter for this slice. Search state is `useState<string>` inside the lib; no prop needed. Server-side search can be added later when pagination beyond 20 is introduced.
-
-### 9. Filter tabs — lib-managed vs app-managed state
-
-The active tab controls which subset of items is displayed:
-- **A.** Tab state lives inside the lib; `ConversationHistoryPanel` receives all items and filters internally.
-- **B.** Tab state lives in the app; the app passes pre-filtered items and the active tab as a prop.
-
-**Decision: A** — tab state (`useState<FilterTab>`) inside the lib. The app passes the full list; the component applies the active-tab filter itself. This minimises the surface area of props and keeps filtering co-located with the UI. The lib does NOT know about REST endpoints — it receives `source` values as plain strings.
-
-`FilterTab = 'all' | 'my-chats' | 'shared' | 'organization'`. An item matches a tab when `item.source === tab` (or tab is `'all'`).
-
-### 10. Grouped sections — Pinned + My chats
-
-Pinned items are those with `isPinned: true`; the rest go into "My chats". Each group is rendered as a collapsible `<section>` with a disclosure button. Collapse state for each group is `useState<boolean>` inside the lib (default: expanded). Groups with zero matching items after search+tab filter are hidden.
-
-**Decision:** Group collapse state lives inside the lib. No prop needed — groups always start expanded.
+`isHistoryPanelOpen` is managed in `app.tsx` using `useLocalStorage('conversationPanelOpen', false)` so the panel position survives page reloads. See `conversation-panel-state-and-list-path` change for the hook implementation.
 
 ## Risks / Trade-offs
 
-- **[Risk] No list endpoint yet — in-memory store returns all conversations** → Mitigation: cap at 20 with pagination params from day one so the UI won't need changes when a DB layer is added.
-- **[Risk] Mobile drawer and Navigation drawer both use overlay** → Mitigation: they are mutually exclusive (conversation panel on conversation routes only); `app.tsx` closes one before opening the other.
-- **[Trade-off] `libs/conversation-history` uses `libs/sidebar` as a dep** — adds a cross-lib dependency. Acceptable since `libs/sidebar` is a stable, generic panel shell with no app-specific knowledge.
-- **[Trade-off] Panel hidden via CSS rather than unmounted** — keeps scroll position on re-open but keeps the list mounted even when hidden. Acceptable for 20 items.
-- **[Trade-off] Client-side search over 20 items** — fast but stale after the initial load. Acceptable for this slice; server-side search is a follow-up when pagination grows.
-- **[Trade-off] Tab and group-collapse state is internal to the lib** — state is reset when the panel unmounts on mobile. Acceptable since the panel stays mounted on desktop (CSS hide).
+- **[Risk] No `isPinned`/`source` from the list endpoint** → Pinned and My chats sections are present in the UI but all items fall into "My chats" until DIAL Core adds those fields. The UI handles this gracefully (Pinned section is hidden when empty).
+- **[Trade-off] `ConversationsProvider` outside `RequireAuth`** — fires the API call before authentication is confirmed; may produce a 401 on the login page. Accepted for parity with `DeploymentsProvider`; a retry-after-auth mechanism is a follow-up.
+- **[Trade-off] Panel hidden via CSS (`w-[0px]`) rather than unmounted** — keeps scroll position on re-open but keeps the list mounted even when hidden. Acceptable for 20 items.
+- **[Trade-off] Client-side search over 20 items** — fast but stale after the initial load. Acceptable for this slice; server-side search is a follow-up.
