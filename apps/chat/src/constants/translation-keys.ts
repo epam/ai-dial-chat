@@ -22,6 +22,7 @@ export enum ActionsI18nKeys {
   Cancel = 'actions.cancel',
   Confirm = 'actions.confirm',
   Edit = 'actions.edit',
+  SaveAndSubmit = 'actions.saveAndSubmit',
   Regenerate = 'actions.regenerate',
   Copy = 'actions.copy',
   Copied = 'actions.copied',
