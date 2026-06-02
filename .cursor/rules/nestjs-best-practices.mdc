@@ -49,8 +49,8 @@ alwaysApply: false
 ## Verification after each slice
 
 ```sh
-pnpm nx test  chat-api
-pnpm nx lint  chat-api
-pnpm nx build chat-api   # when bundling/Nest startup is affected
+npm exec nx test  chat-api
+npm exec nx lint  chat-api
+npm exec nx build chat-api   # when bundling/Nest startup is affected
 npm run openapi && npm run openapi:check   # when endpoint contracts changed
 ```
