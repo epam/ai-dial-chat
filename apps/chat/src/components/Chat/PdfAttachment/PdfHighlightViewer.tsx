@@ -8,6 +8,8 @@ import classNames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getPdfUrlPage, stripUrlHash } from '@/src/utils/app/attachments';
+
 import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
@@ -49,6 +51,9 @@ export const PdfHighlightViewer = ({ url }: Props) => {
 
   const screenState = useScreenState();
   const isSmallScreen = screenState === ScreenState.SM;
+
+  const fileUrl = useMemo(() => stripUrlHash(url), [url]);
+  const initialPage = useMemo(() => getPdfUrlPage(url), [url]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -103,18 +108,29 @@ export const PdfHighlightViewer = ({ url }: Props) => {
         });
 
         if (cancelled) return;
-        await viewer.loadPDF(url);
+        await viewer.loadPDF(fileUrl);
         if (cancelled) return;
 
         viewerRef.current = viewer;
         setIsLoading(false);
 
         const total = viewer.getTotalPages();
-        setCurrentPage(viewer.getCurrentPage());
         setTotalPages(total);
 
         viewer.addEventListener('pageChanged', onPageChanged);
         viewer.addEventListener('zoomChanged', onZoomChanged);
+
+        const startPage =
+          initialPage && initialPage > 1 && initialPage <= total
+            ? initialPage
+            : viewer.getCurrentPage();
+
+        if (startPage > 1) {
+          (viewer as unknown as { currentPage: number }).currentPage =
+            startPage;
+        }
+        setCurrentPage(startPage);
+
         viewer.setZoom(ZoomMode.AUTO);
       } catch (e) {
         if (cancelled) return;
@@ -143,7 +159,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       setThumbnails(new Map());
       requestedThumbnails.clear();
     };
-  }, [url, t]);
+  }, [fileUrl, initialPage, t]);
 
   useEffect(() => {
     if (totalPages === 0) return;
@@ -179,7 +195,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       observer.disconnect();
       observerRef.current = null;
     };
-  }, [totalPages, url]);
+  }, [totalPages, fileUrl]);
 
   useEffect(() => {
     pageRefsMap.current
