@@ -1,6 +1,6 @@
 ## Next.js
 
-Next.js-specific guidance for `nx import`. For generic import issues (pnpm globs, root deps, project references, name collisions, ESLint, frontend tsconfig base settings, `@nx/react` typings, Jest preset, target name prefixing, non-Nx source handling), see `SKILL.md`.
+Next.js-specific guidance for `nx import`. For generic import issues (workspace globs, root deps, project references, name collisions, ESLint, frontend tsconfig base settings, `@nx/react` typings, Jest preset, target name prefixing, non-Nx source handling), see `SKILL.md`.
 
 ---
 
@@ -33,10 +33,10 @@ Beyond the generic root deps issue (see SKILL.md), Next.js projects typically ne
 
 ### Next.js Auto-Installing Dependencies via Wrong Package Manager
 
-Next.js detects missing `@types/react` during `next build` and tries to install it using `yarn add` regardless of the actual package manager. In a pnpm workspace, this fails with a "nearest package directory isn't part of the project" error.
+Next.js detects missing `@types/react` during `next build` and tries to install it using `yarn add` regardless of the actual package manager. In an npm workspace, this fails with a "nearest package directory isn't part of the project" error.
 
 **Root cause**: `@types/react` is missing from root devDependencies.
-**Fix**: Install deps at the root before building: `pnpm add -wD @types/react @types/react-dom`
+**Fix**: Install deps at the root before building: `npm install -D @types/react @types/react-dom`
 
 ### Next.js TypeScript Config Specifics
 
@@ -142,8 +142,8 @@ No naming conflicts between frameworks.
 ## Fix Order — Nx Source (Subdirectory Import)
 
 1. Import Next.js apps into `apps/<name>` (see SKILL.md: "Application vs Library Detection")
-2. Generic fixes from SKILL.md (pnpm globs, root deps, `.gitkeep` removal, frontend tsconfig base settings, `@nx/react` typings)
-3. Install Next.js-specific deps: `pnpm add -wD @next/eslint-plugin-next`
+2. Generic fixes from SKILL.md (workspace globs, root deps, `.gitkeep` removal, frontend tsconfig base settings, `@nx/react` typings)
+3. Install Next.js-specific deps: `npm install -D @next/eslint-plugin-next`
 4. ESLint setup (see SKILL.md: "Root ESLint Config Missing")
 5. Jest setup (see SKILL.md: "Jest Preset Missing")
 6. `nx reset && nx sync --yes && nx run-many -t typecheck,build,test,lint`
@@ -151,7 +151,7 @@ No naming conflicts between frameworks.
 ## Fix Order — Non-Nx Source (create-next-app)
 
 1. Import into `apps/<name>` (see SKILL.md: "Application vs Library Detection")
-2. Generic fixes from SKILL.md (pnpm globs, stale files cleanup, script rewriting, target name prefixing)
+2. Generic fixes from SKILL.md (workspace globs, stale files cleanup, script rewriting, target name prefixing)
 3. (Optional) If app needs to export types for other workspace projects: fix `noEmit` → `composite` (see SKILL.md)
 4. `nx reset && nx run-many -t next:build,eslint:lint` (or unprefixed names if renamed)
 
@@ -207,7 +207,7 @@ No naming conflicts between frameworks.
   1. All Scenario 1 fixes for the Next.js app
   2. Stale files from Vite source: `node_modules/`, `pnpm-lock.yaml`, `pnpm-workspace.yaml`, `.gitignore`, `nx.json`
   3. Removed rewritten scripts from Vite app's `package.json`
-  4. ESLint 8 vs 9 conflict — `@nx/eslint` peer on ESLint 8 resolved wrong version. Fixed with `pnpm.overrides`
+  4. ESLint 8 vs 9 conflict — `@nx/eslint` peer on ESLint 8 resolved wrong version. Fixed with `overrides` in root `package.json`
   5. Vite tsconfigs missing `composite: true`, `declaration: true` — needed for `tsc --build --emitDeclarationOnly`
   6. Vite `tsconfig.spec.json` `include` missing source files — specs import app code
   7. Vite tsconfig `moduleResolution: "node"` → `"bundler"`, added `extends: "../../tsconfig.base.json"`

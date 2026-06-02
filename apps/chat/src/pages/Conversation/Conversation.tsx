@@ -152,6 +152,10 @@ export const ConversationPage: FC = () => {
     handleRateMessage,
     handleButtonSelect,
     handleConfirmStarter,
+    handleStartEdit,
+    handleCancelEdit,
+    handleEditMessage,
+    editingMessageIds,
     pendingDeleteId,
     setPendingDeleteId,
     pendingStarterContext,
@@ -194,6 +198,10 @@ export const ConversationPage: FC = () => {
           onDeleteMessage={handleDeleteMessage}
           onRegenerateMessage={handleRegenerateMessage}
           onRateMessage={handleRateMessage}
+          onStartEdit={handleStartEdit}
+          onCancelEdit={handleCancelEdit}
+          onEditMessage={handleEditMessage}
+          editingMessageIds={editingMessageIds}
           isAssistantTyping={isStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
