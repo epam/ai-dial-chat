@@ -60,7 +60,7 @@ The `preset` path is relative from the project root to the workspace root. Subdi
 #### Core (always needed)
 
 ```
-pnpm add -wD jest ts-jest @types/jest @nx/jest
+npm install -D jest ts-jest @types/jest @nx/jest
 ```
 
 #### Environment-specific
@@ -71,7 +71,7 @@ pnpm add -wD jest ts-jest @types/jest @nx/jest
 #### React testing
 
 ```
-pnpm add -wD @testing-library/react @testing-library/jest-dom
+npm install -D @testing-library/react @testing-library/jest-dom
 ```
 
 #### React with Babel (non-ts-jest transform)
@@ -79,7 +79,7 @@ pnpm add -wD @testing-library/react @testing-library/jest-dom
 Some React projects use Babel instead of ts-jest for JSX transformation:
 
 ```
-pnpm add -wD babel-jest @babel/core @babel/preset-env @babel/preset-react @babel/preset-typescript
+npm install -D babel-jest @babel/core @babel/preset-env @babel/preset-react @babel/preset-typescript
 ```
 
 **When**: Project `jest.config` has `transform` using `babel-jest` instead of `ts-jest`. Common in older Nx workspaces and CRA migrations.
@@ -87,7 +87,7 @@ pnpm add -wD babel-jest @babel/core @babel/preset-env @babel/preset-react @babel
 #### Vue testing
 
 ```
-pnpm add -wD @vue/test-utils
+npm install -D @vue/test-utils
 ```
 
 Vue projects typically use Vitest (not Jest) — see VITE.md.
@@ -212,7 +212,7 @@ This creates `test-ci--src/lib/foo.spec.ts` targets for each test file, enabling
 
 1. `npx nx add @nx/jest` — registers plugin in `nx.json` (does NOT create `jest.preset.js`)
 2. Create `jest.preset.js` manually (see "Jest Preset" section above)
-3. Install deps: `pnpm add -wD jest jest-environment-jsdom ts-jest @types/jest`
+3. Install deps: `npm install -D jest jest-environment-jsdom ts-jest @types/jest`
 4. Install framework test deps: `@testing-library/react @testing-library/jest-dom` (React), `@vue/test-utils` (Vue)
 5. Verify `tsconfig.spec.json` has `"types": ["jest", "node"]`
 6. `nx run-many -t test`

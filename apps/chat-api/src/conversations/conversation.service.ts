@@ -36,7 +36,7 @@ export class ConversationService extends AppService {
     const now = Date.now();
     const uuid = crypto.randomUUID();
     const name = getConversationName(firstMessage);
-    const conversationPath = `${uuid}__${name}`;
+    const conversationPath = `${deploymentId}__${name}__${uuid}`;
     const folderId = `${bucket}`; // TODO: check
 
     const userMessage: MessageDto = {
