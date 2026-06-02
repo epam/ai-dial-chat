@@ -14,7 +14,6 @@ Check whether there's a `packageManager` field in the root-level `package.json`.
 Alternatively check lockfile in repo root:
 
 - `yarn.lock` → yarn
-- `bun.lock` / `bun.lockb` → bun
 - `package-lock.json` → npm
 
 ## Workflow
@@ -60,22 +59,6 @@ npm resolves to local workspace automatically during install.
 
 ---
 
-## bun
-
-Supports `workspace:` protocol (npm-compatible).
-
-```bash
-cd packages/app && bun add @epam/ui
-```
-
-Result in `package.json`:
-
-```json
-{ "dependencies": { "@epam/ui": "workspace:*" } }
-```
-
----
-
 ## Examples
 
 **Example 1: npm - link ui lib to app**
@@ -100,6 +83,6 @@ npm install @epam/data-access @epam/ui --workspace @epam/dashboard
 
 - Symlinks appear in `<consumer>/node_modules/@epam/<package>`
 - **Hoisting differs by manager:**
-  - npm/bun: hoist shared deps to root `node_modules`
+  - npm: hoists shared deps to root `node_modules`
   - yarn berry: uses Plug'n'Play by default (no `node_modules`)
 - Root `package.json` should have `"private": true` to prevent accidental publish
