@@ -239,6 +239,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               disabled={isAppPublic}
               tooltip={isAppPublicTooltip}
               models={toolSupportingModels}
+              hideInlineError
             />
           )}
         />
