@@ -180,6 +180,12 @@
       "maximum": 360,
       "description": "Per-agent timeout. Honored by run-agent.yml. Default 15."
     },
+    "max_turns": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 60,
+      "description": "Max Claude turns for this agent. Honored by run-agent.yml -> composite action. Default 18. Lower it for simple agents — fewer turns means fewer context resends, which cuts input-tokens-per-minute (rate-limit pressure)."
+    },
     "concurrency": {
       "type": "object",
       "additionalProperties": false,

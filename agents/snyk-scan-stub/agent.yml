@@ -5,10 +5,13 @@ agent_version: "0.2.0"
 description: "Synthetic scanner-report producer for chain validation. Emits a fixed, real-shape Snyk Code SARIF 2.1.0 report under payload.sarif so snyk-triage exercises actual SARIF parsing. Test fixture — remove when the real Snyk pipeline (stage-snyk.yml) lands."
 triggers: [pull_request]
 allowed_tools: "Skill"
-# Sonnet, not Haiku: the agent must reproduce a ~150-line SARIF block
-# verbatim into stage-output.json; the larger model is more reliable at
-# faithful nested-JSON emission. Still a trivial, fixed-output run.
-model: claude-sonnet-4-6
+# Haiku: adequate to copy a fixed SARIF block verbatim, and keeps this
+# producer's token footprint (and likely rate-limit pool) off the Sonnet
+# triage agent. If it ever mangles the SARIF, bump back to sonnet.
+model: claude-haiku-4-5-20251001
 phase: sandbox
-cost_class: medium
+cost_class: light
+# Trivial run: invoke the skill, Write one file. Low turn cap reduces
+# context resends (input-tokens-per-minute → rate-limit pressure).
+max_turns: 4
 timeout_minutes: 10

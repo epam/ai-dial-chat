@@ -105,6 +105,7 @@ jobs:
           print(f"allowed_tools={tools}")
           print(f"agent_version={m.get('agent_version', 'unknown')}")
           print(f"model={m.get('model', '')}")
+          print(f"max_turns={m.get('max_turns', 18)}")
           print(f"tools_extra_json={json.dumps(extra)}")
           EOF
 
@@ -160,4 +161,5 @@ jobs:
           allowed_tools: ${{ steps.manifest.outputs.allowed_tools }}
           agent_version: ${{ steps.manifest.outputs.agent_version }}
           model: ${{ steps.manifest.outputs.model }}
+          max_turns: ${{ steps.manifest.outputs.max_turns }}
           upstream_artifacts: ${{ inputs.upstream_artifacts }}
