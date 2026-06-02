@@ -1,11 +1,22 @@
-import { lazy, Suspense, useCallback, useState } from 'react';
-import { Route, Routes, useMatch, useNavigate } from 'react-router-dom';
+import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
+import {
+  Route,
+  Routes,
+  useLocation,
+  useMatch,
+  useNavigate,
+} from 'react-router-dom';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView.js';
 import ConversationSourcesPanelView from '../components/ConversationSourcesPanel/ConversationSourcesPanelView.js';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
-import { ROUTES, getConversationRoute } from '../constants/routes';
+import {
+  ROUTES,
+  getConversationRoute,
+  normalizeConversationId,
+} from '../constants/routes';
+import { StorageKey } from '../constants/storage';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint.js';
 import useLocalStorage from '../hooks/useLocalStorage';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
@@ -19,6 +30,7 @@ const ConversationPage = lazy(async () => {
 
 function App() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const isMobile = useIsMobile();
 
   const [isNavOpen, setIsNavOpen] = useState(false);
@@ -26,7 +38,7 @@ function App() {
   const toggleNav = useCallback(() => setIsNavOpen((prev) => !prev), []);
 
   const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useLocalStorage(
-    'conversationPanelOpen',
+    StorageKey.ConversationPanelOpen,
     false,
   );
   const toggleHistoryPanel = useCallback(
@@ -41,12 +53,28 @@ function App() {
   const matchRoot = useMatch(ROUTES.ROOT);
   const matchConversation = useMatch('/conversations/*');
   const isConversationRoute = !!(matchRoot ?? matchConversation);
-  const activeConversationId = matchConversation?.params['*'];
+  const activeConversationId = useMemo(() => {
+    const prefix = `${ROUTES.CONVERSATIONS}/`;
+    if (!pathname.startsWith(prefix)) return undefined;
+
+    const id = pathname.slice(prefix.length);
+    if (!id) return undefined;
+
+    try {
+      return normalizeConversationId(decodeURIComponent(id));
+    } catch {
+      return normalizeConversationId(id);
+    }
+  }, [pathname]);
 
   const handleSelectConversation = useCallback(
     (id: string) => {
-      navigate(getConversationRoute(id));
-      if (isMobile) closeHistoryPanel();
+      if (isMobile) {
+        closeHistoryPanel();
+      }
+
+      const conversationRoute = getConversationRoute(id);
+      navigate(conversationRoute);
     },
     [navigate, isMobile, closeHistoryPanel],
   );

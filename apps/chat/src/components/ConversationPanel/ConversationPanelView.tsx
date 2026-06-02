@@ -4,6 +4,7 @@ import {
 } from '@epam/ai-dial-conversation-panel';
 import { type FC, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { normalizeConversationId } from '../../constants/routes.js';
 import { ConversationHistoryI18nKeys } from '../../constants/translation-keys.js';
 import { useConversations } from '../../context/ConversationsContext.js';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint.js';
@@ -30,7 +31,7 @@ const ConversationPanelView: FC<Props> = ({
   const conversations: ConversationHistoryItem[] = useMemo(
     () =>
       items.map((item) => ({
-        id: item.id,
+        id: normalizeConversationId(item.id),
         title: item.title,
       })),
     [items],
