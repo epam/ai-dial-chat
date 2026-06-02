@@ -1,0 +1,4 @@
+.agentIconBadge {
+  // 1. app-level override  2. theme inverted bg  3. hard white fallback
+  background: var(--ci-agent-icon-bg, var(--bg-inverted, #eef1f7));
+}

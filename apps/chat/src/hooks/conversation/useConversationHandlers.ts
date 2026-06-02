@@ -15,6 +15,7 @@ import {
 } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
+import { useDeployments } from '../../context/DeploymentsContext';
 import {
   deleteConversation as apiDeleteConversation,
   saveConversation,
@@ -24,7 +25,6 @@ import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
 import { createMessagePair } from '../../utils/message-factory';
 import { getStarterPopulateText } from '../../utils/starter-option';
-import { useDeployments } from '../../context/DeploymentsContext';
 
 interface Params {
   conversation: Conversation | null;
@@ -145,7 +145,7 @@ export const useConversationHandlers = ({
         userMsg.content,
         messageId,
         conversation.model.id,
-        userMsg.custom_content,
+        userMsg.custom_content as MessageCustomContent | undefined,
       );
     },
     [

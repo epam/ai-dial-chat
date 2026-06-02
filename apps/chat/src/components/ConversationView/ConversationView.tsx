@@ -89,7 +89,8 @@ const ConversationView: FC<Props> = ({
             iconUrl: resolveCatalogIconUrl(d.iconUrl),
           },
         ]),
-      ),[items],
+      ),
+    [items],
   );
 
   const deploymentItems = useMemo(

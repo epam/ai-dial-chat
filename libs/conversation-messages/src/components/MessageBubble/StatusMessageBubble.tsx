@@ -22,12 +22,12 @@ export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
   bodyText,
 }) => {
   return (
-    <div className="flex w-full items-center gap-[var(--spacing-03,12px)] overflow-hidden rounded-[var(--radius-1,4px)] border border-[var(--stroke\/info)] bg-[var(--background\/info)] p-[var(--spacing-03,12px)]">
+    <div className="flex w-full items-center gap-3 overflow-hidden rounded border border-[var(--stroke-info)] bg-[var(--bg-info)] p-3">
       <IconInfoCircleFilled
         size={20}
-        className="shrink-0 text-[color:var(--text\&icon\/primary)]"
+        className="shrink-0 text-[var(--text-primary)]"
       />
-      <div className="flex min-w-0 flex-1 items-center gap-[var(--spacing-01,4px)] text-sm leading-5 text-[color:var(--text\&icon\/primary)]">
+      <div className="flex min-w-0 flex-1 items-center gap-1 text-sm leading-5 text-[var(--text-primary)]">
         <span className="shrink-0 font-semibold">{titleText}</span>
         <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-normal">
           {bodyText}

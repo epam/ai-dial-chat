@@ -64,7 +64,34 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   const hasDeploymentIcon = !!(deploymentIconUrl || deploymentDisplayName);
 
   return (
-    <div style={cssVars} className={mergeClasses('flex w-full', className)}>
+    <div
+      style={cssVars}
+      className={mergeClasses('flex w-full items-start gap-5', className)}
+    >
+      {hasDeploymentIcon && (
+        // White rounded badge — matches Figma node 39:6118 (size 28, inset ~11%)
+        <div
+          className={mergeClasses(
+            styles.agentIconBadge,
+            'size-7 shrink-0 overflow-hidden rounded-full',
+          )}
+        >
+          {deploymentIconUrl && !isIconFailed ? (
+            <div className="m-[3px] size-[calc(100%-6px)]">
+              <img
+                ref={iconImgRef}
+                src={deploymentIconUrl}
+                alt={deploymentDisplayName ?? ''}
+                className="size-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex size-full items-center justify-center">
+              <IconRobot size={22} className="shrink-0" />
+            </div>
+          )}
+        </div>
+      )}
       <div className="flex w-full flex-col items-start gap-5">
         <div
           className={mergeClasses(
@@ -72,27 +99,6 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             bubbleClassName,
           )}
         >
-          {hasDeploymentIcon && (
-            <div className="flex items-center gap-1.5">
-              {deploymentIconUrl && !isIconFailed ? (
-                <img
-                  ref={iconImgRef}
-                  src={deploymentIconUrl}
-                  alt=""
-                  width={16}
-                  height={16}
-                  className="shrink-0"
-                />
-              ) : (
-                <IconRobot size={16} className="shrink-0" />
-              )}
-              {deploymentDisplayName && (
-                <span className="text-xs text-secondary">
-                  {deploymentDisplayName}
-                </span>
-              )}
-            </div>
-          )}
           <div className={mergeClasses(textClass, 'text-left')}>
             <MDMessageViewer content={text} />
           </div>

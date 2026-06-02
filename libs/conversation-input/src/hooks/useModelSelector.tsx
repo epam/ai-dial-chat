@@ -1,9 +1,11 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { IconApps, IconRobot } from '@tabler/icons-react';
 import { type ReactNode, useState } from 'react';
 import { DeploymentIcon } from '../components/Input/DeploymentIcon.js';
+import styles from '../components/Input/DeploymentIcon.module.scss';
 import type { ModelSelectorLabels } from '../models/Input.js';
 
 /** Options passed to `useModelSelector`. */
@@ -32,6 +34,24 @@ export interface UseModelSelectorResult {
   onOpenChange: (isOpen: boolean) => void;
 }
 
+const IconBadge = ({
+  size,
+  children,
+}: {
+  size: number;
+  children: ReactNode;
+}) => (
+  <div
+    style={{ width: size, height: size }}
+    className={mergeClasses(
+      styles.agentIconBadge,
+      'flex shrink-0 items-center justify-center overflow-hidden rounded-full',
+    )}
+  >
+    {children}
+  </div>
+);
+
 const buildDeploymentIcon = (
   iconUrl: string | undefined,
   type: string | undefined,
@@ -52,9 +72,13 @@ const buildDeploymentIcon = (
     );
   }
   return type === 'application' ? (
-    <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
+    <IconBadge size={DIAL_ICON_SIZE.SM}>
+      <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
+    </IconBadge>
   ) : (
-    <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
+    <IconBadge size={DIAL_ICON_SIZE.SM}>
+      <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
+    </IconBadge>
   );
 };
 
@@ -85,9 +109,17 @@ export const useModelSelector = ({
       />
     );
   } else if (selectedItem?.type === 'application') {
-    selectorIcon = <IconApps size={18} aria-hidden />;
+    selectorIcon = (
+      <IconBadge size={18}>
+        <IconApps size={18} aria-hidden />
+      </IconBadge>
+    );
   } else {
-    selectorIcon = <IconRobot size={18} aria-hidden />;
+    selectorIcon = (
+      <IconBadge size={18}>
+        <IconRobot size={18} aria-hidden />
+      </IconBadge>
+    );
   }
 
   const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;

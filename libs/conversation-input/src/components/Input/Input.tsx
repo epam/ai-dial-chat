@@ -7,11 +7,12 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
+  DIAL_ICON_SIZE,
   DialDropdown,
   DialDropdownIcon,
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconPaperclip, IconPlus } from '@tabler/icons-react';
+import { IconChevronDown, IconPaperclip, IconPlus } from '@tabler/icons-react';
 import classNames from 'classnames';
 import {
   type FC,
@@ -371,9 +372,17 @@ export const Input: FC<InputProps> = ({
                 matchReferenceWidth={false}
                 listClassName="!w-[240px] !max-h-80"
                 onOpenChange={handleModelSelectorOpenChange}
-                buttonClassName={
-                  isStreaming ? 'pointer-events-none opacity-50' : undefined
+                caretIcon={
+                  <div
+                    className={`${styles.modelSelectorCaret} flex size-5 items-center justify-center rounded-full`}
+                  >
+                    <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
+                  </div>
                 }
+                buttonClassName={mergeClasses(
+                  styles.modelSelectorButton,
+                  isStreaming ? 'pointer-events-none opacity-50' : undefined,
+                )}
               />
             ))}
           {isStreaming ? (

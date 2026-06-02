@@ -2,6 +2,7 @@ import {
   type Conversation,
   type Message,
   MessageRole,
+  type StatusMessageCustomContent,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
@@ -18,16 +19,29 @@ import {
   ActionsI18nKeys,
   ChatI18nKeys,
 } from '../../constants/translation-keys';
+import { useDeployments } from '../../context/DeploymentsContext.js';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
+import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
+import { useConversationStream } from '../../hooks/conversation/useConversationStream';
 import { useModelChangeEffect } from '../../hooks/useModelChangeEffect.js';
 import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
-import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
-import { useConversationStream } from '../../hooks/conversation/useConversationStream';
 import { getConversationPath } from '../../utils/conversation-path';
 
+const getLastDeploymentId = (messages: Message[]): string | null => {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (msg.role === MessageRole.Status) {
+      const cc = msg.custom_content as StatusMessageCustomContent | undefined;
+      if (cc?.event_type === 'model_changed') {
+        return cc.new_deployment_id;
+      }
+    }
+  }
+  return null;
+};
 
 export const ConversationPage: FC = () => {
   const { '*': conversationId } = useParams<{ '*': string }>();
@@ -36,6 +50,7 @@ export const ConversationPage: FC = () => {
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { setSelectedItemId } = useDeployments();
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
 
@@ -63,7 +78,8 @@ export const ConversationPage: FC = () => {
     [conversationId],
   );
 
-  useModelChangeEffect(conversationId, addStatusMessage);
+  const isConversationLoaded = !isFetching && !!conversation;
+  useModelChangeEffect(conversationId, addStatusMessage, isConversationLoaded);
 
   const {
     startStream,
@@ -88,6 +104,14 @@ export const ConversationPage: FC = () => {
     apiGetConversation(conversationPath)
       .then((dto) => {
         const result = dto as unknown as Conversation;
+
+        // Restore the last selected agent from the conversation's change history
+        // so the deployment selector reflects what was active, not the default.
+        const lastDeploymentId = getLastDeploymentId(result.messages);
+        if (lastDeploymentId) {
+          setSelectedItemId(lastDeploymentId);
+        }
+
         const lastMsg = result.messages[result.messages.length - 1];
 
         if (lastMsg?.role === MessageRole.User) {
@@ -118,8 +142,7 @@ export const ConversationPage: FC = () => {
       })
       .catch(() => navigate(ROUTES.ROOT))
       .finally(() => setIsFetching(false));
-  }, [conversationId, navigate, startStream]);
-
+  }, [conversationId, navigate, setSelectedItemId, startStream]);
 
   const {
     handleSend,

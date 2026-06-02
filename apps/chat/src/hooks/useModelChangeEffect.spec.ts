@@ -28,12 +28,12 @@ describe('useModelChangeEffect', () => {
     mockUseDeployments.mockReturnValue(makeDeploymentsContext('gpt-4'));
     const addStatusMessage = vi.fn();
 
-    renderHook(() => useModelChangeEffect('conv-1', addStatusMessage));
+    renderHook(() => useModelChangeEffect('conv-1', addStatusMessage, true));
 
     expect(addStatusMessage).not.toHaveBeenCalled();
   });
 
-  it('calls addStatusMessage when selectedItemId changes', () => {
+  it('calls addStatusMessage when selectedItemId changes after load', () => {
     let selectedItemId = 'gpt-3';
     mockUseDeployments.mockImplementation(() =>
       makeDeploymentsContext(selectedItemId),
@@ -41,7 +41,7 @@ describe('useModelChangeEffect', () => {
     const addStatusMessage = vi.fn();
 
     const { rerender } = renderHook(() =>
-      useModelChangeEffect('conv-1', addStatusMessage),
+      useModelChangeEffect('conv-1', addStatusMessage, true),
     );
 
     act(() => {
@@ -63,7 +63,7 @@ describe('useModelChangeEffect', () => {
     const addStatusMessage = vi.fn();
 
     const { rerender } = renderHook(() =>
-      useModelChangeEffect(undefined, addStatusMessage),
+      useModelChangeEffect(undefined, addStatusMessage, true),
     );
 
     act(() => {
@@ -82,7 +82,7 @@ describe('useModelChangeEffect', () => {
     const addStatusMessage = vi.fn();
 
     const { rerender } = renderHook(() =>
-      useModelChangeEffect('conv-1', addStatusMessage),
+      useModelChangeEffect('conv-1', addStatusMessage, true),
     );
 
     act(() => {
@@ -91,5 +91,78 @@ describe('useModelChangeEffect', () => {
     rerender();
 
     expect(addStatusMessage).not.toHaveBeenCalled();
+  });
+
+  it('does not call addStatusMessage while conversation is not loaded', () => {
+    let selectedItemId = 'gpt-3';
+    mockUseDeployments.mockImplementation(() =>
+      makeDeploymentsContext(selectedItemId),
+    );
+    const addStatusMessage = vi.fn();
+
+    const { rerender } = renderHook(() =>
+      useModelChangeEffect('conv-1', addStatusMessage, false),
+    );
+
+    act(() => {
+      selectedItemId = 'gpt-4';
+    });
+    rerender();
+
+    expect(addStatusMessage).not.toHaveBeenCalled();
+  });
+
+  it('does not call addStatusMessage for the deployment restored on load', () => {
+    // Simulate: default agent is gpt-3, but conversation history had gpt-4.
+    // Caller sets selectedItemId to gpt-4 before isConversationLoaded becomes true,
+    // both changes arrive in the same render.
+    let selectedItemId = 'gpt-3';
+    let isConversationLoaded = false;
+    mockUseDeployments.mockImplementation(() =>
+      makeDeploymentsContext(selectedItemId),
+    );
+    const addStatusMessage = vi.fn();
+
+    const { rerender } = renderHook(() =>
+      useModelChangeEffect('conv-1', addStatusMessage, isConversationLoaded),
+    );
+
+    // Conversation loads; caller restores last agent simultaneously
+    act(() => {
+      selectedItemId = 'gpt-4';
+      isConversationLoaded = true;
+    });
+    rerender();
+
+    expect(addStatusMessage).not.toHaveBeenCalled();
+  });
+
+  it('calls addStatusMessage when user switches agent after load', () => {
+    let selectedItemId = 'gpt-3';
+    let isConversationLoaded = false;
+    mockUseDeployments.mockImplementation(() =>
+      makeDeploymentsContext(selectedItemId),
+    );
+    const addStatusMessage = vi.fn();
+
+    const { rerender } = renderHook(() =>
+      useModelChangeEffect('conv-1', addStatusMessage, isConversationLoaded),
+    );
+
+    // Conversation loads (no agent restoration needed)
+    act(() => {
+      isConversationLoaded = true;
+    });
+    rerender();
+
+    // User switches agent
+    act(() => {
+      selectedItemId = 'gpt-4';
+    });
+    rerender();
+
+    expect(addStatusMessage).toHaveBeenCalledTimes(1);
+    const msg = addStatusMessage.mock.calls[0][0];
+    expect(msg.deploymentId).toBe('gpt-4');
   });
 });
