@@ -19,6 +19,10 @@
   }
 }
 
+.stopIcon {
+  color: var(--ci-stop-color, var(--text-secondary, #9fa6bd));
+}
+
 .sendButton {
   background: var(--ci-send-bg, var(--controls-bg-accent-primary, #3664e2));
   color: var(--ci-send-text, var(--controls-text-permanent, #fcfcfc));
