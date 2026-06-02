@@ -75,10 +75,10 @@ class NextClient {
   }
 
   /**
-   * Clears the refresh lock for a user after a failed refresh attempt,
+   * Resets the refreshing state for a user after a failed refresh attempt,
    * preserving the last known token so subsequent waiters can retry.
    */
-  public static clearRefreshToken(userId: string): void {
+  public static resetRefreshingState(userId: string): void {
     if (!globalObj._refreshTokenMap) return;
     const existing: RefreshToken | undefined =
       globalObj._refreshTokenMap[userId];

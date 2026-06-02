@@ -1,24 +1,25 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// ---------------------------------------------------------------------------
-// Module under test (imported after mocks)
-// ---------------------------------------------------------------------------
-import { callbacks } from '../auth-callbacks';
-
-// Mock declarations (hoisted – must appear before any module imports)
-
-const mockGetOrDiscoverClient = vi.fn();
-const mockGetRefreshToken = vi.fn();
-const mockSetIsRefreshTokenStart = vi.fn();
-const mockClearRefreshToken = vi.fn();
-const mockClientRefresh = vi.fn();
+const {
+  mockGetOrDiscoverClient,
+  mockGetRefreshToken,
+  mockSetIsRefreshTokenStart,
+  mockResetRefreshingState,
+  mockClientRefresh,
+} = vi.hoisted(() => ({
+  mockGetOrDiscoverClient: vi.fn(),
+  mockGetRefreshToken: vi.fn(),
+  mockSetIsRefreshTokenStart: vi.fn(),
+  mockResetRefreshingState: vi.fn(),
+  mockClientRefresh: vi.fn(),
+}));
 
 vi.mock('@/src/utils/auth/nextauth-client', () => ({
   default: {
     getOrDiscoverClient: mockGetOrDiscoverClient,
     getRefreshToken: mockGetRefreshToken,
     setIsRefreshTokenStart: mockSetIsRefreshTokenStart,
-    clearRefreshToken: mockClearRefreshToken,
+    resetRefreshingState: mockResetRefreshingState,
     delay: vi.fn().mockResolvedValue(undefined),
   },
 }));
@@ -64,9 +65,7 @@ vi.mock('lodash-es/get', () => ({ default: () => [] }));
 vi.mock('lodash-es/intersection', () => ({ default: () => [] }));
 vi.mock('lodash-es/snakeCase', () => ({ default: (s: string) => s }));
 
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
+import { callbacks } from '../auth-callbacks';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -131,7 +130,7 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
         expect.objectContaining({ isRefreshing: false }),
       );
       // Never cleared (no failure)
-      expect(mockClearRefreshToken).not.toHaveBeenCalled();
+      expect(mockResetRefreshingState).not.toHaveBeenCalled();
     });
 
     it('returns the refreshed token without an error field', async () => {
@@ -153,7 +152,7 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
   });
 
   describe('failed refresh – lock cleanup', () => {
-    it('calls clearRefreshToken when client.refresh() throws', async () => {
+    it('calls resetRefreshingState when client.refresh() throws', async () => {
       const client = {
         refresh: mockClientRefresh.mockRejectedValue(
           new Error('invalid_grant'),
@@ -171,10 +170,10 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
         'RefreshAccessTokenError',
       );
       // Lock must be cleared so the next request can retry
-      expect(mockClearRefreshToken).toHaveBeenCalledWith('u1');
+      expect(mockResetRefreshingState).toHaveBeenCalledWith('u1');
     });
 
-    it('calls clearRefreshToken when the provider returns a response missing expiry fields', async () => {
+    it('calls resetRefreshingState when the provider returns a response missing expiry fields', async () => {
       const client = {
         refresh: mockClientRefresh.mockResolvedValue({
           access_token: 'tok',
@@ -192,10 +191,10 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
       expect((result as { error?: string }).error).toBe(
         'RefreshAccessTokenError',
       );
-      expect(mockClearRefreshToken).toHaveBeenCalledWith('u1');
+      expect(mockResetRefreshingState).toHaveBeenCalledWith('u1');
     });
 
-    it('does NOT call clearRefreshToken when no OIDC client is found (lock was never acquired)', async () => {
+    it('does NOT call resetRefreshingState when no OIDC client is found (lock was never acquired)', async () => {
       mockGetOrDiscoverClient.mockResolvedValue(null);
 
       const result = await callbacks.jwt!({
@@ -208,12 +207,12 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
         'RefreshAccessTokenError',
       );
       // Lock was never set because we exited before the while loop's break
-      expect(mockClearRefreshToken).not.toHaveBeenCalled();
+      expect(mockResetRefreshingState).not.toHaveBeenCalled();
       // Ensure we also never set the lock
       expect(mockSetIsRefreshTokenStart).not.toHaveBeenCalled();
     });
 
-    it('does NOT call clearRefreshToken for a waiter that times out', async () => {
+    it('does NOT call resetRefreshingState for a waiter that times out', async () => {
       // Simulate another request already holding the lock
       mockGetRefreshToken.mockReturnValue({
         isRefreshing: true,
@@ -232,7 +231,7 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
         'RefreshAccessTokenError',
       );
       // The waiter must NOT clear the lock – that belongs to the refresher
-      expect(mockClearRefreshToken).not.toHaveBeenCalled();
+      expect(mockResetRefreshingState).not.toHaveBeenCalled();
       // The waiter must NOT set the lock either
       expect(mockSetIsRefreshTokenStart).not.toHaveBeenCalled();
     });

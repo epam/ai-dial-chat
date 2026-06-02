@@ -34,9 +34,9 @@ describe('NextClient – refresh token map', () => {
     });
   });
 
-  describe('clearRefreshToken', () => {
+  describe('resetRefreshingState', () => {
     it('is a no-op when no entry exists', () => {
-      expect(() => NextClient.clearRefreshToken('ghost-user')).not.toThrow();
+      expect(() => NextClient.resetRefreshingState('ghost-user')).not.toThrow();
       expect(NextClient.getRefreshToken('ghost-user')).toBeUndefined();
     });
 
@@ -47,7 +47,7 @@ describe('NextClient – refresh token map', () => {
         token,
       });
 
-      NextClient.clearRefreshToken('user-2');
+      NextClient.resetRefreshingState('user-2');
 
       const result = NextClient.getRefreshToken('user-2');
       expect(result?.isRefreshing).toBe(false);
@@ -61,7 +61,7 @@ describe('NextClient – refresh token map', () => {
         token: expiredToken,
       });
 
-      NextClient.clearRefreshToken('user-3');
+      NextClient.resetRefreshingState('user-3');
 
       const result = NextClient.getRefreshToken('user-3');
       // isRefreshing cleared so the next caller can acquire the lock

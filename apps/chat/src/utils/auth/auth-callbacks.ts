@@ -226,7 +226,7 @@ async function refreshAccessToken(token: Token) {
     // Only the request that acquired the lock should release it.
     // Waiters that timed out must not clear the lock belonging to the refresher.
     if (didAcquireLock) {
-      NextClient.clearRefreshToken(token.userId);
+      NextClient.resetRefreshingState(token.userId);
     }
     logger.error(
       error,

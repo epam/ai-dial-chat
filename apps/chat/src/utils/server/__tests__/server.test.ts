@@ -1,16 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// ---------------------------------------------------------------------------
-// Module under test (imported after mocks)
-// ---------------------------------------------------------------------------
-import { getFullToken } from '../server';
+const { mockGetJWTToken, mockGetRefreshToken } = vi.hoisted(() => ({
+  mockGetJWTToken: vi.fn(),
+  mockGetRefreshToken: vi.fn(),
+}));
 
-// Module mocks (must be hoisted before the module under test is imported)
-
-const mockGetJWTToken = vi.fn();
 vi.mock('next-auth/jwt', () => ({ getToken: mockGetJWTToken }));
 
-const mockGetRefreshToken = vi.fn();
 vi.mock('@/src/utils/auth/nextauth-client', () => ({
   default: { getRefreshToken: mockGetRefreshToken },
 }));
@@ -34,9 +30,7 @@ vi.mock('@/src/utils/app/file', () => ({
   constructPath: (...parts: string[]) => parts.filter(Boolean).join('/'),
 }));
 
-// ---------------------------------------------------------------------------
-
-// ---------------------------------------------------------------------------
+import { getFullToken } from '../server';
 
 // ---------------------------------------------------------------------------
 // Helpers
