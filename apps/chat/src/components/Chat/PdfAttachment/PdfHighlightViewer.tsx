@@ -5,8 +5,12 @@ import Image from 'next/image';
 
 import classNames from 'classnames';
 
+import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getPdfUrlPage, stripUrlHash } from '@/src/utils/app/attachments';
+
+import { ScreenState } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
@@ -44,6 +48,12 @@ const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
 export const PdfHighlightViewer = ({ url }: Props) => {
   const { t } = useTranslation(Translation.Chat);
+
+  const screenState = useScreenState();
+  const isSmallScreen = screenState === ScreenState.SM;
+
+  const fileUrl = useMemo(() => stripUrlHash(url), [url]);
+  const initialPage = useMemo(() => getPdfUrlPage(url), [url]);
 
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -98,18 +108,29 @@ export const PdfHighlightViewer = ({ url }: Props) => {
         });
 
         if (cancelled) return;
-        await viewer.loadPDF(url);
+        await viewer.loadPDF(fileUrl);
         if (cancelled) return;
 
         viewerRef.current = viewer;
         setIsLoading(false);
 
         const total = viewer.getTotalPages();
-        setCurrentPage(viewer.getCurrentPage());
         setTotalPages(total);
 
         viewer.addEventListener('pageChanged', onPageChanged);
         viewer.addEventListener('zoomChanged', onZoomChanged);
+
+        const startPage =
+          initialPage && initialPage > 1 && initialPage <= total
+            ? initialPage
+            : viewer.getCurrentPage();
+
+        if (startPage > 1) {
+          (viewer as unknown as { currentPage: number }).currentPage =
+            startPage;
+        }
+        setCurrentPage(startPage);
+
         viewer.setZoom(ZoomMode.AUTO);
       } catch (e) {
         if (cancelled) return;
@@ -138,7 +159,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       setThumbnails(new Map());
       requestedThumbnails.clear();
     };
-  }, [url, t]);
+  }, [fileUrl, initialPage, t]);
 
   useEffect(() => {
     if (totalPages === 0) return;
@@ -174,7 +195,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       observer.disconnect();
       observerRef.current = null;
     };
-  }, [totalPages, url]);
+  }, [totalPages, fileUrl]);
 
   useEffect(() => {
     pageRefsMap.current
@@ -219,9 +240,11 @@ export const PdfHighlightViewer = ({ url }: Props) => {
     <div className="flex size-full flex-col">
       <div className="flex shrink-0 items-center justify-between gap-3">
         <div className="flex items-center gap-1">
-          <span className="text-center text-sm font-semibold text-secondary">
-            {t(ChatI18nKeys.Pages)}
-          </span>
+          {!isSmallScreen && (
+            <span className="text-center text-sm font-semibold text-secondary">
+              {t(ChatI18nKeys.Pages)}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-1">
           <DialSelect
@@ -252,50 +275,52 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       </div>
 
       <div className="mt-4 flex min-h-0 grow">
-        <div className="flex flex-col gap-2 overflow-y-auto">
-          {range(1, totalPages + 1).map((pageNumber) => {
-            const thumbUrl = thumbnails.get(pageNumber);
-            return (
-              <button
-                type="button"
-                key={pageNumber}
-                data-page={pageNumber}
-                ref={(el) => {
-                  if (el) {
-                    pageRefsMap.current.set(pageNumber, el);
-                    observerRef.current?.observe(el);
-                  } else {
-                    pageRefsMap.current.delete(pageNumber);
-                  }
-                }}
-                onClick={() => viewerRef.current?.setPage(pageNumber)}
-                className={classNames(
-                  'flex flex-col items-center gap-1 rounded p-2 hover:bg-accent-primary-alpha',
-                  pageNumber === currentPage && 'border border-primary',
-                )}
-                aria-label={`${t(ChatI18nKeys.Page)} ${pageNumber}`}
-                aria-current={pageNumber === currentPage ? 'page' : undefined}
-              >
-                <div className="relative aspect-[3/4] w-24">
-                  {thumbUrl ? (
-                    <Image
-                      src={thumbUrl}
-                      fill
-                      className="rounded object-contain"
-                      alt={`${t(ChatI18nKeys.Page)} ${pageNumber}`}
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="size-full animate-pulse rounded bg-layer-3" />
+        {!isSmallScreen && (
+          <div className="flex flex-col gap-2 overflow-y-auto">
+            {range(1, totalPages + 1).map((pageNumber) => {
+              const thumbUrl = thumbnails.get(pageNumber);
+              return (
+                <button
+                  type="button"
+                  key={pageNumber}
+                  data-page={pageNumber}
+                  ref={(el) => {
+                    if (el) {
+                      pageRefsMap.current.set(pageNumber, el);
+                      observerRef.current?.observe(el);
+                    } else {
+                      pageRefsMap.current.delete(pageNumber);
+                    }
+                  }}
+                  onClick={() => viewerRef.current?.setPage(pageNumber)}
+                  className={classNames(
+                    'flex flex-col items-center gap-1 rounded p-2 hover:bg-accent-primary-alpha',
+                    pageNumber === currentPage && 'border border-primary',
                   )}
-                </div>
-                <span className="text-xs text-secondary" aria-hidden="true">
-                  {pageNumber}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+                  aria-label={`${t(ChatI18nKeys.Page)} ${pageNumber}`}
+                  aria-current={pageNumber === currentPage ? 'page' : undefined}
+                >
+                  <div className="relative aspect-[3/4] w-24">
+                    {thumbUrl ? (
+                      <Image
+                        src={thumbUrl}
+                        fill
+                        className="rounded object-contain"
+                        alt={`${t(ChatI18nKeys.Page)} ${pageNumber}`}
+                        unoptimized
+                      />
+                    ) : (
+                      <div className="size-full animate-pulse rounded bg-layer-3" />
+                    )}
+                  </div>
+                  <span className="text-xs text-secondary" aria-hidden="true">
+                    {pageNumber}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         <div className="relative min-w-0 grow">
           <div
