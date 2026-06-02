@@ -157,7 +157,7 @@ export const useConversationStream = ({
       }
       return updated;
     });
-  }, [conversationId, stoppedGeneratingText, conversationRef]);
+  }, [conversationId, stoppedGeneratingText, conversationRef, setConversation]);
 
   return {
     startStream,

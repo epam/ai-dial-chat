@@ -105,6 +105,16 @@
     "loginDescription": "Choose your identity provider",
     "providerButtonLabel": "Sign in with {{provider}}",
     "providersError": "Could not load identity providers. Please retry.",
-    "userMenuLabel": "User menu"
+    "userMenuLabel": "User menu",
+    "settings": "Settings",
+    "logOut": "Log out",
+    "logOutConfirmTitle": "Log out?",
+    "logOutConfirmDescription": "Are you sure you want to log out?",
+    "logOutConfirm": "Log out"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "apply": "Apply"
   }
 }

@@ -1,25 +1,43 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../../context/auth/UserContext';
+import * as ThemeContextModule from '../../../context/ThemeContext';
+import * as BreakpointModule from '../../../hooks/breakpoint/useBreakpoint';
 import { UserMenu } from '../UserMenu';
 
 vi.mock('../../../context/auth/UserContext');
+vi.mock('../../../context/ThemeContext');
+vi.mock('../../../hooks/breakpoint/useBreakpoint');
 
 const mockUseUser = vi.mocked(UserContextModule.useUser);
+const mockUseTheme = vi.mocked(ThemeContextModule.useTheme);
+const mockUseIsMobile = vi.mocked(BreakpointModule.useIsMobile);
+
+const defaultTheme = {
+  currentTheme: 'dark',
+  themes: [
+    { id: 'dark', displayName: 'Dark' },
+    { id: 'light', displayName: 'Light' },
+  ],
+  setTheme: vi.fn(),
+  isLoading: false,
+};
+
+const mockUser = {
+  sub: 'user-123',
+  providerId: 'keycloak',
+  claims: {
+    email: 'john.doe@example.com',
+    name: 'John Doe',
+  },
+};
 
 describe('UserMenu', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockUseTheme.mockReturnValue(defaultTheme);
+    mockUseIsMobile.mockReturnValue(false);
   });
-
-  const mockUser = {
-    sub: 'user-123',
-    providerId: 'keycloak',
-    claims: {
-      email: 'john.doe@example.com',
-      name: 'John Doe',
-    },
-  };
 
   it('returns null when status is loading', () => {
     mockUseUser.mockReturnValue({
@@ -88,5 +106,19 @@ describe('UserMenu', () => {
     fireEvent.error(avatar);
 
     expect(screen.getByText('JD')).not.toBeNull();
+  });
+
+  it('avatar button has an aria-label', () => {
+    mockUseUser.mockReturnValue({
+      status: 'authenticated',
+      user: mockUser,
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    render(<UserMenu />);
+
+    const button = screen.getByRole('button');
+    expect(button.getAttribute('aria-label')).toBeTruthy();
   });
 });
