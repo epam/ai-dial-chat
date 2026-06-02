@@ -58,7 +58,7 @@ const ConversationPanelView: FC<Props> = ({
         myChats: t(ConversationHistoryI18nKeys.MyChatsSection),
       }}
       onBackdropClick={isMobile ? onClose : undefined}
-      className={isMobile ? 'fixed inset-y-0 left-0 z-50 w-[288px]' : undefined}
+      className={isMobile ? 'fixed inset-y-0 left-0 z-50 w-[320px]' : undefined}
     />
   );
 };

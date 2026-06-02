@@ -6,7 +6,12 @@ export enum ConversationSource {
 }
 
 /** Active filter tab value. */
-export type FilterTab = 'all' | ConversationSource;
+export enum FilterTab {
+  All = 'all',
+  MyChats = 'my-chats',
+  Shared = 'shared',
+  Organization = 'organization',
+}
 
 /** Labels for each filter tab — provided as props so the app supplies i18n strings. */
 export interface FilterLabels {

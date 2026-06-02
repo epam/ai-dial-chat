@@ -38,7 +38,6 @@ function App() {
 
   const handleSelectConversation = useCallback(
     (id: string) => {
-      console.log('Selected conversation ID:', id);
       navigate(getConversationRoute(id));
       if (isMobile) closeHistoryPanel();
     },

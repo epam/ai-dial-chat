@@ -2,9 +2,8 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
 import {
-  ConversationSource,
+  FilterTab,
   type FilterLabels,
-  type FilterTab,
 } from '../../models/ConversationPanel.js';
 import panelStyles from '../ConversationPanel/ConversationPanel.module.scss';
 
@@ -19,10 +18,10 @@ export interface FilterTabsProps {
 }
 
 const TABS: { value: FilterTab; labelKey: keyof FilterLabels }[] = [
-  { value: 'all', labelKey: 'all' },
-  { value: ConversationSource.MyChats, labelKey: 'myChats' },
-  { value: ConversationSource.Shared, labelKey: 'shared' },
-  { value: ConversationSource.Organization, labelKey: 'organization' },
+  { value: FilterTab.All, labelKey: 'all' },
+  { value: FilterTab.MyChats, labelKey: 'myChats' },
+  { value: FilterTab.Shared, labelKey: 'shared' },
+  { value: FilterTab.Organization, labelKey: 'organization' },
 ];
 
 /** Segmented pill-tab control for filtering conversations by source. */

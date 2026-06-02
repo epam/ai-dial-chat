@@ -24,23 +24,23 @@ root.render(
       <UserProvider>
         <ThemeProvider>
           <DeploymentsProvider>
-            <ConversationsProvider>
-              <SourcesSidebarProvider>
-                <Suspense fallback={null}>
-                  <Routes>
-                    <Route path="/login" element={<LoginPage />} />
-                    <Route
-                      path="*"
-                      element={
-                        <RequireAuth>
+            <SourcesSidebarProvider>
+              <Suspense fallback={null}>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route
+                    path="*"
+                    element={
+                      <RequireAuth>
+                        <ConversationsProvider>
                           <App />
-                        </RequireAuth>
-                      }
-                    />
-                  </Routes>
-                </Suspense>
-              </SourcesSidebarProvider>
-            </ConversationsProvider>
+                        </ConversationsProvider>
+                      </RequireAuth>
+                    }
+                  />
+                </Routes>
+              </Suspense>
+            </SourcesSidebarProvider>
           </DeploymentsProvider>
         </ThemeProvider>
       </UserProvider>

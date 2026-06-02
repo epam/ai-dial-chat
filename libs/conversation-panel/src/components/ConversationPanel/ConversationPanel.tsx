@@ -1,7 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC, memo, useMemo, useState } from 'react';
-import type {
-  ConversationPanelProps,
+import {
+  type ConversationPanelProps,
   FilterTab,
 } from '../../models/ConversationPanel.js';
 import { ConversationGroup } from '../ConversationGroup/ConversationGroup.js';
@@ -10,8 +10,8 @@ import { FilterTabs } from '../FilterTabs/FilterTabs.js';
 import { NewChatButton } from '../NewChatButton/NewChatButton.js';
 import { SearchInput } from '../SearchInput/SearchInput.js';
 import styles from './ConversationPanel.module.scss';
-import { matchesSearch, matchesTab } from './utils.js';
 import { Header } from './Header/Header.js';
+import { matchesSearch, matchesTab } from './utils.js';
 
 /** Collapsible left-side panel showing the user's conversation history. */
 export const ConversationPanel: FC<ConversationPanelProps> = memo(
@@ -33,7 +33,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
   }) => {
     const { colors, typography } = panelStyles ?? {};
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<FilterTab>('all');
+    const [activeTab, setActiveTab] = useState<FilterTab>(FilterTab.All);
 
     const hasTypographyClass = Boolean(typography?.fontClassName);
     const cssVars = buildCssVars({
@@ -104,7 +104,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           className={mergeClasses(
             'relative z-50 flex h-full min-w-0 flex-shrink-0 flex-col overflow-hidden',
             'transition-[width] duration-200 ease-in-out',
-            isOpen ? 'w-[288px] border-l border-r' : 'w-[0px]',
+            isOpen ? 'w-[320px] border-l border-r' : 'w-[0px]',
             styles.panel,
             className,
           )}
