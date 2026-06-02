@@ -50,14 +50,16 @@ describe('StagesPanel', () => {
         stages={[stageRunning]}
         isStreaming={false}
         className="custom-panel"
-        colors={{
-          background: '#111111',
-          border: '#222222',
-          text: '#333333',
-          stageTextColor: '#444444',
-          runningColor: '#555555',
-          completedColor: '#666666',
-          failedColor: '#777777',
+        styles={{
+          colors: {
+            background: '#111111',
+            border: '#222222',
+            text: '#333333',
+            stageTextColor: '#444444',
+            runningColor: '#555555',
+            completedColor: '#666666',
+            failedColor: '#777777',
+          },
         }}
       />,
     );
@@ -74,12 +76,12 @@ describe('StagesPanel', () => {
     expect(panel.style.getPropertyValue('--cs-failed')).toBe('#777777');
   });
 
-  it('applies typographyClassName to each stage row', () => {
+  it('applies typography.fontClassName to each stage row', () => {
     render(
       <StagesPanel
         stages={[stageRunning, stageCompleted]}
         isStreaming={false}
-        typographyClassName="dial-body-text"
+        styles={{ typography: { fontClassName: 'dial-body-text' } }}
       />,
     );
 
