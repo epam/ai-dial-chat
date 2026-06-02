@@ -1,6 +1,6 @@
 import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
+import { DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
 import { IconRobot } from '@tabler/icons-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { DeploymentIcon } from '../components/Input/DeploymentIcon.js';
@@ -21,7 +21,7 @@ export interface UseModelSelectorOptions {
   onDeploymentChange?: (id: string) => void;
   /** Status labels for the selector dropdown. */
   modelSelectorLabels?: ModelSelectorLabels;
-  /** CSS class applied to the sticky search header wrapper. Defaults to `'bg-layer-0'`. */
+  /** Class applied to the sticky search header wrapper for theming. Defaults to `'bg-layer-0'`. */
   searchHeaderClassName?: string;
 }
 

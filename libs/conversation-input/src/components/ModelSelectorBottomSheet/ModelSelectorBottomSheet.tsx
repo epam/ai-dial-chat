@@ -44,7 +44,11 @@ const ModelRow = ({
   onSelect,
 }: RowComponentProps<ModelRowData>) => {
   const item = items[index];
-  const modelIcon = buildDeploymentIcon(item.iconUrl, item.type, DIAL_ICON_SIZE.SM);
+  const modelIcon = buildDeploymentIcon(
+    item.iconUrl,
+    item.type,
+    DIAL_ICON_SIZE.SM,
+  );
   const isSelected = item.id === selectedDeploymentId;
 
   return (
@@ -60,7 +64,10 @@ const ModelRow = ({
           <span className="flex flex-1 items-center justify-between gap-2">
             <DialEllipsisTooltip
               text={item.displayName ?? item.id}
-              className={mergeClasses(labelClassName, 'min-w-0 flex-1 text-left')}
+              className={mergeClasses(
+                labelClassName,
+                'min-w-0 flex-1 text-left',
+              )}
             />
             {isSelected && (
               <IconCheck
@@ -179,7 +186,11 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
       {stateLabel ? (
         <div
           role="list"
-          className={mergeClasses(styles.stateLabel, labelClassName, 'px-4 py-4')}
+          className={mergeClasses(
+            styles.stateLabel,
+            labelClassName,
+            'px-4 py-4',
+          )}
         >
           {stateLabel}
         </div>
