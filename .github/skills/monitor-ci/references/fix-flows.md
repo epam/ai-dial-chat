@@ -19,7 +19,7 @@ The script returns `autoApplySkipReason` in its output.
 
 The script returns `verifiableTaskIds` in its output.
 
-1. **Detect package manager:** `pnpm-lock.yaml` → `pnpm nx`, `yarn.lock` → `yarn nx`, otherwise `npx nx`
+1. **Detect package manager:** `yarn.lock` → `yarn nx`, otherwise `npm exec nx` (this project uses npm)
 2. **Run verifiable tasks in parallel** — spawn `general` subagents for each task
 3. **If all pass** → spawn UPDATE_FIX subagent with `APPLY`, enter wait mode
 4. **If any fail** → Apply Locally + Enhance Flow (see below)

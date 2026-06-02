@@ -1,10 +1,8 @@
-const notAllowedSymbolsRegex = /[<>:"|?*]/g;
+const notAllowedSymbolsRegex = /[:;,=/{}%&"]/g;
 const MAX_ENTITY_LENGTH = 200;
 
 export const getConversationName = (defaultName: string, prompt?: string) => {
-  return prepareEntityName(
-    prompt || `${defaultName} ${new Date().toLocaleDateString()}`,
-  );
+  return prepareEntityName(prompt || defaultName);
 };
 
 export const prepareEntityName = (prompt?: string) => {

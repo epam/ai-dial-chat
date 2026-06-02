@@ -14,6 +14,7 @@ export enum ChatI18nKeys {
   SendMessage = 'chat.sendMessage',
   StopStreaming = 'chat.stopStreaming',
   QuickReplyButtons = 'chat.quickReplyButtons',
+  StoppedGenerating = 'chat.stoppedGenerating',
 }
 
 export enum ActionsI18nKeys {
@@ -21,6 +22,7 @@ export enum ActionsI18nKeys {
   Cancel = 'actions.cancel',
   Confirm = 'actions.confirm',
   Edit = 'actions.edit',
+  SaveAndSubmit = 'actions.saveAndSubmit',
   Regenerate = 'actions.regenerate',
   Copy = 'actions.copy',
   Copied = 'actions.copied',

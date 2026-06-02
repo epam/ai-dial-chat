@@ -80,73 +80,85 @@ export const MessageActions: FC<MessageActionsProps> = ({
         </>
       ) : (
         <>
-          <DialGhostIconButton
-            icon={<IconRefresh size={DIAL_ICON_SIZE.SM} />}
-            size={ElementSize.Small}
-            aria-label={ariaLabels?.regenerateResponse ?? 'Regenerate response'}
-            tooltipProps={{ tooltip: tooltips?.regenerate ?? 'Regenerate' }}
-            onClick={onRegenerate}
-          />
-          <DialGhostIconButton
-            icon={
-              copied === 'copy' ? (
-                <IconCheck size={DIAL_ICON_SIZE.SM} />
-              ) : (
-                <IconCopy size={DIAL_ICON_SIZE.SM} />
-              )
-            }
-            size={ElementSize.Small}
-            aria-label={ariaLabels?.copyResponse ?? 'Copy response'}
-            tooltipProps={{
-              tooltip:
-                copied === 'copy'
-                  ? (tooltips?.copied ?? 'Copied!')
-                  : (tooltips?.copy ?? 'Copy'),
-            }}
-            onClick={handleCopy}
-          />
-          <DialGhostIconButton
-            icon={
-              copied === 'markdown' ? (
-                <IconCheck size={DIAL_ICON_SIZE.SM} />
-              ) : (
-                <IconMarkdown size={DIAL_ICON_SIZE.SM} />
-              )
-            }
-            size={ElementSize.Small}
-            aria-label={ariaLabels?.copyAsMarkdown ?? 'Copy as markdown'}
-            tooltipProps={{
-              tooltip:
-                copied === 'markdown'
-                  ? (tooltips?.copiedMarkdown ?? 'Copied!')
-                  : (tooltips?.copyMarkdown ?? 'Copy as Markdown'),
-            }}
-            onClick={handleCopyMarkdown}
-          />
-          <DialGhostIconButton
-            icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} />}
-            size={ElementSize.Small}
-            aria-label={ariaLabels?.likeResponse ?? 'Like response'}
-            className={
-              activeRating === MessageRating.Like
-                ? 'text-accent-primary'
-                : undefined
-            }
-            tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
-            onClick={onLike}
-          />
-          <DialGhostIconButton
-            icon={<IconThumbDown size={DIAL_ICON_SIZE.SM} />}
-            size={ElementSize.Small}
-            aria-label={ariaLabels?.dislikeResponse ?? 'Dislike response'}
-            className={
-              activeRating === MessageRating.Dislike
-                ? 'text-accent-primary'
-                : undefined
-            }
-            tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}
-            onClick={onDislike}
-          />
+          {onRegenerate && (
+            <DialGhostIconButton
+              icon={<IconRefresh size={DIAL_ICON_SIZE.SM} />}
+              size={ElementSize.Small}
+              aria-label={
+                ariaLabels?.regenerateResponse ?? 'Regenerate response'
+              }
+              tooltipProps={{ tooltip: tooltips?.regenerate ?? 'Regenerate' }}
+              onClick={onRegenerate}
+            />
+          )}
+          {onCopy && (
+            <DialGhostIconButton
+              icon={
+                copied === 'copy' ? (
+                  <IconCheck size={DIAL_ICON_SIZE.SM} />
+                ) : (
+                  <IconCopy size={DIAL_ICON_SIZE.SM} />
+                )
+              }
+              size={ElementSize.Small}
+              aria-label={ariaLabels?.copyResponse ?? 'Copy response'}
+              tooltipProps={{
+                tooltip:
+                  copied === 'copy'
+                    ? (tooltips?.copied ?? 'Copied!')
+                    : (tooltips?.copy ?? 'Copy'),
+              }}
+              onClick={handleCopy}
+            />
+          )}
+          {onCopyMarkdown && (
+            <DialGhostIconButton
+              icon={
+                copied === 'markdown' ? (
+                  <IconCheck size={DIAL_ICON_SIZE.SM} />
+                ) : (
+                  <IconMarkdown size={DIAL_ICON_SIZE.SM} />
+                )
+              }
+              size={ElementSize.Small}
+              aria-label={ariaLabels?.copyAsMarkdown ?? 'Copy as markdown'}
+              tooltipProps={{
+                tooltip:
+                  copied === 'markdown'
+                    ? (tooltips?.copiedMarkdown ?? 'Copied!')
+                    : (tooltips?.copyMarkdown ?? 'Copy as Markdown'),
+              }}
+              onClick={handleCopyMarkdown}
+            />
+          )}
+          {onLike && (
+            <DialGhostIconButton
+              icon={<IconThumbUp size={DIAL_ICON_SIZE.SM} />}
+              size={ElementSize.Small}
+              aria-label={ariaLabels?.likeResponse ?? 'Like response'}
+              className={
+                activeRating === MessageRating.Like
+                  ? 'text-accent-primary'
+                  : undefined
+              }
+              tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
+              onClick={onLike}
+            />
+          )}
+          {onDislike && (
+            <DialGhostIconButton
+              icon={<IconThumbDown size={DIAL_ICON_SIZE.SM} />}
+              size={ElementSize.Small}
+              aria-label={ariaLabels?.dislikeResponse ?? 'Dislike response'}
+              className={
+                activeRating === MessageRating.Dislike
+                  ? 'text-accent-primary'
+                  : undefined
+              }
+              tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}
+              onClick={onDislike}
+            />
+          )}
         </>
       )}
     </div>

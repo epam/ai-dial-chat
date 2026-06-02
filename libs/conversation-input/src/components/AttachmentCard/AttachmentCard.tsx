@@ -73,6 +73,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       style={cssVars}
       className={mergeClasses(

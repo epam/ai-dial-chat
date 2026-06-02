@@ -74,7 +74,7 @@ describe('ConversationController (integration)', () => {
       );
     });
 
-    it('returns 400 when firstMessage is an empty string', async () => {
+    it('returns 400 when firstMessage is empty and no attachment is provided', async () => {
       await request(app.getHttpServer())
         .post('/conversations')
         .send({ firstMessage: '', deploymentId: 'gpt-4o' })
@@ -164,7 +164,7 @@ describe('ConversationController (integration)', () => {
         .expect(201);
 
       expect(result.body.id).toMatch(
-        /^test-bucket\/[0-9a-f-]{36}__Hello from integration/i,
+        /^test-bucket\/gpt-4o__Hello from integration.*__[0-9a-f-]{36}$/i,
       );
       expect(result.body.messages).toHaveLength(1);
       expect(result.body.messages[0].content).toBe('Hello from integration');
@@ -196,6 +196,45 @@ describe('ConversationController (integration)', () => {
       expect(result.body).toEqual(conversation);
       expect(service.createConversation).toHaveBeenCalledWith(
         'Here is a file',
+        TEST_USER.at,
+        TEST_USER.bucket,
+        'gpt-4o',
+        {
+          attachments: [
+            {
+              type: 'application/pdf',
+              title: 'report.pdf',
+              data: 'base64data',
+            },
+          ],
+        },
+      );
+    });
+
+    it('returns 201 with an empty firstMessage when an attachment is provided', async () => {
+      const conversation = { id: 'test-id', messages: [] };
+      service.createConversation.mockReturnValue(conversation);
+
+      const result = await request(app.getHttpServer())
+        .post('/conversations')
+        .send({
+          firstMessage: '',
+          deploymentId: 'gpt-4o',
+          custom_content: {
+            attachments: [
+              {
+                type: 'application/pdf',
+                title: 'report.pdf',
+                data: 'base64data',
+              },
+            ],
+          },
+        })
+        .expect(201);
+
+      expect(result.body).toEqual(conversation);
+      expect(service.createConversation).toHaveBeenCalledWith(
+        '',
         TEST_USER.at,
         TEST_USER.bucket,
         'gpt-4o',
