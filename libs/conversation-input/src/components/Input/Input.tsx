@@ -105,7 +105,6 @@ export const Input: FC<InputProps> = ({
         if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
       });
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const buildAttachments = useCallback((files: File[]): Attachment[] => {
@@ -140,7 +139,6 @@ export const Input: FC<InputProps> = ({
     const built = buildAttachments(pendingDropFiles);
     addAttachments(built);
     onDropFilesConsumed?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pendingDropFiles]); // intentionally omit buildAttachments/addAttachments/onDropFilesConsumed — stable refs
 
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
@@ -368,7 +366,9 @@ export const Input: FC<InputProps> = ({
                       }
                       buttonClassName={mergeClasses(
                         styles.modelSelectorButton,
-                        isStreaming ? 'pointer-events-none opacity-50' : undefined,
+                        isStreaming
+                          ? 'pointer-events-none opacity-50'
+                          : undefined,
                       )}
                     />
                   ))}

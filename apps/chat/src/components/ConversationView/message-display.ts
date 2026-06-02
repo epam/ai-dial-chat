@@ -1,6 +1,7 @@
 import {
   MessageRole,
   type Message,
+  type MessageCustomContent,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { getStartersFromSchema } from '../../utils/starter-option.js';
@@ -52,7 +53,7 @@ export const getMessageStarterProps = (
   onSelectStarter: ((starter: StarterOption) => void) | undefined;
 } => {
   const { starters, propertyKey, description } = getStartersFromSchema(
-    msg.custom_content?.form_schema,
+    (msg.custom_content as MessageCustomContent | undefined)?.form_schema,
   );
   const canShow = shouldShowStarters(
     msg.role,

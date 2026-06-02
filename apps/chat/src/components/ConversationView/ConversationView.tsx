@@ -2,6 +2,7 @@ import {
   MessageRole,
   type Attachment,
   type DisplayAttachment,
+  type MessageCustomContent,
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
@@ -285,7 +286,11 @@ const ConversationView: FC<Props> = ({
                       <EditMessageInput
                         message={msg.content}
                         initialAttachments={attachmentDtosToDisplayAttachments(
-                          msg.custom_content?.attachments,
+                          (
+                            msg.custom_content as
+                              | MessageCustomContent
+                              | undefined
+                          )?.attachments,
                         )}
                         onCancel={() => onCancelEdit?.(msg.id)}
                         onSave={(text, kept, added) =>
@@ -355,7 +360,8 @@ const ConversationView: FC<Props> = ({
                       : undefined
                   }
                   attachments={attachmentDtosToDisplayAttachments(
-                    msg.custom_content?.attachments,
+                    (msg.custom_content as MessageCustomContent | undefined)
+                      ?.attachments,
                   )}
                   hasAlwaysVisibleActions={!isStreaming}
                   actions={buildMessageActions(
@@ -377,7 +383,13 @@ const ConversationView: FC<Props> = ({
                   afterContent={
                     hasStages ? (
                       <StagesPanel
-                        stages={msg.custom_content?.stages ?? []}
+                        stages={
+                          (
+                            msg.custom_content as
+                              | MessageCustomContent
+                              | undefined
+                          )?.stages ?? []
+                        }
                         isStreaming={isStreaming}
                       />
                     ) : undefined

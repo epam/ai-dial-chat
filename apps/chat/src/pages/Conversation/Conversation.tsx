@@ -1,6 +1,7 @@
 import {
   type Conversation,
   type Message,
+  type MessageCustomContent,
   MessageRole,
   type StatusMessageCustomContent,
 } from '@epam/ai-dial-chat-shared';
@@ -134,7 +135,7 @@ export const ConversationPage: FC = () => {
             lastMsg.content,
             assistantMessageId,
             result.model.id,
-            lastMsg.custom_content,
+            lastMsg.custom_content as MessageCustomContent | undefined,
           );
         } else {
           setConversation(result);

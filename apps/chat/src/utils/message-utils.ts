@@ -1,4 +1,8 @@
-import { Message, MessageRole } from '@epam/ai-dial-chat-shared';
+import {
+  Message,
+  MessageCustomContent,
+  MessageRole,
+} from '@epam/ai-dial-chat-shared';
 
 /**
  * Returns `true` when `message` is the actively-streaming assistant response.
@@ -21,4 +25,5 @@ export const isMessageStreaming = (
  */
 export const messageHasStages = (message: Message): boolean =>
   message.role === MessageRole.Assistant &&
-  (message.custom_content?.stages?.length ?? 0) > 0;
+  ((message.custom_content as MessageCustomContent | undefined)?.stages
+    ?.length ?? 0) > 0;
