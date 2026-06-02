@@ -188,6 +188,7 @@ export const ConversationPage: FC = () => {
         )}
         <ConversationView
           messages={conversation.messages}
+          initialDeploymentId={conversation.assistantModelId}
           onSend={handleSend}
           onStop={handleStop}
           onDeleteMessage={handleDeleteMessage}

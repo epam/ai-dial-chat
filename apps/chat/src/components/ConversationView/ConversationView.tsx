@@ -59,6 +59,8 @@ interface Props {
   ) => void;
   placeholder: string;
   isAssistantTyping?: boolean;
+  /** Deployment ID of the conversation's first model — used as fallback for messages without an explicit deploymentId. */
+  initialDeploymentId?: string;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -74,6 +76,7 @@ const ConversationView: FC<Props> = ({
   onSelectStarter,
   placeholder,
   isAssistantTyping = false,
+  initialDeploymentId,
 }) => {
   const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId, isLoading, error } =
@@ -91,6 +94,31 @@ const ConversationView: FC<Props> = ({
         ]),
       ),
     [items],
+  );
+
+  // For each message, resolve the deployment active at that point in the conversation.
+  // Scans status messages in order so messages before a model change get the initial model icon.
+  const effectiveDeploymentIds = useMemo<(string | undefined)[]>(
+    () =>
+      messages.reduce<{
+        ids: (string | undefined)[];
+        activeId: string | undefined;
+      }>(
+        (acc, msg) => {
+          const cc = msg.custom_content as StatusMessageCustomContent;
+          const nextId =
+            msg.role === MessageRole.Status &&
+            cc?.event_type === 'model_changed'
+              ? cc.new_deployment_id
+              : acc.activeId;
+          return {
+            ids: [...acc.ids, msg.deploymentId ?? nextId],
+            activeId: nextId,
+          };
+        },
+        { ids: [], activeId: initialDeploymentId },
+      ).ids,
+    [messages, initialDeploymentId],
   );
 
   const deploymentItems = useMemo(
@@ -239,9 +267,10 @@ const ConversationView: FC<Props> = ({
                 onSelectStarter,
               );
 
-              const deploymentEntry = msg.deploymentId
-                ? deploymentLookup[msg.deploymentId]
-                : undefined;
+              const deploymentEntry =
+                effectiveDeploymentIds[index] !== undefined
+                  ? deploymentLookup[effectiveDeploymentIds[index]]
+                  : undefined;
 
               const statusProps =
                 msg.role === MessageRole.Status

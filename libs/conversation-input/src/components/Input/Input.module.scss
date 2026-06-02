@@ -24,23 +24,20 @@
 }
 
 .modelSelectorButton {
-  &:hover {
+  &:hover,
+  &:active {
     background: var(
       --ci-model-selector-hover-bg,
       var(--controls-bg-accent-primary-alpha-active, #7da4ff4d)
     );
-  }
 
-  &:hover .modelSelectorCaret {
-    background: var(
-      --ci-model-selector-caret-hover-bg,
-      var(--bg-accent-primary-alpha, #7da4ff26)
-    );
+    .modelSelectorCaret {
+      background: var(
+        --ci-model-selector-caret-hover-bg,
+        var(--bg-accent-primary-alpha, #7da4ff26)
+      );
+    }
   }
-}
-
-.modelSelectorCaret {
-  // background applied by parent hover selector above
 }
 
 .sendButton {

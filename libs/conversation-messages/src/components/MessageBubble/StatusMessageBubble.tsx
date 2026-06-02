@@ -25,7 +25,7 @@ export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
     <div className="flex w-full items-center gap-3 overflow-hidden rounded border border-[var(--stroke-info)] bg-[var(--bg-info)] p-3">
       <IconInfoCircleFilled
         size={20}
-        className="shrink-0 text-[var(--text-primary)]"
+        className="shrink-0 text-[var(--text-info)]"
       />
       <div className="flex min-w-0 flex-1 items-center gap-1 text-sm leading-5 text-[var(--text-primary)]">
         <span className="shrink-0 font-semibold">{titleText}</span>
