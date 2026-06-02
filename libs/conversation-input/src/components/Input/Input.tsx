@@ -26,13 +26,12 @@ import { useIsMobile } from '../../hooks/useIsMobile.js';
 import { useModelSelector } from '../../hooks/useModelSelector.js';
 import type { InputProps } from '../../models/Input.js';
 import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
-import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import { BottomSheet } from '../BottomSheet/BottomSheet.js';
 import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet.js';
+import { SendButton } from './Buttons/SendButton.js';
+import { StopButton } from './Buttons/StopButton.js';
 import styles from './Input.module.scss';
-import { SendButton } from './SendButton.js';
-import { StopButton } from './StopButton.js';
 
 export const Input: FC<InputProps> = ({
   message: messageProp = '',
@@ -61,7 +60,6 @@ export const Input: FC<InputProps> = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  resolveDeploymentIconUrl = resolveIconUrl,
 }) => {
   const isMobile = useIsMobile();
   const cssVars = buildCssVars({
@@ -72,6 +70,7 @@ export const Input: FC<InputProps> = ({
     '--ci-placeholder': colors?.placeholder,
     '--ci-send-bg': colors?.sendBackground,
     '--ci-send-text': colors?.sendText,
+    '--ci-stop-color': colors?.stopColor,
     '--ci-font-family': typography?.fontFamily,
     '--ci-font-size': typography?.fontSize,
     '--ci-font-weight': typography?.fontWeight,
@@ -168,7 +167,6 @@ export const Input: FC<InputProps> = ({
     selectedDeploymentId,
     onDeploymentChange,
     modelSelectorLabels,
-    resolveDeploymentIconUrl,
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

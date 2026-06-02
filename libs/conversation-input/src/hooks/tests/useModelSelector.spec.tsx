@@ -8,15 +8,12 @@ const mockDeployments = [
   { id: 'my-app', displayName: 'My App', type: 'application' as const },
 ];
 
-const noopResolver = (url: string) => url;
-
 describe('useModelSelector — selectorAriaLabel', () => {
   it('uses default label when no deployment is selected', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: mockDeployments,
         selectedDeploymentId: undefined,
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.selectorAriaLabel).toBe('Select model');
@@ -27,7 +24,6 @@ describe('useModelSelector — selectorAriaLabel', () => {
       useModelSelector({
         deployments: mockDeployments,
         selectedDeploymentId: 'gpt-4o',
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.selectorAriaLabel).toBe('Select model: GPT-4o');
@@ -39,7 +35,6 @@ describe('useModelSelector — selectorAriaLabel', () => {
         deployments: mockDeployments,
         selectedDeploymentId: 'gpt-4o',
         modelSelectorLabels: { ariaLabel: 'Model' },
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.selectorAriaLabel).toBe('Model: GPT-4o');
@@ -50,7 +45,6 @@ describe('useModelSelector — selectorAriaLabel', () => {
       useModelSelector({
         deployments: [{ id: 'raw-id', type: 'model' as const }],
         selectedDeploymentId: 'raw-id',
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.selectorAriaLabel).toBe('Select model: raw-id');
@@ -62,7 +56,6 @@ describe('useModelSelector — menuItems', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: undefined,
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.menuItems).toEqual([]);
@@ -72,7 +65,6 @@ describe('useModelSelector — menuItems', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: [],
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.menuItems).toEqual([]);
@@ -83,7 +75,6 @@ describe('useModelSelector — menuItems', () => {
       useModelSelector({
         deployments: [],
         modelSelectorLabels: { loading: 'Loading…' },
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.menuItems).toEqual([
@@ -100,7 +91,6 @@ describe('useModelSelector — menuItems', () => {
           error: 'Error',
           empty: 'Empty',
         },
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.menuItems[0].label).toBe('Loading…');
@@ -111,7 +101,6 @@ describe('useModelSelector — menuItems', () => {
       useModelSelector({
         deployments: [],
         modelSelectorLabels: { error: 'Failed', empty: 'Empty' },
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.menuItems[0].label).toBe('Failed');
@@ -121,7 +110,6 @@ describe('useModelSelector — menuItems', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: mockDeployments,
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.menuItems).toHaveLength(3);
@@ -145,7 +133,6 @@ describe('useModelSelector — menuItems', () => {
       useModelSelector({
         deployments: mockDeployments,
         onDeploymentChange,
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     result.current.menuItems[2].onClick?.({
@@ -155,33 +142,19 @@ describe('useModelSelector — menuItems', () => {
     expect(onDeploymentChange).toHaveBeenCalledWith('my-app');
   });
 
-  it('calls resolveDeploymentIconUrl for items that have an iconUrl', () => {
-    const resolver = vi.fn().mockReturnValue('/resolved.png');
+  it('uses pre-resolved iconUrl directly from deployment item', () => {
     const deployments = [
       {
         id: 'gpt-4o',
         displayName: 'GPT-4o',
         type: 'model' as const,
-        iconUrl: 'files/bucket/icon.png',
+        iconUrl: '/api/v1/files/download?path=icon.png',
       },
     ];
-    renderHook(() =>
-      useModelSelector({ deployments, resolveDeploymentIconUrl: resolver }),
-    );
-    expect(resolver).toHaveBeenCalledWith('files/bucket/icon.png');
-  });
-
-  it('does not call resolveDeploymentIconUrl when iconUrl is absent', () => {
-    const resolver = vi.fn().mockReturnValue(undefined);
-    renderHook(() =>
-      useModelSelector({
-        deployments: [
-          { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' as const },
-        ],
-        resolveDeploymentIconUrl: resolver,
-      }),
-    );
-    expect(resolver).not.toHaveBeenCalled();
+    const { result } = renderHook(() => useModelSelector({ deployments }));
+    expect(result.current.menuItems[0].key).toBe('gpt-4o');
+    expect(result.current.menuItems[0].icon).not.toBeNull();
+    expect(result.current.menuItems[0].icon).not.toBeUndefined();
   });
 });
 
@@ -190,7 +163,6 @@ describe('useModelSelector — search filtering', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: mockDeployments,
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.menuItems).toHaveLength(3);
@@ -200,7 +172,6 @@ describe('useModelSelector — search filtering', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: mockDeployments,
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     act(() => {
@@ -219,7 +190,6 @@ describe('useModelSelector — onOpenChange', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: mockDeployments,
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.menuHeader).not.toBeNull();
@@ -230,7 +200,6 @@ describe('useModelSelector — onOpenChange', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: [],
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.menuHeader).toBeUndefined();
@@ -240,7 +209,6 @@ describe('useModelSelector — onOpenChange', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: undefined,
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.menuHeader).toBeUndefined();
@@ -253,7 +221,6 @@ describe('useModelSelector — selectorIcon', () => {
       useModelSelector({
         deployments: mockDeployments,
         selectedDeploymentId: 'gpt-4o',
-        resolveDeploymentIconUrl: noopResolver,
       }),
     );
     expect(result.current.selectorIcon).not.toBeNull();
