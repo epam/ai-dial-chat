@@ -573,7 +573,7 @@
             "in": "query",
             "description": "Conversation path (uuid__name). May contain slashes.",
             "schema": {
-              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "example": "gpt-4o__My Conversation__UUID",
               "type": "string"
             }
           }
@@ -617,7 +617,7 @@
             "in": "query",
             "description": "Conversation path (uuid__name). May contain slashes.",
             "schema": {
-              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "example": "gpt-4o__My Conversation__UUID",
               "type": "string"
             }
           }
@@ -671,7 +671,7 @@
             "in": "query",
             "description": "Conversation path (uuid__name). May contain slashes.",
             "schema": {
-              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "example": "gpt-4o__My Conversation__UUID",
               "type": "string"
             }
           }
@@ -727,6 +727,16 @@
               "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
               "type": "string"
             }
+          },
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "DIAL Core subfolder path to scope the listing. Omit or pass an empty string to list all conversations from the bucket root (\"My Files\").",
+            "schema": {
+              "example": "work/project-x",
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -767,7 +777,7 @@
             "in": "query",
             "description": "Conversation path (uuid__name). May contain slashes.",
             "schema": {
-              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "example": "gpt-4o__My Conversation__UUID",
               "type": "string"
             }
           },
@@ -1666,9 +1676,8 @@
         "properties": {
           "firstMessage": {
             "type": "string",
-            "description": "The first message to start the conversation",
+            "description": "The first message to start the conversation. May be empty only when at least one attachment is provided in custom_content.",
             "example": "Hello, how can you help me today?",
-            "minLength": 1,
             "maxLength": 4000
           },
           "deploymentId": {
@@ -1905,14 +1914,13 @@
         "properties": {
           "path": {
             "type": "string",
-            "description": "Conversation path (uuid__name). May contain slashes.",
-            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation"
+            "description": "Conversation path ({deploymentId}__{name}__{uuid}). May contain slashes.",
+            "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
           },
           "message": {
             "type": "string",
-            "description": "The new user message to send",
+            "description": "The new user message to send. May be empty only when at least one attachment is provided in custom_content.",
             "example": "What is the capital of France?",
-            "minLength": 1,
             "maxLength": 4000
           },
           "model": {
@@ -1948,7 +1956,7 @@
           "conversationId": {
             "type": "string",
             "description": "Identifier of the conversation being rated",
-            "example": "bucket/uuid__name"
+            "example": "bucket/gpt-4o__My Conversation__UUID"
           },
           "responseId": {
             "type": "string",

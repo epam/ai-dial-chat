@@ -482,7 +482,7 @@ export interface ConversationResponseDto {
  */
 export interface CreateConversationDto {
   /**
-   * The first message to start the conversation
+   * The first message to start the conversation. May be empty only when at least one attachment is provided in custom_content.
    * @type {string}
    * @memberof CreateConversationDto
    */
@@ -1114,13 +1114,13 @@ export interface SaveConversationBodyDto {
  */
 export interface SendCompletionDto {
   /**
-   * Conversation path (uuid__name). May contain slashes.
+   * Conversation path ({deploymentId}__{name}__{uuid}). May contain slashes.
    * @type {string}
    * @memberof SendCompletionDto
    */
   path: string;
   /**
-   * The new user message to send
+   * The new user message to send. May be empty only when at least one attachment is provided in custom_content.
    * @type {string}
    * @memberof SendCompletionDto
    */

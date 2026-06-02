@@ -131,11 +131,12 @@ export class ConversationService extends AppService {
     bucket: string,
     limit = 20,
     nextToken?: string,
+    path?: string,
   ): Promise<ConversationListResponseDto> {
     try {
       const { data, error } = (await this.client.getConversationMetadata(
         bucket,
-        '',
+        path ?? '',
         {
           headers: getBearerAuthHeaders(token),
           query: {

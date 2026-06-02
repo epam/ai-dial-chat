@@ -99,6 +99,7 @@ export class ConversationController {
       bucket,
       query.limit,
       query.nextToken,
+      query.path,
     );
   }
 

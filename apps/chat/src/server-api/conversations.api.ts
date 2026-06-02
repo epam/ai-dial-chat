@@ -57,8 +57,10 @@ export const getConversationMetadata = (
 export const listConversations = (params?: {
   limit?: number;
   nextToken?: string;
+  path?: string;
 }) =>
   conversationsApi.listConversations({
     limit: params?.limit,
     nextToken: params?.nextToken,
+    path: params?.path,
   });

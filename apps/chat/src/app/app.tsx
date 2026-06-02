@@ -7,6 +7,7 @@ import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
 import { ROUTES, getConversationRoute } from '../constants/routes';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint.js';
+import useLocalStorage from '../hooks/useLocalStorage';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
@@ -24,12 +25,18 @@ function App() {
   const closeNav = useCallback(() => setIsNavOpen(false), []);
   const toggleNav = useCallback(() => setIsNavOpen((prev) => !prev), []);
 
-  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(false);
-  const toggleHistoryPanel = useCallback(
-    () => setIsHistoryPanelOpen((prev) => !prev),
-    [],
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useLocalStorage(
+    'conversationPanelOpen',
+    false,
   );
-  const closeHistoryPanel = useCallback(() => setIsHistoryPanelOpen(false), []);
+  const toggleHistoryPanel = useCallback(
+    () => setIsHistoryPanelOpen(!isHistoryPanelOpen),
+    [isHistoryPanelOpen, setIsHistoryPanelOpen],
+  );
+  const closeHistoryPanel = useCallback(
+    () => setIsHistoryPanelOpen(false),
+    [setIsHistoryPanelOpen],
+  );
 
   const matchRoot = useMatch(ROUTES.ROOT);
   const matchConversation = useMatch('/conversations/:id');

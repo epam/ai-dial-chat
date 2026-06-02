@@ -1,6 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
 
 export class ListConversationsQueryDto {
   @ApiPropertyOptional({
@@ -24,5 +31,16 @@ export class ListConversationsQueryDto {
   })
   @IsOptional()
   @IsString()
+  @MaxLength(512)
   nextToken?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'DIAL Core subfolder path to scope the listing. Omit or pass an empty string to list all conversations from the bucket root ("My Files").',
+    example: 'work/project-x',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  path?: string;
 }
