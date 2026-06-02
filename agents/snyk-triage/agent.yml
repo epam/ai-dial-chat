@@ -10,9 +10,11 @@ phase: sandbox
 cost_class: medium
 timeout_minutes: 30
 # The ~33KB snyk-triage skill is resent each turn, so this agent is the
-# dominant input-token consumer. 12 turns covers read-upstream + inspect a
-# few sources + Write; lower than the default 18 to cut rate-limit pressure.
-max_turns: 12
+# dominant input-token consumer. 12 turns proved too tight — it hit
+# error_max_turns at 13 (read-upstream + inspect sources + reason over 2
+# findings + Write needs more), so keep the proven 18. Footprint reduction
+# rides on the Haiku/low-turn producer instead.
+max_turns: 18
 
 # Chain-validation wiring (smoke test): consume the synthetic scanner report
 # from snyk-scan-stub at upstream/snyk-scan-stub/stage-output.json (findings
