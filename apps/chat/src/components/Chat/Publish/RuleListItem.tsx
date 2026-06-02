@@ -39,7 +39,7 @@ export function RuleListItem({
       <div className="mb-3 flex flex-wrap gap-1 text-xs" data-qa="rules-list">
         {rules.map((rule, idx) => (
           <div
-            key={rule.source}
+            key={`${rule.source}-${idx}`}
             className="flex max-w-full items-center"
             data-qa="rule"
           >
@@ -60,7 +60,7 @@ export function RuleListItem({
                 {toLower(getFilterLabel(rule.function))}
               </span>
               {rule.targets.map((target, index) => (
-                <Fragment key={index}>
+                <Fragment key={`${target}-${index}`}>
                   {index > 0 && (
                     <span className="italic" data-qa="inner-operator">
                       {t(ChatI18nKeys.Or)}
