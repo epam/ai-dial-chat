@@ -1,0 +1,17 @@
+contract_version: "0.1"
+name: snyk-triage
+skill: snyk-triage
+agent_version: "0.1.0"
+description: "Read-only AppSec triage wrapping the local /snyk-triage skill: validates scanner (Snyk SAST / Code, Jira-exported) findings against repo evidence and emits per-finding verdicts."
+triggers: [pull_request]
+allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Bash(python3:*),Skill"
+model: claude-sonnet-4-6
+phase: sandbox
+cost_class: medium
+timeout_minutes: 30
+
+# Chain-validation wiring (smoke test): consume the synthetic scanner report
+# from snyk-scan-stub at upstream/snyk-scan-stub/stage-output.json (findings
+# under .payload.findings). Replace this upstream with the real Snyk producer
+# when stage-snyk.yml lands; drop the stub then.
+needs: [snyk-scan-stub]

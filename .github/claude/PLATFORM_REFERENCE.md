@@ -100,6 +100,14 @@ permissions. Manifests that omit the `permissions:` field get the same
 union (the runner runs with those scopes; the validator is permissive
 about absence).
 
+Both workflows also grant `actions: read` — **not** an agent-requestable
+tier, so it is absent from `SUPPORTED_PERMISSIONS`. It exists purely so the
+upstream-artifact step (`gh run download` in `run-agent.yml`) can hit the
+Actions API; without it, any `needs:`-based chain fails the download with a
+403. Because a reusable workflow's token is capped by its caller, the grant
+must appear in `dispatch-pr.yml` too, not just `run-agent.yml`. Don't remove
+it while `needs:`-based chaining exists.
+
 To add a new tier (e.g., `contents: write` for spec-edit agents that
 commit to `specs/`):
 

@@ -28,6 +28,7 @@ permissions:
   checks: write
   security-events: write
   id-token: write   # required by anthropics/claude-code-action for OIDC auth
+  actions: read     # `gh run download` (upstream-artifact step) hits the Actions API
 
 jobs:
   agent:
