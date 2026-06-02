@@ -10,6 +10,7 @@ import type {
 } from '@epam/ai-dial-conversation-messages';
 
 export interface MessageActionHandlers {
+  onEdit?: (messageId: string) => void;
   onDelete?: (messageId: string) => void;
   onRegenerate?: (messageId: string) => void;
   onRate?: (messageId: string, rating: MessageRating | null) => void;
@@ -23,6 +24,7 @@ export const buildMessageActions = (
 ): MessageActionsProps => {
   if (msg.role === MessageRole.User) {
     return {
+      onEdit: handlers.onEdit ? () => handlers.onEdit?.(msg.id) : void 0,
       onDelete: handlers.onDelete ? () => handlers.onDelete?.(msg.id) : void 0,
       tooltips,
       ariaLabels,
