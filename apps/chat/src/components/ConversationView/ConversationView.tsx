@@ -4,6 +4,7 @@ import {
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
+  type StatusMessageCustomContent,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
 import { StagesPanel } from '@epam/ai-dial-conversation-stages';
@@ -15,6 +16,7 @@ import {
   Suspense,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -22,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ActionsI18nKeys,
   ChatI18nKeys,
+  ConversationI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys.js';
 import { useDeployments } from '../../context/DeploymentsContext.js';
@@ -33,6 +36,8 @@ import {
   getMessageStarterProps,
   isStreamingMessage,
 } from './message-display.js';
+
+type DeploymentEntry = { displayName: string; iconUrl: string | undefined };
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -73,6 +78,20 @@ const ConversationView: FC<Props> = ({
   const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId, isLoading, error } =
     useDeployments();
+
+  const deploymentLookup = useMemo<Record<string, DeploymentEntry>>(
+    () =>
+      Object.fromEntries(
+        items.map((d) => [
+          d.id,
+          {
+            displayName: d.displayName,
+            iconUrl: resolveCatalogIconUrl(d.iconUrl),
+          },
+        ]),
+      ),
+    [items],
+  );
   const tooltips = {
     edit: t(ActionsI18nKeys.Edit),
     delete: t(ActionsI18nKeys.Delete),
@@ -208,6 +227,36 @@ const ConversationView: FC<Props> = ({
                 onSelectStarter,
               );
 
+              const deploymentEntry = msg.deploymentId
+                ? deploymentLookup[msg.deploymentId]
+                : undefined;
+
+              const statusProps =
+                msg.role === MessageRole.Status
+                  ? (() => {
+                      const cc =
+                        msg.custom_content as StatusMessageCustomContent;
+                      const prevName = cc?.previous_deployment_id
+                        ? (deploymentLookup[cc.previous_deployment_id]
+                            ?.displayName ?? cc.previous_deployment_id)
+                        : null;
+                      const newName =
+                        deploymentLookup[cc?.new_deployment_id ?? '']
+                          ?.displayName ??
+                        cc?.new_deployment_id ??
+                        '';
+                      return {
+                        statusTitleText: t(
+                          ConversationI18nKeys.StatusModelChangedTitle,
+                        ),
+                        statusBodyText: t(
+                          ConversationI18nKeys.StatusModelChangedBody,
+                          { from: prevName ?? '…', to: newName },
+                        ),
+                      };
+                    })()
+                  : {};
+
               return (
                 <MessageBubble
                   key={msg.id}
@@ -243,6 +292,9 @@ const ConversationView: FC<Props> = ({
                   starters={activeStarters}
                   onSelectStarter={handleSelectStarter}
                   startersAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
+                  deploymentIconUrl={deploymentEntry?.iconUrl}
+                  deploymentDisplayName={deploymentEntry?.displayName}
+                  {...statusProps}
                 />
               );
             })}

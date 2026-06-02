@@ -5,7 +5,8 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
-import { FC } from 'react';
+import { IconRobot } from '@tabler/icons-react';
+import { FC, useEffect, useRef, useState } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js';
 import { MDMessageViewer } from '../Markdown/MDMessageViewer.js';
 import { MessageActions } from '../Message/MessageActions.js';
@@ -24,7 +25,24 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   starters,
   onSelectStarter,
   startersAriaLabel = 'Quick reply buttons',
+  deploymentIconUrl,
+  deploymentDisplayName,
 }) => {
+  const [isIconFailed, setIsIconFailed] = useState(false);
+  const iconImgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    setIsIconFailed(false);
+  }, [deploymentIconUrl]);
+
+  useEffect(() => {
+    const el = iconImgRef.current;
+    if (!el) return;
+    const handler = () => setIsIconFailed(true);
+    el.addEventListener('error', handler);
+    return () => el.removeEventListener('error', handler);
+  }, [deploymentIconUrl]);
+
   const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
@@ -43,6 +61,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
 
+  const hasDeploymentIcon = !!(deploymentIconUrl || deploymentDisplayName);
+
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
       <div className="flex w-full flex-col items-start gap-5">
@@ -52,6 +72,27 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             bubbleClassName,
           )}
         >
+          {hasDeploymentIcon && (
+            <div className="flex items-center gap-1.5">
+              {deploymentIconUrl && !isIconFailed ? (
+                <img
+                  ref={iconImgRef}
+                  src={deploymentIconUrl}
+                  alt=""
+                  width={16}
+                  height={16}
+                  className="shrink-0"
+                />
+              ) : (
+                <IconRobot size={16} className="shrink-0" />
+              )}
+              {deploymentDisplayName && (
+                <span className="text-xs text-secondary">
+                  {deploymentDisplayName}
+                </span>
+              )}
+            </div>
+          )}
           <div className={mergeClasses(textClass, 'text-left')}>
             <MDMessageViewer content={text} />
           </div>

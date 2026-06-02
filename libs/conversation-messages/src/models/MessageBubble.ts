@@ -70,6 +70,13 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   startersAriaLabel?: string;
   /** Content rendered between the message body and the actions bar (e.g. a stages panel). */
   afterContent?: ReactNode;
+  /**
+   * Resolved URL for the deployment icon shown in the message header.
+   * When absent (e.g. legacy messages without a stored `deploymentId`), no icon is rendered.
+   */
+  deploymentIconUrl?: string;
+  /** Human-readable deployment name shown as the icon's accessible label. */
+  deploymentDisplayName?: string;
 }
 
 /** Props accepted by the `MessageBubble` role-switching wrapper. */
@@ -89,4 +96,22 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
   startersAriaLabel?: string;
   /** Content rendered between the message body and the actions bar. Forwarded to `AssistantMessageBubble`; ignored for user messages. */
   afterContent?: ReactNode;
+  /**
+   * Resolved deployment icon URL. Forwarded to `AssistantMessageBubble` when role is `Assistant`;
+   * used to render the `StatusMessageBubble` icon when role is `Status`.
+   * Omitted for legacy messages that pre-date this feature.
+   */
+  deploymentIconUrl?: string;
+  /** Human-readable deployment name. Forwarded to `AssistantMessageBubble`; used in status message text when role is `Status`. */
+  deploymentDisplayName?: string;
+  /**
+   * Bold prefix text for the status message banner.
+   * Only used when `role === MessageRole.Status`. Defaults to `"Model switched."`.
+   */
+  statusTitleText?: string;
+  /**
+   * Full description text for the status message banner, e.g. "The model has been switched from GPT to Imagen."
+   * Required when `role === MessageRole.Status`.
+   */
+  statusBodyText?: string;
 }

@@ -1,0 +1,95 @@
+import { MessageRole } from '@epam/ai-dial-chat-shared';
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { useDeployments } from '../context/DeploymentsContext';
+import { useModelChangeEffect } from './useModelChangeEffect';
+
+vi.mock('../context/DeploymentsContext', () => ({
+  useDeployments: vi.fn(),
+}));
+
+const mockUseDeployments = vi.mocked(useDeployments);
+
+const makeDeploymentsContext = (selectedItemId: string | null) => ({
+  items: [],
+  selectedItemId,
+  setSelectedItemId: vi.fn(),
+  selectedDeploymentConfiguration: null,
+  isLoading: false,
+  error: null,
+});
+
+describe('useModelChangeEffect', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('does not call addStatusMessage on initial mount', () => {
+    mockUseDeployments.mockReturnValue(makeDeploymentsContext('gpt-4'));
+    const addStatusMessage = vi.fn();
+
+    renderHook(() => useModelChangeEffect('conv-1', addStatusMessage));
+
+    expect(addStatusMessage).not.toHaveBeenCalled();
+  });
+
+  it('calls addStatusMessage when selectedItemId changes', () => {
+    let selectedItemId = 'gpt-3';
+    mockUseDeployments.mockImplementation(() =>
+      makeDeploymentsContext(selectedItemId),
+    );
+    const addStatusMessage = vi.fn();
+
+    const { rerender } = renderHook(() =>
+      useModelChangeEffect('conv-1', addStatusMessage),
+    );
+
+    act(() => {
+      selectedItemId = 'gpt-4';
+    });
+    rerender();
+
+    expect(addStatusMessage).toHaveBeenCalledTimes(1);
+    const msg = addStatusMessage.mock.calls[0][0];
+    expect(msg.role).toBe(MessageRole.Status);
+    expect(msg.deploymentId).toBe('gpt-4');
+  });
+
+  it('does not call addStatusMessage when conversationId is undefined', () => {
+    let selectedItemId = 'gpt-3';
+    mockUseDeployments.mockImplementation(() =>
+      makeDeploymentsContext(selectedItemId),
+    );
+    const addStatusMessage = vi.fn();
+
+    const { rerender } = renderHook(() =>
+      useModelChangeEffect(undefined, addStatusMessage),
+    );
+
+    act(() => {
+      selectedItemId = 'gpt-4';
+    });
+    rerender();
+
+    expect(addStatusMessage).not.toHaveBeenCalled();
+  });
+
+  it('does not call addStatusMessage when selectedItemId changes to null', () => {
+    let selectedItemId: string | null = 'gpt-3';
+    mockUseDeployments.mockImplementation(() =>
+      makeDeploymentsContext(selectedItemId),
+    );
+    const addStatusMessage = vi.fn();
+
+    const { rerender } = renderHook(() =>
+      useModelChangeEffect('conv-1', addStatusMessage),
+    );
+
+    act(() => {
+      selectedItemId = null;
+    });
+    rerender();
+
+    expect(addStatusMessage).not.toHaveBeenCalled();
+  });
+});

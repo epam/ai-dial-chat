@@ -96,6 +96,12 @@
       }
     }
   },
+  "conversation": {
+    "statusMessage": {
+      "modelChangedTitle": "Model switched.",
+      "modelChangedBody": "The model has been switched from {{from}} to {{to}}."
+    }
+  },
   "auth": {
     "signOut": "Sign out",
     "signedInAs": "Signed in as {{email}}",

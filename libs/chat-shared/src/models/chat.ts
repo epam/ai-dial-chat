@@ -32,6 +32,8 @@ export interface ConversationMetadata {
 export enum MessageRole {
   User = 'user',
   Assistant = 'assistant',
+  /** In-conversation system event; never sent to DIAL Core. */
+  Status = 'status',
 }
 
 /** A user-submitted thumbs-up or thumbs-down rating for an assistant message.
@@ -58,6 +60,19 @@ export type MessageFormValueType = number | string | boolean | string[];
  * Keys are field identifiers; values are typed form field values (or `undefined` for unset fields).
  */
 export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
+
+/**
+ * Extra payload attached to a `MessageRole.Status` message.
+ * Discriminated by `event_type`; forward-compatible with future event types.
+ */
+export interface StatusMessageCustomContent {
+  /** Machine-readable event discriminator. */
+  event_type: 'model_changed';
+  /** ID of the deployment that was active before the change, or `null` for the first selection. */
+  previous_deployment_id: string | null;
+  /** ID of the deployment selected after the change. */
+  new_deployment_id: string;
+}
 
 /** Extra DIAL API payload attached to a message. */
 export interface MessageCustomContent {
@@ -93,10 +108,17 @@ export interface Message {
    * Extra DIAL API payload attached to the message.
    * Present on both user requests (uploaded files) and assistant responses
    * (generated/referenced files).
+   * For `MessageRole.Status` messages, cast to `StatusMessageCustomContent`.
    */
-  custom_content?: MessageCustomContent;
+  custom_content?: MessageCustomContent | StatusMessageCustomContent;
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
+  /**
+   * ID of the deployment that generated this message.
+   * Set on `MessageRole.Assistant` and `MessageRole.Status` messages.
+   * Used to render the deployment icon next to assistant responses.
+   */
+  deploymentId?: string;
   /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
   [key: string]: unknown;
 }

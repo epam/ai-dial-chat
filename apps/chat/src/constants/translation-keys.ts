@@ -60,6 +60,11 @@ export enum DeploymentsI18nKeys {
   SelectorCloseLabel = 'deployments.selector.closeLabel',
 }
 
+export enum ConversationI18nKeys {
+  StatusModelChangedTitle = 'conversation.statusMessage.modelChangedTitle',
+  StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
+}
+
 export enum SidebarI18nKeys {
   ToggleOpen = 'sidebar.base.toggleOpen',
   ToggleClose = 'sidebar.base.toggleClose',

@@ -22,7 +22,9 @@ import {
   ActionsI18nKeys,
   ChatI18nKeys,
 } from '../../constants/translation-keys';
+import { useDeployments } from '../../context/DeploymentsContext.js';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
+import { useModelChangeEffect } from '../../hooks/useModelChangeEffect.js';
 import { streamCompletion } from '../../server-api/chat-stream.api';
 import {
   deleteConversation as apiDeleteConversation,
@@ -46,6 +48,7 @@ export const ConversationPage: FC = () => {
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { selectedItemId } = useDeployments();
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
 
@@ -53,6 +56,27 @@ export const ConversationPage: FC = () => {
     setMessages(conversation?.messages ?? []);
     return () => handleCloseSourcesSidebar();
   }, [handleCloseSourcesSidebar, conversation?.messages, setMessages]);
+
+  const addStatusMessage = useCallback(
+    (msg: Message) => {
+      if (!conversationId) return;
+      const conversationPath = conversationId.substring(
+        conversationId.indexOf('/') + 1,
+      );
+      setConversation((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, messages: [...prev.messages, msg] };
+        conversationRef.current = next;
+        saveConversation(conversationPath, next).catch(() => {
+          // status message remains in local state even if persist fails
+        });
+        return next;
+      });
+    },
+    [conversationId],
+  );
+
+  useModelChangeEffect(conversationId, addStatusMessage);
 
   const startStream = useCallback(
     (
@@ -320,7 +344,12 @@ export const ConversationPage: FC = () => {
         : undefined;
 
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(text, undefined, configurationValue);
+        createMessagePair(
+          text,
+          undefined,
+          configurationValue,
+          selectedItemId ?? undefined,
+        );
 
       const conversationPath = conversationId.substring(
         conversationId.indexOf('/') + 1,
@@ -348,7 +377,7 @@ export const ConversationPage: FC = () => {
           : undefined,
       );
     },
-    [conversation, conversationId, startStream],
+    [conversation, conversationId, selectedItemId, startStream],
   );
 
   const [pendingStarterContext, setPendingStarterContext] = useState<{
@@ -385,7 +414,12 @@ export const ConversationPage: FC = () => {
       const attachmentDtos = await attachmentsToDtos(attachments);
 
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(message, attachmentDtos);
+        createMessagePair(
+          message,
+          attachmentDtos,
+          undefined,
+          selectedItemId ?? undefined,
+        );
 
       const conversationPath = conversationId.substring(
         conversationId.indexOf('/') + 1,
@@ -409,7 +443,7 @@ export const ConversationPage: FC = () => {
         { attachments: attachmentDtos },
       );
     },
-    [conversation, conversationId, startStream],
+    [conversation, conversationId, selectedItemId, startStream],
   );
 
   if (isFetching) return null;
