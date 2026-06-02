@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { SidebarSide } from '../../../models/SidebarPanel.js';
 import { SidebarPanel } from '../SidebarPanel.js';
@@ -129,14 +129,13 @@ describe('SidebarPanel', () => {
   });
 
   it('close button calls onClose', async () => {
-    const user = userEvent.setup();
     const onClose = vi.fn();
     render(
       <SidebarPanel {...defaultProps} onClose={onClose}>
         <span />
       </SidebarPanel>,
     );
-    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 

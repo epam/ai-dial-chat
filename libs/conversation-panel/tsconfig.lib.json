@@ -1,0 +1,39 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "../../dist/libs/conversation-panel",
+
+    "jsx": "react-jsx",
+
+    "declaration": true,
+    "sourceMap": true,
+
+    "module": "node16",
+    "moduleResolution": "node16",
+
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+
+    "types": ["node"],
+    "lib": ["dom"],
+
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.js",
+    "src/**/*.spec.js",
+    "src/**/*.test.jsx",
+    "src/**/*.spec.jsx"
+  ],
+  "references": [
+    {
+      "path": "../chat-shared/tsconfig.lib.json"
+    }
+  ]
+}

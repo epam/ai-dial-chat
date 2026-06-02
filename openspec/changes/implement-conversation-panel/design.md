@@ -1,0 +1,80 @@
+## Context
+
+The app has a `Navigation` icon bar on the left and a `ConversationSourcesPanelView` on the right. There was no panel listing past conversations. The `ConversationsApi` generated client previously exposed only `getConversation`, `saveConversation`, and `deleteConversation` — no list endpoint. The `SidebarPanel` component in `libs/sidebar` provides a generic panel shell but has no domain content.
+
+## Goals / Non-Goals
+
+**Goals:**
+- A left-side `ConversationPanel` component in a new `libs/conversation-panel` lib.
+- **New chat button** — full-width button below the header to start a new conversation.
+- **Search input** — text field that filters the visible list by title client-side.
+- **Filter tabs** — segmented control: All / My chats / Shared / Organization.
+- **Grouped sections** — Pinned (conversations with `isPinned: true`) and My chats; each section is collapsible with a chevron.
+- Conversation rows show an optional icon and title; clicking navigates to the conversation.
+- On desktop: persistent panel, 288px wide, pushes `<main>` content.
+- On mobile: full-height drawer overlay, triggered from the `Header` toggle button.
+- New backend list endpoint `GET /api/v1/conversations/list` returns cursor-paginated metadata backed by DIAL Core.
+- Responsive: uses `useIsMobile` / `useBreakpoint` from `apps/chat/src/hooks/breakpoint/`.
+- Panel open/closed state persisted to `localStorage` via `useLocalStorage` hook.
+
+**Non-Goals:**
+- No conversation rename or delete from the panel.
+- No infinite scroll — first page (20 items) only in this change.
+- No server-side search — filtering is client-side over the loaded page.
+
+## Decisions
+
+### 1. New lib (`libs/conversation-panel`) — standalone, not extending `libs/sidebar`
+
+`SidebarPanel` is a generic panel shell. The conversation panel has domain-specific content (conversation rows, search, filter tabs, grouped sections). A dedicated `libs/conversation-panel` lib keeps domain knowledge co-located and avoids a cross-lib dependency on `libs/sidebar`.
+
+**Decision:** New `libs/conversation-panel` lib at `@epam/ai-dial-conversation-panel`. It does not depend on `libs/sidebar`.
+
+### 2. Collapse/expand — `isOpen` in app, no `onToggle` on the lib
+
+The panel's visibility state must be shared between the `Header` (toggle button) and the panel itself. Both live in `apps/chat`. The lib receives `isOpen` as a prop only; it does not own open/closed state and does not expose `onToggle`.
+
+**Decision:** `isOpen: boolean` prop on `ConversationPanel`. The app manages the state via `useLocalStorage('conversationPanelOpen', false)` and passes it down.
+
+### 3. Toggle icon placement — in app `Header`, not inside the panel
+
+**Decision:** The toggle icon button lives in `apps/chat/src/components/Header/Header.tsx` (`isHistoryPanelOpen` + `onHistoryPanelToggle` props), desktop-only (`hidden desktop:flex`). The panel header does not contain a toggle. This keeps the panel header focused on content and avoids a collapsed-strip layout complexity.
+
+### 4. Panel width and collapse behaviour on desktop
+
+- **Expanded:** `w-[288px]`, `border-l border-r`, pushes `<main>` via flex row.
+- **Collapsed:** `w-[0px] overflow-hidden` — panel content hidden; no icon-only strip.
+- CSS transition on width for smooth open/close.
+
+### 5. Backend list endpoint — `GET /api/v1/conversations/list`
+
+`@Get('list')` avoids a route conflict with the existing `@Get()` handler. DIAL Core metadata endpoint is called with `recursive: true` and the user's bucket, returning all conversations flat. Pagination uses DIAL Core's cursor (`token` → `nextToken` in the response). An optional `path` query parameter scopes the listing to a subfolder.
+
+**Decision:** `GET /api/v1/conversations/list` with `ListConversationsQueryDto { limit?, nextToken?, path? }`. Response: `ConversationListResponseDto { items: ConversationListItemDto[], nextToken? }`. No `isPinned` or `source` fields on items in this slice — those require DIAL Core support that is out of scope.
+
+### 6. Data fetching — `ConversationsContext`
+
+`ConversationsContext` in `apps/chat/src/context/ConversationsContext.tsx` fetches once on mount. It exposes `{ conversations, isLoading, error }`. The context uses the `cancelled` flag pattern (per `useFavicon` reference). The provider is placed in `apps/chat/src/main.tsx`.
+
+### 7. `ConversationPanelView` — app-level adapter component
+
+Rather than wiring `ConversationsContext`, i18n, and routing callbacks directly in `app.tsx`, a dedicated `ConversationPanelView` component in `apps/chat/src/components/ConversationPanel/` owns the translation calls and context consumption. This keeps `app.tsx` lean.
+
+### 8. `FilterTab` and `ConversationSource` — string enums
+
+Both are domain value sets that belong in a string enum per project convention, not plain union literal types. `FilterTab` uses values `All = 'all'`, `MyChats = 'my-chats'`, `Shared = 'shared'`, `Organization = 'organization'`. `ConversationSource` uses the same values minus `All`.
+
+### 9. Search and filter — lib-internal state
+
+Search (`useState<string>`) and active tab (`useState<FilterTab>`) state live inside `ConversationPanel`. The app passes the full unfiltered list; filtering is applied inside the component. This minimises props and keeps filtering logic co-located with the UI.
+
+### 10. Panel open/closed state — `useLocalStorage`
+
+`isHistoryPanelOpen` is managed in `app.tsx` using `useLocalStorage('conversationPanelOpen', false)` so the panel position survives page reloads. See `conversation-panel-state-and-list-path` change for the hook implementation.
+
+## Risks / Trade-offs
+
+- **[Risk] No `isPinned`/`source` from the list endpoint** → Pinned and My chats sections are present in the UI but all items fall into "My chats" until DIAL Core adds those fields. The UI handles this gracefully (Pinned section is hidden when empty).
+- **[Trade-off] `ConversationsProvider` outside `RequireAuth`** — fires the API call before authentication is confirmed; may produce a 401 on the login page. Accepted for parity with `DeploymentsProvider`; a retry-after-auth mechanism is a follow-up.
+- **[Trade-off] Panel hidden via CSS (`w-[0px]`) rather than unmounted** — keeps scroll position on re-open but keeps the list mounted even when hidden. Acceptable for 20 items.
+- **[Trade-off] Client-side search over 20 items** — fast but stale after the initial load. Acceptable for this slice; server-side search is a follow-up.

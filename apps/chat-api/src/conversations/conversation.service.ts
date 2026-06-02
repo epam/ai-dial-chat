@@ -11,7 +11,14 @@ import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
-import { getConversationName } from './conversation.utils';
+import {
+  getConversationName,
+  getConversationTitleFromName,
+} from './conversation.utils';
+import {
+  ConversationListItemDto,
+  ConversationListResponseDto,
+} from './dto/conversation-list.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 
 @Injectable()
@@ -119,6 +126,59 @@ export class ConversationService extends AppService {
     } catch (error) {
       this.logger.error('DIAL Core rejected deleteConversation', error);
       handleDialError(error);
+    }
+  }
+
+  async listConversations(
+    token: string,
+    bucket: string,
+    limit = 20,
+    nextToken?: string,
+    path?: string,
+  ): Promise<ConversationListResponseDto> {
+    try {
+      const { data, error } = (await this.client.getConversationMetadata(
+        bucket,
+        path ?? '',
+        {
+          headers: getBearerAuthHeaders(token),
+          query: {
+            recursive: true,
+            limit,
+            ...(nextToken ? { token: nextToken } : {}),
+          },
+        },
+      )) as {
+        data?: {
+          items?: {
+            name?: string;
+            url?: string;
+            parentPath?: string;
+            updatedAt?: number;
+            nodeType?: string;
+          }[];
+          nextToken?: string;
+        };
+        error?: unknown;
+      };
+
+      if (error !== undefined || !data) {
+        this.logger.error('DIAL Core rejected listConversations', error);
+        return handleDialError(error);
+      }
+
+      const items: ConversationListItemDto[] = (data.items ?? [])
+        .filter((item) => item.nodeType !== 'FOLDER')
+        .map((item) => ({
+          id: item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`,
+          title: getConversationTitleFromName(item.name ?? ''),
+          updatedAt: item.updatedAt ?? 0,
+        }));
+
+      return { items, nextToken: data.nextToken };
+    } catch (error) {
+      this.logger.error('DIAL Core listConversations failed', error);
+      return handleDialError(error);
     }
   }
 
