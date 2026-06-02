@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { IconPlus } from '@tabler/icons-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -18,7 +19,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PromptsSelectors } from '@/src/store/prompts/prompts.selectors';
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 
-import { MarketplaceI18nKeys } from '@/src/constants/i18n';
+import { MarketplaceI18nKeys, PromptBarI18nKeys } from '@/src/constants/i18n';
 import {
   ORGANIZATION_SECTION_NAME,
   PINNED_PROMPTS_SECTION_NAME,
@@ -33,7 +34,11 @@ import { PromptRow } from '@/src/components/Common/PromptRow';
 
 import { NoData } from '../NoData';
 
-import { DialPrimaryButton, DialSearch } from '@epam/ai-dial-ui-kit';
+import {
+  DialLinkButton,
+  DialPrimaryButton,
+  DialSearch,
+} from '@epam/ai-dial-ui-kit';
 
 interface SkillsSectionProps {
   sectionName: string;
@@ -45,9 +50,11 @@ interface SkillsSectionProps {
   openByDefault?: boolean;
   skipFolders?: boolean;
   skipRootPrompts?: boolean;
+  scrollToId?: string | null;
   onToggle: (id: string) => void;
   onToggleFolder: (descendantIds: string[]) => void;
   onClickFolder: (folderId: string) => void;
+  onScrollRef: (id: string, el: HTMLDivElement | null) => void;
 }
 
 const SkillsSection = ({
@@ -60,9 +67,11 @@ const SkillsSection = ({
   skipFolders = false,
   openByDefault = true,
   skipRootPrompts = false,
+  scrollToId,
   onToggle,
   onToggleFolder,
   onClickFolder,
+  onScrollRef,
 }: SkillsSectionProps) => {
   const rootFoldersSelector = useMemo(
     () => PromptsSelectors.selectFilteredFolders(filters, searchTerm),
@@ -120,6 +129,11 @@ const SkillsSection = ({
           {rootPrompts.map((p) => (
             <PromptRow
               key={p.id}
+              ref={
+                scrollToId === p.id
+                  ? (el: HTMLDivElement | null) => onScrollRef(p.id, el)
+                  : null
+              }
               item={p}
               level={0}
               isSelected={selectedIds.includes(p.id)}
@@ -147,9 +161,12 @@ export const AgentSkillsModal = ({
 
   const dispatch = useAppDispatch();
 
+  const preCreateSnapshotRef = useRef<Set<string> | null>(null);
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedIds, setSelectedIds] = useState<string[]>(initialSelectedIds);
   const [openedFoldersIds, setOpenedFoldersIds] = useState<string[]>([]);
+  const [scrollToId, setScrollToId] = useState<string | null>(null);
 
   const myItemsFilters = useAppSelector(PromptsSelectors.selectMyItemsFilters);
   const allFolders = useAppSelector(PromptsSelectors.selectFolders);
@@ -167,6 +184,28 @@ export const AgentSkillsModal = ({
   const rootFolders = useAppSelector(rootFoldersSelector);
 
   const isEmpty = rootFolders.length === 0 && allPrompts.length === 0;
+
+  useEffect(() => {
+    if (!preCreateSnapshotRef.current) return;
+
+    const newId = allPrompts.find(
+      (p) => !preCreateSnapshotRef.current!.has(p.id),
+    )?.id;
+    if (!newId) return;
+
+    preCreateSnapshotRef.current = null;
+    setSelectedIds((prev) => (prev.includes(newId) ? prev : [...prev, newId]));
+    setScrollToId(newId);
+  }, [allPrompts]);
+
+  const handleScrollRef = useCallback(
+    (_id: string, el: HTMLDivElement | null) => {
+      if (!el) return;
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      setScrollToId(null);
+    },
+    [],
+  );
 
   useEffect(() => {
     dispatch(PromptsActions.uploadPromptsWithFoldersRecursive());
@@ -203,6 +242,18 @@ export const AgentSkillsModal = ({
         : [...prev, folderId],
     );
   }, []);
+
+  const handleCreatePrompt = useCallback(() => {
+    preCreateSnapshotRef.current = new Set(allPrompts.map((p) => p.id));
+    dispatch(PromptsActions.setIsNewPromptCreating(true));
+    dispatch(
+      PromptsActions.setIsPromptModalOpen({
+        isOpen: true,
+        isInitModeEdit: true,
+        isQuickAppEditPrompt: true,
+      }),
+    );
+  }, [dispatch, allPrompts]);
 
   const handleConfirm = useCallback(() => {
     onConfirm(selectedIds);
@@ -273,17 +324,24 @@ export const AgentSkillsModal = ({
                 searchTerm={searchTerm}
                 allFolders={allFolders}
                 selectedIds={selectedIds}
+                scrollToId={scrollToId}
                 onToggle={handleTogglePrompt}
                 onToggleFolder={handleToggleFolder}
                 openedFoldersIds={openedFoldersIds}
                 onClickFolder={handleClickFolder}
+                onScrollRef={handleScrollRef}
               />
             ))}
           </div>
         )}
       </div>
 
-      <div className="absolute bottom-0 flex w-full justify-end border-t border-tertiary bg-layer-2 px-6 py-[14px]">
+      <div className="absolute bottom-0 flex w-full justify-between border-t border-tertiary bg-layer-2 px-6 py-[14px]">
+        <DialLinkButton
+          iconBefore={<IconPlus size={18} />}
+          label={t(PromptBarI18nKeys.CreatePrompt)}
+          onClick={handleCreatePrompt}
+        />
         <DialPrimaryButton
           label={t(MarketplaceI18nKeys.SelectAgentSkills)}
           onClick={handleConfirm}
