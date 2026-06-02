@@ -61,7 +61,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
       {...getRootProps({
         style: cssVars,
         className: mergeClasses(
-          'relative flex w-full flex-col items-center gap-6 py-5 desktop:p-5',
+          'relative flex w-full flex-col items-center gap-6 px-4 py-5 desktop:p-5',
           className,
         ),
       })}

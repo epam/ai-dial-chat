@@ -18,6 +18,7 @@ import {
   KeyboardEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -62,20 +63,24 @@ export const Input: FC<InputProps> = ({
   modelSelectorLabels,
 }) => {
   const isMobile = useIsMobile();
-  const cssVars = buildCssVars({
-    '--ci-bg': colors?.background,
-    '--ci-text': colors?.text,
-    '--ci-border': colors?.border,
-    '--ci-border-focus': colors?.borderFocus,
-    '--ci-placeholder': colors?.placeholder,
-    '--ci-send-bg': colors?.sendBackground,
-    '--ci-send-text': colors?.sendText,
-    '--ci-stop-color': colors?.stopColor,
-    '--ci-font-family': typography?.fontFamily,
-    '--ci-font-size': typography?.fontSize,
-    '--ci-font-weight': typography?.fontWeight,
-    '--ci-line-height': typography?.lineHeight,
-  });
+  const cssVars = useMemo(
+    () =>
+      buildCssVars({
+        '--ci-bg': colors?.background,
+        '--ci-text': colors?.text,
+        '--ci-border': colors?.border,
+        '--ci-border-focus': colors?.borderFocus,
+        '--ci-placeholder': colors?.placeholder,
+        '--ci-send-bg': colors?.sendBackground,
+        '--ci-send-text': colors?.sendText,
+        '--ci-stop-color': colors?.stopColor,
+        '--ci-font-family': typography?.fontFamily,
+        '--ci-font-size': typography?.fontSize,
+        '--ci-font-weight': typography?.fontWeight,
+        '--ci-line-height': typography?.lineHeight,
+      }),
+    [colors, typography],
+  );
 
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
@@ -209,6 +214,19 @@ export const Input: FC<InputProps> = ({
     [attachments, handleRemove],
   );
 
+  // Single source for the "add" menu, shared by the mobile sheet and desktop dropdown.
+  const addMenuItems = useMemo(
+    () => [
+      {
+        key: 'attach',
+        label: attachLabel,
+        icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
+        onClick: () => fileInputRef.current?.click(),
+      },
+    ],
+    [attachLabel],
+  );
+
   const textarea = (
     <textarea
       className={mergeClasses(
@@ -286,14 +304,7 @@ export const Input: FC<InputProps> = ({
                 closeLabel={menuCloseLabel}
                 onClose={() => setIsSheetOpen(false)}
                 style={cssVars}
-                items={[
-                  {
-                    key: 'attach',
-                    label: attachLabel,
-                    icon: <IconPaperclip size={18} aria-hidden />,
-                    onClick: () => fileInputRef.current?.click(),
-                  },
-                ]}
+                items={addMenuItems}
               />
             </>
           ) : (
@@ -301,16 +312,7 @@ export const Input: FC<InputProps> = ({
               matchReferenceWidth={false}
               placement="bottom-start"
               listClassName="!w-[240px]"
-              menu={{
-                items: [
-                  {
-                    key: 'attach',
-                    label: attachLabel,
-                    icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
-                    onClick: () => fileInputRef.current?.click(),
-                  },
-                ],
-              }}
+              menu={{ items: addMenuItems }}
             >
               <DialGhostIconButton
                 icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
