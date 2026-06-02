@@ -17,6 +17,8 @@ export interface InputColors {
   sendBackground?: string;
   /** Icon/text color of the send button. */
   sendText?: string;
+  /** Icon color of the stop button. Defaults to `--text-secondary` (`#9fa6bd`). */
+  stopColor?: string;
 }
 
 /** Typography overrides for the `Input` component. */
