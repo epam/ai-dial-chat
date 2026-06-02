@@ -182,7 +182,7 @@ Select the smallest validation set that proves the change:
 | Backend `apps/chat-api/**` | `npx nx test chat-api`, `npx nx lint chat-api`, `npx nx build chat-api` when startup/module/config wiring changed             |
 | HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npx nx build chat-api-client`, `npx nx lint chat-api-client` |
 | Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                   |
-| Broad cross-project change | `npx nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                      |
+| Broad cross-project change | `npx nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                  |
 | CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context                                                        |
 
 Record skipped checks with a reason. A review without a verification story is incomplete.

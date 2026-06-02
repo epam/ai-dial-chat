@@ -5,13 +5,7 @@ import {
   buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import {
-  BASE_ICON_SIZE,
-  DialDropdown,
-  DialDropdownIcon,
-  DialGhostIconButton,
-} from '@epam/ai-dial-ui-kit';
-import { IconPaperclip, IconPlus } from '@tabler/icons-react';
+import { DialDropdownIcon, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import classNames from 'classnames';
 import {
   type FC,
@@ -27,8 +21,8 @@ import { useIsMobile } from '../../hooks/useIsMobile.js';
 import { useModelSelector } from '../../hooks/useModelSelector.js';
 import type { InputProps } from '../../models/Input.js';
 import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
+import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
-import { BottomSheet } from '../BottomSheet/BottomSheet.js';
 import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet.js';
 import { SendButton } from './Buttons/SendButton.js';
 import { StopButton } from './Buttons/StopButton.js';
@@ -90,7 +84,6 @@ export const Input: FC<InputProps> = ({
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] =
     useState<Attachment[]>(initialAttachments);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
 
   useEffect(() => {
@@ -223,19 +216,6 @@ export const Input: FC<InputProps> = ({
     [attachments, handleRemove],
   );
 
-  // Single source for the "add" menu, shared by the mobile sheet and desktop dropdown.
-  const addMenuItems = useMemo(
-    () => [
-      {
-        key: 'attach',
-        label: attachLabel,
-        icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
-        onClick: () => fileInputRef.current?.click(),
-      },
-    ],
-    [attachLabel],
-  );
-
   const textarea = (
     <textarea
       className={mergeClasses(
@@ -301,37 +281,14 @@ export const Input: FC<InputProps> = ({
                 tabIndex={-1}
                 onChange={handleFileChange}
               />
-              {isMobile ? (
-                <>
-                  <DialGhostIconButton
-                    icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
-                    aria-label={addMenuLabel}
-                    className="size-10 flex-shrink-0"
-                    onClick={() => setIsSheetOpen(true)}
-                  />
-                  <BottomSheet
-                    isOpen={isSheetOpen}
-                    title={menuTitle}
-                    closeLabel={menuCloseLabel}
-                    onClose={() => setIsSheetOpen(false)}
-                    style={cssVars}
-                    items={addMenuItems}
-                  />
-                </>
-              ) : (
-                <DialDropdown
-                  matchReferenceWidth={false}
-                  placement="bottom-start"
-                  listClassName="!w-[240px]"
-                  menu={{ items: addMenuItems }}
-                >
-                  <DialGhostIconButton
-                    icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
-                    aria-label={addMenuLabel}
-                    className="size-10 flex-shrink-0"
-                  />
-                </DialDropdown>
-              )}
+              <AddAttachmentButton
+                onAttachClick={() => fileInputRef.current?.click()}
+                attachLabel={attachLabel}
+                addMenuLabel={addMenuLabel}
+                menuTitle={menuTitle}
+                menuCloseLabel={menuCloseLabel}
+                style={cssVars}
+              />
             </div>
           )}
           {!isStackedLayout && (
