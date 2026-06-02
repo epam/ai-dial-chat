@@ -178,7 +178,7 @@ const applyShowConversationsSectionByDefaultEpic: AppEpic = (action$, state$) =>
         ) &&
         shouldShowConversationsSectionByDefault(
           SettingsSelectors.selectIsOverlay(state),
-          SettingsSelectors.selectUseMdSidebarOverlayBreakpoint(state),
+          SettingsSelectors.selectIsMdSidebarOverlayBreakpoint(state),
         )
       );
     }),

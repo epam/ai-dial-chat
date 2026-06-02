@@ -30,8 +30,8 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
-  const useMdSidebarOverlayBreakpoint = useAppSelector(
-    SettingsSelectors.selectUseMdSidebarOverlayBreakpoint,
+  const isMdSidebarOverlayBreakpoint = useAppSelector(
+    SettingsSelectors.selectIsMdSidebarOverlayBreakpoint,
   );
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
@@ -49,7 +49,7 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
         className={classNames(
           'flex size-full flex-col md:flex-row',
           enabledFeatures.has(Feature.ShowLayoutDividers) &&
-            (useMdSidebarOverlayBreakpoint
+            (isMdSidebarOverlayBreakpoint
               ? 'sidebar-overlay-md:[&>*+*]:border-s-[15px] sidebar-overlay-md:[&>*+*]:border-s-tertiary'
               : 'sidebar-overlay:[&>*+*]:border-s-[15px] sidebar-overlay:[&>*+*]:border-s-tertiary'),
         )}

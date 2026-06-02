@@ -59,8 +59,8 @@ export function ResizableSidebarWrapper({
   const isChatbarOpen = useAppSelector(UISelectors.selectShowChatbar);
   const isPromptbarOpen = useAppSelector(UISelectors.selectShowPromptbar);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
-  const useMdSidebarOverlayBreakpoint = useAppSelector(
-    SettingsSelectors.selectUseMdSidebarOverlayBreakpoint,
+  const isMdSidebarOverlayBreakpoint = useAppSelector(
+    SettingsSelectors.selectIsMdSidebarOverlayBreakpoint,
   );
   const isNavigationVisible = useAppSelector(
     UISelectors.selectIsNavigationVisible,
@@ -88,19 +88,19 @@ export function ResizableSidebarWrapper({
 
   const resizeTriggerClassName = classNames(
     'invisible h-full w-0.5 group-hover:visible md:visible',
-    useMdSidebarOverlayBreakpoint
+    isMdSidebarOverlayBreakpoint
       ? 'sidebar-overlay-md:bg-accent-primary sidebar-overlay-md:text-accent-primary'
       : 'sidebar-overlay:bg-accent-primary sidebar-overlay:text-accent-primary',
     isResizing
       ? classNames(
           'bg-accent-primary text-accent-primary',
-          useMdSidebarOverlayBreakpoint
+          isMdSidebarOverlayBreakpoint
             ? 'sidebar-overlay-md:visible'
             : 'sidebar-overlay:visible',
         )
       : classNames(
           'bg-layer-3 text-secondary',
-          useMdSidebarOverlayBreakpoint
+          isMdSidebarOverlayBreakpoint
             ? 'sidebar-overlay-md:invisible'
             : 'sidebar-overlay:invisible',
         ),
@@ -240,13 +240,13 @@ export function ResizableSidebarWrapper({
 
   const resizableWrapperClassName = classNames(
     '!fixed z-40 flex !h-full max-w-[95%] border-tertiary md:max-w-[45%]',
-    useMdSidebarOverlayBreakpoint
+    isMdSidebarOverlayBreakpoint
       ? 'sidebar-overlay-md:!relative sidebar-overlay-md:top-0'
       : 'sidebar-overlay:!relative sidebar-overlay:top-0',
     isLeftSidebar
       ? classNames(
           'start-0 border-r',
-          useMdSidebarOverlayBreakpoint
+          isMdSidebarOverlayBreakpoint
             ? 'sidebar-overlay-md:start-0'
             : 'sidebar-overlay:start-0',
         )

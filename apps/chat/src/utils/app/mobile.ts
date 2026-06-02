@@ -34,14 +34,14 @@ export const isSmallScreenOrTouchable = () => isSmallScreen() || isTouchable();
 
 export const shouldAutoHideChatbarOnConversationChange = (
   isOverlay: boolean,
-  useMdSidebarOverlayBreakpoint: boolean,
+  isMdSidebarOverlayBreakpoint: boolean,
 ) =>
-  isOverlay && useMdSidebarOverlayBreakpoint ? isMobile() : isTabletScreen();
+  isOverlay && isMdSidebarOverlayBreakpoint ? isMobile() : isTabletScreen();
 
 export const shouldShowConversationsSectionByDefault = (
   isOverlay: boolean,
-  useMdSidebarOverlayBreakpoint: boolean,
-) => !isTabletScreenOrMobile() || (isOverlay && useMdSidebarOverlayBreakpoint);
+  isMdSidebarOverlayBreakpoint: boolean,
+) => !isTabletScreenOrMobile() || (isOverlay && isMdSidebarOverlayBreakpoint);
 
 export const getScreenState = () => {
   const screenMappings = [

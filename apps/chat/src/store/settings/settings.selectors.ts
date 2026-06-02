@@ -61,7 +61,7 @@ const selectEnabledFeatures = createSelector(
   },
 );
 
-const selectUseMdSidebarOverlayBreakpoint = createSelector(
+const selectIsMdSidebarOverlayBreakpoint = createSelector(
   [selectIsOverlay, selectEnabledFeatures],
   (isOverlay, enabledFeatures) =>
     isOverlay && enabledFeatures.has(Feature.MdSidebarOverlayBreakpoint),
@@ -286,7 +286,7 @@ const selectAudioTypesDefaultOrder = (state: RootState) =>
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
-  selectUseMdSidebarOverlayBreakpoint,
+  selectIsMdSidebarOverlayBreakpoint,
   selectFooterHtmlMessage,
   selectEnabledFeatures,
   isFeatureEnabled,

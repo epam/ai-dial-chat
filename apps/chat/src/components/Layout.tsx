@@ -68,8 +68,8 @@ export function Layout({
     UISelectors.selectIsAnyMenuOpen(state, router.pathname),
   );
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
-  const useMdSidebarOverlayBreakpoint = useAppSelector(
-    SettingsSelectors.selectUseMdSidebarOverlayBreakpoint,
+  const isMdSidebarOverlayBreakpoint = useAppSelector(
+    SettingsSelectors.selectIsMdSidebarOverlayBreakpoint,
   );
   const [loading, setLoading] = useState(isApplyingModel);
 
@@ -179,7 +179,7 @@ export function Layout({
             <FloatingOverlay
               className={classNames(
                 'z-40 bg-blackout',
-                useMdSidebarOverlayBreakpoint
+                isMdSidebarOverlayBreakpoint
                   ? 'sidebar-overlay-md:hidden'
                   : 'sidebar-overlay:hidden',
               )}

@@ -2334,7 +2334,7 @@ const hideChatbarEpic: AppEpic = (action$, state$) =>
     switchMap(() =>
       shouldAutoHideChatbarOnConversationChange(
         SettingsSelectors.selectIsOverlay(state$.value),
-        SettingsSelectors.selectUseMdSidebarOverlayBreakpoint(state$.value),
+        SettingsSelectors.selectIsMdSidebarOverlayBreakpoint(state$.value),
       )
         ? of(UIActions.setShowChatbar(false))
         : EMPTY,

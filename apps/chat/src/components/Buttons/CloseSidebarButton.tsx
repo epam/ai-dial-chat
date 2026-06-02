@@ -16,15 +16,15 @@ export const CloseSidebarButton: React.FC<Props> = ({
   onClose,
   isLeftSide,
 }) => {
-  const useMdSidebarOverlayBreakpoint = useAppSelector(
-    SettingsSelectors.selectUseMdSidebarOverlayBreakpoint,
+  const isMdSidebarOverlayBreakpoint = useAppSelector(
+    SettingsSelectors.selectIsMdSidebarOverlayBreakpoint,
   );
 
   return (
     <div
       className={classNames(
         'absolute top-0 z-50 p-[6px]',
-        useMdSidebarOverlayBreakpoint
+        isMdSidebarOverlayBreakpoint
           ? 'sidebar-overlay-md:hidden'
           : 'sidebar-overlay:hidden',
         isLeftSide
