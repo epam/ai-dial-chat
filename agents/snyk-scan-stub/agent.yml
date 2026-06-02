@@ -1,11 +1,14 @@
 contract_version: "0.1"
 name: snyk-scan-stub
 skill: snyk-scan-stub
-agent_version: "0.1.0"
-description: "Synthetic scanner-report producer for chain validation. Emits fixed Snyk-Code-shaped findings so snyk-triage has deterministic upstream input. Test fixture — remove when the real Snyk pipeline (stage-snyk.yml) lands."
+agent_version: "0.2.0"
+description: "Synthetic scanner-report producer for chain validation. Emits a fixed, real-shape Snyk Code SARIF 2.1.0 report under payload.sarif so snyk-triage exercises actual SARIF parsing. Test fixture — remove when the real Snyk pipeline (stage-snyk.yml) lands."
 triggers: [pull_request]
 allowed_tools: "Skill"
-model: claude-haiku-4-5-20251001
+# Sonnet, not Haiku: the agent must reproduce a ~150-line SARIF block
+# verbatim into stage-output.json; the larger model is more reliable at
+# faithful nested-JSON emission. Still a trivial, fixed-output run.
+model: claude-sonnet-4-6
 phase: sandbox
-cost_class: light
+cost_class: medium
 timeout_minutes: 10
