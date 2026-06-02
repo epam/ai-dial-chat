@@ -158,8 +158,8 @@
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
     "@vitejs/plugin-react": "^4.7.0",
-    "@vitest/coverage-v8": "4.0.9",
-    "@vitest/ui": "4.0.9",
+    "@vitest/coverage-v8": "4.1.8",
+    "@vitest/ui": "4.1.8",
     "allure-playwright": "^3.8.0",
     "autoprefixer": "^10.4.16",
     "dotenv": "^16.3.1",
@@ -189,7 +189,7 @@
     "ts-unused-exports": "^11.0.1",
     "typescript": "5.9.3",
     "vite": "7.3.2",
-    "vitest": "4.0.9"
+    "vitest": "4.1.8"
   },
   "overrides": {
     "koa": "3.1.2",
