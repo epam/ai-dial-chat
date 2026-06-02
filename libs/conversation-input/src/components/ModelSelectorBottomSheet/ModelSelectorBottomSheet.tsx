@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialButton,
@@ -6,7 +6,6 @@ import {
   DialSearch,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
 import { IconCheck } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useEffect, useState } from 'react';
 import { List, type RowComponentProps } from 'react-window';
@@ -14,7 +13,6 @@ import {
   buildDeploymentIcon,
   filterDeployments,
 } from '../../utils/deployment.js';
-import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell.js';
 import styles from './ModelSelectorBottomSheet.module.scss';
 
@@ -26,7 +24,7 @@ const MAX_VISIBLE_ROWS = 8;
 /** Data passed to each virtualized row via react-window's `rowProps`. */
 interface ModelRowData {
   /** The deployments currently rendered (already filtered). */
-  items: DeploymentItemDto[];
+  items: DeploymentItem[];
   /** ID of the currently selected deployment, shown with a checkmark. */
   selectedDeploymentId?: string | null;
   /** Typography class applied to the item label. */
@@ -46,11 +44,7 @@ const ModelRow = ({
   onSelect,
 }: RowComponentProps<ModelRowData>) => {
   const item = items[index];
-  const modelIcon = buildDeploymentIcon(
-    resolveIconUrl(item.iconUrl),
-    item.type,
-    DIAL_ICON_SIZE.SM,
-  );
+  const modelIcon = buildDeploymentIcon(item.iconUrl, item.type, DIAL_ICON_SIZE.SM);
   const isSelected = item.id === selectedDeploymentId;
 
   return (
@@ -66,10 +60,7 @@ const ModelRow = ({
           <span className="flex flex-1 items-center justify-between gap-2">
             <DialEllipsisTooltip
               text={item.displayName ?? item.id}
-              className={mergeClasses(
-                labelClassName,
-                'min-w-0 flex-1 text-left',
-              )}
+              className={mergeClasses(labelClassName, 'min-w-0 flex-1 text-left')}
             />
             {isSelected && (
               <IconCheck
@@ -98,8 +89,8 @@ export interface ModelSelectorBottomSheetProps {
   searchPlaceholder?: string;
   /** Called when the sheet should close (backdrop tap, close button, or Escape). */
   onClose: () => void;
-  /** Full list of deployments to display. When `undefined` or empty, a state label is shown. */
-  deployments?: DeploymentItemDto[];
+  /** Full list of deployments to display. When `undefined` or empty, a state label is shown. `iconUrl` must already be resolved by the host app. */
+  deployments?: DeploymentItem[];
   /** ID of the currently selected deployment. Shown with a checkmark. */
   selectedDeploymentId?: string | null;
   /** Called when the user taps a deployment; the sheet closes automatically after. */
@@ -188,11 +179,7 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
       {stateLabel ? (
         <div
           role="list"
-          className={mergeClasses(
-            styles.stateLabel,
-            labelClassName,
-            'px-4 py-4',
-          )}
+          className={mergeClasses(styles.stateLabel, labelClassName, 'px-4 py-4')}
         >
           {stateLabel}
         </div>

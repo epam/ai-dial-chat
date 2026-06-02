@@ -1,11 +1,11 @@
+import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
 import { IconApps, IconRobot } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import { DeploymentIcon } from '../components/Input/DeploymentIcon.js';
 
 /** Returns the human-readable label for a deployment, falling back to its id. */
-export const getDeploymentLabel = (item: DeploymentItemDto): string =>
+export const getDeploymentLabel = (item: DeploymentItem): string =>
   item.displayName ?? item.id;
 
 /**
@@ -13,9 +13,9 @@ export const getDeploymentLabel = (item: DeploymentItemDto): string =>
  * An empty/whitespace query returns the list unchanged.
  */
 export const filterDeployments = (
-  deployments: DeploymentItemDto[],
+  deployments: DeploymentItem[],
   query: string,
-): DeploymentItemDto[] => {
+): DeploymentItem[] => {
   const normalized = query.trim().toLowerCase();
   if (!normalized) return deployments;
   return deployments.filter((item) =>
@@ -25,7 +25,8 @@ export const filterDeployments = (
 
 /**
  * Builds the leading icon for a deployment. Uses the resolved image URL when
- * available (with an error fallback) and a type-appropriate Tabler icon otherwise.
+ * available (with an error fallback and lazy loading) and a type-appropriate
+ * Tabler icon otherwise.
  */
 export const buildDeploymentIcon = (
   resolvedIconUrl: string | undefined,

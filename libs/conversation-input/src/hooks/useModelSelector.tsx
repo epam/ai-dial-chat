@@ -1,7 +1,6 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
 import { IconRobot } from '@tabler/icons-react';
 import { type ReactNode, useMemo, useState } from 'react';
 import { DeploymentIcon } from '../components/Input/DeploymentIcon.js';
@@ -14,16 +13,14 @@ import {
 
 /** Options passed to `useModelSelector`. */
 export interface UseModelSelectorOptions {
-  /** Available deployment items. When `undefined`, the selector is hidden. */
-  deployments?: DeploymentItemDto[];
+  /** Available deployment items. When `undefined`, the selector is hidden. `iconUrl` must already be resolved by the host app. */
+  deployments?: DeploymentItem[];
   /** Currently selected deployment ID. */
   selectedDeploymentId?: string | null;
   /** Called when the user picks a different deployment. */
   onDeploymentChange?: (id: string) => void;
   /** Status labels for the selector dropdown. */
   modelSelectorLabels?: ModelSelectorLabels;
-  /** Resolves a raw `iconUrl` value to a usable `<img src>` URL. */
-  resolveDeploymentIconUrl: (iconUrl: string) => string | undefined;
   /** CSS class applied to the sticky search header wrapper. Defaults to `'bg-layer-0'`. */
   searchHeaderClassName?: string;
 }
@@ -48,7 +45,6 @@ export const useModelSelector = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  resolveDeploymentIconUrl,
   searchHeaderClassName = 'bg-layer-0',
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -57,22 +53,19 @@ export const useModelSelector = ({
     () => deployments?.find((i) => i.id === selectedDeploymentId),
     [deployments, selectedDeploymentId],
   );
-  const selectedIconUrl = selectedItem?.iconUrl
-    ? resolveDeploymentIconUrl(selectedItem.iconUrl)
-    : undefined;
 
   const selectorIcon: ReactNode = useMemo(
     () =>
-      selectedIconUrl ? (
+      selectedItem?.iconUrl ? (
         <DeploymentIcon
-          src={selectedIconUrl}
+          src={selectedItem.iconUrl}
           size={18}
           fallback={<IconRobot size={18} aria-hidden />}
         />
       ) : (
         <IconRobot size={18} aria-hidden />
       ),
-    [selectedIconUrl],
+    [selectedItem],
   );
 
   const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
@@ -91,24 +84,13 @@ export const useModelSelector = ({
       }
       return [];
     }
-    return filterDeployments(deployments, searchQuery).map((item) => {
-      const itemIconUrl = item.iconUrl
-        ? resolveDeploymentIconUrl(item.iconUrl)
-        : undefined;
-      return {
-        key: item.id,
-        label: getDeploymentLabel(item),
-        icon: buildDeploymentIcon(itemIconUrl, item.type),
-        onClick: () => onDeploymentChange?.(item.id),
-      };
-    });
-  }, [
-    deployments,
-    searchQuery,
-    modelSelectorLabels,
-    resolveDeploymentIconUrl,
-    onDeploymentChange,
-  ]);
+    return filterDeployments(deployments, searchQuery).map((item) => ({
+      key: item.id,
+      label: getDeploymentLabel(item),
+      icon: buildDeploymentIcon(item.iconUrl, item.type),
+      onClick: () => onDeploymentChange?.(item.id),
+    }));
+  }, [deployments, searchQuery, modelSelectorLabels, onDeploymentChange]);
 
   const menuHeader: ReactNode = useMemo(
     () =>

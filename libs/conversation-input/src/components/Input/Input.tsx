@@ -27,7 +27,6 @@ import { useIsMobile } from '../../hooks/useIsMobile.js';
 import { useModelSelector } from '../../hooks/useModelSelector.js';
 import type { InputProps } from '../../models/Input.js';
 import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
-import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
 import { BottomSheet } from '../BottomSheet/BottomSheet.js';
 import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet.js';
@@ -62,7 +61,6 @@ export const Input: FC<InputProps> = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  resolveDeploymentIconUrl = resolveIconUrl,
 }) => {
   const isMobile = useIsMobile();
   const cssVars = useMemo(
@@ -174,7 +172,6 @@ export const Input: FC<InputProps> = ({
     selectedDeploymentId,
     onDeploymentChange,
     modelSelectorLabels,
-    resolveDeploymentIconUrl,
   });
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

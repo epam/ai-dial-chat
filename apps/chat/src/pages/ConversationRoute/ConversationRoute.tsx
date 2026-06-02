@@ -1,4 +1,8 @@
-import type { Attachment, StarterOption } from '@epam/ai-dial-chat-shared';
+import type {
+  Attachment,
+  DeploymentItem,
+  StarterOption,
+} from '@epam/ai-dial-chat-shared';
 import {
   FC,
   lazy,
@@ -21,6 +25,7 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
+import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import {
   getStarterPopulateText,
   getStartersFromSchema,
@@ -47,6 +52,17 @@ const ConversationRoute: FC = () => {
     isLoading,
     error,
   } = useDeployments();
+
+  const deploymentItems: DeploymentItem[] = useMemo(
+    () =>
+      items.map(({ id, displayName, iconUrl, type }) => ({
+        id,
+        displayName,
+        iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
+        type,
+      })),
+    [items],
+  );
 
   const { starters, propertyKey, description } = useMemo(
     () => getStartersFromSchema(selectedDeploymentConfiguration),
@@ -125,7 +141,7 @@ const ConversationRoute: FC = () => {
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
             typography={{ welcomeClassName: 'dial-display2-text' }}
-            deployments={items}
+            deployments={deploymentItems}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
             modelSelectorLabels={{
