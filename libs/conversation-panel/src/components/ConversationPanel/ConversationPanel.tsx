@@ -1,7 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC, memo, useMemo, useState } from 'react';
 import type {
-  ConversationHistoryItem,
   ConversationPanelProps,
   FilterTab,
 } from '../../models/ConversationPanel.js';
@@ -11,16 +10,8 @@ import { FilterTabs } from '../FilterTabs/FilterTabs.js';
 import { NewChatButton } from '../NewChatButton/NewChatButton.js';
 import { SearchInput } from '../SearchInput/SearchInput.js';
 import styles from './ConversationPanel.module.scss';
-
-function matchesTab(item: ConversationHistoryItem, tab: FilterTab): boolean {
-  if (tab === 'all') return true;
-  return item.source === tab;
-}
-
-function matchesSearch(item: ConversationHistoryItem, query: string): boolean {
-  if (!query) return true;
-  return item.title.toLowerCase().includes(query.toLowerCase());
-}
+import { matchesSearch, matchesTab } from './utils.js';
+import { Header } from './Header/Header.js';
 
 /** Collapsible left-side panel showing the user's conversation history. */
 export const ConversationPanel: FC<ConversationPanelProps> = memo(
@@ -118,23 +109,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             className,
           )}
         >
-          {/* Header bar */}
-          <div
-            className={mergeClasses(
-              'flex h-12 shrink-0 items-center justify-between border-b px-2',
-              styles.header,
-            )}
-          >
-            <span
-              className={mergeClasses(
-                'truncate px-2',
-                styles.headerTitle,
-                typography?.fontClassName,
-              )}
-            >
-              {title}
-            </span>
-          </div>
+          <Header title={title} titleClassName={typography?.fontClassName} />
 
           {/* New chat button */}
           <NewChatButton

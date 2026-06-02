@@ -21,7 +21,7 @@ export interface ConversationGroupProps {
   /** Typography class applied to the conversation title text. Defaults to `'text-sm'`. */
   itemTitleClassName?: string;
 }
-
+// TODO: review all styles ((!!!!))
 /** Collapsible section rendering a labelled group of conversation rows. */
 export const ConversationGroup: FC<ConversationGroupProps> = memo(
   ({

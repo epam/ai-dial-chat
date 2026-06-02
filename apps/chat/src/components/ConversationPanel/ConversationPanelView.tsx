@@ -25,14 +25,13 @@ const ConversationPanelView: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  const { items } = useConversations();
+  const { conversations: items } = useConversations();
 
   const conversations: ConversationHistoryItem[] = useMemo(
     () =>
       items.map((item) => ({
         id: item.id,
         title: item.title,
-        updatedAt: new Date(item.updatedAt).toISOString(),
       })),
     [items],
   );

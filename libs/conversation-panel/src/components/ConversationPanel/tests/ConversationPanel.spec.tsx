@@ -7,7 +7,7 @@ import {
 import { ConversationPanel } from '../ConversationPanel.js';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_ICON_SIZE: { LG: 24 },
+  DIAL_ICON_SIZE: { SM: 16, LG: 24 },
   DialGhostButton: ({
     onClick,
     label,
@@ -43,11 +43,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  DialTag: ({
+    onClick,
+    label,
+    selected,
+  }: {
+    onClick: () => void;
+    label: string;
+    selected?: boolean;
+  }) => (
+    <button onClick={onClick} aria-selected={selected} role="tab">
+      {label}
+    </button>
+  ),
   ElementSize: { Small: 'small', Standard: 'standard' },
 }));
 
 vi.mock('@tabler/icons-react', () => ({
-  IconCirclePlus: () => <span>plus-icon</span>,
+  IconPlus: () => <span>plus-icon</span>,
   IconChevronDown: () => <span>chevron-down</span>,
   IconChevronRight: () => <span>chevron-right</span>,
 }));
@@ -74,32 +87,27 @@ const items: ConversationHistoryItem[] = [
   {
     id: 'c1',
     title: 'First chat',
-    updatedAt: '2026-01-01T00:00:00Z',
     source: ConversationSource.MyChats,
   },
   {
     id: 'c2',
     title: 'Second chat',
-    updatedAt: '2026-01-02T00:00:00Z',
     source: ConversationSource.MyChats,
   },
   {
     id: 'c3',
     title: 'Third chat',
-    updatedAt: '2026-01-03T00:00:00Z',
     source: ConversationSource.Shared,
   },
   {
     id: 'c4',
     title: 'Pinned chat',
-    updatedAt: '2026-01-04T00:00:00Z',
     isPinned: true,
     source: ConversationSource.MyChats,
   },
   {
     id: 'c5',
     title: 'Shared chat',
-    updatedAt: '2026-01-05T00:00:00Z',
     source: ConversationSource.Shared,
   },
 ];

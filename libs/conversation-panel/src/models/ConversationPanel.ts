@@ -26,8 +26,6 @@ export interface ConversationHistoryItem {
   id: string;
   /** Human-readable title — typically the first user message. */
   title: string;
-  /** ISO-8601 timestamp of the last update. */
-  updatedAt: string;
   /** When true the item is shown in the Pinned section. */
   isPinned?: boolean;
   /** Ownership/share source — used to filter by tab. */
@@ -119,11 +117,6 @@ export interface ConversationPanelProps {
   title: string;
   /** Message shown when `conversations` is empty or no items match the current filter. */
   emptyLabel: string;
-  /**
-   * Formats a raw ISO-8601 `updatedAt` string into the display string shown on each row.
-   * Called by the lib; formatting locale/logic is the caller's responsibility.
-   */
-  formatDate?: (isoDate: string) => string;
   /** Called when the New chat button is clicked. */
   onNewChat: () => void;
   /** Label for the New chat button (e.g. `"New chat"`). */

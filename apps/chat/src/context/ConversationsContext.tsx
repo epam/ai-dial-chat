@@ -2,7 +2,6 @@ import type { ConversationListItemDto } from '@epam/chat-api-client';
 import {
   createContext,
   type ReactNode,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -12,13 +11,11 @@ import { listConversations } from '../server-api/conversations.api';
 
 interface ConversationsContextType {
   /** Flat list of all loaded conversations. */
-  items: ConversationListItemDto[];
+  conversations: ConversationListItemDto[];
   /** True while the initial fetch is in flight. */
   isLoading: boolean;
   /** Non-null if the fetch failed. */
   error: Error | null;
-  /** Re-fetches the conversation list from the API. */
-  refresh: () => void;
 }
 
 const ConversationsContext = createContext<
@@ -30,12 +27,11 @@ export const ConversationsProvider = ({
 }: {
   children: ReactNode;
 }) => {
-  const [items, setItems] = useState<ConversationListItemDto[]>([]);
+  const [conversations, setConversations] = useState<ConversationListItemDto[]>(
+    [],
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [refreshKey, setRefreshKey] = useState(0);
-
-  const refresh = useCallback(() => setRefreshKey((k) => k + 1), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -46,7 +42,7 @@ export const ConversationsProvider = ({
 
       try {
         const response = await listConversations();
-        if (!cancelled) setItems(response.items);
+        if (!cancelled) setConversations(response.items);
       } catch (err) {
         if (!cancelled)
           setError(err instanceof Error ? err : new Error(String(err)));
@@ -60,11 +56,11 @@ export const ConversationsProvider = ({
     return () => {
       cancelled = true;
     };
-  }, [refreshKey]);
+  }, []);
 
   const value = useMemo(
-    () => ({ items, isLoading, error, refresh }),
-    [items, isLoading, error, refresh],
+    () => ({ conversations, isLoading, error }),
+    [conversations, isLoading, error],
   );
 
   return (
