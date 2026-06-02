@@ -532,9 +532,8 @@ dialAdminTest(
     toastAssertion,
     adminLocalStorageManager,
     adminDialHomePage,
-    adminApproveRequiredConversationsAssertion,
     adminApproveRequiredPromptsAssertion,
-    adminApproveRequiredConversations,
+    adminApproveRequiredPrompts,
     adminPublishingApprovalModal,
     adminPublishingApprovalModalAssertion,
     adminToolsetToApproveAssertion,
@@ -670,10 +669,6 @@ dialAdminTest(
         await adminLocalStorageManager.setShowSideBarPanels();
         await adminDialHomePage.openHomePage();
         await adminDialHomePage.waitForPageLoaded();
-        await adminApproveRequiredConversationsAssertion.assertFolderState(
-          { name: requestName },
-          'visible',
-        );
         await adminApproveRequiredPromptsAssertion.assertFolderState(
           { name: requestName },
           'visible',
@@ -684,7 +679,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Open publication request and verify the toolset with credentials is available',
       async () => {
-        await adminApproveRequiredConversations.selectRequest(requestName);
+        await adminApproveRequiredPrompts.selectRequest(requestName);
         await adminPublishingApprovalModalAssertion.assertElementState(
           adminPublishingApprovalModal,
           'visible',
