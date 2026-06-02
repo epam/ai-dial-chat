@@ -191,16 +191,16 @@ const ConversationView: FC<Props> = ({
 
   return (
     <>
-      <div className="relative flex w-full max-w-[748px] flex-1 flex-col overflow-hidden">
+      <div className="relative flex w-full flex-1 flex-col overflow-hidden">
         <div
           ref={containerRef}
           role="log"
           aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
-          className="flex flex-1 flex-col overflow-y-auto px-4 py-8"
+          className="flex flex-1 flex-col overflow-y-auto"
         >
-          <div className="flex flex-1 flex-col gap-6">
+          <div className="mx-auto flex w-full max-w-[748px] flex-1 flex-col gap-6 px-4 pt-2">
             {messages.map((msg, index) => {
               const isStreaming = isStreamingMessage(
                 msg.role,
