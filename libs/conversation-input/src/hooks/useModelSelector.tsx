@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { DeploymentItemDto } from '@epam/chat-api-client';
@@ -23,6 +24,8 @@ export interface UseModelSelectorOptions {
   modelSelectorLabels?: ModelSelectorLabels;
   /** Resolves a raw `iconUrl` value to a usable `<img src>` URL. */
   resolveDeploymentIconUrl: (iconUrl: string) => string | undefined;
+  /** CSS class applied to the sticky search header wrapper. Defaults to `'bg-layer-0'`. */
+  searchHeaderClassName?: string;
 }
 
 /** Values returned by `useModelSelector`. */
@@ -46,6 +49,7 @@ export const useModelSelector = ({
   onDeploymentChange,
   modelSelectorLabels,
   resolveDeploymentIconUrl,
+  searchHeaderClassName = 'bg-layer-0',
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -109,16 +113,21 @@ export const useModelSelector = ({
   const menuHeader: ReactNode = useMemo(
     () =>
       deployments && deployments.length > 0 ? (
-        <div className="sticky top-0 z-10 bg-layer-0 px-2 pb-1 pt-2">
+        <div
+          className={mergeClasses(
+            'sticky top-0 z-10 px-2 pb-1 pt-2',
+            searchHeaderClassName,
+          )}
+        >
           <DialSearch
             value={searchQuery}
-            placeholder="Search"
+            placeholder={modelSelectorLabels?.searchPlaceholder ?? 'Search'}
             size={ElementSize.Small}
             onChange={setSearchQuery}
           />
         </div>
       ) : undefined,
-    [deployments, searchQuery],
+    [deployments, searchQuery, modelSelectorLabels, searchHeaderClassName],
   );
 
   const handleOpenChange = (isOpen: boolean) => {

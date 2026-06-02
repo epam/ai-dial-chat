@@ -2,6 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialButton,
+  DialEllipsisTooltip,
   DialSearch,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
@@ -63,14 +64,13 @@ const ModelRow = ({
         iconBefore={<span className={styles.itemIcon}>{modelIcon}</span>}
         label={
           <span className="flex flex-1 items-center justify-between gap-2">
-            <span
+            <DialEllipsisTooltip
+              text={item.displayName ?? item.id}
               className={mergeClasses(
                 labelClassName,
-                'min-w-0 flex-1 truncate text-left',
+                'min-w-0 flex-1 text-left',
               )}
-            >
-              {item.displayName ?? item.id}
-            </span>
+            />
             {isSelected && (
               <IconCheck
                 size={DIAL_ICON_SIZE.SM}

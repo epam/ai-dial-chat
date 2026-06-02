@@ -138,6 +138,10 @@ const ConversationRoute: FC = () => {
                 !isLoading && !error && items.length === 0
                   ? t(DeploymentsI18nKeys.SelectorEmpty)
                   : undefined,
+              searchPlaceholder: t(
+                DeploymentsI18nKeys.SelectorSearchPlaceholder,
+              ),
+              closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
             }}
             sendLabel={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
