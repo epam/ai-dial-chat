@@ -1,4 +1,8 @@
-import type { Attachment, DeploymentItem } from '@epam/ai-dial-chat-shared';
+import type {
+  Attachment,
+  DeploymentItem,
+  DisplayAttachment,
+} from '@epam/ai-dial-chat-shared';
 import type {
   InputColors,
   InputTypography,
@@ -31,6 +35,47 @@ export interface ConversationInputTypography {
   dropLabelClassName?: string;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;
+}
+
+/** Props accepted by the `EditMessageInput` component. */
+export interface EditMessageInputProps {
+  /** Initial message text pre-populated in the textarea. */
+  message?: string;
+  /** Pre-existing attachments from the original message, shown in the attachment tray. */
+  initialAttachments?: DisplayAttachment[];
+  /** Called when the user clicks the Cancel button. */
+  onCancel: () => void;
+  /**
+   * Called when the user clicks Save & Submit.
+   * @param message - The edited message text.
+   * @param keptAttachments - Pre-existing attachments the user did not remove.
+   * @param newAttachments - New attachments added during editing.
+   */
+  onSave: (
+    message: string,
+    keptAttachments: DisplayAttachment[],
+    newAttachments: Attachment[],
+  ) => void;
+  /** Label for the Cancel button. Defaults to `'Cancel'`. */
+  cancelLabel?: string;
+  /** Label for the Save & Submit button. Defaults to `'Save & Submit'`. */
+  saveLabel?: string;
+  /** `aria-label` applied to the textarea. */
+  ariaLabel?: string;
+  /** Accessible label for each attachment card's remove button. */
+  removeLabel?: string;
+  /** Accessible label for each attachment card's retry button (error state only). */
+  retryLabel?: string;
+  /** Accessible label for the add-menu trigger button. */
+  addMenuLabel?: string;
+  /** Label for the attach-file menu item. */
+  attachLabel?: string;
+  /** Heading text shown in the mobile bottom-sheet add-menu. Defaults to `'Menu'`. */
+  menuTitle?: string;
+  /** Accessible label for the bottom-sheet close button. Defaults to `'Close'`. */
+  menuCloseLabel?: string;
+  /** Extra class name(s) merged onto the root wrapper element. */
+  className?: string;
 }
 
 /** Props accepted by the `ConversationInput` component. */
