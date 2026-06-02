@@ -14,7 +14,8 @@
     "conversationStarters": "Conversation starters",
     "sendMessage": "Send message",
     "stopStreaming": "Stop streaming",
-    "quickReplyButtons": "Quick reply buttons"
+    "quickReplyButtons": "Quick reply buttons",
+    "stoppedGenerating": "You stopped generating the response"
   },
   "navigation": {
     "ariaLabel": "Main navigation",
