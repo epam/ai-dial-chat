@@ -142,24 +142,21 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
         }
         const { backendSignInCode } = this.expectedStatusCodes;
         if (backendSignInCode === 200) {
-          const { backendSignInCode } = this.expectedStatusCodes;
-          if (backendSignInCode === 200) {
-            this.state.isSignedIn = true;
-            this.state.signInRequest = request.postDataJSON();
-            await route.fulfill({
-              status: 200,
-              contentType: 'application/json',
-              body: JSON.stringify({
-                success: true,
-                message: 'Authentication successful',
-              }),
-            });
-          } else {
-            await route.fulfill({
-              status: backendSignInCode,
-              contentType: 'application/json',
-            });
-          }
+          this.state.isSignedIn = true;
+          this.state.signInRequest = request.postDataJSON();
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              success: true,
+              message: 'Authentication successful',
+            }),
+          });
+        } else {
+          await route.fulfill({
+            status: backendSignInCode,
+            contentType: 'application/json',
+          });
         }
       });
   }

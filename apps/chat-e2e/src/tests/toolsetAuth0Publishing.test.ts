@@ -67,7 +67,7 @@ dialAdminTest(
       toolsetApiHelper,
       fileApiHelper,
       adminUserItemApiHelper,
-      adminPublishedApplicationReviewModal,
+      adminPublishedToolsetReviewModal,
       adminMarketplacePage,
       adminMarketplaceHeader,
       adminMarketplaceEntitiesSection,
@@ -165,10 +165,9 @@ dialAdminTest(
         await marketplaceHeader
           .getSearch()
           .inputField.fillInInput(toolsetEntity.name);
-        const toolsetElement =
-          await marketplaceEntitiesSection.findEntityElement(
-            toolsetEntity.name,
-          );
+        toolsetElement = await marketplaceEntitiesSection.findEntityElement(
+          toolsetEntity.name,
+        );
         await toolsetElement.hoverOver();
         await marketplaceEntities
           .getEntityElementDotsMenu(toolsetElement)
@@ -379,7 +378,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Click on "Back to publication request" and approve it',
       async () => {
-        await adminPublishedApplicationReviewModal
+        await adminPublishedToolsetReviewModal
           .getPublicationReviewControl()
           .backToPublicationRequest();
         await adminPublishingApprovalModalAssertion.assertButtonsState({
