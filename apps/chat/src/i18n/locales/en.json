@@ -97,7 +97,7 @@
     }
   },
   "conversationHistory": {
-    "title": "Conversations",
+    "title": "Chats",
     "toggleAriaLabel": "Toggle conversation history panel",
     "empty": "No conversations yet"
   },

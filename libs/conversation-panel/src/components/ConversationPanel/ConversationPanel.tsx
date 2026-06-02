@@ -56,9 +56,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           aria-hidden={!isOpen}
           style={cssVars}
           className={mergeClasses(
-            'relative z-50 flex h-full flex-shrink-0 flex-col overflow-hidden border-l border-r',
+            'relative z-50 flex h-full min-w-0 flex-shrink-0 flex-col overflow-hidden',
             'transition-[width] duration-200 ease-in-out',
-            isOpen ? 'w-[288px]' : 'w-0',
+            isOpen ? 'w-[288px] border-l border-r' : 'w-[0px]',
             styles.panel,
             className,
           )}
@@ -86,7 +86,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             {conversations.length === 0 ? (
               <p
                 className={mergeClasses(
-                  'px-4 py-6 text-center text-sm',
+                  'flex h-full items-center justify-center gap-2 px-4 py-6 text-center text-sm',
                   styles.itemDate,
                 )}
               >
