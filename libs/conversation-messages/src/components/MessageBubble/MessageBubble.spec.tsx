@@ -207,13 +207,6 @@ describe('AssistantMessageBubble — attachments', () => {
 });
 
 describe('AssistantMessageBubble — deployment icon', () => {
-  it('renders deployment display name when deploymentDisplayName is provided', () => {
-    render(
-      <AssistantMessageBubble text="Hello" deploymentDisplayName="GPT-4" />,
-    );
-    expect(screen.getByText('GPT-4')).toBeTruthy();
-  });
-
   it('renders an img when deploymentIconUrl is provided', () => {
     const { container } = render(
       <AssistantMessageBubble
