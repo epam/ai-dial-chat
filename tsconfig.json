@@ -10,9 +10,6 @@
       "path": "./apps/chat"
     },
     {
-      "path": "./libs/conversation-panel"
-    },
-    {
       "path": "./libs/conversation-input"
     },
     {
@@ -20,6 +17,15 @@
     },
     {
       "path": "./libs/conversation-messages"
+    },
+    {
+      "path": "./libs/chat-api-client"
+    },
+    {
+      "path": "./libs/sidebar"
+    },
+    {
+      "path": "./libs/conversation-stages"
     }
   ]
 }

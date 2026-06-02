@@ -1,11 +1,12 @@
-import { ProviderInfo } from '@epam/chat-shared';
+import type { ProviderInfoDto } from '@epam/chat-api-client';
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useUser } from '../../context/auth/UserContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
-import { ApiEndpoints, get } from '../../server-api/base';
+import { getProviders } from '../../server-api/auth.api';
 
+// TODO: change styles, add app logo, etc.
 const LoginPage = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
@@ -14,30 +15,33 @@ const LoginPage = () => {
   useUser(); // subscribes to auth state so useAuthRedirect can redirect authenticated users away from /login
   useAuthRedirect();
 
-  const [providers, setProviders] = useState<ProviderInfo[] | null>(null);
-  const [error, setError] = useState(false);
+  const [providers, setProviders] = useState<ProviderInfoDto[] | null>(null);
+  const [hasError, setHasError] = useState(false);
 
-  const loadProviders = useCallback(async (signal: { cancelled: boolean }) => {
-    try {
-      const data = await get<ProviderInfo[]>(ApiEndpoints.AUTH_PROVIDERS);
-      if (!signal.cancelled) setProviders(data);
-    } catch (err) {
-      if (!signal.cancelled) {
-        console.error(err);
-        setError(true);
+  const loadProviders = useCallback(
+    async (signal: { isCancelled: boolean }) => {
+      try {
+        const data = await getProviders();
+        if (!signal.isCancelled) setProviders(data);
+      } catch (err) {
+        if (!signal.isCancelled) {
+          console.error(err);
+          setHasError(true);
+        }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
-    const signal = { cancelled: false };
+    const signal = { isCancelled: false };
     loadProviders(signal);
     return () => {
-      signal.cancelled = true;
+      signal.isCancelled = true;
     };
   }, [loadProviders]);
 
-  if (error) {
+  if (hasError) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p>{t('auth.providersError')}</p>

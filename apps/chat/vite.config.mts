@@ -24,13 +24,29 @@ export default defineConfig(() => ({
   plugins: [react(), svgr()],
   resolve: {
     alias: {
-      '@epam/conversation-input': path.resolve(
+      '@epam/ai-dial-chat-shared': path.resolve(
+        __dirname,
+        '../../libs/chat-shared/src/index.ts',
+      ),
+      '@epam/ai-dial-conversation-input': path.resolve(
         __dirname,
         '../../libs/conversation-input/src/index.ts',
       ),
-      '@epam/conversation-messages': path.resolve(
+      '@epam/ai-dial-conversation-messages': path.resolve(
         __dirname,
         '../../libs/conversation-messages/src/index.ts',
+      ),
+      '@epam/ai-dial-conversation-stages': path.resolve(
+        __dirname,
+        '../../libs/conversation-stages/src/index.ts',
+      ),
+      '@epam/chat-api-client': path.resolve(
+        __dirname,
+        '../../libs/chat-api-client/src/index.ts',
+      ),
+      '@epam/ai-dial-sidebar': path.resolve(
+        __dirname,
+        '../../libs/sidebar/src/index.ts',
       ),
     },
   },
@@ -40,6 +56,19 @@ export default defineConfig(() => ({
     reportCompressedSize: true,
     commonjsOptions: {
       transformMixedEsModules: true,
+    },
+    rollupOptions: {
+      output: {
+        manualChunks: (id) => {
+          if (id.includes('classnames') || id.includes('tailwind-merge'))
+            return 'vendor-utils';
+          if (id.includes('@tabler/icons-react'))
+            return 'tabler-icons';
+          if (id.includes('@epam/ai-dial-ui-kit'))
+            return 'ui-kit';
+          return undefined;
+        },
+      },
     },
   },
   test: {

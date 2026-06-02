@@ -1,0 +1,1176 @@
+/* tslint:disable */
+/* eslint-disable */
+/**
+ *
+ * @export
+ * @interface ApplicationDto
+ */
+export interface ApplicationDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  object: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  displayVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ApplicationDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof ApplicationDto
+   */
+  maxInputAttachments?: number;
+}
+/**
+ *
+ * @export
+ * @interface ApplicationsResponseDto
+ */
+export interface ApplicationsResponseDto {
+  /**
+   *
+   * @type {Array<ApplicationDto>}
+   * @memberof ApplicationsResponseDto
+   */
+  data: Array<ApplicationDto>;
+}
+/**
+ *
+ * @export
+ * @interface AttachmentDto
+ */
+export interface AttachmentDto {
+  /**
+   * Zero-based position in the list
+   * @type {number}
+   * @memberof AttachmentDto
+   */
+  index?: number;
+  /**
+   * MIME type of the attachment
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  type: string;
+  /**
+   * Display name of the attachment
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  title: string;
+  /**
+   * Inline base-64 encoded content
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  data?: string;
+  /**
+   * Remote URL of the attachment content
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  url?: string;
+  /**
+   * MIME type of the reference resource
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  referenceType?: string;
+  /**
+   * URL of the reference resource
+   * @type {string}
+   * @memberof AttachmentDto
+   */
+  referenceUrl?: string;
+}
+/**
+ *
+ * @export
+ * @interface ChatCompletionChoiceDto
+ */
+export interface ChatCompletionChoiceDto {
+  /**
+   *
+   * @type {number}
+   * @memberof ChatCompletionChoiceDto
+   */
+  index: number;
+  /**
+   *
+   * @type {ChatCompletionChoiceDtoMessage}
+   * @memberof ChatCompletionChoiceDto
+   */
+  message: ChatCompletionChoiceDtoMessage;
+}
+/**
+ *
+ * @export
+ * @interface ChatCompletionChoiceDtoMessage
+ */
+export interface ChatCompletionChoiceDtoMessage {
+  /**
+   *
+   * @type {string}
+   * @memberof ChatCompletionChoiceDtoMessage
+   */
+  role?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ChatCompletionChoiceDtoMessage
+   */
+  content?: string;
+}
+/**
+ *
+ * @export
+ * @interface ChatCompletionDto
+ */
+export interface ChatCompletionDto {
+  /**
+   * Ordered chat messages to send to DIAL Core
+   * @type {Array<MessageDto>}
+   * @memberof ChatCompletionDto
+   */
+  messages: Array<MessageDto>;
+  /**
+   * Sampling temperature
+   * @type {number}
+   * @memberof ChatCompletionDto
+   */
+  temperature?: number;
+  /**
+   * Maximum number of tokens to generate
+   * @type {number}
+   * @memberof ChatCompletionDto
+   */
+  maxTokens?: number;
+}
+/**
+ *
+ * @export
+ * @interface ChatCompletionResponseDto
+ */
+export interface ChatCompletionResponseDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ChatCompletionResponseDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ChatCompletionResponseDto
+   */
+  object: string;
+  /**
+   *
+   * @type {Array<ChatCompletionChoiceDto>}
+   * @memberof ChatCompletionResponseDto
+   */
+  choices: Array<ChatCompletionChoiceDto>;
+}
+/**
+ *
+ * @export
+ * @interface Check200Response
+ */
+export interface Check200Response {
+  /**
+   * Health status
+   * @type {string}
+   * @memberof Check200Response
+   */
+  status?: string;
+  /**
+   * Current server time in ISO format
+   * @type {string}
+   * @memberof Check200Response
+   */
+  timestamp?: string;
+  /**
+   * Application version
+   * @type {string}
+   * @memberof Check200Response
+   */
+  version?: string;
+}
+/**
+ *
+ * @export
+ * @interface ConversationMessageDto
+ */
+export interface ConversationMessageDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  role: ConversationMessageDtoRoleEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  content: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  timestamp: string;
+}
+
+/**
+ * @export
+ */
+export const ConversationMessageDtoRoleEnum = {
+  User: 'user',
+  Assistant: 'assistant',
+} as const;
+export type ConversationMessageDtoRoleEnum =
+  (typeof ConversationMessageDtoRoleEnum)[keyof typeof ConversationMessageDtoRoleEnum];
+
+/**
+ *
+ * @export
+ * @interface ConversationMetadataDto
+ */
+export interface ConversationMetadataDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  author?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  parentPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  bucket: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  url: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  nodeType: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  resourceType: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMetadataDto
+   */
+  etag?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationMetadataDto
+   */
+  createdAt?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationMetadataDto
+   */
+  updatedAt?: number;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ConversationMetadataDto
+   */
+  permissions?: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface ConversationModelDto
+ */
+export interface ConversationModelDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationModelDto
+   */
+  id: string;
+}
+/**
+ *
+ * @export
+ * @interface ConversationResponseDto
+ */
+export interface ConversationResponseDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationResponseDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationResponseDto
+   */
+  folderId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationResponseDto
+   */
+  name: string;
+  /**
+   *
+   * @type {ConversationModelDto}
+   * @memberof ConversationResponseDto
+   */
+  model: ConversationModelDto;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationResponseDto
+   */
+  prompt: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationResponseDto
+   */
+  temperature: number;
+  /**
+   *
+   * @type {Array<ConversationMessageDto>}
+   * @memberof ConversationResponseDto
+   */
+  messages: Array<ConversationMessageDto>;
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationResponseDto
+   */
+  lastActivityDate: number;
+  /**
+   *
+   * @type {number}
+   * @memberof ConversationResponseDto
+   */
+  updatedAt: number;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ConversationResponseDto
+   */
+  selectedAddons: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationResponseDto
+   */
+  assistantModelId: string;
+}
+/**
+ * Permitted scalar/array types for a single form field value.
+ * @export
+ */
+export type MessageFormValueType = number | string | boolean | string[];
+
+/**
+ * Key-value map submitted from a form widget embedded in a message.
+ * @export
+ */
+export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
+
+/**
+ *
+ * @export
+ * @interface MessageCustomContentDto
+ */
+export interface MessageCustomContentDto {
+  /**
+   * @type {Array<AttachmentDto>}
+   * @memberof MessageCustomContentDto
+   */
+  attachments?: Array<AttachmentDto>;
+  /**
+   * Form/button submission value (e.g. { button: 1 })
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  configuration_value?: Record<string, unknown>;
+  /**
+   * Key-value map of form field values submitted via an embedded form widget.
+   * @type {MessageFormValue}
+   * @memberof MessageCustomContentDto
+   */
+  form_value?: MessageFormValue;
+}
+/**
+ *
+ * @export
+ * @interface CreateConversationDto
+ */
+export interface CreateConversationDto {
+  /**
+   * The first message to start the conversation
+   * @type {string}
+   * @memberof CreateConversationDto
+   */
+  firstMessage: string;
+  /**
+   * ID of the catalog item (model or application) to use for this conversation
+   * @type {string}
+   * @memberof CreateConversationDto
+   */
+  deploymentId: string;
+  /**
+   * Extra DIAL payload attached to the first user message
+   * @type {MessageCustomContentDto}
+   * @memberof CreateConversationDto
+   */
+  custom_content?: MessageCustomContentDto;
+}
+/**
+ *
+ * @export
+ * @interface DeploymentItemDto
+ */
+export interface DeploymentItemDto {
+  /**
+   * Unique stable identifier from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  id: string;
+  /**
+   * Display name, falls back to id when absent
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  displayName: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  type: DeploymentItemDtoTypeEnum;
+  /**
+   * Icon URL from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  iconUrl?: string;
+  /**
+   * Description from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  description?: string;
+  /**
+   * Interface types supported by this deployment
+   * @type {Array<string>}
+   * @memberof DeploymentItemDto
+   */
+  interfaces?: Array<string>;
+}
+
+/**
+ * @export
+ */
+export const DeploymentItemDtoTypeEnum = {
+  Model: 'model',
+  Application: 'application',
+  Toolset: 'toolset',
+} as const;
+export type DeploymentItemDtoTypeEnum =
+  (typeof DeploymentItemDtoTypeEnum)[keyof typeof DeploymentItemDtoTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface DeploymentsResponseDto
+ */
+export interface DeploymentsResponseDto {
+  /**
+   *
+   * @type {Array<DeploymentItemDto>}
+   * @memberof DeploymentsResponseDto
+   */
+  deployments: Array<DeploymentItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface DialModelCapabilitiesDto
+ */
+export interface DialModelCapabilitiesDto {
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialModelCapabilitiesDto
+   */
+  scaleTypes?: Array<string>;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelCapabilitiesDto
+   */
+  completion?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelCapabilitiesDto
+   */
+  chatCompletion?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelCapabilitiesDto
+   */
+  embeddings?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelCapabilitiesDto
+   */
+  fineTune?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelCapabilitiesDto
+   */
+  inference?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface DialModelDto
+ */
+export interface DialModelDto {
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  object: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  model?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  displayVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  owner?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  status?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelDto
+   */
+  createdAt?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelDto
+   */
+  updatedAt?: number;
+  /**
+   *
+   * @type {DialModelFeaturesDto}
+   * @memberof DialModelDto
+   */
+  features?: DialModelFeaturesDto;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialModelDto
+   */
+  inputAttachmentTypes?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelDto
+   */
+  maxInputAttachments?: number;
+  /**
+   *
+   * @type {{ [key: string]: unknown }}
+   * @memberof DialModelDto
+   */
+  defaults?: { [key: string]: unknown };
+  /**
+   *
+   * @type {{ [key: string]: unknown }}
+   * @memberof DialModelDto
+   */
+  responsesDefaults?: { [key: string]: unknown };
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialModelDto
+   */
+  descriptionKeywords?: Array<string>;
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelDto
+   */
+  maxRetryAttempts?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  lifecycleStatus?: string;
+  /**
+   *
+   * @type {DialModelCapabilitiesDto}
+   * @memberof DialModelDto
+   */
+  capabilities?: DialModelCapabilitiesDto;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelDto
+   */
+  tokenizerModel?: string;
+  /**
+   *
+   * @type {DialModelLimitsDto}
+   * @memberof DialModelDto
+   */
+  limits?: DialModelLimitsDto;
+  /**
+   *
+   * @type {DialModelPricingDto}
+   * @memberof DialModelDto
+   */
+  pricing?: DialModelPricingDto;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialModelDto
+   */
+  interfaces?: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface DialModelFeaturesDto
+ */
+export interface DialModelFeaturesDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  rate?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  tokenize?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  truncatePrompt?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  _configuration?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  systemPrompt?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  tools?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  seed?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  urlAttachments?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  folderAttachments?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  allowResume?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  accessibleByPerRequestKey?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  contentParts?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  temperature?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  cache?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  autoCaching?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  parallelToolCalls?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  assistantAttachmentsInRequest?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  mcp?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface DialModelLimitsDto
+ */
+export interface DialModelLimitsDto {
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelLimitsDto
+   */
+  maxPromptTokens?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof DialModelLimitsDto
+   */
+  maxCompletionTokens?: number;
+}
+/**
+ *
+ * @export
+ * @interface DialModelListResponseDto
+ */
+export interface DialModelListResponseDto {
+  /**
+   *
+   * @type {Array<DialModelDto>}
+   * @memberof DialModelListResponseDto
+   */
+  data: Array<DialModelDto>;
+}
+/**
+ *
+ * @export
+ * @interface DialModelPricingDto
+ */
+export interface DialModelPricingDto {
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelPricingDto
+   */
+  unit?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelPricingDto
+   */
+  prompt?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialModelPricingDto
+   */
+  completion?: string;
+}
+/**
+ *
+ * @export
+ * @interface FileUploadResponseDto
+ */
+export interface FileUploadResponseDto {
+  /**
+   * DIAL Core URL of the uploaded file
+   * @type {string}
+   * @memberof FileUploadResponseDto
+   */
+  url: string;
+}
+/**
+ *
+ * @export
+ * @interface MessageDto
+ */
+export interface MessageDto {
+  /**
+   * Unique message identifier
+   * @type {string}
+   * @memberof MessageDto
+   */
+  id?: string;
+  /**
+   * Message author role
+   * @type {string}
+   * @memberof MessageDto
+   */
+  role: MessageDtoRoleEnum;
+  /**
+   * Message text content
+   * @type {string}
+   * @memberof MessageDto
+   */
+  content: string;
+  /**
+   * ISO-8601 timestamp of when the message was created
+   * @type {string}
+   * @memberof MessageDto
+   */
+  timestamp?: string;
+  /**
+   * Extra DIAL payload attached to the message
+   * @type {MessageCustomContentDto}
+   * @memberof MessageDto
+   */
+  custom_content?: MessageCustomContentDto;
+}
+
+/**
+ * @export
+ */
+export const MessageDtoRoleEnum = {
+  System: 'system',
+  User: 'user',
+  Assistant: 'assistant',
+} as const;
+export type MessageDtoRoleEnum =
+  (typeof MessageDtoRoleEnum)[keyof typeof MessageDtoRoleEnum];
+
+/**
+ *
+ * @export
+ * @interface ProviderInfoDto
+ */
+export interface ProviderInfoDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderInfoDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ProviderInfoDto
+   */
+  label: string;
+}
+/**
+ *
+ * @export
+ * @interface RateMessageDto
+ */
+export interface RateMessageDto {
+  /**
+   * Identifier of the conversation being rated
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  conversationId: string;
+  /**
+   * Identifier of the assistant response message being rated
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  responseId: string;
+  /**
+   * Model deployment ID that produced the response
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  modelId: string;
+  /**
+   * Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.
+   * @type {number}
+   * @memberof RateMessageDto
+   */
+  rate: RateMessageDtoRateEnum;
+  /**
+   * Optional free-text comment from the user
+   * @type {string}
+   * @memberof RateMessageDto
+   */
+  comment?: string;
+}
+
+/**
+ * @export
+ */
+export const RateMessageDtoRateEnum = {
+  NUMBER_1: 1,
+  NUMBER_MINUS_1: -1,
+} as const;
+export type RateMessageDtoRateEnum =
+  (typeof RateMessageDtoRateEnum)[keyof typeof RateMessageDtoRateEnum];
+
+/**
+ *
+ * @export
+ * @interface SaveConversationBodyDto
+ */
+export interface SaveConversationBodyDto {
+  /**
+   * Full conversation object to persist
+   * @type {ConversationResponseDto}
+   * @memberof SaveConversationBodyDto
+   */
+  conversation: ConversationResponseDto;
+}
+/**
+ *
+ * @export
+ * @interface SendCompletionDto
+ */
+export interface SendCompletionDto {
+  /**
+   * Conversation path (uuid__name). May contain slashes.
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  path: string;
+  /**
+   * The new user message to send
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  message: string;
+  /**
+   * DIAL Core deployment name to use for completion
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  model: string;
+  /**
+   * Extra DIAL payload attached to the user message
+   * @type {MessageCustomContentDto}
+   * @memberof SendCompletionDto
+   */
+  custom_content?: MessageCustomContentDto;
+}
+/**
+ *
+ * @export
+ * @interface ThemeConfigResponseDto
+ */
+export interface ThemeConfigResponseDto {
+  /**
+   *
+   * @type {Array<ThemeDto>}
+   * @memberof ThemeConfigResponseDto
+   */
+  themes: Array<ThemeDto>;
+}
+/**
+ *
+ * @export
+ * @interface ThemeDto
+ */
+export interface ThemeDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeDto
+   */
+  icon?: string;
+}
+/**
+ *
+ * @export
+ * @interface UserProfileDto
+ */
+export interface UserProfileDto {
+  /**
+   *
+   * @type {string}
+   * @memberof UserProfileDto
+   */
+  sub: string;
+  /**
+   *
+   * @type {string}
+   * @memberof UserProfileDto
+   */
+  providerId: string;
+  /**
+   *
+   * @type {{ [key: string]: unknown }}
+   * @memberof UserProfileDto
+   */
+  claims: { [key: string]: unknown };
+  /**
+   *
+   * @type {string}
+   * @memberof UserProfileDto
+   */
+  bucket: string;
+}

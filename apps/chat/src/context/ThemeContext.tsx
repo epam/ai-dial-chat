@@ -1,4 +1,4 @@
-import { Theme, ThemeConfiguration } from '@epam/chat-shared';
+import { Theme, ThemeConfiguration } from '@epam/ai-dial-chat-shared';
 import {
   createContext,
   ReactNode,
@@ -8,7 +8,7 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useFavicon } from '../hooks/useFavicon';
+import { useFavicon } from '../hooks/favicon/useFavicon';
 import { ApiEndpoints, get } from '../server-api/base';
 import { applyThemeColors } from '../utils/apply-theme-colors';
 import { getFromLocalStorage } from '../utils/local-storage';
@@ -48,18 +48,29 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     if (!config) {
-      setIsLoading(true);
+      let cancelled = false;
 
-      get<ThemeConfiguration>(ApiEndpoints.THEMES)
-        .then((data) => {
+      const loadThemeConfiguration = async () => {
+        setIsLoading(true);
+
+        try {
+          const data = await get<ThemeConfiguration>(ApiEndpoints.THEMES);
+          if (cancelled) return;
           setConfig(data);
-        })
-        .catch((err) => {
+        } catch (err) {
           console.error('Failed to fetch theme configuration:', err);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
+        } finally {
+          if (!cancelled) {
+            setIsLoading(false);
+          }
+        }
+      };
+
+      loadThemeConfiguration();
+
+      return () => {
+        cancelled = true;
+      };
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

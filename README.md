@@ -1,4 +1,4 @@
-# Chat 2.0
+# AI DIAL Chat
 
 A modern full-stack chat application built with Nx monorepo, featuring a React frontend and NestJS backend with DIAL Core integration.
 
@@ -21,7 +21,7 @@ A modern full-stack chat application built with Nx monorepo, featuring a React f
 
 ## Overview
 
-Chat 2.0 is a comprehensive chat application platform featuring:
+AI DIAL Chat is a comprehensive chat application platform featuring:
 
 - **Frontend**: Modern React application with TypeScript, Vite, and Tailwind CSS
 - **Backend**: NestJS REST API with Swagger documentation
@@ -33,26 +33,26 @@ Chat 2.0 is a comprehensive chat application platform featuring:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                   Chat 2.0                      │
+│                   AI DIAL Chat                  │
 ├─────────────────────────────────────────────────┤
 │                                                 │
-│  ┌─────────────────┐      ┌─────────────────┐ │
-│  │   React App     │◄────►│   NestJS API    │ │
-│  │   (Port 4207)   │      │   (Port 3005)   │ │
-│  │                 │      │                 │ │
-│  │  - Vite         │      │  - REST API     │ │
-│  │  - Tailwind     │      │  - Swagger      │ │
-│  │  - i18next      │      │  - Static Files │ │
-│  │  - React Router │      │  - DIAL Core    │ │
-│  └─────────────────┘      └─────────────────┘ │
-│         │                         │            │
-│         └─────────┬───────────────┘            │
-│                   │                            │
-│          ┌────────▼────────┐                   │
-│          │  Shared Libs    │                   │
-│          │  - UI Components│                   │
-│          │  - Utilities    │                   │
-│          └─────────────────┘                   │
+│  ┌─────────────────┐      ┌─────────────────┐   │
+│  │   React App     │◄────►│   NestJS API    │   │
+│  │   (Port 4207)   │      │   (Port 3005)   │   │
+│  │                 │      │                 │   │
+│  │  - Vite         │      │  - REST API     │   │
+│  │  - Tailwind     │      │  - Swagger      │   │
+│  │  - i18next      │      │  - Static Files │   │
+│  │  - React Router │      │  - DIAL Core    │   │
+│  └─────────────────┘      └─────────────────┘   │
+│         │                         │             │
+│         └─────────┬───────────────┘             │
+│                   │                             │
+│          ┌────────▼────────┐                    │
+│          │  Shared Libs    │                    │
+│          │  - UI Components│                    │
+│          │  - Utilities    │                    │
+│          └─────────────────┘                    │
 │                                                 │
 └─────────────────────────────────────────────────┘
 ```
@@ -60,7 +60,7 @@ Chat 2.0 is a comprehensive chat application platform featuring:
 ## Prerequisites
 
 - **Node.js**: 24 or higher
-- **npm**: v9 or higher (or pnpm)
+- **npm**: v9 or higher
 - **Git**: Latest version
 
 ## Quick Start
@@ -146,8 +146,7 @@ ai-dial-chat/
 │       └── README.md            # Backend docs
 │
 ├── libs/
-│   ├── conversation-input/      # Chat input component library
-│   └── conversation-panel/      # Chat panel component library
+│   └── conversation-input/      # Chat input component library
 │
 ├── .claude/                     # Claude Code configuration
 ├── nx.json                      # Nx configuration

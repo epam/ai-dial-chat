@@ -46,6 +46,8 @@ Build in thin vertical slices — implement one piece, test it, verify it, then 
 
 **Scope discipline:** touch only what the task requires. No drive-by cleanup, refactors in untouched files, or "small useful" features outside the spec. Note follow-ups instead of doing them in the same increment.
 
+**Library isolation:** before editing hand-authored `libs/*`, identify every host/external boundary involved. Libraries must not know REST paths, `/api` URLs, generated API clients, `apps/chat/src/server-api`, app contexts, auth/session/cookies, environment variables, feature flags, routing/navigation, analytics/telemetry, logging transports, persistence/storage keys or schemas, deployment/tenant/provider details, third-party SDK setup, platform bridges, or app-specific URL schemes. Put those details in an app-level adapter and pass resolved values or behavior into the lib through props, callbacks, or narrow interfaces. `libs/chat-api-client` is the generated OpenAPI-client exception; update it via OpenAPI generation scripts, not hand-authored app behavior.
+
 **One thing at a time:** one logical change per increment; do not mix unrelated refactors with features.
 
 **Keep it compilable:** after each increment, the repo should build and existing tests should pass for the scope you are responsible for.
@@ -59,6 +61,8 @@ Build in thin vertical slices — implement one piece, test it, verify it, then 
 After each increment:
 
 - [ ] The change does one thing and completes it
+- [ ] If hand-authored `libs/*` changed, host/external integration knowledge stayed outside the lib boundary
+- [ ] If `libs/chat-api-client` changed, it was regenerated from OpenAPI sources rather than manually edited
 - [ ] Tests pass for the Nx project(s) you changed (`npx nx test <project>`)
 - [ ] Lint passes for touched projects (`npx nx lint <project>` or affected lint)
 - [ ] Build passes when your slice affects build output (`npx nx build <project>`)
@@ -69,13 +73,13 @@ Do not re-run the same command twice in a row without code changes in between.
 
 ## Common rationalizations
 
-| Rationalization | Reality |
-| --- | --- |
-| "I'll test at the end" | Bugs compound; early slices invalidate later work. |
-| "Faster to do it all at once" | Breaks are harder to localize in huge diffs. |
-| "Too small to commit separately" | Small commits are cheap; large ones hide bugs. |
-| "I'll add the feature flag later" | Incomplete work should not be user-visible by accident. |
-| "Small refactor in the same change" | Mixing refactor and feature hurts review and bisect. |
+| Rationalization                     | Reality                                                 |
+| ----------------------------------- | ------------------------------------------------------- |
+| "I'll test at the end"              | Bugs compound; early slices invalidate later work.      |
+| "Faster to do it all at once"       | Breaks are harder to localize in huge diffs.            |
+| "Too small to commit separately"    | Small commits are cheap; large ones hide bugs.          |
+| "I'll add the feature flag later"   | Incomplete work should not be user-visible by accident. |
+| "Small refactor in the same change" | Mixing refactor and feature hurts review and bisect.    |
 
 ## Red flags
 

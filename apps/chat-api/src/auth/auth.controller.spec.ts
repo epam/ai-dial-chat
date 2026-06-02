@@ -12,6 +12,7 @@ import { CompactEncrypt } from 'jose';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { AuthController } from './auth.controller';
+import { BucketService } from './bucket/bucket.service';
 import { KeysService } from './keys/keys.service';
 import { ProviderRegistryService } from './providers/provider-registry.service';
 import { RefreshService } from './refresh/refresh.service';
@@ -50,6 +51,12 @@ const MOCK_REFRESH_SERVICE = {
   refresh: vi.fn(),
 };
 
+const MOCK_BUCKET_SERVICE = {
+  getUserBucket: vi.fn().mockResolvedValue({ bucket: 'test-bucket' }),
+};
+
+let providerConfigOverride: Record<string, unknown> = {};
+
 async function buildApp(): Promise<INestApplication> {
   const keysServiceMock: Partial<KeysService> = {
     activeKey: ACTIVE_KEY,
@@ -85,6 +92,7 @@ async function buildApp(): Promise<INestApplication> {
           scope: 'openid email profile',
           rolesClaim: 'roles',
           postLogoutRedirectUri: 'https://app.example.com',
+          ...providerConfigOverride,
         },
       };
     }),
@@ -109,6 +117,7 @@ async function buildApp(): Promise<INestApplication> {
       { provide: ProviderRegistryService, useValue: registryMock },
       { provide: ConfigService, useValue: configMock },
       { provide: RefreshService, useValue: MOCK_REFRESH_SERVICE },
+      { provide: BucketService, useValue: MOCK_BUCKET_SERVICE },
       { provide: APP_GUARD, useClass: SessionGuard },
     ],
   }).compile();
@@ -167,16 +176,18 @@ const sampleSession: SessionPayload = {
 };
 
 describe('AuthController (integration)', () => {
-  let app: INestApplication;
+  let app: INestApplication | undefined;
 
   beforeEach(async () => {
+    providerConfigOverride = {};
     app = await buildApp();
   });
 
   afterEach(async () => {
     vi.clearAllMocks();
     MOCK_REFRESH_SERVICE.refresh.mockReset();
-    await app.close();
+    await app?.close();
+    app = undefined;
   });
 
   describe('GET /api/v1/auth/providers', () => {
@@ -212,6 +223,22 @@ describe('AuthController (integration)', () => {
         .expect(302);
 
       expect(res.headers.location).toContain('keycloak.example.com');
+    });
+
+    it('passes provider audience to authorization request when configured', async () => {
+      await app?.close();
+      providerConfigOverride = { audience: 'https://dial-core.example.com' };
+      app = await buildApp();
+
+      await request(app.getHttpServer())
+        .get('/api/v1/auth/login/keycloak')
+        .expect(302);
+
+      expect(MOCK_CLIENT.authorizationUrl).toHaveBeenCalledWith(
+        expect.objectContaining({
+          audience: 'https://dial-core.example.com',
+        }),
+      );
     });
 
     it('returns 400 for unsafe callbackUrl query', async () => {
@@ -495,7 +522,10 @@ describe('AuthController (integration)', () => {
         c.startsWith(COOKIE_NAME),
       );
       expect(sessCookieHeader).toBeDefined();
-      const cookieValue = sessCookieHeader!.split(';')[0].split('=')[1];
+      if (!sessCookieHeader) {
+        throw new Error('Expected session cookie header to be present');
+      }
+      const cookieValue = sessCookieHeader.split(';')[0].split('=')[1];
       const payload = await app.get(SessionService).decrypt(cookieValue);
 
       expect(payload.claims['email']).toBe('u@example.com');

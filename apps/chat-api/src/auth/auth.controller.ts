@@ -16,14 +16,20 @@ import { ConfigService } from '@nestjs/config';
 import {
   ApiCookieAuth,
   ApiOperation,
+  ApiParam,
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
-import { generators } from 'openid-client';
+import { generators, type AuthorizationParameters } from 'openid-client';
 import { Public } from '../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../config/environment.config';
+import {
+  ProviderInfoDto,
+  UserProfileDto,
+} from '../openapi/openapi-response.dto';
+import { BucketService } from './bucket/bucket.service';
 import {
   clearCookieValue,
   getCookieOptions,
@@ -49,6 +55,7 @@ export class AuthController {
     private readonly registry: ProviderRegistryService,
     private readonly session: SessionService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
+    private readonly bucketService: BucketService,
   ) {}
 
   private isOriginAllowed(origin: string): boolean {
@@ -75,7 +82,11 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 30, ttl: 60000 } })
   @ApiOperation({ summary: 'List configured identity providers' })
-  @ApiResponse({ status: 200, description: 'Array of provider descriptors' })
+  @ApiResponse({
+    status: 200,
+    description: 'Array of provider descriptors',
+    type: [ProviderInfoDto],
+  })
   listProviders() {
     return this.registry.listProviders();
   }
@@ -84,6 +95,12 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'Start OIDC login flow' })
+  @ApiParam({
+    name: 'providerId',
+    description: 'Configured identity provider ID',
+    type: String,
+    example: 'local',
+  })
   @ApiResponse({ status: 302, description: 'Redirect to identity provider' })
   @ApiResponse({ status: 400, description: 'Unsafe callback URL' })
   @ApiResponse({ status: 404, description: 'Unknown provider' })
@@ -92,6 +109,9 @@ export class AuthController {
     @Query() query: LoginQueryDto,
     @Res() res: Response,
   ): Promise<void> {
+    this.logger.debug(
+      `login() start providerId=${params.providerId} callbackUrl=${query.callbackUrl ?? 'none'}`,
+    );
     const { client, config: providerConfig } = this.registry.getProvider(
       params.providerId,
     );
@@ -111,14 +131,17 @@ export class AuthController {
       corsOrigin,
     });
 
-    const authUrl = client.authorizationUrl({
+    const authorizationParams: AuthorizationParameters = {
       redirect_uri: redirectUri,
       scope: providerConfig.scope,
       state,
       nonce,
       code_challenge: codeChallenge,
       code_challenge_method: 'S256',
-    });
+      ...(providerConfig.audience ? { audience: providerConfig.audience } : {}),
+    };
+
+    const authUrl = client.authorizationUrl(authorizationParams);
 
     const txPayload = {
       state,
@@ -139,8 +162,12 @@ export class AuthController {
       iat: Math.floor(Date.now() / 1000),
       csrf: randomUUID(),
       claims: {},
+      bucket: '',
     });
 
+    this.logger.debug(
+      `login() redirecting to IdP redirectUri=${redirectUri} authUrl=${authUrl}`,
+    );
     res.cookie(getTransactionCookieName(this.config), txToken, {
       ...getCookieOptions(this.config),
       maxAge: 600 * 1000,
@@ -152,6 +179,12 @@ export class AuthController {
   @Public()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({ summary: 'OIDC authorization callback' })
+  @ApiParam({
+    name: 'providerId',
+    description: 'Configured identity provider ID',
+    type: String,
+    example: 'local',
+  })
   @ApiResponse({ status: 302, description: 'Redirect to app after login' })
   @ApiResponse({
     status: 400,
@@ -164,6 +197,7 @@ export class AuthController {
     @Req() req: Request,
     @Res() res: Response,
   ): Promise<void> {
+    this.logger.debug(`callback() start providerId=${params.providerId}`);
     if (query.error) {
       this.logger.warn(
         `IdP returned error for provider=${params.providerId}: ${query.error} - ${query.error_description ?? 'no description'}`,
@@ -235,6 +269,9 @@ export class AuthController {
       corsOrigin,
     });
 
+    this.logger.debug(
+      `callback() exchanging code for tokens redirectUri=${redirectUri}`,
+    );
     let tokenSet;
     try {
       const params2 = client.callbackParams(req);
@@ -247,6 +284,9 @@ export class AuthController {
       this.logger.error('Token exchange failed', err);
       throw new BadGatewayException('Token exchange failed');
     }
+    this.logger.debug(
+      `callback() token exchange succeeded sub=${tokenSet.claims().sub} at_exp=${tokenSet.expires_at ?? 'none'}`,
+    );
 
     const claims = tokenSet.claims();
     const now = Math.floor(Date.now() / 1000);
@@ -277,12 +317,23 @@ export class AuthController {
       filteredClaims[rolesClaim] = allClaims[rolesClaim];
     }
 
+    const accessToken = tokenSet.access_token ?? '';
+    let bucket = '';
+    try {
+      ({ bucket } = await this.bucketService.getUserBucket(accessToken));
+    } catch (err) {
+      this.logger.warn(
+        'Bucket fetch failed during callback — will retry on first authenticated request',
+        err,
+      );
+    }
+
     const payload: SessionPayload = {
       v: 1,
       sid: randomUUID(),
       providerId: params.providerId,
       sub: claims.sub,
-      at: tokenSet.access_token ?? '',
+      at: accessToken,
       rt: tokenSet.refresh_token ?? '',
       it: tokenSet.id_token,
       at_exp: tokenSet.expires_at ?? now + 3600,
@@ -292,7 +343,12 @@ export class AuthController {
       iat: now,
       csrf: randomUUID(),
       claims: filteredClaims,
+      bucket,
     };
+
+    this.logger.debug(
+      `callback() session created sid=${payload.sid} sub=${payload.sub} bucket=${payload.bucket || 'empty'} providerId=${payload.providerId}`,
+    );
 
     const sessionToken = await this.session.encrypt(payload);
     const cookieName = getSessionCookieName(this.config);
@@ -312,6 +368,9 @@ export class AuthController {
       maxAge: 0,
     });
 
+    this.logger.debug(
+      `callback() done, redirecting to callbackUrl=${callbackUrl}`,
+    );
     res.redirect(callbackUrl);
   }
 
@@ -321,6 +380,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Log out and clear session cookie' })
   @ApiResponse({ status: 302, description: 'Redirect after logout' })
   async logout(@Req() req: Request, @Res() res: Response): Promise<void> {
+    this.logger.debug('logout() start');
     // Protect against CSRF logout even though this route is @Public().
     // Native HTML form POSTs always carry an Origin header the browser sets.
     const origin = req.headers['origin'];
@@ -328,6 +388,9 @@ export class AuthController {
     const candidate =
       origin ?? (referer ? new URL(referer as string).origin : undefined);
     if (!candidate || !this.isOriginAllowed(candidate)) {
+      this.logger.debug(
+        `logout() blocked: origin check failed candidate=${candidate ?? 'none'}`,
+      );
       throw new ForbiddenException('Origin check failed');
     }
 
@@ -363,8 +426,12 @@ export class AuthController {
         const revocationEndpoint =
           client.issuer.metadata['revocation_endpoint'];
         if (revocationEndpoint && payload.rt) {
+          this.logger.debug(
+            `logout() revoking token for sub=${payload.sub} providerId=${payload.providerId}`,
+          );
           try {
             await client.revoke(payload.rt);
+            this.logger.debug('logout() token revocation succeeded');
           } catch (err) {
             this.logger.warn('Token revocation failed (non-fatal)', err);
           }
@@ -380,6 +447,9 @@ export class AuthController {
       }
     }
 
+    this.logger.debug(
+      `logout() done, redirecting to endSessionUrl=${endSessionUrl ?? '/'}`,
+    );
     res.redirect(endSessionUrl ?? '/');
   }
 
@@ -387,15 +457,23 @@ export class AuthController {
   @ApiCookieAuth('session')
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'Current user profile' })
+  @ApiResponse({
+    status: 200,
+    description: 'Current user profile',
+    type: UserProfileDto,
+  })
   @ApiResponse({ status: 401, description: 'No valid session' })
-  me(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
+  getCurrentUser(
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
     const user = req.user as SessionUser;
     res.setHeader('X-CSRF-Token', user.csrf);
     return {
       sub: user.sub,
       providerId: user.providerId,
       claims: user.claims,
+      bucket: user.bucket,
     };
   }
 }

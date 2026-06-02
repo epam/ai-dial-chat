@@ -22,10 +22,14 @@ Use this skill to perform structured, source-grounded research before implementa
    - What problem are we solving?
    - What constraints matter (time, compatibility, infra, security, performance)?
    - What is explicitly out of scope?
+   - If hand-authored `libs/*` may be involved, what host/external integration knowledge must stay outside the lib?
+   - If `libs/chat-api-client` may be involved, is this a generated OpenAPI-client update?
 
 2. **Map options**
    - Produce 2-4 realistic options (not one obvious answer)
    - Include a conservative baseline option
+   - Prefer options where apps adapt external interfaces and libs receive props, callbacks,
+     resolved values, or narrow interfaces instead of knowing transport details
 
 3. **Gather evidence**
    - Use authoritative sources first (official docs, standards, mature references)
@@ -52,6 +56,11 @@ When delivering research, provide:
 - **Comparison:** pros/cons/risks table
 - **Recommendation:** chosen option and rationale
 - **Execution draft:** first increments and verification plan
+- **Library boundary:** for any touched hand-authored `libs/*`, where host/external concerns live
+  (API, routes/navigation, auth/session, storage, feature flags, analytics/telemetry, SDKs,
+  platform bridges, download/upload URL construction, etc.) and what contract the lib receives
+  For `libs/chat-api-client`, state that it is the generated OpenAPI-client exception and how it
+  will be regenerated/verified.
 - **Open questions:** what must be decided before implementation
 
 ## Quality Bar
@@ -60,6 +69,12 @@ When delivering research, provide:
 - No "best practice" claims without concrete evidence
 - Avoid one-sided analysis; include meaningful alternatives
 - Keep recommendations actionable for this repo's Nx setup
+- Do not recommend putting host-owned integration details into hand-authored `libs/*`: REST paths,
+  generated clients, server-api wrappers, app contexts, auth/session/cookie/env access, feature
+  flags, route/navigation knowledge, analytics/telemetry/logging clients, deployment/tenant/
+  provider details, third-party SDK setup, platform bridges, app-specific URL schemes, or storage
+  keys/schemas. `libs/chat-api-client` is the generated OpenAPI-client exception and should be
+  changed by regenerating from OpenAPI sources.
 
 ## Verification Checklist
 
@@ -68,3 +83,5 @@ When delivering research, provide:
 - [ ] Risks and rollback strategy are described
 - [ ] Recommendation is concrete and justified
 - [ ] Next implementation slices are proposed
+- [ ] If hand-authored libs are involved, the app/lib integration boundary is explicit and isolated
+- [ ] If `libs/chat-api-client` is involved, the OpenAPI generation and verification path is explicit

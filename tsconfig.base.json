@@ -18,10 +18,14 @@
     "target": "es2022",
     "customConditions": ["@epam/source"],
     "paths": {
-      "@/*": ["apps/chat/*"],
-      "@epam/conversation-input/*": ["./libs/conversation-input/*"],
-      "@epam/conversation-messages/*": ["./libs/conversation-messages/*"],
-      "@epam/chat-shared/*": ["./libs/chat-shared/*"]
+      "@/*": ["./apps/chat/*"],
+      "@epam/ai-dial-conversation-input/*": ["./libs/conversation-input/*"],
+      "@epam/ai-dial-conversation-messages/*": [
+        "./libs/conversation-messages/*"
+      ],
+      "@epam/ai-dial-chat-shared/*": ["./libs/chat-shared/*"],
+      "@epam/ai-dial-sidebar/*": ["./libs/sidebar/*"],
+      "@epam/ai-dial-conversation-stages/*": ["./libs/conversation-stages/*"]
     }
   }
 }

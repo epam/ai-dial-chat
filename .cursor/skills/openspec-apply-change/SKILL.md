@@ -58,6 +58,19 @@ Implement tasks from an OpenSpec change.
    - **spec-driven**: proposal, specs, design, tasks
    - Other schemas: follow the contextFiles from CLI output
 
+   If the context changes HTTP API behavior, read `.agents/skills/api-design/SKILL.md`
+   before implementation. If the context touches `apps/chat-api/**`, also read
+   `.agents/skills/nestjs-chat-api/SKILL.md` and `apps/chat-api/AGENTS.md`.
+
+   **HTTP API preflight:** before implementing any change that adds or modifies a
+   business endpoint, inspect the design/tasks for generated-client coverage. The
+   tasks must include Swagger/OpenAPI annotation work, `npm run openapi`,
+   `npm run openapi:check`, `chat-api-client` build/lint, and frontend
+   `apps/chat/src/server-api/` wrappers that delegate to `@epam/chat-api-client`.
+   If any of these are missing, pause before coding and propose updating the
+   OpenSpec artifacts. Do not silently implement new frontend REST calls with
+   `base.ts` get/post/put/del unless the design documents a generated-client gap.
+
 5. **Show current progress**
 
    Display:
@@ -146,6 +159,8 @@ What would you like to do?
 - Always read context files before starting (from the apply instructions output)
 - If task is ambiguous, pause and ask before implementing
 - If implementation reveals issues, pause and suggest artifact updates
+- If HTTP API tasks omit OpenAPI generation or generated `chat-api-client`
+  frontend usage, pause and suggest artifact updates before implementing
 - Keep code changes minimal and scoped to each task
 - Update task checkbox immediately after completing each task
 - Pause on errors, blockers, or unclear requirements - don't guess

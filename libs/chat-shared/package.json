@@ -1,8 +1,8 @@
 {
-  "name": "@epam/chat-shared",
+  "name": "@epam/ai-dial-chat-shared",
   "version": "0.0.1",
   "private": true,
-  "type": "module",
+  "license": "Apache-2.0",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,9 +11,24 @@
     ".": {
       "@epam/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
+  },
+  "nx": {
+    "targets": {
+      "build": {
+        "outputs": [
+          "{projectRoot}/dist/index.js",
+          "{projectRoot}/dist/**/*.{js,cjs,mjs,jsx,d.ts,d.cts,d.mts}{,.map}",
+          "{projectRoot}/dist/tsconfig.lib.tsbuildinfo"
+        ]
+      }
+    }
+  },
+  "peerDependencies": {
+    "react": "^19.2.6"
   },
   "dependencies": {
     "tslib": "^2.3.0",

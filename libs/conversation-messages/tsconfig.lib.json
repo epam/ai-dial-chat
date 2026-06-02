@@ -1,9 +1,9 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "rootDir": "src",
     "outDir": "../../dist/libs/conversation-messages",
+    "tsBuildInfoFile": "../../dist/libs/conversation-messages/tsconfig.lib.tsbuildinfo",
 
     "jsx": "react-jsx",
 
@@ -22,7 +22,20 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "src/**/*.test.ts",
+    "src/**/*.spec.ts",
+    "src/**/*.test.tsx",
+    "src/**/*.spec.tsx",
+    "src/**/*.test.js",
+    "src/**/*.spec.js",
+    "src/**/*.test.jsx",
+    "src/**/*.spec.jsx"
+  ],
   "references": [
+    {
+      "path": "../conversation-input/tsconfig.lib.json"
+    },
     {
       "path": "../chat-shared/tsconfig.lib.json"
     }

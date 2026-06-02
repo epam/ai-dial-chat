@@ -1,9 +1,14 @@
 import { randomUUID } from 'crypto';
-import { ExecutionContext, UnauthorizedException } from '@nestjs/common';
+import {
+  ExecutionContext,
+  UnauthorizedException,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Reflector } from '@nestjs/core';
 import { Test } from '@nestjs/testing';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { BucketService } from '../../bucket/bucket.service';
 import { RefreshService } from '../../refresh/refresh.service';
 import { SessionGuard } from '../session.guard';
 import { SessionService } from '../session.service';
@@ -25,6 +30,7 @@ function makePayload(overrides?: Partial<SessionPayload>): SessionPayload {
     iat: now,
     csrf: randomUUID(),
     claims: {},
+    bucket: 'user-bucket',
     ...overrides,
   };
 }
@@ -32,13 +38,16 @@ function makePayload(overrides?: Partial<SessionPayload>): SessionPayload {
 function makeContext(opts: { cookieValue?: string; isPublic?: boolean }): {
   context: ExecutionContext;
   req: Record<string, unknown>;
-  res: { cookie: ReturnType<typeof vi.fn> };
+  res: {
+    cookie: ReturnType<typeof vi.fn>;
+    setHeader: ReturnType<typeof vi.fn>;
+  };
 } {
   const req: Record<string, unknown> = {
     cookies: opts.cookieValue ? { [COOKIE_NAME]: opts.cookieValue } : {},
     user: undefined,
   };
-  const res = { cookie: vi.fn() };
+  const res = { cookie: vi.fn(), setHeader: vi.fn() };
   const context = {
     switchToHttp: () => ({
       getRequest: () => req,
@@ -57,6 +66,7 @@ describe('SessionGuard', () => {
     encrypt: ReturnType<typeof vi.fn>;
   };
   let refreshService: { refresh: ReturnType<typeof vi.fn> };
+  let bucketService: { getUserBucket: ReturnType<typeof vi.fn> };
   let reflector: { getAllAndOverride: ReturnType<typeof vi.fn> };
 
   beforeEach(async () => {
@@ -65,6 +75,7 @@ describe('SessionGuard', () => {
       encrypt: vi.fn().mockResolvedValue('new-encrypted-token'),
     };
     refreshService = { refresh: vi.fn() };
+    bucketService = { getUserBucket: vi.fn() };
     reflector = { getAllAndOverride: vi.fn().mockReturnValue(false) };
 
     const module = await Test.createTestingModule({
@@ -72,6 +83,7 @@ describe('SessionGuard', () => {
         SessionGuard,
         { provide: SessionService, useValue: sessionService },
         { provide: RefreshService, useValue: refreshService },
+        { provide: BucketService, useValue: bucketService },
         { provide: Reflector, useValue: reflector },
         {
           provide: ConfigService,
@@ -145,5 +157,51 @@ describe('SessionGuard', () => {
         sameSite: 'lax',
       }),
     );
+  });
+
+  describe('lazy bucket resolution', () => {
+    it('fetches bucket and updates session cookie when payload.bucket is empty', async () => {
+      const payload = makePayload({ bucket: '' });
+      sessionService.decryptFromRequest.mockResolvedValue(payload);
+      bucketService.getUserBucket.mockResolvedValue({
+        bucket: 'resolved-bucket',
+      });
+
+      const { context, req, res } = makeContext({ cookieValue: 'valid-token' });
+      await expect(guard.canActivate(context)).resolves.toBe(true);
+
+      expect(bucketService.getUserBucket).toHaveBeenCalledWith('access-token');
+      expect(sessionService.encrypt).toHaveBeenCalledWith(
+        expect.objectContaining({ bucket: 'resolved-bucket' }),
+      );
+      expect(res.cookie).toHaveBeenCalledWith(
+        COOKIE_NAME,
+        'new-encrypted-token',
+        expect.objectContaining({ httpOnly: true }),
+      );
+      expect((req.user as { bucket: string }).bucket).toBe('resolved-bucket');
+    });
+
+    it('throws ServiceUnavailableException when bucket fetch fails', async () => {
+      const payload = makePayload({ bucket: '' });
+      sessionService.decryptFromRequest.mockResolvedValue(payload);
+      bucketService.getUserBucket.mockRejectedValue(
+        new Error('DIAL Core down'),
+      );
+
+      const { context } = makeContext({ cookieValue: 'valid-token' });
+      await expect(guard.canActivate(context)).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+    });
+
+    it('skips bucket fetch when payload already has a bucket', async () => {
+      const payload = makePayload({ bucket: 'existing-bucket' });
+      sessionService.decryptFromRequest.mockResolvedValue(payload);
+
+      const { context } = makeContext({ cookieValue: 'valid-token' });
+      await expect(guard.canActivate(context)).resolves.toBe(true);
+      expect(bucketService.getUserBucket).not.toHaveBeenCalled();
+    });
   });
 });

@@ -59,7 +59,7 @@ interface ThemeConfiguration {
   images: {
     'chat-logo-dark'?: string;
     'chat-logo-light'?: string;
-    'chat-favicon'?: string;  // NEW: Favicon URL
+    'chat-favicon'?: string; // NEW: Favicon URL
     [key: string]: string | undefined;
   };
 }
@@ -119,7 +119,6 @@ export const useFavicon = (faviconUrl?: string) => {
       // Keep existing favicon (fallback behavior)
     };
     img.src = urlWithCache;
-
   }, [faviconUrl]);
 };
 ```
@@ -223,16 +222,17 @@ Access-Control-Allow-Methods: GET
 
 ### Supported Browsers
 
-| Browser | Support | Notes |
-|---------|---------|-------|
-| Chrome 90+ | ✅ Full | Dynamic link.href updates work well |
+| Browser     | Support | Notes                               |
+| ----------- | ------- | ----------------------------------- |
+| Chrome 90+  | ✅ Full | Dynamic link.href updates work well |
 | Firefox 88+ | ✅ Full | Dynamic link.href updates work well |
-| Safari 14+ | ✅ Full | May need cache-busting |
-| Edge 90+ | ✅ Full | Chromium-based, same as Chrome |
+| Safari 14+  | ✅ Full | May need cache-busting              |
+| Edge 90+    | ✅ Full | Chromium-based, same as Chrome      |
 
 ### Fallback Behavior
 
 All browsers will gracefully fall back to the default favicon if:
+
 - Theme doesn't provide favicon URL
 - Favicon URL fails to load
 - CORS prevents loading
@@ -247,10 +247,12 @@ const urlWithCache = `${faviconUrl}?v=${Date.now()}`;
 ```
 
 **Pros**:
+
 - Forces browser to load new favicon when theme changes
 - Prevents stale favicon after theme switch
 
 **Cons**:
+
 - Bypasses browser cache, re-downloads on every theme change
 
 **Alternative**: Use theme ID as cache key instead of timestamp
@@ -281,19 +283,21 @@ Update CSP to allow favicon from theme CDN:
 
 ```typescript
 // In apps/chat-api/src/main.ts
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      imgSrc: [
-        "'self'",
-        "data:",
-        "https:",  // Allow HTTPS images including favicons
-      ],
-      // ... other directives ...
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        imgSrc: [
+          "'self'",
+          'data:',
+          'https:', // Allow HTTPS images including favicons
+        ],
+        // ... other directives ...
+      },
     },
-  },
-}));
+  }),
+);
 ```
 
 ### URL Validation
@@ -374,6 +378,7 @@ console.debug('No favicon URL in theme config, using default');
 ### Metrics (Future)
 
 Could track:
+
 - Favicon load success/failure rate
 - Favicon load time
 - Themes with/without custom favicons
@@ -381,23 +386,27 @@ Could track:
 ## Migration Strategy
 
 ### Phase 1: Implementation (Week 1)
+
 - Add useFavicon hook
 - Integrate with ThemeContext
 - Add default favicon to public folder
 - Update CSP headers
 
 ### Phase 2: Testing (Week 1)
+
 - Unit tests for useFavicon
 - Integration tests with ThemeContext
 - Manual browser testing
 - Document favicon specifications
 
 ### Phase 3: Documentation (Week 1)
+
 - Update theme API documentation
 - Create favicon design guidelines (32x32 PNG)
 - Add example theme configurations
 
 ### Phase 4: Rollout (Week 2)
+
 - Deploy to development environment
 - Test with existing themes (all should use default)
 - Add custom favicons to themes gradually

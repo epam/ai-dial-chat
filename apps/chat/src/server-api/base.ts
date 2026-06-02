@@ -1,8 +1,8 @@
 export enum ApiEndpoints {
   THEMES = '/api/themes',
   THEME_ICON = '/api/themes/icon',
-  AUTH_ME = '/api/v1/auth/me',
-  AUTH_PROVIDERS = '/api/v1/auth/providers',
+  CONVERSATIONS = '/api/v1/conversations',
+  MODELS = '/api/v1/models',
   AUTH_LOGOUT = '/api/v1/auth/logout',
 }
 
@@ -23,7 +23,11 @@ export const onUnauthorized = (
   return () => listeners.delete(listener);
 };
 
-type RequestMethod = 'GET' | 'POST' | 'PUT';
+export const notifyUnauthorized = (url: string): void => {
+  listeners.forEach((l) => l(url));
+};
+
+type RequestMethod = 'GET' | 'POST' | 'PUT' | 'DELETE';
 
 type RequestOptions = Omit<RequestInit, 'method' | 'body'> & {
   body?: unknown;
@@ -34,6 +38,7 @@ let _csrfToken: string | null = null;
 export const setCsrfToken = (token: string | null): void => {
   _csrfToken = token;
 };
+export const getCsrfToken = (): string | null => _csrfToken;
 
 // Type guard for validating response structure
 export const isValidResponse = <T>(
@@ -102,13 +107,22 @@ const request = async <TResponse>(
     body: body == null ? undefined : isFormData ? body : JSON.stringify(body),
   });
 
+  const rotatedCsrf = response.headers.get('x-csrf-token');
+  if (rotatedCsrf) _csrfToken = rotatedCsrf;
+
   if (!response.ok) {
     if (response.status === 401) {
       listeners.forEach((l) => l(url));
       throw new UnauthorizedError(url);
     }
+    let errorBody = '';
+    try {
+      errorBody = await response.text();
+    } catch {
+      errorBody = '';
+    }
     throw new Error(
-      `Request failed with status ${response.status} for ${method} ${url}`,
+      `Request failed with status ${response.status} for ${method} ${url}: ${errorBody}`,
     );
   }
 
@@ -132,3 +146,8 @@ export const put = <TResponse>(
   body?: unknown,
   options?: RequestOptions,
 ) => request<TResponse>(url, 'PUT', { ...options, body });
+
+export const del = <TResponse = void>(
+  url: string,
+  options?: Omit<RequestOptions, 'body'>,
+) => request<TResponse>(url, 'DELETE', options);

@@ -1,9 +1,17 @@
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
-import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
+import { SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { AppModule } from './app/app.module';
+import {
+  createOpenApiConfig,
+  openApiDocumentOptions,
+} from './openapi/openapi.config';
+
+declare const module: {
+  hot?: { accept: () => void; dispose: (cb: () => void) => void };
+};
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,7 +26,12 @@ async function bootstrap() {
       contentSecurityPolicy: {
         directives: {
           defaultSrc: ["'self'"],
-          styleSrc: ["'self'", "'unsafe-inline'"],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",
+            'https://fonts.googleapis.com',
+          ],
+          fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           scriptSrc: ["'self'"],
           imgSrc: ["'self'", 'data:', 'https:'],
         },
@@ -54,27 +67,20 @@ async function bootstrap() {
   );
 
   if (process.env['NODE_ENV'] !== 'production') {
-    const config = new DocumentBuilder()
-      .setTitle('Chat API')
-      .setDescription(
-        'REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. ' +
-          'All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.',
-      )
-      .setVersion('1.0.0')
-      .addServer(`http://localhost:${port}`, 'Local development')
-      .addTag('health', 'Health check and application status')
-      .addTag('themes', 'Theme configuration and icon management')
-      .addTag('auth', 'Authentication and session management')
-      .addTag('deployments', 'List and inspect available AI DIAL deployments')
-      .addTag('chat', 'Chat completion proxy to DIAL Core')
-      .addCookieAuth('session')
-      .build();
-
-    const document = SwaggerModule.createDocument(app, config);
+    const document = SwaggerModule.createDocument(
+      app,
+      createOpenApiConfig(port),
+      openApiDocumentOptions,
+    );
     SwaggerModule.setup('api/docs', app, document);
     Logger.log(
       `📚 Swagger documentation available at: http://localhost:${port}/api/docs`,
     );
+  }
+
+  if (module.hot) {
+    module.hot.accept();
+    module.hot.dispose(() => app.close());
   }
 }
 

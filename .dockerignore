@@ -8,3 +8,6 @@ dist
 .env.local
 .git
 docs
+.nx
+openspec
+*.md

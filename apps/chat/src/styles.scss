@@ -6,6 +6,8 @@
   html,
   body,
   #root {
-    @apply bg-layer-1 text-primary size-full;
+    @apply size-full bg-layer-1 text-primary;
+    font-family: 'Inter', sans-serif;
+    --theme-font: 'Inter', sans-serif;
   }
 }

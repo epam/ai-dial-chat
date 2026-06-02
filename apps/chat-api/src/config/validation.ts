@@ -19,5 +19,10 @@ export function validate(config: Record<string, unknown>) {
     );
   }
 
+  console.info(
+    '[Config] Environment validated. DIAL_CORE_URL=%s',
+    validatedConfig.DIAL_CORE_URL,
+  );
+
   return validatedConfig;
 }

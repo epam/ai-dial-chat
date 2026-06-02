@@ -16,3 +16,6 @@ build
 package-lock.json
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
+.nx/self-healing
+.github/workflows/*.md
+openspec

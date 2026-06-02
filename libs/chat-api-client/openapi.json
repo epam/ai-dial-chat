@@ -1,0 +1,1836 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/themes": {
+      "get": {
+        "description": "Fetches the complete theme configuration from the external themes service. Returns a JSON object containing all available themes with their properties, colors, and icon references. Results are cached for 5 minutes.",
+        "operationId": "getThemes",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved theme configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeConfigResponseDto"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Theme configuration not found on the external service"
+          },
+          "502": {
+            "description": "External theme service returned an error response"
+          },
+          "503": {
+            "description": "Theme service is unavailable or request timed out"
+          }
+        },
+        "summary": "Get themes configuration",
+        "tags": ["themes"]
+      }
+    },
+    "/api/themes/icon": {
+      "get": {
+        "description": "Fetches a theme icon as SVG or PNG content from the external themes service. The icon name is validated to prevent path traversal attacks - only alphanumeric characters, dashes, underscores, and dots are allowed. Results are cached for 5 minutes.",
+        "operationId": "getThemeIcon",
+        "parameters": [
+          {
+            "name": "iconName",
+            "required": true,
+            "in": "query",
+            "description": "Icon filename (alphanumeric, dash, underscore, and dot only)",
+            "schema": {
+              "example": "icon-light.svg",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved icon content",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string"
+                },
+                "example": "<svg xmlns=\"http://www.w3.org/2000/svg\"><circle r=\"10\"/></svg>"
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid icon name (validation failed or path traversal attempt)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "statusCode": 400,
+                    "message": [
+                      "Icon name must contain only alphanumeric characters, dash, underscore, and dot"
+                    ],
+                    "error": "Bad Request"
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Icon not found on the external service"
+          },
+          "502": {
+            "description": "External theme service returned an error response"
+          },
+          "503": {
+            "description": "Theme service is unavailable or request timed out"
+          }
+        },
+        "summary": "Get theme icon",
+        "tags": ["themes"]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "description": "Returns a simple health check response indicating the application is running. Use this endpoint for load balancer health checks, monitoring, and deployment verification.",
+        "operationId": "check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Application is healthy and responding",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok",
+                      "description": "Health status"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "example": "2026-05-07T20:00:00.000Z",
+                      "description": "Current server time in ISO format"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "1.0.0",
+                      "description": "Application version"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "Check application health status",
+        "tags": ["health"]
+      }
+    },
+    "/api/v1/auth/providers": {
+      "get": {
+        "operationId": "listProviders",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Array of provider descriptors",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ProviderInfoDto"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "summary": "List configured identity providers",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/login/{providerId}": {
+      "get": {
+        "operationId": "login",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "description": "Configured identity provider ID",
+            "schema": {
+              "example": "local",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to identity provider"
+          },
+          "400": {
+            "description": "Unsafe callback URL"
+          },
+          "404": {
+            "description": "Unknown provider"
+          }
+        },
+        "summary": "Start OIDC login flow",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/callback/{providerId}": {
+      "get": {
+        "operationId": "callback",
+        "parameters": [
+          {
+            "name": "providerId",
+            "required": true,
+            "in": "path",
+            "description": "Configured identity provider ID",
+            "schema": {
+              "example": "local",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to app after login"
+          },
+          "400": {
+            "description": "State mismatch or missing tx cookie"
+          },
+          "502": {
+            "description": "Token exchange failed"
+          }
+        },
+        "summary": "OIDC authorization callback",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "parameters": [],
+        "responses": {
+          "302": {
+            "description": "Redirect after logout"
+          }
+        },
+        "summary": "Log out and clear session cookie",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "getCurrentUser",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Current user profile",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserProfileDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No valid session"
+          }
+        },
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "summary": "Get current user profile",
+        "tags": ["auth"]
+      }
+    },
+    "/api/v1/applications": {
+      "get": {
+        "description": "Returns the list of DIAL Core applications visible to the authenticated session user. Proxies GET /openai/applications using the caller's session access token. Results are cached server-side for 30 seconds per user.",
+        "operationId": "listApplications",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved application list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to list applications"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List available applications",
+        "tags": ["applications"]
+      }
+    },
+    "/api/v1/deployments": {
+      "get": {
+        "operationId": "listDeployments",
+        "parameters": [
+          {
+            "name": "interface_type",
+            "required": false,
+            "in": "query",
+            "description": "Filter by interface type (repeatable)",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": ["chat", "embeddings", "mcp", "custom_ui", "all"]
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentsResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameter"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List deployments by interface type",
+        "tags": ["deployments"]
+      }
+    },
+    "/api/v1/deployments/{deployment}/configuration": {
+      "get": {
+        "description": "Returns the JSON Schema of configuration supported by the deployment. Only available for deployments whose `features.configuration` flag is `true`. Results are cached server-side for 60 seconds per user.",
+        "operationId": "getDeploymentConfiguration",
+        "parameters": [
+          {
+            "name": "deployment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "JSON Schema configuration object",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Deployment does not support configuration"
+          },
+          "502": {
+            "description": "Unexpected response from DIAL Core"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Get JSON Schema configuration for a deployment",
+        "tags": ["deployments"]
+      }
+    },
+    "/api/v1/models": {
+      "get": {
+        "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Results are cached server-side for 30 seconds per user.",
+        "operationId": "listModels",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved model list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DialModelListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to list models"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List available models",
+        "tags": ["models"]
+      }
+    },
+    "/api/v1/models/{modelName}": {
+      "get": {
+        "description": "Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller's session access token. Results are cached server-side for 60 seconds per user per model.",
+        "operationId": "getModel",
+        "parameters": [
+          {
+            "name": "modelName",
+            "required": true,
+            "in": "path",
+            "description": "Model name (alphanumeric, dash, underscore, dot, colon, at-sign, and slash only)",
+            "schema": {
+              "example": "gpt-4o",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved model",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DialModelDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid model name — disallowed characters"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to access this model"
+          },
+          "404": {
+            "description": "Model not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get model by name",
+        "tags": ["models"]
+      }
+    },
+    "/api/chat/completions/{deployment}": {
+      "post": {
+        "operationId": "sendCompletion",
+        "parameters": [
+          {
+            "name": "deployment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatCompletionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Chat completion response from DIAL Core",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatCompletionResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "404": {
+            "description": "Deployment not found"
+          },
+          "502": {
+            "description": "Unexpected response from DIAL Core"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Send a chat completion request to DIAL Core",
+        "tags": ["chat"]
+      }
+    },
+    "/api/v1/conversations": {
+      "post": {
+        "description": "Creates a new conversation with an initial user message and returns it with a server-assigned ID.",
+        "operationId": "createConversation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateConversationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Conversation created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body — firstMessage or deploymentId missing or out of range"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        },
+        "summary": "Create a new conversation",
+        "tags": ["conversations"]
+      },
+      "get": {
+        "operationId": "getConversation",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "Get a conversation by path",
+        "tags": ["conversations"]
+      },
+      "put": {
+        "operationId": "saveConversation",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveConversationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversation saved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid path or body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "Save (overwrite) a conversation by path",
+        "tags": ["conversations"]
+      },
+      "delete": {
+        "operationId": "deleteConversation",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Conversation deleted"
+          },
+          "400": {
+            "description": "Missing or invalid path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "Delete a conversation by path",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/metadata": {
+      "get": {
+        "operationId": "getConversationMetadata",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "type": "string"
+            }
+          },
+          {
+            "name": "permissions",
+            "required": false,
+            "in": "query",
+            "description": "Include READ/WRITE/SHARE permissions for the requesting user",
+            "schema": {
+              "example": true,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Conversation metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationMetadataDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "Get metadata for a conversation",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/completions": {
+      "post": {
+        "description": "Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.",
+        "operationId": "streamCompletion",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendCompletionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream of completion chunks"
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Insufficient permissions on conversation"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "Stream a chat completion",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/files": {
+      "post": {
+        "operationId": "uploadFile",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "required": ["file", "bucket", "path"],
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "bucket": {
+                    "type": "string"
+                  },
+                  "path": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileUploadResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket or path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "413": {
+            "description": "Payload too large"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/download": {
+      "get": {
+        "operationId": "downloadFile",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "File path within the bucket (no leading slash, no ..)",
+            "schema": {
+              "example": "folder/file.pdf",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Binary file content",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket or path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "File not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/rate": {
+      "post": {
+        "description": "Forwards a like/dislike rating for an assistant message to DIAL Core. Uses the authenticated session's access token as a Bearer credential.",
+        "operationId": "rateMessage",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RateMessageDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Rating accepted — no content returned"
+          },
+          "400": {
+            "description": "Invalid request body — missing or invalid fields"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an unexpected response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or returned a server error"
+          }
+        },
+        "summary": "Rate an assistant message",
+        "tags": ["rate"]
+      }
+    }
+  },
+  "info": {
+    "title": "Chat API",
+    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [
+    {
+      "name": "health",
+      "description": "Health check and application status"
+    },
+    {
+      "name": "themes",
+      "description": "Theme configuration and icon management"
+    },
+    {
+      "name": "auth",
+      "description": "Authentication and session management"
+    },
+    {
+      "name": "chat",
+      "description": "Chat completion proxy to DIAL Core"
+    },
+    {
+      "name": "rate",
+      "description": "Submit assistant message ratings to DIAL Core"
+    },
+    {
+      "name": "deployments",
+      "description": "List deployments available to the authenticated user"
+    }
+  ],
+  "servers": [
+    {
+      "url": "http://localhost:3005",
+      "description": "Local development"
+    }
+  ],
+  "components": {
+    "securitySchemes": {
+      "cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "session"
+      }
+    },
+    "schemas": {
+      "ThemeDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "light"
+          },
+          "name": {
+            "type": "string",
+            "example": "Light Theme"
+          },
+          "icon": {
+            "type": "string",
+            "example": "icon-light.svg"
+          }
+        },
+        "required": ["id", "name"]
+      },
+      "ThemeConfigResponseDto": {
+        "type": "object",
+        "properties": {
+          "themes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ThemeDto"
+            }
+          }
+        },
+        "required": ["themes"]
+      },
+      "ProviderInfoDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "local"
+          },
+          "label": {
+            "type": "string",
+            "example": "Local"
+          }
+        },
+        "required": ["id", "label"]
+      },
+      "UserProfileDto": {
+        "type": "object",
+        "properties": {
+          "sub": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "providerId": {
+            "type": "string",
+            "example": "local"
+          },
+          "claims": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "bucket": {
+            "type": "string",
+            "example": "default-bucket"
+          }
+        },
+        "required": ["sub", "providerId", "claims", "bucket"]
+      },
+      "ApplicationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "my-app"
+          },
+          "object": {
+            "type": "string",
+            "example": "application"
+          },
+          "display_name": {
+            "type": "string",
+            "example": "My App"
+          },
+          "display_version": {
+            "type": "string",
+            "example": "1.0"
+          },
+          "icon_url": {
+            "type": "string",
+            "example": "MyApp.svg"
+          },
+          "description": {
+            "type": "string",
+            "example": "A custom application."
+          },
+          "input_attachment_types": {
+            "example": ["image/png"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "max_input_attachments": {
+            "type": "number",
+            "example": 5
+          }
+        },
+        "required": ["id", "object"]
+      },
+      "ApplicationsResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationDto"
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "DeploymentItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique stable identifier from DIAL Core"
+          },
+          "displayName": {
+            "type": "string",
+            "description": "Display name, falls back to id when absent"
+          },
+          "type": {
+            "type": "string",
+            "enum": ["model", "application", "toolset"]
+          },
+          "iconUrl": {
+            "type": "string",
+            "description": "Icon URL from DIAL Core"
+          },
+          "description": {
+            "type": "string",
+            "description": "Description from DIAL Core"
+          },
+          "interfaces": {
+            "description": "Interface types supported by this deployment",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["id", "displayName", "type"]
+      },
+      "DeploymentsResponseDto": {
+        "type": "object",
+        "properties": {
+          "deployments": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeploymentItemDto"
+            }
+          }
+        },
+        "required": ["deployments"]
+      },
+      "DialModelFeaturesDto": {
+        "type": "object",
+        "properties": {
+          "rate": {
+            "type": "boolean",
+            "example": false
+          },
+          "tokenize": {
+            "type": "boolean",
+            "example": false
+          },
+          "truncate_prompt": {
+            "type": "boolean",
+            "example": false
+          },
+          "configuration": {
+            "type": "boolean",
+            "example": false
+          },
+          "system_prompt": {
+            "type": "boolean",
+            "example": true
+          },
+          "tools": {
+            "type": "boolean",
+            "example": true
+          },
+          "seed": {
+            "type": "boolean",
+            "example": false
+          },
+          "url_attachments": {
+            "type": "boolean",
+            "example": false
+          },
+          "folder_attachments": {
+            "type": "boolean",
+            "example": false
+          },
+          "allow_resume": {
+            "type": "boolean",
+            "example": true
+          },
+          "accessible_by_per_request_key": {
+            "type": "boolean",
+            "example": true
+          },
+          "content_parts": {
+            "type": "boolean",
+            "example": false
+          },
+          "temperature": {
+            "type": "boolean",
+            "example": true
+          },
+          "cache": {
+            "type": "boolean",
+            "example": false
+          },
+          "auto_caching": {
+            "type": "boolean",
+            "example": false
+          },
+          "parallel_tool_calls": {
+            "type": "boolean",
+            "example": true
+          },
+          "assistant_attachments_in_request": {
+            "type": "boolean",
+            "example": true
+          },
+          "mcp": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "DialModelCapabilitiesDto": {
+        "type": "object",
+        "properties": {
+          "scale_types": {
+            "example": ["standard"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "completion": {
+            "type": "boolean",
+            "example": false
+          },
+          "chat_completion": {
+            "type": "boolean",
+            "example": true
+          },
+          "embeddings": {
+            "type": "boolean",
+            "example": false
+          },
+          "fine_tune": {
+            "type": "boolean",
+            "example": false
+          },
+          "inference": {
+            "type": "boolean",
+            "example": false
+          }
+        }
+      },
+      "DialModelLimitsDto": {
+        "type": "object",
+        "properties": {
+          "max_prompt_tokens": {
+            "type": "number",
+            "example": 1048576
+          },
+          "max_completion_tokens": {
+            "type": "number",
+            "example": 65535
+          }
+        }
+      },
+      "DialModelPricingDto": {
+        "type": "object",
+        "properties": {
+          "unit": {
+            "type": "string",
+            "example": "char_without_whitespace"
+          },
+          "prompt": {
+            "type": "string",
+            "example": "0.0000005"
+          },
+          "completion": {
+            "type": "string",
+            "example": "0.000003"
+          }
+        }
+      },
+      "DialModelDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "object": {
+            "type": "string",
+            "example": "model"
+          },
+          "model": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "display_name": {
+            "type": "string",
+            "example": "Gemini 3 Flash"
+          },
+          "display_version": {
+            "type": "string",
+            "example": "test"
+          },
+          "icon_url": {
+            "type": "string",
+            "example": "Gemini.svg"
+          },
+          "description": {
+            "type": "string",
+            "example": "A multimodal model combining reasoning and efficiency."
+          },
+          "reference": {
+            "type": "string",
+            "example": "dial.gemini-3-flash-preview"
+          },
+          "owner": {
+            "type": "string",
+            "example": "organization-owner"
+          },
+          "status": {
+            "type": "string",
+            "example": "succeeded"
+          },
+          "created_at": {
+            "type": "number",
+            "example": 1779372048383
+          },
+          "updated_at": {
+            "type": "number",
+            "example": 1779372138434
+          },
+          "features": {
+            "$ref": "#/components/schemas/DialModelFeaturesDto"
+          },
+          "input_attachment_types": {
+            "example": ["image/png", "application/pdf"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "max_input_attachments": {
+            "type": "number",
+            "example": 5
+          },
+          "defaults": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "responses_defaults": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "description_keywords": {
+            "example": ["Text Generation", "Image Recognition"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "max_retry_attempts": {
+            "type": "number",
+            "example": 1
+          },
+          "lifecycle_status": {
+            "type": "string",
+            "example": "generally-available"
+          },
+          "capabilities": {
+            "$ref": "#/components/schemas/DialModelCapabilitiesDto"
+          },
+          "tokenizer_model": {
+            "type": "string",
+            "example": "gpt-4"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/DialModelLimitsDto"
+          },
+          "pricing": {
+            "$ref": "#/components/schemas/DialModelPricingDto"
+          },
+          "interfaces": {
+            "example": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["id", "object"]
+      },
+      "DialModelListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DialModelDto"
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "MessageDto": {
+        "type": "object",
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "Message author role",
+            "enum": ["system", "user", "assistant"],
+            "example": "user"
+          },
+          "content": {
+            "type": "string",
+            "description": "Message text content",
+            "example": "Hello, how can you help me today?"
+          }
+        },
+        "required": ["role", "content"]
+      },
+      "ChatCompletionDto": {
+        "type": "object",
+        "properties": {
+          "messages": {
+            "description": "Ordered chat messages to send to DIAL Core",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MessageDto"
+            }
+          },
+          "temperature": {
+            "type": "number",
+            "description": "Sampling temperature",
+            "example": 0.7,
+            "minimum": 0,
+            "maximum": 2
+          },
+          "max_tokens": {
+            "type": "number",
+            "description": "Maximum number of tokens to generate",
+            "example": 1024,
+            "minimum": 1
+          }
+        },
+        "required": ["messages"]
+      },
+      "ChatCompletionChoiceDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "example": 0
+          },
+          "message": {
+            "type": "object",
+            "properties": {
+              "role": {
+                "type": "string",
+                "example": "assistant"
+              },
+              "content": {
+                "type": "string",
+                "example": "Hello!"
+              }
+            }
+          }
+        },
+        "required": ["index", "message"]
+      },
+      "ChatCompletionResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "chatcmpl-123"
+          },
+          "object": {
+            "type": "string",
+            "example": "chat.completion"
+          },
+          "choices": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ChatCompletionChoiceDto"
+            }
+          }
+        },
+        "required": ["id", "object", "choices"]
+      },
+      "AttachmentDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Zero-based position in the list"
+          },
+          "type": {
+            "type": "string",
+            "description": "MIME type of the attachment"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display name of the attachment"
+          },
+          "data": {
+            "type": "string",
+            "description": "Inline base-64 encoded content"
+          },
+          "url": {
+            "type": "string",
+            "description": "Remote URL of the attachment content"
+          },
+          "reference_type": {
+            "type": "string",
+            "description": "MIME type of the reference resource"
+          },
+          "reference_url": {
+            "type": "string",
+            "description": "URL of the reference resource"
+          }
+        },
+        "required": ["type", "title"]
+      },
+      "CreateConversationDto": {
+        "type": "object",
+        "properties": {
+          "firstMessage": {
+            "type": "string",
+            "description": "The first message to start the conversation",
+            "example": "Hello, how can you help me today?",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "deploymentId": {
+            "type": "string",
+            "description": "ID of the catalog item (model or application) to use for this conversation",
+            "example": "anthropic.claude-v3-sonnet",
+            "minLength": 1,
+            "maxLength": 256
+          },
+          "attachments": {
+            "description": "DIAL API attachments to include with the first user message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
+          }
+        },
+        "required": ["firstMessage", "deploymentId"]
+      },
+      "ConversationModelDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "anthropic.claude-v3-sonnet"
+          }
+        },
+        "required": ["id"]
+      },
+      "ConversationMessageDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "7c20f2e0-83d9-45aa-9fdc-bf3eb9f16bf8"
+          },
+          "role": {
+            "type": "string",
+            "enum": ["user", "assistant"],
+            "example": "user"
+          },
+          "content": {
+            "type": "string",
+            "example": "Hello!"
+          },
+          "timestamp": {
+            "type": "string",
+            "example": "2026-05-19T16:00:00.000Z"
+          }
+        },
+        "required": ["id", "role", "content", "timestamp"]
+      },
+      "ConversationResponseDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "test-bucket/uuid__Hello"
+          },
+          "folderId": {
+            "type": "string",
+            "example": "test-bucket"
+          },
+          "name": {
+            "type": "string",
+            "example": "Hello"
+          },
+          "model": {
+            "$ref": "#/components/schemas/ConversationModelDto"
+          },
+          "prompt": {
+            "type": "string",
+            "example": ""
+          },
+          "temperature": {
+            "type": "number",
+            "example": 1
+          },
+          "messages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationMessageDto"
+            }
+          },
+          "lastActivityDate": {
+            "type": "number",
+            "example": 1779206400000
+          },
+          "updatedAt": {
+            "type": "number",
+            "example": 1779206400000
+          },
+          "selectedAddons": {
+            "example": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "assistantModelId": {
+            "type": "string",
+            "example": "anthropic.claude-v3-sonnet"
+          }
+        },
+        "required": [
+          "id",
+          "folderId",
+          "name",
+          "model",
+          "prompt",
+          "temperature",
+          "messages",
+          "lastActivityDate",
+          "updatedAt",
+          "selectedAddons",
+          "assistantModelId"
+        ]
+      },
+      "ConversationMetadataDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Hello"
+          },
+          "author": {
+            "type": "string",
+            "example": "user@example.com"
+          },
+          "parentPath": {
+            "type": "string",
+            "example": "test-bucket"
+          },
+          "bucket": {
+            "type": "string",
+            "example": "test-bucket"
+          },
+          "url": {
+            "type": "string",
+            "example": "files/test-bucket/uuid__Hello"
+          },
+          "nodeType": {
+            "type": "string",
+            "example": "ITEM"
+          },
+          "resourceType": {
+            "type": "string",
+            "example": "Conversation"
+          },
+          "etag": {
+            "type": "string",
+            "example": "abc123"
+          },
+          "createdAt": {
+            "type": "number",
+            "example": 1779206400000
+          },
+          "updatedAt": {
+            "type": "number",
+            "example": 1779206400000
+          },
+          "permissions": {
+            "example": ["READ", "WRITE"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "name",
+          "parentPath",
+          "bucket",
+          "url",
+          "nodeType",
+          "resourceType"
+        ]
+      },
+      "SaveConversationBodyDto": {
+        "type": "object",
+        "properties": {
+          "conversation": {
+            "description": "Full conversation object to persist",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ConversationResponseDto"
+              }
+            ]
+          }
+        },
+        "required": ["conversation"]
+      },
+      "SendCompletionDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation"
+          },
+          "message": {
+            "type": "string",
+            "description": "The new user message to send",
+            "example": "What is the capital of France?",
+            "minLength": 1,
+            "maxLength": 4000
+          },
+          "model": {
+            "type": "string",
+            "description": "DIAL Core deployment name to use for completion",
+            "example": "anthropic.claude-v3-sonnet"
+          },
+          "attachments": {
+            "description": "DIAL API attachments to include with the user message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
+          }
+        },
+        "required": ["path", "message", "model"]
+      },
+      "FileUploadResponseDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "DIAL Core URL of the uploaded file",
+            "example": "files/my-bucket/folder/file.pdf"
+          }
+        },
+        "required": ["url"]
+      },
+      "RateMessageDto": {
+        "type": "object",
+        "properties": {
+          "conversationId": {
+            "type": "string",
+            "description": "Identifier of the conversation being rated",
+            "example": "bucket/uuid__name"
+          },
+          "responseId": {
+            "type": "string",
+            "description": "Identifier of the assistant response message being rated",
+            "example": "22222222-2222-2222-2222-222222222222"
+          },
+          "modelId": {
+            "type": "string",
+            "description": "Model deployment ID that produced the response",
+            "example": "anthropic.claude-v3-sonnet"
+          },
+          "rate": {
+            "type": "number",
+            "description": "Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.",
+            "enum": [1, -1]
+          },
+          "comment": {
+            "type": "string",
+            "description": "Optional free-text comment from the user",
+            "example": "The response was too brief"
+          }
+        },
+        "required": ["conversationId", "responseId", "modelId", "rate"]
+      }
+    }
+  }
+}

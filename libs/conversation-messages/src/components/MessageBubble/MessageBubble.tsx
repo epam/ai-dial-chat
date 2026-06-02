@@ -1,32 +1,13 @@
-import { mergeClasses } from '@epam/chat-shared';
+import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import { BubblePosition } from '../../types/bubble-position.js';
+import type { MessageBubbleProps } from '../../models/MessageBubble.js';
+import { AssistantMessageBubble } from './AssistantMessageBubble.js';
+import { UserMessageBubble } from './UserMessageBubble.js';
 
-interface MessageBubbleProps {
-  text: string;
-  position?: BubblePosition;
-  className?: string;
-}
-
-export const MessageBubble: FC<MessageBubbleProps> = ({
-  text,
-  position = BubblePosition.Bottom,
-  className,
-}) => {
-  const positionRadius =
-    position === BubblePosition.Top ? 'rounded-br-[24px]' : 'rounded-tr-[24px]';
-
-  return (
-    <div
-      className={mergeClasses(
-        'bg-layer-4 flex items-center justify-end rounded-bl-[16px] rounded-tl-[16px] px-6 py-4',
-        positionRadius,
-        className,
-      )}
-    >
-      <p className="dial-body-text text-primary text-right">{text}</p>
-    </div>
+export const MessageBubble: FC<MessageBubbleProps> = ({ role, ...props }) => {
+  return role === MessageRole.User ? (
+    <UserMessageBubble {...props} />
+  ) : (
+    <AssistantMessageBubble {...props} />
   );
 };
-
-export default MessageBubble;

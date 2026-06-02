@@ -1,22 +1,153 @@
-import { Injectable } from '@nestjs/common';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Inject, Injectable, Logger } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import type { Cache } from 'cache-manager';
 import { AppService } from '../app/app.service';
-import { handleDialError } from '../common/utils/dial-error';
+import { getBearerAuthHeaders } from '../common/utils/auth-header';
+import {
+  handleDialFetchError,
+  mapDialHttpStatus,
+} from '../common/utils/dial-fetch-error';
+import type { EnvironmentVariables } from '../config/environment.config';
+import type {
+  DeploymentItemDto,
+  DeploymentsResponseDto,
+} from './dto/deployment-item.dto';
+
+type RawDeployment = {
+  id?: string;
+  display_name?: string;
+  object?: string;
+  toolset?: string;
+  icon_url?: string;
+  description?: string;
+  interfaces?: string | string[];
+};
+
+function mapToDeploymentItem(raw: RawDeployment): DeploymentItemDto | null {
+  if (!raw.id) return null;
+
+  let type: 'model' | 'application' | 'toolset';
+  if (raw.toolset !== undefined) {
+    type = 'toolset';
+  } else if (raw.object === 'application') {
+    type = 'application';
+  } else {
+    type = 'model';
+  }
+
+  const interfaces = raw.interfaces
+    ? Array.isArray(raw.interfaces)
+      ? raw.interfaces
+      : [raw.interfaces]
+    : undefined;
+
+  return {
+    id: raw.id,
+    displayName: raw.display_name ?? raw.id,
+    type,
+    iconUrl: raw.icon_url,
+    description: raw.description,
+    interfaces,
+  };
+}
 
 @Injectable()
 export class DeploymentsService extends AppService {
-  async getDeployments() {
-    try {
-      return await this.client.getDeployments();
-    } catch (error) {
-      return handleDialError(error);
-    }
+  private readonly logger = new Logger(DeploymentsService.name);
+
+  constructor(
+    configService: ConfigService<EnvironmentVariables>,
+    @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+  ) {
+    super(configService);
   }
 
-  async getDeployment(name: string) {
+  async listDeployments(
+    userSub: string,
+    accessToken: string,
+    interfaceType?: string[],
+  ): Promise<DeploymentsResponseDto> {
+    const cacheKey = `deployments:list:${userSub}`;
+    const cached = await this.cacheManager.get<DeploymentItemDto[]>(cacheKey);
+
+    let allItems: DeploymentItemDto[];
+    if (cached) {
+      this.logger.debug(`Cache hit for deployments list (sub: ${userSub})`);
+      allItems = cached;
+    } else {
+      try {
+        const result = await this.client.getDeploymentsByInterfaceType({
+          headers: getBearerAuthHeaders(accessToken),
+        });
+        if (result.error) {
+          return mapDialHttpStatus(
+            result.response.status,
+            'list deployments',
+            this.logger,
+          );
+        }
+        const rawData = result.data as unknown;
+        const rawItems = Array.isArray(rawData)
+          ? (rawData as RawDeployment[])
+          : ((rawData as { deployments?: RawDeployment[] }).deployments ?? []);
+        allItems = rawItems
+          .map(mapToDeploymentItem)
+          .filter((item): item is DeploymentItemDto => item !== null);
+        await this.cacheManager.set(cacheKey, allItems, 30_000);
+      } catch (err) {
+        return handleDialFetchError(err, 'list deployments', this.logger, 0);
+      }
+    }
+
+    if (!interfaceType || interfaceType.length === 0) {
+      return { deployments: allItems };
+    }
+
+    const filtered = allItems.filter(
+      (item) =>
+        item.interfaces &&
+        item.interfaces.some((iface) => interfaceType.includes(iface)),
+    );
+    return { deployments: filtered };
+  }
+
+  async getDeploymentConfiguration(
+    name: string,
+    userSub: string,
+    accessToken: string,
+  ): Promise<Record<string, unknown>> {
+    const cacheKey = `deployments:configuration:${userSub}:${name}`;
+    const cached =
+      await this.cacheManager.get<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      this.logger.debug(
+        `Cache hit for deployment configuration "${name}" (sub: ${userSub})`,
+      );
+      return cached;
+    }
+
     try {
-      return await this.client.getDeployment(name);
-    } catch (error) {
-      return handleDialError(error);
+      const result = await this.client.configurationDeployment(name, {
+        headers: getBearerAuthHeaders(accessToken),
+      });
+      if (result.error) {
+        return mapDialHttpStatus(
+          result.response.status,
+          `get deployment configuration "${name}"`,
+          this.logger,
+        );
+      }
+      const data = result.data as Record<string, unknown>;
+      await this.cacheManager.set(cacheKey, data, 60 * 1000);
+      return data;
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        `get deployment configuration "${name}"`,
+        this.logger,
+        0,
+      );
     }
   }
 }

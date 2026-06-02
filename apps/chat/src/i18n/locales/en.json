@@ -1,38 +1,68 @@
 {
   "chat": {
     "welcomeText": "Hello World, good day for prompting!",
-    "placeholder": "Type a new prompt or use '/' to select one",
-    "demoResponse": "This is a demo response. Connect to your API to get real responses.",
-    "user": "User",
-    "assistant": "Assistant"
-  },
-  "accessibility": {
-    "skipToContent": "Skip to main content",
+    "placeholder": "Type a prompt or use '/' to select one",
+    "streamError": "Something went wrong while generating the response.",
+    "deleteMessageTitle": "Confirm deleting message?",
+    "deleteMessageDescription": "Are you sure that you want to delete the message?",
+    "starterConfirmTitle": "Confirm action",
     "conversationMessages": "Conversation messages",
+    "scrollToBottom": "Scroll to bottom",
     "messageInput": "Message input",
     "welcomeScreen": "Welcome screen",
-    "userMessage": "User message",
-    "assistantMessage": "Assistant message",
-    "assistantTyping": "Assistant is typing",
-    "scrollToBottom": "Scroll to bottom of conversation",
-    "copyMessage": "Copy message",
-    "copyUserMessage": "Copy user message",
-    "copyAssistantMessage": "Copy assistant message",
-    "logoLoading": "Logo loading"
-  },
-  "actions": {
-    "copy": "Copy",
-    "send": "Send",
-    "loading": "Loading..."
+    "logo": "Logo",
+    "conversationStarters": "Conversation starters",
+    "sendMessage": "Send message",
+    "stopStreaming": "Stop streaming",
+    "quickReplyButtons": "Quick reply buttons",
+    "stoppedGenerating": "You stopped generating the response"
   },
   "navigation": {
     "ariaLabel": "Main navigation",
     "home": "Home",
-    "catalog": "Catalog"
+    "catalog": "Catalog",
+    "openMenu": "Open navigation menu",
+    "closeMenu": "Close navigation menu"
   },
   "catalog": {
     "ariaLabel": "Catalog",
-    "comingSoon": "Catalog coming soon"
+    "comingSoon": "Catalog coming soon",
+    "loading": "Loading catalog…",
+    "error": "Failed to load catalog. Please try again."
+  },
+  "deployments": {
+    "empty": "No models or applications available.",
+    "type": {
+      "model": "Model",
+      "application": "Application"
+    },
+    "selector": {
+      "ariaLabel": "Select model",
+      "loading": "Loading models…",
+      "error": "Failed to load models",
+      "empty": "No models available",
+      "searchPlaceholder": "Search models",
+      "closeLabel": "Close model selector"
+    }
+  },
+  "actions": {
+    "add": "Add",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "edit": "Edit",
+    "regenerate": "Regenerate",
+    "copy": "Copy",
+    "copied": "Copied!",
+    "like": "Like",
+    "dislike": "Dislike",
+    "editMessage": "Edit message",
+    "deleteMessage": "Delete message",
+    "regenerateResponse": "Regenerate response",
+    "copyResponse": "Copy response",
+    "copyAsMarkdown": "Copy as markdown",
+    "likeResponse": "Like response",
+    "dislikeResponse": "Dislike response"
   },
   "errors": {
     "generic": "Something went wrong",
@@ -41,6 +71,31 @@
     "tryAgain": "Try again",
     "failedToLoadTheme": "Failed to load themes. Using default theme.",
     "failedToLoadLogo": "Failed to load logo"
+  },
+  "conversationInput": {
+    "attach": { "label": "Attach file" },
+    "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
+    "attachmentTray": { "label": "Attached files" }
+  },
+  "sidebar": {
+    "base": {
+      "toggleOpen": "Open sidebar",
+      "toggleClose": "Close sidebar",
+      "close": "Close"
+    },
+    "sources": {
+      "ariaLabel": "Conversation sources",
+      "sections": {
+        "uploadedFiles": "Uploaded Files",
+        "generatedFiles": "Generated Files",
+        "sources": "Sources"
+      },
+      "empty": {
+        "uploadedFiles": "No uploaded files in this conversation.",
+        "generatedFiles": "No generated files in this conversation.",
+        "sources": "No sources available."
+      }
+    }
   },
   "auth": {
     "signOut": "Sign out",

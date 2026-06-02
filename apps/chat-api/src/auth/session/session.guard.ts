@@ -2,6 +2,8 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -9,6 +11,7 @@ import { Reflector } from '@nestjs/core';
 import type { Request, Response } from 'express';
 import { IS_PUBLIC_KEY } from '../../common/decorators/public.decorator';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import { BucketService } from '../bucket/bucket.service';
 import {
   getCookieOptions,
   getSessionCookieName,
@@ -20,9 +23,12 @@ import type { SessionPayload, SessionUser } from './session.types';
 
 @Injectable()
 export class SessionGuard implements CanActivate {
+  private readonly logger = new Logger(SessionGuard.name);
+
   constructor(
     private readonly session: SessionService,
     private readonly refresh: RefreshService,
+    private readonly bucket: BucketService,
     private readonly config: ConfigService<EnvironmentVariables, true>,
     private readonly reflector: Reflector,
   ) {}
@@ -61,6 +67,31 @@ export class SessionGuard implements CanActivate {
         },
         req.cookies as Record<string, string> | undefined,
       );
+      res.setHeader('X-CSRF-Token', payload.csrf);
+    }
+
+    if (!payload.bucket) {
+      try {
+        const { bucket } = await this.bucket.getUserBucket(payload.at);
+        payload = { ...payload, bucket };
+        const newToken = await this.session.encrypt(payload);
+        const cookieName = getSessionCookieName(this.config);
+        setCookieValue(
+          res,
+          cookieName,
+          newToken,
+          {
+            ...getCookieOptions(this.config),
+            maxAge: (payload.rt_exp - Math.floor(Date.now() / 1000)) * 1000,
+          },
+          req.cookies as Record<string, string> | undefined,
+        );
+      } catch (err) {
+        this.logger.error('Lazy bucket resolution failed', err);
+        throw new ServiceUnavailableException(
+          'Unable to resolve user bucket — DIAL Core unavailable',
+        );
+      }
     }
 
     const user: SessionUser = {
@@ -70,6 +101,7 @@ export class SessionGuard implements CanActivate {
       claims: payload.claims,
       at: payload.at,
       csrf: payload.csrf,
+      bucket: payload.bucket,
     };
     req.user = user;
     return true;

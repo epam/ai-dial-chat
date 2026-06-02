@@ -1,126 +1,304 @@
-import { ConversationInput } from '@epam/conversation-input';
-import { MessageBubble } from '@epam/conversation-messages';
-import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
-import { Message as MessageType } from '../../types';
+import {
+  MessageRole,
+  type Attachment,
+  type MessageRating,
+  type Message as MessageType,
+  type StarterOption,
+} from '@epam/ai-dial-chat-shared';
+import { MessageBubble } from '@epam/ai-dial-conversation-messages';
+import { StagesPanel } from '@epam/ai-dial-conversation-stages';
+import { DialFabButton } from '@epam/ai-dial-ui-kit';
+import {
+  FC,
+  lazy,
+  memo,
+  Suspense,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  ActionsI18nKeys,
+  ChatI18nKeys,
+  DeploymentsI18nKeys,
+} from '../../constants/translation-keys.js';
+import { useDeployments } from '../../context/DeploymentsContext.js';
+import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
+import { resolveCatalogIconUrl } from '../../utils/icon-path.js';
+import { messageHasStages } from '../../utils/message-utils.js';
+import { buildMessageActions } from './buildMessageActions.js';
+import {
+  getMessageStarterProps,
+  isStreamingMessage,
+} from './message-display.js';
 
-/**
- * Props for the ConversationView component
- */
+const ConversationInput = lazy(async () => {
+  const module = await import('@epam/ai-dial-conversation-input');
+  return { default: module.ConversationInput };
+});
+
 interface Props {
-  /** Array of messages to display */
   messages: MessageType[];
-  /** Callback when user sends a message */
-  onSend: (message: string) => void;
-  /** Placeholder text for the input field */
+  onSend: (message: string, attachments: Attachment[]) => void;
+  onStop?: () => void;
+  onDeleteMessage?: (messageId: string) => void;
+  onRegenerateMessage?: (messageId: string) => void;
+  onRateMessage?: (messageId: string, rating: MessageRating | null) => void;
+  onAttachmentsChange?: (attachments: Attachment[]) => void;
+  onSelectStarter?: (
+    starter: StarterOption,
+    propertyKey?: string,
+    description?: string,
+  ) => void;
   placeholder: string;
-  /** Whether the assistant is currently typing */
   isAssistantTyping?: boolean;
 }
 
-/**
- * ConversationView component that displays the message list and input.
- * Handles auto-scrolling to bottom, scroll-to-bottom button visibility,
- * and typing indicator for assistant responses.
- */
+const NEAR_BOTTOM_THRESHOLD = 80;
+
 const ConversationView: FC<Props> = ({
   messages,
   onSend,
+  onStop,
+  onDeleteMessage,
+  onRegenerateMessage,
+  onRateMessage,
+  onAttachmentsChange,
+  onSelectStarter,
   placeholder,
   isAssistantTyping = false,
 }) => {
-  const [showScrollButton, setShowScrollButton] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const { t } = useTranslation();
+  const { items, selectedItemId, setSelectedItemId, isLoading, error } =
+    useDeployments();
+  const tooltips = {
+    edit: t(ActionsI18nKeys.Edit),
+    delete: t(ActionsI18nKeys.Delete),
+    regenerate: t(ActionsI18nKeys.Regenerate),
+    copy: t(ActionsI18nKeys.Copy),
+    copied: t(ActionsI18nKeys.Copied),
+    copyMarkdown: t(ActionsI18nKeys.Copy),
+    copiedMarkdown: t(ActionsI18nKeys.Copied),
+    like: t(ActionsI18nKeys.Like),
+    dislike: t(ActionsI18nKeys.Dislike),
+  };
 
-  // Auto-scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  const ariaLabels = {
+    editMessage: t(ActionsI18nKeys.EditMessage),
+    deleteMessage: t(ActionsI18nKeys.DeleteMessage),
+    regenerateResponse: t(ActionsI18nKeys.RegenerateResponse),
+    copyResponse: t(ActionsI18nKeys.CopyResponse),
+    copyAsMarkdown: t(ActionsI18nKeys.CopyAsMarkdown),
+    likeResponse: t(ActionsI18nKeys.LikeResponse),
+    dislikeResponse: t(ActionsI18nKeys.DislikeResponse),
+  };
 
-  // Handle scroll detection to show/hide scroll button
+  const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const endRef = useRef<HTMLDivElement>(null);
+
+  // True when the user has manually scrolled up during a stream.
+  // Pauses auto-scroll until they click the scroll button or send a new message.
+  const userScrolledRef = useRef(false);
+
+  // Prevents the scroll handler from misreading programmatic scrolls as user input.
+  const isProgrammaticRef = useRef(false);
+
+  const scrollToBottom = useCallback((instant = false) => {
+    const container = containerRef.current;
+    if (!container) return;
+    isProgrammaticRef.current = true;
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: instant ? 'instant' : 'smooth',
+    });
+    // Reset flag after the scroll event has fired
+    requestAnimationFrame(() => {
+      isProgrammaticRef.current = false;
+    });
+  }, []);
+
+  // When streaming ends, release user override so the next send auto-scrolls.
   useEffect(() => {
-    const container = messagesContainerRef.current;
+    if (!isAssistantTyping) {
+      userScrolledRef.current = false;
+    }
+  }, [isAssistantTyping]);
+
+  // Scroll on message updates.
+  // During streaming: instant + skip if user scrolled up.
+  // On new turns (non-streaming message count change): always smooth-scroll.
+  const prevLengthRef = useRef(messages.length);
+  useEffect(() => {
+    const lengthChanged = messages.length !== prevLengthRef.current;
+    prevLengthRef.current = messages.length;
+
+    if (isAssistantTyping) {
+      // Token arrived — scroll only if user hasn't overridden
+      if (!userScrolledRef.current) {
+        scrollToBottom(true);
+      }
+    } else if (lengthChanged) {
+      // New user message appended (or conversation loaded) — always scroll
+      userScrolledRef.current = false;
+      scrollToBottom(false);
+    }
+  }, [messages, isAssistantTyping, scrollToBottom]);
+
+  // Scroll listener: detect user scrolling up during stream
+  useEffect(() => {
+    const container = containerRef.current;
     if (!container) return;
 
     const handleScroll = () => {
       const { scrollTop, scrollHeight, clientHeight } = container;
-      const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-      setShowScrollButton(!isNearBottom);
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
+      const isNearBottom = distanceFromBottom < NEAR_BOTTOM_THRESHOLD;
+
+      setIsScrollButtonVisible(!isNearBottom);
+
+      if (isProgrammaticRef.current) return;
+
+      if (isAssistantTyping && !isNearBottom) {
+        userScrolledRef.current = true;
+      } else if (isNearBottom) {
+        userScrolledRef.current = false;
+      }
     };
 
-    container.addEventListener('scroll', handleScroll);
+    container.addEventListener('scroll', handleScroll, { passive: true });
     return () => container.removeEventListener('scroll', handleScroll);
-  }, [messages.length]);
+  }, [isAssistantTyping]);
 
-  const scrollToBottom = useCallback(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, []);
+  const handleScrollToBottom = useCallback(() => {
+    userScrolledRef.current = false;
+    scrollToBottom(false);
+  }, [scrollToBottom]);
 
   return (
     <>
-      <div
-        ref={messagesContainerRef}
-        role="log"
-        aria-label="Conversation messages"
-        aria-live="polite"
-        aria-relevant="additions"
-        className="relative flex flex-1 flex-col justify-between gap-6 overflow-y-auto px-4 py-8"
-      >
-        {messages.map((msg) => (
-          <MessageBubble key={msg.id} text={msg.content} />
-        ))}
+      <div className="relative flex w-full max-w-[748px] flex-1 flex-col overflow-hidden">
+        <div
+          ref={containerRef}
+          role="log"
+          aria-label={t(ChatI18nKeys.ConversationMessages)}
+          aria-live="polite"
+          aria-relevant="additions"
+          className="flex flex-1 flex-col overflow-y-auto px-4 py-8"
+        >
+          <div className="flex flex-1 flex-col gap-6">
+            {messages.map((msg, index) => {
+              const isStreaming = isStreamingMessage(
+                msg.role,
+                index,
+                messages.length,
+                isAssistantTyping,
+              );
+              const hasStages = messageHasStages(msg);
+              const {
+                starters: activeStarters,
+                onSelectStarter: handleSelectStarter,
+              } = getMessageStarterProps(
+                msg,
+                index,
+                messages.length,
+                isAssistantTyping,
+                onSelectStarter,
+              );
 
-        {isAssistantTyping && (
-          <div
-            className="mx-auto flex w-full max-w-3xl bg-[#f7f7f8] p-4 dark:bg-[#2f2f2f]"
-            role="status"
-            aria-live="polite"
-            aria-label="Assistant is typing"
-          >
-            <div className="flex items-center gap-1 leading-7 text-[#202123] dark:text-[#ececf1]">
-              <span className="animate-bounce">.</span>
-              <span
-                className="animate-bounce"
-                style={{ animationDelay: '0.1s' }}
-              >
-                .
-              </span>
-              <span
-                className="animate-bounce"
-                style={{ animationDelay: '0.2s' }}
-              >
-                .
-              </span>
-            </div>
+              return (
+                <MessageBubble
+                  key={msg.id}
+                  role={msg.role}
+                  text={msg.content}
+                  colors={
+                    msg.stoppedWithoutContent
+                      ? { text: 'var(--text-secondary, #9FA6BD)' }
+                      : undefined
+                  }
+                  attachments={attachmentDtosToDisplayAttachments(
+                    msg.custom_content?.attachments,
+                  )}
+                  hasAlwaysVisibleActions={!isStreaming}
+                  actions={buildMessageActions(
+                    msg,
+                    {
+                      onDelete: onDeleteMessage,
+                      onRegenerate: onRegenerateMessage,
+                      onRate: onRateMessage,
+                    },
+                    tooltips,
+                    ariaLabels,
+                  )}
+                  className={
+                    msg.role === MessageRole.User
+                      ? 'justify-end'
+                      : 'justify-start'
+                  }
+                  afterContent={
+                    hasStages ? (
+                      <StagesPanel
+                        stages={msg.custom_content?.stages ?? []}
+                        isStreaming={isStreaming}
+                      />
+                    ) : undefined
+                  }
+                  starters={activeStarters}
+                  onSelectStarter={handleSelectStarter}
+                  startersAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
+                />
+              );
+            })}
           </div>
-        )}
-        {/* Invisible element at the end for auto-scroll */}
-        <div ref={messagesEndRef} />
-        {/* Scroll to bottom button */}
-        {showScrollButton && (
-          <button
-            onClick={scrollToBottom}
-            className="bg-white hover:bg-gray-100 absolute bottom-4 right-4 flex size-10 items-center justify-center rounded-full shadow-lg transition-opacity dark:bg-[#2f2f2f] dark:hover:bg-[#3f3f3f]"
-            aria-label="Scroll to bottom of conversation"
-          >
-            <svg
-              className="text-gray-700 dark:text-gray-300 size-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M19 14l-7 7m0 0l-7-7m7 7V3"
-              />
-            </svg>
-          </button>
+          <div ref={endRef} />
+        </div>
+
+        {isScrollButtonVisible && (
+          <DialFabButton
+            aria-label={t(ChatI18nKeys.ScrollToBottom)}
+            onClick={handleScrollToBottom}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2"
+          />
         )}
       </div>
-      <div role="region" aria-label="Message input">
-        <ConversationInput onSend={onSend} placeholder={placeholder} />
+
+      <div
+        role="region"
+        aria-label={t(ChatI18nKeys.MessageInput)}
+        className="w-full"
+      >
+        <Suspense fallback={null}>
+          <ConversationInput
+            onSend={onSend}
+            onStop={onStop}
+            isStreaming={isAssistantTyping}
+            onAttachmentsChange={onAttachmentsChange}
+            placeholder={placeholder}
+            deployments={items}
+            selectedDeploymentId={selectedItemId}
+            onDeploymentChange={setSelectedItemId}
+            resolveDeploymentIconUrl={resolveCatalogIconUrl}
+            modelSelectorLabels={{
+              ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
+              loading: isLoading
+                ? t(DeploymentsI18nKeys.SelectorLoading)
+                : undefined,
+              error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
+              empty:
+                !isLoading && !error && items.length === 0
+                  ? t(DeploymentsI18nKeys.SelectorEmpty)
+                  : undefined,
+              searchPlaceholder: t(
+                DeploymentsI18nKeys.SelectorSearchPlaceholder,
+              ),
+              closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
+            }}
+            sendLabel={t(ChatI18nKeys.SendMessage)}
+            stopLabel={t(ChatI18nKeys.StopStreaming)}
+          />
+        </Suspense>
       </div>
     </>
   );
