@@ -1,6 +1,6 @@
+import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
 import { IconApps, IconRobot } from '@tabler/icons-react';
 import { type ReactNode, useState } from 'react';
 import { DeploymentIcon } from '../components/Input/DeploymentIcon.js';
@@ -8,16 +8,14 @@ import type { ModelSelectorLabels } from '../models/Input.js';
 
 /** Options passed to `useModelSelector`. */
 export interface UseModelSelectorOptions {
-  /** Available deployment items. When `undefined`, the selector is hidden. */
-  deployments?: DeploymentItemDto[];
+  /** Available deployment items. When `undefined`, the selector is hidden. `iconUrl` must already be resolved by the host app. */
+  deployments?: DeploymentItem[];
   /** Currently selected deployment ID. */
   selectedDeploymentId?: string | null;
   /** Called when the user picks a different deployment. */
   onDeploymentChange?: (id: string) => void;
   /** Status labels for the selector dropdown. */
   modelSelectorLabels?: ModelSelectorLabels;
-  /** Resolves a raw `iconUrl` value to a usable `<img src>` URL. */
-  resolveDeploymentIconUrl: (iconUrl: string) => string | undefined;
 }
 
 /** Values returned by `useModelSelector`. */
@@ -66,24 +64,31 @@ export const useModelSelector = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  resolveDeploymentIconUrl,
 }: UseModelSelectorOptions): UseModelSelectorResult => {
   const [searchQuery, setSearchQuery] = useState('');
 
   const selectedItem = deployments?.find((i) => i.id === selectedDeploymentId);
-  const selectedIconUrl = selectedItem?.iconUrl
-    ? resolveDeploymentIconUrl(selectedItem.iconUrl)
-    : undefined;
 
-  const selectorIcon: ReactNode = selectedIconUrl ? (
-    <DeploymentIcon
-      src={selectedIconUrl}
-      size={18}
-      fallback={<IconRobot size={18} aria-hidden />}
-    />
-  ) : (
-    <IconRobot size={18} aria-hidden />
-  );
+  let selectorIcon: ReactNode;
+  if (selectedItem?.iconUrl) {
+    const fallback =
+      selectedItem.type === 'application' ? (
+        <IconApps size={18} aria-hidden />
+      ) : (
+        <IconRobot size={18} aria-hidden />
+      );
+    selectorIcon = (
+      <DeploymentIcon
+        src={selectedItem.iconUrl}
+        size={18}
+        fallback={fallback}
+      />
+    );
+  } else if (selectedItem?.type === 'application') {
+    selectorIcon = <IconApps size={18} aria-hidden />;
+  } else {
+    selectorIcon = <IconRobot size={18} aria-hidden />;
+  }
 
   const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
   const selectorAriaLabel = selectedLabel
@@ -107,17 +112,12 @@ export const useModelSelector = ({
           (item.displayName ?? item.id).toLowerCase().includes(query),
         )
       : deployments;
-    return filtered.map((item) => {
-      const itemIconUrl = item.iconUrl
-        ? resolveDeploymentIconUrl(item.iconUrl)
-        : undefined;
-      return {
-        key: item.id,
-        label: item.displayName ?? item.id,
-        icon: buildDeploymentIcon(itemIconUrl, item.type),
-        onClick: () => onDeploymentChange?.(item.id),
-      };
-    });
+    return filtered.map((item) => ({
+      key: item.id,
+      label: item.displayName ?? item.id,
+      icon: buildDeploymentIcon(item.iconUrl, item.type),
+      onClick: () => onDeploymentChange?.(item.id),
+    }));
   };
 
   const menuHeader: ReactNode =

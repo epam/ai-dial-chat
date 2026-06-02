@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, type DeploymentItem } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
@@ -7,11 +7,16 @@ import {
   DialSearch,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
 import { IconApps, IconCheck, IconRobot } from '@tabler/icons-react';
-import { type CSSProperties, type FC, useEffect, useState } from 'react';
+import {
+  type CSSProperties,
+  type FC,
+  type ReactNode,
+  useEffect,
+  useState,
+} from 'react';
 import { createPortal } from 'react-dom';
-import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
+import { DeploymentIcon } from '../Input/DeploymentIcon.js';
 import styles from './ModelSelectorBottomSheet.module.scss';
 
 /** Props for the mobile bottom-sheet model selector. */
@@ -26,8 +31,8 @@ export interface ModelSelectorBottomSheetProps {
   searchPlaceholder?: string;
   /** Called when the sheet should close (backdrop tap, close button, or Escape). */
   onClose: () => void;
-  /** Full list of deployments to display. When `undefined` or empty, a state label is shown. */
-  deployments?: DeploymentItemDto[];
+  /** Full list of deployments to display. When `undefined` or empty, a state label is shown. `iconUrl` must already be resolved by the host app. */
+  deployments?: DeploymentItem[];
   /** ID of the currently selected deployment. Shown with a checkmark. */
   selectedDeploymentId?: string | null;
   /** Called when the user taps a deployment; the sheet closes automatically after. */
@@ -180,19 +185,26 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
             </li>
           ) : (
             filtered.map((item) => {
-              const iconUrl = resolveIconUrl(item.iconUrl);
-              const modelIcon = iconUrl ? (
-                <img
-                  src={iconUrl}
-                  alt=""
-                  width={DIAL_ICON_SIZE.SM}
-                  height={DIAL_ICON_SIZE.SM}
-                />
-              ) : item.type === 'application' ? (
-                <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
-              ) : (
-                <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
-              );
+              let modelIcon: ReactNode;
+              if (item.iconUrl) {
+                const fallback =
+                  item.type === 'application' ? (
+                    <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
+                  ) : (
+                    <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
+                  );
+                modelIcon = (
+                  <DeploymentIcon
+                    src={item.iconUrl}
+                    size={DIAL_ICON_SIZE.SM}
+                    fallback={fallback}
+                  />
+                );
+              } else if (item.type === 'application') {
+                modelIcon = <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />;
+              } else {
+                modelIcon = <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />;
+              }
 
               const isSelected = item.id === selectedDeploymentId;
 
