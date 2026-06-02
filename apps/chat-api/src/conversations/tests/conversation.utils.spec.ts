@@ -52,24 +52,20 @@ describe('conversation.utils', () => {
       expect(result).toBe('Custom prompt');
     });
 
-    it('should use defaultName with date if prompt is not provided', () => {
+    it('should use defaultName if prompt is not provided', () => {
       const result = getConversationName('Default Name');
-      const today = new Date().toLocaleDateString();
-      expect(result).toContain('Default Name');
-      expect(result).toContain(today);
+      expect(result).toBe('Default Name');
     });
 
     it('should apply name cleaning to defaultName when prompt is not provided', () => {
-      const result = getConversationName('Default <Name>');
-      const today = new Date().toLocaleDateString();
-      expect(result).toContain('Default  Name ');
-      expect(result).toContain(today);
+      const result = getConversationName('Default :Name;');
+      expect(result).toBe('Default  Name');
     });
 
     it('should apply name cleaning to prompt when provided', () => {
       const result = getConversationName(
         'Default Name',
-        'Custom <prompt> with "special" chars',
+        'Custom :prompt; with "special" chars',
       );
       expect(result).toBe('Custom  prompt  with  special  chars');
     });

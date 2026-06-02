@@ -133,7 +133,7 @@ export const Input: FC<InputProps> = ({
 
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
-  const canSend = message.trim().length > 0;
+  const canSend = message.trim().length > 0 || attachments.length > 0;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
 

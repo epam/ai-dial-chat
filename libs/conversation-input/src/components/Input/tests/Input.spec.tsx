@@ -198,6 +198,33 @@ describe('Input', () => {
     expect(screen.getByText('doc')).toBeTruthy();
   });
 
+  it('should show send button when only an attachment is present and no text', () => {
+    render(<Input />);
+    expect(screen.queryByLabelText('Send message')).toBeNull();
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(screen.getByLabelText('Send message')).toBeTruthy();
+  });
+
+  it('should call onSend with empty text and the attachment on Enter when no text is typed', () => {
+    const handleSend = vi.fn();
+    const { container } = render(<Input onSend={handleSend} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    const textarea = container.querySelector('textarea')!;
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    expect(handleSend).toHaveBeenCalledWith(
+      '',
+      expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
+    );
+  });
+
   it('should remove the card when the remove button is clicked', () => {
     render(<Input />);
     const fileInput = document.querySelector(
