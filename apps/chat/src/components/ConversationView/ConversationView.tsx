@@ -46,6 +46,8 @@ const EditMessageInput = lazy(async () => {
   return { default: module.EditMessageInput };
 });
 
+const preloadEditInput = () => void import('@epam/ai-dial-conversation-input');
+
 interface Props {
   messages: MessageType[];
   onSend: (message: string, attachments: Attachment[]) => void;
@@ -234,7 +236,18 @@ const ConversationView: FC<Props> = ({
               if (isEditing) {
                 return (
                   <div key={msg.id} className="flex justify-end">
-                    <Suspense fallback={null}>
+                    <Suspense
+                      fallback={
+                        <MessageBubble
+                          role={msg.role}
+                          text={msg.content}
+                          attachments={attachmentDtosToDisplayAttachments(
+                            msg.custom_content?.attachments,
+                          )}
+                          className="justify-end"
+                        />
+                      }
+                    >
                       <EditMessageInput
                         message={msg.content}
                         initialAttachments={attachmentDtosToDisplayAttachments(
@@ -284,6 +297,7 @@ const ConversationView: FC<Props> = ({
                     msg,
                     {
                       onEdit: !isAssistantTyping ? onStartEdit : undefined,
+                      onHoverEdit: preloadEditInput,
                       onDelete: onDeleteMessage,
                       onRegenerate: onRegenerateMessage,
                       onRate: onRateMessage,
