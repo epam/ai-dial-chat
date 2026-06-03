@@ -63,8 +63,9 @@ doc = {
             "filter_id": int(fid) if fid.isdigit() else fid,
             "jql": os.environ["JQL"], "repo_name": os.environ["REPO_NAME"],
             "fetched_count": 0, "matched_count": 0, "dropped_count": 0,
+            "analyzed_count": 0, "max_findings": int(os.environ.get("JIRA_MAX_FINDINGS", "3") or "0"),
         },
-        "issues": [], "dropped": [],
+        "issues": [], "deferred": [], "dropped": [],
     },
 }
 with open(os.environ["OUT"], "w") as f:
@@ -159,12 +160,26 @@ for it in root.findall(".//item"):
         dropped.append(issue["key"])
 
 fetched, matched, ndropped = len(kept) + len(dropped), len(kept), len(dropped)
+
+# TEMPORARY throttle: cap how many repo-matched findings we hand to triage so
+# the Sonnet triage agent doesn't exhaust its turn budget on a large backlog.
+# Default 3; set JIRA_MAX_FINDINGS=0 to analyze all. Issues are priority-ordered
+# by the JQL, so the cap keeps the highest-priority findings. Deferred keys are
+# recorded (not lost) so the backlog stays visible.
+cap = int(os.environ.get("JIRA_MAX_FINDINGS", "3") or "0")
+analyzed_issues = kept[:cap] if cap > 0 else kept
+deferred = [i["key"] for i in kept[cap:]] if cap > 0 else []
+analyzed = len(analyzed_issues)
+
 if dropped:
     print(f"Dropped {ndropped} cross-repo issue(s) (no '{repo}/' path): {', '.join(dropped)}")
+if deferred:
+    print(f"Deferred {len(deferred)} matched issue(s) beyond cap {cap}: {', '.join(deferred)}")
 
-status = "passed_with_findings" if matched else "passed"
+status = "passed_with_findings" if analyzed else "passed"
 if matched:
-    summary = f"Pulled {fetched} from filter {fid}; kept {matched} for {repo}, dropped {ndropped} cross-repo."
+    cap_note = f" (cap {cap}, {len(deferred)} deferred)" if deferred else ""
+    summary = f"{matched} {repo} finding(s); analyzing {analyzed}{cap_note}; {ndropped} cross-repo dropped."
 else:
     summary = f"Pulled {fetched} from filter {fid}; 0 relate to {repo} ({ndropped} cross-repo dropped)."
 
@@ -179,10 +194,12 @@ write({
             "filter_id": int(fid) if fid.isdigit() else fid,
             "jql": os.environ["JQL"], "repo_name": repo,
             "fetched_count": fetched, "matched_count": matched, "dropped_count": ndropped,
+            "analyzed_count": analyzed, "max_findings": cap,
         },
-        "issues": kept,
+        "issues": analyzed_issues,
+        "deferred": deferred,
         "dropped": dropped,
     },
 })
-print(f"Kept {matched}/{fetched} issue(s) for {repo} into {os.environ['OUT']}")
+print(f"Analyzing {analyzed}/{matched} matched ({fetched} fetched) for {repo} into {os.environ['OUT']}")
 PY
