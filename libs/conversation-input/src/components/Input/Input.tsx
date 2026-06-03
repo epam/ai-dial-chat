@@ -5,7 +5,6 @@ import {
   buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import classNames from 'classnames';
 import {
   ChangeEvent,
   type FC,
@@ -75,7 +74,7 @@ export const Input: FC<InputProps> = ({
         '--ci-stop-color': colors?.stopColor,
         '--ci-font-family': typography?.fontFamily,
         '--ci-font-size': typography?.fontSize,
-        '--ci-font-weight': typography?.fontWeight,
+        '--ci-font-weight': typography?.fontWeight?.toString(),
         '--ci-line-height': typography?.lineHeight,
       }),
     [colors, typography],
@@ -240,7 +239,7 @@ export const Input: FC<InputProps> = ({
 
       {!hideActionBar && (
         <div
-          className={classNames(
+          className={mergeClasses(
             'flex items-center gap-2',
             isStackedLayout
               ? hideAddButton
@@ -251,7 +250,7 @@ export const Input: FC<InputProps> = ({
         >
           {!hideAddButton && (
             <div
-              className={classNames(
+              className={mergeClasses(
                 'flex',
                 !isStackedLayout && 'order-2 desktop:order-1',
               )}
@@ -282,7 +281,7 @@ export const Input: FC<InputProps> = ({
             </div>
           )}
           <div
-            className={classNames(
+            className={mergeClasses(
               'flex flex-shrink-0 items-center gap-2',
               !isStackedLayout && 'order-3 ml-auto desktop:ml-0',
             )}

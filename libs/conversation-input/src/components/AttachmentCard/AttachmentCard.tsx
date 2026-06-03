@@ -123,7 +123,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             <DialEllipsisTooltip
               text={bottomLabel}
               className={mergeClasses(
-                'dial-tiny-text min-w-0 flex-1 truncate',
+                typography?.metaClassName ?? 'dial-tiny-text',
                 styles.meta,
               )}
             />
