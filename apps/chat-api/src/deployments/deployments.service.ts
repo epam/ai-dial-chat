@@ -22,6 +22,9 @@ type RawDeployment = {
   icon_url?: string;
   description?: string;
   interfaces?: string | string[];
+  // Confirmed upstream field name from DIAL Core SDK (index.d.ts, DeploymentBase composite → Application):
+  // application_type_schema_id?: string
+  application_type_schema_id?: string;
 };
 
 function mapToDeploymentItem(raw: RawDeployment): DeploymentItemDto | null {
@@ -49,12 +52,16 @@ function mapToDeploymentItem(raw: RawDeployment): DeploymentItemDto | null {
     iconUrl: raw.icon_url,
     description: raw.description,
     interfaces,
+    applicationTypeSchemaId:
+      type === 'application' && raw.application_type_schema_id
+        ? raw.application_type_schema_id
+        : undefined,
   };
 }
 
 @Injectable()
 export class DeploymentsService extends AppService {
-  private readonly logger = new Logger(DeploymentsService.name);
+  protected override readonly logger = new Logger(DeploymentsService.name);
 
   constructor(
     configService: ConfigService<EnvironmentVariables>,

@@ -58,6 +58,62 @@ export interface ApplicationDto {
 /**
  *
  * @export
+ * @interface ApplicationSchemaSummaryDto
+ */
+export interface ApplicationSchemaSummaryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  viewerUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  editorUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  schemaEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  iconUrl?: string;
+}
+/**
+ *
+ * @export
+ * @interface ApplicationSchemasResponseDto
+ */
+export interface ApplicationSchemasResponseDto {
+  /**
+   *
+   * @type {Array<ApplicationSchemaSummaryDto>}
+   * @memberof ApplicationSchemasResponseDto
+   */
+  schemas: Array<ApplicationSchemaSummaryDto>;
+}
+/**
+ *
+ * @export
  * @interface ApplicationsResponseDto
  */
 export interface ApplicationsResponseDto {
@@ -542,6 +598,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   interfaces?: Array<string>;
+  /**
+   * Application type schema id from DIAL Core (present only for application deployments)
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  applicationTypeSchemaId?: string;
 }
 
 /**
