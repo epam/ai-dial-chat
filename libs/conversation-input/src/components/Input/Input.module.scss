@@ -24,6 +24,9 @@
 }
 
 .modelSelectorButton {
+  .modelSelectorCaret {
+    color: var(--ci-model-selector-caret-color, var(--text-primary, #eef1f7));
+  }
   &:hover,
   &:active {
     background: var(

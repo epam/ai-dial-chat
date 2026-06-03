@@ -41,7 +41,7 @@
       "loading": "Loading models…",
       "error": "Failed to load models",
       "empty": "No models available",
-      "searchPlaceholder": "Search models",
+      "searchPlaceholder": "Search...",
       "closeLabel": "Close model selector"
     }
   },

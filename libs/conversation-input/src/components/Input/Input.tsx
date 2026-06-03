@@ -13,6 +13,7 @@ import {
 import { IconChevronDown } from '@tabler/icons-react';
 import classNames from 'classnames';
 import {
+  type CSSProperties,
   ChangeEvent,
   type FC,
   KeyboardEvent,
@@ -33,6 +34,103 @@ import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelec
 import { SendButton } from './Buttons/SendButton.js';
 import { StopButton } from './Buttons/StopButton.js';
 import styles from './Input.module.scss';
+
+interface ModelSelectorControlProps {
+  deployments: InputProps['deployments'];
+  selectedDeploymentId: InputProps['selectedDeploymentId'];
+  onDeploymentChange: InputProps['onDeploymentChange'];
+  modelSelectorLabels: InputProps['modelSelectorLabels'];
+  isStreaming: boolean;
+  isMobile: boolean;
+  style: CSSProperties;
+}
+
+const ModelSelectorControl: FC<ModelSelectorControlProps> = ({
+  deployments,
+  selectedDeploymentId,
+  onDeploymentChange,
+  modelSelectorLabels,
+  isStreaming,
+  isMobile,
+  style,
+}) => {
+  const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
+
+  const {
+    selectorIcon,
+    selectorAriaLabel,
+    menuItems,
+    menuHeader,
+    onOpenChange: handleModelSelectorOpenChange,
+  } = useModelSelector({
+    deployments,
+    selectedDeploymentId,
+    onDeploymentChange,
+    modelSelectorLabels,
+  });
+
+  if (deployments === undefined) {
+    return null;
+  }
+
+  const disabledClassName = isStreaming
+    ? 'pointer-events-none opacity-50'
+    : undefined;
+
+  if (isMobile) {
+    return (
+      <>
+        <DialGhostIconButton
+          icon={selectorIcon}
+          aria-label={selectorAriaLabel}
+          onClick={() => setIsModelSheetOpen(true)}
+          className={disabledClassName}
+        />
+        <ModelSelectorBottomSheet
+          isOpen={isModelSheetOpen}
+          title={modelSelectorLabels?.ariaLabel ?? 'Select model'}
+          closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
+          searchPlaceholder={modelSelectorLabels?.searchPlaceholder ?? 'Search'}
+          onClose={() => setIsModelSheetOpen(false)}
+          deployments={deployments}
+          selectedDeploymentId={selectedDeploymentId}
+          onSelect={(id) => onDeploymentChange?.(id)}
+          loadingLabel={modelSelectorLabels?.loading}
+          errorLabel={modelSelectorLabels?.error}
+          emptyLabel={modelSelectorLabels?.empty}
+          style={style}
+        />
+      </>
+    );
+  }
+
+  return (
+    <DialDropdownIcon
+      icon={selectorIcon}
+      ariaLabel={selectorAriaLabel}
+      items={menuItems}
+      menuHeader={menuHeader}
+      placement="bottom-end"
+      matchReferenceWidth={false}
+      listClassName="!w-[240px] !max-h-80"
+      onOpenChange={handleModelSelectorOpenChange}
+      caretIcon={
+        <div
+          className={mergeClasses(
+            styles.modelSelectorCaret,
+            'flex size-5 items-center justify-center rounded-full',
+          )}
+        >
+          <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
+        </div>
+      }
+      buttonClassName={mergeClasses(
+        styles.modelSelectorButton,
+        disabledClassName,
+      )}
+    />
+  );
+};
 
 export const Input: FC<InputProps> = ({
   message: messageProp = '',
@@ -90,7 +188,6 @@ export const Input: FC<InputProps> = ({
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] =
     useState<Attachment[]>(initialAttachments);
-  const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
 
   useEffect(() => {
     if (messageProp) {
@@ -169,19 +266,6 @@ export const Input: FC<InputProps> = ({
     }
   };
 
-  const {
-    selectorIcon,
-    selectorAriaLabel,
-    menuItems,
-    menuHeader,
-    onOpenChange: handleModelSelectorOpenChange,
-  } = useModelSelector({
-    deployments,
-    selectedDeploymentId,
-    onDeploymentChange,
-    modelSelectorLabels,
-  });
-
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
@@ -206,10 +290,6 @@ export const Input: FC<InputProps> = ({
     },
     [onAttachmentsChange],
   );
-
-  const handleDeploymentSelect = (id: string) => {
-    onDeploymentChange?.(id);
-  };
 
   const handleExpand = useCallback(
     async (id: string) => {
@@ -312,64 +392,15 @@ export const Input: FC<InputProps> = ({
               renderFooterActions({ canSend, onSend: handleSend })
             ) : (
               <>
-                {deployments !== undefined &&
-                  (isMobile ? (
-                    <>
-                      <DialGhostIconButton
-                        icon={selectorIcon}
-                        aria-label={selectorAriaLabel}
-                        onClick={() => setIsModelSheetOpen(true)}
-                        className={
-                          isStreaming
-                            ? 'pointer-events-none opacity-50'
-                            : undefined
-                        }
-                      />
-                      <ModelSelectorBottomSheet
-                        isOpen={isModelSheetOpen}
-                        title={modelSelectorLabels?.ariaLabel ?? 'Select model'}
-                        closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
-                        searchPlaceholder={
-                          modelSelectorLabels?.searchPlaceholder ?? 'Search'
-                        }
-                        onClose={() => setIsModelSheetOpen(false)}
-                        deployments={deployments}
-                        selectedDeploymentId={selectedDeploymentId}
-                        onSelect={handleDeploymentSelect}
-                        loadingLabel={modelSelectorLabels?.loading}
-                        errorLabel={modelSelectorLabels?.error}
-                        emptyLabel={modelSelectorLabels?.empty}
-                        style={cssVars}
-                      />
-                    </>
-                  ) : (
-                    <DialDropdownIcon
-                      icon={selectorIcon}
-                      ariaLabel={selectorAriaLabel}
-                      items={menuItems}
-                      menuHeader={menuHeader}
-                      placement="bottom-end"
-                      matchReferenceWidth={false}
-                      listClassName="!w-[240px] !max-h-80"
-                      onOpenChange={handleModelSelectorOpenChange}
-                      caretIcon={
-                        <div
-                          className={`${styles.modelSelectorCaret} flex size-5 items-center justify-center rounded-full`}
-                        >
-                          <IconChevronDown
-                            size={DIAL_ICON_SIZE.SM}
-                            aria-hidden
-                          />
-                        </div>
-                      }
-                      buttonClassName={mergeClasses(
-                        styles.modelSelectorButton,
-                        isStreaming
-                          ? 'pointer-events-none opacity-50'
-                          : undefined,
-                      )}
-                    />
-                  ))}
+                <ModelSelectorControl
+                  deployments={deployments}
+                  selectedDeploymentId={selectedDeploymentId}
+                  onDeploymentChange={onDeploymentChange}
+                  modelSelectorLabels={modelSelectorLabels}
+                  isStreaming={isStreaming}
+                  isMobile={isMobile}
+                  style={cssVars}
+                />
                 {isStreaming ? (
                   <StopButton onStop={onStop} ariaLabel={stopLabel} />
                 ) : (

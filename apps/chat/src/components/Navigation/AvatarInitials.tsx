@@ -1,3 +1,5 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
+
 interface Props {
   bg: string;
   textColor: string;
@@ -13,7 +15,10 @@ export default function AvatarInitials({
 }: Props) {
   return (
     <div
-      className={`flex size-[28px] flex-shrink-0 items-center justify-center rounded-full ${initialsClassName}`}
+      className={mergeClasses(
+        'flex size-[28px] flex-shrink-0 items-center justify-center rounded-full',
+        initialsClassName,
+      )}
       style={{ backgroundColor: bg, color: textColor }}
     >
       {shortName}

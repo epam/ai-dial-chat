@@ -1,6 +1,6 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import { IconApps, IconRobot } from '@tabler/icons-react';
+import { IconApps } from '@tabler/icons-react';
+import FallbackEntityIcon from '../assets/fallback-entity-icon.svg?react';
 import type { ReactNode } from 'react';
 import { DeploymentIcon } from '../components/Input/DeploymentIcon.js';
 
@@ -26,19 +26,20 @@ export const filterDeployments = (
 /**
  * Builds the leading icon for a deployment. Uses the resolved image URL when
  * available (with an error fallback and lazy loading) and a type-appropriate
- * Tabler icon otherwise.
+ * icon otherwise (IconApps for applications, FallbackEntityIcon for models).
  */
 export const buildDeploymentIcon = (
   resolvedIconUrl: string | undefined,
   type: string | undefined,
-  size: number = DIAL_ICON_SIZE.SM,
+  size = 18,
 ): ReactNode => {
   const fallback =
     type === 'application' ? (
       <IconApps size={size} aria-hidden />
     ) : (
-      <IconRobot size={size} aria-hidden />
+      <FallbackEntityIcon width={size} height={size} aria-hidden />
     );
+
   if (resolvedIconUrl) {
     return (
       <DeploymentIcon src={resolvedIconUrl} size={size} fallback={fallback} />
