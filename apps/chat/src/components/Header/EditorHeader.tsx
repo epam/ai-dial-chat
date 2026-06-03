@@ -139,6 +139,7 @@ export const EditorHeader = <T extends string>({
           <DialLinkButton
             onClick={onSave}
             data-qa="save-and-exit"
+            aria-label={saveLabel}
             iconBefore={<IconLogout size={20} stroke={1.5} />}
             label={t(saveLabel ?? ChatI18nKeys.SaveAndExit)}
           />
