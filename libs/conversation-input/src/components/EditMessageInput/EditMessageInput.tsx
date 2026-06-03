@@ -1,7 +1,7 @@
 import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
-import { type FC, useCallback, useRef, useState } from 'react';
+import { ChangeEvent, type FC, useCallback, useRef, useState } from 'react';
 import type { EditMessageInputProps } from '../../models/ConversationInput.js';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton.js';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
@@ -52,15 +52,12 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
     }
   };
 
-  const handleFileChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files ?? []);
-      if (files.length === 0) return;
-      e.target.value = '';
-      setPendingDropFiles(files);
-    },
-    [],
-  );
+  const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (files.length === 0) return;
+    e.target.value = '';
+    setPendingDropFiles(files);
+  }, []);
 
   return (
     <div className={mergeClasses('flex w-full flex-col gap-2', className)}>

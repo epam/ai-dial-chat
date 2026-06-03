@@ -8,6 +8,7 @@ import {
 import { DialDropdownIcon, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import classNames from 'classnames';
 import {
+  ChangeEvent,
   type FC,
   KeyboardEvent,
   useCallback,
@@ -176,7 +177,7 @@ export const Input: FC<InputProps> = ({
     modelSelectorLabels,
   });
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
 

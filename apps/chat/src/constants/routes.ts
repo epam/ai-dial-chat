@@ -5,5 +5,21 @@ export const ROUTES = {
   CONVERSATIONS: '/conversations',
 } as const;
 
+const CONVERSATION_ROUTE_PREFIX = `${ROUTES.CONVERSATIONS}/`;
+const CONVERSATION_ROUTE_PREFIX_NO_LEADING_SLASH =
+  CONVERSATION_ROUTE_PREFIX.slice(1);
+
+export const normalizeConversationId = (id: string): string => {
+  if (id.startsWith(CONVERSATION_ROUTE_PREFIX)) {
+    return id.slice(CONVERSATION_ROUTE_PREFIX.length);
+  }
+
+  if (id.startsWith(CONVERSATION_ROUTE_PREFIX_NO_LEADING_SLASH)) {
+    return id.slice(CONVERSATION_ROUTE_PREFIX_NO_LEADING_SLASH.length);
+  }
+
+  return id;
+};
+
 export const getConversationRoute = (id: string): string =>
-  `${ROUTES.CONVERSATIONS}/${id}`;
+  `${ROUTES.CONVERSATIONS}/${normalizeConversationId(id)}`;

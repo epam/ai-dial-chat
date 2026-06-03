@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as useAuthRedirectModule from '../../../hooks/auth/useAuthRedirect';
 import RequireAuth from '../RequireAuth';
+import { ReactNode } from 'react';
 
 vi.mock('../../../context/auth/UserContext');
 vi.mock('../../../hooks/auth/useAuthRedirect');
@@ -11,7 +12,7 @@ vi.mock('../../../hooks/auth/useAuthRedirect');
 const mockUseUser = vi.mocked(UserContextModule.useUser);
 const mockUseAuthRedirect = vi.mocked(useAuthRedirectModule.useAuthRedirect);
 
-const renderWithRouter = (ui: React.ReactNode) =>
+const renderWithRouter = (ui: ReactNode) =>
   render(<MemoryRouter>{ui}</MemoryRouter>);
 
 describe('RequireAuth', () => {

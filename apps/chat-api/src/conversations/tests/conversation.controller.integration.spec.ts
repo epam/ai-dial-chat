@@ -13,10 +13,16 @@ const TEST_USER = {
 
 describe('ConversationController (integration)', () => {
   let app: INestApplication;
-  let service: { createConversation: ReturnType<typeof vi.fn> };
+  let service: {
+    createConversation: ReturnType<typeof vi.fn>;
+    listConversations: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
-    service = { createConversation: vi.fn() };
+    service = {
+      createConversation: vi.fn(),
+      listConversations: vi.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
@@ -342,5 +348,51 @@ describe('ConversationController (integration)', () => {
           .expect(400);
       },
     );
+  });
+
+  describe('GET /conversations/list', () => {
+    it('returns 200 with items when path is omitted', async () => {
+      const response = { items: [], nextToken: undefined };
+      service.listConversations.mockReturnValue(response);
+
+      await request(app.getHttpServer()).get('/conversations/list').expect(200);
+
+      expect(service.listConversations).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        undefined,
+        undefined,
+        undefined,
+      );
+    });
+
+    it('forwards non-empty path to the service', async () => {
+      const response = { items: [], nextToken: undefined };
+      service.listConversations.mockReturnValue(response);
+
+      await request(app.getHttpServer())
+        .get('/conversations/list?path=work%2Fproject-x')
+        .expect(200);
+
+      expect(service.listConversations).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        undefined,
+        undefined,
+        'work/project-x',
+      );
+    });
+
+    it('returns 400 when path exceeds 512 characters', async () => {
+      await request(app.getHttpServer())
+        .get(`/conversations/list?path=${'a'.repeat(513)}`)
+        .expect(400);
+    });
+
+    it('returns 400 when limit exceeds 100', async () => {
+      await request(app.getHttpServer())
+        .get('/conversations/list?limit=200')
+        .expect(400);
+    });
   });
 });

@@ -23,6 +23,7 @@ import type { MessageActionsProps } from '../../models/MessageActions.js';
 
 const COPIED_RESET_MS = 2000;
 
+/** Context-sensitive action bar — shows edit/delete for user messages and regenerate/copy/like/dislike for assistant messages. */
 export const MessageActions: FC<MessageActionsProps> = ({
   role = MessageRole.User,
   onEdit,

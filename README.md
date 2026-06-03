@@ -91,6 +91,7 @@ AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=http://localhost:3005
 AUTH_PROVIDERS=[{"id":"your-provider","issuer":"https://your-issuer.example.com","clientId":"your-client-id","clientSecret":"<client-secret>","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
 # DIAL_CORE_URL=https://your-dial-core-url.example.com
+# DIAL_API_VERSION=2024-10-21
 # DIAL_API_KEY=your-api-key
 # THEMES_CONFIG_URL=https://your-themes-url.example.com
 ```
@@ -371,6 +372,7 @@ AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=https://your-api-domain.com
 AUTH_PROVIDERS=[{"id":"your-provider","issuer":"https://your-issuer.example.com","clientId":"your-client-id","clientSecret":"<client-secret>","scope":"openid email profile","rolesClaim":"roles","postLogoutRedirectUri":"https://your-frontend-domain.com"}]
 DIAL_CORE_URL=https://your-dial-core-url
+DIAL_API_VERSION=2024-10-21
 DIAL_API_KEY=your-production-api-key
 THEMES_CONFIG_URL=https://your-themes-url
 ```

@@ -129,20 +129,22 @@ describe('SidebarPanel', () => {
   });
 
   it('close button calls onClose', async () => {
-    const user = userEvent.setup();
     const onClose = vi.fn();
     render(
       <SidebarPanel {...defaultProps} onClose={onClose}>
         <span />
       </SidebarPanel>,
     );
-    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('colors prop emits CSS custom properties', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} colors={{ background: '#ff0000' }}>
+      <SidebarPanel
+        {...defaultProps}
+        styles={{ colors: { background: '#ff0000' } }}
+      >
         <span />
       </SidebarPanel>,
     );

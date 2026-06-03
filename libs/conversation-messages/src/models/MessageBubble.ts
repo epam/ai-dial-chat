@@ -31,6 +31,14 @@ export interface MessageBubbleTypography {
   lineHeight?: string;
 }
 
+/** Combined style overrides (colors and typography) for message bubble components. */
+export interface MessageBubbleStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: MessageBubbleColors;
+  /** Typography overrides applied via CSS custom properties. */
+  typography?: MessageBubbleTypography;
+}
+
 /** Shared props for user and assistant message bubble components. */
 interface BaseMessageBubbleProps {
   /** Plain-text (or Markdown) content of the message. */
@@ -39,10 +47,8 @@ interface BaseMessageBubbleProps {
   className?: string;
   /** Extra class name(s) merged onto the bubble element itself. */
   bubbleClassName?: string;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: MessageBubbleColors;
-  /** Typography overrides applied as CSS custom properties. */
-  typography?: MessageBubbleTypography;
+  /** Color and typography overrides applied as CSS custom properties. */
+  styles?: MessageBubbleStyles;
   /** Props forwarded to the `MessageActions` bar rendered below the bubble. */
   actions?: MessageActionsProps;
   /** When `true`, the actions bar is always visible instead of appearing only on group hover. */
