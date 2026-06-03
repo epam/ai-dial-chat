@@ -124,4 +124,6 @@ export interface ConversationInputProps {
   sendLabel?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
+  /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
+  isInputDisabled?: boolean;
 }

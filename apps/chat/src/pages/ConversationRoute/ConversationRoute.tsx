@@ -69,6 +69,11 @@ const ConversationRoute: FC = () => {
     [selectedDeploymentConfiguration],
   );
 
+  const isInputDisabled = useMemo(
+    () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
+    [selectedDeploymentConfiguration],
+  );
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -143,6 +148,7 @@ const ConversationRoute: FC = () => {
             deployments={deploymentItems}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
+            isInputDisabled={isInputDisabled}
             modelSelectorLabels={{
               ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
               loading: isLoading

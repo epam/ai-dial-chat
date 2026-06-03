@@ -55,10 +55,12 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     onSend,
     deployments,
     selectedDeploymentId,
+    isInputDisabled,
   }: {
     onSend?: (msg: string, att: never[]) => void;
     deployments?: unknown[];
     selectedDeploymentId?: string | null;
+    isInputDisabled?: boolean;
   }) => (
     <div>
       <span data-testid="catalog-items-count">
@@ -66,6 +68,9 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
       </span>
       <span data-testid="selected-item-id">
         {selectedDeploymentId ?? 'null'}
+      </span>
+      <span data-testid="is-input-disabled">
+        {String(isInputDisabled ?? false)}
       </span>
       <button
         type="button"
@@ -151,6 +156,45 @@ describe('ConversationRoute', () => {
     });
 
     expect(mockCreateConversation).not.toHaveBeenCalled();
+  });
+
+  it('passes isInputDisabled=true when dial:chatMessageInputDisabled is true', async () => {
+    mockUseDeployments.mockReturnValue({
+      items: mockItems,
+      selectedItemId: 'gpt-4o',
+      setSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: {
+        isChatMessageInputDisabled: true,
+      },
+      isLoading: false,
+      error: null,
+    });
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId('is-input-disabled').textContent).toBe('true');
+    });
+  });
+
+  it('passes isInputDisabled=false when selectedDeploymentConfiguration is null', async () => {
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId('is-input-disabled').textContent).toBe('false');
+    });
+  });
+
+  it('passes isInputDisabled=false when dial:chatMessageInputDisabled is absent', async () => {
+    mockUseDeployments.mockReturnValue({
+      items: mockItems,
+      selectedItemId: 'gpt-4o',
+      setSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: { type: 'object' },
+      isLoading: false,
+      error: null,
+    });
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByTestId('is-input-disabled').textContent).toBe('false');
+    });
   });
 
   it('passes submit starter values as deployment configuration', async () => {

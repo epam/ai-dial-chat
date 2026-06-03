@@ -142,4 +142,6 @@ export interface InputProps {
     canSend: boolean;
     onSend: () => void;
   }) => ReactNode;
+  /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
+  isInputDisabled?: boolean;
 }

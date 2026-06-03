@@ -23,6 +23,8 @@ interface AddAttachmentButtonProps {
   style?: CSSProperties;
   /** Width class applied to the desktop dropdown list. Defaults to `'!w-[240px]'`. */
   listClassName?: string;
+  /** When `true`, the trigger button is disabled and the menu cannot open. */
+  isDisabled?: boolean;
 }
 
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
@@ -33,6 +35,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   menuCloseLabel,
   style,
   listClassName = '!w-[240px]',
+  isDisabled = false,
 }) => {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -56,6 +59,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
           icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
           aria-label={addMenuLabel}
           className="size-10 flex-shrink-0"
+          disabled={isDisabled}
           onClick={() => setIsSheetOpen(true)}
         />
         <BottomSheet
@@ -81,6 +85,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
         icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
         aria-label={addMenuLabel}
         className="size-10 flex-shrink-0"
+        disabled={isDisabled}
       />
     </DialDropdown>
   );

@@ -21,6 +21,15 @@ import {
 } from './dto/conversation-list.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 
+const getValidAttachments = (customContent?: Message['custom_content']) =>
+  (customContent?.attachments ?? []).filter((attachment) =>
+    Boolean(attachment.data || attachment.url),
+  );
+
+// TODO: Remove this once the DIAL SDK encodes resource path segments internally.
+const encodeDialResourcePath = (path: string): string =>
+  path.split('/').map(encodeURIComponent).join('/');
+
 @Injectable()
 export class ConversationService extends AppService {
   protected override logger = new Logger(ConversationService.name);
@@ -68,7 +77,7 @@ export class ConversationService extends AppService {
     try {
       const { data, error } = (await this.client.saveConversation(
         bucket,
-        conversationPath,
+        encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
           body: conversation,
@@ -94,7 +103,7 @@ export class ConversationService extends AppService {
     try {
       const { data, error } = (await this.client.getConversation(
         bucket,
-        conversationPath,
+        encodeDialResourcePath(conversationPath),
         { headers: getBearerAuthHeaders(token) },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined || !data) {
@@ -116,7 +125,7 @@ export class ConversationService extends AppService {
     try {
       const { error } = (await this.client.deleteConversation(
         bucket,
-        conversationPath,
+        encodeDialResourcePath(conversationPath),
         { headers: getBearerAuthHeaders(token) },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined) {
@@ -139,7 +148,7 @@ export class ConversationService extends AppService {
     try {
       const { data, error } = (await this.client.getConversationMetadata(
         bucket,
-        path ?? '',
+        encodeDialResourcePath(path ?? ''),
         {
           headers: getBearerAuthHeaders(token),
           query: {
@@ -191,7 +200,7 @@ export class ConversationService extends AppService {
     try {
       const { data, error } = (await this.client.getConversationMetadata(
         bucket,
-        conversationPath,
+        encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
           query: permissions !== undefined ? { permissions } : undefined,
@@ -217,7 +226,7 @@ export class ConversationService extends AppService {
     try {
       const { data, error } = (await this.client.saveConversation(
         bucket,
-        conversationPath,
+        encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
           body: conversation,
@@ -277,9 +286,7 @@ export class ConversationService extends AppService {
     const messages = messagesForCompletion
       .filter((m) => m.role !== MessageRole.Status)
       .map((m) => {
-        const validAttachments = (m.custom_content?.attachments ?? []).filter(
-          (a) => a.data ?? a.url,
-        );
+        const validAttachments = getValidAttachments(m.custom_content);
         const content = Object.fromEntries(
           Object.entries({
             ...m.custom_content,

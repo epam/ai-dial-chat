@@ -1,5 +1,6 @@
 /* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
 import {
+  DIAL_ICON_SIZE,
   DialDropdown,
   DialTooltip,
   DropdownItemType,
@@ -15,8 +16,6 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import SettingsModal from '../Settings/SettingsModal';
 import AvatarInitials from './AvatarInitials';
-
-const ICON_SIZE = 16;
 
 export const UserMenu = memo(() => {
   const { status, user } = useUser();
@@ -68,7 +67,7 @@ export const UserMenu = memo(() => {
       key: 'identity',
       type: DropdownItemType.PlainText,
       label: (
-        <div className="flex items-center gap-2 px-2 py-1">
+        <div className="flex items-center gap-2">
           <AvatarInitials bg={bg} textColor={textColor} shortName={shortName} />
           <span className="dial-small-semi-text truncate text-primary">
             {email}
@@ -82,13 +81,13 @@ export const UserMenu = memo(() => {
       label: (
         <span className="dial-small-text">{t(AuthI18nKeys.Settings)}</span>
       ),
-      icon: <IconSettings size={ICON_SIZE} aria-hidden />,
+      icon: <IconSettings size={DIAL_ICON_SIZE.SM} aria-hidden />,
       onClick: () => setIsSettingsOpen(true),
     },
     {
       key: 'logout',
       label: <span className="dial-small-text">{t(AuthI18nKeys.LogOut)}</span>,
-      icon: <IconLogout size={ICON_SIZE} aria-hidden />,
+      icon: <IconLogout size={DIAL_ICON_SIZE.SM} aria-hidden />,
       onClick: () => setIsLogoutOpen(true),
     },
   ];
@@ -102,7 +101,7 @@ export const UserMenu = memo(() => {
           items={menuItems}
         >
           <button
-            className="flex size-[44px] items-center justify-center rounded-full border border-transparent focus-within:border-focus hover:bg-accent-primary-alpha"
+            className="flex size-[44px] items-center justify-center rounded-full border border-transparent focus-within:border-focus hover:bg-accent-primary-alpha focus:border-transparent"
             aria-label={t(AuthI18nKeys.SignedInAs, { email })}
           >
             <DialTooltip tooltip={email} hideTooltip={isMobile}>

@@ -101,8 +101,19 @@ const ConversationView: FC<Props> = ({
   initialModelId,
 }) => {
   const { t } = useTranslation();
-  const { items, selectedItemId, setSelectedItemId, isLoading, error } =
-    useDeployments();
+  const {
+    items,
+    selectedItemId,
+    setSelectedItemId,
+    selectedDeploymentConfiguration,
+    isLoading,
+    error,
+  } = useDeployments();
+
+  const isInputDisabled = useMemo(
+    () => selectedDeploymentConfiguration?.isChatMessageInputDisabled === true,
+    [selectedDeploymentConfiguration],
+  );
 
   const deploymentLookup = useMemo<Record<string, DeploymentEntry>>(
     () =>
@@ -422,6 +433,7 @@ const ConversationView: FC<Props> = ({
             deployments={deploymentItems}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
+            isInputDisabled={isInputDisabled}
             modelSelectorLabels={{
               ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
               loading: isLoading
