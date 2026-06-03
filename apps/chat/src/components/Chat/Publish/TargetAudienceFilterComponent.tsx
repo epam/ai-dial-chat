@@ -79,6 +79,7 @@ export function TargetAudienceFilterComponent({
   );
   const [filterParams, setFilterParams] = useState<string[]>([]);
   const [filterRegexParam, setFilterRegexParam] = useState<string>('');
+  const [isRegexValid, setIsRegexValid] = useState(true);
   const [selectedTarget, setSelectedTarget] = useState(t(emptySelector));
   const [targetMenuOpen, setTargetMenuOpen] = useState(true);
 
@@ -121,6 +122,9 @@ export function TargetAudienceFilterComponent({
   const handleChangeFilterFunction = useCallback(
     (next: PublicationFunctions) => {
       setFilterFunction(next);
+      if (next !== PublicationFunctions.Regex) {
+        setIsRegexValid(true);
+      }
     },
     [],
   );
@@ -152,7 +156,8 @@ export function TargetAudienceFilterComponent({
     !isTargetSelected ||
     !areSomeFilterParamSelected ||
     isRegexFilledInButNotSelected ||
-    isParamsFilledInButRegexIsSelected;
+    isParamsFilledInButRegexIsSelected ||
+    (filterFunction === PublicationFunctions.Regex && !isRegexValid);
 
   isSaveBtnDisabledRef.current = isSaveBtnDisabled;
 
@@ -256,7 +261,9 @@ export function TargetAudienceFilterComponent({
                 <RegexParamInput
                   regEx={filterRegexParam}
                   onRegExChange={handleChangeFilterRegexParam}
-                  className="h-[38px] rounded border border-primary"
+                  onValidityChange={setIsRegexValid}
+                  isInvalid={!isRegexValid}
+                  className="rounded border border-primary"
                   inputRef={regexInputRef}
                 />
               ) : (
@@ -314,6 +321,8 @@ export function TargetAudienceFilterComponent({
         <RegexParamInput
           regEx={filterRegexParam}
           onRegExChange={handleChangeFilterRegexParam}
+          onValidityChange={setIsRegexValid}
+          isInvalid={!isRegexValid}
           inputRef={regexInputRef}
         />
       ) : (
