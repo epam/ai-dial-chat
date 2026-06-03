@@ -9,10 +9,22 @@ import {
   mapDialHttpStatus,
 } from '../common/utils/dial-fetch-error';
 import type { EnvironmentVariables } from '../config/environment.config';
+import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import type {
   DeploymentItemDto,
   DeploymentsResponseDto,
 } from './dto/deployment-item.dto';
+
+const isRecord = (val: unknown): val is Record<string, unknown> =>
+  val != null && typeof val === 'object' && !Array.isArray(val);
+
+function toAdditionalProperties(
+  val: unknown,
+): boolean | Record<string, unknown> | undefined {
+  if (typeof val === 'boolean') return val;
+  if (isRecord(val)) return val;
+  return undefined;
+}
 
 type RawDeployment = {
   id?: string;
@@ -121,10 +133,10 @@ export class DeploymentsService extends AppService {
     name: string,
     userSub: string,
     accessToken: string,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<DeploymentConfigurationDto> {
     const cacheKey = `deployments:configuration:${userSub}:${name}`;
     const cached =
-      await this.cacheManager.get<Record<string, unknown>>(cacheKey);
+      await this.cacheManager.get<DeploymentConfigurationDto>(cacheKey);
     if (cached) {
       this.logger.debug(
         `Cache hit for deployment configuration "${name}" (sub: ${userSub})`,
@@ -143,7 +155,17 @@ export class DeploymentsService extends AppService {
           this.logger,
         );
       }
-      const data = result.data as Record<string, unknown>;
+      const raw = result.data ?? {};
+      const data: DeploymentConfigurationDto = {
+        type: typeof raw['type'] === 'string' ? raw['type'] : undefined,
+        title: typeof raw['title'] === 'string' ? raw['title'] : undefined,
+        properties: isRecord(raw['properties']) ? raw['properties'] : undefined,
+        additionalProperties: toAdditionalProperties(
+          raw['additionalProperties'],
+        ),
+        isChatMessageInputDisabled:
+          raw['dial:chatMessageInputDisabled'] === true || undefined,
+      };
       await this.cacheManager.set(cacheKey, data, 60 * 1000);
       return data;
     } catch (err) {
