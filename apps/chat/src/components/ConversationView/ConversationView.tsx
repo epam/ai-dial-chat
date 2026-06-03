@@ -1,5 +1,7 @@
 import {
   MessageRole,
+  StatusEvent,
+  isStatusMessage,
   type Attachment,
   type DisplayAttachment,
   type MessageRating,
@@ -24,6 +26,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ActionsI18nKeys,
   ChatI18nKeys,
+  ConversationI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys.js';
 import { useDeployments } from '../../context/DeploymentsContext.js';
@@ -33,6 +36,7 @@ import { messageHasStages } from '../../utils/message-utils.js';
 import { buildMessageActions } from './buildMessageActions.js';
 import {
   getMessageStarterProps,
+  getStatusMessageProps,
   isStreamingMessage,
 } from './message-display.js';
 
@@ -72,6 +76,7 @@ interface Props {
   editingMessageIds?: Set<string>;
   placeholder: string;
   isAssistantTyping?: boolean;
+  initialModelId: string;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -91,6 +96,7 @@ const ConversationView: FC<Props> = ({
   editingMessageIds,
   placeholder,
   isAssistantTyping = false,
+  initialModelId,
 }) => {
   const { t } = useTranslation();
   const {
@@ -107,6 +113,46 @@ const ConversationView: FC<Props> = ({
     [selectedDeploymentConfiguration],
   );
 
+  const deploymentLookup = useMemo<
+    Record<string, { displayName: string; iconUrl: string | undefined }>
+  >(
+    () =>
+      Object.fromEntries(
+        items.map((d) => [
+          d.id,
+          {
+            displayName: d.displayName,
+            iconUrl: resolveCatalogIconUrl(d.iconUrl),
+          },
+        ]),
+      ),
+    [items],
+  );
+
+  // For each message, resolve the deployment active at that point in the conversation.
+  // Scans status messages in order so messages before a model change get the initial model icon.
+  const effectiveDeploymentIds = useMemo<(string | undefined)[]>(
+    () =>
+      messages.reduce<{
+        ids: (string | undefined)[];
+        activeId: string | undefined;
+      }>(
+        (acc, msg) => {
+          const nextId =
+            isStatusMessage(msg) &&
+            msg.custom_content?.event_type === StatusEvent.ModelChanged
+              ? msg.custom_content.new_deployment_id
+              : acc.activeId;
+          return {
+            ids: [...acc.ids, msg.deploymentId ?? nextId],
+            activeId: nextId,
+          };
+        },
+        { ids: [], activeId: initialModelId },
+      ).ids,
+    [messages, initialModelId],
+  );
+
   const deploymentItems = useMemo(
     () =>
       items.map(({ id, displayName, iconUrl, type }) => ({
@@ -117,6 +163,7 @@ const ConversationView: FC<Props> = ({
       })),
     [items],
   );
+
   const tooltips = {
     edit: t(ActionsI18nKeys.Edit),
     delete: t(ActionsI18nKeys.Delete),
@@ -290,6 +337,24 @@ const ConversationView: FC<Props> = ({
                 onSelectStarter,
               );
 
+              const deploymentEntry =
+                effectiveDeploymentIds[index] !== undefined
+                  ? deploymentLookup[effectiveDeploymentIds[index]]
+                  : undefined;
+
+              const statusProps = isStatusMessage(msg)
+                ? getStatusMessageProps(
+                    msg,
+                    deploymentLookup,
+                    t(ConversationI18nKeys.StatusModelChangedTitle),
+                    (from, to) =>
+                      t(ConversationI18nKeys.StatusModelChangedBody, {
+                        from,
+                        to,
+                      }),
+                  )
+                : {};
+
               return (
                 <MessageBubble
                   key={msg.id}
@@ -332,6 +397,9 @@ const ConversationView: FC<Props> = ({
                   starters={activeStarters}
                   onSelectStarter={handleSelectStarter}
                   startersAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
+                  deploymentIconUrl={deploymentEntry?.iconUrl}
+                  deploymentDisplayName={deploymentEntry?.displayName}
+                  {...statusProps}
                 />
               );
             })}

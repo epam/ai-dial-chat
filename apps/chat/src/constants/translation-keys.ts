@@ -62,6 +62,11 @@ export enum DeploymentsI18nKeys {
   SelectorCloseLabel = 'deployments.selector.closeLabel',
 }
 
+export enum ConversationI18nKeys {
+  StatusModelChangedTitle = 'conversation.statusMessage.modelChangedTitle',
+  StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
+}
+
 export enum AuthI18nKeys {
   SignOut = 'auth.signOut',
   SignedInAs = 'auth.signedInAs',

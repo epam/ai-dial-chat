@@ -2,8 +2,35 @@ import {
   MessageRole,
   type Message,
   type StarterOption,
+  type StatusMessage,
 } from '@epam/ai-dial-chat-shared';
 import { getStartersFromSchema } from '../../utils/starter-option.js';
+
+/**
+ * Resolves display props for a `MessageRole.Status` message.
+ * Returns `undefined` for non-status messages.
+ * Accepts pre-translated strings so i18n stays in the caller.
+ */
+export const getStatusMessageProps = (
+  msg: StatusMessage,
+  deploymentLookup: Record<string, { displayName: string }>,
+  titleText: string,
+  formatBodyText: (from: string, to: string) => string,
+): { statusTitleText: string; statusBodyText: string } => {
+  const customContent = msg.custom_content;
+  const prevName = customContent?.previous_deployment_id
+    ? (deploymentLookup[customContent.previous_deployment_id]?.displayName ??
+      customContent.previous_deployment_id)
+    : null;
+  const newName =
+    deploymentLookup[customContent?.new_deployment_id ?? '']?.displayName ??
+    customContent?.new_deployment_id ??
+    '';
+  return {
+    statusTitleText: titleText,
+    statusBodyText: formatBodyText(prevName ?? '…', newName),
+  };
+};
 
 /**
  * Returns `true` when the message at `index` is the last assistant message

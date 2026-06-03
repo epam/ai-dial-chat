@@ -16,6 +16,7 @@ import {
 } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
+import { useDeployments } from '../../context/DeploymentsContext';
 import {
   deleteConversation as apiDeleteConversation,
   saveConversation,
@@ -60,6 +61,7 @@ export const useConversationHandlers = ({
     propertyKey?: string;
     description?: string;
   } | null>(null);
+  const { selectedItemId } = useDeployments();
 
   const handleSend = useCallback(
     async (message: string, attachments: Attachment[]) => {
@@ -67,7 +69,7 @@ export const useConversationHandlers = ({
 
       const attachmentDtos = await attachmentsToDtos(attachments);
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(message, attachmentDtos);
+        createMessagePair(message, attachmentDtos, undefined, selectedItemId);
       const conversationPath = getConversationPath(conversationId);
 
       setConversation((prev) => {
@@ -94,6 +96,7 @@ export const useConversationHandlers = ({
       conversation,
       conversationId,
       conversationRef,
+      selectedItemId,
       setConversation,
       startStream,
     ],
@@ -269,7 +272,7 @@ export const useConversationHandlers = ({
         : undefined;
 
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(text, undefined, configurationValue);
+        createMessagePair(text, undefined, configurationValue, selectedItemId);
       const conversationPath = getConversationPath(conversationId);
 
       setConversation((prev) => {
@@ -294,6 +297,7 @@ export const useConversationHandlers = ({
       conversation,
       conversationId,
       conversationRef,
+      selectedItemId,
       setConversation,
       startStream,
     ],

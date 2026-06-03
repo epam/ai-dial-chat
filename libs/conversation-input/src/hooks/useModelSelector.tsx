@@ -1,9 +1,9 @@
 import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
-import { DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
-import { IconRobot } from '@tabler/icons-react';
+import { DIAL_ICON_SIZE, DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
 import { type ReactNode, useMemo, useState } from 'react';
-import { DeploymentIcon } from '../components/Input/DeploymentIcon.js';
+import FallbackEntityIcon from '../assets/fallback-entity-icon.svg?react';
+import { DeploymentIcon } from '../components/Input/Icon/DeploymentIcon.js';
 import type { ModelSelectorLabels } from '../models/Input.js';
 import {
   buildDeploymentIcon,
@@ -59,11 +59,21 @@ export const useModelSelector = ({
       selectedItem?.iconUrl ? (
         <DeploymentIcon
           src={selectedItem.iconUrl}
-          size={18}
-          fallback={<IconRobot size={18} aria-hidden />}
+          size={DIAL_ICON_SIZE.LG}
+          fallback={
+            <FallbackEntityIcon
+              width={DIAL_ICON_SIZE.LG}
+              height={DIAL_ICON_SIZE.LG}
+              aria-hidden
+            />
+          }
         />
       ) : (
-        <IconRobot size={18} aria-hidden />
+        <FallbackEntityIcon
+          width={DIAL_ICON_SIZE.LG}
+          height={DIAL_ICON_SIZE.LG}
+          aria-hidden
+        />
       ),
     [selectedItem],
   );
@@ -97,7 +107,7 @@ export const useModelSelector = ({
       deployments && deployments.length > 0 ? (
         <div
           className={mergeClasses(
-            'sticky top-0 z-10 px-2 pb-1 pt-2',
+            'sticky top-0 z-10 pb-1 pr-2 pt-2',
             searchHeaderClassName,
           )}
         >
@@ -105,6 +115,7 @@ export const useModelSelector = ({
             value={searchQuery}
             placeholder={modelSelectorLabels?.searchPlaceholder ?? 'Search'}
             size={ElementSize.Small}
+            wrapperClassName="border-0"
             onChange={setSearchQuery}
           />
         </div>

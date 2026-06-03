@@ -32,6 +32,8 @@ export interface ConversationMetadata {
 export enum MessageRole {
   User = 'user',
   Assistant = 'assistant',
+  /** In-conversation system event; never sent to DIAL Core. */
+  Status = 'status',
 }
 
 /** A user-submitted thumbs-up or thumbs-down rating for an assistant message.
@@ -58,6 +60,24 @@ export type MessageFormValueType = number | string | boolean | string[];
  * Keys are field identifiers; values are typed form field values (or `undefined` for unset fields).
  */
 export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
+
+/** Discriminator values for `StatusMessageCustomContent.event_type`. */
+export enum StatusEvent {
+  ModelChanged = 'model_changed',
+}
+
+/**
+ * Extra payload attached to a `MessageRole.Status` message.
+ * Discriminated by `event_type`; forward-compatible with future event types.
+ */
+export interface StatusMessageCustomContent {
+  /** Machine-readable event discriminator. */
+  event_type: StatusEvent;
+  /** ID of the deployment that was active before the change, or `null` for the first selection. */
+  previous_deployment_id: string | null;
+  /** ID of the deployment selected after the change. */
+  new_deployment_id: string;
+}
 
 /** Extra DIAL API payload attached to a message. */
 export interface MessageCustomContent {
@@ -97,8 +117,31 @@ export interface Message {
   custom_content?: MessageCustomContent;
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
+  /**
+   * ID of the deployment that generated this message.
+   * Set on `MessageRole.Assistant` and `MessageRole.Status` messages.
+   * Used to render the deployment icon next to assistant responses.
+   */
+  deploymentId?: string;
   /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
   [key: string]: unknown;
+}
+
+/**
+ * An in-conversation system event message produced by the client (never forwarded to DIAL Core).
+ * Discriminated from `Message` by `role: MessageRole.Status`.
+ * Defined as a standalone interface rather than extending `Message` because
+ * `custom_content` has an incompatible type (`StatusMessageCustomContent` vs
+ * `MessageCustomContent`), which prevents structural subtyping.
+ */
+export interface StatusMessage extends Omit<
+  Message,
+  'role' | 'custom_content'
+> {
+  /** Always `MessageRole.Status` for status messages. */
+  role: MessageRole.Status;
+  /** Status event payload. */
+  custom_content?: StatusMessageCustomContent;
 }
 
 /**

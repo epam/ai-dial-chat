@@ -23,6 +23,26 @@
   color: var(--ci-stop-color, var(--text-secondary, #9fa6bd));
 }
 
+.modelSelectorButton {
+  .modelSelectorCaret {
+    color: var(--ci-model-selector-caret-color, var(--text-primary, #eef1f7));
+  }
+  &:hover,
+  &:active {
+    background: var(
+      --ci-model-selector-hover-bg,
+      var(--controls-bg-accent-primary-alpha-active, #7da4ff4d)
+    );
+
+    .modelSelectorCaret {
+      background: var(
+        --ci-model-selector-caret-hover-bg,
+        var(--bg-accent-primary-alpha, #7da4ff26)
+      );
+    }
+  }
+}
+
 .sendButton {
   background: var(--ci-send-bg, var(--controls-bg-accent-primary, #3664e2));
   color: var(--ci-send-text, var(--controls-text-permanent, #fcfcfc));

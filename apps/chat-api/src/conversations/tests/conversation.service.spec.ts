@@ -1,3 +1,4 @@
+import { MessageRole, StatusEvent } from '@epam/ai-dial-chat-shared';
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialError } from '../../common/utils/dial-error';
@@ -172,13 +173,148 @@ describe('ConversationService', () => {
   });
 
   describe('streamCompletion', () => {
-    beforeEach(() => {
+    const baseConversation = {
+      id: 'test-bucket/test-path',
+      folderId: 'test-bucket',
+      name: 'Test',
+      model: { id: 'gpt-4o' },
+      prompt: '',
+      temperature: 1,
+      selectedAddons: [],
+      lastActivityDate: 0,
+      updatedAt: 0,
+    };
+
+    it('excludes MessageRole.Status messages from the DIAL Core payload', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: MessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+          {
+            id: 's1',
+            role: MessageRole.Status,
+            content: '',
+            timestamp: '2024-01-01T00:00:01.000Z',
+            custom_content: {
+              event_type: StatusEvent.ModelChanged,
+              previous_deployment_id: null,
+              new_deployment_id: 'gpt-4o',
+            },
+          },
+          {
+            id: 'a1',
+            role: MessageRole.Assistant,
+            content: 'Hi there',
+            timestamp: '2024-01-01T00:00:02.000Z',
+          },
+        ],
+      };
+
       vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: TEST_CONVERSATION,
+        data: conversation,
       } as never);
+
+      const mockStream = new ReadableStream();
+      const sendSpy = vi
+        .spyOn(service['client'], 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: { ok: true, body: mockStream } as Response,
+        } as never);
+
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        'Next message',
+        'gpt-4o',
+      );
+
+      const sentMessages: { role: string }[] =
+        sendSpy.mock.calls[0][1].body.messages;
+      expect(sentMessages.some((m) => m.role === MessageRole.Status)).toBe(
+        false,
+      );
+      expect(sentMessages.some((m) => m.role === MessageRole.User)).toBe(true);
+      expect(sentMessages.some((m) => m.role === MessageRole.Assistant)).toBe(
+        true,
+      );
+    });
+
+    it('includes all non-status messages in the DIAL Core payload', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: MessageRole.User,
+            content: 'First',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+          {
+            id: 's1',
+            role: MessageRole.Status,
+            content: '',
+            timestamp: '2024-01-01T00:00:01.000Z',
+            custom_content: {
+              event_type: StatusEvent.ModelChanged,
+              previous_deployment_id: 'old-model',
+              new_deployment_id: 'gpt-4o',
+            },
+          },
+          {
+            id: 'a1',
+            role: MessageRole.Assistant,
+            content: 'Response',
+            timestamp: '2024-01-01T00:00:02.000Z',
+          },
+        ],
+      };
+
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: conversation,
+      } as never);
+
+      const mockStream = new ReadableStream();
+      const sendSpy = vi
+        .spyOn(service['client'], 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: { ok: true, body: mockStream } as Response,
+        } as never);
+
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        'Follow-up',
+        'gpt-4o',
+      );
+
+      const sentMessages: { role: string; content: string }[] =
+        sendSpy.mock.calls[0][1].body.messages;
+      expect(sentMessages).toHaveLength(3); // user + assistant + new user
+      expect(sentMessages[0]).toMatchObject({
+        role: MessageRole.User,
+        content: 'First',
+      });
+      expect(sentMessages[1]).toMatchObject({
+        role: MessageRole.Assistant,
+        content: 'Response',
+      });
+      expect(sentMessages[2]).toMatchObject({
+        role: MessageRole.User,
+        content: 'Follow-up',
+      });
     });
 
     it('logs and delegates to handleDialError when completion stream is rejected', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
       vi.mocked(handleDialError).mockImplementation(() => {
         throw new Error('mapped DIAL error');
       });
@@ -210,6 +346,9 @@ describe('ConversationService', () => {
     });
 
     it('passes the stream through when completion succeeds', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
       const firstChunk =
         'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n';
       const secondChunk = 'data: [DONE]\n\n';

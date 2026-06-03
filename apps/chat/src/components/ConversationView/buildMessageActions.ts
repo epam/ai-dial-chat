@@ -23,6 +23,10 @@ export const buildMessageActions = (
   tooltips?: MessageActionTooltips,
   ariaLabels?: MessageActionAriaLabels,
 ): MessageActionsProps => {
+  if (msg.role === MessageRole.Status) {
+    return {};
+  }
+
   if (msg.role === MessageRole.User) {
     return {
       onEdit: handlers.onEdit ? () => handlers.onEdit?.(msg.id) : void 0,

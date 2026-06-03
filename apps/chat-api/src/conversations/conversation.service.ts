@@ -283,21 +283,25 @@ export class ConversationService extends AppService {
     // not inside the messages array.
     const configuration = customContent?.configuration_value;
 
-    const messages = messagesForCompletion.map((m) => {
-      const validAttachments = getValidAttachments(m.custom_content);
-      const content = Object.fromEntries(
-        Object.entries({
-          ...m.custom_content,
-          attachments: validAttachments.length ? validAttachments : undefined,
-          configuration_value: undefined, // configuration_value is sent as top-level custom_fields.configuration, not inside messages[].custom_content
-        }).filter(([, value]) => value != null),
-      );
-      return {
-        role: m.role,
-        content: m.content,
-        ...(Object.keys(content).length > 0 ? { custom_content: content } : {}),
-      };
-    });
+    const messages = messagesForCompletion
+      .filter((m) => m.role !== MessageRole.Status)
+      .map((m) => {
+        const validAttachments = getValidAttachments(m.custom_content);
+        const content = Object.fromEntries(
+          Object.entries({
+            ...m.custom_content,
+            attachments: validAttachments.length ? validAttachments : undefined,
+            configuration_value: undefined, // configuration_value is sent as top-level custom_fields.configuration, not inside messages[].custom_content
+          }).filter(([, value]) => value != null),
+        );
+        return {
+          role: m.role,
+          content: m.content,
+          ...(Object.keys(content).length > 0
+            ? { custom_content: content }
+            : {}),
+        };
+      });
 
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
