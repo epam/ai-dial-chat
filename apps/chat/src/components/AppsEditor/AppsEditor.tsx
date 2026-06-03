@@ -104,6 +104,7 @@ export const AppsEditor = () => {
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
   );
+
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
@@ -160,7 +161,7 @@ export const AppsEditor = () => {
     defaultValues: defaultFormData,
     mode: 'onChange',
     reValidateMode: 'onChange',
-    resolver: zodResolver(getValidationSchema(type)),
+    resolver: zodResolver(getValidationSchema(type, schema ?? undefined)),
   });
   const lastSubmittedValuesRef = useRef<AppsEditorFormType>(defaultFormData);
   const isDirty = formMethods.formState.isDirty;
