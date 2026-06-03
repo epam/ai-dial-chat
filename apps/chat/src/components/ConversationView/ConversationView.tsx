@@ -1,12 +1,12 @@
 import {
   MessageRole,
+  StatusEvent,
+  isStatusMessage,
   type Attachment,
   type DisplayAttachment,
-  type MessageCustomContent,
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
-  type StatusMessageCustomContent,
 } from '@epam/ai-dial-chat-shared';
 import { MessageBubble } from '@epam/ai-dial-conversation-messages';
 import { StagesPanel } from '@epam/ai-dial-conversation-stages';
@@ -36,6 +36,7 @@ import { messageHasStages } from '../../utils/message-utils.js';
 import { buildMessageActions } from './buildMessageActions.js';
 import {
   getMessageStarterProps,
+  getStatusMessageProps,
   isStreamingMessage,
 } from './message-display.js';
 
@@ -75,8 +76,7 @@ interface Props {
   editingMessageIds?: Set<string>;
   placeholder: string;
   isAssistantTyping?: boolean;
-  /** Deployment ID of the conversation's first model — used as fallback for messages without an explicit deploymentId. */
-  initialDeploymentId?: string;
+  initialModelId: string;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -96,7 +96,7 @@ const ConversationView: FC<Props> = ({
   editingMessageIds,
   placeholder,
   isAssistantTyping = false,
-  initialDeploymentId,
+  initialModelId,
 }) => {
   const { t } = useTranslation();
   const { items, selectedItemId, setSelectedItemId, isLoading, error } =
@@ -125,20 +125,19 @@ const ConversationView: FC<Props> = ({
         activeId: string | undefined;
       }>(
         (acc, msg) => {
-          const cc = msg.custom_content as StatusMessageCustomContent;
           const nextId =
-            msg.role === MessageRole.Status &&
-            cc?.event_type === 'model_changed'
-              ? cc.new_deployment_id
+            isStatusMessage(msg) &&
+            msg.custom_content?.event_type === StatusEvent.ModelChanged
+              ? msg.custom_content.new_deployment_id
               : acc.activeId;
           return {
             ids: [...acc.ids, msg.deploymentId ?? nextId],
             activeId: nextId,
           };
         },
-        { ids: [], activeId: initialDeploymentId },
+        { ids: [], activeId: initialModelId },
       ).ids,
-    [messages, initialDeploymentId],
+    [messages, initialModelId],
   );
 
   const deploymentItems = useMemo(
@@ -323,31 +322,18 @@ const ConversationView: FC<Props> = ({
                   ? deploymentLookup[effectiveDeploymentIds[index]]
                   : undefined;
 
-              const statusProps =
-                msg.role === MessageRole.Status
-                  ? (() => {
-                      const cc =
-                        msg.custom_content as StatusMessageCustomContent;
-                      const prevName = cc?.previous_deployment_id
-                        ? (deploymentLookup[cc.previous_deployment_id]
-                            ?.displayName ?? cc.previous_deployment_id)
-                        : null;
-                      const newName =
-                        deploymentLookup[cc?.new_deployment_id ?? '']
-                          ?.displayName ??
-                        cc?.new_deployment_id ??
-                        '';
-                      return {
-                        statusTitleText: t(
-                          ConversationI18nKeys.StatusModelChangedTitle,
-                        ),
-                        statusBodyText: t(
-                          ConversationI18nKeys.StatusModelChangedBody,
-                          { from: prevName ?? '…', to: newName },
-                        ),
-                      };
-                    })()
-                  : {};
+              const statusProps = isStatusMessage(msg)
+                ? getStatusMessageProps(
+                    msg,
+                    deploymentLookup,
+                    t(ConversationI18nKeys.StatusModelChangedTitle),
+                    (from, to) =>
+                      t(ConversationI18nKeys.StatusModelChangedBody, {
+                        from,
+                        to,
+                      }),
+                  )
+                : {};
 
               return (
                 <MessageBubble
@@ -360,8 +346,7 @@ const ConversationView: FC<Props> = ({
                       : undefined
                   }
                   attachments={attachmentDtosToDisplayAttachments(
-                    (msg.custom_content as MessageCustomContent | undefined)
-                      ?.attachments,
+                    msg.custom_content?.attachments,
                   )}
                   hasAlwaysVisibleActions={!isStreaming}
                   actions={buildMessageActions(

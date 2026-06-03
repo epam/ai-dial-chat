@@ -1,6 +1,5 @@
 import type {
   Message,
-  MessageCustomContent,
   Stage,
   StreamChunk,
 } from '@epam/ai-dial-chat-shared';
@@ -66,15 +65,13 @@ export const applyChunkToMessages = (
           ...(formSchema && { form_schema: formSchema }),
           ...(attachments?.length && {
             attachments: [
-              ...((message.custom_content as MessageCustomContent | undefined)
-                ?.attachments ?? []),
+              ...(message.custom_content?.attachments ?? []),
               ...attachments,
             ],
           }),
           ...(stages?.length && {
             stages: mergeStages(
-              (message.custom_content as MessageCustomContent | undefined)
-                ?.stages ?? [],
+              message.custom_content?.stages ?? [],
               stages,
             ),
           }),

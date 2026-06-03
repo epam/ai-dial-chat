@@ -61,13 +61,18 @@ export type MessageFormValueType = number | string | boolean | string[];
  */
 export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
 
+/** Discriminator values for `StatusMessageCustomContent.event_type`. */
+export enum StatusEvent {
+  ModelChanged = 'model_changed',
+}
+
 /**
  * Extra payload attached to a `MessageRole.Status` message.
  * Discriminated by `event_type`; forward-compatible with future event types.
  */
 export interface StatusMessageCustomContent {
   /** Machine-readable event discriminator. */
-  event_type: 'model_changed';
+  event_type: StatusEvent;
   /** ID of the deployment that was active before the change, or `null` for the first selection. */
   previous_deployment_id: string | null;
   /** ID of the deployment selected after the change. */
@@ -108,15 +113,43 @@ export interface Message {
    * Extra DIAL API payload attached to the message.
    * Present on both user requests (uploaded files) and assistant responses
    * (generated/referenced files).
-   * For `MessageRole.Status` messages, cast to `StatusMessageCustomContent`.
    */
-  custom_content?: MessageCustomContent | StatusMessageCustomContent;
+  custom_content?: MessageCustomContent;
   /** User-submitted rating for this message. Only meaningful for assistant messages. Stored in-memory only; not persisted. */
   rating?: MessageRating;
   /**
    * ID of the deployment that generated this message.
    * Set on `MessageRole.Assistant` and `MessageRole.Status` messages.
    * Used to render the deployment icon next to assistant responses.
+   */
+  deploymentId?: string;
+  /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
+  [key: string]: unknown;
+}
+
+/**
+ * An in-conversation system event message produced by the client (never forwarded to DIAL Core).
+ * Discriminated from `Message` by `role: MessageRole.Status`.
+ * Defined as a standalone interface rather than extending `Message` because
+ * `custom_content` has an incompatible type (`StatusMessageCustomContent` vs
+ * `MessageCustomContent`), which prevents structural subtyping.
+ */
+export interface StatusMessage {
+  /** Unique message identifier. */
+  id: string;
+  /** Always `MessageRole.Status` for status messages. */
+  role: MessageRole.Status;
+  /** Empty for status messages; present for structural compatibility with `Message`. */
+  content: string;
+  /** ISO-8601 timestamp of when the message was created. */
+  timestamp: string;
+  /** Status event payload. */
+  custom_content?: StatusMessageCustomContent;
+  /** User-submitted rating; unused for status messages. */
+  rating?: MessageRating;
+  /**
+   * ID of the deployment that generated this message.
+   * Set on `MessageRole.Assistant` and `MessageRole.Status` messages.
    */
   deploymentId?: string;
   /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */

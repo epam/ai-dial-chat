@@ -1,9 +1,7 @@
 import {
   type Conversation,
   type Message,
-  type MessageCustomContent,
   MessageRole,
-  type StatusMessageCustomContent,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
@@ -30,19 +28,7 @@ import {
   saveConversation,
 } from '../../server-api/conversations.api';
 import { getConversationPath } from '../../utils/conversation-path';
-
-const getLastDeploymentId = (messages: Message[]): string | null => {
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const msg = messages[i];
-    if (msg.role === MessageRole.Status) {
-      const cc = msg.custom_content as StatusMessageCustomContent | undefined;
-      if (cc?.event_type === 'model_changed') {
-        return cc.new_deployment_id;
-      }
-    }
-  }
-  return null;
-};
+import { getLastDeploymentId } from '../../utils/message-utils';
 
 export const ConversationPage: FC = () => {
   const { '*': conversationId } = useParams<{ '*': string }>();
@@ -135,7 +121,7 @@ export const ConversationPage: FC = () => {
             lastMsg.content,
             assistantMessageId,
             result.model.id,
-            lastMsg.custom_content as MessageCustomContent | undefined,
+            lastMsg.custom_content,
           );
         } else {
           setConversation(result);
@@ -193,7 +179,7 @@ export const ConversationPage: FC = () => {
         )}
         <ConversationView
           messages={conversation.messages}
-          initialDeploymentId={conversation.assistantModelId}
+          initialModelId={conversation.assistantModelId}
           onSend={handleSend}
           onStop={handleStop}
           onDeleteMessage={handleDeleteMessage}

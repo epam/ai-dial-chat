@@ -1,7 +1,8 @@
 import {
   Message,
-  MessageCustomContent,
   MessageRole,
+  StatusEvent,
+  isStatusMessage,
 } from '@epam/ai-dial-chat-shared';
 
 /**
@@ -20,10 +21,21 @@ export const isMessageStreaming = (
   message.role === MessageRole.Assistant;
 
 /**
- * Returns `true` when `message` is an assistant message that carries at least
- * one accumulated stage — i.e. a `StagesPanel` should be rendered for it.
+ * Returns the `new_deployment_id` from the last `model_changed` status message
+ * in the list, or `null` if none exists.
  */
+export const getLastDeploymentId = (messages: Message[]): string | null => {
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i];
+    if (isStatusMessage(msg)) {
+      if (msg.custom_content?.event_type === StatusEvent.ModelChanged) {
+        return msg.custom_content.new_deployment_id;
+      }
+    }
+  }
+  return null;
+};
+
 export const messageHasStages = (message: Message): boolean =>
   message.role === MessageRole.Assistant &&
-  ((message.custom_content as MessageCustomContent | undefined)?.stages
-    ?.length ?? 0) > 0;
+  (message.custom_content?.stages?.length ?? 0) > 0;

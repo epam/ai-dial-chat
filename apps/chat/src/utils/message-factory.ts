@@ -2,6 +2,8 @@ import {
   Message,
   MessageFormValue,
   MessageRole,
+  StatusEvent,
+  StatusMessage,
   StatusMessageCustomContent,
 } from '@epam/ai-dial-chat-shared';
 import type { AttachmentDto } from '@epam/chat-api-client';
@@ -55,9 +57,9 @@ export const createMessagePair = (
 export const createModelChangedMessage = (
   previousDeploymentId: string | null,
   newDeploymentId: string,
-): Message => {
+): StatusMessage => {
   const custom_content: StatusMessageCustomContent = {
-    event_type: 'model_changed',
+    event_type: StatusEvent.ModelChanged,
     previous_deployment_id: previousDeploymentId,
     new_deployment_id: newDeploymentId,
   };

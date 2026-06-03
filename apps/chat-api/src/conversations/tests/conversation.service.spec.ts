@@ -1,4 +1,4 @@
-import { MessageRole } from '@epam/ai-dial-chat-shared';
+import { MessageRole, StatusEvent } from '@epam/ai-dial-chat-shared';
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { ConversationService } from '../conversation.service';
@@ -129,7 +129,7 @@ describe('ConversationService', () => {
             content: '',
             timestamp: '2024-01-01T00:00:01.000Z',
             custom_content: {
-              event_type: 'model_changed',
+              event_type: StatusEvent.ModelChanged,
               previous_deployment_id: null,
               new_deployment_id: 'gpt-4o',
             },
@@ -189,7 +189,7 @@ describe('ConversationService', () => {
             content: '',
             timestamp: '2024-01-01T00:00:01.000Z',
             custom_content: {
-              event_type: 'model_changed',
+              event_type: StatusEvent.ModelChanged,
               previous_deployment_id: 'old-model',
               new_deployment_id: 'gpt-4o',
             },

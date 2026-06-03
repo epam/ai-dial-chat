@@ -149,7 +149,7 @@ export const useConversationHandlers = ({
         userMsg.content,
         messageId,
         conversation.model.id,
-        userMsg.custom_content as MessageCustomContent | undefined,
+        userMsg.custom_content,
       );
     },
     [
@@ -365,8 +365,7 @@ export const useConversationHandlers = ({
 
       const keptIds = new Set(keptDisplayAttachments.map((a) => a.id));
       const keptDtos = (
-        (originalMessage.custom_content as MessageCustomContent | undefined)
-          ?.attachments ?? []
+        originalMessage.custom_content?.attachments ?? []
       ).filter((att) => {
         const id = att.url ?? att.data ?? att.title;
         return keptIds.has(id);
@@ -375,8 +374,7 @@ export const useConversationHandlers = ({
       const allAttachments = [...keptDtos, ...(newDtos ?? [])];
 
       const { attachments: _removed, ...restCustomContent } =
-        (originalMessage.custom_content as MessageCustomContent | undefined) ??
-        {};
+        originalMessage.custom_content ?? {};
       const updatedCustomContent =
         allAttachments.length > 0
           ? { ...restCustomContent, attachments: allAttachments }

@@ -1,8 +1,4 @@
-import type {
-  DisplayAttachment,
-  Message,
-  MessageCustomContent,
-} from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment, Message } from '@epam/ai-dial-chat-shared';
 import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { useMemo } from 'react';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
@@ -21,7 +17,7 @@ export const useConversationSources = (
 
     for (const msg of messages) {
       const attachments = attachmentDtosToDisplayAttachments(
-        (msg.custom_content as MessageCustomContent | undefined)?.attachments,
+        msg.custom_content?.attachments,
       );
       if (msg.role === MessageRole.User) {
         uploaded.push(...attachments);

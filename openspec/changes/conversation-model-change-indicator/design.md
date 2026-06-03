@@ -245,7 +245,7 @@ const payloadMessages = messages.filter(
 
 ### 12. `postMessage` helper in `conversations.api.ts`
 
-**Decision:** Add `postMessage(conversationId: string, message: Message): Promise<void>` to `apps/chat/src/server-api/conversations.api.ts`. It calls the existing generated client method for creating a conversation message, threading `message.id`, `message.role`, `message.content`, `message.deploymentId`, and `(message.custom_content as StatusMessageCustomContent | undefined)?.event_type`.
+**Decision:** Add `postMessage(conversationId: string, message: Message): Promise<void>` to `apps/chat/src/server-api/conversations.api.ts`. It calls the existing generated client method for creating a conversation message, threading `message.id`, `message.role`, `message.content`, `message.deploymentId`, and `(message.custom_content as StatusMessageCustomContent)?.event_type`.
 
 **Why:** Keeps the server-api abstraction layer intact — the hook calls `postMessage`, not the generated client directly.
 

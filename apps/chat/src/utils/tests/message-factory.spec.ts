@@ -1,4 +1,4 @@
-import { MessageRole } from '@epam/ai-dial-chat-shared';
+import { MessageRole, StatusEvent } from '@epam/ai-dial-chat-shared';
 import { describe, expect, it } from 'vitest';
 import {
   createMessagePair,
@@ -72,22 +72,16 @@ describe('createModelChangedMessage', () => {
 
   it('should store previous and new deployment IDs in custom_content', () => {
     const msg = createModelChangedMessage('gpt-3', 'gpt-4');
-    const cc = msg.custom_content as {
-      event_type: string;
-      previous_deployment_id: string;
-      new_deployment_id: string;
-    };
 
-    expect(cc.event_type).toBe('model_changed');
-    expect(cc.previous_deployment_id).toBe('gpt-3');
-    expect(cc.new_deployment_id).toBe('gpt-4');
+    expect(msg.custom_content?.event_type).toBe(StatusEvent.ModelChanged);
+    expect(msg.custom_content?.previous_deployment_id).toBe('gpt-3');
+    expect(msg.custom_content?.new_deployment_id).toBe('gpt-4');
   });
 
   it('should accept null as previous deployment', () => {
     const msg = createModelChangedMessage(null, 'gpt-4');
-    const cc = msg.custom_content as { previous_deployment_id: null };
 
-    expect(cc.previous_deployment_id).toBeNull();
+    expect(msg.custom_content?.previous_deployment_id).toBeNull();
   });
 
   it('should produce a non-empty id', () => {
