@@ -1,4 +1,4 @@
-import { IconInfoCircleFilled } from '@tabler/icons-react';
+import { DialNotification } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 
 /** Props for the model-change status message banner. */
@@ -21,18 +21,5 @@ export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
   titleText = 'Model switched.',
   bodyText,
 }) => {
-  return (
-    <div className="flex w-full items-center gap-3 overflow-hidden rounded border border-[var(--stroke-info)] bg-[var(--bg-info)] p-3">
-      <IconInfoCircleFilled
-        size={20}
-        className="shrink-0 text-[var(--text-info)]"
-      />
-      <div className="flex min-w-0 flex-1 items-center gap-1 text-sm leading-5 text-[var(--text-primary)]">
-        <span className="shrink-0 font-semibold">{titleText}</span>
-        <span className="min-w-0 flex-1 overflow-hidden text-ellipsis whitespace-nowrap font-normal">
-          {bodyText}
-        </span>
-      </div>
-    </div>
-  );
+  return <DialNotification title={titleText} message={bodyText} />;
 };

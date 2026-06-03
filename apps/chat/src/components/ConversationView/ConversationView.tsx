@@ -40,8 +40,6 @@ import {
   isStreamingMessage,
 } from './message-display.js';
 
-type DeploymentEntry = { displayName: string; iconUrl: string | undefined };
-
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
   return { default: module.ConversationInput };
@@ -115,7 +113,9 @@ const ConversationView: FC<Props> = ({
     [selectedDeploymentConfiguration],
   );
 
-  const deploymentLookup = useMemo<Record<string, DeploymentEntry>>(
+  const deploymentLookup = useMemo<
+    Record<string, { displayName: string; iconUrl: string | undefined }>
+  >(
     () =>
       Object.fromEntries(
         items.map((d) => [

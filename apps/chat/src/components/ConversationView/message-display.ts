@@ -6,8 +6,6 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { getStartersFromSchema } from '../../utils/starter-option.js';
 
-type DeploymentNameLookup = Record<string, { displayName: string }>;
-
 /**
  * Resolves display props for a `MessageRole.Status` message.
  * Returns `undefined` for non-status messages.
@@ -15,7 +13,7 @@ type DeploymentNameLookup = Record<string, { displayName: string }>;
  */
 export const getStatusMessageProps = (
   msg: StatusMessage,
-  deploymentLookup: DeploymentNameLookup,
+  deploymentLookup: Record<string, { displayName: string }>,
   titleText: string,
   formatBodyText: (from: string, to: string) => string,
 ): { statusTitleText: string; statusBodyText: string } => {

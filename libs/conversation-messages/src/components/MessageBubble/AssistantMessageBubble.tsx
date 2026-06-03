@@ -4,9 +4,9 @@ import {
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import { AttachmentTray } from '@epam/ai-dial-conversation-input';
-import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
-import { IconRobot } from '@tabler/icons-react';
+import { DialRoundedButton, DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { FC, useEffect, useRef, useState } from 'react';
+import FallbackEntityIcon from '../../assets/fallback-entity-icon.svg?react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js';
 import { MDMessageViewer } from '../Markdown/MDMessageViewer.js';
 import { MessageActions } from '../Message/MessageActions.js';
@@ -38,9 +38,9 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   useEffect(() => {
     const el = iconImgRef.current;
     if (!el) return;
-    const handler = () => setIsIconFailed(true);
-    el.addEventListener('error', handler);
-    return () => el.removeEventListener('error', handler);
+    const handleError = () => setIsIconFailed(true);
+    el.addEventListener('error', handleError);
+    return () => el.removeEventListener('error', handleError);
   }, [deploymentIconUrl]);
 
   const { colors, typography } = bubbleStyles ?? {};
@@ -70,7 +70,6 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
       className={mergeClasses('flex w-full items-start gap-5', className)}
     >
       {hasDeploymentIcon && (
-        // White rounded badge — matches Figma node 39:6118 (size 28, inset ~11%)
         <div
           className={mergeClasses(
             styles.agentIconBadge,
@@ -88,7 +87,11 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             </div>
           ) : (
             <div className="flex size-full items-center justify-center">
-              <IconRobot size={22} className="shrink-0" />
+              <FallbackEntityIcon
+                width={DIAL_ICON_SIZE.LG}
+                height={DIAL_ICON_SIZE.LG}
+                className="shrink-0"
+              />
             </div>
           )}
         </div>
