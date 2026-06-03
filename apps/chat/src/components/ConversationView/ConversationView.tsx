@@ -285,11 +285,7 @@ const ConversationView: FC<Props> = ({
                       <EditMessageInput
                         message={msg.content}
                         initialAttachments={attachmentDtosToDisplayAttachments(
-                          (
-                            msg.custom_content as
-                              | MessageCustomContent
-                              | undefined
-                          )?.attachments,
+                          msg.custom_content?.attachments,
                         )}
                         onCancel={() => onCancelEdit?.(msg.id)}
                         onSave={(text, kept, added) =>
@@ -369,11 +365,7 @@ const ConversationView: FC<Props> = ({
                     hasStages ? (
                       <StagesPanel
                         stages={
-                          (
-                            msg.custom_content as
-                              | MessageCustomContent
-                              | undefined
-                          )?.stages ?? []
+                          msg.custom_content?.stages ?? []
                         }
                         isStreaming={isStreaming}
                       />
