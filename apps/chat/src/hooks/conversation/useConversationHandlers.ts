@@ -69,12 +69,7 @@ export const useConversationHandlers = ({
 
       const attachmentDtos = await attachmentsToDtos(attachments);
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(
-          message,
-          attachmentDtos,
-          undefined,
-          selectedItemId ?? undefined,
-        );
+        createMessagePair(message, attachmentDtos, undefined, selectedItemId);
       const conversationPath = getConversationPath(conversationId);
 
       setConversation((prev) => {
@@ -277,12 +272,7 @@ export const useConversationHandlers = ({
         : undefined;
 
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(
-          text,
-          undefined,
-          configurationValue,
-          selectedItemId ?? undefined,
-        );
+        createMessagePair(text, undefined, configurationValue, selectedItemId);
       const conversationPath = getConversationPath(conversationId);
 
       setConversation((prev) => {

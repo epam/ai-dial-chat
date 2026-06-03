@@ -2,7 +2,7 @@ import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useDeployments } from '../context/DeploymentsContext';
-import { useModelChangeEffect } from './useModelChangeEffect';
+import { useDeploymentChangeEffect } from './useDeploymentChangeEffect';
 
 vi.mock('../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
@@ -19,7 +19,7 @@ const makeDeploymentsContext = (selectedItemId: string | null) => ({
   error: null,
 });
 
-describe('useModelChangeEffect', () => {
+describe('useDeploymentChangeEffect', () => {
   afterEach(() => {
     vi.clearAllMocks();
   });
@@ -28,7 +28,9 @@ describe('useModelChangeEffect', () => {
     mockUseDeployments.mockReturnValue(makeDeploymentsContext('gpt-4'));
     const addStatusMessage = vi.fn();
 
-    renderHook(() => useModelChangeEffect('conv-1', addStatusMessage, true));
+    renderHook(() =>
+      useDeploymentChangeEffect('conv-1', addStatusMessage, true),
+    );
 
     expect(addStatusMessage).not.toHaveBeenCalled();
   });
@@ -41,7 +43,7 @@ describe('useModelChangeEffect', () => {
     const addStatusMessage = vi.fn();
 
     const { rerender } = renderHook(() =>
-      useModelChangeEffect('conv-1', addStatusMessage, true),
+      useDeploymentChangeEffect('conv-1', addStatusMessage, true),
     );
 
     act(() => {
@@ -63,7 +65,7 @@ describe('useModelChangeEffect', () => {
     const addStatusMessage = vi.fn();
 
     const { rerender } = renderHook(() =>
-      useModelChangeEffect(undefined, addStatusMessage, true),
+      useDeploymentChangeEffect(undefined, addStatusMessage, true),
     );
 
     act(() => {
@@ -82,7 +84,7 @@ describe('useModelChangeEffect', () => {
     const addStatusMessage = vi.fn();
 
     const { rerender } = renderHook(() =>
-      useModelChangeEffect('conv-1', addStatusMessage, true),
+      useDeploymentChangeEffect('conv-1', addStatusMessage, true),
     );
 
     act(() => {
@@ -101,7 +103,7 @@ describe('useModelChangeEffect', () => {
     const addStatusMessage = vi.fn();
 
     const { rerender } = renderHook(() =>
-      useModelChangeEffect('conv-1', addStatusMessage, false),
+      useDeploymentChangeEffect('conv-1', addStatusMessage, false),
     );
 
     act(() => {
@@ -124,7 +126,11 @@ describe('useModelChangeEffect', () => {
     const addStatusMessage = vi.fn();
 
     const { rerender } = renderHook(() =>
-      useModelChangeEffect('conv-1', addStatusMessage, isConversationLoaded),
+      useDeploymentChangeEffect(
+        'conv-1',
+        addStatusMessage,
+        isConversationLoaded,
+      ),
     );
 
     // Conversation loads; caller restores last agent simultaneously
@@ -146,7 +152,11 @@ describe('useModelChangeEffect', () => {
     const addStatusMessage = vi.fn();
 
     const { rerender } = renderHook(() =>
-      useModelChangeEffect('conv-1', addStatusMessage, isConversationLoaded),
+      useDeploymentChangeEffect(
+        'conv-1',
+        addStatusMessage,
+        isConversationLoaded,
+      ),
     );
 
     // Conversation loads (no agent restoration needed)

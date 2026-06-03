@@ -389,9 +389,7 @@ const ConversationView: FC<Props> = ({
                   afterContent={
                     hasStages ? (
                       <StagesPanel
-                        stages={
-                          msg.custom_content?.stages ?? []
-                        }
+                        stages={msg.custom_content?.stages ?? []}
                         isStreaming={isStreaming}
                       />
                     ) : undefined

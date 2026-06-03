@@ -1,7 +1,7 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
 import { IconApps } from '@tabler/icons-react';
-import FallbackEntityIcon from '../assets/fallback-entity-icon.svg?react';
 import type { ReactNode } from 'react';
+import FallbackEntityIcon from '../assets/fallback-entity-icon.svg?react';
 import { DeploymentIcon } from '../components/Input/DeploymentIcon.js';
 
 /** Returns the human-readable label for a deployment, falling back to its id. */

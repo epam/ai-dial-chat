@@ -134,26 +134,14 @@ export interface Message {
  * `custom_content` has an incompatible type (`StatusMessageCustomContent` vs
  * `MessageCustomContent`), which prevents structural subtyping.
  */
-export interface StatusMessage {
-  /** Unique message identifier. */
-  id: string;
+export interface StatusMessage extends Omit<
+  Message,
+  'role' | 'custom_content'
+> {
   /** Always `MessageRole.Status` for status messages. */
   role: MessageRole.Status;
-  /** Empty for status messages; present for structural compatibility with `Message`. */
-  content: string;
-  /** ISO-8601 timestamp of when the message was created. */
-  timestamp: string;
   /** Status event payload. */
   custom_content?: StatusMessageCustomContent;
-  /** User-submitted rating; unused for status messages. */
-  rating?: MessageRating;
-  /**
-   * ID of the deployment that generated this message.
-   * Set on `MessageRole.Assistant` and `MessageRole.Status` messages.
-   */
-  deploymentId?: string;
-  /** Allows extra SDK-level properties to pass through when serializing to DIAL Core. */
-  [key: string]: unknown;
 }
 
 /**

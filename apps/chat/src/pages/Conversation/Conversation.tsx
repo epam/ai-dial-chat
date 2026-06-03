@@ -22,7 +22,7 @@ import { useDeployments } from '../../context/DeploymentsContext.js';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
-import { useModelChangeEffect } from '../../hooks/useModelChangeEffect.js';
+import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect.js';
 import {
   getConversation as apiGetConversation,
   saveConversation,
@@ -66,7 +66,11 @@ export const ConversationPage: FC = () => {
   );
 
   const isConversationLoaded = !isFetching && !!conversation;
-  useModelChangeEffect(conversationId, addStatusMessage, isConversationLoaded);
+  useDeploymentChangeEffect(
+    conversationId,
+    addStatusMessage,
+    isConversationLoaded,
+  );
 
   const {
     startStream,

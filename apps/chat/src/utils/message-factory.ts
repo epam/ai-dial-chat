@@ -18,7 +18,7 @@ export const createMessagePair = (
   content: string,
   attachments?: AttachmentDto[],
   formValue?: MessageFormValue,
-  deploymentId?: string,
+  deploymentId?: string | null,
 ): MessagePair => {
   const now = Date.now();
   const timestamp = new Date(now).toISOString();
@@ -54,7 +54,7 @@ export const createMessagePair = (
  * Creates a status message recording a deployment change in the conversation timeline.
  * Status messages are never forwarded to DIAL Core.
  */
-export const createModelChangedMessage = (
+export const createDeploymentChangedMessage = (
   previousDeploymentId: string | null,
   newDeploymentId: string,
 ): StatusMessage => {

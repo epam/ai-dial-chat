@@ -1,7 +1,7 @@
 import { Message } from '@epam/ai-dial-chat-shared';
 import { useEffect, useRef } from 'react';
 import { useDeployments } from '../context/DeploymentsContext';
-import { createModelChangedMessage } from '../utils/message-factory';
+import { createDeploymentChangedMessage } from '../utils/message-factory';
 
 /**
  * Watches the active deployment selection and appends a status message to the
@@ -16,7 +16,7 @@ import { createModelChangedMessage } from '../utils/message-factory';
  *   is true, which prevents spurious messages during the initial sync of the
  *   deployment selector to the conversation's last-used agent.
  */
-export const useModelChangeEffect = (
+export const useDeploymentChangeEffect = (
   conversationId: string | undefined,
   addStatusMessage: (msg: Message) => void,
   isConversationLoaded: boolean,
@@ -47,8 +47,10 @@ export const useModelChangeEffect = (
     const previous = prevIdRef.current;
     prevIdRef.current = selectedItemId;
 
-    if (selectedItemId === null) return;
+    if (selectedItemId == null) return;
 
-    addStatusMessage(createModelChangedMessage(previous, selectedItemId));
+    addStatusMessage(
+      createDeploymentChangedMessage(previous, selectedItemId) as Message,
+    );
   }, [conversationId, selectedItemId, addStatusMessage, isConversationLoaded]);
 };

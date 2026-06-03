@@ -1,8 +1,4 @@
-import type {
-  Message,
-  Stage,
-  StreamChunk,
-} from '@epam/ai-dial-chat-shared';
+import type { Message, Stage, StreamChunk } from '@epam/ai-dial-chat-shared';
 
 const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
   const result = [...existing];
@@ -70,10 +66,7 @@ export const applyChunkToMessages = (
             ],
           }),
           ...(stages?.length && {
-            stages: mergeStages(
-              message.custom_content?.stages ?? [],
-              stages,
-            ),
+            stages: mergeStages(message.custom_content?.stages ?? [], stages),
           }),
         },
       }),
