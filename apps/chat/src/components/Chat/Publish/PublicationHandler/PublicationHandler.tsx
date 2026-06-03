@@ -484,7 +484,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     const config = applicationDetail?.applicationProperties as
       | QuickApp2Config
       | undefined;
-      
+
     return (config?.skills ?? []).some((s) => !isEntityIdPublic({ id: s.url }));
   }, [publicationModel, publishEntityModel, applicationDetail]);
 
