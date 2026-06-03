@@ -248,10 +248,6 @@ export class ConversationService extends AppService {
       bucket,
     );
 
-    this.logger.log(
-      `[streamCompletion] model from request: "${model}", conversation.model.id: "${conversation.model?.id}", assistantModelId: "${conversation.assistantModelId}"`,
-    );
-
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: MessageRole.User,
@@ -296,10 +292,6 @@ export class ConversationService extends AppService {
       };
     });
 
-    this.logger.log(
-      `[streamCompletion] POST /openai/deployments/${model}/chat/completions`,
-    );
-
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
         body: {
@@ -311,6 +303,7 @@ export class ConversationService extends AppService {
           ...getBearerAuthHeaders(token),
           Accept: 'text/event-stream',
         },
+        params: { query: { 'api-version': this.dialApiVersion } },
         parseAs: 'stream',
       })) as { response: Response; error?: unknown };
 

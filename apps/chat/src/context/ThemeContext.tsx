@@ -72,6 +72,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         cancelled = true;
       };
     }
+    return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

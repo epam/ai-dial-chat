@@ -53,6 +53,7 @@ PORT=3005
 API_PREFIX=api
 CORS_ORIGIN=http://localhost:4207
 DIAL_CORE_URL=https://your-dial-service.com
+DIAL_API_VERSION=2024-10-21
 DIAL_API_KEY=your-secret-api-key
 THEMES_CONFIG_URL=https://your-themes-service.com
 THEMES_SERVICE_TIMEOUT_MS=5000
@@ -83,6 +84,7 @@ AUTH_COOKIE_SECURE=false
 | `AUTH_TRANSACTION_COOKIE_NAME` | `__Host-chat.tx`        | Login transaction cookie name                                                                             |
 | `AUTH_COOKIE_SECURE`           | `true`                  | Set to `false` only for local HTTP smoke testing; runtime drops `__Host-` from cookie names when disabled |
 | `DIAL_CORE_URL`                | —                       | AI DIAL core service URL                                                                                  |
+| `DIAL_API_VERSION`             | `2024-10-21`            | API version query parameter sent to DIAL Core chat completion requests                                    |
 | `DIAL_API_KEY`                 | —                       | AI DIAL authentication key                                                                                |
 | `THEMES_CONFIG_URL`            | —                       | Base URL for theme configuration and icons                                                                |
 | `THEMES_SERVICE_TIMEOUT_MS`    | `5000`                  | Timeout for theme service requests (milliseconds)                                                         |

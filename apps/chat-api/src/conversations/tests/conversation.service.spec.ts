@@ -1,5 +1,6 @@
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { handleDialError } from '../../common/utils/dial-error';
 import { ConversationService } from '../conversation.service';
 
 vi.mock('../../common/utils/dial-error', () => ({
@@ -9,6 +10,54 @@ vi.mock('../../common/utils/dial-error', () => ({
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+const TEST_CONVERSATION = {
+  id: 'test-bucket/gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+  folderId: 'test-bucket',
+  name: 'Test',
+  model: { id: 'gpt-4o' },
+  prompt: '',
+  temperature: 1,
+  messages: [],
+  lastActivityDate: 0,
+  updatedAt: 0,
+  selectedAddons: [],
+  assistantModelId: 'gpt-4o',
+};
+
+const textToStream = (chunks: string[]): ReadableStream<Uint8Array> => {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(chunk));
+      }
+      controller.close();
+    },
+  });
+};
+
+const readStreamText = async (
+  stream: ReadableStream<Uint8Array>,
+): Promise<string> => {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let text = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        text += decoder.decode();
+        return text;
+      }
+
+      text += decoder.decode(value, { stream: true });
+    }
+  } finally {
+    reader.releaseLock();
+  }
+};
 
 describe('ConversationService', () => {
   let service: ConversationService;
@@ -23,6 +72,7 @@ describe('ConversationService', () => {
       }),
     };
     service = new ConversationService(mockConfigService as ConfigService);
+    vi.mocked(handleDialError).mockReset();
     vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
       data: {},
     } as never);
@@ -96,6 +146,80 @@ describe('ConversationService', () => {
       );
       expect(result.model.id).toBe('my-catalog-item');
       expect(result.assistantModelId).toBe('my-catalog-item');
+    });
+  });
+
+  describe('streamCompletion', () => {
+    beforeEach(() => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+    });
+
+    it('logs and delegates to handleDialError when completion stream is rejected', async () => {
+      vi.mocked(handleDialError).mockImplementation(() => {
+        throw new Error('mapped DIAL error');
+      });
+      const logError = vi
+        .spyOn(service['logger'], 'error')
+        .mockImplementation(() => undefined);
+      vi.spyOn(
+        service['client'],
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(null, {
+          status: 400,
+          statusText: 'Bad Request',
+        }),
+      } as never);
+
+      await expect(
+        service.streamCompletion(
+          'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+          'test-token',
+          'test-bucket',
+          'Hello',
+          'gpt-4o',
+        ),
+      ).rejects.toThrow('mapped DIAL error');
+
+      expect(logError).toHaveBeenCalled();
+      expect(handleDialError).toHaveBeenCalledWith({ status: 400 });
+    });
+
+    it('passes the stream through when completion succeeds', async () => {
+      const firstChunk =
+        'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n';
+      const secondChunk = 'data: [DONE]\n\n';
+      const sendCompletionSpy = vi.spyOn(
+        service['client'],
+        'sendChatCompletionRequest',
+      );
+      sendCompletionSpy.mockResolvedValue({
+        response: new Response(textToStream([firstChunk, secondChunk]), {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }),
+      } as never);
+
+      const stream = await service.streamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'Hello',
+        'gpt-4o',
+      );
+
+      await expect(readStreamText(stream)).resolves.toBe(
+        `${firstChunk}${secondChunk}`,
+      );
+      expect(sendCompletionSpy).toHaveBeenCalledWith(
+        'gpt-4o',
+        expect.objectContaining({
+          params: { query: { 'api-version': '2024-10-21' } },
+        }),
+      );
+      expect(handleDialError).not.toHaveBeenCalled();
     });
   });
 });
