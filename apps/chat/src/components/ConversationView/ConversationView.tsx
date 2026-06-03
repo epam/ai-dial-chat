@@ -271,6 +271,7 @@ const ConversationView: FC<Props> = ({
                   key={msg.id}
                   role={msg.role}
                   text={msg.content}
+                  isStreaming={isStreaming}
                   colors={
                     msg.stoppedWithoutContent
                       ? { text: 'var(--text-secondary, #9FA6BD)' }

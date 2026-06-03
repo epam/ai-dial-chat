@@ -15,6 +15,8 @@ export interface MessageBubbleColors {
   text?: string;
   /** Border color of the divider line above quick-reply starter buttons. Falls back to `--color-secondary` when omitted. */
   startersDivider?: string;
+  /** Background color of the streaming typing dots (CSS value, e.g. `'var(--controls-bg-accent-primary)'`). */
+  dot?: string;
 }
 
 /** Typography overrides for message bubble components. */
@@ -43,6 +45,8 @@ export interface MessageBubbleStyles {
 interface BaseMessageBubbleProps {
   /** Plain-text (or Markdown) content of the message. */
   text: string;
+  /** When `true`, a blinking cursor is shown to indicate the message is still being generated. */
+  isStreaming?: boolean;
   /** Extra class name(s) merged onto the outer row wrapper. */
   className?: string;
   /** Extra class name(s) merged onto the bubble element itself. */

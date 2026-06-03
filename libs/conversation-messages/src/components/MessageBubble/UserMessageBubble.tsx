@@ -46,16 +46,18 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
       <div className="flex w-fit flex-col items-end gap-2">
         <AttachmentTray attachments={attachments ?? []} />
-        <div
-          className={mergeClasses(
-            styles.userBubble,
-            'flex w-fit items-center justify-end rounded-bl-[16px] rounded-tl-[16px] px-6 py-4',
-            positionRadius,
-            bubbleClassName,
-          )}
-        >
-          <p className={mergeClasses(textClass, 'text-right')}>{text}</p>
-        </div>
+        {text && (
+          <div
+            className={mergeClasses(
+              styles.userBubble,
+              'flex w-fit items-center justify-end rounded-bl-[16px] rounded-tl-[16px] px-6 py-4',
+              positionRadius,
+              bubbleClassName,
+            )}
+          >
+            <p className={mergeClasses(textClass, 'text-right')}>{text}</p>
+          </div>
+        )}
         <MessageActions
           {...actions}
           isAlwaysVisible={hasAlwaysVisibleActions}

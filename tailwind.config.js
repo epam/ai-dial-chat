@@ -146,9 +146,14 @@ module.exports = {
           '0%': { opacity: '0' },
           '100%': { opacity: '1' },
         },
+        cmTypingDotPulse: {
+          '0%, 100%': { opacity: '0.3', transform: 'scale(0.75)' },
+          '50%': { opacity: '1', transform: 'scale(1)' },
+        },
       },
       animation: {
         fadeIn: 'fadeIn 100ms ease-in',
+        'cm-typing-dot': 'cmTypingDotPulse 1.2s ease-in-out infinite',
       },
       typography: {
         DEFAULT: {

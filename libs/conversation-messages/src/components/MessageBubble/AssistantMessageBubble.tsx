@@ -10,6 +10,7 @@ import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js'
 import { MDMessageViewer } from '../Markdown/MDMessageViewer.js';
 import { MessageActions } from '../Message/MessageActions.js';
 import styles from './MessageBubble.module.scss';
+import { StreamingTypingDots } from './StreamingTypingDots.js';
 
 /** Assistant-authored message bubble, left-aligned with markdown content and optional quick-reply starters. */
 export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
@@ -24,6 +25,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   starters,
   onSelectStarter,
   startersAriaLabel = 'Quick reply buttons',
+  isStreaming = false,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
@@ -55,6 +57,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
         >
           <div className={mergeClasses(textClass, 'text-left')}>
             <MDMessageViewer content={text} />
+            {isStreaming && <StreamingTypingDots dotColor={colors?.dot} />}
           </div>
           <AttachmentTray attachments={attachments ?? []} />
           {afterContent}
