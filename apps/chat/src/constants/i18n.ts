@@ -1113,7 +1113,6 @@ export enum MarketplaceI18nKeys {
   AddAgentSkills = 'Add Agent Skills',
   SkillsLowercase = 'skills',
   AgentSkillsInvalidError = 'This prompt is not a valid Agent Skills. To be valid Agent Skills prompt must have "name" and "description" fields.',
-  AgentSkillsNotFoundError = 'This prompt no longer exists or was moved to a different folder.',
   SelectAgentSkills = 'Select',
   TokenLimits = 'Token limits',
   Minute = 'Minute',
