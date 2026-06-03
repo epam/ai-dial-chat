@@ -61,6 +61,12 @@ const selectEnabledFeatures = createSelector(
   },
 );
 
+const selectIsMdSidebarOverlayBreakpoint = createSelector(
+  [selectIsOverlay, selectEnabledFeatures],
+  (isOverlay, enabledFeatures) =>
+    isOverlay && enabledFeatures.has(Feature.MdSidebarOverlayBreakpoint),
+);
+
 const selectIsIsolatedView = (state: RootState) =>
   !!rootSelector(state).isolatedModelId;
 
@@ -277,9 +283,15 @@ const selectAsrModelId = (state: RootState) => rootSelector(state).asrModelId;
 const selectAudioTypesDefaultOrder = (state: RootState) =>
   rootSelector(state).audioTypesDefaultOrder;
 
+const selectIsCompareModeDisabled = createSelector(
+  [selectEnabledFeatures],
+  (enabledFeatures) => enabledFeatures.has(Feature.CompareModeDisabled),
+);
+
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
+  selectIsMdSidebarOverlayBreakpoint,
   selectFooterHtmlMessage,
   selectEnabledFeatures,
   isFeatureEnabled,
@@ -318,4 +330,5 @@ export const SettingsSelectors = {
   selectResourceMaxSegmentBytes,
   selectAsrModelId,
   selectAudioTypesDefaultOrder,
+  selectIsCompareModeDisabled,
 };

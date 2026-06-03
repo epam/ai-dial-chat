@@ -13,10 +13,14 @@ import {
   migrateMCPToolsetIdName,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
+import { getDefaultSchemaModel } from '@/src/utils/app/application-type-schema';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
-import { doesModelAllowTemperature } from '@/src/utils/app/models';
+import {
+  doesAgentSupportMcp,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 import { zodValidation } from '@/src/utils/zod-config-wrapper';
@@ -508,15 +512,15 @@ const getQuickApp2FormData = (
   app?: CustomApplicationModel,
   toolSupportingModelIds?: string[],
   availableModelIds?: string[],
+  schema?: ApiDetailedApplicationTypeSchema,
 ): QuickApp2Form => {
   const appProperties = app?.applicationProperties as QuickApp2Config;
   // show selected model for existing Quick Apps
   let model = appProperties?.orchestrator?.deployment?.deployment_id;
   if (!model) {
-    const defaultModelId = DefaultsService.get(
-      'quickAppsModel',
-      DEFAULT_QUICK_APPS_MODEL,
-    );
+    const defaultModelId =
+      getDefaultSchemaModel(schema) ??
+      DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL);
     // check if default model for quick app is configured correctly
     model = toolSupportingModelIds?.includes(defaultModelId)
       ? defaultModelId // use default quick app model
@@ -676,6 +680,7 @@ const getSettingsFormData = ({
         app,
         toolSupportingModelIds,
         availableModelIds,
+        schema,
       );
     case AppsEditorSchemaTypes.SchemaDriven:
       return getSchemaDrivenFormData(app, schema);
@@ -807,9 +812,6 @@ export const getQuickApp2Toolsets = ({
             deployment_id: ApiUtils.encodeApiUrl(
               agentAndToolset[AgentOrToolsetSchemaKeys.id],
             ),
-            transport:
-              (toolData as DialAppToolset).transport ??
-              DialAppTransportType.MCP,
           });
         } else if (isToolsetId(agentAndToolset[AgentOrToolsetSchemaKeys.id])) {
           acc.dialMCPToolsets.push({
@@ -847,8 +849,11 @@ export const getQuickApp2Toolsets = ({
           name: entity.name,
           type: ToolsetTypes.DialApp,
           deployment_id: ApiUtils.encodeApiUrl(entity.id),
-          transport:
-            (toolData as DialAppToolset).transport ?? DialAppTransportType.MCP,
+          ...(doesAgentSupportMcp(entity) && {
+            transport:
+              (toolData as DialAppToolset).transport ??
+              DialAppTransportType.MCP,
+          }),
         });
       } else {
         acc.dialMCPToolsets.push({

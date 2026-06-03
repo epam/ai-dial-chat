@@ -41,6 +41,7 @@ export const IconButton: React.FC<Props> = ({
             <Icon size={size} width={size} height={size} strokeWidth="1.5" />
           )
         }
+        aria-label={name}
         data-qa={dataQa}
         className={className}
       />
