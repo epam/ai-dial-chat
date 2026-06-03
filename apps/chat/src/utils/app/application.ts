@@ -568,7 +568,10 @@ export const isExternalAppEditor = checkAppEditorType(
   DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
 );
 
-export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
+export const getEditorSchemaType = (
+  type: string,
+  schema?: ApiDetailedApplicationTypeSchema,
+): AppsEditorSchemaTypes => {
   if (type === ApplicationType.CODE_APP) return AppsEditorSchemaTypes.CodeApp;
 
   if (isQuickAppEditor(type)) return AppsEditorSchemaTypes.QuickApp;
@@ -576,6 +579,10 @@ export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
   if (isQuickApp2Editor(type)) return AppsEditorSchemaTypes.QuickApp2;
 
   if (isExternalAppEditor(type)) return AppsEditorSchemaTypes.ExternalApp;
+
+  if (schema?.properties) {
+    return AppsEditorSchemaTypes.SchemaDriven;
+  }
 
   return AppsEditorSchemaTypes.CustomApp;
 };
