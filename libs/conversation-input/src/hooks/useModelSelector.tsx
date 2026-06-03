@@ -3,7 +3,7 @@ import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { DIAL_ICON_SIZE, DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
 import { type ReactNode, useMemo, useState } from 'react';
 import FallbackEntityIcon from '../assets/fallback-entity-icon.svg?react';
-import { DeploymentIcon } from '../components/Input/DeploymentIcon.js';
+import { DeploymentIcon } from '../components/Input/Icon/DeploymentIcon.js';
 import type { ModelSelectorLabels } from '../models/Input.js';
 import {
   buildDeploymentIcon,

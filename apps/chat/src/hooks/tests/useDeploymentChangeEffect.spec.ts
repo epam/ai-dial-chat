@@ -1,8 +1,8 @@
 import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { useDeployments } from '../context/DeploymentsContext';
-import { useDeploymentChangeEffect } from './useDeploymentChangeEffect';
+import { useDeployments } from '../../context/DeploymentsContext';
+import { useDeploymentChangeEffect } from '../useDeploymentChangeEffect';
 
 vi.mock('../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
