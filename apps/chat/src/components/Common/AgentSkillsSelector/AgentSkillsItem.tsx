@@ -71,10 +71,14 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
   const validationMessage = skillValidation?.message;
 
   useEffect(() => {
-    if (arePromptsUploaded && prompt && prompt.status !== UploadStatus.LOADED) {
+    if (
+      arePromptsUploaded &&
+      prompt &&
+      (prompt.status !== UploadStatus.LOADED || skillValidation === undefined)
+    ) {
       dispatch(PromptsActions.uploadPrompt({ promptId }));
     }
-  }, [dispatch, prompt, promptId, arePromptsUploaded]);
+  }, [dispatch, prompt, promptId, arePromptsUploaded, skillValidation]);
 
   if (!arePromptsUploaded) {
     return (
@@ -96,7 +100,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
         ? constructPath(PINNED_PROMPTS_SECTION_NAME, folderPath)
         : RECENT_PROMPTS_SECTION_NAME
       : constructPath(SHARED_WITH_ME_SECTION_NAME, folderPath);
-  const displayName = prompt?.name ?? promptId;
+  const displayName = prompt?.name ?? promptId.split('/').pop();
   const isPromptLoaded = prompt?.status === UploadStatus.LOADED;
   const hasInvalidError =
     isPromptLoaded && validationStatus === SkillValidationStatus.Invalid;
@@ -137,7 +141,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
 
           {!readonly && (
             <div className="flex gap-2 text-secondary">
-              {isMyPrompt && (
+              {isMyPrompt && prompt && (
                 <IconButton
                   className="size-6"
                   Icon={IconPencilMinus}
