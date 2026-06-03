@@ -1,0 +1,26 @@
+contract_version: "0.1"
+name: snyk-jira-ingest
+skill: snyk-jira-ingest
+agent_version: "0.1.0"
+description: "Pulls real Snyk SAST findings from EPAM Jira (Data Center) via the search-export API using a PAT, and emits them under payload as a Jira XML export artifact for downstream triage. Real-data counterpart to the synthetic snyk-scan-stub producer."
+triggers: [pull_request]
+
+# The agent's only Bash capability is invoking the committed fetch script.
+# The PAT is read inside that script from env (injected below) — the model
+# never types or sees the token (the agent-wrapper forbids shell expansion).
+allowed_tools: "Bash(bash .claude/skills/snyk-jira-ingest/fetch.sh:*),Read,Skill"
+
+# Declared secrets. run-agent.yml promotes ONLY these from the inherited
+# secret bag into the job env before the agent runs, and fails loudly if any
+# is absent. Add JIRA_PAT under repo/org Settings → Secrets → Actions.
+secrets: [JIRA_PAT]
+
+# Haiku: the work is deterministic — run one script, confirm the envelope.
+# No reasoning needed; keeps token footprint and rate-limit pressure low.
+model: claude-haiku-4-5-20251001
+phase: sandbox
+cost_class: light
+
+# Trivial run: one Bash call + one Read. Low turn cap cuts context resends.
+max_turns: 4
+timeout_minutes: 10

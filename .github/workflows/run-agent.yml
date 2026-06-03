@@ -101,12 +101,17 @@ jobs:
           #   - an object {name, install} where `install` is a shell command
           # Emit as a single JSON line; the install step dispatches on shape.
           extra = (m.get("tools") or {}).get("extra") or []
+          # secrets: declared env-var names the agent needs. The inject step
+          # below promotes ONLY these from the inherited secret bag into the
+          # job env. Emit as a JSON list (empty list when none declared).
+          secrets = m.get("secrets") or []
           print(f"skill={skill}")
           print(f"allowed_tools={tools}")
           print(f"agent_version={m.get('agent_version', 'unknown')}")
           print(f"model={m.get('model', '')}")
           print(f"max_turns={m.get('max_turns', 18)}")
           print(f"tools_extra_json={json.dumps(extra)}")
+          print(f"secrets_json={json.dumps(secrets)}")
           EOF
 
       - name: Install agent-declared CLI tools
@@ -151,6 +156,41 @@ jobs:
                   print(f"::group::npm install -g {pkg}")
                   subprocess.run(["npm", "install", "-g", pkg], check=True)
                   print("::endgroup::")
+          PY
+
+      - name: Inject declared secrets
+        # Generic secret plumbing: promote ONLY the secrets a manifest declares
+        # (`secrets:` in agents/<name>/agent.yml) from the inherited secret bag
+        # into the job env, so the wrapped skill's committed helper scripts can
+        # read them. Adding a new secret-using agent needs NO platform edit —
+        # declare the name here and add the matching Actions secret.
+        #
+        # Why this shape: GitHub has no dynamic `secrets[name]` access, so we
+        # take the whole bag via toJSON(secrets) and select the declared names.
+        # Claude never types secret values (the agent-wrapper forbids shell
+        # expansion in Bash tool calls); secrets are referenced only inside
+        # committed scripts that read them from env. We print names only, never
+        # values — and GHA masks registered secret values in logs regardless.
+        if: steps.manifest.outputs.secrets_json != '[]' && steps.manifest.outputs.secrets_json != ''
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
+          DECLARED: ${{ steps.manifest.outputs.secrets_json }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          allsec = json.loads(os.environ["SECRETS_JSON"])
+          declared = json.loads(os.environ["DECLARED"])
+          missing = [n for n in declared if not allsec.get(n)]
+          if missing:
+              raise SystemExit(
+                  f"::error::Declared secrets unavailable to run-agent: {missing}. "
+                  "Add them under repo/org Settings -> Secrets -> Actions, or fix "
+                  "the manifest `secrets:` list.")
+          with open(os.environ["GITHUB_ENV"], "a") as fh:
+              for name in declared:
+                  fh.write(f"{name}<<__SDLC_SECRET_EOF__\n{allsec[name]}\n__SDLC_SECRET_EOF__\n")
+          print(f"Injected {len(declared)} declared secret(s) into job env: {', '.join(declared)}")
           PY
 
       - id: stage
