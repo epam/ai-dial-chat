@@ -62,6 +62,28 @@ export enum DeploymentsI18nKeys {
   SelectorCloseLabel = 'deployments.selector.closeLabel',
 }
 
+export enum AuthI18nKeys {
+  SignOut = 'auth.signOut',
+  SignedInAs = 'auth.signedInAs',
+  Loading = 'auth.loading',
+  LoginTitle = 'auth.loginTitle',
+  LoginDescription = 'auth.loginDescription',
+  ProviderButtonLabel = 'auth.providerButtonLabel',
+  ProvidersError = 'auth.providersError',
+  UserMenuLabel = 'auth.userMenuLabel',
+  Settings = 'auth.settings',
+  LogOut = 'auth.logOut',
+  LogOutConfirmTitle = 'auth.logOutConfirmTitle',
+  LogOutConfirmDescription = 'auth.logOutConfirmDescription',
+  LogOutConfirm = 'auth.logOutConfirm',
+}
+
+export enum SettingsI18nKeys {
+  Title = 'settings.title',
+  Theme = 'settings.theme',
+  Apply = 'settings.apply',
+}
+
 export enum ConversationHistoryI18nKeys {
   Title = 'conversationHistory.title',
   ToggleAriaLabel = 'conversationHistory.toggleAriaLabel',
