@@ -54,17 +54,16 @@ export class ApplicationSchemasService extends AppService {
       }
       const items = Array.isArray(result.data) ? result.data : [];
       const data: ApplicationSchemasResponseDto = {
-        schemas: items.map((rawItem): ApplicationSchemaSummaryDto => {
-          const item = rawItem;
-          return {
-            id: item['$id'],
-            displayName: item['dial:applicationTypeDisplayName'],
-            viewerUrl: item['dial:applicationTypeViewerUrl'],
-            editorUrl: item['dial:applicationTypeEditorUrl'],
-            schemaEndpoint: item['dial:applicationTypeSchemaEndpoint'],
-            iconUrl: item['dial:applicationTypeIconUrl'],
-          };
-        }),
+        schemas: items.map(
+          (rawItem): ApplicationSchemaSummaryDto => ({
+            id: rawItem['$id'],
+            displayName: rawItem['dial:applicationTypeDisplayName'],
+            viewerUrl: rawItem['dial:applicationTypeViewerUrl'],
+            editorUrl: rawItem['dial:applicationTypeEditorUrl'],
+            schemaEndpoint: rawItem['dial:applicationTypeSchemaEndpoint'],
+            iconUrl: rawItem['dial:applicationTypeIconUrl'],
+          }),
+        ),
       };
       await this.cacheManager.set(cacheKey, data, 60 * 1000);
       return data;

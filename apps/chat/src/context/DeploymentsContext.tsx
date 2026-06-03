@@ -49,6 +49,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     async (signal: { isCancelled: boolean }) => {
       setIsLoading(true);
       setError(null);
+      setSchemas([]);
 
       const [deploymentsResult, schemasResult] = await Promise.allSettled([
         getDeployments([ListDeploymentsInterfaceTypeEnum.Chat]),
@@ -96,15 +97,14 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
 
   const items = useMemo<DeploymentItemDto[]>(() => {
     if (schemas.length === 0) return rawDeployments;
+    const schemaById = new Map(schemas.map((s) => [s.id, s]));
     return rawDeployments.map((item) => {
       if (
         item.type === 'application' &&
         !item.iconUrl &&
         item.applicationTypeSchemaId
       ) {
-        const match = schemas.find(
-          (s) => s.id === item.applicationTypeSchemaId,
-        );
+        const match = schemaById.get(item.applicationTypeSchemaId);
         if (match?.iconUrl) {
           return { ...item, iconUrl: match.iconUrl };
         }

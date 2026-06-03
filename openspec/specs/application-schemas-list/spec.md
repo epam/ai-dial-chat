@@ -27,7 +27,8 @@ No request body. No query parameters.
       "displayName": "Quick App",
       "viewerUrl": "https://example.com/viewer",
       "editorUrl": "https://example.com/editor",
-      "schemaEndpoint": "https://example.com/schema"
+      "schemaEndpoint": "https://example.com/schema",
+      "iconUrl": "https://example.com/icon.png"
     }
   ]
 }
@@ -46,6 +47,7 @@ ApplicationSchemaSummaryDto {
   viewerUrl?:      string
   editorUrl?:      string
   schemaEndpoint?: string
+  iconUrl?:        string
 }
 ```
 
@@ -58,6 +60,7 @@ Field mapping (all optional per upstream contract):
 | `viewerUrl`     | `dial:applicationTypeViewerUrl`           |
 | `editorUrl`     | `dial:applicationTypeEditorUrl`           |
 | `schemaEndpoint`| `dial:applicationTypeSchemaEndpoint`      |
+| `iconUrl`       | `dial:applicationTypeIconUrl`             |
 
 ## Error Responses
 
@@ -162,3 +165,13 @@ export const getApplicationSchemas = (): Promise<ApplicationSchemasResponseDto> 
 **Given** the Swagger annotations are in place  
 **When** `npm run openapi` runs  
 **Then** `libs/chat-api-client` contains a `listApplicationSchemas()` method with return type `ApplicationSchemasResponseDto`
+
+### S12 — `iconUrl` is populated when upstream provides `dial:applicationTypeIconUrl`
+
+**Given** DIAL Core returns a schema item with `"dial:applicationTypeIconUrl": "https://example.com/icon.png"`  
+**Then** the normalised DTO includes `iconUrl: "https://example.com/icon.png"`
+
+### S13 — `iconUrl` is absent when upstream omits `dial:applicationTypeIconUrl`
+
+**Given** DIAL Core returns a schema item without `dial:applicationTypeIconUrl`  
+**Then** the normalised DTO has `iconUrl` as `undefined` (field omitted from response)
