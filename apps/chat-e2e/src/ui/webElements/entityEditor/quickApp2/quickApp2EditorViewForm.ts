@@ -1,5 +1,9 @@
 import { AddQuickApp2SettingsFormSelector } from '@/src/ui/selectors';
-import { BaseElement, EntityEditorViewForm } from '@/src/ui/webElements';
+import {
+  BaseElement,
+  Button,
+  EntityEditorViewForm,
+} from '@/src/ui/webElements';
 
 export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public orchestratorSection = this.getChildElementBySelector(
@@ -51,10 +55,15 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
     this.agentsAndToolsetsMarketplaceView.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.agentsAndToolsetsList,
     );
-  public addAgentsButton =
-    this.agentsAndToolsetsMarketplaceView.getChildElementBySelector(
-      AddQuickApp2SettingsFormSelector.addAgentsButton,
-    );
+  public addAgentsButton = new Button(
+    this.page,
+    AddQuickApp2SettingsFormSelector.addAgentsButtonLabel,
+    this.agentsAndToolsetsMarketplaceView
+      .getChildElementBySelector(
+        AddQuickApp2SettingsFormSelector.addAgentsButtonContainer,
+      )
+      .getElementLocator(),
+  );
   public agentsAndToolsetsJsonToggle =
     this.agentsAndToolsetsMarketplaceView.getChildElementBySelector(
       AddQuickApp2SettingsFormSelector.agentsAndToolsetsJsonToggle,
@@ -76,10 +85,16 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
     await this.getChipByName(name).click();
   }
 
+  public getChipRemoveButton(name: string): Button {
+    return new Button(
+      this.page,
+      AddQuickApp2SettingsFormSelector.chipRemoveButtonLabel,
+      this.getChipByName(name).getElementLocator(),
+    );
+  }
+
   public async removeChipByName(name: string): Promise<void> {
-    await this.getChipByName(name)
-      .getChildElementBySelector('[aria-label="Remove item"]')
-      .click();
+    await this.getChipRemoveButton(name).click();
   }
 
   public get allChips(): BaseElement {

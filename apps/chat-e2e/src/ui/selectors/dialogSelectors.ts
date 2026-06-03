@@ -347,26 +347,30 @@ export const AddQuickApp2SettingsFormSelector = {
   // Agents & Toolsets — controls inside marketplace view
   noAgentsAndToolsetsPlaceholder: '[data-qa="no-agents-and-toolsets"]',
   agentsAndToolsetsList: '[data-qa="agents-and-toolsets-list"]',
-  addAgentsButton: '[data-qa="add-agents-button"]',
+  addAgentsButtonContainer: '[data-qa="add-agents-button"]',
+  addAgentsButtonLabel: 'Add', // aria-label of the "+ Add" button
   agentsAndToolsetsJsonToggle: '[data-qa="agents-and-toolsets-json-toggle"]',
 
   // Chips inside agents-and-toolsets-list
   agentChip: '[data-qa="agent-chip"]',
   chipName: '[data-qa="chip-name"]',
   chipVersion: '[data-qa="chip-version"]',
+  chipRemoveButtonLabel: 'Remove item', // aria-label of the chip remove button
 
   // Code Interpreter toggle
   codeInterpreterToggle: '[data-qa="toggle-switch"]',
 };
 
-export const AgentAndToolsetModalSelector = {
-  container:
-    '[role="dialog"][aria-modal="true"]:has([data-qa="search-agents"])',
+// Shared by both agents browser modals (Talk to / Select agents and toolsets).
+export const AgentsBrowserModalSelectors = {
   searchInput: '[data-qa="search-agents"]',
   myWorkspaceTab: '[data-qa="workspace"]',
   marketplaceTab: '[data-qa="marketplace"]',
-  entity: '[data-qa="entity"]',
-  entityName: '#entity-name',
+};
+
+export const AgentAndToolsetModalSelector = {
+  container:
+    '[role="dialog"][aria-modal="true"]:has([data-qa="search-agents"])',
 };
 
 export const AddToolsetSettingsFormSelector = {
