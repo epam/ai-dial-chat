@@ -27,6 +27,7 @@ const COPIED_RESET_MS = 2000;
 export const MessageActions: FC<MessageActionsProps> = ({
   role = MessageRole.User,
   onEdit,
+  onEditHover,
   onDelete,
   onRegenerate,
   onCopy,
@@ -69,6 +70,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             aria-label={ariaLabels?.editMessage ?? 'Edit message'}
             tooltipProps={{ tooltip: tooltips?.edit ?? 'Edit' }}
             onClick={onEdit}
+            onMouseEnter={onEditHover}
           />
           <DialGhostIconButton
             icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}
