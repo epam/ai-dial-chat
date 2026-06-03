@@ -310,6 +310,18 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   updatedAt: number;
+  /**
+   * True when this conversation was shared with the current user by another user.
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  sharedWithMe: boolean;
+  /**
+   * True when this conversation was published to the organisation and is visible to the current user.
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  publishedWithMe: boolean;
 }
 /**
  *

@@ -8,6 +8,7 @@ import { normalizeConversationId } from '../../constants/routes.js';
 import { ConversationHistoryI18nKeys } from '../../constants/translation-keys.js';
 import { useConversations } from '../../context/ConversationsContext.js';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint.js';
+import { getConversationSource } from './conversationSource.utils.js';
 
 interface Props {
   isOpen: boolean;
@@ -39,7 +40,7 @@ const ConversationPanelView: FC<Props> = ({
           console.error('Failed to decode conversation id:', rawId, e);
           id = rawId;
         }
-        return { id, title: item.title };
+        return { id, title: item.title, source: getConversationSource(item) };
       }),
     [items],
   );
