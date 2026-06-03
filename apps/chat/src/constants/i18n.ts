@@ -686,6 +686,7 @@ export enum ChatI18nKeys {
   All = 'All',
   Or = 'or',
   EnterRegularExpression = 'Enter regular expression...',
+  InvalidRegularExpression = 'Invalid regular expression',
   PublishTo = 'Publish to',
   Path = 'Path',
   Change = 'Change',
