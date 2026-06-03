@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { SidebarSide } from '../../../models/SidebarPanel.js';
 import { SidebarPanel } from '../SidebarPanel.js';
 
 // Minimal mock so DialGhostIconButton passes through aria-label and calls onClick.
@@ -16,7 +17,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 const defaultProps = {
-  side: 'right' as const,
+  side: SidebarSide.Right,
   onClose: vi.fn(),
   ariaLabel: 'Test panel',
   closeLabel: 'Close',
@@ -72,7 +73,7 @@ describe('SidebarPanel', () => {
     render(
       <SidebarPanel
         {...defaultProps}
-        side="right"
+        side={SidebarSide.Right}
         rightActions={<button aria-label="download" />}
       >
         <span />
@@ -86,7 +87,7 @@ describe('SidebarPanel', () => {
 
   it('side=right: applies border-l divider', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} side="right">
+      <SidebarPanel {...defaultProps} side={SidebarSide.Right}>
         <span />
       </SidebarPanel>,
     );
@@ -103,7 +104,7 @@ describe('SidebarPanel', () => {
     render(
       <SidebarPanel
         {...defaultProps}
-        side="left"
+        side={SidebarSide.Left}
         rightActions={<button aria-label="download" />}
       >
         <span />
@@ -115,7 +116,7 @@ describe('SidebarPanel', () => {
 
   it('side=left: applies border-r divider', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} side="left">
+      <SidebarPanel {...defaultProps} side={SidebarSide.Left}>
         <span />
       </SidebarPanel>,
     );
@@ -128,20 +129,22 @@ describe('SidebarPanel', () => {
   });
 
   it('close button calls onClose', async () => {
-    const user = userEvent.setup();
     const onClose = vi.fn();
     render(
       <SidebarPanel {...defaultProps} onClose={onClose}>
         <span />
       </SidebarPanel>,
     );
-    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('colors prop emits CSS custom properties', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} colors={{ background: '#ff0000' }}>
+      <SidebarPanel
+        {...defaultProps}
+        styles={{ colors: { background: '#ff0000' } }}
+      >
         <span />
       </SidebarPanel>,
     );

@@ -1,6 +1,7 @@
 import {
   type Attachment,
   type Conversation,
+  type DisplayAttachment,
   type MessageCustomContent,
   MessageRating,
   MessageRole,
@@ -51,6 +52,9 @@ export const useConversationHandlers = ({
   navigate,
 }: Params) => {
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [editingMessageIds, setEditingMessageIds] = useState<Set<string>>(
+    new Set(),
+  );
   const [pendingStarterContext, setPendingStarterContext] = useState<{
     starter: StarterOption;
     propertyKey?: string;
@@ -315,6 +319,105 @@ export const useConversationHandlers = ({
     submitStarter(starter, propertyKey, description);
   }, [pendingStarterContext, submitStarter]);
 
+  const handleStartEdit = useCallback((messageId: string) => {
+    setEditingMessageIds((prev) => new Set([...prev, messageId]));
+  }, []);
+
+  const handleCancelEdit = useCallback((messageId: string) => {
+    setEditingMessageIds((prev) => {
+      const next = new Set(prev);
+      next.delete(messageId);
+      return next;
+    });
+  }, []);
+
+  const handleEditMessage = useCallback(
+    async (
+      messageId: string,
+      text: string,
+      keptDisplayAttachments: DisplayAttachment[],
+      newAttachments: Attachment[],
+    ) => {
+      if (isStreaming || !conversationId || !conversation) return;
+
+      const idx = conversation.messages.findIndex((m) => m.id === messageId);
+      if (idx === -1 || conversation.messages[idx].role !== MessageRole.User)
+        return;
+
+      const originalMessage = conversation.messages[idx];
+      const conversationPath = getConversationPath(conversationId);
+
+      const newDtos = await attachmentsToDtos(newAttachments);
+
+      const keptIds = new Set(keptDisplayAttachments.map((a) => a.id));
+      const keptDtos = (
+        originalMessage.custom_content?.attachments ?? []
+      ).filter((att) => {
+        const id = att.url ?? att.data ?? att.title;
+        return keptIds.has(id);
+      });
+
+      const allAttachments = [...keptDtos, ...(newDtos ?? [])];
+
+      const { attachments: _removed, ...restCustomContent } =
+        originalMessage.custom_content ?? {};
+      const updatedCustomContent =
+        allAttachments.length > 0
+          ? { ...restCustomContent, attachments: allAttachments }
+          : Object.keys(restCustomContent).length > 0
+            ? restCustomContent
+            : undefined;
+
+      const updatedUserMessage = {
+        ...originalMessage,
+        content: text,
+        custom_content: updatedCustomContent,
+      };
+
+      const now = Date.now();
+      const assistantMessageId = `stream_${now}`;
+      const assistantMessage = {
+        id: assistantMessageId,
+        role: MessageRole.Assistant,
+        content: '',
+        timestamp: new Date(now).toISOString(),
+      };
+
+      const updatedMessages = [
+        ...conversation.messages.slice(0, idx),
+        updatedUserMessage,
+        assistantMessage,
+      ];
+
+      const updated = { ...conversation, messages: updatedMessages };
+
+      setConversation(() => {
+        conversationRef.current = updated;
+        return updated;
+      });
+
+      saveConversation(conversationPath, updated);
+
+      startStream(
+        conversationPath,
+        text,
+        assistantMessageId,
+        conversation.model.id,
+        allAttachments.length > 0 ? { attachments: allAttachments } : undefined,
+      );
+
+      setEditingMessageIds(new Set());
+    },
+    [
+      conversation,
+      conversationId,
+      conversationRef,
+      isStreaming,
+      setConversation,
+      startStream,
+    ],
+  );
+
   return {
     handleSend,
     handleRegenerateMessage,
@@ -323,6 +426,10 @@ export const useConversationHandlers = ({
     handleRateMessage,
     handleButtonSelect,
     handleConfirmStarter,
+    handleStartEdit,
+    handleCancelEdit,
+    handleEditMessage,
+    editingMessageIds,
     pendingDeleteId,
     setPendingDeleteId,
     pendingStarterContext,

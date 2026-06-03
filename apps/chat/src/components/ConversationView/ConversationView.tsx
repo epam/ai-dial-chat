@@ -1,6 +1,7 @@
 import {
   MessageRole,
   type Attachment,
+  type DisplayAttachment,
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
@@ -40,6 +41,11 @@ const ConversationInput = lazy(async () => {
   return { default: module.ConversationInput };
 });
 
+const EditMessageInput = lazy(async () => {
+  const module = await import('@epam/ai-dial-conversation-input');
+  return { default: module.EditMessageInput };
+});
+
 interface Props {
   messages: MessageType[];
   onSend: (message: string, attachments: Attachment[]) => void;
@@ -53,6 +59,15 @@ interface Props {
     propertyKey?: string,
     description?: string,
   ) => void;
+  onStartEdit?: (messageId: string) => void;
+  onCancelEdit?: (messageId: string) => void;
+  onEditMessage?: (
+    messageId: string,
+    text: string,
+    keptAttachments: DisplayAttachment[],
+    newAttachments: Attachment[],
+  ) => void;
+  editingMessageIds?: Set<string>;
   placeholder: string;
   isAssistantTyping?: boolean;
 }
@@ -68,6 +83,10 @@ const ConversationView: FC<Props> = ({
   onRateMessage,
   onAttachmentsChange,
   onSelectStarter,
+  onStartEdit,
+  onCancelEdit,
+  onEditMessage,
+  editingMessageIds,
   placeholder,
   isAssistantTyping = false,
 }) => {
@@ -191,16 +210,16 @@ const ConversationView: FC<Props> = ({
 
   return (
     <>
-      <div className="relative flex w-full max-w-[748px] flex-1 flex-col overflow-hidden">
+      <div className="relative flex w-full flex-1 flex-col overflow-hidden">
         <div
           ref={containerRef}
           role="log"
           aria-label={t(ChatI18nKeys.ConversationMessages)}
           aria-live="polite"
           aria-relevant="additions"
-          className="flex flex-1 flex-col overflow-y-auto px-4 py-8"
+          className="flex flex-1 flex-col overflow-y-auto"
         >
-          <div className="flex flex-1 flex-col gap-6">
+          <div className="mx-auto flex w-full max-w-[748px] flex-1 flex-col gap-6 px-4 pt-2">
             {messages.map((msg, index) => {
               const isStreaming = isStreamingMessage(
                 msg.role,
@@ -208,6 +227,33 @@ const ConversationView: FC<Props> = ({
                 messages.length,
                 isAssistantTyping,
               );
+              const isEditing =
+                msg.role === MessageRole.User &&
+                !!editingMessageIds?.has(msg.id);
+
+              if (isEditing) {
+                return (
+                  <div key={msg.id} className="flex justify-end">
+                    <Suspense fallback={null}>
+                      <EditMessageInput
+                        message={msg.content}
+                        initialAttachments={attachmentDtosToDisplayAttachments(
+                          msg.custom_content?.attachments,
+                        )}
+                        onCancel={() => onCancelEdit?.(msg.id)}
+                        onSave={(text, kept, added) =>
+                          onEditMessage?.(msg.id, text, kept, added)
+                        }
+                        cancelLabel={t(ActionsI18nKeys.Cancel)}
+                        saveLabel={t(ActionsI18nKeys.SaveAndSubmit)}
+                        ariaLabel={t(ActionsI18nKeys.EditMessage)}
+                        className="w-full max-w-[748px]"
+                      />
+                    </Suspense>
+                  </div>
+                );
+              }
+
               const hasStages = messageHasStages(msg);
               const {
                 starters: activeStarters,
@@ -237,6 +283,7 @@ const ConversationView: FC<Props> = ({
                   actions={buildMessageActions(
                     msg,
                     {
+                      onEdit: !isAssistantTyping ? onStartEdit : undefined,
                       onDelete: onDeleteMessage,
                       onRegenerate: onRegenerateMessage,
                       onRate: onRateMessage,

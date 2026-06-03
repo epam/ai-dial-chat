@@ -3,17 +3,29 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
+import type { StageTypography } from '../../models/StagesPanel.js';
 import { StageIcon } from '../StageIcon/StageIcon.js';
 import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent.js';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 
-/** A single stage row — plain when no content, collapsible when content is present. */
-export const StageItem: FC<{
+interface Props {
+  /** The stage data to render. */
   stage: Stage;
+  /** Whether this stage is the currently executing (live) stage. */
   isLive: boolean;
-  typographyClassName: string;
+  /** Typography configuration applied to stage text elements. */
+  typography: StageTypography;
+  /** Accessible label for the copy button inside stage content. */
   copyAriaLabel?: string;
-}> = ({ stage, isLive, typographyClassName, copyAriaLabel }) => {
+}
+
+/** A single stage row — plain when no content, collapsible when content is present. */
+export const StageItem: FC<Props> = ({
+  stage,
+  isLive,
+  typography,
+  copyAriaLabel,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const header = (
@@ -34,7 +46,10 @@ export const StageItem: FC<{
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex w-full cursor-pointer items-center gap-2 bg-transparent p-0"
+        className={mergeClasses(
+          'flex w-full cursor-pointer items-center gap-2 p-0',
+          styles.collapseButton,
+        )}
       >
         {header}
         {isOpen ? (
@@ -59,7 +74,7 @@ export const StageItem: FC<{
           <div className="mt-3 flex flex-col gap-3 pl-7">
             <StageMarkdownContent
               content={stage.content}
-              typographyClassName={typographyClassName}
+              typography={typography}
               copyAriaLabel={copyAriaLabel}
             />
           </div>

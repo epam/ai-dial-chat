@@ -18,5 +18,7 @@ export const DeploymentIcon: FC<{
   }, [src]);
 
   if (hasFailed) return <>{fallback}</>;
-  return <img ref={ref} src={src} alt="" width={size} height={size} />;
+  return (
+    <img ref={ref} src={src} alt="" width={size} height={size} loading="lazy" />
+  );
 };

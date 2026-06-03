@@ -22,6 +22,7 @@ export enum ActionsI18nKeys {
   Cancel = 'actions.cancel',
   Confirm = 'actions.confirm',
   Edit = 'actions.edit',
+  SaveAndSubmit = 'actions.saveAndSubmit',
   Regenerate = 'actions.regenerate',
   Copy = 'actions.copy',
   Copied = 'actions.copied',
@@ -59,6 +60,20 @@ export enum DeploymentsI18nKeys {
   SelectorEmpty = 'deployments.selector.empty',
   SelectorSearchPlaceholder = 'deployments.selector.searchPlaceholder',
   SelectorCloseLabel = 'deployments.selector.closeLabel',
+}
+
+export enum ConversationHistoryI18nKeys {
+  Title = 'conversationHistory.title',
+  ToggleAriaLabel = 'conversationHistory.toggleAriaLabel',
+  Empty = 'conversationHistory.empty',
+  NewChat = 'conversationHistory.newChat',
+  SearchPlaceholder = 'conversationHistory.searchPlaceholder',
+  FilterAll = 'conversationHistory.filterAll',
+  FilterMyChats = 'conversationHistory.filterMyChats',
+  FilterShared = 'conversationHistory.filterShared',
+  FilterOrganization = 'conversationHistory.filterOrganization',
+  PinnedSection = 'conversationHistory.pinnedSection',
+  MyChatsSection = 'conversationHistory.myChatsSection',
 }
 
 export enum SidebarI18nKeys {
