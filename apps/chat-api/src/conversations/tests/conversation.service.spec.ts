@@ -149,6 +149,28 @@ describe('ConversationService', () => {
     });
   });
 
+  describe('getConversation', () => {
+    it('encodes reserved URL characters in the DIAL Core conversation path', async () => {
+      const getConversationSpy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({
+          data: TEST_CONVERSATION,
+        } as never);
+
+      await service.getConversation(
+        'folder/statgpt-sample__What datasets are available?__uuid',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(getConversationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'folder/statgpt-sample__What%20datasets%20are%20available%3F__uuid',
+        expect.any(Object),
+      );
+    });
+  });
+
   describe('streamCompletion', () => {
     beforeEach(() => {
       vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
