@@ -16,8 +16,11 @@ timeout_minutes: 30
 # rides on the Haiku/low-turn producer instead.
 max_turns: 18
 
-# Chain-validation wiring (smoke test): consume the synthetic scanner report
-# from snyk-scan-stub at upstream/snyk-scan-stub/stage-output.json (findings
-# under .payload.findings). Replace this upstream with the real Snyk producer
-# when stage-snyk.yml lands; drop the stub then.
-needs: [snyk-scan-stub]
+# Consume the REAL Jira-sourced findings from snyk-jira-ingest at
+# upstream/snyk-jira-ingest/stage-output.json. The findings are inlined under
+# .payload.issues[] (each a Jira issue: key/title/labels/status plus raw
+# `description`/`environment` carrying the SAST file/line/Issue Hash). The
+# synthetic snyk-scan-stub producer is disabled for now (its agent dir is
+# underscore-prefixed); to fall back to it, re-enable the stub and point this
+# `needs:` at snyk-scan-stub (findings under .payload.sarif).
+needs: [snyk-jira-ingest]
