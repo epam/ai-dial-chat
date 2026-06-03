@@ -5,6 +5,7 @@ import Image from 'next/image';
 
 import classNames from 'classnames';
 
+import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -71,6 +72,12 @@ export const PdfHighlightViewer = ({ url }: Props) => {
   );
   const [thumbnails, setThumbnails] = useState<Map<number, string>>(new Map());
 
+  // Latest zoom mode for the resize handler (stable callback, no re-subscribe).
+  const zoomModeRef = useRef<ZoomValue>(ZoomMode.AUTO);
+  useEffect(() => {
+    zoomModeRef.current = zoomSelectValue;
+  }, [zoomSelectValue]);
+
   const zoomOptions = useMemo(
     () => [
       { label: t(ChatI18nKeys.Auto), value: ZoomMode.AUTO },
@@ -130,8 +137,6 @@ export const PdfHighlightViewer = ({ url }: Props) => {
             startPage;
         }
         setCurrentPage(startPage);
-
-        viewer.setZoom(ZoomMode.AUTO);
       } catch (e) {
         if (cancelled) return;
 
@@ -236,6 +241,20 @@ export const PdfHighlightViewer = ({ url }: Props) => {
     viewerRef.current.setZoom(prev);
   }, []);
 
+  const handleContainerResize = useCallback(() => {
+    const viewer = viewerRef.current;
+    const container = containerRef.current;
+
+    if (!viewer || !container) return;
+    if (container.clientWidth <= 0 || container.clientHeight <= 0) return;
+
+    const mode = zoomModeRef.current;
+    if (typeof mode === 'string') {
+      viewer.setZoom(mode);
+    }
+  }, []);
+  useResizeObserver(containerRef.current, handleContainerResize);
+
   return (
     <div className="flex size-full flex-col">
       <div className="flex shrink-0 items-center justify-between gap-3">
@@ -325,7 +344,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
         <div className="relative min-w-0 grow">
           <div
             ref={containerRef}
-            className="size-full overflow-auto !bg-transparent [&_.pdf-container]:min-w-full [&_.pdf-container]:!bg-transparent [&_.pdf-container]:!p-2"
+            className="size-full overflow-auto !bg-transparent [&_.pdf-container]:w-max [&_.pdf-container]:min-w-full [&_.pdf-container]:!bg-transparent [&_.pdf-container]:!p-2"
           />
           {isLoading && !error && (
             <div className="absolute inset-0 flex items-center justify-center bg-layer-3">
