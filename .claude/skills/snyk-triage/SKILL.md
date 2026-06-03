@@ -14,6 +14,23 @@ A full, exhaustive reference version of this prompt lives in `SKILL.full.md` (no
 loaded). This active version is deliberately lean to stay within the agent's turn
 budget — keep your analysis tight and your output to the single envelope below.
 
+## ⚠️ Turn budget — read this first, it is the most important rule
+
+You run under a **strict, small turn limit.** The single most common failure here is
+**over-analyzing and never producing output** — running out of turns with no file
+written. That is the worst possible outcome. Avoid it:
+
+- **Be decisive.** Spend **at most ~2–3 tool calls per finding.** If you can't reach a
+  confident verdict by then, assign **`NEEDS_REVIEW`** (note what's missing) and move on.
+  Do **not** keep digging, re-reading, or double-checking.
+- **Do not write helper/parsing scripts.** Use `files[]` for the path and `Read`/`Grep`
+  for a quick look. Avoid `python3` HTML-parsing rabbit holes.
+- **Writing `stage-output.json` is MANDATORY and is your FINAL action.** Plan to write
+  it well before the turn limit. A file with honest `NEEDS_REVIEW` verdicts is a
+  **success**; endless analysis with no file is a **failure**.
+- Concretely: read the upstream file once, do a quick bounded check per finding, then
+  **Write the envelope and stop.** For 3 findings this should take well under ~15 turns.
+
 ## Input
 
 Findings come from the upstream producer at
@@ -24,9 +41,10 @@ Findings come from the upstream producer at
 - `files[]` — **repo-relative path(s)** to the reported sink (already normalized; use these to locate code directly),
 - `description` / `environment` — raw HTML carrying file/line, the code line, and the Issue Hash.
 
-Read that file first. Analyze every issue in `payload.issues[]` (the producer has
-already filtered to this repo and capped the count). You may use `python3` to parse
-HTML out of a description; use `Read`/`Grep`/`Glob` for all code inspection.
+Read that file once. Analyze every issue in `payload.issues[]` (the producer has
+already filtered to this repo and capped the count). Use `files[]` for the sink path
+and `Read`/`Grep`/`Glob` for code inspection — don't write scripts to parse the HTML
+description; skim it for the line number and move on.
 
 ## Per-finding workflow
 
@@ -74,8 +92,10 @@ context (`critical`/`high`/`medium`/`low`/`info`). FALSE_POSITIVE and NOT_APPLIC
 
 ## Output (single envelope — no separate report files)
 
-Write **only** `stage-output.json` (the platform handles envelope fields and the PR
-comment). Do **not** generate `security-triage-report.md`/`.json` or any other file.
+Writing this file is your **final action** — write it once, then stop. Do not analyze
+further after writing. Write **only** `stage-output.json` (the platform handles
+envelope fields and the PR comment). Do **not** generate
+`security-triage-report.md`/`.json` or any other file.
 
 - `status`: `"passed_with_findings"` if any verdict is CONFIRMED or NEEDS_REVIEW; otherwise `"passed"`.
 - `summary`: one line, e.g. `"1 finding triaged: 1 FALSE_POSITIVE."` (≤280 chars).
