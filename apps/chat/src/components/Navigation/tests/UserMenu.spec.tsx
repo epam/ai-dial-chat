@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
@@ -47,7 +48,11 @@ describe('UserMenu', () => {
       reset: vi.fn(),
     });
 
-    const { container } = render(<UserMenu />);
+    const { container } = render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
     expect(container.firstChild).toBeNull();
   });
 
@@ -65,7 +70,11 @@ describe('UserMenu', () => {
       reset: vi.fn(),
     });
 
-    render(<UserMenu />);
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
 
     const avatar = screen.getByRole('img', { name: 'User avatar' });
     expect(avatar).not.toBeNull();
@@ -80,7 +89,11 @@ describe('UserMenu', () => {
       reset: vi.fn(),
     });
 
-    render(<UserMenu />);
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText('JD')).not.toBeNull();
     expect(screen.queryByRole('img', { name: 'User avatar' })).toBeNull();
@@ -100,7 +113,11 @@ describe('UserMenu', () => {
       reset: vi.fn(),
     });
 
-    render(<UserMenu />);
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
 
     const avatar = screen.getByRole('img', { name: 'User avatar' });
     fireEvent.error(avatar);
@@ -116,7 +133,11 @@ describe('UserMenu', () => {
       reset: vi.fn(),
     });
 
-    render(<UserMenu />);
+    render(
+      <MemoryRouter>
+        <UserMenu />
+      </MemoryRouter>,
+    );
 
     const button = screen.getByRole('button');
     expect(button.getAttribute('aria-label')).toBeTruthy();

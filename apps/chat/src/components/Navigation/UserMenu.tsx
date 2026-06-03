@@ -116,7 +116,7 @@ export const UserMenu = memo(() => {
         onClose={() => setIsSettingsOpen(false)}
       />
       <LogoutConfirmationModal
-        open={isLogoutOpen}
+        isOpen={isLogoutOpen}
         onClose={() => setIsLogoutOpen(false)}
       />
     </>

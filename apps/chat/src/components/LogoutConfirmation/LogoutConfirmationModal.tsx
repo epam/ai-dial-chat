@@ -7,24 +7,28 @@ import { useUser } from '../../context/auth/UserContext';
 import { logout } from '../../server-api/auth.api';
 
 interface Props {
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
 }
 
-export default function LogoutConfirmationModal({ open, onClose }: Props) {
+export default function LogoutConfirmationModal({ isOpen, onClose }: Props) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { reset } = useUser();
 
   const handleConfirm = async () => {
-    await logout();
+    try {
+      await logout();
+    } catch (err) {
+      console.error('Logout request failed', err);
+    }
     reset();
     navigate(ROUTES.LOGIN);
   };
 
   return (
     <DialConfirmationPopup
-      open={open}
+      open={isOpen}
       header={t(AuthI18nKeys.LogOutConfirmTitle)}
       description={t(AuthI18nKeys.LogOutConfirmDescription)}
       confirmLabel={t(AuthI18nKeys.LogOutConfirm)}
