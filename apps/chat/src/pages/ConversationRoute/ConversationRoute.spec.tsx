@@ -1,3 +1,4 @@
+import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -7,6 +8,43 @@ import ConversationRoute from './ConversationRoute';
 
 vi.mock('../../context/DeploymentsContext');
 vi.mock('../../server-api/conversations.api');
+vi.mock('../../components/StarterButtons/StarterButtons', () => ({
+  default: ({
+    starters,
+    onSelect,
+  }: {
+    starters: Array<{
+      const: number;
+      title: string;
+      'dial:widgetOptions': {
+        populateText: string;
+        submit: boolean;
+        confirmationMessage: string | null;
+      };
+    }>;
+    onSelect: (starter: {
+      const: number;
+      title: string;
+      'dial:widgetOptions': {
+        populateText: string;
+        submit: boolean;
+        confirmationMessage: string | null;
+      };
+    }) => void;
+  }) => (
+    <div>
+      {starters.map((starter) => (
+        <button
+          key={starter.const}
+          type="button"
+          onClick={() => onSelect(starter)}
+        >
+          {starter.title}
+        </button>
+      ))}
+    </div>
+  ),
+}));
 vi.mock('react-router-dom', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react-router-dom')>();
   return { ...actual, useNavigate: vi.fn(() => vi.fn()) };
@@ -61,6 +99,7 @@ describe('ConversationRoute', () => {
       items: mockItems,
       selectedItemId: 'gpt-4o',
       setSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
     });
@@ -99,6 +138,7 @@ describe('ConversationRoute', () => {
       items: mockItems,
       selectedItemId: null,
       setSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration: null,
       isLoading: false,
       error: null,
     });
@@ -111,5 +151,49 @@ describe('ConversationRoute', () => {
     });
 
     expect(mockCreateConversation).not.toHaveBeenCalled();
+  });
+
+  it('passes submit starter values as deployment configuration', async () => {
+    const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
+      type: 'object',
+      properties: {
+        starter: {
+          oneOf: [
+            {
+              const: 0,
+              title: 'OCR image',
+              'dial:widgetOptions': {
+                populateText: 'Scan this image',
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    mockUseDeployments.mockReturnValue({
+      items: mockItems,
+      selectedItemId: 'deepseek-ocr-2',
+      setSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration,
+      isLoading: false,
+      error: null,
+    });
+
+    renderRoute();
+
+    await act(async () => {
+      screen.getByText('OCR image').click();
+    });
+
+    await waitFor(() => {
+      expect(mockCreateConversation).toHaveBeenCalledWith(
+        'Scan this image',
+        'deepseek-ocr-2',
+        [],
+        { starter: 0 },
+      );
+    });
   });
 });
