@@ -5,7 +5,7 @@
 
 ## 2. Verify and Test
 
-- [ ] 2.1 Start the dev server (`npm run nx serve chat`) and manually verify that the header stays visible when scrolling through a long code block in a chat message
-- [ ] 2.2 Confirm that multiple code blocks on the same page each have their own independent sticky header (no bleed between blocks)
-- [ ] 2.3 Confirm that the header background correctly covers underlying code text (no transparency issue) in both light and dark themes
+- [x] 2.1 Start the dev server (`npm run nx serve chat`) and manually verify that the header stays visible when scrolling through a long code block in a chat message
+- [x] 2.2 Confirm that multiple code blocks on the same page each have their own independent sticky header (no bleed between blocks)
+- [x] 2.3 Confirm that the header background correctly covers underlying code text (no transparency issue) in both light and dark themes
 - [x] 2.4 Run linting and formatting: `npm run lint:fix && npm run format:fix`
