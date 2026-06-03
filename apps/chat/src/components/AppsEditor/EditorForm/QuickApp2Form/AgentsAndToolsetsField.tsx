@@ -342,7 +342,8 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
       setValue(
         'agentsAndToolsets',
         agentsAndToolsetsOptions.map((option) =>
-          option[AgentOrToolsetSchemaKeys.id] === toolset.deployment_id
+          option[AgentOrToolsetSchemaKeys.tool]?.deployment_id ===
+          toolset.deployment_id
             ? {
                 ...option,
                 [AgentOrToolsetSchemaKeys.tool]: toolset,

@@ -162,6 +162,7 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
     reviewButtonTitle?: string;
     rejectButtonState?: ElementActionabilityState;
     approveButtonState?: ElementActionabilityState;
+    editButtonState?: ElementActionabilityState;
   }) {
     if (buttonsToVerify.reviewButtonState) {
       await this.assertElementState(
@@ -182,6 +183,12 @@ export class PublishingApprovalModalAssertion extends BaseAssertion {
       await this.assertElementActionabilityState(
         this.publishingApprovalModal.approveButton,
         buttonsToVerify.approveButtonState,
+      );
+    }
+    if (buttonsToVerify.editButtonState) {
+      await this.assertElementActionabilityState(
+        this.publishingApprovalModal.editButton,
+        buttonsToVerify.editButtonState,
       );
     }
   }

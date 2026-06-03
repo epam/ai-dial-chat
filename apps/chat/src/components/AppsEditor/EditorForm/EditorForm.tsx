@@ -27,6 +27,7 @@ import { ExternalAppForm } from '@/src/components/AppsEditor/EditorForm/External
 import { GeneralForm } from '@/src/components/AppsEditor/EditorForm/GeneralForm';
 import { QuickApp2Form } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/QuickApp2Form';
 import { QuickAppForm } from '@/src/components/AppsEditor/EditorForm/QuickAppForm';
+import { SchemaDrivenForm } from '@/src/components/AppsEditor/EditorForm/SchemaDrivenForm';
 
 interface EditorFormProps {
   onNextClick: () => void;
@@ -65,7 +66,7 @@ export const EditorForm = ({ onNextClick, onAutoSave }: EditorFormProps) => {
           schema[ApplicationTypeSchemaProperties.applicationTypeDisplayName]
         ) {
           return <CustomViewerForm />;
-        }
+        } else if (schema?.properties) return <SchemaDrivenForm />;
         return null;
     }
   }, [onAutoSave, schema, type]);

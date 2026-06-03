@@ -12,11 +12,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPathToFolderById } from '@/src/utils/app/folders';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
-import {
-  constructPath,
-  isMyEntity,
-  splitEntityId,
-} from '@/src/utils/app/shared-utils';
+import { constructPath, isMyEntity } from '@/src/utils/app/shared-utils';
 
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -91,13 +87,6 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
     );
   }
 
-  const isBackendMissingError =
-    validationStatus === SkillValidationStatus.Invalid &&
-    !!validationMessage &&
-    validationMessage.includes('No YAML frontmatter found');
-
-  const isNotFound = (arePromptsUploaded && !prompt) || isBackendMissingError;
-
   const { path: folderPath } = getPathToFolderById(folders, prompt?.folderId);
   const isMyPrompt = isMyEntity({ id: promptId });
   const resultFolderPath = isEntityIdPublic({ id: promptId })
@@ -107,14 +96,10 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
         ? constructPath(PINNED_PROMPTS_SECTION_NAME, folderPath)
         : RECENT_PROMPTS_SECTION_NAME
       : constructPath(SHARED_WITH_ME_SECTION_NAME, folderPath);
-
-  const displayName = prompt?.name ?? splitEntityId(promptId).name ?? promptId;
-
+  const displayName = prompt?.name ?? promptId;
   const isPromptLoaded = prompt?.status === UploadStatus.LOADED;
   const hasInvalidError =
-    isPromptLoaded &&
-    validationStatus === SkillValidationStatus.Invalid &&
-    !isNotFound;
+    isPromptLoaded && validationStatus === SkillValidationStatus.Invalid;
   const isValidating =
     isPromptLoaded && validationStatus === SkillValidationStatus.Validating;
 
@@ -140,15 +125,10 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
           />
 
           <div className="flex min-w-0 flex-1 flex-col">
-            <span
-              className={classNames(
-                'truncate text-sm font-medium',
-                isNotFound ? 'text-secondary' : 'text-primary',
-              )}
-            >
+            <span className="truncate text-sm font-medium text-primary">
               {displayName}
             </span>
-            {!isNotFound && resultFolderPath && (
+            {resultFolderPath && (
               <span className="truncate text-xs text-secondary">
                 {resultFolderPath}
               </span>
@@ -157,7 +137,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
 
           {!readonly && (
             <div className="flex gap-2 text-secondary">
-              {isMyPrompt && !isNotFound && (
+              {isMyPrompt && (
                 <IconButton
                   className="size-6"
                   Icon={IconPencilMinus}
@@ -183,18 +163,6 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
           <Spinner className="mx-auto my-4" size={16} />
         )}
 
-        {isNotFound && (
-          <div
-            className="mt-2 flex items-center gap-1 px-7 text-error"
-            data-qa="skill-not-found-message"
-          >
-            <IconAlertCircleFilled size={16} className="shrink-0" />
-            <span className="break-words text-xs">
-              {t(MarketplaceI18nKeys.AgentSkillsNotFoundError)}
-            </span>
-          </div>
-        )}
-
         {hasInvalidError && (
           <div
             className="mt-2 flex items-center gap-1 px-7 text-error"
@@ -208,7 +176,7 @@ export const AgentSkillsItem: FC<AgentSkillsItemProps> = ({
           </div>
         )}
       </div>
-      {isExpanded && !isNotFound && (
+      {isExpanded && (
         <div className="max-h-[160px] overflow-auto whitespace-pre-wrap break-words px-10 py-3 font-mono text-xs text-primary">
           {prompt?.content}
         </div>

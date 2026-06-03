@@ -23,3 +23,4 @@ export * from './publication/publishApplicationsTree';
 export * from './publication/publishFolderConversations';
 export * from './publication/publishFolderPrompts';
 export * from './publication/publishFolderFiles';
+export * from './publication/publishToolsetsTree';
