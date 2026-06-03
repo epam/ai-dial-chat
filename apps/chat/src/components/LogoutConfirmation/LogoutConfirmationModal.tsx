@@ -1,7 +1,10 @@
 import { DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../../constants/routes';
 import { AuthI18nKeys } from '../../constants/translation-keys';
-import { ApiEndpoints } from '../../server-api/base';
+import { useUser } from '../../context/auth/UserContext';
+import { logout } from '../../server-api/auth.api';
 
 interface Props {
   open: boolean;
@@ -10,9 +13,13 @@ interface Props {
 
 export default function LogoutConfirmationModal({ open, onClose }: Props) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { reset } = useUser();
 
-  const handleConfirm = () => {
-    window.location.href = ApiEndpoints.AUTH_LOGOUT;
+  const handleConfirm = async () => {
+    await logout();
+    reset();
+    navigate(ROUTES.LOGIN);
   };
 
   return (

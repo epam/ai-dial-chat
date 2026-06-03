@@ -41,7 +41,7 @@ export default function SettingsModal({ open, onClose }: Props) {
       onCancel={onClose}
       onClose={onClose}
     >
-      <div className="p-4">
+      <div className="px-6 py-4">
         <DialFormItem label={t(SettingsI18nKeys.Theme)}>
           <DialSelect
             options={options}
