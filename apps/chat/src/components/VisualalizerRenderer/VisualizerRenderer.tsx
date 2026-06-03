@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useVisualizerLocaleLayoutFields } from '@/src/hooks/useVisualizerLocaleLayoutFields';
 
 import { CustomVisualizer } from '@/src/types/custom-visualizers';
 import { Translation } from '@/src/types/translation';
@@ -72,6 +73,8 @@ export const VisualizerRenderer = ({
   } = renderer;
 
   const dispatch = useAppDispatch();
+
+  const localeLayoutFields = useVisualizerLocaleLayoutFields();
 
   const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
     const sessionAccessToken = session?.accessToken;
@@ -145,6 +148,7 @@ export const VisualizerRenderer = ({
             ),
       themeId,
       ...authLayoutFields,
+      ...localeLayoutFields,
     };
   }, [
     containerHeight,
@@ -153,6 +157,7 @@ export const VisualizerRenderer = ({
     scrollWidth,
     themeId,
     authLayoutFields,
+    localeLayoutFields,
   ]);
 
   const sendMessage = useCallback(
