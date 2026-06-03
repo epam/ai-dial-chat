@@ -39,6 +39,10 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
           label={labels[labelKey]}
           selected={activeTab === value}
           onClick={() => onChange(value)}
+          className={mergeClasses(
+            'dial-tiny-semi-text border py-1 px-2 text-primary border-primary',
+            activeTab === value && 'border-accent-secondary bg-accent-secondary-alpha',
+          )}
         />
       ))}
     </div>
