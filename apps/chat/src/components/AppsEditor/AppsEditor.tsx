@@ -144,6 +144,7 @@ export const AppsEditor = () => {
         type: type,
         runtime: pythonVersions[0],
         toolSupportingModelIds,
+        schema: schema ?? undefined,
       }),
     [
       appDetails,
@@ -151,6 +152,7 @@ export const AppsEditor = () => {
       type,
       pythonVersions,
       toolSupportingModelIds,
+      schema,
     ],
   );
 
@@ -277,6 +279,7 @@ export const AppsEditor = () => {
         type,
         runtime: pythonVersions[0],
         toolSupportingModelIds,
+        schema: schema ?? undefined,
       });
       isSimpleViewSwitchRef.current = false;
       changeEditorTabRef.current = null;

@@ -1,8 +1,11 @@
 import {
   ApiApplicationTypeSchema,
+  ApiDetailedApplicationTypeSchema,
   ApplicationTypeSchema,
   ApplicationTypeSchemaProperties,
 } from '@/src/types/application-type-schema';
+
+import { JSONSchema7, JSONSchema7Object } from 'json-schema';
 
 export const convertApplicationTypeSchemaFromApi = (
   schema: ApiApplicationTypeSchema,
@@ -36,3 +39,18 @@ export function pluralizeDisplayName(displayName: string): string {
   }
   return `My ${displayName}s`;
 }
+
+export const getDefaultSchemaModel = (
+  schema?: ApiDetailedApplicationTypeSchema,
+) => {
+  if (!schema) return undefined;
+
+  const orchestrator = schema.properties?.orchestrator as
+    | JSONSchema7
+    | undefined;
+  const deploymentDefault = (
+    orchestrator?.properties?.deployment as JSONSchema7 | undefined
+  )?.default as JSONSchema7Object | undefined;
+
+  return deploymentDefault?.deployment_id as string;
+};
