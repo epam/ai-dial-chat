@@ -15,7 +15,7 @@ import { HTTPMethod } from '@/src/types/http';
 import { errorsMessages } from '@/src/constants/errors';
 
 import { sanitizeUri } from 'micromark-util-sanitize-uri';
-import fetch from 'node-fetch';
+import fetch, { Response } from 'node-fetch';
 import { Readable } from 'stream';
 
 const getEntityUrlFromSlugs = (
@@ -91,6 +91,63 @@ export const config = {
 interface PutOptions {
   ifNoneMatch?: string;
 }
+async function getProxyErrorMessage(
+  proxyRes: Response,
+  url: string,
+): Promise<string> {
+  let text: string | undefined;
+  try {
+    text = await proxyRes.text();
+  } catch {
+    text = undefined;
+  }
+
+  let json: unknown;
+  try {
+    if (text) {
+      json = JSON.parse(text);
+    }
+  } catch {
+    json = undefined;
+  }
+
+  let errorMessage = '';
+  if (typeof json === 'object' && json !== null) {
+    const jsonObj = json as Record<string, unknown>;
+    const errorObj = jsonObj.error;
+
+    if (typeof errorObj === 'object' && errorObj !== null) {
+      const nestedMessage = (errorObj as Record<string, unknown>).message;
+      if (typeof nestedMessage === 'string') {
+        errorMessage = nestedMessage;
+      }
+    } else if (typeof errorObj === 'string') {
+      errorMessage = errorObj;
+    } else if (typeof jsonObj.message === 'string') {
+      errorMessage = jsonObj.message;
+    }
+  }
+
+  if (!errorMessage && text) {
+    errorMessage = text;
+  }
+
+  if (!errorMessage) {
+    if (proxyRes.status === 403) {
+      errorMessage = errorsMessages.fileAccessRevoked;
+    } else if (proxyRes.status === 404) {
+      errorMessage = errorsMessages.fileNotFound;
+    } else {
+      errorMessage = errorsMessages.requestingEntityFailed(
+        url,
+        proxyRes.statusText,
+      );
+    }
+  }
+
+  return errorMessage;
+}
+
 async function handlePutRequest(
   req: NextApiRequest,
   jwt: string | undefined,
@@ -111,25 +168,16 @@ async function handlePutRequest(
     body: readable,
   });
 
-  let json: string | undefined;
-  let text: string | undefined;
-  try {
-    text = await proxyRes.text();
-  } catch {
-    text = undefined;
-  }
-  try {
-    json = JSON.parse(text as string);
-  } catch {
-    json = undefined;
+  if (!proxyRes.ok) {
+    const errorMessage = await getProxyErrorMessage(proxyRes, url);
+    throw new DialAIError(errorMessage, proxyRes.status, req);
   }
 
-  if (!proxyRes.ok) {
-    throw new DialAIError(
-      json ?? text ?? proxyRes.statusText,
-      proxyRes.status,
-      req,
-    );
+  let json: unknown;
+  try {
+    json = await proxyRes.json();
+  } catch {
+    json = undefined;
   }
 
   return res.status(200).send(json);
@@ -146,11 +194,8 @@ async function handleGetRequest(
   });
 
   if (!proxyRes.ok) {
-    throw new DialAIError(
-      `Requesting entity failed - '${url}'` + proxyRes.statusText,
-      proxyRes.status,
-      req,
-    );
+    const errorMessage = await getProxyErrorMessage(proxyRes, url);
+    throw new DialAIError(errorMessage, proxyRes.status, req);
   }
 
   res.status(proxyRes.status);
@@ -177,17 +222,8 @@ async function handleDeleteRequest(
   });
 
   if (!proxyRes.ok) {
-    let json: unknown;
-    try {
-      json = await proxyRes.json();
-    } catch {
-      json = undefined;
-    }
-    throw new DialAIError(
-      (typeof json === 'string' && json) || proxyRes.statusText,
-      proxyRes.status,
-      req,
-    );
+    const errorMessage = await getProxyErrorMessage(proxyRes, url);
+    throw new DialAIError(errorMessage, proxyRes.status, req);
   }
 
   return res.status(200).send({});

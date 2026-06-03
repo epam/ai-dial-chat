@@ -570,6 +570,8 @@ export enum ChatI18nKeys {
   Download = 'Download',
   ViewPdf = 'View PDF',
   FailedToLoadPdf = 'Failed to load PDF: {{error}}',
+  FileNotAccessible = 'You do not have permission to access this file. The access might have been revoked.',
+  FileNotFound = 'The requested file was not found.',
   Page = 'Page',
   Pages = 'Pages',
   PageFit = 'Page Fit',

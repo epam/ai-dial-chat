@@ -92,4 +92,9 @@ export const errorsMessages = {
   toolsetSignInFailed: 'Failed to sign in toolset',
   toolsetSignOutFailed: 'Failed to sign out toolset',
   transcriptionFailed: 'Audio transcription failed. Please try again.',
+  fileAccessRevoked:
+    'You do not have permission to access this file. The access might have been revoked.',
+  fileNotFound: 'The requested file was not found.',
+  requestingEntityFailed: (url: string, statusText: string) =>
+    `Requesting entity failed - '${url}' ${statusText}`,
 };

@@ -107,6 +107,30 @@ export const PdfHighlightViewer = ({ url }: Props) => {
 
     (async () => {
       try {
+        const controller = new AbortController();
+        const preflight = await fetch(url, {
+          method: 'GET',
+          signal: controller.signal,
+        });
+
+        if (!preflight.ok) {
+          if (cancelled) return;
+          if (preflight.status === 403) {
+            setError(t(ChatI18nKeys.FileNotAccessible));
+          } else if (preflight.status === 404) {
+            setError(t(ChatI18nKeys.FileNotFound));
+          } else {
+            setError(
+              t(ChatI18nKeys.FailedToLoadPdf, {
+                error: preflight.statusText || String(preflight.status),
+              }),
+            );
+          }
+          setIsLoading(false);
+          return;
+        }
+        controller.abort();
+
         await viewer.init(container, {
           enableTextSelection: true,
           enableVirtualScrolling: true,
