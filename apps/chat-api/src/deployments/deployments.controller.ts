@@ -4,11 +4,9 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { DeploymentsService } from './deployments.service';
+import { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import { DeploymentsResponseDto } from './dto/deployment-item.dto';
 import { DeploymentsQueryDto } from './dto/deployments-query.dto';
-
-// Swagger inline type for an open JSON Schema object
-const schemaObject = { type: 'object', additionalProperties: true };
 
 @ApiTags('deployments')
 @Controller({ path: 'deployments', version: '1' })
@@ -63,11 +61,7 @@ export class DeploymentsController {
       'Only available for deployments whose `features.configuration` flag is `true`. ' +
       'Results are cached server-side for 60 seconds per user.',
   })
-  @ApiResponse({
-    status: 200,
-    description: 'JSON Schema configuration object',
-    schema: schemaObject,
-  })
+  @ApiResponse({ status: 200, type: DeploymentConfigurationDto })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   @ApiResponse({
     status: 404,

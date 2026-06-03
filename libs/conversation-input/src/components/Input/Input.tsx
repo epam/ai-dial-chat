@@ -61,6 +61,7 @@ export const Input: FC<InputProps> = ({
   hideAddButton = false,
   hideActionBar = false,
   renderFooterActions,
+  isInputDisabled = false,
 }) => {
   const isMobile = useIsMobile();
   const cssVars = useMemo(
@@ -146,6 +147,7 @@ export const Input: FC<InputProps> = ({
     deployments === undefined || selectedDeploymentId != null;
 
   const handleSend = () => {
+    if (isInputDisabled) return;
     onSend?.(message, attachments);
     setMessage('');
     attachments.forEach((a) => {
@@ -232,6 +234,7 @@ export const Input: FC<InputProps> = ({
       onPaste={handlePaste}
       placeholder={placeholder}
       aria-label={ariaLabel}
+      disabled={isInputDisabled}
       rows={1}
     />
   );
@@ -289,6 +292,7 @@ export const Input: FC<InputProps> = ({
                 menuTitle={menuTitle}
                 menuCloseLabel={menuCloseLabel}
                 style={cssVars}
+                isDisabled={isInputDisabled}
               />
             </div>
           )}
@@ -360,7 +364,7 @@ export const Input: FC<InputProps> = ({
                   canSend && (
                     <SendButton
                       onSend={handleSend}
-                      isDisabled={!hasModelSelected}
+                      isDisabled={isInputDisabled || !hasModelSelected}
                       ariaLabel={sendLabel}
                     />
                   )

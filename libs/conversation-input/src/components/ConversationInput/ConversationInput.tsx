@@ -25,6 +25,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   modelSelectorLabels,
   sendLabel,
   stopLabel,
+  isInputDisabled = false,
 }) => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
@@ -33,9 +34,13 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   }, []);
 
   const { getRootProps, isDragActive } = useDropzone({
-    onDrop: (files) => setPendingFiles(files),
+    onDrop: (files) => {
+      if (isInputDisabled) return;
+      setPendingFiles(files);
+    },
     noClick: true,
     noKeyboard: true,
+    disabled: isInputDisabled,
   });
 
   const noCustomClass = !typography?.welcomeClassName;
@@ -96,6 +101,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           modelSelectorLabels={modelSelectorLabels}
           sendLabel={sendLabel}
           stopLabel={stopLabel}
+          isInputDisabled={isInputDisabled}
         />
         {isDragActive && (
           <div

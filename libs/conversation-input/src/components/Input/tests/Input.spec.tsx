@@ -380,6 +380,58 @@ describe('Input — model selector', () => {
   });
 });
 
+describe('Input — isInputDisabled', () => {
+  it('textarea has disabled attribute when isInputDisabled is true', () => {
+    const { container } = render(<Input isInputDisabled />);
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.disabled).toBe(true);
+  });
+
+  it('textarea is enabled when isInputDisabled is false', () => {
+    const { container } = render(<Input isInputDisabled={false} />);
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.disabled).toBe(false);
+  });
+
+  it('send button is disabled when isInputDisabled is true', () => {
+    render(<Input message="Hello" isInputDisabled />);
+    const sendButton = screen.getByLabelText(
+      'Send message',
+    ) as HTMLButtonElement;
+    expect(sendButton.disabled).toBe(true);
+  });
+
+  it('attach button is disabled when isInputDisabled is true', () => {
+    render(<Input isInputDisabled />);
+    const addButton = screen.getByLabelText('Add') as HTMLButtonElement;
+    expect(addButton.disabled).toBe(true);
+  });
+
+  it('does not call onSend on Enter when isInputDisabled is true', () => {
+    const handleSend = vi.fn();
+    const { container } = render(<Input onSend={handleSend} isInputDisabled />);
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
+  it('calls onSend on Enter when isInputDisabled is false', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input onSend={handleSend} isInputDisabled={false} />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+    expect(handleSend).toHaveBeenCalledWith('Hello', []);
+  });
+});
+
 describe('Input — pasted attachment expand', () => {
   beforeEach(() => {
     vi.stubGlobal('URL', {
