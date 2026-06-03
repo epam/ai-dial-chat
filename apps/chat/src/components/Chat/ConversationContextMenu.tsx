@@ -25,6 +25,7 @@ import {
   ApplicationTypesSchemasSelectors,
   ModelsSelectors,
   PublicationSelectors,
+  SettingsSelectors,
 } from '@/src/store/selectors';
 
 import { ItemContextMenu } from '@/src/components/Common/ItemContextMenu';
@@ -67,6 +68,9 @@ export const ConversationContextMenu = ({
       state,
       conversation.id,
     ),
+  );
+  const isCompareModeDisabled = useAppSelector(
+    SettingsSelectors.selectIsCompareModeDisabled,
   );
 
   const screenState = useScreenState();
@@ -292,7 +296,10 @@ export const ConversationContextMenu = ({
         onExport={handleExport}
         onOpenExportModal={handleOpenExportModal}
         onCompare={
-          !isReplay && !isPlayback && !isCustomViewerApplication
+          !isCompareModeDisabled &&
+          !isReplay &&
+          !isPlayback &&
+          !isCustomViewerApplication
             ? handleCompare
             : undefined
         }

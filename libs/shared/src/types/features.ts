@@ -26,6 +26,7 @@ export enum Feature {
   DisallowChangeAgent = 'disallow-change-agent', // Disallow "Change agent" button
 
   // Conversation functions
+  CompareModeDisabled = 'compare-mode-disabled', // Disable compare mode (sidebar button, conversation context menu). Enabled by default
   Likes = 'likes', // Display likes
   DislikeComment = 'dislike-comment', // Enable adding comment when disliking a message
   InputFiles = 'input-files', // Allow attach files to conversation
