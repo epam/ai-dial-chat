@@ -15,6 +15,18 @@ import type {
   DeploymentsResponseDto,
 } from './dto/deployment-item.dto';
 
+function isRecord(val: unknown): val is Record<string, unknown> {
+  return val !== null && typeof val === 'object' && !Array.isArray(val);
+}
+
+function toAdditionalProperties(
+  val: unknown,
+): boolean | Record<string, unknown> | undefined {
+  if (typeof val === 'boolean') return val;
+  if (isRecord(val)) return val;
+  return undefined;
+}
+
 type RawDeployment = {
   id?: string;
   display_name?: string;
@@ -144,15 +156,14 @@ export class DeploymentsService extends AppService {
           this.logger,
         );
       }
-      const raw = (result.data ?? {}) as Record<string, unknown>;
+      const raw = result.data ?? {};
       const data: DeploymentConfigurationDto = {
         type: typeof raw['type'] === 'string' ? raw['type'] : undefined,
         title: typeof raw['title'] === 'string' ? raw['title'] : undefined,
-        properties: raw['properties'] as Record<string, unknown> | undefined,
-        additionalProperties: raw['additionalProperties'] as
-          | boolean
-          | Record<string, unknown>
-          | undefined,
+        properties: isRecord(raw['properties']) ? raw['properties'] : undefined,
+        additionalProperties: toAdditionalProperties(
+          raw['additionalProperties'],
+        ),
         isChatMessageInputDisabled:
           raw['dial:chatMessageInputDisabled'] === true || undefined,
       };
