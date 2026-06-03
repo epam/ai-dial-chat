@@ -1,8 +1,6 @@
 import { memo, useCallback, useMemo } from 'react';
 
 import classNames from 'classnames';
-import { sanitize } from 'isomorphic-dompurify';
-import { marked } from 'marked';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -31,6 +29,8 @@ import {
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
 import { DialButton, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+import { sanitize } from 'isomorphic-dompurify';
+import { marked } from 'marked';
 
 const emptyHandler = () => undefined;
 

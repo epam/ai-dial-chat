@@ -2,8 +2,6 @@ import { IconDotsVertical } from '@tabler/icons-react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
-import { sanitize } from 'isomorphic-dompurify';
-import { marked } from 'marked';
 
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -41,7 +39,9 @@ import {
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
 import { DialButton } from '@epam/ai-dial-ui-kit';
+import { sanitize } from 'isomorphic-dompurify';
 import intersection from 'lodash-es/intersection';
+import { marked } from 'marked';
 
 interface HiddenButtonsPropertyProps {
   options: FormSchemaButtonOption[];
