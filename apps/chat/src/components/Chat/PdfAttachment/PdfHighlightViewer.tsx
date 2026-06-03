@@ -188,7 +188,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       setThumbnails(new Map());
       requestedThumbnails.clear();
     };
-  }, [fileUrl, initialPage, t]);
+  }, [fileUrl, initialPage, t, url]);
 
   useEffect(() => {
     if (totalPages === 0) return;
