@@ -22,8 +22,6 @@ type RawDeployment = {
   icon_url?: string;
   description?: string;
   interfaces?: string | string[];
-  // Confirmed upstream field name from DIAL Core SDK (index.d.ts, DeploymentBase composite → Application):
-  // application_type_schema_id?: string
   application_type_schema_id?: string;
 };
 
