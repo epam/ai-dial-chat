@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { getFullToken } from '../server';
+
 const { mockGetJWTToken, mockGetRefreshToken } = vi.hoisted(() => ({
   mockGetJWTToken: vi.fn(),
   mockGetRefreshToken: vi.fn(),
@@ -29,8 +31,6 @@ vi.mock('@/src/utils/auth/auth-providers', () => ({
 vi.mock('@/src/utils/app/file', () => ({
   constructPath: (...parts: string[]) => parts.filter(Boolean).join('/'),
 }));
-
-import { getFullToken } from '../server';
 
 // ---------------------------------------------------------------------------
 // Helpers

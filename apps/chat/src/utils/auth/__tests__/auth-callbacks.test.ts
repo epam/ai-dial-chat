@@ -1,5 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { callbacks } from '../auth-callbacks';
+
 const {
   mockGetOrDiscoverClient,
   mockGetRefreshToken,
@@ -64,8 +66,6 @@ vi.mock('../auth-token-utils', () => ({
 vi.mock('lodash-es/get', () => ({ default: () => [] }));
 vi.mock('lodash-es/intersection', () => ({ default: () => [] }));
 vi.mock('lodash-es/snakeCase', () => ({ default: (s: string) => s }));
-
-import { callbacks } from '../auth-callbacks';
 
 // ---------------------------------------------------------------------------
 // Helpers
