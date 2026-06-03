@@ -75,7 +75,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       matchReferenceWidth={false}
       placement="bottom-start"
       listClassName={listClassName}
-      menu={{ items: menuItems }}
+      items={menuItems}
     >
       <DialGhostIconButton
         icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}

@@ -341,10 +341,8 @@ export const Input: FC<InputProps> = ({
                     <DialDropdownIcon
                       icon={selectorIcon}
                       ariaLabel={selectorAriaLabel}
-                      menu={{
-                        items: menuItems,
-                        header: menuHeader,
-                      }}
+                      items={menuItems}
+                      menuHeader={menuHeader}
                       placement="bottom-end"
                       matchReferenceWidth={false}
                       listClassName="!w-[240px] !max-h-80"

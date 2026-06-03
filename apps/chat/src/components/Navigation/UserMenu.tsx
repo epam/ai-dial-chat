@@ -99,7 +99,7 @@ export const UserMenu = memo(() => {
         <DialDropdown
           placement="top-end"
           matchReferenceWidth={false}
-          menu={{ items: menuItems }}
+          items={menuItems}
         >
           <button
             className="flex size-[44px] items-center justify-center rounded-full border border-transparent focus-within:border-focus hover:bg-accent-primary-alpha"
