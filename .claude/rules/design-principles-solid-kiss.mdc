@@ -1,0 +1,16 @@
+---
+description: Design principles — modern practice, SOLID, and KISS
+alwaysApply: true
+---
+
+# Design: modern practice, SOLID, KISS
+
+- Prefer **current, idiomatic** patterns for the stack in this repository (TypeScript, React, Next.js, NX). Favor official guidance and this repo’s guides (`.claude/guides`, `CLAUDE.md`) over legacy habits. Do not adopt experimental platform APIs or dependencies unless the task explicitly requires it.
+- **KISS**: Choose the smallest design that satisfies the requirement. Avoid premature abstraction, deep inheritance, and indirection that does not pay for itself. Prefer clear names and straightforward control flow.
+- **SOLID** (scale formality to scope; small changes need lighter-weight application):
+  - **S** — One main responsibility per module, component, or hook. Split or extract when a single unit handles unrelated concerns.
+  - **O** — Prefer extending through composition, configuration, or new modules instead of repeatedly patching a central "switch" when the codebase already follows that style.
+  - **L** — Subtypes and implementations should honor the contract of the abstraction they replace; avoid surprises that break callers.
+  - **I** — Prefer small, focused interfaces and props; avoid "god" objects, oversized context, and wide option bags where narrower types suffice.
+  - **D** — At boundaries (data access, external services, test doubles), depend on abstractions; keep framework and IO details at the edges.
+- If these principles **conflict with established patterns** in a touched file, **match the existing file first** for consistency; apply clearer structure in new or isolated code.
