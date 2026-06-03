@@ -21,5 +21,11 @@ export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
   titleText = 'Model switched.',
   bodyText,
 }) => {
-  return <DialNotification title={titleText} message={bodyText} />;
+  return (
+    <DialNotification
+      title={titleText}
+      message={bodyText}
+      textClassName="flex-row"
+    />
+  );
 };
