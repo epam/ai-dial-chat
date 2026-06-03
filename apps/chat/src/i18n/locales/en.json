@@ -104,6 +104,19 @@
       "modelChangedBody": "The model has been switched from {{from}} to {{to}}."
     }
   },
+  "conversationHistory": {
+    "title": "Chats",
+    "toggleAriaLabel": "Conversation panel",
+    "empty": "No conversations yet",
+    "newChat": "New chat",
+    "searchPlaceholder": "Search chat…",
+    "filterAll": "All",
+    "filterMyChats": "My chats",
+    "filterShared": "Shared",
+    "filterOrganization": "Organization",
+    "pinnedSection": "Pinned",
+    "myChatsSection": "My chats"
+  },
   "auth": {
     "signOut": "Sign out",
     "signedInAs": "Signed in as {{email}}",
@@ -112,6 +125,16 @@
     "loginDescription": "Choose your identity provider",
     "providerButtonLabel": "Sign in with {{provider}}",
     "providersError": "Could not load identity providers. Please retry.",
-    "userMenuLabel": "User menu"
+    "userMenuLabel": "User menu",
+    "settings": "Settings",
+    "logOut": "Log out",
+    "logOutConfirmTitle": "Log out?",
+    "logOutConfirmDescription": "Are you sure you want to log out?",
+    "logOutConfirm": "Log out"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "apply": "Apply"
   }
 }

@@ -54,6 +54,8 @@ export interface MessageActionsProps {
   ariaLabels?: MessageActionAriaLabels;
   /** Called when the user clicks the Edit button (User source only). */
   onEdit?: () => void;
+  /** Called when the user hovers over the Edit button (User source only). Useful for preloading the edit UI. */
+  onEditHover?: () => void;
   /** Called when the user clicks the Delete button (User source only). */
   onDelete?: () => void;
   /** Called when the user clicks the Regenerate button (Agent source only). */

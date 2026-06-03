@@ -31,6 +31,14 @@ export interface SidebarPanelTypography {
   fontSize?: string;
 }
 
+/** Combined style overrides (colors and typography) for the `SidebarPanel` component. */
+export interface SidebarPanelStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: SidebarPanelColors;
+  /** Typography overrides applied via CSS custom properties. */
+  typography?: SidebarPanelTypography;
+}
+
 /** Props accepted by the `SidebarPanel` component. */
 export interface SidebarPanelProps {
   /**
@@ -56,10 +64,8 @@ export interface SidebarPanelProps {
   closeLabel: string;
   /** Body content rendered below the header bar in the scrollable region. */
   children: ReactNode;
-  /** CSS custom-property overrides for theming. */
-  colors?: SidebarPanelColors;
-  /** Typography overrides applied via CSS custom properties. */
-  typography?: SidebarPanelTypography;
+  /** Color and typography overrides applied as CSS custom properties. */
+  styles?: SidebarPanelStyles;
   /** Extra class name(s) merged onto the root `<aside>` element. */
   className?: string;
 }

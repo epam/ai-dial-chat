@@ -1,3 +1,4 @@
+import type { DeploymentItemDto } from '@epam/chat-api-client';
 import { act, renderHook } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { useModelSelector } from '../useModelSelector.js';
@@ -43,7 +44,9 @@ describe('useModelSelector — selectorAriaLabel', () => {
   it('falls back to item id when displayName is absent', () => {
     const { result } = renderHook(() =>
       useModelSelector({
-        deployments: [{ id: 'raw-id', type: 'model' as const }],
+        deployments: [
+          { id: 'raw-id', type: 'model' as const },
+        ] as unknown as DeploymentItemDto[],
         selectedDeploymentId: 'raw-id',
       }),
     );

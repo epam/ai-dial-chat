@@ -14,6 +14,7 @@ export type {
   MessageBubbleProps,
   UserMessageBubbleProps,
   AssistantMessageBubbleProps,
+  MessageBubbleStyles,
   MessageBubbleColors,
   MessageBubbleTypography,
 } from './models/MessageBubble.js';
@@ -25,6 +26,7 @@ export type {
 } from './models/MessageActions.js';
 export type {
   MessageSourceProps,
+  MessageSourceStyles,
   MessageSourceColors,
   MessageSourceTypography,
 } from './models/MessageSource.js';

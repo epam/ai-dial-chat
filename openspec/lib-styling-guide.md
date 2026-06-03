@@ -91,7 +91,7 @@ Not allowed in SCSS (use Tailwind instead):
 
 ## Props API
 
-Every lib component exposes two optional customization props:
+Every lib component exposes a single optional `styles` prop that groups colors and typography:
 
 ```ts
 export interface <Name>Colors {
@@ -105,9 +105,15 @@ export interface <Name>Typography {
   fontFamily?: string;
   fontSize?: string;
   fontWeight?: string | number;
-  lineHeight?: string;
-  // optionally: className for passing a single font utility class
+  lineHeight?: string | number;
+  letterSpacing?: string;
+  // pass a single CSS utility class instead of explicit fields
   fontClassName?: string;
+}
+
+export interface <Name>Styles {
+  colors?: <Name>Colors;
+  typography?: <Name>Typography;
 }
 ```
 
@@ -116,8 +122,8 @@ export interface <Name>Typography {
 ```
 src/
   models/
-    Input.ts              ← InputProps, InputColors, InputTypography
-    ConversationInput.ts  ← ConversationInputProps, ...Colors, ...Typography
+    Input.ts              ← InputProps, InputColors, InputTypography, InputStyles
+    ConversationInput.ts  ← ConversationInputProps, ...Colors, ...Typography, ...Styles
   components/
     Input/
       Input.tsx
@@ -137,6 +143,10 @@ const cssVars = buildCssVars({
   '--ci-text': colors?.text,
   // font class takes priority — skip individual typography vars when fontClassName is set
   '--ci-font-size': noCustomClass ? typography?.fontSize : undefined,
+  '--ci-font-weight': noCustomClass ? typography?.fontWeight?.toString() : undefined,
+  '--ci-line-height': noCustomClass ? typography?.lineHeight?.toString() : undefined,
+  '--ci-letter-spacing': noCustomClass ? typography?.letterSpacing : undefined,
+  '--ci-font-family': noCustomClass ? typography?.fontFamily : undefined,
 });
 
 return <div style={cssVars} className={mergeClasses(styles.wrapper, 'flex w-full ...', className)}>
@@ -148,6 +158,29 @@ Apply it alongside the SCSS class. The SCSS class handles color; the font class 
 
 ```tsx
 <h1 className={mergeClasses(styles.welcome, 'text-center', typography?.fontClassName)}>
+```
+
+### SCSS wiring for typography CSS vars
+
+Wire the typography vars in `.module.scss` on the element(s) where font styles apply. Omit fallbacks — an unset var on an inherited property resolves to `inherit`, so the font class on the parent still applies:
+
+```scss
+// ✅ correct — no fallback needed; unset var inherits from parent
+.content {
+  color: var(--ci-text, var(--text-primary, #eef1f7));
+  font-size: var(--ci-font-size);
+  font-weight: var(--ci-font-weight);
+  line-height: var(--ci-line-height);
+  letter-spacing: var(--ci-letter-spacing);
+  font-family: var(--ci-font-family);
+}
+```
+
+Typography var naming follows the same `--<lib-prefix>-` convention as color vars:
+
+```
+conversation-input   → --ci-font-size, --ci-font-weight, …
+conversation-stages  → --cs-font-size, --cs-font-weight, …
 ```
 
 ---
@@ -182,8 +215,10 @@ import '@epam/ai-dial-conversation-input/styles.css';
 // Hex fallbacks in styles.css kick in automatically
 // Optionally override via props:
 <ConversationInput
-  colors={{ background: '#fff', text: '#000', border: '#ccc' }}
-  typography={{ fontSize: '16px', fontFamily: 'Inter' }}
+  styles={{
+    colors: { background: '#fff', text: '#000', border: '#ccc' },
+    typography: { fontSize: '16px', fontFamily: 'Inter' },
+  }}
   onSend={handleSend}
 />
 ```

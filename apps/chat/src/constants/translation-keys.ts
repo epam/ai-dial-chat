@@ -67,6 +67,42 @@ export enum ConversationI18nKeys {
   StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
 }
 
+export enum AuthI18nKeys {
+  SignOut = 'auth.signOut',
+  SignedInAs = 'auth.signedInAs',
+  Loading = 'auth.loading',
+  LoginTitle = 'auth.loginTitle',
+  LoginDescription = 'auth.loginDescription',
+  ProviderButtonLabel = 'auth.providerButtonLabel',
+  ProvidersError = 'auth.providersError',
+  UserMenuLabel = 'auth.userMenuLabel',
+  Settings = 'auth.settings',
+  LogOut = 'auth.logOut',
+  LogOutConfirmTitle = 'auth.logOutConfirmTitle',
+  LogOutConfirmDescription = 'auth.logOutConfirmDescription',
+  LogOutConfirm = 'auth.logOutConfirm',
+}
+
+export enum SettingsI18nKeys {
+  Title = 'settings.title',
+  Theme = 'settings.theme',
+  Apply = 'settings.apply',
+}
+
+export enum ConversationHistoryI18nKeys {
+  Title = 'conversationHistory.title',
+  ToggleAriaLabel = 'conversationHistory.toggleAriaLabel',
+  Empty = 'conversationHistory.empty',
+  NewChat = 'conversationHistory.newChat',
+  SearchPlaceholder = 'conversationHistory.searchPlaceholder',
+  FilterAll = 'conversationHistory.filterAll',
+  FilterMyChats = 'conversationHistory.filterMyChats',
+  FilterShared = 'conversationHistory.filterShared',
+  FilterOrganization = 'conversationHistory.filterOrganization',
+  PinnedSection = 'conversationHistory.pinnedSection',
+  MyChatsSection = 'conversationHistory.myChatsSection',
+}
+
 export enum SidebarI18nKeys {
   ToggleOpen = 'sidebar.base.toggleOpen',
   ToggleClose = 'sidebar.base.toggleClose',

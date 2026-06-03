@@ -58,6 +58,62 @@ export interface ApplicationDto {
 /**
  *
  * @export
+ * @interface ApplicationSchemaSummaryDto
+ */
+export interface ApplicationSchemaSummaryDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  id?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  viewerUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  editorUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  schemaEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ApplicationSchemaSummaryDto
+   */
+  iconUrl?: string;
+}
+/**
+ *
+ * @export
+ * @interface ApplicationSchemasResponseDto
+ */
+export interface ApplicationSchemasResponseDto {
+  /**
+   *
+   * @type {Array<ApplicationSchemaSummaryDto>}
+   * @memberof ApplicationSchemasResponseDto
+   */
+  schemas: Array<ApplicationSchemaSummaryDto>;
+}
+/**
+ *
+ * @export
  * @interface ApplicationsResponseDto
  */
 export interface ApplicationsResponseDto {
@@ -229,6 +285,50 @@ export interface Check200Response {
    * @memberof Check200Response
    */
   version?: string;
+}
+/**
+ *
+ * @export
+ * @interface ConversationListItemDto
+ */
+export interface ConversationListItemDto {
+  /**
+   * Full DIAL Core resource URL used as the stable conversation identifier.
+   * @type {string}
+   * @memberof ConversationListItemDto
+   */
+  id: string;
+  /**
+   * Human-readable conversation title (the resource `name` from DIAL Core).
+   * @type {string}
+   * @memberof ConversationListItemDto
+   */
+  title: string;
+  /**
+   * Unix epoch milliseconds of the last update.
+   * @type {number}
+   * @memberof ConversationListItemDto
+   */
+  updatedAt: number;
+}
+/**
+ *
+ * @export
+ * @interface ConversationListResponseDto
+ */
+export interface ConversationListResponseDto {
+  /**
+   *
+   * @type {Array<ConversationListItemDto>}
+   * @memberof ConversationListResponseDto
+   */
+  items: Array<ConversationListItemDto>;
+  /**
+   * Cursor for the next page. Present only when more results exist. Pass as `nextToken` in the next request.
+   * @type {string}
+   * @memberof ConversationListResponseDto
+   */
+  nextToken?: string;
 }
 /**
  *
@@ -432,49 +532,13 @@ export interface ConversationResponseDto {
   assistantModelId: string;
 }
 /**
- * Permitted scalar/array types for a single form field value.
- * @export
- */
-export type MessageFormValueType = number | string | boolean | string[];
-
-/**
- * Key-value map submitted from a form widget embedded in a message.
- * @export
- */
-export type MessageFormValue = Record<string, MessageFormValueType | undefined>;
-
-/**
- *
- * @export
- * @interface MessageCustomContentDto
- */
-export interface MessageCustomContentDto {
-  /**
-   * @type {Array<AttachmentDto>}
-   * @memberof MessageCustomContentDto
-   */
-  attachments?: Array<AttachmentDto>;
-  /**
-   * Form/button submission value (e.g. { button: 1 })
-   * @type {object}
-   * @memberof MessageCustomContentDto
-   */
-  configuration_value?: Record<string, unknown>;
-  /**
-   * Key-value map of form field values submitted via an embedded form widget.
-   * @type {MessageFormValue}
-   * @memberof MessageCustomContentDto
-   */
-  form_value?: MessageFormValue;
-}
-/**
  *
  * @export
  * @interface CreateConversationDto
  */
 export interface CreateConversationDto {
   /**
-   * The first message to start the conversation
+   * The first message to start the conversation. May be empty only when at least one attachment is provided in custom_content.
    * @type {string}
    * @memberof CreateConversationDto
    */
@@ -490,7 +554,7 @@ export interface CreateConversationDto {
    * @type {MessageCustomContentDto}
    * @memberof CreateConversationDto
    */
-  custom_content?: MessageCustomContentDto;
+  customContent?: MessageCustomContentDto;
 }
 /**
  *
@@ -534,6 +598,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   interfaces?: Array<string>;
+  /**
+   * Application type schema id from DIAL Core (present only for application deployments)
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  applicationTypeSchemaId?: string;
 }
 
 /**
@@ -948,6 +1018,31 @@ export interface FileUploadResponseDto {
 /**
  *
  * @export
+ * @interface MessageCustomContentDto
+ */
+export interface MessageCustomContentDto {
+  /**
+   * DIAL API attachments to include with the message
+   * @type {Array<AttachmentDto>}
+   * @memberof MessageCustomContentDto
+   */
+  attachments?: Array<AttachmentDto>;
+  /**
+   * Form/button submission value (e.g. `{ button: 1 }`).
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  configurationValue?: object;
+  /**
+   * Key-value map of form field values submitted via an embedded form widget.
+   * @type {object}
+   * @memberof MessageCustomContentDto
+   */
+  formValue?: object;
+}
+/**
+ *
+ * @export
  * @interface MessageDto
  */
 export interface MessageDto {
@@ -980,7 +1075,7 @@ export interface MessageDto {
    * @type {MessageCustomContentDto}
    * @memberof MessageDto
    */
-  custom_content?: MessageCustomContentDto;
+  customContent?: MessageCustomContentDto;
 }
 
 /**
@@ -1081,13 +1176,13 @@ export interface SaveConversationBodyDto {
  */
 export interface SendCompletionDto {
   /**
-   * Conversation path (uuid__name). May contain slashes.
+   * Conversation path ({deploymentId}__{name}__{uuid}). May contain slashes.
    * @type {string}
    * @memberof SendCompletionDto
    */
   path: string;
   /**
-   * The new user message to send
+   * The new user message to send. May be empty only when at least one attachment is provided in custom_content.
    * @type {string}
    * @memberof SendCompletionDto
    */
@@ -1103,7 +1198,7 @@ export interface SendCompletionDto {
    * @type {MessageCustomContentDto}
    * @memberof SendCompletionDto
    */
-  custom_content?: MessageCustomContentDto;
+  customContent?: MessageCustomContentDto;
 }
 /**
  *

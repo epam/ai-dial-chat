@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input.js';
 
@@ -16,14 +16,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     ...actual,
     DialDropdown: ({
       children,
-      menu,
+      items,
     }: {
-      children: React.ReactNode;
-      menu: { items?: MenuItems };
+      children: ReactNode;
+      items?: MenuItems;
     }) => (
       <div>
         {children}
-        {menu.items?.map((item) => (
+        {items?.map((item) => (
           <button
             key={item.key}
             type="button"
@@ -37,15 +37,15 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     ),
     DialDropdownIcon: ({
       ariaLabel,
-      menu,
+      items,
     }: {
       ariaLabel: string;
-      icon: React.ReactNode;
-      menu: { items?: MenuItems };
+      icon: ReactNode;
+      items?: MenuItems;
     }) => (
       <div>
         <button type="button" aria-label={ariaLabel} />
-        {menu.items?.map((item) => (
+        {items?.map((item) => (
           <button
             key={item.key}
             type="button"

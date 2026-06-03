@@ -12,12 +12,12 @@ import { MDMessageViewer } from '../Markdown/MDMessageViewer.js';
 import { MessageActions } from '../Message/MessageActions.js';
 import styles from './MessageBubble.module.scss';
 
+/** Assistant-authored message bubble, left-aligned with markdown content and optional quick-reply starters. */
 export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   text,
   className,
   bubbleClassName,
-  colors,
-  typography,
+  styles: bubbleStyles,
   actions,
   hasAlwaysVisibleActions,
   attachments,
@@ -43,6 +43,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
     return () => el.removeEventListener('error', handler);
   }, [deploymentIconUrl]);
 
+  const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,

@@ -1,6 +1,6 @@
 import type { ProviderInfoDto, UserProfileDto } from '@epam/chat-api-client';
 import { authApi } from './api-client';
-import { setCsrfToken } from './base';
+import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
 
 export const getMe = async (): Promise<UserProfileDto> => {
   const raw = await authApi.getCurrentUserRaw();
@@ -11,3 +11,13 @@ export const getMe = async (): Promise<UserProfileDto> => {
 
 export const getProviders = (): Promise<Array<ProviderInfoDto>> =>
   authApi.listProviders();
+
+export const logout = async (): Promise<void> => {
+  const csrfToken = getCsrfToken();
+  await fetch(ApiEndpoints.AUTH_LOGOUT, {
+    method: 'POST',
+    credentials: 'include',
+    redirect: 'manual',
+    headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {},
+  });
+};

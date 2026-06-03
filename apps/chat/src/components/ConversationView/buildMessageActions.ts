@@ -11,6 +11,7 @@ import type {
 
 export interface MessageActionHandlers {
   onEdit?: (messageId: string) => void;
+  onHoverEdit?: () => void;
   onDelete?: (messageId: string) => void;
   onRegenerate?: (messageId: string) => void;
   onRate?: (messageId: string, rating: MessageRating | null) => void;
@@ -29,6 +30,7 @@ export const buildMessageActions = (
   if (msg.role === MessageRole.User) {
     return {
       onEdit: handlers.onEdit ? () => handlers.onEdit?.(msg.id) : void 0,
+      onEditHover: handlers.onHoverEdit,
       onDelete: handlers.onDelete ? () => handlers.onDelete?.(msg.id) : void 0,
       tooltips,
       ariaLabels,

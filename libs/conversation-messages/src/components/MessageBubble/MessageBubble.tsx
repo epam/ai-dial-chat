@@ -5,6 +5,7 @@ import { AssistantMessageBubble } from './AssistantMessageBubble.js';
 import { StatusMessageBubble } from './StatusMessageBubble.js';
 import { UserMessageBubble } from './UserMessageBubble.js';
 
+/** Role-switching wrapper — renders `UserMessageBubble` or `AssistantMessageBubble` based on `role`. */
 export const MessageBubble: FC<MessageBubbleProps> = ({ role, ...props }) => {
   if (role === MessageRole.Status) {
     return (
