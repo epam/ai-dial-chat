@@ -34,11 +34,11 @@ The match is **positive-only and boundary-anchored**: `ai-dial-chat/` matches bu
 Every dropped key is logged and counted; the counts surface in the sticky comment
 summary and under `payload.jira` / `payload.dropped` for audit.
 
-After repo filtering, a **temporary throttle** (`JIRA_MAX_FINDINGS`, default `3`)
-caps how many matched findings are handed to triage — the backlog is large and the
-triage agent has a fixed turn budget. The cap keeps the highest-priority findings
-(the JQL is priority-ordered); the rest are recorded under `payload.deferred` (keys
-only) so nothing is lost. Set `JIRA_MAX_FINDINGS=0` to analyze all.
+After repo filtering, an optional cap (`JIRA_MAX_FINDINGS`, default `0` = no cap)
+limits how many matched findings are handed to triage. Set it to `N` to keep only
+the top-`N` highest-priority findings (the JQL is priority-ordered) when triage's
+turn budget is tight; the rest are recorded under `payload.deferred` (keys only) so
+nothing is lost. Default `0` analyzes all matched findings.
 
 ---
 
@@ -66,7 +66,7 @@ only) so nothing is lost. Set `JIRA_MAX_FINDINGS=0` to analyze all.
 | `JIRA_FILTER_ID` | no | `189402` | Used only to build the default JQL. |
 | `JIRA_MAX` | no | `1000` | `tempMax` cap on exported issues. |
 | `JIRA_REPO_NAME` | no | `$GITHUB_REPOSITORY` name, else cwd basename | Repo to keep issues for; matched against the `<name>/...` Location path prefix. |
-| `JIRA_MAX_FINDINGS` | no | `3` | **Temporary throttle.** Max repo-matched findings handed to triage (priority-ordered; the rest are deferred, not lost). `0` = no cap. Keeps the triage agent within its turn budget. |
+| `JIRA_MAX_FINDINGS` | no | `0` | Optional cap on repo-matched findings handed to triage (`0` = no cap; `N` keeps the top-N priority findings, rest deferred). Use to keep triage within its turn budget. |
 
 **Default JQL** (matches the security filter the human exports):
 
@@ -124,8 +124,8 @@ filter = 189402 AND status not in (Closed, "Security Review") ORDER BY priority
       "fetched_count": 73,
       "matched_count": 34,
       "dropped_count": 39,
-      "analyzed_count": 3,
-      "max_findings": 3
+      "analyzed_count": 34,
+      "max_findings": 0
     },
     "issues": [
       {
@@ -144,7 +144,7 @@ filter = 189402 AND status not in (Closed, "Security Review") ORDER BY priority
         "files": ["apps/chat/src/utils/server/api-slug-handler.ts"]
       }
     ],
-    "deferred": ["EPMDIAL-1056", "EPMDIAL-1057", "..."],
+    "deferred": [],
     "dropped": ["EPMDIAL-2222", "EPMDIAL-3333"]
   }
 }

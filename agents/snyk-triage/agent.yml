@@ -9,15 +9,15 @@ model: claude-sonnet-4-6
 phase: sandbox
 cost_class: medium
 timeout_minutes: 30
-# History: the original ~33KB triage skill (resent each turn) plus its dual
-# MD+JSON report generation ran to whatever budget it was given — 19 turns at
-# limit 18, 25 at limit 24, never converging even for ONE real finding. The
-# skill was rewritten lean (~6KB, envelope-only output; full version kept at
-# SKILL.full.md), which removes the per-turn token bloat and the report-writing
-# tail. With the ingest cap at 3, 25 turns should suffice now that the report
-# tail is gone; the lean skill keeps per-turn tokens low, so rate-limit pressure
-# stays modest. Bump if a finding-heavy run still trips error_max_turns.
-max_turns: 25
+# The lean skill (envelope-only, full version kept at SKILL.full.md) plus a
+# strict "be decisive, write before the limit" directive fixed the recurring
+# error_max_turns: triage now writes its output instead of over-analyzing
+# forever. Cap=3 passed comfortably at 25 turns. With the ingest cap removed
+# (analyze all ~34 repo findings), this is set to the schema max of 60 — even
+# so, a backlog that large may not fully fit; the termination directive makes
+# the agent write a partial/NEEDS_REVIEW envelope rather than error. Re-cap via
+# JIRA_MAX_FINDINGS if a thorough per-finding pass is needed.
+max_turns: 60
 
 # Consume the REAL Jira-sourced findings from snyk-jira-ingest at
 # upstream/snyk-jira-ingest/stage-output.json. The findings are inlined under
