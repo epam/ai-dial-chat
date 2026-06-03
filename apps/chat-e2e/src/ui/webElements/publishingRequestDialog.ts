@@ -11,6 +11,7 @@ import {
   PublishFolderConversations,
   PublishFolderPrompts,
   PublishPromptsTree,
+  PublishToolsetsTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { PublishingRules } from '@/src/ui/webElements/publishingRules';
@@ -35,6 +36,8 @@ export class PublishingRequestDialog extends BaseElement {
   private folderPromptsToPublish!: PublishFolderPrompts;
   //applications to publish tree
   private applicationsToPublishTree!: PublishApplicationsTree;
+  //toolsets to publish tree
+  private toolsetsToPublishTree!: PublishToolsetsTree;
   //change publish path element
   private changePublishToPath!: ChangePath;
   private publishingRules!: PublishingRules;
@@ -97,6 +100,16 @@ export class PublishingRequestDialog extends BaseElement {
       );
     }
     return this.applicationsToPublishTree;
+  }
+
+  getPublishToolsetsTree(): PublishToolsetsTree {
+    if (!this.toolsetsToPublishTree) {
+      this.toolsetsToPublishTree = new PublishToolsetsTree(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.toolsetsToPublishTree;
   }
 
   getChangePublishToPath(): ChangePath {
