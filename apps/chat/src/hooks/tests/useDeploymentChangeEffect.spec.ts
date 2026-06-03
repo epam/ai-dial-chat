@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useDeploymentChangeEffect } from '../useDeploymentChangeEffect';
 
-vi.mock('../context/DeploymentsContext', () => ({
+vi.mock('../../context/DeploymentsContext', () => ({
   useDeployments: vi.fn(),
 }));
 
