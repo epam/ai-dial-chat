@@ -29,7 +29,7 @@ export const PdfPreviewModal = ({ url, title, onClose }: Props) => {
       headingClassName="mb-3"
       showHeadingTooltip
     >
-      <div className="min-h-0 grow overflow-hidden">
+      <div className="min-h-0 grow overflow-hidden" data-no-context-menu>
         <PdfHighlightViewerLazy url={url} />
       </div>
     </Modal>
