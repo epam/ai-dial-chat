@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useFormContext, useWatch } from 'react-hook-form';
 
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
@@ -25,11 +25,6 @@ export const SchemaDrivenForm = () => {
 
   const schema = useAppSelector(
     ApplicationTypesSchemasSelectors.selectDetailedApplicationTypeSchema,
-  );
-
-  const required = useMemo(
-    () => schema?.required ?? ['openapi'],
-    [schema?.required],
   );
 
   const handleChange = useCallback(
@@ -73,7 +68,7 @@ export const SchemaDrivenForm = () => {
   return (
     <div className="size-full grow bg-layer-2 px-3 py-4 md:px-5 xl:py-5">
       <DialSchemaRenderer
-        schema={{ ...schema, required } as unknown as JsonSchema}
+        schema={schema as unknown as JsonSchema}
         onPropertyChange={handleChange}
         onDefaultValues={handleDefaultValues}
         variant={SchemaRendererVariant.Flat}

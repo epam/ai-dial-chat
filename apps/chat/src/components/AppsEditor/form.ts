@@ -650,7 +650,7 @@ const getSchemaDrivenFormData = (
       ['document_relative_url'],
     ),
   },
-  required: schema?.required ?? ['openapi'],
+  required: schema?.required ?? [],
 });
 
 const getSettingsFormData = ({
