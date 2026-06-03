@@ -63,7 +63,7 @@ doc = {
             "filter_id": int(fid) if fid.isdigit() else fid,
             "jql": os.environ["JQL"], "repo_name": os.environ["REPO_NAME"],
             "fetched_count": 0, "matched_count": 0, "dropped_count": 0,
-            "analyzed_count": 0, "max_findings": int(os.environ.get("JIRA_MAX_FINDINGS", "1") or "0"),
+            "analyzed_count": 0, "max_findings": int(os.environ.get("JIRA_MAX_FINDINGS", "3") or "0"),
         },
         "issues": [], "deferred": [], "dropped": [],
     },
@@ -163,11 +163,11 @@ fetched, matched, ndropped = len(kept) + len(dropped), len(kept), len(dropped)
 
 # TEMPORARY throttle: cap how many repo-matched findings we hand to triage so
 # the Sonnet triage agent doesn't exhaust its turn budget on a large backlog.
-# Default 1 (validation setting — even 3 real findings exceeded triage's turns);
-# set JIRA_MAX_FINDINGS=0 to analyze all. Issues are priority-ordered by the JQL,
+# Default 3 (the lean triage skill makes a few findings affordable); set
+# JIRA_MAX_FINDINGS=0 to analyze all. Issues are priority-ordered by the JQL,
 # so the cap keeps the highest-priority findings. Deferred keys are recorded
 # (not lost) so the backlog stays visible.
-cap = int(os.environ.get("JIRA_MAX_FINDINGS", "1") or "0")
+cap = int(os.environ.get("JIRA_MAX_FINDINGS", "3") or "0")
 analyzed_issues = kept[:cap] if cap > 0 else kept
 deferred = [i["key"] for i in kept[cap:]] if cap > 0 else []
 analyzed = len(analyzed_issues)

@@ -9,14 +9,15 @@ model: claude-sonnet-4-6
 phase: sandbox
 cost_class: medium
 timeout_minutes: 30
-# The ~33KB snyk-triage skill is resent each turn, so this agent is the
-# dominant input-token consumer. Real Jira findings are far heavier than the
-# old 2-finding SARIF stub (parse HTML desc -> locate file -> read code ->
-# check sinks/mitigations), and even 3 of them blew the 18-turn budget
-# (error_max_turns at 19). Paired with the ingest cap of 1 finding, 24 turns
-# gives headroom to finish one real finding while staying clear of the
-# 100k-tok/min rate limit. Raise alongside the cap if you analyze more.
-max_turns: 24
+# History: the original ~33KB triage skill (resent each turn) plus its dual
+# MD+JSON report generation ran to whatever budget it was given — 19 turns at
+# limit 18, 25 at limit 24, never converging even for ONE real finding. The
+# skill was rewritten lean (~6KB, envelope-only output; full version kept at
+# SKILL.full.md), which removes the per-turn token bloat and the report-writing
+# tail. With the ingest cap at 3, 25 turns should suffice now that the report
+# tail is gone; the lean skill keeps per-turn tokens low, so rate-limit pressure
+# stays modest. Bump if a finding-heavy run still trips error_max_turns.
+max_turns: 25
 
 # Consume the REAL Jira-sourced findings from snyk-jira-ingest at
 # upstream/snyk-jira-ingest/stage-output.json. The findings are inlined under
