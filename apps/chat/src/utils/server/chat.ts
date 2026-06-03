@@ -170,7 +170,7 @@ export const chatErrorHandler = ({
     const errorMessage = errorsMessages[config.messageKey];
     fallbackErrorMessage =
       typeof errorMessage === 'function'
-        ? errorMessage('entity')
+        ? (errorMessage as (entity: string) => string)('entity')
         : errorMessage;
 
     if (error.code === '429' && error.message) {
