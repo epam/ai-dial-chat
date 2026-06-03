@@ -10,11 +10,13 @@ phase: sandbox
 cost_class: medium
 timeout_minutes: 30
 # The ~33KB snyk-triage skill is resent each turn, so this agent is the
-# dominant input-token consumer. 12 turns proved too tight — it hit
-# error_max_turns at 13 (read-upstream + inspect sources + reason over 2
-# findings + Write needs more), so keep the proven 18. Footprint reduction
-# rides on the Haiku/low-turn producer instead.
-max_turns: 18
+# dominant input-token consumer. Real Jira findings are far heavier than the
+# old 2-finding SARIF stub (parse HTML desc -> locate file -> read code ->
+# check sinks/mitigations), and even 3 of them blew the 18-turn budget
+# (error_max_turns at 19). Paired with the ingest cap of 1 finding, 24 turns
+# gives headroom to finish one real finding while staying clear of the
+# 100k-tok/min rate limit. Raise alongside the cap if you analyze more.
+max_turns: 24
 
 # Consume the REAL Jira-sourced findings from snyk-jira-ingest at
 # upstream/snyk-jira-ingest/stage-output.json. The findings are inlined under

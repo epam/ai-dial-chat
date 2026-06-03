@@ -34,11 +34,12 @@ The match is **positive-only and boundary-anchored**: `ai-dial-chat/` matches bu
 Every dropped key is logged and counted; the counts surface in the sticky comment
 summary and under `payload.jira` / `payload.dropped` for audit.
 
-After repo filtering, a **temporary throttle** (`JIRA_MAX_FINDINGS`, default `3`)
+After repo filtering, a **temporary throttle** (`JIRA_MAX_FINDINGS`, default `1`)
 caps how many matched findings are handed to triage — the backlog is large and the
-triage agent has a fixed turn budget. The cap keeps the highest-priority findings
-(the JQL is priority-ordered); the rest are recorded under `payload.deferred` (keys
-only) so nothing is lost. Set `JIRA_MAX_FINDINGS=0` to analyze all.
+triage agent has a fixed turn budget (even 3 real findings exceeded it). The cap
+keeps the highest-priority findings (the JQL is priority-ordered); the rest are
+recorded under `payload.deferred` (keys only) so nothing is lost. Set
+`JIRA_MAX_FINDINGS=0` to analyze all.
 
 ---
 
@@ -66,7 +67,7 @@ only) so nothing is lost. Set `JIRA_MAX_FINDINGS=0` to analyze all.
 | `JIRA_FILTER_ID` | no | `189402` | Used only to build the default JQL. |
 | `JIRA_MAX` | no | `1000` | `tempMax` cap on exported issues. |
 | `JIRA_REPO_NAME` | no | `$GITHUB_REPOSITORY` name, else cwd basename | Repo to keep issues for; matched against the `<name>/...` Location path prefix. |
-| `JIRA_MAX_FINDINGS` | no | `3` | **Temporary throttle.** Max repo-matched findings handed to triage (priority-ordered; the rest are deferred, not lost). `0` = no cap. Keeps the triage agent within its turn budget. |
+| `JIRA_MAX_FINDINGS` | no | `1` | **Temporary throttle.** Max repo-matched findings handed to triage (priority-ordered; the rest are deferred, not lost). `0` = no cap. Keeps the triage agent within its turn budget. |
 
 **Default JQL** (matches the security filter the human exports):
 
@@ -124,8 +125,8 @@ filter = 189402 AND status not in (Closed, "Security Review") ORDER BY priority
       "fetched_count": 73,
       "matched_count": 34,
       "dropped_count": 39,
-      "analyzed_count": 3,
-      "max_findings": 3
+      "analyzed_count": 1,
+      "max_findings": 1
     },
     "issues": [
       {
