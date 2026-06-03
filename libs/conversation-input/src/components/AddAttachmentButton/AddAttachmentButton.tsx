@@ -4,7 +4,7 @@ import {
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconPaperclip, IconPlus } from '@tabler/icons-react';
-import { type FC, useMemo, useState } from 'react';
+import { CSSProperties, type FC, useMemo, useState } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile.js';
 import { BottomSheet } from '../BottomSheet/BottomSheet.js';
 
@@ -20,7 +20,7 @@ interface AddAttachmentButtonProps {
   /** Close label for the mobile bottom sheet. */
   menuCloseLabel: string;
   /** CSS custom-property overrides forwarded to the mobile BottomSheet. */
-  style?: React.CSSProperties;
+  style?: CSSProperties;
   /** Width class applied to the desktop dropdown list. Defaults to `'!w-[240px]'`. */
   listClassName?: string;
 }

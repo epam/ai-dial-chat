@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input.js';
 
@@ -18,7 +18,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       children,
       menu,
     }: {
-      children: React.ReactNode;
+      children: ReactNode;
       menu: { items?: MenuItems };
     }) => (
       <div>
@@ -40,7 +40,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       menu,
     }: {
       ariaLabel: string;
-      icon: React.ReactNode;
+      icon: ReactNode;
       menu: { items?: MenuItems };
     }) => (
       <div>
