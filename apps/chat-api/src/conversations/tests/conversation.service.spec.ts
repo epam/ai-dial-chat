@@ -188,7 +188,8 @@ describe('ConversationService', () => {
     });
 
     it('passes the stream through when completion succeeds', async () => {
-      const firstChunk = 'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n';
+      const firstChunk =
+        'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n';
       const secondChunk = 'data: [DONE]\n\n';
       const sendCompletionSpy = vi.spyOn(
         service['client'],
