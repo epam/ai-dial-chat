@@ -17,7 +17,10 @@ import { getDefaultSchemaModel } from '@/src/utils/app/application-type-schema';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
-import { doesModelAllowTemperature } from '@/src/utils/app/models';
+import {
+  doesAgentSupportMcp,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 import { zodValidation } from '@/src/utils/zod-config-wrapper';
@@ -757,9 +760,6 @@ export const getQuickApp2Toolsets = ({
             deployment_id: ApiUtils.encodeApiUrl(
               agentAndToolset[AgentOrToolsetSchemaKeys.id],
             ),
-            transport:
-              (toolData as DialAppToolset).transport ??
-              DialAppTransportType.MCP,
           });
         } else if (isToolsetId(agentAndToolset[AgentOrToolsetSchemaKeys.id])) {
           acc.dialMCPToolsets.push({
@@ -797,8 +797,11 @@ export const getQuickApp2Toolsets = ({
           name: entity.name,
           type: ToolsetTypes.DialApp,
           deployment_id: ApiUtils.encodeApiUrl(entity.id),
-          transport:
-            (toolData as DialAppToolset).transport ?? DialAppTransportType.MCP,
+          ...(doesAgentSupportMcp(entity) && {
+            transport:
+              (toolData as DialAppToolset).transport ??
+              DialAppTransportType.MCP,
+          }),
         });
       } else {
         acc.dialMCPToolsets.push({

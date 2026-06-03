@@ -119,6 +119,29 @@ describe('SettingsSelectors', () => {
     });
   });
 
+  it('should not disable compare mode by default', () => {
+    const result = SettingsSelectors.selectIsCompareModeDisabled(mockState);
+    expect(result).toBe(false);
+  });
+
+  it('should disable compare mode when compare-mode-disabled feature is enabled', () => {
+    const stateWithDisabledCompare = {
+      ...mockState,
+      settings: {
+        ...mockState.settings,
+        enabledFeatures: [
+          ...mockState.settings.enabledFeatures,
+          Feature.CompareModeDisabled,
+        ],
+      },
+    };
+
+    const result = SettingsSelectors.selectIsCompareModeDisabled(
+      stateWithDisabledCompare,
+    );
+    expect(result).toBe(true);
+  });
+
   it('should check for custom attachment type', () => {
     const selectIsCustomAttachmentType =
       SettingsSelectors.selectIsCustomAttachmentType(
