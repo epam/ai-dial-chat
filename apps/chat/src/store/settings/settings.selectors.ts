@@ -277,6 +277,11 @@ const selectAsrModelId = (state: RootState) => rootSelector(state).asrModelId;
 const selectAudioTypesDefaultOrder = (state: RootState) =>
   rootSelector(state).audioTypesDefaultOrder;
 
+const selectIsCompareModeDisabled = createSelector(
+  [selectEnabledFeatures],
+  (enabledFeatures) => enabledFeatures.has(Feature.CompareModeDisabled),
+);
+
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
@@ -318,4 +323,5 @@ export const SettingsSelectors = {
   selectResourceMaxSegmentBytes,
   selectAsrModelId,
   selectAudioTypesDefaultOrder,
+  selectIsCompareModeDisabled,
 };
