@@ -32,7 +32,10 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   const [keptAttachments, setKeptAttachments] =
     useState<DisplayAttachment[]>(initialAttachments);
 
-  const canSend = currentText.trim().length > 0;
+  const canSend =
+    currentText.trim().length > 0 ||
+    currentNewAttachments.length > 0 ||
+    keptAttachments.length > 0;
 
   const handleRemovePreExisting = (id: string) => {
     setKeptAttachments((prev) => prev.filter((a) => a.id !== id));

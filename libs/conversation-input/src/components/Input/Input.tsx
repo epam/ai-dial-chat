@@ -221,7 +221,7 @@ export const Input: FC<InputProps> = ({
     <textarea
       className={mergeClasses(
         styles.textarea,
-        'max-h-[272px] w-full resize-none overflow-y-auto bg-transparent outline-none [field-sizing:content]',
+        'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
       )}
       value={message}
       onChange={(e) => {
@@ -293,7 +293,7 @@ export const Input: FC<InputProps> = ({
             </div>
           )}
           {!isStackedLayout && (
-            <div className="order-1 w-full min-w-0 desktop:order-2 desktop:w-auto desktop:flex-1">
+            <div className="order-1 flex w-full min-w-0 items-center self-stretch desktop:order-2 desktop:w-auto desktop:flex-1">
               {textarea}
             </div>
           )}
