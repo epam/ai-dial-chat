@@ -1,6 +1,8 @@
+import { EntityType } from '@/chat/types/common';
 import {
   BaseUrlBuilder,
   ExpectedConstants,
+  MarketplaceEntitiesTabs,
   MarketplaceTabs,
 } from '@/src/testData';
 
@@ -36,6 +38,19 @@ export class MarketplaceUrlBuilder extends BaseUrlBuilder {
 
   withModel(model: string): MarketplaceUrlBuilder {
     this.addParam('model', model);
+    return this;
+  }
+
+  withEntitiesTab(entitiesTab: MarketplaceEntitiesTabs): MarketplaceUrlBuilder {
+    this.addParam('entitiesTab', entitiesTab);
+    return this;
+  }
+
+  withReference(
+    entityType: EntityType,
+    reference: string,
+  ): MarketplaceUrlBuilder {
+    this.addParam(entityType, reference);
     return this;
   }
 

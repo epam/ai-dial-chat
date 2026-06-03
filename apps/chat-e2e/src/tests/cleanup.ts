@@ -1,8 +1,12 @@
 import { Conversation } from '@/chat/types/chat';
-import { BackendEntity, BackendResourceType } from '@/chat/types/common';
+import {
+  ApiKeys,
+  BackendEntity,
+  BackendResourceType,
+} from '@/chat/types/common';
 import { Prompt } from '@/chat/types/prompt';
-import dialTest from '@/src/core/dialFixtures';
-import { Attachment } from '@/src/testData';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
+import { API, Attachment, ExpectedConstants } from '@/src/testData';
 import {
   BucketUtil,
   ItemUtil,
@@ -11,11 +15,12 @@ import {
   filenamePrefix,
   promptNamePrefix,
   publicationRequestPrefix,
+  toolsetNamePrefix,
   unpublishRequestPrefix,
 } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
-dialTest(
+dialAdminTest(
   'Cleanup admin data',
   async ({ adminUserItemApiHelper, adminPublicationApiHelper }) => {
     await adminUserItemApiHelper.deleteAllData(BucketUtil.getAdminUserBucket());
@@ -35,9 +40,13 @@ dialTest(
   },
 );
 
-dialTest(
+dialAdminTest(
   'Cleanup published E2E entities (apps, conversations, files)',
-  async ({ adminPublicationApiHelper, publishRequestBuilder }) => {
+  async ({
+    adminPublicationApiHelper,
+    adminToolsetApiHelper,
+    publishRequestBuilder,
+  }) => {
     // Cleanup published E2E apps
     const publishedApps =
       await adminPublicationApiHelper.listPublishedResources(
@@ -63,6 +72,29 @@ dialTest(
             } as BackendEntity,
             PublishActions.DELETE,
           );
+        },
+      );
+    }
+
+    // Cleanup published E2E toolsets
+    const toolsetsList = await adminToolsetApiHelper.listToolsets();
+    const publishedE2EToolsets = Object.values(toolsetsList).filter(
+      (toolset) =>
+        (toolset.display_name
+          .toLowerCase()
+          .includes(toolsetNamePrefix.toLowerCase()) ||
+          toolset.display_name === ExpectedConstants.defaultToolsetName) &&
+        toolset.id?.startsWith(`${ApiKeys.Toolsets}/${API.public}`),
+    );
+
+    for (const toolset of publishedE2EToolsets || []) {
+      const relativePath = ItemUtil.extractRelativePath(toolset.id!);
+      await adminPublicationApiHelper.unpublishEntity(
+        toolset.display_name,
+        relativePath,
+        publishRequestBuilder,
+        (request) => {
+          return request.withToolsetResource(toolset, PublishActions.DELETE);
         },
       );
     }

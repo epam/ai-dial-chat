@@ -89,7 +89,8 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
 
   async setupToolsetRoutes(updatedToolset?: Toolset): Promise<void> {
     this.toolset = updatedToolset ?? this.toolset;
-    const decodedToolsetId = decodeURIComponent(this.toolset.id!);
+    const id = this.toolset.id ?? this.toolset.name;
+    const decodedToolsetId = decodeURIComponent(id!);
     const pattern = `**${API.api}/${ItemUtil.getEncodedItemId(decodedToolsetId)}`;
 
     await this.page.context().route(pattern, async (route, request) => {
@@ -109,6 +110,26 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
           await route.continue();
       }
     });
+  }
+
+  async setupToolsetListingRoute(updatedToolset?: Toolset): Promise<void> {
+    this.toolset = updatedToolset ?? this.toolset;
+    await this.page
+      .context()
+      .route(`**${API.toolsetsHost()}`, async (route) => {
+        if (!this.state.enableMocking) {
+          await route.continue();
+          return;
+        }
+        const response = await route.fetch();
+        const json = await response.json();
+        const toolsetToEnrich = (json.data as Toolset[]).find(
+          (t) => t.reference === this.toolset.reference,
+        )!;
+        // @ts-expect-error set of records is expected for auth_settings property
+        toolsetToEnrich.auth_settings = this.buildAuthSettings();
+        await route.fulfill({ response, json });
+      });
   }
 
   async setupSignInRoute(): Promise<void> {
