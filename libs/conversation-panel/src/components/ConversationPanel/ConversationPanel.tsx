@@ -130,6 +130,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             activeTab={activeTab}
             labels={filterLabels}
             onChange={setActiveTab}
+            tabClassName={typography?.tabClassName}
+            tabColorClassName={typography?.tabColorClassName}
           />
 
           {/* Conversation list */}
