@@ -70,7 +70,7 @@ const ConversationRoute: FC = () => {
   );
 
   const isInputDisabled = useMemo(
-    () => selectedDeploymentConfiguration?.isChatMessageInputDisabled === true,
+    () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
     [selectedDeploymentConfiguration],
   );
 

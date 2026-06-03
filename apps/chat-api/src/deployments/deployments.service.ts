@@ -15,9 +15,8 @@ import type {
   DeploymentsResponseDto,
 } from './dto/deployment-item.dto';
 
-function isRecord(val: unknown): val is Record<string, unknown> {
-  return val !== null && typeof val === 'object' && !Array.isArray(val);
-}
+const isRecord = (val: unknown): val is Record<string, unknown> =>
+  val != null && typeof val === 'object' && !Array.isArray(val);
 
 function toAdditionalProperties(
   val: unknown,
