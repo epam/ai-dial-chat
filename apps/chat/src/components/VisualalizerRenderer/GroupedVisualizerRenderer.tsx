@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useVisualizerLocaleLayoutFields } from '@/src/hooks/useVisualizerLocaleLayoutFields';
 import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -115,6 +116,8 @@ export const GroupedVisualizerRenderer = ({
 
   const themeId = useAppSelector(UISelectors.selectThemeState);
 
+  const localeLayoutFields = useVisualizerLocaleLayoutFields();
+
   const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
     const sessionAccessToken = session?.accessToken;
     const tokenField =
@@ -207,11 +210,13 @@ export const GroupedVisualizerRenderer = ({
       mobileHeight: maxMobileHeight,
       themeId,
       ...authLayoutFields,
+      ...localeLayoutFields,
     };
   }, [
     attachments,
     loadedCustomAttachmentsData,
     authLayoutFields,
+    localeLayoutFields,
     scrollWidth,
     containerHeight,
     isFullScreen,
