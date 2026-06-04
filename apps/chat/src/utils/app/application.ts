@@ -245,7 +245,7 @@ export const convertApplicationToApi = (
           mapApplicationPropertiesToApi(
             applicationData.applicationProperties,
           )) ||
-        {},
+        null,
       application_type_schema_id:
         applicationData.applicationTypeSchemaId ?? schema['$id'],
     };
