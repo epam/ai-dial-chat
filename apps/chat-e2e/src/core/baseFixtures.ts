@@ -9,6 +9,7 @@ import {
 } from '@/src/testData';
 import { CustomApplicationBuilder } from '@/src/testData/applications/customApplicationBuilder';
 import { ExternalApplicationBuilder } from '@/src/testData/applications/externalApplicationBuilder';
+import { QuickApp2Builder } from '@/src/testData/applications/quickApp2Builder';
 import { MarketplaceUrlBuilder } from '@/src/testData/marketplace/marketplaceUrlBuilder';
 import { Auth0Login } from '@/src/ui/actions/auth0Login';
 import { AzureADLogin } from '@/src/ui/actions/azureADLogin';
@@ -58,6 +59,7 @@ const test = base.extend<
     publishRequestBuilder: PublishRequestBuilder;
     customApplicationBuilder: CustomApplicationBuilder;
     externalApplicationBuilder: ExternalApplicationBuilder;
+    quickApp2Builder: QuickApp2Builder;
     marketplaceUrlBuilder: MarketplaceUrlBuilder;
     toolsetBuilder: ToolsetBuilder;
   }
@@ -227,6 +229,11 @@ const test = base.extend<
   externalApplicationBuilder: async ({}, use) => {
     const externalApplicationBuilder = new ExternalApplicationBuilder();
     await use(externalApplicationBuilder);
+  },
+  // eslint-disable-next-line no-empty-pattern
+  quickApp2Builder: async ({}, use) => {
+    const quickApp2Builder = new QuickApp2Builder();
+    await use(quickApp2Builder);
   },
   // eslint-disable-next-line no-empty-pattern
   marketplaceUrlBuilder: async ({}, use) => {
