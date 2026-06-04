@@ -20,6 +20,7 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Checkbox } from '@/src/components/Common/Forms/Checkbox';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
 import {
   DialSchemaProperties,
@@ -29,8 +30,6 @@ import {
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
 import { DialButton, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
-import { sanitize } from 'isomorphic-dompurify';
-import { marked } from 'marked';
 
 const emptyHandler = () => undefined;
 
@@ -116,12 +115,9 @@ const UserSchemaView = memo(function UserSchemaView({
         return (
           <div key={row.property}>
             {!!row.description && (
-              <div
-                className="mb-3 text-base text-primary"
-                dangerouslySetInnerHTML={{
-                  __html: sanitize(marked(row.description, { async: false })),
-                }}
-              />
+              <EntityMarkdownDescription className="mb-3 text-base text-primary">
+                {row.description}
+              </EntityMarkdownDescription>
             )}
 
             {row.type === FormSchemaPropertyType.Button && (
@@ -142,15 +138,12 @@ const UserSchemaView = memo(function UserSchemaView({
                 {buttonDescriptions.length > 0 && (
                   <div className="mt-3 flex flex-col gap-3">
                     {buttonDescriptions.map((option) => (
-                      <div
+                      <EntityMarkdownDescription
                         key={String(option.value)}
                         className="text-base text-primary"
-                        dangerouslySetInnerHTML={{
-                          __html: sanitize(
-                            marked(option.description!, { async: false }),
-                          ),
-                        }}
-                      />
+                      >
+                        {option.description!}
+                      </EntityMarkdownDescription>
                     ))}
                   </div>
                 )}

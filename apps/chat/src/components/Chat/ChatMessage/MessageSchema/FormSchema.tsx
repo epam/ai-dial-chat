@@ -26,6 +26,7 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 import { Checkbox } from '@/src/components/Common/Forms/Checkbox';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
 import { ButtonsSchemaModal } from './ButtonsSchemaModal';
 import { SchemaButton } from './SchemaButton';
@@ -39,9 +40,7 @@ import {
   MessageFormValueType,
 } from '@epam/ai-dial-shared';
 import { DialButton } from '@epam/ai-dial-ui-kit';
-import { sanitize } from 'isomorphic-dompurify';
 import intersection from 'lodash-es/intersection';
-import { marked } from 'marked';
 
 interface HiddenButtonsPropertyProps {
   options: FormSchemaButtonOption[];
@@ -300,13 +299,12 @@ const ButtonsProperty = ({
       {optionsWithDescription.length > 0 && (
         <div className="flex flex-col gap-3">
           {optionsWithDescription.map((option) => (
-            <div
+            <EntityMarkdownDescription
               key={`${option.const}`}
               className="text-base text-primary"
-              dangerouslySetInnerHTML={{
-                __html: sanitize(marked(option.description!, { async: false })),
-              }}
-            />
+            >
+              {option.description!}
+            </EntityMarkdownDescription>
           ))}
         </div>
       )}
@@ -461,12 +459,9 @@ const PropertyRenderer = ({
       className={classNames('flex flex-col gap-3 overflow-hidden', className)}
     >
       {property.description && (
-        <div
-          className="text-base text-primary"
-          dangerouslySetInnerHTML={{
-            __html: sanitize(marked(property.description, { async: false })),
-          }}
-        />
+        <EntityMarkdownDescription className="text-base text-primary">
+          {property.description}
+        </EntityMarkdownDescription>
       )}
 
       {propertyType === FormSchemaPropertyType.Button && (
