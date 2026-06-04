@@ -63,6 +63,8 @@ vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <span>plus-icon</span>,
   IconChevronDown: () => <span>chevron-down</span>,
   IconChevronRight: () => <span>chevron-right</span>,
+  IconCaretDownFilled: () => <span>caret-down-filled</span>,
+  IconCaretRightFilled: () => <span>caret-right-filled</span>,
 }));
 
 const FILTER_LABELS = {

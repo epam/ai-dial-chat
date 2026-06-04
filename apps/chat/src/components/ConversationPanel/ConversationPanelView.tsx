@@ -30,10 +30,17 @@ const ConversationPanelView: FC<Props> = ({
 
   const conversations: ConversationHistoryItem[] = useMemo(
     () =>
-      items.map((item) => ({
-        id: normalizeConversationId(item.id),
-        title: item.title,
-      })),
+      items.map((item) => {
+        const rawId = normalizeConversationId(item.id);
+        let id: string;
+        try {
+          id = decodeURIComponent(rawId);
+        } catch (e) {
+          console.error('Failed to decode conversation id:', rawId, e);
+          id = rawId;
+        }
+        return { id, title: item.title };
+      }),
     [items],
   );
 
