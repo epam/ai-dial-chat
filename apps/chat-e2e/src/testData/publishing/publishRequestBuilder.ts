@@ -7,7 +7,7 @@ import {
 } from '@/chat/types/publication';
 import { ExpectedConstants } from '@/src/testData';
 import { ItemUtil } from '@/src/utils';
-import { Attachment, PublishActions } from '@epam/ai-dial-shared';
+import { Attachment, PublishActions, Toolset } from '@epam/ai-dial-shared';
 
 export interface PublicationResource {
   action: PublishActions;
@@ -152,6 +152,19 @@ export class PublishRequestBuilder {
       ApiKeys.Applications,
       application.name,
       application.url,
+    );
+  }
+
+  withToolsetResource(
+    toolset: Toolset,
+    action: PublishActions,
+  ): PublishRequestBuilder {
+    return this.withEntityResource(
+      action,
+      ApiKeys.Toolsets,
+      toolset.display_name,
+      toolset.id!,
+      toolset.display_version,
     );
   }
 

@@ -39,19 +39,10 @@ export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
     entity: TreeEntity,
     expectedState: CheckboxState,
   ) {
-    const message =
-      expectedState === CheckboxState.checked
-        ? ExpectedMessages.entityIsChecked
-        : ExpectedMessages.entityIsNotChecked;
-    expect
-      .soft(
-        await this.treeEntities.getEntityCheckboxState(
-          entity.name,
-          entity.index,
-        ),
-        message,
-      )
-      .toBe(expectedState);
+    await this.assertCheckboxState(
+      this.treeEntities.getEntityCheckbox(entity.name, entity.index),
+      expectedState,
+    );
   }
 
   public async assertEntityBackgroundColor(

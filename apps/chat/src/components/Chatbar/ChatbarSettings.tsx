@@ -22,7 +22,11 @@ import {
   UIActions,
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ConversationsSelectors, UISelectors } from '@/src/store/selectors';
+import {
+  ConversationsSelectors,
+  SettingsSelectors,
+  UISelectors,
+} from '@/src/store/selectors';
 
 import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { SideBarI18nKeys } from '@/src/constants/i18n';
@@ -53,6 +57,9 @@ export const ChatbarSettings = () => {
   );
   const isSelectMode = useAppSelector(
     ConversationsSelectors.selectIsSelectMode,
+  );
+  const isCompareModeDisabled = useAppSelector(
+    SettingsSelectors.selectIsCompareModeDisabled,
   );
 
   const collapsedSectionsSelector = useMemo(
@@ -184,7 +191,7 @@ export const ChatbarSettings = () => {
         onClick: () => {
           handleToggleCompare();
         },
-        display: !isSelectMode,
+        display: !isSelectMode && !isCompareModeDisabled,
       },
     ],
     [
@@ -192,6 +199,7 @@ export const ChatbarSettings = () => {
       isMyItemsExist,
       isStreaming,
       isSelectMode,
+      isCompareModeDisabled,
       dispatch,
       collapsedSections,
       jsonImportHandler,

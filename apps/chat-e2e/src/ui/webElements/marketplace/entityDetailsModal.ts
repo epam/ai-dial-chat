@@ -51,6 +51,7 @@ export class EntityDetailsModal extends BaseElement {
   public unshareButton = this.getChildElementBySelector(
     MarketplaceDetailsModal.unshareButton,
   );
+  public viewButton = new Button(this.page, MarketplaceDetailsModal.viewButton);
   public loginButton = new Button(
     this.page,
     MarketplaceDetailsModal.loginButton,
