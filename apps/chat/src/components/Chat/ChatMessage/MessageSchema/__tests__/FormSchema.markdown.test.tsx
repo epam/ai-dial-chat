@@ -7,7 +7,6 @@ import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/Form
 import {
   BOLD_MARKDOWN_SAMPLE,
   expectMarkdownRenderedAsHtml,
-  getMarkdownBlockRoot,
 } from './markdown-test-helpers';
 
 import {
@@ -70,7 +69,7 @@ describe('FormSchema markdown descriptions', () => {
 
     render(<FormSchema schema={schema} onChange={onChange} formValue={{}} />);
 
-    expectMarkdownRenderedAsHtml(getMarkdownBlockRoot('bolded text'), {
+    expectMarkdownRenderedAsHtml({
       boldText: 'bolded text',
       plainText: 'not bolded text',
       rawMarkdown: BOLD_MARKDOWN_SAMPLE,
@@ -99,7 +98,7 @@ describe('FormSchema markdown descriptions', () => {
 
     expect(screen.getByRole('button', { name: 'Alex P.' })).toBeInTheDocument();
 
-    expectMarkdownRenderedAsHtml(getMarkdownBlockRoot('option bold'), {
+    expectMarkdownRenderedAsHtml({
       boldText: 'option bold',
       plainText: 'option plain',
       rawMarkdown: '**option bold** option plain',

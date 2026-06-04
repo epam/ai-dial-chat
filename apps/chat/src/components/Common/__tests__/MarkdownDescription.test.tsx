@@ -10,13 +10,13 @@ import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescr
 
 describe('EntityMarkdownDescription', () => {
   it('renders markdown as HTML elements, not as raw or encoded markup', () => {
-    const { container } = render(
+    render(
       <EntityMarkdownDescription className="text-base text-primary">
         {BOLD_MARKDOWN_SAMPLE}
       </EntityMarkdownDescription>,
     );
 
-    expectMarkdownRenderedAsHtml(container, {
+    expectMarkdownRenderedAsHtml({
       boldText: 'bolded text',
       plainText: 'not bolded text',
       rawMarkdown: BOLD_MARKDOWN_SAMPLE,
@@ -24,12 +24,12 @@ describe('EntityMarkdownDescription', () => {
   });
 
   it('does not treat unparsed markdown source as acceptable output', () => {
-    const { container } = render(
+    render(
       <div className="text-base text-primary">{BOLD_MARKDOWN_SAMPLE}</div>,
     );
 
     expect(() =>
-      expectMarkdownRenderedAsHtml(container, {
+      expectMarkdownRenderedAsHtml({
         boldText: 'bolded text',
         plainText: 'not bolded text',
         rawMarkdown: BOLD_MARKDOWN_SAMPLE,

@@ -9,7 +9,6 @@ import { UserSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/User
 import {
   BOLD_MARKDOWN_SAMPLE,
   expectMarkdownRenderedAsHtml,
-  getMarkdownBlockRoot,
 } from './markdown-test-helpers';
 
 import {
@@ -67,7 +66,7 @@ describe('UserSchema markdown descriptions', () => {
       />,
     );
 
-    expectMarkdownRenderedAsHtml(getMarkdownBlockRoot('bolded text'), {
+    expectMarkdownRenderedAsHtml({
       boldText: 'bolded text',
       plainText: 'not bolded text',
       rawMarkdown: BOLD_MARKDOWN_SAMPLE,
@@ -84,7 +83,7 @@ describe('UserSchema markdown descriptions', () => {
       />,
     );
 
-    expectMarkdownRenderedAsHtml(getMarkdownBlockRoot('user message bold'), {
+    expectMarkdownRenderedAsHtml({
       boldText: 'user message bold',
       plainText: 'user message plain',
       rawMarkdown: '**user message bold** user message plain',
