@@ -44,8 +44,8 @@ needs: [snyk-jira-ingest]
 # the right code, and scopes the SARIF upload to that branch/commit.
 analysis_ref: development
 
-# Surface verdicts privately via GitHub code scanning (Security tab, write-access
-# only) instead of public PR comments/summaries. The platform converts
-# payload.findings[] -> SARIF and uploads it. Confirmed/needs-review show as open
-# alerts; false-positive/not-applicable/duplicate upload as dismissed.
-emit_sarif: true
+# SARIF -> Security tab is wired (platform converts payload.findings[] -> SARIF
+# and uploads it), but PAUSED for now while we validate artifact encryption and
+# the aggregate (counts-only) public surface. Flip to true to publish to the
+# Security tab (scoped to analysis_ref's branch/commit).
+emit_sarif: false

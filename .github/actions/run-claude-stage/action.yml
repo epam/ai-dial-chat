@@ -279,6 +279,36 @@ runs:
           && echo "SARIF accepted by code scanning." \
           || { echo "::warning::SARIF upload failed (code scanning may be disabled, or ref/sha not accepted). Triage still succeeded."; }
 
+    - name: Publish aggregate report (sensitive agents)
+      # private_output (sensitive) agents publish ONLY aggregate counts — no
+      # file paths, verdicts-per-finding, or any detail — to the public surfaces
+      # (job summary + sticky PR comment). Safe on a public repo. Runs on the
+      # local plaintext, BEFORE the encrypt step removes it.
+      if: inputs.private_output == 'true' && hashFiles('stage-output.json') != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+        PR_NUMBER: ${{ github.event.pull_request.number }}
+        STAGE_NAME: ${{ inputs.stage_name }}
+      run: |
+        set -euo pipefail
+        python3 ./.github/claude/scripts/findings-aggregate.py stage-output.json > agg.md
+        cat agg.md >> "$GITHUB_STEP_SUMMARY"
+        if [ "${{ github.event_name }}" = "pull_request" ]; then
+          MARKER="<!-- dial-sdlc:${STAGE_NAME} -->"
+          BODY="$(printf '%s\n%s' "$MARKER" "$(cat agg.md)")"
+          EXISTING_ID="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
+            | jq -r --arg m "$MARKER" '.[] | select(.body | startswith($m)) | .id' | head -n1)"
+          if [ -n "$EXISTING_ID" ]; then
+            gh api -X PATCH "repos/${REPO}/issues/comments/${EXISTING_ID}" -f body="$BODY" > /dev/null
+            echo "Updated aggregate sticky comment $EXISTING_ID"
+          else
+            gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -f body="$BODY" > /dev/null
+            echo "Posted aggregate sticky comment"
+          fi
+        fi
+
     - name: Encrypt stage output (private agents)
       # Runs AFTER the renderer (and any SARIF emitter) have consumed the local
       # plaintext. Encrypts stage-output.json -> stage-output.json.enc and
@@ -314,12 +344,10 @@ runs:
         if-no-files-found: warn
 
     - name: Publish to job summary
-      # DISABLED — this repo is PUBLIC, so the Actions job summary is world-
-      # readable; rendering triage findings (file paths, vuln classes, verdicts)
-      # here leaks internal security data. Re-enable only for non-sensitive
-      # agents, or once results move to a private surface (SARIF -> Security tab
-      # / Jira write-back). See revised slice 2.
-      if: false
+      # FULL detail — only for NON-sensitive agents (private_output != true).
+      # Sensitive agents use the aggregate (counts-only) step above instead,
+      # because this repo is public and the job summary is world-readable.
+      if: inputs.private_output != 'true' && steps.extract.outputs.comment != ''
       shell: bash
       env:
         STAGE_NAME: ${{ inputs.stage_name }}
@@ -332,11 +360,9 @@ runs:
         } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Post sticky PR comment
-      # DISABLED — public repo: PR comments are world-readable and would leak
-      # internal security findings. Off until results move to a private surface
-      # (SARIF -> Security tab / Jira write-back). Re-enable per non-sensitive
-      # agent later if a public PR comment is acceptable for that agent.
-      if: false
+      # FULL detail — only for NON-sensitive agents (private_output != true).
+      # Sensitive agents post the aggregate (counts-only) sticky comment above.
+      if: github.event_name == 'pull_request' && inputs.private_output != 'true'
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
