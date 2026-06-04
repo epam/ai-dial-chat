@@ -952,12 +952,9 @@ export const getApplicationPayload = ({
     case AppsEditorSchemaTypes.ExternalApp:
       return {
         ...generalData,
-        applicationProperties:
-          data.externalUrl === MANDATORY_FIELD_PLACEHOLDER || !data.externalUrl
-            ? undefined
-            : {
-                external_url: data.externalUrl,
-              },
+        applicationProperties: {
+          external_url: data.externalUrl === MANDATORY_FIELD_PLACEHOLDER || !data.externalUrl ? '' : data.externalUrl,
+        },
       };
     case AppsEditorSchemaTypes.QuickApp:
       return {
