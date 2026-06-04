@@ -233,8 +233,10 @@ runs:
           exit 1
         fi
         echo "stage-output.json present ($(wc -c < stage-output.json) bytes)"
-        echo "--- contents ---"
-        cat stage-output.json
+        # Do NOT cat the file: this repo is PUBLIC and run logs are world-
+        # readable, so dumping the findings here would leak internal security
+        # data. The renderer validates shape in the next step; the artifact
+        # carries the full content for the (private, in-run) chain handoff.
 
     - name: Validate and render sticky comment
       id: extract
