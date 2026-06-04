@@ -1,4 +1,12 @@
-import { lazy, Suspense, useCallback, useMemo, useState } from 'react';
+import {
+  lazy,
+  memo,
+  Suspense,
+  type FC,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import {
   Route,
   Routes,
@@ -28,7 +36,7 @@ const ConversationPage = lazy(async () => {
   return { default: module.ConversationPage };
 });
 
-function App() {
+const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
@@ -51,14 +59,14 @@ function App() {
   );
 
   const matchRoot = useMatch(ROUTES.ROOT);
-  const matchConversation = useMatch('/conversations/*');
+  const matchConversation = useMatch(`${ROUTES.CONVERSATIONS}/*`);
   const isConversationRoute = !!(matchRoot ?? matchConversation);
   const activeConversationId = useMemo(() => {
     const prefix = `${ROUTES.CONVERSATIONS}/`;
-    if (!pathname.startsWith(prefix)) return undefined;
+    if (!pathname.startsWith(prefix)) return;
 
     const id = pathname.slice(prefix.length);
-    if (!id) return undefined;
+    if (!id) return;
 
     try {
       return normalizeConversationId(decodeURIComponent(id));
@@ -124,6 +132,6 @@ function App() {
       {isConversationRoute && <ConversationSourcesPanelView />}
     </div>
   );
-}
+};
 
-export default App;
+export default memo(App);
