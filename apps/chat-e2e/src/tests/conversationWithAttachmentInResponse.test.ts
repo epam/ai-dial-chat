@@ -159,7 +159,7 @@ dialTest(
         );
         await chatMessagesAssertion.assertElementClass(
           attachmentTitle,
-          new RegExp(AttributeValues.textLeft),
+          new RegExp(AttributeValues.textStart),
         );
 
         minimizeButton =

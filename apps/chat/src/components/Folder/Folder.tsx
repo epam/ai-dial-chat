@@ -1028,7 +1028,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
 
             <input
-              className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+              className="me-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-start outline-none"
               type="text"
               value={renameValue}
               onChange={(e) =>
@@ -1144,7 +1144,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
             <div
               className={classNames(
-                'relative max-h-5 flex-1 select-none truncate text-left',
+                'relative max-h-5 flex-1 select-none truncate text-start',
                 isNameOrPathInvalid && 'text-secondary',
                 !hideContextMenu && 'group-hover/button:pr-5',
                 isContextMenu && !isMobileOrTablet && 'pr-5',
@@ -1167,7 +1167,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 isTriggerClickable
                 contentClassName="break-all"
                 triggerClassName={classNames(
-                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-start',
                   highlightTemporaryFolders &&
                     (isTemporaryFolder ? 'text-primary' : 'text-secondary'),
                   isNameOrPathInvalid

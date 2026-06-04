@@ -80,7 +80,7 @@ export const TemperatureSlider: FC<Props> = ({
       <div className="flex flex-col gap-2" data-qa="temp-slider">
         {!!label && (
           <div className="flex items-center gap-2">
-            <label className="text-left">{label}</label>
+            <label className="text-start">{label}</label>
             <Tooltip
               triggerClassName="text-secondary"
               tooltip={
@@ -116,7 +116,7 @@ export const TemperatureSlider: FC<Props> = ({
         <div className="grid h-4 w-full grid-cols-3 text-xs">
           <span className="">{t(ChatI18nKeys.Precise)}</span>
           <span className="text-center">{t(ChatI18nKeys.Neutral)}</span>
-          <span className="text-right">{t(ChatI18nKeys.Creative)}</span>
+          <span className="text-end">{t(ChatI18nKeys.Creative)}</span>
         </div>
       </div>
     </Tooltip>

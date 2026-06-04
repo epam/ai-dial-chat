@@ -51,7 +51,7 @@ export const PromptRow = forwardRef<HTMLDivElement, PromptRowProps>(
               />
             </div>
           </div>
-          <span className="relative truncate text-left text-sm text-primary">
+          <span className="relative truncate text-start text-sm text-primary">
             {prompt.name}
           </span>
         </div>

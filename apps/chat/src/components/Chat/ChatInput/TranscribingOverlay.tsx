@@ -15,7 +15,7 @@ export const TranscribingOverlay: FC<Props> = ({ text, dataQa }) => {
         <div className="size-4 animate-spin rounded-full border-2 border-x-transparent border-b-transparent border-t-current text-secondary" />
         <span className="text-sm text-secondary">
           {text.replace(/\.+$/, '')}
-          <span className="inline-flex w-[1.2em] text-left" aria-hidden="true">
+          <span className="inline-flex w-[1.2em] text-start" aria-hidden="true">
             <span className="animate-pulse">.</span>
             <span className="animate-pulse [animation-delay:200ms]">.</span>
             <span className="animate-pulse [animation-delay:400ms]">.</span>

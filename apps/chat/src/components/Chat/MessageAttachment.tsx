@@ -551,7 +551,7 @@ export const MessageAttachment = ({
           >
             <span
               className={classNames(
-                'shrink truncate whitespace-pre pr-2 text-left text-sm',
+                'shrink truncate whitespace-pre pe-2 text-start text-sm',
                 isExpanded || isFolder || mappedAttachmentReferenceUrl
                   ? 'max-w-full'
                   : 'max-w-[calc(100%-30px)]',
@@ -643,7 +643,7 @@ export const MessageAttachment = ({
                   stopBubbling(e);
                   setOpenPdfUrl(mappedAttachmentReferenceUrl);
                 }}
-                className="mt-3 block text-left text-accent-primary"
+                className="mt-3 block text-start text-accent-primary"
               >
                 {t(ChatI18nKeys.Reference)}
               </button>

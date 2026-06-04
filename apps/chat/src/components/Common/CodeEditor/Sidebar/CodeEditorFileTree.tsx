@@ -192,7 +192,7 @@ export const CodeEditorFileTree = ({
         >
           <IconFile className="text-secondary" size={18} />
           <input
-            className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+            className="me-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-start outline-none"
             type="text"
             value={newFileName}
             name="edit-input"

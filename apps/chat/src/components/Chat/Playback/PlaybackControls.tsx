@@ -309,7 +309,7 @@ export const PlaybackControls = ({
         </Tooltip>
         <div
           ref={nextMessageBoxRef}
-          className="m-0 max-h-[150px] min-h-[46px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-left outline-none focus-visible:border-accent-primary"
+          className="m-0 max-h-[150px] min-h-[46px] w-full overflow-y-auto whitespace-pre-wrap rounded border border-transparent bg-layer-3 px-12 py-3 text-start outline-none focus-visible:border-accent-primary"
           data-qa="playback-message"
         >
           {isMessageStreaming ? (

@@ -240,7 +240,7 @@ export const ChatMessageTemplatesModal = ({
         >
           <div
             data-qa="result-message-template"
-            className="whitespace-pre-wrap text-left text-primary"
+            className="whitespace-pre-wrap text-start text-primary"
           >
             <TemplateRenderer template={templateResult} />
           </div>

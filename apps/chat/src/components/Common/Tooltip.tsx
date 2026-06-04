@@ -214,7 +214,7 @@ const TooltipContent = forwardRef<HTMLDivElement, HTMLProps<HTMLDivElement>>(
           }}
           {...context.getFloatingProps(props)}
           className={classNames(
-            '!z-[10000] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-left shadow',
+            '!z-[10000] whitespace-pre-wrap rounded border border-primary bg-layer-0 px-2 py-1 text-start shadow',
             context.getFloatingProps(props).className as string,
           )}
           data-qa="tooltip"
