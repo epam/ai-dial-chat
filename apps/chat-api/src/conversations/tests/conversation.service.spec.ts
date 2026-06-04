@@ -311,6 +311,154 @@ describe('ConversationService', () => {
       });
     });
 
+    it('sends current starter configuration only as top-level custom_fields', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: MessageRole.User,
+            content: 'Pick a number',
+            timestamp: '2024-01-01T00:00:00.000Z',
+            custom_content: {
+              configuration_value: { button: 1 },
+            },
+          },
+        ],
+      };
+
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: conversation,
+      } as never);
+
+      const mockStream = new ReadableStream();
+      const sendSpy = vi
+        .spyOn(service['client'], 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: { ok: true, body: mockStream } as Response,
+        } as never);
+
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        '',
+        'form-example',
+        { configuration_value: { button: 1 } },
+      );
+
+      expect(sendSpy.mock.calls[0][1].body).toMatchObject({
+        messages: [
+          {
+            role: MessageRole.User,
+            content: '',
+          },
+        ],
+        stream: true,
+        custom_fields: {
+          configuration: { button: 1 },
+        },
+      });
+      expect(
+        sendSpy.mock.calls[0][1].body.messages[0].custom_content,
+      ).toBeUndefined();
+    });
+
+    it('moves persisted form configuration to custom_fields and submits form_value messages', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: MessageRole.User,
+            content: 'Pick a number',
+            timestamp: '2024-01-01T00:00:00.000Z',
+            custom_content: {
+              configuration_value: { button: 1 },
+            },
+          },
+          {
+            id: 'a1',
+            role: MessageRole.Assistant,
+            content: 'Pick a number',
+            timestamp: '2024-01-01T00:00:01.000Z',
+            custom_content: {
+              stages: [
+                {
+                  index: 0,
+                  name: 'User message',
+                  status: 'completed',
+                  content: 'Content',
+                },
+              ],
+              form_schema: {
+                type: 'object',
+                properties: { button: { type: 'number' } },
+              },
+            },
+          },
+          {
+            id: 's1',
+            role: MessageRole.Status,
+            content: '',
+            timestamp: '2024-01-01T00:00:02.000Z',
+            custom_content: {
+              event_type: StatusEvent.ModelChanged,
+              previous_deployment_id: 'gpt-4o',
+              new_deployment_id: 'form-example',
+            },
+          },
+        ],
+      };
+
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: conversation,
+      } as never);
+
+      const mockStream = new ReadableStream();
+      const sendSpy = vi
+        .spyOn(service['client'], 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: { ok: true, body: mockStream } as Response,
+        } as never);
+
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        '',
+        'form-example',
+        { form_value: { button: 2 } },
+      );
+
+      expect(sendSpy.mock.calls[0][1].body.messages).toEqual([
+        {
+          role: MessageRole.User,
+          content: '',
+        },
+        {
+          role: MessageRole.Assistant,
+          content: 'Pick a number',
+          custom_content: {
+            form_schema: {
+              type: 'object',
+              properties: { button: { type: 'number' } },
+            },
+          },
+        },
+        {
+          role: MessageRole.User,
+          content: '',
+          custom_content: {
+            form_value: { button: 2 },
+          },
+        },
+      ]);
+      expect(sendSpy.mock.calls[0][1].body.custom_fields).toEqual({
+        configuration: { button: 1 },
+      });
+    });
+
     it('logs and delegates to handleDialError when completion stream is rejected', async () => {
       vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,

@@ -445,12 +445,11 @@
         ],
         "responses": {
           "200": {
-            "description": "JSON Schema configuration object",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/DeploymentConfigurationDto"
                 }
               }
             }
@@ -1379,6 +1378,32 @@
         },
         "required": ["deployments"]
       },
+      "DeploymentConfigurationDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "JSON Schema type (typically \"object\")"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable schema title"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Named configuration properties supported by this deployment"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "description": "Whether additional properties are allowed"
+          },
+          "isChatMessageInputDisabled": {
+            "type": "boolean",
+            "description": "When true, the application does not accept free-form text input; users interact only via form/action buttons."
+          }
+        }
+      },
       "DialModelFeaturesDto": {
         "type": "object",
         "properties": {
@@ -1811,7 +1836,7 @@
         "properties": {
           "firstMessage": {
             "type": "string",
-            "description": "The first message to start the conversation. May be empty only when at least one attachment is provided in custom_content.",
+            "description": "The first message to start the conversation. May be empty when custom_content carries attachments, form_value, or configuration_value.",
             "example": "Hello, how can you help me today?",
             "maxLength": 4000
           },
@@ -2070,7 +2095,7 @@
           },
           "message": {
             "type": "string",
-            "description": "The new user message to send. May be empty only when at least one attachment is provided in custom_content.",
+            "description": "The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.",
             "example": "What is the capital of France?",
             "maxLength": 4000
           },

@@ -26,7 +26,10 @@
   }
 
   &.itemActive {
-    background: var(--cp-item-active, var(--bg-accent-secondary-alpha, #37babc2e));
+    background: var(
+      --cp-item-active,
+      var(--bg-accent-secondary-alpha, #37babc2e)
+    );
   }
 }
 

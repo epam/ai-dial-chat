@@ -14,7 +14,7 @@ import { IsMessageOrAttachmentsPresent } from './message-or-attachments.validato
 export class CreateConversationDto {
   @ApiProperty({
     description:
-      'The first message to start the conversation. May be empty only when at least one attachment is provided in custom_content.',
+      'The first message to start the conversation. May be empty when custom_content carries attachments, form_value, or configuration_value.',
     example: 'Hello, how can you help me today?',
     maxLength: 4000,
   })

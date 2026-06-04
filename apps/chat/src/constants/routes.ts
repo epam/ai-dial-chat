@@ -21,5 +21,8 @@ export const normalizeConversationId = (id: string): string => {
   return id;
 };
 
-export const getConversationRoute = (id: string): string =>
-  `${ROUTES.CONVERSATIONS}/${normalizeConversationId(id)}`;
+export const getConversationRoute = (id: string): string => {
+  const normalized = normalizeConversationId(id);
+  const encoded = normalized.split('/').map(encodeURIComponent).join('/');
+  return `${ROUTES.CONVERSATIONS}/${encoded}`;
+};

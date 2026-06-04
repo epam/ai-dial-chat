@@ -94,7 +94,19 @@ export const useModelSelector = ({
       }
       return [];
     }
-    return filterDeployments(deployments, searchQuery).map((item) => ({
+    const sortedDeployments = [
+      ...filterDeployments(deployments, searchQuery),
+    ].sort((left, right) =>
+      getDeploymentLabel(left).localeCompare(
+        getDeploymentLabel(right),
+        undefined,
+        {
+          sensitivity: 'accent',
+        },
+      ),
+    );
+
+    return sortedDeployments.map((item) => ({
       key: item.id,
       label: getDeploymentLabel(item),
       icon: buildDeploymentIcon(item.iconUrl, item.type),

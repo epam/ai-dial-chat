@@ -550,7 +550,7 @@ export interface ConversationResponseDto {
  */
 export interface CreateConversationDto {
   /**
-   * The first message to start the conversation. May be empty only when at least one attachment is provided in custom_content.
+   * The first message to start the conversation. May be empty when custom_content carries attachments, form_value, or configuration_value.
    * @type {string}
    * @memberof CreateConversationDto
    */
@@ -567,6 +567,43 @@ export interface CreateConversationDto {
    * @memberof CreateConversationDto
    */
   customContent?: MessageCustomContentDto;
+}
+/**
+ *
+ * @export
+ * @interface DeploymentConfigurationDto
+ */
+export interface DeploymentConfigurationDto {
+  /**
+   * JSON Schema type (typically "object")
+   * @type {string}
+   * @memberof DeploymentConfigurationDto
+   */
+  type?: string;
+  /**
+   * Human-readable schema title
+   * @type {string}
+   * @memberof DeploymentConfigurationDto
+   */
+  title?: string;
+  /**
+   * Named configuration properties supported by this deployment
+   * @type {{ [key: string]: unknown }}
+   * @memberof DeploymentConfigurationDto
+   */
+  properties?: { [key: string]: unknown };
+  /**
+   * Whether additional properties are allowed
+   * @type {object}
+   * @memberof DeploymentConfigurationDto
+   */
+  additionalProperties?: object;
+  /**
+   * When true, the application does not accept free-form text input; users interact only via form/action buttons.
+   * @type {boolean}
+   * @memberof DeploymentConfigurationDto
+   */
+  isChatMessageInputDisabled?: boolean;
 }
 /**
  *
@@ -1194,7 +1231,7 @@ export interface SendCompletionDto {
    */
   path: string;
   /**
-   * The new user message to send. May be empty only when at least one attachment is provided in custom_content.
+   * The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.
    * @type {string}
    * @memberof SendCompletionDto
    */

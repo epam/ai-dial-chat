@@ -281,37 +281,52 @@ export class ConversationService extends AppService {
         ? conversation.messages
         : [...conversation.messages, userMessage];
 
-    // configuration_value is sent as top-level custom_fields.configuration,
-    // not inside the messages array.
-    const configuration = customContent?.configuration_value;
+    const configuration =
+      customContent?.configuration_value ??
+      messagesForCompletion
+        .filter((m) => m.custom_content?.configuration_value)
+        .at(-1)?.custom_content?.configuration_value;
+    const shouldHideCurrentConfigurationContent =
+      customContent?.configuration_value !== undefined &&
+      lastMessage?.role === MessageRole.User;
 
     const messages = messagesForCompletion
       .filter((m) => m.role !== MessageRole.Status)
-      .map((m) => {
+      .map((m, index, filteredMessages) => {
         const validAttachments = getValidAttachments(m.custom_content);
+        const hasConfigurationValue =
+          m.custom_content?.configuration_value !== undefined;
         const content = Object.fromEntries(
           Object.entries({
             ...m.custom_content,
             attachments: validAttachments.length ? validAttachments : undefined,
-            configuration_value: undefined, // configuration_value is sent as top-level custom_fields.configuration, not inside messages[].custom_content
+            configuration_value: undefined,
+            stages: undefined,
           }).filter(([, value]) => value != null),
         );
         return {
           role: m.role,
-          content: m.content,
+          content:
+            hasConfigurationValue ||
+            (shouldHideCurrentConfigurationContent &&
+              index === filteredMessages.length - 1)
+              ? ''
+              : m.content,
           ...(Object.keys(content).length > 0
             ? { custom_content: content }
             : {}),
         };
       });
 
+    const requestBody = {
+      messages,
+      stream: true,
+      ...(configuration ? { custom_fields: { configuration } } : {}),
+    };
+
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
-        body: {
-          messages,
-          stream: true,
-          ...(configuration ? { custom_fields: { configuration } } : {}),
-        },
+        body: requestBody,
         headers: {
           ...getBearerAuthHeaders(token),
           Accept: 'text/event-stream',
