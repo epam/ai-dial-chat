@@ -17,8 +17,22 @@ const mockUseIsMobile = vi.mocked(BreakpointModule.useIsMobile);
 const defaultTheme = {
   currentTheme: 'dark',
   themes: [
-    { id: 'dark', displayName: 'Dark' },
-    { id: 'light', displayName: 'Light' },
+    {
+      id: 'dark',
+      displayName: 'Dark',
+      colors: {},
+      topicColors: {},
+      authColors: {},
+      'app-logo': '',
+    },
+    {
+      id: 'light',
+      displayName: 'Light',
+      colors: {},
+      topicColors: {},
+      authColors: {},
+      'app-logo': '',
+    },
   ],
   setTheme: vi.fn(),
   isLoading: false,

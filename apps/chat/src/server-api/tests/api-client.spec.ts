@@ -48,7 +48,12 @@ describe('csrfMiddleware', () => {
     const api = new ConversationsApi(createApiConfiguration());
 
     await ignoreRejection(
-      api.createConversation({ createConversationDto: { firstMessage: 'hi' } }),
+      api.createConversation({
+        createConversationDto: {
+          firstMessage: 'hi',
+          deploymentId: 'test-deployment',
+        },
+      }),
     );
 
     expect(getLastRequestHeaders(fetchSpy).get('X-CSRF-Token')).toBe(
@@ -71,7 +76,12 @@ describe('csrfMiddleware', () => {
     const api = new ConversationsApi(createApiConfiguration());
 
     await ignoreRejection(
-      api.createConversation({ createConversationDto: { firstMessage: 'hi' } }),
+      api.createConversation({
+        createConversationDto: {
+          firstMessage: 'hi',
+          deploymentId: 'test-deployment',
+        },
+      }),
     );
 
     expect(getLastRequestHeaders(fetchSpy).get('X-CSRF-Token')).toBeNull();

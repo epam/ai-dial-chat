@@ -1,7 +1,6 @@
 import type {
   AttachmentDto,
   ConversationResponseDto,
-  MessageFormValue,
 } from '@epam/chat-api-client';
 import { conversationsApi } from './api-client';
 
@@ -10,7 +9,7 @@ export const createConversation = (
   deploymentId: string,
   attachments?: AttachmentDto[],
   configurationValue?: Record<string, unknown>,
-  formValue?: MessageFormValue,
+  formValue?: Record<string, unknown>,
 ) =>
   conversationsApi.createConversation({
     createConversationDto: {
