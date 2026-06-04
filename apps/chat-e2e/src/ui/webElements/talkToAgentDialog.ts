@@ -9,18 +9,17 @@ import {
   TalkToAgentDialogSelectors,
 } from '@/src/ui/selectors';
 import { Search } from '@/src/ui/webElements';
+import { AgentsBrowserModal } from '@/src/ui/webElements/agentsBrowserModal';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
-import { Popup } from '@/src/ui/webElements/common/popup';
 import { DropdownButtonMenu } from '@/src/ui/webElements/dropdownButtonMenu';
 import { MarketplaceEntities } from '@/src/ui/webElements/marketplace/marketplaceEntities';
 import { Locator, Page } from '@playwright/test';
 
-export class TalkToAgentDialog extends Popup {
+export class TalkToAgentDialog extends AgentsBrowserModal {
   constructor(page: Page, selector?: string, parentLocator?: Locator) {
     super(page, selector, parentLocator);
   }
 
-  private agents!: MarketplaceEntities;
   private versionDropdownMenu!: DropdownButtonMenu;
   private search!: Search;
   public goToMyWorkspaceButton = this.getChildElementBySelector(
@@ -46,10 +45,7 @@ export class TalkToAgentDialog extends Popup {
   );
 
   getAgents(): MarketplaceEntities {
-    if (!this.agents) {
-      this.agents = new MarketplaceEntities(this.page, this.rootLocator);
-    }
-    return this.agents;
+    return this.getEntities();
   }
 
   getVersionDropdownMenu(): DropdownButtonMenu {
