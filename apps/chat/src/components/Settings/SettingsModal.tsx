@@ -3,7 +3,7 @@ import {
   DialFormItem,
   DialSelect,
 } from '@epam/ai-dial-ui-kit';
-import { useMemo, useState } from 'react';
+import { memo, type FC, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SettingsI18nKeys } from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
@@ -13,7 +13,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function SettingsModal({ open, onClose }: Props) {
+const SettingsModal: FC<Props> = ({ open, onClose }) => {
   const { t } = useTranslation();
   const { currentTheme, themes, setTheme, isLoading } = useTheme();
   const [pendingTheme, setPendingTheme] = useState(currentTheme);
@@ -53,4 +53,6 @@ export default function SettingsModal({ open, onClose }: Props) {
       </div>
     </DialConfirmationPopup>
   );
-}
+};
+
+export default memo(SettingsModal);

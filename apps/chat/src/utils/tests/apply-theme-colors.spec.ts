@@ -19,7 +19,8 @@ describe('applyThemeColors', () => {
   it('should apply theme colors to root element', () => {
     const mockTheme: Theme = {
       id: 'dark',
-      name: 'Dark Theme',
+      displayName: 'Dark Theme',
+      'app-logo': '',
       colors: {
         'primary-color': '#000000',
         'secondary-color': '#ffffff',
@@ -43,7 +44,8 @@ describe('applyThemeColors', () => {
   it('should persist theme to localStorage', () => {
     const mockTheme: Theme = {
       id: 'light',
-      name: 'Light Theme',
+      displayName: 'Light Theme',
+      'app-logo': '',
       colors: {
         'primary-color': '#ffffff',
       },
@@ -66,7 +68,8 @@ describe('applyThemeColors', () => {
   it('should handle empty colors object', () => {
     const mockTheme: Theme = {
       id: 'empty',
-      name: 'Empty Theme',
+      displayName: 'Empty Theme',
+      'app-logo': '',
       colors: {},
     };
 
@@ -78,7 +81,8 @@ describe('applyThemeColors', () => {
   it('should update CSS custom properties correctly', () => {
     const mockTheme: Theme = {
       id: 'test',
-      name: 'Test Theme',
+      displayName: 'Test Theme',
+      'app-logo': '',
       colors: {
         'bg-color': 'rgb(255, 0, 0)',
         'text-color': 'rgba(0, 0, 0, 0.8)',
@@ -98,13 +102,15 @@ describe('applyThemeColors', () => {
   it('should handle multiple consecutive theme applications', () => {
     const darkTheme: Theme = {
       id: 'dark',
-      name: 'Dark',
+      displayName: 'Dark',
+      'app-logo': '',
       colors: { 'bg-color': '#000000' },
     };
 
     const lightTheme: Theme = {
       id: 'light',
-      name: 'Light',
+      displayName: 'Light',
+      'app-logo': '',
       colors: { 'bg-color': '#ffffff' },
     };
 

@@ -6,6 +6,7 @@ import type {
 import {
   FC,
   lazy,
+  memo,
   Suspense,
   useCallback,
   useEffect,
@@ -74,6 +75,21 @@ const ConversationRoute: FC = () => {
     [selectedDeploymentConfiguration],
   );
 
+  const modelSelectorLabels = useMemo(
+    () => ({
+      ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
+      loading: isLoading ? t(DeploymentsI18nKeys.SelectorLoading) : undefined,
+      error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
+      empty:
+        !isLoading && !error && items.length === 0
+          ? t(DeploymentsI18nKeys.SelectorEmpty)
+          : undefined,
+      searchPlaceholder: t(DeploymentsI18nKeys.SelectorSearchPlaceholder),
+      closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
+    }),
+    [t, isLoading, error, items.length],
+  );
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -110,17 +126,24 @@ const ConversationRoute: FC = () => {
     (starter: StarterOption) => {
       if (starter['dial:widgetOptions'].submit) {
         const text = description ?? getStarterPopulateText(starter);
+        if (!selectedItemId) {
+          return;
+        }
+
         const configurationValue = propertyKey
           ? { [propertyKey]: starter.const }
           : undefined;
-        void apiCreateConversation(
-          text,
-          selectedItemId,
-          [],
-          configurationValue,
-        ).then((conversation) => {
+        const createAndNavigate = async () => {
+          const conversation = await apiCreateConversation(
+            text,
+            selectedItemId,
+            [],
+            configurationValue,
+          );
           navigate(getConversationRoute(conversation.id));
-        });
+        };
+
+        void createAndNavigate();
       } else {
         const text = description ?? getStarterPopulateText(starter);
         setInputMessage(text);
@@ -147,21 +170,7 @@ const ConversationRoute: FC = () => {
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
             isInputDisabled={isInputDisabled}
-            modelSelectorLabels={{
-              ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
-              loading: isLoading
-                ? t(DeploymentsI18nKeys.SelectorLoading)
-                : undefined,
-              error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
-              empty:
-                !isLoading && !error && items.length === 0
-                  ? t(DeploymentsI18nKeys.SelectorEmpty)
-                  : undefined,
-              searchPlaceholder: t(
-                DeploymentsI18nKeys.SelectorSearchPlaceholder,
-              ),
-              closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
-            }}
+            modelSelectorLabels={modelSelectorLabels}
             sendLabel={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
           />
@@ -172,4 +181,4 @@ const ConversationRoute: FC = () => {
   );
 };
 
-export default ConversationRoute;
+export default memo(ConversationRoute);

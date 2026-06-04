@@ -19,11 +19,7 @@ export const Header: FC<HeaderProps> = memo(({ title, titleClassName }) => (
     )}
   >
     <span
-      className={mergeClasses(
-        'truncate',
-        styles.headerTitle,
-        titleClassName,
-      )}
+      className={mergeClasses('truncate', styles.headerTitle, titleClassName)}
     >
       {title}
     </span>

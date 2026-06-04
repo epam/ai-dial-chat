@@ -86,6 +86,8 @@
     },
     "sources": {
       "ariaLabel": "Conversation sources",
+      "search": "Search",
+      "downloadAll": "Download all",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",

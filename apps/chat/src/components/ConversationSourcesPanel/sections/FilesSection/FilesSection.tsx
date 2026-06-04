@@ -1,6 +1,6 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentCard } from '@epam/ai-dial-conversation-input';
-import type { FC } from 'react';
+import { memo, type FC } from 'react';
 
 interface Props {
   attachments: DisplayAttachment[];
@@ -25,4 +25,4 @@ const FilesSection: FC<Props> = ({ attachments, title, emptyMessage }) => (
   </section>
 );
 
-export default FilesSection;
+export default memo(FilesSection);

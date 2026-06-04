@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { memo, type FC } from 'react';
 
 interface Props {
   title: string;
@@ -13,4 +13,4 @@ const SourcesSection: FC<Props> = ({ title, emptyMessage }) => (
   </section>
 );
 
-export default SourcesSection;
+export default memo(SourcesSection);

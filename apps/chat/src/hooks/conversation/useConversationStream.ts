@@ -3,6 +3,7 @@ import {
   type MessageCustomContent,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
+import type { ConversationResponseDto } from '@epam/chat-api-client';
 import {
   type Dispatch,
   type MutableRefObject,
@@ -93,7 +94,10 @@ export const useConversationStream = ({
             const final = conversationRef.current;
             if (final) {
               try {
-                await saveConversation(conversationPath, final);
+                await saveConversation(
+                  conversationPath,
+                  final as ConversationResponseDto,
+                );
               } catch (err: unknown) {
                 void err;
               }
@@ -153,7 +157,10 @@ export const useConversationStream = ({
       };
       conversationRef.current = updated;
       if (conversationId) {
-        void saveConversation(getConversationPath(conversationId), updated);
+        void saveConversation(
+          getConversationPath(conversationId),
+          updated as ConversationResponseDto,
+        );
       }
       return updated;
     });

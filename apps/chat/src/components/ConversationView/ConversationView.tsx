@@ -1,15 +1,16 @@
 import {
-  MessageRole,
-  StatusEvent,
+  DisplayAttachment,
   isStatusMessage,
+  StatusEvent,
   type Attachment,
-  type DisplayAttachment,
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import { MessageBubble } from '@epam/ai-dial-conversation-messages';
-import { StagesPanel } from '@epam/ai-dial-conversation-stages';
+import type {
+  MessageActionAriaLabels,
+  MessageActionTooltips,
+} from '@epam/ai-dial-conversation-messages';
 import { DialFabButton } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -30,27 +31,13 @@ import {
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys.js';
 import { useDeployments } from '../../context/DeploymentsContext.js';
-import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
 import { resolveCatalogIconUrl } from '../../utils/icon-path.js';
-import { messageHasStages } from '../../utils/message-utils.js';
-import { buildMessageActions } from './buildMessageActions.js';
-import {
-  getMessageStarterProps,
-  getStatusMessageProps,
-  isStreamingMessage,
-} from './message-display.js';
+import ConversationMessageItem from './ConversationMessageItem.js';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
   return { default: module.ConversationInput };
 });
-
-const EditMessageInput = lazy(async () => {
-  const module = await import('@epam/ai-dial-conversation-input');
-  return { default: module.EditMessageInput };
-});
-
-const preloadEditInput = () => void import('@epam/ai-dial-conversation-input');
 
 interface Props {
   messages: MessageType[];
@@ -109,7 +96,7 @@ const ConversationView: FC<Props> = ({
   } = useDeployments();
 
   const isInputDisabled = useMemo(
-    () => selectedDeploymentConfiguration?.isChatMessageInputDisabled === true,
+    () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
     [selectedDeploymentConfiguration],
   );
 
@@ -164,27 +151,57 @@ const ConversationView: FC<Props> = ({
     [items],
   );
 
-  const tooltips = {
-    edit: t(ActionsI18nKeys.Edit),
-    delete: t(ActionsI18nKeys.Delete),
-    regenerate: t(ActionsI18nKeys.Regenerate),
-    copy: t(ActionsI18nKeys.Copy),
-    copied: t(ActionsI18nKeys.Copied),
-    copyMarkdown: t(ActionsI18nKeys.Copy),
-    copiedMarkdown: t(ActionsI18nKeys.Copied),
-    like: t(ActionsI18nKeys.Like),
-    dislike: t(ActionsI18nKeys.Dislike),
-  };
+  const tooltips = useMemo<MessageActionTooltips>(
+    () => ({
+      edit: t(ActionsI18nKeys.Edit),
+      delete: t(ActionsI18nKeys.Delete),
+      regenerate: t(ActionsI18nKeys.Regenerate),
+      copy: t(ActionsI18nKeys.Copy),
+      copied: t(ActionsI18nKeys.Copied),
+      copyMarkdown: t(ActionsI18nKeys.Copy),
+      copiedMarkdown: t(ActionsI18nKeys.Copied),
+      like: t(ActionsI18nKeys.Like),
+      dislike: t(ActionsI18nKeys.Dislike),
+    }),
+    [t],
+  );
 
-  const ariaLabels = {
-    editMessage: t(ActionsI18nKeys.EditMessage),
-    deleteMessage: t(ActionsI18nKeys.DeleteMessage),
-    regenerateResponse: t(ActionsI18nKeys.RegenerateResponse),
-    copyResponse: t(ActionsI18nKeys.CopyResponse),
-    copyAsMarkdown: t(ActionsI18nKeys.CopyAsMarkdown),
-    likeResponse: t(ActionsI18nKeys.LikeResponse),
-    dislikeResponse: t(ActionsI18nKeys.DislikeResponse),
-  };
+  const ariaLabels = useMemo<MessageActionAriaLabels>(
+    () => ({
+      editMessage: t(ActionsI18nKeys.EditMessage),
+      deleteMessage: t(ActionsI18nKeys.DeleteMessage),
+      regenerateResponse: t(ActionsI18nKeys.RegenerateResponse),
+      copyResponse: t(ActionsI18nKeys.CopyResponse),
+      copyAsMarkdown: t(ActionsI18nKeys.CopyAsMarkdown),
+      likeResponse: t(ActionsI18nKeys.LikeResponse),
+      dislikeResponse: t(ActionsI18nKeys.DislikeResponse),
+    }),
+    [t],
+  );
+
+  const modelSelectorLabels = useMemo(
+    () => ({
+      ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
+      loading: isLoading ? t(DeploymentsI18nKeys.SelectorLoading) : undefined,
+      error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
+      empty:
+        !isLoading && !error && items.length === 0
+          ? t(DeploymentsI18nKeys.SelectorEmpty)
+          : undefined,
+      searchPlaceholder: t(DeploymentsI18nKeys.SelectorSearchPlaceholder),
+      closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
+    }),
+    [t, isLoading, error, items.length],
+  );
+
+  const formatStatusModelChangedBody = useCallback(
+    (from: string, to: string) =>
+      t(ConversationI18nKeys.StatusModelChangedBody, {
+        from,
+        to,
+      }),
+    [t],
+  );
 
   const [isScrollButtonVisible, setIsScrollButtonVisible] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -281,120 +298,33 @@ const ConversationView: FC<Props> = ({
         >
           <div className="mx-auto flex w-full max-w-[748px] flex-1 flex-col gap-6 px-4 pt-2">
             {messages.map((msg, index) => {
-              const isStreaming = isStreamingMessage(
-                msg.role,
-                index,
-                messages.length,
-                isAssistantTyping,
-              );
-              const isEditing =
-                msg.role === MessageRole.User &&
-                !!editingMessageIds?.has(msg.id);
-
-              if (isEditing) {
-                return (
-                  <div key={msg.id} className="flex justify-end">
-                    <Suspense
-                      fallback={
-                        <MessageBubble
-                          role={msg.role}
-                          text={msg.content}
-                          attachments={attachmentDtosToDisplayAttachments(
-                            msg.custom_content?.attachments,
-                          )}
-                          className="justify-end"
-                        />
-                      }
-                    >
-                      <EditMessageInput
-                        message={msg.content}
-                        initialAttachments={attachmentDtosToDisplayAttachments(
-                          msg.custom_content?.attachments,
-                        )}
-                        onCancel={() => onCancelEdit?.(msg.id)}
-                        onSave={(text, kept, added) =>
-                          onEditMessage?.(msg.id, text, kept, added)
-                        }
-                        cancelLabel={t(ActionsI18nKeys.Cancel)}
-                        saveLabel={t(ActionsI18nKeys.SaveAndSubmit)}
-                        ariaLabel={t(ActionsI18nKeys.EditMessage)}
-                        className="w-full max-w-[748px]"
-                      />
-                    </Suspense>
-                  </div>
-                );
-              }
-
-              const hasStages = messageHasStages(msg);
-              const {
-                starters: activeStarters,
-                onSelectStarter: handleSelectStarter,
-              } = getMessageStarterProps(
-                msg,
-                index,
-                messages.length,
-                isAssistantTyping,
-                onSelectStarter,
-              );
-
-              const deploymentEntry =
-                effectiveDeploymentIds[index] !== undefined
-                  ? deploymentLookup[effectiveDeploymentIds[index]]
-                  : undefined;
-
-              const statusProps = isStatusMessage(msg)
-                ? getStatusMessageProps(
-                    msg,
-                    deploymentLookup,
-                    t(ConversationI18nKeys.StatusModelChangedTitle),
-                    (from, to) =>
-                      t(ConversationI18nKeys.StatusModelChangedBody, {
-                        from,
-                        to,
-                      }),
-                  )
-                : {};
-
               return (
-                <MessageBubble
+                <ConversationMessageItem
                   key={msg.id}
-                  role={msg.role}
-                  text={msg.content}
-                  attachments={attachmentDtosToDisplayAttachments(
-                    msg.custom_content?.attachments,
+                  msg={msg}
+                  index={index}
+                  totalCount={messages.length}
+                  isAssistantTyping={isAssistantTyping}
+                  editingMessageIds={editingMessageIds}
+                  onSelectStarter={onSelectStarter}
+                  onStartEdit={onStartEdit}
+                  onDeleteMessage={onDeleteMessage}
+                  onRegenerateMessage={onRegenerateMessage}
+                  onRateMessage={onRateMessage}
+                  onCancelEdit={onCancelEdit}
+                  onEditMessage={onEditMessage}
+                  deploymentLookup={deploymentLookup}
+                  effectiveDeploymentId={effectiveDeploymentIds[index]}
+                  tooltips={tooltips}
+                  ariaLabels={ariaLabels}
+                  cancelLabel={t(ActionsI18nKeys.Cancel)}
+                  saveLabel={t(ActionsI18nKeys.SaveAndSubmit)}
+                  editMessageAriaLabel={t(ActionsI18nKeys.EditMessage)}
+                  quickReplyButtonsAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
+                  statusModelChangedTitle={t(
+                    ConversationI18nKeys.StatusModelChangedTitle,
                   )}
-                  hasAlwaysVisibleActions={!isStreaming}
-                  actions={buildMessageActions(
-                    msg,
-                    {
-                      onEdit: !isAssistantTyping ? onStartEdit : undefined,
-                      onHoverEdit: preloadEditInput,
-                      onDelete: onDeleteMessage,
-                      onRegenerate: onRegenerateMessage,
-                      onRate: onRateMessage,
-                    },
-                    tooltips,
-                    ariaLabels,
-                  )}
-                  className={
-                    msg.role === MessageRole.User
-                      ? 'justify-end'
-                      : 'justify-start'
-                  }
-                  afterContent={
-                    hasStages ? (
-                      <StagesPanel
-                        stages={msg.custom_content?.stages ?? []}
-                        isStreaming={isStreaming}
-                      />
-                    ) : undefined
-                  }
-                  starters={activeStarters}
-                  onSelectStarter={handleSelectStarter}
-                  startersAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
-                  deploymentIconUrl={deploymentEntry?.iconUrl}
-                  deploymentDisplayName={deploymentEntry?.displayName}
-                  {...statusProps}
+                  formatStatusModelChangedBody={formatStatusModelChangedBody}
                 />
               );
             })}
@@ -427,21 +357,7 @@ const ConversationView: FC<Props> = ({
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
             isInputDisabled={isInputDisabled}
-            modelSelectorLabels={{
-              ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
-              loading: isLoading
-                ? t(DeploymentsI18nKeys.SelectorLoading)
-                : undefined,
-              error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
-              empty:
-                !isLoading && !error && items.length === 0
-                  ? t(DeploymentsI18nKeys.SelectorEmpty)
-                  : undefined,
-              searchPlaceholder: t(
-                DeploymentsI18nKeys.SelectorSearchPlaceholder,
-              ),
-              closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
-            }}
+            modelSelectorLabels={modelSelectorLabels}
             sendLabel={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
           />

@@ -108,6 +108,8 @@ export enum SidebarI18nKeys {
   ToggleClose = 'sidebar.base.toggleClose',
   Close = 'sidebar.base.close',
   AriaLabel = 'sidebar.sources.ariaLabel',
+  Search = 'sidebar.sources.search',
+  DownloadAll = 'sidebar.sources.downloadAll',
   SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
   SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
   SectionSources = 'sidebar.sources.sections.sources',

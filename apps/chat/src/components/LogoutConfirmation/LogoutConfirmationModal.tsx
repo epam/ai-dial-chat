@@ -1,4 +1,5 @@
 import { DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
+import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
@@ -11,7 +12,7 @@ interface Props {
   onClose: () => void;
 }
 
-export default function LogoutConfirmationModal({ isOpen, onClose }: Props) {
+const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { reset } = useUser();
@@ -37,4 +38,6 @@ export default function LogoutConfirmationModal({ isOpen, onClose }: Props) {
       onClose={onClose}
     />
   );
-}
+};
+
+export default memo(LogoutConfirmationModal);

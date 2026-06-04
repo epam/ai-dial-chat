@@ -9,6 +9,7 @@ import {
   DialNotification,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
+import type { ConversationResponseDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -56,7 +57,10 @@ export const ConversationPage: FC = () => {
         if (!prev) return prev;
         const next = { ...prev, messages: [...prev.messages, msg] };
         conversationRef.current = next;
-        saveConversation(conversationPath, next).catch(() => {
+        saveConversation(
+          conversationPath,
+          next as ConversationResponseDto,
+        ).catch(() => {
           // status message remains in local state even if persist fails
         });
         return next;

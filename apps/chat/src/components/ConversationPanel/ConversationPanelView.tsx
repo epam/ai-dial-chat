@@ -2,13 +2,13 @@ import {
   ConversationPanel,
   type ConversationHistoryItem,
 } from '@epam/ai-dial-conversation-panel';
-import { type FC, useMemo } from 'react';
+import { type FC, memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { normalizeConversationId } from '../../constants/routes.js';
 import { ConversationHistoryI18nKeys } from '../../constants/translation-keys.js';
 import { useConversations } from '../../context/ConversationsContext.js';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint.js';
-import { getConversationSource } from './conversationSource.utils.js';
+import { getConversationSource } from './get-conversation-source.js';
 
 interface Props {
   isOpen: boolean;
@@ -45,6 +45,24 @@ const ConversationPanelView: FC<Props> = ({
     [items],
   );
 
+  const filterLabels = useMemo(
+    () => ({
+      all: t(ConversationHistoryI18nKeys.FilterAll),
+      myChats: t(ConversationHistoryI18nKeys.FilterMyChats),
+      shared: t(ConversationHistoryI18nKeys.FilterShared),
+      organization: t(ConversationHistoryI18nKeys.FilterOrganization),
+    }),
+    [t],
+  );
+
+  const groupLabels = useMemo(
+    () => ({
+      pinned: t(ConversationHistoryI18nKeys.PinnedSection),
+      myChats: t(ConversationHistoryI18nKeys.MyChatsSection),
+    }),
+    [t],
+  );
+
   return (
     <ConversationPanel
       conversations={conversations}
@@ -56,20 +74,12 @@ const ConversationPanelView: FC<Props> = ({
       onNewChat={onNewChat}
       newChatLabel={t(ConversationHistoryI18nKeys.NewChat)}
       searchPlaceholder={t(ConversationHistoryI18nKeys.SearchPlaceholder)}
-      filterLabels={{
-        all: t(ConversationHistoryI18nKeys.FilterAll),
-        myChats: t(ConversationHistoryI18nKeys.FilterMyChats),
-        shared: t(ConversationHistoryI18nKeys.FilterShared),
-        organization: t(ConversationHistoryI18nKeys.FilterOrganization),
-      }}
-      groupLabels={{
-        pinned: t(ConversationHistoryI18nKeys.PinnedSection),
-        myChats: t(ConversationHistoryI18nKeys.MyChatsSection),
-      }}
+      filterLabels={filterLabels}
+      groupLabels={groupLabels}
       onBackdropClick={isMobile ? onClose : undefined}
       className={isMobile ? 'fixed inset-y-0 left-0 z-50 w-[320px]' : undefined}
     />
   );
 };
 
-export default ConversationPanelView;
+export default memo(ConversationPanelView);
