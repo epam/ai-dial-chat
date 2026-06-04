@@ -21,6 +21,20 @@ export class ConversationListItemDto {
     example: 1749600000000,
   })
   updatedAt!: number;
+
+  @ApiProperty({
+    description:
+      'True when this conversation was shared with the current user by another user.',
+    example: false,
+  })
+  sharedWithMe!: boolean;
+
+  @ApiProperty({
+    description:
+      'True when this conversation was published to the organisation and is visible to the current user.',
+    example: false,
+  })
+  publishedWithMe!: boolean;
 }
 
 export class ConversationListResponseDto {

@@ -1974,9 +1974,25 @@
             "type": "number",
             "description": "Unix epoch milliseconds of the last update.",
             "example": 1749600000000
+          },
+          "sharedWithMe": {
+            "type": "boolean",
+            "description": "True when this conversation was shared with the current user by another user.",
+            "example": false
+          },
+          "publishedWithMe": {
+            "type": "boolean",
+            "description": "True when this conversation was published to the organisation and is visible to the current user.",
+            "example": false
           }
         },
-        "required": ["id", "title", "updatedAt"]
+        "required": [
+          "id",
+          "title",
+          "updatedAt",
+          "sharedWithMe",
+          "publishedWithMe"
+        ]
       },
       "ConversationListResponseDto": {
         "type": "object",

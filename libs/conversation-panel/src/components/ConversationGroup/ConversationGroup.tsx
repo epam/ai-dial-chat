@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
+import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import { type FC, memo, useState } from 'react';
 import type { ConversationHistoryItem } from '../../models/ConversationPanel.js';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
@@ -14,11 +14,11 @@ export interface ConversationGroupProps {
   activeConversationId?: string;
   /** Called when the user selects a conversation row. */
   onSelectConversation: (id: string) => void;
-  /** Typography class applied to the group header button. Defaults to `'text-xs font-semibold'`. */
+  /** Typography class applied to the group header button. Defaults to `'dial-tiny-text'`. */
   groupHeaderClassName?: string;
   /** Typography class applied to the initial-letter icon fallback. Defaults to `'text-xs font-bold'`. */
   itemIconClassName?: string;
-  /** Typography class applied to the conversation title text. Defaults to `'text-sm'`. */
+  /** Typography class applied to the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
 }
 // TODO: review all styles ((!!!!))
@@ -29,9 +29,9 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
     items,
     activeConversationId,
     onSelectConversation,
-    groupHeaderClassName = 'text-xs font-semibold',
+    groupHeaderClassName = 'dial-tiny-text',
     itemIconClassName = 'text-xs font-bold',
-    itemTitleClassName = 'text-sm',
+    itemTitleClassName = 'dial-small-text',
   }) => {
     const [isExpanded, setIsExpanded] = useState(true);
 
@@ -44,21 +44,21 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
           aria-expanded={isExpanded}
           onClick={() => setIsExpanded((prev) => !prev)}
           className={mergeClasses(
-            'flex w-full items-center gap-1 px-3 py-1 text-left',
+            'flex h-6 w-full items-center gap-1 rounded py-1 pr-3 text-left',
             groupHeaderClassName,
             styles.groupHeader,
           )}
         >
           {isExpanded ? (
-            <IconChevronDown size={14} className="shrink-0" />
+            <IconCaretDownFilled size={12} className="shrink-0" />
           ) : (
-            <IconChevronRight size={14} className="shrink-0" />
+            <IconCaretRightFilled size={12} className="shrink-0" />
           )}
           <span className="truncate">{label}</span>
         </button>
 
         {isExpanded && (
-          <ul role="list" className="flex flex-col">
+          <ul role="list" className="flex flex-col gap-0.5">
             {items.map((item) => {
               const isActive = item.id === activeConversationId;
               return (
@@ -68,7 +68,7 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
                     aria-current={isActive ? 'page' : undefined}
                     onClick={() => onSelectConversation(item.id)}
                     className={mergeClasses(
-                      'flex w-full items-center gap-2 px-3 py-2 text-left',
+                      'flex h-8 w-full items-center gap-2 rounded py-1 pl-3 pr-3 text-left',
                       styles.item,
                       isActive && styles.itemActive,
                     )}

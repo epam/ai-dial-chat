@@ -1,11 +1,11 @@
 export { ConversationPanel } from './components/ConversationPanel/ConversationPanel.js';
+export { ConversationSource } from './models/ConversationPanel.js';
 export type {
   ConversationPanelProps,
   ConversationPanelStyles,
   ConversationHistoryColors,
   ConversationHistoryTypography,
   ConversationHistoryItem,
-  ConversationSource,
   FilterTab,
   FilterLabels,
 } from './models/ConversationPanel.js';

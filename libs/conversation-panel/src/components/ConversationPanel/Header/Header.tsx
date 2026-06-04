@@ -14,13 +14,13 @@ export interface HeaderProps {
 export const Header: FC<HeaderProps> = memo(({ title, titleClassName }) => (
   <div
     className={mergeClasses(
-      'flex h-12 shrink-0 items-center justify-between border-b px-2',
+      'flex h-12 shrink-0 items-center justify-between border-b px-5',
       styles.header,
     )}
   >
     <span
       className={mergeClasses(
-        'truncate px-2',
+        'truncate',
         styles.headerTitle,
         titleClassName,
       )}
