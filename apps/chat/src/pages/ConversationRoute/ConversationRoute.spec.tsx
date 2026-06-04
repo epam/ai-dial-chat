@@ -17,7 +17,7 @@ vi.mock('../../components/StarterButtons/StarterButtons', () => ({
       const: number;
       title: string;
       'dial:widgetOptions': {
-        populateText: string;
+        populateText: string | null;
         submit: boolean;
         confirmationMessage: string | null;
       };
@@ -26,7 +26,7 @@ vi.mock('../../components/StarterButtons/StarterButtons', () => ({
       const: number;
       title: string;
       'dial:widgetOptions': {
-        populateText: string;
+        populateText: string | null;
         submit: boolean;
         confirmationMessage: string | null;
       };
@@ -237,6 +237,51 @@ describe('ConversationRoute', () => {
         'deepseek-ocr-2',
         [],
         { starter: 0 },
+      );
+    });
+  });
+
+  it('keeps display text when submitted starter populateText is null', async () => {
+    const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
+      type: 'object',
+      properties: {
+        button: {
+          description: 'Pick a number',
+          oneOf: [
+            {
+              const: 2,
+              title: '2',
+              'dial:widgetOptions': {
+                populateText: null,
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    mockUseDeployments.mockReturnValue({
+      items: mockItems,
+      selectedItemId: 'form-example',
+      setSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration,
+      isLoading: false,
+      error: null,
+    });
+
+    renderRoute();
+
+    await act(async () => {
+      screen.getByText('2').click();
+    });
+
+    await waitFor(() => {
+      expect(mockCreateConversation).toHaveBeenCalledWith(
+        'Pick a number',
+        'form-example',
+        [],
+        { button: 2 },
       );
     });
   });

@@ -11,6 +11,23 @@ export const getStarterPopulateText = (starter: StarterOption): string =>
   starter['dial:widgetOptions'].populateText || starter.title;
 
 /**
+ * Returns submitted text for DIAL starter/form buttons.
+ * For submit buttons, `populateText: null` explicitly means "submit no text".
+ */
+export const getStarterSubmitText = (
+  starter: StarterOption,
+  description?: string,
+): string => {
+  const { populateText, submit } = starter['dial:widgetOptions'];
+
+  if (submit && populateText == null) {
+    return '';
+  }
+
+  return description ?? getStarterPopulateText(starter);
+};
+
+/**
  * Extracts starter options, the schema property key (`'starter'` or `'button'`),
  * and the optional description text from a deployment configuration schema.
  *

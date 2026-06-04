@@ -26,7 +26,7 @@ export class SendCompletionDto {
 
   @ApiProperty({
     description:
-      'The new user message to send. May be empty only when at least one attachment is provided in custom_content.',
+      'The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.',
     example: 'What is the capital of France?',
     maxLength: 4000,
   })

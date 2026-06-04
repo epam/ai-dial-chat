@@ -7,9 +7,8 @@ import { MessageCustomContentDto } from './message-custom-content.dto';
 
 /**
  * Property decorator that passes when the decorated text field is a non-empty
- * string OR the DTO carries at least one attachment in
- * `custom_content.attachments`. Mirrors the client send-gating rule that allows
- * attachment-only messages with empty text.
+ * string OR the DTO carries a DIAL custom payload that can stand in for text
+ * (`attachments`, `form_value`, or `configuration_value`).
  */
 export function IsMessageOrAttachmentsPresent(
   validationOptions?: ValidationOptions,
@@ -25,12 +24,21 @@ export function IsMessageOrAttachmentsPresent(
           const { custom_content } = args.object as {
             custom_content?: MessageCustomContentDto;
           };
+          const hasNonEmptyObject = (v: unknown): boolean =>
+            v != null && typeof v === 'object' && Object.keys(v).length > 0;
           const hasText = typeof value === 'string' && value.trim().length > 0;
           const hasAttachments = (custom_content?.attachments?.length ?? 0) > 0;
-          return hasText || hasAttachments;
+          const hasFormValue = hasNonEmptyObject(custom_content?.form_value);
+          const hasConfigurationValue = hasNonEmptyObject(
+            custom_content?.configuration_value,
+          );
+
+          return (
+            hasText || hasAttachments || hasFormValue || hasConfigurationValue
+          );
         },
         defaultMessage(): string {
-          return 'Either a non-empty message or at least one attachment is required';
+          return 'Either a non-empty message or custom content is required';
         },
       },
     });

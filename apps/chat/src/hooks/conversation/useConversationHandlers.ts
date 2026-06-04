@@ -25,7 +25,7 @@ import { rateMessage } from '../../server-api/rate.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { getConversationPath } from '../../utils/conversation-path';
 import { createMessagePair } from '../../utils/message-factory';
-import { getStarterPopulateText } from '../../utils/starter-option';
+import { getStarterSubmitText } from '../../utils/starter-option';
 
 interface Params {
   conversation: Conversation | null;
@@ -266,13 +266,19 @@ export const useConversationHandlers = ({
     (starter: StarterOption, propertyKey?: string, description?: string) => {
       if (!conversationId || !conversation) return;
 
-      const text = description ?? getStarterPopulateText(starter);
+      const displayText = description ?? starter.title;
+      const submitText = getStarterSubmitText(starter, description);
       const configurationValue = propertyKey
         ? { [propertyKey]: starter.const }
         : undefined;
 
       const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(text, undefined, configurationValue, selectedItemId);
+        createMessagePair(
+          displayText,
+          undefined,
+          configurationValue,
+          selectedItemId,
+        );
       const conversationPath = getConversationPath(conversationId);
 
       setConversation((prev) => {
@@ -287,7 +293,7 @@ export const useConversationHandlers = ({
 
       startStream(
         conversationPath,
-        text,
+        submitText,
         assistantMessageId,
         conversation.model.id,
         configurationValue ? { form_value: configurationValue } : undefined,

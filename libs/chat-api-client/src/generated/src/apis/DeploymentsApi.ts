@@ -13,7 +13,10 @@
  */
 
 import * as runtime from '../runtime';
-import type { DeploymentsResponseDto } from '../models/index';
+import type {
+  DeploymentConfigurationDto,
+  DeploymentsResponseDto,
+} from '../models/index';
 
 export interface GetDeploymentConfigurationRequest {
   deployment: string;
@@ -34,7 +37,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
   async getDeploymentConfigurationRaw(
     requestParameters: GetDeploymentConfigurationRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<{ [key: string]: unknown }>> {
+  ): Promise<runtime.ApiResponse<DeploymentConfigurationDto>> {
     if (requestParameters['deployment'] == null) {
       throw new runtime.RequiredError(
         'deployment',
@@ -62,7 +65,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse<{ [key: string]: unknown }>(response);
+    return new runtime.JSONApiResponse<DeploymentConfigurationDto>(response);
   }
 
   /**
@@ -72,7 +75,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
   async getDeploymentConfiguration(
     requestParameters: GetDeploymentConfigurationRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<{ [key: string]: unknown }> {
+  ): Promise<DeploymentConfigurationDto> {
     const response = await this.getDeploymentConfigurationRaw(
       requestParameters,
       initOverrides,

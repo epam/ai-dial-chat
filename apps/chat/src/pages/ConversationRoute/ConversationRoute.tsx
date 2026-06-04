@@ -108,11 +108,8 @@ const ConversationRoute: FC = () => {
 
   const handleStarterSelect = useCallback(
     (starter: StarterOption) => {
-      // For button widgets the description is the message content;
-      // for starter widgets fall back to populateText / title.
-      const text = description ?? getStarterPopulateText(starter);
-
       if (starter['dial:widgetOptions'].submit) {
+        const text = description ?? getStarterPopulateText(starter);
         const configurationValue = propertyKey
           ? { [propertyKey]: starter.const }
           : undefined;
@@ -125,6 +122,7 @@ const ConversationRoute: FC = () => {
           navigate(getConversationRoute(conversation.id));
         });
       } else {
+        const text = description ?? getStarterPopulateText(starter);
         setInputMessage(text);
       }
     },

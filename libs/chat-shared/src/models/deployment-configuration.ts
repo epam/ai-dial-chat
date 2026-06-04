@@ -1,7 +1,7 @@
 /** DIAL-specific options for a single starter button entry. */
 export interface StarterWidgetOptions {
   /** Text to populate in the input field when the starter is selected. */
-  populateText: string;
+  populateText: string | null;
   /** When true, automatically submits the message after populating the input. */
   submit: boolean;
   /** Optional confirmation message shown before submission. */
