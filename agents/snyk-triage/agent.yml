@@ -9,6 +9,12 @@ description: "Read-only AppSec triage wrapping the local /snyk-triage skill: val
 # non-default sdlc-test-base branch); drop it once on the default branch.
 triggers: [pull_request, schedule, workflow_dispatch]
 allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Bash(python3:*),Skill"
+
+# Public repo: encrypt this agent's artifact, and decrypt the encrypted ingest
+# artifact it consumes. SDLC_ARTIFACT_KEY is the shared key (add it under repo/
+# org Actions secrets); run-agent injects it for both encrypt and decrypt.
+secrets: [SDLC_ARTIFACT_KEY]
+private_output: true
 model: claude-sonnet-4-6
 phase: sandbox
 cost_class: medium

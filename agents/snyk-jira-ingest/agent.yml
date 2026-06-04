@@ -18,8 +18,13 @@ allowed_tools: "Bash(bash .claude/skills/snyk-jira-ingest/fetch.sh:*),Read,Skill
 
 # Declared secrets. run-agent.yml promotes ONLY these from the inherited
 # secret bag into the job env before the agent runs, and fails loudly if any
-# is absent. Add JIRA_PAT under repo/org Settings → Secrets → Actions.
-secrets: [JIRA_PAT]
+# is absent. Add JIRA_PAT and SDLC_ARTIFACT_KEY under repo/org Settings →
+# Secrets → Actions. SDLC_ARTIFACT_KEY is the shared key for `private_output`.
+secrets: [JIRA_PAT, SDLC_ARTIFACT_KEY]
+
+# This repo is PUBLIC and artifacts are world-downloadable, so encrypt the Jira
+# findings before they're uploaded for the triage handoff; triage decrypts.
+private_output: true
 
 # Haiku: the work is deterministic — run one script, confirm the envelope.
 # No reasoning needed; keeps token footprint and rate-limit pressure low.

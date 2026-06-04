@@ -31,6 +31,10 @@ inputs:
     description: 'Comma-separated names of upstream agents whose stage-output.json artifacts have been downloaded into upstream/<name>/ (same value the calling workflow passes to the gh run download step). Used to render the per-agent upstream-inputs section of the composed prompt.'
     required: false
     default: ''
+  private_output:
+    description: 'When "true", encrypt stage-output.json (openssl, key from SDLC_ARTIFACT_KEY in env) before uploading it as an artifact, so the artifact is not readable on a public repo. Local plaintext is consumed on the runner first (verify/render/SARIF) then removed.'
+    required: false
+    default: 'false'
 
 outputs:
   message:
@@ -246,12 +250,37 @@ runs:
         AGENT_VERSION: ${{ inputs.agent_version }}
       run: python3 ./.github/claude/scripts/render-stage-comment.py
 
+    - name: Encrypt stage output (private agents)
+      # Runs AFTER the renderer (and any SARIF emitter) have consumed the local
+      # plaintext. Encrypts stage-output.json -> stage-output.json.enc and
+      # removes the plaintext, so only ciphertext is uploaded as an artifact —
+      # required on a PUBLIC repo, where artifacts are world-downloadable. The
+      # key (SDLC_ARTIFACT_KEY) is injected by run-agent from the manifest's
+      # declared secrets; the downstream agent's run-agent decrypts it.
+      if: inputs.private_output == 'true' && hashFiles('stage-output.json') != ''
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [ -z "${SDLC_ARTIFACT_KEY:-}" ]; then
+          echo "::error::private_output is true but SDLC_ARTIFACT_KEY is not in env. Add it to the agent's manifest \`secrets:\` list and the repo/org Actions secrets."
+          exit 1
+        fi
+        openssl enc -aes-256-cbc -pbkdf2 -salt \
+          -in stage-output.json -out stage-output.json.enc -pass env:SDLC_ARTIFACT_KEY
+        rm -f stage-output.json
+        echo "Encrypted stage-output.json -> stage-output.json.enc (plaintext removed)"
+
     - name: Upload stage output artifact
-      if: always() && hashFiles('stage-output.json') != ''
+      # Uploads whichever exists: stage-output.json (public agents) or
+      # stage-output.json.enc (private_output agents). The artifact name is the
+      # same either way; the downstream decrypt step handles the .enc variant.
+      if: always() && (hashFiles('stage-output.json') != '' || hashFiles('stage-output.json.enc') != '')
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: stage-output-${{ inputs.stage_name }}
-        path: stage-output.json
+        path: |
+          stage-output.json
+          stage-output.json.enc
         retention-days: 90
         if-no-files-found: warn
 

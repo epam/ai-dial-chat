@@ -112,6 +112,10 @@ jobs:
           print(f"max_turns={m.get('max_turns', 18)}")
           print(f"tools_extra_json={json.dumps(extra)}")
           print(f"secrets_json={json.dumps(secrets)}")
+          # private_output: encrypt this agent's artifact and decrypt encrypted
+          # upstream artifacts (public-repo leak protection). See the encrypt
+          # step in run-claude-stage and the decrypt step below.
+          print(f"private_output={str(m.get('private_output', False)).lower()}")
           EOF
 
       - name: Install agent-declared CLI tools
@@ -193,6 +197,28 @@ jobs:
           print(f"Injected {len(declared)} declared secret(s) into job env: {', '.join(declared)}")
           PY
 
+      - name: Decrypt upstream artifacts
+        # Upstream producers flagged `private_output` upload their stage-output
+        # AES-encrypted (.enc). Decrypt any here — after secret injection, so
+        # SDLC_ARTIFACT_KEY is in the env — into the plaintext path the agent
+        # expects (upstream/<name>/stage-output.json). No-op when no .enc exists.
+        if: inputs.upstream_artifacts != ''
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          enc_found=0
+          for enc in upstream/*/stage-output.json.enc; do
+            enc_found=1
+            if [ -z "${SDLC_ARTIFACT_KEY:-}" ]; then
+              echo "::error::Encrypted upstream artifact ${enc} but SDLC_ARTIFACT_KEY is not in env. Add it to this agent's manifest \`secrets:\` list."
+              exit 1
+            fi
+            out="$(dirname "$enc")/stage-output.json"
+            openssl enc -d -aes-256-cbc -pbkdf2 -in "$enc" -out "$out" -pass env:SDLC_ARTIFACT_KEY
+            echo "Decrypted ${enc} -> ${out}"
+          done
+          [ "$enc_found" = 0 ] && echo "No encrypted upstream artifacts to decrypt."
+
       - id: stage
         uses: ./.github/actions/run-claude-stage
         with:
@@ -203,3 +229,4 @@ jobs:
           model: ${{ steps.manifest.outputs.model }}
           max_turns: ${{ steps.manifest.outputs.max_turns }}
           upstream_artifacts: ${{ inputs.upstream_artifacts }}
+          private_output: ${{ steps.manifest.outputs.private_output }}
