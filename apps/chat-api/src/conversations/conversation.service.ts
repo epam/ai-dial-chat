@@ -165,6 +165,8 @@ export class ConversationService extends AppService {
             parentPath?: string;
             updatedAt?: number;
             nodeType?: string;
+            sharedWithMe?: boolean;
+            publishedWithMe?: boolean;
           }[];
           nextToken?: string;
         };
@@ -182,6 +184,8 @@ export class ConversationService extends AppService {
           id: item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`,
           title: getConversationTitleFromName(item.name ?? ''),
           updatedAt: item.updatedAt ?? 0,
+          sharedWithMe: item.sharedWithMe ?? false,
+          publishedWithMe: item.publishedWithMe ?? false,
         }));
 
       return { items, nextToken: data.nextToken };
