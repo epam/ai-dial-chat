@@ -1737,7 +1737,6 @@ dialTest(
           Attachment.flowerImageName,
           'visible',
         );
-        await fileManagerToolbar.clearSelection();
         await fileApiHelper.putFileWithCustomName(
           Attachment.cloudImageName,
           Attachment.sunImageName,
@@ -1791,7 +1790,6 @@ dialTest(
           Attachment.flowerImageName,
           'visible',
         );
-        await fileManagerToolbar.clearSelection();
         for (const file of [
           Attachment.sunImageName,
           Attachment.cloudImageName,
