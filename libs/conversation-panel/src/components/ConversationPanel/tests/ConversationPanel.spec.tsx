@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import {
   ConversationSource,
@@ -11,10 +12,16 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialGhostButton: ({
     onClick,
     label,
+    'aria-current': ariaCurrent,
   }: {
     onClick: () => void;
     label: string;
-  }) => <button onClick={onClick}>{label}</button>,
+    'aria-current'?: React.AriaAttributes['aria-current'];
+  }) => (
+    <button onClick={onClick} aria-current={ariaCurrent}>
+      {label}
+    </button>
+  ),
   DialSearch: ({
     onChange,
     placeholder,
