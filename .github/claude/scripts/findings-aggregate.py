@@ -24,12 +24,14 @@ def main():
     doc = json.load(open(path))
     stage = doc.get("stage", "stage")
     status = doc.get("status", "")
-    summary = doc.get("summary", "")  # count-level by design
     payload = doc.get("payload") or {}
 
+    # IMPORTANT: never echo the agent-authored `summary` (or any free text) on
+    # this PUBLIC surface — agents put per-finding specifics (vuln class, code
+    # symbols, mechanisms) there. This report is machine-generated from the
+    # structured counts only; the free-text summary stays in the (encrypted)
+    # artifact.
     lines = [f"## {stage}", "", f"**Status:** `{status}`", ""]
-    if summary:
-        lines += [summary, ""]
 
     findings = payload.get("findings") or []
     if findings:
