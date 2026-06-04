@@ -170,7 +170,7 @@ export function ContextMenu({
       }
     >
       {!isLoading &&
-        displayedMenuItems.map(({ CustomTriggerRenderer, ...props }) => {
+        displayedMenuItems.map(({ CustomTriggerRenderer, ...props }, index) => {
           const Renderer = CustomTriggerRenderer ? (
             <CustomTriggerRenderer
               {...props}
@@ -185,7 +185,9 @@ export function ContextMenu({
               useStandardColor={useStandardColor}
             />
           );
-          return <Fragment key={props.dataQa}>{Renderer}</Fragment>;
+          return (
+            <Fragment key={`${props.dataQa}-${index}`}>{Renderer}</Fragment>
+          );
         })}
     </Menu>
   );
