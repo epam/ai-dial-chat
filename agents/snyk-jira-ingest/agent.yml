@@ -22,6 +22,11 @@ allowed_tools: "Bash(bash .claude/skills/snyk-jira-ingest/fetch.sh:*),Read,Skill
 # Secrets → Actions. SDLC_ARTIFACT_KEY is the shared key for `private_output`.
 secrets: [JIRA_PAT, SDLC_ARTIFACT_KEY]
 
+# Operator-tunable, non-secret knobs injected from Actions Variables (Settings →
+# Variables). JIRA_MAX_FINDINGS caps how many findings reach triage — change it
+# in the UI/`gh variable set`, no skill edit. Unset → fetch.sh default (10).
+vars: [JIRA_MAX_FINDINGS]
+
 # This repo is PUBLIC and artifacts are world-downloadable, so encrypt the Jira
 # findings before they're uploaded for the triage handoff; triage decrypts.
 private_output: true

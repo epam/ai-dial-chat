@@ -112,6 +112,9 @@ jobs:
           print(f"max_turns={m.get('max_turns', 18)}")
           print(f"tools_extra_json={json.dumps(extra)}")
           print(f"secrets_json={json.dumps(secrets)}")
+          # vars: declared NON-secret config names to inject from the Actions
+          # Variables context (operator-tunable knobs, e.g. JIRA_MAX_FINDINGS).
+          print(f"vars_json={json.dumps(m.get('vars') or [])}")
           # private_output: encrypt this agent's artifact and decrypt encrypted
           # upstream artifacts (public-repo leak protection). See the encrypt
           # step in run-claude-stage and the decrypt step below.
@@ -199,6 +202,32 @@ jobs:
               for name in declared:
                   fh.write(f"{name}<<__SDLC_SECRET_EOF__\n{allsec[name]}\n__SDLC_SECRET_EOF__\n")
           print(f"Injected {len(declared)} declared secret(s) into job env: {', '.join(declared)}")
+          PY
+
+      - name: Inject declared vars
+        # Non-secret counterpart of secret injection: promote ONLY the Actions
+        # Variables a manifest declares (`vars:`) into the job env, so an
+        # operator can tune knobs (e.g. JIRA_MAX_FINDINGS) in Settings ->
+        # Variables WITHOUT editing the skill. Missing vars are skipped — the
+        # skill's own default applies — so this never fails the run.
+        if: steps.manifest.outputs.vars_json != '[]' && steps.manifest.outputs.vars_json != ''
+        env:
+          VARS_JSON: ${{ toJSON(vars) }}
+          DECLARED: ${{ steps.manifest.outputs.vars_json }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          allvars = json.loads(os.environ["VARS_JSON"])
+          declared = json.loads(os.environ["DECLARED"])
+          injected = []
+          with open(os.environ["GITHUB_ENV"], "a") as fh:
+              for name in declared:
+                  val = allvars.get(name)
+                  if val not in (None, ""):
+                      fh.write(f"{name}<<__SDLC_VAR_EOF__\n{val}\n__SDLC_VAR_EOF__\n")
+                      injected.append(name)
+          print(f"Injected vars: {injected or '(none set; skill defaults apply)'}")
           PY
 
       - name: Decrypt upstream artifacts

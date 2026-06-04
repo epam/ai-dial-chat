@@ -34,11 +34,11 @@ The match is **positive-only and boundary-anchored**: `ai-dial-chat/` matches bu
 Every dropped key is logged and counted; the counts surface in the sticky comment
 summary and under `payload.jira` / `payload.dropped` for audit.
 
-After repo filtering, an optional cap (`JIRA_MAX_FINDINGS`, default `0` = no cap)
-limits how many matched findings are handed to triage. Set it to `N` to keep only
-the top-`N` highest-priority findings (the JQL is priority-ordered) when triage's
-turn budget is tight; the rest are recorded under `payload.deferred` (keys only) so
-nothing is lost. Default `0` analyzes all matched findings.
+After repo filtering, a cap (`JIRA_MAX_FINDINGS`, default `10`) limits how many
+matched findings are handed to triage — all ~34 real findings overran triage's
+turn budget. The cap keeps the top-N highest-priority findings (the JQL is
+priority-ordered); the rest are recorded under `payload.deferred` (keys only) so
+nothing is lost. Set `JIRA_MAX_FINDINGS=0` to analyze all.
 
 ---
 
@@ -66,7 +66,7 @@ nothing is lost. Default `0` analyzes all matched findings.
 | `JIRA_FILTER_ID` | no | `189402` | Used only to build the default JQL. |
 | `JIRA_MAX` | no | `1000` | `tempMax` cap on exported issues. |
 | `JIRA_REPO_NAME` | no | `$GITHUB_REPOSITORY` name, else cwd basename | Repo to keep issues for; matched against the `<name>/...` Location path prefix. |
-| `JIRA_MAX_FINDINGS` | no | `0` | Optional cap on repo-matched findings handed to triage (`0` = no cap; `N` keeps the top-N priority findings, rest deferred). Use to keep triage within its turn budget. |
+| `JIRA_MAX_FINDINGS` | no | `10` | Cap on repo-matched findings handed to triage (top-N priority; rest deferred). `0` = no cap. **Set via the Actions Variable of the same name** (Settings → Variables) — no skill edit; `10` is the fallback when unset. |
 
 **Default JQL** (matches the security filter the human exports):
 
