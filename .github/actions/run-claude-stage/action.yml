@@ -254,11 +254,12 @@ runs:
         if-no-files-found: warn
 
     - name: Publish to job summary
-      # The rendered stage report always goes to the Actions run summary. For PR
-      # runs this is an extra surface alongside the sticky comment; for scheduled
-      # / workflow_dispatch runs (no PR) it is the primary human-visible output,
-      # together with the uploaded stage-output.json artifact.
-      if: always() && steps.extract.outputs.comment != ''
+      # DISABLED — this repo is PUBLIC, so the Actions job summary is world-
+      # readable; rendering triage findings (file paths, vuln classes, verdicts)
+      # here leaks internal security data. Re-enable only for non-sensitive
+      # agents, or once results move to a private surface (SARIF -> Security tab
+      # / Jira write-back). See revised slice 2.
+      if: false
       shell: bash
       env:
         STAGE_NAME: ${{ inputs.stage_name }}
@@ -271,7 +272,11 @@ runs:
         } >> "$GITHUB_STEP_SUMMARY"
 
     - name: Post sticky PR comment
-      if: github.event_name == 'pull_request'
+      # DISABLED — public repo: PR comments are world-readable and would leak
+      # internal security findings. Off until results move to a private surface
+      # (SARIF -> Security tab / Jira write-back). Re-enable per non-sensitive
+      # agent later if a public PR comment is acceptable for that agent.
+      if: false
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
