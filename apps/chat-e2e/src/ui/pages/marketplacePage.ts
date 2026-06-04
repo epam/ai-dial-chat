@@ -1,5 +1,6 @@
 import { Routes } from '@/chat/constants/routes';
 import { ApplicationType } from '@/chat/types/applications';
+import { EntityType } from '@/chat/types/common';
 import config from '@/config/chat.playwright.config';
 import {
   API,
@@ -50,6 +51,7 @@ interface EntityConfig {
     installedEntitiesApi: string;
     entitiesApi: string;
   };
+  entityType: EntityType;
   route: Routes;
   hasEntityTabInReturnUrl?: boolean;
 }
@@ -143,6 +145,49 @@ export class MarketplacePage extends BasePage {
     await this.navigateToEntityEditorPage(options, entityEditorAttributes);
   }
 
+  public async openToolsetsPage(): Promise<void> {
+    await this.openEntityPage(undefined, MarketplaceEntitiesTabs.TOOLSETS);
+  }
+
+  public async openToolsetCardPage(id: string): Promise<void> {
+    await this.openEntityPage(id, MarketplaceEntitiesTabs.TOOLSETS);
+  }
+
+  public async openEntityPage(
+    id: string | undefined,
+    entityTab: MarketplaceEntitiesTabs,
+    options: MarketplaceEntityOptions = {
+      getEntities: true,
+      updateInstalledEntities: false,
+    },
+  ): Promise<void> {
+    const entityEditorAttributes = this.getEntityAttributes(entityTab, id);
+    await this.navigateToEntityEditorPage(options, entityEditorAttributes);
+  }
+
+  private getEntityAttributes(
+    entityTab: MarketplaceEntitiesTabs,
+    reference?: string,
+  ): {
+    entityEditorPath: string;
+    entityApiHosts: {
+      installedEntitiesApi?: string;
+      entitiesApi?: string;
+    };
+  } {
+    const config = this.getEntityConfig(entityTab);
+    let entityCardUrlBuilder = new MarketplaceUrlBuilder().withEntitiesTab(
+      entityTab,
+    );
+    if (reference) {
+      entityCardUrlBuilder.withReference(config.entityType, reference);
+    }
+    return {
+      entityEditorPath: entityCardUrlBuilder.build(),
+      entityApiHosts: config.apiHosts,
+    };
+  }
+
   private getCreateEntityEditorAttributes(
     entityTab: MarketplaceEntitiesTabs,
     step: EntityEditSteps,
@@ -212,6 +257,7 @@ export class MarketplacePage extends BasePage {
           installedEntitiesApi: API.installedDeploymentsHost(),
           entitiesApi: API.publishedApplicationsHost(),
         },
+        entityType: EntityType.Application,
         route: Routes.AppsEditor,
       },
       [MarketplaceEntitiesTabs.TOOLSETS]: {
@@ -219,6 +265,7 @@ export class MarketplacePage extends BasePage {
           installedEntitiesApi: API.installedToolsetsHost(),
           entitiesApi: API.toolsetsHost(),
         },
+        entityType: EntityType.Toolset,
         route: Routes.ToolsetEditor,
         hasEntityTabInReturnUrl: true,
       },

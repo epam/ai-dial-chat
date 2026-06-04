@@ -9,7 +9,8 @@ import { ApiUtils } from '@/src/utils/server/api';
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
-import { ToolsetSelectors } from '@/src/store/selectors';
+import { useAppSelector } from '@/src/store/hooks';
+import { PublicationSelectors, ToolsetSelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { NA_VERSION } from '@/src/constants/publication';
@@ -31,6 +32,17 @@ function ReviewToolsetDialogContent({
 }: ReviewToolsetDialogContentProps) {
   const { t } = useTranslation(Translation.Chat);
 
+  const selectedPublicationUrl = useAppSelector(
+    PublicationSelectors.selectSelectedPublicationUrl,
+  );
+  const isResourceUnpublishing = useAppSelector((state) =>
+    PublicationSelectors.selectIsResourceUnpublishing(
+      state,
+      selectedPublicationUrl ?? '',
+      toolset.id,
+    ),
+  );
+
   const controlsEntity = useMemo(
     () => ({
       id: ApiUtils.decodeApiUrl(toolset.id),
@@ -44,17 +56,19 @@ function ReviewToolsetDialogContent({
   return (
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
-        <h2 className="text-base font-semibold">{t(ChatI18nKeys.Toolset)}</h2>
+        <h2 className="text-base font-semibold">
+          {`${isResourceUnpublishing ? t(ChatI18nKeys.Unpublish) : t(ChatI18nKeys.Publish)} ${t(ChatI18nKeys.Toolset)}`}
+        </h2>
         <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Name)}
             value={toolset.name}
-            dataQa="app-name"
+            dataQa="entity-name"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Version)}
             value={toolset.version ?? NA_VERSION}
-            dataQa="app-version"
+            dataQa="entity-version"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Icon)}
@@ -71,7 +85,7 @@ function ReviewToolsetDialogContent({
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Description)}
             value={description}
-            dataQa="app-description"
+            dataQa="entity-description"
           />
           {toolset.topics?.length > 0 && (
             <MarketplaceEntityInfoRow
@@ -88,24 +102,24 @@ function ReviewToolsetDialogContent({
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Endpoint)}
             value={toolset.endpoint}
-            dataQa="app-endpoint"
+            dataQa="toolset-endpoint"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.TransportProtocol)}
             value={toolset.transport}
-            dataQa="app-transport"
+            dataQa="toolset-transport"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.AuthenticationType)}
             value={
               AUTH_TYPE_OPTIONS[toolset.authSettings?.authenticationType]?.name
             }
-            dataQa="app-authentication-type"
+            dataQa="toolset-authentication-type"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.AllowedTools)}
             value={toolset.allowedTools?.join(', ')}
-            dataQa="app-allowed-tools"
+            dataQa="toolset-allowed-tools"
           />
         </div>
       </div>

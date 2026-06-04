@@ -951,6 +951,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
               paddingLeft: `${level * 1.5}rem`,
             }}
             data-qa="edit-container"
+            onClick={(e) => e.stopPropagation()}
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
