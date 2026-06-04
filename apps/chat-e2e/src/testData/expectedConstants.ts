@@ -447,6 +447,7 @@ export enum MenuOptions {
   copyLink = 'Copy link',
   removeAccess = 'Remove access',
   loginWithMyCreds = 'Login with my creds',
+  login = 'Log in',
 }
 
 export enum FilterMenuOptions {
