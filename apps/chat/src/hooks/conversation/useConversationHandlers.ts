@@ -7,6 +7,7 @@ import {
   MessageRole,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
+import type { ConversationResponseDto } from '@epam/chat-api-client';
 import {
   type Dispatch,
   type MutableRefObject,
@@ -189,7 +190,7 @@ export const useConversationHandlers = ({
 
       const updated = { ...prev, messages: next };
       conversationRef.current = updated;
-      saveConversation(conversationPath, updated);
+      saveConversation(conversationPath, updated as ConversationResponseDto);
       return updated;
     });
   }, [
@@ -233,7 +234,10 @@ export const useConversationHandlers = ({
             modelId: updated.model.id,
             rate: rating,
           });
-          await saveConversation(conversationPath, updated);
+          await saveConversation(
+            conversationPath,
+            updated as ConversationResponseDto,
+          );
         } catch {
           setConversation((prev) => {
             if (!prev) return prev;
@@ -246,7 +250,10 @@ export const useConversationHandlers = ({
           });
         }
       } else {
-        await saveConversation(conversationPath, updated).catch(() => {
+        await saveConversation(
+          conversationPath,
+          updated as ConversationResponseDto,
+        ).catch(() => {
           setConversation((prev) => {
             if (!prev) return prev;
             return {
@@ -400,7 +407,7 @@ export const useConversationHandlers = ({
         return updated;
       });
 
-      saveConversation(conversationPath, updated);
+      saveConversation(conversationPath, updated as ConversationResponseDto);
 
       startStream(
         conversationPath,

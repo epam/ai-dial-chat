@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { memo, type FC } from 'react';
 
 interface Props {
   bg: string;
@@ -7,12 +8,12 @@ interface Props {
   initialsClassName?: string;
 }
 
-export default function AvatarInitials({
+const AvatarInitials: FC<Props> = ({
   bg,
   textColor,
   shortName,
   initialsClassName = 'dial-tiny-text',
-}: Props) {
+}) => {
   return (
     <div
       className={mergeClasses(
@@ -24,4 +25,6 @@ export default function AvatarInitials({
       {shortName}
     </div>
   );
-}
+};
+
+export default memo(AvatarInitials);

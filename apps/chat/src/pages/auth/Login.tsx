@@ -1,5 +1,5 @@
 import type { ProviderInfoDto } from '@epam/chat-api-client';
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useUser } from '../../context/auth/UserContext';
@@ -76,4 +76,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default memo(LoginPage);

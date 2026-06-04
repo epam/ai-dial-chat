@@ -12,14 +12,12 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import {
-  getConversationName,
-  getConversationTitleFromName,
-} from './conversation.utils';
-import {
   ConversationListItemDto,
   ConversationListResponseDto,
 } from './dto/conversation-list.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
+import { getConversationName } from './get-conversation-name';
+import { getConversationTitleFromName } from './get-conversation-title-from-name';
 
 const getValidAttachments = (customContent?: Message['custom_content']) =>
   (customContent?.attachments ?? []).filter((attachment) =>

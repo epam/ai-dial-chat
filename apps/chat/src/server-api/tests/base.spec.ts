@@ -9,7 +9,7 @@ import {
   post,
   put,
   setCsrfToken,
-} from './base';
+} from '../base';
 
 // ---------------------------------------------------------------------------
 // Helpers
