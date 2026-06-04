@@ -37,6 +37,14 @@ export interface ConversationInputTypography {
   input?: InputTypography;
 }
 
+/** Combined color and typography overrides for the `ConversationInput` component. */
+export interface ConversationInputStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ConversationInputColors;
+  /** Typography overrides for the welcome heading and input. */
+  typography?: ConversationInputTypography;
+}
+
 /** Props accepted by the `EditMessageInput` component. */
 export interface EditMessageInputProps {
   /** Initial message text pre-populated in the textarea. */
@@ -97,10 +105,8 @@ export interface ConversationInputProps {
   isStreaming?: boolean;
   /** Called whenever the attachment list changes. */
   onAttachmentsChange?: (attachments: Attachment[]) => void;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: ConversationInputColors;
-  /** Typography overrides for the welcome heading and input. */
-  typography?: ConversationInputTypography;
+  /** Color and typography overrides applied as CSS custom properties. */
+  styles?: ConversationInputStyles;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
   /** Text displayed inside the drag-over overlay. Defaults to `"Drop files here"`. */

@@ -7,6 +7,7 @@ export type {
   ConversationInputProps,
   ConversationInputColors,
   ConversationInputTypography,
+  ConversationInputStyles,
   EditMessageInputProps,
 } from './models/ConversationInput.js';
 export type {

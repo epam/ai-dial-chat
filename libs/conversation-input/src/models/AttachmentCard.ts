@@ -14,8 +14,10 @@ export interface AttachmentCardColors {
 
 /** Typography overrides for the `AttachmentCard` component. */
 export interface AttachmentCardTypography {
-  /** Utility class applied to the file name text (e.g. `'dial-tiny-text'`, `'text-xs'`). */
+  /** Utility class applied to the file name text. Defaults to `'dial-tiny-text'`. */
   fontClassName?: string;
+  /** Utility class applied to the bottom meta label (file type / status). Defaults to `'dial-tiny-text'`. */
+  metaClassName?: string;
 }
 
 /** Props accepted by the `AttachmentCard` component. */

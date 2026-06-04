@@ -2,17 +2,18 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react';
 import styles from './DeploymentIcon.module.scss';
 
+interface Props {
+  src: string;
+  size: number;
+  fallback: ReactNode;
+}
 /**
  * Renders a deployment icon inside a white rounded badge.
  * The `size` prop is the outer badge dimension in pixels.
  * The icon image is inset by ~11 % (matching Figma) to leave a visible backdrop.
  * On image load error the `fallback` node is rendered centred inside the same badge.
  */
-export const DeploymentIcon: FC<{
-  src: string;
-  size: number;
-  fallback: ReactNode;
-}> = ({ src, size, fallback }) => {
+export const DeploymentIcon: FC<Props> = ({ src, size, fallback }) => {
   const [hasFailed, setHasFailed] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
 

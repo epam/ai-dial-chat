@@ -13,8 +13,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   message,
   placeholder = 'Type a prompt or use "/" to select one',
   welcomeText,
-  colors,
-  typography,
+  styles: stylesProp,
   className,
   dropLabel = 'Drop files here',
   dropOverlayClassName = 'rounded',
@@ -32,6 +31,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   const handleDropFilesConsumed = useCallback(() => {
     setPendingFiles([]);
   }, []);
+
+  const { colors, typography } = stylesProp ?? {};
 
   const { getRootProps, isDragActive } = useDropzone({
     onDrop: (files) => {
@@ -54,10 +55,10 @@ export const ConversationInput: FC<ConversationInputProps> = ({
       ? typography?.welcomeFontSize
       : undefined,
     '--ci-welcome-font-weight': noCustomClass
-      ? typography?.welcomeFontWeight
+      ? typography?.welcomeFontWeight?.toString()
       : undefined,
     '--ci-welcome-line-height': noCustomClass
-      ? typography?.welcomeLineHeight
+      ? typography?.welcomeLineHeight?.toString()
       : undefined,
   });
 
