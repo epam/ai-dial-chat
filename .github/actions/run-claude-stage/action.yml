@@ -280,34 +280,17 @@ runs:
           || { echo "::warning::SARIF upload failed (code scanning may be disabled, or ref/sha not accepted). Triage still succeeded."; }
 
     - name: Publish aggregate report (sensitive agents)
-      # private_output (sensitive) agents publish ONLY aggregate counts — no
-      # file paths, verdicts-per-finding, or any detail — to the public surfaces
-      # (job summary + sticky PR comment). Safe on a public repo. Runs on the
-      # local plaintext, BEFORE the encrypt step removes it.
+      # private_output (sensitive) agents publish ONLY aggregate counts — no file
+      # paths, per-finding verdicts, or any detail — to the Actions run's job
+      # summary (the pipeline view), NOT a PR comment: these are batch/scheduled
+      # agents over a standing backlog, not PR reviewers. Counts are safe on a
+      # public repo. Runs on the local plaintext, BEFORE the encrypt step removes it.
       if: inputs.private_output == 'true' && hashFiles('stage-output.json') != ''
       shell: bash
-      env:
-        GH_TOKEN: ${{ github.token }}
-        REPO: ${{ github.repository }}
-        PR_NUMBER: ${{ github.event.pull_request.number }}
-        STAGE_NAME: ${{ inputs.stage_name }}
       run: |
         set -euo pipefail
-        python3 ./.github/claude/scripts/findings-aggregate.py stage-output.json > agg.md
-        cat agg.md >> "$GITHUB_STEP_SUMMARY"
-        if [ "${{ github.event_name }}" = "pull_request" ]; then
-          MARKER="<!-- dial-sdlc:${STAGE_NAME} -->"
-          BODY="$(printf '%s\n%s' "$MARKER" "$(cat agg.md)")"
-          EXISTING_ID="$(gh api "repos/${REPO}/issues/${PR_NUMBER}/comments" \
-            | jq -r --arg m "$MARKER" '.[] | select(.body | startswith($m)) | .id' | head -n1)"
-          if [ -n "$EXISTING_ID" ]; then
-            gh api -X PATCH "repos/${REPO}/issues/comments/${EXISTING_ID}" -f body="$BODY" > /dev/null
-            echo "Updated aggregate sticky comment $EXISTING_ID"
-          else
-            gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -f body="$BODY" > /dev/null
-            echo "Posted aggregate sticky comment"
-          fi
-        fi
+        python3 ./.github/claude/scripts/findings-aggregate.py stage-output.json >> "$GITHUB_STEP_SUMMARY"
+        echo "Published aggregate counts to the job summary."
 
     - name: Encrypt stage output (private agents)
       # Runs AFTER the renderer (and any SARIF emitter) have consumed the local
