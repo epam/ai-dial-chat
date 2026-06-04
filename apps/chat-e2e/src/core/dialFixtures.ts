@@ -6,6 +6,7 @@ import {
   MarketplacePage,
 } from '../ui/pages';
 import {
+  AgentAndToolsetSelectModal,
   AgentInfo,
   Breadcrumb,
   Chat,
@@ -48,6 +49,8 @@ import {
   PromptBar,
   PublishingFilter,
   PublishingRules,
+  QuickApp2EditorContainer,
+  QuickApp2EditorViewForm,
   SelectFolderManagerModal,
   SelectFolderModal,
   SendMessage,
@@ -227,6 +230,9 @@ const dialTest = test.extend<{
   externalAppEditorContainer: ExternalAppEditorContainer;
   externalAppEditorViewForm: ExternalAppEditorViewForm;
   externalAppEditorAppSettingsPreview: EntityEditorEntitySettingsCardPreview;
+  quickApp2EditorContainer: QuickApp2EditorContainer;
+  quickApp2EditorViewForm: QuickApp2EditorViewForm;
+  agentAndToolsetSelectModal: AgentAndToolsetSelectModal;
   externalAppEditorAppSettingsPreviewBody: EntityEditorEntitySettingsCardPreviewBody;
   externalAppEditorAppSettingsPreviewCard: EntityEditorPreviewCard;
   toolsetEditorContainer: ToolsetEditorContainer;
@@ -676,6 +682,19 @@ const dialTest = test.extend<{
     const externalAppEditorAppSettingsPreviewCard =
       externalAppEditorAppSettingsPreviewBody.getEntityEditorPreviewCard();
     await use(externalAppEditorAppSettingsPreviewCard);
+  },
+  quickApp2EditorContainer: async ({ entityEditorPage }, use) => {
+    const quickApp2EditorContainer =
+      entityEditorPage.getQuickApp2EditorContainer();
+    await use(quickApp2EditorContainer);
+  },
+  quickApp2EditorViewForm: async ({ quickApp2EditorContainer }, use) => {
+    const quickApp2EditorViewForm =
+      quickApp2EditorContainer.getEntityEditorViewForm();
+    await use(quickApp2EditorViewForm);
+  },
+  agentAndToolsetSelectModal: async ({ page }, use) => {
+    await use(new AgentAndToolsetSelectModal(page));
   },
   toolsetEditorContainer: async ({ entityEditorPage }, use) => {
     const toolsetEditorContainer = entityEditorPage.getToolsetEditorContainer();
