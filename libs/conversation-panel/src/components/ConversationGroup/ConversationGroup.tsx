@@ -1,8 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  IconCaretDownFilled,
-  IconCaretRightFilled,
-} from '@tabler/icons-react';
+import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import { type FC, memo, useState } from 'react';
 import type { ConversationHistoryItem } from '../../models/ConversationPanel.js';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
