@@ -147,9 +147,6 @@ export const ChangePathDialog = ({
   const [collapsedTree, setCollapsedTree] = useState(false);
   const fileManagerActionRef = useRef<DialFileManagerActionsRef>(null);
   const addedTempFolderIdsRef = useRef<Set<string>>(new Set());
-  const [gridApi, setGridApi] = useState<GridApi<FileManagerGridRow> | null>(
-    null,
-  );
 
   const knownRowIdsRef = useRef<Set<string>>(new Set());
   const knownRowIdsInitializedRef = useRef(false);
@@ -577,7 +574,6 @@ export const ChangePathDialog = ({
         collapsedFileTree={collapsedTree}
         allowedFileTypes={[]}
         actionsRef={fileManagerActionRef}
-        onGridApiChange={setGridApi}
         onCreateFolder={handleCreateOrganizationFolder}
         onMoveToFiles={handleOrganizationMoveFiles}
         onCreateFolderValidate={handleCreateFolderValidate}
