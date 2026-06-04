@@ -221,7 +221,7 @@ jobs:
             openssl enc -d -aes-256-cbc -pbkdf2 -in "$enc" -out "$out" -pass env:SDLC_ARTIFACT_KEY
             echo "Decrypted ${enc} -> ${out}"
           done
-          [ "$enc_found" = 0 ] && echo "No encrypted upstream artifacts to decrypt."
+          if [ "$enc_found" = 0 ]; then echo "No encrypted upstream artifacts to decrypt."; fi
 
       - name: Overlay analysis-ref source
         # When a manifest declares `analysis_ref`, the agent must inspect THAT
