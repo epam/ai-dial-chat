@@ -30,6 +30,7 @@ import { constructPath, getMimeTypeByFileName } from '../file';
 import { EnumMapper } from '../mappers';
 
 import { ConversationInfo } from '@epam/ai-dial-shared';
+import uniq from 'lodash-es/uniq';
 
 export const getFolderFromShareResult = (
   folder: BackendChatFolder,
@@ -37,6 +38,10 @@ export const getFolderFromShareResult = (
 ) => {
   const id = ApiUtils.decodeApiUrl(folder.url.slice(0, folder.url.length - 1));
   const { apiKey, bucket, parentPath } = splitEntityId(id);
+  const sharedByUser =
+    folder?.sharedBy &&
+    uniq(folder?.sharedBy.map(({ user }) => user)).join(',');
+  const author = folder.author ?? sharedByUser;
 
   return {
     id,
@@ -44,6 +49,7 @@ export const getFolderFromShareResult = (
     folderId: constructPath(apiKey, bucket, parentPath),
     type: EnumMapper.getFeatureTypeByApiKey(apiKeyType),
     permissions: folder.permissions,
+    author,
   };
 };
 
