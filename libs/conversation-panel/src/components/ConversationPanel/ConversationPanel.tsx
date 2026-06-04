@@ -30,6 +30,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     styles: panelStyles,
     className,
     onBackdropClick,
+    getActions,
+    actionsLabel,
   }) => {
     const { colors, typography } = panelStyles ?? {};
     const [searchQuery, setSearchQuery] = useState('');
@@ -148,6 +150,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
                   items={pinnedItems}
                   activeConversationId={activeConversationId}
                   onSelectConversation={onSelectConversation}
+                  getActions={getActions}
+                  actionsLabel={actionsLabel}
                   groupHeaderClassName={typography?.groupHeaderClassName}
                   itemIconClassName={typography?.itemIconClassName}
                   itemTitleClassName={typography?.itemTitleClassName}
@@ -157,6 +161,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
                   items={myChatsItems}
                   activeConversationId={activeConversationId}
                   onSelectConversation={onSelectConversation}
+                  getActions={getActions}
+                  actionsLabel={actionsLabel}
                   groupHeaderClassName={typography?.groupHeaderClassName}
                   itemIconClassName={typography?.itemIconClassName}
                   itemTitleClassName={typography?.itemTitleClassName}

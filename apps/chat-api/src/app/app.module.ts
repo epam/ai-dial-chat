@@ -18,6 +18,7 @@ import { ModelsModule } from '../models/models.module';
 import { RateModule } from '../rate/rate.module';
 import { ThemeController } from '../themes/theme.controller';
 import { ThemeService } from '../themes/theme.service';
+import { UserConfigModule } from '../user-config/user-config.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { createServeStaticOptions } from './static-assets';
@@ -48,6 +49,7 @@ import { createServeStaticOptions } from './static-assets';
     ModelsModule,
     ChatModule,
     ConversationModule,
+    UserConfigModule,
     FilesModule,
     RateModule,
   ],

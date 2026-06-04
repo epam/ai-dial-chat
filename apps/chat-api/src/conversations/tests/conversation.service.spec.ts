@@ -63,6 +63,10 @@ const readStreamText = async (
 describe('ConversationService', () => {
   let service: ConversationService;
   let mockConfigService: Partial<ConfigService>;
+  let mockUserConfigService: {
+    getPinnedIds: ReturnType<typeof vi.fn>;
+    updatePin: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockConfigService = {
@@ -72,7 +76,14 @@ describe('ConversationService', () => {
         return undefined;
       }),
     };
-    service = new ConversationService(mockConfigService as ConfigService);
+    mockUserConfigService = {
+      getPinnedIds: vi.fn().mockResolvedValue([]),
+      updatePin: vi.fn().mockResolvedValue(undefined),
+    };
+    service = new ConversationService(
+      mockConfigService as ConfigService,
+      mockUserConfigService as never,
+    );
     vi.mocked(handleDialError).mockReset();
     vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
       data: {},
@@ -529,6 +540,80 @@ describe('ConversationService', () => {
         }),
       );
       expect(handleDialError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listConversations with pins', () => {
+    it('sets isPinned: true on items whose id is in the pins list', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            { url: 'conversations/bucket/conv-1', nodeType: 'FILE' },
+            { url: 'conversations/bucket/conv-2', nodeType: 'FILE' },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([
+        'conversations/bucket/conv-1',
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'conversations/bucket/conv-1',
+            isPinned: true,
+          }),
+          expect.objectContaining({
+            id: 'conversations/bucket/conv-2',
+            isPinned: false,
+          }),
+        ]),
+      );
+    });
+
+    it('sets isPinned: false on items not in the pins list', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            { url: 'conversations/bucket/conv-3', nodeType: 'FILE' },
+            { url: 'conversations/bucket/conv-4', nodeType: 'FILE' },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([
+        'conversations/bucket/conv-5',
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items.every((item) => item.isPinned === false)).toBe(true);
+    });
+
+    it('sets isPinned: false on all items when getPinnedIds returns empty', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            { url: 'conversations/bucket/conv-a', nodeType: 'FILE' },
+            { url: 'conversations/bucket/conv-b', nodeType: 'FILE' },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items.every((item) => item.isPinned === false)).toBe(true);
     });
   });
 });

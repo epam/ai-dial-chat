@@ -12,6 +12,7 @@ src/apis/HealthApi.ts
 src/apis/ModelsApi.ts
 src/apis/RateApi.ts
 src/apis/ThemesApi.ts
+src/apis/UserConfigApi.ts
 src/apis/index.ts
 src/index.ts
 src/models/index.ts

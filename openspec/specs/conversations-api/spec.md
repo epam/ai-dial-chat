@@ -79,9 +79,12 @@ On success the endpoint returns HTTP 200 with `ConversationListResponseDto`:
 
 ```ts
 class ConversationListItemDto {
-  id: string;        // Full DIAL Core resource URL (e.g. "conversations/bucket/model__title__uuid")
-  title: string;     // Human-readable conversation title extracted from the resource name
-  updatedAt: number; // Unix epoch milliseconds of the last update
+  id: string;               // Full DIAL Core resource URL (e.g. "conversations/bucket/model__title__uuid")
+  title: string;            // Human-readable conversation title extracted from the resource name
+  updatedAt: number;        // Unix epoch milliseconds of the last update
+  sharedWithMe: boolean;    // True when another user shared this conversation with the current user
+  publishedWithMe: boolean; // True when this conversation is published to the organisation
+  isPinned: boolean;        // True when the user has pinned this conversation
 }
 
 class ConversationListResponseDto {
@@ -89,6 +92,8 @@ class ConversationListResponseDto {
   nextToken?: string; // Cursor for the next page; absent when no more results
 }
 ```
+
+`isPinned` is populated by calling `UserConfigService.getPinnedIds` in parallel with the metadata call (`Promise.all`). That service reads `user-config.json` from the user's DIAL Core bucket; see the [user-config-api spec](../user-config-api/spec.md) for the full file format. The read falls back to `[]` on any error so a missing file never breaks the list response.
 
 The service calls `client.getConversationMetadata(bucket, path ?? '', { query: { recursive: true, limit, token: nextToken } })` and filters out items with `nodeType === 'FOLDER'`.
 
@@ -150,3 +155,16 @@ Integration tests SHALL cover key endpoints using supertest in `apps/chat-api/sr
 
 - **WHEN** `GET /api/v1/conversations/list?path=work` is called
 - **THEN** the service is called with `path: 'work'` forwarded as the DIAL Core folder argument
+
+---
+
+### Requirement: DELETE /api/v1/conversations cleans up pin state
+
+When a conversation is deleted, `deleteConversation` fires a fire-and-forget call to `userConfigService.updatePin(id, false, ...)` to remove the deleted id from `user-config.json`. The cleanup is non-fatal — errors are logged but do not affect the 204 response to the client. The conversation id for cleanup is reconstructed as `conversations/${bucket}/${conversationPath}`.
+
+See the [user-config-api spec](../user-config-api/spec.md) for `updatePin` semantics.
+
+#### Scenario: Deleting a pinned conversation removes it from the pins list
+
+- **WHEN** `DELETE /api/v1/conversations?path=...` is called for a pinned conversation
+- **THEN** the conversation is deleted from DIAL Core and its id is removed from `user-config.json`

@@ -35,6 +35,12 @@ export class ConversationListItemDto {
     example: false,
   })
   publishedWithMe!: boolean;
+
+  @ApiProperty({
+    description: 'True when the user has pinned this conversation.',
+    example: false,
+  })
+  isPinned!: boolean;
 }
 
 export class ConversationListResponseDto {

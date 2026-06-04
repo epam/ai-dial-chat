@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { UserConfigService } from '../../user-config/user-config.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 
@@ -143,6 +144,7 @@ describe('ConversationController (integration)', () => {
         providers: [
           { provide: ConfigService, useValue: configService },
           ConversationService,
+          UserConfigService,
         ],
       }).compile();
 
