@@ -116,6 +116,10 @@ jobs:
           # upstream artifacts (public-repo leak protection). See the encrypt
           # step in run-claude-stage and the decrypt step below.
           print(f"private_output={str(m.get('private_output', False)).lower()}")
+          # analysis_ref: overlay this ref's source for the agent to inspect.
+          # emit_sarif: convert findings[] -> SARIF and upload to code scanning.
+          print(f"analysis_ref={m.get('analysis_ref', '')}")
+          print(f"emit_sarif={str(m.get('emit_sarif', False)).lower()}")
           EOF
 
       - name: Install agent-declared CLI tools
@@ -219,6 +223,27 @@ jobs:
           done
           [ "$enc_found" = 0 ] && echo "No encrypted upstream artifacts to decrypt."
 
+      - name: Overlay analysis-ref source
+        # When a manifest declares `analysis_ref`, the agent must inspect THAT
+        # ref's code (e.g. snyk-triage validates findings against `development`,
+        # the branch the scanner ran on — not the sandbox base). We cannot
+        # `actions/checkout` that ref: the framework (composite action, prompts,
+        # schemas, skills) lives ONLY on the sandbox base, so a full checkout
+        # would strip it. Instead overlay the ref's source while preserving the
+        # framework paths (.github, .claude). Also capture its sha/ref so an
+        # emit_sarif upload can be scoped to the scanned commit.
+        if: steps.manifest.outputs.analysis_ref != ''
+        env:
+          ANALYSIS_REF: ${{ steps.manifest.outputs.analysis_ref }}
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin "$ANALYSIS_REF"
+          SHA="$(git rev-parse FETCH_HEAD)"
+          git checkout FETCH_HEAD -- . ':(exclude).github' ':(exclude).claude'
+          echo "ANALYSIS_SHA=${SHA}" >> "$GITHUB_ENV"
+          echo "ANALYSIS_REF_FULL=refs/heads/${ANALYSIS_REF}" >> "$GITHUB_ENV"
+          echo "Overlaid source from ${ANALYSIS_REF}@${SHA:0:7}; .github/.claude preserved."
+
       - id: stage
         uses: ./.github/actions/run-claude-stage
         with:
@@ -230,3 +255,4 @@ jobs:
           max_turns: ${{ steps.manifest.outputs.max_turns }}
           upstream_artifacts: ${{ inputs.upstream_artifacts }}
           private_output: ${{ steps.manifest.outputs.private_output }}
+          emit_sarif: ${{ steps.manifest.outputs.emit_sarif }}

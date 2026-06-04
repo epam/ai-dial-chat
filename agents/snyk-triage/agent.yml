@@ -37,3 +37,15 @@ max_turns: 60
 # underscore-prefixed); to fall back to it, re-enable the stub and point this
 # `needs:` at snyk-scan-stub (findings under .payload.sarif).
 needs: [snyk-jira-ingest]
+
+# The Snyk findings were scanned against `development` (verified: the findings'
+# file paths exist on origin/development, not on development-1.0 or the sandbox
+# base). The platform overlays development's source so triage validates against
+# the right code, and scopes the SARIF upload to that branch/commit.
+analysis_ref: development
+
+# Surface verdicts privately via GitHub code scanning (Security tab, write-access
+# only) instead of public PR comments/summaries. The platform converts
+# payload.findings[] -> SARIF and uploads it. Confirmed/needs-review show as open
+# alerts; false-positive/not-applicable/duplicate upload as dismissed.
+emit_sarif: true

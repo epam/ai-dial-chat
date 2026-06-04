@@ -35,6 +35,10 @@ inputs:
     description: 'When "true", encrypt stage-output.json (openssl, key from SDLC_ARTIFACT_KEY in env) before uploading it as an artifact, so the artifact is not readable on a public repo. Local plaintext is consumed on the runner first (verify/render/SARIF) then removed.'
     required: false
     default: 'false'
+  emit_sarif:
+    description: 'When "true", convert payload.findings[] to SARIF and upload to GitHub code scanning (Security tab). Scoped to ANALYSIS_REF_FULL/ANALYSIS_SHA from env when set (the scanned branch), else the current ref/sha.'
+    required: false
+    default: 'false'
 
 outputs:
   message:
@@ -249,6 +253,31 @@ runs:
         STAGE_NAME: ${{ inputs.stage_name }}
         AGENT_VERSION: ${{ inputs.agent_version }}
       run: python3 ./.github/claude/scripts/render-stage-comment.py
+
+    - name: Emit SARIF to code scanning
+      # Convert payload.findings[] -> SARIF and upload to the Security tab (a
+      # write-access-gated surface, unlike public PR comments/summaries). Runs
+      # on the local plaintext, BEFORE the encrypt step removes it. Scoped to
+      # the scanned branch/commit (ANALYSIS_*) when analysis_ref is set, so
+      # alerts render against real code; falls back to the current ref/sha.
+      if: inputs.emit_sarif == 'true' && hashFiles('stage-output.json') != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+        python3 ./.github/claude/scripts/findings-to-sarif.py stage-output.json triage.sarif
+        SARIF_REF="${ANALYSIS_REF_FULL:-$GITHUB_REF}"
+        SARIF_SHA="${ANALYSIS_SHA:-$GITHUB_SHA}"
+        B64="$(gzip -c triage.sarif | base64 -w0)"
+        echo "Uploading SARIF for ${SARIF_REF}@${SARIF_SHA:0:7}"
+        gh api -X POST "repos/${REPO}/code-scanning/sarifs" \
+          -f commit_sha="${SARIF_SHA}" \
+          -f ref="${SARIF_REF}" \
+          -f sarif="${B64}" \
+          && echo "SARIF accepted by code scanning." \
+          || { echo "::warning::SARIF upload failed (code scanning may be disabled, or ref/sha not accepted). Triage still succeeded."; }
 
     - name: Encrypt stage output (private agents)
       # Runs AFTER the renderer (and any SARIF emitter) have consumed the local
