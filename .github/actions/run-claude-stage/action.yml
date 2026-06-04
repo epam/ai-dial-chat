@@ -253,6 +253,23 @@ runs:
         retention-days: 90
         if-no-files-found: warn
 
+    - name: Publish to job summary
+      # The rendered stage report always goes to the Actions run summary. For PR
+      # runs this is an extra surface alongside the sticky comment; for scheduled
+      # / workflow_dispatch runs (no PR) it is the primary human-visible output,
+      # together with the uploaded stage-output.json artifact.
+      if: always() && steps.extract.outputs.comment != ''
+      shell: bash
+      env:
+        STAGE_NAME: ${{ inputs.stage_name }}
+        BODY: ${{ steps.extract.outputs.comment }}
+      run: |
+        {
+          echo "## ${STAGE_NAME}"
+          echo ""
+          echo "${BODY}"
+        } >> "$GITHUB_STEP_SUMMARY"
+
     - name: Post sticky PR comment
       if: github.event_name == 'pull_request'
       shell: bash
