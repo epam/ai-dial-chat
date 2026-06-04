@@ -107,6 +107,7 @@ export enum ConversationHistoryI18nKeys {
   DeleteLabel = 'conversationHistory.deleteLabel',
   DeleteConfirmTitle = 'conversationHistory.deleteConfirmTitle',
   DeleteConfirmDescription = 'conversationHistory.deleteConfirmDescription',
+  DeleteError = 'conversationHistory.deleteError',
 }
 
 export enum SidebarI18nKeys {

@@ -98,9 +98,18 @@ export const ConversationsProvider = ({
   }, []);
 
   const deleteConversation = useCallback(async (id: string) => {
-    setConversations((prev) => prev.filter((c) => c.id !== id));
+    let snapshot: ConversationListItemDto[] | undefined;
+    setConversations((prev) => {
+      snapshot = prev;
+      return prev.filter((c) => c.id !== id);
+    });
     const conversationPath = getConversationPath(normalizeConversationId(id));
-    await apiDeleteConversation(conversationPath);
+    try {
+      await apiDeleteConversation(conversationPath);
+    } catch (err) {
+      if (snapshot) setConversations(snapshot);
+      throw err;
+    }
   }, []);
 
   const value = useMemo(

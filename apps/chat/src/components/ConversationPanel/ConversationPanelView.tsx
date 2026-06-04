@@ -68,6 +68,8 @@ const ConversationPanelView: FC<Props> = ({
   }, [activeConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
@@ -168,25 +170,37 @@ const ConversationPanelView: FC<Props> = ({
   const handleConfirmDelete = useCallback(async () => {
     if (!pendingDeleteId) return;
     const idToDelete = pendingDeleteId;
+
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteConversation(idToDelete);
+    } catch {
+      setDeleteError(t(ConversationHistoryI18nKeys.DeleteError));
+      setIsDeleting(false);
+      return;
+    }
+    setIsDeleting(false);
     setPendingDeleteId(null);
 
     const activeContextId = activeConversationId
       ? panelToContextId.get(activeConversationId)
       : undefined;
     if (activeContextId === idToDelete) navigate(ROUTES.ROOT);
-
-    try {
-      await deleteConversation(idToDelete);
-    } catch (err) {
-      console.error('Failed to delete conversation', err);
-    }
   }, [
     pendingDeleteId,
     deleteConversation,
     activeConversationId,
     panelToContextId,
     navigate,
+    t,
   ]);
+
+  const handleCloseDeleteDialog = useCallback(() => {
+    if (isDeleting) return;
+    setPendingDeleteId(null);
+    setDeleteError(null);
+  }, [isDeleting]);
 
   return (
     <>
@@ -213,21 +227,27 @@ const ConversationPanelView: FC<Props> = ({
       <DialConfirmationPopup
         open={pendingDeleteId !== null}
         header={t(ConversationHistoryI18nKeys.DeleteConfirmTitle)}
-        description={
-          <>
-            {t(ConversationHistoryI18nKeys.DeleteConfirmDescription)}{' '}
-            <span className="font-medium text-primary">
-              &ldquo;{pendingDeleteTitle}&rdquo;
-            </span>
-            ?
-          </>
-        }
         confirmLabel={t(ActionsI18nKeys.Delete)}
         cancelLabel={t(ActionsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
+        isLoading={isDeleting}
+        description={
+          <>
+            <span>
+              {t(ConversationHistoryI18nKeys.DeleteConfirmDescription)}{' '}
+              <span className="dial-small-text text-primary">
+                &ldquo;{pendingDeleteTitle}&rdquo;
+              </span>
+              ?
+            </span>
+            {deleteError && (
+              <span className="mt-1 block text-error">{deleteError}</span>
+            )}
+          </>
+        }
         onConfirm={handleConfirmDelete}
-        onCancel={() => setPendingDeleteId(null)}
-        onClose={() => setPendingDeleteId(null)}
+        onCancel={handleCloseDeleteDialog}
+        onClose={handleCloseDeleteDialog}
       />
     </>
   );

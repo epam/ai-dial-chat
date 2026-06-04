@@ -123,7 +123,8 @@
     "unpinLabel": "Unpin",
     "deleteLabel": "Delete",
     "deleteConfirmTitle": "Confirm Deleting Chat",
-    "deleteConfirmDescription": "Are you sure you want to delete"
+    "deleteConfirmDescription": "Are you sure you want to delete",
+    "deleteError": "Failed to delete the conversation. Please try again."
   },
   "auth": {
     "signOut": "Sign out",
