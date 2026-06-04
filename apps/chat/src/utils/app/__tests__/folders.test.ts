@@ -183,4 +183,19 @@ describe('getSelectedEntitiesByFolderId', () => {
       }),
     ).toEqual(['bucket/files/f2/c.txt']);
   });
+
+  it('does not match files from folders whose names share a prefix', () => {
+    const filesWithSimilarFolders = [
+      { id: 'bucket/files/folder01/file1.txt' },
+      { id: 'bucket/files/folder0101/file2.txt' },
+    ];
+    expect(
+      getSelectedEntitiesByFolderId({
+        entities: filesWithSimilarFolders as ShareEntity[],
+        folderId: 'bucket/files/folder01',
+        partialChosenFolderIds: [],
+        chosenItemsIds: [],
+      }),
+    ).toEqual(['bucket/files/folder01/file1.txt']);
+  });
 });

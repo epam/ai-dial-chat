@@ -197,5 +197,14 @@ describe('File utility methods', () => {
         ),
       ).toEqual(['root/a/', 'root/a/nested/']);
     });
+
+    it('does not match folders whose names share a prefix but are distinct', () => {
+      expect(
+        getNestedEmptyFolderIdsForChosenParent(
+          ['bucket/files/folder01', 'bucket/files/folder0101'],
+          'bucket/files/folder01',
+        ),
+      ).toEqual(['bucket/files/folder01/']);
+    });
   });
 });

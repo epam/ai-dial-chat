@@ -754,15 +754,17 @@ export const getSelectedEntitiesByFolderId = <
   folderId: string;
   partialChosenFolderIds: string[];
   chosenItemsIds: string[];
-}) =>
-  entities
+}) => {
+  const prefix = addTrailingSlashIfAbsent(folderId);
+  return entities
     .filter(
       (entity) =>
-        entity.id.startsWith(folderId) &&
+        entity.id.startsWith(prefix) &&
         (!partialChosenFolderIds.includes(folderId) ||
           !chosenItemsIds.includes(entity.id)),
     )
     .map((entity) => entity.id);
+};
 
 export const getPartialAndFullyChosenFolders = (
   folders: FolderInterface[],

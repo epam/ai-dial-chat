@@ -326,8 +326,9 @@ export const filesSlice = createSlice({
         fileIds: string[];
       }>(
         (acc, folderId) => {
+          const prefix = addTrailingSlashIfAbsent(folderId);
           const fileIds = payload.files
-            .filter(({ id }) => id.startsWith(folderId))
+            .filter(({ id }) => id.startsWith(prefix))
             .map(({ id }) => id);
 
           if (fileIds.length) {
