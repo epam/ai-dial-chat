@@ -50,7 +50,7 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
     if (items.length === 0) return null;
 
     return (
-      <section>
+      <section className="flex flex-col gap-1">
         <button
           type="button"
           aria-expanded={isExpanded}
@@ -70,7 +70,7 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
         </button>
 
         {isExpanded && (
-          <ul role="list" className="flex flex-col gap-0.5">
+          <ul role="list" className="flex flex-col gap-1">
             {items.map((item) => (
               <ConversationRow
                 key={item.id}

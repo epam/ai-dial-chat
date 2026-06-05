@@ -37,7 +37,8 @@ export const ConversationPage: FC = () => {
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { setSelectedItemId } = useDeployments();
+  const { setSelectedItemId, isLoading: isDeploymentsLoading } =
+    useDeployments();
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
   const { user } = useUser();
@@ -70,7 +71,8 @@ export const ConversationPage: FC = () => {
     [conversationId],
   );
 
-  const isConversationLoaded = !isFetching && !!conversation;
+  const isConversationLoaded =
+    !isFetching && !!conversation && !isDeploymentsLoading;
   useDeploymentChangeEffect(
     conversationId,
     addStatusMessage,
@@ -83,6 +85,7 @@ export const ConversationPage: FC = () => {
     setConversation,
     conversationRef,
   });
+
   useEffect(() => {
     if (!conversationId) {
       setIsFetching(false);

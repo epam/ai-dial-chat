@@ -71,7 +71,7 @@ Use these two tools for all UI kit discovery and documentation needs: `searchEnt
 
 When you encounter errors after a ui kit package upgrade, or when a prop no longer exists on a component:
 
-1. Determine the **target release version**: check the installed version in `package.json` (`@epam/ai-dial-ui-kit`). Dev versions (`x.y.z-dev.N`) map to the next release — e.g. `0.11.0-dev.17` → look up `0.11.0`.
+1. Determine the **target release version**: check the installed version in `package.json` (`@epam/ai-dial-ui-kit`). Dev versions (`x.y.z-dev.N`) map to the next release — e.g. `0.11.0-dev.18` → look up `0.11.0`.
 2. Read `node_modules/@epam/ai-dial-ui-kit/dist/CHANGELOG.md` for `### Breaking Changes` entries at or between the previous release and the target release.
 3. Follow the linked migration guides found at `node_modules/@epam/ai-dial-ui-kit/dist/migration-guides/<version>/`.
 4. Use `getEntityDetails("component", "DialXxx")` to confirm the current prop signature before applying the fix.
