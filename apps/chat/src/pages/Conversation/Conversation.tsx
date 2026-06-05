@@ -6,8 +6,6 @@ import {
 import {
   ConfirmationPopupVariant,
   DialConfirmationPopup,
-  DialNotification,
-  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
@@ -76,13 +74,7 @@ export const ConversationPage: FC = () => {
     isConversationLoaded,
   );
 
-  const {
-    startStream,
-    handleStop,
-    isStreaming,
-    hasStreamError,
-    setHasStreamError,
-  } = useConversationStream({
+  const { startStream, handleStop, isStreaming } = useConversationStream({
     conversationId,
     stoppedGeneratingText: t(ChatI18nKeys.StoppedGenerating),
     setConversation,
@@ -175,16 +167,6 @@ export const ConversationPage: FC = () => {
   return (
     <>
       <div className="flex h-full flex-col items-center justify-center overflow-hidden">
-        {hasStreamError && (
-          <div className="absolute left-1/2 top-4 z-50 w-[400px] -translate-x-1/2">
-            <DialNotification
-              variant={NotificationVariant.Error}
-              message={t(ChatI18nKeys.StreamError)}
-              closable
-              onClose={() => setHasStreamError(false)}
-            />
-          </div>
-        )}
         <ConversationView
           messages={conversation.messages}
           initialModelId={conversation.assistantModelId}
@@ -200,6 +182,7 @@ export const ConversationPage: FC = () => {
           isAssistantTyping={isStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
+          streamErrorText={t(ChatI18nKeys.StreamError)}
         />
       </div>
 

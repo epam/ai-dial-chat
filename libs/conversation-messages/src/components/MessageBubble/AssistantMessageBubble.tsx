@@ -103,9 +103,11 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             bubbleClassName,
           )}
         >
-          <div className={mergeClasses(textClass, 'text-left')}>
-            <MDMessageViewer content={text} />
-          </div>
+          {text && (
+            <div className={mergeClasses(textClass, 'text-left')}>
+              <MDMessageViewer content={text} />
+            </div>
+          )}
           <AttachmentTray attachments={attachments ?? []} />
           {afterContent}
           <MessageActions

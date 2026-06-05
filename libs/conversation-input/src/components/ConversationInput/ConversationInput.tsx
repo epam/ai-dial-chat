@@ -76,6 +76,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
         <h1
           className={mergeClasses(
             styles.welcome,
+            noCustomClass && styles.welcomeFont,
             'm-0 text-center',
             typography?.welcomeClassName,
           )}
