@@ -2,18 +2,18 @@ name: Deploy development
 
 on:
   workflow_dispatch:
-  # registry_package:
   workflow_run:
     workflows: ["Release Workflow"]
     types:
       - completed
 
+permissions: {}
+
 jobs:
   trigger:
     if: |
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development') ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development')
-    # github.event.registry_package.package_version.container_metadata.tag.name == 'development'
     strategy:
       fail-fast: false
       matrix:
@@ -35,9 +35,8 @@ jobs:
 
   trigger-ng:
     if: |
-      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'workflow_dispatch' && github.event.ref == 'refs/heads/development-1.0') ||
       (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'development-1.0')
-    # github.event.registry_package.package_version.container_metadata.tag.name == 'development'
     strategy:
       fail-fast: false
       matrix:
@@ -48,7 +47,7 @@ jobs:
             gitlab-project-id: "3351"
 
     name: Deploy to ${{ matrix.environment-name }}
-    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.3.0
+    uses: epam/ai-dial-ci/.github/workflows/deploy-development.yml@4.4.1
     with:
       gitlab-project-id: ${{ matrix.gitlab-project-id }}
       environment-name: ${{ matrix.environment-name }}
