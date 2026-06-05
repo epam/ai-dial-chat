@@ -11,8 +11,9 @@ export const DEFAULT_USER_CONFIG: UserConfig = {
 };
 
 export function migrateConfig(raw: unknown): UserConfig {
-  if (typeof raw !== 'object' || raw === null)
+  if (raw == null || typeof raw !== 'object') {
     return { ...DEFAULT_USER_CONFIG };
+  }
   const obj = raw as Record<string, unknown>;
   const pinnedConversationIds = Array.isArray(obj['pinnedConversationIds'])
     ? (obj['pinnedConversationIds'] as unknown[]).filter(

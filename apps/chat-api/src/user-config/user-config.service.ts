@@ -11,7 +11,7 @@ import {
   migrateConfig,
 } from './dto/user-config.dto';
 
-const CONFIG_PATH = 'user-config.json';
+const CONFIG_PATH = '.user-config.json';
 
 @Injectable()
 export class UserConfigService extends AppService {
@@ -37,6 +37,10 @@ export class UserConfigService extends AppService {
       const text = await response.text();
       return migrateConfig(JSON.parse(text) as unknown);
     } catch {
+      console.warn('Failed to read user config, using default', {
+        token,
+        bucket,
+      });
       return { ...DEFAULT_USER_CONFIG };
     }
   }
