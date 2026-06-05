@@ -55,7 +55,14 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
               bubbleClassName,
             )}
           >
-            <p className={mergeClasses(textClass, 'text-right')}>{text}</p>
+            <p
+              className={mergeClasses(
+                textClass,
+                'whitespace-pre-wrap break-words text-left [overflow-wrap:anywhere]',
+              )}
+            >
+              {text}
+            </p>
           </div>
         )}
         <MessageActions

@@ -97,15 +97,20 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           )}
         </div>
       )}
-      <div className="flex w-full flex-col items-start gap-5">
+      <div className="flex min-w-0 max-w-full flex-col items-start gap-5">
         <div
           className={mergeClasses(
-            'flex w-fit flex-col items-start gap-4',
+            'flex w-fit min-w-0 max-w-full flex-col items-start gap-4',
             bubbleClassName,
           )}
         >
           {text && (
-            <div className={mergeClasses(textClass, 'text-left')}>
+            <div
+              className={mergeClasses(
+                textClass,
+                'min-w-0 max-w-full text-left',
+              )}
+            >
               <MDMessageViewer content={text} isStreaming={isStreaming} />
             </div>
           )}
