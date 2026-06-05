@@ -114,6 +114,7 @@ export const convertToUIKitFolder = (
   return {
     id: folder.id,
     name: folder.name,
+    author: folder.author,
     path: fullPath,
     folderId: folder.folderId,
     nodeType: DialFileNodeType.FOLDER,
