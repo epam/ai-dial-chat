@@ -1,5 +1,6 @@
-import { EntityType } from '@/chat/types/common';
+import { BackendEntity, EntityType } from '@/chat/types/common';
 import { DialAIEntityModel } from '@/chat/types/models';
+import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialTest from '@/src/core/dialFixtures';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import {
@@ -15,6 +16,7 @@ import { ConfirmationDialogSelectors } from '@/src/ui/selectors/dialogSelectors'
 import { ToolsetLoginModalSelectors } from '@/src/ui/selectors/marketplaceSelectors';
 import { ToolsetLoginModal } from '@/src/ui/webElements';
 import { DateUtil, GeneratorUtil, UserUtil } from '@/src/utils';
+import { PublishActions } from '@epam/ai-dial-shared';
 import { Locator, Page } from '@playwright/test';
 import { Response } from 'playwright-core';
 
@@ -611,6 +613,390 @@ dialTest(
           expectedReleaseDate: modelWithVersion.createdAt,
           expectedDescription: modelWithVersion.description,
         });
+      },
+    );
+  },
+);
+
+dialTest(
+  '[Agents & Toolsets] Not available agent and toolset stay selected on browser refresh and when user removes/adds new item\n' +
+    '[Quick app 2.0]: One version is displayed on click on bar inside Agents & Toolsets field', // EPMRTC-7972 + EPMRTC-7949
+  async ({
+    marketplacePage,
+    entityEditorPage,
+    quickApp2EditorViewForm,
+    agentAndToolsetSelectModal,
+    entityDetailsModal,
+    entityDetailsModalAssertion,
+    customApplicationBuilder,
+    toolsetBuilder,
+    quickApp2Builder,
+    applicationApiHelper,
+    toolsetApiHelper,
+    itemApiHelper,
+    modelApiHelper,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-7972', 'EPMRTC-7949');
+    const appToDeleteName = GeneratorUtil.randomApplicationName();
+    const appToKeepName = GeneratorUtil.randomApplicationName();
+    const agentName = GeneratorUtil.randomApplicationName();
+    const firstVersion = '0.0.1';
+    const secondVersion = '0.0.2';
+    const toolsetToDeleteName = GeneratorUtil.randomToolsetName();
+    const toolsetToKeepName = GeneratorUtil.randomToolsetName();
+    const newToolsetName = GeneratorUtil.randomToolsetName();
+    const quickAppName = GeneratorUtil.randomApplicationName();
+    let appToDeleteId: string;
+    let toolsetToDeleteId: string;
+
+    await dialTest.step(
+      'Precondition: create apps (incl. an agent with two versions) and toolsets via API',
+      async () => {
+        await applicationApiHelper.createApplication(
+          customApplicationBuilder.withDisplayName(appToDeleteName).build(),
+        );
+        await applicationApiHelper.createApplication(
+          customApplicationBuilder.withDisplayName(appToKeepName).build(),
+        );
+        for (const version of [firstVersion, secondVersion]) {
+          await applicationApiHelper.createApplication(
+            customApplicationBuilder
+              .withDisplayName(agentName)
+              .withDisplayVersion(version)
+              .build(),
+          );
+        }
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(toolsetToDeleteName).build(),
+        );
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(toolsetToKeepName).build(),
+        );
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(newToolsetName).build(),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Precondition: create Quick app 2.0 via API with all 4 items in Agents & Toolsets',
+      async () => {
+        const allEntities = await modelApiHelper.getModels();
+        appToDeleteId = (
+          await modelApiHelper.getAgentByNameAndVersion(
+            { name: appToDeleteName },
+            allEntities,
+          )
+        ).id;
+        const appToKeepId = (
+          await modelApiHelper.getAgentByNameAndVersion(
+            { name: appToKeepName },
+            allEntities,
+          )
+        ).id;
+        const agentFirstVersionId = (
+          await modelApiHelper.getAgentByNameAndVersion(
+            { name: agentName, version: firstVersion },
+            allEntities,
+          )
+        ).id;
+        const agentSecondVersionId = (
+          await modelApiHelper.getAgentByNameAndVersion(
+            { name: agentName, version: secondVersion },
+            allEntities,
+          )
+        ).id;
+        toolsetToDeleteId = (await toolsetApiHelper.getToolset(
+          toolsetToDeleteName,
+        ))!.id!;
+        const toolsetToKeepId = (await toolsetApiHelper.getToolset(
+          toolsetToKeepName,
+        ))!.id!;
+
+        await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(quickAppName)
+            .addApp({ id: appToDeleteId, name: appToDeleteName })
+            .addApp({ id: appToKeepId, name: appToKeepName })
+            .addApp({ id: agentFirstVersionId, name: agentName })
+            .addApp({ id: agentSecondVersionId, name: agentName })
+            .addToolset(toolsetToDeleteId)
+            .addToolset(toolsetToKeepId)
+            .build(),
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Precondition: delete one app and one toolset so they become not available',
+      async () => {
+        await itemApiHelper.deleteEntity(appToDeleteId);
+        await itemApiHelper.deleteEntity(toolsetToDeleteId);
+      },
+    );
+
+    await dialTest.step('Open the Quick app 2.0 in edit mode', async () => {
+      const quickApp = await modelApiHelper.getAgentByNameAndVersion({
+        name: quickAppName,
+      });
+      await marketplacePage.openEditQuickApp2Page(quickApp.reference);
+      await entityEditorPage.waitForPageLoadedForEdit(
+        EntityEditorAppTypes.QuickApp2,
+      );
+    });
+
+    await dialTest.step(
+      'Verify the deleted items stay as not-available (red) chips, the rest stay normal',
+      async () => {
+        for (const name of [
+          appToDeleteName,
+          toolsetToDeleteName,
+          appToKeepName,
+          toolsetToKeepName,
+        ]) {
+          await baseAssertion.assertElementState(
+            quickApp2EditorViewForm.getChipByName(name),
+            'visible',
+          );
+        }
+        for (const name of [appToDeleteName, toolsetToDeleteName]) {
+          await baseAssertion.assertElementClass(
+            quickApp2EditorViewForm.getChipByName(name),
+            /bg-error/,
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Verify the multi-version agent shows two bars — one per version',
+      async () => {
+        await baseAssertion.assertElementsCount(
+          quickApp2EditorViewForm.getChipByName(agentName),
+          2,
+        );
+        for (const version of [firstVersion, secondVersion]) {
+          await baseAssertion.assertElementState(
+            quickApp2EditorViewForm.getChipByNameAndVersion(agentName, version),
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Click each version bar and verify its own version is shown on the card',
+      async () => {
+        for (const version of [firstVersion, secondVersion]) {
+          await quickApp2EditorViewForm
+            .getChipByNameAndVersion(agentName, version)
+            .click();
+          await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+          await entityDetailsModalAssertion.assertEntityVersion(version);
+          await entityDetailsModal.closeButton.click();
+          await baseAssertion.assertElementState(entityDetailsModal, 'hidden');
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Remove every available chip via the "x" — the app, the toolset and both agent versions',
+      async () => {
+        await quickApp2EditorViewForm.removeChipByName(appToKeepName);
+        await quickApp2EditorViewForm.removeChipByName(toolsetToKeepName);
+        for (const version of [firstVersion, secondVersion]) {
+          await quickApp2EditorViewForm.removeChipByNameAndVersion(
+            agentName,
+            version,
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Verify only the not-available chips stay and every removed one is gone',
+      async () => {
+        for (const name of [appToDeleteName, toolsetToDeleteName]) {
+          await baseAssertion.assertElementState(
+            quickApp2EditorViewForm.getChipByName(name),
+            'visible',
+          );
+        }
+        for (const name of [appToKeepName, toolsetToKeepName, agentName]) {
+          await baseAssertion.assertElementState(
+            quickApp2EditorViewForm.getChipByName(name),
+            'hidden',
+          );
+        }
+      },
+    );
+
+    await dialTest.step('Add a new toolset via the select modal', async () => {
+      await quickApp2EditorViewForm.addAgentsButton.click();
+      await agentAndToolsetSelectModal.searchInput.fillInInput(newToolsetName);
+      await agentAndToolsetSelectModal.selectEntityByName(newToolsetName);
+      await agentAndToolsetSelectModal.confirmButton.click();
+      await baseAssertion.assertElementState(
+        agentAndToolsetSelectModal,
+        'hidden',
+      );
+    });
+
+    await dialTest.step(
+      'Verify the not-available chips still stay after adding a new item',
+      async () => {
+        for (const name of [appToDeleteName, toolsetToDeleteName]) {
+          await baseAssertion.assertElementState(
+            quickApp2EditorViewForm.getChipByName(name),
+            'visible',
+          );
+        }
+        await baseAssertion.assertElementState(
+          quickApp2EditorViewForm.getChipByName(newToolsetName),
+          'visible',
+        );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  "[Agents & Toolsets] In Published Quick App 2.0 '+Add' button is unavailable, specific tooltip is shown on hover over selected items", // EPMRTC-7896
+  async ({
+    customApplicationBuilder,
+    toolsetBuilder,
+    quickApp2Builder,
+    applicationApiHelper,
+    toolsetApiHelper,
+    modelApiHelper,
+    publicationApiHelper,
+    publishRequestBuilder,
+    adminPublicationApiHelper,
+    adminMarketplacePage,
+    adminMarketplaceHeader,
+    adminMarketplaceEntitiesSection,
+    adminEntityDetailsModal,
+    adminEntityEditorPage,
+    adminQuickApp2EditorViewForm,
+    adminTooltipPortalAssertion,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    setTestIds('EPMRTC-7896');
+    dialAdminTest.slow();
+    const agentName = GeneratorUtil.randomApplicationName();
+    const toolsetName = GeneratorUtil.randomToolsetName();
+    const quickAppName = GeneratorUtil.randomApplicationName();
+    let quickApp!: BackendEntity;
+
+    await dialAdminTest.step(
+      'Precondition: create an agent, a toolset and a Quick app 2.0 with both via API',
+      async () => {
+        await applicationApiHelper.createApplication(
+          customApplicationBuilder.withDisplayName(agentName).build(),
+        );
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(toolsetName).build(),
+        );
+        const allEntities = await modelApiHelper.getModels();
+        const agentId = (
+          await modelApiHelper.getAgentByNameAndVersion(
+            { name: agentName },
+            allEntities,
+          )
+        ).id;
+        const toolsetId = (await toolsetApiHelper.getToolset(toolsetName))!.id!;
+
+        quickApp = await applicationApiHelper.createApplication(
+          quickApp2Builder
+            .withDisplayName(quickAppName)
+            .addApp({ id: agentId, name: agentName })
+            .addToolset(toolsetId)
+            .build(),
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Precondition: publish the Quick app 2.0 and approve it as admin',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withApplicationResource(quickApp, PublishActions.ADD)
+          .build();
+        const publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Admin opens the Marketplace and finds the published Quick app 2.0 card',
+      async () => {
+        await adminMarketplacePage.openMarketplacePage({
+          updateInstalledDeployments: false,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: false,
+        });
+        await adminMarketplacePage.waitForPageLoaded();
+        await adminMarketplaceHeader.agentsTab.click();
+        await adminMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(quickAppName);
+        const quickAppCard =
+          await adminMarketplaceEntitiesSection.findEntityElement(quickAppName);
+        await quickAppCard.click();
+        await baseAssertion.assertElementState(
+          adminEntityDetailsModal,
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open the app in view mode and verify the editor is read-only',
+      async () => {
+        await adminEntityDetailsModal.viewButton.click();
+        await adminEntityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      "Verify '+Add' is unavailable and shows the public-app tooltip on hover",
+      async () => {
+        await baseAssertion.assertElementActionabilityState(
+          adminQuickApp2EditorViewForm.addAgentsButton,
+          'disabled',
+        );
+        await adminQuickApp2EditorViewForm.addAgentsButton.hoverOver({
+          force: true,
+        });
+        await adminTooltipPortalAssertion.assertTooltipContent(
+          ExpectedConstants.readOnlyApplicationMessage,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Hover over the toolset and agent chips and verify the read-only tooltip',
+      async () => {
+        for (const { name, entityType } of [
+          { name: toolsetName, entityType: 'toolset' },
+          { name: agentName, entityType: 'agent' },
+        ]) {
+          await adminQuickApp2EditorViewForm.getChipByName(name).hoverOver();
+          await adminTooltipPortalAssertion.assertTooltipContent(
+            ExpectedConstants.notAvailableChipTooltip(
+              entityType,
+              name,
+              ExpectedConstants.defaultEntityVersion,
+            ),
+          );
+        }
       },
     );
   },
