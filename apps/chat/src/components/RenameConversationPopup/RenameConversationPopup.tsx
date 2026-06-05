@@ -2,6 +2,7 @@ import {
   ButtonAppearance,
   ButtonVariant,
   DialButton,
+  DialErrorText,
   DialInput,
   DialNeutralButton,
   DialPopup,
@@ -13,9 +14,10 @@ import {
   ActionsI18nKeys,
   ConversationHistoryI18nKeys,
 } from '../../constants/translation-keys.js';
+import { getUtf8ByteLength } from '../../utils/string-utils.js';
 
 interface Props {
-  open: boolean;
+  isOpen: boolean;
   currentTitle: string;
   isSaving: boolean;
   error: string | null;
@@ -24,7 +26,7 @@ interface Props {
 }
 
 const RenameConversationPopup: FC<Props> = ({
-  open,
+  isOpen,
   currentTitle,
   isSaving,
   error,
@@ -36,16 +38,17 @@ const RenameConversationPopup: FC<Props> = ({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (open) {
+    if (isOpen) {
       setValue(currentTitle);
       // Defer focus so the popup has time to mount and become visible
       setTimeout(() => inputRef.current?.focus(), 0);
     }
-  }, [open, currentTitle]);
+  }, [isOpen, currentTitle]);
 
   const trimmed = value.trim();
+  const isTooLong = getUtf8ByteLength(trimmed) > 255;
   const isSaveDisabled =
-    isSaving || trimmed === '' || trimmed === currentTitle.trim();
+    isSaving || trimmed === '' || trimmed === currentTitle.trim() || isTooLong;
 
   const handleSave = useCallback(() => {
     if (!isSaveDisabled) onSave(trimmed);
@@ -60,12 +63,12 @@ const RenameConversationPopup: FC<Props> = ({
 
   return (
     <DialPopup
-      open={open}
+      open={isOpen}
       header={t(ConversationHistoryI18nKeys.RenameTitle)}
       size={PopupSize.Sm}
       onClose={onCancel}
       footer={
-        <div className="flex justify-end gap-2 p-4">
+        <div className="flex justify-end gap-2 px-6 py-4">
           <DialNeutralButton
             label={t(ActionsI18nKeys.Cancel)}
             onClick={onCancel}
@@ -81,19 +84,20 @@ const RenameConversationPopup: FC<Props> = ({
         </div>
       }
     >
-      <div className="py-4 pl-6 pr-4">
+      <div className="px-6 py-2">
         <DialInput
           inputRef={inputRef}
           value={value}
           placeholder={t(ConversationHistoryI18nKeys.RenameInputPlaceholder)}
+          error={
+            isTooLong
+              ? t(ConversationHistoryI18nKeys.RenameTitleTooLong)
+              : undefined
+          }
           onChange={(v) => setValue(v ?? '')}
           onKeyDown={handleKeyDown}
         />
-        {error && (
-          <p role="alert" className="mt-1 text-sm text-error">
-            {error}
-          </p>
-        )}
+        <DialErrorText text={error ?? undefined} />
       </div>
     </DialPopup>
   );

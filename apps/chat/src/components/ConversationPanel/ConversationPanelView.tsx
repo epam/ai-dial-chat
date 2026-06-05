@@ -303,7 +303,7 @@ const ConversationPanelView: FC<Props> = ({
       />
 
       <RenameConversationPopup
-        open={pendingRenameItem !== null}
+        isOpen={pendingRenameItem !== null}
         currentTitle={pendingRenameItem?.title ?? ''}
         isSaving={isRenaming}
         error={renameError}

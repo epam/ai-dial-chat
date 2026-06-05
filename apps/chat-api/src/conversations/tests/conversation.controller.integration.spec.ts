@@ -428,10 +428,10 @@ describe('ConversationController (integration)', () => {
         .expect(400);
     });
 
-    it('returns 400 when newTitle exceeds 200 characters', async () => {
+    it('returns 400 when newTitle exceeds 255 UTF-8 bytes', async () => {
       await request(app.getHttpServer())
         .patch('/conversations?path=gpt-4o__Old+Title__uuid')
-        .send({ newTitle: 'a'.repeat(201) })
+        .send({ newTitle: 'a'.repeat(256) })
         .expect(400);
     });
 

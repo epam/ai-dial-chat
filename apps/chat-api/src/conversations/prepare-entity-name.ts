@@ -1,5 +1,7 @@
+import { StringUtils } from '../common/utils/string-utils.js';
+
 const notAllowedSymbolsRegex = /[:;,=/{}%&"]/g;
-const MAX_ENTITY_LENGTH = 200;
+const MAX_ENTITY_BYTES = 255;
 
 export const prepareEntityName = (prompt?: string) => {
   const clearName =
@@ -9,10 +11,5 @@ export const prepareEntityName = (prompt?: string) => {
       .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
       .filter(Boolean)[0] ?? '';
 
-  const result =
-    clearName.length > MAX_ENTITY_LENGTH
-      ? clearName.substring(0, MAX_ENTITY_LENGTH)
-      : clearName;
-
-  return result.trim();
+  return StringUtils.truncateToUtf8Bytes(clearName, MAX_ENTITY_BYTES);
 };

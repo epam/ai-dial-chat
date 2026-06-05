@@ -113,6 +113,7 @@ export enum ConversationHistoryI18nKeys {
   RenameLabel = 'conversationHistory.renameLabel',
   RenameInputPlaceholder = 'conversationHistory.renameInputPlaceholder',
   RenameError = 'conversationHistory.renameError',
+  RenameTitleTooLong = 'conversationHistory.renameTitleTooLong',
 }
 
 export enum SidebarI18nKeys {

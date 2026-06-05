@@ -33,20 +33,35 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     placeholder,
     onChange,
     inputRef,
+    error,
   }: {
     value?: string;
     placeholder?: string;
     onChange?: (v?: string) => void;
     inputRef?: React.Ref<HTMLInputElement>;
+    error?: string;
   }) => (
-    <input
-      ref={inputRef}
-      data-testid="rename-input"
-      value={value ?? ''}
-      placeholder={placeholder}
-      onChange={(e) => onChange?.(e.target.value)}
-    />
+    <>
+      <input
+        ref={inputRef}
+        data-testid="rename-input"
+        value={value ?? ''}
+        placeholder={placeholder}
+        onChange={(e) => onChange?.(e.target.value)}
+      />
+      {error && (
+        <p role="alert" data-testid="input-error">
+          {error}
+        </p>
+      )}
+    </>
   ),
+  DialErrorText: ({ text }: { text?: string }) =>
+    text ? (
+      <p role="alert" data-testid="api-error">
+        {text}
+      </p>
+    ) : null,
   DialButton: ({
     label,
     onClick,
@@ -82,7 +97,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 const DEFAULT_PROPS = {
-  open: true,
+  isOpen: true,
   currentTitle: 'My Chat',
   isSaving: false,
   error: null,
@@ -148,19 +163,32 @@ describe('RenameConversationPopup', () => {
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
-  it('shows error message with role="alert" when error is provided', () => {
+  it('shows API error message when error prop is provided', () => {
     render(
       <RenameConversationPopup
         {...DEFAULT_PROPS}
         error="Failed to rename. Please try again."
       />,
     );
-    const alert = screen.getByRole('alert');
-    expect(alert.textContent).toContain('Failed to rename');
+    expect(screen.getByTestId('api-error').textContent).toContain(
+      'Failed to rename',
+    );
   });
 
-  it('does not render when open is false', () => {
-    render(<RenameConversationPopup {...DEFAULT_PROPS} open={false} />);
+  it('Save button is disabled when title exceeds 255 UTF-8 bytes', async () => {
+    render(<RenameConversationPopup {...DEFAULT_PROPS} currentTitle="" />);
+    await userEvent.type(getInput(), 'a'.repeat(256));
+    expect(getSaveButton().disabled).toBe(true);
+  });
+
+  it('shows byte-length validation error when title exceeds 255 UTF-8 bytes', async () => {
+    render(<RenameConversationPopup {...DEFAULT_PROPS} currentTitle="" />);
+    await userEvent.type(getInput(), 'a'.repeat(256));
+    expect(screen.getByTestId('input-error')).toBeTruthy();
+  });
+
+  it('does not render when isOpen is false', () => {
+    render(<RenameConversationPopup {...DEFAULT_PROPS} isOpen={false} />);
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

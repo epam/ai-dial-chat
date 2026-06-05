@@ -179,13 +179,13 @@ The backend SHALL expose `PATCH /api/v1/conversations` in `apps/chat-api/src/con
 class RenameConversationBodyDto {
   @IsString()
   @MinLength(1)
-  @MaxLength(200)
+  @MaxUtf8ByteLength(255)
   newTitle: string;
 }
 ```
 
 The service method `renameConversation(path, newTitle, at, bucket)` SHALL:
-1. Sanitise `newTitle` through `prepareEntityName` to strip disallowed characters and truncate to 200 chars.
+1. Sanitise `newTitle` through `prepareEntityName` to strip disallowed characters and truncate to 255 UTF-8 bytes.
 2. Construct `sourceUrl` as the full DIAL Core resource URL for the given `path` and `bucket`.
 3. Replace the title segment (middle `__`-delimited part) of the filename to produce `destinationUrl`.
 4. Call `client.moveResource({ sourceUrl, destinationUrl, overwrite: false })`.
@@ -225,9 +225,9 @@ Error codes:
 - **WHEN** `PATCH /api/v1/conversations?path=...` is called with body `{ "newTitle": "" }`
 - **THEN** the response status is 400
 
-#### Scenario: newTitle exceeding 200 chars returns 400
+#### Scenario: newTitle exceeding 255 UTF-8 bytes returns 400
 
-- **WHEN** `PATCH /api/v1/conversations?path=...` is called with `newTitle` of 201 characters
+- **WHEN** `PATCH /api/v1/conversations?path=...` is called with `newTitle` of 256 UTF-8 bytes
 - **THEN** the response status is 400
 
 #### Scenario: Non-existent source path returns 404
