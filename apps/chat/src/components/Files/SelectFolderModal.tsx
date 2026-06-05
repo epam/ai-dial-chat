@@ -16,11 +16,11 @@ import { FilesSelectors } from '@/src/store/selectors';
 import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import {
-  AlertVariant,
   DialDestinationFolderPopup,
   DialFileManagerActions,
   type DialFileManagerActionsRef,
   DialFileManagerTabs,
+  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import {
   CellEditingStartedEvent,
@@ -245,7 +245,7 @@ export const SelectFolderModal = ({
         uploadEnabled={false}
         alertProps={
           warningMessage
-            ? { message: warningMessage, variant: AlertVariant.Warning }
+            ? { message: warningMessage, variant: NotificationVariant.Warning }
             : undefined
         }
       />
