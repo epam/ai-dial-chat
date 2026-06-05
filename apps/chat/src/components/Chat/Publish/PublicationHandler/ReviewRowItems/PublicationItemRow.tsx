@@ -290,7 +290,7 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
             }
             onChange={handleChangeVersion}
             inputClassName={classNames(
-              'w-[70px] text-right text-xs',
+              'w-[70px] text-end text-xs',
               (errors.length || inputVersion === NA_VERSION) &&
                 '!border-b-error',
               errors.length && 'pl-5',
