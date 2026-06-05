@@ -1,7 +1,12 @@
 import { TypeValidator } from '@/src/utils/app/typeValidator';
 
 import { Conversation, FormButtonType } from '@/src/types/chat';
-import { FormSchemaPropertyType } from '@/src/types/form-schema';
+import {
+  FormSchemaPropertyType,
+  VisibleFormButtonRow,
+  VisibleFormCheckboxRow,
+  VisibleFormValueRow,
+} from '@/src/types/form-schema';
 
 import {
   DialSchemaProperties,
@@ -98,6 +103,7 @@ export const isFormSchemaValid = TypeValidator.shape({
         TypeValidator.array(
           TypeValidator.shape({
             title: TypeValidator.string(),
+            description: TypeValidator.optional(TypeValidator.string()),
             const: TypeValidator.oneOfType([
               TypeValidator.number(),
               TypeValidator.string(),
@@ -110,6 +116,9 @@ export const isFormSchemaValid = TypeValidator.shape({
                 ),
                 populateText: TypeValidator.optional(TypeValidator.string()),
                 submit: TypeValidator.optional(TypeValidator.boolean()),
+                showDescriptionInUserMessage: TypeValidator.optional(
+                  TypeValidator.boolean(),
+                ),
               }),
             ),
           }),
@@ -189,37 +198,46 @@ export const getSortedFormSchemaProperties = (schema: MessageFormSchema) => {
 export const getVisibleFormValues = (
   schema?: MessageFormSchema,
   value?: MessageFormValue,
-) => {
+): VisibleFormValueRow[] => {
   if (!schema || !value) return [];
 
   return getSortedFormSchemaProperties(schema).map(([key, property]) => {
     const type = getFormSchemaPropertyType(schema, key);
     const info = {
-      type,
       property: key,
       description: property.description,
     };
 
     if (type === FormSchemaPropertyType.Button) {
-      return {
+      const row: VisibleFormButtonRow = {
         ...info,
+        type: FormSchemaPropertyType.Button,
         options:
           property.oneOf?.map((option) => ({
             label: option.title,
             value: option.const,
+            description: option.description,
+            showDescriptionInUserMessage:
+              option[DialSchemaProperties.DialWidgetOptions]
+                ?.showDescriptionInUserMessage === true,
             selected: value[key] === option.const,
             buttonType: getFormButtonType(option),
           })) ?? [],
       };
+
+      return row;
     }
 
-    return {
+    const row: VisibleFormCheckboxRow = {
       ...info,
+      type: FormSchemaPropertyType.Checkbox,
       options: getFormCheckboxDefinitionOptions(schema, key).map((option) => ({
         ...option,
         buttonType: null,
         selected: (value[key] as string[])?.includes(option.value),
       })),
     };
+
+    return row;
   });
 };
