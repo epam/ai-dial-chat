@@ -225,7 +225,7 @@ export const FileItem = ({
           hideTooltip={isContextMenu}
           tooltip={item.name}
           isTriggerClickable={isContextMenu}
-          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre text-left"
+          triggerClassName="block max-h-5 flex-1 truncate whitespace-pre text-start"
           contentClassName="break-all"
         >
           <span

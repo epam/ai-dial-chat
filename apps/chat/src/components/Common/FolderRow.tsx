@@ -134,7 +134,7 @@ export const FolderRow = <T extends FolderRowItem>({
               />
             </div>
           </div>
-          <span className="relative max-h-5 flex-1 select-none truncate text-left text-sm">
+          <span className="relative max-h-5 flex-1 select-none truncate text-start text-sm">
             {folder.name}
           </span>
         </div>

@@ -6,6 +6,7 @@ import { logger } from '@/src/utils/server/logger';
 import { Token } from '@/src/types/auth';
 
 import { safeParseJSON } from '../json';
+import { getAuthAdditionalParamsExchangeBody } from './auth-additional-params';
 import {
   CREDENTIALS_PROVIDER_ID,
   getProviderConfigById,
@@ -117,6 +118,9 @@ const getUser = (
 async function refreshAccessToken(token: Token) {
   const displayedTokenSub =
     process.env.SHOW_TOKEN_SUB === 'true' ? token.sub : '******';
+  // Track whether this invocation acquired the refresh lock so we can release
+  // it on failure (waiters that time out must NOT clear the lock).
+  let didAcquireLock = false;
   try {
     if (!token.providerId) {
       throw new Error(`No provider information exists in token`);
@@ -139,6 +143,10 @@ async function refreshAccessToken(token: Token) {
           typeof localToken.token?.accessTokenExpires === 'number' &&
           Date.now() < localToken.token.accessTokenExpires
         ) {
+          // eslint-disable-next-line testing-library/no-debugging-utils -- auth tracing via logger.debug
+          logger.debug(
+            `[Auth] Returning cached refreshed token. Sub: ${displayedTokenSub}`,
+          );
           return localToken.token;
         }
 
@@ -146,9 +154,18 @@ async function refreshAccessToken(token: Token) {
           token: localToken.token,
           isRefreshing: true,
         });
+        didAcquireLock = true;
+        // eslint-disable-next-line testing-library/no-debugging-utils -- auth tracing via logger.debug
+        logger.debug(
+          `[Auth] Starting token refresh. Sub: ${displayedTokenSub}`,
+        );
         break;
       }
 
+      // eslint-disable-next-line testing-library/no-debugging-utils -- auth tracing via logger.debug
+      logger.debug(
+        `[Auth] Waiting for concurrent refresh. Sub: ${displayedTokenSub}`,
+      );
       await NextClient.delay();
       msWaiting += 50;
 
@@ -159,8 +176,10 @@ async function refreshAccessToken(token: Token) {
       }
     }
 
+    const exchangeBody = getAuthAdditionalParamsExchangeBody();
     const refreshedTokens = await client.refresh(
       token.refreshToken as string | TokenSet,
+      exchangeBody ? { exchangeBody } : undefined,
     );
 
     if (
@@ -203,12 +222,19 @@ async function refreshAccessToken(token: Token) {
       refreshToken: refreshedTokens.refresh_token ?? token.refreshToken, // Fall back to old refresh token
     };
 
+    // eslint-disable-next-line testing-library/no-debugging-utils -- auth tracing via logger.debug
+    logger.debug(`[Auth] Token refresh succeeded. Sub: ${displayedTokenSub}`);
     NextClient.setIsRefreshTokenStart(token.userId, {
       isRefreshing: false,
       token: returnToken,
     });
     return returnToken;
   } catch (error: unknown) {
+    // Only the request that acquired the lock should release it.
+    // Waiters that timed out must not clear the lock belonging to the refresher.
+    if (didAcquireLock) {
+      NextClient.resetRefreshingState(token.userId);
+    }
     logger.error(
       error,
       `Error when refreshing token: ${

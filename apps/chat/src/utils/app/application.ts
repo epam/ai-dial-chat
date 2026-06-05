@@ -35,6 +35,7 @@ import {
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationPropertiesLocalFields } from '@/src/constants/applications';
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 import {
   DEFAULT_APPLICATION_NAME,
@@ -49,7 +50,10 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
-import { AppsEditorSchemaTypes } from '@/src/components/AppsEditor/form';
+import {
+  AppsEditorSchemaTypes,
+  MANDATORY_FIELD_PLACEHOLDER,
+} from '@/src/components/AppsEditor/form';
 
 import {
   EntityStorageLimits,
@@ -197,6 +201,7 @@ export const mapApplicationPropertiesToApi = (
     | QuickAppConfig['document_relative_url'];
   const propertiesQA = properties as QuickAppConfig;
   const propertiesQA2 = properties as QuickApp2Config;
+  const unknownProperties = properties as Record<string, unknown>;
   const result = {
     ...properties,
   };
@@ -207,7 +212,10 @@ export const mapApplicationPropertiesToApi = (
       url: ApiUtils.encodeApiUrl(context.url),
     }));
     (result as QuickApp2Config).contexts = documentsRelativeUrls;
-  } else {
+  } else if (
+    !unknownProperties[ApplicationPropertiesLocalFields.isSchemaDrivenApp] &&
+    !unknownProperties[ApplicationPropertiesLocalFields.isExternalApp]
+  ) {
     if (!propertiesQA.document_relative_url) {
       (result as QuickAppConfig).document_relative_url = [];
     } else {
@@ -218,7 +226,7 @@ export const mapApplicationPropertiesToApi = (
     }
   }
 
-  return result;
+  return omit(result, Object.keys(ApplicationPropertiesLocalFields));
 };
 
 export const convertApplicationToApi = (
@@ -236,16 +244,21 @@ export const convertApplicationToApi = (
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
   };
-
+  const unknownProperties = applicationData.applicationProperties as
+    | Record<string, unknown>
+    | undefined;
   if (schema) {
     return {
       ...commonData,
       application_properties:
-        (applicationData.applicationProperties &&
-          mapApplicationPropertiesToApi(
-            applicationData.applicationProperties,
-          )) ||
-        null,
+        unknownProperties?.[ApplicationPropertiesLocalFields.isExternalApp] &&
+        unknownProperties?.external_url === MANDATORY_FIELD_PLACEHOLDER
+          ? null
+          : (applicationData.applicationProperties &&
+              mapApplicationPropertiesToApi(
+                applicationData.applicationProperties,
+              )) ||
+            {},
       application_type_schema_id:
         applicationData.applicationTypeSchemaId ?? schema['$id'],
     };
@@ -568,7 +581,10 @@ export const isExternalAppEditor = checkAppEditorType(
   DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
 );
 
-export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
+export const getEditorSchemaType = (
+  type: string,
+  schema?: ApiDetailedApplicationTypeSchema,
+): AppsEditorSchemaTypes => {
   if (type === ApplicationType.CODE_APP) return AppsEditorSchemaTypes.CodeApp;
 
   if (isQuickAppEditor(type)) return AppsEditorSchemaTypes.QuickApp;
@@ -576,6 +592,10 @@ export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
   if (isQuickApp2Editor(type)) return AppsEditorSchemaTypes.QuickApp2;
 
   if (isExternalAppEditor(type)) return AppsEditorSchemaTypes.ExternalApp;
+
+  if (schema?.properties) {
+    return AppsEditorSchemaTypes.SchemaDriven;
+  }
 
   return AppsEditorSchemaTypes.CustomApp;
 };
@@ -643,6 +663,7 @@ export const getQuickAppItemNameFromConfig = (
   }
 
   if (!item.deployment_id) {
+    if ('template_name' in item) return item.template_name as string;
     console.error('Dial Tool is missing deployment_id:', item);
     return 'unknown';
   }

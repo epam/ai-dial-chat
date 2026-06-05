@@ -341,6 +341,7 @@
   "No compatible audio format available for this model.": "No compatible audio format available for this model.",
   "Transcribing audio...": "Transcribing audio...",
   "Audio transcription failed. Please try again.": "Audio transcription failed. Please try again.",
+  "Recording is too long. Please record a shorter message.": "Recording is too long. Please record a shorter message.",
   "This name will be displayed instead of the author's name for this publication.": "This name will be displayed instead of the author's name for this publication.",
   "Type publication request name...": "Type publication request name...",
   "Type unpublish request name...": "Type unpublish request name...",
@@ -366,5 +367,6 @@
   "Markdown": "Markdown",
   "Plain text": "Plain text",
   "You don't have any files": "You don't have any files",
-  "Select a file from the tree": "Select a file from the tree"
+  "Select a file from the tree": "Select a file from the tree",
+  "This Quick App uses personal skill prompts that are not publicly available. Please replace non-public skill prompts with public ones, otherwise recipients may not be able to access them.": "This Quick App uses personal skill prompts that are not publicly available. Please replace non-public skill prompts with public ones, otherwise recipients may not be able to access them."
 }

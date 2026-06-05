@@ -458,6 +458,7 @@ export enum SideBarI18nKeys {
   PublicFilesWillAppear = 'Public files will appear here.',
   UploadOrDragDropFiles = 'Upload or drag and drop files',
   CopyTo = 'Copy to',
+  QuickApp2ContainsPrivateSkills = 'This Quick App uses personal skill prompts that may not be accessible to other users. To ensure access, share the skill prompts separately or replace them with public ones.',
 }
 
 // promptbar.json
@@ -482,7 +483,9 @@ export enum PromptBarI18nKeys {
   Save = 'Save',
   UnsavedChanges = 'Unsaved changes',
   UnsavedChangesCaption = 'There are unsaved changes. Do you want to save them before closing?',
+  UnsavedChangesEmptyMandatoryFields = 'Unsaved changes contain empty mandatory fields. Please fill in mandatory fields or do not save changes.',
   NotSave = 'Don`t save',
+  BackToEditing = 'Back to editing',
   Unshare = 'Unshare',
   ConfirmDeletingPrompt = 'Confirm deleting prompt',
   ConfirmDeletingPromptCaption = 'Are you sure that you want to delete a prompt?',
@@ -869,6 +872,7 @@ export enum ChatI18nKeys {
   AudioFormatNotSupported = 'No compatible audio format available for this model.',
   TranscribingAudio = 'Transcribing audio...',
   TranscriptionFailed = 'Audio transcription failed. Please try again.',
+  TranscriptionFailedTooLarge = 'Recording is too long. Please record a shorter message.',
   AuthorPublicNameTooltip = "This name will be displayed instead of the author's name for this publication.",
   TypePublicationRequestName = 'Type publication request name...',
   TypeUnpublishRequestName = 'Type unpublish request name...',
@@ -895,6 +899,7 @@ export enum ChatI18nKeys {
   PlainText = 'Plain text',
   YouDontHaveAnyFiles = "You don't have any files",
   SelectFileFromTree = 'Select a file from the tree',
+  QuickApp2ContainsPrivateSkillsPublish = 'This Quick App uses personal skill prompts that are not publicly available. Please replace non-public skill prompts with public ones, otherwise recipients may not be able to access them.',
 }
 
 // files.json

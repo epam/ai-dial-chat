@@ -54,6 +54,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import {
+  ApplicationPropertiesLocalFields,
   CODEAPPS_REQUIRED_FILES,
   FEATURES_ENDPOINTS,
   FEATURES_ENDPOINTS_DEFAULT_VALUES,
@@ -91,6 +92,7 @@ export enum AppsEditorSchemaTypes {
   QuickApp = 'Quick app',
   QuickApp2 = 'Quick app2',
   CodeApp = 'Code App',
+  SchemaDriven = 'Schema Driven',
 }
 
 export const MANDATORY_FIELD_PLACEHOLDER = 'MANDATORY_FIELD_PLACEHOLDER';
@@ -172,6 +174,33 @@ const ExternalAppSchema = zodValidation.object({
   ),
 });
 export type ExternalAppForm = zodValidation.infer<typeof ExternalAppSchema>;
+
+const SchemaDrivenAppSchema = zodValidation
+  .object({
+    type: zodValidation.literal(AppsEditorSchemaTypes.SchemaDriven),
+    required: zodValidation.array(zodValidation.string()),
+    properties: zodValidation.record(
+      zodValidation.string(),
+      zodValidation.unknown(),
+    ),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.required.length || data.properties[MANDATORY_FIELD_PLACEHOLDER])
+      return;
+
+    data.required.forEach((field) => {
+      if (!data.properties[field]) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['properties'],
+          message: 'Field is required',
+        });
+      }
+    });
+  });
+export type SchemaDrivenAppForm = zodValidation.infer<
+  typeof SchemaDrivenAppSchema
+>;
 
 const QuickAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.QuickApp),
@@ -358,6 +387,7 @@ export type AppsEditorFormType = (
   | QuickAppForm
   | QuickApp2Form
   | CodeAppForm
+  | SchemaDrivenAppForm
 ) &
   BaseAppForm;
 
@@ -608,6 +638,22 @@ const getExternalAppFormData = (
     : MANDATORY_FIELD_PLACEHOLDER,
 });
 
+const getSchemaDrivenFormData = (
+  app?: CustomApplicationModel,
+  schema?: ApiDetailedApplicationTypeSchema,
+): SchemaDrivenAppForm => ({
+  type: AppsEditorSchemaTypes.SchemaDriven,
+  properties: {
+    ...omit(
+      app?.applicationProperties ?? {
+        [MANDATORY_FIELD_PLACEHOLDER]: true,
+      },
+      ['document_relative_url'],
+    ),
+  },
+  required: schema?.required ?? [],
+});
+
 const getSettingsFormData = ({
   app,
   type,
@@ -637,6 +683,8 @@ const getSettingsFormData = ({
         availableModelIds,
         schema,
       );
+    case AppsEditorSchemaTypes.SchemaDriven:
+      return getSchemaDrivenFormData(app, schema);
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return getCustomAppFormData(app);
@@ -662,15 +710,18 @@ export const getDefaultFormData = ({
   ...getSettingsFormData({
     app,
     runtime,
-    type: getEditorSchemaType(type),
+    type: getEditorSchemaType(type, schema),
     toolSupportingModelIds,
     availableModelIds: models?.map((model) => model.id),
     schema,
   }),
 });
 
-export const getValidationSchema = (schemaType: string) => {
-  const type = getEditorSchemaType(schemaType);
+export const getValidationSchema = (
+  schemaType: string,
+  schema?: ApiDetailedApplicationTypeSchema,
+) => {
+  const type = getEditorSchemaType(schemaType, schema);
   switch (type) {
     case AppsEditorSchemaTypes.ExternalApp:
       return ExternalAppSchema.and(MarketplaceEntityBaseSchema);
@@ -680,6 +731,8 @@ export const getValidationSchema = (schemaType: string) => {
       return QuickAppSchema.and(MarketplaceEntityBaseSchema);
     case AppsEditorSchemaTypes.QuickApp2:
       return QuickApp2Schema.and(MarketplaceEntityBaseSchema);
+    case AppsEditorSchemaTypes.SchemaDriven:
+      return SchemaDrivenAppSchema.and(MarketplaceEntityBaseSchema);
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return CustomAppSchema.and(MarketplaceEntityBaseSchema);
@@ -900,12 +953,10 @@ export const getApplicationPayload = ({
     case AppsEditorSchemaTypes.ExternalApp:
       return {
         ...generalData,
-        applicationProperties:
-          data.externalUrl === MANDATORY_FIELD_PLACEHOLDER || !data.externalUrl
-            ? undefined
-            : {
-                external_url: data.externalUrl,
-              },
+        applicationProperties: {
+          external_url: data.externalUrl ?? MANDATORY_FIELD_PLACEHOLDER,
+          [ApplicationPropertiesLocalFields.isExternalApp]: true,
+        },
       };
     case AppsEditorSchemaTypes.QuickApp:
       return {
@@ -992,6 +1043,14 @@ export const getApplicationPayload = ({
         },
       };
     }
+    case AppsEditorSchemaTypes.SchemaDriven:
+      return {
+        ...generalData,
+        applicationProperties: {
+          ...omit(data.properties, [MANDATORY_FIELD_PLACEHOLDER]),
+          [ApplicationPropertiesLocalFields.isSchemaDrivenApp]: true,
+        },
+      };
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return {

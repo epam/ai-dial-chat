@@ -6,6 +6,7 @@ import {
   EntityEditorGeneralInfoPreview,
   EntityEditorHeader,
   ExternalAppEditorContainer,
+  QuickApp2EditorContainer,
   ToolsetEditorContainer,
 } from '@/src/ui/webElements';
 
@@ -18,6 +19,7 @@ export class EntityEditorPage extends BasePage {
   //declare specific entity containers
   private customAppEditorContainer!: CustomAppEditorContainer;
   private externalAppEditorContainer!: ExternalAppEditorContainer;
+  private quickApp2EditorContainer!: QuickApp2EditorContainer;
   private toolsetEditorContainer!: ToolsetEditorContainer;
 
   getEntityEditorHeader(): EntityEditorHeader {
@@ -68,6 +70,18 @@ export class EntityEditorPage extends BasePage {
     return this.externalAppEditorContainer;
   }
 
+  getQuickApp2EditorContainer(): QuickApp2EditorContainer {
+    if (!this.quickApp2EditorContainer) {
+      this.quickApp2EditorContainer = new QuickApp2EditorContainer(
+        this.page,
+        this.getEntityEditorHeader(),
+        this.getEntityEditorGeneralForm(),
+        this.getEntityEditorGeneralInfoPreview(),
+      );
+    }
+    return this.quickApp2EditorContainer;
+  }
+
   getToolsetEditorContainer(): ToolsetEditorContainer {
     if (!this.toolsetEditorContainer) {
       this.toolsetEditorContainer = new ToolsetEditorContainer(
@@ -89,6 +103,8 @@ export class EntityEditorPage extends BasePage {
         return this.getCustomAppEditorContainer();
       case EntityEditorAppTypes.ExternalApp:
         return this.getExternalAppEditorContainer();
+      case EntityEditorAppTypes.QuickApp2:
+        return this.getQuickApp2EditorContainer();
       case EntityEditorToolsetTypes.Toolset:
         return this.getToolsetEditorContainer();
       default:

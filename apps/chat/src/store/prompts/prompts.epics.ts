@@ -870,24 +870,27 @@ const uploadPromptEpic: AppEpic = (action$, state$) =>
 
       return PromptService.getPrompt(
         originalPrompt || ({ id: payload.promptId } as PromptInfo),
-      );
-    }),
-    map((servicePrompt) => {
-      return PromptsActions.uploadPromptSuccess({
-        prompt: servicePrompt,
-      });
-    }),
-    catchError((err) => {
-      console.error('An error occurred while uploading the prompt:', err);
-      return concat(
-        of(PromptsActions.uploadPromptFail()),
-        of(
-          UIActions.showErrorToast({
-            message: translate(CommonI18nKeys.ErrorUploadingPrompt, {
-              ns: Translation.Common,
-            }),
-          }),
+      ).pipe(
+        map((servicePrompt) =>
+          PromptsActions.uploadPromptSuccess({ prompt: servicePrompt }),
         ),
+        catchError((err) => {
+          console.error('An error occurred while uploading the prompt:', err);
+          const appDetails = ApplicationSelectors.selectApplicationDetail(
+            state$.value,
+          );
+          if (appDetails?.id) {
+            // need to validate skill anyway to show proper error from the skill validation endpoint
+            return of(
+              PromptsActions.validateSkill({
+                promptId: payload.promptId,
+                deploymentId: appDetails.id,
+                content: '',
+              }),
+            );
+          }
+          return of(PromptsActions.uploadPromptFail());
+        }),
       );
     }),
   );
@@ -1075,6 +1078,7 @@ const selectPromptEpic: AppEpic = (action$, state$) =>
           PromptsActions.setIsPromptModalOpen({
             isOpen: !!payload.promptId,
             isInitModeEdit: !!payload.selectInEditMode,
+            isQuickAppEditPrompt: !!payload.isQuickAppEditPrompt,
           }),
         ),
       );
