@@ -434,7 +434,7 @@ function querystringSingleKey(
 
 export function exists(json: any, key: string) {
   const value = json[key];
-  return value !== null && value !== undefined;
+  return value != null;
 }
 
 export function canConsumeForm(consumes: Consume[]): boolean {
