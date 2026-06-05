@@ -117,7 +117,14 @@
     "filterShared": "Shared",
     "filterOrganization": "Organization",
     "pinnedSection": "Pinned",
-    "myChatsSection": "My chats"
+    "myChatsSection": "My chats",
+    "actionsLabel": "More actions",
+    "pinLabel": "Pin",
+    "unpinLabel": "Unpin",
+    "deleteLabel": "Delete",
+    "deleteConfirmTitle": "Confirm Deleting Chat",
+    "deleteConfirmDescription": "Are you sure you want to delete",
+    "deleteError": "Failed to delete the conversation. Please try again."
   },
   "auth": {
     "signOut": "Sign out",

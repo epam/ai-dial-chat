@@ -322,6 +322,12 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   publishedWithMe: boolean;
+  /**
+   * True when the user has pinned this conversation.
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  isPinned: boolean;
 }
 /**
  *
@@ -1286,6 +1292,25 @@ export interface ThemeDto {
    * @memberof ThemeDto
    */
   icon?: string;
+}
+/**
+ *
+ * @export
+ * @interface UpdatePinsDto
+ */
+export interface UpdatePinsDto {
+  /**
+   * Full DIAL Core resource URL of the conversation to pin or unpin (matches `id` in `ConversationListItemDto`).
+   * @type {string}
+   * @memberof UpdatePinsDto
+   */
+  path: string;
+  /**
+   * Pass `true` to pin the conversation, `false` to unpin.
+   * @type {boolean}
+   * @memberof UpdatePinsDto
+   */
+  isPinned: boolean;
 }
 /**
  *

@@ -49,3 +49,11 @@
   background: var(--cp-item-hover, var(--bg-layer-4, #252c42));
   color: var(--cp-text, var(--text-primary, #eef1f7));
 }
+
+.trigger {
+  background: var(--cp-trigger-bg, var(--controls-bg-accent-secondary-alpha-active, #37BABC5C));
+}
+
+.triggerIcon {
+  color: var(--cp-trigger-icon, var(--text-accent-secondary, #37BABC));
+}

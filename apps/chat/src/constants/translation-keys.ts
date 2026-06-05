@@ -101,6 +101,13 @@ export enum ConversationHistoryI18nKeys {
   FilterOrganization = 'conversationHistory.filterOrganization',
   PinnedSection = 'conversationHistory.pinnedSection',
   MyChatsSection = 'conversationHistory.myChatsSection',
+  ActionsLabel = 'conversationHistory.actionsLabel',
+  PinLabel = 'conversationHistory.pinLabel',
+  UnpinLabel = 'conversationHistory.unpinLabel',
+  DeleteLabel = 'conversationHistory.deleteLabel',
+  DeleteConfirmTitle = 'conversationHistory.deleteConfirmTitle',
+  DeleteConfirmDescription = 'conversationHistory.deleteConfirmDescription',
+  DeleteError = 'conversationHistory.deleteError',
 }
 
 export enum SidebarI18nKeys {

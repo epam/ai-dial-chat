@@ -2,10 +2,28 @@ import {
   ConversationPanel,
   type ConversationHistoryItem,
 } from '@epam/ai-dial-conversation-panel';
-import { type FC, memo, useMemo } from 'react';
+import {
+  ConfirmationPopupVariant,
+  DIAL_ICON_SIZE,
+  DialConfirmationPopup,
+  type DropdownItem,
+} from '@epam/ai-dial-ui-kit';
+import { IconPin, IconPinnedFilled, IconTrashX } from '@tabler/icons-react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
-import { normalizeConversationId } from '../../constants/routes.js';
-import { ConversationHistoryI18nKeys } from '../../constants/translation-keys.js';
+import { useNavigate } from 'react-router-dom';
+import { normalizeConversationId, ROUTES } from '../../constants/routes.js';
+import {
+  ActionsI18nKeys,
+  ConversationHistoryI18nKeys,
+} from '../../constants/translation-keys.js';
 import { useConversations } from '../../context/ConversationsContext.js';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint.js';
 import { getConversationSource } from './get-conversation-source.js';
@@ -27,7 +45,49 @@ const ConversationPanelView: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
-  const { conversations: items } = useConversations();
+  const navigate = useNavigate();
+  const {
+    conversations: items,
+    pinConversation,
+    deleteConversation,
+    refreshConversations,
+  } = useConversations();
+
+  useEffect(() => {
+    if (!activeConversationId) return;
+    const isListed = items.some((item) => {
+      const rawId = normalizeConversationId(item.id);
+      try {
+        return decodeURIComponent(rawId) === activeConversationId;
+      } catch {
+        return rawId === activeConversationId;
+      }
+    });
+    if (!isListed) void refreshConversations();
+    // Intentionally not including items or refreshConversations in the dependency array to avoid re-triggering on every list update.
+  }, [activeConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  /** Map panel id → context id for reverse lookup */
+  const panelToContextId = useMemo(
+    () =>
+      new Map(
+        items.map((item) => {
+          const rawId = normalizeConversationId(item.id);
+          let panelId: string;
+          try {
+            panelId = decodeURIComponent(rawId);
+          } catch {
+            panelId = rawId;
+          }
+          return [panelId, item.id];
+        }),
+      ),
+    [items],
+  );
 
   const conversations: ConversationHistoryItem[] = useMemo(
     () =>
@@ -40,7 +100,12 @@ const ConversationPanelView: FC<Props> = ({
           console.error('Failed to decode conversation id:', rawId, e);
           id = rawId;
         }
-        return { id, title: item.title, source: getConversationSource(item) };
+        return {
+          id,
+          title: item.title,
+          isPinned: item.isPinned ?? false,
+          source: getConversationSource(item),
+        };
       }),
     [items],
   );
@@ -63,22 +128,128 @@ const ConversationPanelView: FC<Props> = ({
     [t],
   );
 
+  const getActions = useCallback(
+    (panelItem: ConversationHistoryItem): DropdownItem[] => {
+      const contextId = panelToContextId.get(panelItem.id);
+      if (!contextId) return [];
+
+      return [
+        {
+          key: 'pin',
+          label: panelItem.isPinned
+            ? t(ConversationHistoryI18nKeys.UnpinLabel)
+            : t(ConversationHistoryI18nKeys.PinLabel),
+          icon: panelItem.isPinned ? (
+            <IconPinnedFilled
+              size={DIAL_ICON_SIZE.SM}
+              className="text-secondary"
+            />
+          ) : (
+            <IconPin size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+          ),
+          onClick: () => pinConversation(contextId, !panelItem.isPinned),
+        },
+        {
+          key: 'delete',
+          label: t(ConversationHistoryI18nKeys.DeleteLabel),
+          icon: (
+            <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+          ),
+          onClick: () => setPendingDeleteId(contextId),
+        },
+      ];
+    },
+    [panelToContextId, pinConversation, t],
+  );
+
+  const pendingDeleteTitle = useMemo(() => {
+    if (!pendingDeleteId) return '';
+    return items.find((c) => c.id === pendingDeleteId)?.title ?? '';
+  }, [items, pendingDeleteId]);
+
+  const handleConfirmDelete = useCallback(async () => {
+    if (!pendingDeleteId) return;
+    const idToDelete = pendingDeleteId;
+
+    setIsDeleting(true);
+    setDeleteError(null);
+    try {
+      await deleteConversation(idToDelete);
+    } catch {
+      setDeleteError(t(ConversationHistoryI18nKeys.DeleteError));
+      setIsDeleting(false);
+      return;
+    }
+    setIsDeleting(false);
+    setPendingDeleteId(null);
+
+    const activeContextId = activeConversationId
+      ? panelToContextId.get(activeConversationId)
+      : undefined;
+    if (activeContextId === idToDelete) navigate(ROUTES.ROOT);
+  }, [
+    pendingDeleteId,
+    deleteConversation,
+    activeConversationId,
+    panelToContextId,
+    navigate,
+    t,
+  ]);
+
+  const handleCloseDeleteDialog = useCallback(() => {
+    if (isDeleting) return;
+    setPendingDeleteId(null);
+    setDeleteError(null);
+  }, [isDeleting]);
+
   return (
-    <ConversationPanel
-      conversations={conversations}
-      isOpen={isOpen}
-      onSelectConversation={onSelectConversation}
-      activeConversationId={activeConversationId}
-      title={t(ConversationHistoryI18nKeys.Title)}
-      emptyLabel={t(ConversationHistoryI18nKeys.Empty)}
-      onNewChat={onNewChat}
-      newChatLabel={t(ConversationHistoryI18nKeys.NewChat)}
-      searchPlaceholder={t(ConversationHistoryI18nKeys.SearchPlaceholder)}
-      filterLabels={filterLabels}
-      groupLabels={groupLabels}
-      onBackdropClick={isMobile ? onClose : undefined}
-      className={isMobile ? 'fixed inset-y-0 left-0 z-50 w-[320px]' : undefined}
-    />
+    <>
+      <ConversationPanel
+        conversations={conversations}
+        isOpen={isOpen}
+        onSelectConversation={onSelectConversation}
+        activeConversationId={activeConversationId}
+        title={t(ConversationHistoryI18nKeys.Title)}
+        emptyLabel={t(ConversationHistoryI18nKeys.Empty)}
+        onNewChat={onNewChat}
+        newChatLabel={t(ConversationHistoryI18nKeys.NewChat)}
+        searchPlaceholder={t(ConversationHistoryI18nKeys.SearchPlaceholder)}
+        filterLabels={filterLabels}
+        groupLabels={groupLabels}
+        getActions={getActions}
+        actionsLabel={t(ConversationHistoryI18nKeys.ActionsLabel)}
+        onBackdropClick={isMobile ? onClose : undefined}
+        className={
+          isMobile ? 'fixed inset-y-0 left-0 z-50 w-[320px]' : undefined
+        }
+      />
+
+      <DialConfirmationPopup
+        open={pendingDeleteId !== null}
+        header={t(ConversationHistoryI18nKeys.DeleteConfirmTitle)}
+        confirmLabel={t(ActionsI18nKeys.Delete)}
+        cancelLabel={t(ActionsI18nKeys.Cancel)}
+        variant={ConfirmationPopupVariant.Danger}
+        isLoading={isDeleting}
+        description={
+          <>
+            <span>
+              {t(ConversationHistoryI18nKeys.DeleteConfirmDescription)}{' '}
+              <span className="dial-small-text text-primary">
+                &ldquo;{pendingDeleteTitle}&rdquo;
+              </span>
+              ?
+            </span>
+            {deleteError && (
+              <span className="mt-1 block text-error">{deleteError}</span>
+            )}
+          </>
+        }
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCloseDeleteDialog}
+        onClose={handleCloseDeleteDialog}
+      />
+    </>
   );
 };
 

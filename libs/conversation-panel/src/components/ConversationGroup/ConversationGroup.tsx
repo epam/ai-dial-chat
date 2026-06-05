@@ -1,8 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DIAL_ICON_SIZE, type DropdownItem } from '@epam/ai-dial-ui-kit';
 import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import { type FC, memo, useState } from 'react';
 import type { ConversationHistoryItem } from '../../models/ConversationPanel.js';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
+import { ConversationRow } from './ConversationRow.js';
 
 /** Props for `ConversationGroup`. */
 export interface ConversationGroupProps {
@@ -14,6 +16,14 @@ export interface ConversationGroupProps {
   activeConversationId?: string;
   /** Called when the user selects a conversation row. */
   onSelectConversation: (id: string) => void;
+  /**
+   * Builds the dropdown menu items for a row.
+   * Receives the item so actions can reflect per-item state (e.g. pin toggle).
+   * When omitted or returns an empty array, no action trigger is rendered.
+   */
+  getActions?: (item: ConversationHistoryItem) => DropdownItem[];
+  /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
+  actionsLabel?: string;
   /** Typography class applied to the group header button. Defaults to `'dial-tiny-text'`. */
   groupHeaderClassName?: string;
   /** Typography class applied to the initial-letter icon fallback. Defaults to `'text-xs font-bold'`. */
@@ -21,7 +31,7 @@ export interface ConversationGroupProps {
   /** Typography class applied to the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
 }
-// TODO: review all styles ((!!!!))
+
 /** Collapsible section rendering a labelled group of conversation rows. */
 export const ConversationGroup: FC<ConversationGroupProps> = memo(
   ({
@@ -29,9 +39,11 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
     items,
     activeConversationId,
     onSelectConversation,
+    getActions,
+    actionsLabel,
     groupHeaderClassName = 'dial-tiny-text',
-    itemIconClassName = 'text-xs font-bold',
-    itemTitleClassName = 'dial-small-text',
+    itemIconClassName,
+    itemTitleClassName,
   }) => {
     const [isExpanded, setIsExpanded] = useState(true);
 
@@ -50,57 +62,33 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
           )}
         >
           {isExpanded ? (
-            <IconCaretDownFilled size={12} className="shrink-0" />
+            <IconCaretDownFilled
+              size={DIAL_ICON_SIZE.SM}
+              className="shrink-0"
+            />
           ) : (
-            <IconCaretRightFilled size={12} className="shrink-0" />
+            <IconCaretRightFilled
+              size={DIAL_ICON_SIZE.SM}
+              className="shrink-0"
+            />
           )}
           <span className="truncate">{label}</span>
         </button>
 
         {isExpanded && (
           <ul role="list" className="flex flex-col gap-0.5">
-            {items.map((item) => {
-              const isActive = item.id === activeConversationId;
-              return (
-                <li key={item.id} role="listitem">
-                  <button
-                    type="button"
-                    aria-current={isActive ? 'page' : undefined}
-                    onClick={() => onSelectConversation(item.id)}
-                    className={mergeClasses(
-                      'flex h-8 w-full items-center gap-2 rounded py-1 pl-3 pr-3 text-left',
-                      styles.item,
-                      isActive && styles.itemActive,
-                    )}
-                  >
-                    {item.iconUrl ? (
-                      <img
-                        src={item.iconUrl}
-                        alt=""
-                        aria-hidden="true"
-                        className="size-6 shrink-0 rounded-full object-cover"
-                      />
-                    ) : (
-                      <span
-                        className={mergeClasses(
-                          'flex size-6 shrink-0 items-center justify-center rounded-full',
-                          itemIconClassName,
-                          styles.itemIcon,
-                        )}
-                        aria-hidden="true"
-                      >
-                        {item.title.charAt(0).toUpperCase()}
-                      </span>
-                    )}
-                    <span
-                      className={mergeClasses('truncate', itemTitleClassName)}
-                    >
-                      {item.title}
-                    </span>
-                  </button>
-                </li>
-              );
-            })}
+            {items.map((item) => (
+              <ConversationRow
+                key={item.id}
+                item={item}
+                isActive={item.id === activeConversationId}
+                onSelectConversation={onSelectConversation}
+                getActions={getActions}
+                actionsLabel={actionsLabel}
+                itemIconClassName={itemIconClassName}
+                itemTitleClassName={itemTitleClassName}
+              />
+            ))}
           </ul>
         )}
       </section>

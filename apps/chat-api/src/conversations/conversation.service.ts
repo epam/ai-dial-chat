@@ -11,6 +11,7 @@ import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
+import { UserConfigService } from '../user-config/user-config.service';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
@@ -32,7 +33,10 @@ const encodeDialResourcePath = (path: string): string =>
 export class ConversationService extends AppService {
   protected override logger = new Logger(ConversationService.name);
 
-  constructor(configService: ConfigService<EnvironmentVariables>) {
+  constructor(
+    configService: ConfigService<EnvironmentVariables>,
+    private readonly userConfigService: UserConfigService,
+  ) {
     super(configService);
   }
 
@@ -115,6 +119,20 @@ export class ConversationService extends AppService {
     }
   }
 
+  async pinConversation(
+    conversationId: string,
+    isPinned: boolean,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    return this.userConfigService.updatePin(
+      conversationId,
+      isPinned,
+      token,
+      bucket,
+    );
+  }
+
   async deleteConversation(
     conversationPath: string,
     token: string,
@@ -134,6 +152,12 @@ export class ConversationService extends AppService {
       this.logger.error('DIAL Core rejected deleteConversation', error);
       handleDialError(error);
     }
+
+    // Remove from pins if present — fire-and-forget, non-fatal
+    const conversationId = `conversations/${bucket}/${conversationPath}`;
+    void this.pinConversation(conversationId, false, token, bucket).catch(
+      (err) => this.logger.error('Failed to clean up pin on delete', err),
+    );
   }
 
   async listConversations(
@@ -144,47 +168,58 @@ export class ConversationService extends AppService {
     path?: string,
   ): Promise<ConversationListResponseDto> {
     try {
-      const { data, error } = (await this.client.getConversationMetadata(
-        bucket,
-        encodeDialResourcePath(path ?? ''),
-        {
-          headers: getBearerAuthHeaders(token),
-          query: {
-            recursive: true,
-            limit,
-            ...(nextToken ? { token: nextToken } : {}),
+      const [metadataResult, pinnedIds] = await Promise.all([
+        this.client.getConversationMetadata(
+          bucket,
+          encodeDialResourcePath(path ?? ''),
+          {
+            headers: getBearerAuthHeaders(token),
+            query: {
+              recursive: true,
+              limit,
+              ...(nextToken ? { token: nextToken } : {}),
+            },
           },
-        },
-      )) as {
-        data?: {
-          items?: {
-            name?: string;
-            url?: string;
-            parentPath?: string;
-            updatedAt?: number;
-            nodeType?: string;
-            sharedWithMe?: boolean;
-            publishedWithMe?: boolean;
-          }[];
-          nextToken?: string;
-        };
-        error?: unknown;
-      };
+        ) as Promise<{
+          data?: {
+            items?: {
+              name?: string;
+              url?: string;
+              parentPath?: string;
+              updatedAt?: number;
+              nodeType?: string;
+              sharedWithMe?: boolean;
+              publishedWithMe?: boolean;
+            }[];
+            nextToken?: string;
+          };
+          error?: unknown;
+        }>,
+        this.userConfigService.getPinnedIds(token, bucket),
+      ]);
+
+      const { data, error } = metadataResult;
 
       if (error !== undefined || !data) {
         this.logger.error('DIAL Core rejected listConversations', error);
         return handleDialError(error);
       }
 
+      const pinnedSet = new Set(pinnedIds);
+
       const items: ConversationListItemDto[] = (data.items ?? [])
         .filter((item) => item.nodeType !== 'FOLDER')
-        .map((item) => ({
-          id: item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`,
-          title: getConversationTitleFromName(item.name ?? ''),
-          updatedAt: item.updatedAt ?? 0,
-          sharedWithMe: item.sharedWithMe ?? false,
-          publishedWithMe: item.publishedWithMe ?? false,
-        }));
+        .map((item) => {
+          const id = item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`;
+          return {
+            id,
+            title: getConversationTitleFromName(item.name ?? ''),
+            updatedAt: item.updatedAt ?? 0,
+            sharedWithMe: item.sharedWithMe ?? false,
+            publishedWithMe: item.publishedWithMe ?? false,
+            isPinned: pinnedSet.has(id),
+          };
+        });
 
       return { items, nextToken: data.nextToken };
     } catch (error) {

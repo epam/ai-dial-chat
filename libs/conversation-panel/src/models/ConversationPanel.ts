@@ -1,3 +1,5 @@
+import type { DropdownItem } from '@epam/ai-dial-ui-kit';
+
 /** Source/ownership of a conversation — used by filter tabs. */
 export enum ConversationSource {
   MyChats = 'my-chats',
@@ -150,4 +152,12 @@ export interface ConversationPanelProps {
    * Clicking the backdrop calls this callback (used for mobile drawer close).
    */
   onBackdropClick?: () => void;
+  /**
+   * Builds the dropdown menu items for a conversation row.
+   * Receives the full item so actions can reflect per-item state (e.g. `isPinned` toggle).
+   * When omitted or returns an empty array, no actions trigger is rendered on rows.
+   */
+  getActions?: (item: ConversationHistoryItem) => DropdownItem[];
+  /** Accessible label for the row actions trigger button. Defaults to `"More actions"`. */
+  actionsLabel?: string;
 }
