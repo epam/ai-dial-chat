@@ -44,18 +44,24 @@ const ModelSelectRow = ({
     >
       <ModelIcon entity={item} entityId={item.id} size={18} />
       <div
-        className={classNames('flex items-center', truncate && 'min-w-0')}
+        className={classNames(
+          'flex flex-1 items-center',
+          truncate ? 'min-w-0' : 'flex-wrap gap-x-1.5',
+        )}
         data-qa="agent-attributes"
       >
         <span
-          className={classNames(truncate && 'truncate')}
+          className={classNames(truncate && 'min-w-0 flex-1 truncate')}
           data-qa="agent-name"
         >
           {getOpenAIEntityFullName(item)}
         </span>
         {item.version && (
           <span
-            className="ms-2 shrink-0 text-secondary"
+            className={classNames(
+              truncate && 'ms-2 max-w-[50%] shrink-0 truncate text-secondary',
+              !truncate && 'text-secondary',
+            )}
             data-qa="agent-version"
           >
             {item.version}

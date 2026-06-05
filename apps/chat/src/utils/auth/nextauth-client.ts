@@ -65,11 +65,29 @@ class NextClient {
 
     return globalObj._refreshTokenMap[userId];
   }
+
   public static setIsRefreshTokenStart(
     userId: string,
     refreshToken: RefreshToken,
   ): void {
+    globalObj._refreshTokenMap = globalObj._refreshTokenMap || {};
     globalObj._refreshTokenMap[userId] = refreshToken;
+  }
+
+  /**
+   * Resets the refreshing state for a user after a failed refresh attempt,
+   * preserving the last known token so subsequent waiters can retry.
+   */
+  public static resetRefreshingState(userId: string): void {
+    if (!globalObj._refreshTokenMap) return;
+    const existing: RefreshToken | undefined =
+      globalObj._refreshTokenMap[userId];
+    if (existing) {
+      globalObj._refreshTokenMap[userId] = {
+        isRefreshing: false,
+        token: existing.token,
+      };
+    }
   }
 
   public static delay(): Promise<undefined> {

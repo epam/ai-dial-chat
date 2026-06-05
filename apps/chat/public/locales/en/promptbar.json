@@ -51,5 +51,7 @@
   "here": "here",
   "Save to re-validate against the latest content.": "Save to re-validate against the latest content.",
   "Validation pending": "Validation pending",
-  "Open inside an agent editor to validate this prompt as a skill.": "Open inside an agent editor to validate this prompt as a skill."
+  "Open inside an agent editor to validate this prompt as a skill.": "Open inside an agent editor to validate this prompt as a skill.",
+  "Unsaved changes contain empty mandatory fields. Please fill in mandatory fields or do not save changes.": "Unsaved changes contain empty mandatory fields. Please fill in mandatory fields or do not save changes.",
+  "Back to editing": "Back to editing"
 }

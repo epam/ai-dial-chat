@@ -42,6 +42,7 @@ const ChipWrapper: React.FC<ChipWrapperProps> = ({
   children,
 }) => (
   <div
+    data-qa="agent-chip"
     className={classNames(
       'group relative flex h-[34px] items-center rounded',
       isCustomTool
@@ -76,7 +77,7 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
       )}
       onClick={() => onRemove?.(id)}
       aria-label="Remove item"
-      variant={isError ? ButtonVariant.Error : ButtonVariant.Primary}
+      variant={isError ? ButtonVariant.Danger : ButtonVariant.Primary}
     />
   );
 };

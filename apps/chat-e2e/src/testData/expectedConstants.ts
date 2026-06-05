@@ -402,6 +402,12 @@ export const ExpectedConstants = {
   itemCopiedToMyFilesMessage: (name: string) =>
     `Item copied successfully\u201C${name}\u201D copied to My Files`,
   readOnlyToolsetMessage: 'This toolset is public and cannot be edited',
+  readOnlyApplicationMessage: 'This application is public and cannot be edited',
+  notAvailableChipTooltip: (
+    entityType: string,
+    name: string,
+    version: string,
+  ) => `Not available ${entityType}.${name}v. ${version}`,
 };
 
 export const withTraceId = (message: string): RegExp => {
@@ -473,6 +479,7 @@ export enum AddAppMenuOptions {
   codeApp = 'Code app',
   customApp = 'Custom app',
   externalApp = 'External app',
+  quickApp2 = 'Quick app 2.0',
 }
 
 export enum EntityEditorGeneralFormFields {
@@ -762,8 +769,23 @@ export enum EntityEditorAppTypes {
   CodeApp = 'Code App',
 }
 
+export const QuickApp2SchemaId =
+  'mydial.epam.com/custom_application_schemas/quickapps2';
+
 export enum MarketplaceTabs {
   WORKSPACE = 'workspace',
+}
+
+// Test-side copies of chat's editor step enums — can't import them, the chat
+// module pulls in an SVG that the test runtime can't parse.
+export enum MarketplaceEditorSteps {
+  General = 'General',
+  Settings = 'Settings',
+}
+
+export enum ToolsetEditorSteps {
+  General = 'General info',
+  Settings = 'Toolset settings',
 }
 
 export enum MarketplaceEntitiesTabs {

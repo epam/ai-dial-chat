@@ -143,7 +143,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
           </div>
           <div
             className={classNames(
-              'relative max-h-5 min-w-0 flex-1 flex-1 text-left',
+              'relative max-h-5 min-w-0 flex-1 flex-1 text-start',
               selectedPublicationUrl === publication.url &&
                 'text-accent-primary',
             )}
