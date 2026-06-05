@@ -65,10 +65,10 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     position === BubblePosition.Top ? 'rounded-br-[24px]' : 'rounded-tr-[24px]';
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
+  const expandAriaLabel = showMoreAriaLabel ?? showMoreLabel;
+  const collapseAriaLabel = showLessAriaLabel ?? showLessLabel;
   const toggleLabel = isCollapsed ? showMoreLabel : showLessLabel;
-  const toggleAriaLabel = isCollapsed
-    ? (showMoreAriaLabel ?? showMoreLabel)
-    : (showLessAriaLabel ?? showLessLabel);
+  const toggleAriaLabel = isCollapsed ? expandAriaLabel : collapseAriaLabel;
   const ToggleIcon = isCollapsed ? IconChevronDown : IconChevronUp;
 
   return (
