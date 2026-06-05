@@ -203,7 +203,11 @@ describe('ConversationService', () => {
         .spyOn(service['client'], 'getConversation')
         .mockResolvedValue({ data: TEST_CONVERSATION } as never);
 
-      await service.getConversation('gpt-4o__My chat__uuid', 'test-token', 'test-bucket');
+      await service.getConversation(
+        'gpt-4o__My chat__uuid',
+        'test-token',
+        'test-bucket',
+      );
 
       expect(spy).toHaveBeenCalledWith(
         'test-bucket',
@@ -655,8 +659,20 @@ describe('ConversationService', () => {
 
     it('merges items from user and public buckets', async () => {
       mockMetadata(
-        [{ url: 'conversations/test-bucket/user-conv', nodeType: 'FILE', updatedAt: 2000 }],
-        [{ url: 'conversations/public/pub-conv', nodeType: 'FILE', updatedAt: 1000 }],
+        [
+          {
+            url: 'conversations/test-bucket/user-conv',
+            nodeType: 'FILE',
+            updatedAt: 2000,
+          },
+        ],
+        [
+          {
+            url: 'conversations/public/pub-conv',
+            nodeType: 'FILE',
+            updatedAt: 1000,
+          },
+        ],
       );
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
@@ -676,8 +692,20 @@ describe('ConversationService', () => {
 
     it('sets publishedWithMe: true on all items from the public bucket', async () => {
       mockMetadata(
-        [{ url: 'conversations/test-bucket/user-conv', nodeType: 'FILE', updatedAt: 2000 }],
-        [{ url: 'conversations/public/pub-conv', nodeType: 'FILE', updatedAt: 1000 }],
+        [
+          {
+            url: 'conversations/test-bucket/user-conv',
+            nodeType: 'FILE',
+            updatedAt: 2000,
+          },
+        ],
+        [
+          {
+            url: 'conversations/public/pub-conv',
+            nodeType: 'FILE',
+            updatedAt: 1000,
+          },
+        ],
       );
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
@@ -697,17 +725,26 @@ describe('ConversationService', () => {
     });
 
     it('merges items from getSharedResources and sets sharedWithMe: true', async () => {
-      mockMetadata(
-        [{ url: 'conversations/test-bucket/user-conv', nodeType: 'FILE', updatedAt: 3000 }],
-      );
+      mockMetadata([
+        {
+          url: 'conversations/test-bucket/user-conv',
+          nodeType: 'FILE',
+          updatedAt: 3000,
+        },
+      ]);
       vi.spyOn(service['client'], 'getSharedResources').mockResolvedValue({
         data: {
-          resources: [{ url: 'conversations/other-bucket/shared-conv', nodeType: 'FILE' }],
+          resources: [
+            { url: 'conversations/other-bucket/shared-conv', nodeType: 'FILE' },
+          ],
         },
       } as never);
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
-      const result = await service.listConversations('test-token', 'test-bucket');
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
 
       expect(result.items).toHaveLength(2);
       const sharedItem = result.items.find(
@@ -719,9 +756,11 @@ describe('ConversationService', () => {
 
     it('calls getSharedResources with resourceTypes CONVERSATION and with me', async () => {
       mockMetadata([]);
-      const spy = vi.spyOn(service['client'], 'getSharedResources').mockResolvedValue({
-        data: { resources: [] },
-      } as never);
+      const spy = vi
+        .spyOn(service['client'], 'getSharedResources')
+        .mockResolvedValue({
+          data: { resources: [] },
+        } as never);
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
       await service.listConversations('test-token', 'test-bucket');
@@ -738,11 +777,22 @@ describe('ConversationService', () => {
         (bucket: string) => {
           if (bucket === 'test-bucket') {
             return Promise.resolve({
-              data: { items: [{ url: 'conversations/test-bucket/user-conv', nodeType: 'FILE' }] },
+              data: {
+                items: [
+                  {
+                    url: 'conversations/test-bucket/user-conv',
+                    nodeType: 'FILE',
+                  },
+                ],
+              },
             }) as never;
           }
           return Promise.resolve({
-            data: { items: [{ url: 'conversations/public/pub-conv', nodeType: 'FILE' }] },
+            data: {
+              items: [
+                { url: 'conversations/public/pub-conv', nodeType: 'FILE' },
+              ],
+            },
           }) as never;
         },
       );
@@ -751,17 +801,36 @@ describe('ConversationService', () => {
       );
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
-      const result = await service.listConversations('test-token', 'test-bucket');
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
 
       expect(result.items).toHaveLength(2);
-      expect(result.items.map((i) => i.id)).toContain('conversations/test-bucket/user-conv');
-      expect(result.items.map((i) => i.id)).toContain('conversations/public/pub-conv');
+      expect(result.items.map((i) => i.id)).toContain(
+        'conversations/test-bucket/user-conv',
+      );
+      expect(result.items.map((i) => i.id)).toContain(
+        'conversations/public/pub-conv',
+      );
     });
 
     it('sorts merged items by updatedAt descending', async () => {
       mockMetadata(
-        [{ url: 'conversations/test-bucket/older', nodeType: 'FILE', updatedAt: 1000 }],
-        [{ url: 'conversations/public/newer', nodeType: 'FILE', updatedAt: 3000 }],
+        [
+          {
+            url: 'conversations/test-bucket/older',
+            nodeType: 'FILE',
+            updatedAt: 1000,
+          },
+        ],
+        [
+          {
+            url: 'conversations/public/newer',
+            nodeType: 'FILE',
+            updatedAt: 3000,
+          },
+        ],
       );
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
@@ -780,7 +849,12 @@ describe('ConversationService', () => {
           if (bucket === 'test-bucket') {
             return Promise.resolve({
               data: {
-                items: [{ url: 'conversations/test-bucket/user-conv', nodeType: 'FILE' }],
+                items: [
+                  {
+                    url: 'conversations/test-bucket/user-conv',
+                    nodeType: 'FILE',
+                  },
+                ],
               },
             }) as never;
           }
@@ -816,20 +890,28 @@ describe('ConversationService', () => {
       } as never);
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
-      const result = await service.listConversations('test-token', 'test-bucket');
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
 
       expect(result.nextToken).toBeDefined();
       const decoded = JSON.parse(
-        Buffer.from(result.nextToken!.slice('ct1.'.length), 'base64url').toString('utf-8'),
+        Buffer.from(
+          result.nextToken!.slice('ct1.'.length),
+          'base64url',
+        ).toString('utf-8'),
       ) as { u?: string; p?: string };
       expect(decoded.u).toBe('user-cursor');
       expect(decoded.p).toBe('pub-cursor');
     });
 
     it('passes decoded user and public cursors as separate token params', async () => {
-      const spy = vi.spyOn(service['client'], 'getConversationMetadata').mockImplementation(
-        () => Promise.resolve({ data: { items: [] } }) as never,
-      );
+      const spy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockImplementation(
+          () => Promise.resolve({ data: { items: [] } }) as never,
+        );
       vi.spyOn(service['client'], 'getSharedResources').mockResolvedValue({
         data: { resources: [] },
       } as never);
@@ -841,9 +923,16 @@ describe('ConversationService', () => {
           JSON.stringify({ u: 'user-cursor', p: 'pub-cursor' }),
         ).toString('base64url');
 
-      await service.listConversations('test-token', 'test-bucket', 20, compoundToken);
+      await service.listConversations(
+        'test-token',
+        'test-bucket',
+        20,
+        compoundToken,
+      );
 
-      const userCall = spy.mock.calls.find(([bucket]) => bucket === 'test-bucket');
+      const userCall = spy.mock.calls.find(
+        ([bucket]) => bucket === 'test-bucket',
+      );
       const publicCall = spy.mock.calls.find(([bucket]) => bucket === 'public');
 
       expect(
@@ -855,9 +944,11 @@ describe('ConversationService', () => {
     });
 
     it('treats a legacy (non-compound) nextToken as a user-bucket cursor', async () => {
-      const spy = vi.spyOn(service['client'], 'getConversationMetadata').mockImplementation(
-        () => Promise.resolve({ data: { items: [] } }) as never,
-      );
+      const spy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockImplementation(
+          () => Promise.resolve({ data: { items: [] } }) as never,
+        );
       vi.spyOn(service['client'], 'getSharedResources').mockResolvedValue({
         data: { resources: [] },
       } as never);
@@ -870,7 +961,9 @@ describe('ConversationService', () => {
         'legacy-opaque-token',
       );
 
-      const userCall = spy.mock.calls.find(([bucket]) => bucket === 'test-bucket');
+      const userCall = spy.mock.calls.find(
+        ([bucket]) => bucket === 'test-bucket',
+      );
       const publicCall = spy.mock.calls.find(([bucket]) => bucket === 'public');
 
       expect(
@@ -885,7 +978,10 @@ describe('ConversationService', () => {
       mockMetadata([]);
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
-      const result = await service.listConversations('test-token', 'test-bucket');
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
 
       expect(result.nextToken).toBeUndefined();
     });
@@ -894,7 +990,9 @@ describe('ConversationService', () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockImplementation(
         (bucket: string) => {
           if (bucket === 'test-bucket') {
-            return Promise.resolve({ data: { items: [], nextToken: 'user-cursor' } }) as never;
+            return Promise.resolve({
+              data: { items: [], nextToken: 'user-cursor' },
+            }) as never;
           }
           return Promise.resolve({ data: { items: [] } }) as never;
         },
@@ -904,28 +1002,44 @@ describe('ConversationService', () => {
       } as never);
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
-      const result = await service.listConversations('test-token', 'test-bucket');
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
 
       expect(result.nextToken).toBeDefined();
       const decoded = JSON.parse(
-        Buffer.from(result.nextToken!.slice('ct1.'.length), 'base64url').toString('utf-8'),
+        Buffer.from(
+          result.nextToken!.slice('ct1.'.length),
+          'base64url',
+        ).toString('utf-8'),
       ) as { u?: string; p?: string };
       expect(decoded.u).toBe('user-cursor');
       expect(decoded.p).toBeUndefined();
     });
 
     it('forwards the path to user and public bucket calls', async () => {
-      const spy = vi.spyOn(service['client'], 'getConversationMetadata').mockImplementation(
-        () => Promise.resolve({ data: { items: [] } }) as never,
-      );
+      const spy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockImplementation(
+          () => Promise.resolve({ data: { items: [] } }) as never,
+        );
       vi.spyOn(service['client'], 'getSharedResources').mockResolvedValue({
         data: { resources: [] },
       } as never);
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
-      await service.listConversations('test-token', 'test-bucket', 20, undefined, 'work/project-x');
+      await service.listConversations(
+        'test-token',
+        'test-bucket',
+        20,
+        undefined,
+        'work/project-x',
+      );
 
-      const userCall = spy.mock.calls.find(([bucket]) => bucket === 'test-bucket');
+      const userCall = spy.mock.calls.find(
+        ([bucket]) => bucket === 'test-bucket',
+      );
       const publicCall = spy.mock.calls.find(([bucket]) => bucket === 'public');
 
       expect(userCall?.[1]).toBe('work/project-x');
@@ -945,7 +1059,10 @@ describe('ConversationService', () => {
       );
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
-      const result = await service.listConversations('test-token', 'test-bucket');
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
 
       expect(result.items.map((i) => i.id)).toEqual(
         expect.not.arrayContaining([
@@ -967,7 +1084,13 @@ describe('ConversationService', () => {
           if (bucket === 'test-bucket') {
             return Promise.resolve({
               data: {
-                items: [{ url: 'conversations/test-bucket/shared', nodeType: 'FILE', sharedWithMe: true }],
+                items: [
+                  {
+                    url: 'conversations/test-bucket/shared',
+                    nodeType: 'FILE',
+                    sharedWithMe: true,
+                  },
+                ],
               },
             }) as never;
           }
@@ -976,7 +1099,10 @@ describe('ConversationService', () => {
       );
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
-      const result = await service.listConversations('test-token', 'test-bucket');
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
 
       expect(result.items[0].sharedWithMe).toBe(true);
     });
@@ -1007,7 +1133,14 @@ describe('ConversationService', () => {
         (bucket: string) => {
           if (bucket === 'test-bucket') {
             return Promise.resolve({
-              data: { items: [{ url: 'conversations/test-bucket/user-conv', nodeType: 'FILE' }] },
+              data: {
+                items: [
+                  {
+                    url: 'conversations/test-bucket/user-conv',
+                    nodeType: 'FILE',
+                  },
+                ],
+              },
             }) as never;
           }
           return Promise.resolve({ error: { status: 403 } }) as never;
@@ -1015,7 +1148,10 @@ describe('ConversationService', () => {
       );
       mockUserConfigService.getPinnedIds.mockResolvedValue([]);
 
-      const result = await service.listConversations('test-token', 'test-bucket');
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
 
       expect(result.items).toHaveLength(1);
       expect(result.items[0].id).toBe('conversations/test-bucket/user-conv');

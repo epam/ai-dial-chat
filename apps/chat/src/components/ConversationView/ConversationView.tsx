@@ -361,23 +361,23 @@ const ConversationView: FC<Props> = ({
             {readOnlyNotice}
           </p>
         ) : (
-        <Suspense fallback={null}>
-          <ConversationInput
-            onSend={onSend}
-            onUploadAttachment={onUploadAttachment}
-            onStop={onStop}
-            isStreaming={isAssistantTyping}
-            onAttachmentsChange={onAttachmentsChange}
-            placeholder={placeholder}
-            deployments={deploymentItems}
-            selectedDeploymentId={selectedItemId}
-            onDeploymentChange={setSelectedItemId}
-            isInputDisabled={isInputDisabled}
-            modelSelectorLabels={modelSelectorLabels}
-            sendLabel={t(ChatI18nKeys.SendMessage)}
-            stopLabel={t(ChatI18nKeys.StopStreaming)}
-          />
-        </Suspense>
+          <Suspense fallback={null}>
+            <ConversationInput
+              onSend={onSend}
+              onUploadAttachment={onUploadAttachment}
+              onStop={onStop}
+              isStreaming={isAssistantTyping}
+              onAttachmentsChange={onAttachmentsChange}
+              placeholder={placeholder}
+              deployments={deploymentItems}
+              selectedDeploymentId={selectedItemId}
+              onDeploymentChange={setSelectedItemId}
+              isInputDisabled={isInputDisabled}
+              modelSelectorLabels={modelSelectorLabels}
+              sendLabel={t(ChatI18nKeys.SendMessage)}
+              stopLabel={t(ChatI18nKeys.StopStreaming)}
+            />
+          </Suspense>
         )}
       </div>
     </>

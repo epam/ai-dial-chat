@@ -87,7 +87,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       () =>
         filteredItems.filter(
           (item) =>
-            !item.isPinned && item.source !== ConversationSource.Shared && item.source !== ConversationSource.Organization,
+            !item.isPinned &&
+            item.source !== ConversationSource.Shared &&
+            item.source !== ConversationSource.Organization,
         ),
       [filteredItems],
     );
@@ -103,7 +105,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const organizationItems = useMemo(
       () =>
         filteredItems.filter(
-          (item) => !item.isPinned && item.source === ConversationSource.Organization,
+          (item) =>
+            !item.isPinned && item.source === ConversationSource.Organization,
         ),
       [filteredItems],
     );

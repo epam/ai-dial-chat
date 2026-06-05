@@ -62,9 +62,13 @@ export const ConversationPage: FC = () => {
   const addStatusMessage = useCallback(
     (msg: Message) => {
       if (!conversationId) return;
-      const conversationPath = conversationId.substring(
-        conversationId.indexOf('/') + 1,
-      );
+      let decoded: string;
+      try {
+        decoded = decodeURIComponent(conversationId);
+      } catch {
+        decoded = conversationId;
+      }
+      const conversationPath = decoded.substring(decoded.indexOf('/') + 1);
       setConversation((prev) => {
         if (!prev) return prev;
         const next = { ...prev, messages: [...prev.messages, msg] };

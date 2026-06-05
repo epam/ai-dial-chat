@@ -12,16 +12,23 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import { UserConfigService } from '../user-config/user-config.service';
-import { buildRenamedConversationPath } from './build-renamed-conversation-path';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
 } from './dto/conversation-list.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 import { RenameConversationResponseDto } from './dto/rename-conversation.dto';
-import { getConversationName } from './get-conversation-name';
-import { getConversationTitleFromName } from './get-conversation-title-from-name';
-import { prepareEntityName } from './prepare-entity-name';
+import type {
+  MetadataItem,
+  MetadataResult,
+  SharedResourcesResult,
+} from './types/conversation.types';
+import {
+  buildRenamedConversationPath,
+  getConversationName,
+  getConversationTitleFromName,
+  prepareEntityName,
+} from './utils/conversation.utils';
 
 const getValidAttachments = (customContent?: Message['custom_content']) =>
   (customContent?.attachments ?? []).filter((attachment) =>
@@ -145,7 +152,9 @@ export class ConversationService extends AppService {
     const bucket =
       slashIndex === -1 ? sessionBucket : conversationPath.slice(0, slashIndex);
     const subPath =
-      slashIndex === -1 ? conversationPath : conversationPath.slice(slashIndex + 1);
+      slashIndex === -1
+        ? conversationPath
+        : conversationPath.slice(slashIndex + 1);
 
     try {
       const { data, error } = (await this.client.getConversation(
@@ -244,31 +253,6 @@ export class ConversationService extends AppService {
     nextToken?: string,
     path?: string,
   ): Promise<ConversationListResponseDto> {
-    type MetadataItem = {
-      name?: string;
-      url?: string;
-      parentPath?: string;
-      updatedAt?: number;
-      nodeType?: string;
-      sharedWithMe?: boolean;
-      publishedWithMe?: boolean;
-    };
-    type MetadataResult = {
-      data?: { items?: MetadataItem[]; nextToken?: string };
-      error?: unknown;
-    };
-    type SharedResourcesResult = {
-      data?: {
-        resources?: {
-          nodeType?: string;
-          name?: string;
-          url?: string;
-          parentPath?: string;
-        }[];
-      };
-      error?: unknown;
-    };
-
     const { u: userNextToken, p: publicNextToken } = decodeNextToken(nextToken);
 
     const buildQuery = (cursor?: string) => ({
@@ -362,9 +346,10 @@ export class ConversationService extends AppService {
               id,
               title: getConversationTitleFromName(item.name ?? ''),
               updatedAt: item.updatedAt ?? 0,
-              sharedWithMe: overrides.sharedWithMe ?? (item.sharedWithMe ?? false),
+              sharedWithMe:
+                overrides.sharedWithMe ?? item.sharedWithMe ?? false,
               publishedWithMe:
-                overrides.publishedWithMe ?? (item.publishedWithMe ?? false),
+                overrides.publishedWithMe ?? item.publishedWithMe ?? false,
               isPinned: pinnedSet.has(id),
             };
           });
@@ -411,7 +396,10 @@ export class ConversationService extends AppService {
 
       return {
         items,
-        nextToken: encodeCompoundToken(userData.nextToken, publicData?.nextToken),
+        nextToken: encodeCompoundToken(
+          userData.nextToken,
+          publicData?.nextToken,
+        ),
       };
     } catch (error) {
       this.logger.error('DIAL Core listConversations failed', error);
