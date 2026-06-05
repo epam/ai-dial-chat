@@ -142,7 +142,7 @@ export const PromptVariablesDialog: FC<Props> = ({
       <form
         ref={modalRef}
         noValidate
-        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-left align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[780px]"
+        className="relative inline-block max-h-full w-full overflow-y-auto rounded bg-layer-3 px-3 py-4 text-start align-bottom transition-all md:p-6 xl:max-w-[720px] 2xl:max-w-[780px]"
         role="dialog"
         data-qa="variable-modal"
         onSubmit={handleSubmit}
