@@ -277,7 +277,7 @@ const ConversationPanelView: FC<Props> = ({
       />
 
       <DialConfirmationPopup
-        open={pendingDeleteId !== null}
+        open={!!pendingDeleteId}
         header={t(ConversationHistoryI18nKeys.DeleteConfirmTitle)}
         confirmLabel={t(ActionsI18nKeys.Delete)}
         cancelLabel={t(ActionsI18nKeys.Cancel)}

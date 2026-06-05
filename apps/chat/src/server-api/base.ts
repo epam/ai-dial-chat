@@ -53,7 +53,7 @@ export const hasRequiredProperties = <T extends Record<string, unknown>>(
   data: unknown,
   properties: Array<keyof T>,
 ): data is T => {
-  if (typeof data !== 'object' || data === null) {
+  if (typeof data !== 'object' || data == null) {
     return false;
   }
   return properties.every((prop) => prop in data);
@@ -72,7 +72,7 @@ const parseResponse = async <TResponse>(
     try {
       const data = await response.json();
       // Basic validation: check if data is not null/undefined
-      if (data === null || data === undefined) {
+      if (data == null) {
         throw new Error('Received null or undefined response data');
       }
       return data as TResponse;

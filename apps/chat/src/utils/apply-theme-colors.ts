@@ -1,4 +1,5 @@
 import { Theme } from '@epam/ai-dial-chat-shared';
+import { StorageKey } from '../constants/storage';
 import { setToLocalStorage } from './local-storage';
 
 export const applyThemeColors = (div: HTMLElement, theme?: Theme) => {
@@ -9,6 +10,6 @@ export const applyThemeColors = (div: HTMLElement, theme?: Theme) => {
       div.style.setProperty(`--${key}`, value);
     });
 
-    setToLocalStorage('theme', theme.id); // Persist the theme
+    setToLocalStorage(StorageKey.Theme, theme.id); // Persist the theme
   }
 };
