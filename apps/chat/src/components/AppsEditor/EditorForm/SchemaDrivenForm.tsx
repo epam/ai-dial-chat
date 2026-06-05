@@ -66,7 +66,7 @@ export const SchemaDrivenForm = () => {
   if (!schema) return null;
 
   return (
-    <div className="size-full grow bg-layer-2 px-3 py-4 md:px-5 xl:py-5">
+    <div className="size-full grow overflow-y-auto bg-layer-2 px-3 py-4 md:px-5 xl:py-5">
       <DialSchemaRenderer
         schema={schema as unknown as JsonSchema}
         onPropertyChange={handleChange}
