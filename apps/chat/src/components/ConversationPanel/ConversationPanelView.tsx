@@ -233,7 +233,7 @@ const ConversationPanelView: FC<Props> = ({
         isLoading={isDeleting}
         description={
           <>
-            <span>
+            <span className="break-all">
               {t(ConversationHistoryI18nKeys.DeleteConfirmDescription)}{' '}
               <span className="dial-small-text text-primary">
                 &ldquo;{pendingDeleteTitle}&rdquo;

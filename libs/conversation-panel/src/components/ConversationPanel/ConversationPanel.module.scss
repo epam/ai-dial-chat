@@ -51,9 +51,12 @@
 }
 
 .trigger {
-  background: var(--cp-trigger-bg, var(--controls-bg-accent-secondary-alpha-active, #37BABC5C));
+  background: var(
+    --cp-trigger-bg,
+    var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
+  );
 }
 
 .triggerIcon {
-  color: var(--cp-trigger-icon, var(--text-accent-secondary, #37BABC));
+  color: var(--cp-trigger-icon, var(--text-accent-secondary, #37babc));
 }

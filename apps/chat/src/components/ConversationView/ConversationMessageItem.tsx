@@ -17,7 +17,7 @@ import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { FC, lazy, memo, Suspense } from 'react';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
 import { messageHasStages } from '../../utils/message-utils.js';
-import { buildMessageActions } from './utils/buildMessageActions.js';
+import { buildMessageActions } from './utils/build-message-actions.js';
 import {
   getMessageStarterProps,
   getStatusMessageProps,

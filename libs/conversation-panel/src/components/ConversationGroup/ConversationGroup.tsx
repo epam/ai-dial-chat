@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, type DropdownItem } from '@epam/ai-dial-ui-kit';
+import { DialEllipsisTooltip, type DropdownItem } from '@epam/ai-dial-ui-kit';
 import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import { type FC, memo, useState } from 'react';
 import type { ConversationHistoryItem } from '../../models/ConversationPanel.js';
@@ -62,17 +62,11 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
           )}
         >
           {isExpanded ? (
-            <IconCaretDownFilled
-              size={DIAL_ICON_SIZE.SM}
-              className="shrink-0"
-            />
+            <IconCaretDownFilled stroke={0.5} size={12} className="shrink-0" />
           ) : (
-            <IconCaretRightFilled
-              size={DIAL_ICON_SIZE.SM}
-              className="shrink-0"
-            />
+            <IconCaretRightFilled stroke={0.5} size={12} className="shrink-0" />
           )}
-          <span className="truncate">{label}</span>
+          <DialEllipsisTooltip text={label} />
         </button>
 
         {isExpanded && (

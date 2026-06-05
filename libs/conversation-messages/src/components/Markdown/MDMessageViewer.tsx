@@ -23,7 +23,8 @@ export const MDMessageViewer: FC<Props> = memo(({ content, isStreaming }) => (
       ol: 'mb-2',
       codeBlock:
         'bg-black/20 my-2 max-w-full whitespace-pre-wrap break-words [overflow-wrap:anywhere]',
-      codeFont: 'font-mono whitespace-pre-wrap break-words [overflow-wrap:anywhere]',
+      codeFont:
+        'font-mono whitespace-pre-wrap break-words [overflow-wrap:anywhere]',
       codeInline: 'bg-black/20 break-words [overflow-wrap:anywhere]',
       blockquote: 'border-current/30 my-2',
       link: 'break-words [overflow-wrap:anywhere]',
