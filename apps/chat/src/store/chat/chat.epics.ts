@@ -44,7 +44,6 @@ import {
   ModelsSelectors,
 } from '@/src/store/selectors';
 
-import { errorsMessages } from '@/src/constants/errors';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Message, Role } from '@epam/ai-dial-shared';
@@ -308,12 +307,16 @@ const handleUserMessageVoiceRecordingEpic: AppEpic = (action$, state$) =>
               return from(
                 requestAudioTranscription(base64Data, audioBlob.type),
               ).pipe(
-                switchMap((transcript) =>
+                switchMap(({ transcript, isTooLarge }) =>
                   transcript?.trim()
                     ? of(
                         ChatActions.setUserMessageTranscript(transcript.trim()),
                       )
-                    : of(ChatActions.userMessageTranscriptionFailed()),
+                    : of(
+                        ChatActions.userMessageTranscriptionFailed({
+                          isTooLarge,
+                        }),
+                      ),
                 ),
                 catchError(() =>
                   of(ChatActions.userMessageTranscriptionFailed()),
@@ -349,9 +352,9 @@ const startTranscriptionEpic: AppEpic = (action$) =>
       const { audioData, mimeType } = payload;
 
       return from(requestAudioTranscription(audioData, mimeType)).pipe(
-        switchMap((transcript) => {
+        switchMap(({ transcript, isTooLarge }) => {
           if (!transcript) {
-            return of(ChatActions.transcriptionFailed());
+            return of(ChatActions.transcriptionFailed({ isTooLarge }));
           }
 
           return of(
@@ -375,7 +378,7 @@ const transcriptionSuccessEpic: AppEpic = (action$, state$) =>
           of(ChatActions.clearAsrInsertionContext()),
           of(
             UIActions.showErrorToast({
-              message: translate(errorsMessages.transcriptionFailed),
+              message: translate(ChatI18nKeys.TranscriptionFailed),
             }),
           ),
         );
@@ -423,9 +426,13 @@ const transcriptionSuccessEpic: AppEpic = (action$, state$) =>
 const transcriptionFailedEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ChatActions.transcriptionFailed.type),
-    map(() =>
+    map(({ payload }) =>
       UIActions.showErrorToast({
-        message: translate(errorsMessages.transcriptionFailed),
+        message: translate(
+          payload?.isTooLarge
+            ? ChatI18nKeys.TranscriptionFailedTooLarge
+            : ChatI18nKeys.TranscriptionFailed,
+        ),
       }),
     ),
   );
@@ -433,9 +440,13 @@ const transcriptionFailedEpic: AppEpic = (action$) =>
 const userMessageTranscriptionFailedEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ChatActions.userMessageTranscriptionFailed.type),
-    map(() =>
+    map(({ payload }) =>
       UIActions.showErrorToast({
-        message: translate(errorsMessages.transcriptionFailed),
+        message: translate(
+          payload?.isTooLarge
+            ? ChatI18nKeys.TranscriptionFailedTooLarge
+            : ChatI18nKeys.TranscriptionFailed,
+        ),
       }),
     ),
   );
