@@ -109,6 +109,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
               className={mergeClasses(
                 'flex items-center justify-center rounded',
                 styles.trigger,
+                isActive && styles.triggerActive,
               )}
             />
           </DialDropdown>

@@ -17,8 +17,10 @@ import {
   ConversationListResponseDto,
 } from './dto/conversation-list.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
+import { RenameConversationResponseDto } from './dto/rename-conversation.dto';
 import { getConversationName } from './get-conversation-name';
 import { getConversationTitleFromName } from './get-conversation-title-from-name';
+import { prepareEntityName } from './prepare-entity-name';
 
 const getValidAttachments = (customContent?: Message['custom_content']) =>
   (customContent?.attachments ?? []).filter((attachment) =>
@@ -158,6 +160,48 @@ export class ConversationService extends AppService {
     void this.pinConversation(conversationId, false, token, bucket).catch(
       (err) => this.logger.error('Failed to clean up pin on delete', err),
     );
+  }
+
+  async renameConversation(
+    conversationPath: string,
+    newTitle: string,
+    token: string,
+    bucket: string,
+  ): Promise<RenameConversationResponseDto> {
+    const sanitisedTitle = prepareEntityName(newTitle);
+
+    // DIAL Core stores conversations as `{deploymentId}__{title}__{uuid}`.
+    // Rename = replace the middle segment, then move the resource.
+    const segments = conversationPath.split('/');
+    const filename = segments[segments.length - 1];
+    const parts = filename.split('__');
+    const renamedFilename =
+      parts.length >= 3
+        ? [parts[0], sanitisedTitle, parts[parts.length - 1]].join('__')
+        : sanitisedTitle;
+    const renamedPath =
+      segments.length > 1
+        ? [...segments.slice(0, -1), renamedFilename].join('/')
+        : renamedFilename;
+
+    const sourceUrl = `conversations/${bucket}/${encodeDialResourcePath(conversationPath)}`;
+    const destinationUrl = `conversations/${bucket}/${encodeDialResourcePath(renamedPath)}`;
+
+    try {
+      const { error } = (await this.client.moveResource({
+        headers: getBearerAuthHeaders(token),
+        body: { sourceUrl, destinationUrl, overwrite: false },
+      })) as { error?: unknown };
+      if (error !== undefined) {
+        this.logger.error('DIAL Core rejected moveResource (rename)', error);
+        return handleDialError(error);
+      }
+    } catch (error) {
+      this.logger.error('DIAL Core moveResource (rename) failed', error);
+      return handleDialError(error);
+    }
+
+    return { newPath: `conversations/${bucket}/${renamedPath}` };
   }
 
   async listConversations(

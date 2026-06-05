@@ -17,12 +17,14 @@ describe('ConversationController (integration)', () => {
   let service: {
     createConversation: ReturnType<typeof vi.fn>;
     listConversations: ReturnType<typeof vi.fn>;
+    renameConversation: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     service = {
       createConversation: vi.fn(),
       listConversations: vi.fn(),
+      renameConversation: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -394,6 +396,49 @@ describe('ConversationController (integration)', () => {
     it('returns 400 when limit exceeds 100', async () => {
       await request(app.getHttpServer())
         .get('/conversations/list?limit=200')
+        .expect(400);
+    });
+  });
+
+  describe('PATCH /conversations', () => {
+    it('returns 200 with newPath for a valid request', async () => {
+      const renamed = {
+        newPath: 'conversations/test-bucket/gpt-4o__New Title__uuid',
+      };
+      service.renameConversation.mockReturnValue(renamed);
+
+      const result = await request(app.getHttpServer())
+        .patch('/conversations?path=gpt-4o__Old+Title__uuid')
+        .send({ newTitle: 'New Title' })
+        .expect(200);
+
+      expect(result.body).toEqual(renamed);
+      expect(service.renameConversation).toHaveBeenCalledWith(
+        'gpt-4o__Old Title__uuid',
+        'New Title',
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 400 when newTitle is empty', async () => {
+      await request(app.getHttpServer())
+        .patch('/conversations?path=gpt-4o__Old+Title__uuid')
+        .send({ newTitle: '' })
+        .expect(400);
+    });
+
+    it('returns 400 when newTitle exceeds 200 characters', async () => {
+      await request(app.getHttpServer())
+        .patch('/conversations?path=gpt-4o__Old+Title__uuid')
+        .send({ newTitle: 'a'.repeat(201) })
+        .expect(400);
+    });
+
+    it('returns 400 when path query param is missing', async () => {
+      await request(app.getHttpServer())
+        .patch('/conversations')
+        .send({ newTitle: 'New Title' })
         .expect(400);
     });
   });

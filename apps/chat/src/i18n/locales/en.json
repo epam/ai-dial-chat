@@ -63,7 +63,8 @@
     "copyResponse": "Copy response",
     "copyAsMarkdown": "Copy as markdown",
     "likeResponse": "Like response",
-    "dislikeResponse": "Dislike response"
+    "dislikeResponse": "Dislike response",
+    "save": "Save"
   },
   "errors": {
     "generic": "Something went wrong",
@@ -124,7 +125,11 @@
     "deleteLabel": "Delete",
     "deleteConfirmTitle": "Confirm Deleting Chat",
     "deleteConfirmDescription": "Are you sure you want to delete",
-    "deleteError": "Failed to delete the conversation. Please try again."
+    "deleteError": "Failed to delete the conversation. Please try again.",
+    "renameTitle": "Rename Chat",
+    "renameLabel": "Rename",
+    "renameInputPlaceholder": "Chat name",
+    "renameError": "Failed to rename. Please try again."
   },
   "auth": {
     "signOut": "Sign out",

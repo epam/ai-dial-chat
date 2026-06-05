@@ -63,3 +63,9 @@ export const listConversations = (params?: {
     nextToken: params?.nextToken,
     path: params?.path,
   });
+
+export const renameConversation = (path: string, newTitle: string) =>
+  conversationsApi.renameConversation({
+    path,
+    renameConversationBodyDto: { newTitle },
+  });

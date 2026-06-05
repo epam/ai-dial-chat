@@ -1214,6 +1214,32 @@ export type RateMessageDtoRateEnum =
 /**
  *
  * @export
+ * @interface RenameConversationBodyDto
+ */
+export interface RenameConversationBodyDto {
+  /**
+   * New title for the conversation
+   * @type {string}
+   * @memberof RenameConversationBodyDto
+   */
+  newTitle: string;
+}
+/**
+ *
+ * @export
+ * @interface RenameConversationResponseDto
+ */
+export interface RenameConversationResponseDto {
+  /**
+   * New relative path of the renamed conversation
+   * @type {string}
+   * @memberof RenameConversationResponseDto
+   */
+  newPath: string;
+}
+/**
+ *
+ * @export
  * @interface SaveConversationBodyDto
  */
 export interface SaveConversationBodyDto {

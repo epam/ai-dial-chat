@@ -8,7 +8,12 @@ import {
   DialConfirmationPopup,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import { IconPin, IconPinnedFilled, IconTrashX } from '@tabler/icons-react';
+import {
+  IconPencilMinus,
+  IconPin,
+  IconPinnedFilled,
+  IconTrashX,
+} from '@tabler/icons-react';
 import {
   memo,
   useCallback,
@@ -26,6 +31,7 @@ import {
 } from '../../constants/translation-keys.js';
 import { useConversations } from '../../context/ConversationsContext.js';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint.js';
+import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup.js';
 import { getConversationSource } from './get-conversation-source.js';
 
 interface Props {
@@ -50,6 +56,7 @@ const ConversationPanelView: FC<Props> = ({
     conversations: items,
     pinConversation,
     deleteConversation,
+    renameConversation,
     refreshConversations,
   } = useConversations();
 
@@ -70,6 +77,13 @@ const ConversationPanelView: FC<Props> = ({
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const [pendingRenameItem, setPendingRenameItem] = useState<{
+    id: string;
+    title: string;
+  } | null>(null);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [renameError, setRenameError] = useState<string | null>(null);
 
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
@@ -150,6 +164,18 @@ const ConversationPanelView: FC<Props> = ({
           onClick: () => pinConversation(contextId, !panelItem.isPinned),
         },
         {
+          key: 'rename',
+          label: t(ConversationHistoryI18nKeys.RenameLabel),
+          icon: (
+            <IconPencilMinus
+              size={DIAL_ICON_SIZE.SM}
+              className="text-secondary"
+            />
+          ),
+          onClick: () =>
+            setPendingRenameItem({ id: contextId, title: panelItem.title }),
+        },
+        {
           key: 'delete',
           label: t(ConversationHistoryI18nKeys.DeleteLabel),
           icon: (
@@ -202,6 +228,32 @@ const ConversationPanelView: FC<Props> = ({
     setDeleteError(null);
   }, [isDeleting]);
 
+  const handleConfirmRename = useCallback(
+    async (newTitle: string) => {
+      if (!pendingRenameItem) return;
+      const { id } = pendingRenameItem;
+
+      setIsRenaming(true);
+      setRenameError(null);
+      try {
+        await renameConversation(id, newTitle);
+      } catch {
+        setRenameError(t(ConversationHistoryI18nKeys.RenameError));
+        setIsRenaming(false);
+        return;
+      }
+      setIsRenaming(false);
+      setPendingRenameItem(null);
+    },
+    [pendingRenameItem, renameConversation, t],
+  );
+
+  const handleCloseRenameDialog = useCallback(() => {
+    if (isRenaming) return;
+    setPendingRenameItem(null);
+    setRenameError(null);
+  }, [isRenaming]);
+
   return (
     <>
       <ConversationPanel
@@ -248,6 +300,15 @@ const ConversationPanelView: FC<Props> = ({
         onConfirm={handleConfirmDelete}
         onCancel={handleCloseDeleteDialog}
         onClose={handleCloseDeleteDialog}
+      />
+
+      <RenameConversationPopup
+        open={pendingRenameItem !== null}
+        currentTitle={pendingRenameItem?.title ?? ''}
+        isSaving={isRenaming}
+        error={renameError}
+        onSave={handleConfirmRename}
+        onCancel={handleCloseRenameDialog}
       />
     </>
   );
