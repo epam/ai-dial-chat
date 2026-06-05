@@ -16,6 +16,10 @@ export enum ChatI18nKeys {
   QuickReplyButtons = 'chat.quickReplyButtons',
   StoppedGenerating = 'chat.stoppedGenerating',
   Thinking = 'chat.thinking',
+  ShowMore = 'chat.showMore',
+  ShowLess = 'chat.showLess',
+  ShowMoreUserMessage = 'chat.showMoreUserMessage',
+  ShowLessUserMessage = 'chat.showLessUserMessage',
 }
 
 export enum ActionsI18nKeys {

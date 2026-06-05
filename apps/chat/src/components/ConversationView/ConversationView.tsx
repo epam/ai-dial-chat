@@ -326,6 +326,14 @@ const ConversationView: FC<Props> = ({
                   saveLabel={t(ActionsI18nKeys.SaveAndSubmit)}
                   editMessageAriaLabel={t(ActionsI18nKeys.EditMessage)}
                   quickReplyButtonsAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
+                  showMoreLabel={t(ChatI18nKeys.ShowMore)}
+                  showLessLabel={t(ChatI18nKeys.ShowLess)}
+                  showMoreUserMessageAriaLabel={t(
+                    ChatI18nKeys.ShowMoreUserMessage,
+                  )}
+                  showLessUserMessageAriaLabel={t(
+                    ChatI18nKeys.ShowLessUserMessage,
+                  )}
                   statusModelChangedTitle={t(
                     ConversationI18nKeys.StatusModelChangedTitle,
                   )}
