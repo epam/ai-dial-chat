@@ -432,6 +432,124 @@ describe('Input — isInputDisabled', () => {
   });
 });
 
+describe('Input — attachment status transitions', () => {
+  beforeEach(() => {
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn().mockReturnValue('blob:mock'),
+      revokeObjectURL: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('uploads attachments immediately when they are added', async () => {
+    let resolveUpload!: (url: string) => void;
+    const uploadPromise = new Promise<string>((resolve) => {
+      resolveUpload = resolve;
+    });
+    const handleUploadAttachment = vi.fn(() => uploadPromise);
+
+    render(<Input onUploadAttachment={handleUploadAttachment} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(handleUploadAttachment).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'doc.pdf' }),
+      );
+    });
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(true);
+
+    resolveUpload('https://example.com/doc.pdf');
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+      ).toBe(false);
+    });
+  });
+
+  it('restores message text and attachment tray when onSend rejects', async () => {
+    const handleSend = vi.fn().mockRejectedValue(new Error('upload failed'));
+
+    const { container } = render(<Input onSend={handleSend} />);
+    const textarea = container.querySelector('textarea');
+    expect(textarea).toBeTruthy();
+    fireEvent.change(textarea as HTMLTextAreaElement, {
+      target: { value: 'Please send this file' },
+    });
+
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(screen.getByText('doc')).toBeTruthy();
+    const sendButton = screen.getByLabelText('Send message');
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(handleSend).toHaveBeenCalled();
+    });
+    expect((textarea as HTMLTextAreaElement).value).toBe(
+      'Please send this file',
+    );
+    expect(screen.queryByText('doc')).toBeTruthy();
+  });
+
+  it('tray clears after onSend resolves', async () => {
+    const handleSend = vi.fn().mockResolvedValue(undefined);
+
+    render(<Input onSend={handleSend} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(screen.getByText('doc')).toBeTruthy();
+    const sendButton = screen.getByLabelText('Send message');
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText('doc')).toBeNull();
+    });
+  });
+
+  it('shows retry for failed immediate uploads and retries the same attachment', async () => {
+    const handleUploadAttachment = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('upload failed'))
+      .mockResolvedValueOnce('https://example.com/doc.pdf');
+
+    render(<Input onUploadAttachment={handleUploadAttachment} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Retry upload')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByLabelText('Retry upload'));
+
+    await waitFor(() => {
+      expect(handleUploadAttachment).toHaveBeenCalledTimes(2);
+      expect(screen.getByLabelText('Send message')).toBeTruthy();
+    });
+  });
+});
+
 describe('Input — pasted attachment expand', () => {
   beforeEach(() => {
     vi.stubGlobal('URL', {

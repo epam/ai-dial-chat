@@ -15,7 +15,25 @@ export const SAFE_DOWNLOAD_HEADERS = [
 interface UploadedFile {
   buffer: Buffer;
   mimetype: string;
+  originalname?: string;
 }
+
+const buildDialFileUrl = (bucket: string, path: string): string =>
+  `files/${bucket}/${path}`;
+
+const getFileNameFromPath = (path: string): string =>
+  path.split('/').filter(Boolean).pop() ?? 'file';
+
+const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
+  const formData = new FormData();
+  const fileName = file.originalname ?? getFileNameFromPath(path);
+  formData.append(
+    'file',
+    new Blob([file.buffer], { type: file.mimetype }),
+    fileName,
+  );
+  return formData;
+};
 
 @Injectable()
 export class FilesService extends AppService {
@@ -36,24 +54,34 @@ export class FilesService extends AppService {
     token: string,
   ): Promise<FileUploadResponseDto> {
     try {
+      this.logger.debug(
+        `Uploading file to DIAL Core: bucket=${bucket}, path=${path}, mimetype=${file.mimetype}, size=${file.buffer.length}`,
+      );
+
       const { data, error, response } = (await this.client.uploadFile(
         bucket,
         path,
         {
           headers: {
             ...getBearerAuthHeaders(token),
-            'Content-Type': file.mimetype,
           },
-          body: file.buffer as unknown as string,
+          body: buildUploadFormData(file, path) as unknown as string,
           signal: AbortSignal.timeout(this.getTimeoutMs()),
         },
       )) as { data?: { url?: string }; error?: unknown; response: Response };
 
       if (error !== undefined) {
+        this.logger.warn(
+          `DIAL Core upload returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
+        );
         return handleDialError({ status: response.status });
       }
 
-      return { url: data?.url ?? '' };
+      const url = buildDialFileUrl(bucket, path);
+      this.logger.debug(
+        `File upload succeeded: bucket=${bucket}, path=${path}, url=${url}, upstreamUrl=${data?.url ?? ''}`,
+      );
+      return { url };
     } catch (err) {
       this.logger.error(`Upload failed for ${bucket}/${path}`, err);
       return handleDialError(err);

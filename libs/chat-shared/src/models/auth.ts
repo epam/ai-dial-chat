@@ -6,6 +6,8 @@ export interface UserProfile {
   providerId: string;
   /** Raw claims from the ID token, keyed by claim name. */
   claims: Record<string, unknown>;
+  /** DIAL Core storage bucket for the authenticated user. Empty string when the bucket has not been resolved yet. */
+  bucket?: string;
 }
 
 /** Describes an available identity provider. */

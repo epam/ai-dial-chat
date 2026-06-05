@@ -230,6 +230,8 @@ export interface DisplayAttachment {
   status: RequestStatus;
   /** Object URL for image preview; only set when `type === AttachmentType.Image`. */
   previewUrl?: string;
+  /** Remote URL for an attachment that has already been uploaded. */
+  url?: string;
 }
 
 /** Attachment selected locally by the user before it is sent to the backend. */

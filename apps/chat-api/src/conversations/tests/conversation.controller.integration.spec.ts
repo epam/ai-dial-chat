@@ -304,12 +304,36 @@ describe('ConversationController (integration)', () => {
         .expect(201);
     });
 
+    it('returns 201 when a DIAL file path is provided in an attachment url', async () => {
+      const conversation = { id: 'test-id', messages: [] };
+      service.createConversation.mockReturnValue(conversation);
+
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({
+          firstMessage: 'Here is a file',
+          deploymentId: 'gpt-4o',
+          custom_content: {
+            attachments: [
+              {
+                type: 'image/jpeg',
+                title: 'IMG_4740 2.jpg',
+                url: 'files/6LLV3pmfwUbYZj3jFvKWdANHFmWwX3P6eFoFKoxZJVrEW5cQzK965U43R5kWqKCwtd/uploads/2026-06/IMG_4740%202.jpg',
+              },
+            ],
+          },
+        })
+        .expect(201);
+    });
+
     it.each([
       'http://169.254.169.254/latest/meta-data/',
       'http://internal.service/secret',
       'file:///etc/passwd',
       'javascript:alert(1)',
       'not-a-url',
+      'files/bucket/uploads/2026-06/../secret.txt',
+      'files/bucket/uploads/2026-06/secret%2ftoken.txt',
     ])(
       'returns 400 when attachment url is a disallowed value: %s',
       async (badUrl) => {

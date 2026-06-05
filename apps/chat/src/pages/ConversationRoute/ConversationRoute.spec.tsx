@@ -2,12 +2,23 @@ import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
 import * as conversationsApi from '../../server-api/conversations.api';
+import * as filesApi from '../../server-api/files.api';
+import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
 import ConversationRoute from './ConversationRoute';
 
 vi.mock('../../context/DeploymentsContext');
+vi.mock('../../context/auth/UserContext');
 vi.mock('../../server-api/conversations.api');
+vi.mock('../../server-api/files.api');
+vi.mock('../../utils/attachment-to-dto');
+vi.mock('../../utils/build-upload-path', () => ({
+  buildUploadPath: vi.fn(
+    (attachment: { name: string }) => `uploads/${attachment.name}`,
+  ),
+}));
 vi.mock('../../components/StarterButtons/StarterButtons', () => ({
   default: ({
     starters,
@@ -53,11 +64,16 @@ vi.mock('react-router-dom', async (importOriginal) => {
 vi.mock('@epam/ai-dial-conversation-input', () => ({
   ConversationInput: ({
     onSend,
+    onUploadAttachment,
     deployments,
     selectedDeploymentId,
     isInputDisabled,
   }: {
-    onSend?: (msg: string, att: never[]) => void;
+    onSend?: (msg: string, att: never[]) => Promise<void> | void;
+    onUploadAttachment?: (attachment: {
+      name: string;
+      file: File;
+    }) => Promise<string>;
     deployments?: unknown[];
     selectedDeploymentId?: string | null;
     isInputDisabled?: boolean;
@@ -74,10 +90,28 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
       </span>
       <button
         type="button"
-        onClick={() => onSend?.('Hello', [])}
+        onClick={() => {
+          Promise.resolve(onSend?.('Hello', [])).catch((_err: unknown) => {
+            // intentional: test mock swallows rejection to avoid unhandled promise
+          });
+        }}
         data-testid="send-trigger"
       >
         Send
+      </button>
+      <button
+        type="button"
+        onClick={() => {
+          void onUploadAttachment?.({
+            name: 'file.pdf',
+            file: new File(['content'], 'file.pdf', {
+              type: 'application/pdf',
+            }),
+          });
+        }}
+        data-testid="upload-trigger"
+      >
+        Upload
       </button>
     </div>
   ),
@@ -96,7 +130,12 @@ const renderRoute = () =>
 
 describe('ConversationRoute', () => {
   const mockUseDeployments = vi.mocked(DeploymentsContextModule.useDeployments);
+  const mockUseUser = vi.mocked(UserContextModule.useUser);
   const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
+  const mockUploadFile = vi.mocked(filesApi.uploadFile);
+  const mockAttachmentsToDtos = vi.mocked(
+    attachmentToDtoModule.attachmentsToDtos,
+  );
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -108,9 +147,17 @@ describe('ConversationRoute', () => {
       isLoading: false,
       error: null,
     });
+    mockUseUser.mockReturnValue({
+      user: { sub: 'u1', providerId: 'p1', claims: {}, bucket: 'user-bucket' },
+      status: 'authenticated',
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
     mockCreateConversation.mockResolvedValue({
       id: 'bucket/path__Hello',
     } as never);
+    mockUploadFile.mockResolvedValue({ url: 'https://example.com/file.pdf' });
+    mockAttachmentsToDtos.mockReturnValue(undefined);
   });
 
   it('passes catalog items and selectedItemId into ConversationInput', async () => {
@@ -134,6 +181,23 @@ describe('ConversationRoute', () => {
         'Hello',
         'gpt-4o',
         undefined,
+      );
+    });
+  });
+
+  it('uploads attachments through onUploadAttachment before send', async () => {
+    renderRoute();
+    await waitFor(() => screen.getByTestId('upload-trigger'));
+
+    await act(async () => {
+      screen.getByTestId('upload-trigger').click();
+    });
+
+    await waitFor(() => {
+      expect(mockUploadFile).toHaveBeenCalledWith(
+        'user-bucket',
+        'uploads/file.pdf',
+        expect.any(File),
       );
     });
   });
@@ -282,6 +346,30 @@ describe('ConversationRoute', () => {
         'form-example',
         [],
         { button: 2 },
+      );
+    });
+  });
+
+  it('creates a text-only conversation when bucket is empty', async () => {
+    mockUseUser.mockReturnValue({
+      user: { sub: 'u1', providerId: 'p1', claims: {}, bucket: '' },
+      status: 'authenticated',
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    });
+
+    renderRoute();
+    await waitFor(() => screen.getByTestId('send-trigger'));
+
+    await act(async () => {
+      screen.getByTestId('send-trigger').click();
+    });
+
+    await waitFor(() => {
+      expect(mockCreateConversation).toHaveBeenCalledWith(
+        'Hello',
+        'gpt-4o',
+        undefined,
       );
     });
   });

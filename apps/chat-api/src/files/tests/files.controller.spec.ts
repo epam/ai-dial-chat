@@ -108,6 +108,28 @@ describe('FilesController — upload', () => {
     );
   });
 
+  it('accepts percent-encoded file names in user upload paths', async () => {
+    const path = 'uploads/2026-06/IMG_4740%202.jpg';
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files')
+      .field('bucket', 'user-bucket')
+      .field('path', path)
+      .attach('file', Buffer.from('hello'), 'IMG_4740 2.jpg')
+      .expect(201);
+
+    expect(res.body).toEqual({ url: 'files/my-bucket/folder/file.pdf' });
+    expect(service.uploadFile).toHaveBeenCalledWith(
+      'user-bucket',
+      path,
+      expect.objectContaining({
+        buffer: expect.any(Buffer),
+        mimetype: expect.any(String),
+      }),
+      TEST_USER.at,
+    );
+  });
+
   it('returns 400 for invalid bucket (contains slash)', async () => {
     await request(app.getHttpServer())
       .post('/api/v1/files')
@@ -124,6 +146,16 @@ describe('FilesController — upload', () => {
       .field('bucket', 'my-bucket')
       .field('path', '../etc/passwd')
       .attach('file', Buffer.from('hello'), 'file.pdf')
+      .expect(400);
+    expect(service.uploadFile).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for URL-encoded path traversal', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files')
+      .field('bucket', 'my-bucket')
+      .field('path', 'files/my-bucket/uploads/2026-06/%2E%2E%2Fsecret.txt')
+      .attach('file', Buffer.from('hello'), 'secret.txt')
       .expect(400);
     expect(service.uploadFile).not.toHaveBeenCalled();
   });
