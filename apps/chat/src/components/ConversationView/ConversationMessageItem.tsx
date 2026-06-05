@@ -167,6 +167,7 @@ const ConversationMessageItem: FC<Props> = ({
       attachments={attachmentDtosToDisplayAttachments(
         msg.custom_content?.attachments,
       )}
+      isStreaming={isStreaming}
       hasAlwaysVisibleActions={!isStreaming}
       actions={buildMessageActions(
         msg,
