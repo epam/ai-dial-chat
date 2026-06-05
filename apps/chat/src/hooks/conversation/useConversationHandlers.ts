@@ -246,7 +246,7 @@ export const useConversationHandlers = ({
 
       const conversationPath = getConversationPath(conversationId);
 
-      if (rating !== null) {
+      if (rating != null) {
         try {
           await rateMessage({
             conversationId: updated.id,

@@ -4,6 +4,7 @@ import { join } from 'node:path';
 const generatedRoot = 'libs/chat-api-client/src/generated';
 const generatedApisRoot = join(generatedRoot, 'src/apis');
 const generatedModelsRoot = join(generatedRoot, 'src/models');
+const generatedRuntimePath = join(generatedRoot, 'src/runtime.ts');
 
 await Promise.all(
   ['package.json', 'tsconfig.json', 'tsconfig.esm.json'].map((file) =>
@@ -70,7 +71,10 @@ await Promise.all(
           'let formParams: { append(name: string, value: string | Blob): void };',
         )
         // Fix multipart/form-data generator gap: remove `as any` from formParams.append calls
-        .replace(/formParams\.append\(([^,]+),\s*([^)]+)\s+as\s+any\)/g, 'formParams.append($1, $2)')
+        .replace(
+          /formParams\.append\(([^,]+),\s*([^)]+)\s+as\s+any\)/g,
+          'formParams.append($1, $2)',
+        )
         // Replace loose object index-signature any in API return types and response wrappers
         .replace(/\{ \[key: string\]: any;? \}/g, '{ [key: string]: unknown }')
         // Replace JSONApiResponse<any> where the generator emitted an explicit any type arg
@@ -103,3 +107,13 @@ await Promise.all(
       }
     }),
 );
+
+const runtimeSource = await readFile(generatedRuntimePath, 'utf8');
+const runtimeUpdated = runtimeSource.replace(
+  'return value !== null && value !== undefined;',
+  'return value != null;',
+);
+
+if (runtimeUpdated !== runtimeSource) {
+  await writeFile(generatedRuntimePath, runtimeUpdated);
+}

@@ -74,7 +74,7 @@ export const remarkPlugins = [remarkGfm];
  * explicit `components` overrides, so consumers can still override them.
  */
 export const defaultMarkdownComponents: Components = {
-  li: ({ children }) => <li className="mb-0.5">{children}</li>,
+  li: ({ children }) => <li className="mb-2">{children}</li>,
 };
 
 const buildMarkdownComponents = (

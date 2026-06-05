@@ -8,7 +8,7 @@ export const getErrorDetails = (
   fallbackStatusCode = 500,
   fallbackMessage = 'Unknown error',
 ): ErrorDetails => {
-  if (typeof error !== 'object' || error === null) {
+  if (typeof error !== 'object' || error == null) {
     return { statusCode: fallbackStatusCode, message: fallbackMessage };
   }
 

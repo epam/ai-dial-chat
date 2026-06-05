@@ -1,5 +1,6 @@
 import { Theme } from '@epam/ai-dial-chat-shared';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { StorageKey } from '../../constants/storage';
 import { applyThemeColors } from '../apply-theme-colors';
 import * as localStorage from '../local-storage';
 
@@ -53,7 +54,10 @@ describe('applyThemeColors', () => {
 
     applyThemeColors(mockElement, mockTheme);
 
-    expect(mockSetToLocalStorage).toHaveBeenCalledWith('theme', 'light');
+    expect(mockSetToLocalStorage).toHaveBeenCalledWith(
+      StorageKey.Theme,
+      'light',
+    );
   });
 
   it('should handle undefined theme (no-op)', () => {
@@ -75,7 +79,10 @@ describe('applyThemeColors', () => {
 
     applyThemeColors(mockElement, mockTheme);
 
-    expect(mockSetToLocalStorage).toHaveBeenCalledWith('theme', 'empty');
+    expect(mockSetToLocalStorage).toHaveBeenCalledWith(
+      StorageKey.Theme,
+      'empty',
+    );
   });
 
   it('should update CSS custom properties correctly', () => {
@@ -121,6 +128,9 @@ describe('applyThemeColors', () => {
     expect(mockElement.style.getPropertyValue('--bg-color')).toBe('#ffffff');
 
     expect(mockSetToLocalStorage).toHaveBeenCalledTimes(2);
-    expect(mockSetToLocalStorage).toHaveBeenLastCalledWith('theme', 'light');
+    expect(mockSetToLocalStorage).toHaveBeenLastCalledWith(
+      StorageKey.Theme,
+      'light',
+    );
   });
 });

@@ -26,7 +26,7 @@ export const streamCompletion = (
         signal,
         headers: {
           'Content-Type': 'application/json',
-          ...(getCsrfToken() !== null
+          ...(getCsrfToken() != null
             ? { 'X-CSRF-Token': getCsrfToken() as string }
             : {}),
         },
