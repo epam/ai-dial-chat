@@ -47,18 +47,17 @@ export const useCollapsedText = ({
     const parsedFontSize = Number.parseFloat(computedStyle.fontSize);
     const fontSize = Number.isNaN(parsedFontSize) ? 16 : parsedFontSize;
     const parsedLineHeight = Number.parseFloat(computedStyle.lineHeight);
-    const lineHeight = (() => {
-      if (
-        computedStyle.lineHeight === 'normal' ||
-        Number.isNaN(parsedLineHeight)
-      ) {
-        return fontSize * 1.5;
-      }
+    let lineHeight = fontSize * 1.5;
 
-      return computedStyle.lineHeight.endsWith('px')
+    if (
+      computedStyle.lineHeight !== 'normal' &&
+      !Number.isNaN(parsedLineHeight)
+    ) {
+      lineHeight = computedStyle.lineHeight.endsWith('px')
         ? parsedLineHeight
         : parsedLineHeight * fontSize;
-    })();
+    }
+
     const nextMaxHeight = lineHeight * effectiveCollapsedLineCount;
 
     setCollapsedMaxHeight(nextMaxHeight);
