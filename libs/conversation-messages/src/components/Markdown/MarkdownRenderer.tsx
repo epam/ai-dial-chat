@@ -94,18 +94,24 @@ const buildMarkdownComponents = (
     <strong className={cn.strong ?? 'font-semibold'}>{children}</strong>
   ),
   em: ({ children }) => <em className={cn.em ?? 'italic'}>{children}</em>,
+  pre: ({ children }) => (
+    <pre
+      className={mergeClasses(
+        'overflow-x-auto rounded p-3',
+        cn.codeBlockFont ?? 'text-sm',
+        cn.codeBlock,
+      )}
+    >
+      {children}
+    </pre>
+  ),
   code: ({ children, className }) => {
-    const isBlock = className?.includes('language-');
+    const isBlock =
+      className?.includes('language-') || String(children).includes('\n');
     return isBlock ? (
-      <pre
-        className={mergeClasses(
-          'overflow-x-auto rounded p-3',
-          cn.codeBlockFont ?? 'text-sm',
-          cn.codeBlock,
-        )}
-      >
-        <code className={cn.codeFont ?? 'font-mono'}>{children}</code>
-      </pre>
+      <code className={mergeClasses(cn.codeFont ?? 'font-mono', className)}>
+        {children}
+      </code>
     ) : (
       <code
         className={mergeClasses(

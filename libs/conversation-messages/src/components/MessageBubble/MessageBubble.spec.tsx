@@ -119,6 +119,18 @@ describe('MessageBubble', () => {
 });
 
 describe('UserMessageBubble — attachments', () => {
+  it('preserves line breaks in the message text', () => {
+    const message = 'First line\n\nSecond line\n- Item';
+
+    const { container } = render(<UserMessageBubble text={message} />);
+
+    const paragraph = container.querySelector('p');
+    expect(paragraph?.textContent).toBe(message);
+    expect(paragraph?.className).toContain('whitespace-pre-wrap');
+    expect(paragraph?.className).toContain('text-left');
+    expect(paragraph?.className).toContain('[overflow-wrap:anywhere]');
+  });
+
   it('renders an attachment tray when attachments are provided', () => {
     render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
     // AttachmentTray renders a list role
@@ -160,6 +172,32 @@ describe('UserMessageBubble — attachments', () => {
 });
 
 describe('AssistantMessageBubble — attachments', () => {
+  it('allows long unbroken markdown text to wrap inside the bubble', () => {
+    const longToken = `integrity sha512-${'f2'.repeat(120)}`;
+
+    const { container } = render(<AssistantMessageBubble text={longToken} />);
+
+    const paragraph = screen.getByText(longToken);
+    expect(paragraph.className).toContain('[overflow-wrap:anywhere]');
+    expect(paragraph.className).toContain('break-words');
+    expect(container.querySelector('.min-w-0.max-w-full')).not.toBeNull();
+  });
+
+  it('allows long unbroken code block lines to wrap inside the bubble', () => {
+    const longToken = `integrity sha512-${'f2'.repeat(120)}`;
+
+    const { container } = render(
+      <AssistantMessageBubble text={`\`\`\`\n${longToken}\n\`\`\``} />,
+    );
+
+    const pre = container.querySelector('pre');
+    const code = container.querySelector('pre code');
+    expect(pre?.className).toContain('whitespace-pre-wrap');
+    expect(pre?.className).toContain('[overflow-wrap:anywhere]');
+    expect(code?.className).toContain('whitespace-pre-wrap');
+    expect(code?.className).toContain('[overflow-wrap:anywhere]');
+  });
+
   it('reveals appended streaming text gradually', () => {
     vi.useFakeTimers();
 
