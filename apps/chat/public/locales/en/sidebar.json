@@ -113,5 +113,6 @@
   "Files shared with you will appear here.": "Files shared with you will appear here.",
   "Public files will appear here.": "Public files will appear here.",
   "Upload or drag and drop files": "Upload or drag and drop files",
-  "Copy to": "Copy to"
+  "Copy to": "Copy to",
+  "This Quick App uses personal skill prompts that may not be accessible to other users. To ensure access, share the skill prompts separately or replace them with public ones.": "This Quick App uses personal skill prompts that may not be accessible to other users. To ensure access, share the skill prompts separately or replace them with public ones."
 }
