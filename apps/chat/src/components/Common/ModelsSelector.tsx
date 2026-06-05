@@ -45,7 +45,7 @@ const ModelSelectRow = ({
       <ModelIcon entity={item} entityId={item.id} size={18} />
       <div
         className={classNames(
-          'flex items-center',
+          'flex flex-1 items-center',
           truncate ? 'min-w-0' : 'flex-wrap gap-x-1.5',
         )}
         data-qa="agent-attributes"
