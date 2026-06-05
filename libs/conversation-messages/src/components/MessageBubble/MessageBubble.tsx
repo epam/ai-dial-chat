@@ -25,6 +25,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({ role, ...props }) => {
       {...props}
       deploymentIconUrl={props.deploymentIconUrl}
       deploymentDisplayName={props.deploymentDisplayName}
+      thinkingLabel={props.thinkingLabel}
     />
   );
 };
