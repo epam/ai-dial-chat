@@ -234,6 +234,88 @@ describe('TargetAudienceFilterComponent', () => {
     });
   });
 
+  it('disables save and shows error message when regex pattern is invalid', async () => {
+    const selectedTarget = targetValues[0];
+    const selectedFilter = getFilterLabel(filterValues[2]);
+
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
+
+    if (!screen.queryByText(selectedTarget)) {
+      await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    }
+    await userEvent.click(screen.getByText(selectedTarget));
+
+    await userEvent.click(screen.getByTestId('open-filter-dropdown-filterFns'));
+    await userEvent.click(screen.getByText(selectedFilter));
+
+    const input = screen.getByPlaceholderText('Enter regular expression...');
+    fireEvent.change(input, { target: { value: '[unclosed' } });
+
+    expect(screen.getByTestId('save-filter')).toBeDisabled();
+    expect(screen.getByText('Invalid regular expression')).toBeInTheDocument();
+  });
+
+  it('disables save when regex input is whitespace only', async () => {
+    const selectedTarget = targetValues[0];
+    const selectedFilter = getFilterLabel(filterValues[2]);
+
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
+
+    if (!screen.queryByText(selectedTarget)) {
+      await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    }
+    await userEvent.click(screen.getByText(selectedTarget));
+
+    await userEvent.click(screen.getByTestId('open-filter-dropdown-filterFns'));
+    await userEvent.click(screen.getByText(selectedFilter));
+
+    const input = screen.getByPlaceholderText('Enter regular expression...');
+    await userEvent.type(input, '   ');
+
+    expect(screen.getByTestId('save-filter')).toBeDisabled();
+  });
+
+  it('re-enables save when valid pattern follows invalid one', async () => {
+    const selectedTarget = targetValues[0];
+    const selectedFilter = getFilterLabel(filterValues[2]);
+
+    render(
+      <TargetAudienceFilterComponent
+        onSaveFilter={onSaveFilter}
+        onCloseFilter={onCLoseFilter}
+      />,
+    );
+
+    if (!screen.queryByText(selectedTarget)) {
+      await userEvent.click(screen.getAllByText(defaultFilterOption)[0]);
+    }
+    await userEvent.click(screen.getByText(selectedTarget));
+
+    await userEvent.click(screen.getByTestId('open-filter-dropdown-filterFns'));
+    await userEvent.click(screen.getByText(selectedFilter));
+
+    const input = screen.getByPlaceholderText('Enter regular expression...');
+    fireEvent.change(input, { target: { value: '[unclosed' } });
+    expect(screen.getByTestId('save-filter')).toBeDisabled();
+
+    fireEvent.change(input, { target: { value: '^admin.*' } });
+
+    expect(screen.getByTestId('save-filter')).not.toBeDisabled();
+    expect(
+      screen.queryByText('Invalid regular expression'),
+    ).not.toBeInTheDocument();
+  });
+
   it('calls onCloseFilter when pointerdown happens outside the filter row and draft is incomplete', () => {
     render(
       <TargetAudienceFilterComponent

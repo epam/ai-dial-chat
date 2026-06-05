@@ -4,6 +4,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 
 import { useRouter } from 'next/router';
 
+import classNames from 'classnames';
+
 import { useRouteHistory } from '@/src/hooks/useRouteHistory';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -66,7 +68,9 @@ export function Layout({
     UISelectors.selectIsAnyMenuOpen(state, router.pathname),
   );
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
-
+  const isMdSidebarOverlayBreakpoint = useAppSelector(
+    SettingsSelectors.selectIsMdSidebarOverlayBreakpoint,
+  );
   const [loading, setLoading] = useState(isApplyingModel);
 
   const showFloatingOverlay = isAnyMenuOpen && !isIsolatedView;
@@ -173,7 +177,12 @@ export function Layout({
         >
           {showFloatingOverlay && (
             <FloatingOverlay
-              className="z-40 bg-blackout sidebar-overlay:hidden"
+              className={classNames(
+                'z-40 bg-blackout',
+                isMdSidebarOverlayBreakpoint
+                  ? 'sidebar-overlay-md:hidden'
+                  : 'sidebar-overlay:hidden',
+              )}
               onClick={handleCloseOverlay}
             />
           )}

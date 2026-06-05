@@ -1,21 +1,16 @@
-import { BaseAssertion } from '@/src/assertions';
+import { BasePublishedEntityReviewModalAssertion } from '@/src/assertions';
 import { PublishingExpectedMessages } from '@/src/testData';
 import { AttributeValues, Attributes } from '@/src/ui/domData';
 import { PublishedApplicationReviewModal } from '@/src/ui/webElements/publishedApplicationReviewModal';
 
-export class PublishedAppReviewModalAssertion extends BaseAssertion {
-  readonly publishedApplicationReviewModal: PublishedApplicationReviewModal;
-
-  constructor(
-    publishedApplicationReviewModal: PublishedApplicationReviewModal,
-  ) {
-    super();
-    this.publishedApplicationReviewModal = publishedApplicationReviewModal;
+export class PublishedAppReviewModalAssertion extends BasePublishedEntityReviewModalAssertion<PublishedApplicationReviewModal> {
+  constructor(publishedEntityReviewModal: PublishedApplicationReviewModal) {
+    super(publishedEntityReviewModal);
   }
 
   public async assertAppFeaturesData(expectedFeatures: Record<string, string>) {
     await this.assertElementInnerText(
-      this.publishedApplicationReviewModal.featuresData,
+      this.publishedEntityReviewModal.featuresData,
       Object.entries(expectedFeatures).map(([k, v]) => `"${k}" : "${v}"`),
       PublishingExpectedMessages.publicationFeaturesDataIsValid,
     );
@@ -33,78 +28,49 @@ export class PublishedAppReviewModalAssertion extends BaseAssertion {
     expectedCompletionUrl?: string;
     expectedExternalUrl?: string;
   }) {
-    if (attributesToVerify.expectedName) {
-      await this.assertElementText(
-        this.publishedApplicationReviewModal.name,
-        attributesToVerify.expectedName,
-      );
-    }
-    if (attributesToVerify.expectedVersion) {
-      await this.assertElementText(
-        this.publishedApplicationReviewModal.version,
-        attributesToVerify.expectedVersion,
-      );
-    }
-    if (attributesToVerify.expectedIcon) {
-      await this.assertEntityIcon(
-        this.publishedApplicationReviewModal.getApplicationIcon(),
-        attributesToVerify.expectedIcon,
-      );
-    }
-    if (attributesToVerify.expectedDescription) {
-      await this.assertElementText(
-        this.publishedApplicationReviewModal.description,
-        attributesToVerify.expectedDescription,
-      );
-    }
-    if (attributesToVerify.expectedTopics) {
-      await this.assertElementInnerText(
-        this.publishedApplicationReviewModal.topics,
-        attributesToVerify.expectedTopics,
-      );
-    }
+    await this.assertEntityAttributes(attributesToVerify);
     if (attributesToVerify.expectedFeatures) {
       await this.assertAppFeaturesData(attributesToVerify.expectedFeatures);
     }
     if (attributesToVerify.expectedAttachmentTypes) {
       await this.assertElementInnerText(
-        this.publishedApplicationReviewModal.attachmentTypes,
+        this.publishedEntityReviewModal.attachmentTypes,
         attributesToVerify.expectedAttachmentTypes,
       );
     }
     if (attributesToVerify.expectedMaxAttachmentNumbers) {
       await this.assertElementText(
-        this.publishedApplicationReviewModal.maxAttachmentsNumber,
+        this.publishedEntityReviewModal.maxAttachmentsNumber,
         attributesToVerify.expectedMaxAttachmentNumbers,
       );
     }
     if (attributesToVerify.expectedCompletionUrl) {
       await this.assertElementState(
-        this.publishedApplicationReviewModal.completionUrlLabel,
+        this.publishedEntityReviewModal.completionUrlLabel,
         'visible',
       );
       await this.assertElementText(
-        this.publishedApplicationReviewModal.completionUrl,
+        this.publishedEntityReviewModal.completionUrl,
         attributesToVerify.expectedCompletionUrl,
       );
     }
     if (attributesToVerify.expectedExternalUrl) {
       await this.assertElementState(
-        this.publishedApplicationReviewModal.externalUrlLabel,
+        this.publishedEntityReviewModal.externalUrlLabel,
         'visible',
       );
       await this.assertElementAttribute(
-        this.publishedApplicationReviewModal.externalUrl,
+        this.publishedEntityReviewModal.externalUrl,
         Attributes.href,
         attributesToVerify.expectedExternalUrl,
       );
       await this.assertElementAttribute(
-        this.publishedApplicationReviewModal.externalUrl,
+        this.publishedEntityReviewModal.externalUrl,
         Attributes.target,
         AttributeValues.blank,
       );
       await this.assertElementState(
-        this.publishedApplicationReviewModal.externalUrlIcon,
+        this.publishedEntityReviewModal.externalUrlIcon,
         'visible',
       );
     }

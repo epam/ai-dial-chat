@@ -41,10 +41,8 @@ const commonBorderColors = {
   'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
 };
 
-const sidebarOverlayBreakpoint =
-  process.env.NEXT_PUBLIC_USE_MD_SIDEBAR_OVERLAY_BREAKPOINT === 'true'
-    ? defaultTheme.screens.md
-    : defaultTheme.screens.xl;
+const sidebarOverlayBreakpoint = defaultTheme.screens.xl;
+const sidebarOverlayMdBreakpoint = defaultTheme.screens.md;
 
 // Do not use palette directly, only through semantic colors
 /** @type {import('tailwindcss').Config} */
@@ -103,6 +101,7 @@ module.exports = {
         '4xl': '2120px',
         '5xl': '2560px',
         'sidebar-overlay': sidebarOverlayBreakpoint,
+        'sidebar-overlay-md': sidebarOverlayMdBreakpoint,
       },
       borderRadius: {
         DEFAULT: 'var(--border-radius, 3px)',

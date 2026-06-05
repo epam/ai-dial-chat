@@ -26,7 +26,7 @@ export function ReviewToolsetDialog() {
 
   return (
     <Modal
-      dataQa="review-toolset-dialog"
+      dataQa="review-entity-dialog"
       portalId="chat"
       onClose={handleClose}
       overlayClassName="fixed inset-0 top-[48px]"

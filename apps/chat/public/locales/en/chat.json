@@ -158,6 +158,7 @@
   "All": "All",
   "or": "or",
   "Enter regular expression...": "Enter regular expression...",
+  "Invalid regular expression": "Invalid regular expression",
   "Publish to": "Publish to",
   "Change": "Change",
   "There are no valid items to publish": "There are no valid items to publish",
@@ -365,5 +366,6 @@
   "Markdown": "Markdown",
   "Plain text": "Plain text",
   "You don't have any files": "You don't have any files",
-  "Select a file from the tree": "Select a file from the tree"
+  "Select a file from the tree": "Select a file from the tree",
+  "This Quick App uses personal skill prompts that are not publicly available. Please replace non-public skill prompts with public ones, otherwise recipients may not be able to access them.": "This Quick App uses personal skill prompts that are not publicly available. Please replace non-public skill prompts with public ones, otherwise recipients may not be able to access them."
 }

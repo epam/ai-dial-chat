@@ -63,12 +63,12 @@ function ReviewToolsetDialogContent({
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Name)}
             value={toolset.name}
-            dataQa="app-name"
+            dataQa="entity-name"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Version)}
             value={toolset.version ?? NA_VERSION}
-            dataQa="app-version"
+            dataQa="entity-version"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Icon)}
@@ -85,7 +85,7 @@ function ReviewToolsetDialogContent({
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Description)}
             value={description}
-            dataQa="app-description"
+            dataQa="entity-description"
           />
           {toolset.topics?.length > 0 && (
             <MarketplaceEntityInfoRow
@@ -102,24 +102,24 @@ function ReviewToolsetDialogContent({
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Endpoint)}
             value={toolset.endpoint}
-            dataQa="app-endpoint"
+            dataQa="toolset-endpoint"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.TransportProtocol)}
             value={toolset.transport}
-            dataQa="app-transport"
+            dataQa="toolset-transport"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.AuthenticationType)}
             value={
               AUTH_TYPE_OPTIONS[toolset.authSettings?.authenticationType]?.name
             }
-            dataQa="app-authentication-type"
+            dataQa="toolset-authentication-type"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.AllowedTools)}
             value={toolset.allowedTools?.join(', ')}
-            dataQa="app-allowed-tools"
+            dataQa="toolset-allowed-tools"
           />
         </div>
       </div>

@@ -144,6 +144,8 @@ export interface CustomVisualizerDataLayout {
   logInHint?: string;
   providerId?: string;
   accessToken?: string;
+  currentLocale?: string;
+  dir?: 'ltr' | 'rtl';
 }
 
 export interface CustomVisualizerData {

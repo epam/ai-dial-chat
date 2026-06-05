@@ -8,6 +8,7 @@ export enum Feature {
   PromptsPanelToggle = 'prompts-panel-toggle', // Show prompts panel toggle in the corner without app header
   ShowConversationsSectionByDefault = 'showConversationsSectionByDefault', // show conversations sidebar by default on desktop
   ShowPromptsSectionByDefault = 'showPromptsSectionByDefault', // show prompts sidebar by default on desktop
+  MdSidebarOverlayBreakpoint = 'md-sidebar-overlay-breakpoint', // use md (768px) instead of xl (1280px) sidebar overlay breakpoint in iframe embed
   ShowLayoutDividers = 'show-layout-dividers', // show dividers between chat and sidebars
   AttachmentsManager = 'attachments-manager', // Display attachments manager in conversation
   ChatFullWidthByDefault = 'chat-full-width-by-default', // Enforce chat full-width
@@ -25,6 +26,7 @@ export enum Feature {
   DisallowChangeAgent = 'disallow-change-agent', // Disallow "Change agent" button
 
   // Conversation functions
+  CompareModeDisabled = 'compare-mode-disabled', // Disable compare mode (sidebar button, conversation context menu). Enabled by default
   Likes = 'likes', // Display likes
   DislikeComment = 'dislike-comment', // Enable adding comment when disliking a message
   InputFiles = 'input-files', // Allow attach files to conversation

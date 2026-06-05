@@ -124,12 +124,12 @@ export function ReviewApplicationDialogView({
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Name)}
             value={application.name}
-            dataQa="app-name"
+            dataQa="entity-name"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Version)}
             value={application.version ?? NA_VERSION}
-            dataQa="app-version"
+            dataQa="entity-version"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Icon)}
@@ -146,7 +146,7 @@ export function ReviewApplicationDialogView({
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Description)}
             value={description}
-            dataQa="app-description"
+            dataQa="entity-description"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Topics)}

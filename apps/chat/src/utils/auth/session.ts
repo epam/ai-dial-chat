@@ -42,7 +42,11 @@ export function validateServerSession(
   req: NextApiRequest,
   res: NextApiResponse,
 ) {
-  if (!isServerSessionValid(session)) {
+  // API routes must always enforce auth, even in overlay (IS_IFRAME) mode.
+  // The overlay page-level bypass in isServerSessionValid is intentional for
+  // server-side props (so the page shell renders), but API proxies should
+  // never forward requests with an invalid or expired session to DIAL Core.
+  if (!isServerSessionValid(session, true)) {
     res.status(401).send(errorsMessages[401]);
 
     return false;

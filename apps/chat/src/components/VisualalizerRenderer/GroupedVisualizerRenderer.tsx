@@ -3,12 +3,13 @@ import {
   IconArrowsMinimize,
   IconRefresh,
 } from '@tabler/icons-react';
-import { useSession } from 'next-auth/react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
+import { useVisualizerAuthLayoutFields } from '@/src/hooks/useVisualizerAuthLayoutFields';
+import { useVisualizerLocaleLayoutFields } from '@/src/hooks/useVisualizerLocaleLayoutFields';
 import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
@@ -101,7 +102,6 @@ export const GroupedVisualizerRenderer = ({
   }, []);
   useWindowResizeEvent(handleResize);
 
-  const { data: session } = useSession();
   const {
     url: rendererUrl,
     title: visualizerTitle = 'Visualizer',
@@ -115,24 +115,11 @@ export const GroupedVisualizerRenderer = ({
 
   const themeId = useAppSelector(UISelectors.selectThemeState);
 
-  const authLayoutFields = useMemo((): Partial<CustomVisualizerDataLayout> => {
-    const sessionAccessToken = session?.accessToken;
-    const tokenField =
-      passExplicitToken && sessionAccessToken != null
-        ? { accessToken: sessionAccessToken }
-        : {};
-
-    if (!passAuthInfo) return tokenField;
-    if (!session) return tokenField;
-
-    const email = session.user?.email ?? undefined;
-    const providerId = (session as { providerId?: string } | null)?.providerId;
-    return {
-      ...(email != null && { logInHint: email }),
-      ...(providerId != null && { providerId }),
-      ...tokenField,
-    };
-  }, [passAuthInfo, passExplicitToken, session]);
+  const localeLayoutFields = useVisualizerLocaleLayoutFields();
+  const authLayoutFields = useVisualizerAuthLayoutFields({
+    passAuthInfo,
+    passExplicitToken,
+  });
 
   const loadedCustomAttachmentsData = useAppSelector(
     ConversationsSelectors.selectLoadedCustomAttachments,
@@ -207,11 +194,13 @@ export const GroupedVisualizerRenderer = ({
       mobileHeight: maxMobileHeight,
       themeId,
       ...authLayoutFields,
+      ...localeLayoutFields,
     };
   }, [
     attachments,
     loadedCustomAttachmentsData,
     authLayoutFields,
+    localeLayoutFields,
     scrollWidth,
     containerHeight,
     isFullScreen,

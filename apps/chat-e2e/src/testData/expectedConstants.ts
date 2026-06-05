@@ -222,6 +222,7 @@ export const ExpectedConstants = {
     `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to insert a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
   replayVariableModalTitle: 'Please, enter variables for the template:',
   exportedFileExtension: '.json',
+  successfulPublishingMessage: 'Publication request created successfully',
   publishToLabel: 'Publish to',
   authorLabel: 'Author',
   publicAuthorLabel: `Author's public name`,
@@ -379,6 +380,7 @@ export const ExpectedConstants = {
   apiKeyParameterNameLabel: 'API Key parameter name',
   apiKeyFieldLabel: 'API Key',
   apiKeyFieldRequiredError: 'Key name is required',
+  credentials: 'Credentials',
   fileManagerPath: '/file-manager',
   deleteItemToastMessage: (filename: string, path: string) =>
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,
@@ -399,6 +401,7 @@ export const ExpectedConstants = {
   itemCopiedSuccessTitle: 'Item copied successfully',
   itemCopiedToMyFilesMessage: (name: string) =>
     `Item copied successfully\u201C${name}\u201D copied to My Files`,
+  readOnlyToolsetMessage: 'This toolset is public and cannot be edited',
 };
 
 export const withTraceId = (message: string): RegExp => {
@@ -470,6 +473,7 @@ export enum AddAppMenuOptions {
   codeApp = 'Code app',
   customApp = 'Custom app',
   externalApp = 'External app',
+  quickApp2 = 'Quick app 2.0',
 }
 
 export enum EntityEditorGeneralFormFields {
@@ -759,8 +763,23 @@ export enum EntityEditorAppTypes {
   CodeApp = 'Code App',
 }
 
+export const QuickApp2SchemaId =
+  'mydial.epam.com/custom_application_schemas/quickapps2';
+
 export enum MarketplaceTabs {
   WORKSPACE = 'workspace',
+}
+
+// Test-side copies of chat's editor step enums — can't import them, the chat
+// module pulls in an SVG that the test runtime can't parse.
+export enum MarketplaceEditorSteps {
+  General = 'General',
+  Settings = 'Settings',
+}
+
+export enum ToolsetEditorSteps {
+  General = 'General info',
+  Settings = 'Toolset settings',
 }
 
 export enum MarketplaceEntitiesTabs {
