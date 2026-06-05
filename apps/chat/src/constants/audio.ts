@@ -9,3 +9,7 @@ export enum AudioMimeType {
   FLAC = 'audio/flac',
   WMA = 'audio/wma',
 }
+
+// Maximum size for audio transcription requests in bytes (5 MB).
+// Must match the sizeLimit in transcribe.ts API route config.
+export const TRANSCRIBE_SIZE_LIMIT_BYTES = 5 * 1024 * 1024;

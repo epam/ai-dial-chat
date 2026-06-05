@@ -81,20 +81,40 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
     );
   }
 
+  // For agents with several versions added — one chip per version.
+  public getChipByNameAndVersion(name: string, version: string): BaseElement {
+    return this.agentsAndToolsetsList.getChildElementBySelector(
+      `${AddQuickApp2SettingsFormSelector.agentChip}:has(${AddQuickApp2SettingsFormSelector.chipName}:text-is("${name}")):has(${AddQuickApp2SettingsFormSelector.chipVersion}:text-is("${version}"))`,
+    );
+  }
+
   public async clickChipByName(name: string): Promise<void> {
     await this.getChipByName(name).click();
   }
 
-  public getChipRemoveButton(name: string): Button {
+  private chipRemoveButton(chip: BaseElement): Button {
     return new Button(
       this.page,
       AddQuickApp2SettingsFormSelector.chipRemoveButtonLabel,
-      this.getChipByName(name).getElementLocator(),
+      chip.getElementLocator(),
     );
+  }
+
+  public getChipRemoveButton(name: string): Button {
+    return this.chipRemoveButton(this.getChipByName(name));
   }
 
   public async removeChipByName(name: string): Promise<void> {
     await this.getChipRemoveButton(name).click();
+  }
+
+  public async removeChipByNameAndVersion(
+    name: string,
+    version: string,
+  ): Promise<void> {
+    await this.chipRemoveButton(
+      this.getChipByNameAndVersion(name, version),
+    ).click();
   }
 
   public get allChips(): BaseElement {

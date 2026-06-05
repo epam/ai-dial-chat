@@ -226,7 +226,7 @@ function ShareModalView() {
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
     >
       <div className="flex min-h-0 flex-1 flex-col px-3 py-4 md:p-6">
-        <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-left text-base font-semibold">
+        <h4 className="mb-2 max-h-[50px] whitespace-pre-wrap text-start text-base font-semibold">
           <div
             className="flex w-full items-center gap-2 pr-6"
             data-qa="modal-entity-name"

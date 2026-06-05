@@ -205,7 +205,7 @@ export const PublicationFolderRow = ({
           />
           <IconFolder size={18} className="mr-1 text-secondary" />
           <div
-            className="relative flex-1 select-none truncate text-left"
+            className="relative flex-1 select-none truncate text-start"
             data-qa="folder-name"
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}

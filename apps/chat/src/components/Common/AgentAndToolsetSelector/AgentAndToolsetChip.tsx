@@ -77,7 +77,7 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
       )}
       onClick={() => onRemove?.(id)}
       aria-label="Remove item"
-      variant={isError ? ButtonVariant.Error : ButtonVariant.Primary}
+      variant={isError ? ButtonVariant.Danger : ButtonVariant.Primary}
     />
   );
 };

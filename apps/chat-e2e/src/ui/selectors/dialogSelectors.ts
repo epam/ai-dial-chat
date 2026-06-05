@@ -109,7 +109,7 @@ export const ShareModalSelectors = {
   shareLink: '[data-qa="share-link"]',
   copyLink: '[data-qa="copy-link"]',
   entityName: '[data-qa="modal-entity-name"]',
-  leftEntityName: '.text-left',
+  leftEntityName: '.text-start',
   shareText: '[data-qa="share-message"]',
   removeAccessBtn: '[data-qa="remove-access-button"]',
   notSharedEntityLabel: '[data-qa="not-shared-entity-label"]',
