@@ -16,8 +16,18 @@ const getNextStreamedContent = (
   return target.slice(0, current.length + characterCount);
 };
 
+const hasMarkdownTableRow = (content: string) =>
+  content.split('\n').some((line) => {
+    const trimmedLine = line.trim();
+    return (
+      trimmedLine.length > 1 &&
+      trimmedLine.startsWith('|') &&
+      trimmedLine.endsWith('|')
+    );
+  });
+
 const hasStructuralMarkdown = (content: string) =>
-  content.includes('```') || /(^|\n)\s*\|.+\|\s*(\n|$)/.test(content);
+  content.includes('```') || hasMarkdownTableRow(content);
 
 export const useStreamedMarkdownContent = (
   content: string,

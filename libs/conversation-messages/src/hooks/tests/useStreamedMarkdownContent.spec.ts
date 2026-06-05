@@ -76,6 +76,23 @@ describe('useStreamedMarkdownContent', () => {
     expect(result.current).toBe(table);
   });
 
+  it('syncs fenced code blocks immediately', () => {
+    vi.useFakeTimers();
+    const codeBlock = 'Intro\n\n```ts\nconst value = 1;\n```';
+
+    const { result, rerender } = renderHook(
+      ({ content, isStreaming }) =>
+        useStreamedMarkdownContent(content, isStreaming),
+      {
+        initialProps: { content: 'Intro', isStreaming: true },
+      },
+    );
+
+    rerender({ content: codeBlock, isStreaming: true });
+
+    expect(result.current).toBe(codeBlock);
+  });
+
   it('syncs immediately when reduced motion is preferred', () => {
     vi.useFakeTimers();
     Object.defineProperty(window, 'matchMedia', {
