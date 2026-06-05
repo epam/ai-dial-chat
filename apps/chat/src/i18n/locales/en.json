@@ -130,7 +130,7 @@
     "renameLabel": "Rename",
     "renameInputPlaceholder": "Chat name",
     "renameError": "Failed to rename. Please try again.",
-    "renameTitleTooLong": "Title must be 255 bytes or fewer in UTF-8 encoding."
+    "renameTitleTooLong": "The name is too long. Please shorten it and try again."
   },
   "auth": {
     "signOut": "Sign out",

@@ -1,13 +1,4 @@
-import {
-  ButtonAppearance,
-  ButtonVariant,
-  DialButton,
-  DialErrorText,
-  DialInput,
-  DialNeutralButton,
-  DialPopup,
-  PopupSize,
-} from '@epam/ai-dial-ui-kit';
+import { DialFormPopup, DialInput, PopupSize } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -62,27 +53,17 @@ const RenameConversationPopup: FC<Props> = ({
   );
 
   return (
-    <DialPopup
+    <DialFormPopup
       open={isOpen}
       header={t(ConversationHistoryI18nKeys.RenameTitle)}
       size={PopupSize.Sm}
       onClose={onCancel}
-      footer={
-        <div className="flex justify-end gap-2 px-6 py-4">
-          <DialNeutralButton
-            label={t(ActionsI18nKeys.Cancel)}
-            onClick={onCancel}
-            disabled={isSaving}
-          />
-          <DialButton
-            label={t(ActionsI18nKeys.Save)}
-            appearance={ButtonAppearance.Solid}
-            variant={ButtonVariant.Primary}
-            onClick={handleSave}
-            disabled={isSaveDisabled}
-          />
-        </div>
-      }
+      onCancel={onCancel}
+      onSubmit={handleSave}
+      cancelLabel={t(ActionsI18nKeys.Cancel)}
+      submitLabel={t(ActionsI18nKeys.Save)}
+      isLoading={isSaving}
+      disableSubmitButton={isSaveDisabled}
     >
       <div className="px-6 py-2">
         <DialInput
@@ -92,14 +73,13 @@ const RenameConversationPopup: FC<Props> = ({
           error={
             isTooLong
               ? t(ConversationHistoryI18nKeys.RenameTitleTooLong)
-              : undefined
+              : (error ?? undefined)
           }
           onChange={(v) => setValue(v ?? '')}
           onKeyDown={handleKeyDown}
         />
-        <DialErrorText text={error ?? undefined} />
       </div>
-    </DialPopup>
+    </DialFormPopup>
   );
 };
 

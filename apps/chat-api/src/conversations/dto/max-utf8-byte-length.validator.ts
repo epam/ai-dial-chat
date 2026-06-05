@@ -19,8 +19,8 @@ export const MaxUtf8ByteLength = (
             StringUtils.getUtf8ByteLength(value) <= max
           );
         },
-        defaultMessage({ constraints }) {
-          return `${propertyName} must be at most ${String(constraints[0])} bytes in UTF-8 encoding`;
+        defaultMessage({ constraints, property }) {
+          return `${property} must be at most ${constraints[0]} bytes in UTF-8 encoding`;
         },
       },
     });

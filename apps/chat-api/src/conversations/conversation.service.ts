@@ -12,6 +12,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import { UserConfigService } from '../user-config/user-config.service';
+import { buildRenamedConversationPath } from './build-renamed-conversation-path';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
@@ -169,20 +170,10 @@ export class ConversationService extends AppService {
     bucket: string,
   ): Promise<RenameConversationResponseDto> {
     const sanitisedTitle = prepareEntityName(newTitle);
-
-    // DIAL Core stores conversations as `{deploymentId}__{title}__{uuid}`.
-    // Rename = replace the middle segment, then move the resource.
-    const segments = conversationPath.split('/');
-    const filename = segments[segments.length - 1];
-    const parts = filename.split('__');
-    const renamedFilename =
-      parts.length >= 3
-        ? [parts[0], sanitisedTitle, parts[parts.length - 1]].join('__')
-        : sanitisedTitle;
-    const renamedPath =
-      segments.length > 1
-        ? [...segments.slice(0, -1), renamedFilename].join('/')
-        : renamedFilename;
+    const renamedPath = buildRenamedConversationPath(
+      conversationPath,
+      sanitisedTitle,
+    );
 
     const sourceUrl = `conversations/${bucket}/${encodeDialResourcePath(conversationPath)}`;
     const destinationUrl = `conversations/${bucket}/${encodeDialResourcePath(renamedPath)}`;
@@ -192,7 +183,7 @@ export class ConversationService extends AppService {
         headers: getBearerAuthHeaders(token),
         body: { sourceUrl, destinationUrl, overwrite: false },
       })) as { error?: unknown };
-      if (error !== undefined) {
+      if (error != null) {
         this.logger.error('DIAL Core rejected moveResource (rename)', error);
         return handleDialError(error);
       }
