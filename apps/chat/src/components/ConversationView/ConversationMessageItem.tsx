@@ -65,9 +65,14 @@ interface Props {
   saveLabel: string;
   editMessageAriaLabel: string;
   quickReplyButtonsAriaLabel: string;
+  showMoreLabel: string;
+  showLessLabel: string;
+  showMoreUserMessageAriaLabel: string;
+  showLessUserMessageAriaLabel: string;
   statusModelChangedTitle: string;
   formatStatusModelChangedBody: (from: string, to: string) => string;
   streamErrorText: string;
+  thinkingLabel: string;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -92,9 +97,14 @@ const ConversationMessageItem: FC<Props> = ({
   saveLabel,
   editMessageAriaLabel,
   quickReplyButtonsAriaLabel,
+  showMoreLabel,
+  showLessLabel,
+  showMoreUserMessageAriaLabel,
+  showLessUserMessageAriaLabel,
   statusModelChangedTitle,
   formatStatusModelChangedBody,
   streamErrorText,
+  thinkingLabel,
 }) => {
   const isStreaming = isStreamingMessage(
     msg.role,
@@ -116,6 +126,10 @@ const ConversationMessageItem: FC<Props> = ({
               attachments={attachmentDtosToDisplayAttachments(
                 msg.custom_content?.attachments,
               )}
+              showMoreLabel={showMoreLabel}
+              showLessLabel={showLessLabel}
+              showMoreAriaLabel={showMoreUserMessageAriaLabel}
+              showLessAriaLabel={showLessUserMessageAriaLabel}
               className="justify-end"
             />
           }
@@ -211,8 +225,13 @@ const ConversationMessageItem: FC<Props> = ({
       starters={activeStarters}
       onSelectStarter={handleSelectStarter}
       startersAriaLabel={quickReplyButtonsAriaLabel}
+      showMoreLabel={showMoreLabel}
+      showLessLabel={showLessLabel}
+      showMoreAriaLabel={showMoreUserMessageAriaLabel}
+      showLessAriaLabel={showLessUserMessageAriaLabel}
       deploymentIconUrl={deploymentEntry?.iconUrl}
       deploymentDisplayName={deploymentEntry?.displayName}
+      thinkingLabel={thinkingLabel}
       {...statusProps}
     />
   );

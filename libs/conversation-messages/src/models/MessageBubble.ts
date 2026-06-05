@@ -63,6 +63,16 @@ interface BaseMessageBubbleProps {
 export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
   /** Position within a message group — controls which corner is rounded. Defaults to `BubblePosition.Bottom`. */
   position?: BubblePosition;
+  /** Maximum number of text lines shown while a long user message is collapsed. Defaults to `10`. */
+  collapsedLineCount?: number;
+  /** Button label shown when a collapsed user message can be expanded. Defaults to `"Show more"`. */
+  showMoreLabel?: string;
+  /** Button label shown when an expanded user message can be collapsed. Defaults to `"Show less"`. */
+  showLessLabel?: string;
+  /** Accessible label for the expand button. Defaults to the `showMoreLabel` value. */
+  showMoreAriaLabel?: string;
+  /** Accessible label for the collapse button. Defaults to the `showLessLabel` value. */
+  showLessAriaLabel?: string;
 }
 
 /** Props accepted by the `AssistantMessageBubble` component. */
@@ -85,6 +95,11 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   deploymentIconUrl?: string;
   /** Human-readable deployment name shown as the icon's accessible label. */
   deploymentDisplayName?: string;
+  /**
+   * Label shown with a shimmer animation while `isStreaming` is true and the message text is still empty.
+   * Pass a translated string from the consuming app. Defaults to `'Thinking'`.
+   */
+  thinkingLabel?: string;
 }
 
 /** Props accepted by the `MessageBubble` role-switching wrapper. */
@@ -93,6 +108,16 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
   role: MessageRole;
   /** Position within a message group — controls which corner is rounded (user messages only). Defaults to `BubblePosition.Bottom`. */
   position?: BubblePosition;
+  /** Maximum number of text lines shown while a long user message is collapsed. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  collapsedLineCount?: number;
+  /** Button label shown when a collapsed user message can be expanded. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  showMoreLabel?: string;
+  /** Button label shown when an expanded user message can be collapsed. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  showLessLabel?: string;
+  /** Accessible label for the expand button. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  showMoreAriaLabel?: string;
+  /** Accessible label for the collapse button. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  showLessAriaLabel?: string;
   /**
    * Quick-reply buttons derived from the assistant message's `form_schema`.
    * Forwarded to `AssistantMessageBubble`; ignored for user messages.
@@ -122,4 +147,9 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
    * Required when `role === MessageRole.Status`.
    */
   statusBodyText?: string;
+  /**
+   * Label shown with a shimmer animation while `isStreaming` is true and the message text is still empty.
+   * Forwarded to `AssistantMessageBubble`. Defaults to `'Thinking'`.
+   */
+  thinkingLabel?: string;
 }
