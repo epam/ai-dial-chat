@@ -7,13 +7,13 @@ import { getFileRootId } from '@/src/utils/app/id';
 import { Conversation } from '@/src/types/chat';
 import { HTTPMethod } from '@/src/types/http';
 
-import { TRANSCRIBE_SIZE_LIMIT_BYTES } from '@/src/constants/audio';
-
 import {
   ChatActions,
   ConversationsActions,
   FilesActions,
 } from '@/src/store/actions';
+
+import { TRANSCRIBE_SIZE_LIMIT_BYTES } from '@/src/constants/audio';
 
 import { Message } from '@epam/ai-dial-shared';
 
