@@ -29,6 +29,7 @@ import { ModelSelectorControl } from './ModelSelectorControl.js';
 export const Input: FC<InputProps> = ({
   message: messageProp = '',
   onSend,
+  onUploadAttachment,
   onStop,
   isStreaming = false,
   onChange,
@@ -115,15 +116,59 @@ export const Input: FC<InputProps> = ({
     });
   }, []);
 
-  const addAttachments = useCallback(
-    (newAttachments: Attachment[]) => {
+  const updateAttachments = useCallback(
+    (updater: (current: Attachment[]) => Attachment[]) => {
       setAttachments((prev) => {
-        const updated = [...prev, ...newAttachments];
+        const updated = updater(prev);
         onAttachmentsChange?.(updated);
         return updated;
       });
     },
     [onAttachmentsChange],
+  );
+
+  const uploadAttachment = useCallback(
+    async (attachment: Attachment) => {
+      if (!onUploadAttachment) return;
+
+      updateAttachments((current) =>
+        current.map((item) =>
+          item.id === attachment.id
+            ? { ...item, status: RequestStatus.Loading }
+            : item,
+        ),
+      );
+
+      try {
+        const url = await onUploadAttachment(attachment);
+        updateAttachments((current) =>
+          current.map((item) =>
+            item.id === attachment.id
+              ? { ...item, status: RequestStatus.Idle, url }
+              : item,
+          ),
+        );
+      } catch {
+        updateAttachments((current) =>
+          current.map((item) =>
+            item.id === attachment.id
+              ? { ...item, status: RequestStatus.Error }
+              : item,
+          ),
+        );
+      }
+    },
+    [onUploadAttachment, updateAttachments],
+  );
+
+  const addAttachments = useCallback(
+    (newAttachments: Attachment[]) => {
+      updateAttachments((prev) => [...prev, ...newAttachments]);
+      newAttachments.forEach((attachment) => {
+        void uploadAttachment(attachment);
+      });
+    },
+    [updateAttachments, uploadAttachment],
   );
 
   useEffect(() => {
@@ -135,22 +180,37 @@ export const Input: FC<InputProps> = ({
 
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
-  const canSend = message.trim().length > 0 || attachments.length > 0;
+  const hasBlockedAttachments = attachments.some(
+    (attachment) =>
+      attachment.status === RequestStatus.Loading ||
+      attachment.status === RequestStatus.Error,
+  );
+  const hasSendableContent =
+    message.trim().length > 0 || attachments.length > 0;
+  const canSend = hasSendableContent && !hasBlockedAttachments;
   // Stacked layout: textarea on its own row above the action bar. Used when the
   // caller opts in (edit mode) or whenever attachments are present.
   const isStackedLayout = isStacked || attachments.length > 0;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (isInputDisabled) return;
-    onSend?.(message, attachments);
+    const currentMessage = message;
+    const currentAttachments = attachments;
     setMessage('');
-    attachments.forEach((a) => {
-      if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
-    });
-    setAttachments([]);
-    onAttachmentsChange?.([]);
+    try {
+      await onSend?.(currentMessage, currentAttachments);
+      currentAttachments.forEach((a) => {
+        if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+      });
+      setAttachments([]);
+      onAttachmentsChange?.([]);
+    } catch {
+      setMessage(currentMessage);
+      setAttachments(currentAttachments);
+      onAttachmentsChange?.(currentAttachments);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -176,15 +236,22 @@ export const Input: FC<InputProps> = ({
 
   const handleRemove = useCallback(
     (id: string) => {
-      setAttachments((prev) => {
+      updateAttachments((prev) => {
         const target = prev.find((a) => a.id === id);
         if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
-        const updated = prev.filter((a) => a.id !== id);
-        onAttachmentsChange?.(updated);
-        return updated;
+        return prev.filter((a) => a.id !== id);
       });
     },
-    [onAttachmentsChange],
+    [updateAttachments],
+  );
+
+  const handleRetry = useCallback(
+    (id: string) => {
+      const target = attachments.find((a) => a.id === id);
+      if (!target) return;
+      void uploadAttachment(target);
+    },
+    [attachments, uploadAttachment],
   );
 
   const handleExpand = useCallback(
@@ -222,6 +289,7 @@ export const Input: FC<InputProps> = ({
       style={cssVars}
       className={mergeClasses(
         styles.wrapper,
+        isInputDisabled && styles.wrapperDisabled,
         'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded border px-3 py-2',
         className,
       )}
@@ -230,6 +298,7 @@ export const Input: FC<InputProps> = ({
         <AttachmentTray
           attachments={attachments}
           onRemove={handleRemove}
+          onRetry={handleRetry}
           onExpand={handleExpand}
           removeLabel={removeLabel}
           retryLabel={retryLabel}
@@ -297,15 +366,20 @@ export const Input: FC<InputProps> = ({
                   modelSelectorLabels={modelSelectorLabels}
                   isStreaming={isStreaming}
                   isMobile={isMobile}
+                  isInputDisabled={isInputDisabled}
                   style={cssVars}
                 />
                 {isStreaming ? (
                   <StopButton onStop={onStop} ariaLabel={stopLabel} />
                 ) : (
-                  canSend && (
+                  hasSendableContent && (
                     <SendButton
                       onSend={handleSend}
-                      isDisabled={isInputDisabled || !hasModelSelected}
+                      isDisabled={
+                        isInputDisabled ||
+                        !hasModelSelected ||
+                        hasBlockedAttachments
+                      }
                       ariaLabel={sendLabel}
                     />
                   )

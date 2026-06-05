@@ -12,6 +12,7 @@ import { normalizeConversationId } from '../constants/routes';
 import {
   deleteConversation as apiDeleteConversation,
   listConversations,
+  renameConversation as apiRenameConversation,
 } from '../server-api/conversations.api';
 import { pinConversation as apiPinConversation } from '../server-api/user-config.api';
 import { getConversationPath } from '../utils/conversation-path';
@@ -27,6 +28,8 @@ interface ConversationsContextType {
   pinConversation: (id: string, isPinned: boolean) => Promise<void>;
   /** Delete a conversation by id, removing it from the local list on success. */
   deleteConversation: (id: string) => Promise<void>;
+  /** Rename a conversation; optimistically updates title, reverts on failure. */
+  renameConversation: (id: string, newTitle: string) => Promise<void>;
   /** Re-fetch the full conversation list from the server. */
   refreshConversations: () => Promise<void>;
 }
@@ -112,6 +115,40 @@ export const ConversationsProvider = ({
     }
   }, []);
 
+  const renameConversation = useCallback(
+    async (id: string, newTitle: string) => {
+      let originalTitle: string | undefined;
+      setConversations((prev) =>
+        prev.map((c) => {
+          if (c.id !== id) return c;
+          originalTitle = c.title;
+          return { ...c, title: newTitle };
+        }),
+      );
+
+      const conversationPath = getConversationPath(normalizeConversationId(id));
+      try {
+        const { newPath } = await apiRenameConversation(
+          conversationPath,
+          newTitle,
+        );
+        setConversations((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, id: newPath } : c)),
+        );
+      } catch (err) {
+        if (originalTitle !== undefined) {
+          setConversations((prev) =>
+            prev.map((c) =>
+              c.id === id ? { ...c, title: originalTitle as string } : c,
+            ),
+          );
+        }
+        throw err;
+      }
+    },
+    [],
+  );
+
   const value = useMemo(
     () => ({
       conversations,
@@ -119,6 +156,7 @@ export const ConversationsProvider = ({
       error,
       pinConversation,
       deleteConversation,
+      renameConversation,
       refreshConversations,
     }),
     [
@@ -127,6 +165,7 @@ export const ConversationsProvider = ({
       error,
       pinConversation,
       deleteConversation,
+      renameConversation,
       refreshConversations,
     ],
   );

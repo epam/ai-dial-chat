@@ -751,6 +751,63 @@
         "summary": "Save (overwrite) a conversation by path",
         "tags": ["conversations"]
       },
+      "patch": {
+        "operationId": "renameConversation",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameConversationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversation renamed — new path returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenameConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid path or newTitle"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "409": {
+            "description": "Destination path already exists"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "Rename a conversation by path",
+        "tags": ["conversations"]
+      },
       "delete": {
         "operationId": "deleteConversation",
         "parameters": [
@@ -1422,32 +1479,6 @@
           }
         },
         "required": ["deployments"]
-      },
-      "DeploymentConfigurationDto": {
-        "type": "object",
-        "properties": {
-          "type": {
-            "type": "string",
-            "description": "JSON Schema type (typically \"object\")"
-          },
-          "title": {
-            "type": "string",
-            "description": "Human-readable schema title"
-          },
-          "properties": {
-            "type": "object",
-            "additionalProperties": true,
-            "description": "Named configuration properties supported by this deployment"
-          },
-          "additionalProperties": {
-            "type": "object",
-            "description": "Whether additional properties are allowed"
-          },
-          "isChatMessageInputDisabled": {
-            "type": "boolean",
-            "description": "When true, the application does not accept free-form text input; users interact only via form/action buttons."
-          }
-        }
       },
       "DeploymentConfigurationDto": {
         "type": "object",
@@ -2191,6 +2222,28 @@
           }
         },
         "required": ["path", "message", "model"]
+      },
+      "RenameConversationBodyDto": {
+        "type": "object",
+        "properties": {
+          "newTitle": {
+            "type": "string",
+            "description": "New title for the conversation",
+            "example": "My renamed chat"
+          }
+        },
+        "required": ["newTitle"]
+      },
+      "RenameConversationResponseDto": {
+        "type": "object",
+        "properties": {
+          "newPath": {
+            "type": "string",
+            "description": "New relative path of the renamed conversation",
+            "example": "conversations/bucket/gpt-4o__My renamed chat__uuid"
+          }
+        },
+        "required": ["newPath"]
       },
       "UpdatePinsDto": {
         "type": "object",

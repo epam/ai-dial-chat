@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Logger,
+  Patch,
   Post,
   Put,
   Query,
@@ -25,6 +26,10 @@ import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { GetConversationMetadataDto } from './dto/get-conversation-metadata.dto';
 import { ListConversationsQueryDto } from './dto/list-conversations-query.dto';
+import {
+  RenameConversationBodyDto,
+  RenameConversationResponseDto,
+} from './dto/rename-conversation.dto';
 import {
   SaveConversationBodyDto,
   SaveConversationQueryDto,
@@ -257,6 +262,37 @@ export class ConversationController {
         res.end();
       }
     }
+  }
+
+  @Patch()
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Rename a conversation by path' })
+  @ApiResponse({
+    status: 200,
+    description: 'Conversation renamed — new path returned',
+    type: RenameConversationResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Missing or invalid path or newTitle',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 404, description: 'Conversation not found' })
+  @ApiResponse({ status: 409, description: 'Destination path already exists' })
+  @ApiResponse({ status: 502, description: 'DIAL Core error' })
+  @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
+  renameConversation(
+    @Req() req: Request,
+    @Query() query: ConversationPathDto,
+    @Body() body: RenameConversationBodyDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.renameConversation(
+      query.path,
+      body.newTitle,
+      at,
+      bucket,
+    );
   }
 
   @Delete()

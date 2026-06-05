@@ -7,6 +7,7 @@ import styles from './ConversationInput.module.scss';
 
 export const ConversationInput: FC<ConversationInputProps> = ({
   onSend,
+  onUploadAttachment,
   onStop,
   isStreaming = false,
   onAttachmentsChange,
@@ -88,6 +89,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
         <Input
           message={message}
           onSend={onSend}
+          onUploadAttachment={onUploadAttachment}
           onStop={onStop}
           isStreaming={isStreaming}
           onAttachmentsChange={onAttachmentsChange}

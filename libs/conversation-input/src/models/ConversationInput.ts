@@ -64,6 +64,8 @@ export interface EditMessageInputProps {
     keptAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
   ) => void;
+  /** Called immediately after a new attachment is added. Returns the uploaded attachment URL. */
+  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
   /** Label for the Cancel button. Defaults to `'Cancel'`. */
   cancelLabel?: string;
   /** Label for the Save & Submit button. Defaults to `'Save & Submit'`. */
@@ -99,6 +101,8 @@ export interface ConversationInputProps {
   welcomeText?: string;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
   onSend?: (message: string, attachments: Attachment[]) => void;
+  /** Called immediately after an attachment is added. Returns the uploaded attachment URL. */
+  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button and blocks Enter. */

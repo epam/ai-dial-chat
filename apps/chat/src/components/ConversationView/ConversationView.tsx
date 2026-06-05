@@ -42,6 +42,7 @@ const ConversationInput = lazy(async () => {
 interface Props {
   messages: MessageType[];
   onSend: (message: string, attachments: Attachment[]) => void;
+  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
   onStop?: () => void;
   onDeleteMessage?: (messageId: string) => void;
   onRegenerateMessage?: (messageId: string) => void;
@@ -72,6 +73,7 @@ const NEAR_BOTTOM_THRESHOLD = 80;
 const ConversationView: FC<Props> = ({
   messages,
   onSend,
+  onUploadAttachment,
   onStop,
   onDeleteMessage,
   onRegenerateMessage,
@@ -315,6 +317,7 @@ const ConversationView: FC<Props> = ({
                   onRateMessage={onRateMessage}
                   onCancelEdit={onCancelEdit}
                   onEditMessage={onEditMessage}
+                  onUploadAttachment={onUploadAttachment}
                   deploymentLookup={deploymentLookup}
                   effectiveDeploymentId={effectiveDeploymentIds[index]}
                   tooltips={tooltips}
@@ -352,6 +355,7 @@ const ConversationView: FC<Props> = ({
         <Suspense fallback={null}>
           <ConversationInput
             onSend={onSend}
+            onUploadAttachment={onUploadAttachment}
             onStop={onStop}
             isStreaming={isAssistantTyping}
             onAttachmentsChange={onAttachmentsChange}

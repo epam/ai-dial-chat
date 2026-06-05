@@ -1,6 +1,6 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { attachmentToDto, attachmentsToDtos } from '../attachment-to-dto';
 
 const makeAttachment = (overrides?: Partial<Attachment>): Attachment => ({
@@ -10,68 +10,55 @@ const makeAttachment = (overrides?: Partial<Attachment>): Attachment => ({
   file: new File(['hello'], 'file.pdf', { type: 'application/pdf' }),
   type: AttachmentType.File,
   status: RequestStatus.Idle,
+  url: 'https://example.com/file.pdf',
   ...overrides,
 });
 
 describe('attachmentToDto', () => {
-  it('resolves to an attachment DTO with correct type and title', async () => {
-    const attachment = makeAttachment();
-    const result = await attachmentToDto(attachment);
-    expect(result.type).toBe('application/pdf');
-    expect(result.title).toBe('file.pdf');
-  });
+  it('maps an already uploaded attachment to a URL-based DTO', () => {
+    const result = attachmentToDto(makeAttachment());
 
-  it('strips the data-URL prefix from the data field', async () => {
-    const attachment = makeAttachment();
-    const result = await attachmentToDto(attachment);
-    expect(result.data).not.toMatch(/^data:/);
-  });
-
-  it('rejects when FileReader fires an error', async () => {
-    const mockFile = {
-      size: 5,
+    expect(result).toEqual({
       type: 'application/pdf',
-    } as File;
-    const attachment = makeAttachment({ file: mockFile });
+      title: 'file.pdf',
+      url: 'https://example.com/file.pdf',
+    });
+  });
 
-    // Spy on FileReader to simulate an error
-    const originalFileReader = globalThis.FileReader;
-    const mockReader = {
-      readAsDataURL: vi.fn(function (this: { onerror?: (e: unknown) => void }) {
-        setTimeout(() => this.onerror?.(new Error('read error')), 0);
-      }),
-      onload: null as ((e: unknown) => void) | null,
-      onerror: null as ((e: unknown) => void) | null,
-      error: new DOMException('read failed'),
-    };
-    globalThis.FileReader = vi.fn(
-      () => mockReader,
-    ) as unknown as typeof FileReader;
-
-    await expect(attachmentToDto(attachment)).rejects.toBeDefined();
-    globalThis.FileReader = originalFileReader;
+  it('throws when the attachment has not been uploaded yet', () => {
+    expect(() => attachmentToDto(makeAttachment({ url: undefined }))).toThrow(
+      'has not been uploaded',
+    );
   });
 });
 
 describe('attachmentsToDtos', () => {
-  it('returns undefined for an empty array', async () => {
-    const result = await attachmentsToDtos([]);
-    expect(result).toBeUndefined();
+  it('returns undefined for an empty array', () => {
+    expect(attachmentsToDtos([])).toBeUndefined();
   });
 
-  it('encodes all attachments in order', async () => {
-    const a1 = makeAttachment({
-      name: 'a.pdf',
-      contentType: 'application/pdf',
-    });
-    const a2 = makeAttachment({
-      name: 'img.png',
-      contentType: 'image/png',
-      file: new File(['img'], 'img.png', { type: 'image/png' }),
-    });
-    const result = await attachmentsToDtos([a1, a2]);
-    expect(result).toHaveLength(2);
-    expect(result?.[0].title).toBe('a.pdf');
-    expect(result?.[1].title).toBe('img.png');
+  it('maps uploaded attachments in order', () => {
+    const result = attachmentsToDtos([
+      makeAttachment({ name: 'a.pdf', url: 'https://example.com/a.pdf' }),
+      makeAttachment({
+        name: 'b.png',
+        contentType: 'image/png',
+        file: new File(['img'], 'b.png', { type: 'image/png' }),
+        url: 'https://example.com/b.png',
+      }),
+    ]);
+
+    expect(result).toEqual([
+      {
+        type: 'application/pdf',
+        title: 'a.pdf',
+        url: 'https://example.com/a.pdf',
+      },
+      {
+        type: 'image/png',
+        title: 'b.png',
+        url: 'https://example.com/b.png',
+      },
+    ]);
   });
 });
