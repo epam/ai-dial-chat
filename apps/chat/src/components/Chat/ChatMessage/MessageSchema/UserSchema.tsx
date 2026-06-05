@@ -20,6 +20,7 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { FormSchema } from '@/src/components/Chat/ChatMessage/MessageSchema/FormSchema';
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Checkbox } from '@/src/components/Common/Forms/Checkbox';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
 import {
   DialSchemaProperties,
@@ -102,46 +103,70 @@ const UserSchemaView = memo(function UserSchemaView({
 
   return schemaPropertiesWithUserResponse.length ? (
     <div className="flex flex-col gap-6">
-      {schemaPropertiesWithUserResponse.map((row) => (
-        <div key={row.property}>
-          {!!row.description && (
-            <p className="mb-3 whitespace-pre-line text-base text-primary">
-              {row.description}
-            </p>
-          )}
+      {schemaPropertiesWithUserResponse.map((row) => {
+        const buttonDescriptions =
+          row.type === FormSchemaPropertyType.Button
+            ? row.options.filter(
+                (option) =>
+                  option.showDescriptionInUserMessage && option.description,
+              )
+            : [];
 
-          {row.type === FormSchemaPropertyType.Button && (
-            <div className="flex flex-wrap gap-2">
-              {row.options?.map((option) => (
-                <DialButton
-                  key={String(option.value)}
-                  className={classNames(
-                    'chat-button truncate',
-                    option.selected && 'button-accent-primary',
-                  )}
-                  disabled
-                  label={<DialEllipsisTooltip text={option.label} />}
-                />
-              ))}
-            </div>
-          )}
+        return (
+          <div key={row.property}>
+            {!!row.description && (
+              <EntityMarkdownDescription className="mb-3 text-base text-primary">
+                {row.description}
+              </EntityMarkdownDescription>
+            )}
 
-          {row.type === FormSchemaPropertyType.Checkbox && (
-            <div className="flex flex-wrap gap-4">
-              {row.options?.map((option) => (
-                <Checkbox
-                  key={String(option.value)}
-                  checked={option.selected}
-                  caption={option.label}
-                  disabled={!option.selected}
-                  readonly={option.selected}
-                  onClick={emptyHandler}
-                />
-              ))}
-            </div>
-          )}
-        </div>
-      ))}
+            {row.type === FormSchemaPropertyType.Button && (
+              <>
+                <div className="flex flex-wrap gap-2">
+                  {row.options.map((option) => (
+                    <DialButton
+                      key={String(option.value)}
+                      className={classNames(
+                        'chat-button truncate',
+                        option.selected && 'button-accent-primary',
+                      )}
+                      disabled
+                      label={<DialEllipsisTooltip text={option.label} />}
+                    />
+                  ))}
+                </div>
+                {buttonDescriptions.length > 0 && (
+                  <div className="mt-3 flex flex-col gap-3">
+                    {buttonDescriptions.map((option) => (
+                      <EntityMarkdownDescription
+                        key={String(option.value)}
+                        className="text-base text-primary"
+                      >
+                        {option.description!}
+                      </EntityMarkdownDescription>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {row.type === FormSchemaPropertyType.Checkbox && (
+              <div className="flex flex-wrap gap-4">
+                {row.options?.map((option) => (
+                  <Checkbox
+                    key={String(option.value)}
+                    checked={option.selected}
+                    caption={option.label}
+                    disabled={!option.selected}
+                    readonly={option.selected}
+                    onClick={emptyHandler}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   ) : null;
 });
