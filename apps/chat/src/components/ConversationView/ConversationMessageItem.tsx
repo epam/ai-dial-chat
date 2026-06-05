@@ -53,6 +53,7 @@ interface Props {
     keptAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
   ) => void;
+  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
   deploymentLookup: Record<
     string,
     { displayName: string; iconUrl: string | undefined }
@@ -82,6 +83,7 @@ const ConversationMessageItem: FC<Props> = ({
   onRateMessage,
   onCancelEdit,
   onEditMessage,
+  onUploadAttachment,
   deploymentLookup,
   effectiveDeploymentId,
   tooltips,
@@ -127,6 +129,7 @@ const ConversationMessageItem: FC<Props> = ({
             onSave={(text, kept, added) =>
               onEditMessage?.(msg.id, text, kept, added)
             }
+            onUploadAttachment={onUploadAttachment}
             cancelLabel={cancelLabel}
             saveLabel={saveLabel}
             ariaLabel={editMessageAriaLabel}

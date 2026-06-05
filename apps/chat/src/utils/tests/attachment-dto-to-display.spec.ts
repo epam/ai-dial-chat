@@ -1,7 +1,16 @@
 import { AttachmentType } from '@epam/ai-dial-chat-shared';
 import type { AttachmentDto } from '@epam/chat-api-client';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { attachmentDtoToDisplayAttachment } from '../attachment-dto-to-display';
+
+// resolveCatalogIconUrl is imported by the module under test; mock it here so
+// the spec doesn't depend on API endpoint constants.
+vi.mock('../icon-path', () => ({
+  resolveCatalogIconUrl: (url: string) =>
+    url.startsWith('files/')
+      ? `/api/v1/files/download?path=${url.slice('files/'.length)}`
+      : url,
+}));
 
 describe('attachmentDtoToDisplayAttachment', () => {
   it('maps a file DTO to a display attachment without a local File', () => {
@@ -33,5 +42,21 @@ describe('attachmentDtoToDisplayAttachment', () => {
 
     expect(attachment.type).toBe(AttachmentType.Image);
     expect(attachment.previewUrl).toBe('data:image/png;base64,iVBORw0KGgo=');
+  });
+
+  it('resolves a DIAL file ID url to a download URL for image previewUrl', () => {
+    const dto: AttachmentDto = {
+      type: 'image/jpeg',
+      title: 'photo.jpg',
+      url: 'files/user-bucket/uploads/2026-06/photo.jpg',
+    };
+
+    const attachment = attachmentDtoToDisplayAttachment(dto);
+
+    expect(attachment.type).toBe(AttachmentType.Image);
+    expect(attachment.url).toBe('files/user-bucket/uploads/2026-06/photo.jpg');
+    expect(attachment.previewUrl).toBe(
+      '/api/v1/files/download?path=user-bucket/uploads/2026-06/photo.jpg',
+    );
   });
 });

@@ -17,6 +17,7 @@ import {
   ActionsI18nKeys,
   ChatI18nKeys,
 } from '../../constants/translation-keys';
+import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext.js';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
@@ -39,6 +40,8 @@ export const ConversationPage: FC = () => {
   const { setSelectedItemId } = useDeployments();
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
+  const { user } = useUser();
+  const bucket = user?.bucket ?? '';
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
@@ -133,6 +136,7 @@ export const ConversationPage: FC = () => {
 
   const {
     handleSend,
+    handleUploadAttachment,
     handleRegenerateMessage,
     handleDeleteMessage,
     handleConfirmDelete,
@@ -150,6 +154,7 @@ export const ConversationPage: FC = () => {
   } = useConversationHandlers({
     conversation,
     conversationId,
+    bucket,
     isStreaming,
     startStream,
     conversationRef,
@@ -171,6 +176,7 @@ export const ConversationPage: FC = () => {
           messages={conversation.messages}
           initialModelId={conversation.assistantModelId}
           onSend={handleSend}
+          onUploadAttachment={handleUploadAttachment}
           onStop={handleStop}
           onDeleteMessage={handleDeleteMessage}
           onRegenerateMessage={handleRegenerateMessage}
