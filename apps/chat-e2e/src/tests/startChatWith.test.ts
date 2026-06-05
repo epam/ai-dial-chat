@@ -253,11 +253,10 @@ dialTest(
     await dialTest.step(
       'Verify list options are truncated with the dots',
       async () => {
-        agentToSelectElement =
-          settingsModal.startChatWithListboxAgentAttributes({
-            name: secondAppName,
-            version: secondAppSecondVersion,
-          });
+        agentToSelectElement = settingsModal.startChatWithListboxAgentName({
+          name: secondAppName,
+          version: secondAppSecondVersion,
+        });
         await settingsModalAssertion.assertElementTextIsTruncated(
           agentToSelectElement,
         );
@@ -270,10 +269,7 @@ dialTest(
         await agentToSelectElement.hover();
         await tooltipAssertion.assertElementState(tooltip);
         await tooltipAssertion.assertTooltipContent(
-          settingsModal.optionAttributes({
-            name: secondAppName,
-            version: secondAppSecondVersion,
-          }),
+          `${secondAppName}\n${secondAppSecondVersion}`,
         );
         await tooltipAssertion.assertEntityIcon(
           tooltip.tooltipIcon,
@@ -314,7 +310,7 @@ dialTest(
       'Verify selected option is truncated with the dots',
       async () => {
         await settingsModalAssertion.assertElementTextIsTruncated(
-          settingsModal.startChatWithAgentAttributes,
+          settingsModal.startChatWithAgentName,
         );
       },
     );
@@ -325,10 +321,7 @@ dialTest(
         await settingsModal.startChatWithSelectedAgent.hoverOver();
         await tooltipAssertion.assertElementState(tooltip);
         await tooltipAssertion.assertTooltipContent(
-          settingsModal.optionAttributes({
-            name: secondAppName,
-            version: secondAppSecondVersion,
-          }),
+          `${secondAppName}\n${secondAppSecondVersion}`,
         );
         await tooltipAssertion.assertEntityIcon(
           tooltip.tooltipIcon,

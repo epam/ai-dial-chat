@@ -525,7 +525,7 @@ dialAdminTest(
       'EPMRTC-3600',
       'EPMRTC-3601',
       'EPMRTC-3608',
-      'EPMRTC-6079',
+      'EPMRTC-8120',
       'EPMRTC-3603',
       'EPMRTC-3605',
       'EPMRTC-5660',

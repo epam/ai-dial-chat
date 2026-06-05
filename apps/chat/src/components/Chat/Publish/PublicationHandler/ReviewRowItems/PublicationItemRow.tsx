@@ -22,12 +22,7 @@ import {
   getStringValidationErrors,
   getVersionValidationErrors,
 } from '@/src/utils/app/forms';
-import {
-  isApplicationId,
-  isFileId,
-  isToolsetId,
-  replaceVersionFromId,
-} from '@/src/utils/app/id';
+import { isApplicationId, isFileId, isToolsetId } from '@/src/utils/app/id';
 import { constructPath } from '@/src/utils/app/shared-utils';
 import {
   ApiUtils,
@@ -195,19 +190,14 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
 
   const handleSelectCheckboxVersion = useCallback(
     (versionId: string) => {
-      const itemIdWithNewVersion = replaceVersionFromId(
-        item.id,
-        getVersionFromId(versionId),
-      );
-
       dispatch(
         PublicationActions.selectPublicationItems({
           publicationUrl,
-          ids: [itemIdWithNewVersion],
+          ids: [versionId],
         }),
       );
     },
-    [item.id, dispatch, publicationUrl],
+    [dispatch, publicationUrl],
   );
 
   const itemVersionsSelected = useMemo(

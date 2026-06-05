@@ -53,6 +53,10 @@ export class SettingsModal extends BaseElement {
     this.startChatWithSelectedAgent.getChildElementBySelector(
       AccountSettingsModalSelector.startChatWithListboxOptionAttributes,
     );
+  public startChatWithAgentName =
+    this.startChatWithAgentAttributes.getChildElementBySelector(
+      AccountSettingsModalSelector.startChatWithListboxOptionName,
+    );
   public startChatWithAgentIcon = this.getElementIcon(
     this.startChatWithSelectedAgent.getElementLocator(),
   );
@@ -100,12 +104,14 @@ export class SettingsModal extends BaseElement {
     });
   };
 
-  public startChatWithListboxAgentAttributes = (
+  public startChatWithListboxAgentName = (
     agent: DialAIEntityModel | { name: string; version?: string } | string,
   ) =>
-    this.startChatWithListboxAgent(agent).locator(
-      AccountSettingsModalSelector.startChatWithListboxOptionAttributes,
-    );
+    this.startChatWithListboxAgent(agent)
+      .locator(
+        AccountSettingsModalSelector.startChatWithListboxOptionAttributes,
+      )
+      .locator(AccountSettingsModalSelector.startChatWithListboxOptionName);
 
   public startChatWithListboxAgentIcon = (
     agent: DialAIEntityModel | { name: string; version?: string } | string,

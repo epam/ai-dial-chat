@@ -13,14 +13,19 @@ import {
   migrateMCPToolsetIdName,
   safeStringifyApplicationFeatures,
 } from '@/src/utils/app/application';
+import { getDefaultSchemaModel } from '@/src/utils/app/application-type-schema';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { isApplicationId, isToolsetId } from '@/src/utils/app/id';
-import { doesModelAllowTemperature } from '@/src/utils/app/models';
+import {
+  doesAgentSupportMcp,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
 import { zodValidation } from '@/src/utils/zod-config-wrapper';
 
+import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
   CustomApplicationModel,
   ExternalAppConfig,
@@ -46,6 +51,7 @@ import {
   isMcpToolset,
   isUnknownToolset,
 } from '@/src/types/quick-apps';
+import { Translation } from '@/src/types/translation';
 
 import {
   CODEAPPS_REQUIRED_FILES,
@@ -58,7 +64,7 @@ import {
   DEFAULT_TEMPERATURE,
 } from '@/src/constants/default-ui-settings';
 import { formErrors } from '@/src/constants/form-errors';
-import { CommonI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_VERSION } from '@/src/constants/publication';
 import {
   DEFAULT_QUICK_APPS_MODEL,
@@ -85,6 +91,7 @@ export enum AppsEditorSchemaTypes {
   QuickApp = 'Quick app',
   QuickApp2 = 'Quick app2',
   CodeApp = 'Code App',
+  SchemaDriven = 'Schema Driven',
 }
 
 export const MANDATORY_FIELD_PLACEHOLDER = 'MANDATORY_FIELD_PLACEHOLDER';
@@ -167,6 +174,33 @@ const ExternalAppSchema = zodValidation.object({
 });
 export type ExternalAppForm = zodValidation.infer<typeof ExternalAppSchema>;
 
+const SchemaDrivenAppSchema = zodValidation
+  .object({
+    type: zodValidation.literal(AppsEditorSchemaTypes.SchemaDriven),
+    required: zodValidation.array(zodValidation.string()),
+    properties: zodValidation.record(
+      zodValidation.string(),
+      zodValidation.unknown(),
+    ),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.required.length || data.properties[MANDATORY_FIELD_PLACEHOLDER])
+      return;
+
+    data.required.forEach((field) => {
+      if (!data.properties[field]) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['properties'],
+          message: 'Field is required',
+        });
+      }
+    });
+  });
+export type SchemaDrivenAppForm = zodValidation.infer<
+  typeof SchemaDrivenAppSchema
+>;
+
 const QuickAppSchema = zodValidation.object({
   type: zodValidation.literal(AppsEditorSchemaTypes.QuickApp),
   instructions: zodValidation.string(),
@@ -240,6 +274,7 @@ export const QuickApp2Schema = zodValidation
     toolSupportingModelIds: zodValidation
       .array(zodValidation.string())
       .optional(),
+    availableModelIds: zodValidation.array(zodValidation.string()).optional(),
     agentSkills: zodValidation.array(zodValidation.string()),
     timestamp: zodValidation.boolean(),
   })
@@ -263,10 +298,21 @@ export const QuickApp2Schema = zodValidation
         });
       }
     }
-    if (
-      data.toolSupportingModelIds &&
-      !data.toolSupportingModelIds.includes(data.model)
-    ) {
+    const modelExists =
+      !data.availableModelIds || data.availableModelIds.includes(data.model);
+
+    if (!modelExists) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['model'],
+        message: translate(ChatI18nKeys.IncorrectSelectedModel, {
+          ns: Translation.Chat,
+        }),
+      });
+      return;
+    }
+
+    if (data.toolSupportingModelIds?.includes(data.model) === false) {
       ctx.addIssue({
         code: 'custom',
         path: ['model'],
@@ -340,6 +386,7 @@ export type AppsEditorFormType = (
   | QuickAppForm
   | QuickApp2Form
   | CodeAppForm
+  | SchemaDrivenAppForm
 ) &
   BaseAppForm;
 
@@ -464,15 +511,16 @@ export const getAgentsAndToolsetsFormValue = (
 const getQuickApp2FormData = (
   app?: CustomApplicationModel,
   toolSupportingModelIds?: string[],
+  availableModelIds?: string[],
+  schema?: ApiDetailedApplicationTypeSchema,
 ): QuickApp2Form => {
   const appProperties = app?.applicationProperties as QuickApp2Config;
   // show selected model for existing Quick Apps
   let model = appProperties?.orchestrator?.deployment?.deployment_id;
   if (!model) {
-    const defaultModelId = DefaultsService.get(
-      'quickAppsModel',
-      DEFAULT_QUICK_APPS_MODEL,
-    );
+    const defaultModelId =
+      getDefaultSchemaModel(schema) ??
+      DefaultsService.get('quickAppsModel', DEFAULT_QUICK_APPS_MODEL);
     // check if default model for quick app is configured correctly
     model = toolSupportingModelIds?.includes(defaultModelId)
       ? defaultModelId // use default quick app model
@@ -516,6 +564,7 @@ const getQuickApp2FormData = (
     ],
     isJsonView: false,
     toolSupportingModelIds,
+    availableModelIds,
     agentSkills: (appProperties?.skills ?? [])
       .filter((s): s is DialPromptSkill => s.type === 'dial-prompt')
       .map((s) => ApiUtils.decodeApiUrl(s.url)),
@@ -588,16 +637,36 @@ const getExternalAppFormData = (
     : MANDATORY_FIELD_PLACEHOLDER,
 });
 
+const getSchemaDrivenFormData = (
+  app?: CustomApplicationModel,
+  schema?: ApiDetailedApplicationTypeSchema,
+): SchemaDrivenAppForm => ({
+  type: AppsEditorSchemaTypes.SchemaDriven,
+  properties: {
+    ...omit(
+      app?.applicationProperties ?? {
+        [MANDATORY_FIELD_PLACEHOLDER]: true,
+      },
+      ['document_relative_url'],
+    ),
+  },
+  required: schema?.required ?? [],
+});
+
 const getSettingsFormData = ({
   app,
   type,
   runtime,
   toolSupportingModelIds,
+  availableModelIds,
+  schema,
 }: {
   app?: CustomApplicationModel;
   type: AppsEditorSchemaTypes;
   runtime?: string;
   toolSupportingModelIds?: string[];
+  availableModelIds?: string[];
+  schema?: ApiDetailedApplicationTypeSchema;
 }) => {
   switch (type) {
     case AppsEditorSchemaTypes.ExternalApp:
@@ -607,7 +676,14 @@ const getSettingsFormData = ({
     case AppsEditorSchemaTypes.QuickApp:
       return getQuickAppFormData(app);
     case AppsEditorSchemaTypes.QuickApp2:
-      return getQuickApp2FormData(app, toolSupportingModelIds);
+      return getQuickApp2FormData(
+        app,
+        toolSupportingModelIds,
+        availableModelIds,
+        schema,
+      );
+    case AppsEditorSchemaTypes.SchemaDriven:
+      return getSchemaDrivenFormData(app, schema);
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return getCustomAppFormData(app);
@@ -620,24 +696,31 @@ export const getDefaultFormData = ({
   runtime,
   type,
   toolSupportingModelIds,
+  schema,
 }: {
   type: string;
   app?: CustomApplicationModel;
   models?: ShareEntity[];
   runtime?: string;
   toolSupportingModelIds?: string[];
+  schema?: ApiDetailedApplicationTypeSchema;
 }): AppsEditorFormType => ({
   ...getBaseFormData({ app, models }),
   ...getSettingsFormData({
     app,
     runtime,
-    type: getEditorSchemaType(type),
+    type: getEditorSchemaType(type, schema),
     toolSupportingModelIds,
+    availableModelIds: models?.map((model) => model.id),
+    schema,
   }),
 });
 
-export const getValidationSchema = (schemaType: string) => {
-  const type = getEditorSchemaType(schemaType);
+export const getValidationSchema = (
+  schemaType: string,
+  schema?: ApiDetailedApplicationTypeSchema,
+) => {
+  const type = getEditorSchemaType(schemaType, schema);
   switch (type) {
     case AppsEditorSchemaTypes.ExternalApp:
       return ExternalAppSchema.and(MarketplaceEntityBaseSchema);
@@ -647,6 +730,8 @@ export const getValidationSchema = (schemaType: string) => {
       return QuickAppSchema.and(MarketplaceEntityBaseSchema);
     case AppsEditorSchemaTypes.QuickApp2:
       return QuickApp2Schema.and(MarketplaceEntityBaseSchema);
+    case AppsEditorSchemaTypes.SchemaDriven:
+      return SchemaDrivenAppSchema.and(MarketplaceEntityBaseSchema);
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return CustomAppSchema.and(MarketplaceEntityBaseSchema);
@@ -727,9 +812,6 @@ export const getQuickApp2Toolsets = ({
             deployment_id: ApiUtils.encodeApiUrl(
               agentAndToolset[AgentOrToolsetSchemaKeys.id],
             ),
-            transport:
-              (toolData as DialAppToolset).transport ??
-              DialAppTransportType.MCP,
           });
         } else if (isToolsetId(agentAndToolset[AgentOrToolsetSchemaKeys.id])) {
           acc.dialMCPToolsets.push({
@@ -767,8 +849,11 @@ export const getQuickApp2Toolsets = ({
           name: entity.name,
           type: ToolsetTypes.DialApp,
           deployment_id: ApiUtils.encodeApiUrl(entity.id),
-          transport:
-            (toolData as DialAppToolset).transport ?? DialAppTransportType.MCP,
+          ...(doesAgentSupportMcp(entity) && {
+            transport:
+              (toolData as DialAppToolset).transport ??
+              DialAppTransportType.MCP,
+          }),
         });
       } else {
         acc.dialMCPToolsets.push({
@@ -959,6 +1044,13 @@ export const getApplicationPayload = ({
         },
       };
     }
+    case AppsEditorSchemaTypes.SchemaDriven:
+      return {
+        ...generalData,
+        applicationProperties: omit(data.properties, [
+          MANDATORY_FIELD_PLACEHOLDER,
+        ]),
+      };
     case AppsEditorSchemaTypes.CustomApp:
     default:
       return {

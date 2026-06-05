@@ -39,22 +39,34 @@ const ModelSelectRow = ({
       className={classNames(
         'flex items-center gap-2',
         isNotAllowed && 'text-secondary',
-        truncate && 'truncate',
+        truncate && 'min-w-0 overflow-hidden',
       )}
     >
       <ModelIcon entity={item} entityId={item.id} size={18} />
       <div
-        className={classNames(truncate && 'truncate')}
+        className={classNames(
+          'flex flex-1 items-center',
+          truncate ? 'min-w-0' : 'flex-wrap gap-x-1.5',
+        )}
         data-qa="agent-attributes"
       >
-        <span>
+        <span
+          className={classNames(truncate && 'min-w-0 flex-1 truncate')}
+          data-qa="agent-name"
+        >
           {getOpenAIEntityFullName(item)}
-          {item.version && (
-            <span className="ms-2 text-secondary" data-qa="agent-version">
-              {item.version}
-            </span>
-          )}
         </span>
+        {item.version && (
+          <span
+            className={classNames(
+              truncate && 'ms-2 max-w-[50%] shrink-0 truncate text-secondary',
+              !truncate && 'text-secondary',
+            )}
+            data-qa="agent-version"
+          >
+            {item.version}
+          </span>
+        )}
         {isNotAllowed && (
           <span className="text-error" data-qa="talk-to-entity-descr">
             <EntityMarkdownDescription isShortDescription>
@@ -78,6 +90,7 @@ interface ModelsSelectorProps {
   panelClassName?: string;
   indexSeparator?: number;
   showHiddenTagModels?: boolean;
+  hideInlineError?: boolean;
 }
 
 export const ModelsSelector = memo(function ModelsSelector({
@@ -91,6 +104,7 @@ export const ModelsSelector = memo(function ModelsSelector({
   panelClassName,
   indexSeparator,
   showHiddenTagModels,
+  hideInlineError,
 }: ModelsSelectorProps) {
   const modelTypeAgents = useAppSelector((state) =>
     ModelsSelectors.selectModelTypeAgents(state, showHiddenTagModels),
@@ -128,7 +142,7 @@ export const ModelsSelector = memo(function ModelsSelector({
           itemRow={({ item, truncate }) => (
             <ModelSelectRow
               item={item}
-              isNotAllowed={item.id === value && !model}
+              isNotAllowed={!hideInlineError && item.id === value && !model}
               truncate={truncate}
             />
           )}

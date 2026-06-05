@@ -74,7 +74,8 @@ function AppsEditorPage() {
     allSchemasLoading === UploadStatus.LOADING ||
     initialDataStatus === UploadStatus.LOADING ||
     !areModelsLoaded ||
-    (!!applicationId && !appDetails);
+    (!!applicationId && !appDetails) ||
+    (schemaId && !isDetailedSchemaLoaded);
 
   useEffect(() => {
     dispatch(ApplicationActions.initQueryParams());

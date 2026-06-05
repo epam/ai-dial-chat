@@ -12,21 +12,29 @@ import {
 import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isQuickApp2 } from '@/src/utils/app/application';
 import { constructPath } from '@/src/utils/app/file';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getShareType } from '@/src/utils/app/share';
 
 import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
+import { QuickApp2Config } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
-import { ShareActions } from '@/src/store/actions';
+import { ApplicationActions, ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors, ShareSelectors } from '@/src/store/selectors';
+import {
+  ApplicationSelectors,
+  ModelsSelectors,
+  ShareSelectors,
+} from '@/src/store/selectors';
 
 import { SideBarI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 import { Tooltip } from '@/src/components/Common/Tooltip';
@@ -100,39 +108,53 @@ function ShareAccessSection({
 
 function ShareModalView() {
   const { t } = useTranslation(Translation.SideBar);
+
   const dispatch = useAppDispatch();
 
   const [editAccess, setEditAccess] = useState(false);
+
   const modalState = useAppSelector(ShareSelectors.selectShareModalState);
   const readInvitationId = useAppSelector(ShareSelectors.selectInvitationId);
   const writeInvitationId = useAppSelector(
     ShareSelectors.selectWriteInvitationId,
   );
-  const invitationId = editAccess ? writeInvitationId : readInvitationId;
-
   const shareResourceId = useAppSelector(ShareSelectors.selectShareResourceId);
-
   const shareResourceName = useAppSelector(
     ShareSelectors.selectShareResourceName,
   );
-
   const isResourceShared = useAppSelector(
     ShareSelectors.selectIsResourceShared,
   );
-
   const shareFeatureType = useAppSelector(
     ShareSelectors.selectShareFeatureType,
   );
-
   const entity = useAppSelector((state) =>
     ModelsSelectors.selectModelById(state, shareResourceId),
   );
-
+  const applicationDetail = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
   const isFolder = useAppSelector(ShareSelectors.selectShareIsFolder);
 
+  const invitationId = editAccess ? writeInvitationId : readInvitationId;
   const sharingType = useMemo(() => {
     return getShareType(shareFeatureType, isFolder);
   }, [shareFeatureType, isFolder]);
+
+  useEffect(() => {
+    if (entity && isQuickApp2(entity) && shareResourceId) {
+      dispatch(ApplicationActions.get({ applicationId: shareResourceId }));
+    }
+  }, [shareResourceId, entity, dispatch]);
+
+  const hasPrivateSkills = useMemo(() => {
+    if (!entity || !isQuickApp2(entity)) return false;
+    const config = applicationDetail?.applicationProperties as
+      | QuickApp2Config
+      | undefined;
+    return (config?.skills ?? []).some((s) => !isEntityIdPublic({ id: s.url }));
+  }, [entity, applicationDetail]);
+
   const [url, setUrl] = useState('');
 
   const onChangeSharePermissionHandler = useCallback(
@@ -218,6 +240,14 @@ function ShareModalView() {
           {entity?.version && (
             <span data-qa="entity-version">Version: {entity.version}</span>
           )}
+
+          {hasPrivateSkills && (
+            <ErrorMessage
+              type="warning"
+              error={t(SideBarI18nKeys.QuickApp2ContainsPrivateSkills)}
+            />
+          )}
+
           <p className="text-sm text-secondary" data-qa="share-message">
             {t(SideBarI18nKeys.LinkDescription)}
           </p>

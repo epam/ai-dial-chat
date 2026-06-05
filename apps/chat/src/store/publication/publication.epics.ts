@@ -1462,8 +1462,13 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.updateApplicationPublicationUrls.type),
     switchMap(({ payload }) => {
-      const { isSaveAndExit, publicationUrl, oldApplication, newApplication } =
-        payload;
+      const {
+        isSaveAndExit,
+        publicationUrl,
+        oldApplication,
+        newApplication,
+        tabToOpen,
+      } = payload;
       const publication = PublicationSelectors.selectPublicationByUrl(
         state$.value,
         publicationUrl,
@@ -1516,6 +1521,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
               { ...oldApplication, id: newApplication.id },
               newApplication,
               isSaveAndExit,
+              tabToOpen,
             ),
             of(
               PublicationActions.setPublicationItems({

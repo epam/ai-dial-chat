@@ -22,6 +22,8 @@ import { PreviewModeButton } from '@/src/components/Marketplace/MarketplaceEdito
 
 import { MarketplaceEditorViewContext } from './marketplaceEditorViewContext';
 
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
+
 interface MarketplaceEditorViewProps {
   leftContent: ReactNode;
   rightContent: ReactNode;
@@ -132,17 +134,14 @@ export const MarketplaceEditorView = ({
               onClick={handleOpenPreview}
             >
               <PreviewModeButton mode={PreviewMode.full} />
-              <PreviewModeButton
-                mode={PreviewMode.half}
-                className="max-xl:hidden"
-              />
+              <PreviewModeButton mode={PreviewMode.half} />
 
               {!!closedPreviewLabel && (
                 <span
-                  className="select-none truncate text-primary"
+                  className="min-h-0 flex-1 select-none text-primary"
                   style={{ writingMode: 'vertical-rl' }}
                 >
-                  {closedPreviewLabel}
+                  <DialEllipsisTooltip text={closedPreviewLabel} />
                 </span>
               )}
             </div>

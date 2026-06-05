@@ -23,7 +23,7 @@ export const MessageStages = ({ stages }: Props) => {
   );
 
   return (
-    <div data-no-context-menu className="flex flex-col gap-1">
+    <div className="flex flex-col gap-1">
       {displayedStages.map((stage) => (
         <MessageStage key={stage.index} stage={stage} />
       ))}
@@ -33,6 +33,7 @@ export const MessageStages = ({ stages }: Props) => {
             onClick={() => setShowMore(!showMore)}
             className="mt-2 flex leading-[18px] text-accent-primary"
             textClassName="font-normal"
+            data-no-context-menu
             data-qa={showMore ? 'show-less' : 'show-more'}
             label={showMore ? 'Show less' : 'Show more'}
             iconAfter={

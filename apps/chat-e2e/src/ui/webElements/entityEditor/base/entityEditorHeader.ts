@@ -7,7 +7,7 @@ import {
   HeaderSelectors,
   IconSelectors,
 } from '@/src/ui/selectors';
-import { BaseElement } from '@/src/ui/webElements';
+import { BaseElement, Button } from '@/src/ui/webElements';
 import { RegexUtil } from '@/src/utils';
 import { Locator, Page } from '@playwright/test';
 
@@ -22,11 +22,15 @@ export class EntityEditorHeader extends BaseElement {
     super(page, EntityEditorHeaderSelectors.header, parentLocator);
   }
 
-  public saveAndExitButton = this.getChildElementBySelector(
+  public saveAndExitButton = new Button(
+    this.page,
     EntityEditorHeaderSelectors.saveAndExitButton,
+    this.rootLocator,
   );
-  public exitLink = this.getChildElementBySelector(
-    EntityEditorHeaderSelectors.exitLink,
+  public exitButton = new Button(
+    this.page,
+    EntityEditorHeaderSelectors.exitButton,
+    this.rootLocator,
   );
   public actionAndEntityTypeTitle = this.getChildElementBySelector(
     EntityEditorHeaderSelectors.actionAndEntityTypeTitle,

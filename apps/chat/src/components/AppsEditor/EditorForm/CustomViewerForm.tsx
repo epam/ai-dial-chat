@@ -94,6 +94,8 @@ export const CustomViewerForm = () => {
         height="100%"
         containerClassName="w-full h-full border-none transition-all"
         onMessage={onMessage}
+        passAuthInfo
+        passExplicitToken
       />
     </div>
   );

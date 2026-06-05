@@ -239,6 +239,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               disabled={isAppPublic}
               tooltip={isAppPublicTooltip}
               models={toolSupportingModels}
+              hideInlineError
             />
           )}
         />
@@ -283,40 +284,48 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         openByDefault
         dataQa="context-tools-section"
       >
-        <AgentsAndToolsetsField onAutoSave={onAutoSave} />
+        <div data-qa="agents-and-toolsets-field">
+          <AgentsAndToolsetsField onAutoSave={onAutoSave} />
+        </div>
 
-        <Controller
-          name="documentRelativeUrl"
-          control={control}
-          render={({ field }) => (
-            <FilesSelectorField
-              label={t(MarketplaceI18nKeys.ContextFiles)}
-              info={t(MarketplaceI18nKeys.ContextFilesInfo)}
-              onAddFiles={handleSelectFiles}
-              onRemoveFile={(document) =>
-                field.onChange(
-                  field.value?.filter((field) => field !== document),
-                )
-              }
-              readonly={isSharedWithMe || isAppPublic}
-              error={errors.documentRelativeUrl?.message}
-              fileManagerTitle={t(MarketplaceI18nKeys.SelectDocuments)}
-              files={field.value ?? []}
-              addBtnTooltip={
-                isSharedWithMe
-                  ? getSharedTooltip(t(MarketplaceI18nKeys.DocumentsLowercase))
-                  : undefined
-              }
-              confirmDialogValues={
-                appDetails?.isShared ? CONFIRM_DOCUMENT_VALUES : undefined
-              }
-              tooltip={isAppPublicTooltip}
-              filesFilter={filesFilter}
-            />
-          )}
-        />
+        <div data-qa="document-urls-field">
+          <Controller
+            name="documentRelativeUrl"
+            control={control}
+            render={({ field }) => (
+              <FilesSelectorField
+                label={t(MarketplaceI18nKeys.ContextFiles)}
+                info={t(MarketplaceI18nKeys.ContextFilesInfo)}
+                onAddFiles={handleSelectFiles}
+                onRemoveFile={(document) =>
+                  field.onChange(
+                    field.value?.filter((field) => field !== document),
+                  )
+                }
+                readonly={isSharedWithMe || isAppPublic}
+                error={errors.documentRelativeUrl?.message}
+                fileManagerTitle={t(MarketplaceI18nKeys.SelectDocuments)}
+                files={field.value ?? []}
+                addBtnTooltip={
+                  isSharedWithMe
+                    ? getSharedTooltip(
+                        t(MarketplaceI18nKeys.DocumentsLowercase),
+                      )
+                    : undefined
+                }
+                confirmDialogValues={
+                  appDetails?.isShared ? CONFIRM_DOCUMENT_VALUES : undefined
+                }
+                tooltip={isAppPublicTooltip}
+                filesFilter={filesFilter}
+              />
+            )}
+          />
+        </div>
 
-        <CodeInterpreterField />
+        <div data-qa="code-interpreter-field">
+          <CodeInterpreterField />
+        </div>
       </FormCollapsibleSection>
 
       <FormCollapsibleSection

@@ -1,0 +1,57 @@
+schema: spec-driven
+
+context: |
+  Project: ai-dial-chat — NX 22 monorepo, Next.js 16 / React 19, TypeScript 5.9
+  Domain: Chat UI for the DIAL platform (AI model/application orchestration)
+
+  Workspace layout:
+    apps/chat          — Main Next.js app (port 3000)
+    apps/chat-e2e      — Playwright E2E tests
+    libs/shared        — Shared types, constants, utils
+    libs/overlay       — DIAL Overlay iframe-embed library
+
+  Tech stack:
+    - TypeScript 5.9, React 19, Next.js 16
+    - Redux Toolkit (state) + redux-observable / RxJS (side effects via epics)
+    - Tailwind CSS + JSS (@epam/ai-dial-modulify-ui) for styling
+    - Vitest (unit tests), Playwright (E2E)
+    - NX 22 for monorepo tooling
+
+  Architecture — Redux Slice + Epic pattern:
+    - Every domain feature has a slice dir: apps/chat/src/store/[domain]/
+        *.reducers.ts   — createSlice (state + actions)
+        *.epics.ts      — AppEpic RxJS observables
+        *.selectors.ts  — createSelector derived state
+        *.types.ts      — TypeScript types
+    - Import ALL selectors from store/selectors.ts barrel (never directly from domain files)
+    - Import ALL actions from store/actions.ts barrel
+    - All epics combined in store/rootEpic.ts
+
+  Next.js API routes (apps/chat/src/pages/api/):
+    - Server-side proxy to DIAL Core backend
+    - Every route must call validateServerSession before forwarding
+
+  Conventions:
+    - Conventional commits (feat, fix, chore, refactor, test, docs)
+    - Single quotes, trailing commas (Prettier enforced)
+    - Import order: third-party first, then local (@/src/...)
+    - @/ alias maps to apps/chat/ root — use @/src/... for all internal imports
+    - No relative ../../ paths across directories
+    - No async logic in reducers or components — put side effects in epics
+    - Use createSelector for derived state, never compute inline in components
+    - SVG imported as React component by default; use ?url suffix for URL import
+
+  Feature flags: Feature enum from @epam/ai-dial-shared, controlled by ENABLED_FEATURES env var
+
+  Key env vars: DIAL_API_HOST (required), DIAL_API_KEY, NEXTAUTH_SECRET, ENABLED_FEATURES
+
+rules:
+  proposal:
+    - Include a "Non-goals" section
+    - Reference the affected store domain(s) and component path(s)
+    - Note any new API routes required and their session-validation requirement
+  tasks:
+    - Break tasks into chunks of max 2 hours
+    - Each task that adds a store domain must list all 6 wiring steps (types, reducers, epics, selectors, barrel exports, rootEpic)
+    - API route tasks must include session validation as an explicit step
+    - Reference exact file paths using the @/src/... convention

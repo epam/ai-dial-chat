@@ -6,6 +6,7 @@ import {
   MarketplacePage,
 } from '../ui/pages';
 import {
+  AgentAndToolsetSelectModal,
   AgentInfo,
   Breadcrumb,
   Chat,
@@ -48,6 +49,8 @@ import {
   PromptBar,
   PublishingFilter,
   PublishingRules,
+  QuickApp2EditorContainer,
+  QuickApp2EditorViewForm,
   SelectFolderManagerModal,
   SelectFolderModal,
   SendMessage,
@@ -88,6 +91,7 @@ import {
   PublishEntityAssertion,
   PublishFileAssertion,
   PublishFolderAssertion,
+  PublishToolsetAssertion,
   PublishingRequestDialogAssertion,
   ReplaceConfirmationModalAssertion,
   SendMessageAssertion,
@@ -158,6 +162,7 @@ import {
   PublishFolder,
   PublishFolderConversations,
   PublishPromptsTree,
+  PublishToolsetsTree,
   SharedFolderConversations,
   SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
@@ -225,6 +230,9 @@ const dialTest = test.extend<{
   externalAppEditorContainer: ExternalAppEditorContainer;
   externalAppEditorViewForm: ExternalAppEditorViewForm;
   externalAppEditorAppSettingsPreview: EntityEditorEntitySettingsCardPreview;
+  quickApp2EditorContainer: QuickApp2EditorContainer;
+  quickApp2EditorViewForm: QuickApp2EditorViewForm;
+  agentAndToolsetSelectModal: AgentAndToolsetSelectModal;
   externalAppEditorAppSettingsPreviewBody: EntityEditorEntitySettingsCardPreviewBody;
   externalAppEditorAppSettingsPreviewCard: EntityEditorPreviewCard;
   toolsetEditorContainer: ToolsetEditorContainer;
@@ -321,6 +329,7 @@ const dialTest = test.extend<{
   additionalSecondShareUserRequestContext: APIRequestContext;
   adminUserRequestContext: APIRequestContext;
   adminUserItemApiHelper: ItemApiHelper;
+  adminToolsetApiHelper: ToolsetApiHelper;
   adminShareApiHelper: ShareApiHelper;
   adminApplicationApiHelper: ApplicationApiHelper;
   mainUserShareApiHelper: ShareApiHelper;
@@ -347,6 +356,7 @@ const dialTest = test.extend<{
   filesToPublishTree: PublishFilesTree;
   promptsToPublishTree: PublishPromptsTree;
   appsToPublishTree: PublishApplicationsTree;
+  toolsetsToPublishTree: PublishToolsetsTree;
   folderConversationsToPublish: PublishFolderConversations;
   publicationApiHelper: PublicationApiHelper;
   adminPublicationApiHelper: PublicationApiHelper;
@@ -405,6 +415,7 @@ const dialTest = test.extend<{
   publishFileTreeAssertion: PublishFileAssertion<PublishFilesTree>;
   publishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
   appToPublishAssertion: PublishEntityAssertion<PublishApplicationsTree>;
+  toolsetToPublishAssertion: PublishToolsetAssertion<PublishToolsetsTree>;
   folderToPublishAssertion: PublishFolderAssertion<PublishFolderConversations>;
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
@@ -671,6 +682,19 @@ const dialTest = test.extend<{
     const externalAppEditorAppSettingsPreviewCard =
       externalAppEditorAppSettingsPreviewBody.getEntityEditorPreviewCard();
     await use(externalAppEditorAppSettingsPreviewCard);
+  },
+  quickApp2EditorContainer: async ({ entityEditorPage }, use) => {
+    const quickApp2EditorContainer =
+      entityEditorPage.getQuickApp2EditorContainer();
+    await use(quickApp2EditorContainer);
+  },
+  quickApp2EditorViewForm: async ({ quickApp2EditorContainer }, use) => {
+    const quickApp2EditorViewForm =
+      quickApp2EditorContainer.getEntityEditorViewForm();
+    await use(quickApp2EditorViewForm);
+  },
+  agentAndToolsetSelectModal: async ({ page }, use) => {
+    await use(new AgentAndToolsetSelectModal(page));
   },
   toolsetEditorContainer: async ({ entityEditorPage }, use) => {
     const toolsetEditorContainer = entityEditorPage.getToolsetEditorContainer();
@@ -1285,6 +1309,11 @@ const dialTest = test.extend<{
       publishingRequestDialog.getApplicationsToPublishTree();
     await use(appsToPublishTree);
   },
+  toolsetsToPublishTree: async ({ publishingRequestDialog }, use) => {
+    const toolsetsToPublishTree =
+      publishingRequestDialog.getPublishToolsetsTree();
+    await use(toolsetsToPublishTree);
+  },
   folderConversationsToPublish: async ({ publishingRequestDialog }, use) => {
     const folderConversationsToPublish =
       publishingRequestDialog.getFolderConversationsToPublish();
@@ -1590,6 +1619,11 @@ const dialTest = test.extend<{
     const appToPublishAssertion =
       new PublishEntityAssertion<PublishApplicationsTree>(appsToPublishTree);
     await use(appToPublishAssertion);
+  },
+  toolsetToPublishAssertion: async ({ toolsetsToPublishTree }, use) => {
+    const toolsetToPublishAssertion =
+      new PublishToolsetAssertion<PublishToolsetsTree>(toolsetsToPublishTree);
+    await use(toolsetToPublishAssertion);
   },
   folderToPublishAssertion: async ({ publishingRequestDialog }, use) => {
     const folderToPublishAssertion = new PublishFolderAssertion(

@@ -243,7 +243,7 @@ dialTest(
           version: appEntity.version,
           description: appEntity.description,
         });
-        await entityEditorHeader.exitLink.click();
+        await entityEditorHeader.exitButton.click();
         await baseAssertion.assertElementState(
           customAppEditorViewForm,
           'hidden',
@@ -2167,7 +2167,7 @@ dialAdminTest(
           isHttpMethodTriggered: false,
         });
         await baseAssertion.assertEntityIcon(
-          adminPublishedApplicationReviewModal.getApplicationIcon(),
+          adminPublishedApplicationReviewModal.getEntityIcon(),
           reviewIconUrl,
         );
 
@@ -2371,7 +2371,7 @@ dialTest(
         await entityEditorHeaderAssertion.assertActionTitle(
           EntityMenuActions.addApp(AddAppMenuOptions.customApp),
         );
-        await entityEditorHeader.exitLink.click();
+        await entityEditorHeader.exitButton.click();
       },
     );
 

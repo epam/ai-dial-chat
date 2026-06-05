@@ -22,6 +22,7 @@ export class ApiKeyMockHelper extends BaseAuthMockHelper<ToolsetApiKeySignInRequ
 
   async setupMocks(): Promise<void> {
     await this.setupToolsetRoutes();
+    await this.setupToolsetListingRoute();
     await this.setupSignInRoute();
     await this.setupSignOutRoute();
   }

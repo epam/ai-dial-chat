@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isQuickApp2 } from '@/src/utils/app/application';
 import {
   extractNameFromEmail,
   formatDate,
@@ -34,14 +35,17 @@ import {
   PublicationResource,
   PublicationRule,
 } from '@/src/types/publication';
+import { QuickApp2Config } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
-import { PublicationActions } from '@/src/store/actions';
+import { ApplicationActions, PublicationActions } from '@/src/store/actions';
 import { FoldersSelectors } from '@/src/store/folders/folders.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
+  ApplicationSelectors,
   AuthSelectors,
   ConversationsSelectors,
+  ModelsSelectors,
   PublicationSelectors,
 } from '@/src/store/selectors';
 
@@ -154,6 +158,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
   );
+  const publishEntityModel = useAppSelector((state) =>
+    publicationModel
+      ? ModelsSelectors.selectModelById(state, publicationModel.entity.id)
+      : undefined,
+  );
+  const applicationDetail = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
+  );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const userName = useAppSelector(AuthSelectors.selectUserName);
   const publicVersionGroups = useAppSelector(
@@ -239,13 +251,22 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   );
 
   useEffect(() => {
-    if (rules && (!isReview || isEditMode)) {
+    if (rules && (!isReview || !isEditMode)) {
       formMethods.setValue(
         PublishRequestFieldsNames.RULES,
         rules[rulesPath] ?? [],
       );
     }
   }, [formMethods, rulesPath, rules, isReview, isEditMode]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      formMethods.setValue(
+        PublishRequestFieldsNames.RULES,
+        publication.rules ?? [],
+      );
+    }
+  }, [formMethods, isEditMode, publication.rules]);
 
   useEffect(() => {
     if (!isEditMode) {
@@ -268,7 +289,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     return !publication.rules && isReview
       ? rulesEntries
       : rulesEntries.filter(([path]) =>
-          isReview
+          isReview && !isEditMode
             ? path !== publication.targetFolder
             : path !== editedPublishToUrl,
         );
@@ -277,19 +298,19 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     publication.rules,
     publication.targetFolder,
     isReview,
+    isEditMode,
     editedPublishToUrl,
   ]);
-
   const newRules: PublicationRule[] = useMemo(
     () =>
-      (!isReview
+      (!isReview || isEditMode
         ? rulesOnEdit
         : publication.rules?.map((rule) => ({
             source: rule.source,
             function: rule.function,
             targets: rule.targets,
           }))) ?? [],
-    [isReview, publication.rules, rulesOnEdit],
+    [isReview, isEditMode, publication.rules, rulesOnEdit],
   );
 
   const isPublicationHasOnlyUnpublishEntities = useMemo(
@@ -321,6 +342,9 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     ? editedPublishToUrl.replace(/^[^/]+/, 'Organization')
     : '';
   const publicationName = publication.name || getPublicationId(publication.url);
+  const comparePath = isEditMode
+    ? editedPublishToUrl
+    : publication.targetFolder;
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -363,21 +387,20 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
         getIdWithoutTemporaryBucket(folder.id) ===
         getIdWithoutFeatureType(editedPublishToUrl),
     );
+    const baselinePath =
+      isReview && !isEditMode ? publication.targetFolder : editedPublishToUrl;
     return (
       (initialState.publishToUrl !== editedPublishToUrl && isTemporaryFolder) ||
-      !isEqual(
-        rules[isReview ? publication.targetFolder : editedPublishToUrl] ?? [],
-        (isReview ? newRules : rulesOnEdit) ?? [],
-      )
+      !isEqual(rules[baselinePath] ?? [], newRules ?? [])
     );
   }, [
     editedPublishToUrl,
     initialState.publishToUrl,
     isReview,
+    isEditMode,
     newRules,
     publication.targetFolder,
     rules,
-    rulesOnEdit,
     temporaryFolders,
   ]);
 
@@ -439,6 +462,31 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     doesIncludeMarketplaceEntity &&
     isFileId(publicationModel.entity.iconUrl) &&
     !isMyEntity({ id: publicationModel.entity.iconUrl ?? '' });
+
+  useEffect(() => {
+    if (!isReview && publishEntityModel && isQuickApp2(publishEntityModel)) {
+      dispatch(
+        ApplicationActions.get({ applicationId: publishEntityModel.id }),
+      );
+    }
+  }, [isReview, publishEntityModel, dispatch]);
+
+  const hasPrivateSkillsInPublish = useMemo(() => {
+    if (
+      !publicationModel ||
+      !publishEntityModel ||
+      publicationModel.action === PublishActions.DELETE ||
+      !isQuickApp2(publishEntityModel)
+    ) {
+      return false;
+    }
+
+    const config = applicationDetail?.applicationProperties as
+      | QuickApp2Config
+      | undefined;
+
+    return (config?.skills ?? []).some((s) => !isEntityIdPublic({ id: s.url }));
+  }, [publicationModel, publishEntityModel, applicationDetail]);
 
   return (
     <FormProvider {...formMethods}>
@@ -727,6 +775,15 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                     )}
                                   />
                                 )}
+                              {hasPrivateSkillsInPublish &&
+                                featureType === FeatureType.Application && (
+                                  <ErrorMessage
+                                    type="warning"
+                                    error={t(
+                                      ChatI18nKeys.QuickApp2ContainsPrivateSkillsPublish,
+                                    )}
+                                  />
+                                )}
                             </CollapsibleSection>
                           );
                         },
@@ -749,13 +806,13 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
             isDraftRuleFilterOpen={isRulesSetterVisible}
           />
         </div>
-        {isCompareModalOpened && publication.targetFolder && (
+        {isCompareModalOpened && comparePath && (
           <CompareRulesModal
             allRuleEntries={filteredRuleEntries}
             newRulesToCompare={newRules}
-            oldRulesToCompare={rules[publication.targetFolder]}
+            oldRulesToCompare={rules[comparePath]}
             onClose={handleCloseCompareModal}
-            newRulesPath={publication.targetFolder}
+            newRulesPath={comparePath}
           />
         )}
         {isApplicationReview && <ReviewApplicationDialog />}

@@ -57,12 +57,13 @@ export const PreviewModeButton = ({
   return (
     <DialButton
       className={classNames(
-        'text-secondary hover:text-accent-primary',
+        '!p-0 text-secondary hover:text-accent-primary',
         className,
       )}
       tooltipProps={{
         tooltip: t(previewModeTooltips[mode]),
         isTriggerClickable: true,
+        triggerClassName: 'size-[40px] flex justify-center items-center',
       }}
       onClick={handlePreviewModeChange}
       iconBefore={<Icon size={size} />}

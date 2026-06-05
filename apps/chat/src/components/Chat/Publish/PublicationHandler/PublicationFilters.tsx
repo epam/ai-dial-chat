@@ -133,7 +133,7 @@ function PublicationFiltersView({
       )}
       {(isEditMode || publicationModel) && !isRootTarget && (
         <>
-          {publicationModel && (
+          {(publicationModel || isEditMode) && (
             <p className="mb-1 text-xs text-secondary" data-qa="published-path">
               <DialEllipsisTooltip
                 text={editedPublishToUrl.split('/').pop() || ''}

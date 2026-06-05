@@ -112,6 +112,14 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     this.oAuthLoginForm.getChildElementBySelector(
       AddToolsetSettingsFormSelector.apiKeyParameterNameFieldErrorMessage(),
     );
+  public apiKeyParameterValueFieldContainer =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.apiKeyParameterValueFieldContainer,
+    );
+  public apiKeyParameterValueFieldInput =
+    this.apiKeyParameterValueFieldContainer.getChildElementBySelector(
+      Tags.input,
+    );
   public allowedToolsLabel = this.getChildElementBySelector(
     AddToolsetSettingsFormSelector.allowedToolsLabel,
   );
@@ -119,6 +127,10 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     AddToolsetSettingsFormSelector.allowedToolsLabelSubtitle,
   );
   public allowedTools = new Combobox(this.page, this.rootLocator);
+  public copyUrlButton = new Button(
+    this.page,
+    AddToolsetSettingsFormSelector.copyUrlButton,
+  );
 
   public async clickLoginButton(
     triggeredHttpHost?: string,
