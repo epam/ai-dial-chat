@@ -19,7 +19,33 @@ permissions:
   actions: read     # caller cap: run-agent.yml's `gh run download` needs this
 
 jobs:
+  # Round-0 trust gate (ADR-0005 M1/M2). Classifies the PR source and rejects
+  # the run if the PR touches agent-trust paths or adds symlinks. A no-op for
+  # schedule / workflow_dispatch (no PR, runs from the trusted default branch),
+  # so the same core serves every trigger. discover gates on this — a failed
+  # gate blocks all rounds.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      trusted: ${{ steps.trust.outputs.trusted }}
+    steps:
+      # Checkout provides the .git dir the gate needs for its symlink ls-tree.
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: trust
+        uses: ./.github/actions/pr-trust-gate
+        with:
+          event_name: ${{ github.event_name }}
+          pr: ${{ toJSON(github.event.pull_request) }}
+          repo: ${{ github.repository }}
+          github_token: ${{ github.token }}
+          # Fork-facing posture (set when AI review opens to external forks):
+          #   trust_label: ai-review-approved   # maintainer label = trust boundary
+          #   fail_on_untrusted: 'false'        # branch on outputs.trusted instead
+          # Defaults (hard-block forks, reject trust-path edits on all PRs) are
+          # correct for the current internal-only (`pull_request`) tier.
+
   discover:
+    needs: gate
     runs-on: ubuntu-latest
     outputs:
       round1: ${{ steps.match.outputs.round1 }}
