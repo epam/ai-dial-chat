@@ -11,7 +11,11 @@ import { ChatCompletionDto } from '../dto/chat-completion.dto';
 
 function makeService() {
   const configService = {
-    get: vi.fn().mockReturnValue('http://dial-core'),
+    get: vi.fn((key: string) => {
+      if (key === 'DIAL_CORE_URL') return 'http://dial-core';
+      if (key === 'DIAL_API_VERSION') return '2024-10-21';
+      return undefined;
+    }),
   } as unknown as ConfigService<EnvironmentVariables>;
   return new ChatService(configService);
 }
@@ -34,6 +38,7 @@ describe('ChatService', () => {
       'gpt-4',
       {
         body: dto,
+        params: { query: { 'api-version': '2024-10-21' } },
       },
     );
   });

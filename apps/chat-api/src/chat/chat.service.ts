@@ -11,6 +11,7 @@ export class ChatService extends AppService {
     try {
       return await this.client.sendChatCompletionRequest(deployment, {
         body: dto,
+        params: { query: { 'api-version': this.dialApiVersion } },
       });
     } catch (error) {
       this.logger.error('DIAL Core rejected sendCompletion', error);

@@ -1,13 +1,13 @@
 import { DialLoader } from '@epam/ai-dial-ui-kit';
-import { ReactNode } from 'react';
+import { memo, type FC, type ReactNode } from 'react';
 import { useUser } from '../../context/auth/UserContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 
-interface RequireAuthProps {
+interface Props {
   children: ReactNode;
 }
 
-const RequireAuth = ({ children }: RequireAuthProps) => {
+const RequireAuth: FC<Props> = ({ children }) => {
   const { status } = useUser();
   useAuthRedirect();
 
@@ -22,4 +22,4 @@ const RequireAuth = ({ children }: RequireAuthProps) => {
   return children;
 };
 
-export default RequireAuth;
+export default memo(RequireAuth);

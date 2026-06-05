@@ -1,6 +1,6 @@
 ## ESLint
 
-ESLint-specific guidance for `nx import`. For generic import issues (root deps, pnpm globs, project references), see `SKILL.md`.
+ESLint-specific guidance for `nx import`. For generic import issues (root deps, workspace globs, project references), see `SKILL.md`.
 
 ---
 

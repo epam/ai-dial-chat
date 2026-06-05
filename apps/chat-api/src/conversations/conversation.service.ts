@@ -11,14 +11,32 @@ import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
-import { getConversationName } from './conversation.utils';
+import { UserConfigService } from '../user-config/user-config.service';
+import {
+  ConversationListItemDto,
+  ConversationListResponseDto,
+} from './dto/conversation-list.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
+import { getConversationName } from './get-conversation-name';
+import { getConversationTitleFromName } from './get-conversation-title-from-name';
+
+const getValidAttachments = (customContent?: Message['custom_content']) =>
+  (customContent?.attachments ?? []).filter((attachment) =>
+    Boolean(attachment.data || attachment.url),
+  );
+
+// TODO: Remove this once the DIAL SDK encodes resource path segments internally.
+const encodeDialResourcePath = (path: string): string =>
+  path.split('/').map(encodeURIComponent).join('/');
 
 @Injectable()
 export class ConversationService extends AppService {
   protected override logger = new Logger(ConversationService.name);
 
-  constructor(configService: ConfigService<EnvironmentVariables>) {
+  constructor(
+    configService: ConfigService<EnvironmentVariables>,
+    private readonly userConfigService: UserConfigService,
+  ) {
     super(configService);
   }
 
@@ -32,7 +50,7 @@ export class ConversationService extends AppService {
     const now = Date.now();
     const uuid = crypto.randomUUID();
     const name = getConversationName(firstMessage);
-    const conversationPath = `${uuid}__${name}`;
+    const conversationPath = `${deploymentId}__${name}__${uuid}`;
     const folderId = `${bucket}`; // TODO: check
 
     const userMessage: MessageDto = {
@@ -61,7 +79,7 @@ export class ConversationService extends AppService {
     try {
       const { data, error } = (await this.client.saveConversation(
         bucket,
-        conversationPath,
+        encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
           body: conversation,
@@ -87,7 +105,7 @@ export class ConversationService extends AppService {
     try {
       const { data, error } = (await this.client.getConversation(
         bucket,
-        conversationPath,
+        encodeDialResourcePath(conversationPath),
         { headers: getBearerAuthHeaders(token) },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined || !data) {
@@ -101,6 +119,20 @@ export class ConversationService extends AppService {
     }
   }
 
+  async pinConversation(
+    conversationId: string,
+    isPinned: boolean,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    return this.userConfigService.updatePin(
+      conversationId,
+      isPinned,
+      token,
+      bucket,
+    );
+  }
+
   async deleteConversation(
     conversationPath: string,
     token: string,
@@ -109,7 +141,7 @@ export class ConversationService extends AppService {
     try {
       const { error } = (await this.client.deleteConversation(
         bucket,
-        conversationPath,
+        encodeDialResourcePath(conversationPath),
         { headers: getBearerAuthHeaders(token) },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined) {
@@ -119,6 +151,80 @@ export class ConversationService extends AppService {
     } catch (error) {
       this.logger.error('DIAL Core rejected deleteConversation', error);
       handleDialError(error);
+    }
+
+    // Remove from pins if present — fire-and-forget, non-fatal
+    const conversationId = `conversations/${bucket}/${conversationPath}`;
+    void this.pinConversation(conversationId, false, token, bucket).catch(
+      (err) => this.logger.error('Failed to clean up pin on delete', err),
+    );
+  }
+
+  async listConversations(
+    token: string,
+    bucket: string,
+    limit = 20,
+    nextToken?: string,
+    path?: string,
+  ): Promise<ConversationListResponseDto> {
+    try {
+      const [metadataResult, pinnedIds] = await Promise.all([
+        this.client.getConversationMetadata(
+          bucket,
+          encodeDialResourcePath(path ?? ''),
+          {
+            headers: getBearerAuthHeaders(token),
+            query: {
+              recursive: true,
+              limit,
+              ...(nextToken ? { token: nextToken } : {}),
+            },
+          },
+        ) as Promise<{
+          data?: {
+            items?: {
+              name?: string;
+              url?: string;
+              parentPath?: string;
+              updatedAt?: number;
+              nodeType?: string;
+              sharedWithMe?: boolean;
+              publishedWithMe?: boolean;
+            }[];
+            nextToken?: string;
+          };
+          error?: unknown;
+        }>,
+        this.userConfigService.getPinnedIds(token, bucket),
+      ]);
+
+      const { data, error } = metadataResult;
+
+      if (error !== undefined || !data) {
+        this.logger.error('DIAL Core rejected listConversations', error);
+        return handleDialError(error);
+      }
+
+      const pinnedSet = new Set(pinnedIds);
+
+      const items: ConversationListItemDto[] = (data.items ?? [])
+        .filter((item) => item.nodeType !== 'FOLDER')
+        .map((item) => {
+          const id = item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`;
+          return {
+            id,
+            title: getConversationTitleFromName(item.name ?? ''),
+            updatedAt: item.updatedAt ?? 0,
+            sharedWithMe: item.sharedWithMe ?? false,
+            publishedWithMe: item.publishedWithMe ?? false,
+            isPinned: pinnedSet.has(id),
+          };
+        });
+
+      return { items, nextToken: data.nextToken };
+    } catch (error) {
+      this.logger.error('DIAL Core listConversations failed', error);
+      return handleDialError(error);
     }
   }
 
@@ -131,7 +237,7 @@ export class ConversationService extends AppService {
     try {
       const { data, error } = (await this.client.getConversationMetadata(
         bucket,
-        conversationPath,
+        encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
           query: permissions !== undefined ? { permissions } : undefined,
@@ -157,7 +263,7 @@ export class ConversationService extends AppService {
     try {
       const { data, error } = (await this.client.saveConversation(
         bucket,
-        conversationPath,
+        encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
           body: conversation,
@@ -188,10 +294,6 @@ export class ConversationService extends AppService {
       bucket,
     );
 
-    this.logger.log(
-      `[streamCompletion] model from request: "${model}", conversation.model.id: "${conversation.model?.id}", assistantModelId: "${conversation.assistantModelId}"`,
-    );
-
     const userMessage: Message = {
       id: crypto.randomUUID(),
       role: MessageRole.User,
@@ -214,43 +316,57 @@ export class ConversationService extends AppService {
         ? conversation.messages
         : [...conversation.messages, userMessage];
 
-    // configuration_value is sent as top-level custom_fields.configuration,
-    // not inside the messages array.
-    const configuration = customContent?.configuration_value;
+    const configuration =
+      customContent?.configuration_value ??
+      messagesForCompletion
+        .filter((m) => m.custom_content?.configuration_value)
+        .at(-1)?.custom_content?.configuration_value;
+    const shouldHideCurrentConfigurationContent =
+      customContent?.configuration_value !== undefined &&
+      lastMessage?.role === MessageRole.User;
 
-    const messages = messagesForCompletion.map((m) => {
-      const validAttachments = (m.custom_content?.attachments ?? []).filter(
-        (a) => a.data ?? a.url,
-      );
-      const content = Object.fromEntries(
-        Object.entries({
-          ...m.custom_content,
-          attachments: validAttachments.length ? validAttachments : undefined,
-          configuration_value: undefined, // configuration_value is sent as top-level custom_fields.configuration, not inside messages[].custom_content
-        }).filter(([, value]) => value != null),
-      );
-      return {
-        role: m.role,
-        content: m.content,
-        ...(Object.keys(content).length > 0 ? { custom_content: content } : {}),
-      };
-    });
+    const messages = messagesForCompletion
+      .filter((m) => m.role !== MessageRole.Status)
+      .map((m, index, filteredMessages) => {
+        const validAttachments = getValidAttachments(m.custom_content);
+        const hasConfigurationValue =
+          m.custom_content?.configuration_value !== undefined;
+        const content = Object.fromEntries(
+          Object.entries({
+            ...m.custom_content,
+            attachments: validAttachments.length ? validAttachments : undefined,
+            configuration_value: undefined,
+            stages: undefined,
+          }).filter(([, value]) => value != null),
+        );
+        return {
+          role: m.role,
+          content:
+            hasConfigurationValue ||
+            (shouldHideCurrentConfigurationContent &&
+              index === filteredMessages.length - 1)
+              ? ''
+              : m.content,
+          ...(Object.keys(content).length > 0
+            ? { custom_content: content }
+            : {}),
+        };
+      });
 
-    this.logger.log(
-      `[streamCompletion] POST /openai/deployments/${model}/chat/completions`,
-    );
+    const requestBody = {
+      messages,
+      stream: true,
+      ...(configuration ? { custom_fields: { configuration } } : {}),
+    };
 
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
-        body: {
-          messages,
-          stream: true,
-          ...(configuration ? { custom_fields: { configuration } } : {}),
-        },
+        body: requestBody,
         headers: {
           ...getBearerAuthHeaders(token),
           Accept: 'text/event-stream',
         },
+        params: { query: { 'api-version': this.dialApiVersion } },
         parseAs: 'stream',
       })) as { response: Response; error?: unknown };
 

@@ -52,7 +52,16 @@ describe('MessageActions', () => {
 
   describe('role=Assistant', () => {
     it('renders Regenerate, Copy, Markdown, Like, and Dislike buttons', () => {
-      render(<MessageActions role={MessageRole.Assistant} />);
+      render(
+        <MessageActions
+          role={MessageRole.Assistant}
+          onRegenerate={vi.fn()}
+          onCopy={vi.fn()}
+          onCopyMarkdown={vi.fn()}
+          onLike={vi.fn()}
+          onDislike={vi.fn()}
+        />,
+      );
       expect(
         screen.getByRole('button', { name: 'Regenerate response' }),
       ).toBeTruthy();
@@ -149,8 +158,8 @@ describe('MessageActions', () => {
     expect(container.firstElementChild?.className).toContain('opacity-0');
   });
 
-  it('does not apply opacity-0 when alwaysVisible is true', () => {
-    const { container } = render(<MessageActions alwaysVisible />);
+  it('does not apply opacity-0 when isAlwaysVisible is true', () => {
+    const { container } = render(<MessageActions isAlwaysVisible />);
     expect(container.firstElementChild?.className).not.toContain('opacity-0');
   });
 
@@ -160,6 +169,8 @@ describe('MessageActions', () => {
         <MessageActions
           role={MessageRole.Assistant}
           activeRating={MessageRating.Like}
+          onLike={vi.fn()}
+          onDislike={vi.fn()}
         />,
       );
       const likeBtn = screen.getByRole('button', { name: 'Like response' });
@@ -171,6 +182,8 @@ describe('MessageActions', () => {
         <MessageActions
           role={MessageRole.Assistant}
           activeRating={MessageRating.Like}
+          onLike={vi.fn()}
+          onDislike={vi.fn()}
         />,
       );
       const dislikeBtn = screen.getByRole('button', {
@@ -184,6 +197,8 @@ describe('MessageActions', () => {
         <MessageActions
           role={MessageRole.Assistant}
           activeRating={MessageRating.Dislike}
+          onLike={vi.fn()}
+          onDislike={vi.fn()}
         />,
       );
       const dislikeBtn = screen.getByRole('button', {
@@ -197,6 +212,8 @@ describe('MessageActions', () => {
         <MessageActions
           role={MessageRole.Assistant}
           activeRating={MessageRating.Dislike}
+          onLike={vi.fn()}
+          onDislike={vi.fn()}
         />,
       );
       const likeBtn = screen.getByRole('button', { name: 'Like response' });
@@ -204,7 +221,13 @@ describe('MessageActions', () => {
     });
 
     it('does not highlight either button when activeRating is undefined', () => {
-      render(<MessageActions role={MessageRole.Assistant} />);
+      render(
+        <MessageActions
+          role={MessageRole.Assistant}
+          onLike={vi.fn()}
+          onDislike={vi.fn()}
+        />,
+      );
       const likeBtn = screen.getByRole('button', { name: 'Like response' });
       const dislikeBtn = screen.getByRole('button', {
         name: 'Dislike response',

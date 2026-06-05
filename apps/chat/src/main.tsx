@@ -5,6 +5,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import App from './app/app';
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import { UserProvider } from './context/auth/UserContext';
+import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
 import { SourcesSidebarProvider } from './context/SourcesSidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -31,7 +32,9 @@ root.render(
                     path="*"
                     element={
                       <RequireAuth>
-                        <App />
+                        <ConversationsProvider>
+                          <App />
+                        </ConversationsProvider>
                       </RequireAuth>
                     }
                   />

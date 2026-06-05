@@ -1,4 +1,4 @@
-import { type FC } from 'react';
+import { memo, type FC } from 'react';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
 import ConversationSourcesPanel from './ConversationSourcesPanel.js';
 
@@ -16,4 +16,4 @@ const ConversationSourcesPanelView: FC = () => {
   return <ConversationSourcesPanel messages={messages} />;
 };
 
-export default ConversationSourcesPanelView;
+export default memo(ConversationSourcesPanelView);

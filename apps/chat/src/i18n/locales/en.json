@@ -14,7 +14,8 @@
     "conversationStarters": "Conversation starters",
     "sendMessage": "Send message",
     "stopStreaming": "Stop streaming",
-    "quickReplyButtons": "Quick reply buttons"
+    "quickReplyButtons": "Quick reply buttons",
+    "stoppedGenerating": "You stopped generating the response"
   },
   "navigation": {
     "ariaLabel": "Main navigation",
@@ -40,7 +41,7 @@
       "loading": "Loading models…",
       "error": "Failed to load models",
       "empty": "No models available",
-      "searchPlaceholder": "Search models",
+      "searchPlaceholder": "Search...",
       "closeLabel": "Close model selector"
     }
   },
@@ -55,6 +56,7 @@
     "copied": "Copied!",
     "like": "Like",
     "dislike": "Dislike",
+    "saveAndSubmit": "Save & Submit",
     "editMessage": "Edit message",
     "deleteMessage": "Delete message",
     "regenerateResponse": "Regenerate response",
@@ -84,6 +86,8 @@
     },
     "sources": {
       "ariaLabel": "Conversation sources",
+      "search": "Search",
+      "downloadAll": "Download all",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",
@@ -96,6 +100,32 @@
       }
     }
   },
+  "conversation": {
+    "statusMessage": {
+      "modelChangedTitle": "Model switched.",
+      "modelChangedBody": "The model has been switched from {{from}} to {{to}}."
+    }
+  },
+  "conversationHistory": {
+    "title": "Chats",
+    "toggleAriaLabel": "Conversation panel",
+    "empty": "No conversations yet",
+    "newChat": "New chat",
+    "searchPlaceholder": "Search chat…",
+    "filterAll": "All",
+    "filterMyChats": "My chats",
+    "filterShared": "Shared",
+    "filterOrganization": "Organization",
+    "pinnedSection": "Pinned",
+    "myChatsSection": "My chats",
+    "actionsLabel": "More actions",
+    "pinLabel": "Pin",
+    "unpinLabel": "Unpin",
+    "deleteLabel": "Delete",
+    "deleteConfirmTitle": "Confirm Deleting Chat",
+    "deleteConfirmDescription": "Are you sure you want to delete",
+    "deleteError": "Failed to delete the conversation. Please try again."
+  },
   "auth": {
     "signOut": "Sign out",
     "signedInAs": "Signed in as {{email}}",
@@ -104,6 +134,16 @@
     "loginDescription": "Choose your identity provider",
     "providerButtonLabel": "Sign in with {{provider}}",
     "providersError": "Could not load identity providers. Please retry.",
-    "userMenuLabel": "User menu"
+    "userMenuLabel": "User menu",
+    "settings": "Settings",
+    "logOut": "Log out",
+    "logOutConfirmTitle": "Log out?",
+    "logOutConfirmDescription": "Are you sure you want to log out?",
+    "logOutConfirm": "Log out"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "apply": "Apply"
   }
 }

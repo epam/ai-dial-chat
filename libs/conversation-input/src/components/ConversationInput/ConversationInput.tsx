@@ -13,8 +13,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   message,
   placeholder = 'Type a prompt or use "/" to select one',
   welcomeText,
-  colors,
-  typography,
+  styles: stylesProp,
   className,
   dropLabel = 'Drop files here',
   dropOverlayClassName = 'rounded',
@@ -23,9 +22,9 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  resolveDeploymentIconUrl,
   sendLabel,
   stopLabel,
+  isInputDisabled = false,
 }) => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
@@ -33,10 +32,16 @@ export const ConversationInput: FC<ConversationInputProps> = ({
     setPendingFiles([]);
   }, []);
 
+  const { colors, typography } = stylesProp ?? {};
+
   const { getRootProps, isDragActive } = useDropzone({
-    onDrop: (files) => setPendingFiles(files),
+    onDrop: (files) => {
+      if (isInputDisabled) return;
+      setPendingFiles(files);
+    },
     noClick: true,
     noKeyboard: true,
+    disabled: isInputDisabled,
   });
 
   const noCustomClass = !typography?.welcomeClassName;
@@ -50,10 +55,10 @@ export const ConversationInput: FC<ConversationInputProps> = ({
       ? typography?.welcomeFontSize
       : undefined,
     '--ci-welcome-font-weight': noCustomClass
-      ? typography?.welcomeFontWeight
+      ? typography?.welcomeFontWeight?.toString()
       : undefined,
     '--ci-welcome-line-height': noCustomClass
-      ? typography?.welcomeLineHeight
+      ? typography?.welcomeLineHeight?.toString()
       : undefined,
   });
 
@@ -62,7 +67,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
       {...getRootProps({
         style: cssVars,
         className: mergeClasses(
-          'relative flex w-full flex-col items-center gap-6 py-4 desktop:p-4',
+          'relative flex w-full flex-col items-center gap-6 px-4 py-5 desktop:p-5',
           className,
         ),
       })}
@@ -71,6 +76,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
         <h1
           className={mergeClasses(
             styles.welcome,
+            noCustomClass && styles.welcomeFont,
             'm-0 text-center',
             typography?.welcomeClassName,
           )}
@@ -95,9 +101,9 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           selectedDeploymentId={selectedDeploymentId}
           onDeploymentChange={onDeploymentChange}
           modelSelectorLabels={modelSelectorLabels}
-          resolveDeploymentIconUrl={resolveDeploymentIconUrl}
           sendLabel={sendLabel}
           stopLabel={stopLabel}
+          isInputDisabled={isInputDisabled}
         />
         {isDragActive && (
           <div

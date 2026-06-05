@@ -1,7 +1,7 @@
 schema: spec-driven
 
 context: |
-  # Chat 2.0
+  # AI DIAL Chat
 
   ## Tech Stack
   - Monorepo: Nx 22
@@ -37,18 +37,18 @@ context: |
   - @epam/ai-dial-chat-shared/*        → libs/chat-shared/*
 
   ## Commands
-  - Frontend dev: `pnpm start` (localhost:4207, proxies /api → localhost:3005)
-  - Backend dev:  `pnpm start:api` (localhost:3005)
-  - Both:         `pnpm start:all`
-  - Affected build / lint / typecheck / test: `pnpm nx affected --target=<t> --base=origin/development`
+  - Frontend dev: `npm start` (localhost:4207, proxies /api → localhost:3005)
+  - Backend dev:  `npm run start:api` (localhost:3005)
+  - Both:         `npm run start:all`
+  - Affected build / lint / typecheck / test: `npm exec nx affected --target=<t> --base=origin/development-1.0`
   - Single-project (preferred for slice verification, see CLAUDE.md per project):
-    - `pnpm nx test chat-api`
-    - `pnpm nx lint chat-api`
-    - `pnpm nx build chat-api`
-  - All tests:    `pnpm test`
-  - Dep graph:    `pnpm graph`
+    - `npm exec nx test chat-api`
+    - `npm exec nx lint chat-api`
+    - `npm exec nx build chat-api`
+  - All tests:    `npm test`
+  - Dep graph:    `npm run graph`
 
-  Default base branch for `nx affected` is `origin/development`. Do NOT use `origin/main`.
+  Default base branch for `nx affected` is `origin/development-1.0`. Do NOT use `origin/main`.
 
   ## Architecture
 
@@ -245,5 +245,5 @@ rules:
         - implement frontend server-api wrappers using `@epam/chat-api-client`, not direct
           `base.ts` helpers, unless the task documents a generator gap
     - Run lint + typecheck + tests as a final verification task after all implementation tasks
-      using `pnpm nx <target> chat-api` for single-project checks or
-      `pnpm nx affected --target=<t> --base=origin/development` for affected sets
+      using `npm exec nx <target> chat-api` for single-project checks or
+      `npm exec nx affected --target=<t> --base=origin/development-1.0` for affected sets

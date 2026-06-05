@@ -7,7 +7,7 @@ const rateValues = [1, -1] as const;
 export class RateMessageDto {
   @ApiProperty({
     description: 'Identifier of the conversation being rated',
-    example: 'bucket/uuid__name',
+    example: 'bucket/gpt-4o__My Conversation__UUID',
   })
   @IsString()
   @IsNotEmpty()

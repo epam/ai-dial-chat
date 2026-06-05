@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { SendButton } from '../SendButton.js';
+import { SendButton } from '../Buttons/SendButton.js';
 
 describe('SendButton', () => {
   it('should call onSend when clicked', () => {

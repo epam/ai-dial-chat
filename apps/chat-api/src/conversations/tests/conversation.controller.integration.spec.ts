@@ -3,6 +3,7 @@ import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { UserConfigService } from '../../user-config/user-config.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 
@@ -13,10 +14,16 @@ const TEST_USER = {
 
 describe('ConversationController (integration)', () => {
   let app: INestApplication;
-  let service: { createConversation: ReturnType<typeof vi.fn> };
+  let service: {
+    createConversation: ReturnType<typeof vi.fn>;
+    listConversations: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
-    service = { createConversation: vi.fn() };
+    service = {
+      createConversation: vi.fn(),
+      listConversations: vi.fn(),
+    };
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
@@ -74,7 +81,7 @@ describe('ConversationController (integration)', () => {
       );
     });
 
-    it('returns 400 when firstMessage is an empty string', async () => {
+    it('returns 400 when firstMessage is empty and no attachment is provided', async () => {
       await request(app.getHttpServer())
         .post('/conversations')
         .send({ firstMessage: '', deploymentId: 'gpt-4o' })
@@ -137,6 +144,7 @@ describe('ConversationController (integration)', () => {
         providers: [
           { provide: ConfigService, useValue: configService },
           ConversationService,
+          UserConfigService,
         ],
       }).compile();
 
@@ -164,7 +172,7 @@ describe('ConversationController (integration)', () => {
         .expect(201);
 
       expect(result.body.id).toMatch(
-        /^test-bucket\/[0-9a-f-]{36}__Hello from integration/i,
+        /^test-bucket\/gpt-4o__Hello from integration.*__[0-9a-f-]{36}$/i,
       );
       expect(result.body.messages).toHaveLength(1);
       expect(result.body.messages[0].content).toBe('Hello from integration');
@@ -196,6 +204,45 @@ describe('ConversationController (integration)', () => {
       expect(result.body).toEqual(conversation);
       expect(service.createConversation).toHaveBeenCalledWith(
         'Here is a file',
+        TEST_USER.at,
+        TEST_USER.bucket,
+        'gpt-4o',
+        {
+          attachments: [
+            {
+              type: 'application/pdf',
+              title: 'report.pdf',
+              data: 'base64data',
+            },
+          ],
+        },
+      );
+    });
+
+    it('returns 201 with an empty firstMessage when an attachment is provided', async () => {
+      const conversation = { id: 'test-id', messages: [] };
+      service.createConversation.mockReturnValue(conversation);
+
+      const result = await request(app.getHttpServer())
+        .post('/conversations')
+        .send({
+          firstMessage: '',
+          deploymentId: 'gpt-4o',
+          custom_content: {
+            attachments: [
+              {
+                type: 'application/pdf',
+                title: 'report.pdf',
+                data: 'base64data',
+              },
+            ],
+          },
+        })
+        .expect(201);
+
+      expect(result.body).toEqual(conversation);
+      expect(service.createConversation).toHaveBeenCalledWith(
+        '',
         TEST_USER.at,
         TEST_USER.bucket,
         'gpt-4o',
@@ -303,5 +350,51 @@ describe('ConversationController (integration)', () => {
           .expect(400);
       },
     );
+  });
+
+  describe('GET /conversations/list', () => {
+    it('returns 200 with items when path is omitted', async () => {
+      const response = { items: [], nextToken: undefined };
+      service.listConversations.mockReturnValue(response);
+
+      await request(app.getHttpServer()).get('/conversations/list').expect(200);
+
+      expect(service.listConversations).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        undefined,
+        undefined,
+        undefined,
+      );
+    });
+
+    it('forwards non-empty path to the service', async () => {
+      const response = { items: [], nextToken: undefined };
+      service.listConversations.mockReturnValue(response);
+
+      await request(app.getHttpServer())
+        .get('/conversations/list?path=work%2Fproject-x')
+        .expect(200);
+
+      expect(service.listConversations).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        undefined,
+        undefined,
+        'work/project-x',
+      );
+    });
+
+    it('returns 400 when path exceeds 512 characters', async () => {
+      await request(app.getHttpServer())
+        .get(`/conversations/list?path=${'a'.repeat(513)}`)
+        .expect(400);
+    });
+
+    it('returns 400 when limit exceeds 100', async () => {
+      await request(app.getHttpServer())
+        .get('/conversations/list?limit=200')
+        .expect(400);
+    });
   });
 });

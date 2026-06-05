@@ -15,7 +15,3 @@ Always prefer Tailwind utility classes over inline `style` props. Use the `style
 
 1. **Look for a UI kit component** — check if a suitable `Dial*` component exists for your use case using the MCP tools below.
 2. **Use raw elements only as last resort** — if and only if no UI kit component meets the requirements, use native HTML (and document why).
-
-## @epam/ai-dial-ui-kit MCP tools
-
-Use these two tools for all UI kit discovery and documentation needs: `searchEntity(entity, query?)` and `getEntityDetails(entity, name?)`. If you need to look up **ANYTHING** about the ui kit, use the MCP server. **Never** use `grep`, `glob`, `find`, or similar file system tools to discover components — they miss type information and examples.

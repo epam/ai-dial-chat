@@ -1,0 +1,46 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import {
+  IsInt,
+  IsOptional,
+  IsString,
+  Max,
+  MaxLength,
+  Min,
+} from 'class-validator';
+
+export class ListConversationsQueryDto {
+  @ApiPropertyOptional({
+    description: 'Maximum number of conversations to return.',
+    example: 20,
+    minimum: 1,
+    maximum: 100,
+    default: 20,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @Transform(({ value }) => (value !== undefined ? Number(value) : undefined))
+  limit?: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Pagination cursor returned in the previous response as `nextToken`. Omit for the first page.',
+    example: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  nextToken?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'DIAL Core subfolder path to scope the listing. Omit or pass an empty string to list all conversations from the bucket root ("My Files").',
+    example: 'work/project-x',
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(512)
+  path?: string;
+}

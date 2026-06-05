@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { Input } from '../Input.js';
 
@@ -16,14 +16,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     ...actual,
     DialDropdown: ({
       children,
-      menu,
+      items,
     }: {
-      children: React.ReactNode;
-      menu: { items?: MenuItems };
+      children: ReactNode;
+      items?: MenuItems;
     }) => (
       <div>
         {children}
-        {menu.items?.map((item) => (
+        {items?.map((item) => (
           <button
             key={item.key}
             type="button"
@@ -37,15 +37,15 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     ),
     DialDropdownIcon: ({
       ariaLabel,
-      menu,
+      items,
     }: {
       ariaLabel: string;
-      icon: React.ReactNode;
-      menu: { items?: MenuItems };
+      icon: ReactNode;
+      items?: MenuItems;
     }) => (
       <div>
         <button type="button" aria-label={ariaLabel} />
-        {menu.items?.map((item) => (
+        {items?.map((item) => (
           <button
             key={item.key}
             type="button"
@@ -196,6 +196,33 @@ describe('Input', () => {
     const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
     fireEvent.change(fileInput, { target: { files: [file] } });
     expect(screen.getByText('doc')).toBeTruthy();
+  });
+
+  it('should show send button when only an attachment is present and no text', () => {
+    render(<Input />);
+    expect(screen.queryByLabelText('Send message')).toBeNull();
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(screen.getByLabelText('Send message')).toBeTruthy();
+  });
+
+  it('should call onSend with empty text and the attachment on Enter when no text is typed', () => {
+    const handleSend = vi.fn();
+    const { container } = render(<Input onSend={handleSend} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    const textarea = container.querySelector('textarea')!;
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    expect(handleSend).toHaveBeenCalledWith(
+      '',
+      expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
+    );
   });
 
   it('should remove the card when the remove button is clicked', () => {
@@ -350,6 +377,58 @@ describe('Input — model selector', () => {
   it('does not render selector when deployments is undefined', () => {
     render(<Input />);
     expect(screen.queryByLabelText(/Select model/)).toBeNull();
+  });
+});
+
+describe('Input — isInputDisabled', () => {
+  it('textarea has disabled attribute when isInputDisabled is true', () => {
+    const { container } = render(<Input isInputDisabled />);
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.disabled).toBe(true);
+  });
+
+  it('textarea is enabled when isInputDisabled is false', () => {
+    const { container } = render(<Input isInputDisabled={false} />);
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.disabled).toBe(false);
+  });
+
+  it('send button is disabled when isInputDisabled is true', () => {
+    render(<Input message="Hello" isInputDisabled />);
+    const sendButton = screen.getByLabelText(
+      'Send message',
+    ) as HTMLButtonElement;
+    expect(sendButton.disabled).toBe(true);
+  });
+
+  it('attach button is disabled when isInputDisabled is true', () => {
+    render(<Input isInputDisabled />);
+    const addButton = screen.getByLabelText('Add') as HTMLButtonElement;
+    expect(addButton.disabled).toBe(true);
+  });
+
+  it('does not call onSend on Enter when isInputDisabled is true', () => {
+    const handleSend = vi.fn();
+    const { container } = render(<Input onSend={handleSend} isInputDisabled />);
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
+  it('calls onSend on Enter when isInputDisabled is false', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input onSend={handleSend} isInputDisabled={false} />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+    expect(handleSend).toHaveBeenCalledWith('Hello', []);
   });
 });
 

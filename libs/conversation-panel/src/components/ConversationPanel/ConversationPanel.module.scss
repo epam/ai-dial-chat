@@ -1,0 +1,59 @@
+// CSS custom-property references and their hex fallbacks.
+// Layout, spacing, and transitions live in Tailwind classes in the TSX file.
+
+.panel {
+  background: var(--cp-bg, var(--bg-layer-3, #1d2439));
+  border-color: var(--cp-border, var(--stroke-tertiary, #0c101d));
+}
+
+.header {
+  border-color: var(--cp-header-border, var(--stroke-tertiary, #0c101d));
+  color: var(--cp-text, var(--text-primary, #eef1f7));
+}
+
+.headerTitle {
+  font-family: var(--cp-title-font-family, var(--theme-font, sans-serif));
+  font-size: var(--cp-title-font-size, 0.875rem);
+  font-weight: var(--cp-title-font-weight, 600);
+  line-height: var(--cp-title-line-height, 1.25rem);
+}
+
+.item {
+  color: var(--cp-text, var(--text-primary, #eef1f7));
+
+  &:hover {
+    background: var(--cp-item-hover, var(--bg-layer-4, #252c42));
+  }
+
+  &.itemActive {
+    background: var(
+      --cp-item-active,
+      var(--bg-accent-secondary-alpha, #37babc2e)
+    );
+  }
+}
+
+.itemDate {
+  color: var(--cp-text-secondary, var(--text-secondary, #9fa6bd));
+}
+
+.groupHeader {
+  color: var(--cp-text-secondary, var(--text-secondary, #9fa6bd));
+}
+
+.divider {
+  border-color: var(--cp-new-chat-divider, var(--stroke-tertiary, #0c101d));
+}
+
+.itemIcon {
+  background: var(--cp-item-hover, var(--bg-layer-4, #252c42));
+  color: var(--cp-text, var(--text-primary, #eef1f7));
+}
+
+.trigger {
+  background: var(--cp-trigger-bg, var(--controls-bg-accent-secondary-alpha-active, #37BABC5C));
+}
+
+.triggerIcon {
+  color: var(--cp-trigger-icon, var(--text-accent-secondary, #37BABC));
+}

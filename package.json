@@ -94,8 +94,8 @@
     "libs/*"
   ],
   "dependencies": {
-    "@epam/ai-dial-typescript-sdk": "^0.1.0-dev.16",
-    "@epam/ai-dial-ui-kit": "0.11.0-dev.8",
+    "@epam/ai-dial-typescript-sdk": "^0.1.0-dev.24",
+    "@epam/ai-dial-ui-kit": "0.11.0-dev.17",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
@@ -119,7 +119,9 @@
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.2",
     "swagger-ui-express": "^5.0.1",
-    "tailwind-merge": "^3.6.0"
+    "tailwind-merge": "^3.6.0",
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   },
   "overrides": {
     "axios": "1.16.0",

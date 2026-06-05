@@ -47,13 +47,15 @@ export interface MessageActionsProps {
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
   /** When `true`, actions are always visible instead of appearing only on group hover. */
-  alwaysVisible?: boolean;
+  isAlwaysVisible?: boolean;
   /** Override tooltip labels for individual action buttons. */
   tooltips?: MessageActionTooltips;
   /** Override accessible labels (aria-label) for individual action buttons. */
   ariaLabels?: MessageActionAriaLabels;
   /** Called when the user clicks the Edit button (User source only). */
   onEdit?: () => void;
+  /** Called when the user hovers over the Edit button (User source only). Useful for preloading the edit UI. */
+  onEditHover?: () => void;
   /** Called when the user clicks the Delete button (User source only). */
   onDelete?: () => void;
   /** Called when the user clicks the Regenerate button (Agent source only). */

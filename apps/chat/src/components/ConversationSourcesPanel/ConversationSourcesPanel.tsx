@@ -2,7 +2,7 @@ import type { Message } from '@epam/ai-dial-chat-shared';
 import { SidebarPanel, SidebarSide } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload, IconSearch } from '@tabler/icons-react';
-import { type FC } from 'react';
+import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SidebarI18nKeys } from '../../constants/translation-keys.js';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
@@ -28,14 +28,14 @@ const ConversationSourcesPanel: FC<Props> = ({ messages }) => {
       leftActions={
         <DialGhostIconButton
           icon={<IconSearch size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-          aria-label="Search"
+          aria-label={t(SidebarI18nKeys.Search)}
           disabled
         />
       }
       rightActions={
         <DialGhostIconButton
           icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-          aria-label="Download all"
+          aria-label={t(SidebarI18nKeys.DownloadAll)}
           disabled
         />
       }
@@ -58,4 +58,4 @@ const ConversationSourcesPanel: FC<Props> = ({ messages }) => {
   );
 };
 
-export default ConversationSourcesPanel;
+export default memo(ConversationSourcesPanel);

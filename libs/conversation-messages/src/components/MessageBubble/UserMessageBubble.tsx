@@ -10,17 +10,18 @@ import { BubblePosition } from '../../types/bubble-position.js';
 import { MessageActions } from '../Message/MessageActions.js';
 import styles from './MessageBubble.module.scss';
 
+/** User-authored message bubble, right-aligned with configurable radius based on group position. */
 export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   text,
   position = BubblePosition.Bottom,
   className,
   bubbleClassName,
-  colors,
-  typography,
+  styles: bubbleStyles,
   actions,
-  alwaysVisibleActions,
+  hasAlwaysVisibleActions,
   attachments,
 }) => {
+  const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
     '--cm-bubble-user-bg': colors?.userBackground,
@@ -45,19 +46,28 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
       <div className="flex w-fit flex-col items-end gap-2">
         <AttachmentTray attachments={attachments ?? []} />
-        <div
-          className={mergeClasses(
-            styles.userBubble,
-            'flex w-fit items-center justify-end rounded-bl-[16px] rounded-tl-[16px] px-6 py-4',
-            positionRadius,
-            bubbleClassName,
-          )}
-        >
-          <p className={mergeClasses(textClass, 'text-right')}>{text}</p>
-        </div>
+        {text && (
+          <div
+            className={mergeClasses(
+              styles.userBubble,
+              'flex w-fit items-center justify-end rounded-bl-[16px] rounded-tl-[16px] px-6 py-4',
+              positionRadius,
+              bubbleClassName,
+            )}
+          >
+            <p
+              className={mergeClasses(
+                textClass,
+                'whitespace-pre-wrap break-words text-left [overflow-wrap:anywhere]',
+              )}
+            >
+              {text}
+            </p>
+          </div>
+        )}
         <MessageActions
           {...actions}
-          alwaysVisible={alwaysVisibleActions}
+          isAlwaysVisible={hasAlwaysVisibleActions}
           role={MessageRole.User}
         />
       </div>

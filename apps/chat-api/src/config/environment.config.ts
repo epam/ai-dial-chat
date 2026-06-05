@@ -30,6 +30,14 @@ export class EnvironmentVariables {
   DIAL_CORE_URL!: string;
 
   @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}(-preview)?$/, {
+    message:
+      'DIAL_API_VERSION must follow the YYYY-MM-DD or YYYY-MM-DD-preview format',
+  })
+  DIAL_API_VERSION?: string = '2024-10-21';
+
+  @IsOptional()
   @IsUrl({ require_tld: false })
   THEMES_CONFIG_URL?: string;
 

@@ -61,10 +61,10 @@ export const streamCompletion = (
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let buffer = '';
-    let hadError = false;
+    let hasError = false;
 
     const handleError = (err: Error) => {
-      hadError = true;
+      hasError = true;
       onError(err);
     };
 
@@ -86,7 +86,7 @@ export const streamCompletion = (
           parseSSELine(line, onChunk, handleError);
         }
       }
-      if (!hadError) onComplete();
+      if (!hasError) onComplete();
     } catch (err) {
       if (err instanceof Error && err.name === 'AbortError') return;
       onError(err instanceof Error ? err : new Error(String(err)));

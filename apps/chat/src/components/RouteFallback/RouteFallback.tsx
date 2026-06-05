@@ -1,5 +1,5 @@
 import { DialLoader } from '@epam/ai-dial-ui-kit';
-import type { FC } from 'react';
+import { memo, type FC } from 'react';
 
 const RouteFallback: FC = () => (
   <div className="flex size-full items-center justify-center">
@@ -7,4 +7,4 @@ const RouteFallback: FC = () => (
   </div>
 );
 
-export default RouteFallback;
+export default memo(RouteFallback);

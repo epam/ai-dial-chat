@@ -1,5 +1,5 @@
 import type { ProviderInfoDto } from '@epam/chat-api-client';
-import { useCallback, useEffect, useState } from 'react';
+import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { useUser } from '../../context/auth/UserContext';
@@ -16,29 +16,32 @@ const LoginPage = () => {
   useAuthRedirect();
 
   const [providers, setProviders] = useState<ProviderInfoDto[] | null>(null);
-  const [error, setError] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
-  const loadProviders = useCallback(async (signal: { cancelled: boolean }) => {
-    try {
-      const data = await getProviders();
-      if (!signal.cancelled) setProviders(data);
-    } catch (err) {
-      if (!signal.cancelled) {
-        console.error(err);
-        setError(true);
+  const loadProviders = useCallback(
+    async (signal: { isCancelled: boolean }) => {
+      try {
+        const data = await getProviders();
+        if (!signal.isCancelled) setProviders(data);
+      } catch (err) {
+        if (!signal.isCancelled) {
+          console.error(err);
+          setHasError(true);
+        }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
-    const signal = { cancelled: false };
+    const signal = { isCancelled: false };
     loadProviders(signal);
     return () => {
-      signal.cancelled = true;
+      signal.isCancelled = true;
     };
   }, [loadProviders]);
 
-  if (error) {
+  if (hasError) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <p>{t('auth.providersError')}</p>
@@ -73,4 +76,4 @@ const LoginPage = () => {
   );
 };
 
-export default LoginPage;
+export default memo(LoginPage);

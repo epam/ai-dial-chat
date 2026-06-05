@@ -58,11 +58,11 @@ Before importing, identify whether the source is an **application** or a **libra
 
 ## Common Issues
 
-### pnpm Workspace Globs (Critical)
+### Workspace Globs (Critical)
 
 `nx import` adds the imported directory itself (e.g. `apps`) to `pnpm-workspace.yaml`, **NOT** glob patterns for packages within it. Cross-package imports will fail with `Cannot find module`.
 
-**Fix**: Replace with proper globs from the source config (e.g. `apps/*`, `libs/shared/*`), then `pnpm install`.
+**Fix**: Replace with proper globs from the source config (e.g. `apps/*`, `libs/shared/*`), then `npm install`.
 
 ### Root Dependencies and Config Not Imported (Critical)
 
@@ -108,25 +108,27 @@ Subdirectory import doesn't bring the source's root `eslint.config.mjs`, but pro
 
 **Fix order**:
 
-1. Install ESLint deps first: `pnpm add -wD eslint@^9 @nx/eslint-plugin typescript-eslint` (plus framework-specific plugins)
+1. Install ESLint deps first: `npm install -D eslint@^9 @nx/eslint-plugin typescript-eslint` (plus framework-specific plugins)
 2. Create root `eslint.config.mjs` (copy from source or create with `@nx/eslint-plugin` base rules)
 3. Then `npx nx add @nx/eslint` to register the plugin in `nx.json`
 
-Install `typescript-eslint` explicitly — pnpm's strict hoisting won't auto-resolve this transitive dep of `@nx/eslint-plugin`.
+Install `typescript-eslint` explicitly — npm may not auto-resolve this transitive dep of `@nx/eslint-plugin`.
 
 ### ESLint Version Pinning (Critical)
 
 **Pin ESLint to v9** (`eslint@^9.0.0`). ESLint 10 breaks `@nx/eslint` and many plugins with cryptic errors like `Cannot read properties of undefined (reading 'version')`.
 
-`@nx/eslint` may peer-depend on ESLint 8, causing the wrong version to resolve. If lint fails with `Cannot read properties of undefined (reading 'allow')`, add `pnpm.overrides`:
+`@nx/eslint` may peer-depend on ESLint 8, causing the wrong version to resolve. If lint fails with `Cannot read properties of undefined (reading 'allow')`, add `overrides` to the root `package.json` (for this npm workspace):
 
 ```json
-{ "pnpm": { "overrides": { "eslint": "^9.0.0" } } }
+{ "overrides": { "eslint": "^9.0.0" } }
 ```
+
+Note: if you encounter this in an imported pnpm source project, the source used `{ "pnpm": { "overrides": ... } }` — translate that to `overrides` in the npm root `package.json` for this project.
 
 ### Dependency Version Conflicts
 
-After import, compare key deps (`typescript`, `eslint`, framework-specific). If dest uses newer versions, upgrade imported packages to match (usually safe). If source is newer, may need to upgrade dest first. Use `pnpm.overrides` to enforce single-version policy if desired.
+After import, compare key deps (`typescript`, `eslint`, framework-specific). If dest uses newer versions, upgrade imported packages to match (usually safe). If source is newer, may need to upgrade dest first. Use `overrides` in the root `package.json` to enforce single-version policy if desired.
 
 ### Module Boundaries
 
@@ -134,11 +136,11 @@ Imported projects may lack `tags`. Add tags or update `@nx/enforce-module-bounda
 
 ### Project Name Collisions (Multi-Import)
 
-Same `name` in `package.json` across source and dest causes `MultipleProjectsWithSameNameError`. **Fix**: Rename conflicting names (e.g. `@epam/api` → `@epam/teama-api`), update all dep references and import statements, `pnpm install`. The root `package.json` of each imported repo also becomes a project — rename those too.
+Same `name` in `package.json` across source and dest causes `MultipleProjectsWithSameNameError`. **Fix**: Rename conflicting names (e.g. `@epam/api` → `@epam/teama-api`), update all dep references and import statements, `npm install`. The root `package.json` of each imported repo also becomes a project — rename those too.
 
 ### Workspace Dep Import Ordering
 
-`pnpm install` fails during `nx import` if a `"workspace:*"` dependency hasn't been imported yet. File operations still succeed. **Fix**: Import all projects first, then `pnpm install --no-frozen-lockfile`.
+`npm install` fails during `nx import` if a `"workspace:*"` dependency hasn't been imported yet. File operations still succeed. **Fix**: Import all projects first, then `npm install`.
 
 ### `.gitkeep` Blocking Subdirectory Import
 
@@ -163,7 +165,7 @@ If the dest also has backend projects needing `nodenext`, use per-project overri
 
 React libraries generated with `@nx/react:library` reference `@nx/react/typings/cssmodule.d.ts` and `@nx/react/typings/image.d.ts` in their tsconfig `types`. These fail with `Cannot find type definition file` unless `@nx/react` is installed in the dest workspace.
 
-**Fix**: `pnpm add -wD @nx/react`
+**Fix**: `npm install -D @nx/react`
 
 ### Jest Preset Missing (Subdirectory Import)
 
@@ -173,7 +175,7 @@ Nx presets create `jest.preset.js` at the workspace root, and project jest confi
 
 1. Run `npx nx add @nx/jest` — registers `@nx/jest/plugin` in `nx.json` and updates `namedInputs`
 2. Create `jest.preset.js` at workspace root (see `references/JEST.md` for content) — `nx add` only creates this when a generator runs, not on bare `nx add`
-3. Install test runner deps: `pnpm add -wD jest jest-environment-jsdom ts-jest @types/jest`
+3. Install test runner deps: `npm install -D jest jest-environment-jsdom ts-jest @types/jest`
 4. Install framework-specific test deps as needed (see `references/JEST.md`)
 
 For deeper Jest issues (tsconfig.spec.json, Babel transforms, CI atomization, Jest vs Vitest coexistence), see `references/JEST.md`.
@@ -189,7 +191,7 @@ When importing a project with existing npm scripts (`build`, `dev`, `start`, `li
 
 ## Non-Nx Source Issues
 
-When the source is a plain pnpm/npm workspace without `nx.json`.
+When the source is a plain npm workspace without `nx.json`.
 
 ### npm Script Rewriting (Critical)
 
@@ -212,7 +214,7 @@ Plain TS projects use `"noEmit": true`, incompatible with Nx project references.
 
 `nx import` may bring `node_modules/` (pnpm symlinks pointing to the source filesystem) and `pnpm-lock.yaml` from the source. Both are stale.
 
-**Fix**: `rm -rf imported/node_modules imported/pnpm-lock.yaml imported/pnpm-workspace.yaml imported/.gitignore`, then `pnpm install`.
+**Fix**: `rm -rf imported/node_modules imported/pnpm-lock.yaml imported/pnpm-workspace.yaml imported/.gitignore`, then `npm install`.
 
 ### ESLint Config Handling
 
@@ -222,7 +224,7 @@ Plain TS projects use `"noEmit": true`, incompatible with Nx project references.
 
 ### TypeScript `paths` Aliases
 
-Nx uses `package.json` `"exports"` + pnpm workspace linking instead of tsconfig `"paths"`. If packages have proper `"exports"`, paths are redundant. Otherwise, update paths for the new directory structure.
+Nx uses `package.json` `"exports"` + npm workspace linking instead of tsconfig `"paths"`. If packages have proper `"exports"`, paths are redundant. Otherwise, update paths for the new directory structure.
 
 ## Technology-specific Guidance
 

@@ -1,7 +1,8 @@
-import { MessageRole } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment, Message } from '@epam/ai-dial-chat-shared';
+import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { SourcesSidebarProvider } from '../../../context/SourcesSidebarContext.js';
 import ConversationSourcesPanel from '../ConversationSourcesPanel.js';
@@ -14,11 +15,11 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
     leftActions,
     rightActions,
   }: {
-    children: React.ReactNode;
+    children: ReactNode;
     ariaLabel: string;
     onClose: () => void;
-    leftActions?: React.ReactNode;
-    rightActions?: React.ReactNode;
+    leftActions?: ReactNode;
+    rightActions?: ReactNode;
   }) => (
     <aside aria-label={ariaLabel}>
       {leftActions}

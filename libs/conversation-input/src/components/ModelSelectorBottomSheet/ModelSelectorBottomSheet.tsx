@@ -1,23 +1,93 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DialButton,
-  DialCloseButton,
+  DialEllipsisTooltip,
   DialSearch,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
-import { IconApps, IconCheck, IconRobot } from '@tabler/icons-react';
+import { IconCheck } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
+import { List, type RowComponentProps } from 'react-window';
+import {
+  buildDeploymentIcon,
+  filterDeployments,
+} from '../../utils/deployment.js';
+import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell.js';
 import styles from './ModelSelectorBottomSheet.module.scss';
+
+/** Fixed pixel height of a single deployment row, used by the virtualized list. */
+const ROW_HEIGHT = 44;
+/** Maximum number of rows shown before the list becomes scrollable. */
+const MAX_VISIBLE_ROWS = 8;
+
+/** Data passed to each virtualized row via react-window's `rowProps`. */
+interface ModelRowData {
+  /** The deployments currently rendered (already filtered). */
+  items: DeploymentItem[];
+  /** ID of the currently selected deployment, shown with a checkmark. */
+  selectedDeploymentId?: string | null;
+  /** Typography class applied to the item label. */
+  labelClassName: string;
+  /** Invoked when a row is tapped. */
+  onSelect: (id: string) => void;
+}
+
+/** Renders a single deployment row inside the virtualized list. */
+const ModelRow = ({
+  index,
+  style,
+  ariaAttributes,
+  items,
+  selectedDeploymentId,
+  labelClassName,
+  onSelect,
+}: RowComponentProps<ModelRowData>) => {
+  const item = items[index];
+  const modelIcon = buildDeploymentIcon(
+    item.iconUrl,
+    item.type,
+    DIAL_ICON_SIZE.SM,
+  );
+  const isSelected = item.id === selectedDeploymentId;
+
+  return (
+    <div style={style} {...ariaAttributes}>
+      <DialButton
+        type="button"
+        className={mergeClasses(
+          styles.item,
+          'flex h-full w-full items-center gap-3 px-4',
+        )}
+        iconBefore={<span className={styles.itemIcon}>{modelIcon}</span>}
+        label={
+          <span className="flex flex-1 items-center justify-between gap-2">
+            <DialEllipsisTooltip
+              text={item.displayName ?? item.id}
+              className={mergeClasses(
+                labelClassName,
+                'min-w-0 flex-1 text-left',
+              )}
+            />
+            {isSelected && (
+              <IconCheck
+                size={DIAL_ICON_SIZE.SM}
+                className={styles.checkIcon}
+                aria-hidden
+              />
+            )}
+          </span>
+        }
+        onClick={() => onSelect(item.id)}
+      />
+    </div>
+  );
+};
 
 /** Props for the mobile bottom-sheet model selector. */
 export interface ModelSelectorBottomSheetProps {
   /** Controls sheet visibility. */
-  open: boolean;
+  isOpen: boolean;
   /** Title displayed in the sheet header and used as the dialog accessible name. */
   title: string;
   /** Accessible label for the close (×) button. */
@@ -26,8 +96,8 @@ export interface ModelSelectorBottomSheetProps {
   searchPlaceholder?: string;
   /** Called when the sheet should close (backdrop tap, close button, or Escape). */
   onClose: () => void;
-  /** Full list of deployments to display. When `undefined` or empty, a state label is shown. */
-  deployments?: DeploymentItemDto[];
+  /** Full list of deployments to display. When `undefined` or empty, a state label is shown. `iconUrl` must already be resolved by the host app. */
+  deployments?: DeploymentItem[];
   /** ID of the currently selected deployment. Shown with a checkmark. */
   selectedDeploymentId?: string | null;
   /** Called when the user taps a deployment; the sheet closes automatically after. */
@@ -48,11 +118,11 @@ export interface ModelSelectorBottomSheetProps {
 
 /**
  * A bottom-sheet overlay for the model/deployment selector on mobile viewports.
- * Renders via a React portal so it sits above all other content.
- * Includes a search input that filters the list as the user types.
+ * Renders the shared {@link BottomSheetShell} with a search input that filters
+ * the deployment list (virtualized for large lists) as the user types.
  */
 export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
-  open,
+  isOpen,
   title,
   closeLabel,
   searchPlaceholder = 'Search',
@@ -69,29 +139,10 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
 }) => {
   const [query, setQuery] = useState('');
 
-  useEffect(() => {
-    if (!open) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [open, onClose]);
-
-  useEffect(() => {
-    if (!open) return;
-    document.body.style.overflow = 'hidden';
-    return () => {
-      document.body.style.overflow = '';
-    };
-  }, [open]);
-
   // Reset search query each time the sheet closes
   useEffect(() => {
-    if (!open) setQuery('');
-  }, [open]);
-
-  if (!open || typeof document === 'undefined') return null;
+    if (!isOpen) setQuery('');
+  }, [isOpen]);
 
   const hasDeployments = deployments && deployments.length > 0;
 
@@ -99,142 +150,68 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
     ? (loadingLabel ?? errorLabel ?? emptyLabel)
     : undefined;
 
-  const q = query.trim().toLowerCase();
-  const filtered = hasDeployments
-    ? q
-      ? deployments.filter((item) =>
-          (item.displayName ?? item.id).toLowerCase().includes(q),
-        )
-      : deployments
-    : [];
+  const filtered = hasDeployments ? filterDeployments(deployments, query) : [];
 
   const handleSelect = (id: string) => {
     onSelect(id);
     onClose();
   };
 
-  return createPortal(
-    <>
-      {/* Backdrop */}
-      <div
-        className="bg-black/50 fixed inset-0 z-40"
-        onClick={onClose}
-        aria-hidden
-      />
-
-      {/* Sheet */}
-      <div
-        role="dialog"
-        aria-modal
-        aria-label={title}
-        style={style}
-        className={mergeClasses(
-          styles.sheet,
-          'fixed bottom-0 left-0 right-0 z-50 flex max-h-[80dvh] flex-col',
-        )}
-      >
-        {/* Header */}
-        <div className="relative flex h-[60px] flex-shrink-0 items-center justify-center px-4">
-          <span className={mergeClasses(styles.title, titleClassName)}>
-            {title}
-          </span>
-          <div className="absolute right-2">
-            <DialCloseButton
-              ariaLabel={closeLabel}
-              size={BASE_ICON_SIZE}
-              onClose={onClose}
+  return (
+    <BottomSheetShell
+      isOpen={isOpen}
+      title={title}
+      closeLabel={closeLabel}
+      onClose={onClose}
+      style={style}
+      titleClassName={titleClassName}
+      className="max-h-[80dvh]"
+    >
+      {/* Search */}
+      {hasDeployments && (
+        <>
+          <div className="flex-shrink-0 px-4 py-[10px]">
+            <DialSearch
+              value={query}
+              placeholder={searchPlaceholder}
+              size={ElementSize.Standard}
+              onChange={setQuery}
             />
           </div>
-        </div>
+          <div className={mergeClasses(styles.divider, 'h-px flex-shrink-0')} />
+        </>
+      )}
 
-        <div className={mergeClasses(styles.divider, 'h-px flex-shrink-0')} />
-
-        {/* Search */}
-        {hasDeployments && (
-          <>
-            <div className="flex-shrink-0 px-4 py-[10px]">
-              <DialSearch
-                value={query}
-                placeholder={searchPlaceholder}
-                size={ElementSize.Standard}
-                onChange={setQuery}
-              />
-            </div>
-            <div
-              className={mergeClasses(styles.divider, 'h-px flex-shrink-0')}
-            />
-          </>
-        )}
-
-        {/* List */}
-        <ul role="list" className="flex flex-col overflow-y-auto">
-          {stateLabel ? (
-            <li
-              className={mergeClasses(
-                styles.stateLabel,
-                labelClassName,
-                'px-4 py-4',
-              )}
-            >
-              {stateLabel}
-            </li>
-          ) : (
-            filtered.map((item) => {
-              const iconUrl = resolveIconUrl(item.iconUrl);
-              const modelIcon = iconUrl ? (
-                <img
-                  src={iconUrl}
-                  alt=""
-                  width={DIAL_ICON_SIZE.SM}
-                  height={DIAL_ICON_SIZE.SM}
-                />
-              ) : item.type === 'application' ? (
-                <IconApps size={DIAL_ICON_SIZE.SM} aria-hidden />
-              ) : (
-                <IconRobot size={DIAL_ICON_SIZE.SM} aria-hidden />
-              );
-
-              const isSelected = item.id === selectedDeploymentId;
-
-              return (
-                <li key={item.id}>
-                  <DialButton
-                    type="button"
-                    className={mergeClasses(
-                      styles.item,
-                      'flex w-full items-center gap-3 px-4 py-[10px]',
-                    )}
-                    iconBefore={
-                      <span className={styles.itemIcon}>{modelIcon}</span>
-                    }
-                    label={
-                      <span className="flex flex-1 items-center justify-between gap-2">
-                        <span
-                          className={mergeClasses(
-                            labelClassName,
-                            'min-w-0 flex-1 truncate text-left',
-                          )}
-                        >
-                          {item.displayName ?? item.id}
-                        </span>
-                        {isSelected && (
-                          <IconCheck
-                            size={DIAL_ICON_SIZE.SM}
-                            className={styles.checkIcon}
-                            aria-hidden
-                          />
-                        )}
-                      </span>
-                    }
-                    onClick={() => handleSelect(item.id)}
-                  />
-                </li>
-              );
-            })
+      {/* List */}
+      {stateLabel ? (
+        <div
+          role="list"
+          className={mergeClasses(
+            styles.stateLabel,
+            labelClassName,
+            'px-4 py-4',
           )}
-        </ul>
-      </div>
-    </>,
-    document.body,
+        >
+          {stateLabel}
+        </div>
+      ) : (
+        <List<ModelRowData>
+          role="list"
+          className="overflow-y-auto"
+          style={{
+            height: Math.min(filtered.length, MAX_VISIBLE_ROWS) * ROW_HEIGHT,
+          }}
+          rowComponent={ModelRow}
+          rowCount={filtered.length}
+          rowHeight={ROW_HEIGHT}
+          rowProps={{
+            items: filtered,
+            selectedDeploymentId,
+            labelClassName,
+            onSelect: handleSelect,
+          }}
+        />
+      )}
+    </BottomSheetShell>
   );
 };

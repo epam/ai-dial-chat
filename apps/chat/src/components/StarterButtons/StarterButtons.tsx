@@ -1,6 +1,6 @@
 import type { StarterOption } from '@epam/ai-dial-chat-shared';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
-import { FC } from 'react';
+import { FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatI18nKeys } from '../../constants/translation-keys';
 
@@ -34,4 +34,4 @@ const StarterButtons: FC<Props> = ({ starters, onSelect }) => {
   );
 };
 
-export default StarterButtons;
+export default memo(StarterButtons);

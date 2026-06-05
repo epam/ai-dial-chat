@@ -1,7 +1,12 @@
-import type { Attachment, StarterOption } from '@epam/ai-dial-chat-shared';
+import type {
+  Attachment,
+  DeploymentItem,
+  StarterOption,
+} from '@epam/ai-dial-chat-shared';
 import {
   FC,
   lazy,
+  memo,
   Suspense,
   useCallback,
   useEffect,
@@ -21,6 +26,7 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
+import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import {
   getStarterPopulateText,
   getStartersFromSchema,
@@ -48,9 +54,40 @@ const ConversationRoute: FC = () => {
     error,
   } = useDeployments();
 
+  const deploymentItems: DeploymentItem[] = useMemo(
+    () =>
+      items.map(({ id, displayName, iconUrl, type }) => ({
+        id,
+        displayName,
+        iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
+        type,
+      })),
+    [items],
+  );
+
   const { starters, propertyKey, description } = useMemo(
     () => getStartersFromSchema(selectedDeploymentConfiguration),
     [selectedDeploymentConfiguration],
+  );
+
+  const isInputDisabled = useMemo(
+    () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
+    [selectedDeploymentConfiguration],
+  );
+
+  const modelSelectorLabels = useMemo(
+    () => ({
+      ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
+      loading: isLoading ? t(DeploymentsI18nKeys.SelectorLoading) : undefined,
+      error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
+      empty:
+        !isLoading && !error && items.length === 0
+          ? t(DeploymentsI18nKeys.SelectorEmpty)
+          : undefined,
+      searchPlaceholder: t(DeploymentsI18nKeys.SelectorSearchPlaceholder),
+      closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
+    }),
+    [t, isLoading, error, items.length],
   );
 
   useEffect(() => {
@@ -71,7 +108,7 @@ const ConversationRoute: FC = () => {
       if (isSending || !selectedItemId) return;
       setIsSending(true);
       try {
-        const attachmentDtos = await attachmentsToDtos(attachments);
+        const attachmentDtos = await attachmentsToDtos(attachments || []);
         const conversation = await apiCreateConversation(
           message,
           selectedItemId,
@@ -87,24 +124,28 @@ const ConversationRoute: FC = () => {
 
   const handleStarterSelect = useCallback(
     (starter: StarterOption) => {
-      // For button widgets the description is the message content;
-      // for starter widgets fall back to populateText / title.
-      const text = description ?? getStarterPopulateText(starter);
-
       if (starter['dial:widgetOptions'].submit) {
+        const text = description ?? getStarterPopulateText(starter);
+        if (!selectedItemId) {
+          return;
+        }
+
         const configurationValue = propertyKey
           ? { [propertyKey]: starter.const }
           : undefined;
-        void apiCreateConversation(
-          text,
-          selectedItemId,
-          [],
-          undefined,
-          configurationValue,
-        ).then((conversation) => {
+        const createAndNavigate = async () => {
+          const conversation = await apiCreateConversation(
+            text,
+            selectedItemId,
+            [],
+            configurationValue,
+          );
           navigate(getConversationRoute(conversation.id));
-        });
+        };
+
+        void createAndNavigate();
       } else {
+        const text = description ?? getStarterPopulateText(starter);
         setInputMessage(text);
       }
     },
@@ -124,21 +165,12 @@ const ConversationRoute: FC = () => {
             message={inputMessage}
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
-            typography={{ welcomeClassName: 'dial-display2-text' }}
-            deployments={items}
+            styles={{ typography: { welcomeClassName: 'dial-display2-text' } }}
+            deployments={deploymentItems}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
-            modelSelectorLabels={{
-              ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
-              loading: isLoading
-                ? t(DeploymentsI18nKeys.SelectorLoading)
-                : undefined,
-              error: error ? t(DeploymentsI18nKeys.SelectorError) : undefined,
-              empty:
-                !isLoading && !error && items.length === 0
-                  ? t(DeploymentsI18nKeys.SelectorEmpty)
-                  : undefined,
-            }}
+            isInputDisabled={isInputDisabled}
+            modelSelectorLabels={modelSelectorLabels}
             sendLabel={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
           />
@@ -149,4 +181,4 @@ const ConversationRoute: FC = () => {
   );
 };
 
-export default ConversationRoute;
+export default memo(ConversationRoute);

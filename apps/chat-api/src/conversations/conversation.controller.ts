@@ -20,9 +20,11 @@ import {
   ConversationResponseDto,
 } from '../openapi/openapi-response.dto';
 import { ConversationService } from './conversation.service';
+import { ConversationListResponseDto } from './dto/conversation-list.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
 import { GetConversationMetadataDto } from './dto/get-conversation-metadata.dto';
+import { ListConversationsQueryDto } from './dto/list-conversations-query.dto';
 import {
   SaveConversationBodyDto,
   SaveConversationQueryDto,
@@ -69,6 +71,35 @@ export class ConversationController {
       bucket,
       dto.deploymentId,
       dto.custom_content,
+    );
+  }
+
+  @Get('list')
+  @ApiOperation({
+    summary: 'List conversations',
+    description:
+      'Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of conversation metadata',
+    type: ConversationListResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid query params' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 502, description: 'DIAL Core error' })
+  @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
+  listConversations(
+    @Req() req: Request,
+    @Query() query: ListConversationsQueryDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.listConversations(
+      at,
+      bucket,
+      query.limit,
+      query.nextToken,
+      query.path,
     );
   }
 
@@ -181,17 +212,17 @@ export class ConversationController {
 
     const reader = stream.getReader();
 
-    let clientAborted = false;
-    let readerReleased = false;
-    let readerCancelRequested = false;
+    let isClientAborted = false;
+    let isReaderReleased = false;
+    let isCancelRequested = false;
 
     const handleClose = () => {
-      clientAborted = true;
-      if (readerReleased || readerCancelRequested) {
+      isClientAborted = true;
+      if (isReaderReleased || isCancelRequested) {
         return;
       }
 
-      readerCancelRequested = true;
+      isCancelRequested = true;
       void reader.cancel().catch(() => undefined);
     };
 
@@ -200,13 +231,13 @@ export class ConversationController {
     let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
     try {
       keepaliveTimer = setInterval(() => {
-        if (!clientAborted && !res.writableEnded) {
+        if (!isClientAborted && !res.writableEnded) {
           res.write(SSE_KEEPALIVE_PAYLOAD);
         }
       }, SSE_KEEPALIVE_INTERVAL_MS);
 
       while (true) {
-        if (clientAborted) break;
+        if (isClientAborted) break;
 
         const { done, value } = await reader.read();
         if (done) break;
@@ -214,13 +245,13 @@ export class ConversationController {
         res.write(value);
       }
     } catch (err) {
-      if (!clientAborted) {
+      if (!isClientAborted) {
         this.logger.error('Error while streaming completion to client', err);
       }
     } finally {
       if (keepaliveTimer) clearInterval(keepaliveTimer);
       res.off('close', handleClose);
-      readerReleased = true;
+      isReaderReleased = true;
       reader.releaseLock();
       if (!res.writableEnded) {
         res.end();

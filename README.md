@@ -1,4 +1,4 @@
-# Chat 2.0
+# AI DIAL Chat
 
 A modern full-stack chat application built with Nx monorepo, featuring a React frontend and NestJS backend with DIAL Core integration.
 
@@ -21,7 +21,7 @@ A modern full-stack chat application built with Nx monorepo, featuring a React f
 
 ## Overview
 
-Chat 2.0 is a comprehensive chat application platform featuring:
+AI DIAL Chat is a comprehensive chat application platform featuring:
 
 - **Frontend**: Modern React application with TypeScript, Vite, and Tailwind CSS
 - **Backend**: NestJS REST API with Swagger documentation
@@ -33,26 +33,26 @@ Chat 2.0 is a comprehensive chat application platform featuring:
 
 ```
 ┌─────────────────────────────────────────────────┐
-│                   Chat 2.0                      │
+│                   AI DIAL Chat                  │
 ├─────────────────────────────────────────────────┤
 │                                                 │
-│  ┌─────────────────┐      ┌─────────────────┐ │
-│  │   React App     │◄────►│   NestJS API    │ │
-│  │   (Port 4207)   │      │   (Port 3005)   │ │
-│  │                 │      │                 │ │
-│  │  - Vite         │      │  - REST API     │ │
-│  │  - Tailwind     │      │  - Swagger      │ │
-│  │  - i18next      │      │  - Static Files │ │
-│  │  - React Router │      │  - DIAL Core    │ │
-│  └─────────────────┘      └─────────────────┘ │
-│         │                         │            │
-│         └─────────┬───────────────┘            │
-│                   │                            │
-│          ┌────────▼────────┐                   │
-│          │  Shared Libs    │                   │
-│          │  - UI Components│                   │
-│          │  - Utilities    │                   │
-│          └─────────────────┘                   │
+│  ┌─────────────────┐      ┌─────────────────┐   │
+│  │   React App     │◄────►│   NestJS API    │   │
+│  │   (Port 4207)   │      │   (Port 3005)   │   │
+│  │                 │      │                 │   │
+│  │  - Vite         │      │  - REST API     │   │
+│  │  - Tailwind     │      │  - Swagger      │   │
+│  │  - i18next      │      │  - Static Files │   │
+│  │  - React Router │      │  - DIAL Core    │   │
+│  └─────────────────┘      └─────────────────┘   │
+│         │                         │             │
+│         └─────────┬───────────────┘             │
+│                   │                             │
+│          ┌────────▼────────┐                    │
+│          │  Shared Libs    │                    │
+│          │  - UI Components│                    │
+│          │  - Utilities    │                    │
+│          └─────────────────┘                    │
 │                                                 │
 └─────────────────────────────────────────────────┘
 ```
@@ -91,6 +91,7 @@ AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=http://localhost:3005
 AUTH_PROVIDERS=[{"id":"your-provider","issuer":"https://your-issuer.example.com","clientId":"your-client-id","clientSecret":"<client-secret>","scope":"openid email profile offline_access","rolesClaim":"roles","adminRoles":["admin"],"postLogoutRedirectUri":"http://localhost:4207"}]
 # DIAL_CORE_URL=https://your-dial-core-url.example.com
+# DIAL_API_VERSION=2024-10-21
 # DIAL_API_KEY=your-api-key
 # THEMES_CONFIG_URL=https://your-themes-url.example.com
 ```
@@ -371,6 +372,7 @@ AUTH_SESSION_SECRET=<64-character-hex-secret>
 AUTH_CALLBACK_BASE_URL=https://your-api-domain.com
 AUTH_PROVIDERS=[{"id":"your-provider","issuer":"https://your-issuer.example.com","clientId":"your-client-id","clientSecret":"<client-secret>","scope":"openid email profile","rolesClaim":"roles","postLogoutRedirectUri":"https://your-frontend-domain.com"}]
 DIAL_CORE_URL=https://your-dial-core-url
+DIAL_API_VERSION=2024-10-21
 DIAL_API_KEY=your-production-api-key
 THEMES_CONFIG_URL=https://your-themes-url
 ```

@@ -1,5 +1,7 @@
+import { MessageRole, StatusEvent } from '@epam/ai-dial-chat-shared';
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
+import { handleDialError } from '../../common/utils/dial-error';
 import { ConversationService } from '../conversation.service';
 
 vi.mock('../../common/utils/dial-error', () => ({
@@ -9,10 +11,62 @@ vi.mock('../../common/utils/dial-error', () => ({
 const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const ISO_REGEX = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/;
+const TEST_CONVERSATION = {
+  id: 'test-bucket/gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+  folderId: 'test-bucket',
+  name: 'Test',
+  model: { id: 'gpt-4o' },
+  prompt: '',
+  temperature: 1,
+  messages: [],
+  lastActivityDate: 0,
+  updatedAt: 0,
+  selectedAddons: [],
+  assistantModelId: 'gpt-4o',
+};
+
+const textToStream = (chunks: string[]): ReadableStream<Uint8Array> => {
+  const encoder = new TextEncoder();
+
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      for (const chunk of chunks) {
+        controller.enqueue(encoder.encode(chunk));
+      }
+      controller.close();
+    },
+  });
+};
+
+const readStreamText = async (
+  stream: ReadableStream<Uint8Array>,
+): Promise<string> => {
+  const reader = stream.getReader();
+  const decoder = new TextDecoder();
+  let text = '';
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        text += decoder.decode();
+        return text;
+      }
+
+      text += decoder.decode(value, { stream: true });
+    }
+  } finally {
+    reader.releaseLock();
+  }
+};
 
 describe('ConversationService', () => {
   let service: ConversationService;
   let mockConfigService: Partial<ConfigService>;
+  let mockUserConfigService: {
+    getPinnedIds: ReturnType<typeof vi.fn>;
+    updatePin: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(() => {
     mockConfigService = {
@@ -22,7 +76,15 @@ describe('ConversationService', () => {
         return undefined;
       }),
     };
-    service = new ConversationService(mockConfigService as ConfigService);
+    mockUserConfigService = {
+      getPinnedIds: vi.fn().mockResolvedValue([]),
+      updatePin: vi.fn().mockResolvedValue(undefined),
+    };
+    service = new ConversationService(
+      mockConfigService as ConfigService,
+      mockUserConfigService as never,
+    );
+    vi.mocked(handleDialError).mockReset();
     vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
       data: {},
     } as never);
@@ -96,6 +158,462 @@ describe('ConversationService', () => {
       );
       expect(result.model.id).toBe('my-catalog-item');
       expect(result.assistantModelId).toBe('my-catalog-item');
+    });
+  });
+
+  describe('getConversation', () => {
+    it('encodes reserved URL characters in the DIAL Core conversation path', async () => {
+      const getConversationSpy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({
+          data: TEST_CONVERSATION,
+        } as never);
+
+      await service.getConversation(
+        'folder/statgpt-sample__What datasets are available?__uuid',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(getConversationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'folder/statgpt-sample__What%20datasets%20are%20available%3F__uuid',
+        expect.any(Object),
+      );
+    });
+  });
+
+  describe('streamCompletion', () => {
+    const baseConversation = {
+      id: 'test-bucket/test-path',
+      folderId: 'test-bucket',
+      name: 'Test',
+      model: { id: 'gpt-4o' },
+      prompt: '',
+      temperature: 1,
+      selectedAddons: [],
+      lastActivityDate: 0,
+      updatedAt: 0,
+    };
+
+    it('excludes MessageRole.Status messages from the DIAL Core payload', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: MessageRole.User,
+            content: 'Hello',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+          {
+            id: 's1',
+            role: MessageRole.Status,
+            content: '',
+            timestamp: '2024-01-01T00:00:01.000Z',
+            custom_content: {
+              event_type: StatusEvent.ModelChanged,
+              previous_deployment_id: null,
+              new_deployment_id: 'gpt-4o',
+            },
+          },
+          {
+            id: 'a1',
+            role: MessageRole.Assistant,
+            content: 'Hi there',
+            timestamp: '2024-01-01T00:00:02.000Z',
+          },
+        ],
+      };
+
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: conversation,
+      } as never);
+
+      const mockStream = new ReadableStream();
+      const sendSpy = vi
+        .spyOn(service['client'], 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: { ok: true, body: mockStream } as Response,
+        } as never);
+
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        'Next message',
+        'gpt-4o',
+      );
+
+      const sentMessages: { role: string }[] =
+        sendSpy.mock.calls[0][1].body.messages;
+      expect(sentMessages.some((m) => m.role === MessageRole.Status)).toBe(
+        false,
+      );
+      expect(sentMessages.some((m) => m.role === MessageRole.User)).toBe(true);
+      expect(sentMessages.some((m) => m.role === MessageRole.Assistant)).toBe(
+        true,
+      );
+    });
+
+    it('includes all non-status messages in the DIAL Core payload', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: MessageRole.User,
+            content: 'First',
+            timestamp: '2024-01-01T00:00:00.000Z',
+          },
+          {
+            id: 's1',
+            role: MessageRole.Status,
+            content: '',
+            timestamp: '2024-01-01T00:00:01.000Z',
+            custom_content: {
+              event_type: StatusEvent.ModelChanged,
+              previous_deployment_id: 'old-model',
+              new_deployment_id: 'gpt-4o',
+            },
+          },
+          {
+            id: 'a1',
+            role: MessageRole.Assistant,
+            content: 'Response',
+            timestamp: '2024-01-01T00:00:02.000Z',
+          },
+        ],
+      };
+
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: conversation,
+      } as never);
+
+      const mockStream = new ReadableStream();
+      const sendSpy = vi
+        .spyOn(service['client'], 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: { ok: true, body: mockStream } as Response,
+        } as never);
+
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        'Follow-up',
+        'gpt-4o',
+      );
+
+      const sentMessages: { role: string; content: string }[] =
+        sendSpy.mock.calls[0][1].body.messages;
+      expect(sentMessages).toHaveLength(3); // user + assistant + new user
+      expect(sentMessages[0]).toMatchObject({
+        role: MessageRole.User,
+        content: 'First',
+      });
+      expect(sentMessages[1]).toMatchObject({
+        role: MessageRole.Assistant,
+        content: 'Response',
+      });
+      expect(sentMessages[2]).toMatchObject({
+        role: MessageRole.User,
+        content: 'Follow-up',
+      });
+    });
+
+    it('sends current starter configuration only as top-level custom_fields', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: MessageRole.User,
+            content: 'Pick a number',
+            timestamp: '2024-01-01T00:00:00.000Z',
+            custom_content: {
+              configuration_value: { button: 1 },
+            },
+          },
+        ],
+      };
+
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: conversation,
+      } as never);
+
+      const mockStream = new ReadableStream();
+      const sendSpy = vi
+        .spyOn(service['client'], 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: { ok: true, body: mockStream } as Response,
+        } as never);
+
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        '',
+        'form-example',
+        { configuration_value: { button: 1 } },
+      );
+
+      expect(sendSpy.mock.calls[0][1].body).toMatchObject({
+        messages: [
+          {
+            role: MessageRole.User,
+            content: '',
+          },
+        ],
+        stream: true,
+        custom_fields: {
+          configuration: { button: 1 },
+        },
+      });
+      expect(
+        sendSpy.mock.calls[0][1].body.messages[0].custom_content,
+      ).toBeUndefined();
+    });
+
+    it('moves persisted form configuration to custom_fields and submits form_value messages', async () => {
+      const conversation = {
+        ...baseConversation,
+        messages: [
+          {
+            id: 'u1',
+            role: MessageRole.User,
+            content: 'Pick a number',
+            timestamp: '2024-01-01T00:00:00.000Z',
+            custom_content: {
+              configuration_value: { button: 1 },
+            },
+          },
+          {
+            id: 'a1',
+            role: MessageRole.Assistant,
+            content: 'Pick a number',
+            timestamp: '2024-01-01T00:00:01.000Z',
+            custom_content: {
+              stages: [
+                {
+                  index: 0,
+                  name: 'User message',
+                  status: 'completed',
+                  content: 'Content',
+                },
+              ],
+              form_schema: {
+                type: 'object',
+                properties: { button: { type: 'number' } },
+              },
+            },
+          },
+          {
+            id: 's1',
+            role: MessageRole.Status,
+            content: '',
+            timestamp: '2024-01-01T00:00:02.000Z',
+            custom_content: {
+              event_type: StatusEvent.ModelChanged,
+              previous_deployment_id: 'gpt-4o',
+              new_deployment_id: 'form-example',
+            },
+          },
+        ],
+      };
+
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: conversation,
+      } as never);
+
+      const mockStream = new ReadableStream();
+      const sendSpy = vi
+        .spyOn(service['client'], 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: { ok: true, body: mockStream } as Response,
+        } as never);
+
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        '',
+        'form-example',
+        { form_value: { button: 2 } },
+      );
+
+      expect(sendSpy.mock.calls[0][1].body.messages).toEqual([
+        {
+          role: MessageRole.User,
+          content: '',
+        },
+        {
+          role: MessageRole.Assistant,
+          content: 'Pick a number',
+          custom_content: {
+            form_schema: {
+              type: 'object',
+              properties: { button: { type: 'number' } },
+            },
+          },
+        },
+        {
+          role: MessageRole.User,
+          content: '',
+          custom_content: {
+            form_value: { button: 2 },
+          },
+        },
+      ]);
+      expect(sendSpy.mock.calls[0][1].body.custom_fields).toEqual({
+        configuration: { button: 1 },
+      });
+    });
+
+    it('logs and delegates to handleDialError when completion stream is rejected', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      vi.mocked(handleDialError).mockImplementation(() => {
+        throw new Error('mapped DIAL error');
+      });
+      const logError = vi
+        .spyOn(service['logger'], 'error')
+        .mockImplementation(() => undefined);
+      vi.spyOn(
+        service['client'],
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(null, {
+          status: 400,
+          statusText: 'Bad Request',
+        }),
+      } as never);
+
+      await expect(
+        service.streamCompletion(
+          'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+          'test-token',
+          'test-bucket',
+          'Hello',
+          'gpt-4o',
+        ),
+      ).rejects.toThrow('mapped DIAL error');
+
+      expect(logError).toHaveBeenCalled();
+      expect(handleDialError).toHaveBeenCalledWith({ status: 400 });
+    });
+
+    it('passes the stream through when completion succeeds', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      const firstChunk =
+        'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n';
+      const secondChunk = 'data: [DONE]\n\n';
+      const sendCompletionSpy = vi.spyOn(
+        service['client'],
+        'sendChatCompletionRequest',
+      );
+      sendCompletionSpy.mockResolvedValue({
+        response: new Response(textToStream([firstChunk, secondChunk]), {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }),
+      } as never);
+
+      const stream = await service.streamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'Hello',
+        'gpt-4o',
+      );
+
+      await expect(readStreamText(stream)).resolves.toBe(
+        `${firstChunk}${secondChunk}`,
+      );
+      expect(sendCompletionSpy).toHaveBeenCalledWith(
+        'gpt-4o',
+        expect.objectContaining({
+          params: { query: { 'api-version': '2024-10-21' } },
+        }),
+      );
+      expect(handleDialError).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('listConversations with pins', () => {
+    it('sets isPinned: true on items whose id is in the pins list', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            { url: 'conversations/bucket/conv-1', nodeType: 'FILE' },
+            { url: 'conversations/bucket/conv-2', nodeType: 'FILE' },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([
+        'conversations/bucket/conv-1',
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: 'conversations/bucket/conv-1',
+            isPinned: true,
+          }),
+          expect.objectContaining({
+            id: 'conversations/bucket/conv-2',
+            isPinned: false,
+          }),
+        ]),
+      );
+    });
+
+    it('sets isPinned: false on items not in the pins list', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            { url: 'conversations/bucket/conv-3', nodeType: 'FILE' },
+            { url: 'conversations/bucket/conv-4', nodeType: 'FILE' },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([
+        'conversations/bucket/conv-5',
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items.every((item) => item.isPinned === false)).toBe(true);
+    });
+
+    it('sets isPinned: false on all items when getPinnedIds returns empty', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            { url: 'conversations/bucket/conv-a', nodeType: 'FILE' },
+            { url: 'conversations/bucket/conv-b', nodeType: 'FILE' },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items.every((item) => item.isPinned === false)).toBe(true);
     });
   });
 });

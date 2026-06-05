@@ -2,6 +2,10 @@
   background: var(--cm-bubble-user-bg, var(--bg-layer-4, #242c42));
 }
 
+.agentIconBadge {
+  background: var(--cm-agent-icon-bg, var(--bg-inverted, #eef1f7));
+}
+
 .startersDivider {
   border-color: var(--cm-starters-divider, var(--stroke-secondary, #242c42));
 }

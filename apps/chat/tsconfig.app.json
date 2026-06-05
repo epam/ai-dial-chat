@@ -9,7 +9,8 @@
       "node",
       "@nx/react/typings/cssmodule.d.ts",
       "@nx/react/typings/image.d.ts",
-      "vite/client"
+      "vite/client",
+      "vite-plugin-svgr/client"
     ],
     "rootDir": "src",
     "module": "esnext",
@@ -35,10 +36,19 @@
     "eslint.config.cjs",
     "eslint.config.mjs"
   ],
-  "include": ["src/**/*.js", "src/**/*.jsx", "src/**/*.ts", "src/**/*.tsx"],
+  "include": [
+    "src/**/*.js",
+    "src/**/*.jsx",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "src/**/*.json"
+  ],
   "references": [
     {
       "path": "../../libs/chat-api-client/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/conversation-stages/tsconfig.lib.json"
     },
     {
       "path": "../../libs/conversation-messages/tsconfig.lib.json"
@@ -51,6 +61,9 @@
     },
     {
       "path": "../../libs/chat-shared/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/conversation-panel/tsconfig.lib.json"
     }
   ]
 }

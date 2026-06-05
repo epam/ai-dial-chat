@@ -14,6 +14,7 @@
 
 import * as runtime from '../runtime';
 import type {
+  ConversationListResponseDto,
   ConversationMetadataDto,
   ConversationResponseDto,
   CreateConversationDto,
@@ -36,6 +37,12 @@ export interface GetConversationRequest {
 export interface GetConversationMetadataRequest {
   path: string;
   permissions?: boolean;
+}
+
+export interface ListConversationsRequest {
+  limit?: number;
+  nextToken?: string;
+  path?: string;
 }
 
 export interface SaveConversationRequest {
@@ -250,6 +257,60 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ConversationMetadataDto> {
     const response = await this.getConversationMetadataRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path.
+   * List conversations
+   */
+  async listConversationsRaw(
+    requestParameters: ListConversationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationListResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['nextToken'] != null) {
+      queryParameters['nextToken'] = requestParameters['nextToken'];
+    }
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/conversations/list`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationListResponseDto>(response);
+  }
+
+  /**
+   * Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path.
+   * List conversations
+   */
+  async listConversations(
+    requestParameters: ListConversationsRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationListResponseDto> {
+    const response = await this.listConversationsRaw(
       requestParameters,
       initOverrides,
     );

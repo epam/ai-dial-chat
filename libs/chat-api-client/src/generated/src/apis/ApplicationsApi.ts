@@ -13,12 +13,109 @@
  */
 
 import * as runtime from '../runtime';
-import type { ApplicationsResponseDto } from '../models/index';
+import type {
+  ApplicationSchemasResponseDto,
+  ApplicationsResponseDto,
+} from '../models/index';
+
+export interface GetApplicationSchemaRequest {
+  id: string;
+}
 
 /**
  *
  */
 export class ApplicationsApi extends runtime.BaseAPI {
+  /**
+   * Returns one DIAL Core application type schema by its $id. Results are cached server-side for 60 seconds per user per schema.
+   * Get application type schema by id
+   */
+  async getApplicationSchemaRaw(
+    requestParameters: GetApplicationSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<{ [key: string]: unknown }>> {
+    if (requestParameters['id'] == null) {
+      throw new runtime.RequiredError(
+        'id',
+        'Required parameter "id" was null or undefined when calling getApplicationSchema().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/application-schemas/{id}`;
+    urlPath = urlPath.replace(
+      `{${'id'}}`,
+      encodeURIComponent(String(requestParameters['id'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<{ [key: string]: unknown }>(response);
+  }
+
+  /**
+   * Returns one DIAL Core application type schema by its $id. Results are cached server-side for 60 seconds per user per schema.
+   * Get application type schema by id
+   */
+  async getApplicationSchema(
+    requestParameters: GetApplicationSchemaRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<{ [key: string]: unknown }> {
+    const response = await this.getApplicationSchemaRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns DIAL Core application type schemas visible to the authenticated user. Results are cached server-side for 60 seconds per user.
+   * List application type schemas
+   */
+  async listApplicationSchemasRaw(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ApplicationSchemasResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/application-schemas`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ApplicationSchemasResponseDto>(response);
+  }
+
+  /**
+   * Returns DIAL Core application type schemas visible to the authenticated user. Results are cached server-side for 60 seconds per user.
+   * List application type schemas
+   */
+  async listApplicationSchemas(
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ApplicationSchemasResponseDto> {
+    const response = await this.listApplicationSchemasRaw(initOverrides);
+    return await response.value();
+  }
+
   /**
    * Returns the list of DIAL Core applications visible to the authenticated session user. Proxies GET /openai/applications using the caller\'s session access token. Results are cached server-side for 30 seconds per user.
    * List available applications

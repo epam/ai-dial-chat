@@ -1,0 +1,11 @@
+/** A host-agnostic view model for a single deployment shown in UI components. */
+export interface DeploymentItem {
+  /** Unique stable identifier from DIAL Core. */
+  id: string;
+  /** Human-readable display name. Falls back to `id` when absent. */
+  displayName?: string;
+  /** URL-safe icon reference. Resolved to a usable `<img src>` by the host app before passing. */
+  iconUrl?: string;
+  /** Deployment kind — used to choose a fallback icon. Typically `'model'` or `'application'`. */
+  type?: string;
+}

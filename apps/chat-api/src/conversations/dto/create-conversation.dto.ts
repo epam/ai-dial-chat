@@ -9,17 +9,18 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { MessageCustomContentDto } from './message-custom-content.dto';
+import { IsMessageOrAttachmentsPresent } from './message-or-attachments.validator';
 
 export class CreateConversationDto {
   @ApiProperty({
-    description: 'The first message to start the conversation',
+    description:
+      'The first message to start the conversation. May be empty when custom_content carries attachments, form_value, or configuration_value.',
     example: 'Hello, how can you help me today?',
-    minLength: 1,
     maxLength: 4000,
   })
   @IsString()
-  @MinLength(1)
   @MaxLength(4000)
+  @IsMessageOrAttachmentsPresent()
   firstMessage!: string;
 
   @ApiProperty({

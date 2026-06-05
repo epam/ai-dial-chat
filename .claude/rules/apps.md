@@ -7,4 +7,6 @@ paths:
 # Apps component conventions
 
 - Name the component props type/interface `Props` (not `<ComponentName>Props`).
-- Prefer `export default` for component exports.
+- Declare React components in `apps/*` as `const ComponentName: FC<Props> = (props) => { ... };`.
+- Do not use function declarations for React components in `apps/*` (for example, `function ComponentName(props: Props) { ... }`).
+- For React components in `apps/*`, use memoized default export in this form: `export default memo(ComponentName);`.

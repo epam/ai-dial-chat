@@ -4,25 +4,47 @@ import {
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import { AttachmentTray } from '@epam/ai-dial-conversation-input';
-import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
-import { FC } from 'react';
+import { DialRoundedButton, DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { FC, useEffect, useRef, useState } from 'react';
+import FallbackEntityIcon from '../../assets/fallback-entity-icon.svg?react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js';
+import { MDMessageViewer } from '../Markdown/MDMessageViewer.js';
 import { MessageActions } from '../Message/MessageActions.js';
 import styles from './MessageBubble.module.scss';
 
+/** Assistant-authored message bubble, left-aligned with markdown content and optional quick-reply starters. */
 export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   text,
   className,
   bubbleClassName,
-  colors,
-  typography,
+  styles: bubbleStyles,
   actions,
-  alwaysVisibleActions,
+  hasAlwaysVisibleActions,
+  isStreaming,
   attachments,
+  afterContent,
   starters,
   onSelectStarter,
   startersAriaLabel = 'Quick reply buttons',
+  deploymentIconUrl,
+  deploymentDisplayName,
 }) => {
+  const [isIconFailed, setIsIconFailed] = useState(false);
+  const iconImgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    setIsIconFailed(false);
+  }, [deploymentIconUrl]);
+
+  useEffect(() => {
+    const el = iconImgRef.current;
+    if (!el) return;
+    const handleError = () => setIsIconFailed(true);
+    el.addEventListener('error', handleError);
+    return () => el.removeEventListener('error', handleError);
+  }, [deploymentIconUrl]);
+
+  const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
@@ -41,20 +63,62 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
 
+  const hasDeploymentIcon = !!(deploymentIconUrl || deploymentDisplayName);
+
   return (
-    <div style={cssVars} className={mergeClasses('flex w-full', className)}>
-      <div className="flex w-full flex-col items-start gap-5">
+    <div
+      style={cssVars}
+      className={mergeClasses('flex w-full items-start gap-5', className)}
+    >
+      {hasDeploymentIcon && (
         <div
           className={mergeClasses(
-            'flex w-fit flex-col items-start gap-4',
+            styles.agentIconBadge,
+            'size-7 shrink-0 overflow-hidden rounded-full',
+          )}
+        >
+          {deploymentIconUrl && !isIconFailed ? (
+            <div className="m-[3px] size-[calc(100%-6px)]">
+              <img
+                ref={iconImgRef}
+                src={deploymentIconUrl}
+                alt={deploymentDisplayName ?? ''}
+                className="size-full object-contain"
+              />
+            </div>
+          ) : (
+            <div className="flex size-full items-center justify-center">
+              <FallbackEntityIcon
+                width={DIAL_ICON_SIZE.LG}
+                height={DIAL_ICON_SIZE.LG}
+                className="shrink-0"
+              />
+            </div>
+          )}
+        </div>
+      )}
+      <div className="flex min-w-0 max-w-full flex-col items-start gap-5">
+        <div
+          className={mergeClasses(
+            'flex w-fit min-w-0 max-w-full flex-col items-start gap-4',
             bubbleClassName,
           )}
         >
-          <p className={mergeClasses(textClass, 'text-left')}>{text}</p>
+          {text && (
+            <div
+              className={mergeClasses(
+                textClass,
+                'min-w-0 max-w-full text-left',
+              )}
+            >
+              <MDMessageViewer content={text} isStreaming={isStreaming} />
+            </div>
+          )}
           <AttachmentTray attachments={attachments ?? []} />
+          {afterContent}
           <MessageActions
             {...actions}
-            alwaysVisible={alwaysVisibleActions}
+            isAlwaysVisible={hasAlwaysVisibleActions}
             role={MessageRole.Assistant}
           />
         </div>

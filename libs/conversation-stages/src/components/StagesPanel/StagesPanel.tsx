@@ -1,0 +1,75 @@
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { FC } from 'react';
+import type { StagesPanelProps } from '../../models/StagesPanel.js';
+import { StageItem } from '../StageItem/StageItem.js';
+import styles from './StagesPanel.module.scss';
+
+/**
+ * Displays an agent's accumulated stages as a collapsible list.
+ * Renders above the assistant message bubble during and after streaming.
+ */
+export const StagesPanel: FC<StagesPanelProps> = ({
+  stages,
+  isStreaming,
+  className,
+  styles: panelStyles,
+  copyAriaLabel,
+}) => {
+  const { colors, typography = { fontClassName: 'dial-small-text' } } =
+    panelStyles ?? {};
+  const noCustomClass = !typography.fontClassName;
+  const cssVars = buildCssVars({
+    '--cs-bg': colors?.background,
+    '--cs-border': colors?.border,
+    '--cs-text': colors?.text,
+    '--cs-stage-text': colors?.stageTextColor,
+    '--cs-running': colors?.runningColor,
+    '--cs-completed': colors?.completedColor,
+    '--cs-failed': colors?.failedColor,
+    '--cs-button-bg': colors?.buttonBackground,
+    '--cs-font-size': noCustomClass ? typography?.fontSize : undefined,
+    '--cs-font-weight': noCustomClass
+      ? typography?.fontWeight?.toString()
+      : undefined,
+    '--cs-line-height': noCustomClass
+      ? typography?.lineHeight?.toString()
+      : undefined,
+    '--cs-letter-spacing': noCustomClass
+      ? typography?.letterSpacing
+      : undefined,
+    '--cs-font-family': noCustomClass ? typography?.fontFamily : undefined,
+  });
+
+  const lastRunningStageIndex = isStreaming
+    ? stages.reduce<number>((lastIndex, stage, index) => {
+        if (!stage.status) {
+          return index;
+        }
+        return lastIndex;
+      }, -1)
+    : -1;
+
+  return (
+    <div
+      style={cssVars}
+      className={mergeClasses('w-full', styles.panel, className)}
+    >
+      <ul role="list" className="flex flex-col gap-4">
+        {stages.map((stage, index) => (
+          <li
+            key={stage.index}
+            role="listitem"
+            className={typography.fontClassName}
+          >
+            <StageItem
+              stage={stage}
+              isLive={lastRunningStageIndex === index}
+              typography={typography}
+              copyAriaLabel={copyAriaLabel}
+            />
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};

@@ -3,14 +3,14 @@ import { FC } from 'react';
 import type { MessageSourceProps } from '../../models/MessageSource.js';
 import styles from './MessageSource.module.scss';
 
-// TODO: review after usage in MessageActions
+/** Styled pill button for a message source reference. */
 export const MessageSource: FC<MessageSourceProps> = ({
   label,
   className,
   onClick,
-  colors,
-  typography,
+  styles: sourceStyles,
 }) => {
+  const { colors, typography } = sourceStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
     '--cm-source-bg': colors?.background,
@@ -35,9 +35,9 @@ export const MessageSource: FC<MessageSourceProps> = ({
       className={mergeClasses(
         styles.button,
         'relative flex h-6 items-center justify-center px-2',
-        'rounded-[4px] border border-solid',
+        'border border-solid',
         'outline-none focus-visible:outline focus-visible:outline-1',
-        'focus-visible:outline-offset-[3px] focus-visible:outline-[var(--stroke-focus,#EEF1F7)]',
+        'focus-visible:outline-offset-[3px]',
         'cursor-pointer whitespace-nowrap',
         typography?.fontClassName,
         className,

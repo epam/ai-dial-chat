@@ -9,21 +9,45 @@
 
 .textarea {
   color: var(--ci-text, var(--text-primary, #eef1f7));
-  font-family: var(--ci-font-family, var(--theme-font, sans-serif));
-  font-size: var(--ci-font-size, 14px);
-  font-weight: var(--ci-font-weight, 400);
-  line-height: var(--ci-line-height, 1.5);
+  font-family: var(--ci-font-family);
+  font-size: var(--ci-font-size);
+  font-weight: var(--ci-font-weight);
+  line-height: var(--ci-line-height);
 
   &::placeholder {
     color: var(--ci-placeholder, var(--text-secondary, #9fa6bd));
   }
 }
 
+.stopIcon {
+  color: var(--ci-stop-color, var(--text-secondary, #9fa6bd));
+}
+
+.modelSelectorButton {
+  .modelSelectorCaret {
+    color: var(--ci-model-selector-caret-color, var(--text-primary, #eef1f7));
+  }
+  &:hover,
+  &:active {
+    background: var(
+      --ci-model-selector-hover-bg,
+      var(--controls-bg-accent-primary-alpha-active, #7da4ff4d)
+    );
+
+    .modelSelectorCaret {
+      background: var(
+        --ci-model-selector-caret-hover-bg,
+        var(--bg-accent-primary-alpha, #7da4ff26)
+      );
+    }
+  }
+}
+
 .sendButton {
   background: var(--ci-send-bg, var(--controls-bg-accent-primary, #3664e2));
   color: var(--ci-send-text, var(--controls-text-permanent, #fcfcfc));
-  font-family: var(--ci-font-family, var(--theme-font, sans-serif));
-  font-size: var(--ci-font-size, 14px);
+  font-family: var(--ci-font-family);
+  font-size: var(--ci-font-size);
 
   &:hover {
     background: var(
