@@ -115,7 +115,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                   aria-label={toggleAriaLabel}
                   className="mt-3"
                   onClick={toggleCollapsed}
-                  size={ElementSize.SM}
+                  size={ElementSize.Small}
                 />
               )}
             </div>

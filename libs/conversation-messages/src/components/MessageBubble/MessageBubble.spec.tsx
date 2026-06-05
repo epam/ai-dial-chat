@@ -4,7 +4,13 @@ import {
   MessageRole,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BubblePosition } from '../../types/bubble-position.js';
 import { AssistantMessageBubble } from './AssistantMessageBubble.js';
@@ -190,12 +196,7 @@ describe('UserMessageBubble — collapsed text', () => {
       },
     );
 
-    render(
-      <UserMessageBubble
-        text={longMessage}
-        collapsedLineCount={2}
-      />,
-    );
+    render(<UserMessageBubble text={longMessage} collapsedLineCount={2} />);
 
     const button = await screen.findByRole('button', { name: 'Show more' });
     const textWrapper = getMessageTextWrapper(longMessage);
@@ -211,12 +212,7 @@ describe('UserMessageBubble — collapsed text', () => {
       },
     );
 
-    render(
-      <UserMessageBubble
-        text={longMessage}
-        collapsedLineCount={2}
-      />,
-    );
+    render(<UserMessageBubble text={longMessage} collapsedLineCount={2} />);
 
     fireEvent.click(await screen.findByRole('button', { name: 'Show more' }));
 
