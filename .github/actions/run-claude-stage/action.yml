@@ -254,6 +254,22 @@ runs:
         AGENT_VERSION: ${{ inputs.agent_version }}
       run: python3 ./.github/claude/scripts/render-stage-comment.py
 
+    - name: Scrub output (M4 — secret scan + URL/HTML neutralize)
+      # ADR-0005 M4: deterministic, LLM-free, fail-closed gate on the rendered
+      # PUBLIC body before any posting step. Fails the stage on a secret hit
+      # (stops "Comment and Control") and neutralizes outbound-exfil vectors
+      # (zero-click images, non-allowlisted links, dangerous HTML). The posting
+      # steps below consume `steps.scrub.outputs.comment` — the scrubbed body —
+      # never the raw render. Only runs for public (non-private_output) agents;
+      # private agents publish counts-only aggregates, not this body.
+      id: scrub
+      if: inputs.private_output != 'true' && steps.extract.outputs.comment != ''
+      shell: bash
+      env:
+        BODY: ${{ steps.extract.outputs.comment }}
+        GITHUB_SERVER_URL: ${{ github.server_url }}
+      run: python3 ./.github/claude/scripts/scrub-output.py
+
     - name: Emit SARIF to code scanning
       # Convert payload.findings[] -> SARIF and upload to the Security tab (a
       # write-access-gated surface, unlike public PR comments/summaries). Runs
@@ -330,11 +346,11 @@ runs:
       # FULL detail — only for NON-sensitive agents (private_output != true).
       # Sensitive agents use the aggregate (counts-only) step above instead,
       # because this repo is public and the job summary is world-readable.
-      if: inputs.private_output != 'true' && steps.extract.outputs.comment != ''
+      if: inputs.private_output != 'true' && steps.scrub.outputs.comment != ''
       shell: bash
       env:
         STAGE_NAME: ${{ inputs.stage_name }}
-        BODY: ${{ steps.extract.outputs.comment }}
+        BODY: ${{ steps.scrub.outputs.comment }}
       run: |
         {
           echo "## ${STAGE_NAME}"
@@ -345,14 +361,14 @@ runs:
     - name: Post sticky PR comment
       # FULL detail — only for NON-sensitive agents (private_output != true).
       # Sensitive agents post the aggregate (counts-only) sticky comment above.
-      if: github.event_name == 'pull_request' && inputs.private_output != 'true'
+      if: github.event_name == 'pull_request' && inputs.private_output != 'true' && steps.scrub.outputs.comment != ''
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
         REPO: ${{ github.repository }}
         STAGE_NAME: ${{ inputs.stage_name }}
-        BODY: ${{ steps.extract.outputs.comment }}
+        BODY: ${{ steps.scrub.outputs.comment }}
       run: |
         set -euo pipefail
         MARKER="<!-- dial-sdlc:${STAGE_NAME} -->"
