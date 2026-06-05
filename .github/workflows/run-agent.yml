@@ -259,8 +259,14 @@ jobs:
         # `actions/checkout` that ref: the framework (composite action, prompts,
         # schemas, skills) lives ONLY on the sandbox base, so a full checkout
         # would strip it. Instead overlay the ref's source while preserving the
-        # framework paths (.github, .claude). Also capture its sha/ref so an
-        # emit_sarif upload can be scoped to the scanned commit.
+        # framework paths (.github, .claude, agents). Also capture its sha/ref so
+        # an emit_sarif upload can be scoped to the scanned commit.
+        #
+        # `agents` is excluded alongside .github/.claude because the overlaid ref
+        # is untrusted under pull_request_target (a fork PR head). The base
+        # manifest — already read into step outputs before this step — must keep
+        # governing the run; letting the overlaid ref replace agents/<name>/agent.yml
+        # would expose tools.extra/secrets/allowed_tools to attacker control.
         if: steps.manifest.outputs.analysis_ref != ''
         env:
           ANALYSIS_REF: ${{ steps.manifest.outputs.analysis_ref }}
@@ -268,10 +274,10 @@ jobs:
           set -euo pipefail
           git fetch --depth=1 origin "$ANALYSIS_REF"
           SHA="$(git rev-parse FETCH_HEAD)"
-          git checkout FETCH_HEAD -- . ':(exclude).github' ':(exclude).claude'
+          git checkout FETCH_HEAD -- . ':(exclude).github' ':(exclude).claude' ':(exclude)agents'
           echo "ANALYSIS_SHA=${SHA}" >> "$GITHUB_ENV"
           echo "ANALYSIS_REF_FULL=refs/heads/${ANALYSIS_REF}" >> "$GITHUB_ENV"
-          echo "Overlaid source from ${ANALYSIS_REF}@${SHA:0:7}; .github/.claude preserved."
+          echo "Overlaid source from ${ANALYSIS_REF}@${SHA:0:7}; .github/.claude/agents preserved."
 
       - id: stage
         uses: ./.github/actions/run-claude-stage
