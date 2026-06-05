@@ -135,7 +135,10 @@ export function isMcpToolset(toolset: AnyToolset): toolset is MCPToolset {
 export function isCodeInterpreterToolset(
   toolset: AnyToolset,
 ): toolset is CodeInterpreterToolset {
-  return toolset.type === ToolsetTypes.CodeInterpreter;
+  return (
+    toolset.type === ToolsetTypes.CodeInterpreter &&
+    toolset.template_name === 'py_interpreter'
+  );
 }
 
 export function isDialAppToolset(

@@ -663,6 +663,7 @@ export const getQuickAppItemNameFromConfig = (
   }
 
   if (!item.deployment_id) {
+    if ('template_name' in item) return item.template_name as string;
     console.error('Dial Tool is missing deployment_id:', item);
     return 'unknown';
   }
