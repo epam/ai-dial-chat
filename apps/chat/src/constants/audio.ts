@@ -10,8 +10,6 @@ export enum AudioMimeType {
   WMA = 'audio/wma',
 }
 
-export const TRANSCRIBE_SIZE_LIMIT_MEGABYTES = 5;
-// Maximum size for audio transcription requests (in bytes)
-// Must match the sizeLimit in transcribe.ts API route config
-export const TRANSCRIBE_SIZE_LIMIT_BYTES =
-  TRANSCRIBE_SIZE_LIMIT_MEGABYTES * 1024 * 1024;
+// Maximum size for audio transcription requests in bytes (5 MB).
+// Must match the sizeLimit in transcribe.ts API route config.
+export const TRANSCRIBE_SIZE_LIMIT_BYTES = 5 * 1024 * 1024;

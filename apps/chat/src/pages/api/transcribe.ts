@@ -10,7 +10,7 @@ import { getFullToken } from '@/src/utils/server/server';
 
 import { HTTPMethod } from '@/src/types/http';
 
-import { TRANSCRIBE_SIZE_LIMIT_MEGABYTES } from '@/src/constants/audio';
+import { TRANSCRIBE_SIZE_LIMIT_BYTES } from '@/src/constants/audio';
 import {
   DIAL_API_HOST,
   DIAL_API_VERSION,
@@ -106,11 +106,10 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
-// Must match TRANSCRIBE_SIZE_LIMIT_BYTES in src/constants/audio.ts
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: `${TRANSCRIBE_SIZE_LIMIT_MEGABYTES}mb`,
+      sizeLimit: TRANSCRIBE_SIZE_LIMIT_BYTES,
     },
   },
 };
