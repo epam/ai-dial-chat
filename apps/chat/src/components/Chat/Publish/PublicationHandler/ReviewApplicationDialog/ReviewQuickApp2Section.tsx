@@ -125,7 +125,8 @@ const ReviewQuickApp2SectionView = ({
     : !isApplicationId(config.orchestrator.deployment.deployment_id)
       ? ApiUtils.decodeApiUrl(
           parseEntityApiKey(
-            splitEntityId(config.orchestrator.deployment.deployment_id).name,
+            splitEntityId(config.orchestrator.deployment.deployment_id, true)
+              .name,
             { parseVersion: true },
           ).name,
         )
