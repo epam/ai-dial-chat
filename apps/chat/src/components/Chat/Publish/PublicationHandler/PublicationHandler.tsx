@@ -5,6 +5,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isQuickApp2 } from '@/src/utils/app/application';
 import {
   extractNameFromEmail,
   formatDate,
@@ -34,14 +35,17 @@ import {
   PublicationResource,
   PublicationRule,
 } from '@/src/types/publication';
+import { QuickApp2Config } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
-import { PublicationActions } from '@/src/store/actions';
+import { ApplicationActions, PublicationActions } from '@/src/store/actions';
 import { FoldersSelectors } from '@/src/store/folders/folders.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
+  ApplicationSelectors,
   AuthSelectors,
   ConversationsSelectors,
+  ModelsSelectors,
   PublicationSelectors,
 } from '@/src/store/selectors';
 
@@ -153,6 +157,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   );
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
+  );
+  const publishEntityModel = useAppSelector((state) =>
+    publicationModel
+      ? ModelsSelectors.selectModelById(state, publicationModel.entity.id)
+      : undefined,
+  );
+  const applicationDetail = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const userName = useAppSelector(AuthSelectors.selectUserName);
@@ -451,6 +463,31 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     isFileId(publicationModel.entity.iconUrl) &&
     !isMyEntity({ id: publicationModel.entity.iconUrl ?? '' });
 
+  useEffect(() => {
+    if (!isReview && publishEntityModel && isQuickApp2(publishEntityModel)) {
+      dispatch(
+        ApplicationActions.get({ applicationId: publishEntityModel.id }),
+      );
+    }
+  }, [isReview, publishEntityModel, dispatch]);
+
+  const hasPrivateSkillsInPublish = useMemo(() => {
+    if (
+      !publicationModel ||
+      !publishEntityModel ||
+      publicationModel.action === PublishActions.DELETE ||
+      !isQuickApp2(publishEntityModel)
+    ) {
+      return false;
+    }
+
+    const config = applicationDetail?.applicationProperties as
+      | QuickApp2Config
+      | undefined;
+
+    return (config?.skills ?? []).some((s) => !isEntityIdPublic({ id: s.url }));
+  }, [publicationModel, publishEntityModel, applicationDetail]);
+
   return (
     <FormProvider {...formMethods}>
       <form
@@ -735,6 +772,15 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                             : ChatI18nKeys.SharedWithMe,
                                         ),
                                       },
+                                    )}
+                                  />
+                                )}
+                              {hasPrivateSkillsInPublish &&
+                                featureType === FeatureType.Application && (
+                                  <ErrorMessage
+                                    type="warning"
+                                    error={t(
+                                      ChatI18nKeys.QuickApp2ContainsPrivateSkillsPublish,
                                     )}
                                   />
                                 )}
