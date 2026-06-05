@@ -28,7 +28,11 @@ export enum BackendResourceTypeName {
   APPLICATION = 'Application',
   TOOLSET = 'Toolset',
 }
-
+interface SharedBy {
+  user: string;
+  permissions: SharePermission[];
+  acceptedAt: number;
+}
 export interface BackendDataEntity {
   nodeType: BackendDataNodeType;
   name: string;
@@ -39,6 +43,7 @@ export interface BackendDataEntity {
   permissions?: SharePermission[];
   updatedAt?: number;
   author?: string;
+  sharedBy?: SharedBy[];
 }
 
 export interface BackendEntity extends BackendDataEntity {
