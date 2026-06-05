@@ -90,7 +90,7 @@ runs:
         LATEST_STABLE_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.[0-9]+$" | sort -V | tail -1 || true)
         LATEST_RC_TAG=$(git tag | grep -E "^[0-9]+\.[0-9]+\.0-rc\.[0-9]+$" | sort -V | tail -1 || true)
 
-        if [[ "${CURRENT_BRANCH}" == "development" || "${CURRENT_BRANCH}" == "development-1.0" ]]; then
+        if [[ "${CURRENT_BRANCH}" == "development" ]]; then
           # Determine which is greater: latest stable tag or latest RC tag
           # If latest stable tag is greater, next version is minor bump of given stable with dev suffix added
           # If latest RC tag is greater, next version is given RC line with dev suffix added
@@ -136,6 +136,13 @@ runs:
               NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" --minor --pre-release "-dev.${DEV_N}")
               ;;
           esac
+
+        # TODO: Use hard-coded version untill will be decided how to version in development-1.0 branch
+        elif [[ "${CURRENT_BRANCH}" == "development-1.0" ]]; then
+          PARENT_SHA=ac755e48467bc4f734c9a596e125b2f211236d20 # development-1.0 branch was created
+          CURRENT_VERSION="1.0.0"
+          DEV_N=$(git rev-list --count "${PARENT_SHA}..HEAD")
+          NEXT_VERSION=$(bump_version "${CURRENT_VERSION}" --pre-release "-dev.${DEV_N}")
 
         elif [[ "${CURRENT_BRANCH}" =~ ^release- ]]; then
           RELEASE_LINE="${CURRENT_BRANCH##release-}" # e.g. "1.0"
