@@ -45,7 +45,7 @@ export function EntitiesTabsHeader() {
           tabKey={key}
           selected={selectedEntitiesTab === key}
           onClick={handleSelectTab}
-          className="flex-1 text-center md:flex-auto md:text-left"
+          className="flex-1 text-center md:flex-auto md:text-start"
           dataQA={key.concat('-tab')}
         >
           {t(label)}

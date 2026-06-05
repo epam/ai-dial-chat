@@ -97,7 +97,7 @@ export const EditorHeader = <T extends string>({
                       onClick={() => handleTabClose(tab)}
                       disabled={isDisabled}
                       className={classNames(
-                        'w-full px-3 py-2 text-left text-sm transition-colors',
+                        'w-full px-3 py-2 text-start text-sm transition-colors',
                         {
                           'cursor-not-allowed text-secondary': isDisabled,
                           'bg-accent-primary-alpha': isActive && !isDisabled,

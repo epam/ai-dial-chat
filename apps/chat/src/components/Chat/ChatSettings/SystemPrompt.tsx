@@ -151,7 +151,7 @@ export const SystemPrompt: FC<Props> = ({
 
   return (
     <div className="flex flex-col" data-qa="system-prompt-container">
-      <label className="mb-4 text-left">{t(ChatI18nKeys.SystemPrompt)}</label>
+      <label className="mb-4 text-start">{t(ChatI18nKeys.SystemPrompt)}</label>
       <div className="relative flex flex-col">
         {disabled && <DisableOverlay />}
         <AdjustedTextarea

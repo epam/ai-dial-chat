@@ -60,3 +60,8 @@ export const PUBLIC_APP_TOOLTIP = translate(
     ns: Translation.Common,
   },
 );
+
+export enum ApplicationPropertiesLocalFields {
+  isExternalApp = 'isExternalApp',
+  isSchemaDrivenApp = 'isSchemaDrivenApp',
+}

@@ -114,7 +114,7 @@ const SourceFilesEditorView: FC<SourceFilesEditorProps> = ({
             tooltip={getIdWithoutRootPathSegments(value ?? '')}
             contentClassName="break-all"
             triggerClassName={classNames(
-              'block min-w-0 truncate whitespace-pre text-left',
+              'block min-w-0 truncate whitespace-pre text-start',
               !value && 'text-secondary',
             )}
             hideTooltip={!value}
