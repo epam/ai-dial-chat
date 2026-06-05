@@ -51,9 +51,27 @@
 }
 
 .trigger {
-  background: var(--cp-trigger-bg, var(--controls-bg-accent-secondary-alpha-active, #37BABC5C));
+  background: var(--cp-trigger-bg-idle, var(--bg-layer-3, #1d2439));
+
+  &.triggerActive {
+    background: var(
+      --cp-item-active,
+      var(--bg-accent-secondary-alpha, #37babc2e)
+    );
+  }
+
+  &:hover {
+    background: var(
+      --cp-trigger-bg,
+      var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
+    );
+
+    .triggerIcon {
+      color: var(--cp-trigger-icon, var(--text-accent-secondary, #37babc));
+    }
+  }
 }
 
 .triggerIcon {
-  color: var(--cp-trigger-icon, var(--text-accent-secondary, #37BABC));
+  color: var(--cp-trigger-icon-idle, var(--text-primary, #eef1f7));
 }

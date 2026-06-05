@@ -34,11 +34,18 @@ describe('conversation naming helpers', () => {
       expect(result).toBe('Hello world');
     });
 
-    it('should truncate to MAX_ENTITY_LENGTH (200 chars)', () => {
-      const longString = 'a'.repeat(250);
+    it('should truncate ASCII input to 255 UTF-8 bytes', () => {
+      const longString = 'a'.repeat(300);
       const result = prepareEntityName(longString);
-      expect(result).toHaveLength(200);
-      expect(result).toBe('a'.repeat(200));
+      expect(result).toHaveLength(255);
+      expect(result).toBe('a'.repeat(255));
+    });
+
+    it('should truncate multi-byte input on a character boundary', () => {
+      // '日' is 3 UTF-8 bytes; 85 × 3 = 255 bytes, 86 × 3 = 258 bytes
+      const result = prepareEntityName('日'.repeat(100));
+      expect(result).toBe('日'.repeat(85));
+      expect(new TextEncoder().encode(result).byteLength).toBe(255);
     });
 
     it('should filter out empty lines and use first non-empty line', () => {

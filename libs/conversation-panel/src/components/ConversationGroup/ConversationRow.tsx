@@ -9,8 +9,9 @@ import {
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
-import { type FC, useState } from 'react';
+import { useState, type FC } from 'react';
 import type { ConversationHistoryItem } from '../../models/ConversationPanel.js';
+import { getButtonPaddingRight } from '../../utils/conversation-row.utils.js';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
 export interface ConversationRowProps {
@@ -68,6 +69,8 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     </span>
   );
 
+  const buttonPaddingRight = getButtonPaddingRight(hasActions, isMenuOpen);
+
   return (
     <li className="group relative">
       <DialGhostButton
@@ -78,7 +81,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         onClick={() => onSelectConversation(item.id)}
         className={mergeClasses(
           'h-8 w-full justify-start gap-2 pl-3',
-          hasActions ? 'pr-2' : 'pr-3',
+          buttonPaddingRight,
           styles.item,
           isActive && styles.itemActive,
         )}
@@ -109,6 +112,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
               className={mergeClasses(
                 'flex items-center justify-center rounded',
                 styles.trigger,
+                isActive && styles.triggerActive,
               )}
             />
           </DialDropdown>

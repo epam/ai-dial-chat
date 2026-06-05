@@ -35,6 +35,7 @@ export enum ActionsI18nKeys {
   CopyAsMarkdown = 'actions.copyAsMarkdown',
   LikeResponse = 'actions.likeResponse',
   DislikeResponse = 'actions.dislikeResponse',
+  Save = 'actions.save',
 }
 
 export enum NavigationI18nKeys {
@@ -108,6 +109,11 @@ export enum ConversationHistoryI18nKeys {
   DeleteConfirmTitle = 'conversationHistory.deleteConfirmTitle',
   DeleteConfirmDescription = 'conversationHistory.deleteConfirmDescription',
   DeleteError = 'conversationHistory.deleteError',
+  RenameTitle = 'conversationHistory.renameTitle',
+  RenameLabel = 'conversationHistory.renameLabel',
+  RenameInputPlaceholder = 'conversationHistory.renameInputPlaceholder',
+  RenameError = 'conversationHistory.renameError',
+  RenameTitleTooLong = 'conversationHistory.renameTitleTooLong',
 }
 
 export enum SidebarI18nKeys {
