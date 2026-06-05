@@ -108,7 +108,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
               </div>
               {isOverflowing && (
                 <DialLinkButton
-                  label={<span>{toggleLabel}</span>}
+                  label={toggleLabel}
                   iconBefore={
                     <ToggleIcon size={DIAL_ICON_SIZE.SM} aria-hidden="true" />
                   }
