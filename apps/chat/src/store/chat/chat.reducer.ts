@@ -208,7 +208,10 @@ export const chatSlice = createSlice({
     clearUserMessageVoiceAttachmentId: (state) => {
       state.userMessageVoiceAttachmentId = undefined;
     },
-    userMessageTranscriptionFailed: (state) => {
+    userMessageTranscriptionFailed: (
+      state,
+      _action: PayloadAction<{ isTooLarge?: boolean } | undefined>,
+    ) => {
       state.isUserMessageTranscribing = false;
     },
     startTranscription: (
@@ -224,7 +227,10 @@ export const chatSlice = createSlice({
     ) => {
       state.isTranscribing = false;
     },
-    transcriptionFailed: (state) => {
+    transcriptionFailed: (
+      state,
+      _action: PayloadAction<{ isTooLarge?: boolean } | undefined>,
+    ) => {
       state.isTranscribing = false;
       state.isAsrFlowActive = false;
       state.asrInsertionContext = undefined;
