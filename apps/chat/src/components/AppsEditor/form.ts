@@ -54,6 +54,7 @@ import {
 import { Translation } from '@/src/types/translation';
 
 import {
+  ApplicationPropertiesLocalFields,
   CODEAPPS_REQUIRED_FILES,
   FEATURES_ENDPOINTS,
   FEATURES_ENDPOINTS_DEFAULT_VALUES,
@@ -952,12 +953,10 @@ export const getApplicationPayload = ({
     case AppsEditorSchemaTypes.ExternalApp:
       return {
         ...generalData,
-        applicationProperties:
-          data.externalUrl === MANDATORY_FIELD_PLACEHOLDER || !data.externalUrl
-            ? undefined
-            : {
-                external_url: data.externalUrl,
-              },
+        applicationProperties: {
+          external_url: data.externalUrl ?? MANDATORY_FIELD_PLACEHOLDER,
+          [ApplicationPropertiesLocalFields.isExternalApp]: true,
+        },
       };
     case AppsEditorSchemaTypes.QuickApp:
       return {
@@ -1047,9 +1046,10 @@ export const getApplicationPayload = ({
     case AppsEditorSchemaTypes.SchemaDriven:
       return {
         ...generalData,
-        applicationProperties: omit(data.properties, [
-          MANDATORY_FIELD_PLACEHOLDER,
-        ]),
+        applicationProperties: {
+          ...omit(data.properties, [MANDATORY_FIELD_PLACEHOLDER]),
+          [ApplicationPropertiesLocalFields.isSchemaDrivenApp]: true,
+        },
       };
     case AppsEditorSchemaTypes.CustomApp:
     default:
