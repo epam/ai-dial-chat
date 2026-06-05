@@ -53,6 +53,8 @@ interface BaseMessageBubbleProps {
   actions?: MessageActionsProps;
   /** When `true`, the actions bar is always visible instead of appearing only on group hover. */
   hasAlwaysVisibleActions?: boolean;
+  /** When `true`, assistant markdown text reveals newly appended content smoothly. */
+  isStreaming?: boolean;
   /** Display attachments associated with the message. Rendered above text for user messages and below text for assistant messages. */
   attachments?: DisplayAttachment[];
 }

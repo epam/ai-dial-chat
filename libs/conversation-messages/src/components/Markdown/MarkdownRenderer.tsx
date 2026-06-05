@@ -2,6 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC, memo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent.js';
 
 /** Per-element className overrides passed to {@link MarkdownRenderer}. */
 export interface MarkdownRendererClassNames {
@@ -48,9 +49,13 @@ export interface MarkdownRendererClassNames {
 }
 
 /** Props for {@link MarkdownRenderer}. */
-interface MarkdownRendererProps {
+export interface MarkdownRendererProps {
   /** Raw markdown string to render. */
   content: string;
+  /** When true, appended content is revealed gradually for smoother streaming updates. */
+  isStreaming?: boolean;
+  /** Reveal speed used while `isStreaming` is true. Defaults to 120 characters per second. */
+  streamCharactersPerSecond?: number;
   /** Per-element styling classes. Merged with structural base classes inside the component. */
   classNames?: MarkdownRendererClassNames;
   /**
@@ -166,16 +171,30 @@ const buildMarkdownComponents = (
 
 /** Markdown renderer with GFM support. Styling is driven by `classNames`; structural overrides via `components`. */
 export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
-  ({ content, classNames = {}, components }) => (
-    <ReactMarkdown
-      remarkPlugins={remarkPlugins}
-      components={{
-        ...buildMarkdownComponents(classNames),
-        ...defaultMarkdownComponents,
-        ...components,
-      }}
-    >
-      {content}
-    </ReactMarkdown>
-  ),
+  ({
+    content,
+    isStreaming,
+    streamCharactersPerSecond,
+    classNames = {},
+    components,
+  }) => {
+    const displayedContent = useStreamedMarkdownContent(
+      content,
+      isStreaming,
+      streamCharactersPerSecond,
+    );
+
+    return (
+      <ReactMarkdown
+        remarkPlugins={remarkPlugins}
+        components={{
+          ...buildMarkdownComponents(classNames),
+          ...defaultMarkdownComponents,
+          ...components,
+        }}
+      >
+        {displayedContent}
+      </ReactMarkdown>
+    );
+  },
 );

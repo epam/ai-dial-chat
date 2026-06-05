@@ -4,8 +4,8 @@ import {
   MessageRole,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, render, screen } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BubblePosition } from '../../types/bubble-position.js';
 import { AssistantMessageBubble } from './AssistantMessageBubble.js';
 import { MessageBubble } from './MessageBubble.js';
@@ -19,6 +19,10 @@ const ATTACHMENT: DisplayAttachment = {
   type: AttachmentType.File,
   status: RequestStatus.Idle,
 };
+
+afterEach(() => {
+  vi.useRealTimers();
+});
 
 describe('MessageBubble', () => {
   it('renders the provided text content', () => {
@@ -156,6 +160,61 @@ describe('UserMessageBubble — attachments', () => {
 });
 
 describe('AssistantMessageBubble — attachments', () => {
+  it('reveals appended streaming text gradually', () => {
+    vi.useFakeTimers();
+
+    const { queryByText, rerender } = render(
+      <AssistantMessageBubble text="Hi" isStreaming />,
+    );
+
+    rerender(<AssistantMessageBubble text="Hi there" isStreaming />);
+
+    expect(queryByText('Hi there')).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+
+    expect(screen.getByText('Hi there')).toBeTruthy();
+  });
+
+  it('continues revealing remaining text after streaming stops', () => {
+    vi.useFakeTimers();
+
+    const { queryByText, rerender } = render(
+      <AssistantMessageBubble text="Hi" isStreaming />,
+    );
+
+    rerender(<AssistantMessageBubble text="Hi there" isStreaming />);
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    rerender(<AssistantMessageBubble text="Hi there friend" />);
+
+    expect(queryByText('Hi there friend')).toBeNull();
+
+    act(() => {
+      vi.advanceTimersByTime(100);
+    });
+
+    expect(screen.getByText('Hi there friend')).toBeTruthy();
+  });
+
+  it('does not reveal structural markdown blocks character by character', () => {
+    vi.useFakeTimers();
+    const tableText = 'Intro\n\n| A | B |\n| - | - |\n| 1 | 2 |';
+
+    const { rerender } = render(
+      <AssistantMessageBubble text="Intro" isStreaming />,
+    );
+
+    rerender(<AssistantMessageBubble text={tableText} isStreaming />);
+
+    expect(screen.getByRole('table')).toBeTruthy();
+  });
+
   it('renders an attachment tray when attachments are provided', () => {
     render(
       <AssistantMessageBubble

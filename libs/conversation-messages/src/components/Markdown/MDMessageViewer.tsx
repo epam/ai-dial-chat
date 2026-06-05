@@ -5,12 +5,15 @@ import { MarkdownRenderer } from './MarkdownRenderer.js';
 interface Props {
   /** Raw markdown string to render. */
   content: string;
+  /** Enables gradual reveal for appended streaming content. */
+  isStreaming?: boolean;
 }
 
 /** Renders assistant message content as formatted markdown. */
-export const MDMessageViewer: FC<Props> = memo(({ content }) => (
+export const MDMessageViewer: FC<Props> = memo(({ content, isStreaming }) => (
   <MarkdownRenderer
     content={content}
+    isStreaming={isStreaming}
     classNames={{
       h1: 'dial-h1-text mb-2',
       h2: 'dial-h2-text mb-2',
