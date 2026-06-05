@@ -232,6 +232,57 @@ runs:
         prompt: ${{ steps.prep.outputs.prompt }}
         claude_args: ${{ steps.prep.outputs.claude_args }}
 
+    - name: Persist input prompt (audit)
+      # Baseline audit (ADR-0005): persist INPUT alongside output, so a run can
+      # be reconstructed from "what was sent" + "what came back". Captures the
+      # composed prompt + agent-facing schema. `always()` so a failed/garbled
+      # agent run is still auditable. Encrypted for private_output agents to
+      # match the output artifact (public repo → world-downloadable artifacts);
+      # the prompt is wrapper boilerplate + skill/upstream names today, but
+      # encrypting keeps the "private agent ⇒ ciphertext" invariant if the
+      # composition ever starts inlining sensitive context.
+      # Guard inside bash, not via hashFiles(): hashFiles only globs under
+      # GITHUB_WORKSPACE, and the prompt lives in runner.temp.
+      if: always()
+      shell: bash
+      env:
+        PRIVATE_OUTPUT: ${{ inputs.private_output }}
+        RUNNER_TEMP: ${{ runner.temp }}
+      run: |
+        set -euo pipefail
+        if [ ! -f "${RUNNER_TEMP}/composed-prompt.md" ]; then
+          echo "::notice::no composed prompt to persist (prep did not complete)"
+          exit 0
+        fi
+        AUDIT_DIR="${RUNNER_TEMP}/stage-input"
+        mkdir -p "$AUDIT_DIR"
+        cp "${RUNNER_TEMP}/composed-prompt.md" "$AUDIT_DIR/composed-prompt.md"
+        [ -f "${RUNNER_TEMP}/agent-schema.json" ] && cp "${RUNNER_TEMP}/agent-schema.json" "$AUDIT_DIR/agent-schema.json" || true
+        if [ "${PRIVATE_OUTPUT}" = "true" ]; then
+          if [ -z "${SDLC_ARTIFACT_KEY:-}" ]; then
+            echo "::error::private_output is true but SDLC_ARTIFACT_KEY is not in env — cannot encrypt the audit input. Add it to the agent manifest \`secrets:\` and repo/org Actions secrets."
+            exit 1
+          fi
+          for f in "$AUDIT_DIR"/*; do
+            openssl enc -aes-256-cbc -pbkdf2 -salt -in "$f" -out "$f.enc" -pass env:SDLC_ARTIFACT_KEY
+            rm -f "$f"
+          done
+          echo "Persisted encrypted audit input (private agent)."
+        else
+          echo "Persisted audit input (plaintext)."
+        fi
+
+    - name: Upload input prompt artifact
+      # if-no-files-found: ignore — the dir is absent when prep didn't complete
+      # (the persist step above exits early); no audit input to upload then.
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: stage-input-${{ inputs.stage_name }}
+        path: ${{ runner.temp }}/stage-input/
+        retention-days: 90
+        if-no-files-found: ignore
+
     - name: Verify stage-output.json
       shell: bash
       run: |
