@@ -32,6 +32,42 @@ const getValidAttachments = (customContent?: Message['custom_content']) =>
 const encodeDialResourcePath = (path: string): string =>
   path.split('/').map(encodeURIComponent).join('/');
 
+const PUBLIC_BUCKET = 'public';
+
+type CompoundNextToken = { u?: string; p?: string };
+const COMPOUND_TOKEN_PREFIX = 'ct1.';
+
+const encodeCompoundToken = (
+  userToken?: string,
+  publicToken?: string,
+): string | undefined => {
+  if (!userToken && !publicToken) return undefined;
+  const payload: CompoundNextToken = {};
+  if (userToken) payload.u = userToken;
+  if (publicToken) payload.p = publicToken;
+  return (
+    COMPOUND_TOKEN_PREFIX +
+    Buffer.from(JSON.stringify(payload)).toString('base64url')
+  );
+};
+
+const decodeNextToken = (token?: string): CompoundNextToken => {
+  if (!token) return {};
+  if (token.startsWith(COMPOUND_TOKEN_PREFIX)) {
+    try {
+      return JSON.parse(
+        Buffer.from(
+          token.slice(COMPOUND_TOKEN_PREFIX.length),
+          'base64url',
+        ).toString('utf-8'),
+      ) as CompoundNextToken;
+    } catch {
+      return {};
+    }
+  }
+  return { u: token };
+};
+
 @Injectable()
 export class ConversationService extends AppService {
   protected override logger = new Logger(ConversationService.name);
@@ -103,12 +139,18 @@ export class ConversationService extends AppService {
   async getConversation(
     conversationPath: string,
     token: string,
-    bucket: string,
+    sessionBucket: string,
   ): Promise<Conversation> {
+    const slashIndex = conversationPath.indexOf('/');
+    const bucket =
+      slashIndex === -1 ? sessionBucket : conversationPath.slice(0, slashIndex);
+    const subPath =
+      slashIndex === -1 ? conversationPath : conversationPath.slice(slashIndex + 1);
+
     try {
       const { data, error } = (await this.client.getConversation(
         bucket,
-        encodeDialResourcePath(conversationPath),
+        encodeDialResourcePath(subPath),
         { headers: getBearerAuthHeaders(token) },
       )) as { data?: unknown; error?: unknown };
       if (error !== undefined || !data) {
@@ -202,61 +244,175 @@ export class ConversationService extends AppService {
     nextToken?: string,
     path?: string,
   ): Promise<ConversationListResponseDto> {
+    type MetadataItem = {
+      name?: string;
+      url?: string;
+      parentPath?: string;
+      updatedAt?: number;
+      nodeType?: string;
+      sharedWithMe?: boolean;
+      publishedWithMe?: boolean;
+    };
+    type MetadataResult = {
+      data?: { items?: MetadataItem[]; nextToken?: string };
+      error?: unknown;
+    };
+    type SharedResourcesResult = {
+      data?: {
+        resources?: {
+          nodeType?: string;
+          name?: string;
+          url?: string;
+          parentPath?: string;
+        }[];
+      };
+      error?: unknown;
+    };
+
+    const { u: userNextToken, p: publicNextToken } = decodeNextToken(nextToken);
+
+    const buildQuery = (cursor?: string) => ({
+      recursive: true as const,
+      limit,
+      ...(cursor ? { token: cursor } : {}),
+    });
+
     try {
-      const [metadataResult, pinnedIds] = await Promise.all([
-        this.client.getConversationMetadata(
-          bucket,
-          encodeDialResourcePath(path ?? ''),
-          {
-            headers: getBearerAuthHeaders(token),
-            query: {
-              recursive: true,
-              limit,
-              ...(nextToken ? { token: nextToken } : {}),
+      const [userResult, publicResult, sharedResult, pinnedIds] =
+        await Promise.all([
+          this.client.getConversationMetadata(
+            bucket,
+            encodeDialResourcePath(path ?? ''),
+            {
+              headers: getBearerAuthHeaders(token),
+              query: buildQuery(userNextToken),
             },
-          },
-        ) as Promise<{
-          data?: {
-            items?: {
-              name?: string;
-              url?: string;
-              parentPath?: string;
-              updatedAt?: number;
-              nodeType?: string;
-              sharedWithMe?: boolean;
-              publishedWithMe?: boolean;
-            }[];
-            nextToken?: string;
-          };
-          error?: unknown;
-        }>,
-        this.userConfigService.getPinnedIds(token, bucket),
-      ]);
+          ) as Promise<MetadataResult>,
+          (
+            this.client.getConversationMetadata(
+              PUBLIC_BUCKET,
+              encodeDialResourcePath(path ?? ''),
+              {
+                headers: getBearerAuthHeaders(token),
+                query: buildQuery(publicNextToken),
+              },
+            ) as Promise<MetadataResult>
+          ).catch((err: unknown) => {
+            this.logger.warn(
+              'DIAL Core listConversations (public bucket) failed',
+              err,
+            );
+            return { data: undefined, error: err } satisfies MetadataResult;
+          }),
+          (
+            this.client.getSharedResources({
+              headers: getBearerAuthHeaders(token),
+              body: { resourceTypes: ['CONVERSATION'], with: 'me' },
+            }) as Promise<SharedResourcesResult>
+          ).catch((err: unknown) => {
+            this.logger.warn(
+              'DIAL Core listConversations (shared resources) failed',
+              err,
+            );
+            return {
+              data: undefined,
+              error: err,
+            } satisfies SharedResourcesResult;
+          }),
+          this.userConfigService.getPinnedIds(token, bucket),
+        ]);
 
-      const { data, error } = metadataResult;
+      const { data: userData, error: userError } = userResult;
+      if (userError !== undefined || !userData) {
+        this.logger.error(
+          'DIAL Core rejected listConversations (user bucket)',
+          userError,
+        );
+        return handleDialError(userError);
+      }
 
-      if (error !== undefined || !data) {
-        this.logger.error('DIAL Core rejected listConversations', error);
-        return handleDialError(error);
+      const { data: publicData, error: publicError } = publicResult;
+      if (publicError !== undefined) {
+        this.logger.warn(
+          'DIAL Core rejected listConversations (public bucket)',
+          publicError,
+        );
+      }
+
+      const { data: sharedData, error: sharedError } = sharedResult;
+      if (sharedError !== undefined) {
+        this.logger.warn(
+          'DIAL Core listConversations (shared resources) failed',
+          sharedError,
+        );
       }
 
       const pinnedSet = new Set(pinnedIds);
 
-      const items: ConversationListItemDto[] = (data.items ?? [])
-        .filter((item) => item.nodeType !== 'FOLDER')
-        .map((item) => {
-          const id = item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`;
-          return {
-            id,
-            title: getConversationTitleFromName(item.name ?? ''),
-            updatedAt: item.updatedAt ?? 0,
-            sharedWithMe: item.sharedWithMe ?? false,
-            publishedWithMe: item.publishedWithMe ?? false,
-            isPinned: pinnedSet.has(id),
-          };
-        });
+      const mapItems = (
+        items: MetadataItem[],
+        overrides: { sharedWithMe?: boolean; publishedWithMe?: boolean } = {},
+      ): ConversationListItemDto[] =>
+        items
+          .filter((item) => item.nodeType !== 'FOLDER')
+          .map((item) => {
+            const id =
+              item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`;
+            return {
+              id,
+              title: getConversationTitleFromName(item.name ?? ''),
+              updatedAt: item.updatedAt ?? 0,
+              sharedWithMe: overrides.sharedWithMe ?? (item.sharedWithMe ?? false),
+              publishedWithMe:
+                overrides.publishedWithMe ?? (item.publishedWithMe ?? false),
+              isPinned: pinnedSet.has(id),
+            };
+          });
 
-      return { items, nextToken: data.nextToken };
+      const userItems = mapItems(userData.items ?? []);
+
+      // Build a set of conversation names already present in the user's bucket so
+      // that published copies in the public bucket are not shown as duplicates.
+      const userItemNames = new Set(
+        (userData.items ?? [])
+          .filter((item) => item.nodeType !== 'FOLDER' && item.name)
+          .map((item) => item.name as string),
+      );
+
+      const publicItems =
+        publicError == null && publicData
+          ? mapItems(
+              (publicData.items ?? []).filter(
+                (item) => !userItemNames.has(item.name ?? ''),
+              ),
+              { publishedWithMe: true },
+            )
+          : [];
+      const sharedItems =
+        sharedError == null && sharedData
+          ? (sharedData.resources ?? [])
+              .filter((r) => r.nodeType !== 'FOLDER')
+              .map((r) => {
+                const id = r.url ?? `${r.parentPath ?? ''}/${r.name ?? ''}`;
+                return {
+                  id,
+                  title: getConversationTitleFromName(r.name ?? ''),
+                  updatedAt: 0,
+                  sharedWithMe: true,
+                  publishedWithMe: false,
+                  isPinned: pinnedSet.has(id),
+                };
+              })
+          : [];
+
+      const items = [...userItems, ...publicItems, ...sharedItems].sort(
+        (a, b) => b.updatedAt - a.updatedAt,
+      );
+
+      return {
+        items,
+        nextToken: encodeCompoundToken(userData.nextToken, publicData?.nextToken),
+      };
     } catch (error) {
       this.logger.error('DIAL Core listConversations failed', error);
       return handleDialError(error);

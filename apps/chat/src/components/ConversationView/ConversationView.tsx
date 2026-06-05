@@ -66,6 +66,8 @@ interface Props {
   isAssistantTyping?: boolean;
   initialModelId: string;
   streamErrorText: string;
+  isReadOnly?: boolean;
+  readOnlyNotice?: string;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -88,6 +90,8 @@ const ConversationView: FC<Props> = ({
   isAssistantTyping = false,
   initialModelId,
   streamErrorText,
+  isReadOnly = false,
+  readOnlyNotice,
 }) => {
   const { t } = useTranslation();
   const {
@@ -352,6 +356,11 @@ const ConversationView: FC<Props> = ({
         aria-label={t(ChatI18nKeys.MessageInput)}
         className="w-full"
       >
+        {isReadOnly ? (
+          <p className="px-4 py-3 text-center text-sm text-secondary">
+            {readOnlyNotice}
+          </p>
+        ) : (
         <Suspense fallback={null}>
           <ConversationInput
             onSend={onSend}
@@ -369,6 +378,7 @@ const ConversationView: FC<Props> = ({
             stopLabel={t(ChatI18nKeys.StopStreaming)}
           />
         </Suspense>
+        )}
       </div>
     </>
   );

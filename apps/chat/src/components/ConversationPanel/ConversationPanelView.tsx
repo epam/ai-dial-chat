@@ -138,6 +138,8 @@ const ConversationPanelView: FC<Props> = ({
     () => ({
       pinned: t(ConversationHistoryI18nKeys.PinnedSection),
       myChats: t(ConversationHistoryI18nKeys.MyChatsSection),
+      shared: t(ConversationHistoryI18nKeys.FilterShared),
+      organization: t(ConversationHistoryI18nKeys.FilterOrganization),
     }),
     [t],
   );

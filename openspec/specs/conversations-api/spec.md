@@ -67,12 +67,45 @@ The `Conversation` and `Message` interfaces SHALL be declared in `libs/chat-shar
 
 ---
 
-### Requirement: GET /api/v1/conversations/list returns a cursor-paginated list of conversation metadata
+### Requirement: GET /api/v1/conversations fetches a conversation from the correct DIAL Core bucket
 
-The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint is backed by DIAL Core metadata (not an in-memory store). It accepts the following query parameters validated by `ListConversationsQueryDto`:
+The backend SHALL expose `GET /api/v1/conversations` accepting a `path` query parameter (`@IsString @MinLength(1)`). The `path` encodes both the DIAL Core bucket and the resource name as `{bucket}/{conversationName}`. The service extracts the bucket as the first `/`-delimited segment and the resource name as the remainder.
+
+If `path` contains no `/`, the session bucket is used as a fallback (backward-compatible with legacy callers that strip the bucket before sending). This allows users to open their own conversations, as well as public and shared conversations whose bucket differs from the session bucket.
+
+```
+path = "public/gpt-4o__title__uuid"  →  getConversation("public", "gpt-4o__title__uuid")
+path = "otherBucket/name"             →  getConversation("otherBucket", "name")
+path = "name"                         →  getConversation(sessionBucket, "name")  [legacy]
+```
+
+DIAL Core's sharing mechanism grants READ access to the resource at its original path using the requesting user's auth token, so no special headers or bucket substitution are needed for shared or public conversations.
+
+**Frontend behaviour.** The `Conversation` page passes the full URL wildcard param (`{bucket}/{name}`) directly to `GET /api/v1/conversations?path=...` after `decodeURIComponent`. The same decoded path (with the bucket stripped) is used for `saveConversation` and `streamCompletion`, which operate on the user's own copy only.
+
+#### Scenario: Own conversation is fetched from the session bucket
+
+- **WHEN** the URL param is `"userBucket/gpt-4o__title__uuid"` and the session bucket equals `"userBucket"`
+- **THEN** the service calls `client.getConversation("userBucket", "gpt-4o__title__uuid")` and returns 200
+
+#### Scenario: Public conversation is fetched from the public bucket
+
+- **WHEN** the path is `"public/gpt-4o__title__uuid"`
+- **THEN** the service calls `client.getConversation("public", "gpt-4o__title__uuid")` and returns 200
+
+#### Scenario: Shared conversation is fetched from the originating bucket
+
+- **WHEN** the path is `"otherUserBucket/gpt-4o__title__uuid"` and the user has been granted access via the sharing mechanism
+- **THEN** the service calls `client.getConversation("otherUserBucket", "gpt-4o__title__uuid")` and returns 200
+
+---
+
+### Requirement: GET /api/v1/conversations/list returns a merged list from the user bucket, public bucket, and shared resources
+
+The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint is backed by DIAL Core metadata and the DIAL Core sharing API (not an in-memory store). It accepts the following query parameters validated by `ListConversationsQueryDto`:
 
 - `limit` — integer, default 20, max 100 (`@IsInt @Min(1) @Max(100) @IsOptional`)
-- `nextToken` — string cursor from a previous response, passed through to DIAL Core (`@IsString @MaxLength(512) @IsOptional`)
+- `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(512) @IsOptional`)
 - `path` — string subfolder path to scope the listing, default `''` (bucket root = "My Files") (`@IsString @MaxLength(512) @IsOptional`)
 
 On success the endpoint returns HTTP 200 with `ConversationListResponseDto`:
@@ -82,20 +115,32 @@ class ConversationListItemDto {
   id: string;               // Full DIAL Core resource URL (e.g. "conversations/bucket/model__title__uuid")
   title: string;            // Human-readable conversation title extracted from the resource name
   updatedAt: number;        // Unix epoch milliseconds of the last update
-  sharedWithMe: boolean;    // True when another user shared this conversation with the current user
-  publishedWithMe: boolean; // True when this conversation is published to the organisation
+  sharedWithMe: boolean;    // True when the conversation was shared with the current user
+  publishedWithMe: boolean; // True when this conversation is from the public bucket (organisation content)
   isPinned: boolean;        // True when the user has pinned this conversation
 }
 
 class ConversationListResponseDto {
   items: ConversationListItemDto[];
-  nextToken?: string; // Cursor for the next page; absent when no more results
+  nextToken?: string; // Compound cursor for the next page; absent when no more results
 }
 ```
 
-`isPinned` is populated by calling `UserConfigService.getPinnedIds` in parallel with the metadata call (`Promise.all`). That service reads `user-config.json` from the user's DIAL Core bucket; see the [user-config-api spec](../user-config-api/spec.md) for the full file format. The read falls back to `[]` on any error so a missing file never breaks the list response.
+**Three-way parallel fetch.** The service issues all of the following in a single `Promise.all`:
+1. `getConversationMetadata(bucket, path, { recursive: true, limit, token: userCursor })` — user's own conversations
+2. `getConversationMetadata('public', path, { recursive: true, limit, token: publicCursor })` — organisation-published conversations
+3. `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })` — conversations shared directly with the user
+4. `UserConfigService.getPinnedIds(token, bucket)` — pinned conversation IDs
 
-The service calls `client.getConversationMetadata(bucket, path ?? '', { query: { recursive: true, limit, token: nextToken } })` and filters out items with `nodeType === 'FOLDER'`.
+Items from all three sources are merged and sorted by `updatedAt` descending. `FOLDER` items are filtered out from bucket results. The `getSharedResources` response does not include `updatedAt`; shared items default to `updatedAt: 0`.
+
+**Ownership flags.** Items from the `'public'` bucket always have `publishedWithMe: true` forced, regardless of the DIAL Core flag value. Items from `getSharedResources` always have `sharedWithMe: true` forced. User-bucket items pass through the DIAL Core `sharedWithMe`/`publishedWithMe` flags unchanged.
+
+**Compound `nextToken`.** Pagination state is tracked independently for the user bucket and public bucket (the `getSharedResources` endpoint returns all results at once and has no cursor). The response `nextToken` format is `ct1.<base64url(JSON)>` where the JSON object has optional fields `u` (user-bucket cursor) and `p` (public-bucket cursor). An incoming token without the `ct1.` prefix is treated as a legacy user-only cursor. The response `nextToken` is omitted when neither paginated source has more results.
+
+**Resilience.** If the public bucket or shared resources call fails (throws or returns an error response), the endpoint logs a warning and continues — it still returns results from the other sources. If the user bucket call fails, the endpoint returns the error to the client.
+
+`isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). Errors fall back to `[]`.
 
 Rate limiting: `@Throttle({ default: { limit: 30, ttl: 60000 } })` on the handler.
 
@@ -108,32 +153,62 @@ Generated-client impact:
 Error codes:
 - `400 Bad Request` — invalid `limit` (out of range or non-integer), `nextToken` or `path` exceeds 512 chars
 - `401 Unauthorized` — missing or invalid bearer token
-- `502 Bad Gateway` — DIAL Core returned an error response
+- `502 Bad Gateway` — user bucket DIAL Core returned an error response
 
-#### Scenario: Returns paginated items with nextToken cursor
+#### Scenario: Returns merged items from user bucket, public bucket, and shared resources
 
-- **WHEN** `GET /api/v1/conversations/list?limit=2` is called and DIAL Core returns 3 conversations
-- **THEN** the response is 200 with `items` containing 2 entries and a non-empty `nextToken`
+- **WHEN** `GET /api/v1/conversations/list` is called and each source has one conversation
+- **THEN** the response is 200 with `items` containing all three entries
 
-#### Scenario: Last page has no nextToken
+#### Scenario: Public bucket items always have publishedWithMe: true
 
-- **WHEN** `GET /api/v1/conversations/list` is called and DIAL Core returns fewer items than the limit
-- **THEN** the response is 200 with `items` and `nextToken` is absent from the response body
+- **WHEN** the public bucket returns an item with `publishedWithMe` absent or `false`
+- **THEN** the response item SHALL have `publishedWithMe: true`
+
+#### Scenario: Shared resource items always have sharedWithMe: true
+
+- **WHEN** `getSharedResources` returns a conversation
+- **THEN** the response item SHALL have `sharedWithMe: true` and `publishedWithMe: false`
+
+#### Scenario: getSharedResources is called with CONVERSATION filter
+
+- **WHEN** `GET /api/v1/conversations/list` is called
+- **THEN** the service calls `getSharedResources({ body: { resourceTypes: ['CONVERSATION'], with: 'me' } })`
+
+#### Scenario: Items are sorted by updatedAt descending
+
+- **WHEN** items from all three sources are merged
+- **THEN** the response `items` array is ordered by `updatedAt` descending (newest first)
+
+#### Scenario: Returns compound nextToken when either paginated bucket has more results
+
+- **WHEN** `GET /api/v1/conversations/list?limit=2` is called and both the user and public buckets return a next-page cursor
+- **THEN** the response `nextToken` starts with `ct1.` and decodes to an object with both `u` and `p` cursor fields
+
+#### Scenario: nextToken omitted when no paginated source has more results
+
+- **WHEN** both the user and public buckets return fewer items than the limit
+- **THEN** the response `nextToken` is absent
+
+#### Scenario: Public bucket failure is non-fatal
+
+- **WHEN** the public bucket call fails (network error or error response)
+- **THEN** the response is 200 with user-bucket and shared items; the public bucket error is logged as a warning
+
+#### Scenario: Shared resources failure is non-fatal
+
+- **WHEN** the `getSharedResources` call fails
+- **THEN** the response is 200 with user-bucket and public-bucket items; the error is logged as a warning
 
 #### Scenario: FOLDER items are excluded from the response
 
-- **WHEN** DIAL Core returns a mix of file items and items with `nodeType === 'FOLDER'`
+- **WHEN** DIAL Core returns a mix of file items and items with `nodeType === 'FOLDER'` from either bucket
 - **THEN** only file items appear in the response `items` array
 
-#### Scenario: path scopes the DIAL Core query
+#### Scenario: path scopes both metadata queries
 
 - **WHEN** `GET /api/v1/conversations/list?path=work%2Fproject-x` is called
-- **THEN** the service calls `getConversationMetadata(bucket, 'work/project-x', ...)` and returns only conversations under that path
-
-#### Scenario: path omitted returns root listing
-
-- **WHEN** `GET /api/v1/conversations/list` is called without a `path` parameter
-- **THEN** the service queries DIAL Core with an empty path (bucket root) and returns all conversations
+- **THEN** the service calls `getConversationMetadata(bucket, 'work/project-x', ...)` AND `getConversationMetadata('public', 'work/project-x', ...)` and returns only conversations under that path
 
 #### Scenario: Invalid limit returns 400
 
