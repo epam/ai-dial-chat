@@ -4,40 +4,63 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import RenameConversationPopup from '../RenameConversationPopup';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  ButtonAppearance: { Ghost: 'ghost', Solid: 'solid' },
-  ButtonVariant: { Neutral: 'neutral', Primary: 'primary' },
   PopupSize: { Sm: 'sm' },
-  DialPopup: ({
+  DialFormPopup: ({
     open,
     header,
     children,
-    footer,
     onClose,
+    onCancel,
+    onSubmit,
+    cancelLabel,
+    submitLabel,
+    isLoading,
+    disableSubmitButton,
   }: {
     open: boolean;
     header?: React.ReactNode;
     children?: React.ReactNode;
-    footer?: React.ReactNode;
     onClose?: () => void;
+    onCancel?: () => void;
+    onSubmit?: () => void;
+    cancelLabel?: string;
+    submitLabel?: string;
+    isLoading?: boolean;
+    disableSubmitButton?: boolean;
   }) =>
     open ? (
       <div role="dialog">
         <div data-testid="popup-header">{header}</div>
         <button data-testid="popup-close" onClick={onClose} />
         {children}
-        {footer}
+        <button
+          data-testid="btn-cancel"
+          onClick={onCancel}
+          disabled={isLoading}
+        >
+          {cancelLabel}
+        </button>
+        <button
+          data-testid="btn-submit"
+          onClick={onSubmit}
+          disabled={disableSubmitButton ?? isLoading}
+        >
+          {submitLabel}
+        </button>
       </div>
     ) : null,
   DialInput: ({
     value,
     placeholder,
     onChange,
+    onKeyDown,
     inputRef,
     error,
   }: {
     value?: string;
     placeholder?: string;
     onChange?: (v?: string) => void;
+    onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
     inputRef?: React.Ref<HTMLInputElement>;
     error?: string;
   }) => (
@@ -48,6 +71,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         value={value ?? ''}
         placeholder={placeholder}
         onChange={(e) => onChange?.(e.target.value)}
+        onKeyDown={onKeyDown}
       />
       {error && (
         <p role="alert" data-testid="input-error">
@@ -55,44 +79,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         </p>
       )}
     </>
-  ),
-  DialErrorText: ({ text }: { text?: string }) =>
-    text ? (
-      <p role="alert" data-testid="api-error">
-        {text}
-      </p>
-    ) : null,
-  DialButton: ({
-    label,
-    onClick,
-    disabled,
-    variant,
-  }: {
-    label?: React.ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-    variant?: string;
-  }) => (
-    <button
-      data-testid={`btn-${variant}`}
-      onClick={onClick}
-      disabled={disabled}
-    >
-      {label}
-    </button>
-  ),
-  DialNeutralButton: ({
-    label,
-    onClick,
-    disabled,
-  }: {
-    label?: React.ReactNode;
-    onClick?: () => void;
-    disabled?: boolean;
-  }) => (
-    <button data-testid="btn-neutral" onClick={onClick} disabled={disabled}>
-      {label}
-    </button>
   ),
 }));
 
@@ -106,9 +92,9 @@ const DEFAULT_PROPS = {
 };
 
 const getSaveButton = () =>
-  screen.getByTestId('btn-primary') as HTMLButtonElement;
+  screen.getByTestId('btn-submit') as HTMLButtonElement;
 const getCancelButton = () =>
-  screen.getByTestId('btn-neutral') as HTMLButtonElement;
+  screen.getByTestId('btn-cancel') as HTMLButtonElement;
 const getInput = () => screen.getByTestId('rename-input') as HTMLInputElement;
 
 describe('RenameConversationPopup', () => {
@@ -170,7 +156,7 @@ describe('RenameConversationPopup', () => {
         error="Failed to rename. Please try again."
       />,
     );
-    expect(screen.getByTestId('api-error').textContent).toContain(
+    expect(screen.getByTestId('input-error').textContent).toContain(
       'Failed to rename',
     );
   });
