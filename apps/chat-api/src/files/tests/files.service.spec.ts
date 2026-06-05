@@ -70,9 +70,7 @@ describe('FilesService', () => {
   describe('uploadFile', () => {
     it('returns FileUploadResponseDto on success', async () => {
       const { service, sdkClient } = makeService();
-      sdkClient.uploadFile.mockResolvedValue(
-        okUpload('files/bucket/path/file.pdf'),
-      );
+      sdkClient.uploadFile.mockResolvedValue(okUpload('bucket/path/file.pdf'));
 
       const result = await service.uploadFile(
         'bucket',
@@ -83,7 +81,23 @@ describe('FilesService', () => {
       expect(result).toEqual({ url: 'files/bucket/path/file.pdf' });
     });
 
-    it('calls SDK with bucket, path, authorization and content-type', async () => {
+    it('builds the returned file URL from bucket and path', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadFile.mockResolvedValue(okUpload('ignored-upstream-url'));
+
+      const result = await service.uploadFile(
+        'user-bucket',
+        'uploads/2026-06/IMG_4740%202.jpg',
+        mockFile,
+        'token',
+      );
+
+      expect(result).toEqual({
+        url: 'files/user-bucket/uploads/2026-06/IMG_4740%202.jpg',
+      });
+    });
+
+    it('calls SDK with bucket, path, authorization and multipart form data', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.uploadFile.mockResolvedValue(
         okUpload('files/bucket/path/file.pdf'),
@@ -96,9 +110,12 @@ describe('FilesService', () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             Authorization: 'Bearer my-token',
-            'Content-Type': 'application/pdf',
           }),
+          body: expect.any(FormData),
         }),
+      );
+      expect(sdkClient.uploadFile.mock.calls[0][2].headers).not.toHaveProperty(
+        'Content-Type',
       );
     });
 

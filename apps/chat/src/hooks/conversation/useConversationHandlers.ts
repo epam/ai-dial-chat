@@ -22,8 +22,10 @@ import {
   deleteConversation as apiDeleteConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { uploadFile } from '../../server-api/files.api';
 import { rateMessage } from '../../server-api/rate.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
+import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { createMessagePair } from '../../utils/message-factory';
 import { getStarterSubmitText } from '../../utils/starter-option';
@@ -31,6 +33,7 @@ import { getStarterSubmitText } from '../../utils/starter-option';
 interface Params {
   conversation: Conversation | null;
   conversationId: string | undefined;
+  bucket: string;
   isStreaming: boolean;
   startStream: (
     conversationPath: string,
@@ -47,6 +50,7 @@ interface Params {
 export const useConversationHandlers = ({
   conversation,
   conversationId,
+  bucket,
   isStreaming,
   startStream,
   conversationRef,
@@ -64,11 +68,27 @@ export const useConversationHandlers = ({
   } | null>(null);
   const { selectedItemId } = useDeployments();
 
+  const handleUploadAttachment = useCallback(
+    async (attachment: Attachment): Promise<string> => {
+      if (!bucket) {
+        throw new Error('User bucket is not available');
+      }
+
+      const response = await uploadFile(
+        bucket,
+        buildUploadPath(attachment),
+        attachment.file,
+      );
+      return response.url;
+    },
+    [bucket],
+  );
+
   const handleSend = useCallback(
     async (message: string, attachments: Attachment[]) => {
       if (!conversationId || !conversation) return;
 
-      const attachmentDtos = await attachmentsToDtos(attachments);
+      const attachmentDtos = attachmentsToDtos(attachments);
       const { userMessage, assistantMessage, assistantMessageId } =
         createMessagePair(message, attachmentDtos, undefined, selectedItemId);
       const conversationPath = getConversationPath(conversationId);
@@ -364,7 +384,7 @@ export const useConversationHandlers = ({
       const originalMessage = conversation.messages[idx];
       const conversationPath = getConversationPath(conversationId);
 
-      const newDtos = await attachmentsToDtos(newAttachments);
+      const newDtos = attachmentsToDtos(newAttachments);
 
       const keptIds = new Set(keptDisplayAttachments.map((a) => a.id));
       const keptDtos = (
@@ -437,6 +457,7 @@ export const useConversationHandlers = ({
 
   return {
     handleSend,
+    handleUploadAttachment,
     handleRegenerateMessage,
     handleDeleteMessage,
     handleConfirmDelete,

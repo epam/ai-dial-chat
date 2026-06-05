@@ -288,6 +288,10 @@ export class ConversationService extends AppService {
     model: string,
     customContent?: MessageCustomContentDto,
   ): Promise<ReadableStream<Uint8Array>> {
+    this.logger.debug(
+      `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}`,
+    );
+
     const conversation = await this.getConversation(
       conversationPath,
       token,
@@ -359,6 +363,10 @@ export class ConversationService extends AppService {
       ...(configuration ? { custom_fields: { configuration } } : {}),
     };
 
+    this.logger.debug(
+      `streamCompletion sending ${messages.length} message(s) to model: ${model}`,
+    );
+
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
         body: requestBody,
@@ -372,8 +380,7 @@ export class ConversationService extends AppService {
 
       if (!result.response.ok || !result.response.body) {
         this.logger.error(
-          'DIAL Core rejected streamCompletion',
-          result.response.status,
+          `DIAL Core rejected streamCompletion — model: ${model}, status: ${result.response.status}`,
         );
         return handleDialError({ status: result.response.status });
       }

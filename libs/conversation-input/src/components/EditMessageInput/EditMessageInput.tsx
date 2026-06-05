@@ -1,5 +1,5 @@
 import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { RequestStatus, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import { ChangeEvent, type FC, useCallback, useRef, useState } from 'react';
 import type { EditMessageInputProps } from '../../models/ConversationInput.js';
@@ -12,6 +12,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   initialAttachments = [],
   onCancel,
   onSave,
+  onUploadAttachment,
   cancelLabel = 'Cancel',
   saveLabel = 'Save & Submit',
   ariaLabel,
@@ -32,10 +33,16 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   const [keptAttachments, setKeptAttachments] =
     useState<DisplayAttachment[]>(initialAttachments);
 
+  const hasBlockedNewAttachments = currentNewAttachments.some(
+    (attachment) =>
+      attachment.status === RequestStatus.Loading ||
+      attachment.status === RequestStatus.Error,
+  );
   const canSend =
-    currentText.trim().length > 0 ||
-    currentNewAttachments.length > 0 ||
-    keptAttachments.length > 0;
+    (currentText.trim().length > 0 ||
+      currentNewAttachments.length > 0 ||
+      keptAttachments.length > 0) &&
+    !hasBlockedNewAttachments;
 
   const handleRemovePreExisting = (id: string) => {
     setKeptAttachments((prev) => prev.filter((a) => a.id !== id));
@@ -81,6 +88,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         pendingDropFiles={pendingDropFiles}
         onDropFilesConsumed={() => setPendingDropFiles([])}
         onSend={handleSend}
+        onUploadAttachment={onUploadAttachment}
         onChange={setCurrentText}
         onAttachmentsChange={setCurrentNewAttachments}
         removeLabel={removeLabel}

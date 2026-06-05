@@ -23,9 +23,12 @@ import {
   ChatI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
+import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
+import { uploadFile } from '../../server-api/files.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
+import { buildUploadPath } from '../../utils/build-upload-path';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import {
   getStarterPopulateText,
@@ -44,6 +47,8 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
+  const { user } = useUser();
+  const bucket = user?.bucket ?? '';
   const inputRef = useRef<HTMLDivElement>(null);
   const {
     items,
@@ -108,7 +113,7 @@ const ConversationRoute: FC = () => {
       if (isSending || !selectedItemId) return;
       setIsSending(true);
       try {
-        const attachmentDtos = await attachmentsToDtos(attachments || []);
+        const attachmentDtos = attachmentsToDtos(attachments || []);
         const conversation = await apiCreateConversation(
           message,
           selectedItemId,
@@ -120,6 +125,22 @@ const ConversationRoute: FC = () => {
       }
     },
     [navigate, isSending, selectedItemId],
+  );
+
+  const handleUploadAttachment = useCallback(
+    async (attachment: Attachment): Promise<string> => {
+      if (!bucket) {
+        throw new Error('User bucket is not available');
+      }
+
+      const response = await uploadFile(
+        bucket,
+        buildUploadPath(attachment),
+        attachment.file,
+      );
+      return response.url;
+    },
+    [bucket],
   );
 
   const handleStarterSelect = useCallback(
@@ -162,6 +183,7 @@ const ConversationRoute: FC = () => {
         >
           <ConversationInput
             onSend={handleSend}
+            onUploadAttachment={handleUploadAttachment}
             message={inputMessage}
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
