@@ -13,6 +13,7 @@ import {
   type MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
 import { StagesPanel } from '@epam/ai-dial-conversation-stages';
+import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { FC, lazy, memo, Suspense } from 'react';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
 import { messageHasStages } from '../../utils/message-utils.js';
@@ -65,6 +66,7 @@ interface Props {
   quickReplyButtonsAriaLabel: string;
   statusModelChangedTitle: string;
   formatStatusModelChangedBody: (from: string, to: string) => string;
+  streamErrorText: string;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -90,6 +92,7 @@ const ConversationMessageItem: FC<Props> = ({
   quickReplyButtonsAriaLabel,
   statusModelChangedTitle,
   formatStatusModelChangedBody,
+  streamErrorText,
 }) => {
   const isStreaming = isStreamingMessage(
     msg.role,
@@ -181,12 +184,25 @@ const ConversationMessageItem: FC<Props> = ({
       className={
         msg.role === MessageRole.User ? 'justify-end' : 'justify-start'
       }
+      bubbleClassName={msg.hasStreamError ? 'w-full' : undefined}
       afterContent={
-        hasStages ? (
-          <StagesPanel
-            stages={msg.custom_content?.stages ?? []}
-            isStreaming={isStreaming}
-          />
+        hasStages || msg.hasStreamError ? (
+          <>
+            {hasStages && (
+              <StagesPanel
+                stages={msg.custom_content?.stages ?? []}
+                isStreaming={isStreaming}
+              />
+            )}
+            {msg.hasStreamError && (
+              <div className="w-full">
+                <DialNotification
+                  variant={NotificationVariant.Error}
+                  message={streamErrorText}
+                />
+              </div>
+            )}
+          </>
         ) : undefined
       }
       starters={activeStarters}

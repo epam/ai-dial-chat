@@ -64,6 +64,7 @@ interface Props {
   placeholder: string;
   isAssistantTyping?: boolean;
   initialModelId: string;
+  streamErrorText: string;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -84,6 +85,7 @@ const ConversationView: FC<Props> = ({
   placeholder,
   isAssistantTyping = false,
   initialModelId,
+  streamErrorText,
 }) => {
   const { t } = useTranslation();
   const {
@@ -325,6 +327,7 @@ const ConversationView: FC<Props> = ({
                     ConversationI18nKeys.StatusModelChangedTitle,
                   )}
                   formatStatusModelChangedBody={formatStatusModelChangedBody}
+                  streamErrorText={streamErrorText}
                 />
               );
             })}
