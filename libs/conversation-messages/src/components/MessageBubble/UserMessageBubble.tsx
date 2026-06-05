@@ -4,11 +4,20 @@ import {
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import { AttachmentTray } from '@epam/ai-dial-conversation-input';
+import {
+  DIAL_ICON_SIZE,
+  DialLinkButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
+import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { FC } from 'react';
+import { useCollapsedText } from '../../hooks/useCollapsedText.js';
 import type { UserMessageBubbleProps } from '../../models/MessageBubble.js';
 import { BubblePosition } from '../../types/bubble-position.js';
 import { MessageActions } from '../Message/MessageActions.js';
 import styles from './MessageBubble.module.scss';
+
+const DEFAULT_COLLAPSED_LINE_COUNT = 10;
 
 /** User-authored message bubble, right-aligned with configurable radius based on group position. */
 export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
@@ -20,6 +29,11 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   actions,
   hasAlwaysVisibleActions,
   attachments,
+  collapsedLineCount = DEFAULT_COLLAPSED_LINE_COUNT,
+  showMoreLabel = 'Show more',
+  showLessLabel = 'Show less',
+  showMoreAriaLabel,
+  showLessAriaLabel,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
@@ -38,10 +52,25 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
       : undefined,
   });
 
+  const {
+    textRef,
+    isTextCollapsed,
+    isOverflowing,
+    collapsedMaxHeight,
+    isCollapsed,
+    toggleCollapsed,
+  } = useCollapsedText({ text, collapsedLineCount });
+
   const positionRadius =
     position === BubblePosition.Top ? 'rounded-br-[24px]' : 'rounded-tr-[24px]';
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
+  const toggleLabel = isCollapsed ? showMoreLabel : showLessLabel;
+  const toggleAriaLabel = isCollapsed
+    ? (showMoreAriaLabel ?? showMoreLabel)
+    : (showLessAriaLabel ?? showLessLabel);
+  const ToggleIcon = isCollapsed ? IconChevronDown : IconChevronUp;
+
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
       <div className="flex w-fit flex-col items-end gap-2">
@@ -55,14 +84,41 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
               bubbleClassName,
             )}
           >
-            <p
-              className={mergeClasses(
-                textClass,
-                'whitespace-pre-wrap break-words text-left [overflow-wrap:anywhere]',
+            <div className="flex min-w-0 flex-col items-start">
+              <div
+                className={mergeClasses(
+                  'relative overflow-hidden transition-[max-height] duration-200 ease-out',
+                  isTextCollapsed && styles.collapsedText,
+                )}
+                style={
+                  isTextCollapsed
+                    ? { maxHeight: `${collapsedMaxHeight}px` }
+                    : undefined
+                }
+              >
+                <p
+                  ref={textRef}
+                  className={mergeClasses(
+                    textClass,
+                    'whitespace-pre-wrap break-words text-left [overflow-wrap:anywhere]',
+                  )}
+                >
+                  {text}
+                </p>
+              </div>
+              {isOverflowing && (
+                <DialLinkButton
+                  label={<span>{toggleLabel}</span>}
+                  iconBefore={
+                    <ToggleIcon size={DIAL_ICON_SIZE.SM} aria-hidden="true" />
+                  }
+                  aria-label={toggleAriaLabel}
+                  className="mt-3"
+                  onClick={toggleCollapsed}
+                  size={ElementSize.SM}
+                />
               )}
-            >
-              {text}
-            </p>
+            </div>
           </div>
         )}
         <MessageActions

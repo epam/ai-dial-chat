@@ -4,7 +4,7 @@ import {
   MessageRole,
   RequestStatus,
 } from '@epam/ai-dial-chat-shared';
-import { act, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { BubblePosition } from '../../types/bubble-position.js';
 import { AssistantMessageBubble } from './AssistantMessageBubble.js';
@@ -20,8 +20,17 @@ const ATTACHMENT: DisplayAttachment = {
   status: RequestStatus.Idle,
 };
 
+const getMessageTextWrapper = (message: string) => {
+  const paragraph = screen.getByText((_, element) => {
+    return element?.tagName === 'P' && element.textContent === message;
+  });
+
+  return paragraph.parentElement as HTMLElement;
+};
+
 afterEach(() => {
   vi.useRealTimers();
+  vi.restoreAllMocks();
 });
 
 describe('MessageBubble', () => {
@@ -168,6 +177,106 @@ describe('UserMessageBubble — attachments', () => {
   it('remove button does not trigger a callback (read-only tray)', () => {
     render(<UserMessageBubble text="Hello" attachments={[ATTACHMENT]} />);
     expect(screen.queryByRole('button', { name: /remove/i })).toBeNull();
+  });
+});
+
+describe('UserMessageBubble — collapsed text', () => {
+  const longMessage = 'Line 1\nLine 2\nLine 3';
+
+  it('collapses long user messages by default', async () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(
+      function getScrollHeight(this: HTMLElement) {
+        return this.tagName === 'P' ? 72 : 0;
+      },
+    );
+
+    render(
+      <UserMessageBubble
+        text={longMessage}
+        collapsedLineCount={2}
+      />,
+    );
+
+    const button = await screen.findByRole('button', { name: 'Show more' });
+    const textWrapper = getMessageTextWrapper(longMessage);
+
+    expect(button).toBeTruthy();
+    expect(textWrapper.style.maxHeight).toBe('48px');
+  });
+
+  it('expands and collapses a long user message', async () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(
+      function getScrollHeight(this: HTMLElement) {
+        return this.tagName === 'P' ? 72 : 0;
+      },
+    );
+
+    render(
+      <UserMessageBubble
+        text={longMessage}
+        collapsedLineCount={2}
+      />,
+    );
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Show more' }));
+
+    const textWrapper = getMessageTextWrapper(longMessage);
+
+    expect(screen.getByRole('button', { name: 'Show less' })).toBeTruthy();
+    expect(textWrapper.style.maxHeight).toBe('');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Show less' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Show more' })).toBeTruthy();
+    });
+    expect(textWrapper.style.maxHeight).toBe('48px');
+  });
+
+  it('does not show the toggle button for short user messages', async () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(
+      function getScrollHeight(this: HTMLElement) {
+        return this.tagName === 'P' ? 24 : 0;
+      },
+    );
+
+    render(<UserMessageBubble text="Short" collapsedLineCount={2} />);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('button', { name: 'Show more' })).toBeNull();
+    });
+  });
+
+  it('uses custom labels and aria labels for the toggle button', async () => {
+    vi.spyOn(HTMLElement.prototype, 'scrollHeight', 'get').mockImplementation(
+      function getScrollHeight(this: HTMLElement) {
+        return this.tagName === 'P' ? 72 : 0;
+      },
+    );
+
+    render(
+      <UserMessageBubble
+        text={longMessage}
+        collapsedLineCount={2}
+        showMoreLabel="More"
+        showLessLabel="Less"
+        showMoreAriaLabel="Expand user message"
+        showLessAriaLabel="Collapse user message"
+      />,
+    );
+
+    const expandButton = await screen.findByRole('button', {
+      name: 'Expand user message',
+    });
+
+    expect(expandButton.textContent).toContain('More');
+
+    fireEvent.click(expandButton);
+
+    const collapseButton = screen.getByRole('button', {
+      name: 'Collapse user message',
+    });
+    expect(collapseButton.textContent).toContain('Less');
   });
 });
 
