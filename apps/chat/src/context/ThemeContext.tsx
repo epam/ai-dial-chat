@@ -8,9 +8,9 @@ import {
   useMemo,
   useState,
 } from 'react';
+import { StorageKey } from '../constants/storage';
 import { useFavicon } from '../hooks/favicon/useFavicon';
 import { ApiEndpoints, get } from '../server-api/base';
-import { StorageKey } from '../constants/storage';
 import { applyThemeColors } from '../utils/apply-theme-colors';
 import { getFromLocalStorage } from '../utils/local-storage';
 
