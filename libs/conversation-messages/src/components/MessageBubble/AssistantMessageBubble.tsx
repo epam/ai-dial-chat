@@ -28,6 +28,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   startersAriaLabel = 'Quick reply buttons',
   deploymentIconUrl,
   deploymentDisplayName,
+  thinkingLabel,
 }) => {
   const [isIconFailed, setIsIconFailed] = useState(false);
   const iconImgRef = useRef<HTMLImageElement>(null);
@@ -104,14 +105,18 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             bubbleClassName,
           )}
         >
-          {text && (
+          {(text || isStreaming) && (
             <div
               className={mergeClasses(
                 textClass,
                 'min-w-0 max-w-full text-left',
               )}
             >
-              <MDMessageViewer content={text} isStreaming={isStreaming} />
+              <MDMessageViewer
+                content={text}
+                isStreaming={isStreaming}
+                thinkingLabel={thinkingLabel}
+              />
             </div>
           )}
           <AttachmentTray attachments={attachments ?? []} />

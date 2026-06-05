@@ -3,6 +3,7 @@ import { type FC, memo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent.js';
+import styles from './MarkdownRenderer.module.scss';
 
 /** Per-element className overrides passed to {@link MarkdownRenderer}. */
 export interface MarkdownRendererClassNames {
@@ -63,6 +64,11 @@ export interface MarkdownRendererProps {
    * Use for elements not covered by `classNames`.
    */
   components?: Components;
+  /**
+   * Label shown with a shimmer animation while `isStreaming` is true and no content has arrived yet.
+   * Defaults to `'Thinking'`. Pass a translated string from the consuming app.
+   */
+  thinkingLabel?: string;
 }
 
 /** GFM remark plugins list, shared across all markdown instances. */
@@ -183,12 +189,17 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     streamCharactersPerSecond,
     classNames = {},
     components,
+    thinkingLabel = 'Thinking',
   }) => {
     const displayedContent = useStreamedMarkdownContent(
       content,
       isStreaming,
       streamCharactersPerSecond,
     );
+
+    if (isStreaming && !displayedContent) {
+      return <span className={styles.thinking}>{thinkingLabel}</span>;
+    }
 
     return (
       <ReactMarkdown

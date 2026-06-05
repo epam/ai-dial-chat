@@ -15,7 +15,8 @@
     "sendMessage": "Send message",
     "stopStreaming": "Stop streaming",
     "quickReplyButtons": "Quick reply buttons",
-    "stoppedGenerating": "You stopped generating the response"
+    "stoppedGenerating": "You stopped generating the response",
+    "thinking": "Thinking"
   },
   "navigation": {
     "ariaLabel": "Main navigation",

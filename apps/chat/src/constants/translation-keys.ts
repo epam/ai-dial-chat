@@ -15,6 +15,7 @@ export enum ChatI18nKeys {
   StopStreaming = 'chat.stopStreaming',
   QuickReplyButtons = 'chat.quickReplyButtons',
   StoppedGenerating = 'chat.stoppedGenerating',
+  Thinking = 'chat.thinking',
 }
 
 export enum ActionsI18nKeys {

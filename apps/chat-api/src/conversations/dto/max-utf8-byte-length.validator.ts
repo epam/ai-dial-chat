@@ -1,4 +1,8 @@
-import { registerDecorator, type ValidationArguments, type ValidationOptions } from 'class-validator';
+import {
+  registerDecorator,
+  type ValidationArguments,
+  type ValidationOptions,
+} from 'class-validator';
 import { StringUtils } from '../../common/utils/string-utils';
 
 export const MaxUtf8ByteLength = (

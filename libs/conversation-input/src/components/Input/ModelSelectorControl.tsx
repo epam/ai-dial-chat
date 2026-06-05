@@ -108,7 +108,9 @@ export const ModelSelectorControl: FC<Props> = ({
       iconClassName={isInputDisabled ? disabledIconClassName : undefined}
       buttonClassName={mergeClasses(
         styles.modelSelectorButton,
-        isInputDisabled &&disabledIconClassName && styles.modelSelectorButtonDisabled,
+        isInputDisabled &&
+          disabledIconClassName &&
+          styles.modelSelectorButtonDisabled,
       )}
     />
   );

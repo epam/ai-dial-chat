@@ -68,6 +68,7 @@ interface Props {
   statusModelChangedTitle: string;
   formatStatusModelChangedBody: (from: string, to: string) => string;
   streamErrorText: string;
+  thinkingLabel: string;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -95,6 +96,7 @@ const ConversationMessageItem: FC<Props> = ({
   statusModelChangedTitle,
   formatStatusModelChangedBody,
   streamErrorText,
+  thinkingLabel,
 }) => {
   const isStreaming = isStreamingMessage(
     msg.role,
@@ -213,6 +215,7 @@ const ConversationMessageItem: FC<Props> = ({
       startersAriaLabel={quickReplyButtonsAriaLabel}
       deploymentIconUrl={deploymentEntry?.iconUrl}
       deploymentDisplayName={deploymentEntry?.displayName}
+      thinkingLabel={thinkingLabel}
       {...statusProps}
     />
   );
