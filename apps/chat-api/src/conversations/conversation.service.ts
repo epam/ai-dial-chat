@@ -12,6 +12,7 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import { UserConfigService } from '../user-config/user-config.service';
+import { PUBLIC_BUCKET } from './constants/conversation.constants';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
@@ -25,6 +26,9 @@ import type {
 } from './types/conversation.types';
 import {
   buildRenamedConversationPath,
+  decodeNextToken,
+  encodeCompoundToken,
+  encodeDialResourcePath,
   getConversationName,
   getConversationTitleFromName,
   prepareEntityName,
@@ -34,46 +38,6 @@ const getValidAttachments = (customContent?: Message['custom_content']) =>
   (customContent?.attachments ?? []).filter((attachment) =>
     Boolean(attachment.data || attachment.url),
   );
-
-// TODO: Remove this once the DIAL SDK encodes resource path segments internally.
-const encodeDialResourcePath = (path: string): string =>
-  path.split('/').map(encodeURIComponent).join('/');
-
-const PUBLIC_BUCKET = 'public';
-
-type CompoundNextToken = { u?: string; p?: string };
-const COMPOUND_TOKEN_PREFIX = 'ct1.';
-
-const encodeCompoundToken = (
-  userToken?: string,
-  publicToken?: string,
-): string | undefined => {
-  if (!userToken && !publicToken) return undefined;
-  const payload: CompoundNextToken = {};
-  if (userToken) payload.u = userToken;
-  if (publicToken) payload.p = publicToken;
-  return (
-    COMPOUND_TOKEN_PREFIX +
-    Buffer.from(JSON.stringify(payload)).toString('base64url')
-  );
-};
-
-const decodeNextToken = (token?: string): CompoundNextToken => {
-  if (!token) return {};
-  if (token.startsWith(COMPOUND_TOKEN_PREFIX)) {
-    try {
-      return JSON.parse(
-        Buffer.from(
-          token.slice(COMPOUND_TOKEN_PREFIX.length),
-          'base64url',
-        ).toString('utf-8'),
-      ) as CompoundNextToken;
-    } catch {
-      return {};
-    }
-  }
-  return { u: token };
-};
 
 @Injectable()
 export class ConversationService extends AppService {

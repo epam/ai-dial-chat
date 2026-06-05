@@ -27,6 +27,7 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { decodeConversationId } from '../../utils/conversation-path';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 export const ConversationPage: FC = () => {
@@ -44,12 +45,7 @@ export const ConversationPage: FC = () => {
 
   const isReadOnly = useMemo(() => {
     if (!conversationId || !bucket) return false;
-    let decoded: string;
-    try {
-      decoded = decodeURIComponent(conversationId);
-    } catch {
-      decoded = conversationId;
-    }
+    const decoded = decodeConversationId(conversationId);
     const slashIndex = decoded.indexOf('/');
     return slashIndex !== -1 && decoded.slice(0, slashIndex) !== bucket;
   }, [conversationId, bucket]);
@@ -62,12 +58,7 @@ export const ConversationPage: FC = () => {
   const addStatusMessage = useCallback(
     (msg: Message) => {
       if (!conversationId) return;
-      let decoded: string;
-      try {
-        decoded = decodeURIComponent(conversationId);
-      } catch {
-        decoded = conversationId;
-      }
+      const decoded = decodeConversationId(conversationId);
       const conversationPath = decoded.substring(decoded.indexOf('/') + 1);
       setConversation((prev) => {
         if (!prev) return prev;
@@ -104,12 +95,7 @@ export const ConversationPage: FC = () => {
       return;
     }
 
-    let decodedConversationId: string;
-    try {
-      decodedConversationId = decodeURIComponent(conversationId);
-    } catch {
-      decodedConversationId = conversationId;
-    }
+    const decodedConversationId = decodeConversationId(conversationId);
     const conversationPath = decodedConversationId.substring(
       decodedConversationId.indexOf('/') + 1,
     );

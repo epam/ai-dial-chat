@@ -27,3 +27,5 @@ export type SharedResourcesResult = {
   };
   error?: unknown;
 };
+
+export type CompoundNextToken = { u?: string; p?: string };

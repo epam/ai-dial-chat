@@ -11,7 +11,11 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
-import { DialFabButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialFabButton,
+  DialNotification,
+  NotificationVariant,
+} from '@epam/ai-dial-ui-kit';
 import {
   FC,
   lazy,
@@ -357,9 +361,10 @@ const ConversationView: FC<Props> = ({
         className="w-full"
       >
         {isReadOnly ? (
-          <p className="px-4 py-3 text-center text-sm text-secondary">
-            {readOnlyNotice}
-          </p>
+          <DialNotification
+            variant={NotificationVariant.Info}
+            message={readOnlyNotice}
+          />
         ) : (
           <Suspense fallback={null}>
             <ConversationInput

@@ -98,6 +98,8 @@ const getCancelButton = () =>
 const getInput = () => screen.getByTestId('rename-input') as HTMLInputElement;
 
 describe('RenameConversationPopup', () => {
+  const user = userEvent.setup({ delay: null });
+
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -114,38 +116,38 @@ describe('RenameConversationPopup', () => {
 
   it('Save button is disabled when value is whitespace-only', async () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} />);
-    await userEvent.clear(getInput());
-    await userEvent.type(getInput(), '   ');
+    await user.clear(getInput());
+    await user.type(getInput(), '   ');
     expect(getSaveButton().disabled).toBe(true);
   });
 
   it('Save button is disabled while isSaving is true', async () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} isSaving={true} />);
-    await userEvent.clear(getInput());
-    await userEvent.type(getInput(), 'New Title');
+    await user.clear(getInput());
+    await user.type(getInput(), 'New Title');
     expect(getSaveButton().disabled).toBe(true);
   });
 
   it('Save button is enabled when value differs from currentTitle', async () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} />);
-    await userEvent.clear(getInput());
-    await userEvent.type(getInput(), 'New Title');
+    await user.clear(getInput());
+    await user.type(getInput(), 'New Title');
     expect(getSaveButton().disabled).toBe(false);
   });
 
   it('calls onSave with trimmed value on Save click', async () => {
     const onSave = vi.fn();
     render(<RenameConversationPopup {...DEFAULT_PROPS} onSave={onSave} />);
-    await userEvent.clear(getInput());
-    await userEvent.type(getInput(), '  New Title  ');
-    await userEvent.click(getSaveButton());
+    await user.clear(getInput());
+    await user.type(getInput(), '  New Title  ');
+    await user.click(getSaveButton());
     expect(onSave).toHaveBeenCalledWith('New Title');
   });
 
   it('calls onCancel on Cancel click', async () => {
     const onCancel = vi.fn();
     render(<RenameConversationPopup {...DEFAULT_PROPS} onCancel={onCancel} />);
-    await userEvent.click(getCancelButton());
+    await user.click(getCancelButton());
     expect(onCancel).toHaveBeenCalledTimes(1);
   });
 
@@ -163,13 +165,13 @@ describe('RenameConversationPopup', () => {
 
   it('Save button is disabled when title exceeds 255 UTF-8 bytes', async () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} currentTitle="" />);
-    await userEvent.type(getInput(), 'a'.repeat(256));
+    await user.type(getInput(), 'a'.repeat(256));
     expect(getSaveButton().disabled).toBe(true);
   });
 
   it('shows byte-length validation error when title exceeds 255 UTF-8 bytes', async () => {
     render(<RenameConversationPopup {...DEFAULT_PROPS} currentTitle="" />);
-    await userEvent.type(getInput(), 'a'.repeat(256));
+    await user.type(getInput(), 'a'.repeat(256));
     expect(screen.getByTestId('input-error')).toBeTruthy();
   });
 
