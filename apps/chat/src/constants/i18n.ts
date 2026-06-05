@@ -870,6 +870,7 @@ export enum ChatI18nKeys {
   AudioFormatNotSupported = 'No compatible audio format available for this model.',
   TranscribingAudio = 'Transcribing audio...',
   TranscriptionFailed = 'Audio transcription failed. Please try again.',
+  TranscriptionFailedTooLarge = 'Recording is too long. Please record a shorter message.',
   AuthorPublicNameTooltip = "This name will be displayed instead of the author's name for this publication.",
   TypePublicationRequestName = 'Type publication request name...',
   TypeUnpublishRequestName = 'Type unpublish request name...',

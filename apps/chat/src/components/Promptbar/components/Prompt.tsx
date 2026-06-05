@@ -324,14 +324,14 @@ export const PromptComponent = memo(
               />
             </ShareIcon>
 
-            <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
+            <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-start">
               <Tooltip
                 tooltip={t(
                   getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
                 )}
                 hideTooltip={!isNameOrPathInvalid}
                 triggerClassName={classNames(
-                  'block max-h-5 min-w-0 flex-1 text-left',
+                  'block max-h-5 min-w-0 flex-1 text-start',
                   (prompt.publicationInfo?.isNotExist || isNameOrPathInvalid) &&
                     'text-secondary',
                   !!additionalItemData?.publicationUrl &&

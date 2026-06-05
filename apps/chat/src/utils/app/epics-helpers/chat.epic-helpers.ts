@@ -13,6 +13,8 @@ import {
   FilesActions,
 } from '@/src/store/actions';
 
+import { TRANSCRIBE_SIZE_LIMIT_BYTES } from '@/src/constants/audio';
+
 import { Message } from '@epam/ai-dial-shared';
 
 export const sendMessage = (
@@ -67,20 +69,42 @@ export const createVoiceQuickAttachment = (
   return { file, fileId, relativePath, fileName };
 };
 
+export interface TranscriptionResult {
+  transcript: string | null;
+  isTooLarge?: boolean;
+}
+
 export const requestAudioTranscription = async (
   audioData: string,
   mimeType: string,
-): Promise<string | null> => {
+): Promise<TranscriptionResult> => {
+  const body = JSON.stringify({ audioData, mimeType });
+
+  // Check actual UTF-8 byte size of the request body (what gets sent over HTTP)
+  // In browser: new Blob([body]).size; In Node: Buffer.byteLength(body, 'utf8')
+  const bodyByteLength =
+    typeof Buffer !== 'undefined'
+      ? Buffer.byteLength(body, 'utf8')
+      : new Blob([body]).size;
+
+  if (bodyByteLength > TRANSCRIBE_SIZE_LIMIT_BYTES) {
+    return { transcript: null, isTooLarge: true };
+  }
+
   const response = await fetch('/api/transcribe', {
     method: HTTPMethod.POST,
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ audioData, mimeType }),
+    body,
   });
 
+  if (response.status === 413) {
+    return { transcript: null, isTooLarge: true };
+  }
+
   if (!response.ok) {
-    return null;
+    return { transcript: null };
   }
 
   const data = (await response.json()) as { transcript?: string };
-  return data.transcript ?? null;
+  return { transcript: data.transcript ?? null };
 };

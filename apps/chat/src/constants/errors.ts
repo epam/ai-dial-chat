@@ -91,5 +91,4 @@ export const errorsMessages = {
   toolsetDeleteFailed: 'Failed to delete toolset',
   toolsetSignInFailed: 'Failed to sign in toolset',
   toolsetSignOutFailed: 'Failed to sign out toolset',
-  transcriptionFailed: 'Audio transcription failed. Please try again.',
 };
