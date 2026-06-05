@@ -16,7 +16,8 @@
     "stopStreaming": "Stop streaming",
     "quickReplyButtons": "Quick reply buttons",
     "stoppedGenerating": "You stopped generating the response",
-    "readOnlyNotice": "Only own conversations can be edited"
+    "readOnlyNotice": "Only own conversations can be edited",
+    "thinking": "Thinking"
   },
   "navigation": {
     "ariaLabel": "Main navigation",

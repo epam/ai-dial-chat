@@ -85,6 +85,11 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   deploymentIconUrl?: string;
   /** Human-readable deployment name shown as the icon's accessible label. */
   deploymentDisplayName?: string;
+  /**
+   * Label shown with a shimmer animation while `isStreaming` is true and the message text is still empty.
+   * Pass a translated string from the consuming app. Defaults to `'Thinking'`.
+   */
+  thinkingLabel?: string;
 }
 
 /** Props accepted by the `MessageBubble` role-switching wrapper. */
@@ -122,4 +127,9 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
    * Required when `role === MessageRole.Status`.
    */
   statusBodyText?: string;
+  /**
+   * Label shown with a shimmer animation while `isStreaming` is true and the message text is still empty.
+   * Forwarded to `AssistantMessageBubble`. Defaults to `'Thinking'`.
+   */
+  thinkingLabel?: string;
 }

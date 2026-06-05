@@ -18,6 +18,7 @@ interface Props {
   modelSelectorLabels: InputProps['modelSelectorLabels'];
   isStreaming: boolean;
   isMobile: boolean;
+  isInputDisabled?: boolean;
   style: CSSProperties;
 }
 
@@ -31,6 +32,7 @@ export const ModelSelectorControl: FC<Props> = ({
   modelSelectorLabels,
   isStreaming,
   isMobile,
+  isInputDisabled = false,
   style,
 }) => {
   const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
@@ -52,8 +54,8 @@ export const ModelSelectorControl: FC<Props> = ({
     return null;
   }
 
-  const disabledClassName = isStreaming
-    ? 'pointer-events-none opacity-50'
+  const disabledIconClassName = isStreaming
+    ? 'pointer-events-none opacity-50 cursor-not-allowed'
     : undefined;
 
   if (isMobile) {
@@ -63,7 +65,7 @@ export const ModelSelectorControl: FC<Props> = ({
           icon={selectorIcon}
           aria-label={selectorAriaLabel}
           onClick={() => setIsModelSheetOpen(true)}
-          className={disabledClassName}
+          className={disabledIconClassName}
         />
         <ModelSelectorBottomSheet
           isOpen={isModelSheetOpen}
@@ -103,9 +105,12 @@ export const ModelSelectorControl: FC<Props> = ({
           <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
         </div>
       }
+      iconClassName={isInputDisabled ? disabledIconClassName : undefined}
       buttonClassName={mergeClasses(
         styles.modelSelectorButton,
-        disabledClassName,
+        isInputDisabled &&
+          disabledIconClassName &&
+          styles.modelSelectorButtonDisabled,
       )}
     />
   );

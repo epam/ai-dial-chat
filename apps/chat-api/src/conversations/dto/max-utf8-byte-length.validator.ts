@@ -1,5 +1,9 @@
-import { registerDecorator, type ValidationOptions } from 'class-validator';
-import { StringUtils } from '../../common/utils/string-utils.js';
+import {
+  registerDecorator,
+  type ValidationArguments,
+  type ValidationOptions,
+} from 'class-validator';
+import { StringUtils } from '../../common/utils/string-utils';
 
 export const MaxUtf8ByteLength = (
   max: number,
@@ -19,7 +23,7 @@ export const MaxUtf8ByteLength = (
             StringUtils.getUtf8ByteLength(value) <= max
           );
         },
-        defaultMessage({ constraints, property }) {
+        defaultMessage({ constraints, property }: ValidationArguments) {
           return `${property} must be at most ${constraints[0]} bytes in UTF-8 encoding`;
         },
       },

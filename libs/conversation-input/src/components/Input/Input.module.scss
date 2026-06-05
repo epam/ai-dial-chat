@@ -5,6 +5,11 @@
   &:focus-within {
     border-color: var(--ci-border-focus, transparent);
   }
+
+  &.wrapperDisabled {
+    background: var(--ci-bg-disabled, var(--controls-bg-disable, #1d2439));
+    cursor: not-allowed;
+  }
 }
 
 .textarea {
@@ -16,6 +21,21 @@
 
   &::placeholder {
     color: var(--ci-placeholder, var(--text-secondary, #9fa6bd));
+  }
+
+  &:disabled {
+    color: var(
+      --ci-text-disabled,
+      var(--controls-text-primary-disable, #7c8293)
+    );
+    cursor: not-allowed;
+
+    &::placeholder {
+      color: var(
+        --ci-placeholder-disabled,
+        var(--controls-text-secondary-disable, #575f73)
+      );
+    }
   }
 }
 
@@ -39,6 +59,21 @@
         --ci-model-selector-caret-hover-bg,
         var(--bg-accent-primary-alpha, #7da4ff26)
       );
+    }
+  }
+
+  &.modelSelectorButtonDisabled {
+    color: var(
+      --ci-model-selector-disabled-color,
+      var(--controls-text-primary-disable, #7c8293)
+    );
+
+    .modelSelectorCaret {
+      color: var(
+        --ci-model-selector-disabled-color,
+        var(--controls-text-primary-disable, #7c8293)
+      );
+      background: var(--ci-bg-disabled, var(--controls-bg-disable, #1d2439));
     }
   }
 }

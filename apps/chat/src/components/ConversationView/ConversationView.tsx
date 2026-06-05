@@ -339,6 +339,7 @@ const ConversationView: FC<Props> = ({
                   )}
                   formatStatusModelChangedBody={formatStatusModelChangedBody}
                   streamErrorText={streamErrorText}
+                  thinkingLabel={t(ChatI18nKeys.Thinking)}
                 />
               );
             })}
