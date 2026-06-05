@@ -95,6 +95,13 @@ async function getProxyErrorMessage(
   proxyRes: Response,
   url: string,
 ): Promise<string> {
+  if (proxyRes.status === 404) {
+    return errorsMessages.fileNotFound;
+  }
+  if (proxyRes.status === 403) {
+    return errorsMessages.fileAccessRevoked;
+  }
+
   let text: string | undefined;
   try {
     text = await proxyRes.text();
@@ -133,16 +140,7 @@ async function getProxyErrorMessage(
   }
 
   if (!errorMessage) {
-    if (proxyRes.status === 403) {
-      errorMessage = errorsMessages.fileAccessRevoked;
-    } else if (proxyRes.status === 404) {
-      errorMessage = errorsMessages.fileNotFound;
-    } else {
-      errorMessage = errorsMessages.requestingEntityFailed(
-        url,
-        proxyRes.statusText,
-      );
-    }
+    errorMessage = errorsMessages.requestingEntityFailed(url, proxyRes.statusText);
   }
 
   return errorMessage;
