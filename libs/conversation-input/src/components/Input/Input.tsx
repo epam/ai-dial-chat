@@ -289,6 +289,7 @@ export const Input: FC<InputProps> = ({
       style={cssVars}
       className={mergeClasses(
         styles.wrapper,
+        isInputDisabled && styles.wrapperDisabled,
         'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded border px-3 py-2',
         className,
       )}
@@ -365,6 +366,7 @@ export const Input: FC<InputProps> = ({
                   modelSelectorLabels={modelSelectorLabels}
                   isStreaming={isStreaming}
                   isMobile={isMobile}
+                  isInputDisabled={isInputDisabled}
                   style={cssVars}
                 />
                 {isStreaming ? (
