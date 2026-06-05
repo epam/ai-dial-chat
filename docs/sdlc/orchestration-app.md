@@ -79,7 +79,7 @@ are sufficient. The pivot to the App should only happen when the bullets
 in the previous section appear — Phase 1.5 buys time, not features the
 App uniquely provides.
 
-See `.github/claude/PLATFORM_NOTES.md` → *Cross-run state* for the
+See `.github/claude/PLATFORM_REFERENCE.md` → *Cross-run state* for the
 consumption pattern.
 
 ---

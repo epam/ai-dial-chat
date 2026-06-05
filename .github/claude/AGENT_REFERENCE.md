@@ -12,27 +12,32 @@ live in [`PLATFORM_REFERENCE.md`](./PLATFORM_REFERENCE.md).
 agents/
 ├── _template/                          # copy this for new agents
 │   └── agent.yml                       # manifest only — no per-agent prompt.md
-├── code-review/                        # worked example: reviewer agent
+├── snyk-jira-ingest/                   # worked example: batch producer (secrets)
 │   └── agent.yml
-└── spec-validation/                    # worked example: agent with orchestration
+└── snyk-triage/                        # worked example: batch chain + analysis_ref + private_output
     └── agent.yml
+# (agents/_*/ are disabled pilots — underscore prefix; the matcher skips them.)
 
 .claude/
 ├── skills/<skill>/SKILL.md             # reusable agent logic lives here
 └── commands/<group>/<skill>.md         # slash-command-style skills (e.g. opsx:verify)
 
 .github/
-├── actions/run-claude-stage/action.yml # composite action; do not edit per-agent
+├── actions/
+│   ├── run-claude-stage/action.yml     # composite action; do not edit per-agent
+│   └── pr-trust-gate/action.yml        # round-0 trust gate (ADR-0005); do not edit per-agent
 ├── claude/
 │   ├── ADDING_AN_AGENT.md              # quickstart
 │   ├── AGENT_REFERENCE.md              # this doc
 │   ├── PLATFORM_REFERENCE.md           # platform-maintainer reference
-│   ├── prompts/agent-wrapper.md        # universal prompt template (intro + inputs + task + output)
+│   ├── prompts/agent-wrapper.md        # universal prompt template (intro + inputs + constraints + task + output)
 │   ├── schemas/agent-manifest.schema.json
 │   ├── schemas/stage-message.schema.json
-│   └── scripts/{render-stage-comment.py, match-agents.py}
+│   └── scripts/{render-stage-comment.py, match-agents.py, scrub-output.py, findings-to-sarif.py, findings-aggregate.py}
 └── workflows/
-    ├── dispatch-pr.yml                 # the dispatcher; do not edit per-agent
+    ├── dispatch-core.yml               # shared dispatch pipeline; do not edit per-agent
+    ├── dispatch-pr.yml                 # pull_request entry point
+    ├── dispatch-schedule.yml           # schedule + workflow_dispatch entry point
     ├── run-agent.yml                   # reusable per-agent runner; do not edit per-agent
     └── stage-security-review.yml       # specialized self-triggered exception
 ```
@@ -55,27 +60,22 @@ agents/
 
 You never write a prompt. The composite action loads a universal template
 at [`prompts/agent-wrapper.md`](./prompts/agent-wrapper.md) and substitutes
-two placeholders — `{{stage}}` and `{{skill}}` — both derived from your
-manifest. Identical shape for every agent:
+four placeholders, all derived from your manifest / the run context:
 
-```
-You are running the **<name>** agent on a pull request.
+- `{{stage}}` — your agent name.
+- `{{skill}}` — the skill it wraps.
+- `{{base_ref}}` — the PR base branch, expanded at compose time (the Bash
+  tool rejects shell expansion, so the diff command can't use `$GITHUB_BASE_REF`).
+- `{{upstream_inputs}}` — per-agent lines for each `needs:` artifact, or a
+  "runs independently" note.
 
-## Inputs
-- Working tree: $GITHUB_WORKSPACE
-- PR diff: git diff origin/${GITHUB_BASE_REF}...HEAD
-- Upstream agent outputs (when declared in `needs:`):
-  upstream/<agent-name>/stage-output.json
-
-## Task
-Invoke the local `/<skill>` skill against the inputs above. Follow its
-instructions verbatim. Map the skill's output to the response schema
-described below.
-
-## Output
-<Universal contract: status enum, payload conventions, "do not post
-comments yourself", envelope-injection note — same for every agent>
-```
+Identical shape for every agent — `## Inputs`, a `## Tool constraints`
+section (the Bash allowlist denies un-listed commands, shell expansion,
+pipes, redirects), a `## Turn budget` directive (write `stage-output.json`
+before the limit — a partial result beats no file), `## Task` (invoke
+`/{{skill}}`; the **wrapper owns input/output plumbing**, the skill owns
+methodology), and `## Output` (write JSON via the `Write` tool; the platform
+injects the envelope and posts — never the agent).
 
 Authors cannot drift the inputs framing, the output contract, or the
 envelope discipline by editing prompts, because there are no per-agent
@@ -104,7 +104,7 @@ cost_class: light
 | `contract_version` | Yes | Pin the manifest schema version. Currently `"0.1"` |
 | `name` | Yes | Kebab-case. Surfaces in PR comments and the kill-switch var |
 | `skill` | Yes | The local skill the agent wraps. Must be addressable as `/<skill>` |
-| `triggers` | Yes | List of events. `[pull_request]` for PR-triggered agents |
+| `triggers` | Yes | List of events: `pull_request`, `schedule`, `workflow_dispatch`. A batch agent declares `[pull_request, schedule, workflow_dispatch]`. Filters apply to PR events only |
 | `allowed_tools` | Yes | Comma-separated Claude tool allowlist (see tiers below) |
 | `agent_version` | No | Recorded in the output envelope; defaults to `"unknown"` |
 | `description` | No | One-line description for the catalog |
@@ -118,6 +118,13 @@ cost_class: light
 | `triggers[].filters` | No | `{branches, labels}` filtering of triggers. `branches` matches PR target; `labels` requires all listed labels present. `paths` is reserved for v0.3 |
 | `kill_switch_var` | No | Override the derived var name (rarely needed) |
 | `tools.extra` | No | CLI tools to install on the runner before the agent runs. Items can be a string (npm package name) or `{name, install}` for non-npm tools. See *CLI dependencies* below |
+| `max_turns` | No | Max Claude turns (default 18, max 60). Honored by the composite action |
+| `secrets` | No | Secret names to inject into the agent's job env. `run-agent.yml` promotes **only** these from the inherited bag and fails loudly if any is absent. The model never types them — committed helper scripts read them from env. See *Secrets* below |
+| `vars` | No | Non-secret config names injected from GitHub Actions Variables — tune knobs (e.g. `JIRA_MAX_FINDINGS`) without editing the skill |
+| `analysis_ref` | No | Git ref whose source the platform overlays before the agent runs, so it inspects *that* branch's code (e.g. the branch a scanner ran on) instead of the checkout. Framework paths (`.github`/`.claude`/`agents`) are preserved. See [`PLATFORM_REFERENCE.md`](./PLATFORM_REFERENCE.md) → *Analysis-ref overlay* |
+| `private_output` | No | `true` → the agent's `stage-output.json` (and audit input) are AES-encrypted (`SDLC_ARTIFACT_KEY`) before upload, and the public surface is **counts-only** to the job summary, not a sticky comment. For sensitive/batch agents on a public repo |
+| `emit_sarif` | No | `true` → convert `payload.findings[]` to SARIF and upload to the Security tab, scoped to `analysis_ref`'s commit |
+| `context_tier` | No | `A` (triggering repo only, default). `B`/`C` reserved; not yet wired |
 
 Manifests are validated against [`schemas/agent-manifest.schema.json`](./schemas/agent-manifest.schema.json) at every dispatch. Schema violations fail the discover job with a clear path to the offending field — no broken agent reaches the matrix. Per-agent `prompt.md` files are rejected (the runner fails loudly if it finds one).
 
@@ -165,12 +172,30 @@ and `{name}` without `version` resolve to the latest stable, which
 can silently change between runs. Pin the version unless you have a
 specific reason to track latest.
 
-Worked examples:
+Worked examples (currently disabled pilots — underscore-prefixed dirs):
 
-- `agents/spec-validation/agent.yml` — short form
+- `agents/_spec-validation/agent.yml` — short form
   (`"@fission-ai/openspec"`, latest)
-- `agents/scan-deps/agent.yml` — long form with version pin
+- `agents/_scan-deps/agent.yml` — long form with version pin
   (Trivy `v0.69.0` via the official curl-based installer)
+
+### Secrets (`secrets:`)
+
+If your skill's committed helper scripts need a credential (e.g. a Jira PAT),
+declare the env-var name in `secrets:` and add the matching value under
+**Settings → Secrets → Actions**. `run-agent.yml` promotes **only** the
+declared names from the inherited secret bag into the job env (failing loudly
+if any is absent) — adding a secret-using agent needs no platform edit.
+
+The model **never types the secret**: the agent-wrapper forbids shell
+expansion in Bash tool calls, so secrets are referenced only inside committed
+scripts that read them from env. Keep the agent's `allowed_tools` scoped to the
+exact committed script (e.g. `Bash(bash .claude/skills/<skill>/fetch.sh:*)`),
+not a general `Bash`.
+
+`SDLC_ARTIFACT_KEY` is the conventional key for `private_output` agents
+(encrypts the output + audit artifacts). Worked example:
+`agents/snyk-jira-ingest/agent.yml` (`secrets: [JIRA_PAT]`).
 
 ### Tool tiers
 
@@ -258,8 +283,8 @@ derived from `name:`:
 
 | Manifest `name` | Variable name |
 |---|---|
-| `code-review` | `STAGE_CODE_REVIEW_ENABLED` |
-| `spec-validation` | `STAGE_SPEC_VALIDATION_ENABLED` |
+| `snyk-triage` | `STAGE_SNYK_TRIAGE_ENABLED` |
+| `snyk-jira-ingest` | `STAGE_SNYK_JIRA_INGEST_ENABLED` |
 
 (Uppercase, hyphens → underscores, prefix `STAGE_`, suffix `_ENABLED`.)
 
@@ -274,13 +299,13 @@ If your agent needs another agent's output as input, declare it in the
 manifest:
 
 ```yaml
-# agents/triage-deps/agent.yml
+# agents/snyk-triage/agent.yml (abridged)
 contract_version: "0.1"
-name: triage-deps
-skill: dep-triage
-triggers: [pull_request]
-allowed_tools: "Read,Grep,Skill"
-needs: [scan-deps]              # ← the only chaining-specific line
+name: snyk-triage
+skill: snyk-triage
+triggers: [pull_request, schedule, workflow_dispatch]
+allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Bash(python3:*),Skill"
+needs: [snyk-jira-ingest]       # ← the only chaining-specific line
 ```
 
 The platform handles the rest:
@@ -294,8 +319,8 @@ The platform handles the rest:
 ### Rules and limits
 
 - **At most 3 rounds** of chaining (the dispatcher caps it).
-- **Upstream killed → downstream skipped.** If `STAGE_SCAN_DEPS_ENABLED`
-  is `"false"`, the matcher drops `triage-deps` too (with a warning).
+- **Upstream killed → downstream skipped.** If `STAGE_SNYK_JIRA_INGEST_ENABLED`
+  is `"false"`, the matcher drops `snyk-triage` too (with a warning).
 - **Cycles fail loudly.** If A needs B and B needs A, the dispatcher
   aborts at discovery with `::error::Cycle detected in agent needs:`.
 - **Same-run only.** The downloaded artifacts are from *this* dispatcher
@@ -313,9 +338,23 @@ it to the composed prompt automatically. What the contract says:
 At the end of the run, the agent uses the **`Write` tool** to save a JSON
 object to `stage-output.json` at the repo root. The renderer reads that
 file, validates required fields, injects envelope fields
-(`contract_version`, `agent_version`, `run_id`, `trigger`), and posts a
-sticky PR comment. The schema lives at
+(`contract_version`, `agent_version`, `run_id`, `trigger`), and surfaces the
+result. The schema lives at
 [`schemas/stage-message.schema.json`](./schemas/stage-message.schema.json).
+
+**You write the same JSON regardless of how it's surfaced** — the platform
+decides the destination from your manifest:
+
+- **Default (public agent):** the rendered body passes through the M4
+  post-processor (secret scan → fail-closed; URL/HTML neutralize), then posts
+  as a sticky PR comment + full job summary. The plaintext artifact uploads.
+- **`private_output: true`:** only **counts** go to the job summary; the full
+  `stage-output.json` is encrypted and uploaded. No sticky comment. Use this
+  for sensitive/batch agents on a public repo.
+
+Either way, the composed prompt + schema are persisted as `stage-input-<name>`
+for audit (encrypted for private agents). You don't write or trigger any of
+this — just produce valid `stage-output.json`.
 
 `Write` is appended to `allowed_tools` automatically by the platform —
 your manifest doesn't need to declare it.

@@ -1,13 +1,26 @@
-# Non-PR agents and output-schema flexibility — design notes
+# Non-PR agents and output-schema flexibility — DESIGN ARCHIVE
 
-**Status: deferred. To discuss before any implementation.**
+> **⚠️ Archived design record — partially superseded.** Scheduled / batch
+> agents ARE now implemented, but via a **different design** than this doc
+> proposed. The as-built behavior — `dispatch-schedule.yml` + `dispatch-core.yml`,
+> the `snyk-jira-ingest → snyk-triage` chain, `private_output` (encrypted
+> artifact + counts-only job-summary aggregate), and the `analysis_ref` overlay
+> — is documented in **[`scheduled-batch-agents.md`](./scheduled-batch-agents.md)**.
+> Read that for what exists today.
+>
+> This doc is kept as the design lineage. The primitives it centers on —
+> `consumes_prior_run`, the `issue` output channel, and platform-computed
+> `change_summary` — were **NOT built**; the `private_output` + job-summary
+> model covered the security chain without them. They remain valid future work
+> (see *Deferred* in the as-built doc) if a delta-tracking / notify-on-change
+> agent appears. Where this doc references `PLATFORM_NOTES.md`, that file is now
+> `PLATFORM_REFERENCE.md`.
 
 Captures the design conversation from May 2026 about adding the first
 non-PR agent (security-findings-triage) and the schema flexibility that
-realization surfaced. No code yet; this is a record so we can pick up the
-thread later.
+realization surfaced. Kept as a record of the design reasoning.
 
-For context: today the platform handles PR-triggered agents only. The
+For context: at the time, the platform handled PR-triggered agents only. The
 first proposed non-PR agent (a scheduled triage of accumulated security
 findings) opened a series of design questions about scheduled dispatch,
 state storage, and how universal the current output schema actually is.
@@ -371,14 +384,22 @@ So the work isn't just for one agent; it's the substrate for a category.
 
 ## Status
 
-**Deferred.** Discussed and designed; not yet implemented. Re-open when
-ready to invest the ~4 hours, with the open questions resolved.
+**Archived — partially superseded.** Scheduled dispatch + the first batch
+agents shipped via a different design (see the banner at the top and
+[`scheduled-batch-agents.md`](./scheduled-batch-agents.md)). What this doc
+proposed and what actually shipped:
 
-When picking back up, the implementation order matches the platform
-primitives table above. Two commits:
-1. **Platform**: items 1–6 (schema loose + scheduler + consumes_prior +
-   issue channel + permission tier + renderer diff)
-2. **Agent**: item 7 (security-findings-triage manifest + prompt)
+| This doc proposed | As-built |
+|---|---|
+| Single scheduled triage agent | Two-agent same-run chain (`snyk-jira-ingest → snyk-triage`) |
+| `dispatch-schedule.yml` | ✅ shipped, plus a shared `dispatch-core.yml` |
+| `consumes_prior_run` (cross-run state) | ❌ not built — uses same-run `needs:` |
+| `issue` output channel | ❌ not built — `private_output` + counts-only job-summary aggregate |
+| platform `change_summary` diff | ❌ not built |
+| `issues: write` tier | ❌ not added |
+| schema loosening | top-level already open; payload conventions used |
+
+The unbuilt items remain valid future work for a delta-tracking agent.
 
 ---
 
