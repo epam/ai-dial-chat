@@ -18,13 +18,13 @@ import type {
 const isRecord = (val: unknown): val is Record<string, unknown> =>
   val != null && typeof val === 'object' && !Array.isArray(val);
 
-function toAdditionalProperties(
+const toAdditionalProperties = (
   val: unknown,
-): boolean | Record<string, unknown> | undefined {
+): boolean | Record<string, unknown> | undefined => {
   if (typeof val === 'boolean') return val;
   if (isRecord(val)) return val;
   return undefined;
-}
+};
 
 type RawDeployment = {
   id?: string;
@@ -37,7 +37,7 @@ type RawDeployment = {
   application_type_schema_id?: string;
 };
 
-function mapToDeploymentItem(raw: RawDeployment): DeploymentItemDto | null {
+const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
   if (!raw.id) return null;
 
   let type: 'model' | 'application' | 'toolset';
@@ -49,11 +49,14 @@ function mapToDeploymentItem(raw: RawDeployment): DeploymentItemDto | null {
     type = 'model';
   }
 
-  const interfaces = raw.interfaces
-    ? Array.isArray(raw.interfaces)
-      ? raw.interfaces
-      : [raw.interfaces]
-    : undefined;
+  let interfaces: string[] | undefined;
+  if (raw.interfaces) {
+    if (Array.isArray(raw.interfaces)) {
+      interfaces = raw.interfaces;
+    } else {
+      interfaces = [raw.interfaces];
+    }
+  }
 
   return {
     id: raw.id,
@@ -67,7 +70,7 @@ function mapToDeploymentItem(raw: RawDeployment): DeploymentItemDto | null {
         ? raw.application_type_schema_id
         : undefined,
   };
-}
+};
 
 @Injectable()
 export class DeploymentsService extends AppService {

@@ -10,17 +10,17 @@ import { MessageCustomContentDto } from './message-custom-content.dto';
  * string OR the DTO carries a DIAL custom payload that can stand in for text
  * (`attachments`, `form_value`, or `configuration_value`).
  */
-export function IsMessageOrAttachmentsPresent(
+export const IsMessageOrAttachmentsPresent = (
   validationOptions?: ValidationOptions,
-) {
-  return function (object: object, propertyName: string): void {
+) => {
+  return (object: object, propertyName: string): void => {
     registerDecorator({
       name: 'isMessageOrAttachmentsPresent',
       target: object.constructor,
       propertyName,
       options: validationOptions,
       validator: {
-        validate(value: unknown, args: ValidationArguments): boolean {
+        validate: (value: unknown, args: ValidationArguments): boolean => {
           const { custom_content } = args.object as {
             custom_content?: MessageCustomContentDto;
           };
@@ -37,10 +37,10 @@ export function IsMessageOrAttachmentsPresent(
             hasText || hasAttachments || hasFormValue || hasConfigurationValue
           );
         },
-        defaultMessage(): string {
+        defaultMessage: (): string => {
           return 'Either a non-empty message or custom content is required';
         },
       },
     });
   };
-}
+};
