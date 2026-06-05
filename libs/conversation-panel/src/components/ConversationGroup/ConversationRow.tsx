@@ -68,6 +68,15 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     </span>
   );
 
+  let buttonPaddingRight: string;
+  if (!hasActions) {
+    buttonPaddingRight = 'pr-3';
+  } else if (isMenuOpen) {
+    buttonPaddingRight = 'pr-9';
+  } else {
+    buttonPaddingRight = 'pr-2 group-hover:pr-9';
+  }
+
   return (
     <li className="group relative">
       <DialGhostButton
@@ -78,7 +87,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         onClick={() => onSelectConversation(item.id)}
         className={mergeClasses(
           'h-8 w-full justify-start gap-2 pl-3',
-          hasActions ? 'pr-2' : 'pr-3',
+          buttonPaddingRight,
           styles.item,
           isActive && styles.itemActive,
         )}
