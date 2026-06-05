@@ -1,6 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsString, MinLength } from 'class-validator';
-import { MaxUtf8ByteLength } from './max-utf8-byte-length.validator.js';
+import { MaxUtf8ByteLength } from './max-utf8-byte-length.validator';
 
 export class RenameConversationBodyDto {
   @ApiProperty({

@@ -1,4 +1,4 @@
-import { StringUtils } from '../common/utils/string-utils.js';
+import { StringUtils } from '../common/utils/string-utils';
 
 const notAllowedSymbolsRegex = /[:;,=/{}%&"]/g;
 const MAX_ENTITY_BYTES = 255;
