@@ -70,6 +70,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   const [submitted, setSubmitted] = useState(false);
   const [isDotError, setIsDotError] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
+  const [confirmCloseEmptyFields, setConfirmCloseEmptyFields] = useState(false);
 
   const skillValidation = useAppSelector((state) =>
     PromptsSelectors.selectSkillValidation(state, prompt.id),
@@ -168,8 +169,9 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
     !prepareEntityName(name, { forRenaming: true }) || !content.trim();
 
   const handleAddAgentSkill = useCallback(() => {
-    setContent(generateSkillContent());
-  }, []);
+    const template = generateSkillContent();
+    setContent(content ? `${template}\n\n${content}` : template);
+  }, [content]);
 
   const allowEnterClick = useAppSelector(UISelectors.selectAllowEnterToSend);
 
@@ -207,13 +209,27 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
     [handleEdit, onClose, prompt],
   );
 
+  const handleConfirmCloseEmptyFields = useCallback(
+    (isConfirmed: boolean) => {
+      if (!isConfirmed) {
+        onClose();
+      }
+      setConfirmCloseEmptyFields(false);
+    },
+    [onClose],
+  );
+
   const handleEditClose = useCallback(() => {
     if (areSomePromptsFieldsChanged(prompt, { name, description, content })) {
-      setConfirmClose(true);
+      if (saveDisabled) {
+        setConfirmCloseEmptyFields(true);
+      } else {
+        setConfirmClose(true);
+      }
     } else {
       onClose();
     }
-  }, [content, description, name, onClose, prompt]);
+  }, [content, description, name, onClose, prompt, saveDisabled]);
 
   useEffect(() => {
     window.addEventListener('keydown', handleEnter);
@@ -401,6 +417,16 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
           confirmLabel={t(PromptBarI18nKeys.Save)}
           cancelLabel={t(PromptBarI18nKeys.NotSave)}
           onClose={handleConfirmClose}
+        />
+      )}
+      {confirmCloseEmptyFields && (
+        <ConfirmDialog
+          isOpen
+          heading={t(PromptBarI18nKeys.UnsavedChanges)}
+          description={t(PromptBarI18nKeys.UnsavedChangesEmptyMandatoryFields)}
+          confirmLabel={t(PromptBarI18nKeys.BackToEditing)}
+          cancelLabel={t(PromptBarI18nKeys.NotSave)}
+          onClose={handleConfirmCloseEmptyFields}
         />
       )}
     </>
