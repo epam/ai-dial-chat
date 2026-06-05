@@ -84,6 +84,7 @@ const EmptyChatDescriptionView = ({
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+  const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const screenState = useScreenState();
 
@@ -219,7 +220,7 @@ const EmptyChatDescriptionView = ({
               <div className="flex items-center justify-center gap-2">
                 <ModelVersionSelect
                   className="h-max w-fit self-center"
-                  entities={versions}
+                  entities={isIsolatedView ? [model] : versions}
                   onSelect={handleSelectVersion}
                   currentEntity={model}
                   showVersionPrefix

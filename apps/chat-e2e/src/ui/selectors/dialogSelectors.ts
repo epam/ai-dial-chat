@@ -334,6 +334,51 @@ export const AddExternalAppSettingsFormSelector = {
   externalUrl: '#externalUrl',
 };
 
+export const AddQuickApp2SettingsFormSelector = {
+  orchestratorSection: '[data-qa="orchestrator-section"]',
+  contextToolsSection: '[data-qa="context-tools-section"]',
+  attachmentsSection: '[data-qa="attachments-section"]',
+  conversationStartersSection: '[data-qa="conversation-starters-section"]',
+
+  // Context & Tools subsections
+  agentsAndToolsetsField: '[data-qa="agents-and-toolsets-field"]',
+  documentUrlsField: '[data-qa="document-urls-field"]',
+  codeInterpreterField: '[data-qa="code-interpreter-field"]',
+
+  // Agents & Toolsets — view modes
+  agentsAndToolsetsMarketplaceView:
+    '[data-qa="agents-and-toolsets-marketplace-view"]',
+  agentsAndToolsetsJsonView: '[data-qa="agents-and-toolsets-json-view"]',
+
+  // Agents & Toolsets — controls inside marketplace view
+  noAgentsAndToolsetsPlaceholder: '[data-qa="no-agents-and-toolsets"]',
+  agentsAndToolsetsList: '[data-qa="agents-and-toolsets-list"]',
+  addAgentsButtonContainer: '[data-qa="add-agents-button"]',
+  addAgentsButtonLabel: 'Add', // aria-label of the "+ Add" button
+  agentsAndToolsetsJsonToggle: '[data-qa="agents-and-toolsets-json-toggle"]',
+
+  // Chips inside agents-and-toolsets-list
+  agentChip: '[data-qa="agent-chip"]',
+  chipName: '[data-qa="chip-name"]',
+  chipVersion: '[data-qa="chip-version"]',
+  chipRemoveButtonLabel: 'Remove item', // aria-label of the chip remove button
+
+  // Code Interpreter toggle
+  codeInterpreterToggle: '[data-qa="toggle-switch"]',
+};
+
+// Shared by both agents browser modals (Talk to / Select agents and toolsets).
+export const AgentsBrowserModalSelectors = {
+  searchInput: '[data-qa="search-agents"]',
+  myWorkspaceTab: '[data-qa="workspace"]',
+  marketplaceTab: '[data-qa="marketplace"]',
+};
+
+export const AgentAndToolsetModalSelector = {
+  container:
+    '[role="dialog"][aria-modal="true"]:has([data-qa="search-agents"])',
+};
+
 export const AddToolsetSettingsFormSelector = {
   definitionLabel: '[data-qa="definition-label"]',
   endpointLabel: '[for="endpoint"]',

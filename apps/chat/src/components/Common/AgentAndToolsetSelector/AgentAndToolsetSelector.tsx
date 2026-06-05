@@ -22,7 +22,10 @@ import { DialLinkButton } from '@epam/ai-dial-ui-kit';
 const NoAgentsAndToolsets: React.FC = () => {
   const { t } = useTranslation(Translation.Common);
   return (
-    <div className="flex flex-col items-center justify-center rounded border border-primary py-4">
+    <div
+      data-qa="no-agents-and-toolsets"
+      className="flex flex-col items-center justify-center rounded border border-primary py-4"
+    >
       <IconLayoutGrid size={60} className="mb-2 text-secondary" stroke={0.5} />
       <span>{t(CommonI18nKeys.NoAgentsAndToolsetsAdded)}</span>
     </div>
@@ -90,41 +93,48 @@ export const AgentAndToolsetSelector: React.FC<
     <div className="relative grow space-y-4">
       <div className="flex flex-col">
         <div className="absolute right-0 top-[-29px] flex items-center">
-          <DialLinkButton
-            tooltipProps={{
-              tooltip:
-                addBtnTooltip ??
-                tooltip ??
-                t(CommonI18nKeys.AddAgentsAndToolsets),
-            }}
-            disabled={readonly}
-            onClick={handleOpenSelectModal}
-            iconBefore={<IconPlus size={18} />}
-            label={t(CommonI18nKeys.AddCommon)}
-          />
+          <span data-qa="add-agents-button">
+            <DialLinkButton
+              tooltipProps={{
+                tooltip:
+                  addBtnTooltip ??
+                  tooltip ??
+                  t(CommonI18nKeys.AddAgentsAndToolsets),
+              }}
+              disabled={readonly}
+              onClick={handleOpenSelectModal}
+              iconBefore={<IconPlus size={18} />}
+              label={t(CommonI18nKeys.AddCommon)}
+            />
+          </span>
           {!!onJsonSwitchClick && (
             <>
               <div className="ml-1 mr-3 h-3 w-0 border-l border-primary" />
-              <ToggleSwitch
-                isOn={false}
-                handleSwitch={onJsonSwitchClick}
-                disabled={readonly}
-                switchOFFText={t(CommonI18nKeys.OFFCommon)}
-                additionalText={t(CommonI18nKeys.JSONCommon)}
-                className="flex w-fit items-center gap-2"
-                tooltip={t(
-                  !readonly
-                    ? CommonI18nKeys.SwitchToJsonView
-                    : CommonI18nKeys.AppIsPublicCannotBeEdited,
-                )}
-              />
+              <span data-qa="agents-and-toolsets-json-toggle">
+                <ToggleSwitch
+                  isOn={false}
+                  handleSwitch={onJsonSwitchClick}
+                  disabled={readonly}
+                  switchOFFText={t(CommonI18nKeys.OFFCommon)}
+                  additionalText={t(CommonI18nKeys.JSONCommon)}
+                  className="flex w-fit items-center gap-2"
+                  tooltip={t(
+                    !readonly
+                      ? CommonI18nKeys.SwitchToJsonView
+                      : CommonI18nKeys.AppIsPublicCannotBeEdited,
+                  )}
+                />
+              </span>
             </>
           )}
         </div>
         {!value.length ? (
           <NoAgentsAndToolsets />
         ) : (
-          <div className="flex flex-wrap gap-1 rounded border border-primary p-2">
+          <div
+            data-qa="agents-and-toolsets-list"
+            className="flex flex-wrap gap-1 rounded border border-primary p-2"
+          >
             {value.map((id) => (
               <AgentAndToolsetChip
                 key={id}
