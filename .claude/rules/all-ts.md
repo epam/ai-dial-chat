@@ -11,6 +11,7 @@ paths:
 - Prefer arrow-function constants over `function` declarations for local helpers and exported functions.
 - Use the `void` operator before Promise-returning calls only for intentional fire-and-forget work where errors are handled internally. Do not add it as a routine prefix for local async helpers.
 - Utility/helper files must be named in kebab-case after the exported function (for example, `get-conversation-source.ts`) and must not use the `.utils` suffix.
+- Prefer `value == null` over `value === null || value === undefined`, and `value != null` over `value !== null && value !== undefined`, unless you must distinguish `null` from `undefined` explicitly.
 
 ## Event handler naming
 

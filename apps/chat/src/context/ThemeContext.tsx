@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { useFavicon } from '../hooks/favicon/useFavicon';
 import { ApiEndpoints, get } from '../server-api/base';
+import { StorageKey } from '../constants/storage';
 import { applyThemeColors } from '../utils/apply-theme-colors';
 import { getFromLocalStorage } from '../utils/local-storage';
 
@@ -78,7 +79,9 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const storedTheme =
-      typeof window !== 'undefined' ? getFromLocalStorage('theme') : null;
+      typeof window !== 'undefined'
+        ? getFromLocalStorage(StorageKey.Theme)
+        : null;
     const configuredTheme = storedTheme || config?.themes?.[0].id;
     if (configuredTheme) {
       updateTheme(configuredTheme);
