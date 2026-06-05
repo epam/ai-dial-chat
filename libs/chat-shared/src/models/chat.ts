@@ -101,8 +101,6 @@ export interface MessageCustomContent {
 
 /** A single message in a conversation. */
 export interface Message {
-  /** Unique message identifier. */
-  id: string;
   /** Who authored the message. */
   role: MessageRole;
   /** Plain-text (or Markdown) message body. */
