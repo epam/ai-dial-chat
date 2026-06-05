@@ -48,7 +48,7 @@ runs:
       shell: bash
       run: |
         #!/bin/bash
-        set -x
+        # set -x
 
         function version { echo "$@" | awk -F. '{ printf("%d%03d%03d\n", $1,$2,$3); }'; }
 
@@ -128,7 +128,7 @@ runs:
             rc)
               DEV_N=$(git rev-list --count "${LATEST_RC_TAG}..HEAD")
               CURRENT_VERSION="${LATEST_RC_TAG}"
-              NEXT_VERSION="${LATEST_RC_LINE}.0-dev.${DEV_N}"
+              NEXT_VERSION=$(bump_version "${LATEST_RC_LINE}.0" --minor --pre-release "-dev.${DEV_N}")
               ;;
             *)
               DEV_N=$(git rev-list --count HEAD)
