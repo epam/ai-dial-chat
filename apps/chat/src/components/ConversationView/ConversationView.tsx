@@ -361,10 +361,12 @@ const ConversationView: FC<Props> = ({
         className="w-full"
       >
         {isReadOnly ? (
-          <DialNotification
-            variant={NotificationVariant.Info}
-            message={readOnlyNotice}
-          />
+          <div className="p-4">
+            <DialNotification
+              variant={NotificationVariant.Info}
+              message={readOnlyNotice}
+            />
+          </div>
         ) : (
           <Suspense fallback={null}>
             <ConversationInput

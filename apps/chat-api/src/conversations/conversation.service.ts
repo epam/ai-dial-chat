@@ -318,21 +318,65 @@ export class ConversationService extends AppService {
             };
           });
 
-      const userItems = mapItems(userData.items ?? []);
+      // Extract the path within a bucket from a DIAL Core resource URL.
+      // URL format: "conversations/<bucket>/<relative-path>"
+      // Stripping the first two segments lets us match the same conversation
+      // across different buckets (e.g. user bucket vs. public bucket).
+      // Falls back to item.name when url is absent.
+      const getBucketRelativePath = (item: MetadataItem): string => {
+        if (item.url) {
+          const parts = item.url.split('/');
+          return parts.length >= 3 ? parts.slice(2).join('/') : item.url;
+        }
+        return item.name ?? '';
+      };
 
-      // Build a set of conversation names already present in the user's bucket so
-      // that published copies in the public bucket are not shown as duplicates.
-      const userItemNames = new Set(
+      // Paths of public-bucket items on this page — used to:
+      //   1. Skip public items that duplicate a user-bucket item (dedup)
+      //   2. Promote user-bucket items that are org-published to publishedWithMe: true
+      const publicItemPaths = new Set(
+        publicError == null && publicData
+          ? (publicData.items ?? [])
+              .filter((item) => item.nodeType !== 'FOLDER')
+              .map(getBucketRelativePath)
+          : [],
+      );
+
+      // IDs of user-bucket items that also exist in the public bucket.
+      // These should be shown as org-published (Organization section) rather
+      // than My Chats, because DIAL Core may not set publishedWithMe on
+      // user-bucket copies.
+      const orgPublishedUserIds = new Set(
         (userData.items ?? [])
-          .filter((item) => item.nodeType !== 'FOLDER' && item.name)
-          .map((item) => item.name as string),
+          .filter(
+            (item) =>
+              item.nodeType !== 'FOLDER' &&
+              publicItemPaths.has(getBucketRelativePath(item)),
+          )
+          .map(
+            (item) => item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`,
+          ),
+      );
+
+      const userItems = mapItems(userData.items ?? []).map((item) =>
+        orgPublishedUserIds.has(item.id)
+          ? { ...item, publishedWithMe: true }
+          : item,
+      );
+
+      // Paths of user-bucket items on this page — used to skip public items
+      // that are already represented as user items above.
+      const userItemPaths = new Set(
+        (userData.items ?? [])
+          .filter((item) => item.nodeType !== 'FOLDER')
+          .map(getBucketRelativePath),
       );
 
       const publicItems =
         publicError == null && publicData
           ? mapItems(
               (publicData.items ?? []).filter(
-                (item) => !userItemNames.has(item.name ?? ''),
+                (item) => !userItemPaths.has(getBucketRelativePath(item)),
               ),
               { publishedWithMe: true },
             )
