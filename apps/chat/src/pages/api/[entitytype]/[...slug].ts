@@ -140,7 +140,10 @@ async function getProxyErrorMessage(
   }
 
   if (!errorMessage) {
-    errorMessage = errorsMessages.requestingEntityFailed(url, proxyRes.statusText);
+    errorMessage = errorsMessages.requestingEntityFailed(
+      url,
+      proxyRes.statusText,
+    );
   }
 
   return errorMessage;
