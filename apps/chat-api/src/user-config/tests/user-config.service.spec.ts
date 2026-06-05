@@ -120,7 +120,7 @@ describe('UserConfigService', () => {
       await service.writeConfig(config, 'token', 'bucket');
       expect(uploadSpy).toHaveBeenCalledWith(
         'bucket',
-        'user-config.json',
+        '.user-config.json',
         expect.any(Object),
       );
       const uploaded = await getUploadedConfig(uploadSpy);
