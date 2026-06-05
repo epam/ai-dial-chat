@@ -403,6 +403,7 @@ export const ExpectedConstants = {
     `Item copied successfully\u201C${name}\u201D copied to My Files`,
   readOnlyToolsetMessage: 'This toolset is public and cannot be edited',
   readOnlyApplicationMessage: 'This application is public and cannot be edited',
+  notAvailableChipTooltip: (
     entityType: string,
     name: string,
     version: string,
