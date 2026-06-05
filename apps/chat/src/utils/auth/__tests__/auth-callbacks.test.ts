@@ -8,12 +8,14 @@ const {
   mockSetIsRefreshTokenStart,
   mockResetRefreshingState,
   mockClientRefresh,
+  mockGetAuthAdditionalParamsExchangeBody,
 } = vi.hoisted(() => ({
   mockGetOrDiscoverClient: vi.fn(),
   mockGetRefreshToken: vi.fn(),
   mockSetIsRefreshTokenStart: vi.fn(),
   mockResetRefreshingState: vi.fn(),
   mockClientRefresh: vi.fn(),
+  mockGetAuthAdditionalParamsExchangeBody: vi.fn(),
 }));
 
 vi.mock('@/src/utils/auth/nextauth-client', () => ({
@@ -48,6 +50,10 @@ vi.mock('@/src/utils/json', () => ({ safeParseJSON: () => ({}) }));
 
 vi.mock('@/src/utils/server/logger', () => ({
   logger: { error: vi.fn(), warn: vi.fn(), debug: vi.fn() },
+}));
+
+vi.mock('../auth-additional-params', () => ({
+  getAuthAdditionalParamsExchangeBody: mockGetAuthAdditionalParamsExchangeBody,
 }));
 
 vi.mock('@epam/ai-dial-shared', () => ({ Feature: {} }));
@@ -101,6 +107,7 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
     vi.clearAllMocks();
     // Default: no existing refresh state → this request acquires the lock
     mockGetRefreshToken.mockReturnValue(undefined);
+    mockGetAuthAdditionalParamsExchangeBody.mockReturnValue(undefined);
   });
 
   describe('successful refresh', () => {
@@ -124,6 +131,7 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
         'u1',
         expect.objectContaining({ isRefreshing: true }),
       );
+      expect(mockClientRefresh).toHaveBeenCalledWith('rt-old', undefined);
       // Lock released with fresh token
       expect(mockSetIsRefreshTokenStart).toHaveBeenLastCalledWith(
         'u1',
@@ -148,6 +156,32 @@ describe('callbacks.jwt – refresh lock lifecycle', () => {
       } as never);
 
       expect((result as { error?: string }).error).toBeUndefined();
+    });
+
+    it('passes AUTH_ADDITIONAL_PARAMS into the refresh exchange body', async () => {
+      const client = {
+        refresh: mockClientRefresh.mockResolvedValue(
+          makeValidRefreshResponse(),
+        ),
+      };
+      mockGetOrDiscoverClient.mockResolvedValue(client);
+      mockGetAuthAdditionalParamsExchangeBody.mockReturnValue({
+        organization_id: 'org-1',
+        tenant_id: 'tenant-1',
+      });
+
+      await callbacks.jwt!({
+        token: makeExpiredToken(),
+        trigger: undefined as never,
+        account: null,
+      } as never);
+
+      expect(mockClientRefresh).toHaveBeenCalledWith('rt-old', {
+        exchangeBody: {
+          organization_id: 'org-1',
+          tenant_id: 'tenant-1',
+        },
+      });
     });
   });
 
