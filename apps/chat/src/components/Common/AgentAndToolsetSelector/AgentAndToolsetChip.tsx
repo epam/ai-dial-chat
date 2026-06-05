@@ -42,6 +42,7 @@ const ChipWrapper: React.FC<ChipWrapperProps> = ({
   children,
 }) => (
   <div
+    data-qa="agent-chip"
     className={classNames(
       'group relative flex h-[34px] items-center rounded',
       isCustomTool

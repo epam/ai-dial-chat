@@ -5,13 +5,15 @@ import config from '@/config/chat.playwright.config';
 import {
   API,
   ExpectedConstants,
+  MarketplaceEditorSteps,
   MarketplaceEntitiesTabs,
   MarketplaceTabs,
   MarketplaceUrlBuilder,
+  QuickApp2SchemaId,
+  ToolsetEditorSteps,
 } from '@/src/testData';
 import { EntityEditorUrlBuilder } from '@/src/testData/marketplace/entityEditorUrlBuilder';
 import { BasePage, ExpectedApiResponse } from '@/src/ui/pages/basePage';
-import { EntityEditSteps } from '@/src/ui/webElements';
 import { MarketplaceContainer } from '@/src/ui/webElements/marketplace/marketplaceContainer';
 
 interface MarketplacePageOptions {
@@ -99,6 +101,14 @@ export class MarketplacePage extends BasePage {
     );
   }
 
+  async openCreateQuickApp2Page(options: MarketplaceEntityOptions = {}) {
+    await this.openCreateEntityPage(
+      MarketplaceEntitiesTabs.AGENTS,
+      QuickApp2SchemaId,
+      options,
+    );
+  }
+
   async openCreateToolsetPage() {
     await this.openCreateEntityPage(
       MarketplaceEntitiesTabs.TOOLSETS,
@@ -124,6 +134,24 @@ export class MarketplacePage extends BasePage {
     );
   }
 
+  // Opens an existing QA 2.0 in edit mode. The apps editor finds the app by
+  // reference (not id) and needs the schema + Settings step in the URL.
+  async openEditQuickApp2Page(
+    reference: string,
+    options: MarketplaceEntityOptions = {
+      updateInstalledEntities: false,
+      getInstalledEntities: false,
+      getEntities: false,
+    },
+  ) {
+    await this.openEditEntityPage(
+      reference,
+      MarketplaceEntitiesTabs.AGENTS,
+      QuickApp2SchemaId,
+      options,
+    );
+  }
+
   private async openCreateEntityPage(
     entityTab: MarketplaceEntitiesTabs,
     appTypeSchema?: ApplicationType | string,
@@ -131,7 +159,6 @@ export class MarketplacePage extends BasePage {
   ): Promise<void> {
     const entityEditorAttributes = this.getCreateEntityEditorAttributes(
       entityTab,
-      EntityEditSteps.generalInfo,
       appTypeSchema,
     );
     await this.navigateToEntityEditorPage(options, entityEditorAttributes);
@@ -196,7 +223,6 @@ export class MarketplacePage extends BasePage {
 
   private getCreateEntityEditorAttributes(
     entityTab: MarketplaceEntitiesTabs,
-    step: EntityEditSteps,
     appTypeSchema?: ApplicationType | string,
   ): {
     entityEditorPath: string;
@@ -211,9 +237,11 @@ export class MarketplacePage extends BasePage {
       entityTab,
       config,
     );
-    let entityEditorUrlBuilder = new EntityEditorUrlBuilder(config.route, step)
-      .withReturnUrl(returnUrl)
-      .withIsCreating();
+    let entityEditorUrlBuilder = this.withEditorStep(
+      new EntityEditorUrlBuilder(config.route).withReturnUrl(returnUrl),
+      entityTab,
+      'General',
+    ).withIsCreating();
     if (appTypeSchema) {
       entityEditorUrlBuilder = entityEditorUrlBuilder.withSchema(appTypeSchema);
     }
@@ -240,13 +268,13 @@ export class MarketplacePage extends BasePage {
       entityTab,
       config,
     );
-    const step =
-      entityTab === MarketplaceEntitiesTabs.TOOLSETS
-        ? EntityEditSteps.toolsetSettings
-        : EntityEditSteps.appSettings;
-    let entityEditorUrlBuilder = new EntityEditorUrlBuilder(config.route, step)
-      .withReturnUrl(returnUrl)
-      .withId(id);
+    let entityEditorUrlBuilder = this.withEditorStep(
+      new EntityEditorUrlBuilder(config.route)
+        .withReturnUrl(returnUrl)
+        .withId(id),
+      entityTab,
+      'Settings',
+    );
     if (appTypeSchema) {
       entityEditorUrlBuilder = entityEditorUrlBuilder.withSchema(appTypeSchema);
     }
@@ -254,6 +282,17 @@ export class MarketplacePage extends BasePage {
       entityEditorPath: entityEditorUrlBuilder.build(),
       entityApiHosts: config.apiHosts,
     };
+  }
+
+  // Picks the step enum that matches the editor, so the values can't be mixed up.
+  private withEditorStep(
+    builder: EntityEditorUrlBuilder,
+    entityTab: MarketplaceEntitiesTabs,
+    section: 'General' | 'Settings',
+  ): EntityEditorUrlBuilder {
+    return entityTab === MarketplaceEntitiesTabs.TOOLSETS
+      ? builder.withToolsetStep(ToolsetEditorSteps[section])
+      : builder.withAppStep(MarketplaceEditorSteps[section]);
   }
 
   private getEntityConfig(entityTab: MarketplaceEntitiesTabs) {

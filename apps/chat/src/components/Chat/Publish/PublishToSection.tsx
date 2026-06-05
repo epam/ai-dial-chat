@@ -98,7 +98,7 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
         <div className="flex w-full min-w-0 items-center justify-between">
           <Tooltip
             tooltip={displayPublishToUrl}
-            triggerClassName="truncate whitespace-pre block min-w-0 text-left"
+            triggerClassName="truncate whitespace-pre block min-w-0 text-start"
             contentClassName="break-all"
             dataQa="path"
           >
