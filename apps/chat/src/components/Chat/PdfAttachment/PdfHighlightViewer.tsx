@@ -47,6 +47,28 @@ interface Props {
 
 const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
+const getPdfLoadErrorMessage = (
+  error: unknown,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string => {
+  const status =
+    typeof error === 'object' &&
+    error !== null &&
+    typeof (error as { status?: unknown }).status === 'number'
+      ? (error as { status: number }).status
+      : undefined;
+
+  if (status === 403) {
+    return t(ChatI18nKeys.FileAccessRevoked);
+  }
+  if (status === 404) {
+    return t(ChatI18nKeys.FileNotFound);
+  }
+
+  const message = error instanceof Error ? error.message : 'Failed to load PDF';
+  return t(ChatI18nKeys.FailedToLoadPdf, { error: message });
+};
+
 export const PdfHighlightViewer = ({ url }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -140,8 +162,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       } catch (e) {
         if (cancelled) return;
 
-        const message = e instanceof Error ? e.message : 'Failed to load PDF';
-        setError(t(ChatI18nKeys.FailedToLoadPdf, { error: message }));
+        setError(getPdfLoadErrorMessage(e, t));
         setIsLoading(false);
       }
     })();
