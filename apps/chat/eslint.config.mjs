@@ -20,7 +20,6 @@ export default [
     rules: {
       'react/jsx-no-target-blank': 'warn',
       'react/jsx-key': 'error',
-      'react/no-array-index-key': 'warn',
       'react/no-children-prop': 'error',
       'react/no-danger': 'warn',
       'react/no-danger-with-children': 'error',

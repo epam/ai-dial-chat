@@ -22,9 +22,6 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
 /**
  * Applies a single SSE stream chunk to the message list.
  *
- * Extracts the text delta, optional `form_schema`, and optional `attachments`
- * from the chunk and merges them into the assistant message identified by
- * `assistantMessageId`.
  *
  * Attachments are accumulated: each chunk's attachments are appended to the
  * existing array rather than replacing it.

@@ -193,7 +193,7 @@ export const ConversationPage: FC = () => {
       </div>
 
       <DialConfirmationPopup
-        open={!!pendingDeleteIndex}
+        open={pendingDeleteIndex != null}
         header={t(ChatI18nKeys.DeleteMessageTitle)}
         description={t(ChatI18nKeys.DeleteMessageDescription)}
         confirmLabel={t(ActionsI18nKeys.Delete)}
@@ -204,7 +204,7 @@ export const ConversationPage: FC = () => {
       />
 
       <DialConfirmationPopup
-        open={!!pendingStarterContext}
+        open={pendingStarterContext != null}
         header={t(ChatI18nKeys.StarterConfirmTitle)}
         description={
           pendingStarterContext?.starter['dial:widgetOptions']

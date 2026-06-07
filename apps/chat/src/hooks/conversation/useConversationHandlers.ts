@@ -113,7 +113,7 @@ export const useConversationHandlers = ({
       startStream(
         conversationPath,
         message,
-        conversation.messages.length - 1,
+        conversation.messages.length + 1,
         conversation.model.id,
         { attachments: attachmentDtos },
       );
@@ -191,7 +191,7 @@ export const useConversationHandlers = ({
   );
 
   const handleConfirmDelete = useCallback(() => {
-    if (!conversationId || !pendingDeleteIndex) return;
+    if (!conversationId || pendingDeleteIndex == null) return;
     setPendingDeleteIndex(null);
 
     const conversationPath = getConversationPath(conversationId);
@@ -206,7 +206,10 @@ export const useConversationHandlers = ({
           ? prev.messages.filter((_, i) => i !== idx && i !== idx + 1)
           : prev.messages.filter((_, i) => i !== idx);
 
-      if (next.length === 0) {
+      if (
+        next.length === 0 ||
+        (next.length === 1 && next[0].role === MessageRole.Status)
+      ) {
         apiDeleteConversation(conversationPath);
         navigate(ROUTES.ROOT);
         return prev;
@@ -254,7 +257,7 @@ export const useConversationHandlers = ({
         try {
           await rateMessage({
             conversationId: updated.id,
-            responseId: updated.messages[messageIndex].id,
+            responseId: updated.messages[messageIndex].responseId || '',
             modelId: updated.model.id,
             rate: rating,
           });
@@ -324,7 +327,7 @@ export const useConversationHandlers = ({
       startStream(
         conversationPath,
         submitText,
-        conversation.messages.length - 1,
+        conversation.messages.length + 1,
         conversation.model.id,
         configurationValue ? { form_value: configurationValue } : undefined,
       );
