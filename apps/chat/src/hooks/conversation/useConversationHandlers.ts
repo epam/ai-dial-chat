@@ -134,7 +134,7 @@ export const useConversationHandlers = ({
 
       if (
         messageIndex === -1 ||
-        conversation.messages[messageIndex].role !== MessageRole.Assistant
+        conversation.messages[messageIndex]?.role !== MessageRole.Assistant
       )
         return;
 
@@ -145,24 +145,29 @@ export const useConversationHandlers = ({
 
       setConversation((prev) => {
         if (!prev) return prev;
+        const regeneratedMessage = {
+          ...prev.messages[messageIndex],
+          content: '',
+          custom_content: undefined,
+          wasStoppedByUser: undefined,
+          stoppedWithoutContent: undefined,
+          hasStreamError: undefined,
+        };
         const next = {
           ...prev,
-          messages: prev.messages.map((m, i) =>
-            i === messageIndex
-              ? {
-                  ...m,
-                  content: '',
-                  custom_content: undefined,
-                  wasStoppedByUser: undefined,
-                  stoppedWithoutContent: undefined,
-                  hasStreamError: undefined,
-                }
-              : m,
-          ),
+          messages: [
+            ...prev.messages.slice(0, messageIndex),
+            regeneratedMessage,
+          ],
         };
         conversationRef.current = next;
         return next;
       });
+
+      setEditingMessageIndexes(
+        (indexes) =>
+          new Set([...indexes].filter((index) => index < messageIndex)),
+      );
 
       startStream(
         conversationPath,
