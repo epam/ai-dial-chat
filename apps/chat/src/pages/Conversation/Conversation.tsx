@@ -123,7 +123,7 @@ export const ConversationPage: FC = () => {
             conversationPath,
             lastMsg.content,
             withPlaceholder.messages.length - 1,
-            result.model.id,
+            lastDeploymentId ?? result.model.id,
             lastMsg.custom_content,
           );
         } else {

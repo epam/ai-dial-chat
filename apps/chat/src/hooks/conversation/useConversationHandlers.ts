@@ -114,7 +114,7 @@ export const useConversationHandlers = ({
         conversationPath,
         message,
         conversation.messages.length + 1,
-        conversation.model.id,
+        selectedItemId ?? conversation.model.id,
         { attachments: attachmentDtos },
       );
     },
@@ -168,7 +168,7 @@ export const useConversationHandlers = ({
         conversationPath,
         userMsg.content,
         messageIndex,
-        conversation.model.id,
+        selectedItemId ?? conversation.model.id,
         userMsg.custom_content,
       );
     },
@@ -177,6 +177,7 @@ export const useConversationHandlers = ({
       conversationId,
       conversationRef,
       isStreaming,
+      selectedItemId,
       setConversation,
       startStream,
     ],
@@ -328,7 +329,7 @@ export const useConversationHandlers = ({
         conversationPath,
         submitText,
         conversation.messages.length + 1,
-        conversation.model.id,
+        selectedItemId ?? conversation.model.id,
         configurationValue ? { form_value: configurationValue } : undefined,
       );
     },
@@ -443,7 +444,7 @@ export const useConversationHandlers = ({
         conversationPath,
         text,
         updatedMessages.length - 1,
-        conversation.model.id,
+        selectedItemId ?? conversation.model.id,
         allAttachments.length > 0 ? { attachments: allAttachments } : undefined,
       );
 
@@ -454,6 +455,7 @@ export const useConversationHandlers = ({
       conversationId,
       conversationRef,
       isStreaming,
+      selectedItemId,
       setConversation,
       startStream,
     ],
