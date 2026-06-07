@@ -105,6 +105,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   }
 };
 
+// sizeLimit must be a static literal — Next.js does not resolve imported
+// identifiers in `config`. Keep in sync with TRANSCRIBE_SIZE_LIMIT_BYTES
+// in src/constants/audio.ts (currently 5 MB = 5 * 1024 * 1024).
 export const config = {
   api: {
     bodyParser: {
