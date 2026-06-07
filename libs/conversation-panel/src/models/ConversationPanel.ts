@@ -58,8 +58,6 @@ export interface ConversationHistoryTypography {
   fontClassName?: string;
   /** Typography class applied to collapsible group header buttons. Defaults to `'text-xs font-semibold'`. */
   groupHeaderClassName?: string;
-  /** Typography class applied to the initial-letter icon fallback inside conversation rows. Defaults to `'text-xs font-bold'`. */
-  itemIconClassName?: string;
   /** Typography class applied to conversation title text in each row. Defaults to `'text-sm'`. */
   itemTitleClassName?: string;
   /** Typography class applied to the empty-state label. Defaults to `'text-sm'`. */

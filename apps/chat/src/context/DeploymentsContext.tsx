@@ -36,6 +36,22 @@ export const DeploymentsContext = createContext<
   DeploymentsContextType | undefined
 >(undefined);
 
+const sortDeployments = (
+  deployments: DeploymentItemDto[],
+): DeploymentItemDto[] => {
+  return [...deployments].sort((a, b) => {
+    const nameCompare = (a.displayName ?? a.id).localeCompare(
+      b.displayName ?? b.id,
+      undefined,
+      { sensitivity: 'accent' },
+    );
+    if (nameCompare !== 0) {
+      return nameCompare;
+    }
+    return a.id.localeCompare(b.id, undefined, { sensitivity: 'accent' });
+  });
+};
+
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const [rawDeployments, setRawDeployments] = useState<DeploymentItemDto[]>([]);
   const [schemas, setSchemas] = useState<ApplicationSchemaSummaryDto[]>([]);
@@ -74,7 +90,9 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         setSchemas(schemasResult.value.schemas ?? []);
       }
 
-      const deployments = deploymentsResult.value.deployments ?? [];
+      const deployments = sortDeployments(
+        deploymentsResult.value.deployments ?? [],
+      );
       setRawDeployments(deployments);
       setSelectedItemId((prev) => {
         if (prev !== null && deployments.some((d) => d.id === prev)) {

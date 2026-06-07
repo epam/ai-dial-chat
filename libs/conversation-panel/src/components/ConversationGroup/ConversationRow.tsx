@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DeploymentIcon } from '@epam/ai-dial-conversation-input';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
@@ -29,8 +30,6 @@ export interface ConversationRowProps {
   getActions?: (item: ConversationHistoryItem) => DropdownItem[];
   /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
-  /** Typography class for the initial-letter icon fallback. Defaults to `'text-xs font-bold'`. */
-  itemIconClassName?: string;
   /** Typography class for the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
 }
@@ -41,7 +40,6 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   onSelectConversation,
   getActions,
   actionsLabel = 'More actions',
-  itemIconClassName = 'text-xs font-bold',
   itemTitleClassName = 'dial-small-text',
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -49,25 +47,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
 
-  const avatar = item.iconUrl ? (
-    <img
-      src={item.iconUrl}
-      alt=""
-      aria-hidden="true"
-      className="size-6 shrink-0 rounded-full object-cover"
-    />
-  ) : (
-    <span
-      className={mergeClasses(
-        'flex size-6 shrink-0 items-center justify-center rounded-full',
-        itemIconClassName,
-        styles.itemIcon,
-      )}
-      aria-hidden="true"
-    >
-      {item.title.charAt(0).toUpperCase()}
-    </span>
-  );
+  const avatar = <DeploymentIcon src={item.iconUrl} size={DIAL_ICON_SIZE.LG} />;
 
   const buttonPaddingRight = getButtonPaddingRight(hasActions, isMenuOpen);
 

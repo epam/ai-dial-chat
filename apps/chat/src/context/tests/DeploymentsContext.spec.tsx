@@ -55,6 +55,34 @@ describe('DeploymentsContext', () => {
     });
   });
 
+  it('sorts deployments by displayName and selects first sorted item', async () => {
+    const zebra = {
+      id: 'zebra',
+      displayName: 'Zebra',
+      type: 'model' as const,
+    };
+    const alpha = {
+      id: 'alpha',
+      displayName: 'Alpha',
+      type: 'model' as const,
+    };
+    mockGetDeployments.mockResolvedValueOnce({
+      deployments: [zebra, alpha],
+    });
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.items.map((item) => item.id)).toEqual([
+        alpha.id,
+        zebra.id,
+      ]);
+      expect(result.current.selectedItemId).toBe(alpha.id);
+    });
+  });
+
   it('allows updating selectedItemId via setSelectedItemId', async () => {
     const { result } = renderHook(() => useDeployments(), {
       wrapper: DeploymentsProvider,

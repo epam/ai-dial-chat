@@ -3,10 +3,12 @@ import {
   mergeClasses,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
-import { AttachmentTray } from '@epam/ai-dial-conversation-input';
-import { DialRoundedButton, DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import { FC, useEffect, useRef, useState } from 'react';
-import FallbackEntityIcon from '../../assets/fallback-entity-icon.svg?react';
+import {
+  AttachmentTray,
+  DeploymentIcon,
+} from '@epam/ai-dial-conversation-input';
+import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
+import { FC } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js';
 import { MDMessageViewer } from '../Markdown/MDMessageViewer.js';
 import { MessageActions } from '../Message/MessageActions.js';
@@ -30,21 +32,6 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   deploymentDisplayName,
   thinkingLabel,
 }) => {
-  const [isIconFailed, setIsIconFailed] = useState(false);
-  const iconImgRef = useRef<HTMLImageElement>(null);
-
-  useEffect(() => {
-    setIsIconFailed(false);
-  }, [deploymentIconUrl]);
-
-  useEffect(() => {
-    const el = iconImgRef.current;
-    if (!el) return;
-    const handleError = () => setIsIconFailed(true);
-    el.addEventListener('error', handleError);
-    return () => el.removeEventListener('error', handleError);
-  }, [deploymentIconUrl]);
-
   const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
@@ -72,31 +59,11 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
       className={mergeClasses('flex w-full items-start gap-5', className)}
     >
       {hasDeploymentIcon && (
-        <div
-          className={mergeClasses(
-            styles.agentIconBadge,
-            'size-7 shrink-0 overflow-hidden rounded-full',
-          )}
-        >
-          {deploymentIconUrl && !isIconFailed ? (
-            <div className="m-[3px] size-[calc(100%-6px)]">
-              <img
-                ref={iconImgRef}
-                src={deploymentIconUrl}
-                alt={deploymentDisplayName ?? ''}
-                className="size-full object-contain"
-              />
-            </div>
-          ) : (
-            <div className="flex size-full items-center justify-center">
-              <FallbackEntityIcon
-                width={DIAL_ICON_SIZE.LG}
-                height={DIAL_ICON_SIZE.LG}
-                className="shrink-0"
-              />
-            </div>
-          )}
-        </div>
+        <DeploymentIcon
+          src={deploymentIconUrl}
+          size={28}
+          badgeClassName={styles.agentIconBadge}
+        />
       )}
       <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-5">
         <div

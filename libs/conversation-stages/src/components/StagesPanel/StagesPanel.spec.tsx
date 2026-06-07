@@ -6,6 +6,7 @@ import { StagesPanel } from './StagesPanel.js';
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { MD: 16 },
   DialSpinner: () => <span data-testid="stage-spinner" />,
+  DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
 const stageRunning = { index: 0, name: 'Running step', status: null };

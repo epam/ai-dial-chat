@@ -109,7 +109,7 @@ describe('useModelSelector — menuItems', () => {
     expect(result.current.menuItems[0].label).toBe('Failed');
   });
 
-  it('returns one item per deployment sorted case-insensitively by label', () => {
+  it('returns one item per deployment preserving input order', () => {
     const { result } = renderHook(() =>
       useModelSelector({
         deployments: mockDeployments,
@@ -117,12 +117,12 @@ describe('useModelSelector — menuItems', () => {
     );
     expect(result.current.menuItems).toHaveLength(3);
     expect(result.current.menuItems[0]).toMatchObject({
-      key: 'claude-3',
-      label: 'Claude 3',
-    });
-    expect(result.current.menuItems[1]).toMatchObject({
       key: 'gpt-4o',
       label: 'GPT-4o',
+    });
+    expect(result.current.menuItems[1]).toMatchObject({
+      key: 'claude-3',
+      label: 'Claude 3',
     });
     expect(result.current.menuItems[2]).toMatchObject({
       key: 'my-app',

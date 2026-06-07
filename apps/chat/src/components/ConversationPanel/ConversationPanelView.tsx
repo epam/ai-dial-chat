@@ -30,7 +30,10 @@ import {
   ConversationHistoryI18nKeys,
 } from '../../constants/translation-keys.js';
 import { useConversations } from '../../context/ConversationsContext.js';
+import { useDeployments } from '../../context/DeploymentsContext.js';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint.js';
+import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id.js';
+import { resolveCatalogIconUrl } from '../../utils/icon-path.js';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup.js';
 import { getConversationSource } from './get-conversation-source.js';
 
@@ -59,6 +62,12 @@ const ConversationPanelView: FC<Props> = ({
     renameConversation,
     refreshConversations,
   } = useConversations();
+
+  const { items: deployments } = useDeployments();
+  const deploymentIconByModelId = useMemo(
+    () => new Map(deployments.map((d) => [d.id, d.iconUrl])),
+    [deployments],
+  );
 
   useEffect(() => {
     if (!activeConversationId) return;
@@ -114,14 +123,20 @@ const ConversationPanelView: FC<Props> = ({
           console.error('Failed to decode conversation id:', rawId, e);
           id = rawId;
         }
+        const modelId = getModelIdFromConversationId(item.id);
+        const iconUrl = modelId
+          ? deploymentIconByModelId.get(modelId)
+          : undefined;
+
         return {
           id,
           title: item.title,
           isPinned: item.isPinned ?? false,
+          iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
           source: getConversationSource(item),
         };
       }),
-    [items],
+    [items, deploymentIconByModelId],
   );
 
   const filterLabels = useMemo(
