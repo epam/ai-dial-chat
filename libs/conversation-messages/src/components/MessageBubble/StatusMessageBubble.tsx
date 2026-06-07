@@ -25,7 +25,7 @@ export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
     <DialNotification
       title={titleText}
       message={bodyText}
-      textClassName="flex-row"
+      textClassName="flex-row flex-wrap gap-1"
     />
   );
 };

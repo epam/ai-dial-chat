@@ -53,11 +53,13 @@ export default [
       prettier,
       import: importPlugin,
       'jsx-a11y': jsxA11y,
+      tailwindcss,
     },
     rules: {
       // Prettier rules
       'prettier/prettier': 'error',
       'react-hooks/set-state-in-effect': 'off',
+      'tailwindcss/no-contradicting-classname': 'error',
 
       // Import rules
       'import/order': [

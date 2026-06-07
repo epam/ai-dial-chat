@@ -17,7 +17,7 @@ import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { FC, lazy, memo, Suspense } from 'react';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
 import { messageHasStages } from '../../utils/message-utils.js';
-import { buildMessageActions } from './utils/buildMessageActions.js';
+import { buildMessageActions } from './utils/build-message-actions.js';
 import {
   getMessageStarterProps,
   getStatusMessageProps,
@@ -36,19 +36,19 @@ interface Props {
   index: number;
   totalCount: number;
   isAssistantTyping: boolean;
-  editingMessageIds?: Set<string>;
+  editingMessageIndexes?: Set<number>;
   onSelectStarter?: (
     starter: StarterOption,
     propertyKey?: string,
     description?: string,
   ) => void;
-  onStartEdit?: (messageId: string) => void;
-  onDeleteMessage?: (messageId: string) => void;
-  onRegenerateMessage?: (messageId: string) => void;
-  onRateMessage?: (messageId: string, rating: MessageRating | null) => void;
-  onCancelEdit?: (messageId: string) => void;
+  onStartEdit?: (messageIndex: number) => void;
+  onDeleteMessage?: (messageIndex: number) => void;
+  onRegenerateMessage?: (messageIndex: number) => void;
+  onRateMessage?: (messageIndex: number, rating: MessageRating | null) => void;
+  onCancelEdit?: (messageIndex: number) => void;
   onEditMessage?: (
-    messageId: string,
+    messageIndex: number,
     text: string,
     keptAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
@@ -80,7 +80,7 @@ const ConversationMessageItem: FC<Props> = ({
   index,
   totalCount,
   isAssistantTyping,
-  editingMessageIds,
+  editingMessageIndexes,
   onSelectStarter,
   onStartEdit,
   onDeleteMessage,
@@ -113,7 +113,7 @@ const ConversationMessageItem: FC<Props> = ({
     isAssistantTyping,
   );
   const isEditing =
-    msg.role === MessageRole.User && !!editingMessageIds?.has(msg.id);
+    msg.role === MessageRole.User && !!editingMessageIndexes?.has(index);
 
   if (isEditing) {
     return (
@@ -139,9 +139,9 @@ const ConversationMessageItem: FC<Props> = ({
             initialAttachments={attachmentDtosToDisplayAttachments(
               msg.custom_content?.attachments,
             )}
-            onCancel={() => onCancelEdit?.(msg.id)}
+            onCancel={() => onCancelEdit?.(index)}
             onSave={(text, kept, added) =>
-              onEditMessage?.(msg.id, text, kept, added)
+              onEditMessage?.(index, text, kept, added)
             }
             onUploadAttachment={onUploadAttachment}
             cancelLabel={cancelLabel}
@@ -188,6 +188,7 @@ const ConversationMessageItem: FC<Props> = ({
       hasAlwaysVisibleActions={!isStreaming}
       actions={buildMessageActions(
         msg,
+        index,
         {
           onEdit: !isAssistantTyping ? onStartEdit : undefined,
           onHoverEdit: preloadEditInput,

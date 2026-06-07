@@ -29,7 +29,7 @@ interface Result {
   startStream: (
     conversationPath: string,
     userContent: string,
-    assistantMessageId: string,
+    messageIndex: number,
     model: string,
     customContent?: MessageCustomContent,
   ) => void;
@@ -59,7 +59,7 @@ export const useConversationStream = ({
     (
       conversationPath: string,
       userContent: string,
-      assistantMessageId: string,
+      messageIndex: number,
       model: string,
       customContent?: MessageCustomContent,
     ) => {
@@ -79,7 +79,7 @@ export const useConversationStream = ({
               if (!prev) return prev;
               const updatedMessages = applyChunkToMessages(
                 prev.messages,
-                assistantMessageId,
+                messageIndex,
                 chunk,
               );
               if (!updatedMessages) return prev;
@@ -111,10 +111,8 @@ export const useConversationStream = ({
               if (!prev) return prev;
               const updated = {
                 ...prev,
-                messages: prev.messages.map((m) =>
-                  m.id === assistantMessageId
-                    ? { ...m, hasStreamError: true }
-                    : m,
+                messages: prev.messages.map((m, index) =>
+                  index === messageIndex ? { ...m, hasStreamError: true } : m,
                 ),
               };
               conversationRef.current = updated;
