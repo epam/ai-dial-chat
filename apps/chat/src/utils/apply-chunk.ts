@@ -34,7 +34,7 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
  */
 export const applyChunkToMessages = (
   messages: Message[],
-  assistantMessageId: string,
+  messageIndex: number,
   chunk: StreamChunk,
 ): Message[] | null => {
   const delta = chunk.choices[0]?.delta;
@@ -46,8 +46,8 @@ export const applyChunkToMessages = (
   if (!content && !formSchema && !attachments?.length && !stages?.length)
     return null;
 
-  return messages.map((message) => {
-    if (message.id !== assistantMessageId) return message;
+  return messages.map((message, index) => {
+    if (index !== messageIndex) return message;
 
     const hasCustomContentUpdate =
       formSchema || attachments?.length || stages?.length;

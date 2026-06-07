@@ -44,24 +44,24 @@ interface Props {
   onSend: (message: string, attachments: Attachment[]) => void;
   onUploadAttachment?: (attachment: Attachment) => Promise<string>;
   onStop?: () => void;
-  onDeleteMessage?: (messageId: string) => void;
-  onRegenerateMessage?: (messageId: string) => void;
-  onRateMessage?: (messageId: string, rating: MessageRating | null) => void;
+  onDeleteMessage?: (messageIndex: number) => void;
+  onRegenerateMessage?: (messageIndex: number) => void;
+  onRateMessage?: (messageIndex: number, rating: MessageRating | null) => void;
   onAttachmentsChange?: (attachments: Attachment[]) => void;
   onSelectStarter?: (
     starter: StarterOption,
     propertyKey?: string,
     description?: string,
   ) => void;
-  onStartEdit?: (messageId: string) => void;
-  onCancelEdit?: (messageId: string) => void;
+  onStartEdit?: (messageIndex: number) => void;
+  onCancelEdit?: (messageIndex: number) => void;
   onEditMessage?: (
-    messageId: string,
+    messageIndex: number,
     text: string,
     keptAttachments: DisplayAttachment[],
     newAttachments: Attachment[],
   ) => void;
-  editingMessageIds?: Set<string>;
+  editingMessageIndexes?: Set<number>;
   placeholder: string;
   isAssistantTyping?: boolean;
   initialModelId: string;
@@ -83,7 +83,7 @@ const ConversationView: FC<Props> = ({
   onStartEdit,
   onCancelEdit,
   onEditMessage,
-  editingMessageIds,
+  editingMessageIndexes,
   placeholder,
   isAssistantTyping = false,
   initialModelId,
@@ -304,12 +304,12 @@ const ConversationView: FC<Props> = ({
             {messages.map((msg, index) => {
               return (
                 <ConversationMessageItem
-                  key={msg.id}
+                  key={index.toString()}
                   msg={msg}
                   index={index}
                   totalCount={messages.length}
                   isAssistantTyping={isAssistantTyping}
-                  editingMessageIds={editingMessageIds}
+                  editingMessageIndexes={editingMessageIndexes}
                   onSelectStarter={onSelectStarter}
                   onStartEdit={onStartEdit}
                   onDeleteMessage={onDeleteMessage}

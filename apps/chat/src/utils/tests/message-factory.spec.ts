@@ -15,17 +15,10 @@ describe('createMessagePair', () => {
     expect(result.assistantMessage.content).toBe('');
   });
 
-  it('should provide assistantMessageId matching assistant message id', () => {
-    const result = createMessagePair('Test');
-
-    expect(result.assistantMessage.id).toBe(result.assistantMessageId);
-  });
-
   it('should use expected id prefixes', () => {
     const result = createMessagePair('Test');
 
     expect(result.userMessage.id).toMatch(/^msg_/);
-    expect(result.assistantMessageId).toMatch(/^stream_/);
   });
 
   it('should include form_value in custom_content when provided', () => {

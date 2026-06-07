@@ -11,7 +11,6 @@ import type { AttachmentDto } from '@epam/chat-api-client';
 interface MessagePair {
   userMessage: Message;
   assistantMessage: Message;
-  assistantMessageId: string;
 }
 
 export const createMessagePair = (
@@ -22,7 +21,6 @@ export const createMessagePair = (
 ): MessagePair => {
   const now = Date.now();
   const timestamp = new Date(now).toISOString();
-  const assistantMessageId = `stream_${now}`;
 
   const customContent = {
     ...(attachments?.length ? { attachments } : {}),
@@ -31,7 +29,6 @@ export const createMessagePair = (
 
   return {
     userMessage: {
-      id: `msg_${now}`,
       role: MessageRole.User,
       content,
       timestamp,
@@ -40,13 +37,11 @@ export const createMessagePair = (
         : {}),
     },
     assistantMessage: {
-      id: assistantMessageId,
       role: MessageRole.Assistant,
       content: '',
       timestamp,
       ...(deploymentId ? { deploymentId } : {}),
     },
-    assistantMessageId,
   };
 };
 
