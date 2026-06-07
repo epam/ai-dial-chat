@@ -2,20 +2,36 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react';
 import styles from './DeploymentIcon.module.scss';
 
-interface Props {
-  src: string;
+/** Props for `DeploymentIcon`. */
+export interface DeploymentIconProps {
+  /** Image URL to display. When absent the `fallback` is shown directly. */
+  src?: string;
+  /** Outer badge dimension in pixels. */
   size: number;
+  /** Node rendered when `src` is absent or the image fails to load. */
   fallback: ReactNode;
+  /** Extra class applied to the outer badge wrapper, e.g. for a custom background variable. */
+  badgeClassName?: string;
 }
+
 /**
- * Renders a deployment icon inside a white rounded badge.
+ * Renders a deployment icon inside a rounded badge.
  * The `size` prop is the outer badge dimension in pixels.
  * The icon image is inset by ~11 % (matching Figma) to leave a visible backdrop.
- * On image load error the `fallback` node is rendered centred inside the same badge.
+ * On image load error, or when `src` is absent, the `fallback` node is rendered centred inside the badge.
  */
-export const DeploymentIcon: FC<Props> = ({ src, size, fallback }) => {
+export const DeploymentIcon: FC<DeploymentIconProps> = ({
+  src,
+  size,
+  fallback,
+  badgeClassName,
+}) => {
   const [hasFailed, setHasFailed] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    setHasFailed(false);
+  }, [src]);
 
   useEffect(() => {
     const el = ref.current;
@@ -33,10 +49,11 @@ export const DeploymentIcon: FC<Props> = ({ src, size, fallback }) => {
       style={{ width: size, height: size }}
       className={mergeClasses(
         styles.agentIconBadge,
+        badgeClassName,
         'shrink-0 overflow-hidden rounded-full',
       )}
     >
-      {hasFailed ? (
+      {!src || hasFailed ? (
         <div className="flex size-full items-center justify-center">
           {fallback}
         </div>

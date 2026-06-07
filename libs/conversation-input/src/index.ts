@@ -1,4 +1,8 @@
 export { ConversationInput } from './components/ConversationInput/ConversationInput.js';
+export {
+  DeploymentIcon,
+  type DeploymentIconProps,
+} from './components/Input/Icon/DeploymentIcon.js';
 export { EditMessageInput } from './components/EditMessageInput/EditMessageInput.js';
 export { Input } from './components/Input/Input.js';
 export { AttachmentCard } from './components/AttachmentCard/AttachmentCard.js';
