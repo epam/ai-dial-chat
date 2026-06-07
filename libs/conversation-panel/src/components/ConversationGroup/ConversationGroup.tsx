@@ -53,7 +53,7 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
           aria-expanded={isExpanded}
           onClick={() => setIsExpanded((prev) => !prev)}
           className={mergeClasses(
-            'flex h-6 w-full items-center gap-1 rounded py-1 pr-3 text-left',
+            'flex h-6 w-full items-center gap-1 rounded py-1 pe-3 text-start',
             groupHeaderClassName,
             styles.groupHeader,
           )}

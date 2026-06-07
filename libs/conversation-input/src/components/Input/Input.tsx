@@ -352,7 +352,7 @@ export const Input: FC<InputProps> = ({
           <div
             className={mergeClasses(
               'flex flex-shrink-0 items-center gap-2',
-              !isStackedLayout && 'order-3 ml-auto desktop:ml-0',
+              !isStackedLayout && 'order-3 ms-auto desktop:ms-0',
             )}
           >
             {renderFooterActions ? (

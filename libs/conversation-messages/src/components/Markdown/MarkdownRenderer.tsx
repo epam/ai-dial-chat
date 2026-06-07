@@ -91,10 +91,10 @@ const buildMarkdownComponents = (
   h3: ({ children }) => <h3 className={cn.h3}>{children}</h3>,
   p: ({ children }) => <p className={cn.p}>{children}</p>,
   ul: ({ children }) => (
-    <ul className={mergeClasses('list-disc pl-5', cn.ul)}>{children}</ul>
+    <ul className={mergeClasses('list-disc ps-5', cn.ul)}>{children}</ul>
   ),
   ol: ({ children }) => (
-    <ol className={mergeClasses('list-decimal pl-5', cn.ol)}>{children}</ol>
+    <ol className={mergeClasses('list-decimal ps-5', cn.ol)}>{children}</ol>
   ),
   strong: ({ children }) => (
     <strong className={cn.strong ?? 'font-semibold'}>{children}</strong>
@@ -132,7 +132,7 @@ const buildMarkdownComponents = (
   },
   blockquote: ({ children }) => (
     <blockquote
-      className={mergeClasses('border-l-4 pl-3 opacity-80', cn.blockquote)}
+      className={mergeClasses('border-s-4 ps-3 opacity-80', cn.blockquote)}
     >
       {children}
     </blockquote>
@@ -165,7 +165,7 @@ const buildMarkdownComponents = (
   th: ({ children }) => (
     <th
       className={mergeClasses(
-        'border px-3 py-1.5 text-left',
+        'border px-3 py-1.5 text-start',
         cn.tableHeaderFont ?? 'font-semibold',
         cn.tableCell,
         cn.tableHeader,

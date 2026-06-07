@@ -62,7 +62,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   } = useCollapsedText({ text, collapsedLineCount });
 
   const positionRadius =
-    position === BubblePosition.Top ? 'rounded-br-[24px]' : 'rounded-tr-[24px]';
+    position === BubblePosition.Top ? 'rounded-ee-[24px]' : 'rounded-se-[24px]';
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
   const expandAriaLabel = showMoreAriaLabel ?? showMoreLabel;
@@ -79,7 +79,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           <div
             className={mergeClasses(
               styles.userBubble,
-              'flex w-fit items-center justify-end rounded-bl-[16px] rounded-tl-[16px] px-6 py-4',
+              'flex w-fit items-center justify-end rounded-es-[16px] rounded-ss-[16px] px-6 py-4',
               positionRadius,
               bubbleClassName,
             )}
@@ -100,7 +100,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
                   ref={textRef}
                   className={mergeClasses(
                     textClass,
-                    'whitespace-pre-wrap text-left [overflow-wrap:anywhere]',
+                    'whitespace-pre-wrap text-start [overflow-wrap:anywhere]',
                   )}
                 >
                   {text}

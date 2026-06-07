@@ -5,9 +5,8 @@
 .collapsedText::after {
   content: '';
   position: absolute;
-  right: 0;
+  inset-inline: 0;
   bottom: 0;
-  left: 0;
   height: 48px;
   pointer-events: none;
   background: linear-gradient(

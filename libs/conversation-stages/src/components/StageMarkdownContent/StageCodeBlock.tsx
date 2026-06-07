@@ -63,7 +63,7 @@ export const StageCodeBlock: FC<Props> = ({
         }
         aria-label={copyAriaLabel}
         onClick={handleCopy}
-        className="absolute right-2 top-2"
+        className="absolute end-2 top-2"
       />
       <code className={mergeClasses('font-mono', codeClassName)}>
         {children}
