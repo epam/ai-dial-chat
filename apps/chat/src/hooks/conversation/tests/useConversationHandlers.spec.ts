@@ -18,7 +18,7 @@ vi.mock('../../../server-api/files.api', () => ({
   uploadFile: vi.fn(),
 }));
 vi.mock('../../../context/DeploymentsContext', () => ({
-  useDeployments: vi.fn(() => ({ selectedItemId: 'gpt-4o' })),
+  useDeployments: vi.fn(() => ({ selectedItemId: 'selected-deployment' })),
 }));
 vi.mock('../../../server-api/conversations.api', () => ({
   deleteConversation: vi.fn(),
@@ -116,6 +116,22 @@ describe('useConversationHandlers — handleSend', () => {
     const customContent = params.startStream.mock.calls[0][4];
     expect(customContent?.attachments?.[0].url).toBe(
       'https://example.com/file.pdf',
+    );
+  });
+
+  it('calls startStream with the selected deployment', async () => {
+    mockAttachmentsToDtos.mockReturnValue(undefined);
+    const params = makeParams();
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await result.current.handleSend('hello', []);
+
+    expect(params.startStream).toHaveBeenCalledWith(
+      'conv-1',
+      'hello',
+      1,
+      'selected-deployment',
+      { attachments: undefined },
     );
   });
 
