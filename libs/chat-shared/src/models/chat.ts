@@ -107,6 +107,8 @@ export interface Message {
   content: string;
   /** ISO-8601 timestamp of when the message was created. */
   timestamp: string;
+
+  responseId?: string;
   /**
    * Extra DIAL API payload attached to the message.
    * Present on both user requests (uploaded files) and assistant responses
