@@ -72,7 +72,7 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @Transform(({ value }) => {
-    if (value === undefined) return undefined;
+    if (value == null) return undefined;
     if (typeof value === 'boolean') return value;
     return !['false', '0', 'no'].includes(String(value).toLowerCase());
   })

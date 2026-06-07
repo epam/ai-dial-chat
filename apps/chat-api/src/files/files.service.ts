@@ -70,7 +70,7 @@ export class FilesService extends AppService {
         },
       )) as { data?: { url?: string }; error?: unknown; response: Response };
 
-      if (error !== undefined) {
+      if (error != null) {
         this.logger.warn(
           `DIAL Core upload returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
         );
@@ -107,7 +107,7 @@ export class FilesService extends AppService {
         response: Response;
       };
 
-      if (error !== undefined) {
+      if (error != null) {
         return handleDialError({ status: response.status });
       }
 

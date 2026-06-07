@@ -66,7 +66,7 @@ export class UserConfigService extends AppService {
         },
       )) as { error?: unknown; response: Response };
 
-      if (error !== undefined) {
+      if (error != null) {
         const body = await response.text().catch(() => '(unreadable)');
         this.logger.error(
           `Failed to write user config — DIAL Core ${response.status}: ${body}`,

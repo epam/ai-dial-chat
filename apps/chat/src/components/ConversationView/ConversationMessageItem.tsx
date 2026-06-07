@@ -164,7 +164,7 @@ const ConversationMessageItem: FC<Props> = ({
       onSelectStarter,
     );
   const deploymentEntry =
-    effectiveDeploymentId !== undefined
+    effectiveDeploymentId != null
       ? deploymentLookup[effectiveDeploymentId]
       : undefined;
 

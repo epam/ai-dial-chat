@@ -98,7 +98,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           )}
         </div>
       )}
-      <div className="flex min-w-0 max-w-full flex-col items-start gap-5">
+      <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-5">
         <div
           className={mergeClasses(
             'flex w-fit min-w-0 max-w-full flex-col items-start gap-4',
