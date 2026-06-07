@@ -32,14 +32,8 @@ export const buildDeploymentIcon = (
   type: string | undefined,
   size = 18,
 ): ReactNode => {
-  const fallback = (
-    <FallbackEntityIcon width={size} height={size} aria-hidden />
-  );
-
   if (resolvedIconUrl) {
-    return (
-      <DeploymentIcon src={resolvedIconUrl} size={size} fallback={fallback} />
-    );
+    return <DeploymentIcon src={resolvedIconUrl} size={size} />;
   }
-  return fallback;
+  return <FallbackEntityIcon width={size} height={size} aria-hidden />;
 };
