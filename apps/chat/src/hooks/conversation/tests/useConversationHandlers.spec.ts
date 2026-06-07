@@ -1,6 +1,10 @@
 import type { Attachment, Conversation } from '@epam/ai-dial-chat-shared';
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
-import { renderHook } from '@testing-library/react';
+import {
+  AttachmentType,
+  MessageRole,
+  RequestStatus,
+} from '@epam/ai-dial-chat-shared';
+import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { uploadFile } from '../../../server-api/files.api';
 import { attachmentsToDtos } from '../../../utils/attachment-to-dto';
@@ -179,5 +183,60 @@ describe('useConversationHandlers — handleSend', () => {
     await result.current.handleSend('hello', []);
 
     expect(params.startStream).not.toHaveBeenCalled();
+  });
+});
+
+describe('useConversationHandlers — handleRegenerateMessage', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('removes messages after the regenerated response before streaming', () => {
+    const conversation = {
+      ...makeConversation(),
+      messages: [
+        { role: MessageRole.User, content: 'First question' },
+        {
+          role: MessageRole.Assistant,
+          content: 'First answer',
+          custom_content: { stages: [] },
+          wasStoppedByUser: true,
+          stoppedWithoutContent: true,
+          hasStreamError: true,
+        },
+        { role: MessageRole.User, content: 'Follow-up question' },
+        { role: MessageRole.Assistant, content: 'Follow-up answer' },
+      ],
+    } as Conversation;
+    const conversationRef = { current: conversation };
+    const params = makeParams({ conversation, conversationRef });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    act(() => result.current.handleRegenerateMessage(1));
+
+    const updateConversation = params.setConversation.mock.calls[0][0] as (
+      previous: Conversation,
+    ) => Conversation;
+    const updated = updateConversation(conversation);
+
+    expect(updated.messages).toEqual([
+      conversation.messages[0],
+      {
+        role: MessageRole.Assistant,
+        content: '',
+        custom_content: undefined,
+        wasStoppedByUser: undefined,
+        stoppedWithoutContent: undefined,
+        hasStreamError: undefined,
+      },
+    ]);
+    expect(conversationRef.current).toBe(updated);
+    expect(params.startStream).toHaveBeenCalledWith(
+      'conv-1',
+      'First question',
+      1,
+      'selected-deployment',
+      undefined,
+    );
   });
 });
