@@ -7,9 +7,8 @@ import {
   AttachmentTray,
   DeploymentIcon,
 } from '@epam/ai-dial-conversation-input';
-import { DialRoundedButton, DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
-import FallbackEntityIcon from '../../assets/fallback-entity-icon.svg?react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js';
 import { MDMessageViewer } from '../Markdown/MDMessageViewer.js';
 import { MessageActions } from '../Message/MessageActions.js';
@@ -64,13 +63,6 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           src={deploymentIconUrl}
           size={28}
           badgeClassName={styles.agentIconBadge}
-          fallback={
-            <FallbackEntityIcon
-              width={DIAL_ICON_SIZE.LG}
-              height={DIAL_ICON_SIZE.LG}
-              className="shrink-0"
-            />
-          }
         />
       )}
       <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-5">

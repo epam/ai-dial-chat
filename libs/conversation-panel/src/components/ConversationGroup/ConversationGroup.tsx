@@ -26,8 +26,6 @@ export interface ConversationGroupProps {
   actionsLabel?: string;
   /** Typography class applied to the group header button. Defaults to `'dial-tiny-text'`. */
   groupHeaderClassName?: string;
-  /** Typography class applied to the initial-letter icon fallback. Defaults to `'text-xs font-bold'`. */
-  itemIconClassName?: string;
   /** Typography class applied to the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
 }
@@ -42,7 +40,6 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
     getActions,
     actionsLabel,
     groupHeaderClassName = 'dial-tiny-text',
-    itemIconClassName,
     itemTitleClassName,
   }) => {
     const [isExpanded, setIsExpanded] = useState(true);
@@ -79,7 +76,6 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
                 onSelectConversation={onSelectConversation}
                 getActions={getActions}
                 actionsLabel={actionsLabel}
-                itemIconClassName={itemIconClassName}
                 itemTitleClassName={itemTitleClassName}
               />
             ))}

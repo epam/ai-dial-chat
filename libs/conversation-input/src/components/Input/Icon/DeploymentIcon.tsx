@@ -1,5 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react';
+import FallbackEntityIcon from '../../../assets/fallback-entity-icon.svg?react';
 import styles from './DeploymentIcon.module.scss';
 
 /** Props for `DeploymentIcon`. */
@@ -9,7 +11,7 @@ export interface DeploymentIconProps {
   /** Outer badge dimension in pixels. */
   size: number;
   /** Node rendered when `src` is absent or the image fails to load. */
-  fallback: ReactNode;
+  fallback?: ReactNode;
   /** Extra class applied to the outer badge wrapper, e.g. for a custom background variable. */
   badgeClassName?: string;
 }
@@ -23,7 +25,13 @@ export interface DeploymentIconProps {
 export const DeploymentIcon: FC<DeploymentIconProps> = ({
   src,
   size,
-  fallback,
+  fallback = (
+    <FallbackEntityIcon
+      width={DIAL_ICON_SIZE.LG}
+      height={DIAL_ICON_SIZE.LG}
+      className="shrink-0"
+    />
+  ),
   badgeClassName,
 }) => {
   const [hasFailed, setHasFailed] = useState(false);
