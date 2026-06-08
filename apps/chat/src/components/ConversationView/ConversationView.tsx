@@ -11,7 +11,11 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
-import { DialFabButton } from '@epam/ai-dial-ui-kit';
+import {
+  DialFabButton,
+  DialNotification,
+  NotificationVariant,
+} from '@epam/ai-dial-ui-kit';
 import {
   FC,
   lazy,
@@ -66,6 +70,8 @@ interface Props {
   isAssistantTyping?: boolean;
   initialModelId: string;
   streamErrorText: string;
+  isReadOnly?: boolean;
+  readOnlyNotice?: string;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -88,6 +94,8 @@ const ConversationView: FC<Props> = ({
   isAssistantTyping = false,
   initialModelId,
   streamErrorText,
+  isReadOnly = false,
+  readOnlyNotice,
 }) => {
   const { t } = useTranslation();
   const {
@@ -361,23 +369,32 @@ const ConversationView: FC<Props> = ({
         aria-label={t(ChatI18nKeys.MessageInput)}
         className="w-full"
       >
-        <Suspense fallback={null}>
-          <ConversationInput
-            onSend={onSend}
-            onUploadAttachment={onUploadAttachment}
-            onStop={onStop}
-            isStreaming={isAssistantTyping}
-            onAttachmentsChange={onAttachmentsChange}
-            placeholder={placeholder}
-            deployments={deploymentItems}
-            selectedDeploymentId={selectedItemId}
-            onDeploymentChange={setSelectedItemId}
-            isInputDisabled={isInputDisabled}
-            modelSelectorLabels={modelSelectorLabels}
-            sendLabel={t(ChatI18nKeys.SendMessage)}
-            stopLabel={t(ChatI18nKeys.StopStreaming)}
-          />
-        </Suspense>
+        {isReadOnly ? (
+          <div className="p-4">
+            <DialNotification
+              variant={NotificationVariant.Info}
+              message={readOnlyNotice}
+            />
+          </div>
+        ) : (
+          <Suspense fallback={null}>
+            <ConversationInput
+              onSend={onSend}
+              onUploadAttachment={onUploadAttachment}
+              onStop={onStop}
+              isStreaming={isAssistantTyping}
+              onAttachmentsChange={onAttachmentsChange}
+              placeholder={placeholder}
+              deployments={deploymentItems}
+              selectedDeploymentId={selectedItemId}
+              onDeploymentChange={setSelectedItemId}
+              isInputDisabled={isInputDisabled}
+              modelSelectorLabels={modelSelectorLabels}
+              sendLabel={t(ChatI18nKeys.SendMessage)}
+              stopLabel={t(ChatI18nKeys.StopStreaming)}
+            />
+          </Suspense>
+        )}
       </div>
     </>
   );

@@ -183,7 +183,7 @@ export class BaseAPI {
       context.headers,
     );
     Object.keys(headers).forEach((key) =>
-      headers[key] == null ? delete headers[key] : {},
+      headers[key] === undefined ? delete headers[key] : {},
     );
 
     const initOverrideFn =

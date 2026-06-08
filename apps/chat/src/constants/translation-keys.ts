@@ -15,6 +15,7 @@ export enum ChatI18nKeys {
   StopStreaming = 'chat.stopStreaming',
   QuickReplyButtons = 'chat.quickReplyButtons',
   StoppedGenerating = 'chat.stoppedGenerating',
+  ReadOnlyNotice = 'chat.readOnlyNotice',
   Thinking = 'chat.thinking',
   ShowMore = 'chat.showMore',
   ShowLess = 'chat.showLess',

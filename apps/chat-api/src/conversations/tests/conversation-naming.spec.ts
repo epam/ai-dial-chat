@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { getConversationName } from '../get-conversation-name';
-import { prepareEntityName } from '../prepare-entity-name';
+import {
+  getConversationName,
+  prepareEntityName,
+} from '../utils/conversation.utils';
 
 describe('conversation naming helpers', () => {
   describe('prepareEntityName', () => {
@@ -62,6 +64,11 @@ describe('conversation naming helpers', () => {
 
     it('should use defaultName if prompt is not provided', () => {
       const result = getConversationName('Default Name');
+      expect(result).toBe('Default Name');
+    });
+
+    it('should use defaultName if prompt contains only whitespace', () => {
+      const result = getConversationName('Default Name', '   \n ');
       expect(result).toBe('Default Name');
     });
 

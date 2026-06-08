@@ -1,6 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC, memo, useMemo, useState } from 'react';
 import {
+  ConversationSource,
   type ConversationPanelProps,
   FilterTab,
 } from '../../models/ConversationPanel.js';
@@ -83,7 +84,30 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     );
 
     const myChatsItems = useMemo(
-      () => filteredItems.filter((item) => !item.isPinned),
+      () =>
+        filteredItems.filter(
+          (item) =>
+            !item.isPinned &&
+            item.source !== ConversationSource.Shared &&
+            item.source !== ConversationSource.Organization,
+        ),
+      [filteredItems],
+    );
+
+    const sharedItems = useMemo(
+      () =>
+        filteredItems.filter(
+          (item) => !item.isPinned && item.source === ConversationSource.Shared,
+        ),
+      [filteredItems],
+    );
+
+    const organizationItems = useMemo(
+      () =>
+        filteredItems.filter(
+          (item) =>
+            !item.isPinned && item.source === ConversationSource.Organization,
+        ),
       [filteredItems],
     );
 
@@ -158,6 +182,26 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
                 <ConversationGroup
                   label={groupLabels?.myChats ?? 'My chats'}
                   items={myChatsItems}
+                  activeConversationId={activeConversationId}
+                  onSelectConversation={onSelectConversation}
+                  getActions={getActions}
+                  actionsLabel={actionsLabel}
+                  groupHeaderClassName={typography?.groupHeaderClassName}
+                  itemTitleClassName={typography?.itemTitleClassName}
+                />
+                <ConversationGroup
+                  label={groupLabels?.shared ?? 'Shared'}
+                  items={sharedItems}
+                  activeConversationId={activeConversationId}
+                  onSelectConversation={onSelectConversation}
+                  getActions={getActions}
+                  actionsLabel={actionsLabel}
+                  groupHeaderClassName={typography?.groupHeaderClassName}
+                  itemTitleClassName={typography?.itemTitleClassName}
+                />
+                <ConversationGroup
+                  label={groupLabels?.organization ?? 'Organization'}
+                  items={organizationItems}
                   activeConversationId={activeConversationId}
                   onSelectConversation={onSelectConversation}
                   getActions={getActions}
