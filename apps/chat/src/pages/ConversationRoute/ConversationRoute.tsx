@@ -3,6 +3,7 @@ import type {
   DeploymentItem,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
+import { isAudioTranscriptionSupported } from '@epam/ai-dial-chat-shared';
 import {
   FC,
   lazy,
@@ -25,6 +26,7 @@ import {
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { transcribeAudio } from '../../server-api/chat.api';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
@@ -61,11 +63,12 @@ const ConversationRoute: FC = () => {
 
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
-      items.map(({ id, displayName, iconUrl, type }) => ({
+      items.map(({ id, displayName, iconUrl, type, inputAttachmentTypes }) => ({
         id,
         displayName,
         iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
         type,
+        inputAttachmentTypes,
       })),
     [items],
   );
@@ -143,6 +146,43 @@ const ConversationRoute: FC = () => {
     [bucket],
   );
 
+  const lastAudioMimeTypeRef = useRef<string>('audio/webm');
+
+  const handleUploadAudio = useCallback(
+    async (file: File, contentType: string): Promise<string> => {
+      if (!bucket) {
+        throw new Error('User bucket is not available');
+      }
+      lastAudioMimeTypeRef.current = contentType;
+      const response = await uploadFile(
+        bucket,
+        buildUploadPath({ name: file.name } as Attachment),
+        file,
+      );
+      return response.url;
+    },
+    [bucket],
+  );
+
+  const handleTranscribeAudio = useCallback(
+    async (audioUrl: string): Promise<string> => {
+      if (!selectedItemId) {
+        throw new Error('No model selected');
+      }
+      return transcribeAudio({
+        audioUrl,
+        mimeType: lastAudioMimeTypeRef.current,
+        deployment: selectedItemId,
+      });
+    },
+    [selectedItemId],
+  );
+
+  const isTranscriptionSupported = useMemo(() => {
+    const selectedItem = items.find((item) => item.id === selectedItemId);
+    return isAudioTranscriptionSupported(selectedItem?.inputAttachmentTypes);
+  }, [items, selectedItemId]);
+
   const handleStarterSelect = useCallback(
     (starter: StarterOption) => {
       if (starter['dial:widgetOptions'].submit) {
@@ -195,6 +235,9 @@ const ConversationRoute: FC = () => {
             modelSelectorLabels={modelSelectorLabels}
             sendLabel={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
+            isTranscriptionSupported={isTranscriptionSupported}
+            onUploadAudio={handleUploadAudio}
+            onTranscribeAudio={handleTranscribeAudio}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
