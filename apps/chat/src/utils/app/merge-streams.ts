@@ -122,6 +122,23 @@ export const mergeMessages = (
           newData.custom_content.configuration_schema;
       }
     }
+
+    if (newData.custom_fields) {
+      if (!newSource.custom_fields) {
+        newSource.custom_fields = {};
+      }
+
+      if (newData.custom_fields.annotations) {
+        if (!newSource.custom_fields.annotations) {
+          newSource.custom_fields.annotations = [];
+        }
+
+        newSource.custom_fields.annotations =
+          newSource.custom_fields.annotations.concat(
+            newData.custom_fields.annotations,
+          );
+      }
+    }
   });
   return newSource;
 };
