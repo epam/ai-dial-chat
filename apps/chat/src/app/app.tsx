@@ -4,6 +4,7 @@ import {
   Suspense,
   type FC,
   useCallback,
+  useEffect,
   useMemo,
   useState,
 } from 'react';
@@ -57,6 +58,11 @@ const App: FC = () => {
     () => setIsHistoryPanelOpen(false),
     [setIsHistoryPanelOpen],
   );
+
+  // Always close the panel when switching to mobile so a stored desktop `true` doesn't bleed through
+  useEffect(() => {
+    if (isMobile) closeHistoryPanel();
+  }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchRoot = useMatch(ROUTES.ROOT);
   const matchConversation = useMatch(`${ROUTES.CONVERSATIONS}/*`);

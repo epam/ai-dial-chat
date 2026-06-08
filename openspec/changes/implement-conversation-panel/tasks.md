@@ -22,12 +22,12 @@
 
 - [x] 3.1 Scaffold library: `package.json` (`"license": "Apache-2.0"`, peer deps for `react`, `@epam/ai-dial-ui-kit`, `@tabler/icons-react`), `vite.config.mts`, `tsconfig.lib.json`, eslint/tailwind/postcss configs
 - [x] 3.2 Register in `tsconfig.base.json` path aliases as `@epam/ai-dial-conversation-panel`; `npm install` to link workspace package
-- [x] 3.3 Add `src/models/ConversationPanel.ts` with: `ConversationSource` (string enum), `FilterTab` (string enum), `FilterLabels`, `ConversationHistoryItem`, `ConversationHistoryColors`, `ConversationHistoryTypography`, `ConversationPanelStyles`, `ConversationPanelProps`
+- [x] 3.3 Add `src/models/ConversationPanel.ts` with: `ConversationSource` (string enum), `FilterTab` (string enum), `FilterLabels`, `ConversationHistoryItem`, `ConversationHistoryColors`, `ConversationHistoryTypography`, `ConversationPanelStyles`, `ConversationPanelProps` (includes optional `onToggle`, `closeAriaLabel` for mobile close button)
 - [x] 3.4 Implement `NewChatButton` sub-component: `IconPlus` icon + label, calls `onNewChat`, keyboard-accessible
 - [x] 3.5 Implement `SearchInput` sub-component: search icon, controlled by local `useState<string>`, filters parent list via callback
 - [x] 3.6 Implement `FilterTabs` sub-component: `role="tablist"`, 4 tabs using `FilterTab` enum, `aria-selected`, local `useState<FilterTab>`
 - [x] 3.7 Implement `ConversationGroup` sub-component: collapsible section with disclosure button (chevron icon), `useState<boolean>` open state (default true), hides when item count is 0
-- [x] 3.8 Implement `ConversationPanel` component: header with `title` prop (no toggle button), `NewChatButton`, `SearchInput`, `FilterTabs`, grouped `ConversationGroup` sections (Pinned + My chats); combined search + tab filter; backdrop overlay when `onBackdropClick` provided
+- [x] 3.8 Implement `ConversationPanel` component: header with `title` prop and optional `IconX` close button (`onToggle`/`closeAriaLabel` props, `desktop:hidden`); full-width on mobile when open (`mobile:w-full`); `NewChatButton`, `SearchInput`, `FilterTabs`, grouped `ConversationGroup` sections (Pinned + My chats); combined search + tab filter; backdrop overlay when `onBackdropClick` provided
 - [x] 3.9 Export all types and `ConversationPanel` from `src/index.ts`
 - [x] 3.10 Unit tests in `libs/conversation-panel/src/components/ConversationPanel/tests/ConversationPanel.spec.tsx`
 - [x] 3.11 Build passes (`npm exec nx build @epam/ai-dial-conversation-panel`); tests pass
@@ -38,9 +38,9 @@
 - [x] 4.2 Create `apps/chat/src/context/ConversationsContext.tsx` with `ConversationsProvider` and `useConversations` hook; fetches on mount with cancelled-flag pattern
 - [x] 4.3 Wrap app with `<ConversationsProvider>` in `apps/chat/src/main.tsx`
 - [x] 4.4 Add `isHistoryPanelOpen` / `setIsHistoryPanelOpen` via `useLocalStorage('conversationPanelOpen', false)` in `app.tsx`; add `toggleHistoryPanel` and `closeHistoryPanel` callbacks
-- [x] 4.5 Add panel toggle icon button to `Header.tsx` (`isHistoryPanelOpen`, `onHistoryPanelToggle` props); desktop only (`hidden desktop:flex`)
-- [x] 4.6 Create `apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` — app-level adapter wiring `useConversations`, `useTranslation`, `useIsMobile`, and routing into `ConversationPanel`
-- [x] 4.7 Render `<ConversationPanelView>` in `app.tsx` with `isOpen`, `activeConversationId`, `onClose`, `onSelectConversation`, `onNewChat`
+- [x] 4.5 Add panel toggle icon button to `Header.tsx` (`isHistoryPanelOpen`, `onHistoryPanelToggle` props); desktop-only toggle (`hidden desktop:flex`); mobile-only `IconLayoutSidebarRight` open button (`desktop:hidden`) shown only when panel is closed
+- [x] 4.6 Create `apps/chat/src/components/ConversationPanel/ConversationPanelView.tsx` — app-level adapter wiring `useConversations`, `useTranslation`, `useIsMobile`, and routing into `ConversationPanel`; passes `onToggle={onClose}` and `closeAriaLabel` when `isMobile`
+- [x] 4.7 Render `<ConversationPanelView>` in `app.tsx` with `isOpen`, `activeConversationId`, `onClose`, `onSelectConversation`, `onNewChat`; add `useEffect` to close panel whenever `isMobile` becomes true (prevents stored desktop `true` bleeding into mobile)
 - [x] 4.8 Add i18n keys: `conversationHistory.title`, `conversationHistory.toggleAriaLabel`, `conversationHistory.empty`, `conversationHistory.newChat`, `conversationHistory.searchPlaceholder`, `conversationHistory.filterAll`, `conversationHistory.filterMyChats`, `conversationHistory.filterShared`, `conversationHistory.filterOrganization`, `conversationHistory.pinnedSection`, `conversationHistory.myChatsSection`
 - [x] 4.9 `npm exec nx build @epam/chat` passes with zero errors
 
@@ -49,7 +49,8 @@
 > Tasks below were planned for manual QA. The panel is functionally implemented; these are verification and polish items.
 
 - [ ] 5.1 Verify desktop: panel expands/collapses with CSS transition, `<main>` content shifts
-- [ ] 5.2 Verify mobile: panel renders as drawer overlay, backdrop closes it
+- [x] 5.2 Verify mobile: panel opens full-width as drawer overlay; `IconLayoutSidebarRight` button in header opens it; `IconX` button inside panel header closes it; backdrop click also closes; panel is closed by default on mobile
+- [x] 5.2a Mobile panel default-closed: `useEffect(() => { if (isMobile) closeHistoryPanel(); }, [isMobile])` in `app.tsx`
 - [ ] 5.3 Verify keyboard navigation: toggle button, New chat button, search input, filter tabs, and section toggles are all focusable; Enter/Space works
 - [x] 5.4 Fix `useMatch('/conversations/:id')` → restore `useMatch('/conversations/*')` with `params['*']` for correct `activeConversationId` (bug found in code review of PR #6953)
 - [x] 5.5 Fix `ConversationsProvider` placement — already correctly inside `RequireAuth` in `apps/chat/src/main.tsx` (line 35) — move inside `RequireAuth` in `apps/chat/src/main.tsx` to avoid unauthenticated fetch on the login page

@@ -10,13 +10,13 @@ Users have no way to revisit or switch between past conversations — every sess
 - **New `ConversationsContext`** in `apps/chat/src/context/ConversationsContext.tsx` — fetches and holds the conversation list; exposes it to `ConversationPanelView`.
 - **New `ConversationPanelView`** in `apps/chat/src/components/ConversationPanel/` — app-level adapter that wires `ConversationsContext`, i18n, and routing callbacks into `ConversationPanel`.
 - **Layout integration** in `apps/chat/src/app/app.tsx` — renders `ConversationPanelView` on the left. Panel open/closed state lives in `app.tsx` (persisted to `localStorage`); the `Header` receives a toggle callback.
-- **Toggle button in `Header.tsx`** — a history panel toggle icon button is added to the app header; desktop-only (`hidden desktop:flex`).
+- **Toggle button in `Header.tsx`** — on **desktop**: history panel toggle icon (`SideBarLeft`/`SideBarRight`, `hidden desktop:flex`). On **mobile**: a separate `IconLayoutSidebarRight` open button (`desktop:hidden`) visible only when the panel is closed; when open, an `IconX` button inside the panel header closes it.
 
 ## Capabilities
 
 ### New Capabilities
 
-- `conversation-panel`: Collapsible left sidebar listing past conversations — panel title, **New chat** button, **search input**, **filter tabs** (All / My chats / Shared / Organization), grouped collapsible sections (Pinned + My chats), conversation rows with optional icon and title; responsive (desktop persistent panel, mobile drawer overlay).
+- `conversation-panel`: Collapsible left sidebar listing past conversations — panel title, **New chat** button, **search input**, **filter tabs** (All / My chats / Shared / Organization), grouped collapsible sections (Pinned + My chats), conversation rows with optional icon and title; responsive (desktop: persistent 320px panel; mobile: full-width drawer overlay, closed by default, open via `IconLayoutSidebarRight` in header, close via `IconX` inside panel header).
 - `conversation-search`: Controlled text input inside the panel that filters the visible conversation list client-side by title match (state owned inside `ConversationPanel`).
 - `new-chat-button`: Prominent button at the top of the panel that calls `onNewChat` prop.
 - `conversation-filter-tabs`: Segmented tab control (All / My chats / Shared / Organization) using `FilterTab` string enum; state owned inside `ConversationPanel`.
