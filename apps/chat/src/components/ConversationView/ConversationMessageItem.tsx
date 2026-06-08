@@ -15,14 +15,14 @@ import {
 import { StagesPanel } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { FC, lazy, memo, Suspense } from 'react';
-import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
-import { messageHasStages } from '../../utils/message-utils.js';
-import { buildMessageActions } from './utils/build-message-actions.js';
+import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
+import { messageHasStages } from '../../utils/message-utils';
+import { buildMessageActions } from './utils/build-message-actions';
 import {
   getMessageStarterProps,
   getStatusMessageProps,
   isStreamingMessage,
-} from './utils/message-display.js';
+} from './utils/message-display';
 
 const EditMessageInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');

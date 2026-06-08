@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { memo, type FC } from 'react';
-import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
-import ConversationSourcesPanel from './ConversationSourcesPanel.js';
+import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
+import ConversationSourcesPanel from './ConversationSourcesPanel';
 
 /**
  * Isolated context consumer for the right sidebar.

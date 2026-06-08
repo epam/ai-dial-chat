@@ -18,11 +18,11 @@ import {
   ChatI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
-import { useDeployments } from '../../context/DeploymentsContext.js';
-import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
+import { useDeployments } from '../../context/DeploymentsContext';
+import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
-import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect.js';
+import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import {
   getConversation as apiGetConversation,
   saveConversation,

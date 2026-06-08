@@ -1,7 +1,7 @@
 import type { DisplayAttachment, Message } from '@epam/ai-dial-chat-shared';
 import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { useMemo } from 'react';
-import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display.js';
+import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
 
 /**
  * Derives uploaded (user) and generated (assistant) attachment lists from a conversation's
