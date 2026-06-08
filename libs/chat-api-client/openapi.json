@@ -858,9 +858,9 @@
             "description": "Maximum number of conversations to return.",
             "schema": {
               "minimum": 1,
-              "maximum": 100,
-              "default": 20,
-              "example": 20,
+              "maximum": 1000,
+              "default": 100,
+              "example": 100,
               "type": "number"
             }
           },

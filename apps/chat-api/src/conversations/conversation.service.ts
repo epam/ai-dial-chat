@@ -52,7 +52,7 @@ export class ConversationService extends AppService {
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
-    const name = getConversationName(firstMessage);
+    const name = getConversationName('New chat', firstMessage);
     const conversationPath = `${deploymentId}__${name}__${uuid}`;
     const folderId = `${bucket}`; // TODO: check
 
@@ -198,7 +198,7 @@ export class ConversationService extends AppService {
   async listConversations(
     token: string,
     bucket: string,
-    limit = 20,
+    limit = 100,
     nextToken?: string,
     path?: string,
   ): Promise<ConversationListResponseDto> {
@@ -209,27 +209,15 @@ export class ConversationService extends AppService {
           encodeDialResourcePath(path ?? ''),
           {
             headers: getBearerAuthHeaders(token),
-            query: {
-              recursive: true,
-              limit,
-              ...(nextToken ? { token: nextToken } : {}),
+            params: {
+              query: {
+                recursive: true,
+                limit,
+                ...(nextToken ? { token: nextToken } : {}),
+              },
             },
           },
-        ) as Promise<{
-          data?: {
-            items?: {
-              name?: string;
-              url?: string;
-              parentPath?: string;
-              updatedAt?: number;
-              nodeType?: string;
-              sharedWithMe?: boolean;
-              publishedWithMe?: boolean;
-            }[];
-            nextToken?: string;
-          };
-          error?: unknown;
-        }>,
+        ),
         this.userConfigService.getPinnedIds(token, bucket),
       ]);
 
@@ -243,18 +231,37 @@ export class ConversationService extends AppService {
       const pinnedSet = new Set(pinnedIds);
 
       const items: ConversationListItemDto[] = (data.items ?? [])
-        .filter((item) => item.nodeType !== 'FOLDER')
-        .map((item) => {
-          const id = item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`;
-          return {
-            id,
-            title: getConversationTitleFromName(item.name ?? ''),
-            updatedAt: item.updatedAt ?? 0,
-            sharedWithMe: item.sharedWithMe ?? false,
-            publishedWithMe: item.publishedWithMe ?? false,
-            isPinned: pinnedSet.has(id),
-          };
-        });
+        .flatMap((item) => {
+          if (
+            item.nodeType !== 'ITEM' ||
+            item.resourceType !== 'CONVERSATION' ||
+            !item.name ||
+            !item.url
+          ) {
+            return [];
+          }
+
+          const id = item.url;
+          return [
+            {
+              id,
+              title: getConversationTitleFromName(item.name),
+              updatedAt: item.updatedAt ?? 0,
+              sharedWithMe: false,
+              publishedWithMe: false,
+              isPinned: pinnedSet.has(id),
+            },
+          ];
+        })
+        .sort(
+          (a, b) =>
+            Number(b.isPinned) - Number(a.isPinned) ||
+            b.updatedAt - a.updatedAt,
+        );
+
+      this.logger.debug(
+        `DIAL Core conversation page received: limit=${limit}, rawItems=${data.items?.length ?? 0}, conversations=${items.length}, hasNextPage=${Boolean(data.nextToken)}`,
+      );
 
       return { items, nextToken: data.nextToken };
     } catch (error) {
@@ -275,7 +282,8 @@ export class ConversationService extends AppService {
         encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
-          query: permissions !== undefined ? { permissions } : undefined,
+          params:
+            permissions !== undefined ? { query: { permissions } } : undefined,
         },
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {

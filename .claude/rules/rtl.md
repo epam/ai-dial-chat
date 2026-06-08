@@ -6,14 +6,14 @@ All apps and libs must support Arabic (`ar`) and any other right-to-left locale.
 
 Use **logical** direction utilities everywhere text or element direction should follow the writing direction. Never use physical-direction utilities for this purpose.
 
-| Physical (forbidden for directional use) | Logical (required) |
-|---|---|
-| `ml-*` / `mr-*` | `ms-*` / `me-*` |
-| `pl-*` / `pr-*` | `ps-*` / `pe-*` |
-| `text-left` / `text-right` | `text-start` / `text-end` |
-| `left-*` / `right-*` | `start-*` / `end-*` |
-| `border-l-*` / `border-r-*` | `border-s-*` / `border-e-*` |
-| `rounded-l-*` / `rounded-r-*` | `rounded-s-*` / `rounded-e-*` |
+| Physical (forbidden for directional use) | Logical (required)            |
+| ---------------------------------------- | ----------------------------- |
+| `ml-*` / `mr-*`                          | `ms-*` / `me-*`               |
+| `pl-*` / `pr-*`                          | `ps-*` / `pe-*`               |
+| `text-left` / `text-right`               | `text-start` / `text-end`     |
+| `left-*` / `right-*`                     | `start-*` / `end-*`           |
+| `border-l-*` / `border-r-*`              | `border-s-*` / `border-e-*`   |
+| `rounded-l-*` / `rounded-r-*`            | `rounded-s-*` / `rounded-e-*` |
 
 In `.scss` / `.css` use CSS logical properties: `margin-inline-start/end`, `padding-inline-start/end`, `inset-inline-start/end`, `inset-inline`, `border-inline-start/end`.
 

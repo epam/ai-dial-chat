@@ -59,7 +59,7 @@ export const listConversations = (params?: {
   path?: string;
 }) =>
   conversationsApi.listConversations({
-    limit: params?.limit,
+    limit: params?.limit ?? 1000,
     nextToken: params?.nextToken,
     path: params?.path,
   });
