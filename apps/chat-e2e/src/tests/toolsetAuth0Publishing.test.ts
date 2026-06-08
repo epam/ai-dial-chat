@@ -1020,7 +1020,9 @@ dialAdminTest(
 );
 
 dialAdminTest(
-  'Public toolset is logged in after publish request approved if publish toolset with credentials',
+  'Public toolset is logged in after publish request approved if publish toolset with credentials.\n' +
+    '[Admin view]: Review publish request with global credentials.\n' +
+    '[Toolset]: "Copy link" is available for public toolset on card detailed view and context menu',
   async ({
     marketplacePage,
     marketplaceHeader,
@@ -1046,14 +1048,15 @@ dialAdminTest(
     adminMarketplaceEntities,
     adminApproveRequiredPrompts,
     adminPublishingApprovalModal,
-    adminPublishedApplicationReviewModal,
+    adminPublishedToolsetReviewModal,
     adminToolsetToApproveAssertion,
     toolsetApiHelper,
     baseAssertion,
     page,
     adminPage,
+    adminEntityDetailsModal,
   }) => {
-    setTestIds('EPMRTC-7158');
+    setTestIds('EPMRTC-7158', 'EPMRTC-7040', 'EPMRTC-7191');
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
@@ -1197,7 +1200,7 @@ dialAdminTest(
       'Approve the toolset with credentials',
       async () => {
         await adminPublishingApprovalModal.goToEntityReview();
-        await adminPublishedApplicationReviewModal
+        await adminPublishedToolsetReviewModal
           .getPublicationReviewControl()
           .backToPublicationRequest();
         adminOAuthMockHelper.disableMocking();
@@ -1244,6 +1247,26 @@ dialAdminTest(
         await baseAssertion.assertElementText(
           adminMarketplaceEntities.getEntityElementCredentials(toolsetElement),
           Creds.orgCreds,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify "Copy link" is available in the dots menu and on the toolset card',
+      async () => {
+        await toolsetElement.hoverOver();
+        await adminMarketplaceEntities
+          .getEntityElementDotsMenu(toolsetElement)
+          .click();
+        const menuOption = adminMarketplaceEntities
+          .getEntityDropdownMenu()
+          .menuOption(MenuOptions.copyLink);
+        await baseAssertion.assertElementState(menuOption, 'visible');
+
+        await toolsetElement.click();
+        await baseAssertion.assertElementState(
+          adminEntityDetailsModal.copyLink,
+          'visible',
         );
       },
     );
