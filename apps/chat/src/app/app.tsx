@@ -14,8 +14,8 @@ import {
   useMatch,
   useNavigate,
 } from 'react-router-dom';
-import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView.js';
-import ConversationSourcesPanelView from '../components/ConversationSourcesPanel/ConversationSourcesPanelView.js';
+import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
+import ConversationSourcesPanelView from '../components/ConversationSourcesPanel/ConversationSourcesPanelView';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -25,7 +25,7 @@ import {
   normalizeConversationId,
 } from '../constants/routes';
 import { StorageKey } from '../constants/storage';
-import { useIsMobile } from '../hooks/breakpoint/useBreakpoint.js';
+import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import useLocalStorage from '../hooks/useLocalStorage';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 

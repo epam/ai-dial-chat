@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import type { AriaAttributes } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ROUTES } from '../../../constants/routes.js';
-import { SourcesSidebarProvider } from '../../../context/SourcesSidebarContext.js';
+import { ROUTES } from '../../../constants/routes';
+import { SourcesSidebarProvider } from '../../../context/SourcesSidebarContext';
 import * as ThemeContext from '../../../context/ThemeContext';
 import Header from '../Header';
 

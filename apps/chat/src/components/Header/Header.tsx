@@ -4,13 +4,13 @@ import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatch } from 'react-router-dom';
-import { ROUTES } from '../../constants/routes.js';
+import { ROUTES } from '../../constants/routes';
 import {
   ConversationHistoryI18nKeys,
   NavigationI18nKeys,
   SidebarI18nKeys,
-} from '../../constants/translation-keys.js';
-import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
+} from '../../constants/translation-keys';
+import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import SideBarLeft from '../../icons/side-bar-left.svg?react';
 import SideBarRight from '../../icons/side-bar-right.svg?react';
 import Logo from './Logo';

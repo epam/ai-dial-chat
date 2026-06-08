@@ -33,10 +33,10 @@ import {
   ChatI18nKeys,
   ConversationI18nKeys,
   DeploymentsI18nKeys,
-} from '../../constants/translation-keys.js';
-import { useDeployments } from '../../context/DeploymentsContext.js';
-import { resolveCatalogIconUrl } from '../../utils/icon-path.js';
-import ConversationMessageItem from './ConversationMessageItem.js';
+} from '../../constants/translation-keys';
+import { useDeployments } from '../../context/DeploymentsContext';
+import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');

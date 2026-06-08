@@ -1,4 +1,4 @@
-import { StringUtils } from '../../common/utils/string-utils.js';
+import { StringUtils } from '../../common/utils/string-utils';
 import { COMPOUND_TOKEN_PREFIX } from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 

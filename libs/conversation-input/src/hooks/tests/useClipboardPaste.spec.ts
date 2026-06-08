@@ -2,7 +2,7 @@ import { AttachmentType } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import { ClipboardEvent } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useClipboardPaste } from '../useClipboardPaste.js';
+import { useClipboardPaste } from '../useClipboardPaste';
 
 const makeTextEvent = (text: string) =>
   ({

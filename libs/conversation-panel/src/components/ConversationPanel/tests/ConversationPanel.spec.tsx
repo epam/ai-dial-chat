@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ConversationSource,
   type ConversationHistoryItem,
-} from '../../../models/ConversationPanel.js';
-import { ConversationPanel } from '../ConversationPanel.js';
+} from '../../../models/ConversationPanel';
+import { ConversationPanel } from '../ConversationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, LG: 24 },

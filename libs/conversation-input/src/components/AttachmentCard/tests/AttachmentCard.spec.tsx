@@ -2,7 +2,7 @@ import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { AttachmentCard } from '../AttachmentCard.js';
+import { AttachmentCard } from '../AttachmentCard';
 
 const makeAttachment = (
   overrides?: Partial<DisplayAttachment>,

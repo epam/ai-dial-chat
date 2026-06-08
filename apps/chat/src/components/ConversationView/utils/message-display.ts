@@ -4,7 +4,7 @@ import {
   type StarterOption,
   type StatusMessage,
 } from '@epam/ai-dial-chat-shared';
-import { getStartersFromSchema } from '../../../utils/starter-option.js';
+import { getStartersFromSchema } from '../../../utils/starter-option';
 
 /**
  * Resolves display props for a `MessageRole.Status` message.

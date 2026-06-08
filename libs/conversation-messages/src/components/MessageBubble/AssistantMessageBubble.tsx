@@ -9,9 +9,9 @@ import {
 } from '@epam/ai-dial-conversation-input';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
-import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js';
-import { MDMessageViewer } from '../Markdown/MDMessageViewer.js';
-import { MessageActions } from '../Message/MessageActions.js';
+import type { AssistantMessageBubbleProps } from '../../models/MessageBubble';
+import { MDMessageViewer } from '../Markdown/MDMessageViewer';
+import { MessageActions } from '../Message/MessageActions';
 import styles from './MessageBubble.module.scss';
 
 /** Assistant-authored message bubble, left-aligned with markdown content and optional quick-reply starters. */

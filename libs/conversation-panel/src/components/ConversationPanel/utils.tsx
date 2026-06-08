@@ -2,7 +2,7 @@ import {
   ConversationSource,
   type ConversationHistoryItem,
   FilterTab,
-} from '../../models/ConversationPanel.js';
+} from '../../models/ConversationPanel';
 
 /** Returns whether a conversation item matches the currently selected filter tab. */
 export const matchesTab = (

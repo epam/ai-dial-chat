@@ -2,10 +2,10 @@ import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { RequestStatus, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import { ChangeEvent, type FC, useCallback, useRef, useState } from 'react';
-import type { EditMessageInputProps } from '../../models/ConversationInput.js';
-import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton.js';
-import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
-import { Input } from '../Input/Input.js';
+import type { EditMessageInputProps } from '../../models/ConversationInput';
+import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
+import { AttachmentTray } from '../AttachmentTray/AttachmentTray';
+import { Input } from '../Input/Input';
 
 export const EditMessageInput: FC<EditMessageInputProps> = ({
   message,

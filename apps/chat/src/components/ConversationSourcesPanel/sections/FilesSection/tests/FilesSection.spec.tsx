@@ -2,7 +2,7 @@ import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import FilesSection from '../FilesSection.js';
+import FilesSection from '../FilesSection';
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
   AttachmentCard: ({ attachment }: { attachment: DisplayAttachment }) => (

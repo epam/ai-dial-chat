@@ -75,6 +75,7 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 - Host/external integrations are adapted at the app edge and passed into libs through props, callbacks, resolved values, or narrow interfaces
 - No unjustified new patterns; justified new ones are called out
 - No sneaky circular deps or leaky module APIs
+- Relative `.ts`/`.tsx` imports and re-exports omit `.js`, `.jsx`, `.ts`, and `.tsx`; Vite projects use bundler resolution rather than Node ESM source specifiers
 - Duplication: only consolidate when the rule of three (or team norm) says so
 
 ### 4. Security
@@ -235,6 +236,7 @@ Use as a literal template when writing a review:
 - [ ] `libs/chat-api-client` changes, if any, are generated OpenAPI client changes
 - [ ] Coupling and abstraction level appropriate
 - [ ] API/generated-client/OpenSpec contract rules followed when relevant
+- [ ] Relative TypeScript source imports are extensionless
 
 ### Security
 

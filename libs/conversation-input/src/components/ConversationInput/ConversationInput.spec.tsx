@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConversationInput } from './ConversationInput.js';
+import { ConversationInput } from './ConversationInput';
 
 describe('ConversationInput', () => {
   it('should render with welcome text', () => {

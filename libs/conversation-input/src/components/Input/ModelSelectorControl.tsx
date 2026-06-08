@@ -6,9 +6,9 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useState } from 'react';
-import { useModelSelector } from '../../hooks/useModelSelector.js';
-import type { InputProps } from '../../models/Input.js';
-import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet.js';
+import { useModelSelector } from '../../hooks/useModelSelector';
+import type { InputProps } from '../../models/Input';
+import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet';
 import styles from './Input.module.scss';
 
 interface Props {

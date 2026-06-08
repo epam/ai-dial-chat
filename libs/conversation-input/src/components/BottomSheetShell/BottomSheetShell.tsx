@@ -2,7 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { BASE_ICON_SIZE, DialCloseButton } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { useBottomSheet } from '../../hooks/useBottomSheet.js';
+import { useBottomSheet } from '../../hooks/useBottomSheet';
 import styles from './BottomSheetShell.module.scss';
 
 /** Props for the shared bottom-sheet overlay shell. */

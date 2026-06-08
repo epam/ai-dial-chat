@@ -4,10 +4,7 @@ import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
 import { type FC, useMemo } from 'react';
-import {
-  SidebarSide,
-  type SidebarPanelProps,
-} from '../../models/SidebarPanel.js';
+import { SidebarSide, type SidebarPanelProps } from '../../models/SidebarPanel';
 import styles from './SidebarPanel.module.scss';
 
 export const SidebarPanel: FC<SidebarPanelProps> = ({
