@@ -19,3 +19,9 @@ resolutions:
         'NPM::union:0\\.5\\.0'\\."
       reason: 'CANT_FIX_EXCEPTION'
       comment: 'The dependency has MIT license in github repo'
+    - message: "The repository license choices, in the \\.ort\\.yml file, \
+        contain the following 'given' expressions which are not applicable.*"
+      reason: 'CANT_FIX_EXCEPTION'
+      comment: >-
+        License choices are kept in sync with the development branch template.
+        Applicable packages may be absent in this feature branch.
