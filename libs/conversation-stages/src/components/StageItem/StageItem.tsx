@@ -1,5 +1,14 @@
-import type { Stage } from '@epam/ai-dial-chat-shared';
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import type {
+  DisplayAttachment,
+  MessageAttachment,
+  Stage,
+} from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentType,
+  RequestStatus,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
+import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
@@ -17,14 +26,32 @@ interface Props {
   typography: StageTypography;
   /** Accessible label for the copy button inside stage content. */
   copyAriaLabel?: string;
+  /** Accessible label for the attachments tray. Defaults to `'Stage attachments'`. */
+  attachmentsAriaLabel?: string;
 }
 
-/** A single stage row — plain when no content, collapsible when content is present. */
+const toDisplayAttachment = (
+  attachment: MessageAttachment,
+  index: number,
+): DisplayAttachment => ({
+  id: attachment.url ?? attachment.title ?? String(index),
+  name: attachment.title,
+  contentType: attachment.type,
+  type: attachment.type.startsWith('image/')
+    ? AttachmentType.Image
+    : AttachmentType.File,
+  status: RequestStatus.Idle,
+  url: attachment.url,
+  previewUrl: attachment.type.startsWith('image/') ? attachment.url : undefined,
+});
+
+/** A single stage row — plain when no content, collapsible when content or attachments are present. */
 export const StageItem: FC<Props> = ({
   stage,
   isLive,
   typography,
   copyAriaLabel,
+  attachmentsAriaLabel = 'Stage attachments',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -37,7 +64,10 @@ export const StageItem: FC<Props> = ({
     </>
   );
 
-  if (!stage.content) {
+  const displayAttachments = stage.attachments?.map(toDisplayAttachment) ?? [];
+  const hasExpandableContent = !!(stage.content || displayAttachments.length);
+
+  if (!hasExpandableContent) {
     return <div className="flex items-center gap-2">{header}</div>;
   }
 
@@ -72,11 +102,19 @@ export const StageItem: FC<Props> = ({
       >
         <div className="overflow-hidden">
           <div className="mt-3 flex flex-col gap-3 ps-7">
-            <StageMarkdownContent
-              content={stage.content}
-              typography={typography}
-              copyAriaLabel={copyAriaLabel}
-            />
+            {stage.content && (
+              <StageMarkdownContent
+                content={stage.content}
+                typography={typography}
+                copyAriaLabel={copyAriaLabel}
+              />
+            )}
+            {displayAttachments.length > 0 && (
+              <AttachmentTray
+                attachments={displayAttachments}
+                ariaLabel={attachmentsAriaLabel}
+              />
+            )}
           </div>
         </div>
       </div>
