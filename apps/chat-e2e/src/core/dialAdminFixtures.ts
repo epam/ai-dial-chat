@@ -64,6 +64,7 @@ import {
   PublishEntityAssertion,
   PublishFileAssertion,
   PublishFolderAssertion,
+  PublishToolsetAssertion,
   PublishedAppReviewModalAssertion,
   PublishedPromptPreviewModalAssertion,
   PublishedToolsetReviewModalAssertion,
@@ -169,7 +170,7 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderPromptAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminAppToApproveAssertion: PublishEntityAssertion<PublishApplicationsTree>;
-  adminToolsetToApproveAssertion: PublishEntityAssertion<PublishToolsetsTree>;
+  adminToolsetToApproveAssertion: PublishToolsetAssertion<PublishToolsetsTree>;
   adminPublishFilesAssertion: PublishFileAssertion<PublishFilesTree>;
   adminPublishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
   adminFolderConversationsToApproveAssertion: PublishFolderAssertion<PublishFolderConversations>;
@@ -693,8 +694,9 @@ const dialAdminTest = dialTest.extend<{
     await use(adminAppToApproveAssertion);
   },
   adminToolsetToApproveAssertion: async ({ adminToolsetsToApprove }, use) => {
-    const adminToolsetToApproveAssertion =
-      new PublishEntityAssertion<PublishToolsetsTree>(adminToolsetsToApprove);
+    const adminToolsetToApproveAssertion = new PublishToolsetAssertion(
+      adminToolsetsToApprove,
+    );
     await use(adminToolsetToApproveAssertion);
   },
   adminPublishFilesAssertion: async ({ adminFilesToApproveTree }, use) => {
