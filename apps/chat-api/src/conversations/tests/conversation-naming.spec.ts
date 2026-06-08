@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { getConversationName } from '../get-conversation-name';
-import { prepareEntityName } from '../prepare-entity-name';
+import {
+  getConversationName,
+  prepareEntityName,
+} from '../utils/conversation.utils';
 
 describe('conversation naming helpers', () => {
   describe('prepareEntityName', () => {

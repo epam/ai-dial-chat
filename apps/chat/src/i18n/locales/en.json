@@ -16,6 +16,7 @@
     "stopStreaming": "Stop streaming",
     "quickReplyButtons": "Quick reply buttons",
     "stoppedGenerating": "You stopped generating the response",
+    "readOnlyNotice": "Only own conversations can be edited",
     "thinking": "Thinking",
     "showMore": "Show more",
     "showLess": "Show less",

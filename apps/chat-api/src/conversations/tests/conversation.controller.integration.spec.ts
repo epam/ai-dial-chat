@@ -411,6 +411,23 @@ describe('ConversationController (integration)', () => {
       );
     });
 
+    it('forwards limit and nextToken to the service', async () => {
+      const response = { items: [], nextToken: undefined };
+      service.listConversations.mockReturnValue(response);
+
+      await request(app.getHttpServer())
+        .get('/conversations/list?limit=50&nextToken=abc123')
+        .expect(200);
+
+      expect(service.listConversations).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        50,
+        'abc123',
+        undefined,
+      );
+    });
+
     it('returns 400 when path exceeds 512 characters', async () => {
       await request(app.getHttpServer())
         .get(`/conversations/list?path=${'a'.repeat(513)}`)
@@ -437,6 +454,18 @@ describe('ConversationController (integration)', () => {
     it('returns 400 when limit exceeds 1000', async () => {
       await request(app.getHttpServer())
         .get('/conversations/list?limit=1001')
+        .expect(400);
+    });
+
+    it('returns 400 when limit is below 1', async () => {
+      await request(app.getHttpServer())
+        .get('/conversations/list?limit=0')
+        .expect(400);
+    });
+
+    it('returns 400 when nextToken exceeds 512 characters', async () => {
+      await request(app.getHttpServer())
+        .get(`/conversations/list?nextToken=${'x'.repeat(513)}`)
         .expect(400);
     });
   });

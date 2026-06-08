@@ -12,25 +12,32 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import { UserConfigService } from '../user-config/user-config.service';
-import { buildRenamedConversationPath } from './build-renamed-conversation-path';
+import { PUBLIC_BUCKET } from './constants/conversation.constants';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
 } from './dto/conversation-list.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 import { RenameConversationResponseDto } from './dto/rename-conversation.dto';
-import { getConversationName } from './get-conversation-name';
-import { getConversationTitleFromName } from './get-conversation-title-from-name';
-import { prepareEntityName } from './prepare-entity-name';
+import type {
+  MetadataItem,
+  MetadataResult,
+  SharedResourcesResult,
+} from './types/conversation.types';
+import {
+  buildRenamedConversationPath,
+  decodeNextToken,
+  encodeCompoundToken,
+  encodeDialResourcePath,
+  getConversationName,
+  getConversationTitleFromName,
+  prepareEntityName,
+} from './utils/conversation.utils';
 
 const getValidAttachments = (customContent?: Message['custom_content']) =>
   (customContent?.attachments ?? []).filter((attachment) =>
     Boolean(attachment.data || attachment.url),
   );
-
-// TODO: Remove this once the DIAL SDK encodes resource path segments internally.
-const encodeDialResourcePath = (path: string): string =>
-  path.split('/').map(encodeURIComponent).join('/');
 
 @Injectable()
 export class ConversationService extends AppService {
@@ -103,12 +110,20 @@ export class ConversationService extends AppService {
   async getConversation(
     conversationPath: string,
     token: string,
-    bucket: string,
+    sessionBucket: string,
   ): Promise<Conversation> {
+    const slashIndex = conversationPath.indexOf('/');
+    const bucket =
+      slashIndex === -1 ? sessionBucket : conversationPath.slice(0, slashIndex);
+    const subPath =
+      slashIndex === -1
+        ? conversationPath
+        : conversationPath.slice(slashIndex + 1);
+
     try {
       const { data, error } = (await this.client.getConversation(
         bucket,
-        encodeDialResourcePath(conversationPath),
+        encodeDialResourcePath(subPath),
         { headers: getBearerAuthHeaders(token) },
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {
@@ -202,68 +217,198 @@ export class ConversationService extends AppService {
     nextToken?: string,
     path?: string,
   ): Promise<ConversationListResponseDto> {
+    const { u: userNextToken, p: publicNextToken } = decodeNextToken(nextToken);
+
+    const buildQuery = (cursor?: string) => ({
+      recursive: true as const,
+      limit,
+      ...(cursor ? { token: cursor } : {}),
+    });
+
     try {
-      const [metadataResult, pinnedIds] = await Promise.all([
-        this.client.getConversationMetadata(
-          bucket,
-          encodeDialResourcePath(path ?? ''),
-          {
-            headers: getBearerAuthHeaders(token),
-            params: {
-              query: {
-                recursive: true,
-                limit,
-                ...(nextToken ? { token: nextToken } : {}),
-              },
+      const [userResult, publicResult, sharedResult, pinnedIds] =
+        await Promise.all([
+          this.client.getConversationMetadata(
+            bucket,
+            encodeDialResourcePath(path ?? ''),
+            {
+              headers: getBearerAuthHeaders(token),
+              query: buildQuery(userNextToken),
             },
-          },
-        ),
-        this.userConfigService.getPinnedIds(token, bucket),
-      ]);
+          ) as Promise<MetadataResult>,
+          (
+            this.client.getConversationMetadata(
+              PUBLIC_BUCKET,
+              encodeDialResourcePath(path ?? ''),
+              {
+                headers: getBearerAuthHeaders(token),
+                query: buildQuery(publicNextToken),
+              },
+            ) as Promise<MetadataResult>
+          ).catch((err: unknown) => {
+            this.logger.warn(
+              'DIAL Core listConversations (public bucket) failed',
+              err,
+            );
+            return { data: undefined, error: err } satisfies MetadataResult;
+          }),
+          (
+            this.client.getSharedResources({
+              headers: getBearerAuthHeaders(token),
+              body: { resourceTypes: ['CONVERSATION'], with: 'me' },
+            }) as Promise<SharedResourcesResult>
+          ).catch((err: unknown) => {
+            this.logger.warn(
+              'DIAL Core listConversations (shared resources) failed',
+              err,
+            );
+            return {
+              data: undefined,
+              error: err,
+            } satisfies SharedResourcesResult;
+          }),
+          this.userConfigService.getPinnedIds(token, bucket),
+        ]);
 
-      const { data, error } = metadataResult;
+      const { data: userData, error: userError } = userResult;
+      if (userError !== undefined || !userData) {
+        this.logger.error(
+          'DIAL Core rejected listConversations (user bucket)',
+          userError,
+        );
+        return handleDialError(userError);
+      }
 
-      if (error != null || !data) {
-        this.logger.error('DIAL Core rejected listConversations', error);
-        return handleDialError(error);
+      const { data: publicData, error: publicError } = publicResult;
+      if (publicError !== undefined) {
+        this.logger.warn(
+          'DIAL Core rejected listConversations (public bucket)',
+          publicError,
+        );
+      }
+
+      const { data: sharedData, error: sharedError } = sharedResult;
+      if (sharedError !== undefined) {
+        this.logger.warn(
+          'DIAL Core listConversations (shared resources) failed',
+          sharedError,
+        );
       }
 
       const pinnedSet = new Set(pinnedIds);
 
-      const items: ConversationListItemDto[] = (data.items ?? [])
-        .flatMap((item) => {
-          if (
-            item.nodeType !== 'ITEM' ||
-            item.resourceType !== 'CONVERSATION' ||
-            !item.name ||
-            !item.url
-          ) {
-            return [];
-          }
-
-          const id = item.url;
-          return [
-            {
+      const mapItems = (
+        items: MetadataItem[],
+        overrides: { sharedWithMe?: boolean; publishedWithMe?: boolean } = {},
+      ): ConversationListItemDto[] =>
+        items
+          .filter((item) => item.nodeType !== 'FOLDER')
+          .map((item) => {
+            const id =
+              item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`;
+            return {
               id,
-              title: getConversationTitleFromName(item.name),
+              title: getConversationTitleFromName(item.name ?? ''),
               updatedAt: item.updatedAt ?? 0,
-              sharedWithMe: false,
-              publishedWithMe: false,
+              sharedWithMe:
+                overrides.sharedWithMe ?? item.sharedWithMe ?? false,
+              publishedWithMe:
+                overrides.publishedWithMe ?? item.publishedWithMe ?? false,
               isPinned: pinnedSet.has(id),
-            },
-          ];
-        })
-        .sort(
-          (a, b) =>
-            Number(b.isPinned) - Number(a.isPinned) ||
-            b.updatedAt - a.updatedAt,
-        );
+            };
+          });
 
-      this.logger.debug(
-        `DIAL Core conversation page received: limit=${limit}, rawItems=${data.items?.length ?? 0}, conversations=${items.length}, hasNextPage=${Boolean(data.nextToken)}`,
+      // Extract the path within a bucket from a DIAL Core resource URL.
+      // URL format: "conversations/<bucket>/<relative-path>"
+      // Stripping the first two segments lets us match the same conversation
+      // across different buckets (e.g. user bucket vs. public bucket).
+      // Falls back to item.name when url is absent.
+      const getBucketRelativePath = (item: MetadataItem): string => {
+        if (item.url) {
+          const parts = item.url.split('/');
+          return parts.length >= 3 ? parts.slice(2).join('/') : item.url;
+        }
+        return item.name ?? '';
+      };
+
+      // Paths of public-bucket items on this page — used to:
+      //   1. Skip public items that duplicate a user-bucket item (dedup)
+      //   2. Promote user-bucket items that are org-published to publishedWithMe: true
+      const publicItemPaths = new Set(
+        publicError == null && publicData
+          ? (publicData.items ?? [])
+              .filter((item) => item.nodeType !== 'FOLDER')
+              .map(getBucketRelativePath)
+          : [],
       );
 
-      return { items, nextToken: data.nextToken };
+      // IDs of user-bucket items that also exist in the public bucket.
+      // These should be shown as org-published (Organization section) rather
+      // than My Chats, because DIAL Core may not set publishedWithMe on
+      // user-bucket copies.
+      const orgPublishedUserIds = new Set(
+        (userData.items ?? [])
+          .filter(
+            (item) =>
+              item.nodeType !== 'FOLDER' &&
+              publicItemPaths.has(getBucketRelativePath(item)),
+          )
+          .map(
+            (item) => item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`,
+          ),
+      );
+
+      const userItems = mapItems(userData.items ?? []).map((item) =>
+        orgPublishedUserIds.has(item.id)
+          ? { ...item, publishedWithMe: true }
+          : item,
+      );
+
+      // Paths of user-bucket items on this page — used to skip public items
+      // that are already represented as user items above.
+      const userItemPaths = new Set(
+        (userData.items ?? [])
+          .filter((item) => item.nodeType !== 'FOLDER')
+          .map(getBucketRelativePath),
+      );
+
+      const publicItems =
+        publicError == null && publicData
+          ? mapItems(
+              (publicData.items ?? []).filter(
+                (item) => !userItemPaths.has(getBucketRelativePath(item)),
+              ),
+              { publishedWithMe: true },
+            )
+          : [];
+      const sharedItems =
+        sharedError == null && sharedData
+          ? (sharedData.resources ?? [])
+              .filter((r) => r.nodeType !== 'FOLDER')
+              .map((r) => {
+                const id = r.url ?? `${r.parentPath ?? ''}/${r.name ?? ''}`;
+                return {
+                  id,
+                  title: getConversationTitleFromName(r.name ?? ''),
+                  updatedAt: 0,
+                  sharedWithMe: true,
+                  publishedWithMe: false,
+                  isPinned: pinnedSet.has(id),
+                };
+              })
+          : [];
+
+      const items = [...userItems, ...publicItems, ...sharedItems].sort(
+        (a, b) => b.updatedAt - a.updatedAt,
+      );
+
+      return {
+        items,
+        nextToken: encodeCompoundToken(
+          userData.nextToken,
+          publicData?.nextToken,
+        ),
+      };
     } catch (error) {
       this.logger.error('DIAL Core listConversations failed', error);
       return handleDialError(error);

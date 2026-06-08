@@ -8,7 +8,7 @@ import {
   DialConfirmationPopup,
 } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
@@ -27,7 +27,7 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
-import { getConversationPath } from '../../utils/conversation-path';
+import { decodeConversationId } from '../../utils/conversation-path';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 export const ConversationPage: FC = () => {
@@ -44,6 +44,13 @@ export const ConversationPage: FC = () => {
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
 
+  const isReadOnly = useMemo(() => {
+    if (!conversationId || !bucket) return false;
+    const decoded = decodeConversationId(conversationId);
+    const slashIndex = decoded.indexOf('/');
+    return slashIndex !== -1 && decoded.slice(0, slashIndex) !== bucket;
+  }, [conversationId, bucket]);
+
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
     return () => handleCloseSourcesSidebar();
@@ -52,9 +59,8 @@ export const ConversationPage: FC = () => {
   const addStatusMessage = useCallback(
     (msg: Message) => {
       if (!conversationId) return;
-      const conversationPath = conversationId.substring(
-        conversationId.indexOf('/') + 1,
-      );
+      const decoded = decodeConversationId(conversationId);
+      const conversationPath = decoded.substring(decoded.indexOf('/') + 1);
       setConversation((prev) => {
         if (!prev) return prev;
         const next = { ...prev, messages: [...prev.messages, msg] };
@@ -92,9 +98,13 @@ export const ConversationPage: FC = () => {
       return;
     }
 
-    const conversationPath = getConversationPath(conversationId);
+    const decodedConversationId = decodeConversationId(conversationId);
+    const conversationPath = decodedConversationId.substring(
+      decodedConversationId.indexOf('/') + 1,
+    );
+
     setIsFetching(true);
-    apiGetConversation(conversationPath)
+    apiGetConversation(decodedConversationId)
       .then((dto) => {
         const result = dto as unknown as Conversation;
 
@@ -189,6 +199,8 @@ export const ConversationPage: FC = () => {
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
           streamErrorText={t(ChatI18nKeys.StreamError)}
+          isReadOnly={isReadOnly}
+          readOnlyNotice={t(ChatI18nKeys.ReadOnlyNotice)}
         />
       </div>
 

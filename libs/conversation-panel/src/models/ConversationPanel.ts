@@ -140,6 +140,10 @@ export interface ConversationPanelProps {
     pinned?: string;
     /** Heading for the My chats section. Defaults to `"My chats"`. */
     myChats?: string;
+    /** Heading for the Shared section. Defaults to `"Shared"`. */
+    shared?: string;
+    /** Heading for the Organization section. Defaults to `"Organization"`. */
+    organization?: string;
   };
   /** Color and typography overrides applied as CSS custom properties. */
   styles?: ConversationPanelStyles;
