@@ -300,6 +300,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
           disabled={!dirtyFields.agentsAndToolsetsJson && !editorError}
         />
         <DialPrimaryButton
+          type="button"
           label={t(MarketplaceI18nKeys.SaveJSON)}
           size={ElementSize.Small}
           onClick={handleSaveJson}
