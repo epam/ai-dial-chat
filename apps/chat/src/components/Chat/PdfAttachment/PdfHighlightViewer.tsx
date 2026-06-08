@@ -47,6 +47,38 @@ interface Props {
 
 const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 
+class PdfFetchError extends Error {
+  constructor(public readonly status: number) {
+    super(`Failed to fetch PDF (status ${status})`);
+    this.name = 'PdfFetchError';
+  }
+}
+
+const fetchPdfArrayBuffer = async (fileUrl: string): Promise<ArrayBuffer> => {
+  const response = await fetch(fileUrl);
+  if (!response.ok) {
+    throw new PdfFetchError(response.status);
+  }
+  return response.arrayBuffer();
+};
+
+const getPdfLoadErrorMessage = (
+  error: unknown,
+  t: (key: string, options?: Record<string, unknown>) => string,
+): string => {
+  if (error instanceof PdfFetchError) {
+    if (error.status === 403) {
+      return t(ChatI18nKeys.FileAccessRevoked);
+    }
+    if (error.status === 404) {
+      return t(ChatI18nKeys.FileNotFound);
+    }
+  }
+
+  const message = error instanceof Error ? error.message : 'Failed to load PDF';
+  return t(ChatI18nKeys.FailedToLoadPdf, { error: message });
+};
+
 export const PdfHighlightViewer = ({ url }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
@@ -115,7 +147,9 @@ export const PdfHighlightViewer = ({ url }: Props) => {
         });
 
         if (cancelled) return;
-        await viewer.loadPDF(fileUrl);
+        const pdfData = await fetchPdfArrayBuffer(fileUrl);
+        if (cancelled) return;
+        await viewer.loadPDF(pdfData);
         if (cancelled) return;
 
         viewerRef.current = viewer;
@@ -140,8 +174,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       } catch (e) {
         if (cancelled) return;
 
-        const message = e instanceof Error ? e.message : 'Failed to load PDF';
-        setError(t(ChatI18nKeys.FailedToLoadPdf, { error: message }));
+        setError(getPdfLoadErrorMessage(e, t));
         setIsLoading(false);
       }
     })();
