@@ -63,7 +63,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       </div>
     ),
     DialSkeleton: ({ variant }: { variant: string }) => (
-      <span data-testid="dial-skeleton" data-variant={variant} />
+      <span data-variant={variant} />
     ),
   };
 });
@@ -319,7 +319,7 @@ describe('Input — model selector', () => {
   });
 
   it('shows seven skeleton rows and a circular trigger skeleton while deployments load', () => {
-    render(
+    const { container } = render(
       <Input
         deployments={[]}
         selectedDeploymentId={null}
@@ -329,7 +329,9 @@ describe('Input — model selector', () => {
     );
     const loadingItem = screen.getByText('Loading models…');
     expect(loadingItem).toBeTruthy();
-    const skeletons = screen.getAllByTestId('dial-skeleton');
+    const skeletons = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-variant]'),
+    );
     expect(
       skeletons.filter((skeleton) => skeleton.dataset.variant === 'circular'),
     ).toHaveLength(8);
