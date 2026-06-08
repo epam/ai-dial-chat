@@ -81,7 +81,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
 
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
-      <div className="flex w-fit flex-col items-end gap-2">
+      <div className="ms-auto flex w-fit flex-col items-end gap-2">
         <AttachmentTray attachments={attachments ?? []} />
         {text && (
           <div

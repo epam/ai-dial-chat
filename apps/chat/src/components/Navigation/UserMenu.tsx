@@ -101,6 +101,7 @@ export const UserMenu = memo(() => {
           placement="top-end"
           matchReferenceWidth={false}
           items={menuItems}
+          listClassName="shadow-md"
         >
           <button
             className="flex size-[44px] items-center justify-center rounded-full border border-transparent focus-within:border-focus hover:bg-accent-primary-alpha focus:border-transparent"
