@@ -113,7 +113,7 @@ label SHALL remain available to assistive technology.
 
 #### Scenario: Deployments are still loading
 
-- **WHEN** `items` is empty and `isLoading` is `true`
+- **WHEN** `isLoading` is `true`, including a reload where `items` still contains previously loaded deployments
 - **THEN** the selector trigger shows a circular skeleton
 - **AND** opening the selector shows seven disabled skeleton rows
 

@@ -19,7 +19,7 @@ onSelectedCatalogItemChange?: (itemId: string) => void;
 /** Accessible label for the model selector dropdown trigger button. */
 modelSelectorAriaLabel?: string;
 
-/** Text shown in the trigger while the catalog is loading. */
+/** Accessible loading label announced while the trigger and menu show skeleton placeholders. */
 modelSelectorLoadingLabel?: string;
 
 /** Text shown in the trigger when the catalog failed to load. */
@@ -128,7 +128,7 @@ The `isStreaming === true` stop-button path is unaffected — streaming stop alw
 
 #### Scenario: Loading skeletons displayed
 
-- **WHEN** `catalogItems` is `[]` and `modelSelectorLoadingLabel` is `"Loading…"`
+- **WHEN** `modelSelectorLoadingLabel` is `"Loading…"`, including a reload where `catalogItems` still contains previously loaded items
 - **THEN** the selector trigger renders a circular `DialSkeleton`
 - **AND** the opened selector renders seven disabled rows containing circular icon and text skeletons
 - **AND** `"Loading…"` remains exposed to assistive technology
@@ -175,7 +175,7 @@ Tests SHALL be added or updated in `libs/conversation-input/src/components/Input
 1. Selector is rendered when `catalogItems` is a non-empty array.
 2. The trigger renders the selected item's `displayName`.
 3. Clicking a menu item calls `onSelectedCatalogItemChange` with the correct id.
-4. Loading label is shown when `catalogItems` is `[]` and `modelSelectorLoadingLabel` is set.
+4. When `modelSelectorLoadingLabel` is set, the trigger renders one circular skeleton and the selector renders seven disabled rows with circular icon and text skeletons; the loading label remains available to assistive technology.
 5. Error label is shown when `catalogItems` is `[]` and `modelSelectorErrorLabel` is set.
 6. Send button is disabled when `catalogItems` is defined and `selectedCatalogItemId` is `null`.
 7. Enter key does not fire `onSend` when no selection.

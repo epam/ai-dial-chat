@@ -89,7 +89,7 @@ available to assistive technology.
 
 #### Scenario: Desktop selector shows deployment skeletons while loading
 
-- **WHEN** `deployments` is `[]` and `modelSelectorLabels.loading` is defined
+- **WHEN** `modelSelectorLabels.loading` is defined, including a reload where `deployments` still contains previously loaded items
 - **THEN** the trigger shows a circular `DialSkeleton`
 - **AND** the dropdown contains exactly seven disabled skeleton rows
 - **AND** every row contains one circular and one text `DialSkeleton`
