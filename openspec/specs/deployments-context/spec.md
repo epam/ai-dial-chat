@@ -74,6 +74,34 @@ The props passed to `ConversationInput` SHALL use `items` from `useDeployments()
 
 ---
 
+### Requirement: Deployment selector uses skeleton placeholders while loading
+
+When `useDeployments().isLoading` is `true`, the deployment selector SHALL use
+`DialSkeleton` from `@epam/ai-dial-ui-kit` instead of a visible loading-text
+row.
+
+The selector trigger SHALL render one circular skeleton in place of the
+selected deployment icon. The opened desktop dropdown SHALL render exactly
+seven disabled rows; every row SHALL contain a circular icon skeleton and a
+text skeleton representing the deployment name. The mobile bottom sheet SHALL
+render the same seven skeleton rows. The localized loading label SHALL remain
+available to assistive technology.
+
+#### Scenario: Desktop selector shows deployment skeletons while loading
+
+- **WHEN** `deployments` is `[]` and `modelSelectorLabels.loading` is defined
+- **THEN** the trigger shows a circular `DialSkeleton`
+- **AND** the dropdown contains exactly seven disabled skeleton rows
+- **AND** every row contains one circular and one text `DialSkeleton`
+
+#### Scenario: Mobile selector shows deployment skeletons while loading
+
+- **WHEN** the mobile selector is opened while deployments are loading
+- **THEN** the bottom sheet contains exactly seven skeleton rows
+- **AND** every row contains one circular and one text `DialSkeleton`
+
+---
+
 ### Requirement: Catalog frontend fully removed
 
 `apps/chat/src/context/CatalogContext.tsx`, `apps/chat/src/context/tests/CatalogContext.spec.tsx`, and `apps/chat/src/server-api/catalog.ts` SHALL be deleted.
