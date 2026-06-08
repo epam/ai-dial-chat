@@ -67,6 +67,11 @@ describe('conversation naming helpers', () => {
       expect(result).toBe('Default Name');
     });
 
+    it('should use defaultName if prompt contains only whitespace', () => {
+      const result = getConversationName('Default Name', '   \n ');
+      expect(result).toBe('Default Name');
+    });
+
     it('should apply name cleaning to defaultName when prompt is not provided', () => {
       const result = getConversationName('Default :Name;');
       expect(result).toBe('Default  Name');

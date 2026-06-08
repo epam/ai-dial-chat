@@ -19,7 +19,7 @@ export const prepareEntityName = (prompt?: string): string => {
 export const getConversationName = (
   defaultName: string,
   prompt?: string,
-): string => prepareEntityName(prompt || defaultName);
+): string => prepareEntityName(prompt) || prepareEntityName(defaultName);
 
 /**
  * Extracts the human-readable title from a DIAL Core conversation filename.

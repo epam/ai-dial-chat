@@ -91,6 +91,43 @@ describe('ConversationService', () => {
   });
 
   describe('createConversation', () => {
+    it('saves the conversation using the expected Core resource name', async () => {
+      const saveConversationSpy = vi.spyOn(
+        service['client'],
+        'saveConversation',
+      );
+
+      await service.createConversation(
+        'What do you want to do?',
+        'test-token',
+        'test-bucket',
+        'form-example',
+      );
+
+      expect(saveConversationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        expect.stringMatching(
+          /^form-example__What%20do%20you%20want%20to%20do%3F__[0-9a-f-]{36}$/i,
+        ),
+        expect.any(Object),
+      );
+    });
+
+    it('uses a non-empty fallback name for conversations without message text', async () => {
+      const result = await service.createConversation(
+        '',
+        'test-token',
+        'test-bucket',
+        'form-example',
+        { form_value: { answer: 'yes' } },
+      );
+
+      expect(result.name).toBe('New chat');
+      expect(result.id).toMatch(
+        /^test-bucket\/form-example__New chat__[0-9a-f-]{36}$/i,
+      );
+    });
+
     it('returns a conversation with a UUID-format id', async () => {
       const result = await service.createConversation(
         'Hello',
@@ -1156,5 +1193,6 @@ describe('ConversationService', () => {
       expect(result.items).toHaveLength(1);
       expect(result.items[0].id).toBe('conversations/test-bucket/user-conv');
     });
+
   });
 });

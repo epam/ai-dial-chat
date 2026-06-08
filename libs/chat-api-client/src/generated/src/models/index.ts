@@ -359,6 +359,12 @@ export interface ConversationMessageDto {
    * @type {string}
    * @memberof ConversationMessageDto
    */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
   role: ConversationMessageDtoRoleEnum;
   /**
    *

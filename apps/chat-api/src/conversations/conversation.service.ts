@@ -59,7 +59,7 @@ export class ConversationService extends AppService {
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
-    const name = getConversationName(firstMessage);
+    const name = getConversationName('New chat', firstMessage);
     const conversationPath = `${deploymentId}__${name}__${uuid}`;
     const folderId = `${bucket}`; // TODO: check
 
@@ -213,7 +213,7 @@ export class ConversationService extends AppService {
   async listConversations(
     token: string,
     bucket: string,
-    limit = 20,
+    limit = 100,
     nextToken?: string,
     path?: string,
   ): Promise<ConversationListResponseDto> {
@@ -280,15 +280,19 @@ export class ConversationService extends AppService {
       }
 
       const { data: publicData, error: publicError } = publicResult;
-      if (publicError != null || !publicData) {
-        this.logger.error('DIAL Core rejected listConversations', publicError);
-        return handleDialError(publicError);
+      if (publicError !== undefined) {
+        this.logger.warn(
+          'DIAL Core rejected listConversations (public bucket)',
+          publicError,
+        );
       }
 
       const { data: sharedData, error: sharedError } = sharedResult;
-      if (sharedError != null || !sharedData) {
-        this.logger.error('DIAL Core rejected getSharedResources', sharedError);
-        return handleDialError(sharedError);
+      if (sharedError !== undefined) {
+        this.logger.warn(
+          'DIAL Core listConversations (shared resources) failed',
+          sharedError,
+        );
       }
 
       const pinnedSet = new Set(pinnedIds);
@@ -423,7 +427,8 @@ export class ConversationService extends AppService {
         encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
-          query: permissions !== undefined ? { permissions } : undefined,
+          params:
+            permissions !== undefined ? { query: { permissions } } : undefined,
         },
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {

@@ -12,15 +12,15 @@ import {
 export class ListConversationsQueryDto {
   @ApiPropertyOptional({
     description: 'Maximum number of conversations to return.',
-    example: 20,
+    example: 100,
     minimum: 1,
-    maximum: 100,
-    default: 20,
+    maximum: 1000,
+    default: 100,
   })
   @IsOptional()
   @IsInt()
   @Min(1)
-  @Max(100)
+  @Max(1000)
   @Transform(({ value }) => (value != null ? Number(value) : undefined))
   limit?: number;
 

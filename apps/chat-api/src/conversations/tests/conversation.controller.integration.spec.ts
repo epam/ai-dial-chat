@@ -434,9 +434,26 @@ describe('ConversationController (integration)', () => {
         .expect(400);
     });
 
-    it('returns 400 when limit exceeds 100', async () => {
+    it('accepts a limit of 1000', async () => {
+      const response = { items: [], nextToken: undefined };
+      service.listConversations.mockReturnValue(response);
+
       await request(app.getHttpServer())
-        .get('/conversations/list?limit=200')
+        .get('/conversations/list?limit=1000')
+        .expect(200);
+
+      expect(service.listConversations).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+        1000,
+        undefined,
+        undefined,
+      );
+    });
+
+    it('returns 400 when limit exceeds 1000', async () => {
+      await request(app.getHttpServer())
+        .get('/conversations/list?limit=1001')
         .expect(400);
     });
 
