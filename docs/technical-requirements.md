@@ -82,15 +82,15 @@ This document defines functional and non-functional requirements for the initial
 
 ### FR-8 — Internationalisation and RTL
 
-| ID     | Requirement                                                                                                                                  | Priority |
-| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| FR-8.1 | App ships with full Arabic (`ar`) translation coverage matching all keys in `en.json`                                                        | Must     |
-| FR-8.2 | Active locale is detected from browser settings and persisted in `localStorage`; a language-selector UI allows manual override               | Must     |
-| FR-8.3 | When an RTL locale is active, `<html dir="rtl">` and the matching `lang` attribute are set before first render; switching locale updates them | Must     |
+| ID     | Requirement                                                                                                                                                                                                           | Priority |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| FR-8.1 | App ships with full Arabic (`ar`) translation coverage matching all keys in `en.json`                                                                                                                                 | Must     |
+| FR-8.2 | Active locale is detected from browser settings and persisted in `localStorage`; a language-selector UI allows manual override                                                                                        | Must     |
+| FR-8.3 | When an RTL locale is active, `<html dir="rtl">` and the matching `lang` attribute are set before first render; switching locale updates them                                                                         | Must     |
 | FR-8.4 | All layout components use CSS logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`, `border-s-*`, `border-e-*`); no component relies on physical `left`/`right` utilities for directional behaviour | Must     |
-| FR-8.5 | Directional icons (back/forward chevrons, navigation arrows, collapse indicators) are mirrored in RTL via `rtl:scale-x-[-1]` or equivalent   | Must     |
-| FR-8.6 | Mobile slide-in panels (navigation drawer, conversation panel) enter and exit from the start edge in both LTR and RTL                        | Must     |
-| FR-8.7 | Adding a new locale requires only: a translation JSON file, one line in `i18n/config.ts`, and — if RTL — one entry in `RTL_LANGUAGES`        | Should   |
+| FR-8.5 | Directional icons (back/forward chevrons, navigation arrows, collapse indicators) are mirrored in RTL via `rtl:scale-x-[-1]` or equivalent                                                                            | Must     |
+| FR-8.6 | Mobile slide-in panels (navigation drawer, conversation panel) enter and exit from the start edge in both LTR and RTL                                                                                                 | Must     |
+| FR-8.7 | Adding a new locale requires only: a translation JSON file, one line in `i18n/config.ts`, and — if RTL — one entry in `RTL_LANGUAGES`                                                                                 | Should   |
 
 ### FR-7 — Theming
 
@@ -127,12 +127,12 @@ This document defines functional and non-functional requirements for the initial
 
 ### NFR-3 — Accessibility
 
-| ID      | Requirement                                                                                                                |
-| ------- | -------------------------------------------------------------------------------------------------------------------------- |
-| NFR-3.1 | Message feed has `role="log"` and `aria-live="polite"`                                                                     |
-| NFR-3.2 | Error messages use `role="alert"`                                                                                          |
-| NFR-3.3 | All interactive controls are keyboard-navigable (Tab, Enter, Escape)                                                       |
-| NFR-3.4 | Send button has a descriptive `aria-label`                                                                                 |
+| ID      | Requirement                                                                                                                                    |
+| ------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| NFR-3.1 | Message feed has `role="log"` and `aria-live="polite"`                                                                                         |
+| NFR-3.2 | Error messages use `role="alert"`                                                                                                              |
+| NFR-3.3 | All interactive controls are keyboard-navigable (Tab, Enter, Escape)                                                                           |
+| NFR-3.4 | Send button has a descriptive `aria-label`                                                                                                     |
 | NFR-3.5 | All `aria-label` values are translated strings — no hardcoded English in aria attributes; libs expose label props, the app passes `t()` values |
 
 ### NFR-4 — Reliability
@@ -224,6 +224,7 @@ Simplest path for initial release: client-side truncation from `conversation.mes
 **Decision:** Arabic (`ar`) ships alongside English as the first RTL locale. See **FR-8** for the full set of derived requirements.
 
 **What was done:**
+
 - `ar.json` created with full translation coverage (`apps/chat/src/i18n/locales/ar.json`)
 - `applyDocumentDirection` wired to `i18n.on('languageChanged')` — sets `document.documentElement.dir` and `lang` on every locale switch
 - All layout components migrated from physical Tailwind utilities to CSS logical properties

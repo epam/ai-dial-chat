@@ -1,18 +1,11 @@
-import type {
-  DisplayAttachment,
-  MessageAttachment,
-  Stage,
-} from '@epam/ai-dial-chat-shared';
-import {
-  AttachmentType,
-  RequestStatus,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
+import type { Stage } from '@epam/ai-dial-chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type { StageTypography } from '../../models/StagesPanel.js';
+import { toDisplayAttachment } from '../../utils/to-display-attachment.js';
 import { StageIcon } from '../StageIcon/StageIcon.js';
 import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent.js';
 import styles from '../StagesPanel/StagesPanel.module.scss';
@@ -29,21 +22,6 @@ interface Props {
   /** Accessible label for the attachments tray. Defaults to `'Stage attachments'`. */
   attachmentsAriaLabel?: string;
 }
-
-const toDisplayAttachment = (
-  attachment: MessageAttachment,
-  index: number,
-): DisplayAttachment => ({
-  id: attachment.url ?? attachment.title ?? String(index),
-  name: attachment.title,
-  contentType: attachment.type,
-  type: attachment.type.startsWith('image/')
-    ? AttachmentType.Image
-    : AttachmentType.File,
-  status: RequestStatus.Idle,
-  url: attachment.url,
-  previewUrl: attachment.type.startsWith('image/') ? attachment.url : undefined,
-});
 
 /** A single stage row — plain when no content, collapsible when content or attachments are present. */
 export const StageItem: FC<Props> = ({
