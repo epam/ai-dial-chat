@@ -64,7 +64,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </button>
   ),
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
-  ElementSize: { Small: 'small', Standard: 'standard' },
+  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
 }));
 
 vi.mock('@tabler/icons-react', () => ({

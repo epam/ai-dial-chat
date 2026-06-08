@@ -3,6 +3,7 @@ import {
   DIAL_ICON_SIZE,
   DialDropdownIcon,
   DialGhostIconButton,
+  ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useState } from 'react';
@@ -95,6 +96,7 @@ export const ModelSelectorControl: FC<Props> = ({
       matchReferenceWidth={false}
       listClassName="!w-[240px] !max-h-80"
       onOpenChange={handleModelSelectorOpenChange}
+      size={ElementSize.Large}
       caretIcon={
         <div
           className={mergeClasses(
