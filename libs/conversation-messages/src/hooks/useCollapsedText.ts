@@ -20,6 +20,8 @@ export interface UseCollapsedTextResult {
   isOverflowing: boolean;
   /** Current collapsed viewport height in pixels. */
   collapsedMaxHeight: number;
+  /** Full rendered text height in pixels. */
+  expandedMaxHeight: number;
   /** Whether the expanded/collapsed control is currently in the collapsed state. */
   isCollapsed: boolean;
   /** Toggle between expanded and collapsed states. */
@@ -38,6 +40,7 @@ export const useCollapsedText = ({
   const [collapsedMaxHeight, setCollapsedMaxHeight] = useState(
     DEFAULT_LINE_HEIGHT_FALLBACK * effectiveCollapsedLineCount,
   );
+  const [expandedMaxHeight, setExpandedMaxHeight] = useState(0);
 
   const measureOverflow = useCallback(() => {
     const el = textRef.current;
@@ -61,6 +64,7 @@ export const useCollapsedText = ({
     const nextMaxHeight = lineHeight * effectiveCollapsedLineCount;
 
     setCollapsedMaxHeight(nextMaxHeight);
+    setExpandedMaxHeight(el.scrollHeight);
     setIsOverflowing(el.scrollHeight - nextMaxHeight > OVERFLOW_TOLERANCE);
   }, [effectiveCollapsedLineCount]);
 
@@ -89,6 +93,7 @@ export const useCollapsedText = ({
     isTextCollapsed: isCollapsed && isOverflowing,
     isOverflowing,
     collapsedMaxHeight,
+    expandedMaxHeight,
     isCollapsed,
     toggleCollapsed,
   };

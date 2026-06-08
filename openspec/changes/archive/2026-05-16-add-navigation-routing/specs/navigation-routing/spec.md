@@ -136,7 +136,7 @@ Every user-visible string introduced by this change MUST be looked up via `useTr
 
 ### Requirement: Tests cover the navigation surface
 
-The change SHALL ship co-located Vitest specs covering: `Navigation.spec.tsx` and `CatalogView.spec.tsx`. Tests MUST use `@testing-library/react` role/label/text queries (no `data-testid`) and describe observable behaviour.
+The change SHALL ship co-located Vitest specs covering: `Navigation.spec.tsx` and `CatalogView.spec.tsx`. Tests MUST use `@testing-library/react` role/label/text queries instead of implementation-specific selectors and describe observable behaviour.
 
 #### Scenario: Navigation active-state tests
 

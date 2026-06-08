@@ -27,7 +27,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('../UserMenu', () => ({
-  default: () => <div data-testid="user-menu" />,
+  default: () => <div>User menu</div>,
 }));
 
 const renderNavigation = (initialPath = '/') =>

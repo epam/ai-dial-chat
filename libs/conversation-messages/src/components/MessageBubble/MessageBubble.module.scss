@@ -2,6 +2,15 @@
   background: var(--cm-bubble-user-bg, var(--bg-layer-4, #242c42));
 }
 
+.collapsibleText {
+  max-height: var(--cm-bubble-collapsed-height);
+  transition: max-height 200ms ease-out;
+}
+
+.expandedText {
+  max-height: var(--cm-bubble-expanded-height);
+}
+
 .collapsedText::after {
   content: '';
   position: absolute;
@@ -14,6 +23,12 @@
     rgb(0 0 0 / 0),
     var(--cm-bubble-user-bg, var(--bg-layer-4, #242c42))
   );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapsibleText {
+    transition: none;
+  }
 }
 
 .agentIconBadge {

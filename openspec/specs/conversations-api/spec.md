@@ -219,7 +219,7 @@ Error codes:
 
 ### Requirement: ConversationController has integration tests
 
-Integration tests SHALL cover key endpoints using supertest in `apps/chat-api/src/conversations/tests/conversation.controller.integration.spec.ts`. Tests MUST follow the established pattern (mock service via `{ provide: ConversationService, useValue: service }`). No `data-testid` attributes; use HTTP status codes and response body assertions.
+Integration tests SHALL cover key endpoints using supertest in `apps/chat-api/src/conversations/tests/conversation.controller.integration.spec.ts`. Tests MUST follow the established pattern (mock service via `{ provide: ConversationService, useValue: service }`) and use HTTP status codes and response body assertions rather than implementation-specific selectors.
 
 #### Scenario: Integration test covers POST 201 and 400 paths
 

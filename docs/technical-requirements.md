@@ -149,7 +149,7 @@ This document defines functional and non-functional requirements for the initial
 | ------- | ----------------------------------------------------------------------------------- |
 | NFR-5.1 | Every new React hook and utility function has unit tests (Vitest + Testing Library) |
 | NFR-5.2 | Every new NestJS controller has integration tests (supertest)                       |
-| NFR-5.3 | Tests use role/label/text queries — no `data-testid` attributes                     |
+| NFR-5.3 | Tests use role/label/text queries instead of implementation-specific selectors      |
 | NFR-5.4 | Tests describe observable behaviour, not implementation details                     |
 
 ### NFR-6 — Code Quality

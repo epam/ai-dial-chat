@@ -242,7 +242,7 @@ rules:
       (ComponentName/tests/ComponentName.spec.tsx); backend specs sit next to the source file
       (feature.controller.spec.ts next to feature.controller.ts)
     - Test names describe observable behaviour — not implementation details
-    - Do not use data-testid attributes in tests — use role, label, and text queries
+    - Tests must use role, label, and text queries instead of implementation-specific selectors
     - Do not add manual testing tasks
     - Add i18n keys to en.json as a dedicated task when new strings are introduced
     - For any new or changed business HTTP endpoint, include dedicated tasks to:

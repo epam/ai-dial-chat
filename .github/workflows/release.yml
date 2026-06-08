@@ -2,13 +2,7 @@ name: Release Workflow
 
 on:
   push:
-    branches: [development, release-*]
-  workflow_dispatch:
-    inputs:
-      promote:
-        type: boolean
-        default: false
-        description: Promote release to stable (for release-* branches only)
+    branches: [development-1.0]
 
 permissions:
   contents: write
@@ -19,11 +13,94 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  IMAGE_NAME: ${{ github.repository }}
+
 jobs:
-  release:
-    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@4.3.1
+  test:
+    uses: epam/ai-dial-ci/.github/workflows/node_test.yml@4.4.1
     with:
-      promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
-      node-version: 24
-      maximize-build-space: true
-    secrets: inherit
+      node-version: '24'
+
+  calculate_version:
+    runs-on: ubuntu-24.04
+    outputs:
+      next-version: ${{ steps.semantic_versioning.outputs.next-version }}
+      latest-stable-tag: ${{ steps.semantic_versioning.outputs.latest-stable-tag }}
+      is-release-candidate: ${{ steps.semantic_versioning.outputs.is-release-candidate }}
+      is-release: ${{ steps.semantic_versioning.outputs.is-release }}
+      is-latest: ${{ steps.semantic_versioning.outputs.is-latest }}
+      release-line: ${{ steps.semantic_versioning.outputs.release-line }}
+      changelog-mode: ${{ steps.semantic_versioning.outputs.changelog-mode }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+      - uses: ./.github/actions/semantic_versioning
+        id: semantic_versioning
+        with:
+          promote: false
+  release:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      packages: write
+      security-events: write
+    needs:
+      - calculate_version
+      - test
+    steps:
+      - name: Maximize build space
+        uses: nepalevov/maximize-build-space@046c48361370e2f3fa758bd2f10c6ce29109ef62 # v1.1.0
+        with:
+          remove-dotnet: "true"
+          remove-android: "true"
+          remove-haskell: "true"
+          remove-codeql: "true"
+          remove-large-packages: "true"
+          remove-cached-tools: "true"
+          remove-swapfile: "true"
+          remove-java: "true"
+          remove-swift: "true"
+          remove-julia: "true"
+          remove-browsers: "true"
+          remove-cloud-tools: "true"
+          remove-kubernetes-tools: "true"
+          remove-powershell: "true"
+          remove-container-tools: "true"
+          remove-rust: "true"
+          remove-python: "true"
+          remove-node: "true"
+          remove-go: "true"
+          remove-ruby: "true"
+          docker-cleanup: "true"
+          set-tmpdir: "true"
+      - uses: epam/ai-dial-ci/actions/generate_release_notes@4.4.1
+        with:
+          latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
+          use-merge-base: ${{ needs.calculate_version.outputs.changelog-mode == 'merge-base' }}
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          lfs: true
+          token: ${{ secrets.ACTIONS_BOT_TOKEN }}
+      - uses: epam/ai-dial-ci/actions/node_prepare@4.4.1
+        with:
+          node-version: '24'
+          clean-install: true
+          registry-url: "https://registry.npmjs.org"
+      - name: Set version
+        shell: bash
+        run: |
+          npm version ${{ needs.calculate_version.outputs.next-version }} --no-git-tag-version --allow-same-version
+      # HACK: jobs.<job_id>.if does not support hashFiles function, so we have to copy it to the each step
+      - if: ${{ hashFiles('Dockerfile') != '' }}
+        uses: epam/ai-dial-ci/actions/build_docker@4.4.1
+        with:
+          ghcr-username: ${{ github.actor }}
+          ghcr-password: ${{ secrets.ACTIONS_BOT_TOKEN }}
+          dockerhub-username: ${{ secrets.DOCKERHUB_LOGIN }}
+          dockerhub-password: ${{ secrets.DOCKERHUB_TOKEN }}
+          image-name: ghcr.io/${{ env.IMAGE_NAME }}
+          image-tag: development-1.0
+          push-enabled: true
