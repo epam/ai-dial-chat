@@ -39,6 +39,7 @@ Review every non-trivial change before it lands on the main line. Use **five axe
 - Fits existing Nx boundaries (`apps/*`, `libs/*`) and import direction
 - No unjustified new patterns; justified new ones are called out
 - No sneaky circular deps or leaky module APIs
+- Relative `.ts`/`.tsx` imports and re-exports omit `.js`, `.jsx`, `.ts`, and `.tsx`; Vite projects use bundler resolution rather than Node ESM source specifiers
 - Duplication: only consolidate when the rule of three (or team norm) says so
 
 ### 4. Security
@@ -119,6 +120,7 @@ Use as a literal template when writing a review:
 ### Architecture
 - [ ] Fits monorepo boundaries and patterns
 - [ ] Coupling and abstraction level appropriate
+- [ ] Relative TypeScript source imports are extensionless
 
 ### Security
 - [ ] No secrets; boundaries validated; auth as needed

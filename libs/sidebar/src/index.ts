@@ -1,8 +1,8 @@
-export { SidebarPanel } from './components/SidebarPanel/SidebarPanel.js';
-export { SidebarSide } from './models/SidebarPanel.js';
+export { SidebarPanel } from './components/SidebarPanel/SidebarPanel';
+export { SidebarSide } from './models/SidebarPanel';
 export type {
   SidebarPanelProps,
   SidebarPanelStyles,
   SidebarPanelColors,
   SidebarPanelTypography,
-} from './models/SidebarPanel.js';
+} from './models/SidebarPanel';

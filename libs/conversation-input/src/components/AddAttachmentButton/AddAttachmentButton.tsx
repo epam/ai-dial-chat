@@ -5,8 +5,8 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconPaperclip, IconPlus } from '@tabler/icons-react';
 import { CSSProperties, type FC, useMemo, useState } from 'react';
-import { useIsMobile } from '../../hooks/useIsMobile.js';
-import { BottomSheet } from '../BottomSheet/BottomSheet.js';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { BottomSheet } from '../BottomSheet/BottomSheet';
 
 interface AddAttachmentButtonProps {
   /** Callback invoked when the user picks "Attach file". */

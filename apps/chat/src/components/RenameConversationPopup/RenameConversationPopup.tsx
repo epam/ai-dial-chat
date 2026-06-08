@@ -4,8 +4,8 @@ import { useTranslation } from 'react-i18next';
 import {
   ActionsI18nKeys,
   ConversationHistoryI18nKeys,
-} from '../../constants/translation-keys.js';
-import { getUtf8ByteLength } from '../../utils/string-utils.js';
+} from '../../constants/translation-keys';
+import { getUtf8ByteLength } from '../../utils/string-utils';
 
 interface Props {
   isOpen: boolean;

@@ -2,7 +2,7 @@ import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { AttachmentTray } from '../AttachmentTray.js';
+import { AttachmentTray } from '../AttachmentTray';
 
 const makeAttachment = (id: string, name = 'file.pdf'): DisplayAttachment => ({
   id,

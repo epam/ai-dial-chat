@@ -4,11 +4,11 @@ import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload, IconSearch } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SidebarI18nKeys } from '../../constants/translation-keys.js';
-import { useSourcesSidebar } from '../../context/SourcesSidebarContext.js';
-import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources.js';
-import FilesSection from './sections/FilesSection/FilesSection.js';
-import SourcesSection from './sections/SourcesSection/SourcesSection.js';
+import { SidebarI18nKeys } from '../../constants/translation-keys';
+import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
+import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
+import FilesSection from './sections/FilesSection/FilesSection';
+import SourcesSection from './sections/SourcesSection/SourcesSection';
 
 interface Props {
   messages: Message[];

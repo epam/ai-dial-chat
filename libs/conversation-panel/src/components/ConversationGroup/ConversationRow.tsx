@@ -11,8 +11,8 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
 import { useState, type FC } from 'react';
-import type { ConversationHistoryItem } from '../../models/ConversationPanel.js';
-import { getButtonPaddingEnd } from '../../utils/conversation-row.utils.js';
+import type { ConversationHistoryItem } from '../../models/ConversationPanel';
+import { getButtonPaddingEnd } from '../../utils/conversation-row.utils';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
 export interface ConversationRowProps {

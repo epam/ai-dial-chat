@@ -24,18 +24,18 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { normalizeConversationId, ROUTES } from '../../constants/routes.js';
+import { normalizeConversationId, ROUTES } from '../../constants/routes';
 import {
   ActionsI18nKeys,
   ConversationHistoryI18nKeys,
-} from '../../constants/translation-keys.js';
-import { useConversations } from '../../context/ConversationsContext.js';
-import { useDeployments } from '../../context/DeploymentsContext.js';
-import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint.js';
-import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id.js';
-import { resolveCatalogIconUrl } from '../../utils/icon-path.js';
-import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup.js';
-import { getConversationSource } from './get-conversation-source.js';
+} from '../../constants/translation-keys';
+import { useConversations } from '../../context/ConversationsContext';
+import { useDeployments } from '../../context/DeploymentsContext';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
+import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
+import { getConversationSource } from './get-conversation-source';
 
 interface Props {
   isOpen: boolean;
@@ -288,9 +288,9 @@ const ConversationPanelView: FC<Props> = ({
         getActions={getActions}
         actionsLabel={t(ConversationHistoryI18nKeys.ActionsLabel)}
         onBackdropClick={isMobile ? onClose : undefined}
-        className={
-          isMobile ? 'fixed inset-y-0 start-0 z-50 w-[320px]' : undefined
-        }
+        onToggle={isMobile ? onClose : undefined}
+        closeAriaLabel={t(ConversationHistoryI18nKeys.ToggleAriaLabel)}
+        className={isMobile ? 'fixed inset-y-0 start-0 z-50' : undefined}
       />
 
       <DialConfirmationPopup

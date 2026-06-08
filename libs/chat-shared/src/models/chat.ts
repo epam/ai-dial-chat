@@ -1,6 +1,6 @@
-import { AttachmentType } from '../types/attachment.js';
-import { MIMEType } from '../types/mime-type.js';
-import type { DeploymentConfigurationSchema } from './deployment-configuration.js';
+import { AttachmentType } from '../types/attachment';
+import { MIMEType } from '../types/mime-type';
+import type { DeploymentConfigurationSchema } from './deployment-configuration';
 
 /** Metadata returned by the DIAL file/conversation listing API for a single resource node. */
 export interface ConversationMetadata {

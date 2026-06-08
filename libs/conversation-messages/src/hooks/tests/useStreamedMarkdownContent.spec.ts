@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { useStreamedMarkdownContent } from '../useStreamedMarkdownContent.js';
+import { useStreamedMarkdownContent } from '../useStreamedMarkdownContent';
 
 afterEach(() => {
   vi.useRealTimers();

@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import {
   SourcesSidebarProvider,
   useSourcesSidebar,
-} from '../SourcesSidebarContext.js';
+} from '../SourcesSidebarContext';
 
 const wrapper = ({ children }: { children: ReactNode }) => (
   <SourcesSidebarProvider>{children}</SourcesSidebarProvider>

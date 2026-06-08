@@ -1,7 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { StagesPanelProps } from '../../models/StagesPanel.js';
-import { StageItem } from '../StageItem/StageItem.js';
+import type { StagesPanelProps } from '../../models/StagesPanel';
+import { StageItem } from '../StageItem/StageItem';
 import styles from './StagesPanel.module.scss';
 
 /**

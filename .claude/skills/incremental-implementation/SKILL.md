@@ -48,6 +48,8 @@ Build in thin vertical slices — implement one piece, test it, verify it, then 
 
 **Library isolation:** before editing hand-authored `libs/*`, identify every host/external boundary involved. Libraries must not know REST paths, `/api` URLs, generated API clients, `apps/chat/src/server-api`, app contexts, auth/session/cookies, environment variables, feature flags, routing/navigation, analytics/telemetry, logging transports, persistence/storage keys or schemas, deployment/tenant/provider details, third-party SDK setup, platform bridges, or app-specific URL schemes. Put those details in an app-level adapter and pass resolved values or behavior into the lib through props, callbacks, or narrow interfaces. `libs/chat-api-client` is the generated OpenAPI-client exception; update it via OpenAPI generation scripts, not hand-authored app behavior.
 
+**Module specifiers:** relative imports and re-exports between `.ts`/`.tsx` source modules omit `.js`, `.jsx`, `.ts`, and `.tsx`. Preserve extensions for resources such as CSS/JSON and explicit package subpaths. Vite-built projects use bundler module resolution; do not add `.js` to source to satisfy Node ESM resolution.
+
 **One thing at a time:** one logical change per increment; do not mix unrelated refactors with features.
 
 **Keep it compilable:** after each increment, the repo should build and existing tests should pass for the scope you are responsible for.
@@ -63,6 +65,7 @@ After each increment:
 - [ ] The change does one thing and completes it
 - [ ] If hand-authored `libs/*` changed, host/external integration knowledge stayed outside the lib boundary
 - [ ] If `libs/chat-api-client` changed, it was regenerated from OpenAPI sources rather than manually edited
+- [ ] Relative TypeScript source imports are extensionless; resource and explicit package-subpath extensions are preserved
 - [ ] Tests pass for the Nx project(s) you changed (`npx nx test <project>`)
 - [ ] Lint passes for touched projects (`npx nx lint <project>` or affected lint)
 - [ ] Build passes when your slice affects build output (`npx nx build <project>`)

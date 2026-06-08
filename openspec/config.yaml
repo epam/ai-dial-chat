@@ -8,6 +8,8 @@ context: |
   - Frontend: React 19, Vite 8 (apps/chat, port 4207)
   - Backend: NestJS 11 (apps/chat-api, port 3005)
   - Language: TypeScript 5.9 (strict mode, noUnusedLocals, noUnusedParameters)
+  - Frontend module resolution: Vite-built apps and libs use `module: esnext` with
+    `moduleResolution: bundler`; relative TypeScript source imports omit `.js`/`.ts` extensions
   - Styling: Tailwind CSS 3 (primary) + SCSS (component overrides only)
   - i18n: react-i18next + i18next-browser-languagedetector (keys in apps/chat/src/i18n/locales/en.json)
   - State: React Context + custom hooks (no external state management library)
@@ -155,6 +157,10 @@ rules:
       resolved values and behavior into libs via props, callbacks, or narrow interfaces.
       libs/chat-api-client/ is the generated OpenAPI-client exception and must be updated only
       through OpenAPI generation scripts, not by hand-authored app behavior.
+    - Relative imports and re-exports between TypeScript source modules omit `.js`, `.jsx`, `.ts`,
+      and `.tsx` extensions. Keep resource extensions such as `.css` and package subpaths whose
+      public API explicitly includes an extension. Vite-built apps/libs use
+      `moduleResolution: bundler`, not Node ESM resolution as a reason to add `.js` to source.
     - Use async/await with try/catch/finally for frontend async code — avoid Promise chains
       with `.then()`/`.catch()`.
     - Use the void operator before Promise-returning calls only for intentional
@@ -218,6 +224,9 @@ rules:
     - Before writing tasks that touch apps/<app>/** or libs/<lib>/**, read the corresponding
       AGENTS.md (e.g. apps/chat-api/AGENTS.md for chat-api work) so task wording matches the
       conventions of that project
+    - For TypeScript source changes, require extensionless relative code imports and preserve
+      extensions only for resources or explicit package subpaths; frontend Vite projects must
+      retain bundler module resolution
     - >-
       For tasks that touch hand-authored libs/*, include an explicit architecture guard: verify
       the lib does not contain host-owned integration details such as hardcoded `/api` paths,

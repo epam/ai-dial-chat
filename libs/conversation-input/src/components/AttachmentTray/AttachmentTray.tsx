@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC } from 'react';
-import type { AttachmentTrayProps } from '../../models/AttachmentTray.js';
-import { AttachmentCard } from '../AttachmentCard/AttachmentCard.js';
+import type { AttachmentTrayProps } from '../../models/AttachmentTray';
+import { AttachmentCard } from '../AttachmentCard/AttachmentCard';
 
 export const AttachmentTray: FC<AttachmentTrayProps> = ({
   attachments,

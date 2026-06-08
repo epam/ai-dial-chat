@@ -82,6 +82,18 @@ export default [
       ],
       'import/no-duplicates': 'error',
       'import/no-unresolved': 'off', // TypeScript handles this
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^\\.{1,2}/.+\\.(?:js|jsx|ts|tsx)$',
+              message:
+                'Omit JavaScript and TypeScript extensions from relative source imports.',
+            },
+          ],
+        },
+      ],
 
       // Accessibility rules
       'jsx-a11y/alt-text': 'warn',

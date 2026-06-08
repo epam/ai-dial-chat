@@ -4,10 +4,10 @@ import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import type { StageTypography } from '../../models/StagesPanel.js';
-import { toDisplayAttachment } from '../../utils/to-display-attachment.js';
-import { StageIcon } from '../StageIcon/StageIcon.js';
-import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent.js';
+import type { StageTypography } from '../../models/StagesPanel';
+import { toDisplayAttachment } from '../../utils/to-display-attachment';
+import { StageIcon } from '../StageIcon/StageIcon';
+import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 
 interface Props {

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Input } from '../Input.js';
+import { Input } from '../Input';
 
 type MenuItems = Array<{
   key: string;

@@ -4,8 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   ConversationSource,
   type ConversationHistoryItem,
-} from '../../../models/ConversationPanel.js';
-import { ConversationPanel } from '../ConversationPanel.js';
+} from '../../../models/ConversationPanel';
+import { ConversationPanel } from '../ConversationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, LG: 24 },
@@ -64,7 +64,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </button>
   ),
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
-  ElementSize: { Small: 'small', Standard: 'standard' },
+  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
 }));
 
 vi.mock('@tabler/icons-react', () => ({

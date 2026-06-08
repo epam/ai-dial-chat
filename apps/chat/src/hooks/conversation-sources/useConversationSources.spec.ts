@@ -6,7 +6,7 @@ import {
 import type { Message } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
-import { useConversationSources } from './useConversationSources.js';
+import { useConversationSources } from './useConversationSources';
 
 const makeMessage = (
   role: MessageRole,
