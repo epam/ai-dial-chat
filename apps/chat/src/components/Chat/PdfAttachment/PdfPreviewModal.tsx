@@ -59,9 +59,9 @@ export const PdfPreviewModal = ({
               },
             ],
             style: {
-              backgroundColor: '#FFD166',
+              backgroundColor: '#7DA4FF',
+              borderColor: '#7DA4FF',
               opacity: 0.35,
-              borderColor: '#D99A00',
               borderWidth: '1px',
               borderRadius: '4px',
             },
