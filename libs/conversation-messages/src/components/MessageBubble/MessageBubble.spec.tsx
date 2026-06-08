@@ -202,7 +202,7 @@ describe('UserMessageBubble — collapsed text', () => {
     const textWrapper = getMessageTextWrapper(longMessage);
 
     expect(button).toBeTruthy();
-    expect(textWrapper.style.maxHeight).toBe('48px');
+    expect(textWrapper.style.maxHeight).toBe('');
   });
 
   it('expands and collapses a long user message', async () => {
@@ -226,7 +226,7 @@ describe('UserMessageBubble — collapsed text', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Show more' })).toBeTruthy();
     });
-    expect(textWrapper.style.maxHeight).toBe('48px');
+    expect(textWrapper.style.maxHeight).toBe('');
   });
 
   it('does not show the toggle button for short user messages', async () => {

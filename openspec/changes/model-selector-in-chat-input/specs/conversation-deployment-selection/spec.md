@@ -164,7 +164,7 @@ The send callback SHALL NOT fire when `selectedItemId` is `null` — enforced by
 2. `assistantModelId` equals `catalogItemId`.
 3. The hardcoded string `'anthropic.claude-v3-sonnet'` is not referenced.
 
-Tests MUST use supertest for controller tests and direct service instantiation (with mocked `AppService`/`ConfigService`) for unit tests. No `data-testid`; use HTTP status and body assertions.
+Tests MUST use supertest for controller tests and direct service instantiation (with mocked `AppService`/`ConfigService`) for unit tests. Use HTTP status and body assertions instead of implementation-specific selectors.
 
 #### Scenario: Integration test — 201 with catalogItemId
 
