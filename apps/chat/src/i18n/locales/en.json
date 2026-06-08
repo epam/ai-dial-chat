@@ -101,6 +101,7 @@
         "sources": "Sources"
       },
       "empty": {
+        "noData": "No data",
         "uploadedFiles": "No uploaded files in this conversation.",
         "generatedFiles": "No generated files in this conversation.",
         "sources": "No sources available."
