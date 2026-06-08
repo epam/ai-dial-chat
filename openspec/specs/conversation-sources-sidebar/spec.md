@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Specifies the right-side conversation sources panel: the sidebar shell lib (`libs/sidebar`), the open/close context, the header toggle button, attachment derivation from messages, section components, and the mount point beside `<main>`.
+Specifies the right-side conversation sources panel: the sidebar shell lib (`libs/sidebar`), the open/close context, the header toggle button, attachment derivation from messages, the panel-level empty state, section components, and the mount point beside `<main>`.
 
 ---
 
@@ -146,36 +146,55 @@ Theming SHALL follow `openspec/lib-styling-guide.md`: the SCSS module `SidebarPa
 
 ---
 
-### Requirement: `ConversationSourcesPanel` composes the shell with three sections
+### Requirement: `ConversationSourcesPanel` renders a global empty state or the source sections
 
-`apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` SHALL accept `Props { messages: Message[]; onSearch?: () => void; onDownloadAll?: () => void; }`, import `SidebarPanel` from `@epam/ai-dial-sidebar`, and render `<SidebarPanel side="right">` whose:
+`apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` SHALL accept `Props { messages: Message[]; }`, import `SidebarPanel` from `@epam/ai-dial-sidebar`, derive `uploaded` and `generated` through `useConversationSources(messages)`, and render `<SidebarPanel side="right">`.
 
-- `leftActions` contains a `DialGhostIconButton` (icon: `IconSearch`) that calls `onSearch` when provided. When `onSearch` is omitted, the button SHALL be `disabled` and have `aria-disabled="true"`. Its `aria-label` SHALL be the i18n value of `sidebar.sources.search`.
-- `rightActions` contains a `DialGhostIconButton` (icon: `IconDownload`) that calls `onDownloadAll` when provided. When `onDownloadAll` is omitted, the button SHALL be `disabled` and have `aria-disabled="true"`. Its `aria-label` SHALL be the i18n value of `sidebar.sources.downloadAll`.
-- `onClose` SHALL call `useRightSidebar().close()`.
+The panel SHALL be considered empty when both `uploaded.length === 0` and `generated.length === 0`.
+
+When the panel is empty:
+
+- The header SHALL contain only the built-in close button; `leftActions` and `rightActions` SHALL not render search or download-all buttons.
+- The body SHALL render a full-height, horizontally and vertically centred empty state.
+- The empty state SHALL contain a decorative `IconFileDescription` followed by the i18n value of `sidebar.sources.empty.noData` (`"No data"`).
+- The icon SHALL be hidden from assistive technology.
+- The Uploaded Files, Generated Files, and Sources section headings and their section-level empty messages SHALL not render.
+
+When the panel is not empty:
+
+- `leftActions` SHALL contain a disabled `DialGhostIconButton` with `IconSearch` and the i18n `aria-label` `sidebar.sources.search`.
+- `rightActions` SHALL contain a disabled `DialGhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`.
+- The body SHALL render, in order: the Uploaded Files `FilesSection`, the Generated Files `FilesSection`, and `SourcesSection`.
+
+For both states:
+
+- `onClose` SHALL call `useSourcesSidebar().handleClose()`.
 - `ariaLabel` SHALL be the i18n value of `sidebar.sources.ariaLabel`.
-- `closeLabel` SHALL be the i18n value of `sidebar.sources.close`.
-- The body SHALL render, in order: `UploadedFilesSection`, `GeneratedFilesSection`, `SourcesSection`.
+- `closeLabel` SHALL be the i18n value of `sidebar.base.close`.
 
-#### Scenario: Search and download buttons disabled by default
+#### Scenario: Global empty state when no files exist
 
-- **WHEN** `ConversationSourcesPanel` is rendered without `onSearch` and `onDownloadAll`
-- **THEN** the search and download buttons are `disabled` with `aria-disabled="true"`
+- **WHEN** `ConversationSourcesPanel` derives empty `uploaded` and `generated` lists
+- **THEN** the body shows the centred file-description icon and `sidebar.sources.empty.noData`
+- **AND** no section heading is rendered
+- **AND** no search or download-all button is rendered
 
-#### Scenario: Search and download buttons fire when provided
+#### Scenario: Any derived file switches the panel to section content
 
-- **WHEN** `ConversationSourcesPanel` is rendered with `onSearch` and `onDownloadAll`
-- **AND** the user activates each button
-- **THEN** the corresponding callback is invoked exactly once
+- **WHEN** at least one attachment is present in either `uploaded` or `generated`
+- **THEN** the global empty state is not rendered
+- **AND** the search and download-all buttons are rendered disabled
+- **AND** the Uploaded Files, Generated Files, and Sources sections are rendered
 
 #### Scenario: Close button closes the sidebar via context
 
 - **WHEN** the user activates the close button
-- **THEN** `useRightSidebar().isOpen` becomes `false` on the next read
+- **THEN** `useSourcesSidebar().isOpen` becomes `false` on the next read
+- **AND** the stored sidebar messages are cleared
 
-#### Scenario: Sections render in fixed order
+#### Scenario: Non-empty sections render in fixed order
 
-- **WHEN** the panel body renders
+- **WHEN** the panel is not empty
 - **THEN** Uploaded Files appears first, Generated Files second, Sources third
 
 ---
@@ -287,12 +306,12 @@ For `SourcesSection`:
 
 ### Requirement: All sidebar user-visible strings come from i18n
 
-All user-visible strings in the right sidebar (toggle aria-labels, panel aria-label, close label, section titles, empty-state messages, search and download-all aria-labels) SHALL be sourced from i18n keys defined in `apps/chat/src/i18n/locales/en.json` under `sidebar.sources.*`. A typed `SidebarI18nKeys` enum/object SHALL be exposed from `apps/chat/src/constants/translation-keys.ts` for consumers.
+All user-visible strings in the right sidebar (toggle aria-labels, panel aria-label, close label, section titles, panel-level and section-level empty-state messages, search and download-all aria-labels) SHALL be sourced from i18n keys defined in `apps/chat/src/i18n/locales/en.json` under `sidebar.base.*` and `sidebar.sources.*`. A typed `SidebarI18nKeys` enum/object SHALL be exposed from `apps/chat/src/constants/translation-keys.ts` for consumers.
 
 #### Scenario: New keys added to en.json
 
 - **WHEN** `apps/chat/src/i18n/locales/en.json` is inspected
-- **THEN** it contains keys `sidebar.sources.toggleOpen`, `sidebar.sources.toggleClose`, `sidebar.sources.ariaLabel`, `sidebar.sources.close`, `sidebar.sources.search`, `sidebar.sources.downloadAll`, `sidebar.sources.sections.uploadedFiles`, `sidebar.sources.sections.generatedFiles`, `sidebar.sources.sections.sources`, `sidebar.sources.empty.uploadedFiles`, `sidebar.sources.empty.generatedFiles`, `sidebar.sources.empty.sources`
+- **THEN** it contains keys `sidebar.base.toggleOpen`, `sidebar.base.toggleClose`, `sidebar.base.close`, `sidebar.sources.ariaLabel`, `sidebar.sources.search`, `sidebar.sources.downloadAll`, `sidebar.sources.sections.uploadedFiles`, `sidebar.sources.sections.generatedFiles`, `sidebar.sources.sections.sources`, `sidebar.sources.empty.noData`, `sidebar.sources.empty.uploadedFiles`, `sidebar.sources.empty.generatedFiles`, `sidebar.sources.empty.sources`
 
 #### Scenario: Components consume the typed key map
 
