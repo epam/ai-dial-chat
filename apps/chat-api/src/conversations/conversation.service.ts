@@ -58,9 +58,8 @@ export class ConversationService extends AppService {
     customContent?: MessageCustomContentDto,
   ): Promise<Conversation> {
     const now = Date.now();
-    const uuid = crypto.randomUUID();
     const name = getConversationName('New chat', firstMessage);
-    const conversationPath = `${deploymentId}__${name}__${uuid}`;
+    const conversationPath = `${deploymentId}__${name}`;
     const folderId = `${bucket}`; // TODO: check
 
     const userMessage: MessageDto = {
