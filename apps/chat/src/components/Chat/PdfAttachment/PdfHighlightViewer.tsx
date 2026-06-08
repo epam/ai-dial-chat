@@ -26,6 +26,7 @@ import {
   SelectSize,
 } from '@epam/ai-dial-ui-kit';
 import {
+  InputHighlightData,
   PDFHighlightViewer as PdfViewer,
   ZoomMode,
 } from '@epam/pdf-highlighter-kit';
@@ -43,6 +44,7 @@ GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 interface Props {
   url: string;
+  highlights?: InputHighlightData[];
 }
 
 const ZOOM_PRESETS = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
@@ -79,7 +81,7 @@ const getPdfLoadErrorMessage = (
   return t(ChatI18nKeys.FailedToLoadPdf, { error: message });
 };
 
-export const PdfHighlightViewer = ({ url }: Props) => {
+export const PdfHighlightViewer = ({ url, highlights }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
   const screenState = useScreenState();
@@ -144,6 +146,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
           enableVirtualScrolling: true,
           bufferPages: 2,
           maxCachedPages: 10,
+          bboxOrigin: 'top-left',
         });
 
         if (cancelled) return;
@@ -152,6 +155,9 @@ export const PdfHighlightViewer = ({ url }: Props) => {
         await viewer.loadPDF(pdfData);
         if (cancelled) return;
 
+        if (highlights?.length) {
+          viewer.loadHighlights(highlights);
+        }
         viewerRef.current = viewer;
         setIsLoading(false);
 
@@ -197,7 +203,7 @@ export const PdfHighlightViewer = ({ url }: Props) => {
       setThumbnails(new Map());
       requestedThumbnails.clear();
     };
-  }, [fileUrl, initialPage, t]);
+  }, [fileUrl, initialPage, t, highlights]);
 
   useEffect(() => {
     if (totalPages === 0) return;
