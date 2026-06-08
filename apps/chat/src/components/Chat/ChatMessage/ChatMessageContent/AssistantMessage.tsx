@@ -708,6 +708,7 @@ export const AssistantMessage = memo(function AssistantMessage({
           <MessageAttachments
             attachments={message.custom_content?.attachments}
             applicationId={message.model?.id}
+            annotations={message.custom_fields?.annotations}
           />
         )}
         <AssistantSchema isLastMessage={isLastMessage} message={message} />
