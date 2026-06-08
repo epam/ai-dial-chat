@@ -1,31 +1,27 @@
-/** A single item returned by the DIAL Core `getConversationMetadata` endpoint. */
-export type MetadataItem = {
-  name?: string;
-  url?: string;
-  parentPath?: string;
-  updatedAt?: number;
-  nodeType?: string;
+import { ConversationMetadataDto } from '../../openapi/openapi-response.dto';
+
+export interface MetadataItem extends Partial<ConversationMetadataDto> {
   sharedWithMe?: boolean;
   publishedWithMe?: boolean;
-};
+}
 
 /** Wrapper around a `getConversationMetadata` SDK call result. */
-export type MetadataResult = {
+export interface MetadataResult {
   data?: { items?: MetadataItem[]; nextToken?: string };
   error?: unknown;
-};
+}
 
 /** Wrapper around a `getSharedResources` SDK call result. */
-export type SharedResourcesResult = {
+export interface SharedResourcesResult {
   data?: {
-    resources?: {
-      nodeType?: string;
-      name?: string;
-      url?: string;
-      parentPath?: string;
-    }[];
+    resources?: Array<
+      Pick<MetadataItem, 'nodeType' | 'name' | 'url' | 'parentPath'>
+    >;
   };
   error?: unknown;
-};
+}
 
-export type CompoundNextToken = { u?: string; p?: string };
+export interface CompoundNextToken {
+  u?: string;
+  p?: string;
+}
