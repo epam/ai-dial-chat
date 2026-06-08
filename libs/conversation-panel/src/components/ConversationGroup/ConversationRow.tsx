@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DeploymentIcon } from '@epam/ai-dial-conversation-input';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
@@ -11,7 +12,7 @@ import {
 import { IconDotsVertical } from '@tabler/icons-react';
 import { useState, type FC } from 'react';
 import type { ConversationHistoryItem } from '../../models/ConversationPanel.js';
-import { getButtonPaddingRight } from '../../utils/conversation-row.utils.js';
+import { getButtonPaddingEnd } from '../../utils/conversation-row.utils.js';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
 export interface ConversationRowProps {
@@ -29,8 +30,6 @@ export interface ConversationRowProps {
   getActions?: (item: ConversationHistoryItem) => DropdownItem[];
   /** Accessible label for the actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
-  /** Typography class for the initial-letter icon fallback. Defaults to `'text-xs font-bold'`. */
-  itemIconClassName?: string;
   /** Typography class for the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
 }
@@ -41,7 +40,6 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   onSelectConversation,
   getActions,
   actionsLabel = 'More actions',
-  itemIconClassName = 'text-xs font-bold',
   itemTitleClassName = 'dial-small-text',
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -49,27 +47,9 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
 
-  const avatar = item.iconUrl ? (
-    <img
-      src={item.iconUrl}
-      alt=""
-      aria-hidden="true"
-      className="size-6 shrink-0 rounded-full object-cover"
-    />
-  ) : (
-    <span
-      className={mergeClasses(
-        'flex size-6 shrink-0 items-center justify-center rounded-full',
-        itemIconClassName,
-        styles.itemIcon,
-      )}
-      aria-hidden="true"
-    >
-      {item.title.charAt(0).toUpperCase()}
-    </span>
-  );
+  const avatar = <DeploymentIcon src={item.iconUrl} size={DIAL_ICON_SIZE.LG} />;
 
-  const buttonPaddingRight = getButtonPaddingRight(hasActions, isMenuOpen);
+  const buttonPaddingRight = getButtonPaddingEnd(hasActions, isMenuOpen);
 
   return (
     <li className="group relative">
@@ -80,7 +60,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         aria-current={isActive ? 'page' : undefined}
         onClick={() => onSelectConversation(item.id)}
         className={mergeClasses(
-          'h-8 w-full justify-start gap-2 pl-3',
+          'h-8 w-full justify-start gap-2 ps-3',
           buttonPaddingRight,
           styles.item,
           isActive && styles.itemActive,
@@ -90,7 +70,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       {hasActions && (
         <div
           className={mergeClasses(
-            'absolute inset-y-0 right-1 flex items-center',
+            'absolute inset-y-0 end-1 flex items-center',
             isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
           )}
         >
@@ -98,6 +78,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
             items={menuItems}
             onOpenChange={setIsMenuOpen}
             matchReferenceWidth={false}
+            listClassName="w-[140px]"
           >
             <DialIconButton
               icon={

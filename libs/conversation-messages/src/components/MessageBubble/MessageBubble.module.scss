@@ -2,8 +2,22 @@
   background: var(--cm-bubble-user-bg, var(--bg-layer-4, #242c42));
 }
 
+.collapsedText::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 48px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0),
+    var(--cm-bubble-user-bg, var(--bg-layer-4, #242c42))
+  );
+}
+
 .agentIconBadge {
-  background: var(--cm-agent-icon-bg, var(--bg-inverted, #eef1f7));
+  background: var(--cm-agent-icon-bg, var(--bg-model-icon, #ffffff00));
 }
 
 .startersDivider {

@@ -21,7 +21,7 @@ export class ListConversationsQueryDto {
   @IsInt()
   @Min(1)
   @Max(100)
-  @Transform(({ value }) => (value !== undefined ? Number(value) : undefined))
+  @Transform(({ value }) => (value != null ? Number(value) : undefined))
   limit?: number;
 
   @ApiPropertyOptional({

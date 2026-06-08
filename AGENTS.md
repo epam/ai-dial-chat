@@ -63,6 +63,51 @@ Default behavior:
 - Before changing anything under `libs/*`, explicitly check the library isolation rule: host/external contracts are adapted by apps, not embedded in libs.
 - UI work is mobile-first by default. The project's named Tailwind breakpoints (`mobile`, `small_tablet`, `large_tablet`, `desktop`, `large_desktop`) live in `tailwind.config.js`; do not introduce `sm:`/`md:`/`lg:`/`xl:` defaults. When a component must branch in JS, use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts` rather than reading `window.innerWidth`.
 
+## RTL and Arabic language support
+
+All apps and libs must support Arabic (`ar`) and any other right-to-left locale. Arabic changes the visual direction of the entire UI.
+
+### Direction attribute
+
+The `<html>` element's `dir` attribute must be set dynamically at runtime. When the active language is RTL (Arabic `ar`, Hebrew `he`, Persian `fa`, Urdu `ur`), set `dir="rtl"`; otherwise `dir="ltr"`. Never hardcode `dir` or `lang` in static HTML. The i18n config (`apps/chat/src/i18n/config.ts`) must call `document.documentElement.dir` and `document.documentElement.lang` on every language change.
+
+### Tailwind: use logical properties, not physical ones
+
+Replace every physical-direction Tailwind class with its logical equivalent so that layout flips automatically when `dir="rtl"` is on an ancestor:
+
+| Physical (forbidden for directional use) | Logical (required) |
+|---|---|
+| `ml-*` / `mr-*` | `ms-*` / `me-*` |
+| `pl-*` / `pr-*` | `ps-*` / `pe-*` |
+| `text-left` / `text-right` | `text-start` / `text-end` |
+| `left-*` / `right-*` | `start-*` / `end-*` |
+| `border-l-*` / `border-r-*` | `border-s-*` / `border-e-*` |
+| `rounded-l-*` / `rounded-r-*` | `rounded-s-*` / `rounded-e-*` |
+| `inset-x-*` one-sided | `inset-inline-start-*` / `inset-inline-end-*` |
+
+In CSS/SCSS files use CSS logical properties: `margin-inline-start/end`, `padding-inline-start/end`, `inset-inline-start/end`, `border-inline-start/end`.
+
+**Exception — physical classes are allowed** only for elements that must NOT flip: decorative/symmetric elements, fixed-position UI chrome that is intentionally pinned to a physical screen edge, or when an explicit `rtl:` counterpart class is placed alongside (e.g. `left-0 rtl:left-auto rtl:right-0`).
+
+### Directional icons
+
+Icons with inherent left/right meaning (back/forward arrows, chevrons, send button, indent/dedent) must be mirrored in RTL. Use `rtl:scale-x-[-1]` on the icon element, or wrap with `[dir='rtl']:scale-x-[-1]` in CSS. Icons that are symmetric or represent a concept (close ×, add +, settings ⚙) must NOT be flipped.
+
+### `rtl:` Tailwind variant
+
+Tailwind's `rtl:` variant (e.g. `rtl:rotate-180`, `rtl:scale-x-[-1]`, `rtl:flex-row-reverse`) works when a `dir="rtl"` ancestor is present. Use it when a logical property equivalent does not cover the needed layout change.
+
+### Libs and direction context
+
+Libs (`libs/*`) must NOT import i18n or read the current language to determine direction. Direction is inherited through the CSS cascade from the `dir` attribute on `<html>`. Libs rely on CSS logical properties for automatic RTL behaviour. If a lib component needs an explicit direction prop (rare), it accepts `dir?: 'ltr' | 'rtl'` and passes it to the root element.
+
+### Adding a new locale
+
+1. Create `apps/chat/src/i18n/locales/<lang>.json` with all keys from `en.json`.
+2. Register the locale in `apps/chat/src/i18n/config.ts`.
+3. Add the locale to the language selector UI.
+4. If the locale is RTL, add its language code to the RTL language list in the dir-switching logic.
+
 ## @epam/ai-dial-ui-kit MCP tools
 
 Use these two tools for all UI kit discovery and documentation needs: `searchEntity(entity, query?)` and `getEntityDetails(entity, name?)`. If you need to look up **ANYTHING** about the ui kit, use the MCP server. **Never** use `grep`, `glob`, `find`, or similar file system tools to discover components — they miss type information and examples.
@@ -71,7 +116,7 @@ Use these two tools for all UI kit discovery and documentation needs: `searchEnt
 
 When you encounter errors after a ui kit package upgrade, or when a prop no longer exists on a component:
 
-1. Determine the **target release version**: check the installed version in `package.json` (`@epam/ai-dial-ui-kit`). Dev versions (`x.y.z-dev.N`) map to the next release — e.g. `0.11.0-dev.17` → look up `0.11.0`.
+1. Determine the **target release version**: check the installed version in `package.json` (`@epam/ai-dial-ui-kit`). Dev versions (`x.y.z-dev.N`) map to the next release — e.g. `0.11.0-dev.18` → look up `0.11.0`.
 2. Read `node_modules/@epam/ai-dial-ui-kit/dist/CHANGELOG.md` for `### Breaking Changes` entries at or between the previous release and the target release.
 3. Follow the linked migration guides found at `node_modules/@epam/ai-dial-ui-kit/dist/migration-guides/<version>/`.
 4. Use `getEntityDetails("component", "DialXxx")` to confirm the current prop signature before applying the fix.

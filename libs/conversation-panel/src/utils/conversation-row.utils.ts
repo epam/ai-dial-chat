@@ -1,9 +1,9 @@
-/** Returns the right-padding Tailwind class for the row's ghost button based on action state. */
-export const getButtonPaddingRight = (
+/** Returns the inline-end padding Tailwind class for the row's ghost button based on action state. */
+export const getButtonPaddingEnd = (
   hasActions: boolean,
   isMenuOpen: boolean,
 ): string => {
-  if (!hasActions) return 'pr-3';
-  if (isMenuOpen) return 'pr-9';
-  return 'pr-2 group-hover:pr-9';
+  if (!hasActions) return 'pe-3';
+  if (isMenuOpen) return 'pe-9';
+  return 'pe-2 group-hover:pe-9';
 };

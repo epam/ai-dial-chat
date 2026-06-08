@@ -8,7 +8,7 @@
 
 This document defines functional and non-functional requirements for the initial release of AI DIAL Chat Next Generation. Requirements are derived from the architecture decisions and the current implementation gap analysis.
 
-**Already implemented (out of scope here):** OIDC auth flow, session/CSRF, SSE streaming, theming (ThemeProvider + CSS vars), i18n scaffold (EN), conversation CRUD backend endpoints, models/deployments API.
+**Already implemented (out of scope here):** OIDC auth flow, session/CSRF, SSE streaming, theming (ThemeProvider + CSS vars), i18n scaffold (EN + AR), RTL direction switching, conversation CRUD backend endpoints, models/deployments API.
 
 ---
 
@@ -80,6 +80,18 @@ This document defines functional and non-functional requirements for the initial
 | FR-6.4 | User can sign out; session cookie is cleared and IdP end_session_endpoint is called                     | Must     |
 | FR-6.5 | Access tokens are refreshed silently before expiry; the user is never asked to log in again mid-session | Must     |
 
+### FR-8 — Internationalisation and RTL
+
+| ID     | Requirement                                                                                                                                  | Priority |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| FR-8.1 | App ships with full Arabic (`ar`) translation coverage matching all keys in `en.json`                                                        | Must     |
+| FR-8.2 | Active locale is detected from browser settings and persisted in `localStorage`; a language-selector UI allows manual override               | Must     |
+| FR-8.3 | When an RTL locale is active, `<html dir="rtl">` and the matching `lang` attribute are set before first render; switching locale updates them | Must     |
+| FR-8.4 | All layout components use CSS logical properties (`ms-*`, `me-*`, `ps-*`, `pe-*`, `start-*`, `end-*`, `border-s-*`, `border-e-*`); no component relies on physical `left`/`right` utilities for directional behaviour | Must     |
+| FR-8.5 | Directional icons (back/forward chevrons, navigation arrows, collapse indicators) are mirrored in RTL via `rtl:scale-x-[-1]` or equivalent   | Must     |
+| FR-8.6 | Mobile slide-in panels (navigation drawer, conversation panel) enter and exit from the start edge in both LTR and RTL                        | Must     |
+| FR-8.7 | Adding a new locale requires only: a translation JSON file, one line in `i18n/config.ts`, and — if RTL — one entry in `RTL_LANGUAGES`        | Should   |
+
 ### FR-7 — Theming
 
 | ID     | Requirement                                                                     | Priority |
@@ -115,12 +127,13 @@ This document defines functional and non-functional requirements for the initial
 
 ### NFR-3 — Accessibility
 
-| ID      | Requirement                                                          |
-| ------- | -------------------------------------------------------------------- |
-| NFR-3.1 | Message feed has `role="log"` and `aria-live="polite"`               |
-| NFR-3.2 | Error messages use `role="alert"`                                    |
-| NFR-3.3 | All interactive controls are keyboard-navigable (Tab, Enter, Escape) |
-| NFR-3.4 | Send button has a descriptive `aria-label`                           |
+| ID      | Requirement                                                                                                                |
+| ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| NFR-3.1 | Message feed has `role="log"` and `aria-live="polite"`                                                                     |
+| NFR-3.2 | Error messages use `role="alert"`                                                                                          |
+| NFR-3.3 | All interactive controls are keyboard-navigable (Tab, Enter, Escape)                                                       |
+| NFR-3.4 | Send button has a descriptive `aria-label`                                                                                 |
+| NFR-3.5 | All `aria-label` values are translated strings — no hardcoded English in aria attributes; libs expose label props, the app passes `t()` values |
 
 ### NFR-4 — Reliability
 
@@ -206,27 +219,24 @@ Simplest path for initial release: client-side truncation from `conversation.mes
 
 ---
 
-### OQ-4 — Multi-language support
+### OQ-4 — Multi-language support ✅ Resolved
 
-**Owner:** Product · **Needed before:** first public release
+**Decision:** Arabic (`ar`) ships alongside English as the first RTL locale. See **FR-8** for the full set of derived requirements.
 
-The i18n scaffold is in place (i18next, language detector, `en.json`). All UI strings go through `useTranslation()`.
-
-**Question:** Is English-only acceptable for the initial release, or does a second locale need to ship alongside it?
-
-**Implications:**
-
-- **EN only:** No additional work. The pipeline is proven by the scaffold. Other locales can be added post-release as translation files — no code changes needed.
-- **Second locale at launch:** Requires a translation file (`{lang}.json`) and a language-switch UI element (not currently in scope). Adds coordination with a translator and a QA pass in that language.
-
-If no second locale is needed at launch, this OQ can be closed and moved to Out of Scope. If one is needed, it must be added as a FR before scope is finalised.
+**What was done:**
+- `ar.json` created with full translation coverage (`apps/chat/src/i18n/locales/ar.json`)
+- `applyDocumentDirection` wired to `i18n.on('languageChanged')` — sets `document.documentElement.dir` and `lang` on every locale switch
+- All layout components migrated from physical Tailwind utilities to CSS logical properties
+- Directional icons mirrored via `rtl:scale-x-[-1]`
+- Mobile slide-in panels use `start-0` + `ltr:-translate-x-full rtl:translate-x-full`
+- Rules documented in `.claude/rules/rtl.md` and `AGENTS.md`
 
 ---
 
 ## Out of Scope (initial release)
 
 - Slash commands and `@mention` support (FR-1.6, FR-1.7)
-- Multi-language locales beyond English
+- Locales beyond English and Arabic
 - Conversation sharing or export
 - Admin / settings panel
 - Mobile-native wrapper

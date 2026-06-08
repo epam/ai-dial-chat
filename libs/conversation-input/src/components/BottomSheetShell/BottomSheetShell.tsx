@@ -61,7 +61,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
         style={style}
         className={mergeClasses(
           styles.sheet,
-          'fixed bottom-0 left-0 right-0 z-50 flex flex-col',
+          'fixed inset-x-0 bottom-0 z-50 flex flex-col',
           className,
         )}
       >
@@ -70,7 +70,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
           <span className={mergeClasses(styles.title, titleClassName)}>
             {title}
           </span>
-          <div className="absolute right-2">
+          <div className="absolute end-2">
             <DialCloseButton
               ariaLabel={closeLabel}
               size={BASE_ICON_SIZE}

@@ -1,5 +1,4 @@
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
-import { IconApps } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import FallbackEntityIcon from '../assets/fallback-entity-icon.svg?react';
 import { DeploymentIcon } from '../components/Input/Icon/DeploymentIcon.js';
@@ -33,17 +32,8 @@ export const buildDeploymentIcon = (
   type: string | undefined,
   size = 18,
 ): ReactNode => {
-  const fallback =
-    type === 'application' ? (
-      <IconApps size={size} aria-hidden />
-    ) : (
-      <FallbackEntityIcon width={size} height={size} aria-hidden />
-    );
-
   if (resolvedIconUrl) {
-    return (
-      <DeploymentIcon src={resolvedIconUrl} size={size} fallback={fallback} />
-    );
+    return <DeploymentIcon src={resolvedIconUrl} size={size} />;
   }
-  return fallback;
+  return <FallbackEntityIcon width={size} height={size} aria-hidden />;
 };

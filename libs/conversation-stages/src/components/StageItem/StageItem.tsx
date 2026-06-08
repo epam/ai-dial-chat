@@ -1,6 +1,6 @@
 import type { Stage } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type { StageTypography } from '../../models/StagesPanel.js';
@@ -32,7 +32,7 @@ export const StageItem: FC<Props> = ({
     <>
       <StageIcon status={stage.status} isLive={isLive} />
       <span className={mergeClasses('truncate capitalize', styles.stageName)}>
-        {stage.name || stage.status}
+        <DialEllipsisTooltip text={stage.name || stage.status} />
       </span>
     </>
   );
@@ -60,7 +60,7 @@ export const StageItem: FC<Props> = ({
         ) : (
           <IconChevronRight
             size={DIAL_ICON_SIZE.MD}
-            className={styles.iconSecondary}
+            className={mergeClasses(styles.iconSecondary, 'rtl:scale-x-[-1]')}
           />
         )}
       </button>
@@ -71,7 +71,7 @@ export const StageItem: FC<Props> = ({
         )}
       >
         <div className="overflow-hidden">
-          <div className="mt-3 flex flex-col gap-3 pl-7">
+          <div className="mt-3 flex flex-col gap-3 ps-7">
             <StageMarkdownContent
               content={stage.content}
               typography={typography}

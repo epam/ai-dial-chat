@@ -17,11 +17,15 @@
     "quickReplyButtons": "Quick reply buttons",
     "stoppedGenerating": "You stopped generating the response",
     "readOnlyNotice": "Only own conversations can be edited",
-    "thinking": "Thinking"
+    "thinking": "Thinking",
+    "showMore": "Show more",
+    "showLess": "Show less",
+    "showMoreUserMessage": "Show full user message",
+    "showLessUserMessage": "Collapse user message"
   },
   "navigation": {
     "ariaLabel": "Main navigation",
-    "home": "Home",
+    "home": "Conversations",
     "catalog": "Catalog",
     "openMenu": "Open navigation menu",
     "closeMenu": "Close navigation menu"

@@ -95,8 +95,10 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
         aria-label={t(NavigationI18nKeys.AriaLabel)}
         aria-hidden={!isOpen}
         className={mergeClasses(
-          'fixed inset-y-0 left-0 z-50 flex w-[60px] flex-col justify-between bg-layer-3 transition-transform duration-200 ease-in-out',
-          isOpen ? 'translate-x-0' : '-translate-x-full',
+          'fixed inset-y-0 start-0 z-50 flex w-[60px] flex-col justify-between bg-layer-3 transition-transform duration-200 ease-in-out',
+          isOpen
+            ? 'translate-x-0'
+            : 'ltr:-translate-x-full rtl:translate-x-full',
         )}
       >
         <div className="flex flex-col items-center gap-2 p-2">

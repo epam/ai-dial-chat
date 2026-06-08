@@ -95,7 +95,7 @@ export class ConversationService extends AppService {
           body: conversation,
         },
       )) as { data?: unknown; error?: unknown };
-      if (error !== undefined || !data) {
+      if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
         return handleDialError(error);
       }
@@ -126,7 +126,7 @@ export class ConversationService extends AppService {
         encodeDialResourcePath(subPath),
         { headers: getBearerAuthHeaders(token) },
       )) as { data?: unknown; error?: unknown };
-      if (error !== undefined || !data) {
+      if (error != null || !data) {
         this.logger.error('DIAL Core rejected getConversation', error);
         return handleDialError(error);
       }
@@ -162,7 +162,7 @@ export class ConversationService extends AppService {
         encodeDialResourcePath(conversationPath),
         { headers: getBearerAuthHeaders(token) },
       )) as { data?: unknown; error?: unknown };
-      if (error !== undefined) {
+      if (error != null) {
         this.logger.error('DIAL Core rejected deleteConversation', error);
         handleDialError(error);
       }
@@ -280,19 +280,15 @@ export class ConversationService extends AppService {
       }
 
       const { data: publicData, error: publicError } = publicResult;
-      if (publicError !== undefined) {
-        this.logger.warn(
-          'DIAL Core rejected listConversations (public bucket)',
-          publicError,
-        );
+      if (publicError != null || !publicData) {
+        this.logger.error('DIAL Core rejected listConversations', publicError);
+        return handleDialError(publicError);
       }
 
       const { data: sharedData, error: sharedError } = sharedResult;
-      if (sharedError !== undefined) {
-        this.logger.warn(
-          'DIAL Core listConversations (shared resources) failed',
-          sharedError,
-        );
+      if (sharedError != null || !sharedData) {
+        this.logger.error('DIAL Core rejected getSharedResources', sharedError);
+        return handleDialError(sharedError);
       }
 
       const pinnedSet = new Set(pinnedIds);
@@ -430,7 +426,7 @@ export class ConversationService extends AppService {
           query: permissions !== undefined ? { permissions } : undefined,
         },
       )) as { data?: unknown; error?: unknown };
-      if (error !== undefined || !data) {
+      if (error != null || !data) {
         this.logger.error('DIAL Core rejected getConversationMetadata', error);
         return handleDialError(error);
       }
@@ -456,7 +452,7 @@ export class ConversationService extends AppService {
           body: conversation,
         },
       )) as { data?: unknown; error?: unknown };
-      if (error !== undefined || !data) {
+      if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
         return handleDialError(error);
       }

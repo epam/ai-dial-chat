@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, type DropdownItem } from '@epam/ai-dial-ui-kit';
+import { DialEllipsisTooltip, type DropdownItem } from '@epam/ai-dial-ui-kit';
 import { IconCaretDownFilled, IconCaretRightFilled } from '@tabler/icons-react';
 import { type FC, memo, useState } from 'react';
 import type { ConversationHistoryItem } from '../../models/ConversationPanel.js';
@@ -26,8 +26,6 @@ export interface ConversationGroupProps {
   actionsLabel?: string;
   /** Typography class applied to the group header button. Defaults to `'dial-tiny-text'`. */
   groupHeaderClassName?: string;
-  /** Typography class applied to the initial-letter icon fallback. Defaults to `'text-xs font-bold'`. */
-  itemIconClassName?: string;
   /** Typography class applied to the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
 }
@@ -42,7 +40,6 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
     getActions,
     actionsLabel,
     groupHeaderClassName = 'dial-tiny-text',
-    itemIconClassName,
     itemTitleClassName,
   }) => {
     const [isExpanded, setIsExpanded] = useState(true);
@@ -50,33 +47,27 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
     if (items.length === 0) return null;
 
     return (
-      <section>
+      <section className="flex flex-col gap-1">
         <button
           type="button"
           aria-expanded={isExpanded}
           onClick={() => setIsExpanded((prev) => !prev)}
           className={mergeClasses(
-            'flex h-6 w-full items-center gap-1 rounded py-1 pr-3 text-left',
+            'flex h-6 w-full items-center gap-1 rounded py-1 pe-3 text-start',
             groupHeaderClassName,
             styles.groupHeader,
           )}
         >
           {isExpanded ? (
-            <IconCaretDownFilled
-              size={DIAL_ICON_SIZE.SM}
-              className="shrink-0"
-            />
+            <IconCaretDownFilled stroke={0.5} size={12} className="shrink-0" />
           ) : (
-            <IconCaretRightFilled
-              size={DIAL_ICON_SIZE.SM}
-              className="shrink-0"
-            />
+            <IconCaretRightFilled stroke={0.5} size={12} className="shrink-0" />
           )}
-          <span className="truncate">{label}</span>
+          <DialEllipsisTooltip text={label} />
         </button>
 
         {isExpanded && (
-          <ul role="list" className="flex flex-col gap-0.5">
+          <ul role="list" className="flex flex-col gap-1">
             {items.map((item) => (
               <ConversationRow
                 key={item.id}
@@ -85,7 +76,6 @@ export const ConversationGroup: FC<ConversationGroupProps> = memo(
                 onSelectConversation={onSelectConversation}
                 getActions={getActions}
                 actionsLabel={actionsLabel}
-                itemIconClassName={itemIconClassName}
                 itemTitleClassName={itemTitleClassName}
               />
             ))}

@@ -28,7 +28,7 @@ export class RateService extends AppService {
         conversationId: dto.conversationId,
         responseId: dto.responseId,
       };
-      if (dto.comment !== undefined) {
+      if (dto.comment != null) {
         body['comment'] = dto.comment;
       }
 

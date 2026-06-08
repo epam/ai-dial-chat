@@ -136,7 +136,7 @@ export const ConversationsProvider = ({
           prev.map((c) => (c.id === id ? { ...c, id: newPath } : c)),
         );
       } catch (err) {
-        if (originalTitle !== undefined) {
+        if (originalTitle != null) {
           setConversations((prev) =>
             prev.map((c) =>
               c.id === id ? { ...c, title: originalTitle as string } : c,

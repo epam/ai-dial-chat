@@ -35,7 +35,7 @@ const Header: FC<Props> = ({
 
   return (
     <header className="relative z-30 grid min-h-[49px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-secondary">
-      <div className="flex items-center pl-2">
+      <div className="flex items-center ps-2">
         <DialGhostIconButton
           icon={<IconMenu2 size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
           aria-label={t(NavigationI18nKeys.OpenMenu)}
@@ -56,7 +56,7 @@ const Header: FC<Props> = ({
         )}
       </div>
       <Logo />
-      <div className="flex justify-end pr-2">
+      <div className="flex justify-end pe-2">
         {isConversationRoute && !isSourcesSidebarOpen && (
           <DialGhostIconButton
             icon={<IconFileDescription size={DIAL_ICON_SIZE.LG} stroke={1.5} />}

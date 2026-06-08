@@ -23,7 +23,7 @@ export class BucketService extends AppService {
         error,
       );
 
-      if (error !== undefined || !data) {
+      if (error != null || !data) {
         this.logger.debug(
           'getUserBucket returned error response from DIAL Core',
         );
