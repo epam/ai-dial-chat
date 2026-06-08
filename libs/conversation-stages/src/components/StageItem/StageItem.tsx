@@ -1,9 +1,11 @@
 import type { Stage } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type { StageTypography } from '../../models/StagesPanel';
+import { toDisplayAttachment } from '../../utils/to-display-attachment';
 import { StageIcon } from '../StageIcon/StageIcon';
 import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent';
 import styles from '../StagesPanel/StagesPanel.module.scss';
@@ -17,14 +19,17 @@ interface Props {
   typography: StageTypography;
   /** Accessible label for the copy button inside stage content. */
   copyAriaLabel?: string;
+  /** Accessible label for the attachments tray. Defaults to `'Stage attachments'`. */
+  attachmentsAriaLabel?: string;
 }
 
-/** A single stage row — plain when no content, collapsible when content is present. */
+/** A single stage row — plain when no content, collapsible when content or attachments are present. */
 export const StageItem: FC<Props> = ({
   stage,
   isLive,
   typography,
   copyAriaLabel,
+  attachmentsAriaLabel = 'Stage attachments',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -37,7 +42,10 @@ export const StageItem: FC<Props> = ({
     </>
   );
 
-  if (!stage.content) {
+  const displayAttachments = stage.attachments?.map(toDisplayAttachment) ?? [];
+  const hasExpandableContent = !!(stage.content || displayAttachments.length);
+
+  if (!hasExpandableContent) {
     return <div className="flex items-center gap-2">{header}</div>;
   }
 
@@ -72,11 +80,19 @@ export const StageItem: FC<Props> = ({
       >
         <div className="overflow-hidden">
           <div className="mt-3 flex flex-col gap-3 ps-7">
-            <StageMarkdownContent
-              content={stage.content}
-              typography={typography}
-              copyAriaLabel={copyAriaLabel}
-            />
+            {stage.content && (
+              <StageMarkdownContent
+                content={stage.content}
+                typography={typography}
+                copyAriaLabel={copyAriaLabel}
+              />
+            )}
+            {displayAttachments.length > 0 && (
+              <AttachmentTray
+                attachments={displayAttachments}
+                ariaLabel={attachmentsAriaLabel}
+              />
+            )}
           </div>
         </div>
       </div>

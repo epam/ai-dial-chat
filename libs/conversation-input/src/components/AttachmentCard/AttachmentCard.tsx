@@ -1,6 +1,6 @@
 import {
-  buildCssVars,
   AttachmentType,
+  buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -10,7 +10,7 @@ import {
   DialLoader,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { IconRefresh, IconX } from '@tabler/icons-react';
+import { IconReload, IconX } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, type MouseEvent, useMemo } from 'react';
 import type { AttachmentCardProps } from '../../models/AttachmentCard';
 import { getAttachmentCardState } from '../../utils/getAttachmentCardState';
@@ -159,12 +159,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         >
           {isError && onRetry && (
             <DialGhostIconButton
-              icon={<IconRefresh size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              icon={<IconReload size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
-              className={mergeClasses(
-                'h-6 w-6 rounded bg-transparent',
-                styles.actionBtn,
-              )}
+              className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
               aria-label={retryLabel}
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();

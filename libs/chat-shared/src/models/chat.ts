@@ -157,6 +157,8 @@ export interface Stage {
   status: StageStatus | null;
   /** Additional text content for this stage, accumulated from streaming chunks. */
   content?: string;
+  /** File or content attachments associated with this stage. */
+  attachments?: MessageAttachment[];
 }
 
 /** Incremental content delta inside a streaming SSE chunk. */
