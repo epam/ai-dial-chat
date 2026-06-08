@@ -16,6 +16,7 @@ const TestCollapsedText = ({
     isTextCollapsed,
     isOverflowing,
     collapsedMaxHeight,
+    expandedMaxHeight,
     isCollapsed,
     toggleCollapsed,
   } = useCollapsedText({ text, collapsedLineCount });
@@ -27,6 +28,7 @@ const TestCollapsedText = ({
       <span data-testid="text-collapsed">{String(isTextCollapsed)}</span>
       <span data-testid="overflowing">{String(isOverflowing)}</span>
       <span data-testid="max-height">{collapsedMaxHeight}</span>
+      <span data-testid="expanded-max-height">{expandedMaxHeight}</span>
       <button type="button" onClick={toggleCollapsed}>
         Toggle
       </button>
@@ -58,6 +60,7 @@ describe('useCollapsedText', () => {
     expect(screen.getByTestId('collapsed').textContent).toBe('true');
     expect(screen.getByTestId('text-collapsed').textContent).toBe('true');
     expect(screen.getByTestId('max-height').textContent).toBe('48');
+    expect(screen.getByTestId('expanded-max-height').textContent).toBe('72');
   });
 
   it('toggles between expanded and collapsed states', async () => {
