@@ -162,4 +162,12 @@ export interface ConversationPanelProps {
   getActions?: (item: ConversationHistoryItem) => DropdownItem[];
   /** Accessible label for the row actions trigger button. Defaults to `"More actions"`. */
   actionsLabel?: string;
+  /**
+   * Called when the mobile sidebar toggle icon in the panel header is clicked.
+   * When provided, the toggle button becomes visible on mobile screens.
+   * The parent is responsible for managing `isOpen` state in response to this callback.
+   */
+  onToggle?: () => void;
+  /** Accessible label for the sidebar toggle icon button. Required when `onToggle` is provided. */
+  closeAriaLabel?: string;
 }

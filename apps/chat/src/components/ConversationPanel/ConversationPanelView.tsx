@@ -288,9 +288,9 @@ const ConversationPanelView: FC<Props> = ({
         getActions={getActions}
         actionsLabel={t(ConversationHistoryI18nKeys.ActionsLabel)}
         onBackdropClick={isMobile ? onClose : undefined}
-        className={
-          isMobile ? 'fixed inset-y-0 start-0 z-50 w-[320px]' : undefined
-        }
+        onToggle={isMobile ? onClose : undefined}
+        closeAriaLabel={t(ConversationHistoryI18nKeys.ToggleAriaLabel)}
+        className={isMobile ? 'fixed inset-y-0 start-0 z-50' : undefined}
       />
 
       <DialConfirmationPopup

@@ -1,7 +1,7 @@
 {
   "chat": {
     "welcomeText": "Hello World, good day for prompting!",
-    "placeholder": "Type a prompt or use '/' to select one",
+    "placeholder": "Type a prompt",
     "streamError": "Something went wrong while generating the response.",
     "deleteMessageTitle": "Confirm deleting message?",
     "deleteMessageDescription": "Are you sure that you want to delete the message?",
