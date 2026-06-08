@@ -4,7 +4,6 @@ import {
   PublicationResource,
 } from '@/chat/types/publication';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
-import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   Attachment,
@@ -765,7 +764,7 @@ dialAdminTest(
       },
     );
 
-    await dialTest.step('Setup OAuth mocks', async () => {
+    await dialAdminTest.step('Setup OAuth mocks', async () => {
       oauthMockHelper = new OAuthMockHelper(
         page,
         initialToolset,
@@ -1085,7 +1084,7 @@ dialAdminTest(
       },
     );
 
-    await dialTest.step('Setup OAuth mocks', async () => {
+    await dialAdminTest.step('Setup OAuth mocks', async () => {
       oauthMockHelper = new OAuthMockHelper(
         page,
         initialToolset,
