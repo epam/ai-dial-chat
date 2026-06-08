@@ -5,7 +5,7 @@ import { StagesPanel } from './StagesPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { MD: 16 },
-  DialSpinner: () => <span data-testid="stage-spinner" />,
+  DialSpinner: () => <span role="status" aria-label="Stage loading" />,
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
@@ -118,7 +118,7 @@ describe('StagesPanel', () => {
       />,
     );
 
-    expect(screen.queryByTestId('stage-spinner')).toBeNull();
+    expect(screen.queryByRole('status', { name: 'Stage loading' })).toBeNull();
   });
 
   it('shows spinner only for the last null-status stage when streaming', () => {
@@ -129,6 +129,8 @@ describe('StagesPanel', () => {
       />,
     );
 
-    expect(screen.getAllByTestId('stage-spinner')).toHaveLength(1);
+    expect(
+      screen.getAllByRole('status', { name: 'Stage loading' }),
+    ).toHaveLength(1);
   });
 });

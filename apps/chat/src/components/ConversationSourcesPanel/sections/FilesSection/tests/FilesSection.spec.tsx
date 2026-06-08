@@ -6,7 +6,7 @@ import FilesSection from '../FilesSection';
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
   AttachmentCard: ({ attachment }: { attachment: DisplayAttachment }) => (
-    <div data-testid="attachment-card">{attachment.name}</div>
+    <div>{attachment.name}</div>
   ),
 }));
 
@@ -31,7 +31,7 @@ describe('FilesSection', () => {
       <FilesSection attachments={[]} title="Files" emptyMessage="No files." />,
     );
     expect(screen.getByText('No files.')).toBeTruthy();
-    expect(screen.queryByTestId('attachment-card')).toBeNull();
+    expect(screen.queryByRole('list')).toBeNull();
   });
 
   it('renders a card per attachment', () => {
@@ -43,7 +43,9 @@ describe('FilesSection', () => {
         emptyMessage="None."
       />,
     );
-    expect(screen.getAllByTestId('attachment-card')).toHaveLength(2);
+    expect(screen.getByText('a.pdf')).toBeTruthy();
+    expect(screen.getByText('b.pdf')).toBeTruthy();
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
 
   it('has role=list grid when attachments present', () => {

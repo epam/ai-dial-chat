@@ -24,11 +24,11 @@ const TestCollapsedText = ({
   return (
     <div>
       <p ref={textRef}>{text}</p>
-      <span data-testid="collapsed">{String(isCollapsed)}</span>
-      <span data-testid="text-collapsed">{String(isTextCollapsed)}</span>
-      <span data-testid="overflowing">{String(isOverflowing)}</span>
-      <span data-testid="max-height">{collapsedMaxHeight}</span>
-      <span data-testid="expanded-max-height">{expandedMaxHeight}</span>
+      <output aria-label="Collapsed">{String(isCollapsed)}</output>
+      <output aria-label="Text collapsed">{String(isTextCollapsed)}</output>
+      <output aria-label="Overflowing">{String(isOverflowing)}</output>
+      <output aria-label="Collapsed height">{collapsedMaxHeight}</output>
+      <output aria-label="Expanded height">{expandedMaxHeight}</output>
       <button type="button" onClick={toggleCollapsed}>
         Toggle
       </button>
@@ -55,12 +55,12 @@ describe('useCollapsedText', () => {
     render(<TestCollapsedText text="Long text" collapsedLineCount={2} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('overflowing').textContent).toBe('true');
+      expect(screen.getByLabelText('Overflowing').textContent).toBe('true');
     });
-    expect(screen.getByTestId('collapsed').textContent).toBe('true');
-    expect(screen.getByTestId('text-collapsed').textContent).toBe('true');
-    expect(screen.getByTestId('max-height').textContent).toBe('48');
-    expect(screen.getByTestId('expanded-max-height').textContent).toBe('72');
+    expect(screen.getByLabelText('Collapsed').textContent).toBe('true');
+    expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
+    expect(screen.getByLabelText('Collapsed height').textContent).toBe('48');
+    expect(screen.getByLabelText('Expanded height').textContent).toBe('72');
   });
 
   it('toggles between expanded and collapsed states', async () => {
@@ -69,22 +69,22 @@ describe('useCollapsedText', () => {
     render(<TestCollapsedText text="Long text" collapsedLineCount={2} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('text-collapsed').textContent).toBe('true');
+      expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
     });
 
     act(() => {
       screen.getByRole('button', { name: 'Toggle' }).click();
     });
 
-    expect(screen.getByTestId('collapsed').textContent).toBe('false');
-    expect(screen.getByTestId('text-collapsed').textContent).toBe('false');
+    expect(screen.getByLabelText('Collapsed').textContent).toBe('false');
+    expect(screen.getByLabelText('Text collapsed').textContent).toBe('false');
 
     act(() => {
       screen.getByRole('button', { name: 'Toggle' }).click();
     });
 
-    expect(screen.getByTestId('collapsed').textContent).toBe('true');
-    expect(screen.getByTestId('text-collapsed').textContent).toBe('true');
+    expect(screen.getByLabelText('Collapsed').textContent).toBe('true');
+    expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
   });
 
   it('does not mark short text as overflowing', async () => {
@@ -93,9 +93,9 @@ describe('useCollapsedText', () => {
     render(<TestCollapsedText text="Short text" collapsedLineCount={2} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('overflowing').textContent).toBe('false');
+      expect(screen.getByLabelText('Overflowing').textContent).toBe('false');
     });
-    expect(screen.getByTestId('text-collapsed').textContent).toBe('false');
+    expect(screen.getByLabelText('Text collapsed').textContent).toBe('false');
   });
 
   it('resets to collapsed when the text changes', async () => {
@@ -106,21 +106,21 @@ describe('useCollapsedText', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('text-collapsed').textContent).toBe('true');
+      expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
     });
 
     act(() => {
       screen.getByRole('button', { name: 'Toggle' }).click();
     });
 
-    expect(screen.getByTestId('collapsed').textContent).toBe('false');
+    expect(screen.getByLabelText('Collapsed').textContent).toBe('false');
 
     rerender(
       <TestCollapsedText text="Another long text" collapsedLineCount={2} />,
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('collapsed').textContent).toBe('true');
+      expect(screen.getByLabelText('Collapsed').textContent).toBe('true');
     });
   });
 
@@ -130,9 +130,9 @@ describe('useCollapsedText', () => {
     render(<TestCollapsedText text="Long text" collapsedLineCount={0} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('overflowing').textContent).toBe('true');
+      expect(screen.getByLabelText('Overflowing').textContent).toBe('true');
     });
-    expect(screen.getByTestId('max-height').textContent).toBe('24');
+    expect(screen.getByLabelText('Collapsed height').textContent).toBe('24');
   });
 
   it('calculates correct collapsedMaxHeight for a larger collapsedLineCount', async () => {
@@ -141,7 +141,7 @@ describe('useCollapsedText', () => {
     render(<TestCollapsedText text="Text" collapsedLineCount={3} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('max-height').textContent).toBe('72');
+      expect(screen.getByLabelText('Collapsed height').textContent).toBe('72');
     });
   });
 
@@ -151,9 +151,9 @@ describe('useCollapsedText', () => {
     render(<TestCollapsedText text="Text" collapsedLineCount={2} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('overflowing').textContent).toBe('false');
+      expect(screen.getByLabelText('Overflowing').textContent).toBe('false');
     });
-    expect(screen.getByTestId('text-collapsed').textContent).toBe('false');
+    expect(screen.getByLabelText('Text collapsed').textContent).toBe('false');
   });
 
   it('marks text as overflowing when scrollHeight exceeds the overflow tolerance', async () => {
@@ -162,9 +162,9 @@ describe('useCollapsedText', () => {
     render(<TestCollapsedText text="Text" collapsedLineCount={2} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('overflowing').textContent).toBe('true');
+      expect(screen.getByLabelText('Overflowing').textContent).toBe('true');
     });
-    expect(screen.getByTestId('text-collapsed').textContent).toBe('true');
+    expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
   });
 
   it('keeps isOverflowing true but isTextCollapsed false when expanded', async () => {
@@ -173,16 +173,16 @@ describe('useCollapsedText', () => {
     render(<TestCollapsedText text="Long text" collapsedLineCount={2} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('text-collapsed').textContent).toBe('true');
+      expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
     });
 
     act(() => {
       screen.getByRole('button', { name: 'Toggle' }).click();
     });
 
-    expect(screen.getByTestId('overflowing').textContent).toBe('true');
-    expect(screen.getByTestId('collapsed').textContent).toBe('false');
-    expect(screen.getByTestId('text-collapsed').textContent).toBe('false');
+    expect(screen.getByLabelText('Overflowing').textContent).toBe('true');
+    expect(screen.getByLabelText('Collapsed').textContent).toBe('false');
+    expect(screen.getByLabelText('Text collapsed').textContent).toBe('false');
   });
 
   it('resets to collapsed when collapsedLineCount changes', async () => {
@@ -193,19 +193,19 @@ describe('useCollapsedText', () => {
     );
 
     await waitFor(() => {
-      expect(screen.getByTestId('text-collapsed').textContent).toBe('true');
+      expect(screen.getByLabelText('Text collapsed').textContent).toBe('true');
     });
 
     act(() => {
       screen.getByRole('button', { name: 'Toggle' }).click();
     });
 
-    expect(screen.getByTestId('collapsed').textContent).toBe('false');
+    expect(screen.getByLabelText('Collapsed').textContent).toBe('false');
 
     rerender(<TestCollapsedText text="Long text" collapsedLineCount={1} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('collapsed').textContent).toBe('true');
+      expect(screen.getByLabelText('Collapsed').textContent).toBe('true');
     });
   });
 
@@ -215,9 +215,9 @@ describe('useCollapsedText', () => {
     render(<TestCollapsedText text="Long text" collapsedLineCount={-5} />);
 
     await waitFor(() => {
-      expect(screen.getByTestId('overflowing').textContent).toBe('true');
+      expect(screen.getByLabelText('Overflowing').textContent).toBe('true');
     });
-    expect(screen.getByTestId('max-height').textContent).toBe('24');
+    expect(screen.getByLabelText('Collapsed height').textContent).toBe('24');
   });
 
   it('starts in the collapsed state initially', () => {
@@ -225,6 +225,6 @@ describe('useCollapsedText', () => {
 
     render(<TestCollapsedText text="Long text" collapsedLineCount={2} />);
 
-    expect(screen.getByTestId('collapsed').textContent).toBe('true');
+    expect(screen.getByLabelText('Collapsed').textContent).toBe('true');
   });
 });

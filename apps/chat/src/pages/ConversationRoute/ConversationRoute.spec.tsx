@@ -79,15 +79,15 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     isInputDisabled?: boolean;
   }) => (
     <div>
-      <span data-testid="catalog-items-count">
+      <output aria-label="Catalog items count">
         {deployments?.length ?? 'none'}
-      </span>
-      <span data-testid="selected-item-id">
+      </output>
+      <output aria-label="Selected deployment">
         {selectedDeploymentId ?? 'null'}
-      </span>
-      <span data-testid="is-input-disabled">
+      </output>
+      <output aria-label="Input disabled">
         {String(isInputDisabled ?? false)}
-      </span>
+      </output>
       <button
         type="button"
         onClick={() => {
@@ -95,7 +95,6 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
             // intentional: test mock swallows rejection to avoid unhandled promise
           });
         }}
-        data-testid="send-trigger"
       >
         Send
       </button>
@@ -109,7 +108,6 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
             }),
           });
         }}
-        data-testid="upload-trigger"
       >
         Upload
       </button>
@@ -163,17 +161,21 @@ describe('ConversationRoute', () => {
   it('passes catalog items and selectedItemId into ConversationInput', async () => {
     renderRoute();
     await waitFor(() => {
-      expect(screen.getByTestId('catalog-items-count').textContent).toBe('1');
-      expect(screen.getByTestId('selected-item-id').textContent).toBe('gpt-4o');
+      expect(screen.getByLabelText('Catalog items count').textContent).toBe(
+        '1',
+      );
+      expect(screen.getByLabelText('Selected deployment').textContent).toBe(
+        'gpt-4o',
+      );
     });
   });
 
   it('calls apiCreateConversation with selectedItemId when send fires', async () => {
     renderRoute();
-    await waitFor(() => screen.getByTestId('send-trigger'));
+    const sendButton = await screen.findByRole('button', { name: 'Send' });
 
     await act(async () => {
-      screen.getByTestId('send-trigger').click();
+      sendButton.click();
     });
 
     await waitFor(() => {
@@ -187,10 +189,10 @@ describe('ConversationRoute', () => {
 
   it('uploads attachments through onUploadAttachment before send', async () => {
     renderRoute();
-    await waitFor(() => screen.getByTestId('upload-trigger'));
+    const uploadButton = await screen.findByRole('button', { name: 'Upload' });
 
     await act(async () => {
-      screen.getByTestId('upload-trigger').click();
+      uploadButton.click();
     });
 
     await waitFor(() => {
@@ -213,10 +215,10 @@ describe('ConversationRoute', () => {
     });
 
     renderRoute();
-    await waitFor(() => screen.getByTestId('send-trigger'));
+    const sendButton = await screen.findByRole('button', { name: 'Send' });
 
     await act(async () => {
-      screen.getByTestId('send-trigger').click();
+      sendButton.click();
     });
 
     expect(mockCreateConversation).not.toHaveBeenCalled();
@@ -235,14 +237,14 @@ describe('ConversationRoute', () => {
     });
     renderRoute();
     await waitFor(() => {
-      expect(screen.getByTestId('is-input-disabled').textContent).toBe('true');
+      expect(screen.getByLabelText('Input disabled').textContent).toBe('true');
     });
   });
 
   it('passes isInputDisabled=false when selectedDeploymentConfiguration is null', async () => {
     renderRoute();
     await waitFor(() => {
-      expect(screen.getByTestId('is-input-disabled').textContent).toBe('false');
+      expect(screen.getByLabelText('Input disabled').textContent).toBe('false');
     });
   });
 
@@ -257,7 +259,7 @@ describe('ConversationRoute', () => {
     });
     renderRoute();
     await waitFor(() => {
-      expect(screen.getByTestId('is-input-disabled').textContent).toBe('false');
+      expect(screen.getByLabelText('Input disabled').textContent).toBe('false');
     });
   });
 
@@ -359,10 +361,10 @@ describe('ConversationRoute', () => {
     });
 
     renderRoute();
-    await waitFor(() => screen.getByTestId('send-trigger'));
+    const sendButton = await screen.findByRole('button', { name: 'Send' });
 
     await act(async () => {
-      screen.getByTestId('send-trigger').click();
+      sendButton.click();
     });
 
     await waitFor(() => {

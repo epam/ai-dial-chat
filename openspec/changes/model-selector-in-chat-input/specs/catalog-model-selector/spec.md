@@ -177,7 +177,7 @@ Tests SHALL be added or updated in `libs/conversation-input/src/components/Input
 7. Enter key does not fire `onSend` when no selection.
 8. No selector element when `catalogItems` is `undefined`.
 
-Tests MUST use role, label, and text queries — no `data-testid`.
+Tests MUST use role, label, and text queries instead of implementation-specific selectors.
 
 #### Scenario: Unit test — selector renders with items
 

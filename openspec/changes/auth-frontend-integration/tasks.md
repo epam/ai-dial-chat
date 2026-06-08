@@ -11,7 +11,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
 - [x] 1.3 In `apps/chat/src/server-api/base.ts`, replace the generic 401 path inside `request()` so that on `response.status === 401` it throws `new UnauthorizedError(url)` instead of a generic `Error`. Non-401 non-OK statuses keep the existing `Error('Request failed with status …')` message.
 - [x] 1.4 In `apps/chat/src/server-api/base.ts`, add a module-scoped listener registry: `const listeners = new Set<(url: string) => void>()` plus an exported `onUnauthorized(listener)` function that returns a cleanup callback (`() => listeners.delete(listener)`). Inside `request()`, invoke each listener synchronously **before** throwing the `UnauthorizedError`.
 - [x] 1.5 Extend the `ApiEndpoints` enum in `apps/chat/src/server-api/base.ts` with `AUTH_ME = '/api/v1/auth/me'`, `AUTH_PROVIDERS = '/api/v1/auth/providers'`, and `AUTH_LOGOUT = '/api/v1/auth/logout'`. Do **not** add a `LOGIN` constant (the URL is built per-provider at the call site).
-- [x] 1.6 Update `apps/chat/src/server-api/base.spec.ts` with co-located Vitest cases (use `vi.spyOn(globalThis, 'fetch')`, no `data-testid`):
+- [x] 1.6 Update `apps/chat/src/server-api/base.spec.ts` with co-located Vitest cases (use `vi.spyOn(globalThis, 'fetch')` and avoid implementation-specific selectors):
   - 1.6.a `get<T>(url)` passes `credentials: 'include'` to `fetch`.
   - 1.6.b `post<T>(url, body)` and `put<T>(url, body)` pass `credentials: 'include'`.
   - 1.6.c A `401` response causes `request()` to throw an instance of `UnauthorizedError` whose `status === 401` and whose `url` matches the call.
@@ -125,7 +125,7 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
   - 6.3.c When authenticated with `claims.email = 'u@x.io'`, the trigger button is resolvable by `getByRole('button', { name: /u@x\.io/ })`.
   - 6.3.d Clicking the trigger reveals the sign-out form (`getByRole('form')` or a role-equivalent query) whose `method` attribute is `'post'` and `action` attribute is `'/api/v1/auth/logout'`.
   - 6.3.e The submit button is resolvable by `getByRole('button', { name: /sign out/i })`.
-  - 6.3.f No assertion uses `data-testid`.
+  - 6.3.f No assertion uses implementation-specific selectors.
 - [x] 6.4 Update `apps/chat/src/components/Header/tests/Header.spec.tsx` minimally: add a single test verifying the `<UserMenu />` mount point exists when `<UserProvider>` is mocked with an authenticated user. Existing logo assertions stay intact.
 - [x] 6.5 Verify the slice: `npm exec nx test chat` and `npm exec nx lint chat`.
 

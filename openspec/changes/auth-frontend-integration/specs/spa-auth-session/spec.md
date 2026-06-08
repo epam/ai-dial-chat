@@ -198,7 +198,7 @@ The `ApiEndpoints` enum in `apps/chat/src/server-api/base.ts` SHALL be extended 
 
 ### Requirement: Tests cover the auth integration surface
 
-The change SHALL ship co-located Vitest specs that cover every new module: `UserContext.spec.tsx`, `useAuthRedirect.spec.ts`, `Login.spec.tsx`, `UserMenu.spec.tsx`, and additions to `base.spec.ts`. Tests MUST use `@testing-library/react` role/label/text queries (no `data-testid`) and describe observable behaviour, not implementation details.
+The change SHALL ship co-located Vitest specs that cover every new module: `UserContext.spec.tsx`, `useAuthRedirect.spec.ts`, `Login.spec.tsx`, `UserMenu.spec.tsx`, and additions to `base.spec.ts`. Tests MUST use `@testing-library/react` role/label/text queries instead of implementation-specific selectors and describe observable behaviour, not implementation details.
 
 #### Scenario: UserContext bootstrap paths are tested
 
@@ -218,4 +218,4 @@ The change SHALL ship co-located Vitest specs that cover every new module: `User
 #### Scenario: UserMenu role-based queries
 
 - **WHEN** the test suite for `UserMenu` runs
-- **THEN** assertions resolve the email button by `getByRole('button', { name: ... })` and the sign-out form by `getByRole('form')`, with no `data-testid` usage
+- **THEN** assertions resolve the email button by `getByRole('button', { name: ... })` and the sign-out form by `getByRole('form')`, without implementation-specific selectors
