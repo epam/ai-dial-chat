@@ -44,7 +44,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
   AttachmentCard: ({ attachment }: { attachment: DisplayAttachment }) => (
-    <div data-testid="attachment-card">{attachment.name}</div>
+    <div>{attachment.name}</div>
   ),
 }));
 

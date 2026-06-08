@@ -37,6 +37,17 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
+
+  const {
+    textRef,
+    isTextCollapsed,
+    isOverflowing,
+    collapsedMaxHeight,
+    expandedMaxHeight,
+    isCollapsed,
+    toggleCollapsed,
+  } = useCollapsedText({ text, collapsedLineCount });
+
   const cssVars = buildCssVars({
     '--cm-bubble-user-bg': colors?.userBackground,
     '--cm-bubble-text': colors?.text,
@@ -50,16 +61,13 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
     '--cm-bubble-line-height': noCustomClass
       ? typography?.lineHeight
       : undefined,
+    '--cm-bubble-collapsed-height': isOverflowing
+      ? `${collapsedMaxHeight}px`
+      : undefined,
+    '--cm-bubble-expanded-height': isOverflowing
+      ? `${expandedMaxHeight}px`
+      : undefined,
   });
-
-  const {
-    textRef,
-    isTextCollapsed,
-    isOverflowing,
-    collapsedMaxHeight,
-    isCollapsed,
-    toggleCollapsed,
-  } = useCollapsedText({ text, collapsedLineCount });
 
   const positionRadius =
     position === BubblePosition.Top ? 'rounded-ee-[24px]' : 'rounded-se-[24px]';
@@ -87,14 +95,11 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
             <div className="flex min-w-0 flex-col items-start">
               <div
                 className={mergeClasses(
-                  'relative overflow-hidden transition-[max-height] duration-200 ease-out',
+                  'relative overflow-hidden',
+                  isOverflowing && styles.collapsibleText,
+                  isOverflowing && !isCollapsed && styles.expandedText,
                   isTextCollapsed && styles.collapsedText,
                 )}
-                style={
-                  isTextCollapsed
-                    ? { maxHeight: `${collapsedMaxHeight}px` }
-                    : undefined
-                }
               >
                 <p
                   ref={textRef}
