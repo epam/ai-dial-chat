@@ -266,6 +266,57 @@ describe('ConversationService', () => {
 
       expect(result.name).toBe('What is AI?');
     });
+
+    it('passes each nextToken to the following metadata request', async () => {
+      const getMetadataSpy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockImplementation((_bucket, _path, init) => {
+          const token = init?.params?.query?.token;
+          if (token === 'page-2') {
+            return Promise.resolve({
+              data: {
+                items: [
+                  {
+                    name: 'gpt-4o__What is AI? 1',
+                    nodeType: 'FILE',
+                  },
+                ],
+              },
+            } as never);
+          }
+
+          return Promise.resolve({
+            data: {
+              items: [
+                {
+                  name: 'gpt-4o__What is AI?',
+                  nodeType: 'FILE',
+                },
+              ],
+              nextToken: 'page-2',
+            },
+          } as never);
+        });
+
+      const result = await service.createConversation(
+        'What is AI?',
+        'test-token',
+        'test-bucket',
+        'gpt-4o',
+      );
+
+      expect(getMetadataSpy).toHaveBeenNthCalledWith(
+        2,
+        'test-bucket',
+        '',
+        expect.objectContaining({
+          params: {
+            query: expect.objectContaining({ token: 'page-2' }),
+          },
+        }),
+      );
+      expect(result.name).toBe('What is AI? 2');
+    });
   });
 
   describe('getConversation', () => {
@@ -704,6 +755,36 @@ describe('ConversationService', () => {
       } as never);
     };
 
+    it('passes pagination through SDK params.query', async () => {
+      const getMetadataSpy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockResolvedValue({ data: { items: [] } } as never);
+      vi.spyOn(service['client'], 'getSharedResources').mockResolvedValue({
+        data: { resources: [] },
+      } as never);
+
+      await service.listConversations(
+        'test-token',
+        'test-bucket',
+        50,
+        'user-cursor',
+      );
+
+      expect(getMetadataSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        '',
+        expect.objectContaining({
+          params: {
+            query: {
+              recursive: true,
+              limit: 50,
+              token: 'user-cursor',
+            },
+          },
+        }),
+      );
+    });
+
     it('sets isPinned: true on items whose id is in the pins list', async () => {
       mockMetadata([
         { url: 'conversations/bucket/conv-1', nodeType: 'FILE' },
@@ -1043,10 +1124,12 @@ describe('ConversationService', () => {
       const publicCall = spy.mock.calls.find(([bucket]) => bucket === 'public');
 
       expect(
-        (userCall?.[2] as { query?: { token?: string } })?.query?.token,
+        (userCall?.[2] as { params?: { query?: { token?: string } } })?.params
+          ?.query?.token,
       ).toBe('user-cursor');
       expect(
-        (publicCall?.[2] as { query?: { token?: string } })?.query?.token,
+        (publicCall?.[2] as { params?: { query?: { token?: string } } })?.params
+          ?.query?.token,
       ).toBe('pub-cursor');
     });
 
@@ -1074,10 +1157,12 @@ describe('ConversationService', () => {
       const publicCall = spy.mock.calls.find(([bucket]) => bucket === 'public');
 
       expect(
-        (userCall?.[2] as { query?: { token?: string } })?.query?.token,
+        (userCall?.[2] as { params?: { query?: { token?: string } } })?.params
+          ?.query?.token,
       ).toBe('legacy-opaque-token');
       expect(
-        (publicCall?.[2] as { query?: { token?: string } })?.query?.token,
+        (publicCall?.[2] as { params?: { query?: { token?: string } } })?.params
+          ?.query?.token,
       ).toBeUndefined();
     });
 

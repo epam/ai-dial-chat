@@ -143,6 +143,29 @@ describe('useModelSelector — menuItems', () => {
     });
   });
 
+  it('updates the active item when selectedDeploymentId changes', () => {
+    const { result, rerender } = renderHook(
+      ({ selectedDeploymentId }) =>
+        useModelSelector({
+          deployments: mockDeployments,
+          selectedDeploymentId,
+        }),
+      { initialProps: { selectedDeploymentId: 'gpt-4o' } },
+    );
+
+    expect(result.current.menuItems[0].className).toBe(
+      'bg-accent-primary-alpha',
+    );
+    expect(result.current.menuItems[1].className).toBeUndefined();
+
+    rerender({ selectedDeploymentId: 'claude-3' });
+
+    expect(result.current.menuItems[0].className).toBeUndefined();
+    expect(result.current.menuItems[1].className).toBe(
+      'bg-accent-primary-alpha',
+    );
+  });
+
   it('item onClick calls onDeploymentChange with item id', () => {
     const onDeploymentChange = vi.fn();
     const { result } = renderHook(() =>

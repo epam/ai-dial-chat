@@ -65,10 +65,12 @@ export class ConversationService extends AppService {
           '',
           {
             headers: getBearerAuthHeaders(token),
-            query: {
-              recursive: true,
-              limit: 1000,
-              ...(cursor ? { token: cursor } : {}),
+            params: {
+              query: {
+                recursive: true,
+                limit: 1000,
+                ...(cursor ? { token: cursor } : {}),
+              },
             },
           },
         )) as MetadataResult;
@@ -86,7 +88,11 @@ export class ConversationService extends AppService {
         // Treat both null and undefined as "no more pages".
         cursor = data.nextToken ?? undefined;
       } while (cursor != null && cursor !== '');
-    } catch {
+    } catch (error) {
+      this.logger.warn(
+        'Unable to finish conversation title lookup; continuing with collected titles',
+        error,
+      );
       // Resilient: return whatever was collected before the failure
     }
 
@@ -278,7 +284,7 @@ export class ConversationService extends AppService {
             encodeDialResourcePath(path ?? ''),
             {
               headers: getBearerAuthHeaders(token),
-              query: buildQuery(userNextToken),
+              params: { query: buildQuery(userNextToken) },
             },
           ) as Promise<MetadataResult>,
           (
@@ -287,7 +293,7 @@ export class ConversationService extends AppService {
               encodeDialResourcePath(path ?? ''),
               {
                 headers: getBearerAuthHeaders(token),
-                query: buildQuery(publicNextToken),
+                params: { query: buildQuery(publicNextToken) },
               },
             ) as Promise<MetadataResult>
           ).catch((err: unknown) => {

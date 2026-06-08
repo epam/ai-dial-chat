@@ -49,7 +49,9 @@ export const buildRenamedConversationPath = (
   const parts = filename.split('__');
   let renamedFilename: string;
   if (parts.length >= 3) {
-    renamedFilename = [parts[0], sanitisedTitle, parts[parts.length - 1]].join('__');
+    renamedFilename = [parts[0], sanitisedTitle, parts[parts.length - 1]].join(
+      '__',
+    );
   } else if (parts.length === 2) {
     renamedFilename = [parts[0], sanitisedTitle].join('__');
   } else {
