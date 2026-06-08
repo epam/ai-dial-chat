@@ -197,7 +197,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
                   getActions={getActions}
                   actionsLabel={actionsLabel}
                   groupHeaderClassName={typography?.groupHeaderClassName}
-                  itemIconClassName={typography?.itemIconClassName}
                   itemTitleClassName={typography?.itemTitleClassName}
                 />
                 <ConversationGroup
@@ -208,7 +207,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
                   getActions={getActions}
                   actionsLabel={actionsLabel}
                   groupHeaderClassName={typography?.groupHeaderClassName}
-                  itemIconClassName={typography?.itemIconClassName}
                   itemTitleClassName={typography?.itemTitleClassName}
                 />
               </>

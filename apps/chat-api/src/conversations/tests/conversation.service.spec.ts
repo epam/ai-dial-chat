@@ -1193,6 +1193,5 @@ describe('ConversationService', () => {
       expect(result.items).toHaveLength(1);
       expect(result.items[0].id).toBe('conversations/test-bucket/user-conv');
     });
-
   });
 });
