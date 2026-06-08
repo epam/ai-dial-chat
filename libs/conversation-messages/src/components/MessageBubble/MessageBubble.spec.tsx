@@ -47,16 +47,16 @@ describe('MessageBubble', () => {
     expect(getByText('Hello world')).toBeTruthy();
   });
 
-  it('applies rounded-tr-[24px] with BubblePosition.Bottom (default)', () => {
+  it('applies rounded-se-[24px] with BubblePosition.Bottom (default)', () => {
     const { container } = render(
       <MessageBubble text="msg" role={MessageRole.User} />,
     );
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
-      'rounded-tr-[24px]',
+      'rounded-se-[24px]',
     );
   });
 
-  it('applies rounded-br-[24px] with BubblePosition.Top', () => {
+  it('applies rounded-ee-[24px] with BubblePosition.Top', () => {
     const { container } = render(
       <MessageBubble
         text="msg"
@@ -65,7 +65,7 @@ describe('MessageBubble', () => {
       />,
     );
     expect(container.querySelector(':scope > * > * > *')?.className).toContain(
-      'rounded-br-[24px]',
+      'rounded-ee-[24px]',
     );
   });
 
@@ -142,7 +142,7 @@ describe('UserMessageBubble — attachments', () => {
     const paragraph = container.querySelector('p');
     expect(paragraph?.textContent).toBe(message);
     expect(paragraph?.className).toContain('whitespace-pre-wrap');
-    expect(paragraph?.className).toContain('text-left');
+    expect(paragraph?.className).toContain('text-start');
     expect(paragraph?.className).toContain('[overflow-wrap:anywhere]');
   });
 

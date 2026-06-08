@@ -287,7 +287,7 @@ const ConversationPanelView: FC<Props> = ({
         actionsLabel={t(ConversationHistoryI18nKeys.ActionsLabel)}
         onBackdropClick={isMobile ? onClose : undefined}
         className={
-          isMobile ? 'fixed inset-y-0 left-0 z-50 w-[320px]' : undefined
+          isMobile ? 'fixed inset-y-0 start-0 z-50 w-[320px]' : undefined
         }
       />
 

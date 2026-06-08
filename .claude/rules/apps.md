@@ -4,6 +4,8 @@ paths:
   - 'apps/**/*.ts'
 ---
 
+@.claude/rules/rtl.md
+
 # Apps component conventions
 
 - Name the component props type/interface `Props` (not `<ComponentName>Props`).

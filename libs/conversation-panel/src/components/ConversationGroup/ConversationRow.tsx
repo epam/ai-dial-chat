@@ -12,7 +12,7 @@ import {
 import { IconDotsVertical } from '@tabler/icons-react';
 import { useState, type FC } from 'react';
 import type { ConversationHistoryItem } from '../../models/ConversationPanel.js';
-import { getButtonPaddingRight } from '../../utils/conversation-row.utils.js';
+import { getButtonPaddingEnd } from '../../utils/conversation-row.utils.js';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
 export interface ConversationRowProps {
@@ -49,7 +49,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
 
   const avatar = <DeploymentIcon src={item.iconUrl} size={DIAL_ICON_SIZE.LG} />;
 
-  const buttonPaddingRight = getButtonPaddingRight(hasActions, isMenuOpen);
+  const buttonPaddingRight = getButtonPaddingEnd(hasActions, isMenuOpen);
 
   return (
     <li className="group relative">
@@ -60,7 +60,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         aria-current={isActive ? 'page' : undefined}
         onClick={() => onSelectConversation(item.id)}
         className={mergeClasses(
-          'h-8 w-full justify-start gap-2 pl-3',
+          'h-8 w-full justify-start gap-2 ps-3',
           buttonPaddingRight,
           styles.item,
           isActive && styles.itemActive,
@@ -70,7 +70,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       {hasActions && (
         <div
           className={mergeClasses(
-            'absolute inset-y-0 right-1 flex items-center',
+            'absolute inset-y-0 end-1 flex items-center',
             isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
           )}
         >

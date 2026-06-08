@@ -60,7 +60,7 @@ export const StageItem: FC<Props> = ({
         ) : (
           <IconChevronRight
             size={DIAL_ICON_SIZE.MD}
-            className={styles.iconSecondary}
+            className={mergeClasses(styles.iconSecondary, 'rtl:scale-x-[-1]')}
           />
         )}
       </button>
@@ -71,7 +71,7 @@ export const StageItem: FC<Props> = ({
         )}
       >
         <div className="overflow-hidden">
-          <div className="mt-3 flex flex-col gap-3 pl-7">
+          <div className="mt-3 flex flex-col gap-3 ps-7">
             <StageMarkdownContent
               content={stage.content}
               typography={typography}

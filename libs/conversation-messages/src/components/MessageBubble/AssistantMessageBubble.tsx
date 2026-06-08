@@ -76,7 +76,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             <div
               className={mergeClasses(
                 textClass,
-                'min-w-0 max-w-full text-left',
+                'min-w-0 max-w-full text-start',
               )}
             >
               <MDMessageViewer

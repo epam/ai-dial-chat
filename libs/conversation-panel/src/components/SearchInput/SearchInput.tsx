@@ -21,7 +21,7 @@ export const SearchInput: FC<SearchInputProps> = memo(
         value={value}
         placeholder={placeholder}
         onChange={onChange}
-        wrapperClassName="border-0 pl-5"
+        wrapperClassName="border-0 ps-5"
       />
     </div>
   ),
