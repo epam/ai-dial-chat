@@ -88,6 +88,11 @@ describe('ConversationService', () => {
     vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
       data: {},
     } as never);
+    // Default: empty bucket so fetchAllUserTitles returns an empty set.
+    // Individual createConversation tests override this when needed.
+    vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+      data: { items: [] },
+    } as never);
   });
 
   describe('createConversation', () => {
@@ -106,9 +111,7 @@ describe('ConversationService', () => {
 
       expect(saveConversationSpy).toHaveBeenCalledWith(
         'test-bucket',
-        expect.stringMatching(
-          /^form-example__What%20do%20you%20want%20to%20do%3F__[0-9a-f-]{36}$/i,
-        ),
+        'form-example__What%20do%20you%20want%20to%20do%3F',
         expect.any(Object),
       );
     });
@@ -123,9 +126,7 @@ describe('ConversationService', () => {
       );
 
       expect(result.name).toBe('New chat');
-      expect(result.id).toMatch(
-        /^test-bucket\/form-example__New chat__[0-9a-f-]{36}$/i,
-      );
+      expect(result.id).toBe('test-bucket/form-example__New chat');
     });
 
     it('returns a conversation with a UUID-format id', async () => {
@@ -195,6 +196,75 @@ describe('ConversationService', () => {
       );
       expect(result.model.id).toBe('my-catalog-item');
       expect(result.assistantModelId).toBe('my-catalog-item');
+    });
+
+    it('uses the base name when no conversation with that title exists', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: { items: [] },
+      } as never);
+
+      const result = await service.createConversation(
+        'What is AI?',
+        'test-token',
+        'test-bucket',
+        'gpt-4o',
+      );
+
+      expect(result.name).toBe('What is AI?');
+    });
+
+    it('appends _1 when a conversation with the same title already exists', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            { name: 'gpt-4o__What is AI?__existing-uuid', nodeType: 'FILE' },
+          ],
+        },
+      } as never);
+
+      const result = await service.createConversation(
+        'What is AI?',
+        'test-token',
+        'test-bucket',
+        'gpt-4o',
+      );
+
+      expect(result.name).toBe('What is AI? 1');
+    });
+
+    it('appends _2 when both the base name and _1 variant already exist', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            { name: 'gpt-4o__What is AI?__uuid1', nodeType: 'FILE' },
+            { name: 'gpt-4o__What is AI? 1__uuid2', nodeType: 'FILE' },
+          ],
+        },
+      } as never);
+
+      const result = await service.createConversation(
+        'What is AI?',
+        'test-token',
+        'test-bucket',
+        'gpt-4o',
+      );
+
+      expect(result.name).toBe('What is AI? 2');
+    });
+
+    it('uses base name when fetching existing titles fails', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockRejectedValue(
+        new Error('DIAL Core unreachable'),
+      );
+
+      const result = await service.createConversation(
+        'What is AI?',
+        'test-token',
+        'test-bucket',
+        'gpt-4o',
+      );
+
+      expect(result.name).toBe('What is AI?');
     });
   });
 

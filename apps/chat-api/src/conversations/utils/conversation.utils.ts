@@ -23,17 +23,22 @@ export const getConversationName = (
 
 /**
  * Extracts the human-readable title from a DIAL Core conversation filename.
- * DIAL Core stores conversations as `{deploymentId}__{title}__{uuid}`.
- * The title may itself contain `__`, so we take all segments between first and last.
+ * Supports both `{deploymentId}__{title}` (2-part) and legacy
+ * `{deploymentId}__{title}__{uuid}` (3-part) formats.
+ * The title may itself contain `__`, so we take all segments after the first
+ * (and before the last when a uuid suffix is present).
  */
 export const getConversationTitleFromName = (name: string): string => {
   const parts = name.split('__');
-  return parts.length >= 3 ? parts.slice(1, -1).join('__') : name;
+  if (parts.length >= 3) return parts.slice(1, -1).join('__');
+  if (parts.length === 2) return parts[1];
+  return name;
 };
 
 /**
  * Builds the new conversation path by replacing the title segment in the filename.
- * DIAL Core stores conversations as `{deploymentId}__{title}__{uuid}`.
+ * Supports both `{deploymentId}__{title}` (2-part) and legacy
+ * `{deploymentId}__{title}__{uuid}` (3-part) formats.
  */
 export const buildRenamedConversationPath = (
   conversationPath: string,
@@ -42,10 +47,14 @@ export const buildRenamedConversationPath = (
   const segments = conversationPath.split('/');
   const filename = segments[segments.length - 1];
   const parts = filename.split('__');
-  const renamedFilename =
-    parts.length >= 3
-      ? [parts[0], sanitisedTitle, parts[parts.length - 1]].join('__')
-      : sanitisedTitle;
+  let renamedFilename: string;
+  if (parts.length >= 3) {
+    renamedFilename = [parts[0], sanitisedTitle, parts[parts.length - 1]].join('__');
+  } else if (parts.length === 2) {
+    renamedFilename = [parts[0], sanitisedTitle].join('__');
+  } else {
+    renamedFilename = sanitisedTitle;
+  }
   return segments.length > 1
     ? [...segments.slice(0, -1), renamedFilename].join('/')
     : renamedFilename;
