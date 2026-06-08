@@ -12,7 +12,7 @@ The app has a `Navigation` icon bar on the left and a `ConversationSourcesPanelV
 - **Grouped sections** — Pinned (conversations with `isPinned: true`) and My chats; each section is collapsible with a chevron.
 - Conversation rows show an optional icon and title; clicking navigates to the conversation.
 - On desktop: persistent panel, 288px wide, pushes `<main>` content.
-- On mobile: full-height drawer overlay, triggered from the `Header` toggle button.
+- On mobile: full-width (`w-full`) drawer overlay, triggered from the `Header` mobile toggle button; closed by default on mobile (a `useEffect` in `app.tsx` resets `isHistoryPanelOpen` to `false` whenever `isMobile` becomes true, clearing any stored desktop `true` from `localStorage`); closed via an `IconX` button inside the panel header.
 - New backend list endpoint `GET /api/v1/conversations/list` returns cursor-paginated metadata backed by DIAL Core.
 - Responsive: uses `useIsMobile` / `useBreakpoint` from `apps/chat/src/hooks/breakpoint/`.
 - Panel open/closed state persisted to `localStorage` via `useLocalStorage` hook.
@@ -30,15 +30,17 @@ The app has a `Navigation` icon bar on the left and a `ConversationSourcesPanelV
 
 **Decision:** New `libs/conversation-panel` lib at `@epam/ai-dial-conversation-panel`. It does not depend on `libs/sidebar`.
 
-### 2. Collapse/expand — `isOpen` in app, no `onToggle` on the lib
+### 2. Collapse/expand — `isOpen` in app, `onToggle` in lib for mobile close
 
-The panel's visibility state must be shared between the `Header` (toggle button) and the panel itself. Both live in `apps/chat`. The lib receives `isOpen` as a prop only; it does not own open/closed state and does not expose `onToggle`.
+The panel's visibility state must be shared between the `Header` (toggle button) and the panel itself. Both live in `apps/chat`. The lib receives `isOpen` as a prop; it does not own open/closed state. On mobile an `onToggle` callback and `closeAriaLabel` string can be passed to `ConversationPanel` to render a close button inside the panel header.
 
-**Decision:** `isOpen: boolean` prop on `ConversationPanel`. The app manages the state via `useLocalStorage('conversationPanelOpen', false)` and passes it down.
+**Decision:** `isOpen: boolean` prop on `ConversationPanel`. Optional `onToggle?: () => void` and `closeAriaLabel?: string` props for the mobile close button. The app manages the state via `useLocalStorage('conversationPanelOpen', false)` and passes it down.
 
 ### 3. Toggle icon placement — in app `Header`, not inside the panel
 
-**Decision:** The toggle icon button lives in `apps/chat/src/components/Header/Header.tsx` (`isHistoryPanelOpen` + `onHistoryPanelToggle` props), desktop-only (`hidden desktop:flex`). The panel header does not contain a toggle. This keeps the panel header focused on content and avoids a collapsed-strip layout complexity.
+**Decision:** The toggle icon button lives in `apps/chat/src/components/Header/Header.tsx` (`isHistoryPanelOpen` + `onHistoryPanelToggle` props). On **desktop** the existing `SideBarLeft/SideBarRight` icon is shown (`hidden desktop:flex`). On **mobile** a separate `IconLayoutSidebarRight` button is shown (`desktop:hidden`); it is only rendered when the panel is closed. The panel header does not contain a toggle on desktop.
+
+When the panel is **open on mobile**, a close (`IconX`) button is rendered inside the `ConversationPanel` header (end/right side, `desktop:hidden`). This is wired via the `onToggle` and `closeAriaLabel` props on `ConversationPanel` → `ConversationPanelView` passes `onToggle={onClose}` when `isMobile` is true.
 
 ### 4. Panel width and collapse behaviour on desktop
 

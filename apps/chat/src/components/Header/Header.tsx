@@ -1,5 +1,9 @@
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconFileDescription, IconMenu2 } from '@tabler/icons-react';
+import {
+  IconFileDescription,
+  IconLayoutSidebarRight,
+  IconMenu2,
+} from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -52,6 +56,16 @@ const Header: FC<Props> = ({
             }}
             onClick={onHistoryPanelToggle}
             className="hidden desktop:flex"
+          />
+        )}
+        {onHistoryPanelToggle && !isHistoryPanelOpen && (
+          <DialGhostIconButton
+            icon={
+              <IconLayoutSidebarRight size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+            }
+            aria-label={t(ConversationHistoryI18nKeys.ToggleAriaLabel)}
+            onClick={onHistoryPanelToggle}
+            className="desktop:hidden"
           />
         )}
       </div>
