@@ -2,6 +2,7 @@
 
 A modern full-stack chat application built with Nx monorepo, featuring a React frontend and NestJS backend with DIAL Core integration.
 
+
 ## 📚 Table of Contents
 
 - [Overview](#overview)
