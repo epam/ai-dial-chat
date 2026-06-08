@@ -11,6 +11,7 @@ import { type CSSProperties, type FC, useEffect, useState } from 'react';
 import { List, type RowComponentProps } from 'react-window';
 import { buildDeploymentIcon, filterDeployments } from '../../utils/deployment';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
+import { ModelSelectorSkeletonRows } from '../ModelSelectorSkeleton/ModelSelectorSkeleton';
 import styles from './ModelSelectorBottomSheet.module.scss';
 
 /** Fixed pixel height of a single deployment row, used by the virtualized list. */
@@ -142,10 +143,10 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
   }, [isOpen]);
 
   const hasDeployments = deployments && deployments.length > 0;
+  const isLoading = loadingLabel !== undefined;
 
-  const stateLabel = !hasDeployments
-    ? (loadingLabel ?? errorLabel ?? emptyLabel)
-    : undefined;
+  const stateLabel =
+    !hasDeployments && !isLoading ? (errorLabel ?? emptyLabel) : undefined;
 
   const filtered = hasDeployments ? filterDeployments(deployments, query) : [];
 
@@ -165,7 +166,7 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
       className="max-h-[80dvh]"
     >
       {/* Search */}
-      {hasDeployments && (
+      {hasDeployments && !isLoading && (
         <>
           <div className="flex-shrink-0 px-4 py-[10px]">
             <DialSearch
@@ -180,7 +181,9 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
       )}
 
       {/* List */}
-      {stateLabel ? (
+      {isLoading ? (
+        <ModelSelectorSkeletonRows loadingLabel={loadingLabel} />
+      ) : stateLabel ? (
         <div
           role="list"
           className={mergeClasses(

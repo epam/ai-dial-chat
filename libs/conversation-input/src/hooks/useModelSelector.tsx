@@ -2,6 +2,11 @@ import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { DIAL_ICON_SIZE, DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
 import { type ReactNode, useMemo, useState } from 'react';
+import {
+  MODEL_SELECTOR_SKELETON_ROW_COUNT,
+  ModelSelectorSkeletonIcon,
+  ModelSelectorSkeletonLabel,
+} from '../components/ModelSelectorSkeleton/ModelSelectorSkeleton';
 import type { ModelSelectorLabels } from '../models/Input';
 import {
   buildDeploymentIcon,
@@ -51,15 +56,20 @@ export const useModelSelector = ({
     () => deployments?.find((i) => i.id === selectedDeploymentId),
     [deployments, selectedDeploymentId],
   );
+  const isLoading = modelSelectorLabels?.loading !== undefined;
 
   const selectorIcon: ReactNode = useMemo(
     () =>
-      buildDeploymentIcon(
-        selectedItem?.iconUrl,
-        selectedItem?.type,
-        DIAL_ICON_SIZE.LG,
+      isLoading ? (
+        <ModelSelectorSkeletonIcon size={DIAL_ICON_SIZE.LG} />
+      ) : (
+        buildDeploymentIcon(
+          selectedItem?.iconUrl,
+          selectedItem?.type,
+          DIAL_ICON_SIZE.LG,
+        )
       ),
-    [selectedItem],
+    [isLoading, selectedItem],
   );
 
   const selectedLabel = selectedItem?.displayName ?? selectedItem?.id;
@@ -68,11 +78,27 @@ export const useModelSelector = ({
     : (modelSelectorLabels?.ariaLabel ?? 'Select model');
 
   const menuItems: DropdownItem[] = useMemo(() => {
+    if (isLoading) {
+      return Array.from(
+        { length: MODEL_SELECTOR_SKELETON_ROW_COUNT },
+        (_, index) => ({
+          key: `__loading-${index}`,
+          icon: <ModelSelectorSkeletonIcon />,
+          label: (
+            <ModelSelectorSkeletonLabel
+              loadingLabel={
+                index === 0 ? modelSelectorLabels?.loading : undefined
+              }
+            />
+          ),
+          disabled: true,
+        }),
+      );
+    }
+
     if (!deployments || deployments.length === 0) {
       const stateLabel =
-        modelSelectorLabels?.loading ??
-        modelSelectorLabels?.error ??
-        modelSelectorLabels?.empty;
+        modelSelectorLabels?.error ?? modelSelectorLabels?.empty;
       if (stateLabel) {
         return [{ key: '__state', label: stateLabel, disabled: true }];
       }
@@ -88,11 +114,17 @@ export const useModelSelector = ({
           ? 'bg-accent-primary-alpha'
           : undefined,
     }));
-  }, [deployments, searchQuery, modelSelectorLabels, onDeploymentChange]);
+  }, [
+    deployments,
+    isLoading,
+    searchQuery,
+    modelSelectorLabels,
+    onDeploymentChange,
+  ]);
 
   const menuHeader: ReactNode = useMemo(
     () =>
-      deployments && deployments.length > 0 ? (
+      !isLoading && deployments && deployments.length > 0 ? (
         <div
           className={mergeClasses(
             'sticky top-0 z-10 pb-1 pr-2 pt-2',
@@ -108,7 +140,13 @@ export const useModelSelector = ({
           />
         </div>
       ) : undefined,
-    [deployments, searchQuery, modelSelectorLabels, searchHeaderClassName],
+    [
+      deployments,
+      isLoading,
+      searchQuery,
+      modelSelectorLabels,
+      searchHeaderClassName,
+    ],
   );
 
   const handleOpenChange = (isOpen: boolean) => {
