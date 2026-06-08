@@ -80,39 +80,39 @@ export interface MessageAnnotationBBox {
 
 export type MessageAnnotationSelector =
   | {
-  type:
-    | MessageAnnotationSelectorType.TextCharacterRange
-    | MessageAnnotationSelectorType.TextLineRange
-    | MessageAnnotationSelectorType.PdfPageRange;
-  start: number;
-  end: number;
-}
+      type:
+        | MessageAnnotationSelectorType.TextCharacterRange
+        | MessageAnnotationSelectorType.TextLineRange
+        | MessageAnnotationSelectorType.PdfPageRange;
+      start: number;
+      end: number;
+    }
   | {
-  type: MessageAnnotationSelectorType.PdfRegion;
-  page: number;
-  bbox: MessageAnnotationBBox;
-}
+      type: MessageAnnotationSelectorType.PdfRegion;
+      page: number;
+      bbox: MessageAnnotationBBox;
+    }
   | {
-  type: MessageAnnotationSelectorType.ImageRegion;
-  bbox: MessageAnnotationBBox;
-}
+      type: MessageAnnotationSelectorType.ImageRegion;
+      bbox: MessageAnnotationBBox;
+    }
   | {
-  type: MessageAnnotationSelectorType.ImageMask;
-  mask: string;
-}
+      type: MessageAnnotationSelectorType.ImageMask;
+      mask: string;
+    }
   | {
-  type: MessageAnnotationSelectorType.ExcelRcRange;
-  start: { row: number; col: number };
-  end: { row: number; col: number };
-}
+      type: MessageAnnotationSelectorType.ExcelRcRange;
+      start: { row: number; col: number };
+      end: { row: number; col: number };
+    }
   | {
-  type: MessageAnnotationSelectorType.HTMLId;
-  id: string;
-}
+      type: MessageAnnotationSelectorType.HTMLId;
+      id: string;
+    }
   | {
-  type: MessageAnnotationSelectorType.HTMLText;
-  text: string;
-};
+      type: MessageAnnotationSelectorType.HTMLText;
+      text: string;
+    };
 
 export interface ChatCompletionSource {
   message_index: number | null;
