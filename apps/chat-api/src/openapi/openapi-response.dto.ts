@@ -249,9 +249,6 @@ export class ChatCompletionResponseDto {
 }
 
 export class ConversationMessageDto {
-  @ApiProperty({ example: '7c20f2e0-83d9-45aa-9fdc-bf3eb9f16bf8' })
-  id!: string;
-
   @ApiProperty({ enum: ['user', 'assistant'], example: 'user' })
   role!: 'user' | 'assistant';
 
