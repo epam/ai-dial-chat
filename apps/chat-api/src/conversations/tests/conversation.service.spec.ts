@@ -91,6 +91,43 @@ describe('ConversationService', () => {
   });
 
   describe('createConversation', () => {
+    it('saves the conversation using the expected Core resource name', async () => {
+      const saveConversationSpy = vi.spyOn(
+        service['client'],
+        'saveConversation',
+      );
+
+      await service.createConversation(
+        'What do you want to do?',
+        'test-token',
+        'test-bucket',
+        'form-example',
+      );
+
+      expect(saveConversationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        expect.stringMatching(
+          /^form-example__What%20do%20you%20want%20to%20do%3F__[0-9a-f-]{36}$/i,
+        ),
+        expect.any(Object),
+      );
+    });
+
+    it('uses a non-empty fallback name for conversations without message text', async () => {
+      const result = await service.createConversation(
+        '',
+        'test-token',
+        'test-bucket',
+        'form-example',
+        { form_value: { answer: 'yes' } },
+      );
+
+      expect(result.name).toBe('New chat');
+      expect(result.id).toMatch(
+        /^test-bucket\/form-example__New chat__[0-9a-f-]{36}$/i,
+      );
+    });
+
     it('returns a conversation with a UUID-format id', async () => {
       const result = await service.createConversation(
         'Hello',
@@ -544,17 +581,76 @@ describe('ConversationService', () => {
   });
 
   describe('listConversations with pins', () => {
+    it('requests 100 conversations by default', async () => {
+      const getMetadataSpy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockResolvedValue({ data: { items: [] } } as never);
+
+      await service.listConversations('test-token', 'test-bucket');
+
+      expect(getMetadataSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        '',
+        expect.objectContaining({
+          params: {
+            query: {
+              recursive: true,
+              limit: 100,
+            },
+          },
+        }),
+      );
+    });
+
+    it('passes pagination parameters through the SDK params object', async () => {
+      const getMetadataSpy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockResolvedValue({ data: { items: [] } } as never);
+
+      await service.listConversations(
+        'test-token',
+        'test-bucket',
+        20,
+        'next-token',
+        'folder',
+      );
+
+      expect(getMetadataSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'folder',
+        expect.objectContaining({
+          params: {
+            query: {
+              recursive: true,
+              limit: 20,
+              token: 'next-token',
+            },
+          },
+        }),
+      );
+    });
+
     it('sets isPinned: true on items whose id is in the pins list', async () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
         data: {
           items: [
-            { url: 'conversations/bucket/conv-1', nodeType: 'FILE' },
-            { url: 'conversations/bucket/conv-2', nodeType: 'FILE' },
+            {
+              name: 'gpt-4o__First chat__uuid-1',
+              url: 'conversations/bucket/gpt-4o__First%20chat__uuid-1',
+              nodeType: 'ITEM',
+              resourceType: 'CONVERSATION',
+            },
+            {
+              name: 'gpt-4o__Second chat__uuid-2',
+              url: 'conversations/bucket/gpt-4o__Second%20chat__uuid-2',
+              nodeType: 'ITEM',
+              resourceType: 'CONVERSATION',
+            },
           ],
         },
       } as never);
       mockUserConfigService.getPinnedIds.mockResolvedValue([
-        'conversations/bucket/conv-1',
+        'conversations/bucket/gpt-4o__First%20chat__uuid-1',
       ]);
 
       const result = await service.listConversations(
@@ -565,11 +661,13 @@ describe('ConversationService', () => {
       expect(result.items).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            id: 'conversations/bucket/conv-1',
+            id: 'conversations/bucket/gpt-4o__First%20chat__uuid-1',
+            title: 'First chat',
             isPinned: true,
           }),
           expect.objectContaining({
-            id: 'conversations/bucket/conv-2',
+            id: 'conversations/bucket/gpt-4o__Second%20chat__uuid-2',
+            title: 'Second chat',
             isPinned: false,
           }),
         ]),
@@ -580,8 +678,18 @@ describe('ConversationService', () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
         data: {
           items: [
-            { url: 'conversations/bucket/conv-3', nodeType: 'FILE' },
-            { url: 'conversations/bucket/conv-4', nodeType: 'FILE' },
+            {
+              name: 'gpt-4o__Third chat__uuid-3',
+              url: 'conversations/bucket/gpt-4o__Third%20chat__uuid-3',
+              nodeType: 'ITEM',
+              resourceType: 'CONVERSATION',
+            },
+            {
+              name: 'gpt-4o__Fourth chat__uuid-4',
+              url: 'conversations/bucket/gpt-4o__Fourth%20chat__uuid-4',
+              nodeType: 'ITEM',
+              resourceType: 'CONVERSATION',
+            },
           ],
         },
       } as never);
@@ -601,8 +709,18 @@ describe('ConversationService', () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
         data: {
           items: [
-            { url: 'conversations/bucket/conv-a', nodeType: 'FILE' },
-            { url: 'conversations/bucket/conv-b', nodeType: 'FILE' },
+            {
+              name: 'gpt-4o__Chat A__uuid-a',
+              url: 'conversations/bucket/gpt-4o__Chat%20A__uuid-a',
+              nodeType: 'ITEM',
+              resourceType: 'CONVERSATION',
+            },
+            {
+              name: 'gpt-4o__Chat B__uuid-b',
+              url: 'conversations/bucket/gpt-4o__Chat%20B__uuid-b',
+              nodeType: 'ITEM',
+              resourceType: 'CONVERSATION',
+            },
           ],
         },
       } as never);
@@ -614,6 +732,86 @@ describe('ConversationService', () => {
       );
 
       expect(result.items.every((item) => item.isPinned === false)).toBe(true);
+    });
+
+    it('sorts pinned conversations first and each group by updatedAt descending', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            {
+              name: 'gpt-4o__Old unpinned__uuid-1',
+              url: 'conversations/bucket/old-unpinned',
+              nodeType: 'ITEM',
+              resourceType: 'CONVERSATION',
+              updatedAt: 100,
+            },
+            {
+              name: 'gpt-4o__New pinned__uuid-2',
+              url: 'conversations/bucket/new-pinned',
+              nodeType: 'ITEM',
+              resourceType: 'CONVERSATION',
+              updatedAt: 400,
+            },
+            {
+              name: 'gpt-4o__New unpinned__uuid-3',
+              url: 'conversations/bucket/new-unpinned',
+              nodeType: 'ITEM',
+              resourceType: 'CONVERSATION',
+              updatedAt: 300,
+            },
+            {
+              name: 'gpt-4o__Old pinned__uuid-4',
+              url: 'conversations/bucket/old-pinned',
+              nodeType: 'ITEM',
+              resourceType: 'CONVERSATION',
+              updatedAt: 200,
+            },
+          ],
+        },
+      } as never);
+      mockUserConfigService.getPinnedIds.mockResolvedValue([
+        'conversations/bucket/new-pinned',
+        'conversations/bucket/old-pinned',
+      ]);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items.map((item) => item.id)).toEqual([
+        'conversations/bucket/new-pinned',
+        'conversations/bucket/old-pinned',
+        'conversations/bucket/new-unpinned',
+        'conversations/bucket/old-unpinned',
+      ]);
+    });
+
+    it('ignores folders and non-conversation resources', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            {
+              name: 'folder',
+              url: 'conversations/bucket/folder',
+              nodeType: 'FOLDER',
+            },
+            {
+              name: 'prompt',
+              url: 'prompts/bucket/prompt',
+              nodeType: 'ITEM',
+              resourceType: 'PROMPT',
+            },
+          ],
+        },
+      } as never);
+
+      const result = await service.listConversations(
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.items).toEqual([]);
     });
   });
 });

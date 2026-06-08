@@ -183,7 +183,7 @@ export class BaseAPI {
       context.headers,
     );
     Object.keys(headers).forEach((key) =>
-      headers[key] == null ? delete headers[key] : {},
+      headers[key] === undefined ? delete headers[key] : {},
     );
 
     const initOverrideFn =
@@ -315,7 +315,7 @@ export class ResponseError extends Error {
 export class FetchError extends Error {
   override name: 'FetchError' = 'FetchError';
   constructor(
-    public override cause: Error,
+    public cause: Error,
     msg?: string,
   ) {
     super(msg);
