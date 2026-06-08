@@ -61,6 +61,7 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
 
   async setupMocks(): Promise<void> {
     await this.setupToolsetRoutes();
+    await this.setupToolsetListingRoute();
     await this.setupSignInRoute();
     await this.setupOAuthRedirectRoute();
     await this.setupSignOutRoute();
