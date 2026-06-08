@@ -1,7 +1,7 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { StagesPanel } from './StagesPanel.js';
+import { StagesPanel } from './StagesPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { MD: 16 },

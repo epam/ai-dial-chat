@@ -9,11 +9,8 @@ import {
 import { IconCheck } from '@tabler/icons-react';
 import { type CSSProperties, type FC, useEffect, useState } from 'react';
 import { List, type RowComponentProps } from 'react-window';
-import {
-  buildDeploymentIcon,
-  filterDeployments,
-} from '../../utils/deployment.js';
-import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell.js';
+import { buildDeploymentIcon, filterDeployments } from '../../utils/deployment';
+import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import styles from './ModelSelectorBottomSheet.module.scss';
 
 /** Fixed pixel height of a single deployment row, used by the virtualized list. */

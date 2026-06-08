@@ -11,10 +11,10 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronUp } from '@tabler/icons-react';
 import { FC } from 'react';
-import { useCollapsedText } from '../../hooks/useCollapsedText.js';
-import type { UserMessageBubbleProps } from '../../models/MessageBubble.js';
-import { BubblePosition } from '../../types/bubble-position.js';
-import { MessageActions } from '../Message/MessageActions.js';
+import { useCollapsedText } from '../../hooks/useCollapsedText';
+import type { UserMessageBubbleProps } from '../../models/MessageBubble';
+import { BubblePosition } from '../../types/bubble-position';
+import { MessageActions } from '../Message/MessageActions';
 import styles from './MessageBubble.module.scss';
 
 const DEFAULT_COLLAPSED_LINE_COUNT = 10;

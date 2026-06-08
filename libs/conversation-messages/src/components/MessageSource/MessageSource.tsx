@@ -1,6 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { MessageSourceProps } from '../../models/MessageSource.js';
+import type { MessageSourceProps } from '../../models/MessageSource';
 import styles from './MessageSource.module.scss';
 
 /** Styled pill button for a message source reference. */

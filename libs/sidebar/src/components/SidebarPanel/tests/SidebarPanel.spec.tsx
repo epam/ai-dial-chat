@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { SidebarSide } from '../../../models/SidebarPanel.js';
-import { SidebarPanel } from '../SidebarPanel.js';
+import { SidebarSide } from '../../../models/SidebarPanel';
+import { SidebarPanel } from '../SidebarPanel';
 
 // Minimal mock so DialGhostIconButton passes through aria-label and calls onClick.
 vi.mock('@epam/ai-dial-ui-kit', () => ({

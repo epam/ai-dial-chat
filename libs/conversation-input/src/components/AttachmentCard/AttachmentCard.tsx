@@ -12,9 +12,9 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconRefresh, IconX } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, type MouseEvent, useMemo } from 'react';
-import type { AttachmentCardProps } from '../../models/AttachmentCard.js';
-import { getAttachmentCardState } from '../../utils/getAttachmentCardState.js';
-import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension.js';
+import type { AttachmentCardProps } from '../../models/AttachmentCard';
+import { getAttachmentCardState } from '../../utils/getAttachmentCardState';
+import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension';
 import styles from './AttachmentCard.module.scss';
 
 export const AttachmentCard: FC<AttachmentCardProps> = ({

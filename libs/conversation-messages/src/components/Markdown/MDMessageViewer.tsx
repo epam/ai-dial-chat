@@ -1,5 +1,5 @@
 import { type FC, memo } from 'react';
-import { MarkdownRenderer } from './MarkdownRenderer.js';
+import { MarkdownRenderer } from './MarkdownRenderer';
 
 /** Props for the {@link MDMessageViewer} markdown renderer. */
 interface Props {

@@ -1,5 +1,5 @@
-export { ConversationPanel } from './components/ConversationPanel/ConversationPanel.js';
-export { ConversationSource } from './models/ConversationPanel.js';
+export { ConversationPanel } from './components/ConversationPanel/ConversationPanel';
+export { ConversationSource } from './models/ConversationPanel';
 export type {
   ConversationPanelProps,
   ConversationPanelStyles,
@@ -8,5 +8,5 @@ export type {
   ConversationHistoryItem,
   FilterTab,
   FilterLabels,
-} from './models/ConversationPanel.js';
-export type { ConversationGroupProps } from './components/ConversationGroup/ConversationGroup.js';
+} from './models/ConversationPanel';
+export type { ConversationGroupProps } from './components/ConversationGroup/ConversationGroup';

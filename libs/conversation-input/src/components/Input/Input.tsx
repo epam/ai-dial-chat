@@ -15,16 +15,16 @@ import {
   useRef,
   useState,
 } from 'react';
-import { useClipboardPaste } from '../../hooks/useClipboardPaste.js';
-import { useIsMobile } from '../../hooks/useIsMobile.js';
-import type { InputProps } from '../../models/Input.js';
-import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
-import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton.js';
-import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
-import { SendButton } from './Buttons/SendButton.js';
-import { StopButton } from './Buttons/StopButton.js';
+import { useClipboardPaste } from '../../hooks/useClipboardPaste';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import type { InputProps } from '../../models/Input';
+import { generateAttachmentId } from '../../utils/generateAttachmentId';
+import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
+import { AttachmentTray } from '../AttachmentTray/AttachmentTray';
+import { SendButton } from './Buttons/SendButton';
+import { StopButton } from './Buttons/StopButton';
 import styles from './Input.module.scss';
-import { ModelSelectorControl } from './ModelSelectorControl.js';
+import { ModelSelectorControl } from './ModelSelectorControl';
 
 export const Input: FC<InputProps> = ({
   message: messageProp = '',

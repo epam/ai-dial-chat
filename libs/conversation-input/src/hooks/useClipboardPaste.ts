@@ -1,7 +1,7 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import { ClipboardEventHandler, useCallback } from 'react';
-import { generateAttachmentId } from '../utils/generateAttachmentId.js';
+import { generateAttachmentId } from '../utils/generateAttachmentId';
 
 /**
  * Returns a `handlePaste` handler for a textarea that intercepts clipboard

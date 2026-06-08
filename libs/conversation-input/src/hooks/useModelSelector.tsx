@@ -2,12 +2,12 @@ import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import { DIAL_ICON_SIZE, DialSearch, ElementSize } from '@epam/ai-dial-ui-kit';
 import { type ReactNode, useMemo, useState } from 'react';
-import type { ModelSelectorLabels } from '../models/Input.js';
+import type { ModelSelectorLabels } from '../models/Input';
 import {
   buildDeploymentIcon,
   filterDeployments,
   getDeploymentLabel,
-} from '../utils/deployment.js';
+} from '../utils/deployment';
 
 /** Options passed to `useModelSelector`. */
 export interface UseModelSelectorOptions {

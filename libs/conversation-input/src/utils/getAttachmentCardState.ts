@@ -7,7 +7,7 @@ import {
 import type { Icon } from '@tabler/icons-react';
 import { IconClipboard, IconPhoto, IconTerminal2 } from '@tabler/icons-react';
 import styles from '../components/AttachmentCard/AttachmentCard.module.scss';
-import { getAttachmentIcon } from './getAttachmentIcon.js';
+import { getAttachmentIcon } from './getAttachmentIcon';
 
 export interface AttachmentCardState {
   isLoading: boolean;

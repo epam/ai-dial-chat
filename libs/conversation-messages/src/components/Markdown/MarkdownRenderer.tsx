@@ -2,7 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC, memo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent.js';
+import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent';
 import styles from './MarkdownRenderer.module.scss';
 
 /** Per-element className overrides passed to {@link MarkdownRenderer}. */

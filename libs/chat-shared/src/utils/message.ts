@@ -1,8 +1,4 @@
-import {
-  MessageRole,
-  type Message,
-  type StatusMessage,
-} from '../models/chat.js';
+import { MessageRole, type Message, type StatusMessage } from '../models/chat';
 
 /**
  * Narrows a `Message` to `StatusMessage` when its role is `MessageRole.Status`.

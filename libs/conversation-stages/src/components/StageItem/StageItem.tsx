@@ -3,9 +3,9 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import type { StageTypography } from '../../models/StagesPanel.js';
-import { StageIcon } from '../StageIcon/StageIcon.js';
-import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent.js';
+import type { StageTypography } from '../../models/StagesPanel';
+import { StageIcon } from '../StageIcon/StageIcon';
+import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 
 interface Props {

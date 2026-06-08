@@ -3,6 +3,8 @@
   "compilerOptions": {
     "outDir": "./out-tsc/vitest",
     "jsx": "react-jsx",
+    "module": "esnext",
+    "moduleResolution": "bundler",
     "lib": ["es2022", "dom"],
     "types": [
       "vitest/globals",

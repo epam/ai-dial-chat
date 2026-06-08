@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialButton } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC, ReactNode } from 'react';
-import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell.js';
+import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 import styles from './BottomSheet.module.scss';
 
 /** A single action entry in the bottom-sheet menu. */

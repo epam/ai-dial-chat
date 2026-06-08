@@ -4,15 +4,15 @@ import {
   ConversationSource,
   type ConversationPanelProps,
   FilterTab,
-} from '../../models/ConversationPanel.js';
-import { ConversationGroup } from '../ConversationGroup/ConversationGroup.js';
-import { EmptyState } from '../EmptyState/EmptyState.js';
-import { FilterTabs } from '../FilterTabs/FilterTabs.js';
-import { NewChatButton } from '../NewChatButton/NewChatButton.js';
-import { SearchInput } from '../SearchInput/SearchInput.js';
+} from '../../models/ConversationPanel';
+import { ConversationGroup } from '../ConversationGroup/ConversationGroup';
+import { EmptyState } from '../EmptyState/EmptyState';
+import { FilterTabs } from '../FilterTabs/FilterTabs';
+import { NewChatButton } from '../NewChatButton/NewChatButton';
+import { SearchInput } from '../SearchInput/SearchInput';
 import styles from './ConversationPanel.module.scss';
-import { Header } from './Header/Header.js';
-import { matchesSearch, matchesTab } from './utils.js';
+import { Header } from './Header/Header';
+import { matchesSearch, matchesTab } from './utils';
 
 /** Collapsible left-side panel showing the user's conversation history. */
 export const ConversationPanel: FC<ConversationPanelProps> = memo(

@@ -19,7 +19,7 @@ import {
   IconTrashX,
 } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
-import type { MessageActionsProps } from '../../models/MessageActions.js';
+import type { MessageActionsProps } from '../../models/MessageActions';
 
 const COPIED_RESET_MS = 2000;
 

@@ -1,9 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { MarkdownRenderer } from '@epam/ai-dial-conversation-messages';
 import { type FC, memo } from 'react';
-import type { StageTypography } from '../../models/StagesPanel.js';
+import type { StageTypography } from '../../models/StagesPanel';
 import styles from '../StagesPanel/StagesPanel.module.scss';
-import { StageCodeBlock } from './StageCodeBlock.js';
+import { StageCodeBlock } from './StageCodeBlock';
 
 /** Props for the {@link StageMarkdownContent} markdown renderer used in stage content areas. */
 interface Props {

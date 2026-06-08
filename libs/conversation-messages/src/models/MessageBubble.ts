@@ -4,8 +4,8 @@ import type {
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
-import type { BubblePosition } from '../types/bubble-position.js';
-import type { MessageActionsProps } from './MessageActions.js';
+import type { BubblePosition } from '../types/bubble-position';
+import type { MessageActionsProps } from './MessageActions';
 
 /** CSS custom-property overrides for message bubble components. */
 export interface MessageBubbleColors {

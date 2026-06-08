@@ -1,7 +1,8 @@
 import type { DeploymentItemDto } from '@epam/chat-api-client';
 import { act, renderHook } from '@testing-library/react';
+import type { MouseEvent as ReactMouseEvent } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { useModelSelector } from '../useModelSelector.js';
+import { useModelSelector } from '../useModelSelector';
 
 const mockDeployments = [
   { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' as const },
@@ -140,7 +141,7 @@ describe('useModelSelector — menuItems', () => {
     );
     result.current.menuItems[2].onClick?.({
       key: 'my-app',
-      domEvent: {} as MouseEvent,
+      domEvent: {} as ReactMouseEvent,
     });
     expect(onDeploymentChange).toHaveBeenCalledWith('my-app');
   });

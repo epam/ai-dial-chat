@@ -7,7 +7,7 @@ import type {
   InputColors,
   InputTypography,
   ModelSelectorLabels,
-} from './Input.js';
+} from './Input';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
 export interface ConversationInputColors {

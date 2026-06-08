@@ -1,10 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag } from '@epam/ai-dial-ui-kit';
 import { type FC, memo } from 'react';
-import {
-  FilterTab,
-  type FilterLabels,
-} from '../../models/ConversationPanel.js';
+import { FilterTab, type FilterLabels } from '../../models/ConversationPanel';
 import panelStyles from '../ConversationPanel/ConversationPanel.module.scss';
 
 /** Props for `FilterTabs`. */
