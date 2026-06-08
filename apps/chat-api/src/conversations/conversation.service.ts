@@ -33,6 +33,7 @@ import {
   getConversationTitleFromName,
   prepareEntityName,
 } from './utils/conversation.utils';
+import { resolveUniqueConversationName } from './utils/resolve-unique-conversation-name';
 
 const getValidAttachments = (customContent?: Message['custom_content']) =>
   (customContent?.attachments ?? []).filter((attachment) =>
@@ -50,6 +51,48 @@ export class ConversationService extends AppService {
     super(configService);
   }
 
+  private async fetchAllUserTitles(
+    token: string,
+    bucket: string,
+  ): Promise<Set<string>> {
+    const titles = new Set<string>();
+    let cursor: string | undefined;
+
+    try {
+      do {
+        const { data, error } = (await this.client.getConversationMetadata(
+          bucket,
+          '',
+          {
+            headers: getBearerAuthHeaders(token),
+            query: {
+              recursive: true,
+              limit: 1000,
+              ...(cursor ? { token: cursor } : {}),
+            },
+          },
+        )) as MetadataResult;
+
+        if (error != null || !data) break;
+
+        for (const item of data.items ?? []) {
+          const filename = item.name ?? item.url?.split('/').at(-1);
+          if (item.nodeType !== 'FOLDER' && filename) {
+            titles.add(getConversationTitleFromName(filename));
+          }
+        }
+
+        // DIAL Core may return nextToken as null (JSON null) when exhausted.
+        // Treat both null and undefined as "no more pages".
+        cursor = data.nextToken ?? undefined;
+      } while (cursor != null && cursor !== '');
+    } catch {
+      // Resilient: return whatever was collected before the failure
+    }
+
+    return titles;
+  }
+
   async createConversation(
     firstMessage: string,
     token: string,
@@ -59,12 +102,14 @@ export class ConversationService extends AppService {
   ): Promise<Conversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
-    const name = getConversationName('New chat', firstMessage);
-    const conversationPath = `${deploymentId}__${name}__${uuid}`;
+    const baseName = getConversationName('New chat', firstMessage);
+    const existingTitles = await this.fetchAllUserTitles(token, bucket);
+    const name = resolveUniqueConversationName(baseName, existingTitles);
+    const conversationPath = `${deploymentId}__${name}`;
     const folderId = `${bucket}`; // TODO: check
 
     const userMessage: MessageDto = {
-      id: crypto.randomUUID(),
+      id: uuid,
       role: ChatMessageRole.User,
       content: firstMessage,
       timestamp: new Date(now).toISOString(),
