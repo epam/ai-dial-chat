@@ -340,9 +340,8 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
   const handleApplyAppToolsetConfig = useCallback(
     (toolset: DialAppToolset) => {
-      setValue(
-        'agentsAndToolsets',
-        agentsAndToolsetsOptions.map((option) =>
+      const newAgentsAndToolsetsOptions = agentsAndToolsetsOptions.map(
+        (option) =>
           option[AgentOrToolsetSchemaKeys.tool]?.deployment_id ===
           toolset.deployment_id
             ? {
@@ -350,11 +349,28 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                 [AgentOrToolsetSchemaKeys.tool]: toolset,
               }
             : option,
-        ),
-        { shouldDirty: true, shouldValidate: true, shouldTouch: true },
       );
+      setValue('agentsAndToolsets', newAgentsAndToolsetsOptions, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+      setValue(
+        'agentsAndToolsetsJson',
+        JSON.stringify(
+          getQuickApp2Toolsets({
+            data: {
+              ...getValues(),
+              agentsAndToolsets: newAgentsAndToolsetsOptions,
+            },
+            allEntitiesMap: allEntitiesMap as Record<string, MarketplaceEntity>,
+          }),
+          null,
+          2,
+        ),
+      );
+      dispatch(ApplicationActions.setShouldTriggerEditorAutoUpdate(true));
     },
-    [agentsAndToolsetsOptions, setValue],
+    [agentsAndToolsetsOptions, setValue, getValues, allEntitiesMap, dispatch],
   );
 
   return (
