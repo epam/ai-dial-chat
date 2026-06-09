@@ -1,8 +1,8 @@
-import type {
+import {
   Attachment,
   isAudioTranscriptionSupported,
-  type Conversation,
-  type Message,
+  Conversation,
+  Message,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import {
