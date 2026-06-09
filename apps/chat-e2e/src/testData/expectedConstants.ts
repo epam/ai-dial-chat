@@ -815,6 +815,12 @@ export enum SignInButtonTitles {
   logOut = 'Log out',
 }
 
+export enum ManageCredsModalText {
+  title = 'Manage credentials',
+  personalCredsText = 'Log in with personal credentials.',
+  orgCredsText = 'Log in with credentials that will be available to other users in the organization.',
+}
+
 export const ExpectedConfirmationPopupData = {
   deleteItemHeader: 'Confirm Deleting Item',
   deleteItemsHeader: 'Confirm Deleting Items',
