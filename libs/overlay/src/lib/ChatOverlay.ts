@@ -30,6 +30,8 @@ import {
   SetInputContentRequest,
   SetSystemPromptRequest,
   SetSystemPromptResponse,
+  SetTemperatureRequest,
+  SetTemperatureResponse,
   StopSelectedPlaybackConversationResponse,
   Styles,
   Task,
@@ -660,6 +662,23 @@ export class ChatOverlay {
       OverlayRequests.setSystemPrompt,
       request,
     ) as Promise<SetSystemPromptResponse>;
+  }
+
+  /**
+   * Set temperature for the first selected conversation
+   * @param temperature {number} temperature value (0-2)
+   */
+  public async setTemperature(
+    temperature: number,
+  ): Promise<SetTemperatureResponse> {
+    const request: SetTemperatureRequest = {
+      temperature,
+    };
+
+    return this.send(
+      OverlayRequests.setTemperature,
+      request,
+    ) as Promise<SetTemperatureResponse>;
   }
 
   /**

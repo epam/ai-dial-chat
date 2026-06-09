@@ -1641,6 +1641,10 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
       const conversationModelType = lastModel?.type ?? EntityType.Model;
+      const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+      const overlayTemperature = OverlaySelectors.selectOverlayTemperature(
+        state$.value,
+      );
       const modelAdditionalSettings: Partial<
         Pick<ChatBody, 'prompt' | 'temperature'>
       > = {};
@@ -1651,7 +1655,9 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
         }
         if (doesModelAllowTemperature(lastModel)) {
           modelAdditionalSettings.temperature =
-            payload.conversation.temperature;
+            isOverlay && overlayTemperature != null
+              ? overlayTemperature
+              : payload.conversation.temperature;
         }
       }
 
