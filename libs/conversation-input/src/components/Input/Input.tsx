@@ -84,6 +84,7 @@ export const Input: FC<InputProps> = ({
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] =
     useState<Attachment[]>(initialAttachments);
+  const attachmentsRef = useRef(attachments);
 
   useEffect(() => {
     if (messageProp) {
@@ -93,8 +94,12 @@ export const Input: FC<InputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
+
+  useEffect(() => {
     return () => {
-      attachments.forEach((a) => {
+      attachmentsRef.current.forEach((a) => {
         if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
       });
     };
@@ -176,7 +181,7 @@ export const Input: FC<InputProps> = ({
     const built = buildAttachments(pendingDropFiles);
     addAttachments(built);
     onDropFilesConsumed?.();
-  }, [pendingDropFiles]); // intentionally omit buildAttachments/addAttachments/onDropFilesConsumed — stable refs
+  }, [addAttachments, buildAttachments, onDropFilesConsumed, pendingDropFiles]);
 
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 

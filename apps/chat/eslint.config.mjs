@@ -1,6 +1,5 @@
 import nx from '@nx/eslint-plugin';
 import react from 'eslint-plugin-react';
-import reactHooks from 'eslint-plugin-react-hooks';
 import baseConfig from '../../eslint.config.mjs';
 
 export default [
@@ -10,7 +9,6 @@ export default [
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
     plugins: {
       react,
-      'react-hooks': reactHooks,
     },
     settings: {
       react: {
@@ -27,10 +25,6 @@ export default [
       'react/no-unescaped-entities': 'warn',
       'react/self-closing-comp': 'warn',
       '@nx/enforce-module-boundaries': 'off',
-
-      // React Hooks rules
-      'react-hooks/rules-of-hooks': 'off',
-      'react-hooks/exhaustive-deps': 'warn',
     },
   },
 ];
