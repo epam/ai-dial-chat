@@ -16,7 +16,7 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
-import ConversationSourcesPanelView from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
+import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -135,7 +135,7 @@ const App: FC = () => {
           />
         </Routes>
       </main>
-      {isConversationRoute && <ConversationSourcesPanelView />}
+      {isConversationRoute && <ConversationSourcesPanel />}
     </div>
   );
 };

@@ -4,14 +4,12 @@ import SourcesSection from '../SourcesSection';
 
 describe('SourcesSection', () => {
   it('renders the title', () => {
-    render(<SourcesSection title="Sources" emptyMessage="No sources." />);
+    render(<SourcesSection title="Sources" />);
     expect(screen.getByText('Sources')).toBeTruthy();
   });
 
-  it('always renders the empty placeholder (links not yet supported)', () => {
-    render(
-      <SourcesSection title="Sources" emptyMessage="No sources available." />,
-    );
-    expect(screen.getByText('No sources available.')).toBeTruthy();
+  it('does not render an empty placeholder', () => {
+    render(<SourcesSection title="Sources" />);
+    expect(screen.queryByText('No sources available.')).toBeNull();
   });
 });
