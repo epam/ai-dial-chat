@@ -25,6 +25,7 @@ export type DialFile = Omit<
     percent?: number;
     fileContent?: File;
     isRootSharedItem?: boolean;
+    isQuickAttachment?: boolean;
   } & ShareEntity;
 
 // For file folders folderId is relative path and id is relative path + '/' + name

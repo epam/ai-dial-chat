@@ -452,11 +452,16 @@ export const UserMessage = memo(function UserMessage({
 
   const handleUnselectFile = useCallback(
     (fileId: string) => {
-      dispatch(FilesActions.uploadFileCancel({ id: fileId }));
       const fid = isFolderId(fileId) ? fileId.slice(0, -1) : fileId;
+      const file = files.find((f) => f.id === fid);
+      if (file?.isQuickAttachment) {
+        dispatch(FilesActions.deleteFile({ fileId: fid }));
+      } else {
+        dispatch(FilesActions.uploadFileCancel({ id: fileId }));
+      }
       setNewEditableAttachmentsIds((ids) => ids.filter((id) => id !== fid));
     },
-    [dispatch],
+    [dispatch, files],
   );
 
   const handleRetry = useCallback(
@@ -485,6 +490,7 @@ export const UserMessage = memo(function UserMessage({
             id: file.id,
             relativePath: folderPath,
             name: file.name,
+            isQuickAttachment: true,
           }),
         );
       });

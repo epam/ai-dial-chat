@@ -212,6 +212,9 @@ const reuploadFileEpic: AppEpic = (action$, state$) =>
           id: payload.fileId,
           relativePath: file.relativePath,
           name: file.name,
+          ...(file.isQuickAttachment && {
+            isQuickAttachment: true,
+          }),
         }),
       );
     }),
@@ -560,13 +563,11 @@ const unselectFilesEpic: AppEpic = (action$, state$) =>
     ofType(FilesActions.unselectFiles.type),
     switchMap(({ payload }) => {
       const files = FilesSelectors.selectFilesByIds(state$.value, payload.ids);
-      const cancelFileActions = files
-        .filter(
-          (file) => !file.serverSynced && file.status === UploadStatus.LOADING,
-        )
-        .map((file) => of(FilesActions.uploadFileCancel({ id: file.id })));
+      const deleteActions = files
+        .filter((file) => file.isQuickAttachment)
+        .map((file) => of(FilesActions.deleteFile({ fileId: file.id })));
 
-      return concat(...cancelFileActions);
+      return concat(...deleteActions);
     }),
   );
 
