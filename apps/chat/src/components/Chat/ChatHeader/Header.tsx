@@ -109,7 +109,10 @@ export const ChatHeader = Inversify.register(
     const enabledFeatures = useAppSelector(
       SettingsSelectors.selectEnabledFeatures,
     );
-    const floatingPanelTogglePadding = useFloatingPanelTogglePadding();
+    const {
+      hasFloatingPanelToggles,
+      headerClassNames: headerClassNamesWithFloatingPanelToggles,
+    } = useFloatingPanelTogglePadding();
     const selectedConversations = useAppSelector(
       ConversationsSelectors.selectSelectedConversations,
     );
@@ -194,10 +197,13 @@ export const ChatHeader = Inversify.register(
       <>
         <div
           className={classNames(
-            'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 px-3 py-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
+            'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
             isChatHeaderBorderEnabled && 'border-b border-secondary',
-            isChatFullWidth && 'px-3 md:px-5 lg:flex-nowrap',
-            floatingPanelTogglePadding,
+            isChatFullWidth && !hasFloatingPanelToggles && 'px-3 md:px-5',
+            isChatFullWidth && 'lg:flex-nowrap',
+            hasFloatingPanelToggles && headerClassNamesWithFloatingPanelToggles
+              ? headerClassNamesWithFloatingPanelToggles
+              : 'px-3 py-2',
           )}
           data-qa="chat-header"
         >
