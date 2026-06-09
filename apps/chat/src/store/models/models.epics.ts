@@ -76,8 +76,8 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
     switchMap((recentModelsIds) => {
       return state$.pipe(
         startWith(state$.value),
+        filter((state) => ModelsSelectors.selectAreModelsLoaded(state)),
         map((state) => ModelsSelectors.selectModels(state)),
-        filter((models) => models && models.length > 0),
         take(1),
         switchMap((models) => {
           const state = state$.value;

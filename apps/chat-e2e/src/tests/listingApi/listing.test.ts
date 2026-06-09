@@ -12,8 +12,8 @@ test('Models API listing', async () => {
   const models = ModelsUtil.getModels(false);
 
   expect
-    .soft(models.length, ExpectedMessages.entitiesCountIsValid)
-    .toBe(expectedModels.length);
+    .soft(models, ExpectedMessages.entitiesCountIsValid)
+    .toHaveLength(expectedModels.length);
 
   expectedModels.forEach((model) => {
     const actualModel = ModelsUtil.getModel(model.entityId);

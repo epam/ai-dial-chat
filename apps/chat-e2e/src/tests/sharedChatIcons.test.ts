@@ -220,10 +220,10 @@ dialTest(
           .toBeTruthy();
         expect
           .soft(
-            secondShareRequestResponse!.request.resources.length,
+            secondShareRequestResponse!.request.resources,
             ExpectedMessages.sharedResourcesCountIsValid,
           )
-          .toBe(1);
+          .toHaveLength(1);
         expect
           .soft(
             secondShareRequestResponse!.request.resources.find(
