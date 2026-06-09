@@ -36,7 +36,12 @@ export const StageItem: FC<Props> = ({
   const header = (
     <>
       <StageIcon status={stage.status} isLive={isLive} />
-      <span className={mergeClasses('truncate capitalize', styles.stageName)}>
+      <span
+        className={mergeClasses(
+          'min-w-0 flex-1 truncate capitalize',
+          styles.stageName,
+        )}
+      >
         <DialEllipsisTooltip text={stage.name || stage.status} />
       </span>
     </>
