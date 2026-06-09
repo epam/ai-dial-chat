@@ -59,6 +59,87 @@ export interface ConversationEntityModel {
   id: string;
 }
 
+export enum MessageAnnotationSelectorType {
+  TextCharacterRange = 'text_character_range',
+  TextLineRange = 'text_line_range',
+  PdfPageRange = 'pdf_page_range',
+  PdfRegion = 'pdf_region',
+  ImageRegion = 'image_region',
+  ImageMask = 'image_mask',
+  ExcelRcRange = 'excel_rc_range',
+  HTMLId = 'html_id',
+  HTMLText = 'html_text',
+}
+
+export interface MessageAnnotationBBox {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+export type MessageAnnotationSelector =
+  | {
+      type:
+        | MessageAnnotationSelectorType.TextCharacterRange
+        | MessageAnnotationSelectorType.TextLineRange
+        | MessageAnnotationSelectorType.PdfPageRange;
+      start: number;
+      end: number;
+    }
+  | {
+      type: MessageAnnotationSelectorType.PdfRegion;
+      page: number;
+      bbox: MessageAnnotationBBox;
+    }
+  | {
+      type: MessageAnnotationSelectorType.ImageRegion;
+      bbox: MessageAnnotationBBox;
+    }
+  | {
+      type: MessageAnnotationSelectorType.ImageMask;
+      mask: string;
+    }
+  | {
+      type: MessageAnnotationSelectorType.ExcelRcRange;
+      start: { row: number; col: number };
+      end: { row: number; col: number };
+    }
+  | {
+      type: MessageAnnotationSelectorType.HTMLId;
+      id: string;
+    }
+  | {
+      type: MessageAnnotationSelectorType.HTMLText;
+      text: string;
+    };
+
+export interface ChatCompletionSource {
+  message_index: number | null;
+  content_part_index: number | null;
+  attachment_index: number | null;
+}
+
+export interface AttachmentSource {
+  type: 'attachment';
+  attachment: Attachment;
+}
+
+export interface MessageAnnotation {
+  index: number;
+  target: {
+    source?: ChatCompletionSource;
+    selector: MessageAnnotationSelector;
+  };
+  body: {
+    title?: string;
+    quote?: string;
+    source?: ChatCompletionSource | AttachmentSource;
+    selector?: MessageAnnotationSelector | MessageAnnotationSelector[];
+    configuration?: Record<string, unknown>;
+  };
+}
+
 export interface Message {
   role: Role;
   content: string;
@@ -71,6 +152,9 @@ export interface Message {
     form_value?: MessageFormValue;
     configuration_schema?: MessageFormSchema;
     configuration_value?: MessageFormValue;
+  };
+  custom_fields?: {
+    annotations?: MessageAnnotation[];
   };
   like?: LikeState;
   errorMessage?: string;

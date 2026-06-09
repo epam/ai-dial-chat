@@ -59,7 +59,7 @@ import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/Visual
 
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
-import { Attachment, MIMEType } from '@epam/ai-dial-shared';
+import { Attachment, MIMEType, MessageAnnotation } from '@epam/ai-dial-shared';
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 import { sanitize } from 'isomorphic-dompurify';
 
@@ -250,6 +250,7 @@ const ChartAttachmentUrlRenderer = ({
 
 interface Props {
   attachment: Attachment;
+  annotations?: MessageAnnotation[];
   isInner?: boolean;
   forceDefaultView?: boolean;
 }
@@ -323,6 +324,7 @@ const LinkIconComponent = () => (
 
 export const MessageAttachment = ({
   attachment,
+  annotations,
   isInner,
   forceDefaultView,
 }: Props) => {
@@ -551,7 +553,7 @@ export const MessageAttachment = ({
           >
             <span
               className={classNames(
-                'shrink truncate whitespace-pre pr-2 text-left text-sm',
+                'shrink truncate whitespace-pre pe-2 text-start text-sm',
                 isExpanded || isFolder || mappedAttachmentReferenceUrl
                   ? 'max-w-full'
                   : 'max-w-[calc(100%-30px)]',
@@ -643,7 +645,7 @@ export const MessageAttachment = ({
                   stopBubbling(e);
                   setOpenPdfUrl(mappedAttachmentReferenceUrl);
                 }}
-                className="mt-3 block text-left text-accent-primary"
+                className="mt-3 block text-start text-accent-primary"
               >
                 {t(ChatI18nKeys.Reference)}
               </button>
@@ -664,6 +666,7 @@ export const MessageAttachment = ({
           url={openPdfUrl}
           title={attachment.title}
           onClose={handleClosePdfPreview}
+          annotations={annotations}
         />
       )}
     </div>

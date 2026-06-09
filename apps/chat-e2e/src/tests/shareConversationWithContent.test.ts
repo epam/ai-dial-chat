@@ -429,11 +429,8 @@ dialSharedWithMeTest(
           await folderConversations.selectShareMenuOption();
         const request = requestResponse.request;
         expect
-          .soft(
-            request.resources.length,
-            ExpectedMessages.sharedResourcesCountIsValid,
-          )
-          .toBe(3);
+          .soft(request.resources, ExpectedMessages.sharedResourcesCountIsValid)
+          .toHaveLength(3);
         expect
           .soft(
             request.resources.find(

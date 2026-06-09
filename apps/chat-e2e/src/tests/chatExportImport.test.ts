@@ -622,8 +622,8 @@ dialTest(
         await chat.sendRequestWithButton('1+1=', false);
         const todayConversations = await conversations.getTodayConversations();
         expect
-          .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
-          .toBe(2);
+          .soft(todayConversations, ExpectedMessages.conversationOfToday)
+          .toHaveLength(2);
       },
     );
   },

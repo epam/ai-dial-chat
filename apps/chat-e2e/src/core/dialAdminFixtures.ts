@@ -35,6 +35,8 @@ import {
   PublishingApprovalModal,
   PublishingRequestDialog,
   PublishingRules,
+  QuickApp2EditorContainer,
+  QuickApp2EditorViewForm,
   SelectFolderManagerModal,
   SelectFolderModal,
   SendMessage,
@@ -62,6 +64,7 @@ import {
   PublishEntityAssertion,
   PublishFileAssertion,
   PublishFolderAssertion,
+  PublishToolsetAssertion,
   PublishedAppReviewModalAssertion,
   PublishedPromptPreviewModalAssertion,
   PublishedToolsetReviewModalAssertion,
@@ -157,6 +160,8 @@ const dialAdminTest = dialTest.extend<{
   adminEntityEditorPage: EntityEditorPage;
   adminToolsetEditorContainer: ToolsetEditorContainer;
   adminToolsetEditorViewForm: ToolsetEditorViewForm;
+  adminQuickApp2EditorContainer: QuickApp2EditorContainer;
+  adminQuickApp2EditorViewForm: QuickApp2EditorViewForm;
   adminEntityEditorGeneralForm: EntityEditorGeneralForm;
   adminEntityEditorHeader: EntityEditorHeader;
   adminApproveRequiredConversationsAssertion: FolderAssertion<ApproveRequiredConversationsTree>;
@@ -165,7 +170,7 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderPromptAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminAppToApproveAssertion: PublishEntityAssertion<PublishApplicationsTree>;
-  adminToolsetToApproveAssertion: PublishEntityAssertion<PublishToolsetsTree>;
+  adminToolsetToApproveAssertion: PublishToolsetAssertion<PublishToolsetsTree>;
   adminPublishFilesAssertion: PublishFileAssertion<PublishFilesTree>;
   adminPublishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
   adminFolderConversationsToApproveAssertion: PublishFolderAssertion<PublishFolderConversations>;
@@ -626,6 +631,19 @@ const dialAdminTest = dialTest.extend<{
       adminToolsetEditorContainer.getEntityEditorViewForm();
     await use(adminToolsetEditorViewForm);
   },
+  adminQuickApp2EditorContainer: async ({ adminEntityEditorPage }, use) => {
+    const adminQuickApp2EditorContainer =
+      adminEntityEditorPage.getQuickApp2EditorContainer();
+    await use(adminQuickApp2EditorContainer);
+  },
+  adminQuickApp2EditorViewForm: async (
+    { adminQuickApp2EditorContainer },
+    use,
+  ) => {
+    const adminQuickApp2EditorViewForm =
+      adminQuickApp2EditorContainer.getEntityEditorViewForm();
+    await use(adminQuickApp2EditorViewForm);
+  },
   adminApproveRequiredConversationsAssertion: async (
     { adminApproveRequiredConversations },
     use,
@@ -676,8 +694,9 @@ const dialAdminTest = dialTest.extend<{
     await use(adminAppToApproveAssertion);
   },
   adminToolsetToApproveAssertion: async ({ adminToolsetsToApprove }, use) => {
-    const adminToolsetToApproveAssertion =
-      new PublishEntityAssertion<PublishToolsetsTree>(adminToolsetsToApprove);
+    const adminToolsetToApproveAssertion = new PublishToolsetAssertion(
+      adminToolsetsToApprove,
+    );
     await use(adminToolsetToApproveAssertion);
   },
   adminPublishFilesAssertion: async ({ adminFilesToApproveTree }, use) => {

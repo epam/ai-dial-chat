@@ -402,6 +402,12 @@ export const ExpectedConstants = {
   itemCopiedToMyFilesMessage: (name: string) =>
     `Item copied successfully\u201C${name}\u201D copied to My Files`,
   readOnlyToolsetMessage: 'This toolset is public and cannot be edited',
+  readOnlyApplicationMessage: 'This application is public and cannot be edited',
+  notAvailableChipTooltip: (
+    entityType: string,
+    name: string,
+    version: string,
+  ) => `Not available ${entityType}.${name}v. ${version}`,
 };
 
 export const withTraceId = (message: string): RegExp => {
@@ -447,6 +453,7 @@ export enum MenuOptions {
   copyLink = 'Copy link',
   removeAccess = 'Remove access',
   loginWithMyCreds = 'Login with my creds',
+  login = 'Log in',
 }
 
 export enum FilterMenuOptions {
