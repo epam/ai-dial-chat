@@ -45,7 +45,9 @@ describe('MarkdownRenderer', () => {
     expect(cell.className).toContain('custom-cell');
     expect(columnHeader.className).toContain('max-w-96');
     expect(columnHeader.className).toContain('whitespace-normal');
+    expect(columnHeader.className).toContain('border-secondary');
     expect(cell.className).toContain('max-w-96');
+    expect(cell.className).toContain('border-secondary');
     expect(cell.className).toContain('[overflow-wrap:anywhere]');
   });
 });
