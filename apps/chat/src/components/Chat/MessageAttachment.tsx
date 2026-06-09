@@ -59,7 +59,7 @@ import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/Visual
 
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
-import { Attachment, MIMEType } from '@epam/ai-dial-shared';
+import { Attachment, MIMEType, MessageAnnotation } from '@epam/ai-dial-shared';
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 import { sanitize } from 'isomorphic-dompurify';
 
@@ -250,6 +250,7 @@ const ChartAttachmentUrlRenderer = ({
 
 interface Props {
   attachment: Attachment;
+  annotations?: MessageAnnotation[];
   isInner?: boolean;
   forceDefaultView?: boolean;
 }
@@ -323,6 +324,7 @@ const LinkIconComponent = () => (
 
 export const MessageAttachment = ({
   attachment,
+  annotations,
   isInner,
   forceDefaultView,
 }: Props) => {
@@ -664,6 +666,7 @@ export const MessageAttachment = ({
           url={openPdfUrl}
           title={attachment.title}
           onClose={handleClosePdfPreview}
+          annotations={annotations}
         />
       )}
     </div>

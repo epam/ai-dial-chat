@@ -117,13 +117,19 @@ export class MarketplacePage extends BasePage {
     );
   }
 
-  async openEditToolsetPage(id: string) {
+  async openEditToolsetPage(
+    id: string,
+    options: MarketplaceEntityOptions = {},
+  ) {
     await this.openEditEntityPage(
       id,
       MarketplaceEntitiesTabs.TOOLSETS,
       undefined,
       {
-        getEntities: true,
+        ...{
+          getEntities: true,
+        },
+        ...options,
       },
     );
   }

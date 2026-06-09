@@ -167,6 +167,12 @@ export class MarketplaceEntities extends BaseElement {
     return entityElement.getChildElementBySelector(MenuSelectors.menuTrigger);
   }
 
+  public getEntityElementCredentials(entityElement: BaseElement) {
+    return entityElement.getChildElementBySelector(
+      MarketplaceEntitySelectors.credsLabel,
+    );
+  }
+
   public getEntityElementAddBookmarkIcon(entityElement: BaseElement) {
     return entityElement
       .getChildElementBySelector(MarketplaceEntitySelectors.addBookmarkIcon)
