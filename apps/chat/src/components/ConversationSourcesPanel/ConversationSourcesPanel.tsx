@@ -1,11 +1,6 @@
-import type { Message } from '@epam/ai-dial-chat-shared';
 import { SidebarPanel, SidebarSide } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import {
-  IconDownload,
-  IconFileDescription,
-  IconSearch,
-} from '@tabler/icons-react';
+import { IconDownload, IconFileDescription } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SidebarI18nKeys } from '../../constants/translation-keys';
