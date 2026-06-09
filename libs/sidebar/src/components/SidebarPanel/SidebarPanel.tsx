@@ -7,6 +7,7 @@ import { Header } from '../Header/Header';
 import styles from './SidebarPanel.module.scss';
 
 export const SidebarPanel: FC<SidebarPanelProps> = ({
+  isOpen,
   side,
   title,
   titleClassName,
@@ -48,40 +49,47 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   ) : null;
 
   return (
-    <aside
-      role="complementary"
-      aria-label={ariaLabel}
-      style={{ ...cssVars, ...panelCssVars }}
+    <div
       className={mergeClasses(
-        styles.wrapper,
-        'flex h-full flex-shrink-0 flex-col',
-        dividerClass,
-        typography?.fontClassName,
+        'h-full flex-shrink-0',
+        isOpen &&
+          'relative z-50 overflow-hidden transition-[width] duration-200 ease-in-out',
         className,
+        styles.panel,
       )}
     >
-      <Header
-        title={title}
-        titleClassName={titleClassName}
-        leftActions={
-          <>
-            {side === SidebarSide.Left && closeButton}
-            {leftActions}
-          </>
-        }
-        rightActions={
-          <>
-            {rightActions}
-            {side === SidebarSide.Right && closeButton}
-          </>
-        }
-      />
-
-      <div
-        className={mergeClasses('flex-1 overflow-y-auto p-4', bodyClassName)}
+      <aside
+        role="complementary"
+        aria-label={ariaLabel}
+        aria-hidden={!isOpen}
+        style={{ ...cssVars, ...panelCssVars }}
+        className={mergeClasses(
+          styles.wrapper,
+          'flex h-full w-full flex-col',
+          dividerClass,
+          typography?.fontClassName,
+        )}
       >
-        {children}
-      </div>
-    </aside>
+        <Header
+          title={title}
+          titleClassName={titleClassName}
+          leftActions={isOpen && leftActions}
+          rightActions={
+            isOpen && (
+              <>
+                {rightActions}
+                {closeButton}
+              </>
+            )
+          }
+        />
+
+        <div
+          className={mergeClasses('flex-1 overflow-y-auto p-4', bodyClassName)}
+        >
+          {children}
+        </div>
+      </aside>
+    </div>
   );
 };

@@ -13,32 +13,21 @@ import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
 import FilesSection from './sections/FilesSection/FilesSection';
 
-interface Props {
-  messages: Message[];
-}
 // TODO: need add libs for this panel
-const ConversationSourcesPanel: FC<Props> = ({ messages }) => {
+const ConversationSourcesPanel: FC = () => {
   const { t } = useTranslation();
-  const { handleClose } = useSourcesSidebar();
+  const { handleClose, isOpen, messages } = useSourcesSidebar();
   const { uploaded, generated } = useConversationSources(messages);
   const isEmpty = uploaded.length === 0 && generated.length === 0;
 
   return (
     <SidebarPanel
+      isOpen={isOpen}
       side={SidebarSide.Right}
-      className="w-[360px]"
+      className={isOpen ? 'w-[360px] mobile:w-full' : 'w-0'}
       ariaLabel={t(SidebarI18nKeys.AriaLabel)}
       closeLabel={t(SidebarI18nKeys.Close)}
       onClose={handleClose}
-      leftActions={
-        !isEmpty && (
-          <DialGhostIconButton
-            icon={<IconSearch size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-            aria-label={t(SidebarI18nKeys.Search)}
-            disabled
-          />
-        )
-      }
       rightActions={
         !isEmpty && (
           <DialGhostIconButton

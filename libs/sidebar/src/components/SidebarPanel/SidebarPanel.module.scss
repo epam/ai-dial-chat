@@ -14,3 +14,14 @@
 .divider {
   border-color: var(--sb-border, var(--stroke-tertiary, #0c101d));
 }
+
+.panel {
+  border-color: var(--cp-border, var(--stroke-tertiary, #0c101d));
+}
+
+.headerTitle {
+  font-family: var(--sb-title-font-family, var(--theme-font, sans-serif));
+  font-size: var(--sb-title-font-size, 0.875rem);
+  font-weight: var(--sb-title-font-weight, 600);
+  line-height: var(--sb-title-line-height, 1.25rem);
+}

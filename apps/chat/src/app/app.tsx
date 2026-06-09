@@ -16,7 +16,7 @@ import {
   useNavigate,
 } from 'react-router-dom';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
-import ConversationSourcesPanelView from '../components/ConversationSourcesPanel/ConversationSourcesPanelView';
+import ConversationSourcesPanelView from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';

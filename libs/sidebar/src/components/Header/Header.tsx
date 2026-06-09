@@ -30,14 +30,18 @@ export const Header: FC<HeaderProps> = memo(
   }) => (
     <div
       className={mergeClasses(
+        'flex h-12 shrink-0 items-center gap-2 border-b px-4',
         styles.header,
-        'flex min-h-[49px] shrink-0 items-center border-b px-2',
       )}
     >
       <div className="flex items-center gap-1">{leftActions}</div>
 
       <span
-        className={mergeClasses('min-w-0 flex-1 truncate px-2', titleClassName)}
+        className={mergeClasses(
+          'min-w-0 flex-1 truncate ps-2',
+          !titleClassName && styles.headerTitle,
+          titleClassName,
+        )}
       >
         {title}
       </span>

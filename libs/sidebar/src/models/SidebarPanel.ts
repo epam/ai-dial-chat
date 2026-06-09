@@ -42,6 +42,12 @@ export interface SidebarPanelStyles {
 /** Props accepted by the `SidebarPanel` component. */
 export interface SidebarPanelProps {
   /**
+   * Whether the panel is currently open.
+   * When provided, the wrapper adds a slide-in width animation and
+   * `aria-hidden` is set on the panel when closed.
+   */
+  isOpen: boolean;
+  /**
    * Which edge the panel anchors to.
    * Controls the divider side (`border-l` vs `border-r`) and
    * the close-button placement (outer edge of the panel).
