@@ -64,6 +64,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
           buttonPaddingRight,
           styles.item,
           isActive && styles.itemActive,
+          isMenuOpen && styles.itemActive,
         )}
       />
 
@@ -93,7 +94,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
               className={mergeClasses(
                 'flex items-center justify-center rounded',
                 styles.trigger,
-                isActive && styles.triggerActive,
+                isMenuOpen && styles.triggerActive,
               )}
             />
           </DialDropdown>
