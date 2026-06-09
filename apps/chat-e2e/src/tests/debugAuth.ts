@@ -52,7 +52,6 @@ test('Debug authenticate all users in parallel', async () => {
       }
     });
   } catch (error) {
-     
     console.error('Parallel authentication failed:', error);
     throw error;
   }

@@ -64,7 +64,6 @@ const test = base.extend<
     toolsetBuilder: ToolsetBuilder;
   }
 >({
-   
   setTestIds: async ({}, use) => {
     const callback = (...testIds: string[]) => {
       for (const testId of testIds) {
@@ -73,7 +72,7 @@ const test = base.extend<
     };
     await use(callback);
   },
-   
+
   setIssueIds: async ({}, use) => {
     const callback = (...issueIds: string[]) => {
       for (const issueId of issueIds) {
@@ -83,12 +82,12 @@ const test = base.extend<
     };
     await use(callback);
   },
-   
+
   baseAssertion: async ({}, use) => {
     const baseAssertion = new BaseAssertion();
     await use(baseAssertion);
   },
-   
+
   apiAssertion: async ({}, use) => {
     const apiAssertion = new ApiAssertion();
     await use(apiAssertion);
@@ -205,42 +204,42 @@ const test = base.extend<
     }
     await use(incognitoProviderLogin);
   },
-   
+
   conversationData: async ({}, use) => {
     const conversationData = new ConversationData();
     await use(conversationData);
   },
-   
+
   promptData: async ({}, use) => {
     const promptData = new PromptData();
     await use(promptData);
   },
-   
+
   publishRequestBuilder: async ({}, use) => {
     const publishRequestBuilder = new PublishRequestBuilder();
     await use(publishRequestBuilder);
   },
-   
+
   customApplicationBuilder: async ({}, use) => {
     const customApplicationBuilder = new CustomApplicationBuilder();
     await use(customApplicationBuilder);
   },
-   
+
   externalApplicationBuilder: async ({}, use) => {
     const externalApplicationBuilder = new ExternalApplicationBuilder();
     await use(externalApplicationBuilder);
   },
-   
+
   quickApp2Builder: async ({}, use) => {
     const quickApp2Builder = new QuickApp2Builder();
     await use(quickApp2Builder);
   },
-   
+
   marketplaceUrlBuilder: async ({}, use) => {
     const marketplaceUrlBuilder = new MarketplaceUrlBuilder();
     await use(marketplaceUrlBuilder);
   },
-   
+
   toolsetBuilder: async ({}, use) => {
     const toolsetBuilder = new ToolsetBuilder();
     await use(toolsetBuilder);

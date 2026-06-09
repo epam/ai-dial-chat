@@ -367,10 +367,7 @@ export class BaseAssertion {
 
     // Assert that the truncated string has the correct length
     expect
-      .soft(
-        truncatedString,
-        'Truncated string should have a length of 255',
-      )
+      .soft(truncatedString, 'Truncated string should have a length of 255')
       .toHaveLength(maxLength);
     // Assert that the truncated string is a substring of the original
     expect

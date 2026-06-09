@@ -237,7 +237,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     },
     { scope: 'test', auto: true },
   ],
-   
+
   additionalShareUserDownloadAssertion: async ({}, use) => {
     const additionalShareUserDownloadAssertion = new DownloadAssertion();
     await use(additionalShareUserDownloadAssertion);
