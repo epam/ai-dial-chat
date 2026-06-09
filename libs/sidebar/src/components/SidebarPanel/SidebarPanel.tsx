@@ -1,14 +1,16 @@
-// leftActions / rightActions are header-bar positions and are independent of the `side` prop.
-// `side` controls only the divider edge and the close-button placement (outer edge).
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
-import { type FC, useMemo } from 'react';
-import { SidebarSide, type SidebarPanelProps } from '../../models/SidebarPanel';
+import { useMemo, type FC } from 'react';
+import { type SidebarPanelProps } from '../../models/SidebarPanel';
+import { Header } from '../Header/Header';
 import styles from './SidebarPanel.module.scss';
 
 export const SidebarPanel: FC<SidebarPanelProps> = ({
+  isOpen,
   side,
+  title,
+  titleClassName,
   leftActions,
   rightActions,
   onClose,
@@ -17,11 +19,13 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   children,
   styles: panelStyles,
   className,
+  bodyClassName,
+  cssVars,
 }) => {
   const { colors, typography } = panelStyles ?? {};
   const noCustomFont = !typography?.fontClassName;
 
-  const cssVars = useMemo(
+  const panelCssVars = useMemo(
     () =>
       buildCssVars({
         '--sb-bg': colors?.background,
@@ -35,52 +39,57 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
 
   const dividerClass = side === 'right' ? 'border-l' : 'border-r';
 
-  const closeButton = (
+  const closeButton = onClose ? (
     <DialGhostIconButton
       icon={<IconX size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
       aria-label={closeLabel}
       tooltipProps={{ tooltip: closeLabel }}
       onClick={onClose}
     />
-  );
+  ) : null;
 
   return (
-    <aside
-      role="complementary"
-      aria-label={ariaLabel}
-      style={cssVars}
+    <div
       className={mergeClasses(
-        styles.wrapper,
-        'flex h-full w-[360px] flex-shrink-0 flex-col',
-        dividerClass,
-        typography?.fontClassName,
+        'h-full flex-shrink-0',
+        isOpen &&
+          'relative z-50 overflow-hidden transition-[width] duration-200 ease-in-out',
         className,
+        styles.panel,
       )}
     >
-      {/* Header bar */}
-      <div
+      <aside
+        role="complementary"
+        aria-label={ariaLabel}
+        aria-hidden={!isOpen}
+        style={{ ...cssVars, ...panelCssVars }}
         className={mergeClasses(
-          styles.header,
-          'flex min-h-[49px] items-center border-b px-2',
+          styles.wrapper,
+          'flex h-full w-full flex-col',
+          dividerClass,
+          typography?.fontClassName,
         )}
       >
-        {/* Left group: close button here when side=left, then leftActions */}
-        <div className="flex items-center gap-1">
-          {side === SidebarSide.Left && closeButton}
-          {leftActions}
+        <Header
+          title={title}
+          titleClassName={titleClassName}
+          leftActions={isOpen && leftActions}
+          rightActions={
+            isOpen && (
+              <>
+                {rightActions}
+                {closeButton}
+              </>
+            )
+          }
+        />
+
+        <div
+          className={mergeClasses('flex-1 overflow-y-auto p-4', bodyClassName)}
+        >
+          {children}
         </div>
-
-        <div className="flex-1" />
-
-        {/* Right group: rightActions, then close button when side=right */}
-        <div className="flex items-center gap-1">
-          {rightActions}
-          {side === SidebarSide.Right && closeButton}
-        </div>
-      </div>
-
-      {/* Scrollable body */}
-      <div className="flex-1 overflow-y-auto p-4">{children}</div>
-    </aside>
+      </aside>
+    </div>
   );
 };

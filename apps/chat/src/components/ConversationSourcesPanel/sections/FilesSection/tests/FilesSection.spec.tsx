@@ -21,28 +21,20 @@ const makeAttachment = (name: string): DisplayAttachment => ({
 describe('FilesSection', () => {
   it('renders the title', () => {
     render(
-      <FilesSection attachments={[]} title="Files" emptyMessage="None." />,
+      <FilesSection attachments={[makeAttachment('a.pdf')]} title="Files" />,
     );
     expect(screen.getByText('Files')).toBeTruthy();
   });
 
-  it('renders empty message when no attachments', () => {
-    render(
-      <FilesSection attachments={[]} title="Files" emptyMessage="No files." />,
-    );
-    expect(screen.getByText('No files.')).toBeTruthy();
+  it('renders nothing when no attachments', () => {
+    render(<FilesSection attachments={[]} title="Files" />);
+    expect(screen.queryByText('Files')).toBeNull();
     expect(screen.queryByRole('list')).toBeNull();
   });
 
   it('renders a card per attachment', () => {
     const attachments = [makeAttachment('a.pdf'), makeAttachment('b.pdf')];
-    render(
-      <FilesSection
-        attachments={attachments}
-        title="Files"
-        emptyMessage="None."
-      />,
-    );
+    render(<FilesSection attachments={attachments} title="Files" />);
     expect(screen.getByText('a.pdf')).toBeTruthy();
     expect(screen.getByText('b.pdf')).toBeTruthy();
     expect(screen.getAllByRole('listitem')).toHaveLength(2);
@@ -50,11 +42,7 @@ describe('FilesSection', () => {
 
   it('has role=list grid when attachments present', () => {
     render(
-      <FilesSection
-        attachments={[makeAttachment('a.pdf')]}
-        title="Files"
-        emptyMessage="None."
-      />,
+      <FilesSection attachments={[makeAttachment('a.pdf')]} title="Files" />,
     );
     expect(screen.getByRole('list')).toBeTruthy();
     expect(screen.getAllByRole('listitem')).toHaveLength(1);

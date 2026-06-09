@@ -6,7 +6,9 @@ export class TranscribeAudioDto {
   @IsString()
   audioUrl!: string;
 
-  @ApiProperty({ description: 'MIME type of the audio file (e.g. audio/webm;codecs=opus).' })
+  @ApiProperty({
+    description: 'MIME type of the audio file (e.g. audio/webm;codecs=opus).',
+  })
   @IsString()
   mimeType!: string;
 }

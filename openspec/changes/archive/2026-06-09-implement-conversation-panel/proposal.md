@@ -20,7 +20,8 @@ Users have no way to revisit or switch between past conversations — every sess
 - `conversation-search`: Controlled text input inside the panel that filters the visible conversation list client-side by title match (state owned inside `ConversationPanel`).
 - `new-chat-button`: Prominent button at the top of the panel that calls `onNewChat` prop.
 - `conversation-filter-tabs`: Segmented tab control (All / My chats / Shared / Organization) using `FilterTab` string enum; state owned inside `ConversationPanel`.
-- `conversation-groups`: Conversation list rendered in two collapsible named sections — **Pinned** (`isPinned: true`) and **My chats** (the rest) — each section can be toggled open/closed independently; state inside `ConversationPanel`.
+- `conversation-groups`: Conversation list rendered in four collapsible named sections — **Pinned** (`isPinned: true`), **My chats** (own conversations), **Shared** (`ConversationSource.Shared`), and **Organization** (`ConversationSource.Organization`) — each section can be toggled open/closed independently; state inside `ConversationPanel`.
+- `conversation-row-actions`: Per-row dropdown actions (pin/unpin, rename, delete) wired in `ConversationPanelView` via `ConversationsContext`; `ConversationPanel` accepts `getActions` and `actionsLabel` props.
 
 ### Modified Capabilities
 
@@ -28,8 +29,8 @@ Users have no way to revisit or switch between past conversations — every sess
 
 ## Impact
 
-- **`libs/conversation-panel`**: new library — `ConversationPanel`, `ConversationPanelProps`, `ConversationPanelStyles`, `ConversationHistoryColors`, `ConversationHistoryTypography`, `ConversationHistoryItem`, `ConversationSource` enum, `FilterTab` enum, `FilterLabels`, `ConversationGroupProps`.
+- **`libs/conversation-panel`**: new library — `ConversationPanel`, `ConversationPanelProps`, `ConversationPanelStyles`, `ConversationHistoryColors`, `ConversationHistoryTypography`, `ConversationHistoryItem`, `ConversationSource` enum, `FilterTab` enum, `FilterLabels`, `ConversationGroupProps`. Uses `SidebarPanel` from `@epam/ai-dial-sidebar` as the panel shell.
 - **`apps/chat-api`**: `src/conversations/` — new `GET /api/v1/conversations/list` handler, `ListConversationsQueryDto`, `ConversationListResponseDto`, `ConversationListItemDto`, service `listConversations` method.
 - **`libs/chat-api-client`**: regenerated with `listConversations` operation.
-- **`apps/chat`**: `server-api/conversations.api.ts` (new `listConversations` wrapper), new `ConversationsContext` and `ConversationsProvider`, new `ConversationPanelView` component, `app.tsx` layout change, `Header.tsx` toggle button; i18n keys for all panel strings.
+- **`apps/chat`**: `server-api/conversations.api.ts` (new `listConversations`, `deleteConversation`, `renameConversation` wrappers), new `ConversationsContext` and `ConversationsProvider` (exposes `conversations`, `isLoading`, `error`, `pinConversation`, `deleteConversation`, `renameConversation`, `refreshConversations`), new `ConversationPanelView` with delete/rename confirmation dialogs, `app.tsx` layout change, `Header.tsx` toggle button; i18n keys for all panel strings.
 - **No breaking changes** — new endpoint and new component; existing routes and data shapes unchanged.

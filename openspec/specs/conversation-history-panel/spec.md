@@ -1,8 +1,12 @@
-## MODIFIED Requirements
+# Spec: conversation-history-panel
+
+## Requirements
 
 ### Requirement: `libs/conversation-panel` library exposes `ConversationPanel`
 
 A new library `@epam/ai-dial-conversation-panel` SHALL exist at `libs/conversation-panel/`. It SHALL export `ConversationPanel` and the types: `ConversationPanelProps`, `ConversationPanelStyles`, `ConversationHistoryColors`, `ConversationHistoryTypography`, `ConversationHistoryItem`, `ConversationSource` (string enum), `FilterTab` (string enum), `FilterLabels`, `ConversationGroupProps`. The library SHALL declare `react`, `@epam/ai-dial-ui-kit`, `@tabler/icons-react` as peer dependencies. It SHALL have `"license": "Apache-2.0"` in `package.json`.
+
+The library imports `SidebarPanel`, `SearchInput`, and `SidebarSide` from `@epam/ai-dial-sidebar` to use as the panel shell.
 
 #### Scenario: ConversationPanel is importable in apps/chat
 
@@ -13,7 +17,9 @@ A new library `@epam/ai-dial-conversation-panel` SHALL exist at `libs/conversati
 
 ### Requirement: Panel header contains the title prop; toggle button is in the app Header
 
-`ConversationPanel` SHALL render a header bar containing the panel title from the `title: string` prop. The header SHALL NOT contain a toggle icon button — `apps/chat/src/components/Header/Header.tsx` owns the toggle (via `isHistoryPanelOpen` and `onHistoryPanelToggle` props, desktop-only). `ConversationPanel` SHALL accept `isOpen: boolean`; when `false`, the panel collapses to zero width via a CSS transition.
+`ConversationPanel` SHALL render a header bar containing the panel title from the `title: string` prop. `ConversationPanel` SHALL accept `isOpen: boolean`; when `false`, the panel collapses to zero width via a CSS transition. On mobile an optional `onToggle?: () => void` prop triggers a close button (rendered by `SidebarPanel.onClose`) inside the panel header; when `isOpen` is `false` the `<aside>` has `aria-hidden="true"`.
+
+The desktop toggle button lives in `apps/chat/src/components/Header/Header.tsx` via `isHistoryPanelOpen` and `onHistoryPanelToggle` props. The panel width when open is `w-[325px]`.
 
 #### Scenario: Panel is visible when isOpen is true
 
@@ -23,18 +29,20 @@ A new library `@epam/ai-dial-conversation-panel` SHALL exist at `libs/conversati
 #### Scenario: Panel collapses when isOpen is false
 
 - **WHEN** `isOpen` changes to `false`
-- **THEN** the panel has `aria-expanded="false"` and its width collapses to 0
+- **THEN** the `<aside>` has `aria-hidden="true"` and its width collapses to 0
 
 ---
 
-### Requirement: Panel body renders conversations grouped into Pinned and My chats sections
+### Requirement: Panel body renders conversations grouped into four collapsible sections
 
-When `isOpen` is `true`, `ConversationPanel` SHALL render conversation items split into two collapsible sections:
+When `isOpen` is `true`, `ConversationPanel` SHALL render conversation items split into four collapsible sections:
 
 - **Pinned** — items where `isPinned === true`, shown first.
-- **My chats** — remaining items.
+- **My chats** — items where `source` is not `ConversationSource.Shared` or `ConversationSource.Organization` and `isPinned` is falsy.
+- **Shared** — items where `source === ConversationSource.Shared` and `isPinned` is falsy.
+- **Organization** — items where `source === ConversationSource.Organization` and `isPinned` is falsy.
 
-Each section renders a disclosure button (chevron icon) as its header that toggles open/closed. Both sections start expanded. A section with zero items after active search + tab filter SHALL be hidden. Each item SHALL display the conversation `title` (truncated) and optionally an icon from `item.iconUrl`. The item SHALL call `onSelectConversation(id)` when activated. The active conversation (matching `activeConversationId`) SHALL receive `aria-current="page"`. Section headings via optional `groupLabels?: { pinned?, myChats? }` (English defaults: `"Pinned"`, `"My chats"`).
+Each section renders a disclosure button (chevron icon) as its header that toggles open/closed. All sections start expanded. A section with zero items after active search + tab filter SHALL be hidden. Each item SHALL display the conversation `title` (truncated) and optionally an icon from `item.iconUrl`. The item SHALL call `onSelectConversation(id)` when activated. The active conversation (matching `activeConversationId`) SHALL receive `aria-current="page"`. Section headings via optional `groupLabels?: { pinned?, myChats?, shared?, organization? }` (English defaults: `"Pinned"`, `"My chats"`, `"Shared"`, `"Organization"`).
 
 #### Scenario: Renders pinned conversations in Pinned section
 
@@ -106,29 +114,37 @@ Each section renders a disclosure button (chevron icon) as its header that toggl
 
 ---
 
+### Requirement: Panel rows expose per-item actions (pin, rename, delete)
+
+`ConversationPanel` SHALL accept `getActions?: (item: ConversationHistoryItem) => DropdownItem[]` and `actionsLabel?: string` (English default: `"More actions"`). When `getActions` returns a non-empty array for a row, an ellipsis trigger button is rendered on that row; activating it opens a dropdown built from the returned `DropdownItem[]`. When `getActions` is omitted or returns an empty array, no trigger is rendered.
+
+Row-level actions (pin/unpin, rename, delete) are wired in `ConversationPanelView` where `ConversationsContext` supplies the mutation methods.
+
+#### Scenario: Row actions trigger renders when getActions returns items
+
+- **WHEN** `getActions` returns a non-empty array for a row
+- **THEN** an actions trigger button is visible on that row
+
+#### Scenario: No trigger when getActions returns empty array
+
+- **WHEN** `getActions` returns `[]` for a row
+- **THEN** no actions trigger button is rendered for that row
+
+---
+
 ### Requirement: Panel is responsive — persistent on desktop, drawer on mobile
 
-`ConversationPanel` renders the same markup regardless of viewport. `ConversationPanelView` in `apps/chat` passes `className="fixed inset-y-0 left-0 z-50 w-[320px]"` on mobile for drawer positioning. `onBackdropClick?: () => void` — when provided and `isOpen` is `true`, a semi-transparent backdrop overlay is rendered; clicking it calls the callback.
+`ConversationPanel` renders the same markup regardless of viewport. On desktop it is a persistent `w-[325px]` panel that pushes `<main>` via flex row. On mobile `ConversationPanelView` passes `className="inset-y-0 start-0 z-50"` plus `onToggle={onClose}` so `SidebarPanel` renders a close button inside the panel header; the parent manages `isOpen` state.
 
-#### Scenario: Backdrop click closes the panel on mobile
-
-- **WHEN** `onBackdropClick` is provided and the backdrop is clicked
-- **THEN** `onBackdropClick` is called once
+Mobile close is handled exclusively via the close button inside the panel header (via `onToggle` → `SidebarPanel.onClose`). There is no backdrop overlay.
 
 ---
 
 ### Requirement: `ConversationPanel` has unit tests
 
-Tests SHALL be in `libs/conversation-panel/src/components/ConversationPanel/tests/ConversationPanel.spec.tsx` covering: rendering items, active item marking, empty state, aria-expanded, backdrop click, new-chat callback, search filtering, filter tab switching, section collapse/expand.
+Tests SHALL be in `libs/conversation-panel/src/components/ConversationPanel/tests/ConversationPanel.spec.tsx` covering: rendering items, active item marking, empty state, aria-hidden, new-chat callback, search filtering, filter tab switching, section collapse/expand.
 
 #### Scenario: Tests cover core interactions
 
 - **WHEN** the `ConversationPanel` test suite runs
 - **THEN** all scenarios above have corresponding test cases and pass
-
----
-
-## RENAMED Requirements
-
-FROM: `libs/conversation-history` library exposes `ConversationHistoryPanel`
-TO: `libs/conversation-panel` library exposes `ConversationPanel`

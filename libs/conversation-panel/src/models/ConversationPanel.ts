@@ -150,11 +150,6 @@ export interface ConversationPanelProps {
   /** Extra class name(s) merged onto the panel root element. */
   className?: string;
   /**
-   * When provided and `isOpen` is `true`, a backdrop overlay is rendered behind the panel.
-   * Clicking the backdrop calls this callback (used for mobile drawer close).
-   */
-  onBackdropClick?: () => void;
-  /**
    * Builds the dropdown menu items for a conversation row.
    * Receives the full item so actions can reflect per-item state (e.g. `isPinned` toggle).
    * When omitted or returns an empty array, no actions trigger is rendered on rows.

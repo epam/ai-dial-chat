@@ -9,8 +9,9 @@ The app has a `Navigation` icon bar on the left and a `ConversationSourcesPanelV
 - **New chat button** — full-width button below the header to start a new conversation.
 - **Search input** — text field that filters the visible list by title client-side.
 - **Filter tabs** — segmented control: All / My chats / Shared / Organization.
-- **Grouped sections** — Pinned (conversations with `isPinned: true`) and My chats; each section is collapsible with a chevron.
+- **Grouped sections** — Pinned (`isPinned: true`), My chats, Shared (`ConversationSource.Shared`), and Organization (`ConversationSource.Organization`); each section is collapsible with a chevron.
 - Conversation rows show an optional icon and title; clicking navigates to the conversation.
+- **Row actions** — each row exposes a `getActions` callback for per-item dropdown actions (pin/unpin, rename, delete); wired in `ConversationPanelView` via `ConversationsContext`.
 - On desktop: persistent panel, 288px wide, pushes `<main>` content.
 - On mobile: full-width (`w-full`) drawer overlay, triggered from the `Header` mobile toggle button; closed by default on mobile (a `useEffect` in `app.tsx` resets `isHistoryPanelOpen` to `false` whenever `isMobile` becomes true, clearing any stored desktop `true` from `localStorage`); closed via an `IconX` button inside the panel header.
 - New backend list endpoint `GET /api/v1/conversations/list` returns cursor-paginated metadata backed by DIAL Core.
@@ -18,17 +19,20 @@ The app has a `Navigation` icon bar on the left and a `ConversationSourcesPanelV
 - Panel open/closed state persisted to `localStorage` via `useLocalStorage` hook.
 
 **Non-Goals:**
-- No conversation rename or delete from the panel.
 - No infinite scroll — first page (20 items) only in this change.
+
+> **Implementation note:** Rename and delete were added during implementation (originally listed as non-goals). They are wired in `ConversationPanelView` via `ConversationsContext`.
 - No server-side search — filtering is client-side over the loaded page.
 
 ## Decisions
 
-### 1. New lib (`libs/conversation-panel`) — standalone, not extending `libs/sidebar`
+### 1. New lib (`libs/conversation-panel`) — uses `SidebarPanel` from `libs/sidebar` as shell
 
-`SidebarPanel` is a generic panel shell. The conversation panel has domain-specific content (conversation rows, search, filter tabs, grouped sections). A dedicated `libs/conversation-panel` lib keeps domain knowledge co-located and avoids a cross-lib dependency on `libs/sidebar`.
+`SidebarPanel` is a generic panel shell. The conversation panel has domain-specific content (conversation rows, search, filter tabs, grouped sections). A dedicated `libs/conversation-panel` lib keeps domain knowledge co-located.
 
-**Decision:** New `libs/conversation-panel` lib at `@epam/ai-dial-conversation-panel`. It does not depend on `libs/sidebar`.
+**Decision:** New `libs/conversation-panel` lib at `@epam/ai-dial-conversation-panel`. It imports `SidebarPanel`, `SearchInput`, and `SidebarSide` from `@epam/ai-dial-sidebar` to use as the panel shell, avoiding duplication of panel layout and CSS custom-property logic.
+
+> **Implementation note:** The original decision said the lib would not depend on `libs/sidebar`. This was revised during implementation — sharing the `SidebarPanel` shell is safe (both are in `libs/*`, neither owns host-level integration details) and avoids maintaining a parallel panel wrapper.
 
 ### 2. Collapse/expand — `isOpen` in app, `onToggle` in lib for mobile close
 
@@ -40,11 +44,11 @@ The panel's visibility state must be shared between the `Header` (toggle button)
 
 **Decision:** The toggle icon button lives in `apps/chat/src/components/Header/Header.tsx` (`isHistoryPanelOpen` + `onHistoryPanelToggle` props). On **desktop** the existing `SideBarLeft/SideBarRight` icon is shown (`hidden desktop:flex`). On **mobile** a separate `IconLayoutSidebarRight` button is shown (`desktop:hidden`); it is only rendered when the panel is closed. The panel header does not contain a toggle on desktop.
 
-When the panel is **open on mobile**, a close (`IconX`) button is rendered inside the `ConversationPanel` header (end/right side, `desktop:hidden`). This is wired via the `onToggle` and `closeAriaLabel` props on `ConversationPanel` → `ConversationPanelView` passes `onToggle={onClose}` when `isMobile` is true.
+When the panel is **open on mobile**, a close (`IconX`) button is rendered inside the `SidebarPanel` header (via `SidebarPanel.onClose`, delegated from `ConversationPanel.onToggle`). `ConversationPanelView` passes `onToggle={onClose}` when `isMobile` is true. There is no backdrop overlay — mobile close is handled exclusively via the close button in the panel header.
 
 ### 4. Panel width and collapse behaviour on desktop
 
-- **Expanded:** `w-[288px]`, `border-l border-r`, pushes `<main>` via flex row.
+- **Expanded:** `w-[325px]`, `border-l border-r`, pushes `<main>` via flex row.
 - **Collapsed:** `w-[0px] overflow-hidden` — panel content hidden; no icon-only strip.
 - CSS transition on width for smooth open/close.
 
@@ -56,7 +60,12 @@ When the panel is **open on mobile**, a close (`IconX`) button is rendered insid
 
 ### 6. Data fetching — `ConversationsContext`
 
-`ConversationsContext` in `apps/chat/src/context/ConversationsContext.tsx` fetches once on mount. It exposes `{ conversations, isLoading, error }`. The context uses the `cancelled` flag pattern (per `useFavicon` reference). The provider is placed in `apps/chat/src/main.tsx`.
+`ConversationsContext` in `apps/chat/src/context/ConversationsContext.tsx` fetches once on mount. It exposes `{ conversations, isLoading, error, pinConversation, deleteConversation, renameConversation, refreshConversations }`. The context uses the `cancelled` flag pattern (per `useFavicon` reference). The provider is placed inside `RequireAuth` in `apps/chat/src/main.tsx`.
+
+- `pinConversation(id, isPinned)` — optimistic update via `apiPinConversation` from `server-api/user-config.api`.
+- `deleteConversation(id)` — optimistic remove; reverts the local list on API failure.
+- `renameConversation(id, newTitle)` — optimistic title update; also updates the item `id` after the server returns a new path.
+- `refreshConversations()` — re-fetches the full list from the server.
 
 ### 7. `ConversationPanelView` — app-level adapter component
 

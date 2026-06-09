@@ -176,29 +176,9 @@ describe('ConversationPanel', () => {
     expect(aside.getAttribute('aria-hidden')).toBe('true');
   });
 
-  it('calls onBackdropClick when the backdrop is clicked', () => {
-    const onBackdropClick = vi.fn();
-    render(
-      <ConversationPanel
-        {...BASE_PROPS}
-        conversations={[]}
-        onBackdropClick={onBackdropClick}
-      />,
-    );
-    const backdrop = document.querySelector('div[aria-hidden="true"]');
-    expect(backdrop).toBeTruthy();
-    fireEvent.click(backdrop!);
-    expect(onBackdropClick).toHaveBeenCalledTimes(1);
-  });
-
   it('does not render backdrop when isOpen is false', () => {
     render(
-      <ConversationPanel
-        {...BASE_PROPS}
-        conversations={[]}
-        isOpen={false}
-        onBackdropClick={vi.fn()}
-      />,
+      <ConversationPanel {...BASE_PROPS} conversations={[]} isOpen={false} />,
     );
     expect(document.querySelector('div[aria-hidden="true"]')).toBeNull();
   });

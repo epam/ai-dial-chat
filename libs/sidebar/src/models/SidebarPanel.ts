@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
 /** Which edge of the viewport the panel anchors to. */
 export enum SidebarSide {
@@ -42,6 +42,12 @@ export interface SidebarPanelStyles {
 /** Props accepted by the `SidebarPanel` component. */
 export interface SidebarPanelProps {
   /**
+   * Whether the panel is currently open.
+   * When provided, the wrapper adds a slide-in width animation and
+   * `aria-hidden` is set on the panel when closed.
+   */
+  isOpen: boolean;
+  /**
    * Which edge the panel anchors to.
    * Controls the divider side (`border-l` vs `border-r`) and
    * the close-button placement (outer edge of the panel).
@@ -49,6 +55,16 @@ export interface SidebarPanelProps {
    * independent of this prop.
    */
   side: SidebarSide;
+  /**
+   * Title text rendered in the header bar between the action groups.
+   * Truncated with an ellipsis when the panel is too narrow.
+   */
+  title?: ReactNode;
+  /**
+   * Typography class applied to the title element.
+   * Defaults to `'dial-body-semi-bold-text'`.
+   */
+  titleClassName?: string;
   /** Rendered in the left group of the 48 px header bar. */
   leftActions?: ReactNode;
   /**
@@ -56,16 +72,26 @@ export interface SidebarPanelProps {
    * before the built-in close button when `side === 'right'`.
    */
   rightActions?: ReactNode;
-  /** Called when the user activates the built-in close button. */
-  onClose: () => void;
+  /**
+   * Called when the user activates the built-in close button.
+   * When omitted the close button is not rendered.
+   */
+  onClose?: () => void;
   /** Accessible label for the panel region. Caller supplies the localised string. */
   ariaLabel: string;
-  /** Accessible label and tooltip for the built-in close button. Caller supplies the localised string. */
-  closeLabel: string;
+  /**
+   * Accessible label and tooltip for the built-in close button.
+   * Required when `onClose` is provided.
+   */
+  closeLabel?: string;
   /** Body content rendered below the header bar in the scrollable region. */
   children: ReactNode;
   /** Color and typography overrides applied as CSS custom properties. */
   styles?: SidebarPanelStyles;
   /** Extra class name(s) merged onto the root `<aside>` element. */
   className?: string;
+  /** Extra class name(s) merged onto the scrollable body `<div>`. */
+  bodyClassName?: string;
+  /** CSS custom properties applied to the scrollable body `<div>`. */
+  cssVars?: CSSProperties;
 }
