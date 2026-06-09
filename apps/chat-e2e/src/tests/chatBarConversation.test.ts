@@ -758,8 +758,8 @@ dialTest.skip(
     await chatMessages.regenerateResponse();
     let todayConversations = await conversations.getTodayConversations();
     expect
-      .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
-      .toBe(1);
+      .soft(todayConversations, ExpectedMessages.conversationOfToday)
+      .toHaveLength(1);
 
     const messageToEdit = lastWeekConversation.messages[0].content;
     await conversations.selectEntity(lastWeekConversation.name);
@@ -767,8 +767,8 @@ dialTest.skip(
     await chatMessages.editMessage(messageToEdit, 'updated message');
     todayConversations = await conversations.getTodayConversations();
     expect
-      .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
-      .toBe(2);
+      .soft(todayConversations, ExpectedMessages.conversationOfToday)
+      .toHaveLength(2);
 
     await conversations.selectEntity(lastMonthConversation.name);
     await dialHomePage.mockChatTextResponse(
@@ -1224,20 +1224,20 @@ dialTest.skip(
           await conversations.getChronologyConversations(randomChronology);
         expect
           .soft(
-            chronologyConversations.length,
+            chronologyConversations,
             ExpectedMessages.chronologyMessageCountIsCorrect,
           )
-          .toBe(0);
+          .toHaveLength(0);
 
         await conversations.chronologyByTitle(randomChronology).click();
         chronologyConversations =
           await conversations.getChronologyConversations(randomChronology);
         expect
           .soft(
-            chronologyConversations.length,
+            chronologyConversations,
             ExpectedMessages.chronologyMessageCountIsCorrect,
           )
-          .toBe(1);
+          .toHaveLength(1);
       },
     );
   },
@@ -1302,8 +1302,8 @@ dialTest(
         await chatBarSearch.setSearchValue('');
         const results = await conversations.getTodayConversations();
         expect
-          .soft(results.length, ExpectedMessages.searchResultCountIsValid)
-          .toBe(2);
+          .soft(results, ExpectedMessages.searchResultCountIsValid)
+          .toHaveLength(2);
       },
     );
 
@@ -1314,8 +1314,8 @@ dialTest(
           await chatBarSearch.setSearchValue(term);
           const results = await conversations.getTodayConversations();
           expect
-            .soft(results.length, ExpectedMessages.searchResultCountIsValid)
-            .toBe(1);
+            .soft(results, ExpectedMessages.searchResultCountIsValid)
+            .toHaveLength(1);
         }
       },
     );
@@ -1326,8 +1326,8 @@ dialTest(
         await chatBarSearch.setSearchValue(specialSymbolsSearchTerm);
         const results = await conversations.getTodayConversations();
         expect
-          .soft(results.length, ExpectedMessages.searchResultCountIsValid)
-          .toBe(1);
+          .soft(results, ExpectedMessages.searchResultCountIsValid)
+          .toHaveLength(1);
       },
     );
   },

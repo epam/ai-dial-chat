@@ -159,7 +159,6 @@ const dialOverlayTest = test.extend<{
   overlayMarketplaceEntities: MarketplaceEntities;
   overlayAgentDropdownMenu: DropdownMenu;
 }>({
-  // eslint-disable-next-line no-empty-pattern
   storageState: async ({}, use) => {
     await use(overlayStateFilePath(+process.env.TEST_PARALLEL_INDEX!));
   },
@@ -272,7 +271,7 @@ const dialOverlayTest = test.extend<{
   overlayDataInjector: async ({ overlayApiInjector }, use) => {
     await use(overlayApiInjector);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   overlayBaseAssertion: async ({}, use) => {
     const baseAssertion = new BaseAssertion();
     await use(baseAssertion);
@@ -287,7 +286,7 @@ const dialOverlayTest = test.extend<{
     );
     await use(overlayChatMessagesAssertion);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   overlayApiAssertion: async ({}, use) => {
     const overlayApiAssertion = new ApiAssertion();
     await use(overlayApiAssertion);
@@ -435,7 +434,7 @@ const dialOverlayTest = test.extend<{
     );
     await use(overlayTalkToAgentDialogAssertion);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   overlayAssertion: async ({}, use) => {
     const overlayAssertion = new OverlayAssertion();
     await use(overlayAssertion);
