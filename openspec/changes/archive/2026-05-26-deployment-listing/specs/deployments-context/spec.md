@@ -102,6 +102,23 @@ All user-visible strings for the deployments-based model selector in `apps/chat`
 
 ---
 
+### Requirement: Deployment selector loading state uses skeleton rows
+
+When deployments are loading, the selector SHALL render `DialSkeleton`
+components from `@epam/ai-dial-ui-kit`: one circular skeleton in the trigger
+and exactly seven disabled selector rows. Each row SHALL contain a circular
+icon skeleton and a text skeleton for the deployment name. The mobile bottom
+sheet SHALL use the same seven-row presentation, and the localized loading
+label SHALL remain available to assistive technology.
+
+#### Scenario: Deployments are still loading
+
+- **WHEN** `isLoading` is `true`, including a reload where `items` still contains previously loaded deployments
+- **THEN** the selector trigger shows a circular skeleton
+- **AND** opening the selector shows seven disabled skeleton rows
+
+---
+
 ### Requirement: DeploymentsContext unit tests
 
 `apps/chat/src/context/tests/DeploymentsContext.spec.tsx` SHALL cover:

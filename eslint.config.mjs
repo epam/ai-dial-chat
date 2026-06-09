@@ -3,6 +3,7 @@ import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
+import reactHooks from 'eslint-plugin-react-hooks';
 import tailwindcss from 'eslint-plugin-tailwindcss';
 
 export default [
@@ -53,11 +54,16 @@ export default [
       prettier,
       import: importPlugin,
       'jsx-a11y': jsxA11y,
+      'react-hooks': reactHooks,
       tailwindcss,
     },
     rules: {
       // Prettier rules
       'prettier/prettier': 'error',
+
+      // React Hooks rules
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
       'react-hooks/set-state-in-effect': 'off',
       'tailwindcss/no-contradicting-classname': 'error',
 

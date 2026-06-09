@@ -19,7 +19,7 @@ onSelectedCatalogItemChange?: (itemId: string) => void;
 /** Accessible label for the model selector dropdown trigger button. */
 modelSelectorAriaLabel?: string;
 
-/** Text shown in the trigger while the catalog is loading. */
+/** Accessible loading label announced while the trigger and menu show skeleton placeholders. */
 modelSelectorLoadingLabel?: string;
 
 /** Text shown in the trigger when the catalog failed to load. */
@@ -110,7 +110,9 @@ The `Input` component SHALL prevent message submission when `catalogItems` is de
 Specifically:
 - The send button SHALL be disabled (non-interactive) in this state.
 - Pressing Enter in the textarea SHALL NOT call `onSend` in this state.
-- Loading, error, and empty states SHALL NOT expand the toolbar with long visible text. They SHALL be represented by a disabled selector trigger and/or disabled dropdown menu item with the appropriate accessible label or tooltip.
+- Loading, error, and empty states SHALL NOT expand the toolbar with long visible text.
+- While loading, the trigger SHALL show a circular `DialSkeleton` from `@epam/ai-dial-ui-kit`. The opened selector SHALL show exactly seven disabled rows, each with a circular icon skeleton and a text skeleton for the item name. The mobile bottom sheet SHALL use the same seven-row loading presentation.
+- Error and empty states SHALL be represented by a disabled dropdown menu item with the appropriate accessible label or tooltip.
 
 The `isStreaming === true` stop-button path is unaffected — streaming stop always works regardless of selection state.
 
@@ -124,10 +126,12 @@ The `isStreaming === true` stop-button path is unaffected — streaming stop alw
 - **WHEN** `catalogItems` is defined and `selectedCatalogItemId` is `null` and the user presses Enter
 - **THEN** `onSend` is NOT called
 
-#### Scenario: Loading label displayed
+#### Scenario: Loading skeletons displayed
 
-- **WHEN** `catalogItems` is `[]` and `modelSelectorLoadingLabel` is `"Loading…"`
-- **THEN** `"Loading…"` is exposed via the disabled selector trigger accessible label, tooltip, or a disabled dropdown menu item
+- **WHEN** `modelSelectorLoadingLabel` is `"Loading…"`, including a reload where `catalogItems` still contains previously loaded items
+- **THEN** the selector trigger renders a circular `DialSkeleton`
+- **AND** the opened selector renders seven disabled rows containing circular icon and text skeletons
+- **AND** `"Loading…"` remains exposed to assistive technology
 
 #### Scenario: Error label displayed
 
@@ -171,7 +175,7 @@ Tests SHALL be added or updated in `libs/conversation-input/src/components/Input
 1. Selector is rendered when `catalogItems` is a non-empty array.
 2. The trigger renders the selected item's `displayName`.
 3. Clicking a menu item calls `onSelectedCatalogItemChange` with the correct id.
-4. Loading label is shown when `catalogItems` is `[]` and `modelSelectorLoadingLabel` is set.
+4. When `modelSelectorLoadingLabel` is set, the trigger renders one circular skeleton and the selector renders seven disabled rows with circular icon and text skeletons; the loading label remains available to assistive technology.
 5. Error label is shown when `catalogItems` is `[]` and `modelSelectorErrorLabel` is set.
 6. Send button is disabled when `catalogItems` is defined and `selectedCatalogItemId` is `null`.
 7. Enter key does not fire `onSend` when no selection.

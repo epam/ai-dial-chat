@@ -36,7 +36,6 @@ export const MDMessageViewer: FC<Props> = memo(
         blockquote: 'border-current/30 my-2',
         link: 'break-words [overflow-wrap:anywhere]',
         tableWrapper: 'my-2',
-        tableCell: 'border-white/20',
         tableHeader: 'bg-white/10',
       }}
     />

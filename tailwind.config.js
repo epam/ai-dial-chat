@@ -105,7 +105,6 @@ const controlsTextColors = {
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  important: true,
   content: [
     './apps/chat/src/**/*.{html,js,ts,tsx,yaml}',
     './node_modules/@epam/ai-dial-ui-kit/**/*.{js,ts,jsx,tsx}',

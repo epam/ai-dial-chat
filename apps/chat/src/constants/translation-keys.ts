@@ -132,6 +132,7 @@ export enum SidebarI18nKeys {
   SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
   SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
   SectionSources = 'sidebar.sources.sections.sources',
+  Empty = 'sidebar.sources.empty.noData',
   EmptyUploadedFiles = 'sidebar.sources.empty.uploadedFiles',
   EmptyGeneratedFiles = 'sidebar.sources.empty.generatedFiles',
   EmptySources = 'sidebar.sources.empty.sources',

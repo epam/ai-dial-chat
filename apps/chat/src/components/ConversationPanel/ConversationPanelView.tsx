@@ -291,6 +291,7 @@ const ConversationPanelView: FC<Props> = ({
         onToggle={isMobile ? onClose : undefined}
         closeAriaLabel={t(ConversationHistoryI18nKeys.ToggleAriaLabel)}
         className={isMobile ? 'fixed inset-y-0 start-0 z-50' : undefined}
+        styles={{ typography: { fontClassName: 'dial-body-text' } }}
       />
 
       <DialConfirmationPopup
