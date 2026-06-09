@@ -97,7 +97,11 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
       // Race condition: the 302 redirect completed the sign-in flow before we
       // got here, so the main page already closed the popup. Nothing left to do.
       if (!popup.isClosed()) throw e;
-      signInResponsePromise.catch(() => {});
+      signInResponsePromise.catch(() => {
+        console.error(
+          'Expected sign-in response was not received, likely due to the popup being closed before navigation.',
+        );
+      });
       return;
     }
     await signInResponsePromise;
