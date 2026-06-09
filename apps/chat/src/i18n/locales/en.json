@@ -137,7 +137,10 @@
     "renameLabel": "Rename",
     "renameInputPlaceholder": "Chat name",
     "renameError": "Failed to rename. Please try again.",
-    "renameTitleTooLong": "The name is too long. Please shorten it and try again."
+    "renameTitleTooLong": "The name is too long. Please shorten it and try again.",
+    "duplicateLabel": "Duplicate",
+    "duplicateReadOnlyDescription": "Duplicate the conversation to be able to edit it",
+    "duplicateError": "Failed to duplicate the conversation. Please try again."
   },
   "auth": {
     "signOut": "Sign out",

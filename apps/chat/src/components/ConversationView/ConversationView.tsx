@@ -13,9 +13,11 @@ import type {
 } from '@epam/ai-dial-conversation-messages';
 import {
   DialFabButton,
+  DialNeutralButton,
   DialNotification,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
+import { IconCopy } from '@tabler/icons-react';
 import {
   FC,
   lazy,
@@ -31,6 +33,7 @@ import { useTranslation } from 'react-i18next';
 import {
   ActionsI18nKeys,
   ChatI18nKeys,
+  ConversationHistoryI18nKeys,
   ConversationI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
@@ -71,7 +74,8 @@ interface Props {
   initialModelId: string;
   streamErrorText: string;
   isReadOnly?: boolean;
-  readOnlyNotice?: string;
+  onDuplicateConversation?: () => void;
+  duplicateError?: string;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -95,7 +99,8 @@ const ConversationView: FC<Props> = ({
   initialModelId,
   streamErrorText,
   isReadOnly = false,
-  readOnlyNotice,
+  onDuplicateConversation,
+  duplicateError,
 }) => {
   const { t } = useTranslation();
   const {
@@ -370,10 +375,19 @@ const ConversationView: FC<Props> = ({
         className="w-full"
       >
         {isReadOnly ? (
-          <div className="p-4">
-            <DialNotification
-              variant={NotificationVariant.Info}
-              message={readOnlyNotice}
+          <div className="flex flex-col items-center justify-center gap-2 p-4">
+            {duplicateError && (
+              <DialNotification
+                variant={NotificationVariant.Error}
+                message={duplicateError}
+              />
+            )}
+            <DialNeutralButton
+              label={t(
+                ConversationHistoryI18nKeys.DuplicateReadOnlyDescription,
+              )}
+              iconBefore={<IconCopy />}
+              onClick={onDuplicateConversation}
             />
           </div>
         ) : (
