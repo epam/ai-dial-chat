@@ -561,7 +561,7 @@ const dialTest = test.extend<{
       sharedWithMeConversations.getDropdownMenu();
     await use(sharedWithMeConversationDropdownMenu);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   storageState: async ({}, use) => {
     await use(stateFilePath(+process.env.TEST_PARALLEL_INDEX!));
   },
@@ -1402,7 +1402,7 @@ const dialTest = test.extend<{
     const toastAssertion = new ToastAssertion(toast);
     await use(toastAssertion);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   downloadAssertion: async ({}, use) => {
     const downloadAssertion = new DownloadAssertion();
     await use(downloadAssertion);
@@ -1640,7 +1640,7 @@ const dialTest = test.extend<{
     );
     await use(organizationFolderConversationAssertions);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   shareApiAssertion: async ({}, use) => {
     const shareApiAssertion = new ShareApiAssertion();
     await use(shareApiAssertion);
@@ -1980,7 +1980,7 @@ const dialTest = test.extend<{
     const tooltipPortalAssertion = new TooltipPortalAssertion(tooltipPortal);
     await use(tooltipPortalAssertion);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   toolsetApiAuthenticationAssertion: async ({}, use) => {
     const toolsetApiAuthenticationAssertion =
       new ToolsetApiAuthenticationAssertion();

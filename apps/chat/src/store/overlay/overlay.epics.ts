@@ -106,6 +106,7 @@ import {
   SendMessageRequest,
   SetInputContentRequest,
   SetSystemPromptRequest,
+  SetTemperatureRequest,
   StopSelectedPlaybackConversationResponse,
   UpdateMessageRequest,
   overlayAppName,
@@ -294,6 +295,31 @@ const postMessageMapperEpic: AppEpic = (_, state$) =>
                 of(
                   OverlayActions.setSystemPrompt({
                     systemPrompt,
+                    requestId,
+                  }),
+                ),
+              );
+            }
+            case OverlayRequests.setTemperature: {
+              const { temperature } = payload as SetTemperatureRequest;
+
+              const hostDomain = OverlaySelectors.selectHostDomain(
+                state$.value,
+              );
+
+              return concat(
+                of(
+                  OverlayActions.sendPMResponse({
+                    type: OverlayRequests.setTemperature,
+                    requestParams: {
+                      requestId,
+                      hostDomain,
+                    },
+                  }),
+                ),
+                of(
+                  OverlayActions.setTemperature({
+                    temperature,
                     requestId,
                   }),
                 ),

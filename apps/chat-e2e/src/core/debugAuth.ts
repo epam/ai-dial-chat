@@ -134,7 +134,7 @@ export class DebugAuth {
             lastError = error;
             if (attempt < maxRetries) {
               const delayMs = 2000 * attempt;
-              // eslint-disable-next-line no-console
+
               console.warn(
                 `Auth attempt ${attempt}/${maxRetries} failed for ${username}: ${error}. Retrying in ${delayMs}ms...`,
               );
