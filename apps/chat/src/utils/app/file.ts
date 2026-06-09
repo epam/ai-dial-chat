@@ -104,8 +104,8 @@ export const getNestedEmptyFolderIdsForChosenParent = (
 ): string[] => {
   const prefix = addTrailingSlashIfAbsent(parentFolderId);
   return emptyFolderIds
-    .filter((id) => `${id}/`.startsWith(prefix))
-    .map((id) => `${id}/`);
+    .filter((id) => addTrailingSlashIfAbsent(id).startsWith(prefix))
+    .map((id) => addTrailingSlashIfAbsent(id));
 };
 
 export const getUserCustomContent = (
