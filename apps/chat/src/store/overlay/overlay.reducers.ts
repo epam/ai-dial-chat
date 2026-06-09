@@ -25,6 +25,7 @@ import {
   SelectConversationRequest,
   SendMessageRequest,
   SetSystemPromptRequest,
+  SetTemperatureRequest,
   UpdateMessageRequest,
 } from '@epam/ai-dial-shared';
 
@@ -36,6 +37,7 @@ const initialState: OverlayState = {
   customMessageButtons: [],
 
   systemPrompt: null,
+  temperature: null,
   validationUserEmail: null,
   newConversationsFolder: null,
   readyToInteractSent: false,
@@ -58,6 +60,12 @@ export const overlaySlice = createSlice({
       { payload }: PayloadAction<WithRequestId<SetSystemPromptRequest>>,
     ) => {
       state.systemPrompt = payload.systemPrompt;
+    },
+    setTemperature: (
+      state,
+      { payload }: PayloadAction<WithRequestId<SetTemperatureRequest>>,
+    ) => {
+      state.temperature = payload.temperature;
     },
     selectConversation: (
       state,
