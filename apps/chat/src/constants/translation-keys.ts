@@ -120,6 +120,9 @@ export enum ConversationHistoryI18nKeys {
   RenameInputPlaceholder = 'conversationHistory.renameInputPlaceholder',
   RenameError = 'conversationHistory.renameError',
   RenameTitleTooLong = 'conversationHistory.renameTitleTooLong',
+  DuplicateLabel = 'conversationHistory.duplicateLabel',
+  DuplicateReadOnlyDescription = 'conversationHistory.duplicateReadOnlyDescription',
+  DuplicateError = 'conversationHistory.duplicateError',
 }
 
 export enum SidebarI18nKeys {
