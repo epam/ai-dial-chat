@@ -1365,10 +1365,20 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const rateMessageSuccessEpic: AppEpic = (action$) =>
+const rateMessageSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.rateMessage.type),
     switchMap(({ payload }) => {
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.conversationId,
+      ) as Conversation;
+      const message = conversation?.messages[payload.messageIndex];
+
+      if (!conversation || !message?.responseId) {
+        return EMPTY;
+      }
+
       return of(
         ConversationsActions.updateMessage({
           conversationId: payload.conversationId,
