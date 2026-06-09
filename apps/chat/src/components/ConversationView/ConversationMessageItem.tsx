@@ -46,6 +46,7 @@ interface Props {
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;
   onRateMessage?: (messageIndex: number, rating: MessageRating | null) => void;
+  onDislikeMessage?: (messageIndex: number) => void;
   onCancelEdit?: (messageIndex: number) => void;
   onEditMessage?: (
     messageIndex: number,
@@ -86,6 +87,7 @@ const ConversationMessageItem: FC<Props> = ({
   onDeleteMessage,
   onRegenerateMessage,
   onRateMessage,
+  onDislikeMessage,
   onCancelEdit,
   onEditMessage,
   onUploadAttachment,
@@ -195,6 +197,7 @@ const ConversationMessageItem: FC<Props> = ({
           onDelete: onDeleteMessage,
           onRegenerate: onRegenerateMessage,
           onRate: onRateMessage,
+          onDislike: onDislikeMessage,
         },
         tooltips,
         ariaLabels,

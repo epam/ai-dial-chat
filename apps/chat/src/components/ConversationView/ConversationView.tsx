@@ -51,6 +51,7 @@ interface Props {
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;
   onRateMessage?: (messageIndex: number, rating: MessageRating | null) => void;
+  onDislikeMessage?: (messageIndex: number) => void;
   onAttachmentsChange?: (attachments: Attachment[]) => void;
   onSelectStarter?: (
     starter: StarterOption,
@@ -84,6 +85,7 @@ const ConversationView: FC<Props> = ({
   onDeleteMessage,
   onRegenerateMessage,
   onRateMessage,
+  onDislikeMessage,
   onAttachmentsChange,
   onSelectStarter,
   onStartEdit,
@@ -323,6 +325,7 @@ const ConversationView: FC<Props> = ({
                   onDeleteMessage={onDeleteMessage}
                   onRegenerateMessage={onRegenerateMessage}
                   onRateMessage={onRateMessage}
+                  onDislikeMessage={onDislikeMessage}
                   onCancelEdit={onCancelEdit}
                   onEditMessage={onEditMessage}
                   onUploadAttachment={onUploadAttachment}

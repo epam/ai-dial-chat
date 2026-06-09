@@ -1,4 +1,5 @@
 import {
+  MessageRating,
   type Conversation,
   type Message,
   MessageRole,
@@ -12,6 +13,8 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
+import NegativeFeedbackModal from '../../components/ConversationView/NegativeFeedbackModal';
+import RatingToast from '../../components/ConversationView/RatingToast';
 import { ROUTES } from '../../constants/routes';
 import {
   ActionsI18nKeys,
@@ -43,6 +46,18 @@ export const ConversationPage: FC = () => {
     useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
+
+  const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] = useState<
+    number | null
+  >(null);
+  const [toastState, setToastState] = useState<{
+    message: string;
+    key: number;
+  } | null>(null);
+
+  const showToast = useCallback((message: string) => {
+    setToastState((prev) => ({ message, key: (prev?.key ?? 0) + 1 }));
+  }, []);
 
   const isReadOnly = useMemo(() => {
     if (!conversationId || !bucket) return false;
@@ -172,6 +187,41 @@ export const ConversationPage: FC = () => {
     navigate,
   });
 
+  const handleLike = useCallback(
+    async (messageIndex: number, rating: MessageRating | null) => {
+      const success = await handleRateMessage(messageIndex, rating);
+      if (success && rating === MessageRating.Like) {
+        showToast(t(ChatI18nKeys.LikeToastMessage));
+      }
+    },
+    [handleRateMessage, showToast, t],
+  );
+
+  const handleOpenDislikeModal = useCallback((messageIndex: number) => {
+    setPendingDislikeMessageIndex(messageIndex);
+  }, []);
+
+  const handleDislikeSubmit = useCallback(
+    async (comment: string) => {
+      if (pendingDislikeMessageIndex == null) return;
+      const index = pendingDislikeMessageIndex;
+      setPendingDislikeMessageIndex(null);
+      const success = await handleRateMessage(
+        index,
+        MessageRating.Dislike,
+        comment,
+      );
+      if (success) {
+        showToast(t(ChatI18nKeys.FeedbackSentToastMessage));
+      }
+    },
+    [pendingDislikeMessageIndex, handleRateMessage, showToast, t],
+  );
+
+  const handleDislikeModalClose = useCallback(() => {
+    setPendingDislikeMessageIndex(null);
+  }, []);
+
   if (isFetching) return null;
 
   if (!conversation) {
@@ -190,7 +240,8 @@ export const ConversationPage: FC = () => {
           onStop={handleStop}
           onDeleteMessage={handleDeleteMessage}
           onRegenerateMessage={handleRegenerateMessage}
-          onRateMessage={handleRateMessage}
+          onRateMessage={handleLike}
+          onDislikeMessage={handleOpenDislikeModal}
           onStartEdit={handleStartEdit}
           onCancelEdit={handleCancelEdit}
           onEditMessage={handleEditMessage}
@@ -203,6 +254,21 @@ export const ConversationPage: FC = () => {
           readOnlyNotice={t(ChatI18nKeys.ReadOnlyNotice)}
         />
       </div>
+
+      {pendingDislikeMessageIndex != null && (
+        <NegativeFeedbackModal
+          onClose={handleDislikeModalClose}
+          onSubmit={handleDislikeSubmit}
+        />
+      )}
+
+      {toastState != null && (
+        <RatingToast
+          key={toastState.key}
+          message={toastState.message}
+          onDismiss={() => setToastState(null)}
+        />
+      )}
 
       <DialConfirmationPopup
         open={pendingDeleteIndex != null}

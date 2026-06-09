@@ -21,6 +21,13 @@ export enum ChatI18nKeys {
   ShowLess = 'chat.showLess',
   ShowMoreUserMessage = 'chat.showMoreUserMessage',
   ShowLessUserMessage = 'chat.showLessUserMessage',
+  NegativeFeedbackTitle = 'chat.negativeFeedbackTitle',
+  FeedbackTypeLabel = 'chat.feedbackTypeLabel',
+  FeedbackTypePlaceholder = 'chat.feedbackTypePlaceholder',
+  FeedbackCommentPlaceholder = 'chat.feedbackCommentPlaceholder',
+  LikeToastMessage = 'chat.likeToastMessage',
+  FeedbackSentToastMessage = 'chat.feedbackSentToastMessage',
+  Send = 'chat.send',
 }
 
 export enum ActionsI18nKeys {

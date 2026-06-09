@@ -235,8 +235,12 @@ export const useConversationHandlers = ({
   ]);
 
   const handleRateMessage = useCallback(
-    async (messageIndex: number, rating: MessageRating | null) => {
-      if (!conversationId) return;
+    async (
+      messageIndex: number,
+      rating: MessageRating | null,
+      comment?: string,
+    ): Promise<boolean> => {
+      if (!conversationId) return false;
 
       let previousRating: MessageRating | undefined;
       setConversation((prev) => {
@@ -255,22 +259,37 @@ export const useConversationHandlers = ({
       });
 
       const updated = conversationRef.current;
-      if (!updated) return;
+      if (!updated) return false;
 
       const conversationPath = getConversationPath(conversationId);
 
       if (rating != null) {
+        const responseId = updated.messages[messageIndex].responseId;
+        if (!responseId) {
+          setConversation((prev) => {
+            if (!prev) return prev;
+            return {
+              ...prev,
+              messages: prev.messages.map((m, i) =>
+                i === messageIndex ? { ...m, rating: previousRating } : m,
+              ),
+            };
+          });
+          return false;
+        }
         try {
           await rateMessage({
             conversationId: updated.id,
-            responseId: updated.messages[messageIndex].responseId || '',
+            responseId,
             modelId: updated.model.id,
             rate: rating,
+            ...(comment ? { comment } : {}),
           });
           await saveConversation(
             conversationPath,
             updated as ConversationResponseDto,
           );
+          return true;
         } catch {
           setConversation((prev) => {
             if (!prev) return prev;
@@ -281,6 +300,7 @@ export const useConversationHandlers = ({
               ),
             };
           });
+          return false;
         }
       } else {
         await saveConversation(
@@ -297,6 +317,7 @@ export const useConversationHandlers = ({
             };
           });
         });
+        return true;
       }
     },
     [conversationId, conversationRef, setConversation],
