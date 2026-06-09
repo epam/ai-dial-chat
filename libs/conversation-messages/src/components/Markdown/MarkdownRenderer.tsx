@@ -4,9 +4,10 @@ import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent';
 import styles from './MarkdownRenderer.module.scss';
+import { MarkdownTable, type MarkdownTableClassNames } from './MarkdownTable';
 
 /** Per-element className overrides passed to {@link MarkdownRenderer}. */
-export interface MarkdownRendererClassNames {
+export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   /** Class on `<h1>`. */
   h1?: string;
   /** Class on `<h2>`. */
@@ -37,11 +38,7 @@ export interface MarkdownRendererClassNames {
   blockquote?: string;
   /** Extra classes on `<a>` (base: `underline opacity-80 hover:opacity-100`). */
   link?: string;
-  /** Extra classes on the table wrapper `<div>`. */
-  tableWrapper?: string;
-  /** Typography class for `<table>`. Defaults to `'text-sm'`. */
-  tableFont?: string;
-  /** Extra classes on `<th>` and `<td>` (base: `border px-3 py-1.5`). */
+  /** Extra classes on `<th>` and `<td>` (base includes borders, spacing, and text wrapping). */
   tableCell?: string;
   /** Extra classes on `<th>` only (applied alongside `tableCell`). */
   tableHeader?: string;
@@ -151,21 +148,12 @@ const buildMarkdownComponents = (
     </a>
   ),
   table: ({ children }) => (
-    <div className={mergeClasses('overflow-x-auto', cn.tableWrapper)}>
-      <table
-        className={mergeClasses(
-          'w-full border-collapse',
-          cn.tableFont ?? 'text-sm',
-        )}
-      >
-        {children}
-      </table>
-    </div>
+    <MarkdownTable classNames={cn}>{children}</MarkdownTable>
   ),
   th: ({ children }) => (
     <th
       className={mergeClasses(
-        'border px-3 py-1.5 text-start',
+        'max-w-96 whitespace-normal border px-3 py-1.5 text-start [overflow-wrap:anywhere]',
         cn.tableHeaderFont ?? 'font-semibold',
         cn.tableCell,
         cn.tableHeader,
@@ -175,7 +163,12 @@ const buildMarkdownComponents = (
     </th>
   ),
   td: ({ children }) => (
-    <td className={mergeClasses('border px-3 py-1.5', cn.tableCell)}>
+    <td
+      className={mergeClasses(
+        'max-w-96 whitespace-normal border px-3 py-1.5 [overflow-wrap:anywhere]',
+        cn.tableCell,
+      )}
+    >
       {children}
     </td>
   ),

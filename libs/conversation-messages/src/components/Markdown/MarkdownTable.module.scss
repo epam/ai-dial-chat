@@ -1,0 +1,56 @@
+.scrollContainer {
+  scrollbar-width: thin;
+  scrollbar-color: var(--stroke-primary, #696e7c) var(--bg-layer-3, #1d2439);
+  scrollbar-gutter: stable;
+
+  &::-webkit-scrollbar {
+    height: 0.5rem;
+  }
+
+  &::-webkit-scrollbar-track {
+    background: var(--bg-layer-3, #1d2439);
+    border-radius: 9999px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--stroke-primary, #696e7c);
+    border: 2px solid var(--bg-layer-3, #1d2439);
+    border-radius: 9999px;
+  }
+}
+
+.tableScrollFadeEnd {
+  mask-image: linear-gradient(
+    to right,
+    #000 0,
+    #000 calc(100% - 1rem),
+    transparent 100%
+  );
+}
+
+:global([dir='rtl']) .tableScrollFadeEnd {
+  mask-image: linear-gradient(
+    to left,
+    #000 0,
+    #000 calc(100% - 1rem),
+    transparent 100%
+  );
+}
+
+.tableScrollFadeStart {
+  mask-image: linear-gradient(to right, transparent 0, #000 1rem, #000 100%);
+}
+
+:global([dir='rtl']) .tableScrollFadeStart {
+  mask-image: linear-gradient(to left, transparent 0, #000 1rem, #000 100%);
+}
+
+.tableScrollFadeBoth {
+  mask-image: linear-gradient(
+    to right,
+    transparent 0,
+    #000 1rem,
+    #000 calc(100% - 1rem),
+    transparent 100%
+  );
+}
