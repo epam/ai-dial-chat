@@ -10,6 +10,7 @@ export interface OverlayState {
   hostDomain: string;
 
   systemPrompt: string | null;
+  temperature: number | null;
   newConversationsFolder: string | null;
 
   readyToInteractSent: boolean;
