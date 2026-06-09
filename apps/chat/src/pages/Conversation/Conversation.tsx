@@ -1,3 +1,4 @@
+import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
   type Conversation,
   type Message,
@@ -27,6 +28,9 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { transcribeAudio } from '../../server-api/chat.api';
+import { uploadFile } from '../../server-api/files.api';
+import { buildUploadPath } from '../../utils/build-upload-path';
 import { decodeConversationId } from '../../utils/conversation-path';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
@@ -37,12 +41,47 @@ export const ConversationPage: FC = () => {
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { setSelectedItemId, isLoading: isDeploymentsLoading } =
-    useDeployments();
+  const {
+    setSelectedItemId,
+    selectedItemId: currentSelectedItemId,
+    isLoading: isDeploymentsLoading,
+  } = useDeployments();
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
+
+  const lastAudioMimeTypeRef = useRef<string>('audio/webm');
+
+  const handleUploadAudio = useCallback(
+    async (file: File, contentType: string): Promise<string> => {
+      if (!bucket) {
+        throw new Error('User bucket is not available');
+      }
+      lastAudioMimeTypeRef.current = contentType;
+      const response = await uploadFile(
+        bucket,
+        buildUploadPath({ name: file.name } as Attachment),
+        file,
+      );
+      return response.url;
+    },
+    [bucket],
+  );
+
+  const handleTranscribeAudio = useCallback(
+    async (audioUrl: string): Promise<string> => {
+      if (!currentSelectedItemId) {
+        throw new Error('No model selected');
+      }
+      return transcribeAudio({
+        audioUrl,
+        mimeType: lastAudioMimeTypeRef.current,
+        deployment: currentSelectedItemId,
+      });
+    },
+    [currentSelectedItemId],
+  );
 
   const isReadOnly = useMemo(() => {
     if (!conversationId || !bucket) return false;
@@ -201,6 +240,8 @@ export const ConversationPage: FC = () => {
           streamErrorText={t(ChatI18nKeys.StreamError)}
           isReadOnly={isReadOnly}
           readOnlyNotice={t(ChatI18nKeys.ReadOnlyNotice)}
+          onUploadAudio={handleUploadAudio}
+          onTranscribeAudio={handleTranscribeAudio}
         />
       </div>
 
