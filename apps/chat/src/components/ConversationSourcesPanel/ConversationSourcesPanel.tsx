@@ -12,12 +12,11 @@ import { SidebarI18nKeys } from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
 import FilesSection from './sections/FilesSection/FilesSection';
-import SourcesSection from './sections/SourcesSection/SourcesSection';
 
 interface Props {
   messages: Message[];
 }
-
+// TODO: need add libs for this panel
 const ConversationSourcesPanel: FC<Props> = ({ messages }) => {
   const { t } = useTranslation();
   const { handleClose } = useSourcesSidebar();
@@ -27,6 +26,7 @@ const ConversationSourcesPanel: FC<Props> = ({ messages }) => {
   return (
     <SidebarPanel
       side={SidebarSide.Right}
+      className="w-[360px]"
       ariaLabel={t(SidebarI18nKeys.AriaLabel)}
       closeLabel={t(SidebarI18nKeys.Close)}
       onClose={handleClose}
@@ -61,17 +61,14 @@ const ConversationSourcesPanel: FC<Props> = ({ messages }) => {
           <FilesSection
             attachments={uploaded}
             title={t(SidebarI18nKeys.SectionUploadedFiles)}
-            emptyMessage={t(SidebarI18nKeys.EmptyUploadedFiles)}
           />
           <FilesSection
             attachments={generated}
             title={t(SidebarI18nKeys.SectionGeneratedFiles)}
-            emptyMessage={t(SidebarI18nKeys.EmptyGeneratedFiles)}
           />
-          <SourcesSection
-            title={t(SidebarI18nKeys.SectionSources)}
-            emptyMessage={t(SidebarI18nKeys.EmptySources)}
-          />
+          {/* TODO: restore after implementing sources extraction from assistant
+          messages */}
+          {/* <SourcesSection title={t(SidebarI18nKeys.SectionSources)} /> */}
         </>
       )}
     </SidebarPanel>

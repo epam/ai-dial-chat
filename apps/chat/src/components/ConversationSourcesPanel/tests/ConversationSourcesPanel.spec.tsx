@@ -96,7 +96,7 @@ describe('ConversationSourcesPanel', () => {
   it('renders the panel empty state when the conversation has no files', () => {
     renderPanel();
 
-    expect(screen.getByText('sidebar.sources.empty.noData')).toBeTruthy();
+    expect(screen.getByText('sidebar.sources.noData')).toBeTruthy();
     expect(screen.queryByRole('heading')).toBeNull();
     expect(
       screen.queryByRole('button', { name: 'sidebar.sources.search' }),

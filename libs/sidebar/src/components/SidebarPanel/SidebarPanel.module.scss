@@ -10,3 +10,7 @@
   border-color: var(--sb-header-border, var(--stroke-tertiary, #0c101d));
   color: var(--sb-text, var(--text-primary, #eef1f7));
 }
+
+.divider {
+  border-color: var(--sb-border, var(--stroke-tertiary, #0c101d));
+}
