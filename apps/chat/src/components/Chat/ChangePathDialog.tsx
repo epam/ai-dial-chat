@@ -458,9 +458,20 @@ export const ChangePathDialog = ({
     }
   }, [fileTreeItems, isGridEditing]);
 
-  const itemsToRender = isGridEditing
+  const rawItemsToRender = isGridEditing
     ? frozenFileTreeItemsRef.current
     : fileTreeItems;
+
+  const itemsToRender = useMemo(() => {
+    const applyTreePermissions = (items: DialFile[]): DialFile[] =>
+      items.map((item) => ({
+        ...item,
+        parentPath: isTempFolder(item.path) ? item.parentPath : null,
+        items: item.items ? applyTreePermissions(item.items) : item.items,
+      }));
+
+    return applyTreePermissions(rawItemsToRender);
+  }, [isTempFolder, rawItemsToRender]);
 
   const handleClose = useCallback(() => onClose(false), [onClose]);
 
@@ -486,8 +497,9 @@ export const ChangePathDialog = ({
       collapsed: collapsedTree,
       onCollapseChange: setCollapsedTree,
       header: treeOptions.header,
+      actionLabels: treeOptions.actionLabels,
     }),
-    [collapsedTree, treeOptions.header],
+    [collapsedTree, treeOptions.header, treeOptions.actionLabels],
   );
 
   const modalGridOptions = useMemo(
