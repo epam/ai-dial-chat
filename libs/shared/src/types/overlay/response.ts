@@ -6,6 +6,8 @@ export type SendMessageResponse = void;
 
 export type SetSystemPromptResponse = void;
 
+export type SetTemperatureResponse = void;
+
 export interface GetMessagesResponse {
   messages: Message[];
 }

@@ -18,6 +18,9 @@ export interface SetInputContentRequest {
 export interface SetSystemPromptRequest {
   systemPrompt: string;
 }
+export interface SetTemperatureRequest {
+  temperature: number;
+}
 export interface CreateConversationRequest {
   parentPath?: string | null;
   local?: boolean | null;
