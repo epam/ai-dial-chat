@@ -30,6 +30,8 @@ import {
 import { useTranslation } from 'react-i18next';
 import {
   ActionsI18nKeys,
+  BasicI18nKeys,
+  ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
   DeploymentsI18nKeys,
@@ -207,7 +209,7 @@ const ConversationView: FC<Props> = ({
         !isLoading && !error && items.length === 0
           ? t(DeploymentsI18nKeys.SelectorEmpty)
           : undefined,
-      searchPlaceholder: t(DeploymentsI18nKeys.SelectorSearchPlaceholder),
+      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
     }),
     [t, isLoading, error, items.length],
@@ -341,8 +343,8 @@ const ConversationView: FC<Props> = ({
                   saveLabel={t(ActionsI18nKeys.SaveAndSubmit)}
                   editMessageAriaLabel={t(ActionsI18nKeys.EditMessage)}
                   quickReplyButtonsAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
-                  showMoreLabel={t(ChatI18nKeys.ShowMore)}
-                  showLessLabel={t(ChatI18nKeys.ShowLess)}
+                  showMoreLabel={t(ButtonsI18nKeys.ShowMore)}
+                  showLessLabel={t(ButtonsI18nKeys.ShowLess)}
                   showMoreUserMessageAriaLabel={t(
                     ChatI18nKeys.ShowMoreUserMessage,
                   )}

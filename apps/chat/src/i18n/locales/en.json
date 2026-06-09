@@ -1,4 +1,11 @@
 {
+  "basic": {
+    "searchPlaceholder": "Search..."
+  },
+  "buttons": {
+    "showMore": "Show more",
+    "showLess": "Show less"
+  },
   "chat": {
     "welcomeText": "Hello World, good day for prompting!",
     "placeholder": "Ask anything...",
@@ -18,8 +25,6 @@
     "stoppedGenerating": "You stopped generating the response",
     "readOnlyNotice": "Only own conversations can be edited",
     "thinking": "Thinking",
-    "showMore": "Show more",
-    "showLess": "Show less",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message"
   },
@@ -47,7 +52,6 @@
       "loading": "Loading models…",
       "error": "Failed to load models",
       "empty": "No models available",
-      "searchPlaceholder": "Search...",
       "closeLabel": "Close model selector"
     }
   },
@@ -93,8 +97,9 @@
     },
     "sources": {
       "ariaLabel": "Conversation sources",
-      "search": "Search",
+      "search": "Search...",
       "downloadAll": "Download all",
+      "noResults": "No results found",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",
