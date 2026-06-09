@@ -91,11 +91,8 @@ dialTest(
 
         const recentAgentsIcons = await talkToAgents.getEntityIcons();
         expect
-          .soft(
-            recentAgentsIcons.length,
-            ExpectedMessages.entitiesIconsCountIsValid,
-          )
-          .toBe(1);
+          .soft(recentAgentsIcons, ExpectedMessages.entitiesIconsCountIsValid)
+          .toHaveLength(1);
 
         const expectedEntityIcon = iconApiHelper.getEntityIcon(
           modelWithoutAttachments,
@@ -135,11 +132,8 @@ dialTest(
 
         const todayConversations = await conversations.getTodayConversations();
         expect
-          .soft(
-            todayConversations.length,
-            ExpectedMessages.newConversationCreated,
-          )
-          .toBe(1);
+          .soft(todayConversations, ExpectedMessages.newConversationCreated)
+          .toHaveLength(1);
         expect
           .soft(todayConversations[0], ExpectedMessages.conversationOfToday)
           .toBe(newConversationName);

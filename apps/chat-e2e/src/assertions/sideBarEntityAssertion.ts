@@ -100,7 +100,7 @@ export class SideBarEntityAssertion<
     const selectedEntities =
       await this.sideBarEntitiesTree.getSelectedEntities();
     expect
-      .soft(selectedEntities.length, ExpectedMessages.noConversationIsSelected)
-      .toBe(0);
+      .soft(selectedEntities, ExpectedMessages.noConversationIsSelected)
+      .toHaveLength(0);
   }
 }
