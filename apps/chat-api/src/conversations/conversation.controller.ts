@@ -24,6 +24,7 @@ import { ConversationService } from './conversation.service';
 import { ConversationListResponseDto } from './dto/conversation-list.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.dto';
 import { GetConversationMetadataDto } from './dto/get-conversation-metadata.dto';
 import { ListConversationsQueryDto } from './dto/list-conversations-query.dto';
 import {
@@ -290,6 +291,33 @@ export class ConversationController {
     return this.conversationService.renameConversation(
       query.path,
       body.newTitle,
+      at,
+      bucket,
+    );
+  }
+
+  @Post('duplicate')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({
+    summary: "Duplicate a conversation into the user's own bucket",
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Conversation duplicated — new path returned',
+    type: DuplicateConversationResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Missing or invalid path' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 404, description: 'Source conversation not found' })
+  @ApiResponse({ status: 502, description: 'DIAL Core error' })
+  @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
+  duplicateConversation(
+    @Req() req: Request,
+    @Query() query: ConversationPathDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.duplicateConversation(
+      query.path,
       at,
       bucket,
     );

@@ -6,9 +6,12 @@ import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DialConfirmationPopup,
+  DialNotification,
+  NotificationVariant,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import {
+  IconCopy,
   IconPencilMinus,
   IconPin,
   IconPinnedFilled,
@@ -24,7 +27,11 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { normalizeConversationId, ROUTES } from '../../constants/routes';
+import {
+  getConversationRoute,
+  normalizeConversationId,
+  ROUTES,
+} from '../../constants/routes';
 import {
   ActionsI18nKeys,
   ConversationHistoryI18nKeys,
@@ -60,6 +67,7 @@ const ConversationPanelView: FC<Props> = ({
     pinConversation,
     deleteConversation,
     renameConversation,
+    duplicateConversation,
     refreshConversations,
   } = useConversations();
 
@@ -93,6 +101,7 @@ const ConversationPanelView: FC<Props> = ({
   } | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
@@ -193,6 +202,22 @@ const ConversationPanelView: FC<Props> = ({
             setPendingRenameItem({ id: contextId, title: panelItem.title }),
         },
         {
+          key: 'duplicate',
+          label: t(ConversationHistoryI18nKeys.DuplicateLabel),
+          icon: (
+            <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+          ),
+          onClick: async () => {
+            setDuplicateError(null);
+            try {
+              const newPath = await duplicateConversation(contextId);
+              navigate(getConversationRoute(newPath));
+            } catch {
+              setDuplicateError(t(ConversationHistoryI18nKeys.DuplicateError));
+            }
+          },
+        },
+        {
           key: 'delete',
           label: t(ConversationHistoryI18nKeys.DeleteLabel),
           icon: (
@@ -202,7 +227,14 @@ const ConversationPanelView: FC<Props> = ({
         },
       ];
     },
-    [panelToContextId, pinConversation, t],
+    [
+      panelToContextId,
+      pinConversation,
+      duplicateConversation,
+      navigate,
+      t,
+      setDuplicateError,
+    ],
   );
 
   const pendingDeleteTitle = useMemo(() => {
@@ -328,6 +360,16 @@ const ConversationPanelView: FC<Props> = ({
         onSave={handleConfirmRename}
         onCancel={handleCloseRenameDialog}
       />
+
+      {duplicateError && (
+        <DialNotification
+          variant={NotificationVariant.Error}
+          message={duplicateError}
+          closable
+          onClose={() => setDuplicateError(null)}
+          className="fixed bottom-4 start-4 z-50 max-w-sm"
+        />
+      )}
     </>
   );
 };

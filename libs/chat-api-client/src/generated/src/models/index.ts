@@ -1060,6 +1060,19 @@ export interface DialModelPricingDto {
 /**
  *
  * @export
+ * @interface DuplicateConversationResponseDto
+ */
+export interface DuplicateConversationResponseDto {
+  /**
+   * Path of the newly created duplicate conversation
+   * @type {string}
+   * @memberof DuplicateConversationResponseDto
+   */
+  newPath: string;
+}
+/**
+ *
+ * @export
  * @interface FileUploadResponseDto
  */
 export interface FileUploadResponseDto {

@@ -11,6 +11,7 @@ import {
 import { normalizeConversationId } from '../constants/routes';
 import {
   deleteConversation as apiDeleteConversation,
+  duplicateConversation as apiDuplicateConversation,
   listConversations,
   renameConversation as apiRenameConversation,
 } from '../server-api/conversations.api';
@@ -30,6 +31,8 @@ interface ConversationsContextType {
   deleteConversation: (id: string) => Promise<void>;
   /** Rename a conversation; optimistically updates title, reverts on failure. */
   renameConversation: (id: string, newTitle: string) => Promise<void>;
+  /** Duplicate a conversation into the user's own bucket; returns the new conversation id. */
+  duplicateConversation: (id: string) => Promise<string>;
   /** Re-fetch the full conversation list from the server. */
   refreshConversations: () => Promise<void>;
 }
@@ -149,6 +152,16 @@ export const ConversationsProvider = ({
     [],
   );
 
+  const duplicateConversation = useCallback(
+    async (id: string) => {
+      const conversationPath = normalizeConversationId(id);
+      const { newPath } = await apiDuplicateConversation(conversationPath);
+      await refreshConversations();
+      return newPath;
+    },
+    [refreshConversations],
+  );
+
   const value = useMemo(
     () => ({
       conversations,
@@ -157,6 +170,7 @@ export const ConversationsProvider = ({
       pinConversation,
       deleteConversation,
       renameConversation,
+      duplicateConversation,
       refreshConversations,
     }),
     [
@@ -166,6 +180,7 @@ export const ConversationsProvider = ({
       pinConversation,
       deleteConversation,
       renameConversation,
+      duplicateConversation,
       refreshConversations,
     ],
   );

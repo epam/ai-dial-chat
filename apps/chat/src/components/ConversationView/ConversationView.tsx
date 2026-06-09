@@ -13,9 +13,11 @@ import type {
 } from '@epam/ai-dial-conversation-messages';
 import {
   DialFabButton,
+  DialNeutralButton,
   DialNotification,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
+import { IconCopy } from '@tabler/icons-react';
 import {
   FC,
   lazy,
@@ -33,6 +35,7 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
+  ConversationHistoryI18nKeys,
   ConversationI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
@@ -74,6 +77,8 @@ interface Props {
   streamErrorText: string;
   isReadOnly?: boolean;
   readOnlyNotice?: string;
+  onDuplicateConversation?: () => void;
+  duplicateError?: string;
   isTranscriptionSupported?: boolean;
   onUploadAudio?: (file: File, contentType: string) => Promise<string>;
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
@@ -101,6 +106,8 @@ const ConversationView: FC<Props> = ({
   streamErrorText,
   isReadOnly = false,
   readOnlyNotice,
+  onDuplicateConversation,
+  duplicateError,
   isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
@@ -379,10 +386,22 @@ const ConversationView: FC<Props> = ({
         className="w-full"
       >
         {isReadOnly ? (
-          <div className="p-4">
-            <DialNotification
-              variant={NotificationVariant.Info}
-              message={readOnlyNotice}
+          <div className="flex flex-col items-center justify-center gap-2 p-4">
+            {readOnlyNotice && (
+              <p className="dial-body-regular-text text-secondary">{readOnlyNotice}</p>
+            )}
+            {duplicateError && (
+              <DialNotification
+                variant={NotificationVariant.Error}
+                message={duplicateError}
+              />
+            )}
+            <DialNeutralButton
+              label={t(
+                ConversationHistoryI18nKeys.DuplicateReadOnlyDescription,
+              )}
+              iconBefore={<IconCopy />}
+              onClick={onDuplicateConversation}
             />
           </div>
         ) : (
