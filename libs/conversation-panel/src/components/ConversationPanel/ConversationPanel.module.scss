@@ -21,6 +21,10 @@
       --cp-item-active,
       var(--bg-accent-secondary-alpha, #37babc2e)
     );
+    border-left-color: var(
+      --cp-item-active-border,
+      var(--stroke-success, #37babc)
+    );
   }
 }
 
