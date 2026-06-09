@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
@@ -35,7 +36,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   menuTitle,
   menuCloseLabel,
   style,
-  listClassName = '!w-[240px]',
+  listClassName = '!w-[240px] shadow-md',
   isDisabled = false,
 }) => {
   const isMobile = useIsMobile();
@@ -59,8 +60,10 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
         <DialGhostIconButton
           icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
           aria-label={addMenuLabel}
-          className="size-10 flex-shrink-0"
-          disabled={isDisabled}
+          className={mergeClasses(
+            'size-10 flex-shrink-0',
+            isDisabled && 'pointer-events-none opacity-50',
+          )}
           onClick={() => setIsSheetOpen(true)}
         />
         <BottomSheet

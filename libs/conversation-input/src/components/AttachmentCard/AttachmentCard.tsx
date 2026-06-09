@@ -91,7 +91,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     >
       {isImage ? (
         <img
-          src={attachment.previewUrl}
+          src={attachment.previewUrl ?? attachment.url}
           alt={name}
           className={mergeClasses(
             'h-full w-full object-cover',
