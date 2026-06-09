@@ -1,15 +1,17 @@
-import { Body, Controller, Param, Post } from '@nestjs/common';
+import { Body, Controller, Post, Req } from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import type { Request } from 'express';
+import type { SessionUser } from '../auth/session/session.types';
 import { ChatCompletionResponseDto } from '../openapi/openapi-response.dto';
 import { ChatService } from './chat.service';
 import { ChatCompletionDto } from './dto/chat-completion.dto';
 
 @ApiTags('chat')
-@Controller('chat')
+@Controller({ path: 'chat', version: '1' })
 export class ChatController {
   constructor(private readonly chatService: ChatService) {}
 
-  @Post('completions/:deployment')
+  @Post('completions')
   @ApiOperation({ summary: 'Send a chat completion request to DIAL Core' })
   @ApiBody({ type: ChatCompletionDto })
   @ApiResponse({
@@ -24,10 +26,8 @@ export class ChatController {
     description: 'Unexpected response from DIAL Core',
   })
   @ApiResponse({ status: 503, description: 'DIAL Core is unreachable' })
-  sendCompletion(
-    @Param('deployment') deployment: string,
-    @Body() dto: ChatCompletionDto,
-  ) {
-    return this.chatService.sendCompletion(deployment, dto);
+  sendCompletion(@Req() req: Request, @Body() dto: ChatCompletionDto) {
+    const { at } = req.user as SessionUser;
+    return this.chatService.sendCompletion(dto, at);
   }
 }

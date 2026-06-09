@@ -1,0 +1,24 @@
+.container {
+  background: var(--ci-bg, var(--bg-layer-2, #161b2d));
+  border-color: var(--ci-border, transparent);
+
+  &.containerError {
+    border-color: var(--ci-voice-error, var(--error-default, #f04438));
+  }
+}
+
+.waveformCanvas {
+  /*
+   * `color` is read via getComputedStyle in the canvas draw effect so that
+   * the bar fill respects the themed value without hard-coding a hex.
+   */
+  color: var(--ci-voice-waveform, var(--text-primary, #eef1f7));
+}
+
+.recordingDot {
+  background: var(--ci-voice-accent, var(--error-default, #f04438));
+}
+
+.micRecordingIcon {
+  color: var(--ci-voice-accent, var(--error-default, #f04438));
+}

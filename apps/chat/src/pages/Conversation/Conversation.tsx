@@ -1,4 +1,6 @@
+import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
+  isAudioTranscriptionSupported,
   type Conversation,
   type Message,
   MessageRole,
@@ -17,6 +19,7 @@ import {
   ActionsI18nKeys,
   ChatI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
@@ -27,6 +30,12 @@ import {
   getConversation as apiGetConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import {
+  transcribeAudio,
+  transcribeAudioWithAsrModel,
+} from '../../server-api/chat.api';
+import { uploadFile } from '../../server-api/files.api';
+import { buildUploadPath } from '../../utils/build-upload-path';
 import { decodeConversationId } from '../../utils/conversation-path';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
@@ -37,12 +46,66 @@ export const ConversationPage: FC = () => {
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { setSelectedItemId, isLoading: isDeploymentsLoading } =
-    useDeployments();
+  const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
+  const {
+    items: deploymentItems,
+    setSelectedItemId,
+    selectedItemId: currentSelectedItemId,
+    isLoading: isDeploymentsLoading,
+  } = useDeployments();
   const { handleClose: handleCloseSourcesSidebar, setMessages } =
     useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
+
+  const isTranscriptionSupported = useMemo(() => {
+    if (asrModelId != null) return true;
+    const selected = deploymentItems.find(
+      (item) => item.id === currentSelectedItemId,
+    );
+    return isAudioTranscriptionSupported(selected?.inputAttachmentTypes);
+  }, [asrModelId, deploymentItems, currentSelectedItemId]);
+
+  const lastAudioMimeTypeRef = useRef<string>('audio/webm');
+
+  const handleUploadAudio = useCallback(
+    async (file: File, contentType: string): Promise<string> => {
+      if (!bucket) {
+        throw new Error('User bucket is not available');
+      }
+      if (file.size > transcribeSizeLimitBytes) {
+        throw new Error(
+          `Audio file exceeds the ${transcribeSizeLimitBytes} byte limit`,
+        );
+      }
+      lastAudioMimeTypeRef.current = contentType;
+      const response = await uploadFile(
+        bucket,
+        buildUploadPath({ name: file.name } as Attachment),
+        file,
+      );
+      return response.url;
+    },
+    [bucket, transcribeSizeLimitBytes],
+  );
+
+  const handleTranscribeAudio = useCallback(
+    async (audioUrl: string): Promise<string> => {
+      const mimeType = lastAudioMimeTypeRef.current;
+      if (asrModelId != null) {
+        return transcribeAudioWithAsrModel({ audioUrl, mimeType });
+      }
+      if (!currentSelectedItemId) {
+        throw new Error('No model selected');
+      }
+      return transcribeAudio({
+        audioUrl,
+        mimeType,
+        deployment: currentSelectedItemId,
+      });
+    },
+    [asrModelId, currentSelectedItemId],
+  );
 
   const isReadOnly = useMemo(() => {
     if (!conversationId || !bucket) return false;
@@ -201,6 +264,9 @@ export const ConversationPage: FC = () => {
           streamErrorText={t(ChatI18nKeys.StreamError)}
           isReadOnly={isReadOnly}
           readOnlyNotice={t(ChatI18nKeys.ReadOnlyNotice)}
+          isTranscriptionSupported={isTranscriptionSupported}
+          onUploadAudio={handleUploadAudio}
+          onTranscribeAudio={handleTranscribeAudio}
         />
       </div>
 

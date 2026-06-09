@@ -98,4 +98,14 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   FILE_TRANSFER_TIMEOUT_MS?: number = 30_000;
+
+  @IsOptional()
+  @IsString()
+  ASR_MODEL?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  TRANSCRIBE_SIZE_LIMIT_BYTES?: number = 5 * 1024 * 1024;
 }

@@ -90,6 +90,8 @@ AUTH_COOKIE_SECURE=false
 | `THEMES_SERVICE_TIMEOUT_MS`    | `5000`                  | Timeout for theme service requests (milliseconds)                                                         |
 | `FILE_UPLOAD_MAX_BYTES`        | `536870912`             | Maximum file upload size in bytes (default 512 MB); multer rejects larger payloads with 413               |
 | `FILE_TRANSFER_TIMEOUT_MS`     | `30000`                 | Timeout for DIAL Core file upload/download fetch requests (milliseconds)                                  |
+| `ASR_MODEL`                    | —                       | Deployment ID of a dedicated speech-to-text model. When set (together with the `voice-input` feature), the mic button is always shown and recorded audio is transcribed by this model via `POST /api/v1/transcription`. When absent, the mic button is shown only for deployments whose `inputAttachmentTypes` include an audio MIME type, and transcription is handled by the selected chat deployment. |
+| `TRANSCRIBE_SIZE_LIMIT_BYTES`  | `5242880`               | Maximum audio file size (in bytes) accepted for transcription. The frontend rejects recordings larger than this before upload. Default is 5 MB.                                                           |
 
 ### 3. Run the Application
 

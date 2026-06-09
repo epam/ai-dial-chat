@@ -72,6 +72,9 @@ interface Props {
   streamErrorText: string;
   isReadOnly?: boolean;
   readOnlyNotice?: string;
+  isTranscriptionSupported?: boolean;
+  onUploadAudio?: (file: File, contentType: string) => Promise<string>;
+  onTranscribeAudio?: (audioUrl: string) => Promise<string>;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -96,6 +99,9 @@ const ConversationView: FC<Props> = ({
   streamErrorText,
   isReadOnly = false,
   readOnlyNotice,
+  isTranscriptionSupported = false,
+  onUploadAudio,
+  onTranscribeAudio,
 }) => {
   const { t } = useTranslation();
   const {
@@ -154,11 +160,12 @@ const ConversationView: FC<Props> = ({
 
   const deploymentItems = useMemo(
     () =>
-      items.map(({ id, displayName, iconUrl, type }) => ({
+      items.map(({ id, displayName, iconUrl, type, inputAttachmentTypes }) => ({
         id,
         displayName,
         iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
         type,
+        inputAttachmentTypes,
       })),
     [items],
   );
@@ -392,6 +399,9 @@ const ConversationView: FC<Props> = ({
               modelSelectorLabels={modelSelectorLabels}
               sendLabel={t(ChatI18nKeys.SendMessage)}
               stopLabel={t(ChatI18nKeys.StopStreaming)}
+              isTranscriptionSupported={isTranscriptionSupported}
+              onUploadAudio={onUploadAudio}
+              onTranscribeAudio={onTranscribeAudio}
             />
           </Suspense>
         )}

@@ -274,6 +274,30 @@ describe('Input', () => {
       expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
     );
   });
+
+  it('should show mic button when isTranscriptionSupported and message is empty', () => {
+    render(<Input isTranscriptionSupported micLabel="Record voice message" />);
+    expect(screen.getByLabelText('Record voice message')).toBeTruthy();
+  });
+
+  it('should hide mic button when message is not empty', () => {
+    const { container } = render(
+      <Input isTranscriptionSupported micLabel="Record voice message" />,
+    );
+    const textarea = container.querySelector('textarea')!;
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
+    expect(screen.queryByLabelText('Record voice message')).toBeNull();
+  });
+
+  it('should hide mic button when isTranscriptionSupported is false', () => {
+    render(
+      <Input
+        isTranscriptionSupported={false}
+        micLabel="Record voice message"
+      />,
+    );
+    expect(screen.queryByLabelText('Record voice message')).toBeNull();
+  });
 });
 
 const mockItems = [

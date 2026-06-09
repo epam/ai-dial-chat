@@ -73,10 +73,13 @@ The endpoint:
 - `iconUrl?: string` — `icon_url` from DIAL Core
 - `description?: string` — `description` from DIAL Core
 - `interfaces?: string[]` — `interfaces` from DIAL Core (list of interface types supported by the deployment)
+- `inputAttachmentTypes?: string[]` — `input_attachment_types` from DIAL Core; omitted when the source field is absent or null
 
 `DeploymentsResponseDto` SHALL wrap this as `{ deployments: DeploymentItemDto[] }`.
 
 No `any` types are allowed in success response shapes.
+
+The `DeploymentItem` interface in `libs/chat-shared/src/models/deployment.ts` SHALL also gain `inputAttachmentTypes?: string[]`. The deployment mapping in `apps/chat` SHALL copy the field through from `DeploymentItemDto`.
 
 #### Scenario: Model item is mapped correctly
 
@@ -102,6 +105,16 @@ No `any` types are allowed in success response shapes.
 
 - **WHEN** a source item has no `display_name`
 - **THEN** `DeploymentItemDto.displayName` equals the source `id`
+
+#### Scenario: inputAttachmentTypes mapped from DIAL Core
+
+- **WHEN** a DIAL Core model entry has `input_attachment_types: ['audio/*', 'image/*']`
+- **THEN** the mapped `DeploymentItemDto` has `inputAttachmentTypes: ['audio/*', 'image/*']`
+
+#### Scenario: inputAttachmentTypes omitted when absent in source
+
+- **WHEN** a DIAL Core model entry has no `input_attachment_types` field
+- **THEN** the mapped `DeploymentItemDto` has `inputAttachmentTypes` as `undefined`
 
 ---
 

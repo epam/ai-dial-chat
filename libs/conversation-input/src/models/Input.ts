@@ -146,4 +146,22 @@ export interface InputProps {
   }) => ReactNode;
   /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
   isInputDisabled?: boolean;
+  /**
+   * When `true`, the mic button is rendered and voice recording is enabled.
+   * Derived by the host app from the selected deployment's `inputAttachmentTypes`.
+   */
+  isTranscriptionSupported?: boolean;
+  /**
+   * Called when the user confirms a voice recording.
+   * Receives the recorded `File` and its detected MIME type.
+   * Resolves with the DIAL storage URL for the uploaded audio.
+   */
+  onUploadAudio?: (file: File, contentType: string) => Promise<string>;
+  /**
+   * Called after successful audio upload with the DIAL storage URL.
+   * Resolves with the transcript text.
+   */
+  onTranscribeAudio?: (audioUrl: string) => Promise<string>;
+  /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
+  micLabel?: string;
 }
