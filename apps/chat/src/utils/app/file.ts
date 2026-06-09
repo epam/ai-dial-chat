@@ -34,6 +34,7 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import {
+  addTrailingSlashIfAbsent,
   doesHaveDotsInTheEnd,
   getUtf8BytesLength,
   prepareEntityName,
@@ -100,10 +101,12 @@ export const getFileName = (path: string | undefined): string | undefined => {
 export const getNestedEmptyFolderIdsForChosenParent = (
   emptyFolderIds: string[],
   parentFolderId: string,
-): string[] =>
-  emptyFolderIds
-    .filter((id) => `${id}/`.startsWith(parentFolderId))
-    .map((id) => `${id}/`);
+): string[] => {
+  const prefix = addTrailingSlashIfAbsent(parentFolderId);
+  return emptyFolderIds
+    .filter((id) => addTrailingSlashIfAbsent(id).startsWith(prefix))
+    .map((id) => addTrailingSlashIfAbsent(id));
+};
 
 export const getUserCustomContent = (
   files?: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
