@@ -646,7 +646,9 @@ export const filesSlice = createSlice({
     ) => state,
     renameFolderFail: (
       state,
-      { payload }: PayloadAction<{ oldId: string; newId: string }>,
+      {
+        payload,
+      }: PayloadAction<{ oldId: string; newId: string; traceId?: string }>,
     ) => {
       state.folders = state.folders.map((f) =>
         renameFolderAndMoveEntity(f, payload.newId, payload.oldId),

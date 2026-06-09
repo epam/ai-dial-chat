@@ -37,6 +37,7 @@ import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
   isEntityIdExternal,
   isEntityIdLocal,
@@ -316,12 +317,14 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   }),
                   UIActions.setEditorLoader(false),
                 ];
+                const { traceId } = parseApiError(err);
                 if (err.status === 412) {
                   return of({
                     success: false as const,
                     actions: [
                       ...failActions,
                       UIActions.showErrorToast({
+                        traceId,
                         message: translate(
                           CommonI18nKeys.ApplicationNameVersionAlreadyExists,
                           {
@@ -338,6 +341,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   actions: [
                     ...failActions,
                     UIActions.showErrorToast({
+                      traceId,
                       message: translate(
                         CommonI18nKeys.FailedToMoveApplication,
                         {
@@ -656,11 +660,12 @@ const updateApplicationStatusEpic: AppEpic = (action$) =>
             ),
           ),
         ),
-        catchError(() =>
+        catchError((err) =>
           of(
             ApplicationActions.updateFunctionStatusFail({
               id: payload.id,
               status: payload.status,
+              ...parseApiError(err),
             }),
           ),
         ),
@@ -791,6 +796,7 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
         ),
         of(
           UIActions.showErrorToast({
+            traceId: payload?.traceId,
             message: `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase().replace(/ing$/, '')} failed`,
           }),
         ),
@@ -808,7 +814,7 @@ const getApplicationLogsEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error('Failed to get application:', err);
-          return of(ApplicationActions.getLogsFail());
+          return of(ApplicationActions.getLogsFail(parseApiError(err)));
         }),
       ),
     ),

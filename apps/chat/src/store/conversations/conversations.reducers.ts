@@ -130,6 +130,7 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         oldConversation: Conversation;
         newConversation: Conversation;
+        traceId?: string;
       }>,
     ) => {
       state.conversations = state.conversations.map((conv) => {
