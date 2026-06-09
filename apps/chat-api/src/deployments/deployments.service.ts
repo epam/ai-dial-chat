@@ -35,6 +35,7 @@ type RawDeployment = {
   description?: string;
   interfaces?: string | string[];
   application_type_schema_id?: string;
+  input_attachment_types?: string[];
 };
 
 const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
@@ -69,6 +70,9 @@ const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
       type === 'application' && raw.application_type_schema_id
         ? raw.application_type_schema_id
         : undefined,
+    inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
+      ? raw.input_attachment_types
+      : undefined,
   };
 };
 

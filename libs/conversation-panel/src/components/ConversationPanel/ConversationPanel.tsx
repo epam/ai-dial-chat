@@ -1,4 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { SearchInput, SidebarPanel, SidebarSide } from '@epam/ai-dial-sidebar';
 import { type FC, memo, useMemo, useState } from 'react';
 import {
   ConversationSource,
@@ -9,9 +10,6 @@ import { ConversationGroup } from '../ConversationGroup/ConversationGroup';
 import { EmptyState } from '../EmptyState/EmptyState';
 import { FilterTabs } from '../FilterTabs/FilterTabs';
 import { NewChatButton } from '../NewChatButton/NewChatButton';
-import { SearchInput } from '../SearchInput/SearchInput';
-import styles from './ConversationPanel.module.scss';
-import { Header } from './Header/Header';
 import { matchesSearch, matchesTab } from './utils';
 
 /** Collapsible left-side panel showing the user's conversation history. */
@@ -30,7 +28,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     groupLabels,
     styles: panelStyles,
     className,
-    onBackdropClick,
     getActions,
     actionsLabel,
     onToggle,
@@ -116,111 +113,105 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const isEmpty = filteredItems.length === 0;
 
     return (
-      <>
-        {isOpen && onBackdropClick && (
-          <div
-            className="bg-black/40 fixed inset-0 z-40"
-            aria-hidden="true"
-            onClick={onBackdropClick}
-          />
+      <SidebarPanel
+        isOpen={isOpen}
+        side={SidebarSide.Left}
+        title={title}
+        titleClassName={typography?.fontClassName}
+        ariaLabel={title}
+        onClose={onToggle}
+        closeLabel={closeAriaLabel}
+        styles={{
+          colors: {
+            background: colors?.background,
+            border: colors?.border,
+            headerBorder: colors?.headerBorder,
+          },
+          typography: {
+            fontClassName: typography?.fontClassName,
+            fontFamily: hasTypographyClass ? undefined : typography?.fontFamily,
+            fontSize: hasTypographyClass ? undefined : typography?.fontSize,
+          },
+        }}
+        className={mergeClasses(
+          isOpen ? 'w-[325px] border-l border-r mobile:w-full' : 'w-0',
+          className,
         )}
+        bodyClassName="flex flex-col overflow-hidden p-0"
+        cssVars={cssVars}
+      >
+        <NewChatButton
+          label={newChatLabel}
+          onClick={onNewChat}
+          labelClassName={typography?.newChatLabelClassName}
+        />
 
-        <aside
-          aria-label={title}
-          aria-hidden={!isOpen}
-          style={cssVars}
-          className={mergeClasses(
-            'relative z-50 flex h-full min-w-0 flex-shrink-0 flex-col overflow-hidden',
-            'transition-[width] duration-200 ease-in-out',
-            isOpen ? 'w-[320px] border-l border-r mobile:w-full' : 'w-[0px]',
-            styles.panel,
-            className,
-          )}
-        >
-          <Header
-            title={title}
-            titleClassName={typography?.fontClassName}
-            onToggle={onToggle}
-            closeAriaLabel={closeAriaLabel}
-          />
+        <SearchInput
+          placeholder={searchPlaceholder}
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
 
-          {/* New chat button */}
-          <NewChatButton
-            label={newChatLabel}
-            onClick={onNewChat}
-            labelClassName={typography?.newChatLabelClassName}
-          />
+        <FilterTabs
+          activeTab={activeTab}
+          labels={filterLabels}
+          onChange={setActiveTab}
+          tabClassName={typography?.tabClassName}
+          tabColorClassName={typography?.tabColorClassName}
+        />
 
-          {/* Search */}
-          <SearchInput
-            placeholder={searchPlaceholder}
-            value={searchQuery}
-            onChange={setSearchQuery}
-          />
-
-          {/* Filter tabs */}
-          <FilterTabs
-            activeTab={activeTab}
-            labels={filterLabels}
-            onChange={setActiveTab}
-            tabClassName={typography?.tabClassName}
-            tabColorClassName={typography?.tabColorClassName}
-          />
-
-          {/* Conversation list */}
-          <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-2 py-1">
-            {isEmpty ? (
-              <EmptyState
-                label={emptyLabel}
-                labelClassName={typography?.emptyLabelClassName}
+        <div className="flex w-full flex-col gap-2 overflow-y-auto px-2 py-1">
+          {isEmpty ? (
+            <EmptyState
+              label={emptyLabel}
+              labelClassName={typography?.emptyLabelClassName}
+            />
+          ) : (
+            <>
+              <ConversationGroup
+                label={groupLabels?.pinned ?? 'Pinned'}
+                items={pinnedItems}
+                activeConversationId={activeConversationId}
+                onSelectConversation={onSelectConversation}
+                getActions={getActions}
+                actionsLabel={actionsLabel}
+                groupHeaderClassName={typography?.groupHeaderClassName}
+                itemTitleClassName={typography?.itemTitleClassName}
               />
-            ) : (
-              <>
-                <ConversationGroup
-                  label={groupLabels?.pinned ?? 'Pinned'}
-                  items={pinnedItems}
-                  activeConversationId={activeConversationId}
-                  onSelectConversation={onSelectConversation}
-                  getActions={getActions}
-                  actionsLabel={actionsLabel}
-                  groupHeaderClassName={typography?.groupHeaderClassName}
-                  itemTitleClassName={typography?.itemTitleClassName}
-                />
-                <ConversationGroup
-                  label={groupLabels?.myChats ?? 'My chats'}
-                  items={myChatsItems}
-                  activeConversationId={activeConversationId}
-                  onSelectConversation={onSelectConversation}
-                  getActions={getActions}
-                  actionsLabel={actionsLabel}
-                  groupHeaderClassName={typography?.groupHeaderClassName}
-                  itemTitleClassName={typography?.itemTitleClassName}
-                />
-                <ConversationGroup
-                  label={groupLabels?.shared ?? 'Shared'}
-                  items={sharedItems}
-                  activeConversationId={activeConversationId}
-                  onSelectConversation={onSelectConversation}
-                  getActions={getActions}
-                  actionsLabel={actionsLabel}
-                  groupHeaderClassName={typography?.groupHeaderClassName}
-                  itemTitleClassName={typography?.itemTitleClassName}
-                />
-                <ConversationGroup
-                  label={groupLabels?.organization ?? 'Organization'}
-                  items={organizationItems}
-                  activeConversationId={activeConversationId}
-                  onSelectConversation={onSelectConversation}
-                  getActions={getActions}
-                  actionsLabel={actionsLabel}
-                  groupHeaderClassName={typography?.groupHeaderClassName}
-                  itemTitleClassName={typography?.itemTitleClassName}
-                />
-              </>
-            )}
-          </div>
-        </aside>
-      </>
+              <ConversationGroup
+                label={groupLabels?.myChats ?? 'My chats'}
+                items={myChatsItems}
+                activeConversationId={activeConversationId}
+                onSelectConversation={onSelectConversation}
+                getActions={getActions}
+                actionsLabel={actionsLabel}
+                groupHeaderClassName={typography?.groupHeaderClassName}
+                itemTitleClassName={typography?.itemTitleClassName}
+              />
+              <ConversationGroup
+                label={groupLabels?.shared ?? 'Shared'}
+                items={sharedItems}
+                activeConversationId={activeConversationId}
+                onSelectConversation={onSelectConversation}
+                getActions={getActions}
+                actionsLabel={actionsLabel}
+                groupHeaderClassName={typography?.groupHeaderClassName}
+                itemTitleClassName={typography?.itemTitleClassName}
+              />
+              <ConversationGroup
+                label={groupLabels?.organization ?? 'Organization'}
+                items={organizationItems}
+                activeConversationId={activeConversationId}
+                onSelectConversation={onSelectConversation}
+                getActions={getActions}
+                actionsLabel={actionsLabel}
+                groupHeaderClassName={typography?.groupHeaderClassName}
+                itemTitleClassName={typography?.itemTitleClassName}
+              />
+            </>
+          )}
+        </div>
+      </SidebarPanel>
     );
   },
 );

@@ -653,6 +653,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   applicationTypeSchemaId?: string;
+  /**
+   * Accepted MIME types for input attachments from DIAL Core (e.g. ["audio/*", "image/*"])
+   * @type {Array<string>}
+   * @memberof DeploymentItemDto
+   */
+  inputAttachmentTypes?: Array<string>;
 }
 
 /**

@@ -319,10 +319,9 @@ const ConversationPanelView: FC<Props> = ({
         groupLabels={groupLabels}
         getActions={getActions}
         actionsLabel={t(ConversationHistoryI18nKeys.ActionsLabel)}
-        onBackdropClick={isMobile ? onClose : undefined}
         onToggle={isMobile ? onClose : undefined}
         closeAriaLabel={t(ConversationHistoryI18nKeys.ToggleAriaLabel)}
-        className={isMobile ? 'fixed inset-y-0 start-0 z-50' : undefined}
+        className={isMobile ? 'inset-y-0 start-0 z-50' : undefined}
         styles={{ typography: { fontClassName: 'dial-body-text' } }}
       />
 

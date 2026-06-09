@@ -17,6 +17,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 const defaultProps = {
+  isOpen: true,
   side: SidebarSide.Right,
   onClose: vi.fn(),
   ariaLabel: 'Test panel',
@@ -100,7 +101,7 @@ describe('SidebarPanel', () => {
   });
 
   // --- side='left' close placement ---
-  it('side=left: close button is in the left group (first button)', () => {
+  it('side=left: close button is rendered after right actions (last button)', () => {
     render(
       <SidebarPanel
         {...defaultProps}
@@ -111,7 +112,9 @@ describe('SidebarPanel', () => {
       </SidebarPanel>,
     );
     const buttons = screen.getAllByRole('button');
-    expect(buttons[0].getAttribute('aria-label')).toBe('Close');
+    expect(buttons[buttons.length - 1].getAttribute('aria-label')).toBe(
+      'Close',
+    );
   });
 
   it('side=left: applies border-r divider', () => {

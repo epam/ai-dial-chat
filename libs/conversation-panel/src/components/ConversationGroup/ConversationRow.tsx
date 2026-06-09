@@ -60,7 +60,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         aria-current={isActive ? 'page' : undefined}
         onClick={() => onSelectConversation(item.id)}
         className={mergeClasses(
-          'h-8 w-full justify-start gap-2 ps-3',
+          'h-8 w-full justify-start gap-2 rounded-b rounded-t border-l-2 border-transparent ps-3',
           buttonPaddingRight,
           styles.item,
           isActive && styles.itemActive,

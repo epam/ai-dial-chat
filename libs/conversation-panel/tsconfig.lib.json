@@ -33,6 +33,9 @@
   ],
   "references": [
     {
+      "path": "../sidebar/tsconfig.lib.json"
+    },
+    {
       "path": "../conversation-input/tsconfig.lib.json"
     },
     {

@@ -9,11 +9,13 @@ import { resolveCatalogIconUrl } from './icon-path';
 export const attachmentDtoToDisplayAttachment = (
   dto: AttachmentDto,
 ): DisplayAttachment => {
-  const isImage = dto.type.startsWith('image/');
+  const isImage = dto.type?.startsWith('image/') ?? false;
   const id = dto.url ?? dto.data ?? dto.title;
   const previewUrl = dto.url
     ? resolveCatalogIconUrl(dto.url)
-    : `data:${dto.type};base64,${dto.data}`;
+    : dto.type && dto.data
+      ? `data:${dto.type};base64,${dto.data}`
+      : undefined;
 
   return {
     id,
@@ -22,7 +24,7 @@ export const attachmentDtoToDisplayAttachment = (
     type: isImage ? AttachmentType.Image : AttachmentType.File,
     status: RequestStatus.Idle,
     ...(dto.url ? { url: dto.url } : {}),
-    ...(isImage && (dto.url || dto.data) ? { previewUrl } : {}),
+    ...(isImage && (dto.url || dto.data) && dto.type ? { previewUrl } : {}),
   };
 };
 
