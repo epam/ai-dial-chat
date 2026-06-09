@@ -7,6 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { topicToOption } from '@/src/utils/app/application';
 import { getLastPathSegment } from '@/src/utils/app/common';
 import { preventEnterDown } from '@/src/utils/app/forms';
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { ScreenState } from '@/src/types/common';
 import { ToolsetModel } from '@/src/types/toolsets';
@@ -58,11 +59,19 @@ export const GeneralForm = ({
   const screenState = useScreenState();
   const isMobileView = screenState === ScreenState.SM;
   const isEditing = !!toolset;
+  const isLoggedIn = toolset && isToolsetSignedIn(toolset);
 
   const { register, control } = useFormContext<ToolsetEditorForm>();
   const { errors, isValid } = useFormState<ToolsetEditorForm>({ control });
 
   const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
+
+  const disabledReason = useMemo(() => {
+    if (isToolsetPublic) return PUBLIC_TOOLSET_TOOLTIP;
+    if (isLoggedIn) return t(CommonI18nKeys.LogOutBeforeEditingToolset);
+
+    return undefined;
+  }, [isLoggedIn, isToolsetPublic, t]);
 
   const getLogoId = useCallback(
     (filesIds: string[]) => files.find((f) => f.id === filesIds[0])?.id,
@@ -88,9 +97,9 @@ export const GeneralForm = ({
           mandatory
           placeholder={t(CommonI18nKeys.TypeName)}
           id="name"
-          disabled={isToolsetPublic}
+          disabled={!!disabledReason}
           error={errors.name?.message}
-          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
+          tooltip={disabledReason}
         />
         <Field
           {...register('version')}
@@ -99,8 +108,8 @@ export const GeneralForm = ({
           mandatory
           placeholder={DEFAULT_VERSION}
           id="version"
-          disabled={isToolsetPublic}
-          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
+          disabled={!!disabledReason}
+          tooltip={disabledReason}
           error={errors.version?.message}
           name="version"
         />
