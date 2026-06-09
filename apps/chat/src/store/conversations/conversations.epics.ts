@@ -526,7 +526,13 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               console.error(
                 'Creation failed: no models were found for conversation',
               );
-              return EMPTY;
+              return of(
+                ConversationsActions.uploadConversationsByIdsSuccess({
+                  setIds: new Set<string>(),
+                  conversations: [],
+                  showLoader: true,
+                }),
+              );
             }
 
             const nonLocalConversations =
