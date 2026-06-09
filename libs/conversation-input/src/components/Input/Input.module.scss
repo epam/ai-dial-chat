@@ -62,6 +62,15 @@
     }
   }
 
+  &:active {
+    .modelSelectorCaret {
+      background: var(
+        --ci-model-selector-hover-bg,
+        var(--controls-bg-accent-primary-alpha-active, #7da4ff4d)
+      );
+    }
+  }
+
   &.modelSelectorButtonDisabled {
     color: var(
       --ci-model-selector-disabled-color,

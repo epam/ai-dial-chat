@@ -18,12 +18,12 @@ export interface NewChatButtonProps {
 /** Full-width button rendered at the top of the conversation panel to start a new chat. */
 export const NewChatButton: FC<NewChatButtonProps> = memo(
   ({ label, onClick, labelClassName = 'dial-small-text' }) => (
-    <div className={mergeClasses('border-b', panelStyles.divider)}>
+    <div className={mergeClasses('border-b px-2 py-1', panelStyles.divider)}>
       <button
         onClick={onClick}
         type="button"
         className={mergeClasses(
-          'flex h-[40px] w-full cursor-pointer items-center gap-2 px-5 py-1',
+          'flex h-[32px] w-full cursor-pointer items-center gap-2 px-5 py-1',
           styles.button,
         )}
       >

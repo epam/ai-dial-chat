@@ -52,7 +52,7 @@ const ConversationSourcesPanel: FC<Props> = ({ messages }) => {
       {isEmpty ? (
         <div className="flex h-full flex-col items-center justify-center gap-2 text-secondary">
           <IconFileDescription aria-hidden size={60} stroke={1} />
-          <p className="dial-small-text text-center">
+          <p className="dial-small-text text-center text-primary">
             {t(SidebarI18nKeys.Empty)}
           </p>
         </div>
