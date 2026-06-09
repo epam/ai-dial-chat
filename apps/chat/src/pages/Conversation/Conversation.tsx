@@ -1,5 +1,5 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
-import {
+import type {
+  Attachment,
   isAudioTranscriptionSupported,
   type Conversation,
   type Message,
@@ -27,13 +27,13 @@ import { useConversationHandlers } from '../../hooks/conversation/useConversatio
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
 import {
-  getConversation as apiGetConversation,
-  saveConversation,
-} from '../../server-api/conversations.api';
-import {
   transcribeAudio,
   transcribeAudioWithAsrModel,
 } from '../../server-api/chat.api';
+import {
+  getConversation as apiGetConversation,
+  saveConversation,
+} from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { decodeConversationId } from '../../utils/conversation-path';

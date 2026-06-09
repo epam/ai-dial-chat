@@ -1,6 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { ConfigService } from '@nestjs/config';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { EnvironmentVariables } from '../config/environment.config';
 import { AppConfigDto } from './dto/app-config.dto';
 
@@ -16,8 +16,7 @@ export class AppConfigController {
   @ApiResponse({ status: 200, type: AppConfigDto })
   getConfig(): AppConfigDto {
     return {
-      asrModelId:
-        this.configService.get('ASR_MODEL', { infer: true }) ?? null,
+      asrModelId: this.configService.get('ASR_MODEL', { infer: true }) ?? null,
       transcribeSizeLimitBytes:
         this.configService.get('TRANSCRIBE_SIZE_LIMIT_BYTES', {
           infer: true,

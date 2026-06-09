@@ -9,7 +9,8 @@ export class AppConfigDto {
   asrModelId!: string | null;
 
   @ApiProperty({
-    description: 'Maximum audio file size in bytes accepted by the transcription endpoint.',
+    description:
+      'Maximum audio file size in bytes accepted by the transcription endpoint.',
   })
   transcribeSizeLimitBytes!: number;
 }
