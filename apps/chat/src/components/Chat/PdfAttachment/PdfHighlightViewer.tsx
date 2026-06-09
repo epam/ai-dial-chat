@@ -221,7 +221,9 @@ export const PdfHighlightViewer = ({ url }: Props) => {
         viewerRef.current
           .getThumbnailsDataUrl(pages, THUMBNAIL_OPTIONS)
           .then((map) => setThumbnails((prev) => new Map([...prev, ...map])))
-          .catch(() => {});
+          .catch((e) => {
+            console.error('Error fetching thumbnails:', e);
+          });
       },
       { threshold: 0 },
     );
