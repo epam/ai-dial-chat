@@ -1,21 +1,19 @@
 .scrollContainer {
   scrollbar-width: thin;
-  scrollbar-color: var(--stroke-primary, #696e7c) var(--bg-layer-3, #1d2439);
+  scrollbar-color: var(--bg-layer-4, #242c42) transparent;
   scrollbar-gutter: stable;
 
   &::-webkit-scrollbar {
-    height: 0.5rem;
+    height: 4px;
   }
 
   &::-webkit-scrollbar-track {
-    background: var(--bg-layer-3, #1d2439);
-    border-radius: 9999px;
+    background-color: transparent;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--stroke-primary, #696e7c);
-    border: 2px solid var(--bg-layer-3, #1d2439);
-    border-radius: 9999px;
+    background-color: var(--bg-layer-4, #242c42);
+    border-radius: 4px;
   }
 }
 
