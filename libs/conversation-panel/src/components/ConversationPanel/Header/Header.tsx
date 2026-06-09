@@ -31,7 +31,7 @@ export const Header: FC<HeaderProps> = memo(
       <span
         className={mergeClasses(
           'min-w-0 flex-1 truncate ps-2',
-          styles.headerTitle,
+          !titleClassName && styles.headerTitle,
           titleClassName,
         )}
       >

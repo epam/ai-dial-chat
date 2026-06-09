@@ -1,5 +1,6 @@
 import {
   BASE_ICON_SIZE,
+  DIAL_ICON_SIZE,
   DialDropdown,
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
@@ -56,7 +57,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
     return (
       <>
         <DialGhostIconButton
-          icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
+          icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
           aria-label={addMenuLabel}
           className="size-10 flex-shrink-0"
           disabled={isDisabled}
@@ -82,7 +83,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       items={menuItems}
     >
       <DialGhostIconButton
-        icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
+        icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
         aria-label={addMenuLabel}
         className="size-10 flex-shrink-0"
         disabled={isDisabled}
