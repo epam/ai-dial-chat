@@ -47,7 +47,7 @@ export const FilterTabs: FC<FilterTabsProps> = memo(
           selected={activeTab === value}
           onClick={() => onChange(value)}
           className={mergeClasses(
-            'border border-primary px-2 py-1',
+            'box-border border border-primary px-[7px] py-1',
             tabClassName,
             tabColorClassName,
             activeTab === value &&
