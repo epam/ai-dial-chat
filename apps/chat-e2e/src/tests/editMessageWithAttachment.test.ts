@@ -244,10 +244,10 @@ dialTest(
         const request = await chat.saveAndSubmitRequest();
         expect
           .soft(
-            request.messages[0].custom_content.attachments.length,
+            request.messages[0].custom_content.attachments,
             ExpectedMessages.requestCustomContentIsValid,
           )
-          .toBe(0);
+          .toHaveLength(0);
       },
     );
   },
@@ -369,10 +369,10 @@ dialTest(
         const request = await chat.saveAndSubmitRequest();
         expect
           .soft(
-            request.messages[0].custom_content.attachments.length,
+            request.messages[0].custom_content.attachments,
             ExpectedMessages.attachedFilesCountIsValid,
           )
-          .toBe(updatedAttachedFiles.length);
+          .toHaveLength(updatedAttachedFiles.length);
         for (const file of updatedAttachedFiles) {
           expect
             .soft(

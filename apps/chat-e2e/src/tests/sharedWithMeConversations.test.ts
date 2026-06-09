@@ -785,8 +785,8 @@ dialSharedWithMeTest(
           sharedFolderEntity!.url,
         );
         expect
-          .soft(sharedItems.length, ExpectedMessages.conversationIsNotShared)
-          .toBe(0);
+          .soft(sharedItems, ExpectedMessages.conversationIsNotShared)
+          .toHaveLength(0);
       },
     );
   },
