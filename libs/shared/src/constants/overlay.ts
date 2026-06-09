@@ -7,6 +7,7 @@ export enum OverlayRequests {
   updateMessage = 'UPDATE_MESSAGE',
   setInputContent = 'SET_INPUT_CONTENT',
   setSystemPrompt = 'SET_SYSTEM_PROMPT',
+  setTemperature = 'SET_TEMPERATURE',
   setOverlayOptions = 'SET_OVERLAY_OPTIONS',
   getConversations = 'GET_CONVERSATIONS',
   getSelectedConversations = 'GET_SELECTED_CONVERSATIONS',
