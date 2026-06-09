@@ -88,6 +88,7 @@ const BASE_PROPS = {
   onNewChat: vi.fn(),
   title: 'Chats',
   emptyLabel: 'No conversations yet',
+  noResultsLabel: 'No results found',
   newChatLabel: 'New chat',
   searchPlaceholder: 'Search chat…',
   filterLabels: FILTER_LABELS,

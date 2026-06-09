@@ -1,4 +1,9 @@
-import { SearchInput, SidebarPanel, SidebarSide } from '@epam/ai-dial-sidebar';
+import {
+  PanelEmptyState,
+  SearchInput,
+  SidebarPanel,
+  SidebarSide,
+} from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import {
   IconDownload,
@@ -77,19 +82,15 @@ const ConversationSourcesPanel: FC = () => {
       />
       <div className="flex-1 overflow-y-auto p-4">
         {isEmpty ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-secondary">
-            <IconFileDescription aria-hidden size={60} stroke={1} />
-            <p className="dial-small-text text-center text-primary">
-              {t(SidebarI18nKeys.Empty)}
-            </p>
-          </div>
+          <PanelEmptyState
+            icon={<IconFileDescription aria-hidden size={60} stroke={1} />}
+            label={t(SidebarI18nKeys.Empty)}
+          />
         ) : isNoResults ? (
-          <div className="flex h-full flex-col items-center justify-center gap-2 text-secondary">
-            <IconSearchOff aria-hidden size={45} stroke={1} />
-            <p className="dial-small-text text-center text-primary">
-              {t(SidebarI18nKeys.NoResults)}
-            </p>
-          </div>
+          <PanelEmptyState
+            icon={<IconSearchOff aria-hidden size={45} stroke={1} />}
+            label={t(SidebarI18nKeys.NoResults)}
+          />
         ) : (
           <>
             <FilesSection

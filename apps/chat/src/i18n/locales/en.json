@@ -118,6 +118,7 @@
     "title": "Chats",
     "toggleAriaLabel": "Conversation panel",
     "empty": "No conversations yet",
+    "noResults": "No results found",
     "newChat": "New chat",
     "searchPlaceholder": "Search chat…",
     "filterAll": "All",

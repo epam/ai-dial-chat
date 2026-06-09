@@ -106,6 +106,7 @@ export enum ConversationHistoryI18nKeys {
   Title = 'conversationHistory.title',
   ToggleAriaLabel = 'conversationHistory.toggleAriaLabel',
   Empty = 'conversationHistory.empty',
+  NoResults = 'conversationHistory.noResults',
   NewChat = 'conversationHistory.newChat',
   SearchPlaceholder = 'conversationHistory.searchPlaceholder',
   FilterAll = 'conversationHistory.filterAll',
