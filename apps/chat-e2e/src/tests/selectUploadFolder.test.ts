@@ -7,9 +7,9 @@ import {
 } from '@/src/testData';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
+import { BaseElement } from '@/src/ui/webElements';
 import { GeneratorUtil, RegexUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
-import { Locator } from '@playwright/test';
 
 dialTest(
   '[Select folder] Create new folder on the root level.\n' +
@@ -145,7 +145,7 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-3248', 'EPMRTC-3249');
     const nameWithRestrictedChars = `Folder${ExpectedConstants.restrictedNameChars}name`;
-    let folderInput: Locator;
+    let folderInput: BaseElement;
 
     await dialTest.step(
       'Copy restricted symbols into buffer, open "Upload from device" modal through chat side bar clip icon and click on "Change" link',
@@ -168,10 +168,8 @@ dialTest(
       'Click "Create new folder" icon, type one by one restricted symbols and verify error is displayed',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        folderInput = selectFolderManagerModalGrid
-          .getRenameInput()
-          .getElementLocator();
-        await folderInput.fill(ExpectedConstants.restrictedNameChars);
+        folderInput = selectFolderManagerModalGrid.getRenameInput();
+        await folderInput.fillInInput(ExpectedConstants.restrictedNameChars);
         await selectFolderManagerModalGridAssertion.assertInputError(
           'visible',
           ExpectedConstants.restrictedNameChars,
@@ -188,10 +186,6 @@ dialTest(
         //TODO ctrl+a doesn't work here
         // await page.keyboard.press(keys.ctrlPlusA);
         await page.keyboard.press(keys.ctrlPlusV);
-        folderInput = selectFolderManagerModalGrid
-          .getRenameInput()
-          .getElementLocator();
-        await folderInput.press('Enter');
         await selectFolderManagerModalGridAssertion.assertInputError(
           'visible',
           nameWithRestrictedChars,
@@ -365,6 +359,7 @@ dialTest(
     selectFolderManagerModal,
     selectFolderManagerModalGrid,
     selectFolderManagerModalGridAssertion,
+    page,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-3017', 'EPMRTC-3246', 'EPMRTC-6718', 'EPMRTC-3291');
@@ -403,16 +398,18 @@ dialTest(
       'Create new folder with trailing dot name and verify inline error is shown',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        await selectFolderManagerModalGrid.setFolderName(
-          nameWithTrailingDot,
-          false,
-        );
+        await selectFolderManagerModalGrid
+          .getRenameInput()
+          .fillInInput(nameWithTrailingDot);
         await selectFolderManagerModalGridAssertion.assertInputError(
           'visible',
           nameWithTrailingDot,
         );
-        //TODO escape closes the modal. Probably bug
-        // await page.keyboard.press('Escape');
+        await page.keyboard.press(keys.enter);
+        await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
+          ExpectedConstants.newFolderWithIndexTitle(1),
+          'visible',
+        );
       },
     );
 
@@ -420,13 +417,18 @@ dialTest(
       'Create new folder with already existing name and verify inline error is shown',
       async () => {
         await selectFolderManagerModal.getAddFolderButton().click();
-        await selectFolderManagerModalGrid.setFolderName(folder1Name, false);
+        await selectFolderManagerModalGrid
+          .getRenameInput()
+          .fillInInput(folder1Name);
         await selectFolderManagerModalGridAssertion.assertInputError(
           'visible',
           folder1Name,
         );
-        //TODO escape closes the modal. Probably bug
-        // await page.keyboard.press('Escape');
+        await page.keyboard.press(keys.enter);
+        await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
+          ExpectedConstants.newFolderWithIndexTitle(2),
+          'visible',
+        );
       },
     );
 
@@ -477,11 +479,13 @@ dialTest(
     );
 
     await dialTest.step(
-      'Set new folder name empty or to spaces, confirm and verify inline error is shown',
+      'Set new folder name empty or to spaces and verify inline error is shown',
       async () => {
         const nameWithSpaces = GeneratorUtil.randomArrayElement(['', '  ']);
         await selectFolderManagerModal.getAddFolderButton().click();
-        await selectFolderManagerModalGrid.setFolderName(nameWithSpaces, false);
+        await selectFolderManagerModalGrid
+          .getRenameInput()
+          .fillInInput(nameWithSpaces);
         await selectFolderManagerModalGridAssertion.assertInputError(
           'visible',
           nameWithSpaces,
