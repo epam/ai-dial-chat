@@ -30,6 +30,10 @@ export interface AttachmentCardProps {
   onRetry?: (id: string) => void;
   /** Called when the user clicks or activates a pasted-text card to expand its content back into the input. */
   onExpand?: (id: string) => void;
+  /** Called when the user activates the download button. If undefined, the download button is not shown. */
+  onDownload?: (id: string) => void;
+  /** Accessible label for the download button. Defaults to `'Download'`. */
+  downloadLabel?: string;
   /** Renders the card in selected state (accent border + tinted background). */
   isSelected?: boolean;
   /** Forces action buttons to be always visible regardless of hover/focus state. */

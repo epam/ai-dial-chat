@@ -57,6 +57,10 @@ interface BaseMessageBubbleProps {
   isStreaming?: boolean;
   /** Display attachments associated with the message. Rendered above text for user messages and below text for assistant messages. */
   attachments?: DisplayAttachment[];
+  /** Called when the user activates the download button on an attachment card. When undefined, no download button is shown. */
+  onDownloadAttachment?: (id: string) => void;
+  /** Accessible label for attachment card download buttons. Forwarded to `AttachmentTray`. */
+  downloadAttachmentLabel?: string;
 }
 
 /** Props accepted by the `UserMessageBubble` component. */

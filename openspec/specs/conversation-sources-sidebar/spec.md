@@ -248,7 +248,7 @@ For both states:
 
 For `UploadedFilesSection` and `GeneratedFilesSection`:
 
-- When `attachments.length > 0`: render a 3-column grid (`role="list"`) where each cell (`role="listitem"`) wraps a read-only `AttachmentCard` (no `onRemove`, no `onRetry`) sized `w-full` with no fixed height — the card content determines the height so the layout adapts to varying screen sizes and font scales.
+- When `attachments.length > 0`: render a 3-column grid (`role="list"`) where each cell (`role="listitem"`) wraps an `AttachmentCard` sized `w-full`. For attachments that have a remote `url`, pass `onDownload` and `downloadLabel` so the card renders a per-card download button. For attachments without a `url` (inline base64), omit `onDownload` so no download button is shown.
 - When `attachments.length === 0`: render the `emptyMessage` text in place of the grid.
 
 For `SourcesSection`:
@@ -275,10 +275,20 @@ For `SourcesSection`:
 - **WHEN** `SourcesSection` is rendered
 - **THEN** it shows the title followed by the empty-message text, regardless of any other state
 
-#### Scenario: Read-only attachment cards
+#### Scenario: Download button present for URL-backed attachments
 
-- **WHEN** any rendered `AttachmentCard` inside a section is inspected
-- **THEN** no remove (×) or retry (↺) controls are present
+- **WHEN** an `AttachmentCard` inside a section is rendered for an attachment with a non-empty `url`
+- **THEN** a download button is present and labelled with the `sidebar.sources.downloadFile` i18n string
+
+#### Scenario: Download button absent for inline attachments
+
+- **WHEN** an `AttachmentCard` inside a section is rendered for an attachment whose `url` is absent
+- **THEN** no download button is rendered on that card
+
+#### Scenario: Download button triggers file download
+
+- **WHEN** the user activates the download button on a URL-backed attachment card
+- **THEN** the browser initiates a file download for the attachment
 
 ---
 
@@ -311,9 +321,25 @@ All user-visible strings in the right sidebar (toggle aria-labels, panel aria-la
 #### Scenario: New keys added to en.json
 
 - **WHEN** `apps/chat/src/i18n/locales/en.json` is inspected
-- **THEN** it contains keys `sidebar.base.toggleOpen`, `sidebar.base.toggleClose`, `sidebar.base.close`, `sidebar.sources.ariaLabel`, `sidebar.sources.search`, `sidebar.sources.downloadAll`, `sidebar.sources.sections.uploadedFiles`, `sidebar.sources.sections.generatedFiles`, `sidebar.sources.sections.sources`, `sidebar.sources.empty.noData`, `sidebar.sources.empty.uploadedFiles`, `sidebar.sources.empty.generatedFiles`, `sidebar.sources.empty.sources`
+- **THEN** it contains keys `sidebar.base.toggleOpen`, `sidebar.base.toggleClose`, `sidebar.base.close`, `sidebar.sources.ariaLabel`, `sidebar.sources.search`, `sidebar.sources.downloadAll`, `sidebar.sources.downloadFile`, `sidebar.sources.sections.uploadedFiles`, `sidebar.sources.sections.generatedFiles`, `sidebar.sources.sections.sources`, `sidebar.sources.empty.noData`, `sidebar.sources.empty.uploadedFiles`, `sidebar.sources.empty.generatedFiles`, `sidebar.sources.empty.sources`
 
 #### Scenario: Components consume the typed key map
 
 - **WHEN** any sidebar component reads an i18n string
 - **THEN** it does so via `t(SidebarI18nKeys.<Member>)`, not via a hardcoded English literal
+
+---
+
+### Requirement: Per-card download i18n key
+
+`apps/chat/src/i18n/locales/en.json` SHALL define the key `sidebar.sources.downloadFile` with the value `"Download file"`. `SidebarI18nKeys` SHALL expose a corresponding `DownloadFile` member mapping to `'sidebar.sources.downloadFile'`.
+
+#### Scenario: Key present in en.json
+
+- **WHEN** `apps/chat/src/i18n/locales/en.json` is inspected
+- **THEN** it contains `"downloadFile": "Download file"` nested under `sidebar.sources`
+
+#### Scenario: Typed key member exists
+
+- **WHEN** `SidebarI18nKeys` is inspected
+- **THEN** it exposes `DownloadFile = 'sidebar.sources.downloadFile'`

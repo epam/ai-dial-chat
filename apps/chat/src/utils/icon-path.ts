@@ -21,7 +21,7 @@ const isDialFileId = (url: string): boolean => url.startsWith('files/');
  * The path segment may be percent-encoded; it is decoded before being passed
  * as a query parameter so the server receives the plain filename.
  */
-const resolveDialFileUrl = (fileId: string): string | undefined => {
+export const resolveDialFileUrl = (fileId: string): string | undefined => {
   const withoutPrefix = fileId.slice('files/'.length);
   const slashIdx = withoutPrefix.indexOf('/');
   if (slashIdx < 0) return undefined;

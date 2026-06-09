@@ -24,6 +24,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   hasAlwaysVisibleActions,
   isStreaming,
   attachments,
+  onDownloadAttachment,
+  downloadAttachmentLabel,
   afterContent,
   starters,
   onSelectStarter,
@@ -86,7 +88,11 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               />
             </div>
           )}
-          <AttachmentTray attachments={attachments ?? []} />
+          <AttachmentTray
+            attachments={attachments ?? []}
+            onDownload={onDownloadAttachment}
+            downloadLabel={downloadAttachmentLabel}
+          />
           {afterContent}
           <MessageActions
             {...actions}

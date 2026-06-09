@@ -10,7 +10,7 @@ import {
   DialSpinner,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { IconReload, IconX } from '@tabler/icons-react';
+import { IconDownload, IconReload, IconX } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, type MouseEvent, useMemo } from 'react';
 import type { AttachmentCardProps } from '../../models/AttachmentCard';
 import { getAttachmentCardState } from '../../utils/getAttachmentCardState';
@@ -22,10 +22,12 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   onRemove,
   onRetry,
   onExpand,
+  onDownload,
   isSelected,
   shouldAlwaysShowActions,
   removeLabel = 'Remove attachment',
   retryLabel = 'Retry upload',
+  downloadLabel = 'Download',
   colors,
   typography,
   roundedClassName = 'rounded',
@@ -156,6 +158,18 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 mobile:opacity-100',
           )}
         >
+          {onDownload && (
+            <DialGhostIconButton
+              icon={<IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              size={ElementSize.Small}
+              className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
+              aria-label={downloadLabel}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                onDownload(id);
+              }}
+            />
+          )}
           {isError && onRetry && (
             <DialGhostIconButton
               icon={<IconReload size={DIAL_ICON_SIZE.SM} aria-hidden />}

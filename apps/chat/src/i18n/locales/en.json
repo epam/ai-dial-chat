@@ -82,7 +82,7 @@
   },
   "conversationInput": {
     "attach": { "label": "Attach file" },
-    "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
+    "attachment": { "remove": "Remove attachment", "retry": "Retry upload", "download": "Download" },
     "attachmentTray": { "label": "Attached files" }
   },
   "sidebar": {
@@ -95,6 +95,7 @@
       "ariaLabel": "Conversation sources",
       "search": "Search",
       "downloadAll": "Download all",
+      "downloadFile": "Download file",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",

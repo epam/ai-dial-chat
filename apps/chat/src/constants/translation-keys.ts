@@ -122,6 +122,10 @@ export enum ConversationHistoryI18nKeys {
   RenameTitleTooLong = 'conversationHistory.renameTitleTooLong',
 }
 
+export enum ConversationInputI18nKeys {
+  AttachmentDownload = 'conversationInput.attachment.download',
+}
+
 export enum SidebarI18nKeys {
   ToggleOpen = 'sidebar.base.toggleOpen',
   ToggleClose = 'sidebar.base.toggleClose',
@@ -129,6 +133,7 @@ export enum SidebarI18nKeys {
   AriaLabel = 'sidebar.sources.ariaLabel',
   Search = 'sidebar.sources.search',
   DownloadAll = 'sidebar.sources.downloadAll',
+  DownloadFile = 'sidebar.sources.downloadFile',
   SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
   SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
   SectionSources = 'sidebar.sources.sections.sources',

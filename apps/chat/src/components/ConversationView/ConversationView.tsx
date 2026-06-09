@@ -32,6 +32,7 @@ import {
   ActionsI18nKeys,
   ChatI18nKeys,
   ConversationI18nKeys,
+  ConversationInputI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -355,6 +356,9 @@ const ConversationView: FC<Props> = ({
                   formatStatusModelChangedBody={formatStatusModelChangedBody}
                   streamErrorText={streamErrorText}
                   thinkingLabel={t(ChatI18nKeys.Thinking)}
+                  downloadAttachmentLabel={t(
+                    ConversationInputI18nKeys.AttachmentDownload,
+                  )}
                 />
               );
             })}

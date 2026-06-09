@@ -16,6 +16,10 @@ export interface AttachmentTrayProps {
   removeLabel?: string;
   /** Accessible label for each card's retry button (error state only). */
   retryLabel?: string;
+  /** Called when the user activates the download button on an attachment card. When undefined, no download button is shown. */
+  onDownload?: (id: string) => void;
+  /** Accessible label for each card's download button. Defaults to `'Download'`. */
+  downloadLabel?: string;
   /** Extra class name(s) merged onto the root element. */
   className?: string;
 }

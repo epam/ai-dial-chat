@@ -29,6 +29,8 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   actions,
   hasAlwaysVisibleActions,
   attachments,
+  onDownloadAttachment,
+  downloadAttachmentLabel,
   collapsedLineCount = DEFAULT_COLLAPSED_LINE_COUNT,
   showMoreLabel = 'Show more',
   showLessLabel = 'Show less',
@@ -81,7 +83,12 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
       <div className="ms-auto flex w-fit flex-col items-end gap-4">
-        <AttachmentTray attachments={attachments ?? []} />
+        <AttachmentTray
+          attachments={attachments ?? []}
+          onDownload={onDownloadAttachment}
+          downloadLabel={downloadAttachmentLabel}
+          className="justify-end"
+        />
         {text && (
           <div
             className={mergeClasses(

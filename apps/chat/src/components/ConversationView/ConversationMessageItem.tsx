@@ -14,8 +14,9 @@ import {
 } from '@epam/ai-dial-conversation-messages';
 import { StagesPanel } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { FC, lazy, memo, Suspense } from 'react';
+import { FC, lazy, memo, Suspense, useCallback, useMemo } from 'react';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
+import { downloadAttachment } from '../../utils/download-attachment';
 import { messageHasStages } from '../../utils/message-utils';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
@@ -73,6 +74,7 @@ interface Props {
   formatStatusModelChangedBody: (from: string, to: string) => string;
   streamErrorText: string;
   thinkingLabel: string;
+  downloadAttachmentLabel: string;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -105,7 +107,23 @@ const ConversationMessageItem: FC<Props> = ({
   formatStatusModelChangedBody,
   streamErrorText,
   thinkingLabel,
+  downloadAttachmentLabel,
 }) => {
+  const msgAttachments = msg.custom_content?.attachments;
+  const displayAttachments = useMemo(
+    () => attachmentDtosToDisplayAttachments(msgAttachments),
+    [msgAttachments],
+  );
+
+  const handleDownloadAttachment = useCallback(
+    (id: string) => {
+      const att = displayAttachments.find((a) => a.id === id);
+      if (!att?.url) return;
+      downloadAttachment(att.url, att.name ?? id);
+    },
+    [displayAttachments],
+  );
+
   const isStreaming = isStreamingMessage(
     msg.role,
     index,
@@ -123,9 +141,7 @@ const ConversationMessageItem: FC<Props> = ({
             <MessageBubble
               role={msg.role}
               text={msg.content}
-              attachments={attachmentDtosToDisplayAttachments(
-                msg.custom_content?.attachments,
-              )}
+              attachments={displayAttachments}
               showMoreLabel={showMoreLabel}
               showLessLabel={showLessLabel}
               showMoreAriaLabel={showMoreUserMessageAriaLabel}
@@ -136,9 +152,7 @@ const ConversationMessageItem: FC<Props> = ({
         >
           <EditMessageInput
             message={msg.content}
-            initialAttachments={attachmentDtosToDisplayAttachments(
-              msg.custom_content?.attachments,
-            )}
+            initialAttachments={displayAttachments}
             onCancel={() => onCancelEdit?.(index)}
             onSave={(text, kept, added) =>
               onEditMessage?.(index, text, kept, added)
@@ -181,9 +195,9 @@ const ConversationMessageItem: FC<Props> = ({
     <MessageBubble
       role={msg.role}
       text={msg.content}
-      attachments={attachmentDtosToDisplayAttachments(
-        msg.custom_content?.attachments,
-      )}
+      attachments={displayAttachments}
+      onDownloadAttachment={handleDownloadAttachment}
+      downloadAttachmentLabel={downloadAttachmentLabel}
       isStreaming={isStreaming}
       hasAlwaysVisibleActions={!isStreaming}
       actions={buildMessageActions(
