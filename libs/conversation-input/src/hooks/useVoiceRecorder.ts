@@ -1,12 +1,18 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
 /** Possible states of the voice recorder lifecycle. */
-export type VoiceRecorderState =
-  | 'idle'
-  | 'recording'
-  | 'stopped'
-  | 'uploading'
-  | 'error';
+export enum VoiceRecorderState {
+  /** Microphone is not active; no recording in progress. */
+  Idle = 'idle',
+  /** Microphone is open and audio is being captured. */
+  Recording = 'recording',
+  /** Recording has ended; awaiting user confirmation or discard. */
+  Stopped = 'stopped',
+  /** Audio is being uploaded and transcribed. */
+  Uploading = 'uploading',
+  /** An error occurred during recording, upload, or transcription. */
+  Error = 'error',
+}
 
 /** Options accepted by `useVoiceRecorder`. */
 export interface UseVoiceRecorderOptions {
@@ -58,7 +64,9 @@ export const useVoiceRecorder = ({
   onTranscribeAudio,
   onTranscript,
 }: UseVoiceRecorderOptions): UseVoiceRecorderResult => {
-  const [state, setState] = useState<VoiceRecorderState>('idle');
+  const [state, setState] = useState<VoiceRecorderState>(
+    VoiceRecorderState.Idle,
+  );
   const [waveformData, setWaveformData] = useState<Float32Array | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -126,7 +134,7 @@ export const useVoiceRecorder = ({
         };
 
         recorder.start();
-        setState('recording');
+        setState(VoiceRecorderState.Recording);
 
         // Start waveform sampling loop
         const sample = () => {
@@ -149,7 +157,7 @@ export const useVoiceRecorder = ({
         const msg =
           err instanceof Error ? err.message : 'Microphone access denied';
         setErrorMessage(msg);
-        setState('error');
+        setState(VoiceRecorderState.Error);
       }
     };
     void run();
@@ -170,7 +178,7 @@ export const useVoiceRecorder = ({
       recordedFileRef.current = new File([blob], `recording.${ext}`, {
         type: effectiveMime,
       });
-      setState('stopped');
+      setState(VoiceRecorderState.Stopped);
     };
 
     recorder.stop();
@@ -181,7 +189,7 @@ export const useVoiceRecorder = ({
     if (!file || !onUploadAudio || !onTranscribeAudio) return;
 
     cancelledRef.current = false;
-    setState('uploading');
+    setState(VoiceRecorderState.Uploading);
 
     const run = async () => {
       try {
@@ -196,13 +204,13 @@ export const useVoiceRecorder = ({
         recordedFileRef.current = null;
         setWaveformData(null);
         setErrorMessage(null);
-        setState('idle');
+        setState(VoiceRecorderState.Idle);
         onTranscript?.(transcript);
       } catch (err) {
         if (cancelledRef.current) return;
         const msg = err instanceof Error ? err.message : 'Transcription failed';
         setErrorMessage(msg);
-        setState('error');
+        setState(VoiceRecorderState.Error);
       }
     };
     void run();
@@ -214,7 +222,7 @@ export const useVoiceRecorder = ({
     recordedFileRef.current = null;
     setWaveformData(null);
     setErrorMessage(null);
-    setState('idle');
+    setState(VoiceRecorderState.Idle);
   }, [cleanupMedia]);
 
   // Release media resources if the component unmounts mid-recording or mid-upload

@@ -13,7 +13,7 @@ import {
   useEffect,
   useRef,
 } from 'react';
-import type { VoiceRecorderState } from '../../hooks/useVoiceRecorder';
+import { VoiceRecorderState } from '../../hooks/useVoiceRecorder';
 import styles from './VoiceBar.module.scss';
 
 const BAR_WIDTH = 3;
@@ -72,9 +72,9 @@ export const VoiceBar: FC<VoiceBarProps> = ({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const waveformDataRef = useRef<Float32Array | null>(null);
   const isRecordingRef = useRef(false);
-  const isRecording = state === 'recording';
-  const isUploading = state === 'uploading';
-  const isError = state === 'error';
+  const isRecording = state === VoiceRecorderState.Recording;
+  const isUploading = state === VoiceRecorderState.Uploading;
+  const isError = state === VoiceRecorderState.Error;
 
   // Keep a ref so draw callbacks always see the latest recording state
   isRecordingRef.current = isRecording;

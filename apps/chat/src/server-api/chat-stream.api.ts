@@ -1,4 +1,5 @@
 import { MessageCustomContent, StreamChunk } from '@epam/ai-dial-chat-shared';
+import { JSON_HEADERS } from '../constants/http';
 import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
 
 export interface StreamCompletionOptions {
@@ -25,7 +26,7 @@ export const streamCompletion = (
         credentials: 'include',
         signal,
         headers: {
-          'Content-Type': 'application/json',
+          ...JSON_HEADERS,
           ...(getCsrfToken() != null
             ? { 'X-CSRF-Token': getCsrfToken() as string }
             : {}),

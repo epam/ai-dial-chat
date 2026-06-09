@@ -1,3 +1,4 @@
+import { JSON_HEADERS } from '../constants/http';
 import { ApiEndpoints, getCsrfToken, setCsrfToken } from '../server-api/base';
 
 /**
@@ -14,7 +15,7 @@ export const collectStream = async (
     method: 'POST',
     credentials: 'include',
     headers: {
-      'Content-Type': 'application/json',
+      ...JSON_HEADERS,
       ...(getCsrfToken() != null
         ? { 'X-CSRF-Token': getCsrfToken() as string }
         : {}),

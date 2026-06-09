@@ -10,3 +10,4 @@ export * from './utils/merge-class';
 export * from './utils/build-css-vars';
 export * from './utils/message';
 export * from './utils/is-audio-transcription-supported';
+export * from './constants/mime-types';
