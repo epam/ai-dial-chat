@@ -6,6 +6,11 @@ interface TranscribeAudioParams {
   deployment: string;
 }
 
+interface TranscribeAudioWithAsrModelParams {
+  audioUrl: string;
+  mimeType: string;
+}
+
 interface ChatCompletionResponse {
   choices?: Array<{ message: { content?: string } }>;
   error?: string;
@@ -37,4 +42,15 @@ export const transcribeAudio = async ({
     throw new Error(response.error);
   }
   return response.choices?.[0]?.message?.content ?? '';
+};
+
+export const transcribeAudioWithAsrModel = async ({
+  audioUrl,
+  mimeType,
+}: TranscribeAudioWithAsrModelParams): Promise<string> => {
+  const response = await post<{ transcript: string }>(
+    ApiEndpoints.TRANSCRIPTION,
+    { audioUrl, mimeType },
+  );
+  return response.transcript;
 };

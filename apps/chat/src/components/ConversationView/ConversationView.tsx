@@ -1,6 +1,5 @@
 import {
   DisplayAttachment,
-  isAudioTranscriptionSupported,
   isStatusMessage,
   StatusEvent,
   type Attachment,
@@ -73,6 +72,7 @@ interface Props {
   streamErrorText: string;
   isReadOnly?: boolean;
   readOnlyNotice?: string;
+  isTranscriptionSupported?: boolean;
   onUploadAudio?: (file: File, contentType: string) => Promise<string>;
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
 }
@@ -99,6 +99,7 @@ const ConversationView: FC<Props> = ({
   streamErrorText,
   isReadOnly = false,
   readOnlyNotice,
+  isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
 }) => {
@@ -168,11 +169,6 @@ const ConversationView: FC<Props> = ({
       })),
     [items],
   );
-
-  const isTranscriptionSupported = useMemo(() => {
-    const selectedItem = items.find((item) => item.id === selectedItemId);
-    return isAudioTranscriptionSupported(selectedItem?.inputAttachmentTypes);
-  }, [items, selectedItemId]);
 
   const tooltips = useMemo<MessageActionTooltips>(
     () => ({

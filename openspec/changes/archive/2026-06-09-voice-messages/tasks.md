@@ -54,10 +54,10 @@
 
 ## 9. Verification
 
-- [ ] 9.1 Verify mic button appears/disappears based on selected model's `inputAttachmentTypes`
-- [ ] 9.2 Verify full happy-path flow: record → stop → confirm → upload → transcribe → transcript in input
-- [ ] 9.3 Verify upload failure shows red border + error text; retry works
-- [ ] 9.4 Verify transcription failure shows red border + error text; retry works
-- [ ] 9.5 Verify X discards at every state (stopped, uploading, error) and restores normal input
-- [ ] 9.6 Verify mobile layout: waveform full-width, buttons on separate row in all states
-- [ ] 9.7 Verify microphone permission denial shows error state in voice bar
+- [x] 9.1 Verify mic button appears/disappears based on selected model's `inputAttachmentTypes`
+- [x] 9.2 Verify full happy-path flow: record → stop → confirm → upload → transcribe → transcript in input
+- [x] 9.3 Verify upload failure shows red border + error text; retry works
+- [x] 9.4 Verify transcription failure shows red border + error text; retry works
+- [x] 9.5 Verify X discards at every state (stopped, uploading, error) and restores normal input
+- [x] 9.6 Verify mobile layout: waveform full-width, buttons on separate row in all states
+- [x] 9.7 Verify microphone permission denial shows error state in voice bar

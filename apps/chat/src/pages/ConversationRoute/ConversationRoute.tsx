@@ -24,9 +24,13 @@ import {
   ChatI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import { transcribeAudio } from '../../server-api/chat.api';
+import {
+  transcribeAudio,
+  transcribeAudioWithAsrModel,
+} from '../../server-api/chat.api';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
@@ -49,6 +53,7 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
+  const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const inputRef = useRef<HTMLDivElement>(null);
@@ -153,6 +158,11 @@ const ConversationRoute: FC = () => {
       if (!bucket) {
         throw new Error('User bucket is not available');
       }
+      if (file.size > transcribeSizeLimitBytes) {
+        throw new Error(
+          `Audio file exceeds the ${transcribeSizeLimitBytes} byte limit`,
+        );
+      }
       lastAudioMimeTypeRef.current = contentType;
       const response = await uploadFile(
         bucket,
@@ -161,27 +171,32 @@ const ConversationRoute: FC = () => {
       );
       return response.url;
     },
-    [bucket],
+    [bucket, transcribeSizeLimitBytes],
   );
 
   const handleTranscribeAudio = useCallback(
     async (audioUrl: string): Promise<string> => {
+      const mimeType = lastAudioMimeTypeRef.current;
+      if (asrModelId != null) {
+        return transcribeAudioWithAsrModel({ audioUrl, mimeType });
+      }
       if (!selectedItemId) {
         throw new Error('No model selected');
       }
       return transcribeAudio({
         audioUrl,
-        mimeType: lastAudioMimeTypeRef.current,
+        mimeType,
         deployment: selectedItemId,
       });
     },
-    [selectedItemId],
+    [asrModelId, selectedItemId],
   );
 
   const isTranscriptionSupported = useMemo(() => {
+    if (asrModelId != null) return true;
     const selectedItem = items.find((item) => item.id === selectedItemId);
     return isAudioTranscriptionSupported(selectedItem?.inputAttachmentTypes);
-  }, [items, selectedItemId]);
+  }, [asrModelId, items, selectedItemId]);
 
   const handleStarterSelect = useCallback(
     (starter: StarterOption) => {

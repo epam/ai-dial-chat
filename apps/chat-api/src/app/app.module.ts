@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { AppConfigModule } from '../app-config/app-config.module';
 import { ApplicationSchemasModule } from '../application-schemas/application-schemas.module';
 import { ApplicationsModule } from '../applications/applications.module';
 import { AuthModule } from '../auth/auth.module';
@@ -18,6 +19,7 @@ import { ModelsModule } from '../models/models.module';
 import { RateModule } from '../rate/rate.module';
 import { ThemeController } from '../themes/theme.controller';
 import { ThemeService } from '../themes/theme.service';
+import { TranscriptionModule } from '../transcription/transcription.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -43,6 +45,7 @@ import { createServeStaticOptions } from './static-assets';
       },
     ]),
     ServeStaticModule.forRoot(createServeStaticOptions()),
+    AppConfigModule,
     ApplicationSchemasModule,
     ApplicationsModule,
     DeploymentsModule,
@@ -52,6 +55,7 @@ import { createServeStaticOptions } from './static-assets';
     UserConfigModule,
     FilesModule,
     RateModule,
+    TranscriptionModule,
   ],
   controllers: [AppController, ThemeController, HealthController],
   providers: [
