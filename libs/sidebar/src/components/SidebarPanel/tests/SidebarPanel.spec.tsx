@@ -17,6 +17,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 const defaultProps = {
+  isOpen: true,
   side: SidebarSide.Right,
   onClose: vi.fn(),
   ariaLabel: 'Test panel',
