@@ -666,7 +666,7 @@ export class ChatOverlay {
 
   /**
    * Set temperature for the first selected conversation
-   * @param temperature {number} temperature value (0-2)
+   * @param temperature {number} temperature value (0-1)
    */
   public async setTemperature(
     temperature: number,

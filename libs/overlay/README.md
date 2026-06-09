@@ -97,7 +97,7 @@ const run = async () => {
   // set system prompt. For chat gpt is first message like { role: 'system', message: "be patient and supportive!"}.
   await overlay.setSystemPrompt('Be patient and supportive!');
 
-  // set temperature for the selected conversation (0-2)
+  // set temperature for the selected conversation (0-1)
   await overlay.setTemperature(0.5);
 
   // set overlay options on the fly
