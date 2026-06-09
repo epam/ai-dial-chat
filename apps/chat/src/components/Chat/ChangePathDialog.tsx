@@ -462,20 +462,16 @@ export const ChangePathDialog = ({
     ? frozenFileTreeItemsRef.current
     : fileTreeItems;
 
-  const applyTreePermissions = useCallback(
-    (items: DialFile[]): DialFile[] =>
+  const itemsToRender = useMemo(() => {
+    const applyTreePermissions = (items: DialFile[]): DialFile[] =>
       items.map((item) => ({
         ...item,
         parentPath: isTempFolder(item.path) ? item.parentPath : null,
         items: item.items ? applyTreePermissions(item.items) : item.items,
-      })),
-    [isTempFolder],
-  );
+      }));
 
-  const itemsToRender = useMemo(
-    () => applyTreePermissions(rawItemsToRender),
-    [applyTreePermissions, rawItemsToRender],
-  );
+    return applyTreePermissions(rawItemsToRender);
+  }, [isTempFolder, rawItemsToRender]);
 
   const handleClose = useCallback(() => onClose(false), [onClose]);
 
