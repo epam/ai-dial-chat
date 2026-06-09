@@ -14,7 +14,6 @@ import tailwindPlugin from 'eslint-plugin-tailwindcss';
 import testingLibraryPlugin from 'eslint-plugin-testing-library';
 import globals from 'globals';
 
-
 export default [
   {
     ignores: [
@@ -98,6 +97,7 @@ export default [
       'testing-library/prefer-presence-queries': 'warn',
       'tailwindcss/classnames-order': 'off',
       'testing-library/render-result-naming-convention': 'warn',
+      '@typescript-eslint/no-empty-function': 'error',
       'react-refresh/only-export-components': [
         'warn',
         {

@@ -1,5 +1,5 @@
 import { ChatOverlayManagerWrapper } from '../components/chatOverlayManagerWrapper';
-import { commonOverlayProps } from '../components/chatOverlayWrapper';
+import { commonOverlayProps } from '../components/commonOverlayProps';
 
 import { ChatOverlayManagerOptions, Feature } from '@epam/ai-dial-overlay';
 
