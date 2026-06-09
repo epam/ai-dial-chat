@@ -4,10 +4,17 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnvironmentVariables } from '../../config/environment.config';
 import { ChatService } from '../chat.service';
 import { ChatCompletionDto } from '../dto/chat-completion.dto';
+
+const dto: ChatCompletionDto = {
+  deployment: 'gpt-4',
+  messages: [{ role: 'user', content: 'Hello' }],
+};
+
+const TOKEN = 'test-token';
 
 function makeService() {
   const configService = {
@@ -20,58 +27,64 @@ function makeService() {
   return new ChatService(configService);
 }
 
-const dto: ChatCompletionDto = {
-  messages: [{ role: 'user', content: 'Hello' }],
-};
-
 describe('ChatService', () => {
+  let service: ChatService;
+  let sendChatCompletionRequest: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    service = makeService();
+    sendChatCompletionRequest = vi.fn();
+    (
+      service as unknown as { client: { sendChatCompletionRequest: unknown } }
+    ).client = {
+      sendChatCompletionRequest,
+    };
+  });
+
+  afterEach(() => vi.restoreAllMocks());
+
   it('returns completion on success', async () => {
-    const service = makeService();
-    const response = { choices: [] };
-    vi.spyOn(service['client'], 'sendChatCompletionRequest').mockResolvedValue(
-      response as never,
-    );
-
-    const result = await service.sendCompletion('gpt-4', dto);
-    expect(result).toEqual(response);
-    expect(service['client'].sendChatCompletionRequest).toHaveBeenCalledWith(
-      'gpt-4',
-      {
-        body: dto,
-        params: { query: { 'api-version': '2024-10-21' } },
-      },
-    );
-  });
-
-  it('throws ServiceUnavailableException on network error', async () => {
-    const service = makeService();
-    vi.spyOn(service['client'], 'sendChatCompletionRequest').mockRejectedValue(
-      new TypeError('fetch failed'),
-    );
-
-    await expect(service.sendCompletion('gpt-4', dto)).rejects.toThrow(
-      ServiceUnavailableException,
-    );
-  });
-
-  it('throws NotFoundException on 404', async () => {
-    const service = makeService();
-    vi.spyOn(service['client'], 'sendChatCompletionRequest').mockRejectedValue({
-      status: 404,
+    const responseBody = { choices: [{ message: { content: 'Hi' } }] };
+    sendChatCompletionRequest.mockResolvedValue({
+      data: responseBody,
+      error: undefined,
+      response: { ok: true, status: 200 },
     });
 
-    await expect(service.sendCompletion('unknown', dto)).rejects.toThrow(
+    const result = await service.sendCompletion(dto, TOKEN);
+    expect(result).toEqual(responseBody);
+    expect(sendChatCompletionRequest).toHaveBeenCalledWith(
+      'gpt-4',
+      expect.objectContaining({
+        headers: expect.objectContaining({ Authorization: `Bearer ${TOKEN}` }),
+      }),
+    );
+  });
+
+  it('throws NotFoundException when DIAL Core returns error with 404 status', async () => {
+    sendChatCompletionRequest.mockResolvedValue({
+      data: undefined,
+      error: { status: 404 },
+      response: { ok: false, status: 404 },
+    });
+
+    await expect(service.sendCompletion(dto, TOKEN)).rejects.toThrow(
       NotFoundException,
     );
   });
 
-  it('throws BadGatewayException on unexpected error', async () => {
-    const service = makeService();
-    vi.spyOn(service['client'], 'sendChatCompletionRequest').mockRejectedValue({
-      weird: 'error',
-    });
+  it('throws ServiceUnavailableException on network error', async () => {
+    sendChatCompletionRequest.mockRejectedValue(new TypeError('fetch failed'));
 
-    await expect(service.sendCompletion('gpt-4', dto)).rejects.toThrow(
+    await expect(service.sendCompletion(dto, TOKEN)).rejects.toThrow(
+      ServiceUnavailableException,
+    );
+  });
+
+  it('throws BadGatewayException on unexpected error', async () => {
+    sendChatCompletionRequest.mockRejectedValue({ weird: 'error' });
+
+    await expect(service.sendCompletion(dto, TOKEN)).rejects.toThrow(
       BadGatewayException,
     );
   });

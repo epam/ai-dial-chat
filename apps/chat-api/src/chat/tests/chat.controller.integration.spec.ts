@@ -5,6 +5,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { ChatController } from '../chat.controller';
 import { ChatService } from '../chat.service';
 
+const TEST_USER = { at: 'test-access-token', bucket: 'test-bucket' };
+
 describe('ChatController (integration)', () => {
   let app: INestApplication;
   let service: { sendCompletion: ReturnType<typeof vi.fn> };
@@ -18,6 +20,10 @@ describe('ChatController (integration)', () => {
     }).compile();
 
     app = module.createNestApplication();
+    app.use((req: any, _res: any, next: any) => {
+      req.user = TEST_USER;
+      next();
+    });
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -33,33 +39,49 @@ describe('ChatController (integration)', () => {
     await app.close();
   });
 
-  describe('POST /chat/completions/:deployment', () => {
+  describe('POST /chat/completions', () => {
+    const VALID_BODY = {
+      deployment: 'gpt-4',
+      messages: [{ role: 'user', content: 'Hello' }],
+    };
+
     it('returns 200 with valid body', async () => {
       const response = { choices: [{ message: { content: 'Hi!' } }] };
       service.sendCompletion.mockResolvedValue(response);
 
       const result = await request(app.getHttpServer())
-        .post('/chat/completions/gpt-4')
-        .send({ messages: [{ role: 'user', content: 'Hello' }] })
+        .post('/chat/completions')
+        .send(VALID_BODY)
         .expect(201);
 
       expect(result.body).toEqual(response);
-      expect(service.sendCompletion).toHaveBeenCalledWith('gpt-4', {
-        messages: [{ role: 'user', content: 'Hello' }],
-      });
+      expect(service.sendCompletion).toHaveBeenCalledWith(
+        VALID_BODY,
+        'test-access-token',
+      );
     });
 
-    it('returns 400 for invalid body', async () => {
+    it('returns 400 when deployment is missing', async () => {
       await request(app.getHttpServer())
-        .post('/chat/completions/gpt-4')
-        .send({ messages: 'not-an-array' })
+        .post('/chat/completions')
+        .send({ messages: [{ role: 'user', content: 'Hello' }] })
+        .expect(400);
+    });
+
+    it('returns 400 for invalid messages type', async () => {
+      await request(app.getHttpServer())
+        .post('/chat/completions')
+        .send({ deployment: 'gpt-4', messages: 'not-an-array' })
         .expect(400);
     });
 
     it('returns 400 for invalid role in message', async () => {
       await request(app.getHttpServer())
-        .post('/chat/completions/gpt-4')
-        .send({ messages: [{ role: 'invalid', content: 'hi' }] })
+        .post('/chat/completions')
+        .send({
+          deployment: 'gpt-4',
+          messages: [{ role: 'invalid', content: 'hi' }],
+        })
         .expect(400);
     });
 
@@ -68,8 +90,8 @@ describe('ChatController (integration)', () => {
       service.sendCompletion.mockRejectedValue(new NotFoundException());
 
       await request(app.getHttpServer())
-        .post('/chat/completions/unknown')
-        .send({ messages: [{ role: 'user', content: 'Hello' }] })
+        .post('/chat/completions')
+        .send(VALID_BODY)
         .expect(404);
     });
 
@@ -80,8 +102,8 @@ describe('ChatController (integration)', () => {
       );
 
       await request(app.getHttpServer())
-        .post('/chat/completions/gpt-4')
-        .send({ messages: [{ role: 'user', content: 'Hello' }] })
+        .post('/chat/completions')
+        .send(VALID_BODY)
         .expect(503);
     });
   });
