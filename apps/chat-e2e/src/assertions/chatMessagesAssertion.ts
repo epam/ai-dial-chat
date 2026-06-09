@@ -54,12 +54,12 @@ export class ChatMessagesAssertion extends BaseAssertion {
     expectedCount: number,
   ) {
     await this.chatMessages.messageStage(messagesIndex, 0).waitFor();
-    const stagesCount = await this.chatMessages
+    const stagesCount = this.chatMessages
       .messageStages(messagesIndex)
-      .count();
-    expect
+      ;
+    await expect
       .soft(stagesCount, ExpectedMessages.elementsCountIsValid)
-      .toBe(expectedCount);
+      .toHaveCount(expectedCount);
   }
 
   public async assertMessageContent(

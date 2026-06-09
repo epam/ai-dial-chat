@@ -430,10 +430,10 @@ dialSharedWithMeTest(
         const request = requestResponse.request;
         expect
           .soft(
-            request.resources.length,
+            request.resources,
             ExpectedMessages.sharedResourcesCountIsValid,
           )
-          .toBe(3);
+          .toHaveLength(3);
         expect
           .soft(
             request.resources.find(

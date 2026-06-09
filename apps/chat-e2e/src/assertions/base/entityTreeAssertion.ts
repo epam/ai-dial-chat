@@ -111,12 +111,12 @@ export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
     entity: TreeEntity,
     expectedCount: number,
   ) {
-    const arrowIconsCount = await this.treeEntities
+    const arrowIconsCount = this.treeEntities
       .getEntityArrowIcon(entity.name, entity.index)
-      .count();
-    expect
+      ;
+    await expect
       .soft(arrowIconsCount, ExpectedMessages.entitiesIconsCountIsValid)
-      .toBe(expectedCount);
+      .toHaveCount(expectedCount);
   }
 
   public async assertEntityColor(entity: TreeEntity, expectedColor: string) {
