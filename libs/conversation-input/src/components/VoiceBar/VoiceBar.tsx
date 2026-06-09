@@ -19,6 +19,9 @@ import styles from './VoiceBar.module.scss';
 const BAR_WIDTH = 3;
 const BAR_GAP = 1;
 
+const SPLASH_SECTIONS = 6;
+const MIN_SPLASH_FRACTION = 0.12; // bars never collapse below this fraction of height
+
 /** Props accepted by the `VoiceBar` component. */
 export interface VoiceBarProps {
   /** Current recorder state — must not be `'idle'` when this component is rendered. */
@@ -68,16 +71,57 @@ export const VoiceBar: FC<VoiceBarProps> = ({
 }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const waveformDataRef = useRef<Float32Array | null>(null);
+  const isRecordingRef = useRef(false);
   const isRecording = state === 'recording';
   const isUploading = state === 'uploading';
   const isError = state === 'error';
 
+  // Keep a ref so draw callbacks always see the latest recording state
+  isRecordingRef.current = isRecording;
+
+  /** Draw live splash animation: SPLASH_SECTIONS arch-shaped groups filling the full
+   *  canvas width, each scaled by the current RMS amplitude. */
+  const drawSplash = useCallback(
+    (canvas: HTMLCanvasElement, currentRms: number) => {
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      canvas.width = canvas.clientWidth || 200;
+      canvas.height = canvas.clientHeight || 32;
+
+      const { width, height } = canvas;
+      ctx.clearRect(0, 0, width, height);
+
+      const barColor = getComputedStyle(canvas).color;
+      ctx.fillStyle = barColor;
+
+      // Scale: RMS ~0.03-0.15 → 0.18-0.9 after ×6
+      const amplitude = Math.min(1, currentRms * 6);
+      const barCount = Math.max(1, Math.floor(width / (BAR_WIDTH + BAR_GAP)));
+
+      for (let i = 0; i < barCount; i++) {
+        // |sin| over SPLASH_SECTIONS half-periods → SPLASH_SECTIONS humps
+        const t = (i / barCount) * SPLASH_SECTIONS * Math.PI;
+        const envelope = Math.abs(Math.sin(t));
+        const fraction = Math.max(MIN_SPLASH_FRACTION, envelope * amplitude);
+        const barHeight = Math.max(3, fraction * height);
+        ctx.fillRect(
+          i * (BAR_WIDTH + BAR_GAP),
+          (height - barHeight) / 2,
+          BAR_WIDTH,
+          barHeight,
+        );
+      }
+    },
+    [],
+  );
+
+  /** Draw the frozen history histogram after recording stops. */
   const drawWaveform = useCallback(
     (canvas: HTMLCanvasElement, data: Float32Array | null) => {
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
 
-      // Sync canvas pixel dimensions to its current CSS layout size
       canvas.width = canvas.clientWidth || 200;
       canvas.height = canvas.clientHeight || 32;
 
@@ -92,10 +136,8 @@ export const VoiceBar: FC<VoiceBarProps> = ({
       const barCount = Math.max(1, Math.floor(width / (BAR_WIDTH + BAR_GAP)));
 
       for (let i = 0; i < barCount; i++) {
-        // Map bar index across the full history length
         const sampleIndex = Math.floor((i / barCount) * data.length);
         const raw = data[sampleIndex] ?? 0;
-        // Scale up: typical RMS speech ~0.03-0.15, ×6 maps that to 0.18-0.9
         const amplitude = Math.min(1, raw * 6);
         const barHeight = Math.max(3, amplitude * height);
         ctx.fillRect(
@@ -113,19 +155,31 @@ export const VoiceBar: FC<VoiceBarProps> = ({
   useEffect(() => {
     waveformDataRef.current = waveformData;
     const canvas = canvasRef.current;
-    if (canvas) drawWaveform(canvas, waveformData);
-  }, [waveformData, drawWaveform]);
+    if (!canvas) return;
+    if (isRecordingRef.current) {
+      const currentRms = waveformData?.[waveformData.length - 1] ?? 0;
+      drawSplash(canvas, currentRms);
+    } else {
+      drawWaveform(canvas, waveformData);
+    }
+  }, [waveformData, drawSplash, drawWaveform]);
 
   // Redraw on resize so bars never overflow into the controls area
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const observer = new ResizeObserver(() => {
-      drawWaveform(canvas, waveformDataRef.current);
+      if (isRecordingRef.current) {
+        const data = waveformDataRef.current;
+        const currentRms = data?.[data.length - 1] ?? 0;
+        drawSplash(canvas, currentRms);
+      } else {
+        drawWaveform(canvas, waveformDataRef.current);
+      }
     });
     observer.observe(canvas);
     return () => observer.disconnect();
-  }, [drawWaveform]);
+  }, [drawSplash, drawWaveform]);
 
   const controls = (
     <div className="flex flex-shrink-0 items-center justify-end gap-1">
@@ -164,7 +218,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
                   <IconCheck
                     size={24}
                     aria-hidden
-                    className="rounded-full bg-controls-accent-primary text-primary"
+                    className="rounded-full bg-controls-accent-primary text-controls-permanent"
                   />
                 </div>
               }

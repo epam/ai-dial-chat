@@ -49,7 +49,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
       {/* Backdrop */}
       <div
         className="bg-black/50 fixed inset-0 z-40"
-        onClick={onClose}
+        onPointerDown={onClose}
         aria-hidden
       />
 

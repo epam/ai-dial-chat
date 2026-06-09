@@ -93,8 +93,24 @@ describe('ConversationSourcesPanel', () => {
     expect(screen.queryByRole('button', { name: 'Close' })).toBeTruthy();
   });
 
-  it('renders three sections in order', () => {
+  it('renders the panel empty state when the conversation has no files', () => {
     renderPanel();
+
+    expect(screen.getByText('sidebar.sources.empty.noData')).toBeTruthy();
+    expect(screen.queryByRole('heading')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'sidebar.sources.search' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'sidebar.sources.downloadAll' }),
+    ).toBeNull();
+  });
+
+  it('renders three sections in order', () => {
+    renderPanel([
+      makeUserMessage('upload.pdf'),
+      makeAssistantMessage('result.csv'),
+    ]);
     const headings = screen.getAllByRole('heading');
     const texts = headings.map((h) => h.textContent);
     expect(texts).toContain('sidebar.sources.sections.uploadedFiles');

@@ -78,10 +78,9 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   const toggleLabel = isCollapsed ? showMoreLabel : showLessLabel;
   const toggleAriaLabel = isCollapsed ? expandAriaLabel : collapseAriaLabel;
   const ToggleIcon = isCollapsed ? IconChevronDown : IconChevronUp;
-
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
-      <div className="flex w-fit flex-col items-end gap-2">
+      <div className="ms-auto flex w-fit flex-col items-end gap-4">
         <AttachmentTray attachments={attachments ?? []} />
         {text && (
           <div
