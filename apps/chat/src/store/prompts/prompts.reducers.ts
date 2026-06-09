@@ -128,6 +128,7 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         newPrompt: Prompt;
         oldPrompt: Prompt;
+        traceId?: string;
       }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
