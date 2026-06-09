@@ -2889,12 +2889,13 @@ const saveConversationEpic: AppEpic = (action$, state$) =>
 const moveConversationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.moveConversationFail.type),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       return of(
         UIActions.showErrorToast({
           message: translate(ChatI18nKeys.ConversationAlreadyExists, {
             ns: Translation.Chat,
           }),
+          traceId: payload?.traceId,
         }),
       );
     }),
@@ -2916,8 +2917,13 @@ const moveConversationEpic: AppEpic = (action$) =>
             }),
           );
         }),
-        catchError(() => {
-          return of(ConversationsActions.moveConversationFail(payload));
+        catchError((err) => {
+          return of(
+            ConversationsActions.moveConversationFail({
+              ...payload,
+              ...parseApiError(err),
+            }),
+          );
         }),
       );
     }),

@@ -20,6 +20,7 @@ import { getDefaultEntityProps } from '@/src/utils/app/common';
 import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { SkillValidationService } from '@/src/utils/app/data/skill-validation-service';
 import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-storage';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
   addGeneratedFolderId,
   fitFolderNameToStorageLimits,
@@ -263,9 +264,10 @@ const savePromptEpic: AppEpic = (action$, state$) =>
 const movePromptFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PromptsActions.movePromptFail.type),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       return of(
         UIActions.showErrorToast({
+          traceId: payload?.traceId,
           message: translate(CommonI18nKeys.PromptAlreadyExists, {
             ns: Translation.Common,
           }),
@@ -286,8 +288,13 @@ const movePromptEpic: AppEpic = (action$) =>
         switchMap(() => {
           return of(PromptsActions.savePrompt({ prompt: payload.newPrompt }));
         }),
-        catchError(() => {
-          return of(PromptsActions.movePromptFail(payload));
+        catchError((err) => {
+          return of(
+            PromptsActions.movePromptFail({
+              ...payload,
+              ...parseApiError(err),
+            }),
+          );
         }),
       );
     }),

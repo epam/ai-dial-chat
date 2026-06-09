@@ -328,7 +328,11 @@ export class VisualizerConnector {
   destroy() {
     window.removeEventListener('message', this.process);
     // So Task.fail() never surfaces as "unhandled" if nothing awaited ready() yet (e.g. Strict Mode).
-    void this.iframeInteraction.ready().catch(() => {});
+    void this.iframeInteraction.ready().catch(() => {
+      console.error(
+        `[${visualizerConnectorLibName}] Iframe interaction error on destroy`,
+      );
+    });
     this.iframeInteraction.fail('Chat Visualizer destroyed');
     this.root.removeChild(this.iframe);
 

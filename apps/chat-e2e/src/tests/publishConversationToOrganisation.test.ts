@@ -445,7 +445,11 @@ dialAdminTest(
     // See agent/ChangePathDialogMigration/progress_tracker.md.
     await dialTest.step.skip(
       'Verify error message appears on adding more than 3 sub-folders',
-      async () => {},
+      async () => {
+        console.info(
+          'This step is skipped due to the ChangePathDialog migration. It should be re-enabled and possibly reworked once the migration is complete.',
+        );
+      },
     );
 
     await dialTest.step(
