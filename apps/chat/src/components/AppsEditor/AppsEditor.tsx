@@ -312,7 +312,7 @@ export const AppsEditor = () => {
         ? Promise.resolve(true)
         : formMethods.trigger());
 
-      if (!isValid && isDirty) {
+      if ((!isValid || skipValidation) && isDirty) {
         if (!forceSave) {
           changeEditorTabRef.current = null;
         } else {
