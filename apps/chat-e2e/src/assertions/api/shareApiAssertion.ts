@@ -35,9 +35,9 @@ export class ShareApiAssertion {
   ) {
     expect
       .soft(
-        sharedEntities.resources.filter((e) => e.url === entity.id).length,
+        sharedEntities.resources.filter((e) => e.url === entity.id),
         ExpectedMessages.entityIsShared,
       )
-      .toBe(1);
+      .toHaveLength(1);
   }
 }

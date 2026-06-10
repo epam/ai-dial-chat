@@ -67,6 +67,10 @@ import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
 
 import { AdjustedTextarea } from '../AdjustedTextarea';
 import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
+import {
+  getSaveSubmitTooltipText,
+  isSaveSubmitTooltipHidden,
+} from './saveSubmitTooltip';
 
 import {
   ConversationResponseFormat,
@@ -539,6 +543,20 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
               disabled={
                 isUploadingAttachmentPresent || isContentEmptyAndNoAttachments
               }
+              tooltipProps={{
+                hideTooltip: isSaveSubmitTooltipHidden({
+                  isUploadingAttachmentPresent,
+                  isContentEmptyAndNoAttachments,
+                }),
+                tooltip: getSaveSubmitTooltipText(
+                  {
+                    isUploadingAttachmentPresent,
+                    isContentEmptyAndNoAttachments,
+                  },
+                  t,
+                ),
+                isTriggerClickable: true,
+              }}
               data-qa="save-and-submit"
             />
           )}

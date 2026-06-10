@@ -6,11 +6,10 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
-
-import { errorsMessages } from '@/src/constants/errors';
 
 import fetch from 'node-fetch';
 
@@ -26,6 +25,7 @@ export const createApiHandler = ({
   returnOriginalResponse = true,
 }: ApiHandlerOptions) => {
   return async (req: NextApiRequest, res: NextApiResponse) => {
+    setTraceparentHeader(res);
     const session = await getServerSession(req, res, authOptions);
     if (!validateServerSession(session, req, res)) return;
 
@@ -57,12 +57,7 @@ export const createApiHandler = ({
       return res.status(200).send(responseData);
     } catch (error: unknown) {
       logger.error(error);
-      if (error instanceof DialAIError) {
-        return res
-          .status(parseInt(error.code, 10) || 500)
-          .send(error.message || errorsMessages.generalServer);
-      }
-      return res.status(500).send(errorsMessages.generalServer);
+      return ServerUtils.sendAPIError(res, error);
     }
   };
 };

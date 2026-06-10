@@ -38,18 +38,12 @@
     },
     "lint": {
       "options": {
-        "lintFilePatterns": [
-          "libs/visualizer-connector/**/*.{ts,tsx,js,jsx}",
-          "libs/visualizer-connector/package.json"
-        ]
+        "lintFilePatterns": ["libs/visualizer-connector/**/*.{ts,tsx,js,jsx}"]
       }
     },
     "lint:fix": {
       "options": {
-        "lintFilePatterns": [
-          "libs/visualizer-connector/**/*.{ts,tsx,js,jsx}",
-          "libs/visualizer-connector/package.json"
-        ]
+        "lintFilePatterns": ["libs/visualizer-connector/**/*.{ts,tsx,js,jsx}"]
       }
     },
     "format": {},

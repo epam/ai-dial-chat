@@ -526,7 +526,13 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
               console.error(
                 'Creation failed: no models were found for conversation',
               );
-              return EMPTY;
+              return of(
+                ConversationsActions.uploadConversationsByIdsSuccess({
+                  setIds: new Set<string>(),
+                  conversations: [],
+                  showLoader: true,
+                }),
+              );
             }
 
             const nonLocalConversations =
@@ -1359,10 +1365,20 @@ const updateMessageEpic: AppEpic = (action$, state$) =>
     }),
   );
 
-const rateMessageSuccessEpic: AppEpic = (action$) =>
+const rateMessageSuccessEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.rateMessage.type),
     switchMap(({ payload }) => {
+      const conversation = ConversationsSelectors.selectConversation(
+        state$.value,
+        payload.conversationId,
+      ) as Conversation;
+      const message = conversation?.messages[payload.messageIndex];
+
+      if (!conversation || !message?.responseId) {
+        return EMPTY;
+      }
+
       return of(
         ConversationsActions.updateMessage({
           conversationId: payload.conversationId,
@@ -1641,6 +1657,10 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const lastModel = modelsMap[payload.conversation.model.id];
       const conversationModelType = lastModel?.type ?? EntityType.Model;
+      const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
+      const overlayTemperature = OverlaySelectors.selectOverlayTemperature(
+        state$.value,
+      );
       const modelAdditionalSettings: Partial<
         Pick<ChatBody, 'prompt' | 'temperature'>
       > = {};
@@ -1651,7 +1671,9 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
         }
         if (doesModelAllowTemperature(lastModel)) {
           modelAdditionalSettings.temperature =
-            payload.conversation.temperature;
+            isOverlay && overlayTemperature != null
+              ? overlayTemperature
+              : payload.conversation.temperature;
         }
       }
 
@@ -2867,12 +2889,13 @@ const saveConversationEpic: AppEpic = (action$, state$) =>
 const moveConversationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ConversationsActions.moveConversationFail.type),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       return of(
         UIActions.showErrorToast({
           message: translate(ChatI18nKeys.ConversationAlreadyExists, {
             ns: Translation.Chat,
           }),
+          traceId: payload?.traceId,
         }),
       );
     }),
@@ -2894,8 +2917,13 @@ const moveConversationEpic: AppEpic = (action$) =>
             }),
           );
         }),
-        catchError(() => {
-          return of(ConversationsActions.moveConversationFail(payload));
+        catchError((err) => {
+          return of(
+            ConversationsActions.moveConversationFail({
+              ...payload,
+              ...parseApiError(err),
+            }),
+          );
         }),
       );
     }),

@@ -290,8 +290,14 @@ export class BasePage {
         downloadedData.map((data) => {
           const paths = Array.isArray(data.path) ? data.path : [data.path];
           return Promise.all(
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-            paths.map((p) => fs.promises.unlink(p).catch(() => {})),
+            paths.map((p) =>
+              fs.promises.unlink(p).catch((e) => {
+                console.error(
+                  `Failed to delete file ${p}:`,
+                  (e as Error).message,
+                );
+              }),
+            ),
           );
         }),
       );
