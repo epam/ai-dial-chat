@@ -54,11 +54,11 @@ interface ShareAccessOptionProps {
   onSelect: (value: boolean) => void;
 }
 
-function ShareAccessOption({
+const renderShareAccessOption = ({
   filterValue,
   selected,
   onSelect,
-}: ShareAccessOptionProps) {
+}: ShareAccessOptionProps) => {
   return (
     <label
       className="relative flex size-[18px] w-full shrink-0 cursor-pointer items-center"
@@ -77,9 +77,9 @@ function ShareAccessOption({
       <span className="ml-2 whitespace-nowrap text-sm">{filterValue}</span>
     </label>
   );
-}
+};
 
-function ShareAccessSection({
+const renderShareAccessSection = ({
   isShared,
   onUnshare,
   notSharedMessage,
@@ -89,7 +89,7 @@ function ShareAccessSection({
   onUnshare: () => void;
   notSharedMessage: string;
   unshareLabel: string;
-}) {
+}) => {
   return (
     <div className="divide-y-0 border-t border-tertiary px-3 py-4 text-sm text-secondary md:p-6">
       {isShared ? (
@@ -104,9 +104,9 @@ function ShareAccessSection({
       )}
     </div>
   );
-}
+};
 
-function ShareModalView() {
+const view = withRenderWhen(ShareSelectors.selectShareModalOpened)(() => {
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
@@ -256,11 +256,11 @@ function ShareModalView() {
           </p>
           {shareFeatureType === FeatureType.Application && (
             <div className="mt-2 flex gap-2">
-              <ShareAccessOption
-                filterValue={t(SideBarI18nKeys.AllowEditingByOtherUsers)}
-                selected={editAccess}
-                onSelect={onChangeSharePermissionHandler}
-              />
+              {renderShareAccessOption({
+                filterValue: t(SideBarI18nKeys.AllowEditingByOtherUsers),
+                selected: editAccess,
+                onSelect: onChangeSharePermissionHandler,
+              })}
             </div>
           )}
           <div className="mt-2 flex justify-center gap-2">
@@ -301,40 +301,34 @@ function ShareModalView() {
           </div>
         </div>
       </div>
-      {shareFeatureType === FeatureType.Application && (
-        <ShareAccessSection
-          isShared={!!entity?.isShared}
-          onUnshare={handleOpenUnshare}
-          notSharedMessage={t(SideBarI18nKeys.NotSharedAppYet)}
-          unshareLabel={t(SideBarI18nKeys.RemoveAccessForAllUsers)}
-        />
-      )}
-      {isFolder ? (
-        <ShareAccessSection
-          isShared={!!isResourceShared}
-          onUnshare={handleOpenUnshareResource}
-          notSharedMessage={t(SideBarI18nKeys.NotSharedFolderYet)}
-          unshareLabel={t(SideBarI18nKeys.RemoveAccessForAllUsers)}
-        />
-      ) : (
-        (shareFeatureType === FeatureType.Chat ||
-          shareFeatureType === FeatureType.Prompt) && (
-          <ShareAccessSection
-            isShared={!!isResourceShared}
-            onUnshare={handleOpenUnshareResource}
-            notSharedMessage={t(
+      {shareFeatureType === FeatureType.Application &&
+        renderShareAccessSection({
+          isShared: !!entity?.isShared,
+          onUnshare: handleOpenUnshare,
+          notSharedMessage: t(SideBarI18nKeys.NotSharedAppYet),
+          unshareLabel: t(SideBarI18nKeys.RemoveAccessForAllUsers),
+        })}
+      {isFolder
+        ? renderShareAccessSection({
+            isShared: !!isResourceShared,
+            onUnshare: handleOpenUnshareResource,
+            notSharedMessage: t(SideBarI18nKeys.NotSharedFolderYet),
+            unshareLabel: t(SideBarI18nKeys.RemoveAccessForAllUsers),
+          })
+        : (shareFeatureType === FeatureType.Chat ||
+            shareFeatureType === FeatureType.Prompt) &&
+          renderShareAccessSection({
+            isShared: !!isResourceShared,
+            onUnshare: handleOpenUnshareResource,
+            notSharedMessage: t(
               shareFeatureType === FeatureType.Chat
                 ? SideBarI18nKeys.NotSharedChatYet
                 : SideBarI18nKeys.NotSharedPromptYet,
-            )}
-            unshareLabel={t(SideBarI18nKeys.RemoveAccessForAllUsers)}
-          />
-        )
-      )}
+            ),
+            unshareLabel: t(SideBarI18nKeys.RemoveAccessForAllUsers),
+          })}
     </Modal>
   );
-}
+});
 
-export const ShareModal = withRenderWhen(ShareSelectors.selectShareModalOpened)(
-  ShareModalView,
-);
+export const ShareModal = view;

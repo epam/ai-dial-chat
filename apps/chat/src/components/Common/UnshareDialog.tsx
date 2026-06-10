@@ -220,7 +220,7 @@ function UnshareDialogView() {
   );
 }
 
-export const UnshareDialog = withRenderWhen((state) => {
+const view = withRenderWhen((state) => {
   const unshareModel = ShareSelectors.selectUnshareModel(state);
   const unshareResource = ShareSelectors.selectUnshareResourceId(state);
   const fileManagerItems = ShareSelectors.selectUnshareFileManagerItems(state);
@@ -231,3 +231,5 @@ export const UnshareDialog = withRenderWhen((state) => {
     !!(fileManagerItems && fileManagerItems.length > 0)
   );
 })(UnshareDialogView);
+
+export const UnshareDialog = view;

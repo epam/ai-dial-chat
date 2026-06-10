@@ -21,64 +21,21 @@ import { Spinner } from '@/src/components/Common/Spinner';
 
 import { DialGhostIconButton, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
-const LogsHeader = () => {
+const view = withRenderWhen(ApplicationSelectors.selectLogsEntityId)(() => {
   const { t } = useTranslation(Translation.Marketplace);
-
-  return (
-    <div className="px-3 pb-4 pt-6 md:px-6">
-      <h2 className="text-base font-semibold">
-        {t(MarketplaceI18nKeys.ApplicationLogs)}
-      </h2>
-    </div>
-  );
-};
-
-const LogsView = () => {
-  const { t } = useTranslation(Translation.Marketplace);
-
-  const applicationLogs = useAppSelector(
-    ApplicationSelectors.selectApplicationLogs,
-  );
-  const isLogsLoading = useAppSelector(
-    ApplicationSelectors.selectIsLogsLoading,
-  );
-
-  if (isLogsLoading || !applicationLogs) {
-    return (
-      <div className="flex w-full grow items-center justify-center p-4">
-        {isLogsLoading ? (
-          <Spinner size={30} className="mx-auto" />
-        ) : (
-          t(MarketplaceI18nKeys.NoLogsFound)
-        )}
-      </div>
-    );
-  }
-
-  return (
-    <div className="flex grow flex-col gap-1 overflow-y-auto break-all px-3 pb-6 md:px-6">
-      <div className="flex flex-col gap-1">
-        {applicationLogs.split('\n').map((log, index) => (
-          <p key={index}>{log}</p>
-        ))}
-      </div>
-    </div>
-  );
-};
-
-const LogsFooter = () => {
-  const { t } = useTranslation(Translation.Marketplace);
-
   const dispatch = useAppDispatch();
 
   const entityId = useAppSelector(ApplicationSelectors.selectLogsEntityId);
-
   const applicationLogs = useAppSelector(
     ApplicationSelectors.selectApplicationLogs,
   );
   const isLogsLoading = useAppSelector(
     ApplicationSelectors.selectIsLogsLoading,
   );
+
+  const handleClose = useCallback(() => {
+    dispatch(ApplicationActions.setLogsEntityId());
+  }, [dispatch]);
 
   const uploadLogs = useCallback(
     () => dispatch(ApplicationActions.getLogs(entityId!)),
@@ -90,41 +47,6 @@ const LogsFooter = () => {
   }, [uploadLogs]);
 
   return (
-    <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
-      <DialGhostIconButton
-        tooltipProps={{ tooltip: t(MarketplaceI18nKeys.ReloadLogs) }}
-        onClick={uploadLogs}
-        data-qa="application-reload-logs"
-        disabled={isLogsLoading}
-        icon={<IconRefresh />}
-      />
-      {applicationLogs && (
-        <DialNeutralButton
-          tooltipProps={{ tooltip: t(MarketplaceI18nKeys.DownloadLogs) }}
-          label={t(MarketplaceI18nKeys.Download)}
-          onClick={() => downloadApplicationLogs(applicationLogs)}
-          data-qa="application-download-logs"
-          disabled={isLogsLoading}
-          iconBefore={
-            <IconDownload
-              className={classNames(isLogsLoading && 'button-secondary')}
-              size={18}
-            />
-          }
-        />
-      )}
-    </div>
-  );
-};
-
-const ApplicationLogsView = () => {
-  const dispatch = useAppDispatch();
-
-  const handleClose = useCallback(() => {
-    dispatch(ApplicationActions.setLogsEntityId());
-  }, [dispatch]);
-
-  return (
     <Modal
       portalId="theme-main"
       state
@@ -132,13 +54,56 @@ const ApplicationLogsView = () => {
       containerClassName="group/modal flex w-full flex-col min-h-[350px] xl:max-w-[820px] max-w-[800px]"
       onClose={handleClose}
     >
-      <LogsHeader />
-      <LogsView />
-      <LogsFooter />
+      <div className="px-3 pb-4 pt-6 md:px-6">
+        <h2 className="text-base font-semibold">
+          {t(MarketplaceI18nKeys.ApplicationLogs)}
+        </h2>
+      </div>
+
+      {isLogsLoading || !applicationLogs ? (
+        <div className="flex w-full grow items-center justify-center p-4">
+          {isLogsLoading ? (
+            <Spinner size={30} className="mx-auto" />
+          ) : (
+            t(MarketplaceI18nKeys.NoLogsFound)
+          )}
+        </div>
+      ) : (
+        <div className="flex grow flex-col gap-1 overflow-y-auto break-all px-3 pb-6 md:px-6">
+          <div className="flex flex-col gap-1">
+            {applicationLogs.split('\n').map((log, index) => (
+              <p key={index}>{log}</p>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between gap-3 divide-y-0 border-t border-tertiary px-3 py-4 md:px-6">
+        <DialGhostIconButton
+          tooltipProps={{ tooltip: t(MarketplaceI18nKeys.ReloadLogs) }}
+          onClick={uploadLogs}
+          data-qa="application-reload-logs"
+          disabled={isLogsLoading}
+          icon={<IconRefresh />}
+        />
+        {applicationLogs && (
+          <DialNeutralButton
+            tooltipProps={{ tooltip: t(MarketplaceI18nKeys.DownloadLogs) }}
+            label={t(MarketplaceI18nKeys.Download)}
+            onClick={() => downloadApplicationLogs(applicationLogs)}
+            data-qa="application-download-logs"
+            disabled={isLogsLoading}
+            iconBefore={
+              <IconDownload
+                className={classNames(isLogsLoading && 'button-secondary')}
+                size={18}
+              />
+            }
+          />
+        )}
+      </div>
     </Modal>
   );
-};
+});
 
-export const ApplicationLogs = withRenderWhen(
-  ApplicationSelectors.selectLogsEntityId,
-)(ApplicationLogsView);
+export const ApplicationLogs = view;

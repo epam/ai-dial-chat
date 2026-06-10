@@ -1,4 +1,4 @@
-import { FC, useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { ConversationsActions, ImportExportActions } from '@/src/store/actions';
 import { useAppDispatch } from '@/src/store/hooks';
@@ -11,9 +11,9 @@ interface ExportConversationDialogProps {
   conversationId: string;
 }
 
-const ExportConversationDialogView: FC<ExportConversationDialogProps> = ({
-  conversationId,
-}) => {
+const view = withRenderWhenEntities<ExportConversationDialogProps>({
+  conversationId: ConversationsSelectors.selectExportingConversationId,
+})(({ conversationId }: ExportConversationDialogProps) => {
   const dispatch = useAppDispatch();
 
   const handleCloseExportModal = useCallback(() => {
@@ -38,9 +38,6 @@ const ExportConversationDialogView: FC<ExportConversationDialogProps> = ({
   return (
     <ExportModal onExport={handleExport} onClose={handleCloseExportModal} />
   );
-};
+});
 
-export const ExportConversationDialog =
-  withRenderWhenEntities<ExportConversationDialogProps>({
-    conversationId: ConversationsSelectors.selectExportingConversationId,
-  })(ExportConversationDialogView);
+export const ExportConversationDialog = view;

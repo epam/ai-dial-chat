@@ -11,10 +11,12 @@ const MDEditor = dynamic(
   { ssr: false },
 );
 
-export enum EditorThemes {
-  dark = 'dark',
-  light = 'light',
-}
+export const EditorThemes = {
+  dark: 'dark',
+  light: 'light',
+} as const;
+
+export type EditorThemes = (typeof EditorThemes)[keyof typeof EditorThemes];
 
 export interface DialMarkdownEditorProps {
   value?: string;

@@ -38,8 +38,6 @@ import { ThemeSelect } from './ThemeSelect';
 import { Feature } from '@epam/ai-dial-shared';
 import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
-const ToggleSwitchLabel = withLabel(ToggleSwitchLabeled);
-
 const getCustomLogoLocalStoreName = (customLogoId: string | undefined) =>
   customLogoId && splitEntityId(customLogoId).name;
 
@@ -53,6 +51,10 @@ const view = withRenderWhen((state) => {
   return isOpen && !isUserMenuHidden;
 })(() => {
   const dispatch = useAppDispatch();
+  const ToggleSwitchLabel = useMemo(
+    () => withLabel(ToggleSwitchLabeled),
+    [],
+  );
 
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);

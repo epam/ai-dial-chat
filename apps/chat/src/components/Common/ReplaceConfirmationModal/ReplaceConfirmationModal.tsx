@@ -240,6 +240,8 @@ function ReplaceConfirmationModalView() {
   );
 }
 
-export const ReplaceConfirmationModal = withRenderWhen(
+const view = withRenderWhen(
   ImportExportSelectors.selectIsShowReplaceDialog,
 )(ReplaceConfirmationModalView);
+
+export const ReplaceConfirmationModal = view;

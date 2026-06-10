@@ -88,6 +88,6 @@ function InfoModalView() {
   );
 }
 
-export const InfoModal = withRenderWhen(ChatSelectors.selectInfoModalOpened)(
-  InfoModalView,
-);
+const view = withRenderWhen(ChatSelectors.selectInfoModalOpened)(InfoModalView);
+
+export const InfoModal = view;
