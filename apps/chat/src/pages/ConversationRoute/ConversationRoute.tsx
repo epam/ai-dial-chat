@@ -21,6 +21,7 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
 import {
+  BasicI18nKeys,
   ChatI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
@@ -97,7 +98,7 @@ const ConversationRoute: FC = () => {
         !isLoading && !error && items.length === 0
           ? t(DeploymentsI18nKeys.SelectorEmpty)
           : undefined,
-      searchPlaceholder: t(DeploymentsI18nKeys.SelectorSearchPlaceholder),
+      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
       closeLabel: t(DeploymentsI18nKeys.SelectorCloseLabel),
     }),
     [t, isLoading, error, items.length],
