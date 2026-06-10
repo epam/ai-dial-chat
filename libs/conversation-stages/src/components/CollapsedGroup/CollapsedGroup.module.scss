@@ -1,0 +1,15 @@
+.toggleButton {
+  color: var(--cs-cg-label, var(--text-secondary, #9fa6bd));
+
+  &:hover {
+    color: var(--cs-cg-label-hover, var(--text-primary, #eef1f7));
+  }
+}
+
+.stepsCount {
+  color: var(--cs-cg-steps-count, var(--text-primary, #eef1f7));
+}
+
+.contentBox {
+  border-color: var(--cs-cg-border, var(--stroke-secondary, #242c42));
+}

@@ -1,10 +1,10 @@
 import {
-  MessageRole,
   isStatusMessage,
+  MessageRole,
   type Attachment,
   type DisplayAttachment,
-  type Message as MessageType,
   type MessageRating,
+  type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -12,7 +12,7 @@ import {
   type MessageActionAriaLabels,
   type MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
-import { StagesPanel } from '@epam/ai-dial-conversation-stages';
+import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { FC, lazy, memo, Suspense } from 'react';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
@@ -73,6 +73,8 @@ interface Props {
   formatStatusModelChangedBody: (from: string, to: string) => string;
   streamErrorText: string;
   thinkingLabel: string;
+  executedLabel: string;
+  stepsLabel: (count: number) => string;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -105,6 +107,8 @@ const ConversationMessageItem: FC<Props> = ({
   formatStatusModelChangedBody,
   streamErrorText,
   thinkingLabel,
+  executedLabel,
+  stepsLabel,
 }) => {
   const isStreaming = isStreamingMessage(
     msg.role,
@@ -207,9 +211,11 @@ const ConversationMessageItem: FC<Props> = ({
         hasStages || msg.hasStreamError ? (
           <>
             {hasStages && (
-              <StagesPanel
+              <CollapsedGroup
                 stages={msg.custom_content?.stages ?? []}
                 isStreaming={isStreaming}
+                executedLabel={executedLabel}
+                stepsLabel={stepsLabel}
               />
             )}
             {msg.hasStreamError && (

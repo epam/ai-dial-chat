@@ -115,6 +115,11 @@
     "statusMessage": {
       "modelChangedTitle": "Model switched.",
       "modelChangedBody": "The model has been switched from {{from}} to {{to}}."
+    },
+    "stages": {
+      "executed": "Executed",
+      "step_one": "step",
+      "step_other": "steps"
     }
   },
   "conversationHistory": {
