@@ -1,5 +1,11 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { SearchInput, SidebarPanel, SidebarSide } from '@epam/ai-dial-sidebar';
+import {
+  PanelEmptyState,
+  SearchInput,
+  SidebarPanel,
+  SidebarSide,
+} from '@epam/ai-dial-sidebar';
+import { IconMessageCircle, IconSearchOff } from '@tabler/icons-react';
 import { type FC, memo, useMemo, useState } from 'react';
 import {
   ConversationSource,
@@ -7,7 +13,6 @@ import {
   FilterTab,
 } from '../../models/ConversationPanel';
 import { ConversationGroup } from '../ConversationGroup/ConversationGroup';
-import { EmptyState } from '../EmptyState/EmptyState';
 import { FilterTabs } from '../FilterTabs/FilterTabs';
 import { NewChatButton } from '../NewChatButton/NewChatButton';
 import { matchesSearch, matchesTab } from './utils';
@@ -21,6 +26,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     activeConversationId,
     title,
     emptyLabel,
+    noResultsLabel,
     onNewChat,
     newChatLabel,
     searchPlaceholder,
@@ -110,7 +116,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       [filteredItems],
     );
 
-    const isEmpty = filteredItems.length === 0;
+    const isNoConversations = conversations.length === 0;
+    const isNoResults = conversations.length > 0 && filteredItems.length === 0;
 
     return (
       <SidebarPanel
@@ -160,10 +167,17 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           tabColorClassName={typography?.tabColorClassName}
         />
 
-        <div className="flex w-full flex-col gap-2 overflow-y-auto px-2 py-1">
-          {isEmpty ? (
-            <EmptyState
+        <div className="flex w-full flex-1 flex-col gap-2 overflow-y-auto px-2 py-1">
+          {isNoConversations ? (
+            <PanelEmptyState
+              icon={<IconMessageCircle aria-hidden size={48} stroke={1} />}
               label={emptyLabel}
+              labelClassName={typography?.emptyLabelClassName}
+            />
+          ) : isNoResults ? (
+            <PanelEmptyState
+              icon={<IconSearchOff aria-hidden size={45} stroke={1} />}
+              label={noResultsLabel}
               labelClassName={typography?.emptyLabelClassName}
             />
           ) : (

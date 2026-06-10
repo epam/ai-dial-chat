@@ -312,6 +312,7 @@ const ConversationPanelView: FC<Props> = ({
         activeConversationId={activeConversationId}
         title={t(ConversationHistoryI18nKeys.Title)}
         emptyLabel={t(ConversationHistoryI18nKeys.Empty)}
+        noResultsLabel={t(ConversationHistoryI18nKeys.NoResults)}
         onNewChat={onNewChat}
         newChatLabel={t(ConversationHistoryI18nKeys.NewChat)}
         searchPlaceholder={t(ConversationHistoryI18nKeys.SearchPlaceholder)}
