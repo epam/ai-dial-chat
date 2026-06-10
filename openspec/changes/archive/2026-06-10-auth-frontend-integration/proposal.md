@@ -35,5 +35,6 @@ Without SPA-side wiring, the encrypted cookie is not exercised by the frontend, 
 - **i18n**: adds the `auth.*` namespace to `en.json` (new user-visible strings: sign-in / signed-in-as / sign-out / loading / provider-picker copy).
 - **Breaking changes**: none for the API; from the SPA user perspective the experience changes from "no auth" to "redirect to IdP on first load" — a UX change that is the entire point of this work.
 - **Out of scope** (deferred):
-  - CSRF token wiring (`X-CSRF-Token` header on non-GET requests) — paired with backend Slice 5 in a separate change.
   - Backend Slice 3 (`POST /api/v1/auth/logout`) — the frontend form is intentionally wired now, but successful sign-out is tracked in the existing `auth-bff-encrypted-cookie/tasks.md`.
+- **Implemented via `auth-bff-encrypted-cookie` Slice 5** (originally deferred):
+  - CSRF token wiring (`X-CSRF-Token` header on non-GET requests) — `GET /api/v1/auth/me` issues the token; frontend stores and sends it on every state-mutating call; rotated tokens from session refresh are captured from response headers.

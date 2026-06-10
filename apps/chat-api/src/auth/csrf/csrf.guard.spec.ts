@@ -14,6 +14,7 @@ const VALID_USER: SessionUser = {
   providerId: 'keycloak',
   claims: {},
   at: 'access-token',
+  bucket: 'user-bucket',
   csrf: 'csrf-secret-token',
 };
 
