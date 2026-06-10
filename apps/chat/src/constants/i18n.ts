@@ -325,6 +325,7 @@ export enum CommonI18nKeys {
   ShareLimitExceeded = '"{{name}}" has already been shared with the maximum specified number of users.',
   ShareLimitExceededWithVersion = '"{{name}}" version {{version}} has already been shared with the maximum specified number of users.',
   ShareApplicationWithPublicResourcesFailed = 'Sharing failed. You are only allowed to share applications with resources from "My files"',
+  LogOutBeforeEditingToolset = 'Log out before editing toolset',
 }
 
 // errors.json
