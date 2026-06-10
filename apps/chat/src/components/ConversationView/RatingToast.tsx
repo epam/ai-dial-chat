@@ -16,7 +16,7 @@ const RatingToast: FC<Props> = ({ title, description, onDismiss }) => {
   }, [title, onDismiss]);
 
   return (
-    <div className="fixed top-6 start-1/2 z-50 -translate-x-1/2">
+    <div className="fixed start-1/2 top-6 z-50 -translate-x-1/2">
       <DialNotification
         variant={NotificationVariant.Success}
         title={title}

@@ -124,7 +124,11 @@ export const ConversationPage: FC = () => {
   } | null>(null);
 
   const showToast = useCallback((title: string, description: string) => {
-    setToastState((prev) => ({ title, description, key: (prev?.key ?? 0) + 1 }));
+    setToastState((prev) => ({
+      title,
+      description,
+      key: (prev?.key ?? 0) + 1,
+    }));
   }, []);
 
   const isReadOnly = useMemo(() => {
@@ -270,7 +274,10 @@ export const ConversationPage: FC = () => {
     async (messageIndex: number, rating: MessageRating | null) => {
       const success = await handleRateMessage(messageIndex, rating);
       if (success && rating === MessageRating.Like) {
-        showToast(t(ChatI18nKeys.LikeToastTitle), t(ChatI18nKeys.LikeToastDescription));
+        showToast(
+          t(ChatI18nKeys.LikeToastTitle),
+          t(ChatI18nKeys.LikeToastDescription),
+        );
       }
     },
     [handleRateMessage, showToast, t],
@@ -291,7 +298,10 @@ export const ConversationPage: FC = () => {
         comment,
       );
       if (success) {
-        showToast(t(ChatI18nKeys.DislikeToastTitle), t(ChatI18nKeys.DislikeToastDescription));
+        showToast(
+          t(ChatI18nKeys.DislikeToastTitle),
+          t(ChatI18nKeys.DislikeToastDescription),
+        );
       }
     },
     [pendingDislikeMessageIndex, handleRateMessage, showToast, t],
