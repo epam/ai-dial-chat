@@ -27,6 +27,7 @@ import { PromptService } from '@/src/utils/app/data/prompt-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
   addMessageAttachmentsToPublication$,
   getDeletedEntities,
@@ -156,9 +157,9 @@ const publishEpic: AppEpic = (action$) =>
     switchMap(({ publicationData, isPublishingExternalFiles }) => {
       if (isPublishingExternalFiles) {
         return of(
-          PublicationActions.publishFail(
-            CommonI18nKeys.PublicationWithExternalFilesFailed,
-          ),
+          PublicationActions.publishFail({
+            message: CommonI18nKeys.PublicationWithExternalFilesFailed,
+          }),
         );
       }
 
@@ -176,7 +177,8 @@ const publishEpic: AppEpic = (action$) =>
         ),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.publishFail(err.message));
+          const { traceId, message } = parseApiError(err);
+          return of(PublicationActions.publishFail({ message, traceId }));
         }),
       );
     }),
@@ -187,9 +189,13 @@ const publishFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.publishFail.type),
     map(({ payload }) => {
       return UIActions.showErrorToast({
-        message: translate(payload ?? CommonI18nKeys.PublicationFailed, {
-          ns: Translation.Common,
-        }),
+        message: translate(
+          payload?.message ?? CommonI18nKeys.PublicationFailed,
+          {
+            ns: Translation.Common,
+          },
+        ),
+        traceId: payload?.traceId,
       });
     }),
   );
@@ -216,7 +222,9 @@ const uploadPublicationsEpic: AppEpic = (action$, state$) =>
         ),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.uploadPublicationsFail());
+          return of(
+            PublicationActions.uploadPublicationsFail(parseApiError(err)),
+          );
         }),
       ),
     ),
@@ -225,11 +233,12 @@ const uploadPublicationsEpic: AppEpic = (action$, state$) =>
 const uploadPublicationsFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadPublicationsFail.type),
-    map(() =>
+    map(({ payload }) =>
       UIActions.showErrorToast({
         message: translate(CommonI18nKeys.PublicationsUploadFailed, {
           ns: Translation.Common,
         }),
+        traceId: payload?.traceId,
       }),
     ),
   );
@@ -443,7 +452,9 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.uploadPublicationFail());
+          return of(
+            PublicationActions.uploadPublicationFail(parseApiError(err)),
+          );
         }),
       ),
     ),
@@ -452,11 +463,12 @@ const uploadPublicationEpic: AppEpic = (action$, state$) =>
 const uploadPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.uploadPublicationsFail.type),
-    map(() =>
+    map(({ payload }) =>
       UIActions.showErrorToast({
         message: translate(CommonI18nKeys.PublicationUploadFailed, {
           ns: Translation.Common,
         }),
+        traceId: payload?.traceId,
       }),
     ),
   );
@@ -1038,7 +1050,9 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.approvePublicationFail(err.message));
+          return of(
+            PublicationActions.approvePublicationFail(parseApiError(err)),
+          );
         }),
       ),
     ),
@@ -1049,9 +1063,13 @@ const approvePublicationFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.approvePublicationFail.type),
     map(({ payload }) =>
       UIActions.showErrorToast({
-        message: translate(payload ?? CommonI18nKeys.PublicationApproveFailed, {
-          ns: Translation.Common,
-        }),
+        message: translate(
+          payload?.message ?? CommonI18nKeys.PublicationApproveFailed,
+          {
+            ns: Translation.Common,
+          },
+        ),
+        traceId: payload?.traceId,
       }),
     ),
   );
@@ -1066,7 +1084,9 @@ const rejectPublicationEpic: AppEpic = (action$) =>
         ),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.rejectPublicationFail());
+          return of(
+            PublicationActions.rejectPublicationFail(parseApiError(err)),
+          );
         }),
       ),
     ),
@@ -1075,11 +1095,12 @@ const rejectPublicationEpic: AppEpic = (action$) =>
 const rejectPublicationFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(PublicationActions.rejectPublicationFail.type),
-    map(() =>
+    map(({ payload }) =>
       UIActions.showErrorToast({
         message: translate(CommonI18nKeys.PublicationRejectFailed, {
           ns: Translation.Common,
         }),
+        traceId: payload?.traceId,
       }),
     ),
   );
@@ -1163,7 +1184,7 @@ const uploadRulesEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.uploadRulesFail(err.message));
+          return of(PublicationActions.uploadRulesFail(parseApiError(err)));
         }),
       ),
     ),
@@ -1174,9 +1195,13 @@ const uploadRulesFailEpic: AppEpic = (action$) =>
     ofType(PublicationActions.uploadRulesFail.type),
     map(({ payload }) =>
       UIActions.showErrorToast({
-        message: translate(payload ?? CommonI18nKeys.RulesUploadingFailed, {
-          ns: Translation.Common,
-        }),
+        message: translate(
+          payload?.message ?? CommonI18nKeys.RulesUploadingFailed,
+          {
+            ns: Translation.Common,
+          },
+        ),
+        traceId: payload?.traceId,
       }),
     ),
   );
@@ -1452,7 +1477,8 @@ const updatePublicationRequestAndEntityEpic: AppEpic = (action$, state$) =>
           );
         }),
         catchError((err) => {
-          return of(PublicationActions.publishFail(err.message));
+          const { message, traceId } = parseApiError(err);
+          return of(PublicationActions.publishFail({ message, traceId }));
         }),
       );
     }),
@@ -1539,7 +1565,7 @@ const updateApplicationPublicationUrlsEpic: AppEpic = (action$, state$) =>
           );
         }),
         catchError((err) => {
-          return of(PublicationActions.publishFail(err.message));
+          return of(PublicationActions.publishFail(parseApiError(err)));
         }),
       );
     }),
@@ -1649,7 +1675,7 @@ const updatePublicationRequestAndApplicationIconEpic: AppEpic = (
           );
         }),
         catchError((err) => {
-          return of(PublicationActions.publishFail(err.message));
+          return of(PublicationActions.publishFail(parseApiError(err)));
         }),
       );
     }),
@@ -1778,7 +1804,7 @@ const updatePublicationRequestAndFolderEpic: AppEpic = (action$, state$) =>
           );
         }),
         catchError((err) => {
-          return of(PublicationActions.publishFail(err.message));
+          return of(PublicationActions.publishFail(parseApiError(err)));
         }),
       );
     }),
@@ -2096,7 +2122,7 @@ const updatePublicationRequestEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.publishFail(err.message));
+          return of(PublicationActions.publishFail(parseApiError(err)));
         }),
       );
     }),
@@ -2230,7 +2256,7 @@ const updateAndApprovePublicationRequestEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.publishFail(err.message));
+          return of(PublicationActions.publishFail(parseApiError(err)));
         }),
       );
     }),
@@ -2334,7 +2360,7 @@ const updatePublicationAndConversationLastMessageAttachmentsEpic: AppEpic = (
           );
         }),
         catchError((err) => {
-          return of(PublicationActions.publishFail(err.message));
+          return of(PublicationActions.publishFail(parseApiError(err)));
         }),
       );
     }),
@@ -2406,7 +2432,7 @@ const updatePublicationConversationAttachmentsAndSendMessageEpic: AppEpic = (
         }),
         catchError((err) => {
           console.error(err);
-          return of(PublicationActions.publishFail(err.message));
+          return of(PublicationActions.publishFail(parseApiError(err)));
         }),
       );
     }),

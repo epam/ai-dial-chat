@@ -30,6 +30,8 @@ import {
   SetInputContentRequest,
   SetSystemPromptRequest,
   SetSystemPromptResponse,
+  SetTemperatureRequest,
+  SetTemperatureResponse,
   StopSelectedPlaybackConversationResponse,
   Styles,
   Task,
@@ -663,6 +665,23 @@ export class ChatOverlay {
   }
 
   /**
+   * Set temperature for the first selected conversation
+   * @param temperature {number} temperature value (0-1)
+   */
+  public async setTemperature(
+    temperature: number,
+  ): Promise<SetTemperatureResponse> {
+    const request: SetTemperatureRequest = {
+      temperature,
+    };
+
+    return this.send(
+      OverlayRequests.setTemperature,
+      request,
+    ) as Promise<SetTemperatureResponse>;
+  }
+
+  /**
    * Send to DIAL overlay options (modelId, hostDomain, etc.)
    * @param options {ChatOverlayOptions} Options that should be set into the DIAL
    */
@@ -675,7 +694,9 @@ export class ChatOverlay {
    */
   destroy() {
     window.removeEventListener('message', this.process);
-    void this.iframeInteraction.ready().catch(() => {});
+    void this.iframeInteraction.ready().catch(() => {
+      console.error(`[${overlayLibName}] Iframe interaction error on destroy`);
+    });
     this.iframeInteraction.fail('Chat Overlay destroyed');
     this.root.removeChild(this.iframe);
 

@@ -258,11 +258,12 @@ const renameFolderEpic: AppEpic = (action$, state$) =>
             }),
           ),
         ),
-        catchError(() =>
+        catchError((err) =>
           of(
             FilesActions.renameFolderFail({
               oldId: payload.folderId,
               newId: targetFolderId,
+              ...parseApiError(err),
             }),
           ),
         ),
@@ -276,6 +277,7 @@ const renameFolderFailEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       return of(
         UIActions.showErrorToast({
+          traceId: payload?.traceId,
           message: translate(FilesI18nKeys.FailedToRename, {
             ns: Translation.Files,
             folderName: getFolderFromId(payload.oldId, FeatureType.File).name,

@@ -19,6 +19,7 @@ export type {
   OverlayConversation,
   SendMessageResponse,
   SetSystemPromptResponse,
+  SetTemperatureResponse,
   GetMessagesResponse,
   GetConversationsResponse,
   CreateConversationResponse,

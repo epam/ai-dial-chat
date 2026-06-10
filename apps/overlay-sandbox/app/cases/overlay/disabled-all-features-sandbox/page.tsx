@@ -1,9 +1,7 @@
 'use client';
 
-import {
-  ChatOverlayWrapper,
-  commonOverlayProps,
-} from '../../components/chatOverlayWrapper';
+import { ChatOverlayWrapper } from '../../components/chatOverlayWrapper';
+import { commonOverlayProps } from '../../components/commonOverlayProps';
 
 const overlayOptions = {
   ...commonOverlayProps,
