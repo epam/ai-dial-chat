@@ -473,27 +473,22 @@ export const UserMessage = memo(function UserMessage({
     );
   }, []);
 
+  const { uploadFiles: uploadPastedFiles, dispatchPreparedFiles } =
+    useChatUploadFiles({
+      selectedAttachmentsAmount: newEditableAttachments.length,
+      skipSelect: true,
+    });
+
   const handleUploadFromDevice = useCallback(
     (
       selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
       folderPath: string | undefined,
     ) => {
-      selectedFiles.forEach((file) => {
-        dispatch(
-          FilesActions.uploadFile({
-            fileContent: file.fileContent,
-            id: file.id,
-            relativePath: folderPath,
-            name: file.name,
-          }),
-        );
-      });
+      const ids = dispatchPreparedFiles(selectedFiles, folderPath);
 
-      setNewEditableAttachmentsIds((ids) =>
-        uniq(ids.concat(selectedFiles.map(({ id }) => id))),
-      );
+      setNewEditableAttachmentsIds((prevIds) => uniq(prevIds.concat(ids)));
     },
-    [dispatch],
+    [dispatchPreparedFiles],
   );
 
   const handleToggleEditingTemplates = useCallback(
@@ -629,11 +624,6 @@ export const UserMessage = memo(function UserMessage({
       dispatch(ChatActions.clearUserMessageVoiceAttachmentId());
     }
   }, [dispatch, isEditing]);
-
-  const uploadPastedFiles = useChatUploadFiles({
-    selectedAttachmentsAmount: newEditableAttachments.length,
-    skipSelect: true,
-  });
 
   const handleUploadPastedFiles = useCallback(
     (

@@ -10,6 +10,7 @@ import React, {
 
 import classNames from 'classnames';
 
+import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTextareaInsertInPosition } from '@/src/hooks/useTextareaInsertInPosition';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
@@ -528,6 +529,8 @@ export const ChatInputMessage = Inversify.register(
       [dispatch],
     );
 
+    const { dispatchPreparedFiles } = useChatUploadFiles();
+
     const handleUploadFromDevice = useCallback(
       (
         selectedFiles: Required<
@@ -535,23 +538,11 @@ export const ChatInputMessage = Inversify.register(
         >[],
         folderPath: string | undefined,
       ) => {
-        selectedFiles.forEach((file) => {
-          dispatch(
-            FilesActions.uploadFile({
-              fileContent: file.fileContent,
-              id: file.id,
-              relativePath: folderPath,
-              name: file.name,
-            }),
-          );
+        dispatchPreparedFiles(selectedFiles, folderPath, {
+          showSuccessMessage: true,
         });
-        dispatch(
-          FilesActions.selectFiles({
-            ids: selectedFiles.map(({ id }) => id),
-          }),
-        );
       },
-      [dispatch],
+      [dispatchPreparedFiles],
     );
 
     const handleAddLinkToMessage = useCallback((link: DialLink) => {

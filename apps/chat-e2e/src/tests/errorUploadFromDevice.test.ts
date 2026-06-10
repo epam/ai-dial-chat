@@ -2,7 +2,6 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
   ExpectedConstants,
-  ExpectedMessages,
   UploadMenuOptions,
 } from '@/src/testData';
 import { FileUtil, GeneratorUtil } from '@/src/utils';
@@ -156,9 +155,9 @@ dialTest(
 );
 
 dialTest(
-  '[Upload from device] Several different errors are combined into one (error about restricted symbols, already existed file, equal files).\n' +
-    "'[Upload from device] Error appears if to load two files with equal names and extension'.\n" +
-    '[Upload from device] Error appears if to upload the file if to rename it using restricted chars',
+  '[Upload from device] Duplicate names in upload list are auto-renamed on upload.\n' +
+    '[Upload from device] Files with restricted chars in the name are sanitized and uploaded.\n' +
+    '[Upload from device] Upload succeeds when batch contains files that sanitize to the same name',
   async ({
     dialHomePage,
     setTestIds,
@@ -174,6 +173,14 @@ dialTest(
 
     const sanitizedFilename = ExpectedConstants.replacedRestrictedCharsName(
       Attachment.restrictedSemicolonCharFilename,
+    );
+    const renamedRestrictedCharFilename = sanitizedFilename.replace(
+      /(\.)([^.]+)$/,
+      ' 1.$2',
+    );
+    const renamedCloudImageName = Attachment.cloudImageName.replace(
+      /(\.)([^.]+)$/,
+      ' 1.$2',
     );
 
     await dialTest.step('Upload file with valid name to app', async () => {
@@ -229,54 +236,29 @@ dialTest(
     );
 
     await dialTest.step(
-      'Click Upload and verify combined error messages are shown',
+      'Upload all files and verify duplicates are auto-renamed in attachments',
       async () => {
-        await uploadFromDeviceModal.uploadButton.click();
-
-        const modalError = uploadFromDeviceModal.getModalError();
-        await baseAssertion.assertElementState(modalError, 'visible');
-
-        //TODO currently the error message about the duplicated file that already exiss in user's filestorage do not appear
-        // await baseAssertion.assertElementText(
-        //   modalError.errorMessage,
-        //     ExpectedConstants.duplicatedFilenameError(Attachment.sunImageName),
-        //   ExpectedMessages.errorMessageContentIsValid,
-        // );
-        await baseAssertion.assertElementText(
-          modalError.errorMessage,
-          ExpectedConstants.sameFilenamesError(
-            sanitizedFilename,
-            Attachment.cloudImageName,
-          ),
-          ExpectedMessages.errorMessageContentIsValid,
-        );
-      },
-    );
-
-    await dialTest.step(
-      'Remove duplicate files and upload successfully',
-      async () => {
-        await uploadFromDeviceModal
-          .getDeleteUploadedFileButtonIcon(Attachment.sunImageName)
-          .click();
-        await uploadFromDeviceModal
-          .getDeleteUploadedFileButtonIcon(Attachment.cloudImageName)
-          .nth(0)
-          .click();
-        await uploadFromDeviceModal
-          .getDeleteUploadedFileButtonIcon(sanitizedFilename)
-          .nth(0)
-          .click();
-
         await uploadFromDeviceModal.uploadFiles();
         await baseAssertion.assertElementState(uploadFromDeviceModal, 'hidden');
 
+        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+          Attachment.sunImageName,
+          'visible',
+        );
         await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
           sanitizedFilename,
           'visible',
         );
         await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+          renamedRestrictedCharFilename,
+          'visible',
+        );
+        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
           Attachment.cloudImageName,
+          'visible',
+        );
+        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
+          renamedCloudImageName,
           'visible',
         );
       },

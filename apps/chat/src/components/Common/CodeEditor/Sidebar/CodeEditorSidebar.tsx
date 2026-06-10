@@ -4,6 +4,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getLastPathSegment } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
+import { dispatchPreparedFileUploads } from '@/src/utils/app/prepare-files-for-upload';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
 import { isHiddenEntity } from '@/src/utils/app/search';
@@ -127,17 +128,12 @@ export const CodeEditorSidebar = ({
       selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
       folderPath: string | undefined,
     ) => {
-      selectedFiles.forEach((file) => {
-        dispatch(
-          FilesActions.uploadFile({
-            fileContent: file.fileContent,
-            id: file.id,
-            relativePath: folderPath,
-            name: file.name,
-            bucket,
-          }),
-        );
-      });
+      dispatchPreparedFileUploads(
+        dispatch,
+        selectedFiles,
+        folderPath,
+        { bucket },
+      );
     },
     [bucket, dispatch],
   );

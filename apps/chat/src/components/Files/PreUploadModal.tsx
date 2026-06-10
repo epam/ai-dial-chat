@@ -21,8 +21,8 @@ import {
   notAllowedSymbolsRegex,
   prepareFileName,
   validatePreUploadFiles,
-  validateUploadFiles,
 } from '@/src/utils/app/file';
+import { prepareFilesForUpload } from '@/src/utils/app/prepare-files-for-upload';
 import { getFileRootId, isMyBucket } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
@@ -112,6 +112,10 @@ export const PreUploadDialog = ({
   );
 
   const folderPath = getRelativePath(selectedFolderId);
+  const uploadBucket = useMemo(
+    () => bucket ?? splitEntityId(selectedFolderId).bucket,
+    [bucket, selectedFolderId],
+  );
   const allowedExtensions = useMemo(() => {
     if (allowedTypes.includes('*/*')) {
       return [t(ChatI18nKeys.all)];
@@ -143,7 +147,7 @@ export const PreUploadDialog = ({
             return {
               fileContent: getFileWithType(file),
               id: constructPath(
-                getFileRootId(bucket),
+                getFileRootId(uploadBucket),
                 folderPath,
                 prepareFileName(file.name),
               ),
@@ -156,11 +160,11 @@ export const PreUploadDialog = ({
         uploadInputRef.current.value = '';
       }
     },
-    [allowedTypes, bucket, folderPath],
+    [allowedTypes, folderPath, uploadBucket],
   );
 
   const handleUpload = useCallback(() => {
-    const errors = [];
+    const errors: string[] = [];
 
     if (attachments.length + selectedFiles.length > maximumAttachmentsAmount) {
       errors.push(
@@ -171,36 +175,19 @@ export const PreUploadDialog = ({
       );
     }
 
-    const { validFiles: filesToUpload } = validateUploadFiles(selectedFiles);
+    const { preparedFiles, errorMsg } = prepareFilesForUpload({
+      files: selectedFiles.map((file) => ({
+        fileContent: file.fileContent,
+        name: file.name,
+      })),
+      folderId: selectedFolderId,
+      existingFiles: files,
+      bucket: uploadBucket,
+      allowedTypes,
+    });
 
-    const attachmentsSameLevelNames = files
-      .filter((file) => file.folderId === selectedFolderId)
-      .map((file) => prepareFileName(file.name));
-
-    const localIncorrectSameNameFiles = filesToUpload
-      .filter((file) =>
-        attachmentsSameLevelNames.includes(prepareFileName(file.name)),
-      )
-      .map((file) => prepareFileName(file.name));
-
-    if (localIncorrectSameNameFiles.length > 0) {
-      errors.push(
-        t(ChatI18nKeys.FilesAlreadyExistInSelectedFolder, {
-          fileNames: localIncorrectSameNameFiles.join(', '),
-        }),
-      );
-    }
-
-    const duplicateNames = filesToUpload
-      .map((file) => file.name)
-      .filter((value, index, self) => self.indexOf(value) !== index);
-
-    if (duplicateNames.length) {
-      errors.push(
-        t(ChatI18nKeys.FilesHaveSameNamesInUploadList, {
-          fileNames: duplicateNames.join(', '),
-        }),
-      );
+    if (errorMsg) {
+      errors.push(errorMsg);
     }
 
     if (errors.length) {
@@ -208,9 +195,14 @@ export const PreUploadDialog = ({
       return;
     }
 
-    onUploadFiles(filesToUpload, folderPath);
+    if (!preparedFiles.length) {
+      return;
+    }
+
+    onUploadFiles(preparedFiles, folderPath);
     onClose(true);
   }, [
+    allowedTypes,
     attachments.length,
     files,
     folderPath,
@@ -220,6 +212,7 @@ export const PreUploadDialog = ({
     selectedFiles,
     selectedFolderId,
     t,
+    uploadBucket,
   ]);
 
   const handleRenameFile = useCallback(
@@ -239,14 +232,18 @@ export const PreUploadDialog = ({
               ? {
                   ...file,
                   name: newName,
-                  id: constructPath(getFileRootId(), folderPath, newName),
+                  id: constructPath(
+                    getFileRootId(uploadBucket),
+                    folderPath,
+                    newName,
+                  ),
                 }
               : file,
           ),
         );
       };
     },
-    [folderPath, selectedFiles],
+    [folderPath, selectedFiles, uploadBucket],
   );
 
   const handleFolderChange = useCallback(() => {
@@ -267,11 +264,11 @@ export const PreUploadDialog = ({
     if (isOpen) {
       dispatch(
         FilesActions.getFiles({
-          id: constructPath(getFileRootId(), folderPath),
+          id: constructPath(getFileRootId(uploadBucket), folderPath),
         }),
       );
     }
-  }, [dispatch, folderPath, isOpen]);
+  }, [dispatch, folderPath, isOpen, uploadBucket]);
 
   useEffect(() => {
     if (initialFilesSelect && isOpen) {
@@ -283,19 +280,16 @@ export const PreUploadDialog = ({
   useEffect(() => {
     setSelectedFiles((oldFiles) =>
       oldFiles.map((file) => {
+        const name = prepareFileName(file.name);
+
         return {
           ...file,
-          name: prepareFileName(file.name),
-          id: constructPath(
-            getFileRootId(),
-            folderPath,
-            prepareFileName(file.name),
-          ),
-          folderPath,
+          name,
+          id: constructPath(getFileRootId(uploadBucket), folderPath, name),
         };
       }),
     );
-  }, [folderPath]);
+  }, [folderPath, uploadBucket]);
 
   const visiblePath = useMemo(() => {
     const isReview = !!reviewBucket && bucket === reviewBucket;
@@ -441,12 +435,12 @@ export const PreUploadDialog = ({
         reviewBucket={reviewBucket}
         isOpen={isChangeFolderModalOpened}
         initialSelectedFolderId={selectedFolderId}
-        rootFolderId={rootFolderId ?? getFileRootId(bucket)}
+        rootFolderId={rootFolderId ?? getFileRootId(uploadBucket)}
         onClose={(folderId) => {
           if (folderId) {
             setSelectedFolderId(folderId);
           } else {
-            const root = rootFolderId ?? getFileRootId(bucket);
+            const root = rootFolderId ?? getFileRootId(uploadBucket);
             if (selectedFolderId && selectedFolderId !== root) {
               const exists = folders.some((f) => f.id === selectedFolderId);
               if (!exists) {
