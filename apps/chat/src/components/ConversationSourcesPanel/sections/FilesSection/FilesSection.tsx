@@ -5,9 +5,16 @@ import { memo, type FC } from 'react';
 interface Props {
   attachments: DisplayAttachment[];
   title: string;
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  attachmentClickLabel?: string;
 }
 
-const FilesSection: FC<Props> = ({ attachments, title }) => {
+const FilesSection: FC<Props> = ({
+  attachments,
+  title,
+  onAttachmentClick,
+  attachmentClickLabel,
+}) => {
   if (attachments.length === 0) {
     return null;
   }
@@ -18,7 +25,14 @@ const FilesSection: FC<Props> = ({ attachments, title }) => {
       <div role="list" className="grid grid-cols-3 gap-3">
         {attachments.map((att) => (
           <div key={att.id} role="listitem">
-            <AttachmentCard attachment={att} className="w-full" />
+            <AttachmentCard
+              attachment={att}
+              className="w-full"
+              onClick={
+                onAttachmentClick ? () => onAttachmentClick(att) : undefined
+              }
+              clickLabel={attachmentClickLabel}
+            />
           </div>
         ))}
       </div>

@@ -18,10 +18,13 @@ const isDialFileId = (url: string): boolean => url.startsWith('files/');
 
 /**
  * Converts a DIAL file ID (`files/{bucket}/{path}`) to the BFF download URL.
- * The path segment may be percent-encoded; it is decoded before being passed
- * as a query parameter so the server receives the plain filename.
+ * Returns `undefined` if the input does not start with `files/` or has no path segment.
+ * The path segment is decoded with `decodeURIComponent` before being set as the query parameter.
  */
-const resolveDialFileUrl = (fileId: string): string | undefined => {
+export const resolveDialFileDownloadUrl = (
+  fileId: string,
+): string | undefined => {
+  if (!fileId.startsWith('files/')) return undefined;
   const withoutPrefix = fileId.slice('files/'.length);
   const slashIdx = withoutPrefix.indexOf('/');
   if (slashIdx < 0) return undefined;
@@ -50,6 +53,6 @@ export const resolveCatalogIconUrl = (
 ): string | undefined => {
   if (!iconUrl) return undefined;
   if (isAbsoluteUrl(iconUrl)) return iconUrl;
-  if (isDialFileId(iconUrl)) return resolveDialFileUrl(iconUrl);
+  if (isDialFileId(iconUrl)) return resolveDialFileDownloadUrl(iconUrl);
   return getIconPath(iconUrl);
 };

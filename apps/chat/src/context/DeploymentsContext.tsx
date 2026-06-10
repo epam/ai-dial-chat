@@ -52,6 +52,25 @@ const sortDeployments = (
   });
 };
 
+// TODO: move to user config
+const SELECTED_DEPLOYMENT_KEY = 'dial:selectedDeploymentId';
+
+const readStoredDeploymentId = (): string | null => {
+  try {
+    return localStorage.getItem(SELECTED_DEPLOYMENT_KEY);
+  } catch {
+    return null;
+  }
+};
+
+const writeStoredDeploymentId = (id: string): void => {
+  try {
+    localStorage.setItem(SELECTED_DEPLOYMENT_KEY, id);
+  } catch {
+    // storage quota exceeded or private browsing — ignore
+  }
+};
+
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
   const [rawDeployments, setRawDeployments] = useState<DeploymentItemDto[]>([]);
   const [schemas, setSchemas] = useState<ApplicationSchemaSummaryDto[]>([]);
@@ -97,6 +116,10 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       setSelectedItemId((prev) => {
         if (prev !== null && deployments.some((d) => d.id === prev)) {
           return prev;
+        }
+        const stored = readStoredDeploymentId();
+        if (stored != null && deployments.some((d) => d.id === stored)) {
+          return stored;
         }
         return deployments[0]?.id ?? null;
       });
@@ -159,13 +182,18 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [selectedItemId]);
 
+  const selectDeployment = useCallback((id: string) => {
+    writeStoredDeploymentId(id);
+    setSelectedItemId(id);
+  }, []);
+
   return (
     <DeploymentsContext.Provider
       value={useMemo(
         () => ({
           items,
           selectedItemId,
-          setSelectedItemId,
+          setSelectedItemId: selectDeployment,
           selectedDeploymentConfiguration,
           isLoading,
           error,
@@ -173,6 +201,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         [
           items,
           selectedItemId,
+          selectDeployment,
           selectedDeploymentConfiguration,
           isLoading,
           error,
