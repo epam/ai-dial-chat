@@ -127,6 +127,9 @@ export enum ConversationHistoryI18nKeys {
   RenameInputPlaceholder = 'conversationHistory.renameInputPlaceholder',
   RenameError = 'conversationHistory.renameError',
   RenameTitleTooLong = 'conversationHistory.renameTitleTooLong',
+  DuplicateLabel = 'conversationHistory.duplicateLabel',
+  DuplicateReadOnlyDescription = 'conversationHistory.duplicateReadOnlyDescription',
+  DuplicateError = 'conversationHistory.duplicateError',
 }
 
 export enum SidebarI18nKeys {
@@ -139,8 +142,5 @@ export enum SidebarI18nKeys {
   SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
   SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
   SectionSources = 'sidebar.sources.sections.sources',
-  Empty = 'sidebar.sources.empty.noData',
-  EmptyUploadedFiles = 'sidebar.sources.empty.uploadedFiles',
-  EmptyGeneratedFiles = 'sidebar.sources.empty.generatedFiles',
-  EmptySources = 'sidebar.sources.empty.sources',
+  Empty = 'sidebar.sources.noData',
 }

@@ -1014,6 +1014,52 @@
         "tags": ["conversations"]
       }
     },
+    "/api/v1/conversations/duplicate": {
+      "post": {
+        "operationId": "duplicateConversation",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Conversation duplicated — new path returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Source conversation not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "Duplicate a conversation into the user's own bucket",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/user-config": {
       "get": {
         "operationId": "getConfig",
@@ -1464,6 +1510,13 @@
           "applicationTypeSchemaId": {
             "type": "string",
             "description": "Application type schema id from DIAL Core (present only for application deployments)"
+          },
+          "inputAttachmentTypes": {
+            "description": "Accepted MIME types for input attachments from DIAL Core (e.g. [\"audio/*\", \"image/*\"])",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["id", "displayName", "type"]
@@ -1973,10 +2026,6 @@
       "ConversationMessageDto": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "example": "7c20f2e0-83d9-45aa-9fdc-bf3eb9f16bf8"
-          },
           "role": {
             "type": "string",
             "enum": ["user", "assistant"],
@@ -1991,7 +2040,7 @@
             "example": "2026-05-19T16:00:00.000Z"
           }
         },
-        "required": ["id", "role", "content", "timestamp"]
+        "required": ["role", "content", "timestamp"]
       },
       "ConversationResponseDto": {
         "type": "object",
@@ -2241,6 +2290,17 @@
             "type": "string",
             "description": "New relative path of the renamed conversation",
             "example": "conversations/bucket/gpt-4o__My renamed chat__uuid"
+          }
+        },
+        "required": ["newPath"]
+      },
+      "DuplicateConversationResponseDto": {
+        "type": "object",
+        "properties": {
+          "newPath": {
+            "type": "string",
+            "description": "Path of the newly created duplicate conversation",
+            "example": "conversations/bucket/gpt-4o__My conversation"
           }
         },
         "required": ["newPath"]

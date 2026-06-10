@@ -3,6 +3,7 @@ import type {
   DeploymentItem,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
+import { isAudioTranscriptionSupported } from '@epam/ai-dial-chat-shared';
 import {
   FC,
   lazy,
@@ -23,8 +24,13 @@ import {
   ChatI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
+import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import {
+  transcribeAudio,
+  transcribeAudioWithAsrModel,
+} from '../../server-api/chat.api';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
@@ -47,6 +53,7 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
+  const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const inputRef = useRef<HTMLDivElement>(null);
@@ -61,11 +68,12 @@ const ConversationRoute: FC = () => {
 
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
-      items.map(({ id, displayName, iconUrl, type }) => ({
+      items.map(({ id, displayName, iconUrl, type, inputAttachmentTypes }) => ({
         id,
         displayName,
         iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
         type,
+        inputAttachmentTypes,
       })),
     [items],
   );
@@ -143,6 +151,53 @@ const ConversationRoute: FC = () => {
     [bucket],
   );
 
+  const lastAudioMimeTypeRef = useRef<string>('audio/webm');
+
+  const handleUploadAudio = useCallback(
+    async (file: File, contentType: string): Promise<string> => {
+      if (!bucket) {
+        throw new Error('User bucket is not available');
+      }
+      if (file.size > transcribeSizeLimitBytes) {
+        throw new Error(
+          `Audio file exceeds the ${transcribeSizeLimitBytes} byte limit`,
+        );
+      }
+      lastAudioMimeTypeRef.current = contentType;
+      const response = await uploadFile(
+        bucket,
+        buildUploadPath({ name: file.name } as Attachment),
+        file,
+      );
+      return response.url;
+    },
+    [bucket, transcribeSizeLimitBytes],
+  );
+
+  const handleTranscribeAudio = useCallback(
+    async (audioUrl: string): Promise<string> => {
+      const mimeType = lastAudioMimeTypeRef.current;
+      if (asrModelId != null) {
+        return transcribeAudioWithAsrModel({ audioUrl, mimeType });
+      }
+      if (!selectedItemId) {
+        throw new Error('No model selected');
+      }
+      return transcribeAudio({
+        audioUrl,
+        mimeType,
+        deployment: selectedItemId,
+      });
+    },
+    [asrModelId, selectedItemId],
+  );
+
+  const isTranscriptionSupported = useMemo(() => {
+    if (asrModelId != null) return true;
+    const selectedItem = items.find((item) => item.id === selectedItemId);
+    return isAudioTranscriptionSupported(selectedItem?.inputAttachmentTypes);
+  }, [asrModelId, items, selectedItemId]);
+
   const handleStarterSelect = useCallback(
     (starter: StarterOption) => {
       if (starter['dial:widgetOptions'].submit) {
@@ -195,6 +250,9 @@ const ConversationRoute: FC = () => {
             modelSelectorLabels={modelSelectorLabels}
             sendLabel={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
+            isTranscriptionSupported={isTranscriptionSupported}
+            onUploadAudio={handleUploadAudio}
+            onTranscribeAudio={handleTranscribeAudio}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>

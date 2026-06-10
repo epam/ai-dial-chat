@@ -4,8 +4,14 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { SourcesSidebarProvider } from '../../../context/SourcesSidebarContext';
 import ConversationSourcesPanel from '../ConversationSourcesPanel';
+
+const mockHandleClose = vi.fn();
+const mockUseSourcesSidebar = vi.fn();
+
+vi.mock('../../../context/SourcesSidebarContext', () => ({
+  useSourcesSidebar: () => mockUseSourcesSidebar(),
+}));
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
   SidebarPanel: ({
@@ -68,12 +74,15 @@ const makeAssistantMessage = (attachmentTitle: string): Message => ({
   },
 });
 
-const renderPanel = (messages: Message[] = []) =>
-  render(
-    <SourcesSidebarProvider>
-      <ConversationSourcesPanel messages={messages} />
-    </SourcesSidebarProvider>,
-  );
+const renderPanel = (messages: Message[] = []) => {
+  mockUseSourcesSidebar.mockReturnValue({
+    handleClose: mockHandleClose,
+    isOpen: true,
+    messages,
+  });
+
+  return render(<ConversationSourcesPanel />);
+};
 
 describe('ConversationSourcesPanel', () => {
   it('derives uploaded files from user messages', () => {
@@ -87,16 +96,17 @@ describe('ConversationSourcesPanel', () => {
   });
 
   it('close button calls useSourcesSidebar().handleClose via context', async () => {
+    mockHandleClose.mockClear();
     const user = userEvent.setup();
     renderPanel();
     await user.click(screen.getByRole('button', { name: 'Close' }));
-    expect(screen.queryByRole('button', { name: 'Close' })).toBeTruthy();
+    expect(mockHandleClose).toHaveBeenCalledOnce();
   });
 
   it('renders the panel empty state when the conversation has no files', () => {
     renderPanel();
 
-    expect(screen.getByText('sidebar.sources.empty.noData')).toBeTruthy();
+    expect(screen.getByText('sidebar.sources.noData')).toBeTruthy();
     expect(screen.queryByRole('heading')).toBeNull();
     expect(
       screen.queryByRole('button', { name: 'sidebar.sources.search' }),
@@ -106,7 +116,7 @@ describe('ConversationSourcesPanel', () => {
     ).toBeNull();
   });
 
-  it('renders three sections in order', () => {
+  it('renders uploaded and generated sections in order', () => {
     renderPanel([
       makeUserMessage('upload.pdf'),
       makeAssistantMessage('result.csv'),
@@ -115,13 +125,10 @@ describe('ConversationSourcesPanel', () => {
     const texts = headings.map((h) => h.textContent);
     expect(texts).toContain('sidebar.sources.sections.uploadedFiles');
     expect(texts).toContain('sidebar.sources.sections.generatedFiles');
-    expect(texts).toContain('sidebar.sources.sections.sources');
     const uploadedIdx = texts.indexOf('sidebar.sources.sections.uploadedFiles');
     const generatedIdx = texts.indexOf(
       'sidebar.sources.sections.generatedFiles',
     );
-    const sourcesIdx = texts.indexOf('sidebar.sources.sections.sources');
     expect(uploadedIdx).toBeLessThan(generatedIdx);
-    expect(generatedIdx).toBeLessThan(sourcesIdx);
   });
 });

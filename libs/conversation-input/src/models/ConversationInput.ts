@@ -136,4 +136,23 @@ export interface ConversationInputProps {
   stopLabel?: string;
   /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
   isInputDisabled?: boolean;
+  /**
+   * When `true`, the mic button is rendered and voice recording is enabled.
+   * The host app derives this from the selected deployment's `inputAttachmentTypes`.
+   * When `false` or absent, the mic button is hidden and the voice bar is never shown.
+   */
+  isTranscriptionSupported?: boolean;
+  /**
+   * Called when the user confirms a voice recording.
+   * Receives the recorded `File` and its detected MIME type.
+   * Should resolve with the DIAL storage URL for the uploaded audio.
+   */
+  onUploadAudio?: (file: File, contentType: string) => Promise<string>;
+  /**
+   * Called after successful audio upload with the returned DIAL storage URL.
+   * Should resolve with the transcript text.
+   */
+  onTranscribeAudio?: (audioUrl: string) => Promise<string>;
+  /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
+  micLabel?: string;
 }

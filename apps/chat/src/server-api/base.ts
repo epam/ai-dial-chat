@@ -1,9 +1,12 @@
 export enum ApiEndpoints {
   THEMES = '/api/themes',
   THEME_ICON = '/api/themes/icon',
+  CHAT_COMPLETIONS = '/api/v1/chat/completions',
   CONVERSATIONS = '/api/v1/conversations',
   MODELS = '/api/v1/models',
   AUTH_LOGOUT = '/api/v1/auth/logout',
+  CONFIG = '/api/v1/config',
+  TRANSCRIPTION = '/api/v1/transcription',
 }
 
 export class UnauthorizedError extends Error {

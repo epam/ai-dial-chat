@@ -17,6 +17,7 @@ import {
   ConversationListItemDto,
   ConversationListResponseDto,
 } from './dto/conversation-list.dto';
+import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 import { RenameConversationResponseDto } from './dto/rename-conversation.dto';
 import type {
@@ -65,10 +66,12 @@ export class ConversationService extends AppService {
           '',
           {
             headers: getBearerAuthHeaders(token),
-            query: {
-              recursive: true,
-              limit: 1000,
-              ...(cursor ? { token: cursor } : {}),
+            params: {
+              query: {
+                recursive: true,
+                limit: 1000,
+                ...(cursor ? { token: cursor } : {}),
+              },
             },
           },
         )) as MetadataResult;
@@ -86,7 +89,11 @@ export class ConversationService extends AppService {
         // Treat both null and undefined as "no more pages".
         cursor = data.nextToken ?? undefined;
       } while (cursor != null && cursor !== '');
-    } catch {
+    } catch (error) {
+      this.logger.warn(
+        'Unable to finish conversation title lookup; continuing with collected titles',
+        error,
+      );
       // Resilient: return whatever was collected before the failure
     }
 
@@ -255,6 +262,46 @@ export class ConversationService extends AppService {
     return { newPath: `conversations/${bucket}/${renamedPath}` };
   }
 
+  async duplicateConversation(
+    sourcePath: string,
+    token: string,
+    sessionBucket: string,
+  ): Promise<DuplicateConversationResponseDto> {
+    const slashIndex = sourcePath.indexOf('/');
+    const sourceBucket =
+      slashIndex === -1 ? sessionBucket : sourcePath.slice(0, slashIndex);
+    const subPath =
+      slashIndex === -1 ? sourcePath : sourcePath.slice(slashIndex + 1);
+
+    const filename = subPath.split('/').at(-1) ?? subPath;
+    const sourceTitle = getConversationTitleFromName(filename);
+    const existingTitles = await this.fetchAllUserTitles(token, sessionBucket);
+    const uniqueTitle = resolveUniqueConversationName(
+      prepareEntityName(sourceTitle),
+      existingTitles,
+    );
+    const destFilename = buildRenamedConversationPath(filename, uniqueTitle);
+
+    const sourceUrl = `conversations/${sourceBucket}/${encodeDialResourcePath(subPath)}`;
+    const destinationUrl = `conversations/${sessionBucket}/${encodeURIComponent(destFilename)}`;
+
+    try {
+      const { error } = (await this.client.copyResource({
+        headers: getBearerAuthHeaders(token),
+        body: { sourceUrl, destinationUrl, overwrite: false },
+      })) as { error?: unknown };
+      if (error != null) {
+        this.logger.error('DIAL Core rejected copyResource (duplicate)', error);
+        return handleDialError(error);
+      }
+    } catch (error) {
+      this.logger.error('DIAL Core copyResource (duplicate) failed', error);
+      return handleDialError(error);
+    }
+
+    return { newPath: `conversations/${sessionBucket}/${destFilename}` };
+  }
+
   async listConversations(
     token: string,
     bucket: string,
@@ -278,7 +325,7 @@ export class ConversationService extends AppService {
             encodeDialResourcePath(path ?? ''),
             {
               headers: getBearerAuthHeaders(token),
-              query: buildQuery(userNextToken),
+              params: { query: buildQuery(userNextToken) },
             },
           ) as Promise<MetadataResult>,
           (
@@ -287,7 +334,7 @@ export class ConversationService extends AppService {
               encodeDialResourcePath(path ?? ''),
               {
                 headers: getBearerAuthHeaders(token),
-                query: buildQuery(publicNextToken),
+                params: { query: buildQuery(publicNextToken) },
               },
             ) as Promise<MetadataResult>
           ).catch((err: unknown) => {

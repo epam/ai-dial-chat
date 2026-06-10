@@ -118,6 +118,7 @@ export const useModelSelector = ({
     deployments,
     isLoading,
     searchQuery,
+    selectedDeploymentId,
     modelSelectorLabels,
     onDeploymentChange,
   ]);

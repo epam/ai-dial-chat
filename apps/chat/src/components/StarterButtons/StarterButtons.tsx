@@ -22,8 +22,8 @@ const StarterButtons: FC<Props> = ({ starters, onSelect }) => {
       aria-label={t(ChatI18nKeys.ConversationStarters)}
       className="mt-4 flex flex-wrap justify-center gap-2"
     >
-      {starters.map((starter) => (
-        <div key={starter.const} role="listitem">
+      {starters.map((starter, index) => (
+        <div key={index} role="listitem">
           <DialRoundedButton
             label={starter.title}
             onClick={() => onSelect(starter)}

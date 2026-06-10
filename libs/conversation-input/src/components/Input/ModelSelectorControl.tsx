@@ -94,9 +94,9 @@ export const ModelSelectorControl: FC<Props> = ({
       menuHeader={menuHeader}
       placement="bottom-end"
       matchReferenceWidth={false}
-      listClassName="!w-[240px] !max-h-80"
+      listClassName="!w-[240px] !max-h-80 shadow-md"
       onOpenChange={handleModelSelectorOpenChange}
-      size={ElementSize.Large}
+      size={ElementSize.Standard}
       caretIcon={
         <div
           className={mergeClasses(

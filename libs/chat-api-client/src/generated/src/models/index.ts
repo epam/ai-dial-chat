@@ -653,6 +653,12 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   applicationTypeSchemaId?: string;
+  /**
+   * Accepted MIME types for input attachments from DIAL Core (e.g. ["audio/*", "image/*"])
+   * @type {Array<string>}
+   * @memberof DeploymentItemDto
+   */
+  inputAttachmentTypes?: Array<string>;
 }
 
 /**
@@ -1050,6 +1056,19 @@ export interface DialModelPricingDto {
    * @memberof DialModelPricingDto
    */
   completion?: string;
+}
+/**
+ *
+ * @export
+ * @interface DuplicateConversationResponseDto
+ */
+export interface DuplicateConversationResponseDto {
+  /**
+   * Path of the newly created duplicate conversation
+   * @type {string}
+   * @memberof DuplicateConversationResponseDto
+   */
+  newPath: string;
 }
 /**
  *

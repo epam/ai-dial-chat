@@ -7,7 +7,7 @@ import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
   DialGhostIconButton,
-  DialLoader,
+  DialSpinner,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconReload, IconX } from '@tabler/icons-react';
@@ -91,7 +91,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     >
       {isImage ? (
         <img
-          src={attachment.previewUrl}
+          src={attachment.previewUrl ?? attachment.url}
           alt={name}
           className={mergeClasses(
             'h-full w-full object-cover',
@@ -139,11 +139,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             styles.loadingOverlay,
           )}
         >
-          <DialLoader
-            size={16}
-            fullWidth={false}
-            iconClassName="text-primary"
+          <DialSpinner
+            size={40}
             ariaLabel="Loading attachment"
+            className="z-50"
           />
         </span>
       )}

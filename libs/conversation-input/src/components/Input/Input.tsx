@@ -5,22 +5,27 @@ import {
   buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
+import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { IconMicrophone } from '@tabler/icons-react';
 import {
   ChangeEvent,
   type FC,
   KeyboardEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from 'react';
 import { useClipboardPaste } from '../../hooks/useClipboardPaste';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import type { InputProps } from '../../models/Input';
 import { generateAttachmentId } from '../../utils/generateAttachmentId';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray';
+import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
 import { StopButton } from './Buttons/StopButton';
 import styles from './Input.module.scss';
@@ -44,6 +49,7 @@ export const Input: FC<InputProps> = ({
   retryLabel,
   sendLabel,
   stopLabel,
+  micLabel = 'Record voice message',
   colors,
   typography,
   className,
@@ -60,6 +66,9 @@ export const Input: FC<InputProps> = ({
   hideActionBar = false,
   renderFooterActions,
   isInputDisabled = false,
+  isTranscriptionSupported = false,
+  onUploadAudio,
+  onTranscribeAudio,
 }) => {
   const isMobile = useIsMobile();
   const cssVars = useMemo(
@@ -84,6 +93,29 @@ export const Input: FC<InputProps> = ({
   const [message, setMessage] = useState(messageProp);
   const [attachments, setAttachments] =
     useState<Attachment[]>(initialAttachments);
+  const attachmentsRef = useRef(attachments);
+
+  const handleTranscript = useCallback(
+    (transcript: string) => {
+      setMessage(transcript);
+      onChange?.(transcript);
+    },
+    [onChange],
+  );
+
+  const {
+    state: voiceState,
+    waveformData,
+    errorMessage: voiceError,
+    startRecording,
+    stopRecording,
+    confirmRecording,
+    discardRecording,
+  } = useVoiceRecorder({
+    onUploadAudio,
+    onTranscribeAudio,
+    onTranscript: handleTranscript,
+  });
 
   useEffect(() => {
     if (messageProp) {
@@ -91,10 +123,30 @@ export const Input: FC<InputProps> = ({
     }
   }, [messageProp]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const singleRowHeightRef = useRef<number>(0);
+  const [isMultiLine, setIsMultiLine] = useState(false);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      singleRowHeightRef.current = textareaRef.current.offsetHeight;
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!textareaRef.current || singleRowHeightRef.current === 0) return;
+    setIsMultiLine(
+      textareaRef.current.offsetHeight > singleRowHeightRef.current,
+    );
+  }, [message]);
+
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
 
   useEffect(() => {
     return () => {
-      attachments.forEach((a) => {
+      attachmentsRef.current.forEach((a) => {
         if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
       });
     };
@@ -176,7 +228,7 @@ export const Input: FC<InputProps> = ({
     const built = buildAttachments(pendingDropFiles);
     addAttachments(built);
     onDropFilesConsumed?.();
-  }, [pendingDropFiles]); // intentionally omit buildAttachments/addAttachments/onDropFilesConsumed — stable refs
+  }, [addAttachments, buildAttachments, onDropFilesConsumed, pendingDropFiles]);
 
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
@@ -189,8 +241,13 @@ export const Input: FC<InputProps> = ({
     message.trim().length > 0 || attachments.length > 0;
   const canSend = hasSendableContent && !hasBlockedAttachments;
   // Stacked layout: textarea on its own row above the action bar. Used when the
-  // caller opts in (edit mode) or whenever attachments are present.
-  const isStackedLayout = isStacked || attachments.length > 0;
+  // caller opts in (edit mode), whenever attachments are present, or when the
+  // message spans multiple visual lines (either explicit newlines or word-wrap).
+  const isStackedLayout =
+    isStacked ||
+    attachments.length > 0 ||
+    message.includes('\n') ||
+    isMultiLine;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
 
@@ -265,12 +322,28 @@ export const Input: FC<InputProps> = ({
     [attachments, handleRemove],
   );
 
+  if (voiceState !== 'idle') {
+    return (
+      <VoiceBar
+        state={voiceState}
+        waveformData={waveformData}
+        errorMessage={voiceError}
+        onStop={stopRecording}
+        onConfirm={confirmRecording}
+        onDiscard={discardRecording}
+        style={cssVars}
+        className={className}
+      />
+    );
+  }
+
   const textarea = (
     <textarea
       className={mergeClasses(
         styles.textarea,
         'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
       )}
+      ref={textareaRef}
       value={message}
       onChange={(e) => {
         setMessage(e.target.value);
@@ -386,6 +459,17 @@ export const Input: FC<InputProps> = ({
                 )}
               </>
             )}
+            {isTranscriptionSupported &&
+              !message.trim() &&
+              attachments.length === 0 && (
+                <DialGhostIconButton
+                  icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
+                  aria-label={micLabel}
+                  className="size-10 flex-shrink-0"
+                  onClick={startRecording}
+                  disabled={isInputDisabled || isStreaming}
+                />
+              )}
           </div>
         </div>
       )}

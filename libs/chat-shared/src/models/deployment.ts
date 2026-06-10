@@ -8,4 +8,6 @@ export interface DeploymentItem {
   iconUrl?: string;
   /** Deployment kind — used to choose a fallback icon. Typically `'model'` or `'application'`. */
   type?: string;
+  /** MIME types accepted as input attachments (e.g. `['audio/*', 'image/*']`). Undefined when not specified by DIAL Core. */
+  inputAttachmentTypes?: string[];
 }
