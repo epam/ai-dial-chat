@@ -133,6 +133,7 @@ export const filesSlice = createSlice({
         bucket?: string;
 
         showSuccessMessage?: boolean;
+        isFromDeviceAttachment?: boolean;
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.id);
@@ -148,6 +149,9 @@ export const filesSlice = createSlice({
         fileContent,
         contentLength: payload.fileContent.size,
         contentType: fileContent.type,
+        ...(payload.isFromDeviceAttachment && {
+          isFromDeviceAttachment: true,
+        }),
       });
     },
     uploadFileCancel: (
@@ -209,6 +213,7 @@ export const filesSlice = createSlice({
             contentLength:
               payload.apiResult.contentLength || file.contentLength,
             contentType: payload.apiResult.contentType || file.contentType,
+            isFromDeviceAttachment: file.isFromDeviceAttachment,
           };
         }
         return file;
