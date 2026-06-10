@@ -20,7 +20,9 @@ export enum PreviewMode {
   closed = 'closed',
 }
 
-export type MarketplaceEntity = DialAIEntityModel | ToolsetModel;
+export type MarketplaceEntity = (DialAIEntityModel | ToolsetModel) & {
+  owner?: string;
+};
 
 export interface EntitiesGroup<T extends MarketplaceEntity> {
   groupName: string;
