@@ -54,6 +54,7 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
+import { DialAIEntityFeatures } from '@/src/types/models';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
@@ -556,12 +557,21 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           actions.push(of(successAction));
 
           if (!modelFromState) {
+            const isQuickApp2 =
+              application.applicationTypeSchemaId ===
+              DEFAULT_QUICK_APPS_SCHEMA_2_ID;
             actions.push(
               of(
                 ModelsActions.addModels({
                   models: [
                     {
                       ...application,
+                      ...(isQuickApp2 && {
+                        features: {
+                          ...application.features,
+                          configuration: true,
+                        } as DialAIEntityFeatures,
+                      }),
                       sharedWithMe: acceptSharedWithMe,
                       permissions: payload.acceptSharePermissions,
                     },
