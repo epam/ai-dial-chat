@@ -1,6 +1,6 @@
 import type { DisplayAttachment, Message } from '@epam/ai-dial-chat-shared';
 import { MessageRole } from '@epam/ai-dial-chat-shared';
-import { act, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';

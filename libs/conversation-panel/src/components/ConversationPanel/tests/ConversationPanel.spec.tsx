@@ -73,6 +73,8 @@ vi.mock('@tabler/icons-react', () => ({
   IconChevronRight: () => <span>chevron-right</span>,
   IconCaretDownFilled: () => <span>caret-down-filled</span>,
   IconCaretRightFilled: () => <span>caret-right-filled</span>,
+  IconMessageCircle: () => <span>message-circle</span>,
+  IconSearchOff: () => <span>search-off</span>,
 }));
 
 const FILTER_LABELS = {
@@ -209,7 +211,7 @@ describe('ConversationPanel', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={items} />);
     const input = screen.getByPlaceholderText('Search chat…');
     fireEvent.change(input, { target: { value: 'zzznomatch' } });
-    expect(screen.getByText('No conversations yet')).toBeTruthy();
+    expect(screen.getByText('No results found')).toBeTruthy();
   });
 
   it('filters by Shared tab', () => {
