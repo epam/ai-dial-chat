@@ -213,6 +213,9 @@ const reuploadFileEpic: AppEpic = (action$, state$) =>
           id: payload.fileId,
           relativePath: file.relativePath,
           name: file.name,
+          ...(file.isFromDeviceAttachment && {
+            isFromDeviceAttachment: true,
+          }),
         }),
       );
     }),
@@ -563,13 +566,11 @@ const unselectFilesEpic: AppEpic = (action$, state$) =>
     ofType(FilesActions.unselectFiles.type),
     switchMap(({ payload }) => {
       const files = FilesSelectors.selectFilesByIds(state$.value, payload.ids);
-      const cancelFileActions = files
-        .filter(
-          (file) => !file.serverSynced && file.status === UploadStatus.LOADING,
-        )
-        .map((file) => of(FilesActions.uploadFileCancel({ id: file.id })));
+      const deleteActions = files
+        .filter((file) => file.isFromDeviceAttachment)
+        .map((file) => of(FilesActions.deleteFile({ fileId: file.id })));
 
-      return concat(...cancelFileActions);
+      return concat(...deleteActions);
     }),
   );
 
@@ -1231,6 +1232,9 @@ const continueUploadReplaceDialogEpic: AppEpic = (action$, state$) =>
             ...(file.httpMethod && { httpMethod: file.httpMethod }),
             ...(dialog.showSuccessMessage && {
               showSuccessMessage: index === resolvedFiles.length - 1,
+            }),
+            ...(dialog.isFromDeviceAttachment && {
+              isFromDeviceAttachment: true,
             }),
           }),
         ),

@@ -19,6 +19,7 @@ export interface UploadReplaceDialogState {
   bucket?: string;
   showSuccessMessage: boolean;
   selectFileIds: boolean;
+  isFromDeviceAttachment?: boolean;
   mappedActions?: MappedReplaceActions;
 }
 

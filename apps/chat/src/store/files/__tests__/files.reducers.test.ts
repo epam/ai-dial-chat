@@ -384,3 +384,92 @@ describe('files.reducers uploadReplaceDialog', () => {
     });
   });
 });
+
+describe('files.reducers quick attachments', () => {
+  const fileId = 'files/test/uploads/2025-01/attachment.txt';
+  const fileContent = new File(['content'], 'attachment.txt', {
+    type: 'text/plain',
+  });
+
+  it('uploadFile sets isFromDeviceAttachment when flag is passed', () => {
+    const state = filesSlice.getInitialState();
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.uploadFile({
+        fileContent,
+        id: fileId,
+        name: 'attachment.txt',
+        relativePath: 'uploads/2025-01',
+        isFromDeviceAttachment: true,
+      }),
+    );
+
+    expect(nextState.files).toHaveLength(1);
+    expect(nextState.files[0].isFromDeviceAttachment).toBe(true);
+    expect(nextState.files[0].status).toBe(UploadStatus.LOADING);
+  });
+
+  it('uploadFile does not set isFromDeviceAttachment without flag', () => {
+    const state = filesSlice.getInitialState();
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.uploadFile({
+        fileContent,
+        id: fileId,
+        name: 'attachment.txt',
+        relativePath: 'uploads/2025-01',
+      }),
+    );
+
+    expect(nextState.files[0].isFromDeviceAttachment).toBeUndefined();
+  });
+
+  it('uploadFileSuccess preserves isFromDeviceAttachment', () => {
+    const state = {
+      ...filesSlice.getInitialState(),
+      files: [
+        makeFile({
+          id: fileId,
+          status: UploadStatus.LOADING,
+          isFromDeviceAttachment: true,
+        }),
+      ],
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.uploadFileSuccess({
+        apiResult: makeFile({
+          id: fileId,
+          serverSynced: true,
+        }),
+      }),
+    );
+
+    expect(nextState.files[0].isFromDeviceAttachment).toBe(true);
+    expect(nextState.files[0].serverSynced).toBe(true);
+  });
+
+  it('unselectFiles removes ids from selectedFilesIds only', () => {
+    const state = {
+      ...filesSlice.getInitialState(),
+      selectedFilesIds: [fileId, 'files/test/other.txt'],
+      files: [
+        makeFile({
+          id: fileId,
+          isFromDeviceAttachment: true,
+        }),
+      ],
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.unselectFiles({ ids: [fileId] }),
+    );
+
+    expect(nextState.selectedFilesIds).toEqual(['files/test/other.txt']);
+    expect(nextState.files).toHaveLength(1);
+  });
+});

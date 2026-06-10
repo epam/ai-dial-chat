@@ -25,6 +25,7 @@ import { UploadStatus } from '@epam/ai-dial-shared';
 export interface DispatchPreparedFilesOptions {
   bucket?: string;
   showSuccessMessage?: boolean;
+  isFromDeviceAttachment?: boolean;
 }
 
 export const useUploadFilesHandler = (
@@ -78,6 +79,7 @@ export const useUploadFilesHandler = (
           bucket: options.bucket ?? bucket,
           showSuccessMessage: options.showSuccessMessage ?? false,
           selectFileIds: !skipSelect,
+          isFromDeviceAttachment: options.isFromDeviceAttachment ?? false,
         },
       );
     },

@@ -210,6 +210,7 @@ export const PreUploadDialog = ({
           bucket: uploadBucket,
           showSuccessMessage: true,
           selectFileIds: true,
+          isFromDeviceAttachment: true,
         }),
       );
       onClose(true);

@@ -540,6 +540,7 @@ export const ChatInputMessage = Inversify.register(
       ) => {
         dispatchPreparedFiles(selectedFiles, folderPath, {
           showSuccessMessage: true,
+          isFromDeviceAttachment: true,
         });
       },
       [dispatchPreparedFiles],

@@ -219,6 +219,7 @@ export interface DispatchPreparedFileUploadsOptions {
   bucket?: string;
   showSuccessMessage?: boolean;
   selectFileIds?: boolean;
+  isFromDeviceAttachment?: boolean;
 }
 
 export const dispatchPreparedFileUploads = (
@@ -229,6 +230,7 @@ export const dispatchPreparedFileUploads = (
     bucket,
     showSuccessMessage = false,
     selectFileIds = false,
+    isFromDeviceAttachment = false,
   }: DispatchPreparedFileUploadsOptions = {},
 ): string[] => {
   const lastIndex = preparedFiles.length - 1;
@@ -245,6 +247,7 @@ export const dispatchPreparedFileUploads = (
         ...(showSuccessMessage && {
           showSuccessMessage: index === lastIndex,
         }),
+        ...(isFromDeviceAttachment && { isFromDeviceAttachment: true }),
       }),
     );
   });
