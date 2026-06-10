@@ -69,6 +69,7 @@ export const Input: FC<InputProps> = ({
   isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
+  sendOnEnter = 'enter',
 }) => {
   const isMobile = useIsMobile();
   const cssVars = useMemo(
@@ -271,7 +272,15 @@ export const Input: FC<InputProps> = ({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    const isEnterKey = e.key === 'Enter';
+    if (!isEnterKey) return;
+
+    const shouldSend =
+      sendOnEnter === 'meta-enter'
+        ? (e.metaKey || e.ctrlKey) && !e.shiftKey
+        : !e.shiftKey && !e.metaKey && !e.ctrlKey;
+
+    if (shouldSend) {
       e.preventDefault();
       if (!isStreaming && canSend && hasModelSelected) {
         handleSend();

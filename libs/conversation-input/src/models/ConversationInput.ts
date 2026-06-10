@@ -155,4 +155,10 @@ export interface ConversationInputProps {
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
   /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
   micLabel?: string;
+  /**
+   * Controls which key combination submits the message.
+   * - `'enter'` (default): Enter submits; Shift+Enter inserts a newline.
+   * - `'meta-enter'`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
+   */
+  sendOnEnter?: 'enter' | 'meta-enter';
 }
