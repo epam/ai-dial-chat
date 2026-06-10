@@ -86,11 +86,13 @@ export const StageItem: FC<Props> = ({
         <div className="overflow-hidden">
           <div className="mt-3 flex flex-col gap-3 ps-7">
             {stage.content && (
-              <StageMarkdownContent
-                content={stage.content}
-                typography={typography}
-                copyAriaLabel={copyAriaLabel}
-              />
+              <div className="max-h-[300px] overflow-y-auto">
+                <StageMarkdownContent
+                  content={stage.content}
+                  typography={typography}
+                  copyAriaLabel={copyAriaLabel}
+                />
+              </div>
             )}
             {displayAttachments.length > 0 && (
               <AttachmentTray
