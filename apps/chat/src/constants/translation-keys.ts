@@ -23,8 +23,10 @@ export enum ChatI18nKeys {
   FeedbackTypeLabel = 'chat.feedbackTypeLabel',
   FeedbackTypePlaceholder = 'chat.feedbackTypePlaceholder',
   FeedbackCommentPlaceholder = 'chat.feedbackCommentPlaceholder',
-  LikeToastMessage = 'chat.likeToastMessage',
-  FeedbackSentToastMessage = 'chat.feedbackSentToastMessage',
+  LikeToastTitle = 'chat.likeToastTitle',
+  LikeToastDescription = 'chat.likeToastDescription',
+  DislikeToastTitle = 'chat.dislikeToastTitle',
+  DislikeToastDescription = 'chat.dislikeToastDescription',
   Send = 'chat.send',
 }
 

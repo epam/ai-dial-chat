@@ -240,87 +240,75 @@ export const useConversationHandlers = ({
       rating: MessageRating | null,
       comment?: string,
     ): Promise<boolean> => {
-      if (!conversationId) return false;
+      if (!conversationId || !conversation) return false;
 
-      let previousRating: MessageRating | undefined;
-      setConversation((prev) => {
-        if (!prev) return prev;
-        const msg = prev.messages[messageIndex];
-        if (!msg) return prev;
-        previousRating = msg.rating;
-        const next: Conversation = {
-          ...prev,
-          messages: prev.messages.map((m, i) =>
-            i === messageIndex ? { ...m, rating: rating ?? undefined } : m,
-          ),
-        };
-        conversationRef.current = next;
-        return next;
+      const msg = conversation.messages[messageIndex];
+      if (!msg) return false;
+
+      const previousRating = msg.rating;
+      const updatedConversation: Conversation = {
+        ...conversation,
+        messages: conversation.messages.map((m, i) =>
+          i === messageIndex ? { ...m, rating: rating ?? undefined } : m,
+        ),
+      };
+
+      setConversation(() => {
+        conversationRef.current = updatedConversation;
+        return updatedConversation;
       });
-
-      const updated = conversationRef.current;
-      if (!updated) return false;
 
       const conversationPath = getConversationPath(conversationId);
 
+      const revert = () => {
+        setConversation((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            messages: prev.messages.map((m, i) =>
+              i === messageIndex ? { ...m, rating: previousRating } : m,
+            ),
+          };
+        });
+      };
+
       if (rating != null) {
-        const responseId = updated.messages[messageIndex].responseId;
+        const responseId = msg.responseId;
         if (!responseId) {
-          setConversation((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              messages: prev.messages.map((m, i) =>
-                i === messageIndex ? { ...m, rating: previousRating } : m,
-              ),
-            };
-          });
+          revert();
           return false;
         }
         try {
           await rateMessage({
-            conversationId: updated.id,
+            conversationId: conversation.id,
             responseId,
-            modelId: updated.model.id,
+            modelId: conversation.model.id,
             rate: rating,
             ...(comment ? { comment } : {}),
           });
           await saveConversation(
             conversationPath,
-            updated as ConversationResponseDto,
+            updatedConversation as ConversationResponseDto,
           );
           return true;
         } catch {
-          setConversation((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              messages: prev.messages.map((m, i) =>
-                i === messageIndex ? { ...m, rating: previousRating } : m,
-              ),
-            };
-          });
+          revert();
           return false;
         }
       } else {
-        await saveConversation(
-          conversationPath,
-          updated as ConversationResponseDto,
-        ).catch(() => {
-          setConversation((prev) => {
-            if (!prev) return prev;
-            return {
-              ...prev,
-              messages: prev.messages.map((m, i) =>
-                i === messageIndex ? { ...m, rating: previousRating } : m,
-              ),
-            };
-          });
-        });
-        return true;
+        try {
+          await saveConversation(
+            conversationPath,
+            updatedConversation as ConversationResponseDto,
+          );
+          return true;
+        } catch {
+          revert();
+          return false;
+        }
       }
     },
-    [conversationId, conversationRef, setConversation],
+    [conversation, conversationId, conversationRef, setConversation],
   );
 
   const submitStarter = useCallback(

@@ -18,7 +18,7 @@ import {
   IconThumbUp,
   IconTrashX,
 } from '@tabler/icons-react';
-import { FC, useCallback, useState } from 'react';
+import { FC, useCallback, useEffect, useState } from 'react';
 import type { MessageActionsProps } from '../../models/MessageActions';
 
 const COPIED_RESET_MS = 2000;
@@ -140,7 +140,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.likeResponse ?? 'Like response'}
               className={
                 activeRating === MessageRating.Like
-                  ? 'text-accent-primary'
+                  ? '!text-accent-primary'
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
@@ -154,7 +154,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.dislikeResponse ?? 'Dislike response'}
               className={
                 activeRating === MessageRating.Dislike
-                  ? 'text-accent-primary'
+                  ? '!text-accent-primary'
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}

@@ -31,8 +31,10 @@
     "feedbackTypeLabel": "What type of feedback you want to give?",
     "feedbackTypePlaceholder": "Select",
     "feedbackCommentPlaceholder": "Type an optional comment to your feedback",
-    "likeToastMessage": "Thanks for the feedback!",
-    "feedbackSentToastMessage": "Feedback sent. Thank you!",
+    "likeToastTitle": "Thank you for your positive feedback!",
+    "likeToastDescription": "You help us make better products",
+    "dislikeToastTitle": "Thank you for letting us know about this issue",
+    "dislikeToastDescription": "You help us make better products",
     "send": "Send"
   },
   "navigation": {

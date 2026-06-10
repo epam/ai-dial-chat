@@ -3,6 +3,7 @@ import {
   DialFormPopup,
   DialSelect,
   DialTextarea,
+  PopupSize,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -39,11 +40,12 @@ const NegativeFeedbackModal: FC<Props> = ({ onClose, onSubmit }) => {
       open
       header={t(ChatI18nKeys.NegativeFeedbackTitle)}
       submitLabel={t(ChatI18nKeys.Send)}
-      cancelLabel={t(ActionsI18nKeys.Cancel)}
       disableSubmitButton={!category}
       onSubmit={handleSubmit}
-      onCancel={onClose}
       onClose={onClose}
+      dividers={false}
+      closeOnOutsideClick={true}
+      size={PopupSize.Sm}
     >
       <div className="flex flex-col gap-4 px-6 py-4">
         <DialFormItem label={t(ChatI18nKeys.FeedbackTypeLabel)} required>
