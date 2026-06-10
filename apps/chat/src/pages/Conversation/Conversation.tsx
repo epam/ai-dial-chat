@@ -170,28 +170,22 @@ export const ConversationPage: FC = () => {
     conversationRef,
   });
 
-  useEffect(() => {
-    if (!conversationId) {
-      setIsFetching(false);
-      return;
-    }
+  const loadConversation = useCallback(
+    async (id: string) => {
+      const decodedConversationId = decodeConversationId(id);
+      const conversationPath = decodedConversationId.substring(
+        decodedConversationId.indexOf('/') + 1,
+      );
 
-    const decodedConversationId = decodeConversationId(conversationId);
-    const conversationPath = decodedConversationId.substring(
-      decodedConversationId.indexOf('/') + 1,
-    );
-
-    setIsFetching(true);
-    apiGetConversation(decodedConversationId)
-      .then((dto) => {
-        const result = dto as unknown as Conversation;
+      setIsFetching(true);
+      try {
+        const dto = await apiGetConversation(decodedConversationId);
+        const result = dto as Conversation; // adapt if API response shape differs
 
         // Restore the last selected agent from the conversation's change history
         // so the deployment selector reflects what was active, not the default.
         const lastDeploymentId = getLastDeploymentId(result.messages);
-        if (lastDeploymentId) {
-          setSelectedItemId(lastDeploymentId);
-        }
+        setSelectedItemId(lastDeploymentId ?? result.assistantModelId);
 
         const lastMsg = result.messages[result.messages.length - 1];
 
@@ -217,10 +211,22 @@ export const ConversationPage: FC = () => {
         } else {
           setConversation(result);
         }
-      })
-      .catch(() => navigate(ROUTES.ROOT))
-      .finally(() => setIsFetching(false));
-  }, [conversationId, navigate, setSelectedItemId, startStream]);
+      } catch {
+        navigate(ROUTES.ROOT);
+      } finally {
+        setIsFetching(false);
+      }
+    },
+    [navigate, setSelectedItemId, startStream],
+  );
+
+  useEffect(() => {
+    if (!conversationId) {
+      setIsFetching(false);
+      return;
+    }
+    void loadConversation(conversationId);
+  }, [conversationId, loadConversation]);
 
   const {
     handleSend,
