@@ -24,6 +24,7 @@ describe('prepareFilesForUpload', () => {
         },
       ],
       bucket: 'test-bucket',
+      allowedTypes: ['*/*'],
     });
 
     expect(preparedFiles).toHaveLength(1);
@@ -40,6 +41,7 @@ describe('prepareFilesForUpload', () => {
       folderId,
       existingFiles: [],
       bucket: 'test-bucket',
+      allowedTypes: ['*/*'],
     });
 
     expect(preparedFiles.map(({ name }) => name)).toEqual([
