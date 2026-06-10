@@ -6,6 +6,13 @@ import { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import ConversationSourcesPanel from '../ConversationSourcesPanel';
 
+const mockHandleAttachmentClick = vi.fn();
+vi.mock('../../../hooks/attachment/useAttachmentAction', () => ({
+  useAttachmentAction: () => ({
+    handleAttachmentClick: mockHandleAttachmentClick,
+  }),
+}));
+
 const mockHandleClose = vi.fn();
 const mockUseSourcesSidebar = vi.fn();
 
@@ -68,9 +75,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
-  AttachmentCard: ({ attachment }: { attachment: DisplayAttachment }) => (
-    <div>{attachment.name}</div>
-  ),
+  AttachmentCard: ({
+    attachment,
+    onClick,
+  }: {
+    attachment: DisplayAttachment;
+    onClick?: () => void;
+  }) =>
+    onClick ? (
+      <button type="button" data-testid="attachment-card" onClick={onClick}>
+        {attachment.name}
+      </button>
+    ) : (
+      <div>{attachment.name}</div>
+    ),
 }));
 
 const makeUserMessage = (attachmentTitle: string): Message => ({
@@ -133,6 +151,15 @@ describe('ConversationSourcesPanel', () => {
     expect(
       screen.queryByRole('button', { name: 'sidebar.sources.downloadAll' }),
     ).toBeNull();
+  });
+
+  it('passes onAttachmentClick to both file sections', () => {
+    renderPanel([
+      makeUserMessage('upload.pdf'),
+      makeAssistantMessage('result.csv'),
+    ]);
+    const cards = screen.getAllByTestId('attachment-card');
+    expect(cards).toHaveLength(2);
   });
 
   it('renders uploaded and generated sections in order', () => {

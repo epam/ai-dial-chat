@@ -280,7 +280,6 @@ export const ConversationPage: FC = () => {
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}
           duplicateError={duplicateError ?? undefined}
-          readOnlyNotice={t(ChatI18nKeys.ReadOnlyNotice)}
           isTranscriptionSupported={isTranscriptionSupported}
           onUploadAudio={handleUploadAudio}
           onTranscribeAudio={handleTranscribeAudio}

@@ -109,6 +109,7 @@ export const ModelSelectorControl: FC<Props> = ({
       }
       iconClassName={isInputDisabled ? disabledIconClassName : undefined}
       buttonClassName={mergeClasses(
+        'bg-transparent',
         styles.modelSelectorButton,
         isInputDisabled &&
           disabledIconClassName &&

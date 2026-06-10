@@ -23,7 +23,6 @@
     "stopStreaming": "Stop streaming",
     "quickReplyButtons": "Quick reply buttons",
     "stoppedGenerating": "You stopped generating the response",
-    "readOnlyNotice": "Only own conversations can be edited",
     "thinking": "Thinking",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message"
@@ -105,7 +104,10 @@
         "generatedFiles": "Generated Files",
         "sources": "Sources"
       },
-      "noData": "No data"
+      "noData": "No data",
+      "attachment": {
+        "downloadLabel": "Download file"
+      }
     }
   },
   "conversation": {

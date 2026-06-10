@@ -22,10 +22,12 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   onRemove,
   onRetry,
   onExpand,
+  onClick,
   isSelected,
   shouldAlwaysShowActions,
   removeLabel = 'Remove attachment',
   retryLabel = 'Retry upload',
+  clickLabel = 'Open attachment',
   colors,
   typography,
   roundedClassName = 'rounded',
@@ -34,6 +36,8 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   const { id, name } = attachment;
   const isPasted = attachment.type === AttachmentType.Pasted;
   const isExpandable = isPasted && onExpand !== undefined;
+  const isClickable = onClick !== undefined && !isExpandable;
+  const isInteractive = isExpandable || isClickable;
 
   const displayName = useMemo(() => {
     return isPasted ? name : getNameWithoutExtension(name);
@@ -65,10 +69,18 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     [attachment, isSelected, shouldAlwaysShowActions],
   );
 
+  const handleCardClick = (): void => {
+    if (isExpandable) {
+      onExpand!(id);
+    } else if (isClickable) {
+      onClick!(id);
+    }
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (isExpandable && (e.key === 'Enter' || e.key === ' ')) {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onExpand(id);
+      handleCardClick();
     }
   };
 
@@ -81,13 +93,14 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         roundedClassName,
         cardColorClass,
         !isImage && 'flex-col gap-3 p-3',
-        isExpandable && 'cursor-pointer',
+        isInteractive && 'cursor-pointer',
         className,
       )}
-      onClick={isExpandable ? () => onExpand(id) : undefined}
-      onKeyDown={isExpandable ? handleKeyDown : undefined}
-      tabIndex={isExpandable ? 0 : undefined}
-      role={isExpandable ? 'button' : undefined}
+      onClick={isInteractive ? handleCardClick : undefined}
+      onKeyDown={isInteractive ? handleKeyDown : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      role={isInteractive ? 'button' : undefined}
+      aria-label={isClickable ? clickLabel : undefined}
     >
       {isImage ? (
         <img
