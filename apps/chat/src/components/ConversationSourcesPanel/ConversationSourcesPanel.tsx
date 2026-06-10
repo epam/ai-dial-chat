@@ -75,11 +75,13 @@ const ConversationSourcesPanel: FC = () => {
         )
       }
     >
-      <SearchInput
-        placeholder={t(SidebarI18nKeys.Search)}
-        value={searchQuery}
-        onChange={setSearchQuery}
-      />
+      {!isEmpty && (
+        <SearchInput
+          placeholder={t(SidebarI18nKeys.Search)}
+          value={searchQuery}
+          onChange={setSearchQuery}
+        />
+      )}
       <div className="flex-1 overflow-y-auto p-4">
         {isEmpty ? (
           <PanelEmptyState
