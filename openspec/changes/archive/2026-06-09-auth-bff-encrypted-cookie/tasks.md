@@ -344,9 +344,22 @@ This follow-up supersedes the initial Slice 1 callback behaviour that always red
 
 ### Frontend: CSRF token wiring
 
-- [x] Add CSRF token to `UserContext` in `apps/chat/src/context/UserContext.tsx`
-  - Extract `X-CSRF-Token` response header from `GET /api/v1/auth/me`
-  - Include `X-CSRF-Token` header in all non-GET API calls via the `post`/`put`/`del` helpers in `apps/chat/src/server-api/base.ts`
+- [x] In `apps/chat/src/server-api/auth.api.ts`, call `getCurrentUserRaw()` instead of `getCurrentUser()` and extract the `X-CSRF-Token` response header; store it via `setCsrfToken` from `base.ts`
+- [x] In `apps/chat/src/server-api/base.ts`, include `X-CSRF-Token` on all non-GET requests when the token is non-null; capture any rotated token from the response `x-csrf-token` header
+- [x] In `apps/chat/src/server-api/api-client.ts`, add CSRF `pre` middleware to inject `X-CSRF-Token` on non-GET requests and `post` middleware to capture the rotated token from the response header (so OpenAPI-client calls update the in-memory token on refresh)
+- [x] In `apps/chat/src/server-api/chat-stream.api.ts` and `apps/chat/src/utils/collect-stream.ts`, include `X-CSRF-Token` on streaming POST requests and capture any rotated token from the response header
+
+### Bug fix: CSRF rotation race in SessionGuard
+
+After `RefreshService.refresh` generates a new `csrf` UUID, the guard was assigning the new token to `req.user.csrf` before `CsrfGuard` could validate the request — causing the current request (which carries the old token) to fail with 403.
+
+- [x] In `apps/chat-api/src/auth/session/session.guard.ts`, capture `csrfForCurrentRequest = payload.csrf` **before** calling `RefreshService.refresh`; assign `csrfForCurrentRequest` (not `payload.csrf`) to `user.csrf` so `CsrfGuard` validates the current request against the token the frontend sent; the rotated token is still sent via `X-CSRF-Token` response header for subsequent requests
+
+### Tests — CSRF fixes
+
+- [x] `apps/chat-api/src/auth/session/tests/session.guard.spec.ts`: add test verifying `req.user.csrf` equals the pre-refresh token and `res.setHeader` is called with the rotated token after a near-expiry refresh
+- [x] `apps/chat/src/server-api/tests/api-client.spec.ts`: add test verifying the `post` middleware captures a rotated `x-csrf-token` from the response header and updates the in-memory token
+- [x] `apps/chat-api/src/auth/csrf/csrf.guard.spec.ts`: fix missing `bucket` field in the `VALID_USER` fixture to match the full `SessionUser` interface
 
 ### Verification
 

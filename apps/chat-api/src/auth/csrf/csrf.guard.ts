@@ -47,8 +47,14 @@ export class CsrfGuard implements CanActivate {
     }) as string;
     const appOrigin = new URL(corsOrigin).origin;
 
-    const origin = req.headers['origin'];
-    const referer = req.headers['referer'];
+    const originHeader = req.headers['origin'];
+    const refererHeader = req.headers['referer'];
+
+    // Express headers can be string | string[] — normalise to string
+    const origin = Array.isArray(originHeader) ? originHeader[0] : originHeader;
+    const referer = Array.isArray(refererHeader)
+      ? refererHeader[0]
+      : refererHeader;
 
     const candidate = origin ?? (referer ? new URL(referer).origin : undefined);
     if (!candidate || candidate !== appOrigin) {
@@ -62,7 +68,9 @@ export class CsrfGuard implements CanActivate {
       throw new ForbiddenException('No session for CSRF check');
     }
 
-    const headerToken = req.headers['x-csrf-token'];
+    // Express headers can be string | string[] — normalise to string
+    const raw = req.headers['x-csrf-token'];
+    const headerToken = Array.isArray(raw) ? raw[0] : raw;
     if (!headerToken || headerToken !== user.csrf) {
       throw new ForbiddenException('Invalid CSRF token');
     }
