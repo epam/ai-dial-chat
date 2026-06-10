@@ -14,6 +14,7 @@ const VALID_USER: SessionUser = {
   providerId: 'keycloak',
   claims: {},
   at: 'access-token',
+  bucket: 'user-bucket',
   csrf: 'csrf-secret-token',
 };
 
@@ -44,7 +45,7 @@ function buildContext(options: {
       ...(options.referer ? { referer: options.referer } : {}),
       ...(options.csrfHeader ? { 'x-csrf-token': options.csrfHeader } : {}),
     },
-    user: options.user !== undefined ? options.user : VALID_USER,
+    user: options.user != null ? options.user : VALID_USER,
   };
 
   return {

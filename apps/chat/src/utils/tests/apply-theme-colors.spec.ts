@@ -1,5 +1,6 @@
 import { Theme } from '@epam/ai-dial-chat-shared';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { StorageKey } from '../../constants/storage';
 import { applyThemeColors } from '../apply-theme-colors';
 import * as localStorage from '../local-storage';
 
@@ -19,7 +20,8 @@ describe('applyThemeColors', () => {
   it('should apply theme colors to root element', () => {
     const mockTheme: Theme = {
       id: 'dark',
-      name: 'Dark Theme',
+      displayName: 'Dark Theme',
+      'app-logo': '',
       colors: {
         'primary-color': '#000000',
         'secondary-color': '#ffffff',
@@ -43,7 +45,8 @@ describe('applyThemeColors', () => {
   it('should persist theme to localStorage', () => {
     const mockTheme: Theme = {
       id: 'light',
-      name: 'Light Theme',
+      displayName: 'Light Theme',
+      'app-logo': '',
       colors: {
         'primary-color': '#ffffff',
       },
@@ -51,7 +54,10 @@ describe('applyThemeColors', () => {
 
     applyThemeColors(mockElement, mockTheme);
 
-    expect(mockSetToLocalStorage).toHaveBeenCalledWith('theme', 'light');
+    expect(mockSetToLocalStorage).toHaveBeenCalledWith(
+      StorageKey.Theme,
+      'light',
+    );
   });
 
   it('should handle undefined theme (no-op)', () => {
@@ -66,19 +72,24 @@ describe('applyThemeColors', () => {
   it('should handle empty colors object', () => {
     const mockTheme: Theme = {
       id: 'empty',
-      name: 'Empty Theme',
+      displayName: 'Empty Theme',
+      'app-logo': '',
       colors: {},
     };
 
     applyThemeColors(mockElement, mockTheme);
 
-    expect(mockSetToLocalStorage).toHaveBeenCalledWith('theme', 'empty');
+    expect(mockSetToLocalStorage).toHaveBeenCalledWith(
+      StorageKey.Theme,
+      'empty',
+    );
   });
 
   it('should update CSS custom properties correctly', () => {
     const mockTheme: Theme = {
       id: 'test',
-      name: 'Test Theme',
+      displayName: 'Test Theme',
+      'app-logo': '',
       colors: {
         'bg-color': 'rgb(255, 0, 0)',
         'text-color': 'rgba(0, 0, 0, 0.8)',
@@ -98,13 +109,15 @@ describe('applyThemeColors', () => {
   it('should handle multiple consecutive theme applications', () => {
     const darkTheme: Theme = {
       id: 'dark',
-      name: 'Dark',
+      displayName: 'Dark',
+      'app-logo': '',
       colors: { 'bg-color': '#000000' },
     };
 
     const lightTheme: Theme = {
       id: 'light',
-      name: 'Light',
+      displayName: 'Light',
+      'app-logo': '',
       colors: { 'bg-color': '#ffffff' },
     };
 
@@ -115,6 +128,9 @@ describe('applyThemeColors', () => {
     expect(mockElement.style.getPropertyValue('--bg-color')).toBe('#ffffff');
 
     expect(mockSetToLocalStorage).toHaveBeenCalledTimes(2);
-    expect(mockSetToLocalStorage).toHaveBeenLastCalledWith('theme', 'light');
+    expect(mockSetToLocalStorage).toHaveBeenLastCalledWith(
+      StorageKey.Theme,
+      'light',
+    );
   });
 });

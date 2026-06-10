@@ -1,0 +1,31 @@
+import { DialNotification } from '@epam/ai-dial-ui-kit';
+import { FC } from 'react';
+
+/** Props for the model-change status message banner. */
+export interface StatusMessageBubbleProps {
+  /**
+   * Bold prefix text displayed before the description.
+   * @default "Model switched."
+   */
+  titleText?: string;
+  /** Full description text, e.g. "The model has been switched from GPT to Imagen." */
+  bodyText: string;
+}
+
+/**
+ * Full-width info banner rendered in the conversation timeline when the active
+ * deployment changes. Matches Figma node 613:8730 (`section-message`).
+ * Does not render message actions, ratings, or a copy button.
+ */
+export const StatusMessageBubble: FC<StatusMessageBubbleProps> = ({
+  titleText = 'Model switched.',
+  bodyText,
+}) => {
+  return (
+    <DialNotification
+      title={titleText}
+      message={bodyText}
+      textClassName="flex-row flex-wrap gap-1"
+    />
+  );
+};

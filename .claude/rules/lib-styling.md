@@ -6,3 +6,5 @@ paths:
 ---
 
 @openspec/lib-styling-guide.md
+
+@.claude/rules/rtl.md

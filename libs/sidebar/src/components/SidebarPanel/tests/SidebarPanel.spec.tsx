@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
+import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { SidebarPanel } from '../SidebarPanel.js';
+import { SidebarSide } from '../../../models/SidebarPanel';
+import { SidebarPanel } from '../SidebarPanel';
 
 // Minimal mock so DialGhostIconButton passes through aria-label and calls onClick.
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -16,7 +17,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 const defaultProps = {
-  side: 'right' as const,
+  isOpen: true,
+  side: SidebarSide.Right,
   onClose: vi.fn(),
   ariaLabel: 'Test panel',
   closeLabel: 'Close',
@@ -72,7 +74,7 @@ describe('SidebarPanel', () => {
     render(
       <SidebarPanel
         {...defaultProps}
-        side="right"
+        side={SidebarSide.Right}
         rightActions={<button aria-label="download" />}
       >
         <span />
@@ -86,7 +88,7 @@ describe('SidebarPanel', () => {
 
   it('side=right: applies border-l divider', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} side="right">
+      <SidebarPanel {...defaultProps} side={SidebarSide.Right}>
         <span />
       </SidebarPanel>,
     );
@@ -99,23 +101,25 @@ describe('SidebarPanel', () => {
   });
 
   // --- side='left' close placement ---
-  it('side=left: close button is in the left group (first button)', () => {
+  it('side=left: close button is rendered after right actions (last button)', () => {
     render(
       <SidebarPanel
         {...defaultProps}
-        side="left"
+        side={SidebarSide.Left}
         rightActions={<button aria-label="download" />}
       >
         <span />
       </SidebarPanel>,
     );
     const buttons = screen.getAllByRole('button');
-    expect(buttons[0].getAttribute('aria-label')).toBe('Close');
+    expect(buttons[buttons.length - 1].getAttribute('aria-label')).toBe(
+      'Close',
+    );
   });
 
   it('side=left: applies border-r divider', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} side="left">
+      <SidebarPanel {...defaultProps} side={SidebarSide.Left}>
         <span />
       </SidebarPanel>,
     );
@@ -128,20 +132,22 @@ describe('SidebarPanel', () => {
   });
 
   it('close button calls onClose', async () => {
-    const user = userEvent.setup();
     const onClose = vi.fn();
     render(
       <SidebarPanel {...defaultProps} onClose={onClose}>
         <span />
       </SidebarPanel>,
     );
-    await user.click(screen.getByRole('button', { name: 'Close' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Close' }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
   it('colors prop emits CSS custom properties', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} colors={{ background: '#ff0000' }}>
+      <SidebarPanel
+        {...defaultProps}
+        styles={{ colors: { background: '#ff0000' } }}
+      >
         <span />
       </SidebarPanel>,
     );

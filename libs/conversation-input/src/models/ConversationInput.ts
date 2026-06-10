@@ -1,10 +1,13 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
+import type {
+  Attachment,
+  DeploymentItem,
+  DisplayAttachment,
+} from '@epam/ai-dial-chat-shared';
 import type {
   InputColors,
   InputTypography,
   ModelSelectorLabels,
-} from './Input.js';
+} from './Input';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
 export interface ConversationInputColors {
@@ -34,6 +37,57 @@ export interface ConversationInputTypography {
   input?: InputTypography;
 }
 
+/** Combined color and typography overrides for the `ConversationInput` component. */
+export interface ConversationInputStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: ConversationInputColors;
+  /** Typography overrides for the welcome heading and input. */
+  typography?: ConversationInputTypography;
+}
+
+/** Props accepted by the `EditMessageInput` component. */
+export interface EditMessageInputProps {
+  /** Initial message text pre-populated in the textarea. */
+  message?: string;
+  /** Pre-existing attachments from the original message, shown in the attachment tray. */
+  initialAttachments?: DisplayAttachment[];
+  /** Called when the user clicks the Cancel button. */
+  onCancel: () => void;
+  /**
+   * Called when the user clicks Save & Submit.
+   * @param message - The edited message text.
+   * @param keptAttachments - Pre-existing attachments the user did not remove.
+   * @param newAttachments - New attachments added during editing.
+   */
+  onSave: (
+    message: string,
+    keptAttachments: DisplayAttachment[],
+    newAttachments: Attachment[],
+  ) => void;
+  /** Called immediately after a new attachment is added. Returns the uploaded attachment URL. */
+  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  /** Label for the Cancel button. Defaults to `'Cancel'`. */
+  cancelLabel?: string;
+  /** Label for the Save & Submit button. Defaults to `'Save & Submit'`. */
+  saveLabel?: string;
+  /** `aria-label` applied to the textarea. */
+  ariaLabel?: string;
+  /** Accessible label for each attachment card's remove button. */
+  removeLabel?: string;
+  /** Accessible label for each attachment card's retry button (error state only). */
+  retryLabel?: string;
+  /** Accessible label for the add-menu trigger button. */
+  addMenuLabel?: string;
+  /** Label for the attach-file menu item. */
+  attachLabel?: string;
+  /** Heading text shown in the mobile bottom-sheet add-menu. Defaults to `'Menu'`. */
+  menuTitle?: string;
+  /** Accessible label for the bottom-sheet close button. Defaults to `'Close'`. */
+  menuCloseLabel?: string;
+  /** Extra class name(s) merged onto the root wrapper element. */
+  className?: string;
+}
+
 /** Props accepted by the `ConversationInput` component. */
 export interface ConversationInputProps {
   /** Placeholder text shown inside the textarea when empty. */
@@ -47,16 +101,16 @@ export interface ConversationInputProps {
   welcomeText?: string;
   /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
   onSend?: (message: string, attachments: Attachment[]) => void;
+  /** Called immediately after an attachment is added. Returns the uploaded attachment URL. */
+  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button and blocks Enter. */
   isStreaming?: boolean;
   /** Called whenever the attachment list changes. */
   onAttachmentsChange?: (attachments: Attachment[]) => void;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: ConversationInputColors;
-  /** Typography overrides for the welcome heading and input. */
-  typography?: ConversationInputTypography;
+  /** Color and typography overrides applied as CSS custom properties. */
+  styles?: ConversationInputStyles;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
   /** Text displayed inside the drag-over overlay. Defaults to `"Drop files here"`. */
@@ -65,22 +119,40 @@ export interface ConversationInputProps {
   dropOverlayClassName?: string;
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
-  /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
-  deployments?: DeploymentItemDto[];
+  /**
+   * List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered.
+   * `iconUrl` on each item must already be a fully resolved URL usable in `<img src>`.
+   */
+  deployments?: DeploymentItem[];
   /** ID of the currently selected deployment. When `null` or `undefined` and `deployments` is defined, the send button is disabled. */
   selectedDeploymentId?: string | null;
   /** Called when the user selects a different deployment from the dropdown. Receives the selected item's `id`. */
   onDeploymentChange?: (id: string) => void;
   /** Labels shown inside the model selector dropdown for the trigger and various loading states. */
   modelSelectorLabels?: ModelSelectorLabels;
-  /**
-   * Converts a raw `DeploymentItemDto.iconUrl` value to a URL usable in an `<img src>`.
-   * When omitted, the default resolver handles absolute URLs, root-relative paths, and `files/` IDs.
-   * Pass a custom resolver (e.g. from the host app) to also support theme-relative icon names.
-   */
-  resolveDeploymentIconUrl?: (iconUrl: string) => string | undefined;
   /** Accessible label for the send button. */
   sendLabel?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
+  /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
+  isInputDisabled?: boolean;
+  /**
+   * When `true`, the mic button is rendered and voice recording is enabled.
+   * The host app derives this from the selected deployment's `inputAttachmentTypes`.
+   * When `false` or absent, the mic button is hidden and the voice bar is never shown.
+   */
+  isTranscriptionSupported?: boolean;
+  /**
+   * Called when the user confirms a voice recording.
+   * Receives the recorded `File` and its detected MIME type.
+   * Should resolve with the DIAL storage URL for the uploaded audio.
+   */
+  onUploadAudio?: (file: File, contentType: string) => Promise<string>;
+  /**
+   * Called after successful audio upload with the returned DIAL storage URL.
+   * Should resolve with the transcript text.
+   */
+  onTranscribeAudio?: (audioUrl: string) => Promise<string>;
+  /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
+  micLabel?: string;
 }

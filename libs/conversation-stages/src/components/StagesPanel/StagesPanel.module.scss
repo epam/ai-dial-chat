@@ -4,6 +4,10 @@
   color: var(--cs-text, var(--text-primary, #eef1f7));
 }
 
+.collapseButton {
+  background: var(--cs-button-bg, transparent);
+}
+
 .stageName {
   color: var(--cs-stage-text, var(--text-secondary, #9fa6bd));
 }
@@ -14,6 +18,11 @@
 
 .stageContent {
   color: var(--cs-stage-text, var(--text-secondary, #9fa6bd));
+  font-size: var(--cs-font-size);
+  font-weight: var(--cs-font-weight);
+  line-height: var(--cs-line-height);
+  letter-spacing: var(--cs-letter-spacing);
+  font-family: var(--cs-font-family);
 }
 
 .codeBlock {
@@ -33,7 +42,7 @@
 }
 
 .tableCell {
-  border-color: var(--cs-border, var(--stroke-primary, #696e7c));
+  border-color: var(--cs-border, var(--stroke-secondary, #242c42));
   color: var(--cs-stage-text, var(--text-secondary, #9fa6bd));
 }
 

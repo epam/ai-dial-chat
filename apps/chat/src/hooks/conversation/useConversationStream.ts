@@ -3,6 +3,7 @@ import {
   type MessageCustomContent,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
+import type { ConversationResponseDto } from '@epam/chat-api-client';
 import {
   type Dispatch,
   type MutableRefObject,
@@ -28,7 +29,7 @@ interface Result {
   startStream: (
     conversationPath: string,
     userContent: string,
-    assistantMessageId: string,
+    messageIndex: number,
     model: string,
     customContent?: MessageCustomContent,
   ) => void;
@@ -58,7 +59,7 @@ export const useConversationStream = ({
     (
       conversationPath: string,
       userContent: string,
-      assistantMessageId: string,
+      messageIndex: number,
       model: string,
       customContent?: MessageCustomContent,
     ) => {
@@ -78,7 +79,7 @@ export const useConversationStream = ({
               if (!prev) return prev;
               const updatedMessages = applyChunkToMessages(
                 prev.messages,
-                assistantMessageId,
+                messageIndex,
                 chunk,
               );
               if (!updatedMessages) return prev;
@@ -93,7 +94,10 @@ export const useConversationStream = ({
             const final = conversationRef.current;
             if (final) {
               try {
-                await saveConversation(conversationPath, final);
+                await saveConversation(
+                  conversationPath,
+                  final as ConversationResponseDto,
+                );
               } catch (err: unknown) {
                 void err;
               }
@@ -107,10 +111,8 @@ export const useConversationStream = ({
               if (!prev) return prev;
               const updated = {
                 ...prev,
-                messages: prev.messages.map((m) =>
-                  m.id === assistantMessageId
-                    ? { ...m, hasStreamError: true }
-                    : m,
+                messages: prev.messages.map((m, index) =>
+                  index === messageIndex ? { ...m, hasStreamError: true } : m,
                 ),
               };
               conversationRef.current = updated;
@@ -153,11 +155,14 @@ export const useConversationStream = ({
       };
       conversationRef.current = updated;
       if (conversationId) {
-        void saveConversation(getConversationPath(conversationId), updated);
+        void saveConversation(
+          getConversationPath(conversationId),
+          updated as ConversationResponseDto,
+        );
       }
       return updated;
     });
-  }, [conversationId, stoppedGeneratingText, conversationRef]);
+  }, [conversationId, stoppedGeneratingText, conversationRef, setConversation]);
 
   return {
     startStream,

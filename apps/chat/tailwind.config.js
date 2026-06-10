@@ -10,9 +10,19 @@ module.exports = {
       '{src,pages,components,app}/**/*!(*.stories|*.spec).{ts,tsx,html}',
     ),
     ...createGlobPatternsForDependencies(__dirname),
+    join(__dirname, '../../node_modules/@epam/ai-dial-ui-kit/**/*.{js,jsx}'),
   ],
   theme: {
-    extend: {},
+    extend: {
+      keyframes: {
+        spin: {
+          to: { transform: 'rotate(1turn)' },
+        },
+      },
+      animation: {
+        'spin-steps': 'spin 0.75s steps(8) infinite',
+      },
+    },
   },
   plugins: [],
 };

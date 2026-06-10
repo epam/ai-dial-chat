@@ -21,6 +21,19 @@ export class DeploymentItemDto {
     description: 'Interface types supported by this deployment',
   })
   interfaces?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Application type schema id from DIAL Core (present only for application deployments)',
+  })
+  applicationTypeSchemaId?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description:
+      'Accepted MIME types for input attachments from DIAL Core (e.g. ["audio/*", "image/*"])',
+  })
+  inputAttachmentTypes?: string[];
 }
 
 export class DeploymentsResponseDto {

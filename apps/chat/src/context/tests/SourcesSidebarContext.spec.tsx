@@ -1,13 +1,14 @@
-import { MessageRole } from '@epam/ai-dial-chat-shared';
 import type { Message } from '@epam/ai-dial-chat-shared';
+import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { act, renderHook } from '@testing-library/react';
+import { ReactNode } from 'react';
 import { describe, expect, it } from 'vitest';
 import {
   SourcesSidebarProvider,
   useSourcesSidebar,
-} from '../SourcesSidebarContext.js';
+} from '../SourcesSidebarContext';
 
-const wrapper = ({ children }: { children: React.ReactNode }) => (
+const wrapper = ({ children }: { children: ReactNode }) => (
   <SourcesSidebarProvider>{children}</SourcesSidebarProvider>
 );
 

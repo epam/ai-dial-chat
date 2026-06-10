@@ -5,11 +5,15 @@ import { IconAlertCircle, IconCircleCheck } from '@tabler/icons-react';
 import { FC } from 'react';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 
+interface Props {
+  /** The stage status value; `null` means the stage is pending or running. */
+  status: Stage['status'];
+  /** Whether this stage is the currently executing (live) stage. */
+  isLive: boolean;
+}
+
 /** Maps a stage status to the appropriate icon element. */
-export const StageIcon: FC<{ status: Stage['status']; isLive: boolean }> = ({
-  status,
-  isLive,
-}) => {
+export const StageIcon: FC<Props> = ({ status, isLive }) => {
   if (!status) {
     if (!isLive) {
       return (

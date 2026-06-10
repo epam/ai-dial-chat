@@ -5,38 +5,36 @@ import {
   buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
+import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { IconMicrophone } from '@tabler/icons-react';
 import {
-  BASE_ICON_SIZE,
-  DialDropdown,
-  DialDropdownIcon,
-  DialGhostIconButton,
-} from '@epam/ai-dial-ui-kit';
-import { IconPaperclip, IconPlus } from '@tabler/icons-react';
-import classNames from 'classnames';
-import {
+  ChangeEvent,
   type FC,
   KeyboardEvent,
   useCallback,
   useEffect,
+  useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
-import { useClipboardPaste } from '../../hooks/useClipboardPaste.js';
-import { useIsMobile } from '../../hooks/useIsMobile.js';
-import { useModelSelector } from '../../hooks/useModelSelector.js';
-import type { InputProps } from '../../models/Input.js';
-import { generateAttachmentId } from '../../utils/generateAttachmentId.js';
-import { resolveIconUrl } from '../../utils/resolveIconUrl.js';
-import { AttachmentTray } from '../AttachmentTray/AttachmentTray.js';
-import { BottomSheet } from '../BottomSheet/BottomSheet.js';
-import { ModelSelectorBottomSheet } from '../ModelSelectorBottomSheet/ModelSelectorBottomSheet.js';
-import { SendButton } from './Buttons/SendButton.js';
-import { StopButton } from './Buttons/StopButton.js';
+import { useClipboardPaste } from '../../hooks/useClipboardPaste';
+import { useIsMobile } from '../../hooks/useIsMobile';
+import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
+import type { InputProps } from '../../models/Input';
+import { generateAttachmentId } from '../../utils/generateAttachmentId';
+import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
+import { AttachmentTray } from '../AttachmentTray/AttachmentTray';
+import { VoiceBar } from '../VoiceBar/VoiceBar';
+import { SendButton } from './Buttons/SendButton';
+import { StopButton } from './Buttons/StopButton';
 import styles from './Input.module.scss';
+import { ModelSelectorControl } from './ModelSelectorControl';
 
 export const Input: FC<InputProps> = ({
   message: messageProp = '',
   onSend,
+  onUploadAttachment,
   onStop,
   isStreaming = false,
   onChange,
@@ -51,6 +49,7 @@ export const Input: FC<InputProps> = ({
   retryLabel,
   sendLabel,
   stopLabel,
+  micLabel = 'Record voice message',
   colors,
   typography,
   className,
@@ -61,28 +60,62 @@ export const Input: FC<InputProps> = ({
   selectedDeploymentId,
   onDeploymentChange,
   modelSelectorLabels,
-  resolveDeploymentIconUrl = resolveIconUrl,
+  initialAttachments = [],
+  isStacked = false,
+  hideAddButton = false,
+  hideActionBar = false,
+  renderFooterActions,
+  isInputDisabled = false,
+  isTranscriptionSupported = false,
+  onUploadAudio,
+  onTranscribeAudio,
 }) => {
   const isMobile = useIsMobile();
-  const cssVars = buildCssVars({
-    '--ci-bg': colors?.background,
-    '--ci-text': colors?.text,
-    '--ci-border': colors?.border,
-    '--ci-border-focus': colors?.borderFocus,
-    '--ci-placeholder': colors?.placeholder,
-    '--ci-send-bg': colors?.sendBackground,
-    '--ci-send-text': colors?.sendText,
-    '--ci-stop-color': colors?.stopColor,
-    '--ci-font-family': typography?.fontFamily,
-    '--ci-font-size': typography?.fontSize,
-    '--ci-font-weight': typography?.fontWeight,
-    '--ci-line-height': typography?.lineHeight,
-  });
+  const cssVars = useMemo(
+    () =>
+      buildCssVars({
+        '--ci-bg': colors?.background,
+        '--ci-text': colors?.text,
+        '--ci-border': colors?.border,
+        '--ci-border-focus': colors?.borderFocus,
+        '--ci-placeholder': colors?.placeholder,
+        '--ci-send-bg': colors?.sendBackground,
+        '--ci-send-text': colors?.sendText,
+        '--ci-stop-color': colors?.stopColor,
+        '--ci-font-family': typography?.fontFamily,
+        '--ci-font-size': typography?.fontSize,
+        '--ci-font-weight': typography?.fontWeight?.toString(),
+        '--ci-line-height': typography?.lineHeight,
+      }),
+    [colors, typography],
+  );
 
   const [message, setMessage] = useState(messageProp);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
+  const [attachments, setAttachments] =
+    useState<Attachment[]>(initialAttachments);
+  const attachmentsRef = useRef(attachments);
+
+  const handleTranscript = useCallback(
+    (transcript: string) => {
+      setMessage(transcript);
+      onChange?.(transcript);
+    },
+    [onChange],
+  );
+
+  const {
+    state: voiceState,
+    waveformData,
+    errorMessage: voiceError,
+    startRecording,
+    stopRecording,
+    confirmRecording,
+    discardRecording,
+  } = useVoiceRecorder({
+    onUploadAudio,
+    onTranscribeAudio,
+    onTranscript: handleTranscript,
+  });
 
   useEffect(() => {
     if (messageProp) {
@@ -90,10 +123,30 @@ export const Input: FC<InputProps> = ({
     }
   }, [messageProp]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const singleRowHeightRef = useRef<number>(0);
+  const [isMultiLine, setIsMultiLine] = useState(false);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      singleRowHeightRef.current = textareaRef.current.offsetHeight;
+    }
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!textareaRef.current || singleRowHeightRef.current === 0) return;
+    setIsMultiLine(
+      textareaRef.current.offsetHeight > singleRowHeightRef.current,
+    );
+  }, [message]);
+
+  useEffect(() => {
+    attachmentsRef.current = attachments;
+  }, [attachments]);
 
   useEffect(() => {
     return () => {
-      attachments.forEach((a) => {
+      attachmentsRef.current.forEach((a) => {
         if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
       });
     };
@@ -115,10 +168,10 @@ export const Input: FC<InputProps> = ({
     });
   }, []);
 
-  const addAttachments = useCallback(
-    (newAttachments: Attachment[]) => {
+  const updateAttachments = useCallback(
+    (updater: (current: Attachment[]) => Attachment[]) => {
       setAttachments((prev) => {
-        const updated = [...prev, ...newAttachments];
+        const updated = updater(prev);
         onAttachmentsChange?.(updated);
         return updated;
       });
@@ -126,27 +179,95 @@ export const Input: FC<InputProps> = ({
     [onAttachmentsChange],
   );
 
+  const uploadAttachment = useCallback(
+    async (attachment: Attachment) => {
+      if (!onUploadAttachment) return;
+
+      updateAttachments((current) =>
+        current.map((item) =>
+          item.id === attachment.id
+            ? { ...item, status: RequestStatus.Loading }
+            : item,
+        ),
+      );
+
+      try {
+        const url = await onUploadAttachment(attachment);
+        updateAttachments((current) =>
+          current.map((item) =>
+            item.id === attachment.id
+              ? { ...item, status: RequestStatus.Idle, url }
+              : item,
+          ),
+        );
+      } catch {
+        updateAttachments((current) =>
+          current.map((item) =>
+            item.id === attachment.id
+              ? { ...item, status: RequestStatus.Error }
+              : item,
+          ),
+        );
+      }
+    },
+    [onUploadAttachment, updateAttachments],
+  );
+
+  const addAttachments = useCallback(
+    (newAttachments: Attachment[]) => {
+      updateAttachments((prev) => [...prev, ...newAttachments]);
+      newAttachments.forEach((attachment) => {
+        void uploadAttachment(attachment);
+      });
+    },
+    [updateAttachments, uploadAttachment],
+  );
+
   useEffect(() => {
     if (pendingDropFiles.length === 0) return;
     const built = buildAttachments(pendingDropFiles);
     addAttachments(built);
     onDropFilesConsumed?.();
-  }, [pendingDropFiles]); // intentionally omit buildAttachments/addAttachments/onDropFilesConsumed — stable refs
+  }, [addAttachments, buildAttachments, onDropFilesConsumed, pendingDropFiles]);
 
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
-  const canSend = message.trim().length > 0;
+  const hasBlockedAttachments = attachments.some(
+    (attachment) =>
+      attachment.status === RequestStatus.Loading ||
+      attachment.status === RequestStatus.Error,
+  );
+  const hasSendableContent =
+    message.trim().length > 0 || attachments.length > 0;
+  const canSend = hasSendableContent && !hasBlockedAttachments;
+  // Stacked layout: textarea on its own row above the action bar. Used when the
+  // caller opts in (edit mode), whenever attachments are present, or when the
+  // message spans multiple visual lines (either explicit newlines or word-wrap).
+  const isStackedLayout =
+    isStacked ||
+    attachments.length > 0 ||
+    message.includes('\n') ||
+    isMultiLine;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
 
-  const handleSend = () => {
-    onSend?.(message, attachments);
+  const handleSend = async () => {
+    if (isInputDisabled) return;
+    const currentMessage = message;
+    const currentAttachments = attachments;
     setMessage('');
-    attachments.forEach((a) => {
-      if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
-    });
-    setAttachments([]);
-    onAttachmentsChange?.([]);
+    try {
+      await onSend?.(currentMessage, currentAttachments);
+      currentAttachments.forEach((a) => {
+        if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
+      });
+      setAttachments([]);
+      onAttachmentsChange?.([]);
+    } catch {
+      setMessage(currentMessage);
+      setAttachments(currentAttachments);
+      onAttachmentsChange?.(currentAttachments);
+    }
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -158,21 +279,7 @@ export const Input: FC<InputProps> = ({
     }
   };
 
-  const {
-    selectorIcon,
-    selectorAriaLabel,
-    menuItems,
-    menuHeader,
-    onOpenChange: handleModelSelectorOpenChange,
-  } = useModelSelector({
-    deployments,
-    selectedDeploymentId,
-    onDeploymentChange,
-    modelSelectorLabels,
-    resolveDeploymentIconUrl,
-  });
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
 
@@ -186,20 +293,23 @@ export const Input: FC<InputProps> = ({
 
   const handleRemove = useCallback(
     (id: string) => {
-      setAttachments((prev) => {
+      updateAttachments((prev) => {
         const target = prev.find((a) => a.id === id);
         if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
-        const updated = prev.filter((a) => a.id !== id);
-        onAttachmentsChange?.(updated);
-        return updated;
+        return prev.filter((a) => a.id !== id);
       });
     },
-    [onAttachmentsChange],
+    [updateAttachments],
   );
 
-  const handleDeploymentSelect = (id: string) => {
-    onDeploymentChange?.(id);
-  };
+  const handleRetry = useCallback(
+    (id: string) => {
+      const target = attachments.find((a) => a.id === id);
+      if (!target) return;
+      void uploadAttachment(target);
+    },
+    [attachments, uploadAttachment],
+  );
 
   const handleExpand = useCallback(
     async (id: string) => {
@@ -212,12 +322,28 @@ export const Input: FC<InputProps> = ({
     [attachments, handleRemove],
   );
 
+  if (voiceState !== 'idle') {
+    return (
+      <VoiceBar
+        state={voiceState}
+        waveformData={waveformData}
+        errorMessage={voiceError}
+        onStop={stopRecording}
+        onConfirm={confirmRecording}
+        onDiscard={discardRecording}
+        style={cssVars}
+        className={className}
+      />
+    );
+  }
+
   const textarea = (
     <textarea
       className={mergeClasses(
         styles.textarea,
-        'max-h-[272px] w-full resize-none overflow-y-auto bg-transparent outline-none [field-sizing:content]',
+        'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
       )}
+      ref={textareaRef}
       value={message}
       onChange={(e) => {
         setMessage(e.target.value);
@@ -227,6 +353,7 @@ export const Input: FC<InputProps> = ({
       onPaste={handlePaste}
       placeholder={placeholder}
       aria-label={ariaLabel}
+      disabled={isInputDisabled}
       rows={1}
     />
   );
@@ -235,163 +362,117 @@ export const Input: FC<InputProps> = ({
       style={cssVars}
       className={mergeClasses(
         styles.wrapper,
+        isInputDisabled && styles.wrapperDisabled,
         'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded border px-3 py-2',
         className,
       )}
     >
       {attachments.length > 0 && (
-        <>
-          <AttachmentTray
-            attachments={attachments}
-            onRemove={handleRemove}
-            onExpand={handleExpand}
-            removeLabel={removeLabel}
-            retryLabel={retryLabel}
-          />
-          {textarea}
-        </>
+        <AttachmentTray
+          attachments={attachments}
+          onRemove={handleRemove}
+          onRetry={handleRetry}
+          onExpand={handleExpand}
+          removeLabel={removeLabel}
+          retryLabel={retryLabel}
+        />
       )}
+      {isStackedLayout && textarea}
 
-      <div
-        className={classNames(
-          'flex items-center gap-2',
-          attachments.length > 0
-            ? 'justify-between'
-            : 'flex-wrap desktop:flex-nowrap',
-        )}
-      >
+      {!hideActionBar && (
         <div
-          className={classNames(
-            'flex',
-            attachments.length === 0 && 'order-2 desktop:order-1',
+          className={mergeClasses(
+            'flex items-center gap-2',
+            isStackedLayout
+              ? hideAddButton
+                ? 'justify-end'
+                : 'justify-between'
+              : 'flex-wrap desktop:flex-nowrap',
           )}
         >
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="sr-only"
-            aria-hidden
-            tabIndex={-1}
-            onChange={handleFileChange}
-          />
-          {isMobile ? (
-            <>
-              <DialGhostIconButton
-                icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
-                aria-label={addMenuLabel}
-                className="size-10 flex-shrink-0"
-                onClick={() => setIsSheetOpen(true)}
-              />
-              <BottomSheet
-                isOpen={isSheetOpen}
-                title={menuTitle}
-                closeLabel={menuCloseLabel}
-                onClose={() => setIsSheetOpen(false)}
-                style={cssVars}
-                items={[
-                  {
-                    key: 'attach',
-                    label: attachLabel,
-                    icon: <IconPaperclip size={18} aria-hidden />,
-                    onClick: () => fileInputRef.current?.click(),
-                  },
-                ]}
-              />
-            </>
-          ) : (
-            <DialDropdown
-              matchReferenceWidth={false}
-              placement="bottom-start"
-              listClassName="!w-[240px]"
-              menu={{
-                items: [
-                  {
-                    key: 'attach',
-                    label: attachLabel,
-                    icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
-                    onClick: () => fileInputRef.current?.click(),
-                  },
-                ],
-              }}
+          {!hideAddButton && (
+            <div
+              className={mergeClasses(
+                'flex',
+                !isStackedLayout && 'order-2 desktop:order-1',
+              )}
             >
-              <DialGhostIconButton
-                icon={<IconPlus size={BASE_ICON_SIZE} aria-hidden />}
-                aria-label={addMenuLabel}
-                className="size-10 flex-shrink-0"
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="sr-only"
+                aria-hidden
+                tabIndex={-1}
+                onChange={handleFileChange}
               />
-            </DialDropdown>
+              <AddAttachmentButton
+                onAttachClick={() => fileInputRef.current?.click()}
+                attachLabel={attachLabel}
+                addMenuLabel={addMenuLabel}
+                menuTitle={menuTitle}
+                menuCloseLabel={menuCloseLabel}
+                style={cssVars}
+                isDisabled={isInputDisabled}
+              />
+            </div>
           )}
-        </div>
-        {attachments.length === 0 && (
-          <div className="order-1 w-full min-w-0 desktop:order-2 desktop:w-auto desktop:flex-1">
-            {textarea}
-          </div>
-        )}
-        <div
-          className={classNames(
-            'flex flex-shrink-0 items-center gap-2',
-            attachments.length === 0 && 'order-3 ml-auto desktop:ml-0',
+          {!isStackedLayout && (
+            <div className="order-1 flex w-full min-w-0 items-center self-stretch desktop:order-2 desktop:w-auto desktop:flex-1">
+              {textarea}
+            </div>
           )}
-        >
-          {deployments !== undefined &&
-            (isMobile ? (
+          <div
+            className={mergeClasses(
+              'flex flex-shrink-0 items-center gap-2',
+              !isStackedLayout && 'order-3 ms-auto desktop:ms-0',
+            )}
+          >
+            {renderFooterActions ? (
+              renderFooterActions({ canSend, onSend: handleSend })
+            ) : (
               <>
-                <DialGhostIconButton
-                  icon={selectorIcon}
-                  aria-label={selectorAriaLabel}
-                  onClick={() => setIsModelSheetOpen(true)}
-                  className={
-                    isStreaming ? 'pointer-events-none opacity-50' : undefined
-                  }
-                />
-                <ModelSelectorBottomSheet
-                  isOpen={isModelSheetOpen}
-                  title={modelSelectorLabels?.ariaLabel ?? 'Select model'}
-                  closeLabel={modelSelectorLabels?.closeLabel ?? 'Close'}
-                  searchPlaceholder={
-                    modelSelectorLabels?.searchPlaceholder ?? 'Search'
-                  }
-                  onClose={() => setIsModelSheetOpen(false)}
+                <ModelSelectorControl
                   deployments={deployments}
                   selectedDeploymentId={selectedDeploymentId}
-                  onSelect={handleDeploymentSelect}
-                  loadingLabel={modelSelectorLabels?.loading}
-                  errorLabel={modelSelectorLabels?.error}
-                  emptyLabel={modelSelectorLabels?.empty}
+                  onDeploymentChange={onDeploymentChange}
+                  modelSelectorLabels={modelSelectorLabels}
+                  isStreaming={isStreaming}
+                  isMobile={isMobile}
+                  isInputDisabled={isInputDisabled}
                   style={cssVars}
                 />
+                {isStreaming ? (
+                  <StopButton onStop={onStop} ariaLabel={stopLabel} />
+                ) : (
+                  hasSendableContent && (
+                    <SendButton
+                      onSend={handleSend}
+                      isDisabled={
+                        isInputDisabled ||
+                        !hasModelSelected ||
+                        hasBlockedAttachments
+                      }
+                      ariaLabel={sendLabel}
+                    />
+                  )
+                )}
               </>
-            ) : (
-              <DialDropdownIcon
-                icon={selectorIcon}
-                ariaLabel={selectorAriaLabel}
-                menu={{
-                  items: menuItems,
-                  header: menuHeader,
-                }}
-                placement="bottom-end"
-                matchReferenceWidth={false}
-                listClassName="!w-[240px] !max-h-80"
-                onOpenChange={handleModelSelectorOpenChange}
-                buttonClassName={
-                  isStreaming ? 'pointer-events-none opacity-50' : undefined
-                }
-              />
-            ))}
-          {isStreaming ? (
-            <StopButton onStop={onStop} ariaLabel={stopLabel} />
-          ) : (
-            canSend && (
-              <SendButton
-                onSend={handleSend}
-                isDisabled={!hasModelSelected}
-                ariaLabel={sendLabel}
-              />
-            )
-          )}
+            )}
+            {isTranscriptionSupported &&
+              !message.trim() &&
+              attachments.length === 0 && (
+                <DialGhostIconButton
+                  icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
+                  aria-label={micLabel}
+                  className="size-10 flex-shrink-0"
+                  onClick={startRecording}
+                  disabled={isInputDisabled || isStreaming}
+                />
+              )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

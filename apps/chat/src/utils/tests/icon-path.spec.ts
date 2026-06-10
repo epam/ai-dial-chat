@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ApiEndpoints } from '../../server-api/base';
-import { getIconPath } from '../icon-path';
+import { getIconPath, resolveDialFileDownloadUrl } from '../icon-path';
 
 describe('getIconPath', () => {
   it('should return correct URL format for icon name', () => {
@@ -52,5 +52,31 @@ describe('getIconPath', () => {
     const result = getIconPath(iconName);
 
     expect(result).toContain('iconName=icon-%C3%B1-test.svg');
+  });
+});
+
+describe('resolveDialFileDownloadUrl', () => {
+  it('converts a valid DIAL file ID to a BFF download URL', () => {
+    const result = resolveDialFileDownloadUrl('files/my-bucket/reports/q1.pdf');
+    expect(result).toBe(
+      '/api/v1/files/download?bucket=my-bucket&path=reports%2Fq1.pdf',
+    );
+  });
+
+  it('decodes a percent-encoded path segment before passing as query param', () => {
+    const result = resolveDialFileDownloadUrl(
+      'files/my-bucket/folder%2Fname.pdf',
+    );
+    expect(result).toContain('path=folder%2Fname.pdf');
+  });
+
+  it('returns undefined for a non-DIAL URL', () => {
+    expect(
+      resolveDialFileDownloadUrl('https://external.com/file.pdf'),
+    ).toBeUndefined();
+  });
+
+  it('returns undefined when there is no path segment after the bucket', () => {
+    expect(resolveDialFileDownloadUrl('files/only-bucket')).toBeUndefined();
   });
 });

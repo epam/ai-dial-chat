@@ -1,31 +1,56 @@
 import type { Stage } from '@epam/ai-dial-chat-shared';
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { AttachmentTray } from '@epam/ai-dial-conversation-input';
+import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import { StageIcon } from '../StageIcon/StageIcon.js';
-import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent.js';
+import type { StageTypography } from '../../models/StagesPanel';
+import { toDisplayAttachment } from '../../utils/to-display-attachment';
+import { StageIcon } from '../StageIcon/StageIcon';
+import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 
-/** A single stage row — plain when no content, collapsible when content is present. */
-export const StageItem: FC<{
+interface Props {
+  /** The stage data to render. */
   stage: Stage;
+  /** Whether this stage is the currently executing (live) stage. */
   isLive: boolean;
-  typographyClassName: string;
+  /** Typography configuration applied to stage text elements. */
+  typography: StageTypography;
+  /** Accessible label for the copy button inside stage content. */
   copyAriaLabel?: string;
-}> = ({ stage, isLive, typographyClassName, copyAriaLabel }) => {
+  /** Accessible label for the attachments tray. Defaults to `'Stage attachments'`. */
+  attachmentsAriaLabel?: string;
+}
+
+/** A single stage row — plain when no content, collapsible when content or attachments are present. */
+export const StageItem: FC<Props> = ({
+  stage,
+  isLive,
+  typography,
+  copyAriaLabel,
+  attachmentsAriaLabel = 'Stage attachments',
+}) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const header = (
     <>
       <StageIcon status={stage.status} isLive={isLive} />
-      <span className={mergeClasses('truncate capitalize', styles.stageName)}>
-        {stage.name || stage.status}
+      <span
+        className={mergeClasses(
+          'min-w-0 flex-1 truncate capitalize',
+          styles.stageName,
+        )}
+      >
+        <DialEllipsisTooltip text={stage.name || stage.status} />
       </span>
     </>
   );
 
-  if (!stage.content) {
+  const displayAttachments = stage.attachments?.map(toDisplayAttachment) ?? [];
+  const hasExpandableContent = !!(stage.content || displayAttachments.length);
+
+  if (!hasExpandableContent) {
     return <div className="flex items-center gap-2">{header}</div>;
   }
 
@@ -34,7 +59,10 @@ export const StageItem: FC<{
       <button
         type="button"
         onClick={() => setIsOpen((prev) => !prev)}
-        className="flex w-full cursor-pointer items-center gap-2 bg-transparent p-0"
+        className={mergeClasses(
+          'flex w-full cursor-pointer items-center gap-2 p-0',
+          styles.collapseButton,
+        )}
       >
         {header}
         {isOpen ? (
@@ -45,7 +73,7 @@ export const StageItem: FC<{
         ) : (
           <IconChevronRight
             size={DIAL_ICON_SIZE.MD}
-            className={styles.iconSecondary}
+            className={mergeClasses(styles.iconSecondary, 'rtl:scale-x-[-1]')}
           />
         )}
       </button>
@@ -56,12 +84,22 @@ export const StageItem: FC<{
         )}
       >
         <div className="overflow-hidden">
-          <div className="mt-3 flex flex-col gap-3 pl-7">
-            <StageMarkdownContent
-              content={stage.content}
-              typographyClassName={typographyClassName}
-              copyAriaLabel={copyAriaLabel}
-            />
+          <div className="mt-3 flex flex-col gap-3 ps-7">
+            {stage.content && (
+              <div className="max-h-[300px] overflow-y-auto">
+                <StageMarkdownContent
+                  content={stage.content}
+                  typography={typography}
+                  copyAriaLabel={copyAriaLabel}
+                />
+              </div>
+            )}
+            {displayAttachments.length > 0 && (
+              <AttachmentTray
+                attachments={displayAttachments}
+                ariaLabel={attachmentsAriaLabel}
+              />
+            )}
           </div>
         </div>
       </div>

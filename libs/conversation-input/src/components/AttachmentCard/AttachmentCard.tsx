@@ -1,20 +1,20 @@
 import {
-  buildCssVars,
   AttachmentType,
+  buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
   DialGhostIconButton,
-  DialLoader,
+  DialSpinner,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { IconRefresh, IconX } from '@tabler/icons-react';
+import { IconReload, IconX } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, type MouseEvent, useMemo } from 'react';
-import type { AttachmentCardProps } from '../../models/AttachmentCard.js';
-import { getAttachmentCardState } from '../../utils/getAttachmentCardState.js';
-import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension.js';
+import type { AttachmentCardProps } from '../../models/AttachmentCard';
+import { getAttachmentCardState } from '../../utils/getAttachmentCardState';
+import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension';
 import styles from './AttachmentCard.module.scss';
 
 export const AttachmentCard: FC<AttachmentCardProps> = ({
@@ -22,10 +22,12 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   onRemove,
   onRetry,
   onExpand,
+  onClick,
   isSelected,
   shouldAlwaysShowActions,
   removeLabel = 'Remove attachment',
   retryLabel = 'Retry upload',
+  clickLabel = 'Open attachment',
   colors,
   typography,
   roundedClassName = 'rounded',
@@ -34,6 +36,8 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   const { id, name } = attachment;
   const isPasted = attachment.type === AttachmentType.Pasted;
   const isExpandable = isPasted && onExpand !== undefined;
+  const isClickable = onClick !== undefined && !isExpandable;
+  const isInteractive = isExpandable || isClickable;
 
   const displayName = useMemo(() => {
     return isPasted ? name : getNameWithoutExtension(name);
@@ -65,10 +69,18 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     [attachment, isSelected, shouldAlwaysShowActions],
   );
 
+  const handleCardClick = (): void => {
+    if (isExpandable) {
+      onExpand!(id);
+    } else if (isClickable) {
+      onClick!(id);
+    }
+  };
+
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (isExpandable && (e.key === 'Enter' || e.key === ' ')) {
+    if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
-      onExpand(id);
+      handleCardClick();
     }
   };
 
@@ -81,17 +93,18 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         roundedClassName,
         cardColorClass,
         !isImage && 'flex-col gap-3 p-3',
-        isExpandable && 'cursor-pointer',
+        isInteractive && 'cursor-pointer',
         className,
       )}
-      onClick={isExpandable ? () => onExpand(id) : undefined}
-      onKeyDown={isExpandable ? handleKeyDown : undefined}
-      tabIndex={isExpandable ? 0 : undefined}
-      role={isExpandable ? 'button' : undefined}
+      onClick={isInteractive ? handleCardClick : undefined}
+      onKeyDown={isInteractive ? handleKeyDown : undefined}
+      tabIndex={isInteractive ? 0 : undefined}
+      role={isInteractive ? 'button' : undefined}
+      aria-label={isClickable ? clickLabel : undefined}
     >
       {isImage ? (
         <img
-          src={attachment.previewUrl}
+          src={attachment.previewUrl ?? attachment.url}
           alt={name}
           className={mergeClasses(
             'h-full w-full object-cover',
@@ -123,7 +136,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             <DialEllipsisTooltip
               text={bottomLabel}
               className={mergeClasses(
-                'dial-tiny-text min-w-0 flex-1 truncate',
+                typography?.metaClassName ?? 'dial-tiny-text',
                 styles.meta,
               )}
             />
@@ -139,11 +152,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             styles.loadingOverlay,
           )}
         >
-          <DialLoader
-            size={16}
-            fullWidth={false}
-            iconClassName="text-primary"
+          <DialSpinner
+            size={40}
             ariaLabel="Loading attachment"
+            className="z-50"
           />
         </span>
       )}
@@ -159,12 +171,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
         >
           {isError && onRetry && (
             <DialGhostIconButton
-              icon={<IconRefresh size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              icon={<IconReload size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
-              className={mergeClasses(
-                'h-6 w-6 rounded bg-transparent',
-                styles.actionBtn,
-              )}
+              className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
               aria-label={retryLabel}
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();

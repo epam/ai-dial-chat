@@ -153,6 +153,62 @@ describe('DeploymentsService', () => {
       expect(result.deployments[0].id).toBe('chat-model');
     });
 
+    it('maps application_type_schema_id to applicationTypeSchemaId for application deployments', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          {
+            ...mockApplication,
+            application_type_schema_id: 'https://example.com/schemas/quick-app',
+          },
+        ],
+      });
+      const result = await service.listDeployments('user1', 'token');
+      expect(result.deployments[0].applicationTypeSchemaId).toBe(
+        'https://example.com/schemas/quick-app',
+      );
+    });
+
+    it('does not set applicationTypeSchemaId for model deployments', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [mockModel],
+      });
+      const result = await service.listDeployments('user1', 'token');
+      expect(result.deployments[0].applicationTypeSchemaId).toBeUndefined();
+    });
+
+    it('maps input_attachment_types to inputAttachmentTypes', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          { ...mockModel, input_attachment_types: ['audio/*', 'image/*'] },
+        ],
+      });
+      const result = await service.listDeployments('user1', 'token');
+      expect(result.deployments[0].inputAttachmentTypes).toEqual([
+        'audio/*',
+        'image/*',
+      ]);
+    });
+
+    it('leaves inputAttachmentTypes undefined when source field is absent', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [mockModel],
+      });
+      const result = await service.listDeployments('user1', 'token');
+      expect(result.deployments[0].inputAttachmentTypes).toBeUndefined();
+    });
+
     it('throws BadGatewayException when DIAL Core returns non-2xx', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({

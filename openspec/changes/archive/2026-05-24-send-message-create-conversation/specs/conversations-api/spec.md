@@ -101,7 +101,7 @@ interface Conversation {
 
 ### Requirement: ConversationService has unit tests and ConversationController has integration tests
 
-Unit tests SHALL cover `ConversationService.createConversation` in `apps/chat-api/src/conversations/tests/conversation.service.spec.ts`. Integration tests SHALL cover the `POST /api/v1/conversations` endpoint using supertest in `apps/chat-api/src/conversations/tests/conversation.controller.integration.spec.ts`. Tests MUST follow the pattern established by `chat/tests/chat.controller.integration.spec.ts`. No `data-testid` attributes; use HTTP status codes and response body assertions.
+Unit tests SHALL cover `ConversationService.createConversation` in `apps/chat-api/src/conversations/tests/conversation.service.spec.ts`. Integration tests SHALL cover the `POST /api/v1/conversations` endpoint using supertest in `apps/chat-api/src/conversations/tests/conversation.controller.integration.spec.ts`. Tests MUST follow the pattern established by `chat/tests/chat.controller.integration.spec.ts` and use HTTP status codes and response body assertions rather than implementation-specific selectors.
 
 #### Scenario: Service creates a conversation with a valid UUID
 

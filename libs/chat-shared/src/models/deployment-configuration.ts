@@ -1,7 +1,7 @@
 /** DIAL-specific options for a single starter button entry. */
 export interface StarterWidgetOptions {
   /** Text to populate in the input field when the starter is selected. */
-  populateText: string;
+  populateText: string | null;
   /** When true, automatically submits the message after populating the input. */
   submit: boolean;
   /** Optional confirmation message shown before submission. */
@@ -52,6 +52,12 @@ export interface DeploymentConfigurationSchema {
   additionalProperties?: boolean | Record<string, unknown>;
   /** Named configuration properties supported by this deployment. */
   properties?: Record<string, DeploymentConfigurationSchemaProperty>;
+  /**
+   * When `true`, the application does not accept free-form text input.
+   * Users interact only via form/action buttons defined in the schema.
+   * Mapped from `dial:chatMessageInputDisabled` by the backend.
+   */
+  isChatMessageInputDisabled?: boolean;
   /** Index signature for additional JSON Schema keywords. */
   [key: string]: unknown;
 }

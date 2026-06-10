@@ -74,6 +74,34 @@ The props passed to `ConversationInput` SHALL use `items` from `useDeployments()
 
 ---
 
+### Requirement: Deployment selector uses skeleton placeholders while loading
+
+When `useDeployments().isLoading` is `true`, the deployment selector SHALL use
+`DialSkeleton` from `@epam/ai-dial-ui-kit` instead of a visible loading-text
+row.
+
+The selector trigger SHALL render one circular skeleton in place of the
+selected deployment icon. The opened desktop dropdown SHALL render exactly
+seven disabled rows; every row SHALL contain a circular icon skeleton and a
+text skeleton representing the deployment name. The mobile bottom sheet SHALL
+render the same seven skeleton rows. The localized loading label SHALL remain
+available to assistive technology.
+
+#### Scenario: Desktop selector shows deployment skeletons while loading
+
+- **WHEN** `modelSelectorLabels.loading` is defined, including a reload where `deployments` still contains previously loaded items
+- **THEN** the trigger shows a circular `DialSkeleton`
+- **AND** the dropdown contains exactly seven disabled skeleton rows
+- **AND** every row contains one circular and one text `DialSkeleton`
+
+#### Scenario: Mobile selector shows deployment skeletons while loading
+
+- **WHEN** the mobile selector is opened while deployments are loading
+- **THEN** the bottom sheet contains exactly seven skeleton rows
+- **AND** every row contains one circular and one text `DialSkeleton`
+
+---
+
 ### Requirement: Catalog frontend fully removed
 
 `apps/chat/src/context/CatalogContext.tsx`, `apps/chat/src/context/tests/CatalogContext.spec.tsx`, and `apps/chat/src/server-api/catalog.ts` SHALL be deleted.
@@ -110,3 +138,67 @@ All `getDeployments` calls SHALL be mocked; no live network calls.
 
 - **WHEN** a component calls `useDeployments()` without a `DeploymentsProvider` ancestor
 - **THEN** rendering throws `Error('useDeployments must be used within a DeploymentsProvider')`
+
+---
+
+### Requirement: Backend maps dial:chatMessageInputDisabled to isChatMessageInputDisabled
+
+`apps/chat-api/src/deployments/deployments.service.ts` SHALL, in `getDeploymentConfiguration`, map the raw DIAL Core JSON Schema response to a `DeploymentConfigurationDto` before returning it to the frontend. The mapping SHALL extract `raw['dial:chatMessageInputDisabled']` into a clean camelCase field `isChatMessageInputDisabled?: boolean`, following the same pattern as `ApplicationSchemasService` maps `dial:applicationTypeDisplayName` to `displayName`.
+
+The raw `Record<string, unknown>` SHALL NOT be returned directly — a typed DTO is the contract.
+
+#### Scenario: Backend maps the flag to isChatMessageInputDisabled
+
+- **WHEN** DIAL Core returns a schema with `{ "dial:chatMessageInputDisabled": true }`
+- **THEN** `getDeploymentConfiguration` returns `{ isChatMessageInputDisabled: true }` (field renamed, DIAL key absent)
+
+#### Scenario: Flag absent in raw schema — field omitted from DTO
+
+- **WHEN** DIAL Core returns a schema without `dial:chatMessageInputDisabled`
+- **THEN** the DTO does not include `isChatMessageInputDisabled` (field is `undefined`)
+
+---
+
+### Requirement: DeploymentConfigurationDto is the typed backend response
+
+`apps/chat-api/src/deployments/dto/deployment-configuration.dto.ts` SHALL define:
+
+```ts
+export class DeploymentConfigurationDto {
+  type?: string;
+  title?: string;
+  properties?: Record<string, unknown>;
+  additionalProperties?: boolean | Record<string, unknown>;
+  isChatMessageInputDisabled?: boolean;
+}
+```
+
+The controller SHALL reference this class in its `@ApiResponse` decorator.
+
+#### Scenario: DTO shape matches mapped fields
+
+- **WHEN** `getDeploymentConfiguration` succeeds
+- **THEN** the response body contains only the mapped fields defined in `DeploymentConfigurationDto`
+
+---
+
+### Requirement: DeploymentConfigurationSchema exposes isChatMessageInputDisabled as a typed field
+
+`libs/chat-shared/src/models/deployment-configuration.ts` (`DeploymentConfigurationSchema`) SHALL include:
+
+```ts
+/** When true, the application does not accept free-form text input; users interact only via form/action buttons. */
+isChatMessageInputDisabled?: boolean;
+```
+
+The raw `'dial:chatMessageInputDisabled'` field SHALL be removed — the backend owns the mapping, the frontend reads only the clean name.
+
+#### Scenario: Type-safe field access without cast
+
+- **WHEN** app-edge code reads `selectedDeploymentConfiguration?.isChatMessageInputDisabled`
+- **THEN** TypeScript infers the type as `boolean | undefined` without a type assertion
+
+#### Scenario: Missing field defaults to undefined
+
+- **WHEN** a `DeploymentConfigurationSchema` object is constructed without `isChatMessageInputDisabled`
+- **THEN** the field is `undefined`, which is falsy, and no existing code breaks

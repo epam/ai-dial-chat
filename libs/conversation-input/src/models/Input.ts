@@ -1,5 +1,5 @@
-import type { Attachment } from '@epam/ai-dial-chat-shared';
-import type { DeploymentItemDto } from '@epam/chat-api-client';
+import type { Attachment, DeploymentItem } from '@epam/ai-dial-chat-shared';
+import type { ReactNode } from 'react';
 
 /** CSS custom-property overrides for the `Input` component. */
 export interface InputColors {
@@ -58,8 +58,10 @@ export interface InputProps {
   message?: string;
   /** Called on every keystroke with the current textarea value. */
   onChange?: (message: string) => void;
-  /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. */
-  onSend?: (message: string, attachments: Attachment[]) => void;
+  /** Called when the user submits a message (Enter or send button). Receives the current local attachments as the second argument. Returning a rejected promise transitions attachments to Error state. */
+  onSend?: (message: string, attachments: Attachment[]) => Promise<void> | void;
+  /** Called immediately after an attachment is added. Returns the uploaded attachment URL. */
+  onUploadAttachment?: (attachment: Attachment) => Promise<string>;
   /** Called when the user clicks the stop button during streaming. */
   onStop?: () => void;
   /** When `true`, shows a stop button instead of the send button. */
@@ -94,14 +96,12 @@ export interface InputProps {
   onDropFilesConsumed?: () => void;
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
-  /** List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered. */
-  deployments?: DeploymentItemDto[];
   /**
-   * Converts a raw `DeploymentItemDto.iconUrl` value to a URL usable in an `<img src>`.
-   * When omitted, the default resolver handles absolute URLs, root-relative paths, and `files/` IDs.
-   * Pass a custom resolver (e.g. from the host app) to also support theme-relative icon names.
+   * List of deployment items to populate the model selector menu. When `undefined`, the selector is not rendered.
+   * `iconUrl` on each item must already be a fully resolved URL usable in `<img src>` — the host app
+   * resolves DIAL file IDs, theme-relative names, etc. before passing the list.
    */
-  resolveDeploymentIconUrl?: (iconUrl: string) => string | undefined;
+  deployments?: DeploymentItem[];
   /** ID of the currently selected deployment. When `null` or `undefined` and `deployments` is defined, the send button is disabled. */
   selectedDeploymentId?: string | null;
   /** Called when the user selects a different deployment from the dropdown. Receives the selected item's `id`. */
@@ -112,4 +112,56 @@ export interface InputProps {
   menuTitle?: string;
   /** Accessible label for the bottom-sheet close button. Defaults to `'Close'`. */
   menuCloseLabel?: string;
+  /** Attachments pre-populated in the tray on mount (e.g. when editing an existing message). */
+  initialAttachments?: Attachment[];
+  /**
+   * When `true`, the textarea always renders on its own row above the action bar
+   * (attach button on the left, footer actions on the right), instead of the
+   * compact single-row layout used when no attachments are present. Used by the
+   * edit-message UI, which always wants the stacked layout.
+   */
+  isStacked?: boolean;
+  /**
+   * When `true`, the attach (+) button and its associated hidden file input are
+   * not rendered. Use this when the caller manages file picking outside the
+   * component (e.g. `EditMessageInput` renders the `+` button outside the
+   * bordered box and feeds files back via `pendingDropFiles`).
+   */
+  hideAddButton?: boolean;
+  /**
+   * When `true`, the entire action bar row (attach button, send/stop button,
+   * model selector, and any `renderFooterActions` content) is not rendered.
+   * The bordered box contains only the attachment tray and textarea. Use in
+   * `EditMessageInput` where the action row lives outside the bordered box.
+   */
+  hideActionBar?: boolean;
+  /**
+   * When provided, replaces the default send/stop/model-selector area with custom content.
+   * Receives `canSend` (textarea has non-empty trimmed content) and `onSend` (triggers the
+   * same internal send flow as the default send button).
+   */
+  renderFooterActions?: (helpers: {
+    canSend: boolean;
+    onSend: () => void;
+  }) => ReactNode;
+  /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
+  isInputDisabled?: boolean;
+  /**
+   * When `true`, the mic button is rendered and voice recording is enabled.
+   * Derived by the host app from the selected deployment's `inputAttachmentTypes`.
+   */
+  isTranscriptionSupported?: boolean;
+  /**
+   * Called when the user confirms a voice recording.
+   * Receives the recorded `File` and its detected MIME type.
+   * Resolves with the DIAL storage URL for the uploaded audio.
+   */
+  onUploadAudio?: (file: File, contentType: string) => Promise<string>;
+  /**
+   * Called after successful audio upload with the DIAL storage URL.
+   * Resolves with the transcript text.
+   */
+  onTranscribeAudio?: (audioUrl: string) => Promise<string>;
+  /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
+  micLabel?: string;
 }

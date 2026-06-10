@@ -9,8 +9,8 @@
     "declaration": true,
     "sourceMap": true,
 
-    "module": "node16",
-    "moduleResolution": "node16",
+    "module": "esnext",
+    "moduleResolution": "bundler",
 
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -32,7 +32,14 @@
     "src/**/*.spec.jsx"
   ],
   "references": [
-    { "path": "../chat-shared/tsconfig.lib.json" },
-    { "path": "../conversation-messages/tsconfig.lib.json" }
+    {
+      "path": "../conversation-input/tsconfig.lib.json"
+    },
+    {
+      "path": "../conversation-messages/tsconfig.lib.json"
+    },
+    {
+      "path": "../chat-shared/tsconfig.lib.json"
+    }
   ]
 }

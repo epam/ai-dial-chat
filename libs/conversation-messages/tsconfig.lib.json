@@ -10,8 +10,8 @@
     "declaration": true,
     "sourceMap": true,
 
-    "module": "node16",
-    "moduleResolution": "node16",
+    "module": "esnext",
+    "moduleResolution": "bundler",
 
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

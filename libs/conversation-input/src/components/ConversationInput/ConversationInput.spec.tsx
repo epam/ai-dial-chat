@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConversationInput } from './ConversationInput.js';
+import { ConversationInput } from './ConversationInput';
 
 describe('ConversationInput', () => {
   it('should render with welcome text', () => {
@@ -114,7 +114,7 @@ describe('ConversationInput — attachments', () => {
         items: items as unknown as DataTransferItemList,
       },
       preventDefault: vi.fn(),
-    } as unknown as React.DragEvent;
+    } as unknown as DragEvent;
   };
 
   it('shows drop overlay when dragging files over and hides it on drag leave', async () => {

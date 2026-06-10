@@ -26,6 +26,9 @@
     },
     {
       "path": "./libs/conversation-stages"
+    },
+    {
+      "path": "./libs/conversation-panel"
     }
   ]
 }

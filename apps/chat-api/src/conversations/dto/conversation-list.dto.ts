@@ -1,0 +1,56 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+
+export class ConversationListItemDto {
+  @ApiProperty({
+    description:
+      'Full DIAL Core resource URL used as the stable conversation identifier.',
+    example:
+      'conversations/default-bucket/cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My chat',
+  })
+  id!: string;
+
+  @ApiProperty({
+    description:
+      'Human-readable conversation title (the resource `name` from DIAL Core).',
+    example: 'My chat',
+  })
+  title!: string;
+
+  @ApiProperty({
+    description: 'Unix epoch milliseconds of the last update.',
+    example: 1749600000000,
+  })
+  updatedAt!: number;
+
+  @ApiProperty({
+    description:
+      'True when this conversation was shared with the current user by another user.',
+    example: false,
+  })
+  sharedWithMe!: boolean;
+
+  @ApiProperty({
+    description:
+      'True when this conversation was published to the organisation and is visible to the current user.',
+    example: false,
+  })
+  publishedWithMe!: boolean;
+
+  @ApiProperty({
+    description: 'True when the user has pinned this conversation.',
+    example: false,
+  })
+  isPinned!: boolean;
+}
+
+export class ConversationListResponseDto {
+  @ApiProperty({ type: [ConversationListItemDto] })
+  items!: ConversationListItemDto[];
+
+  @ApiPropertyOptional({
+    description:
+      'Cursor for the next page. Present only when more results exist. Pass as `nextToken` in the next request.',
+    example: 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9',
+  })
+  nextToken?: string;
+}

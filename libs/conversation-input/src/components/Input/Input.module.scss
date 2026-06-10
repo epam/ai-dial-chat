@@ -5,17 +5,37 @@
   &:focus-within {
     border-color: var(--ci-border-focus, transparent);
   }
+
+  &.wrapperDisabled {
+    background: var(--ci-bg-disabled, var(--controls-bg-disable, #1d2439));
+    cursor: not-allowed;
+  }
 }
 
 .textarea {
   color: var(--ci-text, var(--text-primary, #eef1f7));
-  font-family: var(--ci-font-family, var(--theme-font, sans-serif));
-  font-size: var(--ci-font-size, 14px);
-  font-weight: var(--ci-font-weight, 400);
-  line-height: var(--ci-line-height, 1.5);
+  font-family: var(--ci-font-family);
+  font-size: var(--ci-font-size);
+  font-weight: var(--ci-font-weight);
+  line-height: var(--ci-line-height);
 
   &::placeholder {
     color: var(--ci-placeholder, var(--text-secondary, #9fa6bd));
+  }
+
+  &:disabled {
+    color: var(
+      --ci-text-disabled,
+      var(--controls-text-primary-disable, #7c8293)
+    );
+    cursor: not-allowed;
+
+    &::placeholder {
+      color: var(
+        --ci-placeholder-disabled,
+        var(--controls-text-secondary-disable, #575f73)
+      );
+    }
   }
 }
 
@@ -23,11 +43,55 @@
   color: var(--ci-stop-color, var(--text-secondary, #9fa6bd));
 }
 
+.modelSelectorButton {
+  .modelSelectorCaret {
+    color: var(--ci-model-selector-caret-color, var(--text-primary, #eef1f7));
+  }
+  &:hover,
+  &:active {
+    background: var(
+      --ci-model-selector-hover-bg,
+      var(--controls-bg-accent-primary-alpha-active, #7da4ff4d)
+    );
+
+    .modelSelectorCaret {
+      background: var(
+        --ci-model-selector-caret-hover-bg,
+        var(--bg-accent-primary-alpha, #7da4ff26)
+      );
+    }
+  }
+
+  &:active {
+    .modelSelectorCaret {
+      background: var(
+        --ci-model-selector-hover-bg,
+        var(--controls-bg-accent-primary-alpha-active, #7da4ff4d)
+      );
+    }
+  }
+
+  &.modelSelectorButtonDisabled {
+    color: var(
+      --ci-model-selector-disabled-color,
+      var(--controls-text-primary-disable, #7c8293)
+    );
+
+    .modelSelectorCaret {
+      color: var(
+        --ci-model-selector-disabled-color,
+        var(--controls-text-primary-disable, #7c8293)
+      );
+      background: var(--ci-bg-disabled, var(--controls-bg-disable, #1d2439));
+    }
+  }
+}
+
 .sendButton {
   background: var(--ci-send-bg, var(--controls-bg-accent-primary, #3664e2));
   color: var(--ci-send-text, var(--controls-text-permanent, #fcfcfc));
-  font-family: var(--ci-font-family, var(--theme-font, sans-serif));
-  font-size: var(--ci-font-size, 14px);
+  font-family: var(--ci-font-family);
+  font-size: var(--ci-font-size);
 
   &:hover {
     background: var(

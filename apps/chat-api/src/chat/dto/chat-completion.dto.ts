@@ -8,6 +8,7 @@ import {
   IsString,
   Max,
   Min,
+  MinLength,
   ValidateNested,
 } from 'class-validator';
 import { MessageCustomContentDto } from '../../conversations/dto/message-custom-content.dto';
@@ -61,6 +62,15 @@ export class MessageDto {
 }
 
 export class ChatCompletionDto {
+  @ApiProperty({
+    description:
+      'DIAL Core deployment name (may contain slashes and special characters)',
+    example: 'gpt-4o',
+  })
+  @IsString()
+  @MinLength(1)
+  deployment!: string;
+
   @ApiProperty({
     description: 'Ordered chat messages to send to DIAL Core',
     type: () => [MessageDto],

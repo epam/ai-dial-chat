@@ -1,5 +1,7 @@
-export { StagesPanel } from './components/StagesPanel/StagesPanel.js';
+export { StagesPanel } from './components/StagesPanel/StagesPanel';
 export type {
   StagesPanelProps,
   StagesPanelColors,
-} from './models/StagesPanel.js';
+  StagesPanelStyles,
+  StageTypography,
+} from './models/StagesPanel';

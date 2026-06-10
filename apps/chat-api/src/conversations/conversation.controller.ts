@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Logger,
+  Patch,
   Post,
   Put,
   Query,
@@ -20,9 +21,16 @@ import {
   ConversationResponseDto,
 } from '../openapi/openapi-response.dto';
 import { ConversationService } from './conversation.service';
+import { ConversationListResponseDto } from './dto/conversation-list.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.dto';
 import { GetConversationMetadataDto } from './dto/get-conversation-metadata.dto';
+import { ListConversationsQueryDto } from './dto/list-conversations-query.dto';
+import {
+  RenameConversationBodyDto,
+  RenameConversationResponseDto,
+} from './dto/rename-conversation.dto';
 import {
   SaveConversationBodyDto,
   SaveConversationQueryDto,
@@ -69,6 +77,35 @@ export class ConversationController {
       bucket,
       dto.deploymentId,
       dto.custom_content,
+    );
+  }
+
+  @Get('list')
+  @ApiOperation({
+    summary: 'List conversations',
+    description:
+      'Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of conversation metadata',
+    type: ConversationListResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid query params' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 502, description: 'DIAL Core error' })
+  @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
+  listConversations(
+    @Req() req: Request,
+    @Query() query: ListConversationsQueryDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.listConversations(
+      at,
+      bucket,
+      query.limit,
+      query.nextToken,
+      query.path,
     );
   }
 
@@ -226,6 +263,64 @@ export class ConversationController {
         res.end();
       }
     }
+  }
+
+  @Patch()
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({ summary: 'Rename a conversation by path' })
+  @ApiResponse({
+    status: 200,
+    description: 'Conversation renamed — new path returned',
+    type: RenameConversationResponseDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Missing or invalid path or newTitle',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 404, description: 'Conversation not found' })
+  @ApiResponse({ status: 409, description: 'Destination path already exists' })
+  @ApiResponse({ status: 502, description: 'DIAL Core error' })
+  @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
+  renameConversation(
+    @Req() req: Request,
+    @Query() query: ConversationPathDto,
+    @Body() body: RenameConversationBodyDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.renameConversation(
+      query.path,
+      body.newTitle,
+      at,
+      bucket,
+    );
+  }
+
+  @Post('duplicate')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({
+    summary: "Duplicate a conversation into the user's own bucket",
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Conversation duplicated — new path returned',
+    type: DuplicateConversationResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Missing or invalid path' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 404, description: 'Source conversation not found' })
+  @ApiResponse({ status: 502, description: 'DIAL Core error' })
+  @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
+  duplicateConversation(
+    @Req() req: Request,
+    @Query() query: ConversationPathDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.duplicateConversation(
+      query.path,
+      at,
+      bucket,
+    );
   }
 
   @Delete()

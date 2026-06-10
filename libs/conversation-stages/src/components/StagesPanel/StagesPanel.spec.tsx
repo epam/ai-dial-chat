@@ -1,11 +1,12 @@
 import { StageStatus } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { StagesPanel } from './StagesPanel.js';
+import { StagesPanel } from './StagesPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { MD: 16 },
-  DialSpinner: () => <span data-testid="stage-spinner" />,
+  DialSpinner: () => <span role="status" aria-label="Stage loading" />,
+  DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
 }));
 
 const stageRunning = { index: 0, name: 'Running step', status: null };
@@ -50,14 +51,16 @@ describe('StagesPanel', () => {
         stages={[stageRunning]}
         isStreaming={false}
         className="custom-panel"
-        colors={{
-          background: '#111111',
-          border: '#222222',
-          text: '#333333',
-          stageTextColor: '#444444',
-          runningColor: '#555555',
-          completedColor: '#666666',
-          failedColor: '#777777',
+        styles={{
+          colors: {
+            background: '#111111',
+            border: '#222222',
+            text: '#333333',
+            stageTextColor: '#444444',
+            runningColor: '#555555',
+            completedColor: '#666666',
+            failedColor: '#777777',
+          },
         }}
       />,
     );
@@ -74,12 +77,12 @@ describe('StagesPanel', () => {
     expect(panel.style.getPropertyValue('--cs-failed')).toBe('#777777');
   });
 
-  it('applies typographyClassName to each stage row', () => {
+  it('applies typography.fontClassName to each stage row', () => {
     render(
       <StagesPanel
         stages={[stageRunning, stageCompleted]}
         isStreaming={false}
-        typographyClassName="dial-body-text"
+        styles={{ typography: { fontClassName: 'dial-body-text' } }}
       />,
     );
 
@@ -115,7 +118,7 @@ describe('StagesPanel', () => {
       />,
     );
 
-    expect(screen.queryByTestId('stage-spinner')).toBeNull();
+    expect(screen.queryByRole('status', { name: 'Stage loading' })).toBeNull();
   });
 
   it('shows spinner only for the last null-status stage when streaming', () => {
@@ -126,6 +129,8 @@ describe('StagesPanel', () => {
       />,
     );
 
-    expect(screen.getAllByTestId('stage-spinner')).toHaveLength(1);
+    expect(
+      screen.getAllByRole('status', { name: 'Stage loading' }),
+    ).toHaveLength(1);
   });
 });

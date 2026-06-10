@@ -1,11 +1,13 @@
 import {
   type Attachment,
   type Conversation,
+  type DisplayAttachment,
   type MessageCustomContent,
   MessageRating,
   MessageRole,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
+import type { ConversationResponseDto } from '@epam/chat-api-client';
 import {
   type Dispatch,
   type MutableRefObject,
@@ -15,24 +17,28 @@ import {
 } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
+import { useDeployments } from '../../context/DeploymentsContext';
 import {
   deleteConversation as apiDeleteConversation,
   saveConversation,
 } from '../../server-api/conversations.api';
+import { uploadFile } from '../../server-api/files.api';
 import { rateMessage } from '../../server-api/rate.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
+import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { createMessagePair } from '../../utils/message-factory';
-import { getStarterPopulateText } from '../../utils/starter-option';
+import { getStarterSubmitText } from '../../utils/starter-option';
 
 interface Params {
   conversation: Conversation | null;
   conversationId: string | undefined;
+  bucket: string;
   isStreaming: boolean;
   startStream: (
     conversationPath: string,
     userContent: string,
-    assistantMessageId: string,
+    messageIndex: number,
     model: string,
     customContent?: MessageCustomContent,
   ) => void;
@@ -44,26 +50,54 @@ interface Params {
 export const useConversationHandlers = ({
   conversation,
   conversationId,
+  bucket,
   isStreaming,
   startStream,
   conversationRef,
   setConversation,
   navigate,
 }: Params) => {
-  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
+  const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(
+    null,
+  );
+  const [editingMessageIndexes, setEditingMessageIndexes] = useState<
+    Set<number>
+  >(new Set());
+
   const [pendingStarterContext, setPendingStarterContext] = useState<{
     starter: StarterOption;
     propertyKey?: string;
     description?: string;
   } | null>(null);
+  const { selectedItemId } = useDeployments();
+
+  const handleUploadAttachment = useCallback(
+    async (attachment: Attachment): Promise<string> => {
+      if (!bucket) {
+        throw new Error('User bucket is not available');
+      }
+
+      const response = await uploadFile(
+        bucket,
+        buildUploadPath(attachment),
+        attachment.file,
+      );
+      return response.url;
+    },
+    [bucket],
+  );
 
   const handleSend = useCallback(
     async (message: string, attachments: Attachment[]) => {
       if (!conversationId || !conversation) return;
 
-      const attachmentDtos = await attachmentsToDtos(attachments);
-      const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(message, attachmentDtos);
+      const attachmentDtos = attachmentsToDtos(attachments);
+      const { userMessage, assistantMessage } = createMessagePair(
+        message,
+        attachmentDtos,
+        undefined,
+        selectedItemId,
+      );
       const conversationPath = getConversationPath(conversationId);
 
       setConversation((prev) => {
@@ -79,64 +113,67 @@ export const useConversationHandlers = ({
       startStream(
         conversationPath,
         message,
-        assistantMessageId,
-        conversation.model.id,
-        {
-          attachments: attachmentDtos,
-        },
+        conversation.messages.length + 1,
+        selectedItemId ?? conversation.model.id,
+        { attachments: attachmentDtos },
       );
     },
     [
       conversation,
       conversationId,
       conversationRef,
+      selectedItemId,
       setConversation,
       startStream,
     ],
   );
 
   const handleRegenerateMessage = useCallback(
-    (messageId: string) => {
+    (messageIndex: number) => {
       if (isStreaming || !conversationId || !conversation) return;
 
-      const idx = conversation.messages.findIndex((m) => m.id === messageId);
       if (
-        idx === -1 ||
-        conversation.messages[idx].role !== MessageRole.Assistant
+        messageIndex === -1 ||
+        conversation.messages[messageIndex]?.role !== MessageRole.Assistant
       )
         return;
 
-      const userMsg = conversation.messages[idx - 1];
+      const userMsg = conversation.messages[messageIndex - 1];
       if (!userMsg || userMsg.role !== MessageRole.User) return;
 
       const conversationPath = getConversationPath(conversationId);
 
       setConversation((prev) => {
         if (!prev) return prev;
+        const regeneratedMessage = {
+          ...prev.messages[messageIndex],
+          content: '',
+          custom_content: undefined,
+          wasStoppedByUser: undefined,
+          stoppedWithoutContent: undefined,
+          hasStreamError: undefined,
+        };
         const next = {
           ...prev,
-          messages: prev.messages.map((m, i) =>
-            i === idx
-              ? {
-                  ...m,
-                  content: '',
-                  custom_content: undefined,
-                  wasStoppedByUser: undefined,
-                  stoppedWithoutContent: undefined,
-                  hasStreamError: undefined,
-                }
-              : m,
-          ),
+          messages: [
+            ...prev.messages.slice(0, messageIndex),
+            regeneratedMessage,
+          ],
         };
         conversationRef.current = next;
         return next;
       });
 
+      setEditingMessageIndexes(
+        (indexes) =>
+          new Set([...indexes].filter((index) => index < messageIndex)),
+      );
+
       startStream(
         conversationPath,
         userMsg.content,
-        messageId,
-        conversation.model.id,
+        messageIndex,
+        selectedItemId ?? conversation.model.id,
         userMsg.custom_content,
       );
     },
@@ -145,28 +182,29 @@ export const useConversationHandlers = ({
       conversationId,
       conversationRef,
       isStreaming,
+      selectedItemId,
       setConversation,
       startStream,
     ],
   );
 
   const handleDeleteMessage = useCallback(
-    (messageId: string) => {
+    (messageIndex: number) => {
       if (isStreaming) return;
-      setPendingDeleteId(messageId);
+      setPendingDeleteIndex(messageIndex);
     },
     [isStreaming],
   );
 
   const handleConfirmDelete = useCallback(() => {
-    if (!conversationId || !pendingDeleteId) return;
-    setPendingDeleteId(null);
+    if (!conversationId || pendingDeleteIndex == null) return;
+    setPendingDeleteIndex(null);
 
     const conversationPath = getConversationPath(conversationId);
 
     setConversation((prev) => {
       if (!prev) return prev;
-      const idx = prev.messages.findIndex((m) => m.id === pendingDeleteId);
+      const idx = pendingDeleteIndex;
       if (idx === -1) return prev;
 
       const next =
@@ -174,7 +212,10 @@ export const useConversationHandlers = ({
           ? prev.messages.filter((_, i) => i !== idx && i !== idx + 1)
           : prev.messages.filter((_, i) => i !== idx);
 
-      if (next.length === 0) {
+      if (
+        next.length === 0 ||
+        (next.length === 1 && next[0].role === MessageRole.Status)
+      ) {
         apiDeleteConversation(conversationPath);
         navigate(ROUTES.ROOT);
         return prev;
@@ -182,31 +223,31 @@ export const useConversationHandlers = ({
 
       const updated = { ...prev, messages: next };
       conversationRef.current = updated;
-      saveConversation(conversationPath, updated);
+      saveConversation(conversationPath, updated as ConversationResponseDto);
       return updated;
     });
   }, [
     conversationId,
     conversationRef,
     navigate,
-    pendingDeleteId,
+    pendingDeleteIndex,
     setConversation,
   ]);
 
   const handleRateMessage = useCallback(
-    async (messageId: string, rating: MessageRating | null) => {
+    async (messageIndex: number, rating: MessageRating | null) => {
       if (!conversationId) return;
 
       let previousRating: MessageRating | undefined;
       setConversation((prev) => {
         if (!prev) return prev;
-        const msg = prev.messages.find((m) => m.id === messageId);
+        const msg = prev.messages[messageIndex];
         if (!msg) return prev;
         previousRating = msg.rating;
         const next: Conversation = {
           ...prev,
-          messages: prev.messages.map((m) =>
-            m.id === messageId ? { ...m, rating: rating ?? undefined } : m,
+          messages: prev.messages.map((m, i) =>
+            i === messageIndex ? { ...m, rating: rating ?? undefined } : m,
           ),
         };
         conversationRef.current = next;
@@ -218,34 +259,40 @@ export const useConversationHandlers = ({
 
       const conversationPath = getConversationPath(conversationId);
 
-      if (rating !== null) {
+      if (rating != null) {
         try {
           await rateMessage({
             conversationId: updated.id,
-            responseId: messageId,
+            responseId: updated.messages[messageIndex].responseId || '',
             modelId: updated.model.id,
             rate: rating,
           });
-          await saveConversation(conversationPath, updated);
+          await saveConversation(
+            conversationPath,
+            updated as ConversationResponseDto,
+          );
         } catch {
           setConversation((prev) => {
             if (!prev) return prev;
             return {
               ...prev,
-              messages: prev.messages.map((m) =>
-                m.id === messageId ? { ...m, rating: previousRating } : m,
+              messages: prev.messages.map((m, i) =>
+                i === messageIndex ? { ...m, rating: previousRating } : m,
               ),
             };
           });
         }
       } else {
-        await saveConversation(conversationPath, updated).catch(() => {
+        await saveConversation(
+          conversationPath,
+          updated as ConversationResponseDto,
+        ).catch(() => {
           setConversation((prev) => {
             if (!prev) return prev;
             return {
               ...prev,
-              messages: prev.messages.map((m) =>
-                m.id === messageId ? { ...m, rating: previousRating } : m,
+              messages: prev.messages.map((m, i) =>
+                i === messageIndex ? { ...m, rating: previousRating } : m,
               ),
             };
           });
@@ -259,13 +306,18 @@ export const useConversationHandlers = ({
     (starter: StarterOption, propertyKey?: string, description?: string) => {
       if (!conversationId || !conversation) return;
 
-      const text = description ?? getStarterPopulateText(starter);
+      const displayText = description ?? starter.title;
+      const submitText = getStarterSubmitText(starter, description);
       const configurationValue = propertyKey
         ? { [propertyKey]: starter.const }
         : undefined;
 
-      const { userMessage, assistantMessage, assistantMessageId } =
-        createMessagePair(text, undefined, configurationValue);
+      const { userMessage, assistantMessage } = createMessagePair(
+        displayText,
+        undefined,
+        configurationValue,
+        selectedItemId,
+      );
       const conversationPath = getConversationPath(conversationId);
 
       setConversation((prev) => {
@@ -280,9 +332,9 @@ export const useConversationHandlers = ({
 
       startStream(
         conversationPath,
-        text,
-        assistantMessageId,
-        conversation.model.id,
+        submitText,
+        conversation.messages.length + 1,
+        selectedItemId ?? conversation.model.id,
         configurationValue ? { form_value: configurationValue } : undefined,
       );
     },
@@ -290,6 +342,7 @@ export const useConversationHandlers = ({
       conversation,
       conversationId,
       conversationRef,
+      selectedItemId,
       setConversation,
       startStream,
     ],
@@ -315,16 +368,119 @@ export const useConversationHandlers = ({
     submitStarter(starter, propertyKey, description);
   }, [pendingStarterContext, submitStarter]);
 
+  const handleStartEdit = useCallback((messageIndex: number) => {
+    setEditingMessageIndexes((prev) => new Set([...prev, messageIndex]));
+  }, []);
+
+  const handleCancelEdit = useCallback((messageIndex: number) => {
+    setEditingMessageIndexes((prev) => {
+      const next = new Set(prev);
+      next.delete(messageIndex);
+      return next;
+    });
+  }, []);
+
+  const handleEditMessage = useCallback(
+    async (
+      messageIndex: number,
+      text: string,
+      keptDisplayAttachments: DisplayAttachment[],
+      newAttachments: Attachment[],
+    ) => {
+      if (isStreaming || !conversationId || !conversation) return;
+
+      const idx = messageIndex;
+      if (idx === -1 || conversation.messages[idx].role !== MessageRole.User)
+        return;
+
+      const originalMessage = conversation.messages[idx];
+      const conversationPath = getConversationPath(conversationId);
+
+      const newDtos = attachmentsToDtos(newAttachments);
+
+      const keptIds = new Set(keptDisplayAttachments.map((a) => a.id));
+      const keptDtos = (
+        originalMessage.custom_content?.attachments ?? []
+      ).filter((att) => {
+        const id = att.url ?? att.data ?? att.title;
+        return keptIds.has(id);
+      });
+
+      const allAttachments = [...keptDtos, ...(newDtos ?? [])];
+
+      const { attachments: _removed, ...restCustomContent } =
+        originalMessage.custom_content ?? {};
+      const updatedCustomContent =
+        allAttachments.length > 0
+          ? { ...restCustomContent, attachments: allAttachments }
+          : Object.keys(restCustomContent).length > 0
+            ? restCustomContent
+            : undefined;
+
+      const updatedUserMessage = {
+        ...originalMessage,
+        content: text,
+        custom_content: updatedCustomContent,
+      };
+
+      const now = Date.now();
+      const assistantMessage = {
+        role: MessageRole.Assistant,
+        content: '',
+        timestamp: new Date(now).toISOString(),
+      };
+
+      const updatedMessages = [
+        ...conversation.messages.slice(0, idx),
+        updatedUserMessage,
+        assistantMessage,
+      ];
+
+      const updated = { ...conversation, messages: updatedMessages };
+
+      setConversation(() => {
+        conversationRef.current = updated;
+        return updated;
+      });
+
+      saveConversation(conversationPath, updated as ConversationResponseDto);
+
+      startStream(
+        conversationPath,
+        text,
+        updatedMessages.length - 1,
+        selectedItemId ?? conversation.model.id,
+        allAttachments.length > 0 ? { attachments: allAttachments } : undefined,
+      );
+
+      setEditingMessageIndexes(new Set());
+    },
+    [
+      conversation,
+      conversationId,
+      conversationRef,
+      isStreaming,
+      selectedItemId,
+      setConversation,
+      startStream,
+    ],
+  );
+
   return {
     handleSend,
+    handleUploadAttachment,
     handleRegenerateMessage,
     handleDeleteMessage,
     handleConfirmDelete,
     handleRateMessage,
     handleButtonSelect,
     handleConfirmStarter,
-    pendingDeleteId,
-    setPendingDeleteId,
+    handleStartEdit,
+    handleCancelEdit,
+    handleEditMessage,
+    editingMessageIndexes,
+    pendingDeleteIndex,
+    setPendingDeleteIndex,
     pendingStarterContext,
     setPendingStarterContext,
   };

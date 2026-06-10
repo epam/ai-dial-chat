@@ -1,20 +1,23 @@
-export { ConversationInput } from './components/ConversationInput/ConversationInput.js';
-export { Input } from './components/Input/Input.js';
-export { AttachmentCard } from './components/AttachmentCard/AttachmentCard.js';
-export { AttachmentTray } from './components/AttachmentTray/AttachmentTray.js';
+export { ConversationInput } from './components/ConversationInput/ConversationInput';
+export {
+  DeploymentIcon,
+  type DeploymentIconProps,
+} from './components/Input/Icon/DeploymentIcon';
+export { EditMessageInput } from './components/EditMessageInput/EditMessageInput';
+export { Input } from './components/Input/Input';
+export { AttachmentCard } from './components/AttachmentCard/AttachmentCard';
+export { AttachmentTray } from './components/AttachmentTray/AttachmentTray';
 export type {
   ConversationInputProps,
   ConversationInputColors,
   ConversationInputTypography,
-} from './models/ConversationInput.js';
-export type {
-  InputProps,
-  InputColors,
-  InputTypography,
-} from './models/Input.js';
+  ConversationInputStyles,
+  EditMessageInputProps,
+} from './models/ConversationInput';
+export type { InputProps, InputColors, InputTypography } from './models/Input';
 export type {
   AttachmentCardProps,
   AttachmentCardColors,
   AttachmentCardTypography,
-} from './models/AttachmentCard.js';
-export type { AttachmentTrayProps } from './models/AttachmentTray.js';
+} from './models/AttachmentCard';
+export type { AttachmentTrayProps } from './models/AttachmentTray';

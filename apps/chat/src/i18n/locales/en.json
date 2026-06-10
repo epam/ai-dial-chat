@@ -1,7 +1,14 @@
 {
+  "basic": {
+    "searchPlaceholder": "Search..."
+  },
+  "buttons": {
+    "showMore": "Show more",
+    "showLess": "Show less"
+  },
   "chat": {
     "welcomeText": "Hello World, good day for prompting!",
-    "placeholder": "Type a prompt or use '/' to select one",
+    "placeholder": "Ask anything...",
     "streamError": "Something went wrong while generating the response.",
     "deleteMessageTitle": "Confirm deleting message?",
     "deleteMessageDescription": "Are you sure that you want to delete the message?",
@@ -15,11 +22,14 @@
     "sendMessage": "Send message",
     "stopStreaming": "Stop streaming",
     "quickReplyButtons": "Quick reply buttons",
-    "stoppedGenerating": "You stopped generating the response"
+    "stoppedGenerating": "You stopped generating the response",
+    "thinking": "Thinking",
+    "showMoreUserMessage": "Show full user message",
+    "showLessUserMessage": "Collapse user message"
   },
   "navigation": {
     "ariaLabel": "Main navigation",
-    "home": "Home",
+    "home": "Conversations",
     "catalog": "Catalog",
     "openMenu": "Open navigation menu",
     "closeMenu": "Close navigation menu"
@@ -41,7 +51,6 @@
       "loading": "Loading models…",
       "error": "Failed to load models",
       "empty": "No models available",
-      "searchPlaceholder": "Search models",
       "closeLabel": "Close model selector"
     }
   },
@@ -56,13 +65,15 @@
     "copied": "Copied!",
     "like": "Like",
     "dislike": "Dislike",
+    "saveAndSubmit": "Save & Submit",
     "editMessage": "Edit message",
     "deleteMessage": "Delete message",
     "regenerateResponse": "Regenerate response",
     "copyResponse": "Copy response",
     "copyAsMarkdown": "Copy as markdown",
     "likeResponse": "Like response",
-    "dislikeResponse": "Dislike response"
+    "dislikeResponse": "Dislike response",
+    "save": "Save"
   },
   "errors": {
     "generic": "Something went wrong",
@@ -85,17 +96,54 @@
     },
     "sources": {
       "ariaLabel": "Conversation sources",
+      "search": "Search...",
+      "downloadAll": "Download all",
+      "noResults": "No results found",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",
         "sources": "Sources"
       },
-      "empty": {
-        "uploadedFiles": "No uploaded files in this conversation.",
-        "generatedFiles": "No generated files in this conversation.",
-        "sources": "No sources available."
+      "noData": "No data",
+      "attachment": {
+        "downloadLabel": "Download file"
       }
     }
+  },
+  "conversation": {
+    "statusMessage": {
+      "modelChangedTitle": "Model switched.",
+      "modelChangedBody": "The model has been switched from {{from}} to {{to}}."
+    }
+  },
+  "conversationHistory": {
+    "title": "Chats",
+    "toggleAriaLabel": "Conversation panel",
+    "empty": "No conversations yet",
+    "noResults": "No results found",
+    "newChat": "New chat",
+    "searchPlaceholder": "Search chat…",
+    "filterAll": "All",
+    "filterMyChats": "My chats",
+    "filterShared": "Shared",
+    "filterOrganization": "Organization",
+    "pinnedSection": "Pinned",
+    "myChatsSection": "My chats",
+    "actionsLabel": "More actions",
+    "pinLabel": "Pin",
+    "unpinLabel": "Unpin",
+    "deleteLabel": "Delete",
+    "deleteConfirmTitle": "Confirm Deleting Chat",
+    "deleteConfirmDescription": "Are you sure you want to delete",
+    "deleteError": "Failed to delete the conversation. Please try again.",
+    "renameTitle": "Rename Chat",
+    "renameLabel": "Rename",
+    "renameInputPlaceholder": "Chat name",
+    "renameError": "Failed to rename. Please try again.",
+    "renameTitleTooLong": "The name is too long. Please shorten it and try again.",
+    "duplicateLabel": "Duplicate",
+    "duplicateReadOnlyDescription": "Duplicate the conversation to be able to edit it",
+    "duplicateError": "Failed to duplicate the conversation. Please try again."
   },
   "auth": {
     "signOut": "Sign out",
@@ -105,6 +153,16 @@
     "loginDescription": "Choose your identity provider",
     "providerButtonLabel": "Sign in with {{provider}}",
     "providersError": "Could not load identity providers. Please retry.",
-    "userMenuLabel": "User menu"
+    "userMenuLabel": "User menu",
+    "settings": "Settings",
+    "logOut": "Log out",
+    "logOutConfirmTitle": "Log out?",
+    "logOutConfirmDescription": "Are you sure you want to log out?",
+    "logOutConfirm": "Log out"
+  },
+  "settings": {
+    "title": "Settings",
+    "theme": "Theme",
+    "apply": "Apply"
   }
 }

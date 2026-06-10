@@ -1,28 +1,35 @@
 export {
   MarkdownRenderer,
   defaultMarkdownComponents,
-} from './components/Markdown/MarkdownRenderer.js';
-export type { MarkdownRendererClassNames } from './components/Markdown/MarkdownRenderer.js';
-export { MessageBubble } from './components/MessageBubble/MessageBubble.js';
-export { UserMessageBubble } from './components/MessageBubble/UserMessageBubble.js';
-export { AssistantMessageBubble } from './components/MessageBubble/AssistantMessageBubble.js';
-export { MessageActions } from './components/Message/MessageActions.js';
-export { MessageSource } from './components/MessageSource/MessageSource.js';
-export { BubblePosition } from './types/bubble-position.js';
+} from './components/Markdown/MarkdownRenderer';
+export type {
+  MarkdownRendererClassNames,
+  MarkdownRendererProps,
+} from './components/Markdown/MarkdownRenderer';
+export { MessageBubble } from './components/MessageBubble/MessageBubble';
+export { UserMessageBubble } from './components/MessageBubble/UserMessageBubble';
+export { AssistantMessageBubble } from './components/MessageBubble/AssistantMessageBubble';
+export { StatusMessageBubble } from './components/MessageBubble/StatusMessageBubble';
+export { MessageActions } from './components/Message/MessageActions';
+export { MessageSource } from './components/MessageSource/MessageSource';
+export { BubblePosition } from './types/bubble-position';
 export type {
   MessageBubbleProps,
   UserMessageBubbleProps,
   AssistantMessageBubbleProps,
+  MessageBubbleStyles,
   MessageBubbleColors,
   MessageBubbleTypography,
-} from './models/MessageBubble.js';
+} from './models/MessageBubble';
+export type { StatusMessageBubbleProps } from './components/MessageBubble/StatusMessageBubble';
 export type {
   MessageActionsProps,
   MessageActionTooltips,
   MessageActionAriaLabels,
-} from './models/MessageActions.js';
+} from './models/MessageActions';
 export type {
   MessageSourceProps,
+  MessageSourceStyles,
   MessageSourceColors,
   MessageSourceTypography,
-} from './models/MessageSource.js';
+} from './models/MessageSource';

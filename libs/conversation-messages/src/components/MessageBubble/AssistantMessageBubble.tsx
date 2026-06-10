@@ -3,28 +3,36 @@ import {
   mergeClasses,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
-import { AttachmentTray } from '@epam/ai-dial-conversation-input';
+import {
+  AttachmentTray,
+  DeploymentIcon,
+} from '@epam/ai-dial-conversation-input';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
-import type { AssistantMessageBubbleProps } from '../../models/MessageBubble.js';
-import { MDMessageViewer } from '../Markdown/MDMessageViewer.js';
-import { MessageActions } from '../Message/MessageActions.js';
+import type { AssistantMessageBubbleProps } from '../../models/MessageBubble';
+import { MDMessageViewer } from '../Markdown/MDMessageViewer';
+import { MessageActions } from '../Message/MessageActions';
 import styles from './MessageBubble.module.scss';
 
+/** Assistant-authored message bubble, left-aligned with markdown content and optional quick-reply starters. */
 export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   text,
   className,
   bubbleClassName,
-  colors,
-  typography,
+  styles: bubbleStyles,
   actions,
   hasAlwaysVisibleActions,
+  isStreaming,
   attachments,
   afterContent,
   starters,
   onSelectStarter,
   startersAriaLabel = 'Quick reply buttons',
+  deploymentIconUrl,
+  deploymentDisplayName,
+  thinkingLabel,
 }) => {
+  const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
@@ -43,18 +51,41 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
 
   const textClass = mergeClasses(styles.text, typography?.fontClassName);
 
+  const hasDeploymentIcon = !!(deploymentIconUrl || deploymentDisplayName);
+
   return (
-    <div style={cssVars} className={mergeClasses('flex w-full', className)}>
-      <div className="flex w-full flex-col items-start gap-5">
+    <div
+      style={cssVars}
+      className={mergeClasses('flex w-full items-start gap-5', className)}
+    >
+      {hasDeploymentIcon && (
+        <DeploymentIcon
+          src={deploymentIconUrl}
+          size={28}
+          badgeClassName={styles.agentIconBadge}
+        />
+      )}
+      <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-5">
         <div
           className={mergeClasses(
-            'flex w-fit flex-col items-start gap-4',
+            'flex w-fit min-w-0 max-w-full flex-col items-start gap-4',
             bubbleClassName,
           )}
         >
-          <div className={mergeClasses(textClass, 'text-left')}>
-            <MDMessageViewer content={text} />
-          </div>
+          {(text || isStreaming) && (
+            <div
+              className={mergeClasses(
+                textClass,
+                'min-w-0 max-w-full text-start',
+              )}
+            >
+              <MDMessageViewer
+                content={text}
+                isStreaming={isStreaming}
+                thinkingLabel={thinkingLabel}
+              />
+            </div>
+          )}
           <AttachmentTray attachments={attachments ?? []} />
           {afterContent}
           <MessageActions
@@ -72,8 +103,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               styles.startersDivider,
             )}
           >
-            {starters.map((starter) => (
-              <div key={starter.const} role="listitem" className="min-w-[40px]">
+            {starters.map((starter, index) => (
+              <div key={index} role="listitem" className="min-w-[40px]">
                 <DialRoundedButton
                   label={starter.title}
                   className="min-w-[40px]"

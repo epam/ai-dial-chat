@@ -19,13 +19,15 @@ import {
   IconTrashX,
 } from '@tabler/icons-react';
 import { FC, useCallback, useState } from 'react';
-import type { MessageActionsProps } from '../../models/MessageActions.js';
+import type { MessageActionsProps } from '../../models/MessageActions';
 
 const COPIED_RESET_MS = 2000;
 
+/** Context-sensitive action bar — shows edit/delete for user messages and regenerate/copy/like/dislike for assistant messages. */
 export const MessageActions: FC<MessageActionsProps> = ({
   role = MessageRole.User,
   onEdit,
+  onEditHover,
   onDelete,
   onRegenerate,
   onCopy,
@@ -68,6 +70,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
             aria-label={ariaLabels?.editMessage ?? 'Edit message'}
             tooltipProps={{ tooltip: tooltips?.edit ?? 'Edit' }}
             onClick={onEdit}
+            onMouseEnter={onEditHover}
           />
           <DialGhostIconButton
             icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}

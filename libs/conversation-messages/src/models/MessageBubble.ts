@@ -4,8 +4,8 @@ import type {
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
-import type { BubblePosition } from '../types/bubble-position.js';
-import type { MessageActionsProps } from './MessageActions.js';
+import type { BubblePosition } from '../types/bubble-position';
+import type { MessageActionsProps } from './MessageActions';
 
 /** CSS custom-property overrides for message bubble components. */
 export interface MessageBubbleColors {
@@ -31,6 +31,14 @@ export interface MessageBubbleTypography {
   lineHeight?: string;
 }
 
+/** Combined style overrides (colors and typography) for message bubble components. */
+export interface MessageBubbleStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: MessageBubbleColors;
+  /** Typography overrides applied via CSS custom properties. */
+  typography?: MessageBubbleTypography;
+}
+
 /** Shared props for user and assistant message bubble components. */
 interface BaseMessageBubbleProps {
   /** Plain-text (or Markdown) content of the message. */
@@ -39,14 +47,14 @@ interface BaseMessageBubbleProps {
   className?: string;
   /** Extra class name(s) merged onto the bubble element itself. */
   bubbleClassName?: string;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: MessageBubbleColors;
-  /** Typography overrides applied as CSS custom properties. */
-  typography?: MessageBubbleTypography;
+  /** Color and typography overrides applied as CSS custom properties. */
+  styles?: MessageBubbleStyles;
   /** Props forwarded to the `MessageActions` bar rendered below the bubble. */
   actions?: MessageActionsProps;
   /** When `true`, the actions bar is always visible instead of appearing only on group hover. */
   hasAlwaysVisibleActions?: boolean;
+  /** When `true`, assistant markdown text reveals newly appended content smoothly. */
+  isStreaming?: boolean;
   /** Display attachments associated with the message. Rendered above text for user messages and below text for assistant messages. */
   attachments?: DisplayAttachment[];
 }
@@ -55,6 +63,16 @@ interface BaseMessageBubbleProps {
 export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
   /** Position within a message group — controls which corner is rounded. Defaults to `BubblePosition.Bottom`. */
   position?: BubblePosition;
+  /** Maximum number of text lines shown while a long user message is collapsed. Defaults to `10`. */
+  collapsedLineCount?: number;
+  /** Button label shown when a collapsed user message can be expanded. Defaults to `"Show more"`. */
+  showMoreLabel?: string;
+  /** Button label shown when an expanded user message can be collapsed. Defaults to `"Show less"`. */
+  showLessLabel?: string;
+  /** Accessible label for the expand button. Defaults to the `showMoreLabel` value. */
+  showMoreAriaLabel?: string;
+  /** Accessible label for the collapse button. Defaults to the `showLessLabel` value. */
+  showLessAriaLabel?: string;
 }
 
 /** Props accepted by the `AssistantMessageBubble` component. */
@@ -70,6 +88,18 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   startersAriaLabel?: string;
   /** Content rendered between the message body and the actions bar (e.g. a stages panel). */
   afterContent?: ReactNode;
+  /**
+   * Resolved URL for the deployment icon shown in the message header.
+   * When absent (e.g. legacy messages without a stored `deploymentId`), no icon is rendered.
+   */
+  deploymentIconUrl?: string;
+  /** Human-readable deployment name shown as the icon's accessible label. */
+  deploymentDisplayName?: string;
+  /**
+   * Label shown with a shimmer animation while `isStreaming` is true and the message text is still empty.
+   * Pass a translated string from the consuming app. Defaults to `'Thinking'`.
+   */
+  thinkingLabel?: string;
 }
 
 /** Props accepted by the `MessageBubble` role-switching wrapper. */
@@ -78,6 +108,16 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
   role: MessageRole;
   /** Position within a message group — controls which corner is rounded (user messages only). Defaults to `BubblePosition.Bottom`. */
   position?: BubblePosition;
+  /** Maximum number of text lines shown while a long user message is collapsed. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  collapsedLineCount?: number;
+  /** Button label shown when a collapsed user message can be expanded. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  showMoreLabel?: string;
+  /** Button label shown when an expanded user message can be collapsed. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  showLessLabel?: string;
+  /** Accessible label for the expand button. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  showMoreAriaLabel?: string;
+  /** Accessible label for the collapse button. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  showLessAriaLabel?: string;
   /**
    * Quick-reply buttons derived from the assistant message's `form_schema`.
    * Forwarded to `AssistantMessageBubble`; ignored for user messages.
@@ -89,4 +129,27 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
   startersAriaLabel?: string;
   /** Content rendered between the message body and the actions bar. Forwarded to `AssistantMessageBubble`; ignored for user messages. */
   afterContent?: ReactNode;
+  /**
+   * Resolved deployment icon URL. Forwarded to `AssistantMessageBubble` when role is `Assistant`;
+   * used to render the `StatusMessageBubble` icon when role is `Status`.
+   * Omitted for legacy messages that pre-date this feature.
+   */
+  deploymentIconUrl?: string;
+  /** Human-readable deployment name. Forwarded to `AssistantMessageBubble`; used in status message text when role is `Status`. */
+  deploymentDisplayName?: string;
+  /**
+   * Bold prefix text for the status message banner.
+   * Only used when `role === MessageRole.Status`. Defaults to `"Model switched."`.
+   */
+  statusTitleText?: string;
+  /**
+   * Full description text for the status message banner, e.g. "The model has been switched from GPT to Imagen."
+   * Required when `role === MessageRole.Status`.
+   */
+  statusBodyText?: string;
+  /**
+   * Label shown with a shimmer animation while `isStreaming` is true and the message text is still empty.
+   * Forwarded to `AssistantMessageBubble`. Defaults to `'Thinking'`.
+   */
+  thinkingLabel?: string;
 }

@@ -19,14 +19,13 @@
   },
   "peerDependencies": {
     "@epam/ai-dial-chat-shared": "0.0.1",
-    "@epam/ai-dial-ui-kit": "0.11.0-dev.8",
-    "@epam/chat-api-client": "0.0.1",
+    "@epam/ai-dial-ui-kit": "0.11.0-dev.30",
     "@tabler/icons-react": "^3.44.0",
-    "classnames": "2.5.1",
     "react": "^19.0.0",
     "react-dom": "^19.2.6"
   },
   "dependencies": {
-    "react-dropzone": "^15.0.0"
+    "react-dropzone": "^15.0.0",
+    "react-window": "^2.2.7"
   }
 }

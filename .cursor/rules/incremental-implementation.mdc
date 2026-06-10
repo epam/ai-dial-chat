@@ -46,6 +46,8 @@ Build in thin vertical slices — implement one piece, test it, verify it, then 
 
 **Scope discipline:** touch only what the task requires. No drive-by cleanup, refactors in untouched files, or “small useful” features outside the spec. Note follow-ups instead of doing them in the same increment.
 
+**Module specifiers:** relative imports and re-exports between `.ts`/`.tsx` source modules omit `.js`, `.jsx`, `.ts`, and `.tsx`. Preserve extensions for resources such as CSS/JSON and explicit package subpaths. Vite-built projects use bundler module resolution; do not add `.js` to source to satisfy Node ESM resolution.
+
 **One thing at a time:** one logical change per increment; do not mix unrelated refactors with features.
 
 **Keep it compilable:** after each increment, the repo should build and existing tests should pass for the scope you are responsible for.
@@ -59,6 +61,7 @@ Build in thin vertical slices — implement one piece, test it, verify it, then 
 After each increment:
 
 - [ ] The change does one thing and completes it  
+- [ ] Relative TypeScript source imports are extensionless; resource and explicit package-subpath extensions are preserved
 - [ ] Tests pass for the Nx project(s) you changed (`npx nx test <project>`)  
 - [ ] Lint passes for touched projects (`npx nx lint <project>` or affected lint)  
 - [ ] Build passes when your slice affects build output (`npx nx build <project>`)  

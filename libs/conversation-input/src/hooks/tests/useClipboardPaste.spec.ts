@@ -1,8 +1,8 @@
 import { AttachmentType } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
-import type React from 'react';
+import { ClipboardEvent } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useClipboardPaste } from '../useClipboardPaste.js';
+import { useClipboardPaste } from '../useClipboardPaste';
 
 const makeTextEvent = (text: string) =>
   ({
@@ -11,7 +11,7 @@ const makeTextEvent = (text: string) =>
       getData: () => text,
     },
     preventDefault: vi.fn(),
-  }) as unknown as React.ClipboardEvent<HTMLTextAreaElement>;
+  }) as unknown as ClipboardEvent<HTMLTextAreaElement>;
 
 const makeImageEvent = () => {
   const blob = new Blob(['img'], { type: 'image/png' });
@@ -22,7 +22,7 @@ const makeImageEvent = () => {
       getData: () => '',
     },
     preventDefault: vi.fn(),
-  } as unknown as React.ClipboardEvent<HTMLTextAreaElement>;
+  } as unknown as ClipboardEvent<HTMLTextAreaElement>;
 };
 
 describe('useClipboardPaste', () => {
@@ -42,7 +42,7 @@ describe('useClipboardPaste', () => {
     expect(() =>
       result.current.handlePaste({
         clipboardData: null,
-      } as unknown as React.ClipboardEvent<HTMLTextAreaElement>),
+      } as unknown as ClipboardEvent<HTMLTextAreaElement>),
     ).not.toThrow();
   });
 

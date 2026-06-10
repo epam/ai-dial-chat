@@ -1,6 +1,6 @@
 ## Vite
 
-Vite-specific guidance for `nx import`. For generic import issues (pnpm globs, root deps, project references, name collisions, ESLint, frontend tsconfig base settings, `@nx/react` typings, Jest preset, non-Nx source handling), see `SKILL.md`.
+Vite-specific guidance for `nx import`. For generic import issues (workspace globs, root deps, project references, name collisions, ESLint, frontend tsconfig base settings, `@nx/react` typings, Jest preset, non-Nx source handling), see `SKILL.md`.
 
 ---
 
@@ -12,7 +12,7 @@ Keep both plugins only if the workspace has non-Vite pure TS libraries — `@nx/
 
 ### @nx/vite Plugin Install Failure
 
-Plugin init loads `vite.config.ts` before deps are available. **Fix**: `pnpm add -wD vite @vitejs/plugin-react` (or `@vitejs/plugin-vue`) first, then `pnpm exec nx add @nx/vite`.
+Plugin init loads `vite.config.ts` before deps are available. **Fix**: `npm install -D vite @vitejs/plugin-react` (or `@vitejs/plugin-vue`) first, then `npm exec nx add @nx/vite`.
 
 ### Vite `resolve.alias` and `__dirname` (Non-Nx Sources)
 
@@ -136,7 +136,7 @@ export default [
 
 ### React Version Conflicts
 
-React 18 (source) + React 19 (dest): pnpm may hoist mismatched `react-dom`, causing `TypeError: Cannot read properties of undefined (reading 'S')`. **Fix**: Align versions with `pnpm.overrides`.
+React 18 (source) + React 19 (dest): npm may hoist mismatched `react-dom`, causing `TypeError: Cannot read properties of undefined (reading 'S')`. **Fix**: Align versions with `overrides` in the root `package.json`.
 
 ### `@testing-library/jest-dom` with Vitest
 
@@ -183,7 +183,7 @@ Both `@nx/js/typescript` and `@nx/vite/plugin` auto-detect `vue-tsc` when instal
 
 **Correct order:**
 
-1. `pnpm add -wD eslint@^9 eslint-plugin-vue vue-eslint-parser @vue/eslint-config-typescript @typescript-eslint/parser @nx/eslint-plugin typescript-eslint`
+1. `npm install -D eslint@^9 eslint-plugin-vue vue-eslint-parser @vue/eslint-config-typescript @typescript-eslint/parser @nx/eslint-plugin typescript-eslint`
 2. Create root `eslint.config.mjs`
 3. Then `npx nx add @nx/eslint`
 
@@ -210,7 +210,7 @@ export default [
 
 **Important**: `vue-eslint-parser` override must come **AFTER** base config — `flat/typescript` sets the TS parser globally without a `files` filter, breaking `.vue` parsing.
 
-`vue-eslint-parser` must be an explicit pnpm dependency (strict resolution prevents transitive import).
+`vue-eslint-parser` must be an explicit dependency (transitive resolution cannot be relied upon).
 
 **Known issue**: Some generated Vue ESLint configs omit `vue-eslint-parser`. Use the pattern above instead.
 
@@ -300,7 +300,7 @@ Do **not** remove React Router 7 scripts. They use the framework CLI (`react-rou
 
 ### Nx Source
 
-1. Generic fixes from SKILL.md (pnpm globs, root deps, executor paths, frontend tsconfig base settings, `@nx/react` typings)
+1. Generic fixes from SKILL.md (workspace globs, root deps, executor paths, frontend tsconfig base settings, `@nx/react` typings)
 2. Configure `@nx/vite/plugin` typecheck target
 3. **React**: `jsx: "react-jsx"` (root or per-project)
 4. **Vue**: `jsx: "preserve"` + `jsxImportSource: "vue"`; verify `vue-shims.d.ts`; install ESLint deps before `@nx/eslint`
@@ -310,7 +310,7 @@ Do **not** remove React Router 7 scripts. They use the framework CLI (`react-rou
 ### Non-Nx Source (additional steps)
 
 0. Import into `apps/<name>` (see SKILL.md: "Application vs Library Detection")
-1. Generic fixes from SKILL.md (stale files cleanup, pnpm globs, rewritten scripts, target name prefixing, noEmit→composite, ESLint handling)
+1. Generic fixes from SKILL.md (stale files cleanup, workspace globs, rewritten scripts, target name prefixing, noEmit→composite, ESLint handling)
 2. Fix `noEmit` in **all** tsconfigs (app, node, etc. — non-Nx projects often have multiple)
 3. Add `extends` to solution-style tsconfigs so root settings apply
 4. Fix `resolve.alias` / `__dirname` / `baseUrl`

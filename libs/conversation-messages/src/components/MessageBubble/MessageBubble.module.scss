@@ -2,6 +2,39 @@
   background: var(--cm-bubble-user-bg, var(--bg-layer-4, #242c42));
 }
 
+.collapsibleText {
+  max-height: var(--cm-bubble-collapsed-height);
+  transition: max-height 200ms ease-out;
+}
+
+.expandedText {
+  max-height: var(--cm-bubble-expanded-height);
+}
+
+.collapsedText::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  height: 48px;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 0),
+    var(--cm-bubble-user-bg, var(--bg-layer-4, #242c42))
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .collapsibleText {
+    transition: none;
+  }
+}
+
+.agentIconBadge {
+  background: var(--cm-agent-icon-bg, var(--bg-model-icon, #ffffff00));
+}
+
 .startersDivider {
   border-color: var(--cm-starters-divider, var(--stroke-secondary, #242c42));
 }

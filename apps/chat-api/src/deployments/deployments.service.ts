@@ -9,10 +9,22 @@ import {
   mapDialHttpStatus,
 } from '../common/utils/dial-fetch-error';
 import type { EnvironmentVariables } from '../config/environment.config';
+import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import type {
   DeploymentItemDto,
   DeploymentsResponseDto,
 } from './dto/deployment-item.dto';
+
+const isRecord = (val: unknown): val is Record<string, unknown> =>
+  val != null && typeof val === 'object' && !Array.isArray(val);
+
+const toAdditionalProperties = (
+  val: unknown,
+): boolean | Record<string, unknown> | undefined => {
+  if (typeof val === 'boolean') return val;
+  if (isRecord(val)) return val;
+  return undefined;
+};
 
 type RawDeployment = {
   id?: string;
@@ -22,9 +34,11 @@ type RawDeployment = {
   icon_url?: string;
   description?: string;
   interfaces?: string | string[];
+  application_type_schema_id?: string;
+  input_attachment_types?: string[];
 };
 
-function mapToDeploymentItem(raw: RawDeployment): DeploymentItemDto | null {
+const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
   if (!raw.id) return null;
 
   let type: 'model' | 'application' | 'toolset';
@@ -36,11 +50,14 @@ function mapToDeploymentItem(raw: RawDeployment): DeploymentItemDto | null {
     type = 'model';
   }
 
-  const interfaces = raw.interfaces
-    ? Array.isArray(raw.interfaces)
-      ? raw.interfaces
-      : [raw.interfaces]
-    : undefined;
+  let interfaces: string[] | undefined;
+  if (raw.interfaces) {
+    if (Array.isArray(raw.interfaces)) {
+      interfaces = raw.interfaces;
+    } else {
+      interfaces = [raw.interfaces];
+    }
+  }
 
   return {
     id: raw.id,
@@ -49,12 +66,19 @@ function mapToDeploymentItem(raw: RawDeployment): DeploymentItemDto | null {
     iconUrl: raw.icon_url,
     description: raw.description,
     interfaces,
+    applicationTypeSchemaId:
+      type === 'application' && raw.application_type_schema_id
+        ? raw.application_type_schema_id
+        : undefined,
+    inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
+      ? raw.input_attachment_types
+      : undefined,
   };
-}
+};
 
 @Injectable()
 export class DeploymentsService extends AppService {
-  private readonly logger = new Logger(DeploymentsService.name);
+  protected override readonly logger = new Logger(DeploymentsService.name);
 
   constructor(
     configService: ConfigService<EnvironmentVariables>,
@@ -116,10 +140,10 @@ export class DeploymentsService extends AppService {
     name: string,
     userSub: string,
     accessToken: string,
-  ): Promise<Record<string, unknown>> {
+  ): Promise<DeploymentConfigurationDto> {
     const cacheKey = `deployments:configuration:${userSub}:${name}`;
     const cached =
-      await this.cacheManager.get<Record<string, unknown>>(cacheKey);
+      await this.cacheManager.get<DeploymentConfigurationDto>(cacheKey);
     if (cached) {
       this.logger.debug(
         `Cache hit for deployment configuration "${name}" (sub: ${userSub})`,
@@ -138,7 +162,17 @@ export class DeploymentsService extends AppService {
           this.logger,
         );
       }
-      const data = result.data as Record<string, unknown>;
+      const raw = result.data ?? {};
+      const data: DeploymentConfigurationDto = {
+        type: typeof raw['type'] === 'string' ? raw['type'] : undefined,
+        title: typeof raw['title'] === 'string' ? raw['title'] : undefined,
+        properties: isRecord(raw['properties']) ? raw['properties'] : undefined,
+        additionalProperties: toAdditionalProperties(
+          raw['additionalProperties'],
+        ),
+        isChatMessageInputDisabled:
+          raw['dial:chatMessageInputDisabled'] === true || undefined,
+      };
       await this.cacheManager.set(cacheKey, data, 60 * 1000);
       return data;
     } catch (err) {

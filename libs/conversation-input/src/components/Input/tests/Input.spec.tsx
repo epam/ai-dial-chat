@@ -1,11 +1,12 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import React from 'react';
+import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { Input } from '../Input.js';
+import { Input } from '../Input';
 
 type MenuItems = Array<{
   key: string;
-  label: string;
+  label?: ReactNode;
+  icon?: ReactNode;
   disabled?: boolean;
   onClick?: () => void;
 }>;
@@ -16,14 +17,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     ...actual,
     DialDropdown: ({
       children,
-      menu,
+      items,
     }: {
-      children: React.ReactNode;
-      menu: { items?: MenuItems };
+      children: ReactNode;
+      items?: MenuItems;
     }) => (
       <div>
         {children}
-        {menu.items?.map((item) => (
+        {items?.map((item) => (
           <button
             key={item.key}
             type="button"
@@ -37,25 +38,32 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     ),
     DialDropdownIcon: ({
       ariaLabel,
-      menu,
+      icon,
+      items,
     }: {
       ariaLabel: string;
-      icon: React.ReactNode;
-      menu: { items?: MenuItems };
+      icon: ReactNode;
+      items?: MenuItems;
     }) => (
       <div>
-        <button type="button" aria-label={ariaLabel} />
-        {menu.items?.map((item) => (
+        <button type="button" aria-label={ariaLabel}>
+          {items?.[0]?.key.startsWith('__loading-') ? icon : null}
+        </button>
+        {items?.map((item) => (
           <button
             key={item.key}
             type="button"
             onClick={item.onClick}
             disabled={item.disabled}
           >
+            {item.key.startsWith('__loading-') ? item.icon : null}
             {item.label}
           </button>
         ))}
       </div>
+    ),
+    DialSkeleton: ({ variant }: { variant: string }) => (
+      <span data-variant={variant} />
     ),
   };
 });
@@ -198,6 +206,33 @@ describe('Input', () => {
     expect(screen.getByText('doc')).toBeTruthy();
   });
 
+  it('should show send button when only an attachment is present and no text', () => {
+    render(<Input />);
+    expect(screen.queryByLabelText('Send message')).toBeNull();
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    expect(screen.getByLabelText('Send message')).toBeTruthy();
+  });
+
+  it('should call onSend with empty text and the attachment on Enter when no text is typed', () => {
+    const handleSend = vi.fn();
+    const { container } = render(<Input onSend={handleSend} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+    const textarea = container.querySelector('textarea')!;
+    fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    expect(handleSend).toHaveBeenCalledWith(
+      '',
+      expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
+    );
+  });
+
   it('should remove the card when the remove button is clicked', () => {
     render(<Input />);
     const fileInput = document.querySelector(
@@ -238,6 +273,30 @@ describe('Input', () => {
     expect(onAttachmentsChange).toHaveBeenCalledWith(
       expect.arrayContaining([expect.objectContaining({ name: 'doc.pdf' })]),
     );
+  });
+
+  it('should show mic button when isTranscriptionSupported and message is empty', () => {
+    render(<Input isTranscriptionSupported micLabel="Record voice message" />);
+    expect(screen.getByLabelText('Record voice message')).toBeTruthy();
+  });
+
+  it('should hide mic button when message is not empty', () => {
+    const { container } = render(
+      <Input isTranscriptionSupported micLabel="Record voice message" />,
+    );
+    const textarea = container.querySelector('textarea')!;
+    fireEvent.change(textarea, { target: { value: 'Hello' } });
+    expect(screen.queryByLabelText('Record voice message')).toBeNull();
+  });
+
+  it('should hide mic button when isTranscriptionSupported is false', () => {
+    render(
+      <Input
+        isTranscriptionSupported={false}
+        micLabel="Record voice message"
+      />,
+    );
+    expect(screen.queryByLabelText('Record voice message')).toBeNull();
   });
 });
 
@@ -283,8 +342,8 @@ describe('Input — model selector', () => {
     expect(onDeploymentChange).toHaveBeenCalledWith('my-app');
   });
 
-  it('shows loading label as disabled item when deployments is empty', () => {
-    render(
+  it('shows seven skeleton rows and a circular trigger skeleton while deployments load', () => {
+    const { container } = render(
       <Input
         deployments={[]}
         selectedDeploymentId={null}
@@ -294,7 +353,20 @@ describe('Input — model selector', () => {
     );
     const loadingItem = screen.getByText('Loading models…');
     expect(loadingItem).toBeTruthy();
-    expect((loadingItem as HTMLButtonElement).disabled).toBe(true);
+    const skeletons = Array.from(
+      container.querySelectorAll<HTMLElement>('[data-variant]'),
+    );
+    expect(
+      skeletons.filter((skeleton) => skeleton.dataset.variant === 'circular'),
+    ).toHaveLength(8);
+    expect(
+      skeletons.filter((skeleton) => skeleton.dataset.variant === 'text'),
+    ).toHaveLength(7);
+    expect(
+      screen
+        .getAllByRole('button')
+        .filter((button) => (button as HTMLButtonElement).disabled),
+    ).toHaveLength(7);
   });
 
   it('shows error label as disabled item when deployments is empty', () => {
@@ -350,6 +422,176 @@ describe('Input — model selector', () => {
   it('does not render selector when deployments is undefined', () => {
     render(<Input />);
     expect(screen.queryByLabelText(/Select model/)).toBeNull();
+  });
+});
+
+describe('Input — isInputDisabled', () => {
+  it('textarea has disabled attribute when isInputDisabled is true', () => {
+    const { container } = render(<Input isInputDisabled />);
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.disabled).toBe(true);
+  });
+
+  it('textarea is enabled when isInputDisabled is false', () => {
+    const { container } = render(<Input isInputDisabled={false} />);
+    const textarea = container.querySelector('textarea');
+    expect(textarea?.disabled).toBe(false);
+  });
+
+  it('send button is disabled when isInputDisabled is true', () => {
+    render(<Input message="Hello" isInputDisabled />);
+    const sendButton = screen.getByLabelText(
+      'Send message',
+    ) as HTMLButtonElement;
+    expect(sendButton.disabled).toBe(true);
+  });
+
+  it('attach button is disabled when isInputDisabled is true', () => {
+    render(<Input isInputDisabled />);
+    const addButton = screen.getByLabelText('Add') as HTMLButtonElement;
+    expect(addButton.disabled).toBe(true);
+  });
+
+  it('does not call onSend on Enter when isInputDisabled is true', () => {
+    const handleSend = vi.fn();
+    const { container } = render(<Input onSend={handleSend} isInputDisabled />);
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
+  it('calls onSend on Enter when isInputDisabled is false', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input onSend={handleSend} isInputDisabled={false} />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.change(textarea, { target: { value: 'Hello' } });
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+    expect(handleSend).toHaveBeenCalledWith('Hello', []);
+  });
+});
+
+describe('Input — attachment status transitions', () => {
+  beforeEach(() => {
+    vi.stubGlobal('URL', {
+      createObjectURL: vi.fn().mockReturnValue('blob:mock'),
+      revokeObjectURL: vi.fn(),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('uploads attachments immediately when they are added', async () => {
+    let resolveUpload!: (url: string) => void;
+    const uploadPromise = new Promise<string>((resolve) => {
+      resolveUpload = resolve;
+    });
+    const handleUploadAttachment = vi.fn(() => uploadPromise);
+
+    render(<Input onUploadAttachment={handleUploadAttachment} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(handleUploadAttachment).toHaveBeenCalledWith(
+        expect.objectContaining({ name: 'doc.pdf' }),
+      );
+    });
+    expect(
+      (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+    ).toBe(true);
+
+    resolveUpload('https://example.com/doc.pdf');
+
+    await waitFor(() => {
+      expect(
+        (screen.getByLabelText('Send message') as HTMLButtonElement).disabled,
+      ).toBe(false);
+    });
+  });
+
+  it('restores message text and attachment tray when onSend rejects', async () => {
+    const handleSend = vi.fn().mockRejectedValue(new Error('upload failed'));
+
+    const { container } = render(<Input onSend={handleSend} />);
+    const textarea = container.querySelector('textarea');
+    expect(textarea).toBeTruthy();
+    fireEvent.change(textarea as HTMLTextAreaElement, {
+      target: { value: 'Please send this file' },
+    });
+
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(screen.getByText('doc')).toBeTruthy();
+    const sendButton = screen.getByLabelText('Send message');
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(handleSend).toHaveBeenCalled();
+    });
+    expect((textarea as HTMLTextAreaElement).value).toBe(
+      'Please send this file',
+    );
+    expect(screen.queryByText('doc')).toBeTruthy();
+  });
+
+  it('tray clears after onSend resolves', async () => {
+    const handleSend = vi.fn().mockResolvedValue(undefined);
+
+    render(<Input onSend={handleSend} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    expect(screen.getByText('doc')).toBeTruthy();
+    const sendButton = screen.getByLabelText('Send message');
+    fireEvent.click(sendButton);
+
+    await waitFor(() => {
+      expect(screen.queryByText('doc')).toBeNull();
+    });
+  });
+
+  it('shows retry for failed immediate uploads and retries the same attachment', async () => {
+    const handleUploadAttachment = vi
+      .fn()
+      .mockRejectedValueOnce(new Error('upload failed'))
+      .mockResolvedValueOnce('https://example.com/doc.pdf');
+
+    render(<Input onUploadAttachment={handleUploadAttachment} />);
+    const fileInput = document.querySelector(
+      'input[type="file"]',
+    ) as HTMLInputElement;
+    const file = new File(['content'], 'doc.pdf', { type: 'application/pdf' });
+    fireEvent.change(fileInput, { target: { files: [file] } });
+
+    await waitFor(() => {
+      expect(screen.getByLabelText('Retry upload')).toBeTruthy();
+    });
+
+    fireEvent.click(screen.getByLabelText('Retry upload'));
+
+    await waitFor(() => {
+      expect(handleUploadAttachment).toHaveBeenCalledTimes(2);
+      expect(screen.getByLabelText('Send message')).toBeTruthy();
+    });
   });
 });
 

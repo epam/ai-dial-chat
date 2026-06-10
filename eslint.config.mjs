@@ -3,6 +3,7 @@ import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
 import importPlugin from 'eslint-plugin-import';
 import jsxA11y from 'eslint-plugin-jsx-a11y';
+import reactHooks from 'eslint-plugin-react-hooks';
 import tailwindcss from 'eslint-plugin-tailwindcss';
 
 export default [
@@ -53,11 +54,18 @@ export default [
       prettier,
       import: importPlugin,
       'jsx-a11y': jsxA11y,
+      'react-hooks': reactHooks,
+      tailwindcss,
     },
     rules: {
       // Prettier rules
       'prettier/prettier': 'error',
+
+      // React Hooks rules
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
       'react-hooks/set-state-in-effect': 'off',
+      'tailwindcss/no-contradicting-classname': 'error',
 
       // Import rules
       'import/order': [
@@ -80,6 +88,18 @@ export default [
       ],
       'import/no-duplicates': 'error',
       'import/no-unresolved': 'off', // TypeScript handles this
+      'no-restricted-imports': [
+        'error',
+        {
+          patterns: [
+            {
+              regex: '^\\.{1,2}/.+\\.(?:js|jsx|ts|tsx)$',
+              message:
+                'Omit JavaScript and TypeScript extensions from relative source imports.',
+            },
+          ],
+        },
+      ],
 
       // Accessibility rules
       'jsx-a11y/alt-text': 'warn',

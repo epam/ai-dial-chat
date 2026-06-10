@@ -1,6 +1,7 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { AttachmentDto } from '@epam/chat-api-client';
+import { resolveCatalogIconUrl } from './icon-path';
 
 /**
  * Maps a Chat API attachment DTO to the display-only attachment model used by UI components.
@@ -8,9 +9,13 @@ import type { AttachmentDto } from '@epam/chat-api-client';
 export const attachmentDtoToDisplayAttachment = (
   dto: AttachmentDto,
 ): DisplayAttachment => {
-  const isImage = dto.type.startsWith('image/');
+  const isImage = dto.type?.startsWith('image/') ?? false;
   const id = dto.url ?? dto.data ?? dto.title;
-  const previewUrl = dto.url ?? `data:${dto.type};base64,${dto.data}`;
+  const previewUrl = dto.url
+    ? resolveCatalogIconUrl(dto.url)
+    : dto.type && dto.data
+      ? `data:${dto.type};base64,${dto.data}`
+      : undefined;
 
   return {
     id,
@@ -18,7 +23,8 @@ export const attachmentDtoToDisplayAttachment = (
     contentType: dto.type,
     type: isImage ? AttachmentType.Image : AttachmentType.File,
     status: RequestStatus.Idle,
-    ...(isImage && (dto.url || dto.data) ? { previewUrl } : {}),
+    ...(dto.url ? { url: dto.url } : {}),
+    ...(isImage && (dto.url || dto.data) && dto.type ? { previewUrl } : {}),
   };
 };
 

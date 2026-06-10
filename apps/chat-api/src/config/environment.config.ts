@@ -30,6 +30,14 @@ export class EnvironmentVariables {
   DIAL_CORE_URL!: string;
 
   @IsOptional()
+  @IsString()
+  @Matches(/^\d{4}-\d{2}-\d{2}(-preview)?$/, {
+    message:
+      'DIAL_API_VERSION must follow the YYYY-MM-DD or YYYY-MM-DD-preview format',
+  })
+  DIAL_API_VERSION?: string = '2024-10-21';
+
+  @IsOptional()
   @IsUrl({ require_tld: false })
   THEMES_CONFIG_URL?: string;
 
@@ -64,7 +72,7 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @Transform(({ value }) => {
-    if (value === undefined) return undefined;
+    if (value == null) return undefined;
     if (typeof value === 'boolean') return value;
     return !['false', '0', 'no'].includes(String(value).toLowerCase());
   })
@@ -90,4 +98,14 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   FILE_TRANSFER_TIMEOUT_MS?: number = 30_000;
+
+  @IsOptional()
+  @IsString()
+  ASR_MODEL?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  TRANSCRIBE_SIZE_LIMIT_BYTES?: number = 5 * 1024 * 1024;
 }

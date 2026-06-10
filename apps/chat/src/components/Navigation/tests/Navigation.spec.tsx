@@ -1,5 +1,4 @@
 import { render, screen } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
 import type { AriaAttributes } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
@@ -28,7 +27,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('../UserMenu', () => ({
-  default: () => <div data-testid="user-menu" />,
+  default: () => <div>User menu</div>,
 }));
 
 const renderNavigation = (initialPath = '/') =>
@@ -53,58 +52,11 @@ describe('Navigation', () => {
     ).toBeTruthy();
   });
 
-  it('renders a Catalog button', () => {
-    renderNavigation();
-    expect(
-      screen.getByRole('button', { name: 'navigation.catalog' }),
-    ).toBeTruthy();
-  });
-
   it('marks Home as active on the / route', () => {
     renderNavigation('/');
     expect(
       screen
         .getByRole('button', { name: 'navigation.home' })
-        .getAttribute('aria-current'),
-    ).toBe('page');
-  });
-
-  it('does not mark Catalog as active on the / route', () => {
-    renderNavigation('/');
-    expect(
-      screen
-        .getByRole('button', { name: 'navigation.catalog' })
-        .getAttribute('aria-current'),
-    ).toBeNull();
-  });
-
-  it('marks Catalog as active on the /catalog route', () => {
-    renderNavigation('/catalog');
-    expect(
-      screen
-        .getByRole('button', { name: 'navigation.catalog' })
-        .getAttribute('aria-current'),
-    ).toBe('page');
-  });
-
-  it('does not mark Home as active on the /catalog route', () => {
-    renderNavigation('/catalog');
-    expect(
-      screen
-        .getByRole('button', { name: 'navigation.home' })
-        .getAttribute('aria-current'),
-    ).toBeNull();
-  });
-
-  it('navigates to /catalog when Catalog button is clicked', async () => {
-    const user = userEvent.setup();
-    renderNavigation('/');
-    await user.click(
-      screen.getByRole('button', { name: 'navigation.catalog' }),
-    );
-    expect(
-      screen
-        .getByRole('button', { name: 'navigation.catalog' })
         .getAttribute('aria-current'),
     ).toBe('page');
   });

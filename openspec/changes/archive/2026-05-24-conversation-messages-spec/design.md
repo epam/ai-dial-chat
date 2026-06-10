@@ -129,7 +129,7 @@ Tests co-locate with source files:
 - `libs/conversation-messages/src/components/MessageBubble/MessageBubble.spec.tsx`
 - `libs/conversation-messages/src/components/Message/MessageActions.spec.tsx`
 
-Test names describe observable behaviour. No `data-testid` — use `role`, `label`, and text queries.
+Test names describe observable behaviour. Use `role`, `label`, and text queries instead of implementation-specific selectors.
 
 ### MessageBubble coverage expectations
 

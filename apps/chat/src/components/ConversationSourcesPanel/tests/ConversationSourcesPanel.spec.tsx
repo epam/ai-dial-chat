@@ -1,31 +1,64 @@
-import { MessageRole } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment, Message } from '@epam/ai-dial-chat-shared';
+import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { SourcesSidebarProvider } from '../../../context/SourcesSidebarContext.js';
-import ConversationSourcesPanel from '../ConversationSourcesPanel.js';
+import ConversationSourcesPanel from '../ConversationSourcesPanel';
+
+const mockHandleAttachmentClick = vi.fn();
+vi.mock('../../../hooks/attachment/useAttachmentAction', () => ({
+  useAttachmentAction: () => ({
+    handleAttachmentClick: mockHandleAttachmentClick,
+  }),
+}));
+
+const mockHandleClose = vi.fn();
+const mockUseSourcesSidebar = vi.fn();
+
+vi.mock('../../../context/SourcesSidebarContext', () => ({
+  useSourcesSidebar: () => mockUseSourcesSidebar(),
+}));
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
+  PanelEmptyState: ({ label }: { label: string }) => <div>{label}</div>,
   SidebarPanel: ({
     children,
+    isOpen,
     ariaLabel,
     onClose,
     leftActions,
     rightActions,
   }: {
-    children: React.ReactNode;
+    children: ReactNode;
+    isOpen?: boolean;
     ariaLabel: string;
     onClose: () => void;
-    leftActions?: React.ReactNode;
-    rightActions?: React.ReactNode;
+    leftActions?: ReactNode;
+    rightActions?: ReactNode;
   }) => (
     <aside aria-label={ariaLabel}>
       {leftActions}
       {rightActions}
       <button aria-label="Close" onClick={onClose} />
-      <div>{children}</div>
+      {isOpen ? <div>{children}</div> : null}
     </aside>
+  ),
+  SearchInput: ({
+    placeholder,
+    value,
+    onChange,
+  }: {
+    placeholder: string;
+    value: string;
+    onChange: (v: string) => void;
+  }) => (
+    <input
+      type="search"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
   ),
   SidebarSide: { Right: 'right', Left: 'left' },
 }));
@@ -42,9 +75,20 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 }));
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
-  AttachmentCard: ({ attachment }: { attachment: DisplayAttachment }) => (
-    <div data-testid="attachment-card">{attachment.name}</div>
-  ),
+  AttachmentCard: ({
+    attachment,
+    onClick,
+  }: {
+    attachment: DisplayAttachment;
+    onClick?: () => void;
+  }) =>
+    onClick ? (
+      <button type="button" data-testid="attachment-card" onClick={onClick}>
+        {attachment.name}
+      </button>
+    ) : (
+      <div>{attachment.name}</div>
+    ),
 }));
 
 const makeUserMessage = (attachmentTitle: string): Message => ({
@@ -67,12 +111,15 @@ const makeAssistantMessage = (attachmentTitle: string): Message => ({
   },
 });
 
-const renderPanel = (messages: Message[] = []) =>
-  render(
-    <SourcesSidebarProvider>
-      <ConversationSourcesPanel messages={messages} />
-    </SourcesSidebarProvider>,
-  );
+const renderPanel = (messages: Message[] = []) => {
+  mockUseSourcesSidebar.mockReturnValue({
+    handleClose: mockHandleClose,
+    isOpen: true,
+    messages,
+  });
+
+  return render(<ConversationSourcesPanel />);
+};
 
 describe('ConversationSourcesPanel', () => {
   it('derives uploaded files from user messages', () => {
@@ -86,25 +133,134 @@ describe('ConversationSourcesPanel', () => {
   });
 
   it('close button calls useSourcesSidebar().handleClose via context', async () => {
+    mockHandleClose.mockClear();
     const user = userEvent.setup();
     renderPanel();
     await user.click(screen.getByRole('button', { name: 'Close' }));
-    expect(screen.queryByRole('button', { name: 'Close' })).toBeTruthy();
+    expect(mockHandleClose).toHaveBeenCalledOnce();
   });
 
-  it('renders three sections in order', () => {
+  it('renders the panel empty state when the conversation has no files', () => {
     renderPanel();
+
+    expect(screen.getByText('sidebar.sources.noData')).toBeTruthy();
+    expect(screen.queryByRole('heading')).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'sidebar.sources.search' }),
+    ).toBeNull();
+    expect(
+      screen.queryByRole('button', { name: 'sidebar.sources.downloadAll' }),
+    ).toBeNull();
+  });
+
+  it('passes onAttachmentClick to both file sections', () => {
+    renderPanel([
+      makeUserMessage('upload.pdf'),
+      makeAssistantMessage('result.csv'),
+    ]);
+    const cards = screen.getAllByTestId('attachment-card');
+    expect(cards).toHaveLength(2);
+  });
+
+  it('renders uploaded and generated sections in order', () => {
+    renderPanel([
+      makeUserMessage('upload.pdf'),
+      makeAssistantMessage('result.csv'),
+    ]);
     const headings = screen.getAllByRole('heading');
     const texts = headings.map((h) => h.textContent);
     expect(texts).toContain('sidebar.sources.sections.uploadedFiles');
     expect(texts).toContain('sidebar.sources.sections.generatedFiles');
-    expect(texts).toContain('sidebar.sources.sections.sources');
     const uploadedIdx = texts.indexOf('sidebar.sources.sections.uploadedFiles');
     const generatedIdx = texts.indexOf(
       'sidebar.sources.sections.generatedFiles',
     );
-    const sourcesIdx = texts.indexOf('sidebar.sources.sections.sources');
     expect(uploadedIdx).toBeLessThan(generatedIdx);
-    expect(generatedIdx).toBeLessThan(sourcesIdx);
+  });
+});
+
+describe('ConversationSourcesPanel — search', () => {
+  const renderOpenPanel = (messages: Message[] = []) => {
+    mockUseSourcesSidebar.mockReturnValue({
+      handleClose: mockHandleClose,
+      isOpen: true,
+      messages,
+    });
+    return render(<ConversationSourcesPanel />);
+  };
+
+  // 5.1 — typing a partial name filters both sections
+  it('typing a partial name filters both uploaded and generated sections', async () => {
+    const user = userEvent.setup();
+    renderOpenPanel([
+      makeUserMessage('Annual Report.pdf'),
+      makeUserMessage('Budget.xlsx'),
+      makeAssistantMessage('Summary Report.csv'),
+      makeAssistantMessage('Chart.png'),
+    ]);
+
+    await user.type(screen.getByRole('searchbox'), 'report');
+
+    expect(screen.getByText('Annual Report.pdf')).toBeTruthy();
+    expect(screen.getByText('Summary Report.csv')).toBeTruthy();
+    expect(screen.queryByText('Budget.xlsx')).toBeNull();
+    expect(screen.queryByText('Chart.png')).toBeNull();
+  });
+
+  // 5.2 — query matching nothing shows "No results found" and no file sections
+  it('shows "No results found" when query matches no attachments', async () => {
+    const user = userEvent.setup();
+    renderOpenPanel([
+      makeUserMessage('upload.pdf'),
+      makeAssistantMessage('result.csv'),
+    ]);
+
+    await user.type(screen.getByRole('searchbox'), 'zzznomatch');
+
+    expect(screen.getByText('sidebar.sources.noResults')).toBeTruthy();
+    expect(screen.queryByRole('heading')).toBeNull();
+  });
+
+  // 5.3 — clearing the query restores all attachments
+  it('clearing the query restores all attachments', async () => {
+    const user = userEvent.setup();
+    renderOpenPanel([
+      makeUserMessage('upload.pdf'),
+      makeAssistantMessage('result.csv'),
+    ]);
+
+    const input = screen.getByRole('searchbox');
+    await user.type(input, 'zzznomatch');
+    expect(screen.getByText('sidebar.sources.noResults')).toBeTruthy();
+
+    await user.clear(input);
+    expect(screen.getByText('upload.pdf')).toBeTruthy();
+    expect(screen.getByText('result.csv')).toBeTruthy();
+    expect(screen.queryByText('sidebar.sources.noResults')).toBeNull();
+  });
+
+  // 5.4 — closing/opening panel resets the search input
+  //
+  // This spec uses a mocked hook instead of the real context provider; because
+  // the component is memoized, `rerender` won't reflect mocked context changes.
+  // We verify reset behavior through an unmount/remount cycle instead.
+  it('resets search query after panel remount', async () => {
+    const messages = [
+      makeUserMessage('upload.pdf'),
+      makeUserMessage('other.pdf'),
+    ];
+    const user = userEvent.setup();
+
+    const { unmount } = renderOpenPanel(messages);
+
+    // Type a query that hides other.pdf
+    await user.type(screen.getByRole('searchbox'), 'upload');
+    expect(screen.queryByText('other.pdf')).toBeNull();
+
+    unmount();
+    renderOpenPanel(messages);
+
+    expect(screen.getByText('upload.pdf')).toBeTruthy();
+    expect(screen.getByText('other.pdf')).toBeTruthy();
   });
 });

@@ -1,4 +1,5 @@
 import { Readable } from 'node:stream';
+import { pipeline } from 'node:stream/promises';
 import {
   Body,
   Controller,
@@ -102,6 +103,8 @@ export class FilesController {
       res.setHeader(key, value);
     }
 
-    Readable.fromWeb(stream as ReadableStream).pipe(res);
+    await pipeline(Readable.fromWeb(stream as ReadableStream), res).catch(() => {
+      res.destroy();
+    });
   }
 }

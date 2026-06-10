@@ -251,6 +251,96 @@
         "tags": ["auth"]
       }
     },
+    "/api/v1/application-schemas": {
+      "get": {
+        "description": "Returns DIAL Core application type schemas visible to the authenticated user. Results are cached server-side for 60 seconds per user.",
+        "operationId": "listApplicationSchemas",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved schema list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplicationSchemasResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to list application schemas"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List application type schemas",
+        "tags": ["applications"]
+      }
+    },
+    "/api/v1/application-schemas/{id}": {
+      "get": {
+        "description": "Returns one DIAL Core application type schema by its $id. Results are cached server-side for 60 seconds per user per schema.",
+        "operationId": "getApplicationSchema",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "description": "Schema $id (URL-encoded)",
+            "schema": {
+              "example": "https://example.com/schemas/quick-app",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved schema",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": true
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid or empty id"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to access this schema"
+          },
+          "404": {
+            "description": "Schema not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get application type schema by id",
+        "tags": ["applications"]
+      }
+    },
     "/api/v1/applications": {
       "get": {
         "description": "Returns the list of DIAL Core applications visible to the authenticated session user. Proxies GET /openai/applications using the caller's session access token. Results are cached server-side for 30 seconds per user.",
@@ -355,12 +445,11 @@
         ],
         "responses": {
           "200": {
-            "description": "JSON Schema configuration object",
+            "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "additionalProperties": true
+                  "$ref": "#/components/schemas/DeploymentConfigurationDto"
                 }
               }
             }
@@ -573,7 +662,7 @@
             "in": "query",
             "description": "Conversation path (uuid__name). May contain slashes.",
             "schema": {
-              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "example": "gpt-4o__My Conversation__UUID",
               "type": "string"
             }
           }
@@ -617,7 +706,7 @@
             "in": "query",
             "description": "Conversation path (uuid__name). May contain slashes.",
             "schema": {
-              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "example": "gpt-4o__My Conversation__UUID",
               "type": "string"
             }
           }
@@ -662,6 +751,63 @@
         "summary": "Save (overwrite) a conversation by path",
         "tags": ["conversations"]
       },
+      "patch": {
+        "operationId": "renameConversation",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameConversationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversation renamed — new path returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RenameConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid path or newTitle"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Conversation not found"
+          },
+          "409": {
+            "description": "Destination path already exists"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "Rename a conversation by path",
+        "tags": ["conversations"]
+      },
       "delete": {
         "operationId": "deleteConversation",
         "parameters": [
@@ -671,7 +817,7 @@
             "in": "query",
             "description": "Conversation path (uuid__name). May contain slashes.",
             "schema": {
-              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "example": "gpt-4o__My Conversation__UUID",
               "type": "string"
             }
           }
@@ -700,6 +846,73 @@
         "tags": ["conversations"]
       }
     },
+    "/api/v1/conversations/list": {
+      "get": {
+        "description": "Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path.",
+        "operationId": "listConversations",
+        "parameters": [
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Maximum number of conversations to return.",
+            "schema": {
+              "minimum": 1,
+              "maximum": 1000,
+              "default": 100,
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "nextToken",
+            "required": false,
+            "in": "query",
+            "description": "Pagination cursor returned in the previous response as `nextToken`. Omit for the first page.",
+            "schema": {
+              "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "DIAL Core subfolder path to scope the listing. Omit or pass an empty string to list all conversations from the bucket root (\"My Files\").",
+            "schema": {
+              "example": "work/project-x",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of conversation metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationListResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query params"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "List conversations",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/conversations/metadata": {
       "get": {
         "operationId": "getConversationMetadata",
@@ -710,7 +923,7 @@
             "in": "query",
             "description": "Conversation path (uuid__name). May contain slashes.",
             "schema": {
-              "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation 5/19/2026",
+              "example": "gpt-4o__My Conversation__UUID",
               "type": "string"
             }
           },
@@ -799,6 +1012,97 @@
         },
         "summary": "Stream a chat completion",
         "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/duplicate": {
+      "post": {
+        "operationId": "duplicateConversation",
+        "parameters": [
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "Conversation path (uuid__name). May contain slashes.",
+            "schema": {
+              "example": "gpt-4o__My Conversation__UUID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Conversation duplicated — new path returned",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DuplicateConversationResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing or invalid path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Source conversation not found"
+          },
+          "502": {
+            "description": "DIAL Core error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable"
+          }
+        },
+        "summary": "Duplicate a conversation into the user's own bucket",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/user-config": {
+      "get": {
+        "operationId": "getConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "User configuration"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Get current user configuration",
+        "tags": ["user-config"]
+      }
+    },
+    "/api/v1/user-config/pins": {
+      "patch": {
+        "operationId": "updatePin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePinsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Pin state updated"
+          },
+          "400": {
+            "description": "Missing or invalid body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Pin or unpin a conversation",
+        "tags": ["user-config"]
       }
     },
     "/api/v1/files": {
@@ -1079,6 +1383,47 @@
         },
         "required": ["sub", "providerId", "claims", "bucket"]
       },
+      "ApplicationSchemaSummaryDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "https://example.com/schemas/quick-app"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "Quick App"
+          },
+          "viewerUrl": {
+            "type": "string",
+            "example": "https://example.com/viewer"
+          },
+          "editorUrl": {
+            "type": "string",
+            "example": "https://example.com/editor"
+          },
+          "schemaEndpoint": {
+            "type": "string",
+            "example": "https://example.com/schema"
+          },
+          "iconUrl": {
+            "type": "string",
+            "example": "https://example.com/icon.png"
+          }
+        }
+      },
+      "ApplicationSchemasResponseDto": {
+        "type": "object",
+        "properties": {
+          "schemas": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ApplicationSchemaSummaryDto"
+            }
+          }
+        },
+        "required": ["schemas"]
+      },
       "ApplicationDto": {
         "type": "object",
         "properties": {
@@ -1161,6 +1506,17 @@
             "items": {
               "type": "string"
             }
+          },
+          "applicationTypeSchemaId": {
+            "type": "string",
+            "description": "Application type schema id from DIAL Core (present only for application deployments)"
+          },
+          "inputAttachmentTypes": {
+            "description": "Accepted MIME types for input attachments from DIAL Core (e.g. [\"audio/*\", \"image/*\"])",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["id", "displayName", "type"]
@@ -1176,6 +1532,32 @@
           }
         },
         "required": ["deployments"]
+      },
+      "DeploymentConfigurationDto": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "JSON Schema type (typically \"object\")"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable schema title"
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": true,
+            "description": "Named configuration properties supported by this deployment"
+          },
+          "additionalProperties": {
+            "type": "object",
+            "description": "Whether additional properties are allowed"
+          },
+          "isChatMessageInputDisabled": {
+            "type": "boolean",
+            "description": "When true, the application does not accept free-form text input; users interact only via form/action buttons."
+          }
+        }
       },
       "DialModelFeaturesDto": {
         "type": "object",
@@ -1439,9 +1821,75 @@
         },
         "required": ["data"]
       },
+      "AttachmentDto": {
+        "type": "object",
+        "properties": {
+          "index": {
+            "type": "number",
+            "description": "Zero-based position in the list"
+          },
+          "type": {
+            "type": "string",
+            "description": "MIME type of the attachment"
+          },
+          "title": {
+            "type": "string",
+            "description": "Display name of the attachment"
+          },
+          "data": {
+            "type": "string",
+            "description": "Inline base-64 encoded content"
+          },
+          "url": {
+            "type": "string",
+            "description": "Remote URL of the attachment content"
+          },
+          "reference_type": {
+            "type": "string",
+            "description": "MIME type of the reference resource"
+          },
+          "reference_url": {
+            "type": "string",
+            "description": "URL of the reference resource"
+          }
+        },
+        "required": ["type", "title"]
+      },
+      "MessageCustomContentDto": {
+        "type": "object",
+        "properties": {
+          "attachments": {
+            "description": "DIAL API attachments to include with the message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
+          },
+          "configuration_value": {
+            "type": "object",
+            "description": "Form/button submission value (e.g. `{ button: 1 }`).",
+            "example": {
+              "button": 1
+            }
+          },
+          "form_value": {
+            "type": "object",
+            "description": "Key-value map of form field values submitted via an embedded form widget.",
+            "example": {
+              "field1": "value",
+              "field2": 42
+            }
+          }
+        }
+      },
       "MessageDto": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique message identifier",
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          },
           "role": {
             "type": "string",
             "description": "Message author role",
@@ -1452,6 +1900,19 @@
             "type": "string",
             "description": "Message text content",
             "example": "Hello, how can you help me today?"
+          },
+          "timestamp": {
+            "type": "string",
+            "description": "ISO-8601 timestamp of when the message was created",
+            "example": "2024-01-01T00:00:00.000Z"
+          },
+          "custom_content": {
+            "description": "Extra DIAL payload attached to the message",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageCustomContentDto"
+              }
+            ]
           }
         },
         "required": ["role", "content"]
@@ -1525,48 +1986,13 @@
         },
         "required": ["id", "object", "choices"]
       },
-      "AttachmentDto": {
-        "type": "object",
-        "properties": {
-          "index": {
-            "type": "number",
-            "description": "Zero-based position in the list"
-          },
-          "type": {
-            "type": "string",
-            "description": "MIME type of the attachment"
-          },
-          "title": {
-            "type": "string",
-            "description": "Display name of the attachment"
-          },
-          "data": {
-            "type": "string",
-            "description": "Inline base-64 encoded content"
-          },
-          "url": {
-            "type": "string",
-            "description": "Remote URL of the attachment content"
-          },
-          "reference_type": {
-            "type": "string",
-            "description": "MIME type of the reference resource"
-          },
-          "reference_url": {
-            "type": "string",
-            "description": "URL of the reference resource"
-          }
-        },
-        "required": ["type", "title"]
-      },
       "CreateConversationDto": {
         "type": "object",
         "properties": {
           "firstMessage": {
             "type": "string",
-            "description": "The first message to start the conversation",
+            "description": "The first message to start the conversation. May be empty when custom_content carries attachments, form_value, or configuration_value.",
             "example": "Hello, how can you help me today?",
-            "minLength": 1,
             "maxLength": 4000
           },
           "deploymentId": {
@@ -1576,12 +2002,13 @@
             "minLength": 1,
             "maxLength": 256
           },
-          "attachments": {
-            "description": "DIAL API attachments to include with the first user message",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AttachmentDto"
-            }
+          "custom_content": {
+            "description": "Extra DIAL payload attached to the first user message",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageCustomContentDto"
+              }
+            ]
           }
         },
         "required": ["firstMessage", "deploymentId"]
@@ -1599,10 +2026,6 @@
       "ConversationMessageDto": {
         "type": "object",
         "properties": {
-          "id": {
-            "type": "string",
-            "example": "7c20f2e0-83d9-45aa-9fdc-bf3eb9f16bf8"
-          },
           "role": {
             "type": "string",
             "enum": ["user", "assistant"],
@@ -1617,7 +2040,7 @@
             "example": "2026-05-19T16:00:00.000Z"
           }
         },
-        "required": ["id", "role", "content", "timestamp"]
+        "required": ["role", "content", "timestamp"]
       },
       "ConversationResponseDto": {
         "type": "object",
@@ -1684,6 +2107,66 @@
           "selectedAddons",
           "assistantModelId"
         ]
+      },
+      "ConversationListItemDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Full DIAL Core resource URL used as the stable conversation identifier.",
+            "example": "conversations/default-bucket/cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My chat"
+          },
+          "title": {
+            "type": "string",
+            "description": "Human-readable conversation title (the resource `name` from DIAL Core).",
+            "example": "My chat"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix epoch milliseconds of the last update.",
+            "example": 1749600000000
+          },
+          "sharedWithMe": {
+            "type": "boolean",
+            "description": "True when this conversation was shared with the current user by another user.",
+            "example": false
+          },
+          "publishedWithMe": {
+            "type": "boolean",
+            "description": "True when this conversation was published to the organisation and is visible to the current user.",
+            "example": false
+          },
+          "isPinned": {
+            "type": "boolean",
+            "description": "True when the user has pinned this conversation.",
+            "example": false
+          }
+        },
+        "required": [
+          "id",
+          "title",
+          "updatedAt",
+          "sharedWithMe",
+          "publishedWithMe",
+          "isPinned"
+        ]
+      },
+      "ConversationListResponseDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationListItemDto"
+            }
+          },
+          "nextToken": {
+            "type": "string",
+            "description": "Cursor for the next page. Present only when more results exist. Pass as `nextToken` in the next request.",
+            "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
+          }
+        },
+        "required": ["items"]
       },
       "ConversationMetadataDto": {
         "type": "object",
@@ -1764,14 +2247,13 @@
         "properties": {
           "path": {
             "type": "string",
-            "description": "Conversation path (uuid__name). May contain slashes.",
-            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8__My Conversation"
+            "description": "Conversation path ({deploymentId}__{name}__{uuid}). May contain slashes.",
+            "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
           },
           "message": {
             "type": "string",
-            "description": "The new user message to send",
+            "description": "The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.",
             "example": "What is the capital of France?",
-            "minLength": 1,
             "maxLength": 4000
           },
           "model": {
@@ -1779,15 +2261,65 @@
             "description": "DIAL Core deployment name to use for completion",
             "example": "anthropic.claude-v3-sonnet"
           },
-          "attachments": {
-            "description": "DIAL API attachments to include with the user message",
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AttachmentDto"
-            }
+          "custom_content": {
+            "description": "Extra DIAL payload attached to the user message",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/MessageCustomContentDto"
+              }
+            ]
           }
         },
         "required": ["path", "message", "model"]
+      },
+      "RenameConversationBodyDto": {
+        "type": "object",
+        "properties": {
+          "newTitle": {
+            "type": "string",
+            "description": "New title for the conversation",
+            "example": "My renamed chat"
+          }
+        },
+        "required": ["newTitle"]
+      },
+      "RenameConversationResponseDto": {
+        "type": "object",
+        "properties": {
+          "newPath": {
+            "type": "string",
+            "description": "New relative path of the renamed conversation",
+            "example": "conversations/bucket/gpt-4o__My renamed chat__uuid"
+          }
+        },
+        "required": ["newPath"]
+      },
+      "DuplicateConversationResponseDto": {
+        "type": "object",
+        "properties": {
+          "newPath": {
+            "type": "string",
+            "description": "Path of the newly created duplicate conversation",
+            "example": "conversations/bucket/gpt-4o__My conversation"
+          }
+        },
+        "required": ["newPath"]
+      },
+      "UpdatePinsDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Full DIAL Core resource URL of the conversation to pin or unpin (matches `id` in `ConversationListItemDto`).",
+            "example": "conversations/default-bucket/gpt-4__My chat__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          },
+          "isPinned": {
+            "type": "boolean",
+            "description": "Pass `true` to pin the conversation, `false` to unpin.",
+            "example": true
+          }
+        },
+        "required": ["path", "isPinned"]
       },
       "FileUploadResponseDto": {
         "type": "object",
@@ -1806,7 +2338,7 @@
           "conversationId": {
             "type": "string",
             "description": "Identifier of the conversation being rated",
-            "example": "bucket/uuid__name"
+            "example": "bucket/gpt-4o__My Conversation__UUID"
           },
           "responseId": {
             "type": "string",

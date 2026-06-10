@@ -1,7 +1,8 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
-import { memo, useEffect } from 'react';
 import type { FC } from 'react';
+import { memo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
@@ -81,9 +82,10 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
     <>
       {/* Backdrop */}
       <div
-        className={`bg-black/50 fixed inset-0 z-40 transition-opacity duration-200 ${
-          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0'
-        }`}
+        className={mergeClasses(
+          'bg-black/50 fixed inset-0 z-40 transition-opacity duration-200',
+          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
+        )}
         onClick={onClose}
         aria-hidden
       />
@@ -92,9 +94,12 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
       <nav
         aria-label={t(NavigationI18nKeys.AriaLabel)}
         aria-hidden={!isOpen}
-        className={`fixed inset-y-0 left-0 z-50 flex w-[60px] flex-col justify-between bg-layer-3 transition-transform duration-200 ease-in-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className={mergeClasses(
+          'fixed inset-y-0 start-0 z-50 flex w-[60px] flex-col justify-between bg-layer-3 transition-transform duration-200 ease-in-out',
+          isOpen
+            ? 'translate-x-0'
+            : 'ltr:-translate-x-full rtl:translate-x-full',
+        )}
       >
         <div className="flex flex-col items-center gap-2 p-2">
           <DialGhostIconButton

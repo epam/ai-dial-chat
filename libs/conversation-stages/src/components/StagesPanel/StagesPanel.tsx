@@ -1,7 +1,7 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { StagesPanelProps } from '../../models/StagesPanel.js';
-import { StageItem } from '../StageItem/StageItem.js';
+import type { StagesPanelProps } from '../../models/StagesPanel';
+import { StageItem } from '../StageItem/StageItem';
 import styles from './StagesPanel.module.scss';
 
 /**
@@ -12,10 +12,12 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   stages,
   isStreaming,
   className,
-  colors,
-  typographyClassName = 'dial-small-text',
+  styles: panelStyles,
   copyAriaLabel,
 }) => {
+  const { colors, typography = { fontClassName: 'dial-small-text' } } =
+    panelStyles ?? {};
+  const noCustomClass = !typography.fontClassName;
   const cssVars = buildCssVars({
     '--cs-bg': colors?.background,
     '--cs-border': colors?.border,
@@ -24,6 +26,18 @@ export const StagesPanel: FC<StagesPanelProps> = ({
     '--cs-running': colors?.runningColor,
     '--cs-completed': colors?.completedColor,
     '--cs-failed': colors?.failedColor,
+    '--cs-button-bg': colors?.buttonBackground,
+    '--cs-font-size': noCustomClass ? typography?.fontSize : undefined,
+    '--cs-font-weight': noCustomClass
+      ? typography?.fontWeight?.toString()
+      : undefined,
+    '--cs-line-height': noCustomClass
+      ? typography?.lineHeight?.toString()
+      : undefined,
+    '--cs-letter-spacing': noCustomClass
+      ? typography?.letterSpacing
+      : undefined,
+    '--cs-font-family': noCustomClass ? typography?.fontFamily : undefined,
   });
 
   const lastRunningStageIndex = isStreaming
@@ -42,11 +56,15 @@ export const StagesPanel: FC<StagesPanelProps> = ({
     >
       <ul role="list" className="flex flex-col gap-4">
         {stages.map((stage, index) => (
-          <li key={stage.index} role="listitem" className={typographyClassName}>
+          <li
+            key={stage.index}
+            role="listitem"
+            className={typography.fontClassName}
+          >
             <StageItem
               stage={stage}
               isLive={lastRunningStageIndex === index}
-              typographyClassName={typographyClassName}
+              typography={typography}
               copyAriaLabel={copyAriaLabel}
             />
           </li>

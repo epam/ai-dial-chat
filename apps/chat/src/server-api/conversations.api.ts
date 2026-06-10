@@ -6,7 +6,7 @@ import { conversationsApi } from './api-client';
 
 export const createConversation = (
   firstMessage: string,
-  deploymentId: string | null,
+  deploymentId: string,
   attachments?: AttachmentDto[],
   configurationValue?: Record<string, unknown>,
   formValue?: Record<string, unknown>,
@@ -52,3 +52,23 @@ export const getConversationMetadata = (
     path: conversationPath,
     permissions: options?.permissions,
   });
+
+export const listConversations = (params?: {
+  limit?: number;
+  nextToken?: string;
+  path?: string;
+}) =>
+  conversationsApi.listConversations({
+    limit: params?.limit ?? 1000,
+    nextToken: params?.nextToken,
+    path: params?.path,
+  });
+
+export const renameConversation = (path: string, newTitle: string) =>
+  conversationsApi.renameConversation({
+    path,
+    renameConversationBodyDto: { newTitle },
+  });
+
+export const duplicateConversation = (conversationPath: string) =>
+  conversationsApi.duplicateConversation({ path: conversationPath });

@@ -75,6 +75,7 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 - Host/external integrations are adapted at the app edge and passed into libs through props, callbacks, resolved values, or narrow interfaces
 - No unjustified new patterns; justified new ones are called out
 - No sneaky circular deps or leaky module APIs
+- Relative `.ts`/`.tsx` imports and re-exports omit `.js`, `.jsx`, `.ts`, and `.tsx`; Vite projects use bundler resolution rather than Node ESM source specifiers
 - Duplication: only consolidate when the rule of three (or team norm) says so
 
 ### 4. Security
@@ -168,7 +169,7 @@ Use a prefix so authors know what is mandatory:
 When checking "tests / build / lint":
 
 - Prefer `npx nx test <project>`, `npx nx lint <project>`, `npx nx build <project>` for touched projects (see `openspec/config.yaml` and `AGENTS.md`).
-- For broad checks, use affected targets with the repository base branch: `npx nx affected --target=<target> --base=origin/development`.
+- For broad checks, use affected targets with the repository base branch: `npx nx affected --target=<target> --base=origin/development-1.0`.
 - Do not use `origin/main` as the affected base in this workspace.
 - When unsure which project owns a path, use `npx nx show projects` or `npx nx show project <name> --json`.
 
@@ -182,7 +183,7 @@ Select the smallest validation set that proves the change:
 | Backend `apps/chat-api/**` | `npx nx test chat-api`, `npx nx lint chat-api`, `npx nx build chat-api` when startup/module/config wiring changed             |
 | HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npx nx build chat-api-client`, `npx nx lint chat-api-client` |
 | Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                   |
-| Broad cross-project change | `npx nx affected --target=lint --base=origin/development` and affected test/build targets as appropriate                      |
+| Broad cross-project change | `npx nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                  |
 | CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context                                                        |
 
 Record skipped checks with a reason. A review without a verification story is incomplete.
@@ -235,6 +236,7 @@ Use as a literal template when writing a review:
 - [ ] `libs/chat-api-client` changes, if any, are generated OpenAPI client changes
 - [ ] Coupling and abstraction level appropriate
 - [ ] API/generated-client/OpenSpec contract rules followed when relevant
+- [ ] Relative TypeScript source imports are extensionless
 
 ### Security
 

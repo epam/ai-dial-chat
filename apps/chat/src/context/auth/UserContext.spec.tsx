@@ -104,7 +104,7 @@ describe('UserContext', () => {
 
     // Simulate a 401 from any API call via the listener mechanism
     act(() => {
-      onUnauthorized(() => undefined)('/api/some-protected');
+      onUnauthorized(() => undefined);
       result.current.reset();
     });
 

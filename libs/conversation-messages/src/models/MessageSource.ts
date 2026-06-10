@@ -24,6 +24,14 @@ export interface MessageSourceTypography {
   lineHeight?: string;
 }
 
+/** Combined style overrides (colors and typography) for the `MessageSource` component. */
+export interface MessageSourceStyles {
+  /** Color overrides applied as CSS custom properties. */
+  colors?: MessageSourceColors;
+  /** Typography overrides applied via CSS custom properties. */
+  typography?: MessageSourceTypography;
+}
+
 /** Props accepted by the `MessageSource` component. */
 export interface MessageSourceProps {
   /** Text label displayed inside the button. */
@@ -32,8 +40,6 @@ export interface MessageSourceProps {
   className?: string;
   /** Called when the user clicks the source button. */
   onClick?: () => void;
-  /** Color overrides applied as CSS custom properties. */
-  colors?: MessageSourceColors;
-  /** Typography overrides applied as CSS custom properties. */
-  typography?: MessageSourceTypography;
+  /** Color and typography overrides applied as CSS custom properties. */
+  styles?: MessageSourceStyles;
 }

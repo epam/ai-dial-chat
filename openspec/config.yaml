@@ -8,6 +8,8 @@ context: |
   - Frontend: React 19, Vite 8 (apps/chat, port 4207)
   - Backend: NestJS 11 (apps/chat-api, port 3005)
   - Language: TypeScript 5.9 (strict mode, noUnusedLocals, noUnusedParameters)
+  - Frontend module resolution: Vite-built apps and libs use `module: esnext` with
+    `moduleResolution: bundler`; relative TypeScript source imports omit `.js`/`.ts` extensions
   - Styling: Tailwind CSS 3 (primary) + SCSS (component overrides only)
   - i18n: react-i18next + i18next-browser-languagedetector (keys in apps/chat/src/i18n/locales/en.json)
   - State: React Context + custom hooks (no external state management library)
@@ -37,18 +39,18 @@ context: |
   - @epam/ai-dial-chat-shared/*        → libs/chat-shared/*
 
   ## Commands
-  - Frontend dev: `pnpm start` (localhost:4207, proxies /api → localhost:3005)
-  - Backend dev:  `pnpm start:api` (localhost:3005)
-  - Both:         `pnpm start:all`
-  - Affected build / lint / typecheck / test: `pnpm nx affected --target=<t> --base=origin/development`
+  - Frontend dev: `npm start` (localhost:4207, proxies /api → localhost:3005)
+  - Backend dev:  `npm run start:api` (localhost:3005)
+  - Both:         `npm run start:all`
+  - Affected build / lint / typecheck / test: `npm exec nx affected --target=<t> --base=origin/development-1.0`
   - Single-project (preferred for slice verification, see CLAUDE.md per project):
-    - `pnpm nx test chat-api`
-    - `pnpm nx lint chat-api`
-    - `pnpm nx build chat-api`
-  - All tests:    `pnpm test`
-  - Dep graph:    `pnpm graph`
+    - `npm exec nx test chat-api`
+    - `npm exec nx lint chat-api`
+    - `npm exec nx build chat-api`
+  - All tests:    `npm test`
+  - Dep graph:    `npm run graph`
 
-  Default base branch for `nx affected` is `origin/development`. Do NOT use `origin/main`.
+  Default base branch for `nx affected` is `origin/development-1.0`. Do NOT use `origin/main`.
 
   ## Architecture
 
@@ -155,6 +157,10 @@ rules:
       resolved values and behavior into libs via props, callbacks, or narrow interfaces.
       libs/chat-api-client/ is the generated OpenAPI-client exception and must be updated only
       through OpenAPI generation scripts, not by hand-authored app behavior.
+    - Relative imports and re-exports between TypeScript source modules omit `.js`, `.jsx`, `.ts`,
+      and `.tsx` extensions. Keep resource extensions such as `.css` and package subpaths whose
+      public API explicitly includes an extension. Vite-built apps/libs use
+      `moduleResolution: bundler`, not Node ESM resolution as a reason to add `.js` to source.
     - Use async/await with try/catch/finally for frontend async code — avoid Promise chains
       with `.then()`/`.catch()`.
     - Use the void operator before Promise-returning calls only for intentional
@@ -218,6 +224,9 @@ rules:
     - Before writing tasks that touch apps/<app>/** or libs/<lib>/**, read the corresponding
       AGENTS.md (e.g. apps/chat-api/AGENTS.md for chat-api work) so task wording matches the
       conventions of that project
+    - For TypeScript source changes, require extensionless relative code imports and preserve
+      extensions only for resources or explicit package subpaths; frontend Vite projects must
+      retain bundler module resolution
     - >-
       For tasks that touch hand-authored libs/*, include an explicit architecture guard: verify
       the lib does not contain host-owned integration details such as hardcoded `/api` paths,
@@ -233,7 +242,7 @@ rules:
       (ComponentName/tests/ComponentName.spec.tsx); backend specs sit next to the source file
       (feature.controller.spec.ts next to feature.controller.ts)
     - Test names describe observable behaviour — not implementation details
-    - Do not use data-testid attributes in tests — use role, label, and text queries
+    - Tests must use role, label, and text queries instead of implementation-specific selectors
     - Do not add manual testing tasks
     - Add i18n keys to en.json as a dedicated task when new strings are introduced
     - For any new or changed business HTTP endpoint, include dedicated tasks to:
@@ -245,5 +254,5 @@ rules:
         - implement frontend server-api wrappers using `@epam/chat-api-client`, not direct
           `base.ts` helpers, unless the task documents a generator gap
     - Run lint + typecheck + tests as a final verification task after all implementation tasks
-      using `pnpm nx <target> chat-api` for single-project checks or
-      `pnpm nx affected --target=<t> --base=origin/development` for affected sets
+      using `npm exec nx <target> chat-api` for single-project checks or
+      `npm exec nx affected --target=<t> --base=origin/development-1.0` for affected sets
