@@ -427,6 +427,12 @@ export class ChatOverlayManager {
     return overlay.setSystemPrompt(systemPrompt);
   }
 
+  public setTemperature(overlayId: string, temperature: number) {
+    const { overlay } = this.getOverlay(overlayId);
+
+    return overlay.setTemperature(temperature);
+  }
+
   public async getMessages(overlayId: string) {
     const { overlay } = this.getOverlay(overlayId);
 

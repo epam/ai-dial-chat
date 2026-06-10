@@ -21,6 +21,7 @@ import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
 import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { refreshToolset$ } from '@/src/utils/app/epics-helpers/toolset.epic-helpers';
 import {
   getEntityNameFromId,
@@ -162,8 +163,10 @@ const getToolsetsEpic: AppEpic = (action$) =>
         ),
         catchError((err) => {
           console.error('Failed to get toolsets', err);
+          const { traceId } = parseApiError(err);
           return of(
             UIActions.showErrorToast({
+              traceId,
               message: translate(CommonI18nKeys.ToolsetsGetFailed, {
                 ns: Translation.Common,
               }),
@@ -205,8 +208,10 @@ const createToolsetEpic: AppEpic = (action$) =>
             }),
             catchError((err) => {
               console.error('Failed to get toolset: ', err);
+              const { traceId } = parseApiError(err);
               return of(
                 UIActions.showErrorToast({
+                  traceId,
                   message: translate(CommonI18nKeys.ToolsetGetFailed, {
                     ns: Translation.Common,
                     name: data.id,
@@ -261,8 +266,13 @@ const getToolsetDetailsEpic: AppEpic = (action$) =>
             ? of(ToolsetActions.getToolsetDetailsSuccess(toolset))
             : of(ToolsetActions.getToolsetDetailsFailed({ id: payload.id }));
         }),
-        catchError(() =>
-          of(ToolsetActions.getToolsetDetailsFailed({ id: payload.id })),
+        catchError((err) =>
+          of(
+            ToolsetActions.getToolsetDetailsFailed({
+              ...parseApiError(err),
+              id: payload.id,
+            }),
+          ),
         ),
       );
     }),
@@ -282,6 +292,7 @@ const getToolsetDetailsFailedEpic: AppEpic = (action$, _state$, { router }) =>
 
       return of(
         UIActions.showErrorToast({
+          traceId: payload?.traceId,
           message: translate(CommonI18nKeys.ToolsetGetFailed, {
             ns: Translation.Common,
             name: payload?.id ?? '...',
@@ -317,12 +328,14 @@ const updateToolsetEpic: AppEpic = (action$) =>
                   }),
                   UIActions.setEditorLoader(false),
                 ];
+                const { traceId } = parseApiError(err);
                 if (err.status === 412) {
                   return of({
                     success: false as const,
                     actions: [
                       ...failActions,
                       UIActions.showErrorToast({
+                        traceId,
                         message: translate(
                           CommonI18nKeys.ToolsetAlreadyExists,
                           {
@@ -339,6 +352,7 @@ const updateToolsetEpic: AppEpic = (action$) =>
                   actions: [
                     ...failActions,
                     UIActions.showErrorToast({
+                      traceId,
                       message: translate(CommonI18nKeys.ToolsetMoveFailed, {
                         ns: Translation.Common,
                       }),
@@ -416,9 +430,11 @@ const updateToolsetEpic: AppEpic = (action$) =>
             ),
             catchError((err) => {
               console.error('Failed to update toolset', err.message);
+              const { traceId } = parseApiError(err);
               return concat(
                 of(
                   UIActions.showErrorToast({
+                    traceId,
                     message: translate(
                       err.status === 400
                         ? CommonI18nKeys.ToolsetOAuthNotSupported
@@ -806,7 +822,7 @@ const startSignInProcessEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error('Failed to login', err);
-          return of(ToolsetActions.logInToolsetFail());
+          return of(ToolsetActions.logInToolsetFail(parseApiError(err)));
         }),
       );
     }),
@@ -893,12 +909,11 @@ const logInToolsetEpic: AppEpic = (action$, state$, { router }) =>
               void router.push(new URL(callbackUrl));
             }
           }
-          return concat(
-            of(
-              ToolsetActions.logInToolsetFail({
-                skipToastMessage: payload.isPopup,
-              }),
-            ),
+          return of(
+            ToolsetActions.logInToolsetFail({
+              ...parseApiError(err),
+              skipToastMessage: payload.isPopup,
+            }),
           );
         }),
       );
@@ -935,8 +950,9 @@ const loginToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.logInToolsetFail.type),
     filter(({ payload }) => !payload?.skipToastMessage),
-    map(() =>
+    map(({ payload }) =>
       UIActions.showErrorToast({
+        traceId: payload?.traceId,
         message: translate(CommonI18nKeys.ToolsetSignInFailed, {
           ns: Translation.Common,
         }),
@@ -985,7 +1001,7 @@ const logOutToolsetEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error('Failed to sign out toolset', err);
-          return of(ToolsetActions.logOutToolsetFail());
+          return of(ToolsetActions.logOutToolsetFail(parseApiError(err)));
         }),
       );
     }),
@@ -994,8 +1010,9 @@ const logOutToolsetEpic: AppEpic = (action$, state$) =>
 const logOutToolsetFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ToolsetActions.logOutToolsetFail.type),
-    map(() =>
+    map(({ payload }) =>
       UIActions.showErrorToast({
+        traceId: payload?.traceId,
         message: translate(CommonI18nKeys.ToolsetSignOutFailed, {
           ns: Translation.Common,
         }),
