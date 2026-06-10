@@ -1,4 +1,4 @@
-import { FC, useMemo } from 'react';
+import { useMemo } from 'react';
 
 import { ChatEventOperations } from '@/src/types/chat-events';
 
@@ -10,7 +10,9 @@ import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
 import groupBy from 'lodash-es/groupBy';
 
-const ChatEventsModalView: FC = () => {
+const view = withRenderWhen((state) => {
+  return !!ChatEventsSelectors.selectEventsList(state).length;
+})(() => {
   const events = useAppSelector(ChatEventsSelectors.selectEventsList);
 
   const { [ChatEventOperations.ToolsetSignIn]: toolsetLoginEvents } = useMemo(
@@ -23,8 +25,6 @@ const ChatEventsModalView: FC = () => {
   }
 
   return null;
-};
+});
 
-export const ChatEventsModal = withRenderWhen((state) => {
-  return !!ChatEventsSelectors.selectEventsList(state).length;
-})(ChatEventsModalView);
+export const ChatEventsModal = view;

@@ -103,6 +103,14 @@ export default [
         'warn',
         {
           allowConstantExport: true,
+          extraHOCs: [
+            'withErrorBoundary',
+            'withRenderForScreen',
+            'withRenderWhen',
+            'withRenderWhenNot',
+            'withRenderWhenFeature',
+            'withRenderWhenEntities',
+          ],
           allowExportNames: [
             'getServerSideProps',
             'getStaticProps',
