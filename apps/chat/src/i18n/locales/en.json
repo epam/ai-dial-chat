@@ -1,4 +1,11 @@
 {
+  "basic": {
+    "searchPlaceholder": "Search..."
+  },
+  "buttons": {
+    "showMore": "Show more",
+    "showLess": "Show less"
+  },
   "chat": {
     "welcomeText": "Hello World, good day for prompting!",
     "placeholder": "Ask anything...",
@@ -18,8 +25,6 @@
     "stoppedGenerating": "You stopped generating the response",
     "readOnlyNotice": "Only own conversations can be edited",
     "thinking": "Thinking",
-    "showMore": "Show more",
-    "showLess": "Show less",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message",
     "negativeFeedbackTitle": "Send negative feedback",
@@ -54,7 +59,6 @@
       "loading": "Loading models…",
       "error": "Failed to load models",
       "empty": "No models available",
-      "searchPlaceholder": "Search...",
       "closeLabel": "Close model selector"
     }
   },
@@ -100,14 +104,18 @@
     },
     "sources": {
       "ariaLabel": "Conversation sources",
-      "search": "Search",
+      "search": "Search...",
       "downloadAll": "Download all",
+      "noResults": "No results found",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",
         "sources": "Sources"
       },
-      "noData": "No data"
+      "noData": "No data",
+      "attachment": {
+        "downloadLabel": "Download file"
+      }
     }
   },
   "conversation": {
@@ -120,6 +128,7 @@
     "title": "Chats",
     "toggleAriaLabel": "Conversation panel",
     "empty": "No conversations yet",
+    "noResults": "No results found",
     "newChat": "New chat",
     "searchPlaceholder": "Search chat…",
     "filterAll": "All",

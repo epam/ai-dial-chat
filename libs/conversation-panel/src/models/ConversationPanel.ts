@@ -124,8 +124,10 @@ export interface ConversationPanelProps {
   activeConversationId?: string;
   /** Panel heading text (e.g. `"Chats"`). */
   title: string;
-  /** Message shown when `conversations` is empty or no items match the current filter. */
+  /** Message shown when `conversations` is empty. */
   emptyLabel: string;
+  /** Message shown when conversations exist but none match the active filter. */
+  noResultsLabel: string;
   /** Called when the New chat button is clicked. */
   onNewChat: () => void;
   /** Label for the New chat button (e.g. `"New chat"`). */

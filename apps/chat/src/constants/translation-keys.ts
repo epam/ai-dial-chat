@@ -17,8 +17,6 @@ export enum ChatI18nKeys {
   StoppedGenerating = 'chat.stoppedGenerating',
   ReadOnlyNotice = 'chat.readOnlyNotice',
   Thinking = 'chat.thinking',
-  ShowMore = 'chat.showMore',
-  ShowLess = 'chat.showLess',
   ShowMoreUserMessage = 'chat.showMoreUserMessage',
   ShowLessUserMessage = 'chat.showLessUserMessage',
   NegativeFeedbackTitle = 'chat.negativeFeedbackTitle',
@@ -28,6 +26,15 @@ export enum ChatI18nKeys {
   LikeToastMessage = 'chat.likeToastMessage',
   FeedbackSentToastMessage = 'chat.feedbackSentToastMessage',
   Send = 'chat.send',
+}
+
+export enum ButtonsI18nKeys {
+  ShowMore = 'buttons.showMore',
+  ShowLess = 'buttons.showLess',
+}
+
+export enum BasicI18nKeys {
+  SearchPlaceholder = 'basic.searchPlaceholder',
 }
 
 export enum ActionsI18nKeys {
@@ -72,7 +79,6 @@ export enum DeploymentsI18nKeys {
   SelectorLoading = 'deployments.selector.loading',
   SelectorError = 'deployments.selector.error',
   SelectorEmpty = 'deployments.selector.empty',
-  SelectorSearchPlaceholder = 'deployments.selector.searchPlaceholder',
   SelectorCloseLabel = 'deployments.selector.closeLabel',
 }
 
@@ -107,6 +113,7 @@ export enum ConversationHistoryI18nKeys {
   Title = 'conversationHistory.title',
   ToggleAriaLabel = 'conversationHistory.toggleAriaLabel',
   Empty = 'conversationHistory.empty',
+  NoResults = 'conversationHistory.noResults',
   NewChat = 'conversationHistory.newChat',
   SearchPlaceholder = 'conversationHistory.searchPlaceholder',
   FilterAll = 'conversationHistory.filterAll',
@@ -139,8 +146,10 @@ export enum SidebarI18nKeys {
   AriaLabel = 'sidebar.sources.ariaLabel',
   Search = 'sidebar.sources.search',
   DownloadAll = 'sidebar.sources.downloadAll',
+  NoResults = 'sidebar.sources.noResults',
   SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
   SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
   SectionSources = 'sidebar.sources.sections.sources',
   Empty = 'sidebar.sources.noData',
+  AttachmentDownloadLabel = 'sidebar.sources.attachment.downloadLabel',
 }
