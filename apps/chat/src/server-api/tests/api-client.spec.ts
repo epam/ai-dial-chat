@@ -1,7 +1,12 @@
 import { ConversationsApi, ModelsApi } from '@epam/chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApiConfiguration } from '../api-client';
-import { UnauthorizedError, onUnauthorized, setCsrfToken } from '../base';
+import {
+  UnauthorizedError,
+  getCsrfToken,
+  onUnauthorized,
+  setCsrfToken,
+} from '../base';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -85,6 +90,31 @@ describe('csrfMiddleware', () => {
     );
 
     expect(getLastRequestHeaders(fetchSpy).get('X-CSRF-Token')).toBeNull();
+  });
+
+  it('captures rotated X-CSRF-Token from response header', async () => {
+    setCsrfToken('old-token');
+    global.fetch = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(JSON.stringify({ data: [] }), {
+        status: 200,
+        headers: {
+          'content-type': 'application/json',
+          'x-csrf-token': 'rotated-token',
+        },
+      }),
+    );
+    const api = new ConversationsApi(createApiConfiguration());
+
+    await ignoreRejection(
+      api.createConversation({
+        createConversationDto: {
+          firstMessage: 'hi',
+          deploymentId: 'test-deployment',
+        },
+      }),
+    );
+
+    expect(getCsrfToken()).toBe('rotated-token');
   });
 });
 

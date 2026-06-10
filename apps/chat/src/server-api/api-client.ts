@@ -10,7 +10,12 @@ import {
   RateApi,
   UserConfigApi,
 } from '@epam/chat-api-client';
-import { UnauthorizedError, getCsrfToken, notifyUnauthorized } from './base';
+import {
+  UnauthorizedError,
+  getCsrfToken,
+  notifyUnauthorized,
+  setCsrfToken,
+} from './base';
 
 const csrfMiddleware: Middleware = {
   pre: async (context) => {
@@ -28,6 +33,11 @@ const csrfMiddleware: Middleware = {
       };
     }
     return context;
+  },
+  post: async (context) => {
+    const rotated = context.response.headers.get('x-csrf-token');
+    if (rotated) setCsrfToken(rotated);
+    return context.response;
   },
 };
 
