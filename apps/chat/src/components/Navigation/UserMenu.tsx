@@ -3,6 +3,7 @@ import {
   DialDropdown,
   DialEllipsisTooltip,
   DialTooltip,
+  DropdownItem,
   DropdownItemType,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -16,19 +17,19 @@ import {
 } from '@tabler/icons-react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { StorageKey, ThemeId } from '../../constants/storage';
 import {
   AuthI18nKeys,
   SettingsI18nKeys,
 } from '../../constants/translation-keys';
-import { StorageKey, ThemeId } from '../../constants/storage';
 import { useUser } from '../../context/auth/UserContext';
-import { getFromLocalStorage } from '../../utils/local-storage';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import {
   metaKey,
   useKeyboardShortcutPreference,
 } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { getFromLocalStorage } from '../../utils/local-storage';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import AvatarInitials from './AvatarInitials';
 
@@ -64,6 +65,7 @@ export const UserMenu = memo(() => {
   const avatar = isFallbackIconShown ? (
     <AvatarInitials shortName={shortName} />
   ) : (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <img
       className="rounded-full"
       src={image}
@@ -88,7 +90,9 @@ export const UserMenu = memo(() => {
         <span className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-2">
             <IconMoon size={DIAL_ICON_SIZE.SM} aria-hidden />
-            <span className="dial-small-text">{t(SettingsI18nKeys.ThemeDark)}</span>
+            <span className="dial-small-text">
+              {t(SettingsI18nKeys.ThemeDark)}
+            </span>
           </span>
           {storedTheme === ThemeId.Dark && activeCheck}
         </span>
@@ -101,27 +105,32 @@ export const UserMenu = memo(() => {
         <span className="flex items-center justify-between gap-4">
           <span className="flex items-center gap-2">
             <IconSun size={DIAL_ICON_SIZE.SM} aria-hidden />
-            <span className="dial-small-text">{t(SettingsI18nKeys.ThemeLight)}</span>
+            <span className="dial-small-text">
+              {t(SettingsI18nKeys.ThemeLight)}
+            </span>
           </span>
           {storedTheme === ThemeId.Light && activeCheck}
         </span>
       ),
       onClick: () => setTheme(ThemeId.Light),
     },
-    hasDark && hasLight && {
-      key: 'theme-system',
-      label: (
-        <span className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-2">
-            <IconDeviceDesktop size={DIAL_ICON_SIZE.SM} aria-hidden />
-            <span className="dial-small-text">{t(SettingsI18nKeys.ThemeSystem)}</span>
+    hasDark &&
+      hasLight && {
+        key: 'theme-system',
+        label: (
+          <span className="flex items-center justify-between gap-4">
+            <span className="flex items-center gap-2">
+              <IconDeviceDesktop size={DIAL_ICON_SIZE.SM} aria-hidden />
+              <span className="dial-small-text">
+                {t(SettingsI18nKeys.ThemeSystem)}
+              </span>
+            </span>
+            {storedTheme === ThemeId.System && activeCheck}
           </span>
-          {storedTheme === ThemeId.System && activeCheck}
-        </span>
-      ),
-      onClick: () => setTheme(ThemeId.System),
-    },
-  ].filter(Boolean);
+        ),
+        onClick: () => setTheme(ThemeId.System),
+      },
+  ].filter((x): x is Exclude<typeof x, false> => Boolean(x)) as DropdownItem[];
 
   const menuItems = [
     {

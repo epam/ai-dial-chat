@@ -17,7 +17,6 @@ import {
 } from '../utils/apply-theme-colors';
 import { getFromLocalStorage, setToLocalStorage } from '../utils/local-storage';
 
-
 interface ThemeContextType {
   currentTheme: string;
   currentThemeLogo?: string;
@@ -30,7 +29,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [config, setConfig] = useState<ThemeConfiguration | null>(null);
-  const [currentThemeId, setCurrentThemeId] = useState(ThemeId.Dark);
+  const [currentThemeId, setCurrentThemeId] = useState<string>(ThemeId.Dark);
   const [currentLogo, setCurrentLogo] = useState<string | undefined>(void 0);
   const [isLoading, setIsLoading] = useState(true);
 
