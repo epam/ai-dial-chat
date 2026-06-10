@@ -408,6 +408,10 @@ export const ExpectedConstants = {
     name: string,
     version: string,
   ) => `Not available ${entityType}.${name}v. ${version}`,
+  loginToOrgSuccessfulMessage: (name: string, version: string) =>
+    `Successful login\nYou have successfully logged into the "${name}" version ${version} with credentials to entire organization.`,
+  personalLoginSuccessfulMessage: (name: string, version: string) =>
+    `Successful login\nYou have successfully logged into the "${name}" version ${version} with personal credentials.`,
 };
 
 export const withTraceId = (message: string): RegExp => {
@@ -813,6 +817,12 @@ export enum Creds {
 export enum SignInButtonTitles {
   logIn = 'Log in',
   logOut = 'Log out',
+}
+
+export enum ManageCredsModalText {
+  title = 'Manage credentials',
+  personalCredsText = 'Log in with personal credentials.',
+  orgCredsText = 'Log in with credentials that will be available to other users in the organization.',
 }
 
 export const ExpectedConfirmationPopupData = {
