@@ -22,12 +22,14 @@ interface StarterWithId extends ConversationStarter {
 interface ConversationStartersListProps {
   value: StarterWithId[];
   onChange: (value: StarterWithId[]) => void;
+  onBlur?: () => void;
   disabled?: boolean;
 }
 
 export const ConversationStartersList: FC<ConversationStartersListProps> = ({
   value,
   onChange,
+  onBlur,
   disabled,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
@@ -60,6 +62,7 @@ export const ConversationStartersList: FC<ConversationStartersListProps> = ({
             <DialInput
               value={item.title}
               onChange={(value) => handleChange(index, 'title', value ?? '')}
+              onBlur={onBlur}
               containerClassName="flex-1"
               placeholder={t(MarketplaceI18nKeys.ButtonTitleTravelTips) ?? ''}
               disabled={disabled}
@@ -67,6 +70,7 @@ export const ConversationStartersList: FC<ConversationStartersListProps> = ({
             <DialInput
               value={item.text}
               onChange={(value) => handleChange(index, 'text', value ?? '')}
+              onBlur={onBlur}
               containerClassName="flex-[2]"
               placeholder={t(MarketplaceI18nKeys.PromptToSendInChat) ?? ''}
               disabled={disabled}
@@ -79,9 +83,11 @@ export const ConversationStartersList: FC<ConversationStartersListProps> = ({
                   className={classNames(isLastRow && 'opacity-0')}
                 />
               }
-              onClick={() =>
-                !isLastRow && onChange(value.filter((_, i) => i !== index))
-              }
+              onClick={() => {
+                if (isLastRow) return;
+                onChange(value.filter((_, i) => i !== index));
+                onBlur?.();
+              }}
               className={classNames(
                 'shrink-0 px-2',
                 isLastRow ? 'pointer-events-none' : 'hover:text-error',

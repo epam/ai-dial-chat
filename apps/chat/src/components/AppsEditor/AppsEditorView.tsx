@@ -48,7 +48,7 @@ const getDefaultPreviewMode = (
 
 interface AppsEditorViewProps {
   onNextClick: () => void;
-  onAutoSave: () => void;
+  onAutoSave: (isSimpleViewSwitch?: boolean, ignoreDirty?: boolean) => void;
 }
 
 export const AppsEditorView = ({
