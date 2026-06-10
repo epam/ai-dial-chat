@@ -142,7 +142,7 @@ export const useUploadFilesHandler = (
             name: file.name,
 
             showSuccessMessage: true,
-            isQuickAttachment: true,
+            isFromDeviceAttachment: true,
           }),
         );
       });

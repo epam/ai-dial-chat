@@ -315,7 +315,7 @@ describe('files.reducers quick attachments', () => {
     type: 'text/plain',
   });
 
-  it('uploadFile sets isQuickAttachment when flag is passed', () => {
+  it('uploadFile sets isFromDeviceAttachment when flag is passed', () => {
     const state = filesSlice.getInitialState();
 
     const nextState = filesSlice.reducer(
@@ -325,16 +325,16 @@ describe('files.reducers quick attachments', () => {
         id: fileId,
         name: 'attachment.txt',
         relativePath: 'uploads/2025-01',
-        isQuickAttachment: true,
+        isFromDeviceAttachment: true,
       }),
     );
 
     expect(nextState.files).toHaveLength(1);
-    expect(nextState.files[0].isQuickAttachment).toBe(true);
+    expect(nextState.files[0].isFromDeviceAttachment).toBe(true);
     expect(nextState.files[0].status).toBe(UploadStatus.LOADING);
   });
 
-  it('uploadFile does not set isQuickAttachment without flag', () => {
+  it('uploadFile does not set isFromDeviceAttachment without flag', () => {
     const state = filesSlice.getInitialState();
 
     const nextState = filesSlice.reducer(
@@ -347,17 +347,17 @@ describe('files.reducers quick attachments', () => {
       }),
     );
 
-    expect(nextState.files[0].isQuickAttachment).toBeUndefined();
+    expect(nextState.files[0].isFromDeviceAttachment).toBeUndefined();
   });
 
-  it('uploadFileSuccess preserves isQuickAttachment', () => {
+  it('uploadFileSuccess preserves isFromDeviceAttachment', () => {
     const state = {
       ...filesSlice.getInitialState(),
       files: [
         makeFile({
           id: fileId,
           status: UploadStatus.LOADING,
-          isQuickAttachment: true,
+          isFromDeviceAttachment: true,
         }),
       ],
     };
@@ -372,7 +372,7 @@ describe('files.reducers quick attachments', () => {
       }),
     );
 
-    expect(nextState.files[0].isQuickAttachment).toBe(true);
+    expect(nextState.files[0].isFromDeviceAttachment).toBe(true);
     expect(nextState.files[0].serverSynced).toBe(true);
   });
 
@@ -383,7 +383,7 @@ describe('files.reducers quick attachments', () => {
       files: [
         makeFile({
           id: fileId,
-          isQuickAttachment: true,
+          isFromDeviceAttachment: true,
         }),
       ],
     };

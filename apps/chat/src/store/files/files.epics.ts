@@ -212,8 +212,8 @@ const reuploadFileEpic: AppEpic = (action$, state$) =>
           id: payload.fileId,
           relativePath: file.relativePath,
           name: file.name,
-          ...(file.isQuickAttachment && {
-            isQuickAttachment: true,
+          ...(file.isFromDeviceAttachment && {
+            isFromDeviceAttachment: true,
           }),
         }),
       );
@@ -566,7 +566,7 @@ const unselectFilesEpic: AppEpic = (action$, state$) =>
     switchMap(({ payload }) => {
       const files = FilesSelectors.selectFilesByIds(state$.value, payload.ids);
       const deleteActions = files
-        .filter((file) => file.isQuickAttachment)
+        .filter((file) => file.isFromDeviceAttachment)
         .map((file) => of(FilesActions.deleteFile({ fileId: file.id })));
 
       return concat(...deleteActions);

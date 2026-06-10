@@ -133,7 +133,7 @@ export const filesSlice = createSlice({
         bucket?: string;
 
         showSuccessMessage?: boolean;
-        isQuickAttachment?: boolean;
+        isFromDeviceAttachment?: boolean;
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.id);
@@ -149,8 +149,8 @@ export const filesSlice = createSlice({
         fileContent,
         contentLength: payload.fileContent.size,
         contentType: fileContent.type,
-        ...(payload.isQuickAttachment && {
-          isQuickAttachment: true,
+        ...(payload.isFromDeviceAttachment && {
+          isFromDeviceAttachment: true,
         }),
       });
     },
@@ -213,7 +213,7 @@ export const filesSlice = createSlice({
             contentLength:
               payload.apiResult.contentLength || file.contentLength,
             contentType: payload.apiResult.contentType || file.contentType,
-            isQuickAttachment: file.isQuickAttachment,
+            isFromDeviceAttachment: file.isFromDeviceAttachment,
           };
         }
         return file;

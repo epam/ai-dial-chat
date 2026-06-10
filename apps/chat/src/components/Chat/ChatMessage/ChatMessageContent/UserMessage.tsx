@@ -458,7 +458,7 @@ export const UserMessage = memo(function UserMessage({
     (fileId: string) => {
       const fid = isFolderId(fileId) ? fileId.slice(0, -1) : fileId;
       const file = files.find((f) => f.id === fid);
-      if (file?.isQuickAttachment) {
+      if (file?.isFromDeviceAttachment) {
         dispatch(FilesActions.deleteFile({ fileId: fid }));
       } else {
         dispatch(FilesActions.uploadFileCancel({ id: fileId }));
@@ -494,7 +494,7 @@ export const UserMessage = memo(function UserMessage({
             id: file.id,
             relativePath: folderPath,
             name: file.name,
-            isQuickAttachment: true,
+            isFromDeviceAttachment: true,
           }),
         );
       });
