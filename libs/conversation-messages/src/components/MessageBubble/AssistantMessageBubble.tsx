@@ -103,8 +103,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
               styles.startersDivider,
             )}
           >
-            {starters.map((starter) => (
-              <div key={starter.const} role="listitem" className="min-w-[40px]">
+            {starters.map((starter, index) => (
+              <div key={index} role="listitem" className="min-w-[40px]">
                 <DialRoundedButton
                   label={starter.title}
                   className="min-w-[40px]"

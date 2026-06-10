@@ -17,6 +17,7 @@ import {
   ConversationListItemDto,
   ConversationListResponseDto,
 } from './dto/conversation-list.dto';
+import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 import { RenameConversationResponseDto } from './dto/rename-conversation.dto';
 import type {
@@ -259,6 +260,46 @@ export class ConversationService extends AppService {
     }
 
     return { newPath: `conversations/${bucket}/${renamedPath}` };
+  }
+
+  async duplicateConversation(
+    sourcePath: string,
+    token: string,
+    sessionBucket: string,
+  ): Promise<DuplicateConversationResponseDto> {
+    const slashIndex = sourcePath.indexOf('/');
+    const sourceBucket =
+      slashIndex === -1 ? sessionBucket : sourcePath.slice(0, slashIndex);
+    const subPath =
+      slashIndex === -1 ? sourcePath : sourcePath.slice(slashIndex + 1);
+
+    const filename = subPath.split('/').at(-1) ?? subPath;
+    const sourceTitle = getConversationTitleFromName(filename);
+    const existingTitles = await this.fetchAllUserTitles(token, sessionBucket);
+    const uniqueTitle = resolveUniqueConversationName(
+      prepareEntityName(sourceTitle),
+      existingTitles,
+    );
+    const destFilename = buildRenamedConversationPath(filename, uniqueTitle);
+
+    const sourceUrl = `conversations/${sourceBucket}/${encodeDialResourcePath(subPath)}`;
+    const destinationUrl = `conversations/${sessionBucket}/${encodeURIComponent(destFilename)}`;
+
+    try {
+      const { error } = (await this.client.copyResource({
+        headers: getBearerAuthHeaders(token),
+        body: { sourceUrl, destinationUrl, overwrite: false },
+      })) as { error?: unknown };
+      if (error != null) {
+        this.logger.error('DIAL Core rejected copyResource (duplicate)', error);
+        return handleDialError(error);
+      }
+    } catch (error) {
+      this.logger.error('DIAL Core copyResource (duplicate) failed', error);
+      return handleDialError(error);
+    }
+
+    return { newPath: `conversations/${sessionBucket}/${destFilename}` };
   }
 
   async listConversations(

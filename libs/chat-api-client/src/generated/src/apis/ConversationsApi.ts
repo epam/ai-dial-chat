@@ -18,6 +18,7 @@ import type {
   ConversationMetadataDto,
   ConversationResponseDto,
   CreateConversationDto,
+  DuplicateConversationResponseDto,
   RenameConversationBodyDto,
   RenameConversationResponseDto,
   SaveConversationBodyDto,
@@ -29,6 +30,10 @@ export interface CreateConversationRequest {
 }
 
 export interface DeleteConversationRequest {
+  path: string;
+}
+
+export interface DuplicateConversationRequest {
   path: string;
 }
 
@@ -162,6 +167,59 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.deleteConversationRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Duplicate a conversation into the user\'s own bucket
+   */
+  async duplicateConversationRaw(
+    requestParameters: DuplicateConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<DuplicateConversationResponseDto>> {
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling duplicateConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/conversations/duplicate`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<DuplicateConversationResponseDto>(
+      response,
+    );
+  }
+
+  /**
+   * Duplicate a conversation into the user\'s own bucket
+   */
+  async duplicateConversation(
+    requestParameters: DuplicateConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<DuplicateConversationResponseDto> {
+    const response = await this.duplicateConversationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
   }
 
   /**

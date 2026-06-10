@@ -14,13 +14,15 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
-import { ROUTES } from '../../constants/routes';
+import { getConversationRoute, ROUTES } from '../../constants/routes';
 import {
   ActionsI18nKeys,
   ChatI18nKeys,
+  ConversationHistoryI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
+import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
@@ -57,6 +59,8 @@ export const ConversationPage: FC = () => {
     useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
+  const { duplicateConversation } = useConversations();
+  const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   const isTranscriptionSupported = useMemo(() => {
     if (asrModelId != null) return true;
@@ -113,6 +117,17 @@ export const ConversationPage: FC = () => {
     const slashIndex = decoded.indexOf('/');
     return slashIndex !== -1 && decoded.slice(0, slashIndex) !== bucket;
   }, [conversationId, bucket]);
+
+  const handleDuplicateConversation = useCallback(async () => {
+    if (!conversationId) return;
+    setDuplicateError(null);
+    try {
+      const newPath = await duplicateConversation(conversationId);
+      navigate(getConversationRoute(newPath));
+    } catch {
+      setDuplicateError(t(ConversationHistoryI18nKeys.DuplicateError));
+    }
+  }, [conversationId, duplicateConversation, navigate, t]);
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
@@ -263,6 +278,8 @@ export const ConversationPage: FC = () => {
           onSelectStarter={handleButtonSelect}
           streamErrorText={t(ChatI18nKeys.StreamError)}
           isReadOnly={isReadOnly}
+          onDuplicateConversation={handleDuplicateConversation}
+          duplicateError={duplicateError ?? undefined}
           readOnlyNotice={t(ChatI18nKeys.ReadOnlyNotice)}
           isTranscriptionSupported={isTranscriptionSupported}
           onUploadAudio={handleUploadAudio}
