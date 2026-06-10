@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Controller,
   useFormContext,
@@ -91,7 +91,7 @@ const adminFilesFilter = new Set([
 const getItemLabel = (item: unknown): string => item as string;
 
 interface AppsEditorProps {
-  onAutoSave: () => void;
+  onAutoSave: (isSimpleViewSwitch?: boolean, ignoreDirty?: boolean) => void;
 }
 
 export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
@@ -112,7 +112,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
 
-  const { control, setError, clearErrors, setValue } =
+  const { control, setError, clearErrors, setValue, getValues } =
     useFormContext<QuickApp2FormType>();
   const { errors } = useFormState<QuickApp2FormType>({ control });
 
@@ -149,6 +149,30 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const filesFilter = isPublicationReview ? adminFilesFilter : undefined;
 
   const reviewBucket = useReviewBucket();
+
+  const getStartersSettingsSnapshot = useCallback(() => {
+    const { starters, introText, autoSubmit, chatMessageInputDisabled } =
+      getValues();
+    return JSON.stringify({
+      starters,
+      introText,
+      autoSubmit,
+      chatMessageInputDisabled,
+    });
+  }, [getValues]);
+
+  const lastSavedStartersSettings = useRef<string | null>(null);
+  if (lastSavedStartersSettings.current === null) {
+    lastSavedStartersSettings.current = getStartersSettingsSnapshot();
+  }
+
+  const handleStartersSettingsAutoSave = useCallback(() => {
+    if (isAppPublic) return;
+    const snapshot = getStartersSettingsSnapshot();
+    if (snapshot === lastSavedStartersSettings.current) return;
+    lastSavedStartersSettings.current = snapshot;
+    onAutoSave(false, true);
+  }, [getStartersSettingsSnapshot, isAppPublic, onAutoSave]);
 
   const handleSelectFiles = useCallback(
     (fileIds: string[]) => {
@@ -395,6 +419,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             <ConversationStartersList
               value={field.value}
               onChange={field.onChange}
+              onBlur={handleStartersSettingsAutoSave}
               disabled={isAppPublic}
             />
           )}
@@ -427,6 +452,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 name="introText"
                 value={field.value}
                 onChange={field.onChange}
+                onBlur={handleStartersSettingsAutoSave}
                 disabled={isAppPublic || !hasStarters}
                 error={errors.introText?.message}
                 tooltipText={startersSettingsTooltip}
@@ -442,7 +468,10 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 label={t(MarketplaceI18nKeys.StartersBehavior)}
                 value={field.value}
                 isSubgroup
-                onChange={field.onChange}
+                onChange={(value) => {
+                  field.onChange(value);
+                  handleStartersSettingsAutoSave();
+                }}
                 disabled={isAppPublic || !hasStarters}
                 tooltip={startersSettingsTooltip}
               />
@@ -456,7 +485,10 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               <ToggleSwitchField
                 label={t(MarketplaceI18nKeys.DisableChatInput)}
                 isOn={field.value}
-                handleSwitch={() => field.onChange(!field.value)}
+                handleSwitch={() => {
+                  field.onChange(!field.value);
+                  handleStartersSettingsAutoSave();
+                }}
                 isSubgroup
                 className="mt-1 flex w-fit items-center gap-2"
                 switchOnText={t(SettingsI18nKeys.ON)}
