@@ -388,7 +388,9 @@ const ConversationView: FC<Props> = ({
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
             {readOnlyNotice && (
-              <p className="dial-body-regular-text text-secondary">{readOnlyNotice}</p>
+              <p className="dial-body-regular-text text-secondary">
+                {readOnlyNotice}
+              </p>
             )}
             {duplicateError && (
               <DialNotification
