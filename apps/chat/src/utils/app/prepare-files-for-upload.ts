@@ -13,7 +13,7 @@ import { getFileRootId } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { DialFile } from '@/src/types/files';
-import { AppDispatch } from '@/src/types/store';
+import type { AppDispatch } from '@/src/store';
 
 import { FilesActions } from '@/src/store/actions';
 
