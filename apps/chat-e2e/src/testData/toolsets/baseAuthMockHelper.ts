@@ -205,6 +205,8 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
       }
 
       this.state.isSignedIn = false;
+      this.isSignedInGlobal = false;
+      this.isSignedInUser = false;
       this.state.signOutRequest = requestData;
 
       await route.fulfill({
