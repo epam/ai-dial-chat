@@ -38,6 +38,10 @@ export interface AttachmentCardProps {
   removeLabel?: string;
   /** Accessible label for the retry button (error state only). */
   retryLabel?: string;
+  /** Called when the user clicks or keyboard-activates the card. Receives the attachment `id`. */
+  onClick?: (id: string) => void;
+  /** Accessible label applied to the card root when it is interactive via `onClick`. Defaults to `'Open attachment'`. */
+  clickLabel?: string;
   /** Color overrides applied as CSS custom properties. */
   colors?: AttachmentCardColors;
   /** Typography overrides for text elements inside the card. */
