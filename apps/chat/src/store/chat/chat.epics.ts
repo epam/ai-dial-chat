@@ -20,6 +20,7 @@ import {
   sendMessage,
 } from '@/src/utils/app/epics-helpers/chat.epic-helpers';
 import { getUserCustomContent } from '@/src/utils/app/file';
+import { removeDescriptionsFromSchema } from '@/src/utils/app/form-schema';
 import {
   isConversationId,
   isEntityIdExternal,
@@ -80,7 +81,9 @@ const setFormValueEpic: AppEpic = (action$, state$) =>
           ...(isFirstMessage
             ? {
                 configuration_value: formValue,
-                configuration_schema: configurationSchema,
+                configuration_schema: configurationSchema
+                  ? removeDescriptionsFromSchema(configurationSchema)
+                  : configurationSchema,
               }
             : {
                 form_value: formValue,
