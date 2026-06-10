@@ -122,7 +122,7 @@ export class ToolsetLoginModalAssertion extends BaseAssertion {
     }
     if (attributesToVerify.expectedIcon !== undefined) {
       await this.assertEntityIcon(
-        this.toolsetLoginModal,
+        this.toolsetLoginModal.getElementIcon(this.toolsetLoginModal),
         attributesToVerify.expectedIcon,
       );
     }

@@ -73,6 +73,14 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
     this.state.isSignedIn = isSignedIn;
   }
 
+  setIsSignedInGlobal(isSignedInGlobal: boolean) {
+    this.isSignedInGlobal = isSignedInGlobal;
+  }
+
+  setIsSignedInUser(isSignedInUser: boolean) {
+    this.isSignedInUser = isSignedInUser;
+  }
+
   getSignInRequest(): T | null {
     return this.state.signInRequest;
   }

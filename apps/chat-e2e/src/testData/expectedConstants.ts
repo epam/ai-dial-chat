@@ -408,6 +408,10 @@ export const ExpectedConstants = {
     name: string,
     version: string,
   ) => `Not available ${entityType}.${name}v. ${version}`,
+  loginToOrgSuccessfulMessage: (name: string, version: string) =>
+    `Successful login\nYou have successfully logged into the "${name}" version ${version} with credentials to entire organization.`,
+  personalLoginSuccessfulMessage: (name: string, version: string) =>
+    `Successful login\nYou have successfully logged into the "${name}" version ${version} with personal credentials.`,
 };
 
 export const withTraceId = (message: string): RegExp => {

@@ -1,7 +1,7 @@
 import { Publication } from '@/chat/types/publication';
 import { ToolsetCredentialsLevel } from '@/chat/types/toolsets';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
-import { Creds } from '@/src/testData';
+import { API, Attachment, Creds } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
@@ -15,7 +15,9 @@ import { Page } from '@playwright/test';
 
 dialAdminTest(
   '[Toolsets] Login with org and personal creds to public toolset with OAuth authentication type.\n' +
-    'Manage credentials form view',
+    'Manage credentials form view.\n' +
+    'Manage credentials form: icon is displayed.\n' +
+    'Admin logged in with personal creds to public toolset - normal user see logged out toolset',
   async ({
     toolsetBuilder,
     toolsetApiHelper,
@@ -33,18 +35,33 @@ dialAdminTest(
     toolsetApiAuthenticationAssertion,
     baseAssertion,
     setTestIds,
+    fileApiHelper,
     adminPage,
+    page,
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
+    entityDetailsModalAssertion,
   }) => {
-    setTestIds('EPMRTC-7990', 'EPMRTC-7991');
+    setTestIds('EPMRTC-7990', 'EPMRTC-7991', 'EPMRTC-7992', 'EPMRTC-8001');
 
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
       version: GeneratorUtil.randomEntityVersion(),
       endpoint: GeneratorUtil.randomUrl(),
     };
+    const filename = GeneratorUtil.randomFilename('svg');
+    const iconUrl = await fileApiHelper.putFileWithCustomName(
+      filename,
+      Attachment.appIconSvg,
+    );
+
     let initialToolset: Toolset;
     let publishedToolset: Toolset;
-    let oauthMockHelper: OAuthMockHelper;
+    let personalToolset: Toolset;
+    let adminOauthMockHelper: OAuthMockHelper;
+    let userOAuthMockHelper: OAuthMockHelper;
     let loginPopup: Page;
 
     await dialAdminTest.step(
@@ -53,6 +70,7 @@ dialAdminTest(
         const toolsetModel = toolsetBuilder
           .withDisplayName(toolsetEntity.name)
           .withDisplayVersion(toolsetEntity.version)
+          .withIconUrl(iconUrl)
           .build();
         await toolsetApiHelper.createToolset(toolsetModel);
         initialToolset = (await toolsetApiHelper.getToolset(
@@ -68,6 +86,7 @@ dialAdminTest(
         const publishRequest = publishRequestBuilder
           .withName(GeneratorUtil.randomPublicationRequestName())
           .withToolsetResource(initialToolset, PublishActions.ADD)
+          .withFileResource(iconUrl, PublishActions.ADD)
           .build();
         const publication: Publication =
           await publicationApiHelper.createPublishRequest(publishRequest);
@@ -82,15 +101,18 @@ dialAdminTest(
       },
     );
 
-    await dialAdminTest.step('Setup OAuth mocks for admin page', async () => {
-      oauthMockHelper = new OAuthMockHelper(
-        adminPage,
-        publishedToolset,
-        toolsetEntity.endpoint,
-      );
-      await oauthMockHelper.setupMocks();
-      oauthMockHelper.enableMocking();
-    });
+    await dialAdminTest.step(
+      'Setup OAuth mocks for admin user page',
+      async () => {
+        adminOauthMockHelper = new OAuthMockHelper(
+          adminPage,
+          publishedToolset,
+          toolsetEntity.endpoint,
+        );
+        await adminOauthMockHelper.setupMocks();
+        adminOauthMockHelper.enableMocking();
+      },
+    );
 
     await dialAdminTest.step(
       'Open admin marketplace, navigate to toolsets and find published toolset',
@@ -99,7 +121,7 @@ dialAdminTest(
           updateInstalledDeployments: false,
           getInstalledDeployments: true,
           updateInstalledToolsets: false,
-          getInstalledToolsets: true,
+          getInstalledToolsets: false,
           getStyles: true,
         });
         await adminMarketplacePage.waitForPageLoaded();
@@ -145,7 +167,7 @@ dialAdminTest(
           {
             expectedName: toolsetEntity.name,
             expectedVersion: toolsetEntity.version,
-            expectedDefaultIconState: 'visible',
+            expectedIcon: `${API.api}/${publishedToolset.icon_url}`,
           },
         );
       },
@@ -176,7 +198,7 @@ dialAdminTest(
       async () => {
         loginPopup =
           await adminToolsetLoginModal.clickOrgCredsLoginButtonForOAuth();
-        await oauthMockHelper.navigateToCallback(loginPopup);
+        await adminOauthMockHelper.navigateToCallback(loginPopup);
       },
     );
 
@@ -204,27 +226,82 @@ dialAdminTest(
     await dialAdminTest.step(
       'Validate org sign-in request payload',
       async () => {
-        const orgSignInRequest = oauthMockHelper.getOrgSignInRequest()!;
+        const orgSignInRequest = adminOauthMockHelper.getOrgSignInRequest()!;
         toolsetApiAuthenticationAssertion.assertSignInRequest(
           orgSignInRequest,
           {
             url: publishedToolset.name!,
             authType: ToolsetAuthTypes.OAUTH,
             credentialsLevel: ToolsetCredentialsLevel.GLOBAL,
-            authorizationCode: oauthMockHelper.getAuthorizationCode(),
+            authorizationCode: adminOauthMockHelper.getAuthorizationCode(),
           },
         );
       },
     );
 
     await dialAdminTest.step(
-      'Click Manage creds button again, click login button and complete OAuth flow',
+      'Click Manage creds button again, click login button and complete OAuth flow for personal creds',
       async () => {
         await adminEntityDetailsModal.manageCredsButton.click();
         await adminToolsetLoginModal.myCredsAccordion.click();
         loginPopup =
           await adminToolsetLoginModal.clickMyCredsLoginButtonForOAuth();
-        await oauthMockHelper.navigateToCallback(loginPopup);
+        const responses = await adminMarketplacePage.waitForExpectedResponses(
+          () => adminOauthMockHelper.navigateToCallback(loginPopup),
+          [
+            {
+              apiMethod: 'GET',
+              urlPattern: API.toolsetCreateHost(),
+              status: 200,
+            },
+          ],
+        );
+        personalToolset = (await responses.responses[0].json()) as Toolset;
+      },
+    );
+
+    await dialAdminTest.step(
+      'Setup OAuth mocks for regular user page',
+      async () => {
+        userOAuthMockHelper = new OAuthMockHelper(
+          page,
+          personalToolset,
+          toolsetEntity.endpoint,
+        );
+        await userOAuthMockHelper.setupToolsetListingRoute();
+        userOAuthMockHelper.enableMocking();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify regular user sees toolset as logged-out when admin is logged in with personal creds only',
+      async () => {
+        await marketplacePage.openMarketplacePage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: false,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: false,
+          getStyles: true,
+        });
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.toolsetsTab.click();
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(toolsetEntity.name);
+        const toolsetElement =
+          await marketplaceEntitiesSection.findEntityElement(
+            toolsetEntity.name,
+            { isEditable: false, isWorkspaceEntity: false },
+          );
+        await baseAssertion.assertElementState(toolsetElement, 'visible');
+        await toolsetElement.click();
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
+          'visible',
+        );
+        await entityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedCredsLabel: Creds.loggedOut,
+        });
       },
     );
 
@@ -264,14 +341,14 @@ dialAdminTest(
     await dialAdminTest.step(
       'Validate user sign-in request payload',
       async () => {
-        const userSignInRequest = oauthMockHelper.getUserSignInRequest()!;
+        const userSignInRequest = adminOauthMockHelper.getUserSignInRequest()!;
         toolsetApiAuthenticationAssertion.assertSignInRequest(
           userSignInRequest,
           {
             url: publishedToolset.name!,
             authType: ToolsetAuthTypes.OAUTH,
             credentialsLevel: ToolsetCredentialsLevel.USER,
-            authorizationCode: oauthMockHelper.getAuthorizationCode(),
+            authorizationCode: adminOauthMockHelper.getAuthorizationCode(),
           },
         );
       },

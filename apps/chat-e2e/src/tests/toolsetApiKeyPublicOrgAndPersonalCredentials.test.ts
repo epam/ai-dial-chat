@@ -1,7 +1,7 @@
 import { Publication } from '@/chat/types/publication';
 import { ToolsetCredentialsLevel } from '@/chat/types/toolsets';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
-import { Creds } from '@/src/testData';
+import { Creds, ExpectedConstants } from '@/src/testData';
 import { ApiKeyMockHelper } from '@/src/testData/toolsets/apiKeyMockHelper';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
@@ -13,7 +13,9 @@ import {
 } from '@epam/ai-dial-shared';
 
 dialAdminTest(
-  '[Toolsets] Login with org and personal creds to public toolset with API key authentication type',
+  '[Toolsets] Login with org and personal creds to public toolset with API key authentication type.\n' +
+    'Toast message on successfully login for public toolset.\n' +
+    'Admin logged in with orgl creds to public toolset - normal user see logged in with Org creds toolset',
   async ({
     toolsetBuilder,
     toolsetApiHelper,
@@ -30,10 +32,17 @@ dialAdminTest(
     adminToolsetLoginModalAssertion,
     toolsetApiAuthenticationAssertion,
     baseAssertion,
+    adminToast,
+    marketplacePage,
+    marketplaceHeader,
+    marketplaceEntitiesSection,
+    entityDetailsModal,
+    entityDetailsModalAssertion,
     setTestIds,
     adminPage,
+    page,
   }) => {
-    setTestIds('EPMRTC-8005');
+    setTestIds('EPMRTC-8005', 'EPMRTC-7995', 'EPMRTC-8002');
 
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
@@ -45,7 +54,9 @@ dialAdminTest(
     };
     let initialToolset: Toolset;
     let publishedToolset: Toolset;
-    let apiKeyMockHelper: ApiKeyMockHelper;
+    let orgToolset: Toolset;
+    let adminApiKeyMockHelper: ApiKeyMockHelper;
+    let userApiKeyMockHelper: ApiKeyMockHelper;
 
     await dialAdminTest.step(
       'Precondition: Create API-key toolset via API',
@@ -87,15 +98,18 @@ dialAdminTest(
       },
     );
 
-    await dialAdminTest.step('Setup ApiKey mocks for admin page', async () => {
-      apiKeyMockHelper = new ApiKeyMockHelper(
-        adminPage,
-        publishedToolset,
-        toolsetEntity.endpoint,
-      );
-      await apiKeyMockHelper.setupMocks();
-      apiKeyMockHelper.enableMocking();
-    });
+    await dialAdminTest.step(
+      'Setup ApiKey mocks for admin user page',
+      async () => {
+        adminApiKeyMockHelper = new ApiKeyMockHelper(
+          adminPage,
+          publishedToolset,
+          toolsetEntity.endpoint,
+        );
+        await adminApiKeyMockHelper.setupMocks();
+        adminApiKeyMockHelper.enableMocking();
+      },
+    );
 
     await dialAdminTest.step(
       'Open admin marketplace, navigate to toolsets and find published toolset',
@@ -144,13 +158,35 @@ dialAdminTest(
         await adminToolsetLoginModal.orgCredsApiKeyInput.fillInInput(
           toolsetEntity.orgApiKey,
         );
-        await adminToolsetLoginModal.orgCredsLoginButton.click();
+        orgToolset =
+          await adminToolsetLoginModal.clickOrgCredsLoginButtonForApiKey();
       },
     );
 
     await dialAdminTest.step(
-      'Verify login modal is closed and entity details shows org creds badge',
+      'Setup ApiKey mocks for the main user page',
       async () => {
+        userApiKeyMockHelper = new ApiKeyMockHelper(
+          page,
+          orgToolset,
+          toolsetEntity.endpoint,
+        );
+        await userApiKeyMockHelper.setupMocks();
+        userApiKeyMockHelper.enableMocking();
+        userApiKeyMockHelper.setIsSignedInGlobal(true);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify login modal is closed, successful toast is displayed and entity details shows org creds badge',
+      async () => {
+        await baseAssertion.assertElementText(
+          adminToast,
+          ExpectedConstants.loginToOrgSuccessfulMessage(
+            toolsetEntity.name,
+            toolsetEntity.version,
+          ),
+        );
         await adminToolsetLoginModalAssertion.assertElementState(
           adminToolsetLoginModal,
           'hidden',
@@ -172,7 +208,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Validate org sign-in request payload',
       async () => {
-        const orgSignInRequest = apiKeyMockHelper.getOrgSignInRequest()!;
+        const orgSignInRequest = adminApiKeyMockHelper.getOrgSignInRequest()!;
         toolsetApiAuthenticationAssertion.assertSignInRequest(
           orgSignInRequest,
           {
@@ -186,6 +222,38 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
+      'Verify regular user sees toolset as logged-in when admin is logged in with Org creds only',
+      async () => {
+        await marketplacePage.openMarketplacePage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: false,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: false,
+          getStyles: true,
+        });
+        await marketplacePage.waitForPageLoaded();
+        await marketplaceHeader.toolsetsTab.click();
+        await marketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(toolsetEntity.name);
+        const toolsetElement =
+          await marketplaceEntitiesSection.findEntityElement(
+            toolsetEntity.name,
+            { isEditable: false, isWorkspaceEntity: false },
+          );
+        await baseAssertion.assertElementState(toolsetElement, 'visible');
+        await toolsetElement.click();
+        await entityDetailsModalAssertion.assertElementState(
+          entityDetailsModal,
+          'visible',
+        );
+        await entityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedCredsLabel: Creds.orgCreds,
+        });
+      },
+    );
+
+    await dialAdminTest.step(
       'Click Manage creds button again, fill in API key and log in',
       async () => {
         await adminEntityDetailsModal.manageCredsButton.click();
@@ -193,13 +261,20 @@ dialAdminTest(
         await adminToolsetLoginModal.myCredsApiKeyInput.fillInInput(
           toolsetEntity.userApiKey,
         );
-        await adminToolsetLoginModal.myCredsLoginButton.click();
+        await adminToolsetLoginModal.clickMyCredsLoginButtonForApiKey();
       },
     );
 
     await dialAdminTest.step(
-      'Verify login modal is closed and entity details shows both MY CREDS and ORG CREDS badges',
+      'Verify login modal is closed, successful toast is displayed and entity details shows both MY CREDS and ORG CREDS badges',
       async () => {
+        await baseAssertion.assertElementText(
+          adminToast,
+          ExpectedConstants.personalLoginSuccessfulMessage(
+            toolsetEntity.name,
+            toolsetEntity.version,
+          ),
+        );
         await adminToolsetLoginModalAssertion.assertElementState(
           adminToolsetLoginModal,
           'hidden',
@@ -233,7 +308,7 @@ dialAdminTest(
     await dialAdminTest.step(
       'Validate user sign-in request payload',
       async () => {
-        const userSignInRequest = apiKeyMockHelper.getUserSignInRequest()!;
+        const userSignInRequest = adminApiKeyMockHelper.getUserSignInRequest()!;
         toolsetApiAuthenticationAssertion.assertSignInRequest(
           userSignInRequest,
           {
