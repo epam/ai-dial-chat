@@ -8,10 +8,7 @@ import {
 import { memo, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { FEEDBACK_CATEGORIES } from '../../constants/feedback-categories';
-import {
-  ActionsI18nKeys,
-  ChatI18nKeys,
-} from '../../constants/translation-keys';
+import { ChatI18nKeys } from '../../constants/translation-keys';
 
 interface Props {
   onClose: () => void;
