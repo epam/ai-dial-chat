@@ -29,7 +29,17 @@ function getDialPathDisplayName(path: string) {
   return name ?? path;
 }
 
-function UnshareDialogView() {
+const view = withRenderWhen((state) => {
+  const unshareModel = ShareSelectors.selectUnshareModel(state);
+  const unshareResource = ShareSelectors.selectUnshareResourceId(state);
+  const fileManagerItems = ShareSelectors.selectUnshareFileManagerItems(state);
+
+  return (
+    !!unshareModel ||
+    !!unshareResource ||
+    !!(fileManagerItems && fileManagerItems.length > 0)
+  );
+})(() => {
   const { t } = useTranslation(Translation.Common);
   const dispatch = useAppDispatch();
 
@@ -218,18 +228,6 @@ function UnshareDialogView() {
       onClose={handleConfirmUnshare}
     />
   );
-}
-
-const view = withRenderWhen((state) => {
-  const unshareModel = ShareSelectors.selectUnshareModel(state);
-  const unshareResource = ShareSelectors.selectUnshareResourceId(state);
-  const fileManagerItems = ShareSelectors.selectUnshareFileManagerItems(state);
-
-  return (
-    !!unshareModel ||
-    !!unshareResource ||
-    !!(fileManagerItems && fileManagerItems.length > 0)
-  );
-})(UnshareDialogView);
+});
 
 export const UnshareDialog = view;

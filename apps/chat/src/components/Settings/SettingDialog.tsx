@@ -51,10 +51,7 @@ const view = withRenderWhen((state) => {
   return isOpen && !isUserMenuHidden;
 })(() => {
   const dispatch = useAppDispatch();
-  const ToggleSwitchLabel = useMemo(
-    () => withLabel(ToggleSwitchLabeled),
-    [],
-  );
+  const ToggleSwitchLabel = useMemo(() => withLabel(ToggleSwitchLabeled), []);
 
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);

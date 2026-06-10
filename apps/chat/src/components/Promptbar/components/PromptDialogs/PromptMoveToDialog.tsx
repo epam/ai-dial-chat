@@ -27,9 +27,7 @@ interface PromptMoveToDialogProps {
 
 const view = withRenderWhenEntities<PromptMoveToDialogProps>({
   moveToPromptId: PromptsSelectors.selectMoveToPromptId,
-})(({
-  moveToPromptId,
-}: PromptMoveToDialogProps) => {
+})(({ moveToPromptId }: PromptMoveToDialogProps) => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();

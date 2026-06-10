@@ -119,6 +119,7 @@ export default [
             'getStaticPaths',
             'config',
             'metadata',
+            'EditorThemes',
             'withController',
             'withErrorMessage',
             'withErrorBoundary',

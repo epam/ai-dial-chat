@@ -21,9 +21,7 @@ interface PromptDeleteDialogProps {
 
 const view = withRenderWhenEntities<PromptDeleteDialogProps>({
   deletingPromptId: PromptsSelectors.selectDeletingPromptId,
-})(({
-  deletingPromptId,
-}: PromptDeleteDialogProps) => {
+})(({ deletingPromptId }: PromptDeleteDialogProps) => {
   const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
 

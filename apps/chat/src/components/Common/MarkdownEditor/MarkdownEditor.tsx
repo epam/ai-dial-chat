@@ -16,14 +16,14 @@ export const EditorThemes = {
   light: 'light',
 } as const;
 
-export type EditorThemes = (typeof EditorThemes)[keyof typeof EditorThemes];
+export type EditorTheme = (typeof EditorThemes)[keyof typeof EditorThemes];
 
 export interface DialMarkdownEditorProps {
   value?: string;
   onChange?: (value: string) => void;
   height?: number;
   preview?: PreviewType;
-  theme?: EditorThemes;
+  theme?: EditorTheme;
   className?: string;
   placeholder?: string;
   commands?: ICommand[];

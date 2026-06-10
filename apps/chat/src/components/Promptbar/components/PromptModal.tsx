@@ -132,9 +132,7 @@ const view = withRenderWhen(PromptsSelectors.selectIsPromptModalOpen)(() => {
       return <ViewPrompt prompt={prompt} onEditMode={handleGoToEditMode} />;
     }
 
-    return (
-      <EditPrompt onEdit={handleEdit} onClose={onClose} prompt={prompt} />
-    );
+    return <EditPrompt onEdit={handleEdit} onClose={onClose} prompt={prompt} />;
   };
 
   return (
