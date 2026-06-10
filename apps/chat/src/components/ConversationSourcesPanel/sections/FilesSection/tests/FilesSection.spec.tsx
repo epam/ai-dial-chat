@@ -1,13 +1,26 @@
 import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import FilesSection from '../FilesSection';
 
 vi.mock('@epam/ai-dial-conversation-input', () => ({
-  AttachmentCard: ({ attachment }: { attachment: DisplayAttachment }) => (
-    <div>{attachment.name}</div>
-  ),
+  AttachmentCard: ({
+    attachment,
+    onClick,
+    clickLabel,
+  }: {
+    attachment: DisplayAttachment;
+    onClick?: () => void;
+    clickLabel?: string;
+  }) =>
+    onClick ? (
+      <button type="button" aria-label={clickLabel} onClick={onClick}>
+        {attachment.name}
+      </button>
+    ) : (
+      <div>{attachment.name}</div>
+    ),
 }));
 
 const makeAttachment = (name: string): DisplayAttachment => ({
@@ -46,5 +59,40 @@ describe('FilesSection', () => {
     );
     expect(screen.getByRole('list')).toBeTruthy();
     expect(screen.getAllByRole('listitem')).toHaveLength(1);
+  });
+
+  it('cards have no onClick when onAttachmentClick is not provided', () => {
+    render(
+      <FilesSection attachments={[makeAttachment('a.pdf')]} title="Files" />,
+    );
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('cards have onClick and clickLabel when onAttachmentClick is provided', () => {
+    const onAttachmentClick = vi.fn();
+    render(
+      <FilesSection
+        attachments={[makeAttachment('a.pdf')]}
+        title="Files"
+        onAttachmentClick={onAttachmentClick}
+        attachmentClickLabel="Download file"
+      />,
+    );
+    const btn = screen.getByRole('button', { name: 'Download file' });
+    expect(btn).toBeTruthy();
+  });
+
+  it('activating a card calls onAttachmentClick with the correct attachment', () => {
+    const onAttachmentClick = vi.fn();
+    const att = makeAttachment('a.pdf');
+    render(
+      <FilesSection
+        attachments={[att]}
+        title="Files"
+        onAttachmentClick={onAttachmentClick}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button'));
+    expect(onAttachmentClick).toHaveBeenCalledWith(att);
   });
 });

@@ -144,4 +144,5 @@ export enum SidebarI18nKeys {
   SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
   SectionSources = 'sidebar.sources.sections.sources',
   Empty = 'sidebar.sources.noData',
+  AttachmentDownloadLabel = 'sidebar.sources.attachment.downloadLabel',
 }

@@ -14,6 +14,7 @@ import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SidebarI18nKeys } from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
+import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
 import FilesSection from './sections/FilesSection/FilesSection';
 
@@ -22,6 +23,7 @@ const ConversationSourcesPanel: FC = () => {
   const { t } = useTranslation();
   const { handleClose, isOpen, messages } = useSourcesSidebar();
   const { uploaded, generated } = useConversationSources(messages);
+  const { handleAttachmentClick } = useAttachmentAction();
   const [searchQuery, setSearchQuery] = useState('');
 
   useLayoutEffect(() => {
@@ -96,10 +98,14 @@ const ConversationSourcesPanel: FC = () => {
             <FilesSection
               attachments={filteredUploaded}
               title={t(SidebarI18nKeys.SectionUploadedFiles)}
+              onAttachmentClick={handleAttachmentClick}
+              attachmentClickLabel={t(SidebarI18nKeys.AttachmentDownloadLabel)}
             />
             <FilesSection
               attachments={filteredGenerated}
               title={t(SidebarI18nKeys.SectionGeneratedFiles)}
+              onAttachmentClick={handleAttachmentClick}
+              attachmentClickLabel={t(SidebarI18nKeys.AttachmentDownloadLabel)}
             />
             {/* TODO: restore after implementing sources extraction from assistant
             messages */}

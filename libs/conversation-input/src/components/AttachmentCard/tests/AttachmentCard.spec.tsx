@@ -186,3 +186,103 @@ describe('AttachmentCard — pasted type', () => {
     expect(card.getAttribute('role')).toBeNull();
   });
 });
+
+describe('AttachmentCard — onClick', () => {
+  it('card is inert without onClick: no role, no tabIndex, no cursor-pointer', () => {
+    const { container } = render(
+      <AttachmentCard attachment={makeAttachment()} />,
+    );
+    const card = container.firstElementChild as HTMLElement;
+    expect(card.getAttribute('role')).toBeNull();
+    expect(card.getAttribute('tabindex')).toBeNull();
+    expect(card.className).not.toContain('cursor-pointer');
+  });
+
+  it('card has role="button", tabIndex=0, and cursor-pointer when onClick is provided', () => {
+    const { container } = render(
+      <AttachmentCard attachment={makeAttachment()} onClick={vi.fn()} />,
+    );
+    const card = container.firstElementChild as HTMLElement;
+    expect(card.getAttribute('role')).toBe('button');
+    expect(card.getAttribute('tabindex')).toBe('0');
+    expect(card.className).toContain('cursor-pointer');
+  });
+
+  it('uses default aria-label "Open attachment" when clickLabel is omitted', () => {
+    const { container } = render(
+      <AttachmentCard attachment={makeAttachment()} onClick={vi.fn()} />,
+    );
+    const card = container.firstElementChild as HTMLElement;
+    expect(card.getAttribute('aria-label')).toBe('Open attachment');
+  });
+
+  it('uses provided clickLabel as aria-label', () => {
+    const { container } = render(
+      <AttachmentCard
+        attachment={makeAttachment()}
+        onClick={vi.fn()}
+        clickLabel="Download file"
+      />,
+    );
+    const card = container.firstElementChild as HTMLElement;
+    expect(card.getAttribute('aria-label')).toBe('Download file');
+  });
+
+  it('calls onClick with attachment id on card click', () => {
+    const onClick = vi.fn();
+    const { container } = render(
+      <AttachmentCard attachment={makeAttachment()} onClick={onClick} />,
+    );
+    fireEvent.click(container.firstElementChild!);
+    expect(onClick).toHaveBeenCalledWith('a1');
+  });
+
+  it('calls onClick on Enter key press', () => {
+    const onClick = vi.fn();
+    const { container } = render(
+      <AttachmentCard attachment={makeAttachment()} onClick={onClick} />,
+    );
+    fireEvent.keyDown(container.firstElementChild!, { key: 'Enter' });
+    expect(onClick).toHaveBeenCalledWith('a1');
+  });
+
+  it('calls onClick on Space key press', () => {
+    const onClick = vi.fn();
+    const { container } = render(
+      <AttachmentCard attachment={makeAttachment()} onClick={onClick} />,
+    );
+    fireEvent.keyDown(container.firstElementChild!, { key: ' ' });
+    expect(onClick).toHaveBeenCalledWith('a1');
+  });
+
+  it('remove button click does not propagate to onClick', () => {
+    const onClick = vi.fn();
+    const onRemove = vi.fn();
+    render(
+      <AttachmentCard
+        attachment={makeAttachment()}
+        onClick={onClick}
+        onRemove={onRemove}
+      />,
+    );
+    fireEvent.click(screen.getByLabelText('Remove attachment'));
+    expect(onRemove).toHaveBeenCalledWith('a1');
+    expect(onClick).not.toHaveBeenCalled();
+  });
+
+  it('onExpand takes precedence over onClick for pasted cards', () => {
+    const onClick = vi.fn();
+    const onExpand = vi.fn();
+    const pasted = makeAttachment({ type: AttachmentType.Pasted });
+    const { container } = render(
+      <AttachmentCard
+        attachment={pasted}
+        onClick={onClick}
+        onExpand={onExpand}
+      />,
+    );
+    fireEvent.click(container.firstElementChild!);
+    expect(onExpand).toHaveBeenCalledWith('a1');
+    expect(onClick).not.toHaveBeenCalled();
+  });
+});

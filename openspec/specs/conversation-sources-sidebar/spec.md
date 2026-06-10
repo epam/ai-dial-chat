@@ -150,6 +150,8 @@ Theming SHALL follow `openspec/lib-styling-guide.md`: the SCSS module `SidebarPa
 
 `apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` SHALL accept `Props { messages: Message[]; }`, import `SidebarPanel` from `@epam/ai-dial-sidebar`, derive `uploaded` and `generated` through `useConversationSources(messages)`, and render `<SidebarPanel side="right">`.
 
+The panel SHALL use `useAttachmentAction()` to obtain `handleAttachmentClick` and SHALL pass it as `onAttachmentClick` to both `FilesSection` instances (Uploaded Files and Generated Files).
+
 The panel SHALL be considered empty when both `uploaded.length === 0` and `generated.length === 0`.
 
 When the panel is empty:
@@ -196,6 +198,16 @@ For both states:
 
 - **WHEN** the panel is not empty
 - **THEN** Uploaded Files appears first, Generated Files second, Sources third
+
+#### Scenario: Panel passes click handler to both file sections
+
+- **WHEN** `ConversationSourcesPanel` renders with non-empty `uploaded` and `generated`
+- **THEN** both `FilesSection` instances receive the same `onAttachmentClick` handler from `useAttachmentAction`
+
+#### Scenario: Clicking an attachment card triggers download
+
+- **WHEN** a user clicks an attachment card in the panel
+- **THEN** `handleAttachmentClick` is invoked with the corresponding `DisplayAttachment`
 
 ---
 
@@ -248,8 +260,10 @@ For both states:
 
 For `UploadedFilesSection` and `GeneratedFilesSection`:
 
-- When `attachments.length > 0`: render a 3-column grid (`role="list"`) where each cell (`role="listitem"`) wraps a read-only `AttachmentCard` (no `onRemove`, no `onRetry`) sized `w-full` with no fixed height — the card content determines the height so the layout adapts to varying screen sizes and font scales.
+- When `attachments.length > 0`: render a 3-column grid (`role="list"`) where each cell (`role="listitem"`) wraps an `AttachmentCard` (no `onRemove`, no `onRetry`) sized `w-full`. When an `onAttachmentClick` callback is provided to the section, the section SHALL forward `(att) => onAttachmentClick(att)` to each card's `onClick` prop and pass the i18n value of `sidebar.sources.attachment.downloadLabel` as `clickLabel`. When `onAttachmentClick` is not provided, `onClick` SHALL be omitted.
 - When `attachments.length === 0`: render the `emptyMessage` text in place of the grid.
+
+Both `UploadedFilesSection` and `GeneratedFilesSection` SHALL accept an optional `onAttachmentClick?: (attachment: DisplayAttachment) => void` prop.
 
 For `SourcesSection`:
 
@@ -275,10 +289,16 @@ For `SourcesSection`:
 - **WHEN** `SourcesSection` is rendered
 - **THEN** it shows the title followed by the empty-message text, regardless of any other state
 
-#### Scenario: Read-only attachment cards
+#### Scenario: Read-only attachment cards without handler
 
-- **WHEN** any rendered `AttachmentCard` inside a section is inspected
-- **THEN** no remove (×) or retry (↺) controls are present
+- **WHEN** any rendered `AttachmentCard` inside a section is inspected and no `onAttachmentClick` was supplied
+- **THEN** no remove (×), retry (↺), or click handler is present on the card
+
+#### Scenario: Cards receive click handler when `onAttachmentClick` is provided
+
+- **WHEN** `UploadedFilesSection` or `GeneratedFilesSection` is rendered with `onAttachmentClick` supplied
+- **THEN** each `AttachmentCard` receives an `onClick` prop
+- **AND** activating a card invokes `onAttachmentClick` with the corresponding `DisplayAttachment`
 
 ---
 
@@ -306,12 +326,12 @@ For `SourcesSection`:
 
 ### Requirement: All sidebar user-visible strings come from i18n
 
-All user-visible strings in the right sidebar (toggle aria-labels, panel aria-label, close label, section titles, panel-level and section-level empty-state messages, search and download-all aria-labels) SHALL be sourced from i18n keys defined in `apps/chat/src/i18n/locales/en.json` under `sidebar.base.*` and `sidebar.sources.*`. A typed `SidebarI18nKeys` enum/object SHALL be exposed from `apps/chat/src/constants/translation-keys.ts` for consumers.
+All user-visible strings in the right sidebar (toggle aria-labels, panel aria-label, close label, section titles, panel-level and section-level empty-state messages, search and download-all aria-labels, attachment click label) SHALL be sourced from i18n keys defined in `apps/chat/src/i18n/locales/en.json` under `sidebar.base.*` and `sidebar.sources.*`. A typed `SidebarI18nKeys` enum/object SHALL be exposed from `apps/chat/src/constants/translation-keys.ts` for consumers.
 
 #### Scenario: New keys added to en.json
 
 - **WHEN** `apps/chat/src/i18n/locales/en.json` is inspected
-- **THEN** it contains keys `sidebar.base.toggleOpen`, `sidebar.base.toggleClose`, `sidebar.base.close`, `sidebar.sources.ariaLabel`, `sidebar.sources.search`, `sidebar.sources.downloadAll`, `sidebar.sources.sections.uploadedFiles`, `sidebar.sources.sections.generatedFiles`, `sidebar.sources.sections.sources`, `sidebar.sources.empty.noData`, `sidebar.sources.empty.uploadedFiles`, `sidebar.sources.empty.generatedFiles`, `sidebar.sources.empty.sources`
+- **THEN** it contains keys `sidebar.base.toggleOpen`, `sidebar.base.toggleClose`, `sidebar.base.close`, `sidebar.sources.ariaLabel`, `sidebar.sources.search`, `sidebar.sources.downloadAll`, `sidebar.sources.sections.uploadedFiles`, `sidebar.sources.sections.generatedFiles`, `sidebar.sources.sections.sources`, `sidebar.sources.empty.noData`, `sidebar.sources.empty.uploadedFiles`, `sidebar.sources.empty.generatedFiles`, `sidebar.sources.empty.sources`, `sidebar.sources.attachment.downloadLabel`
 
 #### Scenario: Components consume the typed key map
 
