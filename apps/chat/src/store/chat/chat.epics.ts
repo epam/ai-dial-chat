@@ -128,7 +128,7 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
         )
         .filter((schema) => schema !== undefined);
 
-      if (savedConfigurationSchemas.length) {
+      if (!replaceExisting && savedConfigurationSchemas.length) {
         return concat(
           ...savedConfigurationSchemas.map((schema) =>
             of(

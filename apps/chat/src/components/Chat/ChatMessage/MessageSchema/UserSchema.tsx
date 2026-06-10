@@ -114,12 +114,6 @@ const UserSchemaView = memo(function UserSchemaView({
 
         return (
           <div key={row.property}>
-            {!!row.description && (
-              <EntityMarkdownDescription className="mb-3 text-base text-primary">
-                {row.description}
-              </EntityMarkdownDescription>
-            )}
-
             {row.type === FormSchemaPropertyType.Button && (
               <>
                 <div className="flex flex-wrap gap-2">
