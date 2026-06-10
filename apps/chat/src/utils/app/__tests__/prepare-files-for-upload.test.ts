@@ -1,19 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  dispatchPreparedFileUploads,
-  prepareFilesForUpload,
-} from '@/src/utils/app/prepare-files-for-upload';
+import { ReplaceOptions } from '@/src/types/common';
+import { HTTPMethod } from '@/src/types/http';
 
 import { FilesActions } from '@/src/store/actions';
 
-describe('prepareFilesForUpload', () => {
+import {
+  applyUploadReplaceActions,
+  detectUploadFileConflicts,
+  dispatchPreparedFileUploads,
+} from '@/src/utils/app/prepare-files-for-upload';
+
+describe('detectUploadFileConflicts', () => {
   const folderId = 'files/test-bucket/uploads';
 
-  it('auto-renames files that conflict with existing folder files', () => {
+  it('detects conflicts with existing folder files', () => {
     const file = new File(['content'], 'sun.jpg', { type: 'image/jpeg' });
 
-    const { preparedFiles } = prepareFilesForUpload({
+    const { duplicatedFiles, nonDuplicatedFiles } = detectUploadFileConflicts({
       files: [file],
       folderId,
       existingFiles: [
@@ -27,16 +31,16 @@ describe('prepareFilesForUpload', () => {
       allowedTypes: ['*/*'],
     });
 
-    expect(preparedFiles).toHaveLength(1);
-    expect(preparedFiles[0].name).toBe('sun 1.jpg');
-    expect(preparedFiles[0].id).toBe('files/test-bucket/uploads/sun 1.jpg');
+    expect(duplicatedFiles).toHaveLength(1);
+    expect(duplicatedFiles[0].name).toBe('sun.jpg');
+    expect(nonDuplicatedFiles).toHaveLength(0);
   });
 
-  it('auto-renames duplicate names within the same batch', () => {
+  it('detects duplicate names within the same batch', () => {
     const first = new File(['a'], 'cloud.jpg', { type: 'image/jpeg' });
     const second = new File(['b'], 'cloud.jpg', { type: 'image/jpeg' });
 
-    const { preparedFiles } = prepareFilesForUpload({
+    const { duplicatedFiles, nonDuplicatedFiles } = detectUploadFileConflicts({
       files: [first, second],
       folderId,
       existingFiles: [],
@@ -44,10 +48,98 @@ describe('prepareFilesForUpload', () => {
       allowedTypes: ['*/*'],
     });
 
-    expect(preparedFiles.map(({ name }) => name)).toEqual([
-      'cloud.jpg',
-      'cloud 1.jpg',
-    ]);
+    expect(nonDuplicatedFiles.map(({ name }) => name)).toEqual(['cloud.jpg']);
+    expect(duplicatedFiles).toHaveLength(1);
+    expect(duplicatedFiles[0].name).toBe('cloud.jpg');
+  });
+});
+
+describe('applyUploadReplaceActions', () => {
+  const folderId = 'files/test-bucket/uploads';
+
+  it('applies postfix strategy to conflicting files', () => {
+    const file = new File(['content'], 'sun.jpg', { type: 'image/jpeg' });
+    const duplicatedFile = {
+      id: `${folderId}/sun.jpg`,
+      name: 'sun.jpg',
+      folderId,
+      fileContent: file,
+    };
+
+    const resolved = applyUploadReplaceActions({
+      duplicatedFiles: [duplicatedFile],
+      nonDuplicatedFiles: [],
+      mappedActions: { [duplicatedFile.id]: ReplaceOptions.Postfix },
+      existingFiles: [
+        {
+          id: `${folderId}/sun.jpg`,
+          name: 'sun.jpg',
+          folderId,
+        },
+      ],
+      folderId,
+      bucket: 'test-bucket',
+    });
+
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0].name).toBe('sun 1.jpg');
+    expect(resolved[0].id).toBe('files/test-bucket/uploads/sun 1.jpg');
+  });
+
+  it('applies replace strategy with PUT method', () => {
+    const file = new File(['content'], 'sun.jpg', { type: 'image/jpeg' });
+    const duplicatedFile = {
+      id: `${folderId}/sun.jpg`,
+      name: 'sun.jpg',
+      folderId,
+      fileContent: file,
+    };
+
+    const resolved = applyUploadReplaceActions({
+      duplicatedFiles: [duplicatedFile],
+      nonDuplicatedFiles: [],
+      mappedActions: { [duplicatedFile.id]: ReplaceOptions.Replace },
+      existingFiles: [
+        {
+          id: `${folderId}/sun.jpg`,
+          name: 'sun.jpg',
+          folderId,
+        },
+      ],
+      folderId,
+      bucket: 'test-bucket',
+    });
+
+    expect(resolved).toHaveLength(1);
+    expect(resolved[0].name).toBe('sun.jpg');
+    expect(resolved[0].httpMethod).toBe(HTTPMethod.PUT);
+  });
+
+  it('skips ignored files', () => {
+    const file = new File(['content'], 'sun.jpg', { type: 'image/jpeg' });
+    const duplicatedFile = {
+      id: `${folderId}/sun.jpg`,
+      name: 'sun.jpg',
+      folderId,
+      fileContent: file,
+    };
+
+    const resolved = applyUploadReplaceActions({
+      duplicatedFiles: [duplicatedFile],
+      nonDuplicatedFiles: [],
+      mappedActions: { [duplicatedFile.id]: ReplaceOptions.Ignore },
+      existingFiles: [
+        {
+          id: `${folderId}/sun.jpg`,
+          name: 'sun.jpg',
+          folderId,
+        },
+      ],
+      folderId,
+      bucket: 'test-bucket',
+    });
+
+    expect(resolved).toHaveLength(0);
   });
 });
 
@@ -85,6 +177,29 @@ describe('dispatchPreparedFileUploads', () => {
     );
     expect(dispatch).toHaveBeenCalledWith(
       FilesActions.selectFiles({ ids: [preparedFile.id] }),
+    );
+  });
+
+  it('dispatches upload with httpMethod when provided', () => {
+    const dispatch = vi.fn();
+    const file = new File(['content'], 'test.txt', { type: 'text/plain' });
+    const preparedFile = {
+      id: 'files/test-bucket/uploads/test.txt',
+      name: 'test.txt',
+      fileContent: file,
+      httpMethod: HTTPMethod.PUT,
+    };
+
+    dispatchPreparedFileUploads(dispatch, [preparedFile], 'uploads');
+
+    expect(dispatch).toHaveBeenCalledWith(
+      FilesActions.uploadFile({
+        fileContent: file,
+        id: preparedFile.id,
+        relativePath: 'uploads',
+        name: 'test.txt',
+        httpMethod: HTTPMethod.PUT,
+      }),
     );
   });
 });

@@ -6,8 +6,8 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { getRelativePath } from '@/src/utils/app/file';
 import { isRootId } from '@/src/utils/app/id';
 import {
+  detectUploadFileConflicts,
   dispatchPreparedFileUploads,
-  prepareFilesForUpload,
   PreparedUploadFile,
 } from '@/src/utils/app/prepare-files-for-upload';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
@@ -99,22 +99,38 @@ export const useUploadFilesHandler = (
         return;
       }
 
-      const { preparedFiles, errorMsg } = prepareFilesForUpload({
-        files,
-        folderId,
-        existingFiles: allFiles,
-        bucket,
-        allowedTypes,
-      });
+      const { duplicatedFiles, nonDuplicatedFiles, errorMsg } =
+        detectUploadFileConflicts({
+          files,
+          folderId,
+          existingFiles: allFiles,
+          bucket,
+          allowedTypes,
+        });
 
       if (errorMsg) dispatch(UIActions.showErrorToast({ message: errorMsg }));
-      if (!preparedFiles.length) return;
+      if (!duplicatedFiles.length && !nonDuplicatedFiles.length) return;
 
-      dispatchPreparedFiles(preparedFiles, folderPath, {
+      if (duplicatedFiles.length) {
+        dispatch(
+          FilesActions.showUploadReplaceDialog({
+            duplicatedFiles,
+            nonDuplicatedFiles,
+            folderId,
+            folderPath,
+            bucket,
+            showSuccessMessage: true,
+            selectFileIds: !skipSelect,
+          }),
+        );
+        return Promise.resolve(nonDuplicatedFiles);
+      }
+
+      dispatchPreparedFiles(nonDuplicatedFiles, folderPath, {
         showSuccessMessage: true,
       });
 
-      return Promise.resolve(preparedFiles);
+      return Promise.resolve(nonDuplicatedFiles);
     },
     [
       selectedAttachmentsAmount,
@@ -127,6 +143,7 @@ export const useUploadFilesHandler = (
       folderId,
       bucket,
       folderPath,
+      skipSelect,
     ],
   );
 

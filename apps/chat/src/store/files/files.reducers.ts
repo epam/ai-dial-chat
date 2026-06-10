@@ -31,17 +31,22 @@ import {
   isRootId,
 } from '@/src/utils/app/id';
 
-import { FeatureType, MoveModel } from '@/src/types/common';
+import {
+  FeatureType,
+  MappedReplaceActions,
+  MoveModel,
+} from '@/src/types/common';
 import {
   DialFile,
   FileFolderInterface,
   FileOperationsResult,
 } from '@/src/types/files';
 import { FolderInterface } from '@/src/types/folder';
+import { HTTPMethod } from '@/src/types/http';
 
 import { CLIENTDATA_PATH } from '@/src/constants/client-data';
 
-import { FilesState } from './files.types';
+import { FilesState, UploadReplaceDialogState } from './files.types';
 
 import { SharePermission, UploadStatus } from '@epam/ai-dial-shared';
 import {
@@ -105,6 +110,7 @@ const initialState: FilesState = {
   searchListingMetadata: {},
   sharedWithMeFilesAndFoldersIds: [],
   localFileSizeCache: {},
+  uploadReplaceDialog: null,
 };
 
 export const filesSlice = createSlice({
@@ -131,7 +137,7 @@ export const filesSlice = createSlice({
         relativePath?: string;
         name: string;
         bucket?: string;
-
+        httpMethod?: HTTPMethod;
         showSuccessMessage?: boolean;
       }>,
     ) => {
@@ -1321,6 +1327,31 @@ export const filesSlice = createSlice({
       { payload }: PayloadAction<{ ids: string[] }>,
     ) => {
       state.sharedWithMeFilesAndFoldersIds = payload.ids;
+    },
+
+    showUploadReplaceDialog: (
+      state,
+      { payload }: PayloadAction<Omit<UploadReplaceDialogState, 'isOpen'>>,
+    ) => {
+      state.uploadReplaceDialog = {
+        ...payload,
+        isOpen: true,
+      };
+    },
+    cancelUploadReplaceDialog: (state) => {
+      state.uploadReplaceDialog = null;
+    },
+    continueUploadReplaceDialog: (
+      state,
+      { payload }: PayloadAction<{ mappedActions: MappedReplaceActions }>,
+    ) => {
+      if (state.uploadReplaceDialog) {
+        state.uploadReplaceDialog.isOpen = false;
+        state.uploadReplaceDialog.mappedActions = payload.mappedActions;
+      }
+    },
+    clearUploadReplaceDialog: (state) => {
+      state.uploadReplaceDialog = null;
     },
   },
 });

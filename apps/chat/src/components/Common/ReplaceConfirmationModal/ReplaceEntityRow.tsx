@@ -8,6 +8,7 @@ import { ReplaceSelector } from './ReplaceSelector';
 
 export interface FeatureRowProps {
   additionalItemData?: AdditionalItemData;
+  level?: number;
   onEvent?: (eventId: ReplaceOptions, data: string) => void;
 }
 
@@ -24,6 +25,7 @@ export const EntityRow = ({
   dataQA,
   additionalItemData,
   itemComponentClassNames,
+  level = 0,
   onEvent,
 }: EntityRowProps) => {
   const [selectedOption, setSelectedOption] = useState<ReplaceOptions>(
@@ -52,6 +54,7 @@ export const EntityRow = ({
         'flex h-[38px] justify-between hover:rounded hover:bg-accent-primary-alpha',
         itemComponentClassNames,
       )}
+      style={{ paddingLeft: `${level * 24}px` }}
       data-qa={dataQA}
     >
       {children}

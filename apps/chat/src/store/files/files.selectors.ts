@@ -317,6 +317,15 @@ const selectSearchResultsForFolder = createSelector(
 const selectSharedWithMeFilesAndFoldersIds = (state: RootState) =>
   rootSelector(state).sharedWithMeFilesAndFoldersIds;
 
+const selectUploadReplaceDialog = (state: RootState) =>
+  rootSelector(state).uploadReplaceDialog;
+
+const selectIsShowUploadReplaceDialog = (state: RootState) =>
+  !!rootSelector(state).uploadReplaceDialog?.isOpen;
+
+const selectDuplicatedUploadFiles = (state: RootState) =>
+  rootSelector(state).uploadReplaceDialog?.duplicatedFiles ?? [];
+
 export const FilesSelectors = {
   selectFiles,
   selectReviewBucketFiles,
@@ -355,4 +364,7 @@ export const FilesSelectors = {
   selectIsCopyingFiles,
   selectIsUploadingFiles,
   selectSharedWithMeFilesAndFoldersIds,
+  selectUploadReplaceDialog,
+  selectIsShowUploadReplaceDialog,
+  selectDuplicatedUploadFiles,
 };

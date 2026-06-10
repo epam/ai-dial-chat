@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { FeatureType } from '@/src/types/common';
+import { FeatureType, ReplaceOptions } from '@/src/types/common';
 import { DialFile, FileFolderInterface } from '@/src/types/files';
 
 import { FilesActions, filesSlice } from '../files.reducers';
@@ -306,5 +306,81 @@ describe('files.reducers deleteFilesSuccess', () => {
     expect(nextState.folders.map((f) => f.id).sort()).toEqual(
       [nestedFolderId, zipRoot].sort(),
     );
+  });
+});
+
+describe('files.reducers uploadReplaceDialog', () => {
+  const folderId = 'files/test-bucket/uploads';
+  const file = new File(['content'], 'sun.jpg', { type: 'image/jpeg' });
+
+  it('opens dialog with duplicated and non-duplicated files', () => {
+    const duplicatedFile = makeFile({
+      id: `${folderId}/sun.jpg`,
+      name: 'sun.jpg',
+      folderId,
+    });
+
+    const nextState = filesSlice.reducer(
+      filesSlice.getInitialState(),
+      FilesActions.showUploadReplaceDialog({
+        duplicatedFiles: [{ ...duplicatedFile, fileContent: file }],
+        nonDuplicatedFiles: [],
+        folderId,
+        folderPath: 'uploads',
+        bucket: 'test-bucket',
+        showSuccessMessage: true,
+        selectFileIds: true,
+      }),
+    );
+
+    expect(nextState.uploadReplaceDialog?.isOpen).toBe(true);
+    expect(nextState.uploadReplaceDialog?.duplicatedFiles).toHaveLength(1);
+  });
+
+  it('clears dialog on cancel', () => {
+    const state = {
+      ...filesSlice.getInitialState(),
+      uploadReplaceDialog: {
+        isOpen: true,
+        duplicatedFiles: [],
+        nonDuplicatedFiles: [],
+        folderId,
+        showSuccessMessage: false,
+        selectFileIds: false,
+      },
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.cancelUploadReplaceDialog(),
+    );
+
+    expect(nextState.uploadReplaceDialog).toBeNull();
+  });
+
+  it('stores mapped actions and closes dialog on continue', () => {
+    const state = {
+      ...filesSlice.getInitialState(),
+      uploadReplaceDialog: {
+        isOpen: true,
+        duplicatedFiles: [],
+        nonDuplicatedFiles: [],
+        folderId,
+        showSuccessMessage: false,
+        selectFileIds: false,
+      },
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.continueUploadReplaceDialog({
+        mappedActions: { [`${folderId}/sun.jpg`]: ReplaceOptions.Postfix },
+      }),
+    );
+
+    expect(nextState.uploadReplaceDialog?.isOpen).toBe(false);
+    expect(nextState.uploadReplaceDialog?.mappedActions).toEqual({
+      [`${folderId}/sun.jpg`]: ReplaceOptions.Postfix,
+    });
   });
 });

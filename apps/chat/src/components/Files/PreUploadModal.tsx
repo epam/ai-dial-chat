@@ -22,7 +22,7 @@ import {
   prepareFileName,
   validatePreUploadFiles,
 } from '@/src/utils/app/file';
-import { prepareFilesForUpload } from '@/src/utils/app/prepare-files-for-upload';
+import { detectUploadFileConflicts } from '@/src/utils/app/prepare-files-for-upload';
 import { getFileRootId, isMyBucket } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
@@ -175,16 +175,17 @@ export const PreUploadDialog = ({
       );
     }
 
-    const { preparedFiles, errorMsg } = prepareFilesForUpload({
-      files: selectedFiles.map((file) => ({
-        fileContent: file.fileContent,
-        name: file.name,
-      })),
-      folderId: selectedFolderId,
-      existingFiles: files,
-      bucket: uploadBucket,
-      allowedTypes,
-    });
+    const { duplicatedFiles, nonDuplicatedFiles, errorMsg } =
+      detectUploadFileConflicts({
+        files: selectedFiles.map((file) => ({
+          fileContent: file.fileContent,
+          name: file.name,
+        })),
+        folderId: selectedFolderId,
+        existingFiles: files,
+        bucket: uploadBucket,
+        allowedTypes,
+      });
 
     if (errorMsg) {
       errors.push(errorMsg);
@@ -195,11 +196,27 @@ export const PreUploadDialog = ({
       return;
     }
 
-    if (!preparedFiles.length) {
+    if (!duplicatedFiles.length && !nonDuplicatedFiles.length) {
       return;
     }
 
-    onUploadFiles(preparedFiles, folderPath);
+    if (duplicatedFiles.length) {
+      dispatch(
+        FilesActions.showUploadReplaceDialog({
+          duplicatedFiles,
+          nonDuplicatedFiles,
+          folderId: selectedFolderId,
+          folderPath,
+          bucket: uploadBucket,
+          showSuccessMessage: true,
+          selectFileIds: true,
+        }),
+      );
+      onClose(true);
+      return;
+    }
+
+    onUploadFiles(nonDuplicatedFiles, folderPath);
     onClose(true);
   }, [
     allowedTypes,
@@ -207,6 +224,7 @@ export const PreUploadDialog = ({
     files,
     folderPath,
     maximumAttachmentsAmount,
+    dispatch,
     onClose,
     onUploadFiles,
     selectedFiles,
