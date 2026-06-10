@@ -31,6 +31,7 @@ export default [
       'apps/chat-e2e/html-report',
       'apps/chat-e2e/chat-html-report',
       'apps/chat-e2e/overlay-html-report',
+      'apps/chat/public/scripts',
       'next-env.d.ts',
       '**/package.json',
       '**/**.config.js',
