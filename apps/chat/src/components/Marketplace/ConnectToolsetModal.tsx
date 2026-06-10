@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -26,7 +26,9 @@ interface ConnectToolsetModalProps {
   entity: MarketplaceEntity;
 }
 
-const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
+const view = withRenderWhenEntities<ConnectToolsetModalProps>({
+  entity: MarketplaceSelectors.selectConnectLinkEntity,
+})(({ entity }: ConnectToolsetModalProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
 
@@ -108,9 +110,6 @@ const ConnectToolsetModalView: FC<ConnectToolsetModalProps> = ({ entity }) => {
       </div>
     </DialPopup>
   );
-};
+});
 
-export const ConnectToolsetModal =
-  withRenderWhenEntities<ConnectToolsetModalProps>({
-    entity: MarketplaceSelectors.selectConnectLinkEntity,
-  })(ConnectToolsetModalView);
+export const ConnectToolsetModal = view;

@@ -87,7 +87,7 @@ const validateJwtWithOidc = async (params: {
 
 export const validateProviderAccessToken = async (params: {
   token: string;
-  provider: OAuthConfig<any>;
+  provider: OAuthConfig<unknown>;
 }): Promise<TokenValidationResult> => {
   const provider = params.provider;
 
