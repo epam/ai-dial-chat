@@ -1,13 +1,12 @@
 import {
   PanelEmpty,
-  PanelEmptyState,
   PanelNoResults,
   SearchInput,
   SidebarPanel,
   SidebarSide,
 } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconDownload, IconFileDescription } from '@tabler/icons-react';
+import { IconDownload } from '@tabler/icons-react';
 import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SidebarI18nKeys } from '../../constants/translation-keys';
