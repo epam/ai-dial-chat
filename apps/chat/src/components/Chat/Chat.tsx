@@ -856,7 +856,8 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
                                             }
                                             editDisabled={
                                               !isChatReadyForInput ||
-                                              !areModelsInstalled ||
+                                              (!areModelsInstalled &&
+                                                isValidApproveRequiredConversation) ||
                                               ((!!notAvailableEntityType ||
                                                 isReadOnly ||
                                                 isReplay ||
