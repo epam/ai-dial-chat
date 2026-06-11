@@ -498,8 +498,14 @@ export const ChangePathDialog = ({
       onCollapseChange: setCollapsedTree,
       header: treeOptions.header,
       actionLabels: treeOptions.actionLabels,
+      loadedPaths: treeOptions.loadedPaths,
     }),
-    [collapsedTree, treeOptions.header, treeOptions.actionLabels],
+    [
+      collapsedTree,
+      treeOptions.header,
+      treeOptions.actionLabels,
+      treeOptions.loadedPaths,
+    ],
   );
 
   const modalGridOptions = useMemo(
