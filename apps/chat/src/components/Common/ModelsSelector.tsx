@@ -24,12 +24,14 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 interface ModelSelectRowProps {
   item: DialAIEntityModel;
   isNotAllowed: boolean;
+  showInlineError?: boolean;
   truncate?: boolean;
 }
 
 const ModelSelectRow = ({
   item,
   isNotAllowed,
+  showInlineError,
   truncate = true,
 }: ModelSelectRowProps) => {
   const { t } = useTranslation(Translation.Chat);
@@ -51,7 +53,10 @@ const ModelSelectRow = ({
         data-qa="agent-attributes"
       >
         <span
-          className={classNames(truncate && 'min-w-0 flex-1 truncate')}
+          className={classNames(
+            truncate && 'min-w-0 flex-1 truncate',
+            isNotAllowed && 'text-secondary',
+          )}
           data-qa="agent-name"
         >
           {getOpenAIEntityFullName(item)}
@@ -67,7 +72,7 @@ const ModelSelectRow = ({
             {item.version}
           </span>
         )}
-        {isNotAllowed && (
+        {showInlineError && (
           <span className="text-error" data-qa="talk-to-entity-descr">
             <EntityMarkdownDescription isShortDescription>
               {t(ChatI18nKeys.IncorrectSelectedModel)}
@@ -142,7 +147,8 @@ export const ModelsSelector = memo(function ModelsSelector({
           itemRow={({ item, truncate }) => (
             <ModelSelectRow
               item={item}
-              isNotAllowed={!hideInlineError && item.id === value && !model}
+              isNotAllowed={item.id === value && !model}
+              showInlineError={!hideInlineError && item.id === value && !model}
               truncate={truncate}
             />
           )}
