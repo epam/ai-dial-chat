@@ -1,40 +1,52 @@
-/* eslint-disable jsx-a11y/no-noninteractive-element-interactions */
+import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
+  DialEllipsisTooltip,
   DialTooltip,
+  DropdownItem,
   DropdownItemType,
 } from '@epam/ai-dial-ui-kit';
-import { IconLogout, IconSettings } from '@tabler/icons-react';
-import { readableColor } from 'polished';
-import randomColor from 'randomcolor';
+import {
+  IconColorSwatch,
+  IconDeviceDesktop,
+  IconKeyboard,
+  IconLogout,
+  IconMoon,
+  IconSun,
+} from '@tabler/icons-react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AuthI18nKeys } from '../../constants/translation-keys';
+import { StorageKey, ThemeId } from '../../constants/storage';
+import {
+  AuthI18nKeys,
+  SettingsI18nKeys,
+} from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
+import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import {
+  metaKey,
+  useKeyboardShortcutPreference,
+} from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { getFromLocalStorage } from '../../utils/local-storage';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
-import SettingsModal from '../Settings/SettingsModal';
 import AvatarInitials from './AvatarInitials';
+import MenuItemLabel from './MenuItemLabel';
 
 export const UserMenu = memo(() => {
   const { status, user } = useUser();
   const { t } = useTranslation();
+  const { currentTheme, setTheme, themes } = useTheme();
+  const { preference, setPreference } = useKeyboardShortcutPreference();
 
   const image = user?.claims?.['image'] as string | undefined;
   const [isFallbackIconShown, setIsFallbackIconShown] = useState(!image);
   const isMobile = useIsMobile();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isLogoutOpen, setIsLogoutOpen] = useState(false);
 
   const email = (user?.claims?.['email'] as string) ?? user?.sub ?? '';
-
-  const bg = randomColor({
-    luminosity: 'bright',
-    seed: email,
-  });
-
-  const textColor = readableColor(bg);
+  const displayName = (user?.claims?.['name'] as string) || email;
 
   const shortName = useMemo(() => {
     const nameClaim = (user?.claims?.['name'] as string) || '';
@@ -52,8 +64,9 @@ export const UserMenu = memo(() => {
   }
 
   const avatar = isFallbackIconShown ? (
-    <AvatarInitials bg={bg} textColor={textColor} shortName={shortName} />
+    <AvatarInitials shortName={shortName} />
   ) : (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <img
       className="rounded-full"
       src={image}
@@ -64,28 +77,105 @@ export const UserMenu = memo(() => {
     />
   );
 
+  const storedTheme = getFromLocalStorage(StorageKey.Theme) ?? currentTheme;
+
+  const hasDark = themes?.some((t) => t.id === ThemeId.Dark) ?? false;
+  const hasLight = themes?.some((t) => t.id === ThemeId.Light) ?? false;
+
+  const themeChildren = [
+    hasDark && {
+      key: 'theme-dark',
+      label: (
+        <MenuItemLabel
+          label={t(SettingsI18nKeys.ThemeDark)}
+          isActive={storedTheme === ThemeId.Dark}
+          icon={<IconMoon size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        />
+      ),
+      onClick: () => setTheme(ThemeId.Dark),
+    },
+    hasLight && {
+      key: 'theme-light',
+      label: (
+        <MenuItemLabel
+          label={t(SettingsI18nKeys.ThemeLight)}
+          isActive={storedTheme === ThemeId.Light}
+          icon={<IconSun size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        />
+      ),
+      onClick: () => setTheme(ThemeId.Light),
+    },
+    hasDark &&
+      hasLight && {
+        key: 'theme-system',
+        label: (
+          <MenuItemLabel
+            label={t(SettingsI18nKeys.ThemeSystem)}
+            isActive={storedTheme === ThemeId.System}
+            icon={<IconDeviceDesktop size={DIAL_ICON_SIZE.SM} aria-hidden />}
+          />
+        ),
+        onClick: () => setTheme(ThemeId.System),
+      },
+  ].filter((x): x is Exclude<typeof x, false> => Boolean(x)) as DropdownItem[];
+
   const menuItems = [
     {
       key: 'identity',
       type: DropdownItemType.PlainText,
       label: (
-        <div className="flex items-center gap-2">
-          <AvatarInitials bg={bg} textColor={textColor} shortName={shortName} />
-          <span className="dial-small-semi-text truncate text-primary">
-            {email}
-          </span>
+        <div className="flex min-w-0 items-center gap-4 px-2 py-1">
+          <AvatarInitials shortName={shortName} />
+          <DialEllipsisTooltip
+            text={displayName}
+            className="dial-small-text min-w-0 flex-1 truncate text-secondary"
+          />
         </div>
       ),
     },
-    { key: 'divider', type: DropdownItemType.Divider },
+    { key: 'divider-1', type: DropdownItemType.Divider },
     {
-      key: 'settings',
+      key: 'theme',
       label: (
-        <span className="dial-small-text">{t(AuthI18nKeys.Settings)}</span>
+        <span className="dial-small-text">{t(SettingsI18nKeys.Theme)}</span>
       ),
-      icon: <IconSettings size={DIAL_ICON_SIZE.SM} aria-hidden />,
-      onClick: () => setIsSettingsOpen(true),
+      icon: <IconColorSwatch size={DIAL_ICON_SIZE.SM} aria-hidden />,
+      children: themeChildren,
     },
+    {
+      key: 'keyboard-shortcuts',
+      label: (
+        <span className="dial-small-text">
+          {t(SettingsI18nKeys.KeyboardShortcuts)}
+        </span>
+      ),
+      icon: <IconKeyboard size={DIAL_ICON_SIZE.SM} aria-hidden />,
+      children: [
+        {
+          key: 'shortcut-enter',
+          label: (
+            <MenuItemLabel
+              label={t(SettingsI18nKeys.ShortcutEnter)}
+              isActive={preference === SendOnEnter.Enter}
+            />
+          ),
+          onClick: () => setPreference(SendOnEnter.Enter),
+        },
+        {
+          key: 'shortcut-meta-enter',
+          label: (
+            <MenuItemLabel
+              label={t(SettingsI18nKeys.ShortcutMetaEnter, {
+                modifier: metaKey,
+              })}
+              isActive={preference === SendOnEnter.MetaEnter}
+            />
+          ),
+          onClick: () => setPreference(SendOnEnter.MetaEnter),
+        },
+      ],
+    },
+    { key: 'divider-2', type: DropdownItemType.Divider },
     {
       key: 'logout',
       label: <span className="dial-small-text">{t(AuthI18nKeys.LogOut)}</span>,
@@ -113,10 +203,6 @@ export const UserMenu = memo(() => {
           </button>
         </DialDropdown>
       </div>
-      <SettingsModal
-        open={isSettingsOpen}
-        onClose={() => setIsSettingsOpen(false)}
-      />
       <LogoutConfirmationModal
         isOpen={isLogoutOpen}
         onClose={() => setIsLogoutOpen(false)}
