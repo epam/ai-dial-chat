@@ -6,9 +6,9 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { getRelativePath } from '@/src/utils/app/file';
 import { isRootId } from '@/src/utils/app/id';
 import {
+  PreparedUploadFile,
   detectUploadFileConflicts,
   dispatchPreparedFileUploads,
-  PreparedUploadFile,
 } from '@/src/utils/app/prepare-files-for-upload';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 

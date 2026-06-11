@@ -96,10 +96,7 @@ export function ReplaceConfirmationModal({
         </div>
       </div>
       <div className="flex shrink flex-col overflow-y-scroll px-3 md:px-6">
-        <div
-          className="flex flex-col pl-3"
-          data-qa="main-folder-tree"
-        >
+        <div className="flex flex-col pl-3" data-qa="main-folder-tree">
           {conversations && (
             <ConversationsList
               conversationsToReplace={conversations}

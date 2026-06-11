@@ -22,8 +22,8 @@ import {
   prepareFileName,
   validatePreUploadFiles,
 } from '@/src/utils/app/file';
-import { detectUploadFileConflicts } from '@/src/utils/app/prepare-files-for-upload';
 import { getFileRootId, isMyBucket } from '@/src/utils/app/id';
+import { detectUploadFileConflicts } from '@/src/utils/app/prepare-files-for-upload';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { DialFile } from '@/src/types/files';

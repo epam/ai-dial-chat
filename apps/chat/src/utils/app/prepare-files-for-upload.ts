@@ -12,15 +12,13 @@ import { getFileRootId } from '@/src/utils/app/id';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { updateAttachmentsNames } from '@/src/utils/app/zip-import-export';
 
-import {
-  MappedReplaceActions,
-  ReplaceOptions,
-} from '@/src/types/common';
+import { MappedReplaceActions, ReplaceOptions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { HTTPMethod } from '@/src/types/http';
-import type { AppDispatch } from '@/src/store';
 
 import { FilesActions } from '@/src/store/actions';
+
+import type { AppDispatch } from '@/src/store';
 
 export type PreparedUploadFile = Required<
   Pick<DialFile, 'fileContent' | 'id' | 'name'>
@@ -30,13 +28,9 @@ export type ResolvedUploadFile = PreparedUploadFile & {
   httpMethod?: HTTPMethod;
 };
 
-export type PrepareFileUploadInput =
-  | File
-  | { fileContent: File; name: string };
+export type PrepareFileUploadInput = File | { fileContent: File; name: string };
 
-const normalizeUploadInputs = (
-  files: PrepareFileUploadInput[],
-): File[] =>
+const normalizeUploadInputs = (files: PrepareFileUploadInput[]): File[] =>
   files.map((file) => {
     if (file instanceof File) {
       return file;

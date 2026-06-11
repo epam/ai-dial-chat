@@ -1,15 +1,15 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { ReplaceOptions } from '@/src/types/common';
-import { HTTPMethod } from '@/src/types/http';
-
-import { FilesActions } from '@/src/store/actions';
-
 import {
   applyUploadReplaceActions,
   detectUploadFileConflicts,
   dispatchPreparedFileUploads,
 } from '@/src/utils/app/prepare-files-for-upload';
+
+import { ReplaceOptions } from '@/src/types/common';
+import { HTTPMethod } from '@/src/types/http';
+
+import { FilesActions } from '@/src/store/actions';
 
 describe('detectUploadFileConflicts', () => {
   const folderId = 'files/test-bucket/uploads';
