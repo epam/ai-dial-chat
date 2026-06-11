@@ -7,6 +7,9 @@ excludes:
     - pattern: 'devDependencies'
       reason: 'DEV_DEPENDENCY_OF'
       comment: 'Packages for development only.'
+  packages:
+    - id: 'NPM:@epam:.*'
+      reason: 'INTERNAL_PACKAGE'
 license_choices:
   repository_license_choices:
     - given: 'GPL-2.0-only OR MIT'
