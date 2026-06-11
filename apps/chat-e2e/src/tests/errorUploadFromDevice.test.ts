@@ -246,7 +246,6 @@ dialTest(
       'Upload all files and verify duplicates are auto-renamed in attachments',
       async () => {
         await uploadFromDeviceModal.uploadButton.click();
-        await replaceConfirmationModal.waitForState({ state: 'visible' });
         await baseAssertion.assertElementText(
           replaceConfirmationModal.title,
           ExpectedConstants.uploadDuplicateNamesModalTitle,

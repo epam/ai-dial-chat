@@ -88,7 +88,8 @@ export class ReplaceConfirmationModal extends BaseElement {
    */
   public async confirmUploadDuplicates() {
     await this.waitForState({ state: 'visible' });
-    await this.clickContinue();
+    await this.continueButton.click();
+    await this.waitForState({ state: 'hidden' });
   }
 
   public async clickContinue(expectedRequests?: Map<string, string>) {
