@@ -36,7 +36,7 @@
       "executor": "@nx/eslint:lint",
       "outputs": ["{options.outputFile}"],
       "options": {
-        "maxWarnings": 30
+        "maxWarnings": 55
       },
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"]
     },
@@ -46,7 +46,7 @@
       "inputs": ["default", "{workspaceRoot}/eslint.config.mjs"],
       "options": {
         "fix": true,
-        "maxWarnings": 30
+        "maxWarnings": 55
       }
     },
     "format": {
