@@ -13,7 +13,11 @@ import dynamic from 'next/dynamic';
 import { Label } from '@/src/components/Common/Forms/Label';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 
-import { DialMarkdownEditor, EditorTheme } from './MarkdownEditor';
+import {
+  DialMarkdownEditor,
+  EditorTheme,
+  EditorThemes,
+} from './MarkdownEditor';
 
 // Dynamic import to avoid SSR issues with Monaco Editor
 const MonacoEditor = dynamic(
@@ -49,7 +53,7 @@ export const DialMarkdownEditorContainer: FC<
   headerContent,
   switcherLabel,
   height = 300,
-  theme = EditorTheme.dark,
+  theme = EditorThemes.dark,
   onValidateJSON,
   preview = 'edit',
   placeholder,
@@ -107,7 +111,7 @@ export const DialMarkdownEditorContainer: FC<
               onChange={handleChange}
               onValidate={onValidateJSON}
               language="json"
-              theme={theme === EditorTheme.dark ? 'vs-dark' : 'light'}
+              theme={theme === EditorThemes.dark ? 'vs-dark' : 'light'}
               height={height}
               options={monacoEditorOptions}
             />

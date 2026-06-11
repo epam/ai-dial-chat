@@ -61,13 +61,12 @@ import { withController } from '@/src/components/Common/Forms/ControlledFormFiel
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
+import { EditorTheme } from '@/src/components/Common/MarkdownEditor/MarkdownEditor';
 import { DialMarkdownEditorContainer } from '@/src/components/Common/MarkdownEditor/MarkdownEditorContainer';
 import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
-
-import { EditorTheme } from '../../../Common/MarkdownEditor/MarkdownEditor';
 
 import { DialFileNodeType, DialInput } from '@epam/ai-dial-ui-kit';
 import { difference } from 'lodash-es';
