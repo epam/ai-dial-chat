@@ -62,6 +62,8 @@
 
 `libs/conversation-messages/src/components/MessageBubble/UserMessageBubble.tsx` SHALL accept an optional `attachments?: DisplayAttachment[]` display prop. When non-empty, it SHALL render an `AttachmentTray` above the message text. The tray SHALL be read-only: no remove button, no retry button (`alwaysShowActions={false}`, no `onRemove`, no `onRetry`). API attachment DTOs SHALL be mapped to `DisplayAttachment[]` before reaching this component.
 
+The tray SHALL be right-aligned (cards packed to the right edge), wrap to multiple rows when there are more than 6 cards, and show at most 6 cards per row (capped at `640px` = 6 × 100px cards + 5 × 8px gaps).
+
 #### Scenario: User bubble with attachments shows tray above text
 
 - **WHEN** `UserMessageBubble` is rendered with two attachments and a text body
@@ -76,6 +78,17 @@
 
 - **WHEN** the tray is rendered in a user bubble
 - **THEN** no remove (×) or retry (↺) buttons are shown
+
+#### Scenario: User bubble tray is right-aligned
+
+- **WHEN** the text bubble is wider than the attachment cards
+- **THEN** the attachment cards are packed against the right edge of the tray
+
+#### Scenario: User bubble tray wraps beyond 6 cards
+
+- **WHEN** a user message has more than 6 attachments
+- **THEN** the tray wraps to a second row rather than scrolling horizontally
+- **THEN** each row contains at most 6 cards, right-aligned
 
 ---
 

@@ -1,4 +1,8 @@
-import type { Attachment, DeploymentItem } from '@epam/ai-dial-chat-shared';
+import type {
+  Attachment,
+  DeploymentItem,
+  DisplayAttachment,
+} from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 
 /**
@@ -182,4 +186,8 @@ export interface InputProps {
    * - `SendOnEnter.MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
    */
   sendOnEnter?: SendOnEnter;
+  /** Attachments managed externally (e.g. pre-existing kept attachments in edit mode) prepended to the tray alongside locally-added ones. */
+  prefixAttachments?: DisplayAttachment[];
+  /** Called when the user removes an attachment from `prefixAttachments`. */
+  onRemovePrefixAttachment?: (id: string) => void;
 }
