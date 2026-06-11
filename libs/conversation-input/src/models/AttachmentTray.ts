@@ -16,6 +16,10 @@ export interface AttachmentTrayProps {
   removeLabel?: string;
   /** Accessible label for each card's retry button (error state only). */
   retryLabel?: string;
+  /** Called when the user clicks or keyboard-activates an attachment card. Receives the full `DisplayAttachment` object. */
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Accessible label forwarded to each card's root when it is interactive. When omitted, the card's own default (`'Open attachment'`) applies. */
+  clickLabel?: string;
   /** Extra class name(s) merged onto the root element. */
   className?: string;
 }

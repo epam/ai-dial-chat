@@ -23,20 +23,18 @@ jobs:
       contents: read
       id-token: write # For Bedrock API authentication with OIDC
       pull-requests: write # For posting comments
+    environment:
+      name: security-review
+      deployment: false
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           persist-credentials: true # TODO: set false when upstream issue be resolved https://github.com/anthropics/claude-code-action/issues/1236
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
-        with:
-          role-to-assume: ${{ secrets.AWS_ROLE_TO_ASSUME }}
-          aws-region: us-east-2
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@4481e6d3c7bbb88db2a928ca3444c536f589c7c1 # v1.0.131
+        uses: anthropics/claude-code-action@11ba60486e4aec9ddfeafcf4bb3f00b028ac2c16 # v1.0.142
         with:
-          use_bedrock: true
+          anthropic_api_key: ${{ secrets.DIAL_API_KEY }}
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -45,7 +43,7 @@ jobs:
 
             RULES:
               1. The repository is already checked out at the PR head SHA.
-              2. Run subagent with `security-review` skill to do the work first. Once they finishes, address their findings.
+              2. At first, use `security-review` skill to do the main work. Once finished, address the findings.
               3. You MUST use `mcp__github_inline_comment__create_inline_comment` to highlight issues that point at specific lines.
               4. Any other feedback that is not specific to a line goes to the tracking comment (`mcp__github_comment__update_claude_comment`).
               5. Keep feedback concise. Do not praise good practices or provide other non-critical feedback.
@@ -56,6 +54,10 @@ jobs:
           use_sticky_comment: true
           claude_args: |
             --verbose
-            --model us.anthropic.claude-sonnet-4-6
+            --model dial,anthropic.claude-sonnet-4-6
             --max-turns 50
             --allowedTools "Glob,Grep,LS,Read,Task,Skill,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh pr checks:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:--comment*),Bash(gh pr comment:*),mcp__github_comment__update_claude_comment,mcp__github_inline_comment__create_inline_comment"
+        env:
+          ANTHROPIC_BASE_URL: "${{ vars.DIAL_CORE_URL }}/anthropic"
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.DIAL_API_KEY }}
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: 1

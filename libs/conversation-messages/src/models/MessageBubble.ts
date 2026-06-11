@@ -73,6 +73,10 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
   showMoreAriaLabel?: string;
   /** Accessible label for the collapse button. Defaults to the `showLessLabel` value. */
   showLessAriaLabel?: string;
+  /** Called when the user clicks an attachment card. Passed through to `AttachmentTray`. */
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Accessible label forwarded to each attachment card's root when it is interactive. */
+  attachmentClickLabel?: string;
 }
 
 /** Props accepted by the `AssistantMessageBubble` component. */
@@ -152,4 +156,8 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
    * Forwarded to `AssistantMessageBubble`. Defaults to `'Thinking'`.
    */
   thinkingLabel?: string;
+  /** Called when the user clicks an attachment card. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Accessible label forwarded to each attachment card's root when it is interactive. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  attachmentClickLabel?: string;
 }

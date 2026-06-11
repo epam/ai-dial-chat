@@ -77,7 +77,6 @@ interface Props {
   initialModelId: string;
   streamErrorText: string;
   isReadOnly?: boolean;
-  readOnlyNotice?: string;
   onDuplicateConversation?: () => void;
   duplicateError?: string;
   isTranscriptionSupported?: boolean;
@@ -107,7 +106,6 @@ const ConversationView: FC<Props> = ({
   initialModelId,
   streamErrorText,
   isReadOnly = false,
-  readOnlyNotice,
   onDuplicateConversation,
   duplicateError,
   isTranscriptionSupported = false,
@@ -390,11 +388,6 @@ const ConversationView: FC<Props> = ({
       >
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
-            {readOnlyNotice && (
-              <p className="dial-body-regular-text text-secondary">
-                {readOnlyNotice}
-              </p>
-            )}
             {duplicateError && (
               <DialNotification
                 variant={NotificationVariant.Error}

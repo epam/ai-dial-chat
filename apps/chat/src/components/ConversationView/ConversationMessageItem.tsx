@@ -15,6 +15,9 @@ import {
 import { StagesPanel } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { FC, lazy, memo, Suspense } from 'react';
+import { useTranslation } from 'react-i18next';
+import { MessagesI18nKeys } from '../../constants/translation-keys';
+import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
 import { messageHasStages } from '../../utils/message-utils';
 import { buildMessageActions } from './utils/build-message-actions';
@@ -108,6 +111,8 @@ const ConversationMessageItem: FC<Props> = ({
   streamErrorText,
   thinkingLabel,
 }) => {
+  const { t } = useTranslation();
+  const { handleAttachmentClick } = useAttachmentAction();
   const isStreaming = isStreamingMessage(
     msg.role,
     index,
@@ -132,6 +137,8 @@ const ConversationMessageItem: FC<Props> = ({
               showLessLabel={showLessLabel}
               showMoreAriaLabel={showMoreUserMessageAriaLabel}
               showLessAriaLabel={showLessUserMessageAriaLabel}
+              onAttachmentClick={handleAttachmentClick}
+              attachmentClickLabel={t(MessagesI18nKeys.AttachmentDownloadLabel)}
               className="justify-end"
             />
           }
@@ -236,6 +243,8 @@ const ConversationMessageItem: FC<Props> = ({
       deploymentIconUrl={deploymentEntry?.iconUrl}
       deploymentDisplayName={deploymentEntry?.displayName}
       thinkingLabel={thinkingLabel}
+      onAttachmentClick={handleAttachmentClick}
+      attachmentClickLabel={t(MessagesI18nKeys.AttachmentDownloadLabel)}
       {...statusProps}
     />
   );

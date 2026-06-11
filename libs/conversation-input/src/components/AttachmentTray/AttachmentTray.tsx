@@ -11,6 +11,8 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
   ariaLabel = 'Attached files',
   removeLabel,
   retryLabel,
+  onAttachmentClick,
+  clickLabel,
   className,
 }) => {
   if (attachments.length === 0) return null;
@@ -33,6 +35,12 @@ export const AttachmentTray: FC<AttachmentTrayProps> = ({
             onExpand={onExpand}
             removeLabel={removeLabel}
             retryLabel={retryLabel}
+            onClick={
+              onAttachmentClick
+                ? () => onAttachmentClick(attachment)
+                : undefined
+            }
+            clickLabel={clickLabel}
           />
         </div>
       ))}

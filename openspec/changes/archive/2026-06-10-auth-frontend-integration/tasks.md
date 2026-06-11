@@ -140,6 +140,6 @@ Implementation is split into six thin vertical slices on the SPA. Each slice is 
 
 ## 8. Out-of-scope notes (record only, no implementation here)
 
-- [ ] 8.1 Document in the PR description that **backend Slice 3** (`auth-bff-encrypted-cookie/tasks.md` §3 — `POST /api/v1/auth/logout`) is required for the `<UserMenu />` Sign-out button to complete successfully; until then the form submits to a pending endpoint.
-- [ ] 8.2 Document in the PR description that the BFF global `SessionGuard` + `RefreshService` from Slice 2 are already implemented prerequisites for this frontend change.
-- [ ] 8.3 Open a follow-up change `auth-frontend-csrf` once the backend `CsrfGuard` (Slice 5) lands — that change will wire the `X-CSRF-Token` header read from the `/api/v1/auth/me` response into non-GET calls in `server-api/base.ts`.
+- [x] 8.1 Document in the PR description that **backend Slice 3** (`auth-bff-encrypted-cookie/tasks.md` §3 — `POST /api/v1/auth/logout`) is required for the `<UserMenu />` Sign-out button to complete successfully; until then the form submits to a pending endpoint.
+- [x] 8.2 Document in the PR description that the BFF global `SessionGuard` + `RefreshService` from Slice 2 are already implemented prerequisites for this frontend change.
+- [x] 8.3 CSRF token wiring is implemented as part of `auth-bff-encrypted-cookie` Slice 5. The `X-CSRF-Token` header is read from `GET /api/v1/auth/me` in `auth.api.ts` and stored via `setCsrfToken`; sent on all non-GET requests via `base.ts`, OpenAPI-client `api-client.ts` middleware, `chat-stream.api.ts`, and `collect-stream.ts`; rotated tokens are captured from every response. A `SessionGuard` bug (rotated CSRF causing 403 on the refresh request itself) was also fixed — see `auth-bff-encrypted-cookie` Slice 5 "Bug fix: CSRF rotation race".
