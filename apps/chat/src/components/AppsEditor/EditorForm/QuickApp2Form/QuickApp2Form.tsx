@@ -67,6 +67,8 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
 
+import { EditorTheme } from '../../../Common/MarkdownEditor/MarkdownEditor';
+
 import { DialFileNodeType, DialInput } from '@epam/ai-dial-ui-kit';
 import { difference } from 'lodash-es';
 import uniq from 'lodash-es/uniq';
@@ -271,7 +273,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               value={field.value}
               onChangeValue={field.onChange}
               height={200}
-              theme={theme}
+              theme={theme as EditorTheme}
             />
           )}
         />
