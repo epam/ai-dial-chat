@@ -140,11 +140,11 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.likeResponse ?? 'Like response'}
               className={
                 activeRating === MessageRating.Like
-                  ? '!text-accent-primary'
+                  ? 'cursor-default !text-accent-primary'
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
-              onClick={onLike}
+              onClick={activeRating === MessageRating.Like ? undefined : onLike}
             />
           )}
           {onDislike && (
@@ -154,11 +154,13 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.dislikeResponse ?? 'Dislike response'}
               className={
                 activeRating === MessageRating.Dislike
-                  ? '!text-accent-primary'
+                  ? 'cursor-default !text-accent-primary'
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}
-              onClick={onDislike}
+              onClick={
+                activeRating === MessageRating.Dislike ? undefined : onDislike
+              }
             />
           )}
         </>
