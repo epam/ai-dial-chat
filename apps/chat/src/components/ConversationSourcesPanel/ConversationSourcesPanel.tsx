@@ -1,15 +1,13 @@
 import {
+  PanelEmpty,
   PanelEmptyState,
+  PanelNoResults,
   SearchInput,
   SidebarPanel,
   SidebarSide,
 } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import {
-  IconDownload,
-  IconFileDescription,
-  IconSearchOff,
-} from '@tabler/icons-react';
+import { IconDownload, IconFileDescription } from '@tabler/icons-react';
 import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { SidebarI18nKeys } from '../../constants/translation-keys';
@@ -86,15 +84,9 @@ const ConversationSourcesPanel: FC = () => {
       )}
       <div className="flex-1 overflow-y-auto p-4">
         {isEmpty ? (
-          <PanelEmptyState
-            icon={<IconFileDescription aria-hidden size={60} stroke={1} />}
-            label={t(SidebarI18nKeys.Empty)}
-          />
+          <PanelEmpty label={t(SidebarI18nKeys.Empty)} />
         ) : isNoResults ? (
-          <PanelEmptyState
-            icon={<IconSearchOff aria-hidden size={45} stroke={1} />}
-            label={t(SidebarI18nKeys.NoResults)}
-          />
+          <PanelNoResults label={t(SidebarI18nKeys.NoResults)} />
         ) : (
           <>
             <FilesSection

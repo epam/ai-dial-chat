@@ -1,11 +1,11 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
-  PanelEmptyState,
+  PanelEmpty,
+  PanelNoResults,
   SearchInput,
   SidebarPanel,
   SidebarSide,
 } from '@epam/ai-dial-sidebar';
-import { IconMessageCircle, IconSearchOff } from '@tabler/icons-react';
 import { type FC, memo, useMemo, useState } from 'react';
 import {
   ConversationSource,
@@ -169,14 +169,12 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
 
         <div className="flex w-full flex-1 flex-col gap-2 overflow-y-auto px-2 py-1">
           {isNoConversations ? (
-            <PanelEmptyState
-              icon={<IconMessageCircle aria-hidden size={48} stroke={1} />}
+            <PanelEmpty
               label={emptyLabel}
               labelClassName={typography?.emptyLabelClassName}
             />
           ) : isNoResults ? (
-            <PanelEmptyState
-              icon={<IconSearchOff aria-hidden size={45} stroke={1} />}
+            <PanelNoResults
               label={noResultsLabel}
               labelClassName={typography?.emptyLabelClassName}
             />
