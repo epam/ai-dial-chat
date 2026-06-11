@@ -52,6 +52,12 @@ export class SessionGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
+    // Capture the CSRF token the frontend sent with this request before any
+    // refresh rotates it. CsrfGuard must validate the current request against
+    // this pre-refresh token; the rotated token is returned via the response
+    // header so the frontend uses it for subsequent requests.
+    const csrfForCurrentRequest = payload.csrf;
+
     const now = Math.floor(Date.now() / 1000);
     if (payload.at_exp < now + 60) {
       payload = await this.refresh.refresh(payload);
@@ -100,7 +106,7 @@ export class SessionGuard implements CanActivate {
       providerId: payload.providerId,
       claims: payload.claims,
       at: payload.at,
-      csrf: payload.csrf,
+      csrf: csrfForCurrentRequest,
       bucket: payload.bucket,
     };
     req.user = user;

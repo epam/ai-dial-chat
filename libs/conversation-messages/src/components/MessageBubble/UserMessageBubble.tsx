@@ -34,6 +34,8 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   showLessLabel = 'Show less',
   showMoreAriaLabel,
   showLessAriaLabel,
+  onAttachmentClick,
+  attachmentClickLabel,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
@@ -81,7 +83,11 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   return (
     <div style={cssVars} className={mergeClasses('flex w-full', className)}>
       <div className="ms-auto flex w-fit flex-col items-end gap-4">
-        <AttachmentTray attachments={attachments ?? []} />
+        <AttachmentTray
+          attachments={attachments ?? []}
+          onAttachmentClick={onAttachmentClick}
+          clickLabel={attachmentClickLabel}
+        />
         {text && (
           <div
             className={mergeClasses(
