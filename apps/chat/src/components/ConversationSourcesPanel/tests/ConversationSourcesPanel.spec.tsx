@@ -21,7 +21,8 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
 }));
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
-  PanelEmptyState: ({ label }: { label: string }) => <div>{label}</div>,
+  PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
+  PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
   SidebarPanel: ({
     children,
     isOpen,
