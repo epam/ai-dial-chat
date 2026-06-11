@@ -2,6 +2,7 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   Attachment,
   ExpectedConstants,
+  ImportResolutionOption,
   UploadMenuOptions,
 } from '@/src/testData';
 import { FileUtil, GeneratorUtil } from '@/src/utils';
@@ -168,11 +169,17 @@ dialTest(
     fileApiHelper,
     baseAssertion,
     sendMessageInputAttachmentsAssertions,
+    replaceConfirmationModal,
+    replaceConfirmationModalAssertion,
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
     const sanitizedFilename = ExpectedConstants.replacedRestrictedCharsName(
       Attachment.restrictedSemicolonCharFilename,
+    );
+    const renamedSunImageName = Attachment.sunImageName.replace(
+      /(\.)([^.]+)$/,
+      ' 1.$2',
     );
     const renamedRestrictedCharFilename = sanitizedFilename.replace(
       /(\.)([^.]+)$/,
@@ -238,11 +245,24 @@ dialTest(
     await dialTest.step(
       'Upload all files and verify duplicates are auto-renamed in attachments',
       async () => {
-        await uploadFromDeviceModal.uploadFiles();
+        await uploadFromDeviceModal.uploadButton.click();
+        await replaceConfirmationModal.waitForState({ state: 'visible' });
+        await baseAssertion.assertElementText(
+          replaceConfirmationModal.title,
+          ExpectedConstants.uploadDuplicateNamesModalTitle,
+        );
+        await baseAssertion.assertElementText(
+          replaceConfirmationModal.description,
+          ExpectedConstants.uploadDuplicateNamesModalDescription,
+        );
+        await replaceConfirmationModalAssertion.assertAllItemsOption(
+          ImportResolutionOption.Postfix,
+        );
+        await replaceConfirmationModal.confirmUploadDuplicates();
         await baseAssertion.assertElementState(uploadFromDeviceModal, 'hidden');
 
         await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
-          Attachment.sunImageName,
+          renamedSunImageName,
           'visible',
         );
         await sendMessageInputAttachmentsAssertions.assertAttachedFileState(

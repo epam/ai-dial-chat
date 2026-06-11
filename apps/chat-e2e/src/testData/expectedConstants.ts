@@ -386,6 +386,11 @@ export const ExpectedConstants = {
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,
   replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',
   replaceGroupAttachmentConfirmationTitle: 'Replace Or Duplicate Items',
+  uploadDuplicateNamesModalTitle:
+    'Some files failed to upload due to duplicate names',
+  uploadDuplicateNamesModalDescription:
+    'Add a postfix, ignore or replace existing files with uploading ones.',
+  continueUploadButtonLabel: 'Continue upload',
   replaceAttachmentConfirmationMessage: (filename: string) =>
     `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
   duplicatedFileName: (name: string, index = 1) => {
