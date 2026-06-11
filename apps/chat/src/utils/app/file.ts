@@ -20,6 +20,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
 import {
+  ALL_FILE_EXTENSIONS,
   BYTES_IN_KB,
   BYTES_IN_MB,
   FALLBACK_CONTENT_TYPE,
@@ -50,7 +51,7 @@ import {
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
 import uniqBy from 'lodash-es/uniqBy';
-import { extensions, lookup } from 'mime-types';
+import { lookup } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
@@ -373,7 +374,7 @@ export const getExtensionsListForMimeType = (mimeType: string) => {
   if (subset === '*') {
     return ['all'];
   } else if (name === '*') {
-    return Object.entries(extensions).reduce((acc, [key, value]) => {
+    return Object.entries(ALL_FILE_EXTENSIONS).reduce((acc, [key, value]) => {
       const [keySubset] = key.split('/');
       if (keySubset === subset) {
         acc.push(...value);
@@ -382,7 +383,7 @@ export const getExtensionsListForMimeType = (mimeType: string) => {
       return acc;
     }, [] as string[]);
   } else {
-    return extensions[mimeType] || [];
+    return ALL_FILE_EXTENSIONS[mimeType] || [];
   }
 };
 
