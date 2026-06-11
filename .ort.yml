@@ -7,9 +7,6 @@ excludes:
     - pattern: 'devDependencies'
       reason: 'DEV_DEPENDENCY_OF'
       comment: 'Packages for development only.'
-  packages:
-    - id: 'NPM:@epam:.*'
-      reason: 'INTERNAL_PACKAGE'
 license_choices:
   repository_license_choices:
     - given: 'GPL-2.0-only OR MIT'
@@ -28,3 +25,25 @@ resolutions:
       comment: >-
         License choices are kept in sync with the development branch template.
         Applicable packages may be absent in this feature branch.
+  issues:
+    - message: '.*@epam/ai-dial-chat-shared.*'
+      reason: 'CANT_FIX_ISSUE'
+      comment: 'Internal workspace package not published to npm registry.'
+    - message: '.*@epam/ai-dial-conversation-input.*'
+      reason: 'CANT_FIX_ISSUE'
+      comment: 'Internal workspace package not published to npm registry.'
+    - message: '.*@epam/ai-dial-conversation-panel.*'
+      reason: 'CANT_FIX_ISSUE'
+      comment: 'Internal workspace package not published to npm registry.'
+    - message: '.*@epam/ai-dial-conversation-stages.*'
+      reason: 'CANT_FIX_ISSUE'
+      comment: 'Internal workspace package not published to npm registry.'
+    - message: '.*@epam/chat-api@.*'
+      reason: 'CANT_FIX_ISSUE'
+      comment: 'Internal workspace package not published to npm registry.'
+    - message: '.*@epam/chat-api-client.*'
+      reason: 'CANT_FIX_ISSUE'
+      comment: 'Internal workspace package not published to npm registry.'
+    - message: '.*@epam/chat@.*'
+      reason: 'CANT_FIX_ISSUE'
+      comment: 'Internal workspace package not published to npm registry.'
