@@ -87,38 +87,38 @@ const validateJwtWithOidc = async (params: {
 
 export const validateProviderAccessToken = async (params: {
   token: string;
-  provider: OAuthConfig<unknown>;
+  provider: OAuthConfig<Record<string, unknown>> | undefined;
 }): Promise<TokenValidationResult> => {
   const provider = params.provider;
 
-  if (!provider.options?.issuer) {
+  if (!provider?.options?.issuer) {
     return {
       ok: false,
-      provider: provider.id,
+      provider: provider?.id ?? 'unknown',
       error: {
         message: 'Missing issuer',
       },
     };
   }
-  if (!provider.wellKnown) {
+  if (!provider?.wellKnown) {
     return {
       ok: false,
-      provider: provider.id,
+      provider: provider?.id ?? 'unknown',
       error: {
         message: 'Missing well-known endpoint',
       },
     };
   }
-  const authorization = provider.authorization;
+  const authorization = provider?.authorization;
   const audience =
     typeof authorization === 'string'
       ? undefined
       : authorization?.params?.audience;
   return validateJwtWithOidc({
-    provider: provider.id,
+    provider: provider?.id ?? 'unknown',
     token: params.token,
-    issuer: provider.options.issuer,
+    issuer: provider?.options?.issuer,
     audience: audience,
-    wellKnown: provider.wellKnown,
+    wellKnown: provider?.wellKnown,
   });
 };
