@@ -143,6 +143,7 @@ const ConversationPanelView: FC<Props> = ({
           isPinned: item.isPinned ?? false,
           iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
           source: getConversationSource(item),
+          href: getConversationRoute(id),
         };
       }),
     [items, deploymentIconByModelId],
