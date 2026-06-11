@@ -26,6 +26,7 @@ import type {
   SharedResourcesResult,
 } from './types/conversation.types';
 import {
+  buildConversationUrl,
   buildRenamedConversationPath,
   decodeNextToken,
   encodeCompoundToken,
@@ -33,6 +34,7 @@ import {
   getConversationName,
   getConversationTitleFromName,
   prepareEntityName,
+  safeDecodeURIComponent,
 } from './utils/conversation.utils';
 import { resolveUniqueConversationName } from './utils/resolve-unique-conversation-name';
 
@@ -224,9 +226,13 @@ export class ConversationService extends AppService {
     }
 
     // Remove from pins if present — fire-and-forget, non-fatal
-    const conversationId = `conversations/${bucket}/${conversationPath}`;
-    void this.pinConversation(conversationId, false, token, bucket).catch(
-      (err) => this.logger.error('Failed to clean up pin on delete', err),
+    void this.pinConversation(
+      buildConversationUrl(bucket, conversationPath),
+      false,
+      token,
+      bucket,
+    ).catch((err) =>
+      this.logger.error('Failed to clean up pin on delete', err),
     );
   }
 
@@ -242,8 +248,8 @@ export class ConversationService extends AppService {
       sanitisedTitle,
     );
 
-    const sourceUrl = `conversations/${bucket}/${encodeDialResourcePath(conversationPath)}`;
-    const destinationUrl = `conversations/${bucket}/${encodeDialResourcePath(renamedPath)}`;
+    const sourceUrl = `${buildConversationUrl(bucket, encodeDialResourcePath(conversationPath))}`;
+    const destinationUrl = `${buildConversationUrl(bucket, encodeDialResourcePath(renamedPath))}`;
 
     try {
       const { error } = (await this.client.moveResource({
@@ -259,7 +265,17 @@ export class ConversationService extends AppService {
       return handleDialError(error);
     }
 
-    return { newPath: `conversations/${bucket}/${renamedPath}` };
+    // Migrate pin state: if the old conversation was pinned, point the pin at
+    // the new path. Fire-and-forget, non-fatal (mirrors deleteConversation cleanup).
+    const oldPinId = buildConversationUrl(bucket, conversationPath);
+    const newPinId = buildConversationUrl(bucket, renamedPath);
+    void this.userConfigService
+      .migratePin(oldPinId, newPinId, token, bucket)
+      .catch((err) =>
+        this.logger.error('Failed to migrate pin on rename', err),
+      );
+
+    return { newPath: buildConversationUrl(bucket, renamedPath) };
   }
 
   async duplicateConversation(
@@ -282,8 +298,14 @@ export class ConversationService extends AppService {
     );
     const destFilename = buildRenamedConversationPath(filename, uniqueTitle);
 
-    const sourceUrl = `conversations/${sourceBucket}/${encodeDialResourcePath(subPath)}`;
-    const destinationUrl = `conversations/${sessionBucket}/${encodeURIComponent(destFilename)}`;
+    const sourceUrl = buildConversationUrl(
+      sourceBucket,
+      encodeDialResourcePath(subPath),
+    );
+    const destinationUrl = buildConversationUrl(
+      sessionBucket,
+      encodeURIComponent(destFilename),
+    );
 
     try {
       const { error } = (await this.client.copyResource({
@@ -299,7 +321,7 @@ export class ConversationService extends AppService {
       return handleDialError(error);
     }
 
-    return { newPath: `conversations/${sessionBucket}/${destFilename}` };
+    return { newPath: buildConversationUrl(sessionBucket, destFilename) };
   }
 
   async listConversations(
@@ -387,7 +409,7 @@ export class ConversationService extends AppService {
         );
       }
 
-      const pinnedSet = new Set(pinnedIds);
+      const pinnedSet = new Set(pinnedIds.map(safeDecodeURIComponent));
 
       const mapItems = (
         items: MetadataItem[],
@@ -398,6 +420,7 @@ export class ConversationService extends AppService {
           .map((item) => {
             const id =
               item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`;
+            const decodedId = safeDecodeURIComponent(id);
             return {
               id,
               title: getConversationTitleFromName(item.name ?? ''),
@@ -406,7 +429,7 @@ export class ConversationService extends AppService {
                 overrides.sharedWithMe ?? item.sharedWithMe ?? false,
               publishedWithMe:
                 overrides.publishedWithMe ?? item.publishedWithMe ?? false,
-              isPinned: pinnedSet.has(id),
+              isPinned: pinnedSet.has(decodedId),
             };
           });
 
@@ -479,13 +502,14 @@ export class ConversationService extends AppService {
               .filter((r) => r.nodeType !== 'FOLDER')
               .map((r) => {
                 const id = r.url ?? `${r.parentPath ?? ''}/${r.name ?? ''}`;
+                const decodedId = safeDecodeURIComponent(id);
                 return {
                   id,
                   title: getConversationTitleFromName(r.name ?? ''),
                   updatedAt: 0,
                   sharedWithMe: true,
                   publishedWithMe: false,
-                  isPinned: pinnedSet.has(id),
+                  isPinned: pinnedSet.has(decodedId),
                 };
               })
           : [];
