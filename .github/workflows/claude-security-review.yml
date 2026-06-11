@@ -1,0 +1,63 @@
+name: Claude Security Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review, reopened] # Allowed types: https://github.com/anthropics/claude-code-action/blob/4481e6d3c7bbb88db2a928ca3444c536f589c7c1/src/modes/detector.ts#L101
+    branches: [development-1.0]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.head_ref || github.ref }}
+  cancel-in-progress: true
+
+permissions: {}
+
+jobs:
+  review:
+    if: |
+      github.event.pull_request.state == 'open' &&
+      github.event.pull_request.draft == false &&
+      contains(github.event.pull_request.labels.*.name, 'security-review')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write # For Bedrock API authentication with OIDC
+      pull-requests: write # For posting comments
+    environment:
+      name: security-review
+      deployment: false
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: true # TODO: set false when upstream issue be resolved https://github.com/anthropics/claude-code-action/issues/1236
+      - name: Run Claude Code
+        id: claude
+        uses: anthropics/claude-code-action@11ba60486e4aec9ddfeafcf4bb3f00b028ac2c16 # v1.0.142
+        with:
+          anthropic_api_key: ${{ secrets.DIAL_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Perform a pull request security code review.
+
+            RULES:
+              1. The repository is already checked out at the PR head SHA.
+              2. At first, use `security-review` skill to do the main work. Once finished, address the findings.
+              3. You MUST use `mcp__github_inline_comment__create_inline_comment` to highlight issues that point at specific lines.
+              4. Any other feedback that is not specific to a line goes to the tracking comment (`mcp__github_comment__update_claude_comment`).
+              5. Keep feedback concise. Do not praise good practices or provide other non-critical feedback.
+              6. NEVER repeat feedback from inline comments in the tracking comment. Tracking comment MUST be ULTRA CONCISE and high-level. Table summary `Severity | File(s) | Description` is preferred.
+              7. Do not include `https://claude.ai` links in your comments, as they are not reachable by the users.
+              8. Skip findings that are already posted as comments.
+          track_progress: true
+          use_sticky_comment: true
+          claude_args: |
+            --verbose
+            --model dial,anthropic.claude-sonnet-4-6
+            --max-turns 50
+            --allowedTools "Glob,Grep,LS,Read,Task,Skill,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Bash(gh pr checks:*),Bash(gh pr view:*),Bash(gh pr diff:*),Bash(gh pr review:--comment*),Bash(gh pr comment:*),mcp__github_comment__update_claude_comment,mcp__github_inline_comment__create_inline_comment"
+        env:
+          ANTHROPIC_BASE_URL: "${{ vars.DIAL_CORE_URL }}/anthropic"
+          ANTHROPIC_AUTH_TOKEN: ${{ secrets.DIAL_API_KEY }}
+          CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC: 1

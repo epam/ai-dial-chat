@@ -44,6 +44,7 @@ export const ColorsWithoutAlpha = Object.fromEntries(
 export enum ThemeColorAttributes {
   textAccentTertiary = 'text-accent-tertiary',
   textAccentPrimary = 'text-accent-primary',
+  bgLayer0 = '--bg-layer-0',
   bgLayer3 = 'bg-layer-3',
   bgLayer4 = 'bg-layer-4',
   bgAccentPrimary = 'bg-accent-primary',

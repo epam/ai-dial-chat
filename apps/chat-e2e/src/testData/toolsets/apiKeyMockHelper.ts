@@ -31,10 +31,12 @@ export class ApiKeyMockHelper extends BaseAuthMockHelper<ToolsetApiKeySignInRequ
     return {
       authentication_type: ToolsetAuthTypes.API_KEY,
       api_key_header: this.toolset.auth_settings?.api_key_header,
-      global_auth_status: this.state.isSignedIn
+      global_auth_status: this.isSignedInGlobal
         ? ToolsetAuthStatus.SIGNED_IN
         : ToolsetAuthStatus.SIGNED_OUT,
-      user_level_auth_status: ToolsetAuthStatus.SIGNED_OUT,
+      user_level_auth_status: this.isSignedInUser
+        ? ToolsetAuthStatus.SIGNED_IN
+        : ToolsetAuthStatus.SIGNED_OUT,
     };
   }
 }

@@ -1,5 +1,8 @@
 import { ServerSlugs } from '@/chat/types/slugs-types';
-import { ToolsetAuthPayloadBase } from '@/chat/types/toolsets';
+import {
+  ToolsetAuthPayloadBase,
+  ToolsetCredentialsLevel,
+} from '@/chat/types/toolsets';
 import { API, StatusCodeConfig } from '@/src/testData';
 import {
   AuthState,
@@ -21,6 +24,10 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
   protected readonly toolsetEndpoint: string;
   protected readonly expectedStatusCodes: StatusCodeConfig;
   protected state: AuthState<T>;
+  protected isSignedInGlobal = false;
+  protected isSignedInUser = false;
+  protected orgSignInRequest: T | null = null;
+  protected userSignInRequest: T | null = null;
 
   protected constructor(
     page: Page,
@@ -64,6 +71,14 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
 
   setSignedIn(isSignedIn: boolean) {
     this.state.isSignedIn = isSignedIn;
+  }
+
+  setIsSignedInGlobal(isSignedInGlobal: boolean) {
+    this.isSignedInGlobal = isSignedInGlobal;
+  }
+
+  setIsSignedInUser(isSignedInUser: boolean) {
+    this.isSignedInUser = isSignedInUser;
   }
 
   getSignInRequest(): T | null {
@@ -146,8 +161,16 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
         }
         const { backendSignInCode } = this.expectedStatusCodes;
         if (backendSignInCode === 200) {
+          const body: T = request.postDataJSON();
+          if (body.credentialsLevel === ToolsetCredentialsLevel.GLOBAL) {
+            this.isSignedInGlobal = true;
+            this.orgSignInRequest = body;
+          } else {
+            this.isSignedInUser = true;
+            this.userSignInRequest = body;
+          }
           this.state.isSignedIn = true;
-          this.state.signInRequest = request.postDataJSON();
+          this.state.signInRequest = body;
           await route.fulfill({
             status: 200,
             contentType: 'application/json',
@@ -165,6 +188,14 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
       });
   }
 
+  getOrgSignInRequest(): T | null {
+    return this.orgSignInRequest;
+  }
+
+  getUserSignInRequest(): T | null {
+    return this.userSignInRequest;
+  }
+
   async setupSignOutRoute(): Promise<void> {
     const signOutUrl = `**${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_OUT}`;
     await this.page.route(signOutUrl, async (route, request) => {
@@ -174,6 +205,8 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
       }
 
       this.state.isSignedIn = false;
+      this.isSignedInGlobal = false;
+      this.isSignedInUser = false;
       this.state.signOutRequest = requestData;
 
       await route.fulfill({
