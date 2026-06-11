@@ -77,6 +77,8 @@ export enum DeploymentsI18nKeys {
 export enum ConversationI18nKeys {
   StatusModelChangedTitle = 'conversation.statusMessage.modelChangedTitle',
   StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
+  StagesExecuted = 'conversation.stages.executed',
+  StagesStep = 'conversation.stages.step',
 }
 
 export enum AuthI18nKeys {
