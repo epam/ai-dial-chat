@@ -23,7 +23,6 @@
     "stopStreaming": "Stop streaming",
     "quickReplyButtons": "Quick reply buttons",
     "stoppedGenerating": "You stopped generating the response",
-    "readOnlyNotice": "Only own conversations can be edited",
     "thinking": "Thinking",
     "showMoreUserMessage": "Show full user message",
     "showLessUserMessage": "Collapse user message"
@@ -85,9 +84,16 @@
     "failedToLoadLogo": "Failed to load logo"
   },
   "conversationInput": {
-    "attach": { "label": "Attach file" },
-    "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
-    "attachmentTray": { "label": "Attached files" }
+    "attach": {
+      "label": "Attach file"
+    },
+    "attachment": {
+      "remove": "Remove attachment",
+      "retry": "Retry upload"
+    },
+    "attachmentTray": {
+      "label": "Attached files"
+    }
   },
   "sidebar": {
     "base": {
@@ -170,5 +176,10 @@
     "title": "Settings",
     "theme": "Theme",
     "apply": "Apply"
+  },
+  "messages": {
+    "attachment": {
+      "downloadLabel": "Download file"
+    }
   }
 }
