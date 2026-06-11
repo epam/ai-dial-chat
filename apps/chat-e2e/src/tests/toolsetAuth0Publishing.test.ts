@@ -37,7 +37,8 @@ dialAdminTest(
     'Admin is able to view content of public toolset.\n' +
     '[Admin view]: Public toolset with OAuth with login (without creds) is logged out by default.\n' +
     'Without login option is not displayed for OAuth authentication type.\n' +
-    '[Toolset][Admin view]: Exit button for public toolset when admin open Editor using View option',
+    '[Toolset][Admin view]: Exit button for public toolset when admin open Editor using View option.\n' +
+    '[Toolset]: Connect section is available in Toolset editor for public toolset',
   async (
     {
       marketplacePage,
@@ -97,6 +98,7 @@ dialAdminTest(
       'EPMRTC-7144',
       'EPMRTC-7409',
       'EPMRTC-7860',
+      'EPMRTC-8751',
     );
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
@@ -109,6 +111,7 @@ dialAdminTest(
     let oauthMockHelper: OAuthMockHelper;
     let adminOAuthMockHelper: OAuthMockHelper;
     let initialToolset: Toolset;
+    let publishedToolset: Toolset;
     const defaultAuthor = UserUtil.getE2EUsername(testInfo.parallelIndex);
     const filename = GeneratorUtil.randomFilename('svg');
     const iconUrl = await fileApiHelper.putFileWithCustomName(
@@ -401,7 +404,7 @@ dialAdminTest(
         );
 
         //mock published toolset
-        const publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
+        publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
           toolsetResource.targetUrl,
         );
         adminOAuthMockHelper.enableMocking();
@@ -479,7 +482,7 @@ dialAdminTest(
     );
 
     await dialAdminTest.step(
-      'Verify toolset editor is opened in read only mode and the tooltip is displayed on hover over the controls',
+      'Verify toolset editor is opened in read only mode and the tooltip is displayed on hover over the controls on Settings tab',
       async () => {
         await adminToolsetEditorViewFormAssertion.assertFormIsReadOnly(
           ToolsetAuthTypes.OAUTH,
@@ -488,6 +491,38 @@ dialAdminTest(
         await adminTooltipPortalAssertion.assertTooltipContent(
           ExpectedConstants.readOnlyToolsetMessage,
         );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify Connect toolset section is visible in the editor with Copy URL button',
+      async () => {
+        await adminToolsetEditorViewFormAssertion.assertElementState(
+          adminToolsetEditorViewForm.connectToolsetLabel,
+          'visible',
+        );
+        await adminToolsetEditorViewFormAssertion.assertElementState(
+          adminToolsetEditorViewForm.copyUrlButton,
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click Copy URL button in editor and verify URL is copied to clipboard',
+      async () => {
+        await adminToolsetEditorViewForm.copyUrlButton.click();
+        const copiedUrl = await marketplacePage.readTextFromClipboard();
+        adminToolsetEditorViewFormAssertion.assertValueMatchPattern(
+          copiedUrl,
+          ExpectedConstants.copyToolsetUrlPattern(publishedToolset),
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify toolset editor is opened in read only mode and the tooltip is displayed on hover over the controls on General tab',
+      async () => {
         await adminEntityEditorHeader.goOnGeneralInfoStepWithHeaderStepper({
           isHttpMethodTriggered: false,
         });

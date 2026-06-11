@@ -64,7 +64,9 @@ const FormSection = ({
   subtitle,
 }: FormSectionProps) => {
   return (
-    <div className={classNames('flex flex-col gap-4', className)}>
+    <div
+      className={classNames('flex flex-col gap-4', className)}
+    >
       {(!!title || !!subtitle) && (
         <div className="flex flex-col gap-2">
           {!!title && (
@@ -220,6 +222,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         <CopyUrlButton
           entity={toolset}
           label={t(CommonI18nKeys.CopyToolsetEndpointURL)}
+          id="copy-section"
         />
       </FormSection>
     </div>
