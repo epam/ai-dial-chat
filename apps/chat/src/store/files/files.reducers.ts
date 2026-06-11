@@ -133,6 +133,7 @@ export const filesSlice = createSlice({
         bucket?: string;
 
         showSuccessMessage?: boolean;
+        isFromDeviceAttachment?: boolean;
       }>,
     ) => {
       state.files = state.files.filter((file) => file.id !== payload.id);
@@ -148,6 +149,9 @@ export const filesSlice = createSlice({
         fileContent,
         contentLength: payload.fileContent.size,
         contentType: fileContent.type,
+        ...(payload.isFromDeviceAttachment && {
+          isFromDeviceAttachment: true,
+        }),
       });
     },
     uploadFileCancel: (
@@ -209,6 +213,7 @@ export const filesSlice = createSlice({
             contentLength:
               payload.apiResult.contentLength || file.contentLength,
             contentType: payload.apiResult.contentType || file.contentType,
+            isFromDeviceAttachment: file.isFromDeviceAttachment,
           };
         }
         return file;
@@ -326,8 +331,9 @@ export const filesSlice = createSlice({
         fileIds: string[];
       }>(
         (acc, folderId) => {
+          const prefix = addTrailingSlashIfAbsent(folderId);
           const fileIds = payload.files
-            .filter(({ id }) => id.startsWith(folderId))
+            .filter(({ id }) => id.startsWith(prefix))
             .map(({ id }) => id);
 
           if (fileIds.length) {
@@ -646,7 +652,9 @@ export const filesSlice = createSlice({
     ) => state,
     renameFolderFail: (
       state,
-      { payload }: PayloadAction<{ oldId: string; newId: string }>,
+      {
+        payload,
+      }: PayloadAction<{ oldId: string; newId: string; traceId?: string }>,
     ) => {
       state.folders = state.folders.map((f) =>
         renameFolderAndMoveEntity(f, payload.newId, payload.oldId),

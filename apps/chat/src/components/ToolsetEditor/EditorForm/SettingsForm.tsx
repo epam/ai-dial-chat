@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import {
   Controller,
   useFormContext,
@@ -9,6 +9,8 @@ import {
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { isToolsetSignedIn } from '@/src/utils/app/toolsets';
 
 import { DropdownSelectorOption } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
@@ -104,6 +106,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
   const { t } = useTranslation(Translation.Common);
 
   const toolset = useAppSelector(ToolsetSelectors.selectToolsetDetails);
+  const isLoggedIn = toolset && isToolsetSignedIn(toolset);
   const { register, clearErrors, setValue, control } =
     useFormContext<ToolsetEditorForm>();
   const { errors } = useFormState<ToolsetEditorForm>({ control });
@@ -118,6 +121,13 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
       clearErrors('endpoint');
     }
   }, [clearErrors, endpointField, setValue]);
+
+  const disabledReason = useMemo(() => {
+    if (isToolsetPublic) return PUBLIC_TOOLSET_TOOLTIP;
+    if (isLoggedIn) return t(CommonI18nKeys.LogOutBeforeEditingToolset);
+
+    return undefined;
+  }, [isLoggedIn, isToolsetPublic, t]);
 
   return (
     <div
@@ -135,8 +145,8 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
           placeholder={t(CommonI18nKeys.EnterEndpoint)}
           id="endpoint"
           error={errors.endpoint?.message}
-          tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
-          disabled={isToolsetPublic}
+          tooltip={disabledReason}
+          disabled={!!disabledReason}
         />
         <Controller
           name="protocol"
@@ -155,8 +165,8 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
               id="protocol"
               options={protocolOptions}
               closeMenuOnSelect
-              tooltip={isToolsetPublic ? PUBLIC_TOOLSET_TOOLTIP : undefined}
-              isDisabled={isToolsetPublic}
+              tooltip={disabledReason}
+              isDisabled={!!disabledReason}
             />
           )}
         />

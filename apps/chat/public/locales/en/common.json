@@ -235,5 +235,6 @@
   "Limit exceeded": "Limit exceeded",
   "\"{{name}}\" has already been shared with the maximum specified number of users.": "\"{{name}}\" has already been shared with the maximum specified number of users.",
   "\"{{name}}\" version {{version}} has already been shared with the maximum specified number of users.": "\"{{name}}\" version {{version}} has already been shared with the maximum specified number of users.",
-  "Sharing failed. You are only allowed to share applications with resources from \"My files\"": "Sharing failed. You are only allowed to share applications with resources from \"My files\""
+  "Sharing failed. You are only allowed to share applications with resources from \"My files\"": "Sharing failed. You are only allowed to share applications with resources from \"My files\"",
+  "Log out before editing toolset": "Log out before editing toolset"
 }

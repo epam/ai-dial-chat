@@ -52,15 +52,18 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
       token_endpoint: this.mockConfig.token_endpoint,
       scopes_supported: this.mockConfig.scopes_supported,
       code_challenge_method: this.mockConfig.code_challenge_method,
-      global_auth_status: this.state.isSignedIn
+      global_auth_status: this.isSignedInGlobal
         ? ToolsetAuthStatus.SIGNED_IN
         : ToolsetAuthStatus.SIGNED_OUT,
-      user_level_auth_status: ToolsetAuthStatus.SIGNED_OUT,
+      user_level_auth_status: this.isSignedInUser
+        ? ToolsetAuthStatus.SIGNED_IN
+        : ToolsetAuthStatus.SIGNED_OUT,
     };
   }
 
   async setupMocks(): Promise<void> {
     await this.setupToolsetRoutes();
+    await this.setupToolsetListingRoute();
     await this.setupSignInRoute();
     await this.setupOAuthRedirectRoute();
     await this.setupSignOutRoute();
@@ -96,7 +99,11 @@ export class OAuthMockHelper extends BaseAuthMockHelper<ToolsetOAuthSignInReques
       // Race condition: the 302 redirect completed the sign-in flow before we
       // got here, so the main page already closed the popup. Nothing left to do.
       if (!popup.isClosed()) throw e;
-      signInResponsePromise.catch(() => {});
+      signInResponsePromise.catch(() => {
+        console.error(
+          'Expected sign-in response was not received, likely due to the popup being closed before navigation.',
+        );
+      });
       return;
     }
     await signInResponsePromise;

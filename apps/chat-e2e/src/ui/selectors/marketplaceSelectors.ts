@@ -38,6 +38,7 @@ export const MarketplaceEntitySelectors = {
   pencilIcon: '[data-qa="pencil-icon"]',
   arrowIcon: '[data-qa="arrow-icon"]',
   openInNewTab: '[data-qa="external-link"]',
+  credsLabel: '[data-qa="creds-label"]',
 };
 
 export const MarketplaceDetailsModal = {
@@ -61,6 +62,7 @@ export const MarketplaceDetailsModal = {
   unshareButton: '[data-qa="unshare"]',
   loginButton: 'Log in',
   logoutButton: 'Log out',
+  manageCredsButton: 'Manage creds',
   viewButton: 'View',
 };
 
@@ -78,10 +80,15 @@ export const MarketplaceSideBarSelectors = {
 export const ToolsetLoginModalSelectors = {
   modalContainer: '[data-qa="marketplace-toolset-signin"]',
   header: '[data-qa="login-header"]',
+  manageCredsHeader: '[data-qa="manage-creds-header"]',
   toolsetName: '[data-qa="toolset-name"]',
   toolsetVersion: '[data-qa="toolset-version"]',
   apiKeyFieldContainer: '[data-qa="apiKey"]',
   apiKeyMaskedFieldInput: `${Tags.input}[${Attributes.type} = "${AttributeValues.password}"]`,
   apiKeyUnmaskedFieldInput: `${Tags.input}[${Attributes.type} = "${AttributeValues.text}"]`,
   loginButton: 'Log in',
+  orgCredsAccordion: '[data-qa="org-creds-accordion"]',
+  orgCredsContent: '[data-qa="org-creds-content"]',
+  myCredsAccordion: '[data-qa="my-creds-accordion"]',
+  myCredsContent: '[data-qa="my-creds-content"]',
 };

@@ -5,9 +5,14 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { FeatureType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { AuthSelectors } from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 import { ChatI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
@@ -16,6 +21,7 @@ import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
@@ -59,6 +65,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
   selectedBaseIdsSet,
 }: EntityVersionSelectProps<T>) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const userName = useAppSelector(AuthSelectors.selectUserName);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (entity: T) => {
@@ -136,11 +143,23 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
           )}
           item={
             <div className="flex w-full items-center gap-2">
-              <ModelIcon
-                entityId={entity.id}
-                entity={entity}
-                size={DEFAULT_ICON_SIZES.SMALL}
-              />
+              <ShareIcon
+                {...entity}
+                isPublished={
+                  (userName === entity.author || userName === entity.owner) &&
+                  isEntityIdPublic(entity)
+                }
+                isHighlighted={false}
+                size={10}
+                featureType={FeatureType.Application}
+                containerClassName="flex"
+              >
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={DEFAULT_ICON_SIZES.SMALL}
+                />
+              </ShareIcon>
               <DialEllipsisTooltip
                 text={getDisplayValue(entity)}
                 contentClassName="!z-[10000]"

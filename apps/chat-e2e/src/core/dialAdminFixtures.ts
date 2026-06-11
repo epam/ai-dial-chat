@@ -44,6 +44,7 @@ import {
   Toast,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
+  ToolsetLoginModal,
   TooltipPortal,
   VariableModalDialog,
 } from '../ui/webElements';
@@ -64,6 +65,7 @@ import {
   PublishEntityAssertion,
   PublishFileAssertion,
   PublishFolderAssertion,
+  PublishToolsetAssertion,
   PublishedAppReviewModalAssertion,
   PublishedPromptPreviewModalAssertion,
   PublishedToolsetReviewModalAssertion,
@@ -82,6 +84,7 @@ import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishing
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
+import { ToolsetLoginModalAssertion } from '@/src/assertions/toolset/toolsetLoginModalAssertion';
 import { ToolsetEditorViewFormAssertion } from '@/src/assertions/toolsetEditorViewFormAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
@@ -169,7 +172,7 @@ const dialAdminTest = dialTest.extend<{
   adminOrganizationFolderPromptAssertions: FolderAssertion<Folders>;
   adminPublishingApprovalModalAssertion: PublishingApprovalModalAssertion;
   adminAppToApproveAssertion: PublishEntityAssertion<PublishApplicationsTree>;
-  adminToolsetToApproveAssertion: PublishEntityAssertion<PublishToolsetsTree>;
+  adminToolsetToApproveAssertion: PublishToolsetAssertion<PublishToolsetsTree>;
   adminPublishFilesAssertion: PublishFileAssertion<PublishFilesTree>;
   adminPublishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
   adminFolderConversationsToApproveAssertion: PublishFolderAssertion<PublishFolderConversations>;
@@ -254,6 +257,8 @@ const dialAdminTest = dialTest.extend<{
   adminRenameConversationModalAssertion: RenameConversationModalAssertion;
   adminToolsetEditorViewFormAssertion: ToolsetEditorViewFormAssertion;
   adminEntityEditorGeneralFormAssertion: EntityEditorGeneralFormAssertion;
+  adminToolsetLoginModal: ToolsetLoginModal;
+  adminToolsetLoginModalAssertion: ToolsetLoginModalAssertion;
 }>({
   adminRenameConversationModal: async ({ adminPage }, use) => {
     const adminRenameConversationModal = new RenameConversationModal(adminPage);
@@ -693,8 +698,9 @@ const dialAdminTest = dialTest.extend<{
     await use(adminAppToApproveAssertion);
   },
   adminToolsetToApproveAssertion: async ({ adminToolsetsToApprove }, use) => {
-    const adminToolsetToApproveAssertion =
-      new PublishEntityAssertion<PublishToolsetsTree>(adminToolsetsToApprove);
+    const adminToolsetToApproveAssertion = new PublishToolsetAssertion(
+      adminToolsetsToApprove,
+    );
     await use(adminToolsetToApproveAssertion);
   },
   adminPublishFilesAssertion: async ({ adminFilesToApproveTree }, use) => {
@@ -1052,6 +1058,16 @@ const dialAdminTest = dialTest.extend<{
       adminTalkToAgentDialog,
     );
     await use(adminTalkToAgentDialogAssertion);
+  },
+  adminToolsetLoginModal: async ({ adminPage }, use) => {
+    const adminToolsetLoginModal = new ToolsetLoginModal(adminPage);
+    await use(adminToolsetLoginModal);
+  },
+  adminToolsetLoginModalAssertion: async ({ adminToolsetLoginModal }, use) => {
+    const adminToolsetLoginModalAssertion = new ToolsetLoginModalAssertion(
+      adminToolsetLoginModal,
+    );
+    await use(adminToolsetLoginModalAssertion);
   },
 });
 

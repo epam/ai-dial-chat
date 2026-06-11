@@ -20,6 +20,7 @@ import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
 import {
+  ALL_FILE_EXTENSIONS,
   BYTES_IN_KB,
   BYTES_IN_MB,
   FALLBACK_CONTENT_TYPE,
@@ -34,6 +35,7 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import {
+  addTrailingSlashIfAbsent,
   doesHaveDotsInTheEnd,
   getUtf8BytesLength,
   prepareEntityName,
@@ -49,7 +51,7 @@ import {
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
 import uniqBy from 'lodash-es/uniqBy';
-import { extensions, lookup } from 'mime-types';
+import { lookup } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
@@ -100,10 +102,12 @@ export const getFileName = (path: string | undefined): string | undefined => {
 export const getNestedEmptyFolderIdsForChosenParent = (
   emptyFolderIds: string[],
   parentFolderId: string,
-): string[] =>
-  emptyFolderIds
-    .filter((id) => `${id}/`.startsWith(parentFolderId))
-    .map((id) => `${id}/`);
+): string[] => {
+  const prefix = addTrailingSlashIfAbsent(parentFolderId);
+  return emptyFolderIds
+    .filter((id) => addTrailingSlashIfAbsent(id).startsWith(prefix))
+    .map((id) => addTrailingSlashIfAbsent(id));
+};
 
 export const getUserCustomContent = (
   files?: Pick<DialFile, 'contentType' | 'absolutePath' | 'name' | 'status'>[],
@@ -370,7 +374,7 @@ export const getExtensionsListForMimeType = (mimeType: string) => {
   if (subset === '*') {
     return ['all'];
   } else if (name === '*') {
-    return Object.entries(extensions).reduce((acc, [key, value]) => {
+    return Object.entries(ALL_FILE_EXTENSIONS).reduce((acc, [key, value]) => {
       const [keySubset] = key.split('/');
       if (keySubset === subset) {
         acc.push(...value);
@@ -379,7 +383,7 @@ export const getExtensionsListForMimeType = (mimeType: string) => {
       return acc;
     }, [] as string[]);
   } else {
-    return extensions[mimeType] || [];
+    return ALL_FILE_EXTENSIONS[mimeType] || [];
   }
 };
 

@@ -156,7 +156,7 @@ export const modelsSlice = createSlice({
         state.recentModelsIds = payload.defaultRecentModelsIds;
       } else if (payload.defaultModelReference && isDefaultModelAvailable) {
         state.recentModelsIds = [payload.defaultModelReference];
-      } else {
+      } else if (state.models.length > 0) {
         state.recentModelsIds = [state.models[0].reference];
       }
       state.recentModelsIds = uniq(state.recentModelsIds).slice(

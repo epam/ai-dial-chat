@@ -31,6 +31,8 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_OPTIONS="${NODE_OPTIONS} --max-http-header-size=32768"
 ENV KEEP_ALIVE_TIMEOUT=61000
 
+RUN apk upgrade --no-cache libssl3 libcrypto3
+
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 -G nodejs nextjs
 

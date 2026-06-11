@@ -5,11 +5,11 @@ import { constructPath } from '@/src/utils/app/shared-utils';
 import { authOptions } from '@/src/utils/auth/auth-options';
 import { validateServerSession } from '@/src/utils/auth/session';
 import { getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
 
-import { errorsMessages } from '@/src/constants/errors';
 import { mappingServerUrls } from '@/src/constants/server';
 
 import { getApiHeaders } from './get-headers';
@@ -88,6 +88,7 @@ export const createDialApiSlugsHandler = (
   } = options;
 
   return async (req: NextApiRequest, res: NextApiResponse) => {
+    setTraceparentHeader(res);
     // Method validation
     if (
       (method && req.method !== method) ||
@@ -148,12 +149,7 @@ export const createDialApiSlugsHandler = (
       return res.status(200).send(responseData);
     } catch (error) {
       logger.error(error);
-      if (error instanceof DialAIError) {
-        return res
-          .status(parseInt(error.code, 10) || 500)
-          .send(error.message || errorsMessages.generalServer);
-      }
-      return res.status(500).send(errorsMessages.generalServer);
+      return ServerUtils.sendAPIError(res, error);
     }
   };
 };
