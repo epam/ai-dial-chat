@@ -84,9 +84,16 @@
     "failedToLoadLogo": "Failed to load logo"
   },
   "conversationInput": {
-    "attach": { "label": "Attach file" },
-    "attachment": { "remove": "Remove attachment", "retry": "Retry upload" },
-    "attachmentTray": { "label": "Attached files" }
+    "attach": {
+      "label": "Attach file"
+    },
+    "attachment": {
+      "remove": "Remove attachment",
+      "retry": "Retry upload"
+    },
+    "attachmentTray": {
+      "label": "Attached files"
+    }
   },
   "sidebar": {
     "base": {
@@ -166,6 +173,12 @@
     "themeSystem": "System",
     "keyboardShortcuts": "Keyboard shortcuts",
     "shortcutEnter": "Enter — send message, Shift+Enter",
-    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter"
+    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter",
+    "apply": "Apply"
+  },
+  "messages": {
+    "attachment": {
+      "downloadLabel": "Download file"
+    }
   }
 }

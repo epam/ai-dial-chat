@@ -67,14 +67,58 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
 }));
 
+vi.mock('@epam/ai-dial-sidebar', () => ({
+  PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
+  PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
+  SearchInput: ({
+    onChange,
+    placeholder,
+    value,
+  }: {
+    onChange: (v: string) => void;
+    placeholder: string;
+    value: string;
+  }) => (
+    <input
+      type="search"
+      placeholder={placeholder}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+    />
+  ),
+  SidebarPanel: ({
+    children,
+    isOpen,
+    ariaLabel,
+  }: {
+    children: React.ReactNode;
+    isOpen?: boolean;
+    ariaLabel: string;
+  }) => (
+    <aside role="complementary" aria-label={ariaLabel} aria-hidden={!isOpen}>
+      {children}
+    </aside>
+  ),
+  SidebarSide: { Right: 'right', Left: 'left' },
+}));
+
 vi.mock('@tabler/icons-react', () => ({
-  IconPlus: () => <span>plus-icon</span>,
-  IconChevronDown: () => <span>chevron-down</span>,
-  IconChevronRight: () => <span>chevron-right</span>,
-  IconCaretDownFilled: () => <span>caret-down-filled</span>,
-  IconCaretRightFilled: () => <span>caret-right-filled</span>,
-  IconMessageCircle: () => <span>message-circle</span>,
-  IconSearchOff: () => <span>search-off</span>,
+  ...new Proxy(
+    {
+      IconPlus: () => <span>plus-icon</span>,
+      IconChevronDown: () => <span>chevron-down</span>,
+      IconChevronRight: () => <span>chevron-right</span>,
+      IconCaretDownFilled: () => <span>caret-down-filled</span>,
+      IconCaretRightFilled: () => <span>caret-right-filled</span>,
+      IconMessageCircle: () => <span>message-circle</span>,
+      IconSearchOff: () => <span>search-off</span>,
+    },
+    {
+      get: (target, key: string) =>
+        target[key as keyof typeof target] ??
+        (() => <span>{`${key}-icon`}</span>),
+    },
+  ),
 }));
 
 const FILTER_LABELS = {

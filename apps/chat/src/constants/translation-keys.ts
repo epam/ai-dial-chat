@@ -148,3 +148,7 @@ export enum SidebarI18nKeys {
   Empty = 'sidebar.sources.noData',
   AttachmentDownloadLabel = 'sidebar.sources.attachment.downloadLabel',
 }
+
+export enum MessagesI18nKeys {
+  AttachmentDownloadLabel = 'messages.attachment.downloadLabel',
+}
