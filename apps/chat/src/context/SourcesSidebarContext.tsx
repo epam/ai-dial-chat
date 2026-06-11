@@ -14,7 +14,7 @@ export interface SourcesSidebarContextValue {
   isOpen: boolean;
   /** Open the sidebar. */
   handleOpen: () => void;
-  /** Close the sidebar and clear the messages. */
+  /** Close the sidebar. */
   handleClose: () => void;
   /** Messages of the active conversation; used to derive uploaded and generated files. */
   messages: Message[];
@@ -38,7 +38,6 @@ export const SourcesSidebarProvider = ({
   const handleOpen = useCallback(() => setIsOpen(true), []);
   const handleClose = useCallback(() => {
     setIsOpen(false);
-    setMessages([]);
   }, []);
 
   return (
