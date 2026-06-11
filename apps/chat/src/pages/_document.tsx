@@ -2,6 +2,7 @@ import { DocumentProps, Head, Html, Main, NextScript } from 'next/document';
 import Script from 'next/script';
 
 import { isRtlLocale } from '@/src/utils/app/rtl';
+import { getAdditionalCssFilenames } from '@/src/utils/server/additional-css';
 
 import i18nextConfig from '@/next-i18next.config';
 import { documentWithJss } from '@epam/ai-dial-modulify-ui';
@@ -15,6 +16,7 @@ function Document(props: Props) {
     props.__NEXT_DATA__.locale ?? i18nextConfig.i18n.defaultLocale;
 
   const dir = isRtlLocale(currentLocale) ? 'rtl' : 'ltr';
+  const additionalCssFiles = getAdditionalCssFilenames();
 
   return (
     <Html lang={currentLocale} dir={dir}>
@@ -34,6 +36,13 @@ function Document(props: Props) {
         {!!process.env.THEMES_CONFIG_HOST && (
           <link rel="stylesheet" href={'/api/themes/styles'} />
         )}
+        {additionalCssFiles.map((file) => (
+          <link
+            key={file}
+            rel="stylesheet"
+            href={`/api/additional-css/${file}`}
+          />
+        ))}
         <link rel="manifest" href="/api/manifest" />
       </Head>
       <body>

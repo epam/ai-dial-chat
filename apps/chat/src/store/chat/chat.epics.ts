@@ -20,6 +20,7 @@ import {
   sendMessage,
 } from '@/src/utils/app/epics-helpers/chat.epic-helpers';
 import { getUserCustomContent } from '@/src/utils/app/file';
+import { removeDescriptionsFromSchema } from '@/src/utils/app/form-schema';
 import {
   isConversationId,
   isEntityIdExternal,
@@ -80,7 +81,9 @@ const setFormValueEpic: AppEpic = (action$, state$) =>
           ...(isFirstMessage
             ? {
                 configuration_value: formValue,
-                configuration_schema: configurationSchema,
+                configuration_schema: configurationSchema
+                  ? removeDescriptionsFromSchema(configurationSchema)
+                  : configurationSchema,
               }
             : {
                 form_value: formValue,
@@ -128,7 +131,7 @@ const getConfigurationSchemaEpic: AppEpic = (action$, state$) =>
         )
         .filter((schema) => schema !== undefined);
 
-      if (savedConfigurationSchemas.length) {
+      if (!replaceExisting && savedConfigurationSchemas.length) {
         return concat(
           ...savedConfigurationSchemas.map((schema) =>
             of(
@@ -281,6 +284,7 @@ const handleVoiceRecordingEpic: AppEpic = (action$, state$) =>
             id: fileId,
             relativePath,
             name: fileName,
+            isFromDeviceAttachment: true,
           }),
         ),
         of(FilesActions.selectFiles({ ids: [fileId] })),
@@ -338,6 +342,7 @@ const handleUserMessageVoiceRecordingEpic: AppEpic = (action$, state$) =>
             id: fileId,
             relativePath,
             name: fileName,
+            isFromDeviceAttachment: true,
           }),
         ),
         of(ChatActions.setUserMessageVoiceAttachmentId(fileId)),

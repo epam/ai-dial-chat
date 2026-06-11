@@ -542,6 +542,7 @@ export const ChatInputMessage = Inversify.register(
               id: file.id,
               relativePath: folderPath,
               name: file.name,
+              isFromDeviceAttachment: true,
             }),
           );
         });

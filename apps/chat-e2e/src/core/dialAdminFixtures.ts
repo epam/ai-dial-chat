@@ -44,6 +44,7 @@ import {
   Toast,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
+  ToolsetLoginModal,
   TooltipPortal,
   VariableModalDialog,
 } from '../ui/webElements';
@@ -83,6 +84,7 @@ import { PublishingRulesAssertion } from '@/src/assertions/publishing/publishing
 import { RenameConversationModalAssertion } from '@/src/assertions/renameConversationModalAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
 import { SideBarEntityAssertion } from '@/src/assertions/sideBarEntityAssertion';
+import { ToolsetLoginModalAssertion } from '@/src/assertions/toolset/toolsetLoginModalAssertion';
 import { ToolsetEditorViewFormAssertion } from '@/src/assertions/toolsetEditorViewFormAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
@@ -255,6 +257,8 @@ const dialAdminTest = dialTest.extend<{
   adminRenameConversationModalAssertion: RenameConversationModalAssertion;
   adminToolsetEditorViewFormAssertion: ToolsetEditorViewFormAssertion;
   adminEntityEditorGeneralFormAssertion: EntityEditorGeneralFormAssertion;
+  adminToolsetLoginModal: ToolsetLoginModal;
+  adminToolsetLoginModalAssertion: ToolsetLoginModalAssertion;
 }>({
   adminRenameConversationModal: async ({ adminPage }, use) => {
     const adminRenameConversationModal = new RenameConversationModal(adminPage);
@@ -1054,6 +1058,16 @@ const dialAdminTest = dialTest.extend<{
       adminTalkToAgentDialog,
     );
     await use(adminTalkToAgentDialogAssertion);
+  },
+  adminToolsetLoginModal: async ({ adminPage }, use) => {
+    const adminToolsetLoginModal = new ToolsetLoginModal(adminPage);
+    await use(adminToolsetLoginModal);
+  },
+  adminToolsetLoginModalAssertion: async ({ adminToolsetLoginModal }, use) => {
+    const adminToolsetLoginModalAssertion = new ToolsetLoginModalAssertion(
+      adminToolsetLoginModal,
+    );
+    await use(adminToolsetLoginModalAssertion);
   },
 });
 

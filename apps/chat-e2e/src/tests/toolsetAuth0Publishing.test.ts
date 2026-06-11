@@ -1219,6 +1219,7 @@ dialAdminTest(
           toolsetResource.targetUrl,
         );
         adminOAuthMockHelper.enableMocking();
+        adminOAuthMockHelper.setIsSignedInGlobal(true);
         await adminOAuthMockHelper.setupToolsetListingRoute(publishedToolset);
         await adminOAuthMockHelper.setupToolsetRoutes(publishedToolset);
       },

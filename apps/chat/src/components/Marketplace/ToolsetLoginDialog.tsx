@@ -48,11 +48,15 @@ const credsTabs = [
     key: ToolsetCredentialsLevel.USER,
     label: MarketplaceI18nKeys.MyCredentials,
     Icon: IconUser,
+    triggerQa: 'my-creds-accordion',
+    contentQa: 'my-creds-content',
   },
   {
     key: ToolsetCredentialsLevel.GLOBAL,
     label: MarketplaceI18nKeys.EntireOrganizationCredentials,
     Icon: IconLayoutGrid,
+    triggerQa: 'org-creds-accordion',
+    contentQa: 'org-creds-content',
   },
 ];
 
@@ -294,7 +298,7 @@ const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
       <FormProvider {...formMethods}>
         <div className="flex flex-col gap-2 p-6">
           {isOrganizationView ? (
-            credsTabs.map(({ label, key, Icon }) => (
+            credsTabs.map(({ label, key, Icon, triggerQa, contentQa }) => (
               <AuthAccordion
                 className="!bg-layer-2"
                 key={key}
@@ -310,6 +314,8 @@ const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
                   ),
                   type: isToolsetSignedIn(toolset, key) ? 'success' : 'error',
                 }}
+                triggerQa={triggerQa}
+                contentQa={contentQa}
               >
                 <p className="text-sm text-primary">{organizationFormTitle}</p>
 
