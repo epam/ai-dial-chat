@@ -46,6 +46,41 @@ The input SHALL store the returned URL on the matching `Attachment.url`.
 
 ---
 
+### Requirement: AttachmentCard lazy-loads image previews
+
+`libs/conversation-input/src/components/AttachmentCard/AttachmentCard.tsx` SHALL render image attachments through a lazy-loaded `<img>` element when `attachment.type === AttachmentType.Image`, the attachment is not in `RequestStatus.Error`, and either `attachment.previewUrl` or `attachment.url` is present.
+
+The image source SHALL prefer `attachment.previewUrl` and fall back to `attachment.url`. The `<img>` SHALL use native lazy-loading (`loading="lazy"`) and asynchronous decoding (`decoding="async"`).
+
+While the image has not loaded, `AttachmentCard` SHALL render a rectangular `DialSkeleton` from `@epam/ai-dial-ui-kit` over the image area. The skeleton SHALL use the ui-kit overlay API to display a centered image icon (`IconPhoto`) and SHALL use theme/ui-kit styling only. The skeleton SHALL remain visible while the image is loading or failed, and SHALL be removed when the image emits a successful load event.
+
+The image load tracking SHALL be isolated in a reusable hook owned by `libs/conversation-input` and SHALL not introduce host/application knowledge such as REST paths, generated clients, auth/session state, or file-storage URL rules.
+
+#### Scenario: Image card uses lazy browser loading
+
+- **WHEN** `AttachmentCard` renders an image attachment with `previewUrl`
+- **THEN** the rendered `<img>` uses `src={attachment.previewUrl}`
+- **AND** the rendered `<img>` has `loading="lazy"` and `decoding="async"`
+
+#### Scenario: Image card falls back to remote URL
+
+- **WHEN** `AttachmentCard` renders an image attachment with no `previewUrl` and a non-empty `url`
+- **THEN** the card renders an image thumbnail using `url` as the image source
+
+#### Scenario: Skeleton is shown until image load completes
+
+- **WHEN** an image attachment thumbnail has not emitted a successful load event
+- **THEN** the card shows a rectangular active `DialSkeleton` with a centered image icon overlay
+- **WHEN** the image emits a successful load event
+- **THEN** the skeleton is removed and the image is shown
+
+#### Scenario: Failed image load keeps placeholder visible
+
+- **WHEN** an image attachment thumbnail emits an error event
+- **THEN** the card keeps the skeleton placeholder visible instead of showing a broken-image gap
+
+---
+
 ### Requirement: Voice recording props on ConversationInput
 
 `ConversationInputProps` (and the inner `InputProps`) SHALL accept three new optional props:

@@ -57,6 +57,8 @@ const defaultProps = {
   formatStatusModelChangedBody: () => '',
   streamErrorText: 'Stream error',
   thinkingLabel: 'Thinking',
+  executedLabel: 'Executed',
+  stepsLabel: (count: number) => `${count} Steps`,
 };
 
 afterEach(() => {
