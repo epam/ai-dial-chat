@@ -14,7 +14,10 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconPhoto, IconReload, IconX } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, type MouseEvent, useMemo } from 'react';
-import { useLazyImageLoad } from '../../hooks/useLazyImageLoad';
+import {
+  LazyImageLoadStatus,
+  useLazyImageLoad,
+} from '../../hooks/useLazyImageLoad';
 import type { AttachmentCardProps } from '../../models/AttachmentCard';
 import { getAttachmentCardState } from '../../utils/getAttachmentCardState';
 import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension';
@@ -106,12 +109,12 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     <>
       {isImage ? (
         <div className="relative h-full w-full overflow-hidden">
-          {imageLoadStatus !== 'loaded' && (
+          {imageLoadStatus !== LazyImageLoadStatus.Loaded && (
             <DialSkeleton
               variant={DialSkeletonVariant.Rectangular}
               width="100%"
               height="100%"
-              active={imageLoadStatus === 'loading'}
+              active={imageLoadStatus === LazyImageLoadStatus.Loading}
               overlay={
                 <IconPhoto
                   size={DIAL_ICON_SIZE.LG}
@@ -130,7 +133,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             decoding="async"
             className={mergeClasses(
               'h-full w-full object-cover transition-opacity duration-200',
-              imageLoadStatus === 'loaded' ? 'opacity-100' : 'opacity-0',
+              imageLoadStatus === LazyImageLoadStatus.Loaded
+                ? 'opacity-100'
+                : 'opacity-0',
               roundedClassName,
             )}
           />

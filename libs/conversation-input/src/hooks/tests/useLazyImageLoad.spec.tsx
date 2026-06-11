@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import type { FC } from 'react';
 import { describe, expect, it } from 'vitest';
-import { useLazyImageLoad } from '../useLazyImageLoad';
+import { LazyImageLoadStatus, useLazyImageLoad } from '../useLazyImageLoad';
 
 interface LazyImageLoadHarnessProps {
   enabled: boolean;
@@ -25,19 +25,25 @@ const LazyImageLoadHarness: FC<LazyImageLoadHarnessProps> = ({
 describe('useLazyImageLoad', () => {
   it('starts in loading state when enabled with a source', () => {
     render(<LazyImageLoadHarness enabled src="https://example.com/a.png" />);
-    expect(screen.getByTestId('status').textContent).toBe('loading');
+    expect(screen.getByTestId('status').textContent).toBe(
+      LazyImageLoadStatus.Loading,
+    );
   });
 
   it('moves to loaded when the image loads', () => {
     render(<LazyImageLoadHarness enabled src="https://example.com/a.png" />);
     fireEvent.load(screen.getByAltText('Preview'));
-    expect(screen.getByTestId('status').textContent).toBe('loaded');
+    expect(screen.getByTestId('status').textContent).toBe(
+      LazyImageLoadStatus.Loaded,
+    );
   });
 
   it('moves to error when the image fails to load', () => {
     render(<LazyImageLoadHarness enabled src="https://example.com/a.png" />);
     fireEvent.error(screen.getByAltText('Preview'));
-    expect(screen.getByTestId('status').textContent).toBe('error');
+    expect(screen.getByTestId('status').textContent).toBe(
+      LazyImageLoadStatus.Error,
+    );
   });
 
   it('resets to idle when disabled', () => {
@@ -48,7 +54,9 @@ describe('useLazyImageLoad', () => {
 
     rerender(<LazyImageLoadHarness enabled={false} />);
 
-    expect(screen.getByTestId('status').textContent).toBe('idle');
+    expect(screen.getByTestId('status').textContent).toBe(
+      LazyImageLoadStatus.Idle,
+    );
   });
 
   it('resets to loading when the source changes', () => {
@@ -59,6 +67,8 @@ describe('useLazyImageLoad', () => {
 
     rerender(<LazyImageLoadHarness enabled src="https://example.com/b.png" />);
 
-    expect(screen.getByTestId('status').textContent).toBe('loading');
+    expect(screen.getByTestId('status').textContent).toBe(
+      LazyImageLoadStatus.Loading,
+    );
   });
 });

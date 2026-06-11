@@ -1,6 +1,11 @@
 import { type RefObject, useEffect, useRef, useState } from 'react';
 
-export type LazyImageLoadStatus = 'idle' | 'loading' | 'loaded' | 'error';
+export enum LazyImageLoadStatus {
+  Idle = 'idle',
+  Loading = 'loading',
+  Loaded = 'loaded',
+  Error = 'error',
+}
 
 interface UseLazyImageLoadParams {
   enabled: boolean;
@@ -19,11 +24,14 @@ export const useLazyImageLoad = ({
   imageLoadStatus: LazyImageLoadStatus;
 } => {
   const imageRef = useRef<HTMLImageElement>(null);
-  const [imageLoadStatus, setImageLoadStatus] =
-    useState<LazyImageLoadStatus>('idle');
+  const [imageLoadStatus, setImageLoadStatus] = useState<LazyImageLoadStatus>(
+    LazyImageLoadStatus.Idle,
+  );
 
   useEffect(() => {
-    setImageLoadStatus(enabled && src ? 'loading' : 'idle');
+    setImageLoadStatus(
+      enabled && src ? LazyImageLoadStatus.Loading : LazyImageLoadStatus.Idle,
+    );
   }, [enabled, src]);
 
   useEffect(() => {
@@ -32,14 +40,20 @@ export const useLazyImageLoad = ({
       return;
     }
 
-    const handleImageLoad = (): void => setImageLoadStatus('loaded');
-    const handleImageError = (): void => setImageLoadStatus('error');
+    const handleImageLoad = (): void =>
+      setImageLoadStatus(LazyImageLoadStatus.Loaded);
+    const handleImageError = (): void =>
+      setImageLoadStatus(LazyImageLoadStatus.Error);
 
     imageElement.addEventListener('load', handleImageLoad);
     imageElement.addEventListener('error', handleImageError);
 
     if (imageElement.complete) {
-      setImageLoadStatus(imageElement.naturalWidth > 0 ? 'loaded' : 'error');
+      setImageLoadStatus(
+        imageElement.naturalWidth > 0
+          ? LazyImageLoadStatus.Loaded
+          : LazyImageLoadStatus.Error,
+      );
     }
 
     return () => {
