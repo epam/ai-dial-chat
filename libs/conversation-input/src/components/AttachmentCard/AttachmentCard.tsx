@@ -7,11 +7,17 @@ import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
   DialGhostIconButton,
+  DialSkeleton,
+  DialSkeletonVariant,
   DialSpinner,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { IconReload, IconX } from '@tabler/icons-react';
+import { IconPhoto, IconReload, IconX } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, type MouseEvent, useMemo } from 'react';
+import {
+  LazyImageLoadStatus,
+  useLazyImageLoad,
+} from '../../hooks/useLazyImageLoad';
 import type { AttachmentCardProps } from '../../models/AttachmentCard';
 import { getAttachmentCardState } from '../../utils/getAttachmentCardState';
 import { getNameWithoutExtension } from '../../utils/getNameWithoutExtension';
@@ -34,6 +40,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
   className,
 }) => {
   const { id, name } = attachment;
+  const imageSrc = attachment.previewUrl ?? attachment.url;
   const isPasted = attachment.type === AttachmentType.Pasted;
   const isExpandable = isPasted && onExpand !== undefined;
   const isClickable = onClick !== undefined && !isExpandable;
@@ -69,11 +76,16 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     [attachment, isSelected, shouldAlwaysShowActions],
   );
 
+  const { imageRef, imageLoadStatus } = useLazyImageLoad({
+    enabled: isImage,
+    src: imageSrc,
+  });
+
   const handleCardClick = (): void => {
-    if (isExpandable) {
-      onExpand!(id);
-    } else if (isClickable) {
-      onClick!(id);
+    if (isExpandable && onExpand) {
+      onExpand(id);
+    } else if (isClickable && onClick) {
+      onClick(id);
     }
   };
 
@@ -84,33 +96,50 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     }
   };
 
-  return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
-    <div
-      style={cssVars}
-      className={mergeClasses(
-        'group relative flex h-[100px] w-[100px] flex-shrink-0 border focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',
-        roundedClassName,
-        cardColorClass,
-        !isImage && 'flex-col gap-3 p-3',
-        isInteractive && 'cursor-pointer',
-        className,
-      )}
-      onClick={isInteractive ? handleCardClick : undefined}
-      onKeyDown={isInteractive ? handleKeyDown : undefined}
-      tabIndex={isInteractive ? 0 : undefined}
-      role={isInteractive ? 'button' : undefined}
-      aria-label={isClickable ? clickLabel : undefined}
-    >
+  const cardClassName = mergeClasses(
+    'group relative flex h-[100px] w-[100px] flex-shrink-0 border focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',
+    roundedClassName,
+    cardColorClass,
+    !isImage && 'flex-col gap-3 p-3',
+    isInteractive && 'cursor-pointer',
+    className,
+  );
+
+  const cardContent = (
+    <>
       {isImage ? (
-        <img
-          src={attachment.previewUrl ?? attachment.url}
-          alt={name}
-          className={mergeClasses(
-            'h-full w-full object-cover',
-            roundedClassName,
+        <div className="relative h-full w-full overflow-hidden">
+          {imageLoadStatus !== LazyImageLoadStatus.Loaded && (
+            <DialSkeleton
+              variant={DialSkeletonVariant.Rectangular}
+              width="100%"
+              height="100%"
+              active={imageLoadStatus === LazyImageLoadStatus.Loading}
+              overlay={
+                <IconPhoto
+                  size={DIAL_ICON_SIZE.LG}
+                  className="text-secondary"
+                  aria-hidden
+                />
+              }
+              className={mergeClasses('absolute inset-0', roundedClassName)}
+            />
           )}
-        />
+          <img
+            ref={imageRef}
+            src={imageSrc}
+            alt={name}
+            loading="lazy"
+            decoding="async"
+            className={mergeClasses(
+              'h-full w-full object-cover transition-opacity duration-200',
+              imageLoadStatus === LazyImageLoadStatus.Loaded
+                ? 'opacity-100'
+                : 'opacity-0',
+              roundedClassName,
+            )}
+          />
+        </div>
       ) : (
         <>
           {/* Top group: file name */}
@@ -195,6 +224,28 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
           )}
         </div>
       )}
+    </>
+  );
+
+  if (isInteractive) {
+    return (
+      <div
+        style={cssVars}
+        className={cardClassName}
+        onClick={handleCardClick}
+        onKeyDown={handleKeyDown}
+        tabIndex={0}
+        role="button"
+        aria-label={isClickable ? clickLabel : undefined}
+      >
+        {cardContent}
+      </div>
+    );
+  }
+
+  return (
+    <div style={cssVars} className={cardClassName}>
+      {cardContent}
     </div>
   );
 };

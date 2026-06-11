@@ -15,6 +15,14 @@ const makeAttachment = (
   ...overrides,
 });
 
+const getRenderedCard = (container: HTMLElement): HTMLElement => {
+  const card = container.firstElementChild;
+  if (!(card instanceof HTMLElement)) {
+    throw new Error('Expected attachment card to be rendered');
+  }
+  return card;
+};
+
 describe('AttachmentCard', () => {
   it('renders the file name without extension', () => {
     render(<AttachmentCard attachment={makeAttachment()} onRemove={vi.fn()} />);
@@ -33,6 +41,44 @@ describe('AttachmentCard', () => {
     const img = container.querySelector('img');
     expect(img).toBeTruthy();
     expect(img?.src).toContain('blob:preview');
+    expect(img?.getAttribute('loading')).toBe('lazy');
+    expect(img?.getAttribute('decoding')).toBe('async');
+  });
+
+  it('renders remote image url when previewUrl is absent', () => {
+    const attachment = makeAttachment({
+      contentType: 'image/png',
+      type: AttachmentType.Image,
+      url: 'https://example.com/image.png',
+    });
+    const { container } = render(
+      <AttachmentCard attachment={attachment} onRemove={vi.fn()} />,
+    );
+    const img = container.querySelector('img');
+    expect(img).toBeTruthy();
+    expect(img?.src).toBe('https://example.com/image.png');
+  });
+
+  it('shows image placeholder until thumbnail has loaded', () => {
+    const attachment = makeAttachment({
+      contentType: 'image/png',
+      type: AttachmentType.Image,
+      previewUrl: 'blob:preview',
+    });
+    const { container } = render(
+      <AttachmentCard attachment={attachment} onRemove={vi.fn()} />,
+    );
+    const img = container.querySelector('img');
+    expect(container.querySelector('.absolute.inset-0')).toBeTruthy();
+    expect(img?.className).toContain('opacity-0');
+    if (!img) {
+      throw new Error('Expected image thumbnail to be rendered');
+    }
+
+    fireEvent.load(img);
+
+    expect(container.querySelector('.absolute.inset-0')).toBeNull();
+    expect(img?.className).toContain('opacity-100');
   });
 
   it('hides remove button during loading state', () => {
@@ -129,7 +175,7 @@ describe('AttachmentCard — pasted type', () => {
         onExpand={onExpand}
       />,
     );
-    fireEvent.click(container.firstElementChild!);
+    fireEvent.click(getRenderedCard(container));
     expect(onExpand).toHaveBeenCalledWith('a1');
   });
 
@@ -142,7 +188,7 @@ describe('AttachmentCard — pasted type', () => {
         onExpand={onExpand}
       />,
     );
-    fireEvent.keyDown(container.firstElementChild!, { key: 'Enter' });
+    fireEvent.keyDown(getRenderedCard(container), { key: 'Enter' });
     expect(onExpand).toHaveBeenCalledWith('a1');
   });
 
@@ -155,7 +201,7 @@ describe('AttachmentCard — pasted type', () => {
         onExpand={onExpand}
       />,
     );
-    fireEvent.keyDown(container.firstElementChild!, { key: ' ' });
+    fireEvent.keyDown(getRenderedCard(container), { key: ' ' });
     expect(onExpand).toHaveBeenCalledWith('a1');
   });
 
@@ -233,7 +279,7 @@ describe('AttachmentCard — onClick', () => {
     const { container } = render(
       <AttachmentCard attachment={makeAttachment()} onClick={onClick} />,
     );
-    fireEvent.click(container.firstElementChild!);
+    fireEvent.click(getRenderedCard(container));
     expect(onClick).toHaveBeenCalledWith('a1');
   });
 
@@ -242,7 +288,7 @@ describe('AttachmentCard — onClick', () => {
     const { container } = render(
       <AttachmentCard attachment={makeAttachment()} onClick={onClick} />,
     );
-    fireEvent.keyDown(container.firstElementChild!, { key: 'Enter' });
+    fireEvent.keyDown(getRenderedCard(container), { key: 'Enter' });
     expect(onClick).toHaveBeenCalledWith('a1');
   });
 
@@ -251,7 +297,7 @@ describe('AttachmentCard — onClick', () => {
     const { container } = render(
       <AttachmentCard attachment={makeAttachment()} onClick={onClick} />,
     );
-    fireEvent.keyDown(container.firstElementChild!, { key: ' ' });
+    fireEvent.keyDown(getRenderedCard(container), { key: ' ' });
     expect(onClick).toHaveBeenCalledWith('a1');
   });
 
@@ -281,7 +327,7 @@ describe('AttachmentCard — onClick', () => {
         onExpand={onExpand}
       />,
     );
-    fireEvent.click(container.firstElementChild!);
+    fireEvent.click(getRenderedCard(container));
     expect(onExpand).toHaveBeenCalledWith('a1');
     expect(onClick).not.toHaveBeenCalled();
   });

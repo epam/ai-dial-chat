@@ -46,11 +46,12 @@ export const getAttachmentCardState = (
   isSelected: boolean,
   shouldAlwaysShowActions: boolean,
 ): AttachmentCardState => {
-  const { type, status, previewUrl } = attachment;
+  const { type, status, previewUrl, url } = attachment;
 
   const isLoading = status === RequestStatus.Loading;
   const isError = status === RequestStatus.Error;
-  const isImage = type === AttachmentType.Image && !!previewUrl && !isError;
+  const isImage =
+    type === AttachmentType.Image && !!(previewUrl ?? url) && !isError;
 
   const cardColorClass = mergeClasses(
     styles.card,
