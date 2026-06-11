@@ -4,8 +4,8 @@ export enum StorageKey {
   KeyboardShortcut = 'keyboardShortcut',
 }
 
-export const ThemeId = {
-  Dark: 'dark',
-  Light: 'light',
-  System: 'system',
-} as const;
+export enum ThemeId {
+  Dark = 'dark',
+  Light = 'light',
+  System = 'system',
+}

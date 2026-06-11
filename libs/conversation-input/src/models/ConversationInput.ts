@@ -7,6 +7,7 @@ import type {
   InputColors,
   InputTypography,
   ModelSelectorLabels,
+  SendOnEnter,
 } from './Input';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
@@ -157,8 +158,8 @@ export interface ConversationInputProps {
   micLabel?: string;
   /**
    * Controls which key combination submits the message.
-   * - `'enter'` (default): Enter submits; Shift+Enter inserts a newline.
-   * - `'meta-enter'`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
+   * - `SendOnEnter.Enter` (default): Enter submits; Shift+Enter inserts a newline.
+   * - `SendOnEnter.MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
    */
-  sendOnEnter?: 'enter' | 'meta-enter';
+  sendOnEnter?: SendOnEnter;
 }

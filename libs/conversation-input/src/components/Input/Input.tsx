@@ -21,6 +21,7 @@ import {
 import { useClipboardPaste } from '../../hooks/useClipboardPaste';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
+import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { generateAttachmentId } from '../../utils/generateAttachmentId';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
@@ -69,7 +70,7 @@ export const Input: FC<InputProps> = ({
   isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
-  sendOnEnter = 'enter',
+  sendOnEnter = SendOnEnter.Enter,
 }) => {
   const isMobile = useIsMobile();
   const cssVars = useMemo(
@@ -276,7 +277,7 @@ export const Input: FC<InputProps> = ({
     if (!isEnterKey) return;
 
     const shouldSend =
-      sendOnEnter === 'meta-enter'
+      sendOnEnter === SendOnEnter.MetaEnter
         ? (e.metaKey || e.ctrlKey) && !e.shiftKey
         : !e.shiftKey && !e.metaKey && !e.ctrlKey;
 

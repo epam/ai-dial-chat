@@ -1,3 +1,4 @@
+import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
@@ -7,7 +8,6 @@ import {
   DropdownItemType,
 } from '@epam/ai-dial-ui-kit';
 import {
-  IconCheck,
   IconColorSwatch,
   IconDeviceDesktop,
   IconKeyboard,
@@ -32,6 +32,7 @@ import {
 import { getFromLocalStorage } from '../../utils/local-storage';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import AvatarInitials from './AvatarInitials';
+import MenuItemLabel from './MenuItemLabel';
 
 export const UserMenu = memo(() => {
   const { status, user } = useUser();
@@ -76,8 +77,6 @@ export const UserMenu = memo(() => {
     />
   );
 
-  const activeCheck = <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />;
-
   const storedTheme = getFromLocalStorage(StorageKey.Theme) ?? currentTheme;
 
   const hasDark = themes?.some((t) => t.id === ThemeId.Dark) ?? false;
@@ -87,30 +86,22 @@ export const UserMenu = memo(() => {
     hasDark && {
       key: 'theme-dark',
       label: (
-        <span className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-2">
-            <IconMoon size={DIAL_ICON_SIZE.SM} aria-hidden />
-            <span className="dial-small-text">
-              {t(SettingsI18nKeys.ThemeDark)}
-            </span>
-          </span>
-          {storedTheme === ThemeId.Dark && activeCheck}
-        </span>
+        <MenuItemLabel
+          label={t(SettingsI18nKeys.ThemeDark)}
+          isActive={storedTheme === ThemeId.Dark}
+          icon={<IconMoon size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        />
       ),
       onClick: () => setTheme(ThemeId.Dark),
     },
     hasLight && {
       key: 'theme-light',
       label: (
-        <span className="flex items-center justify-between gap-4">
-          <span className="flex items-center gap-2">
-            <IconSun size={DIAL_ICON_SIZE.SM} aria-hidden />
-            <span className="dial-small-text">
-              {t(SettingsI18nKeys.ThemeLight)}
-            </span>
-          </span>
-          {storedTheme === ThemeId.Light && activeCheck}
-        </span>
+        <MenuItemLabel
+          label={t(SettingsI18nKeys.ThemeLight)}
+          isActive={storedTheme === ThemeId.Light}
+          icon={<IconSun size={DIAL_ICON_SIZE.SM} aria-hidden />}
+        />
       ),
       onClick: () => setTheme(ThemeId.Light),
     },
@@ -118,15 +109,11 @@ export const UserMenu = memo(() => {
       hasLight && {
         key: 'theme-system',
         label: (
-          <span className="flex items-center justify-between gap-4">
-            <span className="flex items-center gap-2">
-              <IconDeviceDesktop size={DIAL_ICON_SIZE.SM} aria-hidden />
-              <span className="dial-small-text">
-                {t(SettingsI18nKeys.ThemeSystem)}
-              </span>
-            </span>
-            {storedTheme === ThemeId.System && activeCheck}
-          </span>
+          <MenuItemLabel
+            label={t(SettingsI18nKeys.ThemeSystem)}
+            isActive={storedTheme === ThemeId.System}
+            icon={<IconDeviceDesktop size={DIAL_ICON_SIZE.SM} aria-hidden />}
+          />
         ),
         onClick: () => setTheme(ThemeId.System),
       },
@@ -167,26 +154,24 @@ export const UserMenu = memo(() => {
         {
           key: 'shortcut-enter',
           label: (
-            <span className="flex items-center justify-between gap-4">
-              <span className="dial-small-text">
-                {t(SettingsI18nKeys.ShortcutEnter)}
-              </span>
-              {preference === 'enter' && activeCheck}
-            </span>
+            <MenuItemLabel
+              label={t(SettingsI18nKeys.ShortcutEnter)}
+              isActive={preference === SendOnEnter.Enter}
+            />
           ),
-          onClick: () => setPreference('enter'),
+          onClick: () => setPreference(SendOnEnter.Enter),
         },
         {
           key: 'shortcut-meta-enter',
           label: (
-            <span className="flex items-center justify-between gap-4">
-              <span className="dial-small-text">
-                {t(SettingsI18nKeys.ShortcutMetaEnter, { modifier: metaKey })}
-              </span>
-              {preference === 'meta-enter' && activeCheck}
-            </span>
+            <MenuItemLabel
+              label={t(SettingsI18nKeys.ShortcutMetaEnter, {
+                modifier: metaKey,
+              })}
+              isActive={preference === SendOnEnter.MetaEnter}
+            />
           ),
-          onClick: () => setPreference('meta-enter'),
+          onClick: () => setPreference(SendOnEnter.MetaEnter),
         },
       ],
     },

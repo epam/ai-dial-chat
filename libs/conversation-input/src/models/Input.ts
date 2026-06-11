@@ -1,6 +1,18 @@
 import type { Attachment, DeploymentItem } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 
+/**
+ * Controls which key combination submits the message in the `Input` component.
+ * - `Enter` (default): Enter submits; Shift+Enter inserts a newline.
+ * - `MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
+ */
+export enum SendOnEnter {
+  /** Enter submits; Shift+Enter inserts a newline. */
+  Enter = 'enter',
+  /** ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline. */
+  MetaEnter = 'meta-enter',
+}
+
 /** CSS custom-property overrides for the `Input` component. */
 export interface InputColors {
   /** Input area background color. */
@@ -166,8 +178,8 @@ export interface InputProps {
   micLabel?: string;
   /**
    * Controls which key combination submits the message.
-   * - `'enter'` (default): Enter submits; Shift+Enter inserts a newline.
-   * - `'meta-enter'`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
+   * - `SendOnEnter.Enter` (default): Enter submits; Shift+Enter inserts a newline.
+   * - `SendOnEnter.MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
    */
-  sendOnEnter?: 'enter' | 'meta-enter';
+  sendOnEnter?: SendOnEnter;
 }
