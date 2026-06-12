@@ -28,6 +28,7 @@ import {
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import {
   transcribeAudio,
   transcribeAudioWithAsrModel,
@@ -193,6 +194,8 @@ const ConversationRoute: FC = () => {
     [asrModelId, selectedItemId],
   );
 
+  const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+
   const isTranscriptionSupported = useMemo(() => {
     if (asrModelId != null) return true;
     const selectedItem = items.find((item) => item.id === selectedItemId);
@@ -254,6 +257,7 @@ const ConversationRoute: FC = () => {
             isTranscriptionSupported={isTranscriptionSupported}
             onUploadAudio={handleUploadAudio}
             onTranscribeAudio={handleTranscribeAudio}
+            sendOnEnter={sendOnEnter}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>

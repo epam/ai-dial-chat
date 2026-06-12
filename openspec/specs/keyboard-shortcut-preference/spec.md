@@ -58,6 +58,22 @@ The chat input send handler SHALL read `useKeyboardShortcutPreference` and apply
 
 ---
 
+## Requirement: New chat screen input respects the keyboard shortcut preference
+
+The conversation input rendered on the new chat (landing) screen — before any conversation is created — SHALL read `useKeyboardShortcutPreference` and pass the resulting value to `ConversationInput` as the `sendOnEnter` prop, identical to the behaviour of the existing conversation view.
+
+### Scenario: Preference is applied on the new chat screen
+- **GIVEN** the user has set `preference = 'meta-enter'`
+- **WHEN** the user opens the new chat screen (no conversation selected)
+- **THEN** pressing bare Enter inserts a newline and pressing ⌘+Enter / Ctrl+Enter submits the message
+
+### Scenario: Default preference is applied on the new chat screen
+- **GIVEN** no preference has been stored in localStorage
+- **WHEN** the user opens the new chat screen
+- **THEN** pressing bare Enter submits the message (default `'enter'` behaviour)
+
+---
+
 ## Requirement: Focus and cursor position retained after newline insertion
 
 When a newline-inserting key combination (Shift+Enter with `preference = 'enter'`, or bare Enter with `preference = 'meta-enter'`) is pressed and the textarea layout transitions from single-line (non-stacked) to multi-line (stacked), the `Input` component SHALL:
