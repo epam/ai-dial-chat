@@ -101,6 +101,7 @@ import { parseEntityApiKey } from '@/src/utils/server/api';
 import { ChatBody, Conversation, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType, PartialBy } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
+import { DialAIEntityModel } from '@/src/types/models';
 import { AppAction, AppEpic, RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
@@ -447,7 +448,15 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
       ({ payload: { names, modelReference, folderId, headerCreateNew } }) => {
         return state$.pipe(
           startWith(state$.value),
-          filter(ModelsSelectors.selectIsRecentModelsLoaded),
+          filter(
+            (state) =>
+              ModelsSelectors.selectIsRecentModelsLoaded(state) ||
+              // Optimistic fast path (gated by ENABLE_OPTIMISTIC_LOAD): skip
+              // wait when settings default model is known and we don't need
+              // isolated-model resolution from the models list.
+              (!SettingsSelectors.selectIsIsolatedView(state) &&
+                SettingsSelectors.selectIsOptimisticDefaultModelLoad(state)),
+          ),
           map((state) => {
             const isIsolatedView =
               SettingsSelectors.selectIsIsolatedView(state);
@@ -463,6 +472,16 @@ const createNewConversationsEpic: AppEpic = (action$, state$) =>
 
             if (modelReference) {
               return modelReference;
+            }
+
+            // Optimistic fast path: models not loaded yet but default is known.
+            if (
+              !ModelsSelectors.selectIsRecentModelsLoaded(state) &&
+              SettingsSelectors.selectIsOptimisticDefaultModelLoad(state)
+            ) {
+              const settingsDefault =
+                SettingsSelectors.selectDefaultModelReference(state);
+              if (settingsDefault) return settingsDefault;
             }
 
             const modelReferences = ModelsSelectors.selectModels(state).map(
@@ -1655,8 +1674,20 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
     ofType(ConversationsActions.streamMessage.type),
     map(({ payload }) => {
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
-      const lastModel = modelsMap[payload.conversation.model.id];
-      const conversationModelType = lastModel?.type ?? EntityType.Model;
+      const isOptimisticLoadEnabled =
+        SettingsSelectors.selectIsOptimisticLoadEnabled(state$.value);
+      // On the optimistic fast path the models listing may not have resolved
+      // yet; fall back to a minimal reference from the conversation so the API
+      // call is valid. Only active when ENABLE_OPTIMISTIC_LOAD is set.
+      const model: DialAIEntityModel | undefined =
+        modelsMap[payload.conversation.model.id] ??
+        (isOptimisticLoadEnabled
+          ? ({
+              id: payload.conversation.model.id,
+              reference: payload.conversation.model.id,
+            } as DialAIEntityModel)
+          : undefined);
+      const conversationModelType = model?.type ?? EntityType.Model;
       const isOverlay = SettingsSelectors.selectIsOverlay(state$.value);
       const overlayTemperature = OverlaySelectors.selectOverlayTemperature(
         state$.value,
@@ -1666,10 +1697,10 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       > = {};
 
       if (conversationModelType === EntityType.Model) {
-        if (doesModelAllowSystemPrompt(lastModel)) {
+        if (doesModelAllowSystemPrompt(model)) {
           modelAdditionalSettings.prompt = payload.conversation.prompt;
         }
-        if (doesModelAllowTemperature(lastModel)) {
+        if (doesModelAllowTemperature(model)) {
           modelAdditionalSettings.temperature =
             isOverlay && overlayTemperature != null
               ? overlayTemperature
@@ -1678,7 +1709,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
       }
 
       const chatBody: ChatBody = {
-        model: modelsMap[payload.conversation.model.id],
+        model,
         messages: payload.conversation.messages
           .filter(
             (message, index) =>
