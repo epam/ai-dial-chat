@@ -67,6 +67,7 @@ export const useModelSelector = ({
           selectedItem?.iconUrl,
           selectedItem?.type,
           DIAL_ICON_SIZE.LG,
+          selectedItem?.displayName ?? selectedItem?.id,
         )
       ),
     [isLoading, selectedItem],

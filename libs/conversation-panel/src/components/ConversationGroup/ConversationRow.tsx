@@ -4,6 +4,7 @@ import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialDropdown,
+  DialEllipsisTooltip,
   DialGhostButton,
   DialIconButton,
   ElementSize,
@@ -47,7 +48,13 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
 
-  const avatar = <DeploymentIcon src={item.iconUrl} size={DIAL_ICON_SIZE.LG} />;
+  const avatar = (
+    <DeploymentIcon
+      src={item.iconUrl}
+      size={DIAL_ICON_SIZE.LG}
+      tooltip={item.iconTooltip}
+    />
+  );
 
   const buttonPaddingRight = getButtonPaddingEnd(hasActions, isMenuOpen);
 
@@ -76,8 +83,13 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     <li className="group relative">
       <DialGhostButton
         iconBefore={avatar}
-        label={item.title}
-        textClassName={mergeClasses('truncate min-w-0', itemTitleClassName)}
+        label={
+          <DialEllipsisTooltip
+            text={item.title}
+            className={itemTitleClassName}
+          />
+        }
+        textClassName="min-w-0"
         aria-current={isActive ? 'page' : undefined}
         onClick={() => onSelectConversation(item.id)}
         onMouseDown={item.href ? handleMouseDown : undefined}

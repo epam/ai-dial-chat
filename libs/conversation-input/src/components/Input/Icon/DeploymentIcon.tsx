@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DialTooltip } from '@epam/ai-dial-ui-kit';
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react';
 import FallbackEntityIcon from '../../../assets/fallback-entity-icon.svg?react';
 import styles from './DeploymentIcon.module.scss';
@@ -14,6 +14,8 @@ export interface DeploymentIconProps {
   fallback?: ReactNode;
   /** Extra class applied to the outer badge wrapper, e.g. for a custom background variable. */
   badgeClassName?: string;
+  /** When provided, a tooltip with this text is shown on hover/focus. */
+  tooltip?: string;
 }
 
 /**
@@ -33,6 +35,7 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
     />
   ),
   badgeClassName,
+  tooltip,
 }) => {
   const [hasFailed, setHasFailed] = useState(false);
   const ref = useRef<HTMLImageElement>(null);
@@ -52,7 +55,7 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
   // ~11 % inset matches the Figma "inset-[11.11%]" applied to the icon inside its badge
   const padding = Math.round(size * 0.111);
 
-  return (
+  const badge = (
     <div
       style={{ width: size, height: size }}
       className={mergeClasses(
@@ -77,4 +80,14 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
       )}
     </div>
   );
+
+  if (tooltip) {
+    return (
+      <DialTooltip tooltip={tooltip} triggerClassName="flex shrink-0">
+        {badge}
+      </DialTooltip>
+    );
+  }
+
+  return badge;
 };
