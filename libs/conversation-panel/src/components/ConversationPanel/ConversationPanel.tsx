@@ -6,12 +6,17 @@ import {
   SidebarPanel,
   SidebarSide,
 } from '@epam/ai-dial-sidebar';
+import { DialSkeleton } from '@epam/ai-dial-ui-kit';
 import { type FC, memo, useMemo, useState } from 'react';
 import {
-  ConversationSource,
   type ConversationPanelProps,
+  ConversationSource,
   FilterTab,
 } from '../../models/ConversationPanel';
+import {
+  getSkeletonWidth,
+  SKELETON_ROW_COUNT,
+} from '../../utils/conversation-row.utils';
 import { ConversationGroup } from '../ConversationGroup/ConversationGroup';
 import { FilterTabs } from '../FilterTabs/FilterTabs';
 import { NewChatButton } from '../NewChatButton/NewChatButton';
@@ -21,6 +26,7 @@ import { matchesSearch, matchesTab } from './utils';
 export const ConversationPanel: FC<ConversationPanelProps> = memo(
   ({
     conversations,
+    isLoading,
     isOpen,
     onSelectConversation,
     activeConversationId,
@@ -168,7 +174,20 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         />
 
         <div className="flex w-full flex-1 flex-col gap-2 overflow-y-auto px-2 py-1">
-          {isNoConversations ? (
+          {isLoading ? (
+            <div className="flex flex-col gap-3 px-2 py-3">
+              {Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
+                <DialSkeleton
+                  key={i}
+                  avatar={{ size: 24 }}
+                  showTitle={{ width: getSkeletonWidth(i) }}
+                  paragraph={false}
+                  active
+                  color="var(--bg-layer-4)"
+                />
+              ))}
+            </div>
+          ) : isNoConversations ? (
             <PanelEmpty
               label={emptyLabel}
               labelClassName={typography?.emptyLabelClassName}

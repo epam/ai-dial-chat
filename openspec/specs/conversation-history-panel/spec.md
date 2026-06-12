@@ -72,6 +72,24 @@ Each section renders a disclosure button (chevron icon) as its header that toggl
 - **WHEN** `conversations` is an empty array
 - **THEN** the `emptyLabel` prop text is rendered instead of sections
 
+---
+
+### Requirement: Panel shows a skeleton loader while conversations are loading
+
+`ConversationPanel` SHALL accept an optional `isLoading?: boolean` prop. When `isLoading` is `true`, the panel body SHALL render a column of skeleton placeholder rows instead of the conversation list, empty state, or no-results state. Each skeleton row SHALL display a 24 × 24 px circular avatar placeholder and a title rectangle beside it. Row widths vary deterministically via `60 + (i * 23 % 35)` percent. The skeleton uses `DialSkeleton` from `@epam/ai-dial-ui-kit` with `color="var(--bg-layer-4)"` for contrast against the `bg-layer-3` panel background. `ConversationPanelView` in `apps/chat` passes `isLoading` from `ConversationsContext`.
+
+#### Scenario: Skeleton is shown while loading
+
+- **WHEN** `ConversationPanel` receives `isLoading={true}`
+- **THEN** skeleton rows are rendered and the conversation list, empty state, and no-results state are not rendered
+
+#### Scenario: Normal content is shown after loading
+
+- **WHEN** `isLoading` is `false` or omitted
+- **THEN** the panel renders conversations (or empty/no-results state) as normal
+
+---
+
 #### Scenario: Collapsing a section hides its items
 
 - **WHEN** the user clicks the My chats section disclosure button
