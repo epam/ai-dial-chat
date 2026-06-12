@@ -87,6 +87,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           attachments={attachments ?? []}
           onAttachmentClick={onAttachmentClick}
           clickLabel={attachmentClickLabel}
+          className="max-w-[640px] flex-wrap justify-end overflow-x-visible"
         />
         {text && (
           <div

@@ -71,6 +71,8 @@ export const Input: FC<InputProps> = ({
   onUploadAudio,
   onTranscribeAudio,
   sendOnEnter = SendOnEnter.Enter,
+  prefixAttachments = [],
+  onRemovePrefixAttachment,
 }) => {
   const isMobile = useIsMobile();
   const cssVars = useMemo(
@@ -377,10 +379,16 @@ export const Input: FC<InputProps> = ({
         className,
       )}
     >
-      {attachments.length > 0 && (
+      {(prefixAttachments.length > 0 || attachments.length > 0) && (
         <AttachmentTray
-          attachments={attachments}
-          onRemove={handleRemove}
+          attachments={[...prefixAttachments, ...attachments]}
+          onRemove={(id) => {
+            if (prefixAttachments.some((a) => a.id === id)) {
+              onRemovePrefixAttachment?.(id);
+            } else {
+              handleRemove(id);
+            }
+          }}
           onRetry={handleRetry}
           onExpand={handleExpand}
           removeLabel={removeLabel}
