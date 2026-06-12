@@ -28,6 +28,7 @@ import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { createMessagePair } from '../../utils/message-factory';
+import { isMessageChanged } from '../../utils/message-utils';
 import { getStarterSubmitText } from '../../utils/starter-option';
 
 interface Params {
@@ -404,6 +405,22 @@ export const useConversationHandlers = ({
 
       const originalMessage = conversation.messages[idx];
       const conversationPath = getConversationPath(conversationId);
+
+      if (
+        !isMessageChanged(
+          originalMessage,
+          text,
+          keptDisplayAttachments,
+          newAttachments,
+        )
+      ) {
+        setEditingMessageIndexes((prev) => {
+          const next = new Set(prev);
+          next.delete(idx);
+          return next;
+        });
+        return;
+      }
 
       const newDtos = attachmentsToDtos(newAttachments);
 
