@@ -59,6 +59,11 @@ jobs:
         env:
           DIAL_CORE_URL: ${{ vars.DIAL_CORE_URL }}
           DIAL_API_KEY: ${{ secrets.DIAL_API_KEY }}
+          # DIAL deployment id to route to (e.g. anthropic.claude-sonnet-4-5-
+          # 20250929-v1:0). DIAL names rarely match Anthropic model strings, so
+          # set this to a deployment your key actually has. If unset, the
+          # platform falls back to `anthropic.<manifest model>`.
+          DIAL_MODEL: ${{ vars.DIAL_MODEL }}
         run: |
           set -euo pipefail
           if [ -n "${DIAL_CORE_URL:-}" ]; then
@@ -71,8 +76,9 @@ jobs:
               echo "ANTHROPIC_AUTH_TOKEN=${DIAL_API_KEY}"
               echo "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"
               echo "SDLC_DIAL_MODE=1"
+              if [ -n "${DIAL_MODEL:-}" ]; then echo "SDLC_DIAL_MODEL=${DIAL_MODEL}"; fi
             } >> "$GITHUB_ENV"
-            echo "Inference route: DIAL (${base})"
+            echo "Inference route: DIAL (${base}) deployment=${DIAL_MODEL:-anthropic.<manifest model>}"
           else
             echo "Inference route: direct Anthropic"
           fi
