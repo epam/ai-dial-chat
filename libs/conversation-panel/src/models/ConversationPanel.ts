@@ -39,6 +39,8 @@ export interface ConversationHistoryItem {
   source?: ConversationSource;
   /** URL of the model or conversation icon. When absent a default icon is shown. */
   iconUrl?: string;
+  /** Tooltip text shown on the deployment icon. Typically the agent or model display name. */
+  iconTooltip?: string;
 }
 
 /** Font overrides for the header title in `ConversationPanel`. */
