@@ -32,7 +32,11 @@ permissions:
 
 jobs:
   agent:
-    name: ${{ inputs.agent_name }}
+    # Generic name so the matrix path reads `dispatch / <agent> / agent` (the
+    # agent name appears once, at the matrix level, instead of doubled). The
+    # upstream-wait step matches the agent name as a path segment, so this is
+    # safe.
+    name: agent
     runs-on: ubuntu-latest
     # TEMPORARY (validation): use the security-review environment's DIAL key,
     # which has the Anthropic route + the anthropic.claude-sonnet-4-6 deployment
