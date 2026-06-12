@@ -188,7 +188,11 @@ export const ConversationPage: FC = () => {
         // Restore the last selected agent from the conversation's change history
         // so the deployment selector reflects what was active, not the default.
         const lastDeploymentId = getLastDeploymentId(result.messages);
-        setSelectedItemId(lastDeploymentId ?? result.assistantModelId);
+        const modelToSelect =
+          lastDeploymentId ?? (result.assistantModelId || result.model.id);
+        if (modelToSelect) {
+          setSelectedItemId(modelToSelect);
+        }
 
         const lastMsg = result.messages[result.messages.length - 1];
 
