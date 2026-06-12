@@ -85,11 +85,11 @@ const DEFAULT_PROPS = {
 
 const getSaveButton = () =>
   screen.getByRole('button', {
-    name: 'actions.save',
+    name: 'buttons.save',
   }) as HTMLButtonElement;
 const getCancelButton = () =>
   screen.getByRole('button', {
-    name: 'actions.cancel',
+    name: 'buttons.cancel',
   }) as HTMLButtonElement;
 const getInput = () =>
   screen.getByRole('textbox', {

@@ -65,8 +65,8 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-// t() returns the key in tests; MessagesI18nKeys.AttachmentDownloadLabel = 'messages.attachment.downloadLabel'
-const CLICK_LABEL = 'messages.attachment.downloadLabel';
+// t() returns the key in tests; AttachmentsI18nKeys.Download = 'attachments.downloadFile'
+const CLICK_LABEL = 'attachments.downloadFile';
 
 describe('ConversationMessageItem — main render', () => {
   it('attachment card is clickable and fires handleAttachmentClick', () => {

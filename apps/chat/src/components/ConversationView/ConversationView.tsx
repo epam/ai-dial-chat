@@ -31,9 +31,8 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ActionsI18nKeys,
-  BasicI18nKeys,
   ButtonsI18nKeys,
+  BasicI18nKeys,
   ChatI18nKeys,
   ConversationHistoryI18nKeys,
   ConversationI18nKeys,
@@ -181,28 +180,28 @@ const ConversationView: FC<Props> = ({
 
   const tooltips = useMemo<MessageActionTooltips>(
     () => ({
-      edit: t(ActionsI18nKeys.Edit),
-      delete: t(ActionsI18nKeys.Delete),
-      regenerate: t(ActionsI18nKeys.Regenerate),
-      copy: t(ActionsI18nKeys.Copy),
-      copied: t(ActionsI18nKeys.Copied),
-      copyMarkdown: t(ActionsI18nKeys.Copy),
-      copiedMarkdown: t(ActionsI18nKeys.Copied),
-      like: t(ActionsI18nKeys.Like),
-      dislike: t(ActionsI18nKeys.Dislike),
+      edit: t(ButtonsI18nKeys.Edit),
+      delete: t(ButtonsI18nKeys.Delete),
+      regenerate: t(ButtonsI18nKeys.Regenerate),
+      copy: t(ButtonsI18nKeys.Copy),
+      copied: t(ButtonsI18nKeys.Copied),
+      copyMarkdown: t(ButtonsI18nKeys.CopyAsMarkdown),
+      copiedMarkdown: t(ButtonsI18nKeys.Copied),
+      like: t(ButtonsI18nKeys.Like),
+      dislike: t(ButtonsI18nKeys.Dislike),
     }),
     [t],
   );
 
   const ariaLabels = useMemo<MessageActionAriaLabels>(
     () => ({
-      editMessage: t(ActionsI18nKeys.EditMessage),
-      deleteMessage: t(ActionsI18nKeys.DeleteMessage),
-      regenerateResponse: t(ActionsI18nKeys.RegenerateResponse),
-      copyResponse: t(ActionsI18nKeys.CopyResponse),
-      copyAsMarkdown: t(ActionsI18nKeys.CopyAsMarkdown),
-      likeResponse: t(ActionsI18nKeys.LikeResponse),
-      dislikeResponse: t(ActionsI18nKeys.DislikeResponse),
+      editMessage: t(ButtonsI18nKeys.EditMessage),
+      deleteMessage: t(ButtonsI18nKeys.DeleteMessage),
+      regenerateResponse: t(ButtonsI18nKeys.RegenerateResponse),
+      copyResponse: t(ButtonsI18nKeys.CopyResponse),
+      copyAsMarkdown: t(ButtonsI18nKeys.CopyAsMarkdown),
+      likeResponse: t(ButtonsI18nKeys.LikeResponse),
+      dislikeResponse: t(ButtonsI18nKeys.DislikeResponse),
     }),
     [t],
   );
@@ -346,9 +345,9 @@ const ConversationView: FC<Props> = ({
                   effectiveDeploymentId={effectiveDeploymentIds[index]}
                   tooltips={tooltips}
                   ariaLabels={ariaLabels}
-                  cancelLabel={t(ActionsI18nKeys.Cancel)}
-                  saveLabel={t(ActionsI18nKeys.SaveAndSubmit)}
-                  editMessageAriaLabel={t(ActionsI18nKeys.EditMessage)}
+                  cancelLabel={t(ButtonsI18nKeys.Cancel)}
+                  saveLabel={t(ButtonsI18nKeys.SaveAndSubmit)}
+                  editMessageAriaLabel={t(ButtonsI18nKeys.EditMessage)}
                   quickReplyButtonsAriaLabel={t(ChatI18nKeys.QuickReplyButtons)}
                   showMoreLabel={t(ButtonsI18nKeys.ShowMore)}
                   showLessLabel={t(ButtonsI18nKeys.ShowLess)}

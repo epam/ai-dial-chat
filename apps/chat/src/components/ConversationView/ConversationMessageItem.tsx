@@ -16,7 +16,7 @@ import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { FC, lazy, memo, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessagesI18nKeys } from '../../constants/translation-keys';
+import { AttachmentsI18nKeys } from '../../constants/translation-keys';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
 import { messageHasStages } from '../../utils/message-utils';
@@ -140,7 +140,7 @@ const ConversationMessageItem: FC<Props> = ({
               showMoreAriaLabel={showMoreUserMessageAriaLabel}
               showLessAriaLabel={showLessUserMessageAriaLabel}
               onAttachmentClick={handleAttachmentClick}
-              attachmentClickLabel={t(MessagesI18nKeys.AttachmentDownloadLabel)}
+              attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
               className="justify-end"
             />
           }
@@ -247,7 +247,7 @@ const ConversationMessageItem: FC<Props> = ({
       deploymentDisplayName={deploymentEntry?.displayName}
       thinkingLabel={thinkingLabel}
       onAttachmentClick={handleAttachmentClick}
-      attachmentClickLabel={t(MessagesI18nKeys.AttachmentDownloadLabel)}
+      attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
       {...statusProps}
     />
   );
