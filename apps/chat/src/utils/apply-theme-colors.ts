@@ -1,6 +1,5 @@
 import { Theme } from '@epam/ai-dial-chat-shared';
-import { StorageKey, ThemeId } from '../constants/storage';
-import { setToLocalStorage } from './local-storage';
+import { ThemeId } from '../constants/storage';
 
 export const getOsPreferredTheme = (): string =>
   window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -14,7 +13,5 @@ export const applyThemeColors = (div: HTMLElement, theme?: Theme) => {
     Object.entries(themeColors).forEach(([key, value]) => {
       div.style.setProperty(`--${key}`, value);
     });
-
-    setToLocalStorage(StorageKey.Theme, theme.id); // Persist the theme
   }
 };

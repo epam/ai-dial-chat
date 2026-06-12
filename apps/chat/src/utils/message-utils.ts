@@ -1,4 +1,6 @@
 import {
+  type Attachment,
+  type DisplayAttachment,
   Message,
   MessageRole,
   StatusEvent,
@@ -34,6 +36,28 @@ export const getLastDeploymentId = (messages: Message[]): string | null => {
     }
   }
   return null;
+};
+
+/**
+ * Returns `true` when the edited text or attachment list differs from the
+ * original message, meaning a regeneration is needed.
+ *
+ * @param originalMessage - The unmodified message stored in the conversation.
+ * @param newText - The text the user submitted from the edit area.
+ * @param keptDisplayAttachments - Attachments the user kept (not removed).
+ * @param newAttachments - Brand-new attachments the user added during editing.
+ */
+export const isMessageChanged = (
+  originalMessage: Message,
+  newText: string,
+  keptDisplayAttachments: DisplayAttachment[],
+  newAttachments: Attachment[],
+): boolean => {
+  if (newText !== originalMessage.content) return true;
+  if (newAttachments.length > 0) return true;
+  const originalAttachmentCount =
+    originalMessage.custom_content?.attachments?.length ?? 0;
+  return keptDisplayAttachments.length !== originalAttachmentCount;
 };
 
 export const messageHasStages = (message: Message): boolean =>
