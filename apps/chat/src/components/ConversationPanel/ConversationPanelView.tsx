@@ -76,6 +76,10 @@ const ConversationPanelView: FC<Props> = ({
     () => new Map(deployments.map((d) => [d.id, d.iconUrl])),
     [deployments],
   );
+  const deploymentNameByModelId = useMemo(
+    () => new Map(deployments.map((d) => [d.id, d.displayName ?? d.id])),
+    [deployments],
+  );
 
   useEffect(() => {
     if (!activeConversationId) return;
@@ -142,11 +146,14 @@ const ConversationPanelView: FC<Props> = ({
           title: item.title,
           isPinned: item.isPinned ?? false,
           iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
+          iconTooltip: modelId
+            ? deploymentNameByModelId.get(modelId)
+            : undefined,
           source: getConversationSource(item),
           href: getConversationRoute(id),
         };
       }),
-    [items, deploymentIconByModelId],
+    [items, deploymentIconByModelId, deploymentNameByModelId],
   );
 
   const filterLabels = useMemo(
