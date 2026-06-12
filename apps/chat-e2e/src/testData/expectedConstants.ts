@@ -5,6 +5,7 @@ import { EntityType } from '@/chat/types/common';
 import { ServerSlugs } from '@/chat/types/slugs-types';
 import { ItemUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
+import { Toolset } from '@epam/ai-dial-shared';
 import path from 'path';
 
 export const ExpectedConstants = {
@@ -412,6 +413,8 @@ export const ExpectedConstants = {
     `Successful login\nYou have successfully logged into the "${name}" version ${version} with credentials to entire organization.`,
   personalLoginSuccessfulMessage: (name: string, version: string) =>
     `Successful login\nYou have successfully logged into the "${name}" version ${version} with personal credentials.`,
+  copyToolsetUrlPattern: (toolset: Toolset) =>
+    new RegExp(`/v1/toolset/${toolset.id ?? toolset.name}/mcp$`),
 };
 
 export const withTraceId = (message: string): RegExp => {
@@ -458,6 +461,7 @@ export enum MenuOptions {
   removeAccess = 'Remove access',
   loginWithMyCreds = 'Login with my creds',
   login = 'Log in',
+  connect = 'Connect',
 }
 
 export enum FilterMenuOptions {
@@ -832,4 +836,8 @@ export const ExpectedConfirmationPopupData = {
     `Are you sure you want to delete “${item}”?`,
   deleteItemsContent: (count: number) =>
     `Do you want to delete the following ${count} items?`,
+};
+
+export const ExpectedConnectToolsetModalData = {
+  header: 'Connect toolset',
 };

@@ -406,6 +406,8 @@ export const AddToolsetSettingsFormSelector = {
   allowedToolsLabel: '[data-qa="allowed-tools-label"]',
   allowedToolsLabelSubtitle: '[data-qa="allowed-tools-subtitle"]',
   copyUrlButton: 'Copy URL',
+  connectToolsetLabel: '[data-qa="connect-toolset-label"]',
+  connectToolsetHint: '[data-qa="copy-section"] > label',
 };
 
 export const InformationModalSelectors = {

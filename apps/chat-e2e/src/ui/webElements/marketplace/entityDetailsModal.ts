@@ -135,6 +135,11 @@ export class EntityDetailsModal extends BaseElement {
   public credsLabel = this.getChildElementBySelector(
     MarketplaceDetailsModal.credsLabel,
   );
+  public connectButton = new Button(
+    this.page,
+    MarketplaceDetailsModal.connectButton,
+    this.rootLocator,
+  );
 
   public async clickUseButton({
     isInstalledDeploymentsUpdated = false,
