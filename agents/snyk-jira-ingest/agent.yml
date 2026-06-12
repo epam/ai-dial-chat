@@ -31,9 +31,10 @@ vars: [JIRA_MAX_FINDINGS]
 # findings before they're uploaded for the triage handoff; triage decrypts.
 private_output: true
 
-# Haiku: the work is deterministic — run one script, confirm the envelope.
-# No reasoning needed; keeps token footprint and rate-limit pressure low.
-model: claude-haiku-4-5-20251001
+# Sonnet: matches the triage agent so a single DIAL deployment
+# (claude-sonnet-4-6) serves the whole chain. The work is light — run one
+# script and confirm the envelope — so cost stays low regardless of model.
+model: claude-sonnet-4-6
 phase: sandbox
 cost_class: light
 

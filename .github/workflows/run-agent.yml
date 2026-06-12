@@ -38,12 +38,40 @@ jobs:
     concurrency:
       group: ${{ inputs.concurrency_group != '' && inputs.concurrency_group || format('{0}-{1}-{2}', github.workflow, inputs.agent_name, github.ref) }}
       cancel-in-progress: true
-    env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
+
+      - name: Configure inference route
+        # DIAL when the DIAL_CORE_URL variable is set (key + endpoint from DIAL);
+        # otherwise the direct Anthropic key. These land in the job env and are
+        # consumed only by claude-code-action's API calls — never the prompt, so
+        # the "model never sees secrets" property holds. Toggle / rollback = set
+        # or unset the DIAL_CORE_URL repo variable.
+        env:
+          DIAL_CORE_URL: ${{ vars.DIAL_CORE_URL }}
+          DIAL_API_KEY: ${{ secrets.DIAL_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -n "${DIAL_CORE_URL:-}" ]; then
+            if [ -z "${DIAL_API_KEY:-}" ]; then
+              echo "::error::DIAL_CORE_URL is set but the DIAL_API_KEY secret is missing."
+              exit 1
+            fi
+            base="${DIAL_CORE_URL%/}/anthropic"
+            { echo "ANTHROPIC_API_KEY=${DIAL_API_KEY}"
+              echo "ANTHROPIC_BASE_URL=${base}"
+              echo "ANTHROPIC_AUTH_TOKEN=${DIAL_API_KEY}"
+              echo "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"
+              echo "SDLC_DIAL_MODE=1"
+            } >> "$GITHUB_ENV"
+            echo "Inference route: DIAL (${base})"
+          else
+            echo "ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}" >> "$GITHUB_ENV"
+            echo "Inference route: direct Anthropic"
+          fi
 
       - name: Install YAML parser
         run: pip install --quiet pyyaml
