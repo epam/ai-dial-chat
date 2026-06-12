@@ -396,6 +396,22 @@ export const useConversationHandlers = ({
       const originalMessage = conversation.messages[idx];
       const conversationPath = getConversationPath(conversationId);
 
+      const originalAttachmentCount =
+        originalMessage.custom_content?.attachments?.length ?? 0;
+      const isTextUnchanged = text === originalMessage.content;
+      const hasNoNewAttachments = newAttachments.length === 0;
+      const hasNoRemovedAttachments =
+        keptDisplayAttachments.length === originalAttachmentCount;
+
+      if (isTextUnchanged && hasNoNewAttachments && hasNoRemovedAttachments) {
+        setEditingMessageIndexes((prev) => {
+          const next = new Set(prev);
+          next.delete(idx);
+          return next;
+        });
+        return;
+      }
+
       const newDtos = attachmentsToDtos(newAttachments);
 
       const keptIds = new Set(keptDisplayAttachments.map((a) => a.id));
