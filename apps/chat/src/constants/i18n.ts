@@ -36,6 +36,7 @@ export enum SettingsI18nKeys {
   ReportingInProgress = 'Reporting an issue in progress...',
   Submit = 'Submit',
   Theme = 'Theme',
+  Language = 'Language',
   Settings = 'Settings',
   CustomLogo = 'Custom logo',
   ShowChatFullScreen = 'Show chat full screen width',

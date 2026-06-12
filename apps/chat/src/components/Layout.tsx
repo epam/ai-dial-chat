@@ -10,6 +10,7 @@ import { useRouteHistory } from '@/src/hooks/useRouteHistory';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getPageType } from '@/src/utils/app/route';
+import { isRtlLocale } from '@/src/utils/app/rtl';
 import { signInInOverlay } from '@/src/utils/auth/auth-overlay';
 
 import { Translation } from '@/src/types/translation';
@@ -94,9 +95,13 @@ export function Layout({
   }, [dispatch, previousRoute]);
 
   useEffect(() => {
-    dispatch(
-      UIActions.setLocale(router.locale ?? router.defaultLocale ?? 'en'),
-    );
+    const locale = router.locale ?? router.defaultLocale ?? 'en';
+    const dir = isRtlLocale(locale) ? 'rtl' : 'ltr';
+
+    document.documentElement.lang = locale;
+    document.documentElement.dir = dir;
+
+    dispatch(UIActions.setLocale(locale));
   }, [dispatch, router.defaultLocale, router.locale]);
   useEffect(() => {
     setLoading(isApplyingModel);
