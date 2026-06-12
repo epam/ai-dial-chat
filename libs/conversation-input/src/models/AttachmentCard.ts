@@ -18,6 +18,8 @@ export interface AttachmentCardTypography {
   fontClassName?: string;
   /** Utility class applied to the bottom meta label (file type / status). Defaults to `'dial-tiny-text'`. */
   metaClassName?: string;
+  /** Utility class applied to the placeholder icon shown while the image is loading. Defaults to `'text-secondary'`. */
+  placeholderIconClassName?: string;
 }
 
 /** Props accepted by the `AttachmentCard` component. */
