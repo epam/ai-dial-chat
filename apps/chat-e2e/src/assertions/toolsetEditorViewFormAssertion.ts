@@ -49,7 +49,7 @@ export class ToolsetEditorViewFormAssertion extends BaseAssertion {
     }
     await this.assertElementState(
       this.toolsetEditorViewForm.copyUrlButton,
-      'hidden',
+      'visible',
     );
   }
 

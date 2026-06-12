@@ -52,6 +52,7 @@ export * from './marketplace/marketplaceContainer';
 export * from './marketplace/marketplaceFilter';
 export * from './marketplace/marketplaceHeader';
 export * from './marketplace/marketplaceSidebar';
+export * from './marketplace/connectToolsetModal';
 export * from './marketplace/toolsetLoginModal';
 export * from './agentsBrowserModal';
 export * from './talkToAgentDialog';

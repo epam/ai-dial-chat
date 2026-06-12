@@ -15,6 +15,7 @@ import {
   ChatMessages,
   ChatNotFound,
   ConfirmationPopup,
+  ConnectToolsetModal,
   ConversationSettingsModal,
   ConversationToCompare,
   CustomAppEditorAppSettingsPreview,
@@ -482,6 +483,7 @@ const dialTest = test.extend<{
   toolsetApiAuthenticationAssertion: ToolsetApiAuthenticationAssertion;
   toolsetLoginModal: ToolsetLoginModal;
   toolsetLoginModalAssertion: ToolsetLoginModalAssertion;
+  connectToolsetModal: ConnectToolsetModal;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -1995,6 +1997,10 @@ const dialTest = test.extend<{
       toolsetLoginModal,
     );
     await use(toolsetLoginModalAssertion);
+  },
+  connectToolsetModal: async ({ page }, use) => {
+    const connectToolsetModal = new ConnectToolsetModal(page);
+    await use(connectToolsetModal);
   },
 });
 

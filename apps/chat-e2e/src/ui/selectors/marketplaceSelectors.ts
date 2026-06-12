@@ -64,6 +64,7 @@ export const MarketplaceDetailsModal = {
   logoutButton: 'Log out',
   manageCredsButton: 'Manage creds',
   viewButton: 'View',
+  connectButton: 'Connect',
 };
 
 export const MarketplaceSideBarSelectors = {
@@ -91,4 +92,8 @@ export const ToolsetLoginModalSelectors = {
   orgCredsContent: '[data-qa="org-creds-content"]',
   myCredsAccordion: '[data-qa="my-creds-accordion"]',
   myCredsContent: '[data-qa="my-creds-content"]',
+};
+
+export const ConnectToolsetModalSelectors = {
+  copyUrlButton: 'Copy URL',
 };

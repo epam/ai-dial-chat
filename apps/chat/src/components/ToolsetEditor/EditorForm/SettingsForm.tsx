@@ -220,6 +220,7 @@ export const SettingsForm = ({ isToolsetPublic }: SettingsFormProps) => {
         <CopyUrlButton
           entity={toolset}
           label={t(CommonI18nKeys.CopyToolsetEndpointURL)}
+          id="copy-section"
         />
       </FormSection>
     </div>
