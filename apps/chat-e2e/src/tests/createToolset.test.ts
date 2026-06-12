@@ -40,7 +40,8 @@ dialTest(
     '[Editor]: detailed card view is displayed by default on Preview side.\n' +
     `[Toolset]: toolset's card is open on My Workspace page when create toolset and click "save and exit" (without login).\n` +
     `Icon is shown on the toolset's card if the svg contains some special chars.\n` +
-    '[Toolset]: Login option is not displayed for toolsets without authentication',
+    '[Toolset]: Login option is not displayed for toolsets without authentication.\n' +
+    '[Toolset]: connect option is available from context menu',
   async (
     {
       marketplacePage,
@@ -78,6 +79,7 @@ dialTest(
       'EPMRTC-6873',
       'EPMRTC-6888',
       'EPMRTC-7192',
+      'EPMRTC-8745',
     );
     const shortDescription = GeneratorUtil.randomShortDescription();
     const longDescription = GeneratorUtil.randomLongDescription();
@@ -421,7 +423,7 @@ dialTest(
     });
 
     await dialTest.step(
-      'Open toolset card menu and verify "Login with my creds" option is not available',
+      'Open toolset card menu and verify "Login with my creds" option is not available, "Connect" option is presented',
       async () => {
         await marketplaceHeader
           .getSearch()
@@ -442,6 +444,11 @@ dialTest(
           allMenuOptions,
           [MenuOptions.loginWithMyCreds],
           ExpectedMessages.contextMenuOptionIsNotAvailable,
+        );
+        baseAssertion.assertArrayIncludesAll(
+          allMenuOptions,
+          [MenuOptions.connect],
+          ExpectedMessages.contextMenuOptionIsAvailable,
         );
       },
     );
