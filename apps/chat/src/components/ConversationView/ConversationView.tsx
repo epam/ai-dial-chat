@@ -34,7 +34,7 @@ import {
   ButtonsI18nKeys,
   BasicI18nKeys,
   ChatI18nKeys,
-  ConversationHistoryI18nKeys,
+  ConversationPanelI18nKeys,
   ConversationI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
@@ -400,9 +400,7 @@ const ConversationView: FC<Props> = ({
               />
             )}
             <DialNeutralButton
-              label={t(
-                ConversationHistoryI18nKeys.DuplicateReadOnlyDescription,
-              )}
+              label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
               iconBefore={<IconCopy />}
               onClick={onDuplicateConversation}
             />

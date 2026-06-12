@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import RenameConversationPopup from '../RenameConversationPopup';
+import { ButtonsI18nKeys } from '../../../constants/translation-keys';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   PopupSize: { Sm: 'sm' },
@@ -85,11 +86,11 @@ const DEFAULT_PROPS = {
 
 const getSaveButton = () =>
   screen.getByRole('button', {
-    name: 'buttons.save',
+    name: ButtonsI18nKeys.Save,
   }) as HTMLButtonElement;
 const getCancelButton = () =>
   screen.getByRole('button', {
-    name: 'buttons.cancel',
+    name: ButtonsI18nKeys.Cancel,
   }) as HTMLButtonElement;
 const getInput = () =>
   screen.getByRole('textbox', {

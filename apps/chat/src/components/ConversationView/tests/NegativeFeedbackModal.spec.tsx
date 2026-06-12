@@ -1,7 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import NegativeFeedbackModal from '../NegativeFeedbackModal';
+import { ButtonsI18nKeys } from '../../../constants/translation-keys';
+import NegativeFeedbackModal from '../Rate/NegativeFeedbackModal';
 
 // DialSelect uses floating-ui which can't position in jsdom — mock it as a
 // native <select> so option interaction works in tests.
@@ -45,7 +46,9 @@ describe('NegativeFeedbackModal', () => {
 
   it('submit button is disabled when no category is selected', () => {
     render(<NegativeFeedbackModal onClose={vi.fn()} onSubmit={vi.fn()} />);
-    const submitBtn = screen.getByRole('button', { name: 'chat.send' });
+    const submitBtn = screen.getByRole('button', {
+      name: ButtonsI18nKeys.Send,
+    });
     expect(submitBtn.hasAttribute('disabled')).toBe(true);
   });
 
@@ -57,7 +60,7 @@ describe('NegativeFeedbackModal', () => {
 
     expect(
       screen
-        .getByRole('button', { name: 'chat.send' })
+        .getByRole('button', { name: ButtonsI18nKeys.Send })
         .hasAttribute('disabled'),
     ).toBe(false);
   });
@@ -72,7 +75,9 @@ describe('NegativeFeedbackModal', () => {
       'Incomplete response',
     );
     await user.type(screen.getByRole('textbox'), 'Too short');
-    await user.click(screen.getByRole('button', { name: 'chat.send' }));
+    await user.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.Send }),
+    );
 
     expect(onSubmit).toHaveBeenCalledWith('Incomplete response: Too short');
   });
@@ -86,7 +91,9 @@ describe('NegativeFeedbackModal', () => {
       screen.getByRole('combobox'),
       'Overactive refusal',
     );
-    await user.click(screen.getByRole('button', { name: 'chat.send' }));
+    await user.click(
+      screen.getByRole('button', { name: ButtonsI18nKeys.Send }),
+    );
 
     expect(onSubmit).toHaveBeenCalledWith('Overactive refusal');
   });

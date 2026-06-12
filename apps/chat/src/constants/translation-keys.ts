@@ -18,15 +18,21 @@ export enum ChatI18nKeys {
   Thinking = 'chat.thinking',
   ShowMoreUserMessage = 'chat.showMoreUserMessage',
   ShowLessUserMessage = 'chat.showLessUserMessage',
-  NegativeFeedbackTitle = 'chat.negativeFeedbackTitle',
-  FeedbackTypeLabel = 'chat.feedbackTypeLabel',
-  FeedbackTypePlaceholder = 'chat.feedbackTypePlaceholder',
-  FeedbackCommentPlaceholder = 'chat.feedbackCommentPlaceholder',
-  LikeToastTitle = 'chat.likeToastTitle',
-  LikeToastDescription = 'chat.likeToastDescription',
-  DislikeToastTitle = 'chat.dislikeToastTitle',
-  DislikeToastDescription = 'chat.dislikeToastDescription',
-  Send = 'chat.send',
+}
+
+export enum RateI18nKeys {
+  NegativeFeedbackTitle = 'rate.negativeFeedbackTitle',
+  FeedbackTypeLabel = 'rate.feedbackTypeLabel',
+  FeedbackCommentPlaceholder = 'rate.feedbackCommentPlaceholder',
+  FeedbackCategoryUiBug = 'rate.feedbackCategories.uiBug',
+  FeedbackCategoryOveractiveRefusal = 'rate.feedbackCategories.overactiveRefusal',
+  FeedbackCategoryIncompleteResponse = 'rate.feedbackCategories.incompleteResponse',
+  FeedbackCategoryShouldHaveTriggeredThinking = 'rate.feedbackCategories.shouldHaveTriggeredThinking',
+  FeedbackCategoryShouldHaveSearchedTheWeb = 'rate.feedbackCategories.shouldHaveSearchedTheWeb',
+  LikeToastTitle = 'rate.likeToastTitle',
+  LikeToastDescription = 'rate.likeToastDescription',
+  DislikeToastTitle = 'rate.dislikeToastTitle',
+  DislikeToastDescription = 'rate.dislikeToastDescription',
 }
 
 export enum BasicI18nKeys {
@@ -49,6 +55,7 @@ export enum ButtonsI18nKeys {
   Like = 'buttons.like',
   Dislike = 'buttons.dislike',
   Rename = 'buttons.rename',
+  Select = 'buttons.select',
   Duplicate = 'buttons.duplicate',
   EditMessage = 'buttons.editMessage',
   DeleteMessage = 'buttons.deleteMessage',
@@ -59,6 +66,7 @@ export enum ButtonsI18nKeys {
   DislikeResponse = 'buttons.dislikeResponse',
   Save = 'buttons.save',
   Close = 'buttons.close',
+  Send = 'buttons.send',
 }
 
 export enum NavigationI18nKeys {
@@ -116,29 +124,29 @@ export enum SettingsI18nKeys {
   ShortcutMetaEnter = 'settings.shortcutMetaEnter',
 }
 
-export enum ConversationHistoryI18nKeys {
-  Title = 'conversationHistory.title',
-  ToggleAriaLabel = 'conversationHistory.toggleAriaLabel',
-  Empty = 'conversationHistory.empty',
-  NewChat = 'conversationHistory.newChat',
-  FilterAll = 'conversationHistory.filterAll',
-  FilterMyChats = 'conversationHistory.filterMyChats',
-  FilterShared = 'conversationHistory.filterShared',
-  FilterOrganization = 'conversationHistory.filterOrganization',
-  PinnedSection = 'conversationHistory.pinnedSection',
-  MyChatsSection = 'conversationHistory.myChatsSection',
-  ActionsLabel = 'conversationHistory.actionsLabel',
-  PinLabel = 'conversationHistory.pinLabel',
-  UnpinLabel = 'conversationHistory.unpinLabel',
-  DeleteConfirmTitle = 'conversationHistory.deleteConfirmTitle',
-  DeleteConfirmDescription = 'conversationHistory.deleteConfirmDescription',
-  DeleteError = 'conversationHistory.deleteError',
-  RenameTitle = 'conversationHistory.renameTitle',
-  RenameInputPlaceholder = 'conversationHistory.renameInputPlaceholder',
-  RenameError = 'conversationHistory.renameError',
-  RenameTitleTooLong = 'conversationHistory.renameTitleTooLong',
-  DuplicateReadOnlyDescription = 'conversationHistory.duplicateReadOnlyDescription',
-  DuplicateError = 'conversationHistory.duplicateError',
+export enum ConversationPanelI18nKeys {
+  Title = 'conversationPanel.title',
+  ToggleAriaLabel = 'conversationPanel.toggleAriaLabel',
+  Empty = 'conversationPanel.empty',
+  NewChat = 'conversationPanel.newChat',
+  FilterAll = 'conversationPanel.filterAll',
+  FilterMyChats = 'conversationPanel.filterMyChats',
+  FilterShared = 'conversationPanel.filterShared',
+  FilterOrganization = 'conversationPanel.filterOrganization',
+  PinnedSection = 'conversationPanel.pinnedSection',
+  MyChatsSection = 'conversationPanel.myChatsSection',
+  ActionsLabel = 'conversationPanel.actionsLabel',
+  PinLabel = 'conversationPanel.pinLabel',
+  UnpinLabel = 'conversationPanel.unpinLabel',
+  DeleteConfirmTitle = 'conversationPanel.deleteConfirmTitle',
+  DeleteConfirmDescription = 'conversationPanel.deleteConfirmDescription',
+  DeleteError = 'conversationPanel.deleteError',
+  RenameTitle = 'conversationPanel.renameTitle',
+  RenameInputPlaceholder = 'conversationPanel.renameInputPlaceholder',
+  RenameError = 'conversationPanel.renameError',
+  RenameTitleTooLong = 'conversationPanel.renameTitleTooLong',
+  DuplicateReadOnlyDescription = 'conversationPanel.duplicateReadOnlyDescription',
+  DuplicateError = 'conversationPanel.duplicateError',
 }
 
 export enum SidebarI18nKeys {

@@ -15,13 +15,13 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
-import NegativeFeedbackModal from '../../components/ConversationView/NegativeFeedbackModal';
-import RatingToast from '../../components/ConversationView/RatingToast';
+import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
+import RatingToast from '../../components/ConversationView/Rate/RatingToast';
 import { getConversationRoute, ROUTES } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   ChatI18nKeys,
-  ConversationHistoryI18nKeys,
+  ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
@@ -145,7 +145,7 @@ export const ConversationPage: FC = () => {
       const newPath = await duplicateConversation(conversationId);
       navigate(getConversationRoute(newPath));
     } catch {
-      setDuplicateError(t(ConversationHistoryI18nKeys.DuplicateError));
+      setDuplicateError(t(ConversationPanelI18nKeys.DuplicateError));
     }
   }, [conversationId, duplicateConversation, navigate, t]);
 

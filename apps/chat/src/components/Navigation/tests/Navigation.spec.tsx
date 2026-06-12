@@ -3,6 +3,7 @@ import type { AriaAttributes } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import Navigation from '../Navigation';
+import { NavigationI18nKeys } from '../../../constants/translation-keys';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: {
@@ -42,13 +43,13 @@ describe('Navigation', () => {
     const { container } = renderNavigation();
     const nav = container.querySelector('nav');
     expect(nav).toBeTruthy();
-    expect(nav?.getAttribute('aria-label')).toBe('navigation.ariaLabel');
+    expect(nav?.getAttribute('aria-label')).toBe(NavigationI18nKeys.AriaLabel);
   });
 
   it('renders a Home button', () => {
     renderNavigation();
     expect(
-      screen.getByRole('button', { name: 'navigation.home' }),
+      screen.getByRole('button', { name: NavigationI18nKeys.Home }),
     ).toBeTruthy();
   });
 
@@ -56,7 +57,7 @@ describe('Navigation', () => {
     renderNavigation('/');
     expect(
       screen
-        .getByRole('button', { name: 'navigation.home' })
+        .getByRole('button', { name: NavigationI18nKeys.Home })
         .getAttribute('aria-current'),
     ).toBe('page');
   });

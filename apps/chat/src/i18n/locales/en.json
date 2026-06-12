@@ -23,16 +23,23 @@
     "stoppedGenerating": "You stopped generating the response",
     "thinking": "Thinking",
     "showMoreUserMessage": "Show full user message",
-    "showLessUserMessage": "Collapse user message",
+    "showLessUserMessage": "Collapse user message"
+  },
+  "rate": {
     "negativeFeedbackTitle": "Send negative feedback",
     "feedbackTypeLabel": "What type of feedback you want to give?",
-    "feedbackTypePlaceholder": "Select",
+    "feedbackCategories": {
+      "uiBug": "Ui bug",
+      "overactiveRefusal": "Overactive refusal",
+      "incompleteResponse": "Incomplete response",
+      "shouldHaveTriggeredThinking": "Should have triggered thinking",
+      "shouldHaveSearchedTheWeb": "Should have search the web"
+    },
     "feedbackCommentPlaceholder": "Type an optional comment to your feedback",
     "likeToastTitle": "Thank you for your positive feedback!",
     "likeToastDescription": "You help us make better products",
     "dislikeToastTitle": "Thank you for letting us know about this issue",
-    "dislikeToastDescription": "You help us make better products",
-    "send": "Send"
+    "dislikeToastDescription": "You help us make better products"
   },
   "navigation": {
     "ariaLabel": "Main navigation",
@@ -69,12 +76,14 @@
     "cancel": "Cancel",
     "add": "Add",
     "save": "Save",
+    "select": "Select",
     "close": "Close",
     "apply": "Apply",
     "edit": "Edit",
     "regenerate": "Regenerate",
     "copy": "Copy",
     "copied": "Copied!",
+    "send": "Send",
     "like": "Like",
     "rename": "Rename",
     "dislike": "Dislike",
@@ -87,26 +96,6 @@
     "copyAsMarkdown": "Copy as markdown",
     "likeResponse": "Like response",
     "dislikeResponse": "Dislike response"
-  },
-  "errors": {
-    "generic": "Something went wrong",
-    "genericMessage": "We're sorry, but something unexpected happened. Please try refreshing the page.",
-    "errorDetails": "Error details",
-    "tryAgain": "Try again",
-    "failedToLoadTheme": "Failed to load themes. Using default theme.",
-    "failedToLoadLogo": "Failed to load logo"
-  },
-  "conversationInput": {
-    "attach": {
-      "label": "Attach file"
-    },
-    "attachment": {
-      "remove": "Remove attachment",
-      "retry": "Retry upload"
-    },
-    "attachmentTray": {
-      "label": "Attached files"
-    }
   },
   "sidebar": {
     "base": {
@@ -134,7 +123,7 @@
       "step_other": "steps"
     }
   },
-  "conversationHistory": {
+  "conversationPanel": {
     "title": "Chats",
     "toggleAriaLabel": "Conversation panel",
     "empty": "No conversations yet",

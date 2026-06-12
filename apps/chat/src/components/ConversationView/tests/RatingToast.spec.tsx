@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import RatingToast from '../RatingToast';
+import RatingToast from '../Rate/RatingToast';
 
 const DEFAULT_PROPS = {
   title: 'Thank you!',

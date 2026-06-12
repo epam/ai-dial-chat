@@ -5,6 +5,7 @@ import * as UserContextModule from '../../context/auth/UserContext';
 import * as useAuthRedirectModule from '../../hooks/auth/useAuthRedirect';
 import * as authApi from '../../server-api/auth.api';
 import LoginPage from './Login';
+import { AuthI18nKeys } from '../../constants/translation-keys';
 
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../hooks/auth/useAuthRedirect');
@@ -44,7 +45,7 @@ describe('LoginPage', () => {
     );
 
     const links = await screen.findAllByRole('link', {
-      name: 'auth.providerButtonLabel',
+      name: AuthI18nKeys.ProviderButtonLabel,
     });
     const [keycloakLink, auth0Link] = links;
 
@@ -63,7 +64,7 @@ describe('LoginPage', () => {
     renderLogin();
 
     const keycloakLink = await screen.findByRole('link', {
-      name: 'auth.providerButtonLabel',
+      name: AuthI18nKeys.ProviderButtonLabel,
     });
 
     expect(keycloakLink.getAttribute('href')).toBe(

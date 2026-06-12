@@ -118,7 +118,9 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               overlay={
                 <IconPhoto
                   size={DIAL_ICON_SIZE.LG}
-                  className={typography?.placeholderIconClassName ?? 'text-secondary'}
+                  className={
+                    typography?.placeholderIconClassName ?? 'text-secondary'
+                  }
                   aria-hidden
                 />
               }
