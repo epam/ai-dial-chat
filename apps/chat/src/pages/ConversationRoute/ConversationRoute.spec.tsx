@@ -1,9 +1,11 @@
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
+import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
+import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as filesApi from '../../server-api/files.api';
 import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
@@ -11,6 +13,7 @@ import ConversationRoute from './ConversationRoute';
 
 vi.mock('../../context/DeploymentsContext');
 vi.mock('../../context/auth/UserContext');
+vi.mock('../../hooks/keyboard-shortcut/useKeyboardShortcutPreference');
 vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/files.api');
 vi.mock('../../utils/attachment-to-dto');
@@ -61,59 +64,67 @@ vi.mock('react-router-dom', async (importOriginal) => {
   return { ...actual, useNavigate: vi.fn(() => vi.fn()) };
 });
 
-vi.mock('@epam/ai-dial-conversation-input', () => ({
-  ConversationInput: ({
-    onSend,
-    onUploadAttachment,
-    deployments,
-    selectedDeploymentId,
-    isInputDisabled,
-  }: {
-    onSend?: (msg: string, att: never[]) => Promise<void> | void;
-    onUploadAttachment?: (attachment: {
-      name: string;
-      file: File;
-    }) => Promise<string>;
-    deployments?: unknown[];
-    selectedDeploymentId?: string | null;
-    isInputDisabled?: boolean;
-  }) => (
-    <div>
-      <output aria-label="Catalog items count">
-        {deployments?.length ?? 'none'}
-      </output>
-      <output aria-label="Selected deployment">
-        {selectedDeploymentId ?? 'null'}
-      </output>
-      <output aria-label="Input disabled">
-        {String(isInputDisabled ?? false)}
-      </output>
-      <button
-        type="button"
-        onClick={() => {
-          Promise.resolve(onSend?.('Hello', [])).catch((_err: unknown) => {
-            // intentional: test mock swallows rejection to avoid unhandled promise
-          });
-        }}
-      >
-        Send
-      </button>
-      <button
-        type="button"
-        onClick={() => {
-          void onUploadAttachment?.({
-            name: 'file.pdf',
-            file: new File(['content'], 'file.pdf', {
-              type: 'application/pdf',
-            }),
-          });
-        }}
-      >
-        Upload
-      </button>
-    </div>
-  ),
-}));
+vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-conversation-input')>();
+  return {
+    ...actual,
+    ConversationInput: ({
+      onSend,
+      onUploadAttachment,
+      deployments,
+      selectedDeploymentId,
+      isInputDisabled,
+      sendOnEnter,
+    }: {
+      onSend?: (msg: string, att: never[]) => Promise<void> | void;
+      onUploadAttachment?: (attachment: {
+        name: string;
+        file: File;
+      }) => Promise<string>;
+      deployments?: unknown[];
+      selectedDeploymentId?: string | null;
+      isInputDisabled?: boolean;
+      sendOnEnter?: string;
+    }) => (
+      <div>
+        <output aria-label="Catalog items count">
+          {deployments?.length ?? 'none'}
+        </output>
+        <output aria-label="Selected deployment">
+          {selectedDeploymentId ?? 'null'}
+        </output>
+        <output aria-label="Input disabled">
+          {String(isInputDisabled ?? false)}
+        </output>
+        <output aria-label="Send on enter">{sendOnEnter ?? 'none'}</output>
+        <button
+          type="button"
+          onClick={() => {
+            Promise.resolve(onSend?.('Hello', [])).catch((_err: unknown) => {
+              // intentional: test mock swallows rejection to avoid unhandled promise
+            });
+          }}
+        >
+          Send
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            void onUploadAttachment?.({
+              name: 'file.pdf',
+              file: new File(['content'], 'file.pdf', {
+                type: 'application/pdf',
+              }),
+            });
+          }}
+        >
+          Upload
+        </button>
+      </div>
+    ),
+  };
+});
 
 const mockItems = [
   { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' as const },
@@ -129,6 +140,9 @@ const renderRoute = () =>
 describe('ConversationRoute', () => {
   const mockUseDeployments = vi.mocked(DeploymentsContextModule.useDeployments);
   const mockUseUser = vi.mocked(UserContextModule.useUser);
+  const mockUseKeyboardShortcutPreference = vi.mocked(
+    KeyboardShortcutModule.useKeyboardShortcutPreference,
+  );
   const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
   const mockUploadFile = vi.mocked(filesApi.uploadFile);
   const mockAttachmentsToDtos = vi.mocked(
@@ -157,6 +171,10 @@ describe('ConversationRoute', () => {
     } as never);
     mockUploadFile.mockResolvedValue({ url: 'https://example.com/file.pdf' });
     mockAttachmentsToDtos.mockReturnValue(undefined);
+    mockUseKeyboardShortcutPreference.mockReturnValue({
+      preference: SendOnEnter.Enter,
+      setPreference: vi.fn(),
+    });
   });
 
   it('passes catalog items and selectedItemId into ConversationInput', async () => {
@@ -354,6 +372,32 @@ describe('ConversationRoute', () => {
         'form-example',
         [],
         { button: 2 },
+      );
+    });
+  });
+
+  it('passes sendOnEnter=enter to ConversationInput when preference is Enter', async () => {
+    mockUseKeyboardShortcutPreference.mockReturnValue({
+      preference: SendOnEnter.Enter,
+      setPreference: vi.fn(),
+    });
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByLabelText('Send on enter').textContent).toBe(
+        SendOnEnter.Enter,
+      );
+    });
+  });
+
+  it('passes sendOnEnter=meta-enter to ConversationInput when preference is MetaEnter', async () => {
+    mockUseKeyboardShortcutPreference.mockReturnValue({
+      preference: SendOnEnter.MetaEnter,
+      setPreference: vi.fn(),
+    });
+    renderRoute();
+    await waitFor(() => {
+      expect(screen.getByLabelText('Send on enter').textContent).toBe(
+        SendOnEnter.MetaEnter,
       );
     });
   });
