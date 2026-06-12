@@ -97,6 +97,25 @@ describe('DeploymentsContext', () => {
     expect(result.current.selectedItemId).toBe(mockItem2.id);
   });
 
+  it('restoreSelectedItemId updates selectedItemId without writing to localStorage', async () => {
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => expect(result.current.items.length).toBe(2));
+
+    const storedBefore = localStorage.getItem('dial:selectedDeploymentId');
+
+    act(() => {
+      result.current.restoreSelectedItemId(mockItem2.id);
+    });
+
+    expect(result.current.selectedItemId).toBe(mockItem2.id);
+    expect(localStorage.getItem('dial:selectedDeploymentId')).toBe(
+      storedBefore,
+    );
+  });
+
   it('throws when useDeployments is called outside DeploymentsProvider', () => {
     const consoleError = vi
       .spyOn(console, 'error')

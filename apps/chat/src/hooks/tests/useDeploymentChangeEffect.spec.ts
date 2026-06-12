@@ -14,6 +14,7 @@ const makeDeploymentsContext = (selectedItemId: string | null) => ({
   items: [],
   selectedItemId,
   setSelectedItemId: vi.fn(),
+  restoreSelectedItemId: vi.fn(),
   selectedDeploymentConfiguration: null,
   isLoading: false,
   error: null,
