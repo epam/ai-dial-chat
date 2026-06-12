@@ -22,6 +22,7 @@ import {
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationPanelI18nKeys,
+  RateI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
@@ -288,8 +289,8 @@ export const ConversationPage: FC = () => {
       const success = await handleRateMessage(messageIndex, rating);
       if (success && rating === MessageRating.Like) {
         showToast(
-          t(ChatI18nKeys.LikeToastTitle),
-          t(ChatI18nKeys.LikeToastDescription),
+          t(RateI18nKeys.LikeToastTitle),
+          t(RateI18nKeys.LikeToastDescription),
         );
       }
     },
@@ -312,8 +313,8 @@ export const ConversationPage: FC = () => {
       );
       if (success) {
         showToast(
-          t(ChatI18nKeys.DislikeToastTitle),
-          t(ChatI18nKeys.DislikeToastDescription),
+          t(RateI18nKeys.DislikeToastTitle),
+          t(RateI18nKeys.DislikeToastDescription),
         );
       }
     },
