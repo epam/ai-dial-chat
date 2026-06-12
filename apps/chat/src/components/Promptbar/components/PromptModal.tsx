@@ -35,72 +35,7 @@ interface PromptModalViewProps {
   onClose: () => void;
 }
 
-const PromptModalContent: React.FC<PromptModalViewProps> = ({
-  prompt,
-  isViewMode,
-  onToggleEditMode,
-  onClose,
-}) => {
-  const isNewPromptCreating = useAppSelector(
-    PromptsSelectors.selectIsNewPromptCreating,
-  );
-  const { isQuickAppEditPrompt } = useAppSelector(
-    PromptsSelectors.selectSelectedPromptId,
-  );
-
-  const dispatch = useAppDispatch();
-
-  const handleEdit = useCallback(
-    (editedPrompt: Prompt) => {
-      const regeneratePrompt = regeneratePromptId(editedPrompt);
-
-      if (isNewPromptCreating) {
-        dispatch(PromptsActions.createNewPrompt(regeneratePrompt));
-        dispatch(
-          PromptsActions.setSelectedPrompt({
-            promptId: regeneratePrompt.id,
-          }),
-        );
-        dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
-      } else {
-        if (areSomePromptsFieldsChanged(editedPrompt, prompt)) {
-          dispatch(
-            PromptsActions.updatePrompt({
-              id: prompt.id,
-              values: editedPrompt,
-              publicationUrl: prompt.publicationInfo?.publicationUrl,
-            }),
-          );
-        }
-      }
-
-      if (isQuickAppEditPrompt) {
-        dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
-      }
-
-      onToggleEditMode(true);
-    },
-    [
-      dispatch,
-      isNewPromptCreating,
-      onToggleEditMode,
-      prompt,
-      isQuickAppEditPrompt,
-    ],
-  );
-
-  const handleGoToEditMode = useCallback(() => {
-    onToggleEditMode(false);
-  }, [onToggleEditMode]);
-
-  if (isViewMode && !isNewPromptCreating) {
-    return <ViewPrompt prompt={prompt} onEditMode={handleGoToEditMode} />;
-  }
-
-  return <EditPrompt onEdit={handleEdit} onClose={onClose} prompt={prompt} />;
-};
-
-const PromptModalView = () => {
+const view = withRenderWhen(PromptsSelectors.selectIsPromptModalOpen)(() => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const prompt = useAppSelector(PromptsSelectors.selectSelectedOrNewPrompt);
@@ -135,6 +70,71 @@ const PromptModalView = () => {
     dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
   }, [dispatch]);
 
+  const PromptModalContent: React.FC<PromptModalViewProps> = ({
+    prompt,
+    isViewMode,
+    onToggleEditMode,
+    onClose,
+  }) => {
+    const isNewPromptCreating = useAppSelector(
+      PromptsSelectors.selectIsNewPromptCreating,
+    );
+    const { isQuickAppEditPrompt } = useAppSelector(
+      PromptsSelectors.selectSelectedPromptId,
+    );
+
+    const dispatch = useAppDispatch();
+
+    const handleEdit = useCallback(
+      (editedPrompt: Prompt) => {
+        const regeneratePrompt = regeneratePromptId(editedPrompt);
+
+        if (isNewPromptCreating) {
+          dispatch(PromptsActions.createNewPrompt(regeneratePrompt));
+          dispatch(
+            PromptsActions.setSelectedPrompt({
+              promptId: regeneratePrompt.id,
+            }),
+          );
+          dispatch(PromptsActions.uploadPromptSuccess({ prompt: null }));
+        } else {
+          if (areSomePromptsFieldsChanged(editedPrompt, prompt)) {
+            dispatch(
+              PromptsActions.updatePrompt({
+                id: prompt.id,
+                values: editedPrompt,
+                publicationUrl: prompt.publicationInfo?.publicationUrl,
+              }),
+            );
+          }
+        }
+
+        if (isQuickAppEditPrompt) {
+          dispatch(PromptsActions.selectPrompt({ promptId: undefined }));
+        }
+
+        onToggleEditMode(true);
+      },
+      [
+        dispatch,
+        isNewPromptCreating,
+        onToggleEditMode,
+        prompt,
+        isQuickAppEditPrompt,
+      ],
+    );
+
+    const handleGoToEditMode = useCallback(() => {
+      onToggleEditMode(false);
+    }, [onToggleEditMode]);
+
+    if (isViewMode && !isNewPromptCreating) {
+      return <ViewPrompt prompt={prompt} onEditMode={handleGoToEditMode} />;
+    }
+
+    return <EditPrompt onEdit={handleEdit} onClose={onClose} prompt={prompt} />;
+  };
+
   return (
     <Modal
       portalId="theme-main"
@@ -168,8 +168,6 @@ const PromptModalView = () => {
       )}
     </Modal>
   );
-};
+});
 
-export const PromptModal = withRenderWhen(
-  PromptsSelectors.selectIsPromptModalOpen,
-)(PromptModalView);
+export const PromptModal = view;

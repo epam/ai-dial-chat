@@ -1,5 +1,3 @@
-import { FC } from 'react';
-
 import classNames from 'classnames';
 
 import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
@@ -15,7 +13,9 @@ interface Props {
   className?: string;
 }
 
-const UserView: FC<Props> = ({ className }) => {
+const view = withRenderWhen(
+  (state) => !SettingsSelectors.isFeatureEnabled(state, Feature.HideUserMenu),
+)(({ className }: Props) => {
   return (
     <div
       className={classNames(
@@ -32,8 +32,6 @@ const UserView: FC<Props> = ({ className }) => {
       </div>
     </div>
   );
-};
+});
 
-export const User = withRenderWhen(
-  (state) => !SettingsSelectors.isFeatureEnabled(state, Feature.HideUserMenu),
-)(UserView);
+export const User = view;

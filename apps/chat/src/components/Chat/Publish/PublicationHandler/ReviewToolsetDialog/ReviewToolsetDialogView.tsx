@@ -27,9 +27,9 @@ interface ReviewToolsetDialogContentProps {
   toolset: ToolsetModel;
 }
 
-function ReviewToolsetDialogContent({
-  toolset,
-}: ReviewToolsetDialogContentProps) {
+const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
+  toolset: ToolsetSelectors.selectToolsetDetails,
+})(({ toolset }: ReviewToolsetDialogContentProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const selectedPublicationUrl = useAppSelector(
@@ -131,9 +131,6 @@ function ReviewToolsetDialogContent({
       </div>
     </>
   );
-}
+});
 
-export const ReviewToolsetDialogView =
-  withRenderWhenEntities<ReviewToolsetDialogContentProps>({
-    toolset: ToolsetSelectors.selectToolsetDetails,
-  })(ReviewToolsetDialogContent);
+export const ReviewToolsetDialogView = view;

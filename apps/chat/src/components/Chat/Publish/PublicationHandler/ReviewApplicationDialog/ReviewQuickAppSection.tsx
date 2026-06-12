@@ -20,7 +20,7 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import {
   DialMarkdownEditor,
-  EditorThemes,
+  type EditorTheme,
 } from '@/src/components/Common/MarkdownEditor/MarkdownEditor';
 import { MonacoEditor } from '@/src/components/Common/MonacoEditor';
 
@@ -95,7 +95,7 @@ const ReviewQuickAppSectionView = ({
           <DialMarkdownEditor
             value={config.instructions}
             height={200}
-            theme={theme as EditorThemes}
+            theme={theme as EditorTheme}
             preview="preview"
             commands={[]}
             className="rounded-[5px]"
