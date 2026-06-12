@@ -34,6 +34,12 @@ jobs:
   agent:
     name: agent
     runs-on: ubuntu-latest
+    # TEMPORARY (validation): use the security-review environment's DIAL key,
+    # which has the Anthropic route + the anthropic.claude-sonnet-4-6 deployment
+    # (same as the claude-security-review reference). Remove once the repo-level
+    # DIAL key has its own Anthropic-route model access. No protection rules, so
+    # it doesn't gate runs.
+    environment: security-review
     timeout-minutes: ${{ inputs.timeout_minutes }}
     concurrency:
       group: ${{ inputs.concurrency_group != '' && inputs.concurrency_group || format('{0}-{1}-{2}', github.workflow, inputs.agent_name, github.ref) }}
