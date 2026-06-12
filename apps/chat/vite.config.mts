@@ -66,10 +66,8 @@ export default defineConfig(() => ({
         manualChunks: (id) => {
           if (id.includes('classnames') || id.includes('tailwind-merge'))
             return 'vendor-utils';
-          if (id.includes('@tabler/icons-react'))
-            return 'tabler-icons';
-          if (id.includes('@epam/ai-dial-ui-kit'))
-            return 'ui-kit';
+          if (id.includes('@tabler/icons-react')) return 'tabler-icons';
+          if (id.includes('@epam/ai-dial-ui-kit')) return 'ui-kit';
           return undefined;
         },
       },
@@ -80,7 +78,6 @@ export default defineConfig(() => ({
     watch: false,
     globals: true,
     environment: 'jsdom',
-    env: { NODE_ENV: 'test' },
     setupFiles: ['./src/test-setup.ts'],
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],

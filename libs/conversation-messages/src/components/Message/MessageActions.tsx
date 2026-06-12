@@ -140,7 +140,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.likeResponse ?? 'Like response'}
               className={
                 activeRating === MessageRating.Like
-                  ? 'cursor-default !text-accent-primary'
+                  ? 'text-accent-primary'
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
@@ -154,7 +154,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
               aria-label={ariaLabels?.dislikeResponse ?? 'Dislike response'}
               className={
                 activeRating === MessageRating.Dislike
-                  ? 'cursor-default !text-accent-primary'
+                  ? 'text-accent-primary'
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}
