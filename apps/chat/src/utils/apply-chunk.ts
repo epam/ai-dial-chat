@@ -39,8 +39,10 @@ export const applyChunkToMessages = (
   const formSchema = delta?.custom_content?.form_schema;
   const attachments = delta?.custom_content?.attachments;
   const stages = delta?.custom_content?.stages;
-  const hasContentUpdate = !!content || !!formSchema || !!attachments?.length || !!stages?.length;
-  const responseId = delta?.responseId ?? (hasContentUpdate ? chunk.id : undefined);
+  const hasContentUpdate =
+    !!content || !!formSchema || !!attachments?.length || !!stages?.length;
+  const responseId =
+    delta?.responseId ?? (hasContentUpdate ? chunk.id : undefined);
 
   if (!hasContentUpdate && !responseId) return null;
 

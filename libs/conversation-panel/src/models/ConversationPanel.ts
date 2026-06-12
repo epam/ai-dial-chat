@@ -124,6 +124,8 @@ export interface ConversationPanelStyles {
 export interface ConversationPanelProps {
   /** Ordered list of conversations to display. */
   conversations: ConversationHistoryItem[];
+  /** When true, renders skeleton rows instead of the conversation list. */
+  isLoading?: boolean;
   /** Whether the panel is currently expanded. */
   isOpen: boolean;
   /** Called with the conversation `id` when a row is clicked. */

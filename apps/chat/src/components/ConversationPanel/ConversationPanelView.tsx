@@ -65,6 +65,7 @@ const ConversationPanelView: FC<Props> = ({
   const navigate = useNavigate();
   const {
     conversations: items,
+    isLoading,
     pinConversation,
     deleteConversation,
     renameConversation,
@@ -329,6 +330,7 @@ const ConversationPanelView: FC<Props> = ({
     <>
       <ConversationPanel
         conversations={conversations}
+        isLoading={isLoading}
         isOpen={isOpen}
         onSelectConversation={onSelectConversation}
         activeConversationId={activeConversationId}

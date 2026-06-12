@@ -2,8 +2,8 @@ import { render, screen } from '@testing-library/react';
 import type { AriaAttributes } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
-import Navigation from '../Navigation';
 import { NavigationI18nKeys } from '../../../constants/translation-keys';
+import Navigation from '../Navigation';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: {
