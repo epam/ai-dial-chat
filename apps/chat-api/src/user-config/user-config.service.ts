@@ -107,4 +107,26 @@ export class UserConfigService extends AppService {
       bucket,
     );
   }
+
+  /**
+   * If `oldId` is currently pinned, replace it with `newId` in a single
+   * read-modify-write. No-ops silently when `oldId` is not pinned.
+   */
+  async migratePin(
+    oldId: string,
+    newId: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    const config = await this.readConfig(token, bucket);
+    const ids = config.pinnedConversationIds;
+    const index = ids.indexOf(oldId);
+    if (index === -1) return;
+    ids[index] = newId;
+    await this.writeConfig(
+      { ...config, version: CURRENT_CONFIG_VERSION },
+      token,
+      bucket,
+    );
+  }
 }
