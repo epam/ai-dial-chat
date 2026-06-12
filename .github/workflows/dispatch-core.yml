@@ -2,10 +2,12 @@ name: SDLC Dispatch / Core
 
 # Reusable dispatch pipeline shared by every trigger-specific dispatcher
 # (dispatch-pr.yml, dispatch-schedule.yml). It discovers agents whose manifests
-# match the CALLER's event, then fans them out into topologically-sorted rounds
-# via run-agent.yml. The triggering event is read from `github.event_name`
-# (reusable workflows inherit the caller's github context), so the same core
-# serves pull_request, schedule, and workflow_dispatch without modification.
+# match the CALLER's event, then runs them ALL in one matrix via run-agent.yml —
+# each agent waits for its own `needs:` upstreams inside its job (no rounds), so
+# a dependent starts as soon as ITS upstream finishes, not the whole level. The
+# triggering event is read from `github.event_name` (reusable workflows inherit
+# the caller's github context), so the same core serves pull_request, schedule,
+# and workflow_dispatch without modification.
 
 on:
   workflow_call:
@@ -23,7 +25,7 @@ jobs:
   # the run if the PR touches agent-trust paths or adds symlinks. A no-op for
   # schedule / workflow_dispatch (no PR, runs from the trusted default branch),
   # so the same core serves every trigger. discover gates on this — a failed
-  # gate blocks all rounds.
+  # gate blocks the whole dispatch.
   gate:
     runs-on: ubuntu-latest
     outputs:
@@ -48,9 +50,7 @@ jobs:
     needs: gate
     runs-on: ubuntu-latest
     outputs:
-      round1: ${{ steps.match.outputs.round1 }}
-      round2: ${{ steps.match.outputs.round2 }}
-      round3: ${{ steps.match.outputs.round3 }}
+      agents: ${{ steps.match.outputs.agents }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
 
@@ -68,58 +68,24 @@ jobs:
           echo "$VARS_JSON" > /tmp/vars.json
           echo "$EVENT_JSON" > /tmp/event.json
           echo "Dispatching agents for event: $EVENT_NAME"
-          ROUNDS=$(python3 .github/claude/scripts/match-agents.py "$EVENT_NAME" \
+          MATCHED=$(python3 .github/claude/scripts/match-agents.py "$EVENT_NAME" \
             --vars /tmp/vars.json --event-context /tmp/event.json)
-          echo "Matched rounds: $ROUNDS"
-          echo "round1=$(echo "$ROUNDS" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("round1", [])))')" >> "$GITHUB_OUTPUT"
-          echo "round2=$(echo "$ROUNDS" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("round2", [])))')" >> "$GITHUB_OUTPUT"
-          echo "round3=$(echo "$ROUNDS" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("round3", [])))')" >> "$GITHUB_OUTPUT"
+          echo "Matched: $MATCHED"
+          echo "agents=$(echo "$MATCHED" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("agents", [])))')" >> "$GITHUB_OUTPUT"
 
-  run-round-1:
+  # One matrix over ALL matched agents — no rounds. Every agent starts at once;
+  # those with `needs:` wait for their specific upstream jobs inside run-agent
+  # (the "Wait for and download upstream artifacts" step), so a dependent runs
+  # as soon as ITS upstream finishes rather than waiting on a whole round.
+  # fail-fast: false keeps independent agents running if one fails.
+  run-agents:
     name: ${{ matrix.agent.name }}
     needs: discover
-    if: needs.discover.outputs.round1 != '[]'
+    if: needs.discover.outputs.agents != '[]'
     strategy:
       fail-fast: false
       matrix:
-        agent: ${{ fromJSON(needs.discover.outputs.round1) }}
-    uses: ./.github/workflows/run-agent.yml
-    with:
-      agent_name: ${{ matrix.agent.name }}
-      upstream_artifacts: ${{ join(matrix.agent.needs, ',') }}
-      timeout_minutes: ${{ matrix.agent.timeout_minutes }}
-      concurrency_group: ${{ matrix.agent.concurrency_group }}
-    secrets: inherit
-
-  run-round-2:
-    name: ${{ matrix.agent.name }}
-    needs: [discover, run-round-1]
-    # `always()` lets round-2 fire even when a different round-1 agent
-    # failed. Without it, GHA treats run-round-1 as failed-as-a-whole and
-    # skips round-2 entirely — blocking downstream agents whose specific
-    # `needs:` upstream DID succeed. We still gate on discover succeeding
-    # so the matrix is empty rather than malformed if the matcher failed.
-    if: always() && needs.discover.result == 'success' && needs.discover.outputs.round2 != '[]'
-    strategy:
-      fail-fast: false
-      matrix:
-        agent: ${{ fromJSON(needs.discover.outputs.round2) }}
-    uses: ./.github/workflows/run-agent.yml
-    with:
-      agent_name: ${{ matrix.agent.name }}
-      upstream_artifacts: ${{ join(matrix.agent.needs, ',') }}
-      timeout_minutes: ${{ matrix.agent.timeout_minutes }}
-      concurrency_group: ${{ matrix.agent.concurrency_group }}
-    secrets: inherit
-
-  run-round-3:
-    name: ${{ matrix.agent.name }}
-    needs: [discover, run-round-2]
-    if: always() && needs.discover.result == 'success' && needs.discover.outputs.round3 != '[]'
-    strategy:
-      fail-fast: false
-      matrix:
-        agent: ${{ fromJSON(needs.discover.outputs.round3) }}
+        agent: ${{ fromJSON(needs.discover.outputs.agents) }}
     uses: ./.github/workflows/run-agent.yml
     with:
       agent_name: ${{ matrix.agent.name }}

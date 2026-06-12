@@ -32,7 +32,7 @@ permissions:
 
 jobs:
   agent:
-    name: agent
+    name: ${{ inputs.agent_name }}
     runs-on: ubuntu-latest
     # TEMPORARY (validation): use the security-review environment's DIAL key,
     # which has the Anthropic route + the anthropic.claude-sonnet-4-6 deployment
@@ -92,7 +92,13 @@ jobs:
       - name: Install YAML parser
         run: pip install --quiet pyyaml
 
-      - name: Download upstream artifacts
+      - name: Wait for and download upstream artifacts
+        # No rounds: every matched agent starts at once, so a `needs:` upstream
+        # may still be running. For each one, poll until its artifact is ready
+        # (download succeeds), or until its job finishes WITHOUT one (failed /
+        # cancelled) — then proceed and let the agent-wrapper handle the absent
+        # artifact. This gives per-edge scheduling: a dependent waits only for
+        # ITS upstream, not a whole round.
         if: inputs.upstream_artifacts != ''
         env:
           GH_TOKEN: ${{ github.token }}
@@ -100,16 +106,33 @@ jobs:
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
         run: |
-          set -euo pipefail
+          set -uo pipefail   # NOT -e: the download retries are expected to fail until ready
           mkdir -p upstream
           IFS=',' read -ra NAMES <<< "$UPSTREAM"
           for name in "${NAMES[@]}"; do
             [ -z "$name" ] && continue
-            echo "Downloading stage-output-${name} from this run..."
-            gh run download "$RUN_ID" -R "$REPO" -n "stage-output-${name}" -D "upstream/${name}/"
+            echo "Waiting for upstream agent: ${name}"
+            got=0
+            for i in $(seq 1 160); do   # ~40 min cap (160 × 15s)
+              if gh run download "$RUN_ID" -R "$REPO" -n "stage-output-${name}" -D "upstream/${name}/" 2>/dev/null; then
+                echo "  ✓ downloaded stage-output-${name}"; got=1; break
+              fi
+              # Break early if the upstream JOB has finished without an artifact.
+              # The dispatcher's matrix job is named after the agent, so the
+              # agent name is always a path segment of the job's full name
+              # (e.g. "dispatch / <agent> / …") — match it as a segment.
+              concl=$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/jobs" --paginate \
+                --jq "[.jobs[] | select(.name | test(\"(^| / )${name}( / |\$)\")) | .conclusion] | map(select(. != null)) | last // \"\"" 2>/dev/null || echo "")
+              if [ -n "$concl" ] && [ "$concl" != "success" ]; then
+                echo "::warning::upstream ${name} finished as '${concl}' with no artifact; proceeding without it"
+                break
+              fi
+              sleep 15
+            done
+            [ "$got" = 1 ] || echo "::notice::upstream ${name} not available; the agent will note the absent artifact"
           done
           echo "Upstream payloads available at:"
-          find upstream/ -type f -name 'stage-output.json'
+          find upstream/ -type f -name 'stage-output.json' 2>/dev/null || true
 
       - name: Load manifest
         id: manifest
