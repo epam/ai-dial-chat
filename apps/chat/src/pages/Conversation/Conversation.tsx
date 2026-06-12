@@ -16,7 +16,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import { getConversationRoute, ROUTES } from '../../constants/routes';
 import {
-  ActionsI18nKeys,
+  ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationHistoryI18nKeys,
 } from '../../constants/translation-keys';
@@ -299,8 +299,8 @@ export const ConversationPage: FC = () => {
         open={pendingDeleteIndex != null}
         header={t(ChatI18nKeys.DeleteMessageTitle)}
         description={t(ChatI18nKeys.DeleteMessageDescription)}
-        confirmLabel={t(ActionsI18nKeys.Delete)}
-        cancelLabel={t(ActionsI18nKeys.Cancel)}
+        confirmLabel={t(ButtonsI18nKeys.Delete)}
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
         onConfirm={handleConfirmDelete}
         onClose={() => setPendingDeleteIndex(null)}
@@ -313,8 +313,8 @@ export const ConversationPage: FC = () => {
           pendingStarterContext?.starter['dial:widgetOptions']
             .confirmationMessage ?? ''
         }
-        confirmLabel={t(ActionsI18nKeys.Confirm)}
-        cancelLabel={t(ActionsI18nKeys.Cancel)}
+        confirmLabel={t(ButtonsI18nKeys.Confirm)}
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
         onConfirm={handleConfirmStarter}
         onClose={() => setPendingStarterContext(null)}
       />

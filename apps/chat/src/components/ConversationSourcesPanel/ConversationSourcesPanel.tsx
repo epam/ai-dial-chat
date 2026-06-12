@@ -9,7 +9,12 @@ import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { SidebarI18nKeys } from '../../constants/translation-keys';
+import {
+  AttachmentsI18nKeys,
+  BasicI18nKeys,
+  ButtonsI18nKeys,
+  SidebarI18nKeys,
+} from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
@@ -61,7 +66,7 @@ const ConversationSourcesPanel: FC = () => {
       side={SidebarSide.Right}
       className={isOpen ? 'w-[360px] mobile:w-full' : 'w-0'}
       ariaLabel={t(SidebarI18nKeys.AriaLabel)}
-      closeLabel={t(SidebarI18nKeys.Close)}
+      closeLabel={t(ButtonsI18nKeys.Close)}
       onClose={handleClose}
       bodyClassName="flex flex-col overflow-hidden p-0"
       rightActions={
@@ -76,29 +81,29 @@ const ConversationSourcesPanel: FC = () => {
     >
       {!isEmpty && (
         <SearchInput
-          placeholder={t(SidebarI18nKeys.Search)}
+          placeholder={t(BasicI18nKeys.SearchPlaceholder)}
           value={searchQuery}
           onChange={setSearchQuery}
         />
       )}
       <div className="flex-1 overflow-y-auto p-4">
         {isEmpty ? (
-          <PanelEmpty label={t(SidebarI18nKeys.Empty)} />
+          <PanelEmpty label={t(BasicI18nKeys.Empty)} />
         ) : isNoResults ? (
-          <PanelNoResults label={t(SidebarI18nKeys.NoResults)} />
+          <PanelNoResults label={t(BasicI18nKeys.NoResults)} />
         ) : (
           <>
             <FilesSection
               attachments={filteredUploaded}
               title={t(SidebarI18nKeys.SectionUploadedFiles)}
               onAttachmentClick={handleAttachmentClick}
-              attachmentClickLabel={t(SidebarI18nKeys.AttachmentDownloadLabel)}
+              attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
             />
             <FilesSection
               attachments={filteredGenerated}
               title={t(SidebarI18nKeys.SectionGeneratedFiles)}
               onAttachmentClick={handleAttachmentClick}
-              attachmentClickLabel={t(SidebarI18nKeys.AttachmentDownloadLabel)}
+              attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
             />
             {/* TODO: restore after implementing sources extraction from assistant
             messages */}

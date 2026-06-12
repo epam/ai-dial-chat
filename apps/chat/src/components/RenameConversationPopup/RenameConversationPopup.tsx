@@ -2,7 +2,7 @@ import { DialFormPopup, DialInput, PopupSize } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ActionsI18nKeys,
+  ButtonsI18nKeys,
   ConversationHistoryI18nKeys,
 } from '../../constants/translation-keys';
 import { getUtf8ByteLength } from '../../utils/string-utils';
@@ -60,8 +60,8 @@ const RenameConversationPopup: FC<Props> = ({
       onClose={onCancel}
       onCancel={onCancel}
       onSubmit={handleSave}
-      cancelLabel={t(ActionsI18nKeys.Cancel)}
-      submitLabel={t(ActionsI18nKeys.Save)}
+      cancelLabel={t(ButtonsI18nKeys.Cancel)}
+      submitLabel={t(ButtonsI18nKeys.Save)}
       isLoading={isSaving}
       disableSubmitButton={isSaveDisabled}
     >

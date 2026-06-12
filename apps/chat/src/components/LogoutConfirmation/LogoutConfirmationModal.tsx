@@ -32,7 +32,7 @@ const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
       open={isOpen}
       header={t(AuthI18nKeys.LogOutConfirmTitle)}
       description={t(AuthI18nKeys.LogOutConfirmDescription)}
-      confirmLabel={t(AuthI18nKeys.LogOutConfirm)}
+      confirmLabel={t(AuthI18nKeys.LogOut)}
       onConfirm={handleConfirm}
       onCancel={onClose}
       onClose={onClose}
