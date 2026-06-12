@@ -137,6 +137,9 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const isMarketplaceEnabled = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(state, Feature.Marketplace),
   );
+  const isOptimisticDefaultModelLoad = useAppSelector(
+    SettingsSelectors.selectIsOptimisticDefaultModelLoad,
+  );
   const isRegenerateAssistantMessageHided = useAppSelector((state) =>
     SettingsSelectors.isFeatureEnabled(
       state,
@@ -607,6 +610,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const isChatReadyForInput =
     !isMarketplaceEnabled ||
     areModelsInstalled ||
+    isOptimisticDefaultModelLoad ||
     isIsolatedView ||
     isAdminPreview ||
     isApproveRequiredEntity;
@@ -616,6 +620,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
       !isReadOnly &&
       !isApproveRequiredEntity &&
       (areModelsInstalled ||
+        isOptimisticDefaultModelLoad ||
         isAdminPreview ||
         isReplay ||
         isIsolatedView ||
@@ -1123,6 +1128,9 @@ export function Chat({ isPreview }: ChatProps) {
   const isInstalledModelsInitialized = useAppSelector(
     ModelsSelectors.selectIsInstalledModelsInitialized,
   );
+  const isOptimisticDefaultModelLoad = useAppSelector(
+    SettingsSelectors.selectIsOptimisticDefaultModelLoad,
+  );
   const loadingConfigurationSchemas = useAppSelector(
     ChatSelectors.selectLoadingConfigurationSchemas,
   );
@@ -1224,7 +1232,9 @@ export function Chat({ isPreview }: ChatProps) {
 
   if (
     !areSelectedConversationsLoaded ||
-    !isInstalledModelsInitialized ||
+    // Optimistic fast path: don't block the chat on the installed-models
+    // listing when the default model is already known from settings.
+    (!isInstalledModelsInitialized && !isOptimisticDefaultModelLoad) ||
     loadingConfigurationSchemas.length ||
     isPublicationUpdating ||
     showIsSubscribingLoader

@@ -50,6 +50,7 @@ import { AgentSkillsField } from '@/src/components/AppsEditor/EditorForm/QuickAp
 import { AgentsAndToolsetsField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/AgentsAndToolsetsField';
 import { CodeInterpreterField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/CodeInterpreterField';
 import { ConversationStartersList } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/ConversationStartersField';
+import { ModelField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/ModelField';
 import { StartersBehaviourRadioGroup } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/StartersBehaviourRadioGroup';
 import {
   QuickApp2Form as QuickApp2FormType,
@@ -63,7 +64,6 @@ import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessag
 import { withLabel } from '@/src/components/Common/Forms/Label';
 import { EditorTheme } from '@/src/components/Common/MarkdownEditor/MarkdownEditor';
 import { DialMarkdownEditorContainer } from '@/src/components/Common/MarkdownEditor/MarkdownEditorContainer';
-import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
@@ -74,7 +74,7 @@ import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
 const Slider = withLabel(TemperatureSlider, true);
-const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
+const ModelsSelectorField = withErrorMessage(withLabel(ModelField));
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
 const StartersBehaviourField = withLabel(StartersBehaviourRadioGroup);
@@ -104,9 +104,6 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   );
   const theme = useAppSelector(UISelectors.selectThemeState);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const toolSupportingModels = useAppSelector(
-    ModelsSelectors.selectToolSupportingModels,
-  );
   const { dialCoreExternalUrl } = useAppSelector(
     SettingsSelectors.selectDefaults,
   );
@@ -250,22 +247,10 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         openByDefault
         dataQa="orchestrator-section"
       >
-        <Controller
-          name="model"
-          control={control}
-          render={({ field }) => (
-            <ModelsSelectorField
-              label={t(MarketplaceI18nKeys.ModelMarketplace)}
-              value={field.value}
-              onChange={field.onChange}
-              mandatory
-              error={errors.model?.message}
-              disabled={isAppPublic}
-              tooltip={isAppPublicTooltip}
-              models={toolSupportingModels}
-              hideInlineError
-            />
-          )}
+        <ModelsSelectorField
+          label={t(MarketplaceI18nKeys.ModelMarketplace)}
+          error={errors.model?.message}
+          mandatory
         />
 
         {showTemperatureSlider && (
