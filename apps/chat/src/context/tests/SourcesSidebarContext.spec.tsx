@@ -58,13 +58,14 @@ describe('SourcesSidebarContext', () => {
     expect(result.current.isOpen).toBe(true);
   });
 
-  it('close() also clears messages', () => {
+  it('close() preserves messages', () => {
     const { result } = renderHook(() => useSourcesSidebar(), { wrapper });
     act(() => result.current.handleOpen());
-    act(() => result.current.setMessages(makeMessages()));
+    const messages = makeMessages();
+    act(() => result.current.setMessages(messages));
     act(() => result.current.handleClose());
     expect(result.current.isOpen).toBe(false);
-    expect(result.current.messages).toEqual([]);
+    expect(result.current.messages).toEqual(messages);
   });
 
   it('throws when used outside provider', () => {
