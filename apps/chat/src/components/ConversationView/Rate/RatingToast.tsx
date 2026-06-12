@@ -22,8 +22,6 @@ const RatingToast: FC<Props> = ({ title, description, onDismiss }) => {
         title={title}
         message={description}
         closable={true}
-        textClassName="pr-6"
-        className="[&>div:first-child]:items-start"
       />
     </div>
   );
