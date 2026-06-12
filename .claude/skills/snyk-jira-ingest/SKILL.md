@@ -5,23 +5,22 @@ description: Pull REAL Snyk SAST findings from EPAM Jira (Data Center) via the s
 
 # Snyk → Jira Ingest
 
-Pull the real Snyk SAST findings tracked in EPAM Jira and write them to
-`stage-output.json` for the downstream triage stage. All the work — fetch,
-filter to this repo, cap, and writing a schema-valid envelope — is done by the
-committed script `fetch.sh`; you only run it. (Config and behaviour are
-documented in that script.)
+Pull the real Snyk SAST findings tracked in EPAM Jira for the downstream triage
+stage. All the work — fetch, filter to this repo, cap, and writing a schema-valid
+`stage-output.json` — is done by the committed script `fetch.sh`; you only run it
+and confirm the result. (Config and behaviour are documented in that script.)
 
 ## Procedure
 
-1. Run exactly this single Bash command — the only one in your allowlist:
+1. Run the script:
 
    ```
    bash .claude/skills/snyk-jira-ingest/fetch.sh
    ```
 
-2. Confirm `stage-output.json` exists (Read it). The script already wrote a valid
-   envelope — do **not** overwrite it. Then finish.
+2. Read `stage-output.json` to confirm it exists. **The script already wrote a
+   valid envelope — do not overwrite it.** Then finish.
 
-3. **Only** if that command is denied or errors before the file is written: use
-   Write to create `stage-output.json` with `status: "failed"` and a `summary`
-   naming what went wrong. Never fabricate findings or a synthetic export.
+3. **Only** if the script is denied or errors before that file exists: write a
+   failed result naming what went wrong. Never fabricate findings or a synthetic
+   export.
