@@ -2,10 +2,10 @@ import type { ProviderInfoDto } from '@epam/chat-api-client';
 import { memo, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
+import { AuthI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { getProviders } from '../../server-api/auth.api';
-import { AuthI18nKeys } from '../../constants/translation-keys';
 
 // TODO: change styles, add app logo, etc.
 const LoginPage = () => {
