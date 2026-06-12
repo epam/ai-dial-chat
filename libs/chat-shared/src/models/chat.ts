@@ -167,6 +167,8 @@ export interface StreamChunkDelta {
   content?: string;
   /** Role field — only present in the first chunk of a response. */
   role?: string;
+  /** DIAL Core response identifier used for the rate API. Present on the final chunk. */
+  responseId?: string;
   /**
    * Partial custom content carried in this chunk.
    * `form_schema`, `attachments`, and `stages` may arrive in separate chunks or together in the final chunk.

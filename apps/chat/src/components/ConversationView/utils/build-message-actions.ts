@@ -15,6 +15,7 @@ export interface MessageActionHandlers {
   onDelete?: (messageIndex: number) => void;
   onRegenerate?: (messageIndex: number) => void;
   onRate?: (messageIndex: number, rating: MessageRating | null) => void;
+  onDislike?: (messageIndex: number) => void;
 }
 
 export const buildMessageActions = (
@@ -62,13 +63,16 @@ export const buildMessageActions = (
             msg.rating === MessageRating.Like ? null : MessageRating.Like,
           )
       : void 0,
-    onDislike: handlers.onRate
-      ? () =>
-          handlers.onRate?.(
-            index,
-            msg.rating === MessageRating.Dislike ? null : MessageRating.Dislike,
-          )
-      : void 0,
+    onDislike:
+      handlers.onRate || handlers.onDislike
+        ? () => {
+            if (msg.rating === MessageRating.Dislike) {
+              handlers.onRate?.(index, null);
+            } else {
+              handlers.onDislike?.(index);
+            }
+          }
+        : void 0,
     activeRating: msg.rating,
     tooltips,
     ariaLabels,

@@ -34,7 +34,7 @@ import {
   ButtonsI18nKeys,
   BasicI18nKeys,
   ChatI18nKeys,
-  ConversationHistoryI18nKeys,
+  ConversationPanelI18nKeys,
   ConversationI18nKeys,
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
@@ -56,6 +56,7 @@ interface Props {
   onDeleteMessage?: (messageIndex: number) => void;
   onRegenerateMessage?: (messageIndex: number) => void;
   onRateMessage?: (messageIndex: number, rating: MessageRating | null) => void;
+  onDislikeMessage?: (messageIndex: number) => void;
   onAttachmentsChange?: (attachments: Attachment[]) => void;
   onSelectStarter?: (
     starter: StarterOption,
@@ -93,6 +94,7 @@ const ConversationView: FC<Props> = ({
   onDeleteMessage,
   onRegenerateMessage,
   onRateMessage,
+  onDislikeMessage,
   onAttachmentsChange,
   onSelectStarter,
   onStartEdit,
@@ -338,6 +340,7 @@ const ConversationView: FC<Props> = ({
                   onDeleteMessage={onDeleteMessage}
                   onRegenerateMessage={onRegenerateMessage}
                   onRateMessage={onRateMessage}
+                  onDislikeMessage={onDislikeMessage}
                   onCancelEdit={onCancelEdit}
                   onEditMessage={onEditMessage}
                   onUploadAttachment={onUploadAttachment}
@@ -397,9 +400,7 @@ const ConversationView: FC<Props> = ({
               />
             )}
             <DialNeutralButton
-              label={t(
-                ConversationHistoryI18nKeys.DuplicateReadOnlyDescription,
-              )}
+              label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
               iconBefore={<IconCopy />}
               onClick={onDuplicateConversation}
             />

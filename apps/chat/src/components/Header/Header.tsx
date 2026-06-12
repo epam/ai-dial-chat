@@ -10,7 +10,7 @@ import { useTranslation } from 'react-i18next';
 import { useMatch } from 'react-router-dom';
 import { ROUTES } from '../../constants/routes';
 import {
-  ConversationHistoryI18nKeys,
+  ConversationPanelI18nKeys,
   NavigationI18nKeys,
   SidebarI18nKeys,
 } from '../../constants/translation-keys';
@@ -49,10 +49,10 @@ const Header: FC<Props> = ({
         {onHistoryPanelToggle && (
           <DialGhostIconButton
             icon={<Icon />}
-            aria-label={t(ConversationHistoryI18nKeys.ToggleAriaLabel)}
+            aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
             aria-pressed={isHistoryPanelOpen}
             tooltipProps={{
-              tooltip: t(ConversationHistoryI18nKeys.ToggleAriaLabel),
+              tooltip: t(ConversationPanelI18nKeys.ToggleAriaLabel),
             }}
             onClick={onHistoryPanelToggle}
             className="hidden desktop:flex"
@@ -63,7 +63,7 @@ const Header: FC<Props> = ({
             icon={
               <IconLayoutSidebarRight size={DIAL_ICON_SIZE.LG} stroke={1.5} />
             }
-            aria-label={t(ConversationHistoryI18nKeys.ToggleAriaLabel)}
+            aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
             onClick={onHistoryPanelToggle}
             className="desktop:hidden"
           />

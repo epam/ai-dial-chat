@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 import { useUser } from '../../context/auth/UserContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { getProviders } from '../../server-api/auth.api';
+import { AuthI18nKeys } from '../../constants/translation-keys';
 
 // TODO: change styles, add app logo, etc.
 const LoginPage = () => {
@@ -44,7 +45,7 @@ const LoginPage = () => {
   if (hasError) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p>{t('auth.providersError')}</p>
+        <p>{t(AuthI18nKeys.ProvidersError)}</p>
       </div>
     );
   }
@@ -52,15 +53,15 @@ const LoginPage = () => {
   if (!providers) {
     return (
       <div className="flex min-h-screen items-center justify-center">
-        <p>{t('auth.loading')}</p>
+        <p>{t(AuthI18nKeys.Loading)}</p>
       </div>
     );
   }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4">
-      <h1 className="text-2xl font-semibold">{t('auth.loginTitle')}</h1>
-      <p className="text-secondary">{t('auth.loginDescription')}</p>
+      <h1 className="text-2xl font-semibold">{t(AuthI18nKeys.LoginTitle)}</h1>
+      <p className="text-secondary">{t(AuthI18nKeys.LoginDescription)}</p>
       <div className="flex flex-col gap-2">
         {providers.map((provider) => (
           <a
@@ -68,7 +69,7 @@ const LoginPage = () => {
             href={`/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`}
             className="border-accent hover:bg-accent-secondary rounded border px-6 py-2 text-center"
           >
-            {t('auth.providerButtonLabel', { provider: provider.label })}
+            {t(AuthI18nKeys.ProviderButtonLabel, { provider: provider.label })}
           </a>
         ))}
       </div>

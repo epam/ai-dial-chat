@@ -35,7 +35,7 @@ import {
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
-  ConversationHistoryI18nKeys,
+  ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -159,20 +159,20 @@ const ConversationPanelView: FC<Props> = ({
 
   const filterLabels = useMemo(
     () => ({
-      all: t(ConversationHistoryI18nKeys.FilterAll),
-      myChats: t(ConversationHistoryI18nKeys.FilterMyChats),
-      shared: t(ConversationHistoryI18nKeys.FilterShared),
-      organization: t(ConversationHistoryI18nKeys.FilterOrganization),
+      all: t(ConversationPanelI18nKeys.FilterAll),
+      myChats: t(ConversationPanelI18nKeys.FilterMyChats),
+      shared: t(ConversationPanelI18nKeys.FilterShared),
+      organization: t(ConversationPanelI18nKeys.FilterOrganization),
     }),
     [t],
   );
 
   const groupLabels = useMemo(
     () => ({
-      pinned: t(ConversationHistoryI18nKeys.PinnedSection),
-      myChats: t(ConversationHistoryI18nKeys.MyChatsSection),
-      shared: t(ConversationHistoryI18nKeys.FilterShared),
-      organization: t(ConversationHistoryI18nKeys.FilterOrganization),
+      pinned: t(ConversationPanelI18nKeys.PinnedSection),
+      myChats: t(ConversationPanelI18nKeys.MyChatsSection),
+      shared: t(ConversationPanelI18nKeys.FilterShared),
+      organization: t(ConversationPanelI18nKeys.FilterOrganization),
     }),
     [t],
   );
@@ -186,8 +186,8 @@ const ConversationPanelView: FC<Props> = ({
         {
           key: 'pin',
           label: panelItem.isPinned
-            ? t(ConversationHistoryI18nKeys.UnpinLabel)
-            : t(ConversationHistoryI18nKeys.PinLabel),
+            ? t(ConversationPanelI18nKeys.UnpinLabel)
+            : t(ConversationPanelI18nKeys.PinLabel),
           icon: panelItem.isPinned ? (
             <IconPinnedFilled
               size={DIAL_ICON_SIZE.SM}
@@ -222,7 +222,7 @@ const ConversationPanelView: FC<Props> = ({
               const newPath = await duplicateConversation(contextId);
               navigate(getConversationRoute(newPath));
             } catch {
-              setDuplicateError(t(ConversationHistoryI18nKeys.DuplicateError));
+              setDuplicateError(t(ConversationPanelI18nKeys.DuplicateError));
             }
           },
         },
@@ -260,7 +260,7 @@ const ConversationPanelView: FC<Props> = ({
     try {
       await deleteConversation(idToDelete);
     } catch {
-      setDeleteError(t(ConversationHistoryI18nKeys.DeleteError));
+      setDeleteError(t(ConversationPanelI18nKeys.DeleteError));
       setIsDeleting(false);
       return;
     }
@@ -297,7 +297,7 @@ const ConversationPanelView: FC<Props> = ({
       try {
         newPath = await renameConversation(id, newTitle);
       } catch {
-        setRenameError(t(ConversationHistoryI18nKeys.RenameError));
+        setRenameError(t(ConversationPanelI18nKeys.RenameError));
         setIsRenaming(false);
         return;
       }
@@ -332,25 +332,25 @@ const ConversationPanelView: FC<Props> = ({
         isOpen={isOpen}
         onSelectConversation={onSelectConversation}
         activeConversationId={activeConversationId}
-        title={t(ConversationHistoryI18nKeys.Title)}
-        emptyLabel={t(ConversationHistoryI18nKeys.Empty)}
+        title={t(ConversationPanelI18nKeys.Title)}
+        emptyLabel={t(ConversationPanelI18nKeys.Empty)}
         noResultsLabel={t(BasicI18nKeys.NoResults)}
         onNewChat={onNewChat}
-        newChatLabel={t(ConversationHistoryI18nKeys.NewChat)}
+        newChatLabel={t(ConversationPanelI18nKeys.NewChat)}
         searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
         filterLabels={filterLabels}
         groupLabels={groupLabels}
         getActions={getActions}
-        actionsLabel={t(ConversationHistoryI18nKeys.ActionsLabel)}
+        actionsLabel={t(ConversationPanelI18nKeys.ActionsLabel)}
         onToggle={isMobile ? onClose : undefined}
-        closeAriaLabel={t(ConversationHistoryI18nKeys.ToggleAriaLabel)}
+        closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
         className={isMobile ? 'inset-y-0 start-0 z-50' : undefined}
         styles={{ typography: { fontClassName: 'dial-body-text' } }}
       />
 
       <DialConfirmationPopup
         open={!!pendingDeleteId}
-        header={t(ConversationHistoryI18nKeys.DeleteConfirmTitle)}
+        header={t(ConversationPanelI18nKeys.DeleteConfirmTitle)}
         confirmLabel={t(ButtonsI18nKeys.Delete)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
@@ -358,7 +358,7 @@ const ConversationPanelView: FC<Props> = ({
         description={
           <>
             <span className="break-all">
-              {t(ConversationHistoryI18nKeys.DeleteConfirmDescription)}{' '}
+              {t(ConversationPanelI18nKeys.DeleteConfirmDescription)}{' '}
               <span className="dial-small-text text-primary">
                 &ldquo;{pendingDeleteTitle}&rdquo;
               </span>

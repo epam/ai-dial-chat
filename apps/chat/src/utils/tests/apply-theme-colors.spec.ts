@@ -1,15 +1,8 @@
 import { Theme } from '@epam/ai-dial-chat-shared';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { StorageKey } from '../../constants/storage';
 import { applyThemeColors } from '../apply-theme-colors';
-import * as localStorage from '../local-storage';
-
-// Mock localStorage utilities
-vi.mock('../local-storage');
 
 describe('applyThemeColors', () => {
-  const mockSetToLocalStorage = vi.mocked(localStorage.setToLocalStorage);
-
   let mockElement: HTMLElement;
 
   beforeEach(() => {
@@ -42,7 +35,7 @@ describe('applyThemeColors', () => {
     );
   });
 
-  it('should persist theme to localStorage', () => {
+  it('should apply theme colors when a theme is provided', () => {
     const mockTheme: Theme = {
       id: 'light',
       displayName: 'Light Theme',
@@ -54,9 +47,8 @@ describe('applyThemeColors', () => {
 
     applyThemeColors(mockElement, mockTheme);
 
-    expect(mockSetToLocalStorage).toHaveBeenCalledWith(
-      StorageKey.Theme,
-      'light',
+    expect(mockElement.style.getPropertyValue('--primary-color')).toBe(
+      '#ffffff',
     );
   });
 
@@ -66,7 +58,6 @@ describe('applyThemeColors', () => {
     applyThemeColors(mockElement, undefined);
 
     expect(setPropertySpy).not.toHaveBeenCalled();
-    expect(mockSetToLocalStorage).not.toHaveBeenCalled();
   });
 
   it('should handle empty colors object', () => {
@@ -79,10 +70,7 @@ describe('applyThemeColors', () => {
 
     applyThemeColors(mockElement, mockTheme);
 
-    expect(mockSetToLocalStorage).toHaveBeenCalledWith(
-      StorageKey.Theme,
-      'empty',
-    );
+    expect(mockElement.style.length).toBe(0);
   });
 
   it('should update CSS custom properties correctly', () => {
@@ -126,11 +114,5 @@ describe('applyThemeColors', () => {
 
     applyThemeColors(mockElement, lightTheme);
     expect(mockElement.style.getPropertyValue('--bg-color')).toBe('#ffffff');
-
-    expect(mockSetToLocalStorage).toHaveBeenCalledTimes(2);
-    expect(mockSetToLocalStorage).toHaveBeenLastCalledWith(
-      StorageKey.Theme,
-      'light',
-    );
   });
 });

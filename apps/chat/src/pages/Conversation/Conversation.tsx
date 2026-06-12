@@ -1,8 +1,9 @@
 import {
   Attachment,
   isAudioTranscriptionSupported,
-  Conversation,
-  Message,
+  MessageRating,
+  type Conversation,
+  type Message,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -14,11 +15,14 @@ import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
+import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
+import RatingToast from '../../components/ConversationView/Rate/RatingToast';
 import { getConversationRoute, ROUTES } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   ChatI18nKeys,
-  ConversationHistoryI18nKeys,
+  ConversationPanelI18nKeys,
+  RateI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
@@ -111,6 +115,23 @@ export const ConversationPage: FC = () => {
     [asrModelId, currentSelectedItemId],
   );
 
+  const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] = useState<
+    number | null
+  >(null);
+  const [toastState, setToastState] = useState<{
+    title: string;
+    description: string;
+    key: number;
+  } | null>(null);
+
+  const showToast = useCallback((title: string, description: string) => {
+    setToastState((prev) => ({
+      title,
+      description,
+      key: (prev?.key ?? 0) + 1,
+    }));
+  }, []);
+
   const isReadOnly = useMemo(() => {
     if (!conversationId || !bucket) return false;
     const decoded = decodeConversationId(conversationId);
@@ -125,7 +146,7 @@ export const ConversationPage: FC = () => {
       const newPath = await duplicateConversation(conversationId);
       navigate(getConversationRoute(newPath));
     } catch {
-      setDuplicateError(t(ConversationHistoryI18nKeys.DuplicateError));
+      setDuplicateError(t(ConversationPanelI18nKeys.DuplicateError));
     }
   }, [conversationId, duplicateConversation, navigate, t]);
 
@@ -263,6 +284,47 @@ export const ConversationPage: FC = () => {
     navigate,
   });
 
+  const handleLike = useCallback(
+    async (messageIndex: number, rating: MessageRating | null) => {
+      const success = await handleRateMessage(messageIndex, rating);
+      if (success && rating === MessageRating.Like) {
+        showToast(
+          t(RateI18nKeys.LikeToastTitle),
+          t(RateI18nKeys.LikeToastDescription),
+        );
+      }
+    },
+    [handleRateMessage, showToast, t],
+  );
+
+  const handleOpenDislikeModal = useCallback((messageIndex: number) => {
+    setPendingDislikeMessageIndex(messageIndex);
+  }, []);
+
+  const handleDislikeSubmit = useCallback(
+    async (comment: string) => {
+      if (pendingDislikeMessageIndex == null) return;
+      const index = pendingDislikeMessageIndex;
+      setPendingDislikeMessageIndex(null);
+      const success = await handleRateMessage(
+        index,
+        MessageRating.Dislike,
+        comment,
+      );
+      if (success) {
+        showToast(
+          t(RateI18nKeys.DislikeToastTitle),
+          t(RateI18nKeys.DislikeToastDescription),
+        );
+      }
+    },
+    [pendingDislikeMessageIndex, handleRateMessage, showToast, t],
+  );
+
+  const handleDislikeModalClose = useCallback(() => {
+    setPendingDislikeMessageIndex(null);
+  }, []);
+
   if (isFetching) return null;
 
   if (!conversation) {
@@ -283,7 +345,8 @@ export const ConversationPage: FC = () => {
           onStop={handleStop}
           onDeleteMessage={handleDeleteMessage}
           onRegenerateMessage={handleRegenerateMessage}
-          onRateMessage={handleRateMessage}
+          onRateMessage={handleLike}
+          onDislikeMessage={handleOpenDislikeModal}
           onStartEdit={handleStartEdit}
           onCancelEdit={handleCancelEdit}
           onEditMessage={handleEditMessage}
@@ -300,6 +363,22 @@ export const ConversationPage: FC = () => {
           onTranscribeAudio={handleTranscribeAudio}
         />
       </div>
+
+      {pendingDislikeMessageIndex != null && (
+        <NegativeFeedbackModal
+          onClose={handleDislikeModalClose}
+          onSubmit={handleDislikeSubmit}
+        />
+      )}
+
+      {toastState != null && (
+        <RatingToast
+          key={toastState.key}
+          title={toastState.title}
+          description={toastState.description}
+          onDismiss={() => setToastState(null)}
+        />
+      )}
 
       <DialConfirmationPopup
         open={pendingDeleteIndex != null}
