@@ -183,9 +183,11 @@ export const useFileManager = ({
 
   const isCopyingFiles = useAppSelector(FilesSelectors.selectIsCopyingFiles);
   const isMovingFiles = useAppSelector(FilesSelectors.selectIsMovingFiles);
+  const isDeletingFiles = useAppSelector(FilesSelectors.selectIsDeletingFiles);
   const movingFilesCountRef = useRef<number>(0);
   const prevIsCopyingRef = useRef(false);
   const prevIsMovingRef = useRef(false);
+  const prevIsDeletingRef = useRef(false);
 
   const fileMetadata = useAppSelector(FilesSelectors.selectFileMetadata);
   const _files = useAppSelector(FilesSelectors.selectFiles);
@@ -382,6 +384,15 @@ export const useFileManager = ({
       dispatch(FilesActions.getFullListing({ folderPath: currentPath }));
     }
   }, [isCopyingFiles, isMovingFiles, isSearching, currentPath, dispatch]);
+
+  useEffect(() => {
+    const deleteJustFinished = prevIsDeletingRef.current && !isDeletingFiles;
+    prevIsDeletingRef.current = isDeletingFiles;
+
+    if (deleteJustFinished) {
+      deduplicatedFileIdsRef.current.clear();
+    }
+  }, [isDeletingFiles]);
 
   useEffect(() => {
     if (currentPath && !isRootId(currentPath) && !isMovingFiles) {
