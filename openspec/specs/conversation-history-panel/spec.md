@@ -177,3 +177,76 @@ Tests SHALL be in `libs/conversation-panel/src/components/ConversationPanel/test
 
 - **WHEN** a `ConversationHistoryItem` object is constructed with `iconTooltip: "My Agent"`
 - **THEN** TypeScript resolves the type without error
+
+---
+
+### Requirement: `getModelIdFromConversationId` correctly extracts the deployment ID from multi-segment and slash-containing conversation IDs
+
+`apps/chat/src/utils/get-model-id-from-conversation-id.ts` SHALL export `getModelIdFromConversationId(id: string): string | undefined`.
+
+The backend encodes each `/`-separated segment of the conversation path individually with `encodeURIComponent` (`encodeDialResourcePath`). This means **both** the deployment ID and the conversation title can introduce extra URL path segments:
+
+- Deployment `anthropic/claude-3`, title `My chat`
+  → `conversations/bucket/anthropic/claude-3__My%20chat`
+- Deployment `uuid`, title `report 6/2/2026` (title contains slashes)
+  → `conversations/bucket/uuid__report%206/2/2026`
+
+The function MUST scan the post-`conversations/{bucket}/` segments **left-to-right** and stop at the **first** segment (after URL-decoding) that contains `__`. Segments before that one form the deployment ID path prefix. The part of the separator segment before `__` is the final piece of the deployment ID. Segments after the separator segment are part of the title and MUST be ignored.
+
+The function MUST return `undefined` when:
+- The input has fewer than 3 `/`-separated segments.
+- No segment contains `__`.
+
+#### Scenario: Simple single-segment deployment
+
+- **WHEN** `getModelIdFromConversationId('conversations/bucket/gpt-4__My%20chat')` is called
+- **THEN** it returns `'gpt-4'`
+
+#### Scenario: Multi-segment deployment ID
+
+- **WHEN** `getModelIdFromConversationId('conversations/bucket/anthropic/claude-3__My%20chat')` is called
+- **THEN** it returns `'anthropic/claude-3'`
+
+#### Scenario: Title containing slashes
+
+- **WHEN** `getModelIdFromConversationId('conversations/bucket/gpt-4__report%206/2/2026')` is called
+- **THEN** it returns `'gpt-4'`
+
+#### Scenario: Multi-segment deployment AND title with slashes
+
+- **WHEN** `getModelIdFromConversationId('conversations/bucket/anthropic/claude-3__report%206/2/2026')` is called
+- **THEN** it returns `'anthropic/claude-3'`
+
+#### Scenario: No `__` separator → returns undefined
+
+- **WHEN** `getModelIdFromConversationId('conversations/bucket/gpt-4-no-title')` is called
+- **THEN** it returns `undefined`
+
+#### Scenario: Fewer than 3 segments → returns undefined
+
+- **WHEN** `getModelIdFromConversationId('bucket/gpt-4__title')` is called
+- **THEN** it returns `undefined`
+
+---
+
+### Requirement: `ConversationPage` uses `model.id` as fallback when `assistantModelId` is absent
+
+`apps/chat/src/pages/Conversation/Conversation.tsx` SHALL pass `initialModelId` to `ConversationView` as:
+
+```ts
+initialModelId={conversation.assistantModelId || conversation.model.id}
+```
+
+The `Conversation` type declares `assistantModelId: string`, but conversations created externally or by older versions of the application may omit the field at runtime. Without a fallback, messages that have no own `deploymentId` would have no effective deployment ID and therefore no icon in the message bubbles, while the dropdown and sidebar correctly display an icon. The `model.id` fallback MUST mirror the same fallback already used when calling `restoreSelectedItemId` from `loadConversation`.
+
+#### Scenario: Icons shown in message bubbles when assistantModelId is absent
+
+- **WHEN** a conversation's JSON has `model.id = 'gpt-4'` but no `assistantModelId` field
+- **AND** the conversation messages have no individual `deploymentId` set
+- **THEN** message bubbles resolve icons using `'gpt-4'` as the effective deployment ID
+- **AND** the icon is consistent with the dropdown and conversation panel
+
+#### Scenario: assistantModelId takes precedence when present
+
+- **WHEN** a conversation has both `model.id = 'gpt-4'` and `assistantModelId = 'anthropic/claude-3'`
+- **THEN** `initialModelId` is `'anthropic/claude-3'` (the `assistantModelId` wins)

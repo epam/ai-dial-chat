@@ -55,7 +55,7 @@ export const ConversationPage: FC = () => {
   const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
   const {
     items: deploymentItems,
-    setSelectedItemId,
+    restoreSelectedItemId,
     selectedItemId: currentSelectedItemId,
     isLoading: isDeploymentsLoading,
   } = useDeployments();
@@ -212,7 +212,7 @@ export const ConversationPage: FC = () => {
         const modelToSelect =
           lastDeploymentId ?? (result.assistantModelId || result.model.id);
         if (modelToSelect) {
-          setSelectedItemId(modelToSelect);
+          restoreSelectedItemId(modelToSelect);
         }
 
         const lastMsg = result.messages[result.messages.length - 1];
@@ -245,7 +245,7 @@ export const ConversationPage: FC = () => {
         setIsFetching(false);
       }
     },
-    [navigate, setSelectedItemId, startStream],
+    [navigate, restoreSelectedItemId, startStream],
   );
 
   useEffect(() => {
@@ -337,7 +337,9 @@ export const ConversationPage: FC = () => {
       <div className="flex h-full flex-col items-center justify-center overflow-hidden">
         <ConversationView
           messages={conversation.messages}
-          initialModelId={conversation.assistantModelId}
+          initialModelId={
+            conversation.assistantModelId || conversation.model.id
+          }
           onSend={handleSend}
           onUploadAttachment={handleUploadAttachment}
           onStop={handleStop}
