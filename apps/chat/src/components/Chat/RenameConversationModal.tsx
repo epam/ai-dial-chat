@@ -41,9 +41,9 @@ interface RenameConversationViewProps {
   renamingConversation: ConversationInfo;
 }
 
-function RenameConversationView({
-  renamingConversation,
-}: RenameConversationViewProps) {
+const view = withRenderWhenEntities<RenameConversationViewProps>({
+  renamingConversation: ConversationsSelectors.selectRenamingConversation,
+})(({ renamingConversation }: RenameConversationViewProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -183,9 +183,6 @@ function RenameConversationView({
       </div>
     </Modal>
   );
-}
+});
 
-export const RenameConversationModal =
-  withRenderWhenEntities<RenameConversationViewProps>({
-    renamingConversation: ConversationsSelectors.selectRenamingConversation,
-  })(RenameConversationView);
+export const RenameConversationModal = view;

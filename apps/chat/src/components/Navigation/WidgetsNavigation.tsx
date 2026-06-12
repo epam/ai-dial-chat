@@ -1,5 +1,5 @@
 import { IconBrowser, IconProps } from '@tabler/icons-react';
-import React, { useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
@@ -26,40 +26,7 @@ import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
 import { NavigationButton } from './NavigationButton';
 
-const WidgetBarIcon: React.FC<IconProps> = ({ height, ...rest }) => {
-  const { widgetModels } = useWidgets();
-
-  const isApplicationsInitialized = useAppSelector(
-    ApplicationSelectors.selectInitialized,
-  );
-  const areModelsLoading = useAppSelector(
-    ModelsSelectors.selectAreModelsLoading,
-  );
-  const selectedWidgetId = useAppSelector(
-    ApplicationSelectors.selectSelectedWidget,
-  );
-
-  const selectedWidget = useMemo(
-    () => widgetModels.find((model) => model.reference === selectedWidgetId),
-    [widgetModels, selectedWidgetId],
-  );
-
-  if (areModelsLoading || !isApplicationsInitialized) {
-    return <Loader size={height as number} />;
-  }
-
-  return selectedWidget ? (
-    <ModelIcon
-      entity={selectedWidget}
-      entityId={selectedWidget.reference}
-      size={height as number}
-    />
-  ) : (
-    <IconBrowser height={height} {...rest} />
-  );
-};
-
-const WidgetsNavigationView = () => {
+const view = withRenderWhen(WidgetsSelectors.selectIsAnyWidget)(() => {
   const { t } = useTranslation(Translation.SideBar);
 
   const router = useRouter();
@@ -75,6 +42,39 @@ const WidgetsNavigationView = () => {
   const { widgetModels, handleWidgetClick } = useWidgets();
 
   const screenState = useScreenState();
+
+  const WidgetBarIcon = ({ height, ...rest }: IconProps) => {
+    const { widgetModels } = useWidgets();
+
+    const isApplicationsInitialized = useAppSelector(
+      ApplicationSelectors.selectInitialized,
+    );
+    const areModelsLoading = useAppSelector(
+      ModelsSelectors.selectAreModelsLoading,
+    );
+    const selectedWidgetId = useAppSelector(
+      ApplicationSelectors.selectSelectedWidget,
+    );
+
+    const selectedWidget = useMemo(
+      () => widgetModels.find((model) => model.reference === selectedWidgetId),
+      [widgetModels, selectedWidgetId],
+    );
+
+    if (areModelsLoading || !isApplicationsInitialized) {
+      return <Loader size={height as number} />;
+    }
+
+    return selectedWidget ? (
+      <ModelIcon
+        entity={selectedWidget}
+        entityId={selectedWidget.reference}
+        size={height as number}
+      />
+    ) : (
+      <IconBrowser height={height} {...rest} />
+    );
+  };
 
   const handleOpenWidgetsClick = useCallback(() => {
     if (router.route === Routes.SelectedWidget) return;
@@ -128,8 +128,6 @@ const WidgetsNavigationView = () => {
       ))}
     </div>
   );
-};
+});
 
-export const WidgetsNavigation = withRenderWhen(
-  WidgetsSelectors.selectIsAnyWidget,
-)(WidgetsNavigationView);
+export const WidgetsNavigation = view;

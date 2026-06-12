@@ -37,7 +37,7 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { AgentAndToolsetChip } from '@/src/components/Common/AgentAndToolsetSelector/AgentAndToolsetChip';
 import {
   DialMarkdownEditor,
-  EditorThemes,
+  EditorTheme,
 } from '@/src/components/Common/MarkdownEditor/MarkdownEditor';
 
 import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
@@ -175,7 +175,7 @@ const ReviewQuickApp2SectionView = ({
           <DialMarkdownEditor
             value={config.orchestrator.system_prompt.content}
             height={200}
-            theme={theme as EditorThemes}
+            theme={theme as EditorTheme}
             preview="preview"
             commands={[]}
             className="rounded-[5px]"

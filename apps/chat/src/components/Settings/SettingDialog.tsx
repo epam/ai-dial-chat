@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -38,13 +38,20 @@ import { ThemeSelect } from './ThemeSelect';
 import { Feature } from '@epam/ai-dial-shared';
 import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
-const ToggleSwitchLabel = withLabel(ToggleSwitchLabeled);
-
 const getCustomLogoLocalStoreName = (customLogoId: string | undefined) =>
   customLogoId && splitEntityId(customLogoId).name;
 
-const SettingDialogView: FC = () => {
+const view = withRenderWhen((state) => {
+  const isOpen = UISelectors.selectIsUserSettingsOpen(state);
+  const isUserMenuHidden = SettingsSelectors.isFeatureEnabled(
+    state,
+    Feature.HideUserMenu,
+  );
+
+  return isOpen && !isUserMenuHidden;
+})(() => {
   const dispatch = useAppDispatch();
+  const ToggleSwitchLabel = useMemo(() => withLabel(ToggleSwitchLabeled), []);
 
   const theme = useAppSelector(UISelectors.selectThemeState);
   const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
@@ -251,14 +258,6 @@ const SettingDialogView: FC = () => {
       </div>
     </Modal>
   );
-};
+});
 
-export const SettingDialog = withRenderWhen((state) => {
-  const isOpen = UISelectors.selectIsUserSettingsOpen(state);
-  const isUserMenuHidden = SettingsSelectors.isFeatureEnabled(
-    state,
-    Feature.HideUserMenu,
-  );
-
-  return isOpen && !isUserMenuHidden;
-})(SettingDialogView);
+export const SettingDialog = view;
