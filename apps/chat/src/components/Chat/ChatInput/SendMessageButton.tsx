@@ -49,6 +49,9 @@ export const SendMessageButton = Inversify.register(
     const areModelsLoading = useAppSelector(
       ModelsSelectors.selectAreModelsLoading,
     );
+    const isOptimisticDefaultModelLoad = useAppSelector(
+      SettingsSelectors.selectIsOptimisticDefaultModelLoad,
+    );
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
     const messageIsStreaming = useAppSelector(
@@ -101,7 +104,10 @@ export const SendMessageButton = Inversify.register(
       );
     }
 
-    const isSpinner = isLoading || areModelsLoading;
+    // On the optimistic fast path the default model is already usable, so the
+    // models listing still loading must not turn the send button into a spinner.
+    const isSpinner =
+      isLoading || (areModelsLoading && !isOptimisticDefaultModelLoad);
     const [Icon, dataQa, disabled] = messageIsStreaming
       ? [IconPlaystationSquare, 'stop-generating', false]
       : [IconSend, 'send', isDisabled];
