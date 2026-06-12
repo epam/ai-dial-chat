@@ -26,6 +26,11 @@ A hook `useKeyboardShortcutPreference` SHALL expose `{ preference, setPreference
 - **WHEN** `setPreference('meta-enter')` is called
 - **THEN** `localStorage` is updated to `'meta-enter'` AND subsequent reads of `preference` return `'meta-enter'`
 
+### Scenario: Preference change is reflected in all hook instances immediately
+- **GIVEN** multiple components each call `useKeyboardShortcutPreference()` (e.g. settings menu and the chat input)
+- **WHEN** `setPreference` is called in one instance (e.g. the user selects a new option in settings)
+- **THEN** all other mounted instances update their `preference` value on the same render cycle — no page reload or navigation is required
+
 ---
 
 ## Requirement: Chat input respects the keyboard shortcut preference
@@ -50,3 +55,24 @@ The chat input send handler SHALL read `useKeyboardShortcutPreference` and apply
 ### Scenario: Bare Enter inserts newline when preference is meta-enter
 - **WHEN** `preference = 'meta-enter'` AND the user presses Enter without modifier keys
 - **THEN** a newline is inserted and the message is NOT submitted
+
+---
+
+## Requirement: Focus and cursor position retained after newline insertion
+
+When a newline-inserting key combination (Shift+Enter with `preference = 'enter'`, or bare Enter with `preference = 'meta-enter'`) is pressed and the textarea layout transitions from single-line (non-stacked) to multi-line (stacked), the `Input` component SHALL:
+
+1. Keep keyboard focus in the textarea — the user MUST NOT need to click the input again.
+2. Place the cursor on the new line, immediately after the inserted `\n` — NOT at the start of the text.
+
+This applies to the **first** such key press in a session (when the textarea moves from the inline row into the stacked position) as well as all subsequent presses.
+
+### Scenario: First Shift+Enter retains focus on new line
+- **GIVEN** `preference = 'enter'` AND the textarea is in single-line (non-stacked) layout
+- **WHEN** the user presses Shift+Enter for the first time
+- **THEN** the textarea retains keyboard focus AND the cursor is positioned at the start of the newly inserted line
+
+### Scenario: Subsequent Shift+Enter presses retain focus
+- **GIVEN** `preference = 'enter'` AND the textarea is already in stacked layout
+- **WHEN** the user presses Shift+Enter
+- **THEN** the textarea retains keyboard focus AND the cursor is positioned after the inserted newline
