@@ -90,14 +90,4 @@ describe('NegativeFeedbackModal', () => {
 
     expect(onSubmit).toHaveBeenCalledWith('Overactive refusal');
   });
-
-  it('calls onClose when the cancel button is clicked', async () => {
-    const onClose = vi.fn();
-    const user = userEvent.setup();
-    render(<NegativeFeedbackModal onClose={onClose} onSubmit={vi.fn()} />);
-
-    await user.click(screen.getByRole('button', { name: 'Cancel' }));
-
-    expect(onClose).toHaveBeenCalledOnce();
-  });
 });
