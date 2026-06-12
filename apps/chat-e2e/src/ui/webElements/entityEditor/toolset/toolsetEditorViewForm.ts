@@ -127,6 +127,12 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     AddToolsetSettingsFormSelector.allowedToolsLabelSubtitle,
   );
   public allowedTools = new Combobox(this.page, this.rootLocator);
+  public connectToolsetLabel = this.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.connectToolsetLabel,
+  );
+  public connectToolsetHint = this.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.connectToolsetHint,
+  );
   public copyUrlButton = new Button(
     this.page,
     AddToolsetSettingsFormSelector.copyUrlButton,

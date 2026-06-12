@@ -4,6 +4,7 @@ import {
   API,
   Creds,
   EntityEditorToolsetTypes,
+  ExpectedConnectToolsetModalData,
   ExpectedConstants,
   ExpectedMessages,
   OAuthOptions,
@@ -17,7 +18,11 @@ dialTest(
     '[Toolsets] Create toolset with API key without login.\n' +
     'Login from card detailed view to toolset with API key from My workspace.\n' +
     '[Toolset]: api key value is hidden with dots in login modal form.\n' +
-    'Logout from card detailed view menu for toolset with API key from My workspace',
+    'Logout from card detailed view menu for toolset with API key from My workspace.\n' +
+    '[Toolset][Connect]: connect button for not public toolset.\n' +
+    '[Toolset]: Connect button is available for logged out toolset.\n' +
+    '[Toolset]: Connect link format.\n' +
+    '[Toolset]: Connect section is available in Toolset editor for not public toolset',
   async ({
     marketplacePage,
     entityEditorPage,
@@ -34,6 +39,8 @@ dialTest(
     confirmationDialogAssertion,
     toolsetApiHelper,
     toolsetApiAuthenticationAssertion,
+    connectToolsetModal,
+    baseAssertion,
     page,
   }) => {
     setTestIds(
@@ -42,6 +49,10 @@ dialTest(
       'EPMRTC-7934',
       'EPMRTC-8084',
       'EPMRTC-7937',
+      'EPMRTC-8743',
+      'EPMRTC-8747',
+      'EPMRTC-8749',
+      'EPMRTC-8761',
     );
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
@@ -51,6 +62,7 @@ dialTest(
     };
     let apiKeyMockHelper: ApiKeyMockHelper;
     let initialToolset: Toolset;
+    let savedToolset: Toolset;
 
     await dialTest.step('Open toolset creation page directly', async () => {
       await marketplacePage.openCreateToolsetPage();
@@ -71,6 +83,48 @@ dialTest(
         });
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorToolsetTypes.Toolset,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Verify Connect toolset section is visible in the editor with title, hint and Copy URL button',
+      async () => {
+        await toolsetEditorViewFormAssertion.assertElementState(
+          toolsetEditorViewForm.connectToolsetLabel,
+          'visible',
+        );
+        await toolsetEditorViewFormAssertion.assertElementText(
+          toolsetEditorViewForm.connectToolsetLabel,
+          'Connect toolset',
+        );
+        await toolsetEditorViewFormAssertion.assertElementState(
+          toolsetEditorViewForm.connectToolsetHint,
+          'visible',
+        );
+        await toolsetEditorViewFormAssertion.assertElementText(
+          toolsetEditorViewForm.connectToolsetHint,
+          'Copy endpoint URL to easily integrate toolset into your workflows',
+        );
+        await toolsetEditorViewFormAssertion.assertElementState(
+          toolsetEditorViewForm.copyUrlButton,
+          'visible',
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click Copy URL button in editor and verify URL is copied to clipboard',
+      async () => {
+        savedToolset = (await toolsetApiHelper.getToolset(
+          toolsetEntity.name,
+          toolsetEntity.version,
+        ))!;
+        await toolsetEditorViewForm.copyUrlButton.click();
+        const copiedUrl = await marketplacePage.readTextFromClipboard();
+        toolsetEditorViewFormAssertion.assertValueMatchPattern(
+          copiedUrl,
+          ExpectedConstants.copyToolsetUrlPattern(savedToolset),
         );
       },
     );
@@ -142,6 +196,32 @@ dialTest(
         await entityDetailsModalAssertion.assertEntityCommonAttributes({
           expectedCredsLabel: Creds.loggedOut,
         });
+      },
+    );
+
+    await dialTest.step(
+      'Click Connect button and verify Connect toolset modal is displayed',
+      async () => {
+        await entityDetailsModal.connectButton.click();
+        await baseAssertion.assertElementState(connectToolsetModal, 'visible');
+        await baseAssertion.assertElementText(
+          connectToolsetModal.header,
+          ExpectedConnectToolsetModalData.header,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Click Copy URL button and verify URL is copied to clipboard',
+      async () => {
+        await connectToolsetModal.copyUrlButton.click();
+        const copiedUrl = await marketplacePage.readTextFromClipboard();
+        baseAssertion.assertValueMatchPattern(
+          copiedUrl,
+          ExpectedConstants.copyToolsetUrlPattern(savedToolset),
+        );
+        await connectToolsetModal.getCloseButton().click();
+        await baseAssertion.assertElementState(connectToolsetModal, 'hidden');
       },
     );
 
