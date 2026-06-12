@@ -1,6 +1,7 @@
 import { MessageRole, type Message } from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { AttachmentsI18nKeys } from '../../../constants/translation-keys';
 import ConversationMessageItem from '../ConversationMessageItem';
 
 const mockHandleAttachmentClick = vi.fn();
@@ -65,19 +66,16 @@ afterEach(() => {
   vi.clearAllMocks();
 });
 
-// t() returns the key in tests; AttachmentsI18nKeys.Download = 'attachments.downloadFile'
-const CLICK_LABEL = 'attachments.downloadFile';
-
 describe('ConversationMessageItem — main render', () => {
   it('attachment card is clickable and fires handleAttachmentClick', () => {
     render(<ConversationMessageItem {...defaultProps} />);
-    fireEvent.click(screen.getByLabelText(CLICK_LABEL));
+    fireEvent.click(screen.getByLabelText(AttachmentsI18nKeys.Download));
     expect(mockHandleAttachmentClick).toHaveBeenCalledOnce();
   });
 
   it('passes the correct DisplayAttachment to handleAttachmentClick', () => {
     render(<ConversationMessageItem {...defaultProps} />);
-    fireEvent.click(screen.getByLabelText(CLICK_LABEL));
+    fireEvent.click(screen.getByLabelText(AttachmentsI18nKeys.Download));
     expect(mockHandleAttachmentClick).toHaveBeenCalledWith(
       expect.objectContaining({ url: 'files/report.pdf', name: 'report.pdf' }),
     );
@@ -93,7 +91,7 @@ describe('ConversationMessageItem — Suspense fallback', () => {
       />,
     );
     // The fallback bubble renders while EditMessageInput suspends
-    fireEvent.click(screen.getByLabelText(CLICK_LABEL));
+    fireEvent.click(screen.getByLabelText(AttachmentsI18nKeys.Download));
     expect(mockHandleAttachmentClick).toHaveBeenCalledOnce();
   });
 });

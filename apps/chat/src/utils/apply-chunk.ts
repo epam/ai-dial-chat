@@ -39,9 +39,10 @@ export const applyChunkToMessages = (
   const formSchema = delta?.custom_content?.form_schema;
   const attachments = delta?.custom_content?.attachments;
   const stages = delta?.custom_content?.stages;
+  const hasContentUpdate = !!content || !!formSchema || !!attachments?.length || !!stages?.length;
+  const responseId = delta?.responseId ?? (hasContentUpdate ? chunk.id : undefined);
 
-  if (!content && !formSchema && !attachments?.length && !stages?.length)
-    return null;
+  if (!hasContentUpdate && !responseId) return null;
 
   return messages.map((message, index) => {
     if (index !== messageIndex) return message;
@@ -52,6 +53,7 @@ export const applyChunkToMessages = (
     return {
       ...message,
       content: content ? message.content + content : message.content,
+      ...(responseId && { responseId }),
       ...(hasCustomContentUpdate && {
         custom_content: {
           ...message.custom_content,

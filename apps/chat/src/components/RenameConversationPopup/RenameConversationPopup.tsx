@@ -3,7 +3,7 @@ import { memo, useCallback, useEffect, useRef, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
-  ConversationHistoryI18nKeys,
+  ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
 import { getUtf8ByteLength } from '../../utils/string-utils';
 
@@ -55,7 +55,7 @@ const RenameConversationPopup: FC<Props> = ({
   return (
     <DialFormPopup
       open={isOpen}
-      header={t(ConversationHistoryI18nKeys.RenameTitle)}
+      header={t(ConversationPanelI18nKeys.RenameTitle)}
       size={PopupSize.Sm}
       onClose={onCancel}
       onCancel={onCancel}
@@ -69,10 +69,10 @@ const RenameConversationPopup: FC<Props> = ({
         <DialInput
           inputRef={inputRef}
           value={value}
-          placeholder={t(ConversationHistoryI18nKeys.RenameInputPlaceholder)}
+          placeholder={t(ConversationPanelI18nKeys.RenameInputPlaceholder)}
           error={
             isTooLong
-              ? t(ConversationHistoryI18nKeys.RenameTitleTooLong)
+              ? t(ConversationPanelI18nKeys.RenameTitleTooLong)
               : (error ?? undefined)
           }
           onChange={(v) => setValue(v ?? '')}

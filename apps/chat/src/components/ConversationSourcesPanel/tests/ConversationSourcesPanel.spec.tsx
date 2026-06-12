@@ -4,7 +4,10 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import { BasicI18nKeys } from '../../../constants/translation-keys';
+import {
+  BasicI18nKeys,
+  SidebarI18nKeys,
+} from '../../../constants/translation-keys';
 import ConversationSourcesPanel from '../ConversationSourcesPanel';
 
 const mockHandleAttachmentClick = vi.fn();
@@ -151,7 +154,7 @@ describe('ConversationSourcesPanel', () => {
       screen.queryByRole('button', { name: BasicI18nKeys.SearchPlaceholder }),
     ).toBeNull();
     expect(
-      screen.queryByRole('button', { name: 'sidebar.sources.downloadAll' }),
+      screen.queryByRole('button', { name: SidebarI18nKeys.DownloadAll }),
     ).toBeNull();
   });
 
@@ -171,12 +174,10 @@ describe('ConversationSourcesPanel', () => {
     ]);
     const headings = screen.getAllByRole('heading');
     const texts = headings.map((h) => h.textContent);
-    expect(texts).toContain('sidebar.sources.sections.uploadedFiles');
-    expect(texts).toContain('sidebar.sources.sections.generatedFiles');
-    const uploadedIdx = texts.indexOf('sidebar.sources.sections.uploadedFiles');
-    const generatedIdx = texts.indexOf(
-      'sidebar.sources.sections.generatedFiles',
-    );
+    expect(texts).toContain(SidebarI18nKeys.SectionUploadedFiles);
+    expect(texts).toContain(SidebarI18nKeys.SectionGeneratedFiles);
+    const uploadedIdx = texts.indexOf(SidebarI18nKeys.SectionUploadedFiles);
+    const generatedIdx = texts.indexOf(SidebarI18nKeys.SectionGeneratedFiles);
     expect(uploadedIdx).toBeLessThan(generatedIdx);
   });
 });
