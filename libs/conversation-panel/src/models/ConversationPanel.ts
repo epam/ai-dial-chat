@@ -39,6 +39,12 @@ export interface ConversationHistoryItem {
   source?: ConversationSource;
   /** URL of the model or conversation icon. When absent a default icon is shown. */
   iconUrl?: string;
+  /**
+   * Browser-navigable URL for the conversation (e.g. `/conversations/<id>`).
+   * When provided, a middle mouse button click on the row opens this URL in a new tab,
+   * matching standard browser link behaviour.
+   */
+  href?: string;
 }
 
 /** Font overrides for the header title in `ConversationPanel`. */
