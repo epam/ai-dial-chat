@@ -85,6 +85,9 @@ const EmptyChatDescriptionView = ({
     SettingsSelectors.selectEnabledFeatures,
   );
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
+  const isOptimisticDefaultModelLoad = useAppSelector(
+    SettingsSelectors.selectIsOptimisticDefaultModelLoad,
+  );
 
   const screenState = useScreenState();
 
@@ -125,7 +128,10 @@ const EmptyChatDescriptionView = ({
     [conversation.id, dispatch],
   );
 
-  if (models.length === 0) {
+  // On the optimistic fast path the models listing may not be loaded yet;
+  // render the description using the known default model reference instead of
+  // blocking on a spinner.
+  if (models.length === 0 && !isOptimisticDefaultModelLoad) {
     return (
       <div className="flex w-full items-center justify-center rounded-t p-4">
         <Spinner size={DEFAULT_ICON_SIZES.SMALL} className="mx-auto" />

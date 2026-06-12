@@ -258,6 +258,15 @@ const selectDefaults = createSelector(
 const selectInitialDataStatus = (state: RootState) =>
   rootSelector(state).initialDataStatus;
 
+const selectIsOptimisticLoadEnabled = (state: RootState) =>
+  rootSelector(state).isOptimisticLoadEnabled;
+
+// True only when optimistic load is enabled via env and a default model is
+// known from server-side settings.
+const selectIsOptimisticDefaultModelLoad = (state: RootState) =>
+  rootSelector(state).isOptimisticLoadEnabled &&
+  !!rootSelector(state).defaultModelReference;
+
 const selectProviderId = (state: RootState) => rootSelector(state).providerId;
 
 const selectWidgetsSchemaIds = (state: RootState) =>
@@ -321,6 +330,8 @@ export const SettingsSelectors = {
   selectOverlayDefaultModelReference,
   selectDefaults,
   selectInitialDataStatus,
+  selectIsOptimisticLoadEnabled,
+  selectIsOptimisticDefaultModelLoad,
   selectProviderId,
   selectWidgetsSchemaIds,
   selectIsAuthDisabled,
