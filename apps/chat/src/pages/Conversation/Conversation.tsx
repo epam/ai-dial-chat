@@ -19,7 +19,7 @@ import NegativeFeedbackModal from '../../components/ConversationView/NegativeFee
 import RatingToast from '../../components/ConversationView/RatingToast';
 import { getConversationRoute, ROUTES } from '../../constants/routes';
 import {
-  ActionsI18nKeys,
+  ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationHistoryI18nKeys,
 } from '../../constants/translation-keys';
@@ -151,7 +151,10 @@ export const ConversationPage: FC = () => {
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
-    return () => handleCloseSourcesSidebar();
+    return () => {
+      handleCloseSourcesSidebar();
+      setMessages([]);
+    };
   }, [handleCloseSourcesSidebar, conversation?.messages, setMessages]);
 
   const addStatusMessage = useCallback(
@@ -205,7 +208,11 @@ export const ConversationPage: FC = () => {
         // Restore the last selected agent from the conversation's change history
         // so the deployment selector reflects what was active, not the default.
         const lastDeploymentId = getLastDeploymentId(result.messages);
-        setSelectedItemId(lastDeploymentId ?? result.assistantModelId);
+        const modelToSelect =
+          lastDeploymentId ?? (result.assistantModelId || result.model.id);
+        if (modelToSelect) {
+          setSelectedItemId(modelToSelect);
+        }
 
         const lastMsg = result.messages[result.messages.length - 1];
 
@@ -374,8 +381,8 @@ export const ConversationPage: FC = () => {
         open={pendingDeleteIndex != null}
         header={t(ChatI18nKeys.DeleteMessageTitle)}
         description={t(ChatI18nKeys.DeleteMessageDescription)}
-        confirmLabel={t(ActionsI18nKeys.Delete)}
-        cancelLabel={t(ActionsI18nKeys.Cancel)}
+        confirmLabel={t(ButtonsI18nKeys.Delete)}
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
         onConfirm={handleConfirmDelete}
         onClose={() => setPendingDeleteIndex(null)}
@@ -388,8 +395,8 @@ export const ConversationPage: FC = () => {
           pendingStarterContext?.starter['dial:widgetOptions']
             .confirmationMessage ?? ''
         }
-        confirmLabel={t(ActionsI18nKeys.Confirm)}
-        cancelLabel={t(ActionsI18nKeys.Cancel)}
+        confirmLabel={t(ButtonsI18nKeys.Confirm)}
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
         onConfirm={handleConfirmStarter}
         onClose={() => setPendingStarterContext(null)}
       />

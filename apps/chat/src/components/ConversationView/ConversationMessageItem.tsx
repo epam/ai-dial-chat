@@ -1,10 +1,10 @@
 import {
-  MessageRole,
   isStatusMessage,
+  MessageRole,
   type Attachment,
   type DisplayAttachment,
-  type Message as MessageType,
   type MessageRating,
+  type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
@@ -12,11 +12,11 @@ import {
   type MessageActionAriaLabels,
   type MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
-import { StagesPanel } from '@epam/ai-dial-conversation-stages';
+import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { FC, lazy, memo, Suspense } from 'react';
 import { useTranslation } from 'react-i18next';
-import { MessagesI18nKeys } from '../../constants/translation-keys';
+import { AttachmentsI18nKeys } from '../../constants/translation-keys';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
 import { messageHasStages } from '../../utils/message-utils';
@@ -77,6 +77,8 @@ interface Props {
   formatStatusModelChangedBody: (from: string, to: string) => string;
   streamErrorText: string;
   thinkingLabel: string;
+  executedLabel: string;
+  stepsLabel: (count: number) => string;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -110,6 +112,8 @@ const ConversationMessageItem: FC<Props> = ({
   formatStatusModelChangedBody,
   streamErrorText,
   thinkingLabel,
+  executedLabel,
+  stepsLabel,
 }) => {
   const { t } = useTranslation();
   const { handleAttachmentClick } = useAttachmentAction();
@@ -138,7 +142,7 @@ const ConversationMessageItem: FC<Props> = ({
               showMoreAriaLabel={showMoreUserMessageAriaLabel}
               showLessAriaLabel={showLessUserMessageAriaLabel}
               onAttachmentClick={handleAttachmentClick}
-              attachmentClickLabel={t(MessagesI18nKeys.AttachmentDownloadLabel)}
+              attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
               className="justify-end"
             />
           }
@@ -217,9 +221,11 @@ const ConversationMessageItem: FC<Props> = ({
         hasStages || msg.hasStreamError ? (
           <>
             {hasStages && (
-              <StagesPanel
+              <CollapsedGroup
                 stages={msg.custom_content?.stages ?? []}
                 isStreaming={isStreaming}
+                executedLabel={executedLabel}
+                stepsLabel={stepsLabel}
               />
             )}
             {msg.hasStreamError && (
@@ -244,7 +250,7 @@ const ConversationMessageItem: FC<Props> = ({
       deploymentDisplayName={deploymentEntry?.displayName}
       thinkingLabel={thinkingLabel}
       onAttachmentClick={handleAttachmentClick}
-      attachmentClickLabel={t(MessagesI18nKeys.AttachmentDownloadLabel)}
+      attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
       {...statusProps}
     />
   );

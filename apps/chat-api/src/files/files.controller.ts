@@ -103,8 +103,10 @@ export class FilesController {
       res.setHeader(key, value);
     }
 
-    await pipeline(Readable.fromWeb(stream as ReadableStream), res).catch(() => {
-      res.destroy();
-    });
+    await pipeline(Readable.fromWeb(stream as ReadableStream), res).catch(
+      () => {
+        res.destroy();
+      },
+    );
   }
 }

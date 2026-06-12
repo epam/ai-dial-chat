@@ -63,6 +63,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           src={deploymentIconUrl}
           size={28}
           badgeClassName={styles.agentIconBadge}
+          tooltip={deploymentDisplayName}
         />
       )}
       <div className="flex w-full min-w-0 max-w-full flex-col items-start gap-5">

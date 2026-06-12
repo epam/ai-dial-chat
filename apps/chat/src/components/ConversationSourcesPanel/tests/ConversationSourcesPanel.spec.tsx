@@ -4,6 +4,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { BasicI18nKeys } from '../../../constants/translation-keys';
 import ConversationSourcesPanel from '../ConversationSourcesPanel';
 
 const mockHandleAttachmentClick = vi.fn();
@@ -21,7 +22,8 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
 }));
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
-  PanelEmptyState: ({ label }: { label: string }) => <div>{label}</div>,
+  PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
+  PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
   SidebarPanel: ({
     children,
     isOpen,
@@ -143,10 +145,10 @@ describe('ConversationSourcesPanel', () => {
   it('renders the panel empty state when the conversation has no files', () => {
     renderPanel();
 
-    expect(screen.getByText('sidebar.sources.noData')).toBeTruthy();
+    expect(screen.getByText(BasicI18nKeys.Empty)).toBeTruthy();
     expect(screen.queryByRole('heading')).toBeNull();
     expect(
-      screen.queryByRole('button', { name: 'sidebar.sources.search' }),
+      screen.queryByRole('button', { name: BasicI18nKeys.SearchPlaceholder }),
     ).toBeNull();
     expect(
       screen.queryByRole('button', { name: 'sidebar.sources.downloadAll' }),
@@ -217,7 +219,7 @@ describe('ConversationSourcesPanel — search', () => {
 
     await user.type(screen.getByRole('searchbox'), 'zzznomatch');
 
-    expect(screen.getByText('sidebar.sources.noResults')).toBeTruthy();
+    expect(screen.getByText(BasicI18nKeys.NoResults)).toBeTruthy();
     expect(screen.queryByRole('heading')).toBeNull();
   });
 
@@ -231,12 +233,12 @@ describe('ConversationSourcesPanel — search', () => {
 
     const input = screen.getByRole('searchbox');
     await user.type(input, 'zzznomatch');
-    expect(screen.getByText('sidebar.sources.noResults')).toBeTruthy();
+    expect(screen.getByText(BasicI18nKeys.NoResults)).toBeTruthy();
 
     await user.clear(input);
     expect(screen.getByText('upload.pdf')).toBeTruthy();
     expect(screen.getByText('result.csv')).toBeTruthy();
-    expect(screen.queryByText('sidebar.sources.noResults')).toBeNull();
+    expect(screen.queryByText(BasicI18nKeys.NoResults)).toBeNull();
   });
 
   // 5.4 — closing/opening panel resets the search input

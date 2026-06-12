@@ -33,7 +33,8 @@ import {
   ROUTES,
 } from '../../constants/routes';
 import {
-  ActionsI18nKeys,
+  BasicI18nKeys,
+  ButtonsI18nKeys,
   ConversationHistoryI18nKeys,
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
@@ -74,6 +75,10 @@ const ConversationPanelView: FC<Props> = ({
   const { items: deployments } = useDeployments();
   const deploymentIconByModelId = useMemo(
     () => new Map(deployments.map((d) => [d.id, d.iconUrl])),
+    [deployments],
+  );
+  const deploymentNameByModelId = useMemo(
+    () => new Map(deployments.map((d) => [d.id, d.displayName ?? d.id])),
     [deployments],
   );
 
@@ -142,10 +147,14 @@ const ConversationPanelView: FC<Props> = ({
           title: item.title,
           isPinned: item.isPinned ?? false,
           iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
+          iconTooltip: modelId
+            ? deploymentNameByModelId.get(modelId)
+            : undefined,
           source: getConversationSource(item),
+          href: getConversationRoute(id),
         };
       }),
-    [items, deploymentIconByModelId],
+    [items, deploymentIconByModelId, deploymentNameByModelId],
   );
 
   const filterLabels = useMemo(
@@ -191,7 +200,7 @@ const ConversationPanelView: FC<Props> = ({
         },
         {
           key: 'rename',
-          label: t(ConversationHistoryI18nKeys.RenameLabel),
+          label: t(ButtonsI18nKeys.Rename),
           icon: (
             <IconPencilMinus
               size={DIAL_ICON_SIZE.SM}
@@ -203,7 +212,7 @@ const ConversationPanelView: FC<Props> = ({
         },
         {
           key: 'duplicate',
-          label: t(ConversationHistoryI18nKeys.DuplicateLabel),
+          label: t(ButtonsI18nKeys.Duplicate),
           icon: (
             <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />
           ),
@@ -219,7 +228,7 @@ const ConversationPanelView: FC<Props> = ({
         },
         {
           key: 'delete',
-          label: t(ConversationHistoryI18nKeys.DeleteLabel),
+          label: t(ButtonsI18nKeys.Delete),
           icon: (
             <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-secondary" />
           ),
@@ -325,10 +334,10 @@ const ConversationPanelView: FC<Props> = ({
         activeConversationId={activeConversationId}
         title={t(ConversationHistoryI18nKeys.Title)}
         emptyLabel={t(ConversationHistoryI18nKeys.Empty)}
-        noResultsLabel={t(ConversationHistoryI18nKeys.NoResults)}
+        noResultsLabel={t(BasicI18nKeys.NoResults)}
         onNewChat={onNewChat}
         newChatLabel={t(ConversationHistoryI18nKeys.NewChat)}
-        searchPlaceholder={t(ConversationHistoryI18nKeys.SearchPlaceholder)}
+        searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
         filterLabels={filterLabels}
         groupLabels={groupLabels}
         getActions={getActions}
@@ -342,8 +351,8 @@ const ConversationPanelView: FC<Props> = ({
       <DialConfirmationPopup
         open={!!pendingDeleteId}
         header={t(ConversationHistoryI18nKeys.DeleteConfirmTitle)}
-        confirmLabel={t(ActionsI18nKeys.Delete)}
-        cancelLabel={t(ActionsI18nKeys.Cancel)}
+        confirmLabel={t(ButtonsI18nKeys.Delete)}
+        cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
         isLoading={isDeleting}
         description={

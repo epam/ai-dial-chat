@@ -1,10 +1,8 @@
 {
   "basic": {
-    "searchPlaceholder": "Search..."
-  },
-  "buttons": {
-    "showMore": "Show more",
-    "showLess": "Show less"
+    "searchPlaceholder": "Search...",
+    "noResults": "No results found",
+    "noData": "No data"
   },
   "chat": {
     "welcomeText": "Hello World, good day for prompting!",
@@ -63,17 +61,24 @@
       "closeLabel": "Close model selector"
     }
   },
-  "actions": {
-    "add": "Add",
+  "buttons": {
+    "showMore": "Show more",
+    "showLess": "Show less",
     "delete": "Delete",
-    "cancel": "Cancel",
     "confirm": "Confirm",
+    "cancel": "Cancel",
+    "add": "Add",
+    "save": "Save",
+    "close": "Close",
+    "apply": "Apply",
     "edit": "Edit",
     "regenerate": "Regenerate",
     "copy": "Copy",
     "copied": "Copied!",
     "like": "Like",
+    "rename": "Rename",
     "dislike": "Dislike",
+    "duplicate": "Duplicate",
     "saveAndSubmit": "Save & Submit",
     "editMessage": "Edit message",
     "deleteMessage": "Delete message",
@@ -81,8 +86,7 @@
     "copyResponse": "Copy response",
     "copyAsMarkdown": "Copy as markdown",
     "likeResponse": "Like response",
-    "dislikeResponse": "Dislike response",
-    "save": "Save"
+    "dislikeResponse": "Dislike response"
   },
   "errors": {
     "generic": "Something went wrong",
@@ -107,22 +111,15 @@
   "sidebar": {
     "base": {
       "toggleOpen": "Open sidebar",
-      "toggleClose": "Close sidebar",
-      "close": "Close"
+      "toggleClose": "Close sidebar"
     },
     "sources": {
       "ariaLabel": "Conversation sources",
-      "search": "Search...",
       "downloadAll": "Download all",
-      "noResults": "No results found",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",
         "sources": "Sources"
-      },
-      "noData": "No data",
-      "attachment": {
-        "downloadLabel": "Download file"
       }
     }
   },
@@ -130,15 +127,18 @@
     "statusMessage": {
       "modelChangedTitle": "Model switched.",
       "modelChangedBody": "The model has been switched from {{from}} to {{to}}."
+    },
+    "stages": {
+      "executed": "Executed",
+      "step_one": "step",
+      "step_other": "steps"
     }
   },
   "conversationHistory": {
     "title": "Chats",
     "toggleAriaLabel": "Conversation panel",
     "empty": "No conversations yet",
-    "noResults": "No results found",
     "newChat": "New chat",
-    "searchPlaceholder": "Search chat…",
     "filterAll": "All",
     "filterMyChats": "My chats",
     "filterShared": "Shared",
@@ -148,16 +148,13 @@
     "actionsLabel": "More actions",
     "pinLabel": "Pin",
     "unpinLabel": "Unpin",
-    "deleteLabel": "Delete",
     "deleteConfirmTitle": "Confirm Deleting Chat",
     "deleteConfirmDescription": "Are you sure you want to delete",
     "deleteError": "Failed to delete the conversation. Please try again.",
     "renameTitle": "Rename Chat",
-    "renameLabel": "Rename",
     "renameInputPlaceholder": "Chat name",
     "renameError": "Failed to rename. Please try again.",
     "renameTitleTooLong": "The name is too long. Please shorten it and try again.",
-    "duplicateLabel": "Duplicate",
     "duplicateReadOnlyDescription": "Duplicate the conversation to be able to edit it",
     "duplicateError": "Failed to duplicate the conversation. Please try again."
   },
@@ -170,20 +167,20 @@
     "providerButtonLabel": "Sign in with {{provider}}",
     "providersError": "Could not load identity providers. Please retry.",
     "userMenuLabel": "User menu",
-    "settings": "Settings",
     "logOut": "Log out",
     "logOutConfirmTitle": "Log out?",
-    "logOutConfirmDescription": "Are you sure you want to log out?",
-    "logOutConfirm": "Log out"
+    "logOutConfirmDescription": "Are you sure you want to log out?"
   },
   "settings": {
-    "title": "Settings",
     "theme": "Theme",
-    "apply": "Apply"
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "themeSystem": "System",
+    "keyboardShortcuts": "Keyboard shortcuts",
+    "shortcutEnter": "Enter — send message, Shift+Enter",
+    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter"
   },
-  "messages": {
-    "attachment": {
-      "downloadLabel": "Download file"
-    }
+  "attachments": {
+    "downloadFile": "Download file"
   }
 }

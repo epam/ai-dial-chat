@@ -21,6 +21,7 @@ import {
 import { useClipboardPaste } from '../../hooks/useClipboardPaste';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
+import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { generateAttachmentId } from '../../utils/generateAttachmentId';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
@@ -69,6 +70,9 @@ export const Input: FC<InputProps> = ({
   isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
+  sendOnEnter = SendOnEnter.Enter,
+  prefixAttachments = [],
+  onRemovePrefixAttachment,
 }) => {
   const isMobile = useIsMobile();
   const cssVars = useMemo(
@@ -125,6 +129,7 @@ export const Input: FC<InputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const singleRowHeightRef = useRef<number>(0);
+  const restoreCursorPosRef = useRef<number | null>(null);
   const [isMultiLine, setIsMultiLine] = useState(false);
 
   useEffect(() => {
@@ -270,12 +275,36 @@ export const Input: FC<InputProps> = ({
     }
   };
 
+  useLayoutEffect(() => {
+    const pos = restoreCursorPosRef.current;
+    if (pos != null && isStackedLayout && textareaRef.current) {
+      restoreCursorPosRef.current = null;
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(pos, pos);
+    }
+  }, [isStackedLayout]);
+
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    const isEnterKey = e.key === 'Enter';
+    if (!isEnterKey) return;
+
+    const shouldSend =
+      sendOnEnter === SendOnEnter.MetaEnter
+        ? (e.metaKey || e.ctrlKey) && !e.shiftKey
+        : !e.shiftKey && !e.metaKey && !e.ctrlKey;
+
+    if (shouldSend) {
       e.preventDefault();
       if (!isStreaming && canSend && hasModelSelected) {
         handleSend();
       }
+    } else if (!isStackedLayout) {
+      // A newline will be inserted and the layout will transition from
+      // non-stacked to stacked, remounting the textarea and losing focus.
+      // Capture the position after the inserted '\n' so the layout-effect
+      // can restore both focus and the cursor to the correct location.
+      const pos = e.currentTarget.selectionStart ?? 0;
+      restoreCursorPosRef.current = pos + 1;
     }
   };
 
@@ -367,10 +396,16 @@ export const Input: FC<InputProps> = ({
         className,
       )}
     >
-      {attachments.length > 0 && (
+      {(prefixAttachments.length > 0 || attachments.length > 0) && (
         <AttachmentTray
-          attachments={attachments}
-          onRemove={handleRemove}
+          attachments={[...prefixAttachments, ...attachments]}
+          onRemove={(id) => {
+            if (prefixAttachments.some((a) => a.id === id)) {
+              onRemovePrefixAttachment?.(id);
+            } else {
+              handleRemove(id);
+            }
+          }}
           onRetry={handleRetry}
           onExpand={handleExpand}
           removeLabel={removeLabel}

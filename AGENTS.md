@@ -70,6 +70,10 @@ Default behavior:
 - Vite-built apps and libraries must use `moduleResolution: "bundler"` with an ES module mode such as `module: "esnext"`. Do not switch frontend code to `node16`/`nodenext` resolution to make `.js` source specifiers compile.
 - Native Node ESM packages that are executed without a bundler are a separate case: use a Node-compatible build strategy instead of introducing `.js` specifiers into shared frontend source.
 
+## TypeScript enums
+
+- Use string enums for named finite sets of statuses, modes, variants, or lifecycle states instead of string-literal union types. Prefer `enum UploadStatus { Idle = 'idle' }` over `type UploadStatus = 'idle' | ...` when the values are reused across a module, exported, or compared in component logic/tests.
+
 ## RTL and Arabic language support
 
 All apps and libs must support Arabic (`ar`) and any other right-to-left locale. Arabic changes the visual direction of the entire UI.

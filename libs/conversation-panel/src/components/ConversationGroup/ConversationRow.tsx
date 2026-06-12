@@ -4,13 +4,14 @@ import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialDropdown,
+  DialEllipsisTooltip,
   DialGhostButton,
   DialIconButton,
   ElementSize,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
-import { useState, type FC } from 'react';
+import { useCallback, useState, type FC, type MouseEvent } from 'react';
 import type { ConversationHistoryItem } from '../../models/ConversationPanel';
 import { getButtonPaddingEnd } from '../../utils/conversation-row.utils';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
@@ -47,18 +48,52 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
 
-  const avatar = <DeploymentIcon src={item.iconUrl} size={DIAL_ICON_SIZE.LG} />;
+  const avatar = (
+    <DeploymentIcon
+      src={item.iconUrl}
+      size={DIAL_ICON_SIZE.LG}
+      tooltip={item.iconTooltip}
+    />
+  );
 
   const buttonPaddingRight = getButtonPaddingEnd(hasActions, isMenuOpen);
+
+  const handleAuxClick = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      // Middle mouse button (button === 1) — open conversation in a new tab
+      if (e.button === 1 && item.href) {
+        e.preventDefault();
+        window.open(item.href, '_blank', 'noreferrer');
+      }
+    },
+    [item.href],
+  );
+
+  const handleMouseDown = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      // Prevent the browser autoscroll indicator from appearing on middle click
+      if (e.button === 1 && item.href) {
+        e.preventDefault();
+      }
+    },
+    [item.href],
+  );
 
   return (
     <li className="group relative">
       <DialGhostButton
         iconBefore={avatar}
-        label={item.title}
-        textClassName={mergeClasses('truncate min-w-0', itemTitleClassName)}
+        label={
+          <DialEllipsisTooltip
+            text={item.title}
+            className={itemTitleClassName}
+          />
+        }
+        textClassName="min-w-0"
         aria-current={isActive ? 'page' : undefined}
         onClick={() => onSelectConversation(item.id)}
+        onMouseDown={item.href ? handleMouseDown : undefined}
+        onAuxClick={item.href ? handleAuxClick : undefined}
         className={mergeClasses(
           'h-8 w-full justify-start gap-2 rounded-b rounded-t border-l-2 border-transparent ps-3',
           buttonPaddingRight,

@@ -7,6 +7,7 @@ import type {
   InputColors,
   InputTypography,
   ModelSelectorLabels,
+  SendOnEnter,
 } from './Input';
 
 /** CSS custom-property overrides for the `ConversationInput` component. */
@@ -155,4 +156,10 @@ export interface ConversationInputProps {
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
   /** Accessible label for the mic button. Defaults to `'Record voice message'`. */
   micLabel?: string;
+  /**
+   * Controls which key combination submits the message.
+   * - `SendOnEnter.Enter` (default): Enter submits; Shift+Enter inserts a newline.
+   * - `SendOnEnter.MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
+   */
+  sendOnEnter?: SendOnEnter;
 }

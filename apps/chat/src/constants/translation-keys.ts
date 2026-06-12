@@ -29,34 +29,36 @@ export enum ChatI18nKeys {
   Send = 'chat.send',
 }
 
+export enum BasicI18nKeys {
+  SearchPlaceholder = 'basic.searchPlaceholder',
+  NoResults = 'basic.noResults',
+  Empty = 'basic.noData',
+}
+
 export enum ButtonsI18nKeys {
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
-}
-
-export enum BasicI18nKeys {
-  SearchPlaceholder = 'basic.searchPlaceholder',
-}
-
-export enum ActionsI18nKeys {
-  Delete = 'actions.delete',
-  Cancel = 'actions.cancel',
-  Confirm = 'actions.confirm',
-  Edit = 'actions.edit',
-  SaveAndSubmit = 'actions.saveAndSubmit',
-  Regenerate = 'actions.regenerate',
-  Copy = 'actions.copy',
-  Copied = 'actions.copied',
-  Like = 'actions.like',
-  Dislike = 'actions.dislike',
-  EditMessage = 'actions.editMessage',
-  DeleteMessage = 'actions.deleteMessage',
-  RegenerateResponse = 'actions.regenerateResponse',
-  CopyResponse = 'actions.copyResponse',
-  CopyAsMarkdown = 'actions.copyAsMarkdown',
-  LikeResponse = 'actions.likeResponse',
-  DislikeResponse = 'actions.dislikeResponse',
-  Save = 'actions.save',
+  Delete = 'buttons.delete',
+  Cancel = 'buttons.cancel',
+  Confirm = 'buttons.confirm',
+  Edit = 'buttons.edit',
+  SaveAndSubmit = 'buttons.saveAndSubmit',
+  Regenerate = 'buttons.regenerate',
+  Copy = 'buttons.copy',
+  Copied = 'buttons.copied',
+  Like = 'buttons.like',
+  Dislike = 'buttons.dislike',
+  Rename = 'buttons.rename',
+  Duplicate = 'buttons.duplicate',
+  EditMessage = 'buttons.editMessage',
+  DeleteMessage = 'buttons.deleteMessage',
+  RegenerateResponse = 'buttons.regenerateResponse',
+  CopyResponse = 'buttons.copyResponse',
+  CopyAsMarkdown = 'buttons.copyAsMarkdown',
+  LikeResponse = 'buttons.likeResponse',
+  DislikeResponse = 'buttons.dislikeResponse',
+  Save = 'buttons.save',
+  Close = 'buttons.close',
 }
 
 export enum NavigationI18nKeys {
@@ -86,6 +88,8 @@ export enum DeploymentsI18nKeys {
 export enum ConversationI18nKeys {
   StatusModelChangedTitle = 'conversation.statusMessage.modelChangedTitle',
   StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
+  StagesExecuted = 'conversation.stages.executed',
+  StagesStep = 'conversation.stages.step',
 }
 
 export enum AuthI18nKeys {
@@ -97,26 +101,26 @@ export enum AuthI18nKeys {
   ProviderButtonLabel = 'auth.providerButtonLabel',
   ProvidersError = 'auth.providersError',
   UserMenuLabel = 'auth.userMenuLabel',
-  Settings = 'auth.settings',
   LogOut = 'auth.logOut',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
-  LogOutConfirm = 'auth.logOutConfirm',
 }
 
 export enum SettingsI18nKeys {
-  Title = 'settings.title',
   Theme = 'settings.theme',
-  Apply = 'settings.apply',
+  ThemeDark = 'settings.themeDark',
+  ThemeLight = 'settings.themeLight',
+  ThemeSystem = 'settings.themeSystem',
+  KeyboardShortcuts = 'settings.keyboardShortcuts',
+  ShortcutEnter = 'settings.shortcutEnter',
+  ShortcutMetaEnter = 'settings.shortcutMetaEnter',
 }
 
 export enum ConversationHistoryI18nKeys {
   Title = 'conversationHistory.title',
   ToggleAriaLabel = 'conversationHistory.toggleAriaLabel',
   Empty = 'conversationHistory.empty',
-  NoResults = 'conversationHistory.noResults',
   NewChat = 'conversationHistory.newChat',
-  SearchPlaceholder = 'conversationHistory.searchPlaceholder',
   FilterAll = 'conversationHistory.filterAll',
   FilterMyChats = 'conversationHistory.filterMyChats',
   FilterShared = 'conversationHistory.filterShared',
@@ -126,16 +130,13 @@ export enum ConversationHistoryI18nKeys {
   ActionsLabel = 'conversationHistory.actionsLabel',
   PinLabel = 'conversationHistory.pinLabel',
   UnpinLabel = 'conversationHistory.unpinLabel',
-  DeleteLabel = 'conversationHistory.deleteLabel',
   DeleteConfirmTitle = 'conversationHistory.deleteConfirmTitle',
   DeleteConfirmDescription = 'conversationHistory.deleteConfirmDescription',
   DeleteError = 'conversationHistory.deleteError',
   RenameTitle = 'conversationHistory.renameTitle',
-  RenameLabel = 'conversationHistory.renameLabel',
   RenameInputPlaceholder = 'conversationHistory.renameInputPlaceholder',
   RenameError = 'conversationHistory.renameError',
   RenameTitleTooLong = 'conversationHistory.renameTitleTooLong',
-  DuplicateLabel = 'conversationHistory.duplicateLabel',
   DuplicateReadOnlyDescription = 'conversationHistory.duplicateReadOnlyDescription',
   DuplicateError = 'conversationHistory.duplicateError',
 }
@@ -143,18 +144,13 @@ export enum ConversationHistoryI18nKeys {
 export enum SidebarI18nKeys {
   ToggleOpen = 'sidebar.base.toggleOpen',
   ToggleClose = 'sidebar.base.toggleClose',
-  Close = 'sidebar.base.close',
   AriaLabel = 'sidebar.sources.ariaLabel',
-  Search = 'sidebar.sources.search',
   DownloadAll = 'sidebar.sources.downloadAll',
-  NoResults = 'sidebar.sources.noResults',
   SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
   SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
   SectionSources = 'sidebar.sources.sections.sources',
-  Empty = 'sidebar.sources.noData',
-  AttachmentDownloadLabel = 'sidebar.sources.attachment.downloadLabel',
 }
 
-export enum MessagesI18nKeys {
-  AttachmentDownloadLabel = 'messages.attachment.downloadLabel',
+export enum AttachmentsI18nKeys {
+  Download = 'attachments.downloadFile',
 }
