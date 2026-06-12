@@ -59,6 +59,14 @@ Each section renders a disclosure button (chevron icon) as its header that toggl
 - **WHEN** the user clicks a conversation item
 - **THEN** `onSelectConversation` is called with that item's `id`
 
+#### Scenario: Middle mouse button click opens conversation in a new tab
+
+- **WHEN** the user middle-clicks (scroll wheel click) a conversation row
+- **THEN** the conversation URL (`item.href`) is opened in a new browser tab
+- **AND** the browser autoscroll indicator does NOT appear
+
+`ConversationHistoryItem` SHALL include an optional `href?: string` field — a browser-navigable URL for the conversation. When `href` is set, the row intercepts `mousedown` (button 1) to suppress the browser autoscroll cursor and intercepts `auxclick` (button 1) to call `window.open(href, '_blank', 'noreferrer')`. Both handlers are attached to the interactive `<button>` element (not the surrounding `<li>`). `ConversationPanelView` in `apps/chat` SHALL populate `href` using `getConversationRoute(id)` for each item.
+
 #### Scenario: Empty state is shown when no conversations
 
 - **WHEN** `conversations` is an empty array

@@ -121,6 +121,11 @@
     "statusMessage": {
       "modelChangedTitle": "Model switched.",
       "modelChangedBody": "The model has been switched from {{from}} to {{to}}."
+    },
+    "stages": {
+      "executed": "Executed",
+      "step_one": "step",
+      "step_other": "steps"
     }
   },
   "conversationHistory": {
@@ -161,15 +166,19 @@
     "providerButtonLabel": "Sign in with {{provider}}",
     "providersError": "Could not load identity providers. Please retry.",
     "userMenuLabel": "User menu",
-    "settings": "Settings",
     "logOut": "Log out",
     "logOutConfirmTitle": "Log out?",
     "logOutConfirmDescription": "Are you sure you want to log out?",
     "logOutConfirm": "Log out"
   },
   "settings": {
-    "title": "Settings",
     "theme": "Theme",
+    "themeDark": "Dark",
+    "themeLight": "Light",
+    "themeSystem": "System",
+    "keyboardShortcuts": "Keyboard shortcuts",
+    "shortcutEnter": "Enter — send message, Shift+Enter",
+    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter",
     "apply": "Apply"
   },
   "messages": {

@@ -15,6 +15,7 @@ export type {
   EditMessageInputProps,
 } from './models/ConversationInput';
 export type { InputProps, InputColors, InputTypography } from './models/Input';
+export { SendOnEnter } from './models/Input';
 export type {
   AttachmentCardProps,
   AttachmentCardColors,

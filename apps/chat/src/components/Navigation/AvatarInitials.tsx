@@ -2,25 +2,23 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { memo, type FC } from 'react';
 
 interface Props {
-  bg: string;
-  textColor: string;
   shortName: string | undefined;
+  colorClassName?: string;
   initialsClassName?: string;
 }
 
 const AvatarInitials: FC<Props> = ({
-  bg,
-  textColor,
   shortName,
+  colorClassName = 'bg-avatar-bg text-avatar-initials',
   initialsClassName = 'dial-tiny-text',
 }) => {
   return (
     <div
       className={mergeClasses(
         'flex size-[28px] flex-shrink-0 items-center justify-center rounded-full',
+        colorClassName,
         initialsClassName,
       )}
-      style={{ backgroundColor: bg, color: textColor }}
     >
       {shortName}
     </div>

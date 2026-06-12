@@ -131,7 +131,10 @@ export const ConversationPage: FC = () => {
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);
-    return () => handleCloseSourcesSidebar();
+    return () => {
+      handleCloseSourcesSidebar();
+      setMessages([]);
+    };
   }, [handleCloseSourcesSidebar, conversation?.messages, setMessages]);
 
   const addStatusMessage = useCallback(

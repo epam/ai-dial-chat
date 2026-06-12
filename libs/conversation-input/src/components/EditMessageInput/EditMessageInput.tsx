@@ -4,7 +4,6 @@ import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import { ChangeEvent, type FC, useCallback, useRef, useState } from 'react';
 import type { EditMessageInputProps } from '../../models/ConversationInput';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
-import { AttachmentTray } from '../AttachmentTray/AttachmentTray';
 import { Input } from '../Input/Input';
 
 export const EditMessageInput: FC<EditMessageInputProps> = ({
@@ -71,15 +70,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
 
   return (
     <div className={mergeClasses('flex w-full flex-col gap-2', className)}>
-      {keptAttachments.length > 0 && (
-        <AttachmentTray
-          attachments={keptAttachments}
-          onRemove={handleRemovePreExisting}
-          removeLabel={removeLabel}
-        />
-      )}
-
-      {/* Bordered box — contains only the textarea (and new attachment tray) */}
+      {/* Bordered box — contains kept attachments, new attachments, and the textarea */}
       <Input
         message={message}
         ariaLabel={ariaLabel}
@@ -94,6 +85,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         removeLabel={removeLabel}
         retryLabel={retryLabel}
         className="max-w-full"
+        prefixAttachments={keptAttachments}
+        onRemovePrefixAttachment={handleRemovePreExisting}
       />
 
       {/* Action row — outside the bordered box */}

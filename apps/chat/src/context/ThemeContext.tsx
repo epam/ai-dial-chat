@@ -8,13 +8,14 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { StorageKey } from '../constants/storage';
+import { StorageKey, ThemeId } from '../constants/storage';
 import { useFavicon } from '../hooks/favicon/useFavicon';
 import { ApiEndpoints, get } from '../server-api/base';
-import { applyThemeColors } from '../utils/apply-theme-colors';
-import { getFromLocalStorage } from '../utils/local-storage';
-
-const DEFAULT_THEME = 'dark';
+import {
+  applyThemeColors,
+  getOsPreferredTheme,
+} from '../utils/apply-theme-colors';
+import { getFromLocalStorage, setToLocalStorage } from '../utils/local-storage';
 
 interface ThemeContextType {
   currentTheme: string;
@@ -28,23 +29,34 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [config, setConfig] = useState<ThemeConfiguration | null>(null);
-  const [currentThemeId, setCurrentThemeId] = useState(DEFAULT_THEME);
+  const [currentThemeId, setCurrentThemeId] = useState<string>(ThemeId.Dark);
   const [currentLogo, setCurrentLogo] = useState<string | undefined>(void 0);
   const [isLoading, setIsLoading] = useState(true);
 
-  const updateTheme = useCallback(
-    (themeId: string) => {
-      const theme = config?.themes.find((t) => t.id === themeId);
+  const applyResolvedTheme = useCallback(
+    (resolvedId: string) => {
+      const theme = config?.themes.find((t) => t.id === resolvedId);
       const root = document.documentElement;
       applyThemeColors(root, theme);
-      setCurrentThemeId(themeId);
+      setCurrentThemeId(resolvedId);
       const updatedLogo =
-        themeId === DEFAULT_THEME
+        resolvedId === ThemeId.Dark
           ? config?.images['chat-logo-dark']
           : config?.images['chat-logo-light'];
       setCurrentLogo(updatedLogo);
     },
     [config],
+  );
+
+  const updateTheme = useCallback(
+    (themeId: string) => {
+      if (themeId === ThemeId.System) {
+        applyResolvedTheme(getOsPreferredTheme());
+      } else {
+        applyResolvedTheme(themeId);
+      }
+    },
+    [applyResolvedTheme],
   );
 
   useEffect(() => {
@@ -88,8 +100,20 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [config, updateTheme]);
 
+  // Subscribe to OS color scheme changes when the stored preference is 'system'
+  useEffect(() => {
+    const storedTheme = getFromLocalStorage(StorageKey.Theme);
+    if (storedTheme !== ThemeId.System) return;
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => applyResolvedTheme(getOsPreferredTheme());
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, [applyResolvedTheme]);
+
   const setTheme = useCallback(
     (themeId: string) => {
+      setToLocalStorage(StorageKey.Theme, themeId);
       updateTheme(themeId);
     },
     [updateTheme],

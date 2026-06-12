@@ -77,6 +77,8 @@ export enum DeploymentsI18nKeys {
 export enum ConversationI18nKeys {
   StatusModelChangedTitle = 'conversation.statusMessage.modelChangedTitle',
   StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
+  StagesExecuted = 'conversation.stages.executed',
+  StagesStep = 'conversation.stages.step',
 }
 
 export enum AuthI18nKeys {
@@ -88,7 +90,6 @@ export enum AuthI18nKeys {
   ProviderButtonLabel = 'auth.providerButtonLabel',
   ProvidersError = 'auth.providersError',
   UserMenuLabel = 'auth.userMenuLabel',
-  Settings = 'auth.settings',
   LogOut = 'auth.logOut',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
@@ -96,9 +97,13 @@ export enum AuthI18nKeys {
 }
 
 export enum SettingsI18nKeys {
-  Title = 'settings.title',
   Theme = 'settings.theme',
-  Apply = 'settings.apply',
+  ThemeDark = 'settings.themeDark',
+  ThemeLight = 'settings.themeLight',
+  ThemeSystem = 'settings.themeSystem',
+  KeyboardShortcuts = 'settings.keyboardShortcuts',
+  ShortcutEnter = 'settings.shortcutEnter',
+  ShortcutMetaEnter = 'settings.shortcutMetaEnter',
 }
 
 export enum ConversationHistoryI18nKeys {

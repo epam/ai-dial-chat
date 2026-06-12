@@ -150,6 +150,7 @@ const ConversationPanelView: FC<Props> = ({
             ? deploymentNameByModelId.get(modelId)
             : undefined,
           source: getConversationSource(item),
+          href: getConversationRoute(id),
         };
       }),
     [items, deploymentIconByModelId, deploymentNameByModelId],

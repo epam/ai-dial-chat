@@ -1,12 +1,6 @@
-# User Menu
+## MODIFIED Requirements
 
-## Overview
-
-The navigation sidebar avatar button opens a dropdown menu giving the user access to theme selection, keyboard shortcut preferences, and Log out. A Logout confirmation dialog guards the logout action.
-
----
-
-## Requirement: Avatar button opens a dropdown menu
+### Requirement: Avatar button opens a dropdown menu
 
 The avatar button in the navigation sidebar SHALL open a `DialDropdown` (`placement="top-end"`, `matchReferenceWidth={false}`) when clicked. The existing `DialTooltip` showing the user email SHALL be retained as the trigger child and SHALL be hidden on mobile (`hideTooltip={isMobile}` via `useIsMobile()`). The avatar button SHALL carry `aria-label={t('auth.signedInAs', { email })}`.
 
@@ -14,17 +8,9 @@ State ownership: local `isLogoutOpen` boolean inside `UserMenu`. The `isSettings
 
 i18n keys: `auth.logOut`, `auth.signedInAs`
 
-### Requirement: User identity header
+#### Requirement: User identity header
 
 The first menu item SHALL be a non-interactive `DropdownItemType.PlainText` row showing the user's avatar (image or initials fallback) and the user's display name (`user.claims['name']`). The display name SHALL be rendered with `DialEllipsisTooltip` to show the full name on hover when truncated. Header padding SHALL be `px-2 py-1`.
-
-### Requirement: Action items
-
-Log out SHALL include a left-aligned icon and label in `dial-small-text`:
-
-- **Log out** — `IconLogout` (16 px, `@tabler/icons-react`), opens `LogoutConfirmationModal`
-
-A `DropdownItemType.Divider` SHALL separate the identity header from the Theme and Keyboard shortcuts items. A second `DropdownItemType.Divider` SHALL separate the preference items from Log out.
 
 #### Scenario: Menu opens on avatar click
 - **WHEN** the user clicks the avatar button
@@ -38,13 +24,9 @@ A `DropdownItemType.Divider` SHALL separate the identity header from the Theme a
 - **WHEN** the viewport is mobile
 - **THEN** `DialTooltip` on the avatar button is hidden (`hideTooltip={isMobile}`)
 
-#### Scenario: Log out item opens confirmation
-- **WHEN** the user clicks Log out
-- **THEN** the dropdown closes and the Logout Confirmation modal opens
-
 ---
 
-## Requirement: Theme submenu item
+### Requirement: Theme submenu item
 
 A **Theme** item SHALL appear in the dropdown below the first divider. It SHALL render with a right-arrow indicator (via `DropdownItem.children`) that reveals a submenu on hover containing three options: **Dark**, **Light**, and **System**.
 
@@ -56,29 +38,29 @@ The active theme option SHALL be visually indicated (e.g., checkmark or bold lab
 
 i18n keys: `settings.theme`, `settings.themeDark`, `settings.themeLight`, `settings.themeSystem`
 
-### Scenario: Theme submenu opens on hover
+#### Scenario: Theme submenu opens on hover
 - **WHEN** the user hovers over the Theme item
 - **THEN** a submenu appears with Dark, Light, and System options
 
-### Scenario: Selecting Dark applies dark theme immediately
+#### Scenario: Selecting Dark applies dark theme immediately
 - **WHEN** the user clicks Dark in the Theme submenu
 - **THEN** `setTheme('dark')` is called and the theme changes without a confirmation step
 
-### Scenario: Selecting System follows OS preference
+#### Scenario: Selecting System follows OS preference
 - **WHEN** the user selects System AND the OS is in dark mode
 - **THEN** the dark theme is applied
 
-### Scenario: System theme responds to OS changes
+#### Scenario: System theme responds to OS changes
 - **WHEN** `preference = 'system'` AND the OS switches from dark to light mode
 - **THEN** the application theme switches to light automatically
 
-### Scenario: Active theme is visually indicated
+#### Scenario: Active theme is visually indicated
 - **WHEN** the Theme submenu is open
 - **THEN** the currently active theme option is visually distinguished from the others
 
 ---
 
-## Requirement: Keyboard shortcuts submenu item
+### Requirement: Keyboard shortcuts submenu item
 
 A **Keyboard shortcuts** item SHALL appear in the dropdown below the Theme item. It SHALL render with a right-arrow indicator (via `DropdownItem.children`) that reveals a submenu on hover containing two options:
 
@@ -89,19 +71,19 @@ Selecting an option SHALL call `setPreference(value)` from `useKeyboardShortcutP
 
 i18n keys: `settings.keyboardShortcuts`, `settings.shortcutEnter`, `settings.shortcutMetaEnter`
 
-### Scenario: Keyboard shortcuts submenu opens on hover
+#### Scenario: Keyboard shortcuts submenu opens on hover
 - **WHEN** the user hovers over the Keyboard shortcuts item
 - **THEN** a submenu appears with the two send-key options
 
-### Scenario: Selecting an option persists it
+#### Scenario: Selecting an option persists it
 - **WHEN** the user clicks a shortcut option
 - **THEN** `setPreference` is called with the corresponding value AND the chat input reflects the new shortcut immediately
 
-### Scenario: Active shortcut is visually indicated
+#### Scenario: Active shortcut is visually indicated
 - **WHEN** the Keyboard shortcuts submenu is open
 - **THEN** the currently active option is visually distinguished
 
-### Scenario: Platform-aware modifier key label
+#### Scenario: Platform-aware modifier key label
 - **WHEN** the user is on macOS
 - **THEN** the second option label reads "⌘+Enter — send message, Enter"
 - **WHEN** the user is on Windows or Linux
@@ -109,18 +91,26 @@ i18n keys: `settings.keyboardShortcuts`, `settings.shortcutEnter`, `settings.sho
 
 ---
 
-## Requirement: Logout confirmation modal
+## REMOVED Requirements
 
-`LogoutConfirmationModal` SHALL render a `DialConfirmationPopup` (default Info variant) with `header={t('auth.logOutConfirmTitle')}`, `description={t('auth.logOutConfirmDescription')}`, and `confirmLabel={t('auth.logOutConfirm')}`. `onConfirm` SHALL set `window.location.href = ApiEndpoints.AUTH_LOGOUT`. `onCancel` and `onClose` SHALL call `onClose` without navigating.
+### Requirement: Settings modal
 
-Props: `open`, `onClose`.
+**Reason**: The Settings modal is replaced by inline submenu items in the dropdown. The single-setting modal added an unnecessary navigation step.
 
-i18n keys: `auth.logOutConfirmTitle`, `auth.logOutConfirmDescription`, `auth.logOutConfirm`
+**Migration**: Theme is now set via the Theme submenu in the dropdown. The `SettingsModal` component, `SettingsI18nKeys`, and the `isSettingsOpen` state in `UserMenu` are deleted. The `settings.title` and `settings.apply` i18n keys are removed from all locale files.
 
-#### Scenario: Confirm navigates to logout endpoint
-- **WHEN** the user clicks Log out in the confirmation dialog
-- **THEN** `window.location.href` is set to `ApiEndpoints.AUTH_LOGOUT`
+#### Scenario: Settings item opens Settings modal
 
-#### Scenario: Cancel closes without navigating
-- **WHEN** the user clicks Cancel or Escape
-- **THEN** the modal closes and the user remains on the current page
+**REMOVED** — the Settings dropdown item no longer exists; replaced by Theme submenu.
+
+---
+
+### Requirement: Action items (Settings entry)
+
+**Reason**: The Settings entry in the action items list is replaced by the Theme and Keyboard shortcuts submenus.
+
+**Migration**: Remove the Settings item (`key: 'settings'`) and the `isSettingsOpen` state from `UserMenu`. The `IconSettings` import from `@tabler/icons-react` is no longer needed.
+
+#### Scenario: Settings item opens Settings modal
+
+**REMOVED** — see above.

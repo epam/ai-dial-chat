@@ -66,6 +66,21 @@ export const buildRenamedConversationPath = (
 export const encodeDialResourcePath = (path: string): string =>
   path.split('/').map(encodeURIComponent).join('/');
 
+/** Decodes a URI component, returning the original string if decoding fails. */
+export const safeDecodeURIComponent = (value: string): string => {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+};
+
+/** Builds the full DIAL Core resource URL for a conversation: `conversations/<bucket>/<path>` */
+export const buildConversationUrl = (
+  bucket: string,
+  conversationPath: string,
+): string => `conversations/${bucket}/${conversationPath}`;
+
 export const encodeCompoundToken = (
   userToken?: string,
   publicToken?: string,

@@ -21,6 +21,7 @@ import {
 import { useClipboardPaste } from '../../hooks/useClipboardPaste';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
+import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { generateAttachmentId } from '../../utils/generateAttachmentId';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
@@ -69,6 +70,9 @@ export const Input: FC<InputProps> = ({
   isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
+  sendOnEnter = SendOnEnter.Enter,
+  prefixAttachments = [],
+  onRemovePrefixAttachment,
 }) => {
   const isMobile = useIsMobile();
   const cssVars = useMemo(
@@ -271,7 +275,15 @@ export const Input: FC<InputProps> = ({
   };
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    const isEnterKey = e.key === 'Enter';
+    if (!isEnterKey) return;
+
+    const shouldSend =
+      sendOnEnter === SendOnEnter.MetaEnter
+        ? (e.metaKey || e.ctrlKey) && !e.shiftKey
+        : !e.shiftKey && !e.metaKey && !e.ctrlKey;
+
+    if (shouldSend) {
       e.preventDefault();
       if (!isStreaming && canSend && hasModelSelected) {
         handleSend();
@@ -367,10 +379,16 @@ export const Input: FC<InputProps> = ({
         className,
       )}
     >
-      {attachments.length > 0 && (
+      {(prefixAttachments.length > 0 || attachments.length > 0) && (
         <AttachmentTray
-          attachments={attachments}
-          onRemove={handleRemove}
+          attachments={[...prefixAttachments, ...attachments]}
+          onRemove={(id) => {
+            if (prefixAttachments.some((a) => a.id === id)) {
+              onRemovePrefixAttachment?.(id);
+            } else {
+              handleRemove(id);
+            }
+          }}
           onRetry={handleRetry}
           onExpand={handleExpand}
           removeLabel={removeLabel}
