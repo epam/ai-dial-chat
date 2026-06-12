@@ -4,7 +4,8 @@
 
 - `items: DeploymentItemDto[]` — full deployment list from `GET /api/v1/deployments`
 - `selectedItemId: string | null` — currently selected deployment id
-- `setSelectedItemId: (id: string) => void`
+- `setSelectedItemId: (id: string) => void` — persists selection to `localStorage` (user-initiated model change)
+- `restoreSelectedItemId: (id: string) => void` — sets `selectedItemId` **without** writing to `localStorage`; used when restoring a conversation's last-used model so the user's own new-chat preference is preserved
 - `isLoading: boolean`
 - `error: Error | null`
 
@@ -113,6 +114,12 @@ All imports of `CatalogContext`, `useCatalog`, `CatalogProvider`, `getCatalogIte
 - **WHEN** the codebase is scanned for `useCatalog`, `CatalogProvider`, `getCatalogItems`
 - **THEN** no references are found in `apps/chat/src/`
 
+#### Scenario: restoreSelectedItemId updates selectedItemId without touching localStorage
+
+- **WHEN** `restoreSelectedItemId('dep-b')` is called
+- **THEN** `selectedItemId` becomes `'dep-b'`
+- **AND** `localStorage.getItem('dial:selectedDeploymentId')` is unchanged
+
 ---
 
 ### Requirement: DeploymentsContext unit tests
@@ -121,11 +128,12 @@ All imports of `CatalogContext`, `useCatalog`, `CatalogProvider`, `getCatalogIte
 
 1. Provider loads items on mount and sets `isLoading: false` on completion.
 2. `selectedItemId` defaults to `items[0].id` after successful load.
-3. `setSelectedItemId` updates `selectedItemId`.
-4. `useDeployments()` throws when called outside provider.
-5. Unmount before fetch — no setState called.
-6. Previously selected id not in new items → reset to `items[0]?.id ?? null`.
-7. Fetch error → `error` is set, `isLoading: false`.
+3. `setSelectedItemId` updates `selectedItemId` and writes to `localStorage`.
+4. `restoreSelectedItemId` updates `selectedItemId` without writing to `localStorage`.
+5. `useDeployments()` throws when called outside provider.
+6. Unmount before fetch — no setState called.
+7. Previously selected id not in new items → reset to `items[0]?.id ?? null`.
+8. Fetch error → `error` is set, `isLoading: false`.
 
 All `getDeployments` calls SHALL be mocked; no live network calls.
 

@@ -22,8 +22,14 @@ export interface DeploymentsContextType {
   items: DeploymentItemDto[];
   /** ID of the currently selected deployment, or null if none. */
   selectedItemId: string | null;
-  /** Updates the selected deployment. */
+  /** Updates the selected deployment and persists the choice to localStorage. Use for user-initiated selections. */
   setSelectedItemId: (id: string) => void;
+  /**
+   * Restores the selected deployment without persisting to localStorage.
+   * Use when loading a conversation to reflect its last-used model without
+   * overwriting the user's own model preference for new chats.
+   */
+  restoreSelectedItemId: (id: string) => void;
   /** JSON Schema configuration for the currently selected deployment, or null if none selected or unsupported. */
   selectedDeploymentConfiguration: DeploymentConfigurationSchema | null;
   /** True while deployments are being fetched. */
@@ -187,6 +193,10 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     setSelectedItemId(id);
   }, []);
 
+  const restoreDeployment = useCallback((id: string) => {
+    setSelectedItemId(id);
+  }, []);
+
   return (
     <DeploymentsContext.Provider
       value={useMemo(
@@ -194,6 +204,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
           items,
           selectedItemId,
           setSelectedItemId: selectDeployment,
+          restoreSelectedItemId: restoreDeployment,
           selectedDeploymentConfiguration,
           isLoading,
           error,
@@ -202,6 +213,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
           items,
           selectedItemId,
           selectDeployment,
+          restoreDeployment,
           selectedDeploymentConfiguration,
           isLoading,
           error,
