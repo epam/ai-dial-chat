@@ -1,3 +1,4 @@
+import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -115,7 +116,9 @@ export class DeploymentsService extends AppService {
         const rawItems = Array.isArray(rawData)
           ? (rawData as RawDeployment[])
           : ((rawData as { deployments?: RawDeployment[] }).deployments ?? []);
+
         allItems = rawItems
+          .filter((item) => item.id && !item.id.includes(HIDDEN_FILE))
           .map(mapToDeploymentItem)
           .filter((item): item is DeploymentItemDto => item !== null);
         await this.cacheManager.set(cacheKey, allItems, 30_000);
