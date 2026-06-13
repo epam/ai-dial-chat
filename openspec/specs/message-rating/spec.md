@@ -138,7 +138,7 @@ When the user clicks Dislike on an assistant message that is **not already disli
 **Modal contents:**
 - Title: **"Send negative feedback"**
 - Required `DialSelect` labelled **"What type of feedback you want to give? \*"** with the following options defined in `apps/chat/src/constants/feedback-categories.ts`:
-  - "Ui bug"
+  - "UI bug"
   - "Overactive refusal"
   - "Incomplete response"
   - "Should have triggered thinking"
