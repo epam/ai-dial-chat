@@ -3,11 +3,13 @@ import { lazy, StrictMode, Suspense } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import App from './app/app';
+import NotificationContainer from './components/Notification/NotificationContainer';
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import AppConfigProvider from './context/AppConfigContext';
 import { UserProvider } from './context/auth/UserContext';
 import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
+import { NotificationProvider } from './context/NotificationContext';
 import { SourcesSidebarProvider } from './context/SourcesSidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
 import './i18n/config';
@@ -22,31 +24,34 @@ const root = ReactDOM.createRoot(
 root.render(
   <StrictMode>
     <BrowserRouter>
-      <UserProvider>
-        <ThemeProvider>
-          <DeploymentsProvider>
-            <SourcesSidebarProvider>
-              <Suspense fallback={null}>
-                <Routes>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route
-                    path="*"
-                    element={
-                      <RequireAuth>
-                        <AppConfigProvider>
-                          <ConversationsProvider>
-                            <App />
-                          </ConversationsProvider>
-                        </AppConfigProvider>
-                      </RequireAuth>
-                    }
-                  />
-                </Routes>
-              </Suspense>
-            </SourcesSidebarProvider>
-          </DeploymentsProvider>
-        </ThemeProvider>
-      </UserProvider>
+      <NotificationProvider>
+        <NotificationContainer />
+        <UserProvider>
+          <ThemeProvider>
+            <DeploymentsProvider>
+              <SourcesSidebarProvider>
+                <Suspense fallback={null}>
+                  <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route
+                      path="*"
+                      element={
+                        <RequireAuth>
+                          <AppConfigProvider>
+                            <ConversationsProvider>
+                              <App />
+                            </ConversationsProvider>
+                          </AppConfigProvider>
+                        </RequireAuth>
+                      }
+                    />
+                  </Routes>
+                </Suspense>
+              </SourcesSidebarProvider>
+            </DeploymentsProvider>
+          </ThemeProvider>
+        </UserProvider>
+      </NotificationProvider>
     </BrowserRouter>
   </StrictMode>,
 );
