@@ -202,19 +202,19 @@ After a successful Like toggle-on or a successful negative feedback submission, 
 
 **Component:** `apps/chat/src/components/ConversationView/RatingToast.tsx` — wraps `DialNotification` with `NotificationVariant.Success`, rendered in a `fixed` overlay layer (e.g. `fixed bottom-6 start-1/2 -translate-x-1/2 z-50`).
 
-**Auto-dismiss:** Toast disappears after **3 000 ms**. Implemented via `setTimeout` keyed to a counter so rapid successive actions each restart the timer correctly.
+**Auto-dismiss:** Toast disappears after **5 000 ms**. Implemented via `setTimeout` keyed to a counter so rapid successive actions each restart the timer correctly.
 
 **Toast copy:** Exact message strings TBD from Figma nodes 1545:16413 (feedback sent) and 1545:15983 (like) — placeholder keys `ChatI18nKeys.LikeToastMessage` and `ChatI18nKeys.FeedbackSentToastMessage`.
 
 #### Scenario: Successful Like shows a success toast
 
 - **WHEN** the user clicks Like and the API call succeeds
-- **THEN** a floating success toast appears and auto-dismisses after 3 000 ms
+- **THEN** a floating success toast appears and auto-dismisses after 5 000 ms
 
 #### Scenario: Successful feedback submission shows a success toast
 
 - **WHEN** the user submits the `NegativeFeedbackModal` and the API call succeeds
-- **THEN** a floating success toast appears and auto-dismisses after 3 000 ms
+- **THEN** a floating success toast appears and auto-dismisses after 5 000 ms
 
 #### Scenario: Toggling off a rating shows no toast
 
@@ -228,5 +228,5 @@ After a successful Like toggle-on or a successful negative feedback submission, 
 
 #### Scenario: Rapid successive ratings restart the timer
 
-- **WHEN** the user triggers two rating successes within 3 000 ms of each other
+- **WHEN** the user triggers two rating successes within 5 000 ms of each other
 - **THEN** the toast is shown for each action and the auto-dismiss timer resets on the second action
