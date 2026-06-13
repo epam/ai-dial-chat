@@ -152,7 +152,7 @@ export class FileManagerGrid extends Grid {
     { isHttpMethodTriggered = true }: { isHttpMethodTriggered?: boolean } = {},
   ) {
     const dotsMenu = await this.gridDotsMenuByNameCell(currentName);
-    await dotsMenu.click({ force: true });
+    await dotsMenu.click();
     await this.getRowDropdownMenu().selectItem(MenuOptions.rename);
     await this.getRenameInput().fillInInput(newName);
     if (isHttpMethodTriggered) {

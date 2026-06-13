@@ -88,7 +88,7 @@ dialTest(
       async () => {
         await prompts.openEntityDropdownMenu(prompt.name);
         await promptDropdownMenu.selectShareMenuOption();
-        await promptBar.draggableArea.click({ force: true });
+        await promptBar.draggableArea.click();
         await shareModalAssertion.assertModalState('hidden');
         await promptAssertion.assertEntityArrowIconState(
           { name: prompt.name },

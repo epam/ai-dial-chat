@@ -1375,7 +1375,7 @@ dialTest(
         const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
           Attachment.textName,
         );
-        await dotsMenu.click({ force: true });
+        await dotsMenu.click();
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
         await fileManagerGrid
           .getRenameInput()
@@ -1398,7 +1398,7 @@ dialTest(
       async () => {
         const dotsMenu =
           await fileManagerGrid.gridDotsMenuByNameCell(folderName);
-        await dotsMenu.click({ force: true });
+        await dotsMenu.click();
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
         await fileManagerGrid.getRenameInput().fillInInput('.' + folderName);
         await fileManagerGridAssertion.assertInputWarning();
@@ -1424,7 +1424,7 @@ dialTest(
         const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
           Attachment.textName,
         );
-        await dotsMenu.click({ force: true });
+        await dotsMenu.click();
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
         await fileManagerGrid.getRenameInput().fillInInput(renamedBaseName);
         await fileManagerGridAssertion.assertGridFileIconClassDuringRename(
@@ -1849,7 +1849,7 @@ dialTest(
       async () => {
         const dotsMenu =
           await fileManagerGrid.gridDotsMenuByNameCell(folderName);
-        await dotsMenu.click({ force: true });
+        await dotsMenu.click();
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
         await fileManagerGrid.getRenameInput().fillInInput(folderName + '.');
         await fileManagerGridAssertion.assertInputError();
@@ -1867,7 +1867,7 @@ dialTest(
         const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(
           Attachment.fileWithoutExtension,
         );
-        await dotsMenu.click({ force: true });
+        await dotsMenu.click();
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
         await fileManagerGrid
           .getRenameInput()
@@ -1925,7 +1925,7 @@ dialTest(
       'EPMRTC-8175: Rename folder from grid context menu and verify updated name in grid and folder tree',
       async () => {
         const dotsMenu = await fileManagerGrid.gridDotsMenuByNameCell(folderA);
-        await dotsMenu.click({ force: true });
+        await dotsMenu.click();
         await fileManagerGridRowDropdownMenu.selectItem(MenuOptions.rename);
         await fileManagerGrid.getRenameInput().fillInInput(folderARenamedName);
         await fileManagerGrid.saveRename();

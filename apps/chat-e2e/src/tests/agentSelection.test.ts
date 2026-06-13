@@ -14,6 +14,16 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    for (const publication of publicationsToUnpublish) {
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
+  },
+);
+
 dialTest(
   'Previously used model is selected for New conversation: change model in "Change agent"\n' +
     'Previously used model is selected for New conversation: change model in My workspace through Use model\n' +
@@ -840,15 +850,5 @@ dialSharedWithMeTest(
         ]);
       },
     );
-  },
-);
-
-dialTest.afterAll(
-  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
-    for (const publication of publicationsToUnpublish) {
-      const unpublishResponse =
-        await publicationApiHelper.createUnpublishRequest(publication);
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
-    }
   },
 );

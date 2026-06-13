@@ -39,6 +39,21 @@ dialTest.beforeAll(async () => {
   simpleRequestModel = ModelsUtil.getModelForSimpleRequest();
 });
 
+dialTest.afterAll(async () => {
+  const importFilesToDelete: UploadDownloadData[] = [
+    folderConversationData,
+    rootConversationData,
+    newFolderConversationData,
+    threeConversationsData,
+    ...updatedExportedConversations,
+  ];
+  importFilesToDelete.forEach((d) => {
+    if (d) {
+      FileUtil.deleteImportFile(d.path);
+    }
+  });
+});
+
 dialTest(
   'Export and import one chat in a folder.\n' +
     `Export and import one chat in a folder when folder doesn't exist`,
@@ -1016,18 +1031,3 @@ dialTest(
     );
   },
 );
-
-dialTest.afterAll(async () => {
-  const importFilesToDelete: UploadDownloadData[] = [
-    folderConversationData,
-    rootConversationData,
-    newFolderConversationData,
-    threeConversationsData,
-    ...updatedExportedConversations,
-  ];
-  importFilesToDelete.forEach((d) => {
-    if (d) {
-      FileUtil.deleteImportFile(d.path);
-    }
-  });
-});

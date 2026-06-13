@@ -149,7 +149,7 @@ dialAdminTest(
               adminModelInfoTooltip.versionInfo,
               'hidden',
             );
-        await adminChatHeader.chatAgent.click({ force: true });
+        await adminChatHeader.chatAgent.click();
         await baseAssertion.assertElementState(
           adminTalkToAgentDialog,
           'hidden',
@@ -173,7 +173,7 @@ dialAdminTest(
         await adminTooltipAssertion.assertTooltipContains(
           ExpectedConstants.settingsTooltipWithoutChanges(agent.type),
         );
-        await adminChatHeader.conversationSettings.click({ force: true });
+        await adminChatHeader.conversationSettings.click();
         await baseAssertion.assertElementState(
           adminConversationSettings,
           'hidden',

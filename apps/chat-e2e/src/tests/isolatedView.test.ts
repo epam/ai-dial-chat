@@ -468,7 +468,7 @@ dialTest(
     await dialTest.step(
       'Click on the model icon and verify model change is not available',
       async () => {
-        await chatHeader.chatModelIcon.click({ force: true });
+        await chatHeader.chatModelIcon.click();
         await baseAssertion.assertElementState(
           talkToAgentDialog.getElementLocator(),
           'hidden',

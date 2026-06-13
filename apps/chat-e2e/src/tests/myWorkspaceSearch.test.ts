@@ -19,6 +19,14 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
+dialTest.afterAll(async ({ adminPublicationApiHelper }) => {
+  for (const publication of publicationsToUnpublish) {
+    const unpublishResponse =
+      await adminPublicationApiHelper.createUnpublishRequest(publication);
+    await adminPublicationApiHelper.approveRequest(unpublishResponse);
+  }
+});
+
 dialTest(
   `Search in My workspace: 'No results found' and suggest results.\n` +
     `Search in My workspace: 'No results found' and no suggested results.\n` +
@@ -857,11 +865,3 @@ dialTest(
     );
   },
 );
-
-dialTest.afterAll(async ({ adminPublicationApiHelper }) => {
-  for (const publication of publicationsToUnpublish) {
-    const unpublishResponse =
-      await adminPublicationApiHelper.createUnpublishRequest(publication);
-    await adminPublicationApiHelper.approveRequest(unpublishResponse);
-  }
-});

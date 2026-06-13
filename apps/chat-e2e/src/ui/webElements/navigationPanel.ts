@@ -33,11 +33,11 @@ export class NavigationPanel extends BaseElement {
     button.getChildElementBySelector(NavigationPanelSelectors.buttonLabel);
 
   public async goToMarketplaceHome() {
-    await this.marketplaceHomeButton.click({ force: true });
+    await this.marketplaceHomeButton.click();
   }
 
   public async goToMyWorkspace() {
-    await this.myWorkspaceButton.click({ force: true });
+    await this.myWorkspaceButton.click();
   }
 
   public async backToChat(
@@ -74,7 +74,7 @@ export class NavigationPanel extends BaseElement {
       );
       responses.push(resp);
     }
-    await this.filesButton.click({ force: true });
+    await this.filesButton.click();
     for (const resp of responses) {
       await resp;
     }

@@ -466,7 +466,7 @@ export class ChatMessages extends BaseElement {
       rate,
       rowIndex,
     );
-    await thumb.hover({ force: true });
+    await thumb.hover();
     await thumb.waitFor();
     const respPromise = this.page.waitForResponse(
       (resp) => resp.request().method() === 'POST' && resp.status() === 200,

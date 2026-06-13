@@ -81,8 +81,8 @@ export class SideBarEntitiesTree extends EntitiesTree {
     indexOrOptions?: number | { exactMatch: boolean; index?: number },
   ) {
     const entity = this.getTreeEntity(name, indexOrOptions);
-    await entity.hover({ force: true });
-    await this.entityDotsMenu(name, indexOrOptions).click({ force: true });
+    await entity.hover();
+    await this.entityDotsMenu(name, indexOrOptions).click();
     await this.entityDotsMenuSpinner(name, indexOrOptions).waitFor({
       state: 'hidden',
     });

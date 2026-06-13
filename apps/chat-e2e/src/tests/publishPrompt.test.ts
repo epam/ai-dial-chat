@@ -16,6 +16,16 @@ import { PublishActions } from '@epam/ai-dial-shared';
 
 const publicationsToUnpublish: Publication[] = [];
 
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    for (const publication of publicationsToUnpublish) {
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
+  },
+);
+
 dialAdminTest(
   'Publish single prompt: select folder in Organization path\n' +
     'Publish prompt: create folder in Organization path\n' +
@@ -1067,15 +1077,5 @@ dialAdminTest(
         );
       },
     );
-  },
-);
-
-dialTest.afterAll(
-  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
-    for (const publication of publicationsToUnpublish) {
-      const unpublishResponse =
-        await publicationApiHelper.createUnpublishRequest(publication);
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
-    }
   },
 );

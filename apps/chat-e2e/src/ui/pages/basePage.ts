@@ -406,7 +406,7 @@ export class BasePage {
     const { pasteToElement, isHttpMethodTriggered = true } = options || {};
     // 1. Focus on element that support 'paste' event
     if (pasteToElement) {
-      await pasteToElement.click({ force: true });
+      await pasteToElement.click();
     }
 
     const filesMetadata: FileMetadata[] = [];

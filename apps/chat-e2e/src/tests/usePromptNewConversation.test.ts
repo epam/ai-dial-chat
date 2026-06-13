@@ -11,6 +11,16 @@ import {
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
 import { PublishActions } from '@epam/ai-dial-shared';
 
+dialTest.afterAll(
+  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
+    for (const publication of publicationsToUnpublish) {
+      const unpublishResponse =
+        await publicationApiHelper.createUnpublishRequest(publication);
+      await adminPublicationApiHelper.approveRequest(unpublishResponse);
+    }
+  },
+);
+
 dialTest(
   'Use own prompt for new conversation\n' +
     'Use own prompt for chat with history\n' +
@@ -723,15 +733,5 @@ dialTest(
         );
       },
     );
-  },
-);
-
-dialTest.afterAll(
-  async ({ publicationApiHelper, adminPublicationApiHelper }) => {
-    for (const publication of publicationsToUnpublish) {
-      const unpublishResponse =
-        await publicationApiHelper.createUnpublishRequest(publication);
-      await adminPublicationApiHelper.approveRequest(unpublishResponse);
-    }
   },
 );

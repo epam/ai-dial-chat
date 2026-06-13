@@ -73,7 +73,7 @@ dialTest(
         await conversationDropdownMenu.selectMenuOption(
           MenuOptions.withAttachments,
         );
-        await importExportLoader.stopLoading.click({ force: true });
+        await importExportLoader.stopLoading.click();
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
         const exportedFiles = FileUtil.getExportedFiles();
@@ -122,7 +122,7 @@ dialTest(
           { path: Import.importedAttachmentsFilename },
           () => chatBar.importButton.click(),
         );
-        await importExportLoader.stopLoading.click({ force: true });
+        await importExportLoader.stopLoading.click();
         await importExportLoader.waitForState({ state: 'hidden' });
         await dialHomePage.unRouteAllResponses();
         const afterImportConversations = await conversations.getEntitiesCount();

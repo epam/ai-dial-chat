@@ -32,6 +32,24 @@ dialTest.beforeAll(async ({ iconApiHelper }) => {
   );
 });
 
+dialTest.afterAll(
+  async ({
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+  }) => {
+    const publishRequest = publishRequestBuilder
+      .withConversationInFolderResource(
+        folderConversationToUnpublish,
+        PublishActions.DELETE,
+      )
+      .build();
+    const folderPublicationRequest =
+      await publicationApiHelper.createUnpublishRequest(publishRequest);
+    await adminPublicationApiHelper.approveRequest(folderPublicationRequest);
+  },
+);
+
 dialAdminTest(
   'Unpublish chat inside folder.\n' +
     'Unpublish request for folder structure where one chat was already unpublished.\n' +
@@ -1127,23 +1145,5 @@ dialAdminTest(
         );
       },
     );
-  },
-);
-
-dialTest.afterAll(
-  async ({
-    publicationApiHelper,
-    adminPublicationApiHelper,
-    publishRequestBuilder,
-  }) => {
-    const publishRequest = publishRequestBuilder
-      .withConversationInFolderResource(
-        folderConversationToUnpublish,
-        PublishActions.DELETE,
-      )
-      .build();
-    const folderPublicationRequest =
-      await publicationApiHelper.createUnpublishRequest(publishRequest);
-    await adminPublicationApiHelper.approveRequest(folderPublicationRequest);
   },
 );
