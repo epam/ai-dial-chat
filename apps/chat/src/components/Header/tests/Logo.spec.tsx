@@ -115,20 +115,4 @@ describe('Logo', () => {
     expect((logo as HTMLElement).classList.contains('bg-right')).toBe(true);
     expect((logo as HTMLElement).classList.contains('bg-no-repeat')).toBe(true);
   });
-
-  it('should render loader while theme is loading', () => {
-    mockUseTheme.mockReturnValue({
-      currentTheme: 'dark',
-      currentThemeLogo: 'logo.svg',
-      themes: [],
-      setTheme: vi.fn(),
-      isLoading: true,
-    });
-
-    render(<Logo />);
-
-    expect(screen.getByLabelText('logo loading')).toBeTruthy();
-    expect(screen.queryByLabelText(ChatI18nKeys.Logo)).toBeNull();
-    expect(mockGetIconPath).not.toHaveBeenCalled();
-  });
 });

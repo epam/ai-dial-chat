@@ -3,7 +3,7 @@ import {
   DIAL_ICON_SIZE,
   DialErrorText,
   DialGhostIconButton,
-  DialLoader,
+  DialSpinner,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconMicrophone, IconX } from '@tabler/icons-react';
 import {
@@ -205,7 +205,7 @@ export const VoiceBar: FC<VoiceBarProps> = ({
             onClick={onDiscard}
           />
           {isUploading ? (
-            <DialLoader
+            <DialSpinner
               fullWidth={false}
               size={DIAL_ICON_SIZE.LG}
               ariaLabel={uploadingLabel}

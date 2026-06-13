@@ -1,4 +1,3 @@
-import { DialLoader } from '@epam/ai-dial-ui-kit';
 import { FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ChatI18nKeys } from '../../constants/translation-keys';
@@ -7,16 +6,10 @@ import { getIconPath } from '../../utils/icon-path';
 
 /**
  * Logo component that displays the theme-specific logo image or fallback text.
- * Shows loading skeleton while theme is being loaded.
  */
 const Logo: FC = () => {
   const { t } = useTranslation();
-  const { currentThemeLogo, isLoading } = useTheme();
-
-  // Show loading skeleton while theme is loading
-  if (isLoading) {
-    return <DialLoader size={14} ariaLabel="logo loading" />;
-  }
+  const { currentThemeLogo } = useTheme();
 
   return currentThemeLogo ? (
     <a

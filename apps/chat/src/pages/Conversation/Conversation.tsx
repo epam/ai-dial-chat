@@ -9,6 +9,7 @@ import {
 import {
   ConfirmationPopupVariant,
   DialConfirmationPopup,
+  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -16,7 +17,6 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
-import RatingToast from '../../components/ConversationView/Rate/RatingToast';
 import { getConversationRoute, ROUTES } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
@@ -27,6 +27,7 @@ import {
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
@@ -115,22 +116,11 @@ export const ConversationPage: FC = () => {
     [asrModelId, currentSelectedItemId],
   );
 
+  const { showNotification } = useNotification();
+
   const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] = useState<
     number | null
   >(null);
-  const [toastState, setToastState] = useState<{
-    title: string;
-    description: string;
-    key: number;
-  } | null>(null);
-
-  const showToast = useCallback((title: string, description: string) => {
-    setToastState((prev) => ({
-      title,
-      description,
-      key: (prev?.key ?? 0) + 1,
-    }));
-  }, []);
 
   const isReadOnly = useMemo(() => {
     if (!conversationId || !bucket) return false;
@@ -288,13 +278,14 @@ export const ConversationPage: FC = () => {
     async (messageIndex: number, rating: MessageRating | null) => {
       const success = await handleRateMessage(messageIndex, rating);
       if (success && rating === MessageRating.Like) {
-        showToast(
-          t(RateI18nKeys.LikeToastTitle),
-          t(RateI18nKeys.LikeToastDescription),
-        );
+        showNotification({
+          variant: NotificationVariant.Success,
+          title: t(RateI18nKeys.LikeToastTitle),
+          message: t(RateI18nKeys.LikeToastDescription),
+        });
       }
     },
-    [handleRateMessage, showToast, t],
+    [handleRateMessage, showNotification, t],
   );
 
   const handleOpenDislikeModal = useCallback((messageIndex: number) => {
@@ -312,13 +303,14 @@ export const ConversationPage: FC = () => {
         comment,
       );
       if (success) {
-        showToast(
-          t(RateI18nKeys.DislikeToastTitle),
-          t(RateI18nKeys.DislikeToastDescription),
-        );
+        showNotification({
+          variant: NotificationVariant.Success,
+          title: t(RateI18nKeys.DislikeToastTitle),
+          message: t(RateI18nKeys.DislikeToastDescription),
+        });
       }
     },
-    [pendingDislikeMessageIndex, handleRateMessage, showToast, t],
+    [pendingDislikeMessageIndex, handleRateMessage, showNotification, t],
   );
 
   const handleDislikeModalClose = useCallback(() => {
@@ -368,15 +360,6 @@ export const ConversationPage: FC = () => {
         <NegativeFeedbackModal
           onClose={handleDislikeModalClose}
           onSubmit={handleDislikeSubmit}
-        />
-      )}
-
-      {toastState != null && (
-        <RatingToast
-          key={toastState.key}
-          title={toastState.title}
-          description={toastState.description}
-          onDismiss={() => setToastState(null)}
         />
       )}
 
