@@ -5,8 +5,7 @@ Both `ConversationSourcesPanel` (right) and `ConversationPanel` (left) render at
 ## What Changes
 
 - `SidebarPanel` (lib) gains optional resize props (`resizable`, `defaultWidth`, `minWidth`, `maxWidth`, `onResizeStop`) and owns `DialConditionalResizableContainer` internally — callers simply pass props, no wrapping required.
-- New app-level `ResizableSidebarPanel` component combines `SidebarPanel` + `localStorage` + viewport-width logic; `storageKey` is a prop, making the pattern reusable across any panel built on `SidebarPanel`.
-- `ConversationSourcesPanel` (app) adopts `ResizableSidebarPanel`; fixed `w-[360px]` removed.
+- `ConversationSourcesPanel` (app) uses `SidebarPanel` directly with `useLocalStorage`, `useViewportWidth`, and `useIsMobile` inlined; fixed `w-[360px]` removed.
 - `ConversationPanel` (lib) gains corresponding props (`resizable`, `defaultPanelWidth`, `minPanelWidth`, `maxPanelWidth`, `onPanelResizeStop`) and forwards them to `SidebarPanel`.
 - `ConversationPanelView` (app) manages `localStorage` + viewport width and passes resize values to `ConversationPanel`.
 - Resize handle is hidden when the panel is collapsed (`enabled={(resizable ?? false) && isOpen}` inside `SidebarPanel`).
@@ -26,6 +25,6 @@ Both `ConversationSourcesPanel` (right) and `ConversationPanel` (left) render at
 
 - **`libs/sidebar`**: `SidebarPanel` and `SidebarPanelProps` updated with optional resize props; `DialConditionalResizableContainer` used internally.
 - **`libs/conversation-panel`**: `ConversationPanel` and `ConversationPanelProps` updated with optional resize props forwarded to `SidebarPanel`.
-- **`apps/chat`**: New `ResizableSidebarPanel` component; `ConversationSourcesPanel` uses it; `ConversationPanelView` passes resize props to `ConversationPanel`.
+- **`apps/chat`**: `ConversationSourcesPanel` uses `SidebarPanel` directly with inlined storage/viewport hooks; `ConversationPanelView` passes resize props to `ConversationPanel`.
 - **Dependencies**: `@epam/ai-dial-ui-kit` already a dependency of `libs/sidebar`; `DialConditionalResizableContainer` and `ResizableContainerSide` already exported.
 - **`localStorage`**: `conversationSourcesWidth` (sources panel), `conversationPanelWidth` (conversation panel).

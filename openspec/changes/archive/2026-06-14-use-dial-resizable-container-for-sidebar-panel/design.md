@@ -32,11 +32,11 @@ Inside `SidebarPanel`: `resizableSide = side === SidebarSide.Right ? ResizableCo
 
 **Why:** The handle must always be on the inner edge (toward the chat area), which is the opposite of where the panel is anchored. Deriving it from `side` removes the need for callers to know about `ResizableContainerSide`.
 
-### 3. `ResizableSidebarPanel` app component owns `localStorage` + viewport width
+### 3. Each app panel owns its own `localStorage` + viewport width logic
 
-A new app component extends `SidebarPanelProps` with `storageKey`, `minWidth`, and `defaultWidth`. Internally it calls `useLocalStorage` and `useViewportWidth`, computes `clampedDefaultWidth` and `maxWidth`, then passes them as resize props to `SidebarPanel`.
+`ConversationSourcesPanel` calls `useLocalStorage`, `useViewportWidth`, and `useIsMobile` directly and passes the computed resize props to `SidebarPanel`. `ConversationPanelView` does the same for `ConversationPanel`.
 
-**Why:** `localStorage` and viewport width are host-owned concerns that libs must not manage. Encapsulating them in an app component makes the pattern reusable: any future panel on `SidebarPanel` just uses `ResizableSidebarPanel` with a storage key.
+**Why:** `localStorage` and viewport width are host-owned concerns that libs must not manage. Inline logic was preferred over a shared `ResizableSidebarPanel` wrapper because the two panels have different component hierarchies (`ConversationSourcesPanel` is a flat app component; `ConversationPanel` is a lib wrapped by `ConversationPanelView`). A shared wrapper offered no structural benefit and introduced an extra indirection layer that obscured the data flow. Keeping the logic inline in each panel's entry point makes the ownership explicit and avoids forwarding prop chains.
 
 ### 4. `ConversationPanel` lib passes resize props through to `SidebarPanel`
 
