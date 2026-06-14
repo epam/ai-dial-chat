@@ -57,7 +57,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const hasTypographyClass = Boolean(typography?.fontClassName);
     const cssVars = buildCssVars({
       '--cp-bg': colors?.background,
-      '--cp-border': colors?.border,
+      '--sb-border': colors?.border,
       '--cp-header-border': colors?.headerBorder,
       '--cp-item-hover': colors?.itemHover,
       '--cp-item-active': colors?.itemActive,

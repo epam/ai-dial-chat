@@ -61,7 +61,6 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
       onClick={onClose}
     />
   ) : null;
-
   return (
     <DialConditionalResizableContainer
       enabled={(resizable ?? false) && isOpen}
@@ -69,6 +68,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
       defaultWidth={defaultWidth}
       minWidth={minWidth}
       maxWidth={maxWidth}
+      resizeHandlerClassName={styles.resizeHandler}
       onResizeStop={onResizeStop}
     >
       <div
@@ -104,7 +104,6 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
               )
             }
           />
-
           <div
             className={mergeClasses(
               'flex-1 overflow-y-auto p-4',

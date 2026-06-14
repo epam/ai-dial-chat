@@ -16,7 +16,7 @@
 }
 
 .panel {
-  border-color: var(--cp-border, var(--stroke-tertiary, #0c101d));
+  border-color: var(--sb-border, var(--stroke-tertiary, #0c101d));
 }
 
 .headerTitle {
@@ -24,4 +24,10 @@
   font-size: var(--sb-title-font-size, 0.875rem);
   font-weight: var(--sb-title-font-weight, 600);
   line-height: var(--sb-title-line-height, 1.25rem);
+}
+
+.resizeHandler {
+  width: 4px !important;
+  color: var(--sb-resize-handler, var(--text-success, #37babc)) !important;
+  background: var(--sb-bg-resize-handler, var(--text-success, #37babc));
 }

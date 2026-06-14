@@ -9,10 +9,10 @@
 - [x] 2.1 Add `resizable?`, `defaultWidth?`, `minWidth?`, `maxWidth?`, `onResizeStop?` to `SidebarPanelProps` in `libs/sidebar/src/models/SidebarPanel.ts`
 - [x] 2.2 Import `DialConditionalResizableContainer` and `ResizableContainerSide` in `SidebarPanel.tsx`; derive `resizableSide` from `side`; wrap root div with `DialConditionalResizableContainer`; `enabled={(resizable ?? false) && isOpen}`
 
-## 3. `ResizableSidebarPanel` app component
+## 3. `ConversationSourcesPanel` app wiring
 
-- [x] 3.1 Create `apps/chat/src/components/ResizableSidebarPanel/ResizableSidebarPanel.tsx` — extends `SidebarPanelProps` with `storageKey`, `minWidth?`, `defaultWidth?`; manages `useLocalStorage` + `useViewportWidth`; passes resize props to `SidebarPanel`
-- [x] 3.2 Update `ConversationSourcesPanel` to use `ResizableSidebarPanel` with `storageKey={StorageKey.ConversationSourcesWidth}`; remove `w-[360px]` fixed-width className
+- [x] 3.1 ~~`ResizableSidebarPanel` wrapper~~ — removed; `ConversationSourcesPanel` uses `SidebarPanel` directly
+- [x] 3.2 Add `useIsMobile` + `useViewportWidth` + `useLocalStorage(StorageKey.ConversationSourcesWidth, 360)` inline in `ConversationSourcesPanel`; pass `resizable`, `defaultWidth`, `minWidth`, `maxWidth`, `onResizeStop` to `SidebarPanel`; remove `w-[360px]` fixed-width className
 
 ## 4. `ConversationPanel` lib — resize prop forwarding
 

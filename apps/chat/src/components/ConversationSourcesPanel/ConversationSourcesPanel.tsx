@@ -2,6 +2,7 @@ import {
   PanelEmpty,
   PanelNoResults,
   SearchInput,
+  SidebarPanel,
   SidebarSide,
 } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
@@ -17,9 +18,14 @@ import {
 } from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
-import ResizableSidebarPanel from '../ResizableSidebarPanel/ResizableSidebarPanel';
+import useViewportWidth from '../../hooks/use-viewport-width';
+import useLocalStorage from '../../hooks/useLocalStorage';
 import FilesSection from './sections/FilesSection/FilesSection';
+
+const MIN_PANEL_WIDTH = 312;
+const DEFAULT_PANEL_WIDTH = 360;
 
 // TODO: need add libs for this panel
 const ConversationSourcesPanel: FC = () => {
@@ -28,6 +34,18 @@ const ConversationSourcesPanel: FC = () => {
   const { uploaded, generated } = useConversationSources(messages);
   const { handleAttachmentClick } = useAttachmentAction();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const isMobile = useIsMobile();
+  const viewportWidth = useViewportWidth();
+  const maxPanelWidth = Math.floor(viewportWidth * 0.5);
+  const [storedWidth, setStoredWidth] = useLocalStorage(
+    StorageKey.ConversationSourcesWidth,
+    DEFAULT_PANEL_WIDTH,
+  );
+  const defaultPanelWidth = Math.min(
+    Math.max(storedWidth, MIN_PANEL_WIDTH),
+    maxPanelWidth,
+  );
 
   useLayoutEffect(() => {
     if (!isOpen) {
@@ -62,8 +80,7 @@ const ConversationSourcesPanel: FC = () => {
     filteredGenerated.length === 0;
 
   return (
-    <ResizableSidebarPanel
-      storageKey={StorageKey.ConversationSourcesWidth}
+    <SidebarPanel
       isOpen={isOpen}
       side={SidebarSide.Right}
       className={isOpen ? 'mobile:w-full' : 'w-0'}
@@ -71,6 +88,11 @@ const ConversationSourcesPanel: FC = () => {
       closeLabel={t(ButtonsI18nKeys.Close)}
       onClose={handleClose}
       bodyClassName="flex flex-col overflow-hidden p-0"
+      resizable={!isMobile}
+      defaultWidth={defaultPanelWidth}
+      minWidth={MIN_PANEL_WIDTH}
+      maxWidth={maxPanelWidth}
+      onResizeStop={setStoredWidth}
       rightActions={
         !isEmpty && (
           <DialGhostIconButton
@@ -113,7 +135,7 @@ const ConversationSourcesPanel: FC = () => {
           </>
         )}
       </div>
-    </ResizableSidebarPanel>
+    </SidebarPanel>
   );
 };
 
