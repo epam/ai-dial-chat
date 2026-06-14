@@ -177,4 +177,18 @@ export interface ConversationPanelProps {
   onToggle?: () => void;
   /** Accessible label for the sidebar toggle icon button. Required when `onToggle` is provided. */
   closeAriaLabel?: string;
+  /**
+   * Enables the drag-to-resize handle on the panel's right edge.
+   * When false (default) the panel renders at a fixed width.
+   * Pass `false` on mobile to disable resizing.
+   */
+  resizable?: boolean;
+  /** Initial panel width in px used when `resizable` is true. Defaults to 325. */
+  defaultPanelWidth?: number;
+  /** Minimum panel width in px used when `resizable` is true. Defaults to 312. */
+  minPanelWidth?: number;
+  /** Maximum panel width in px used when `resizable` is true. Defaults to 600. */
+  maxPanelWidth?: number;
+  /** Called with the new width in px when the user finishes a resize drag. */
+  onPanelResizeStop?: (width: number) => void;
 }

@@ -32,6 +32,7 @@ import {
   normalizeConversationId,
   ROUTES,
 } from '../../constants/routes';
+import { StorageKey } from '../../constants/storage';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -40,6 +41,8 @@ import {
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import useViewportWidth from '../../hooks/use-viewport-width';
+import useLocalStorage from '../../hooks/useLocalStorage';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
@@ -62,6 +65,16 @@ const ConversationPanelView: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
+  const viewportWidth = useViewportWidth();
+  const maxPanelWidth = Math.floor(viewportWidth * 0.5);
+  const [storedPanelWidth, setStoredPanelWidth] = useLocalStorage(
+    StorageKey.ConversationPanelWidth,
+    325,
+  );
+  const defaultPanelWidth = Math.min(
+    Math.max(storedPanelWidth, 312),
+    maxPanelWidth,
+  );
   const navigate = useNavigate();
   const {
     conversations: items,
@@ -348,6 +361,10 @@ const ConversationPanelView: FC<Props> = ({
         closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
         className={isMobile ? 'inset-y-0 start-0 z-50' : undefined}
         styles={{ typography: { fontClassName: 'dial-body-text' } }}
+        resizable={!isMobile}
+        defaultPanelWidth={defaultPanelWidth}
+        maxPanelWidth={maxPanelWidth}
+        onPanelResizeStop={setStoredPanelWidth}
       />
 
       <DialConfirmationPopup

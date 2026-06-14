@@ -2,13 +2,13 @@ import {
   PanelEmpty,
   PanelNoResults,
   SearchInput,
-  SidebarPanel,
   SidebarSide,
 } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import { StorageKey } from '../../constants/storage';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
@@ -18,6 +18,7 @@ import {
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
+import ResizableSidebarPanel from '../ResizableSidebarPanel/ResizableSidebarPanel';
 import FilesSection from './sections/FilesSection/FilesSection';
 
 // TODO: need add libs for this panel
@@ -61,10 +62,11 @@ const ConversationSourcesPanel: FC = () => {
     filteredGenerated.length === 0;
 
   return (
-    <SidebarPanel
+    <ResizableSidebarPanel
+      storageKey={StorageKey.ConversationSourcesWidth}
       isOpen={isOpen}
       side={SidebarSide.Right}
-      className={isOpen ? 'w-[360px] mobile:w-full' : 'w-0'}
+      className={isOpen ? 'mobile:w-full' : 'w-0'}
       ariaLabel={t(SidebarI18nKeys.AriaLabel)}
       closeLabel={t(ButtonsI18nKeys.Close)}
       onClose={handleClose}
@@ -111,7 +113,7 @@ const ConversationSourcesPanel: FC = () => {
           </>
         )}
       </div>
-    </SidebarPanel>
+    </ResizableSidebarPanel>
   );
 };
 

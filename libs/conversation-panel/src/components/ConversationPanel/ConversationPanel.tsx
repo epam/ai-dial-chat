@@ -44,6 +44,11 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     actionsLabel,
     onToggle,
     closeAriaLabel,
+    resizable,
+    defaultPanelWidth = 325,
+    minPanelWidth = 312,
+    maxPanelWidth = 600,
+    onPanelResizeStop,
   }) => {
     const { colors, typography } = panelStyles ?? {};
     const [searchQuery, setSearchQuery] = useState('');
@@ -147,11 +152,20 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           },
         }}
         className={mergeClasses(
-          isOpen ? 'w-[325px] border-l border-r mobile:w-full' : 'w-0',
+          isOpen
+            ? resizable
+              ? 'border-l border-r mobile:w-full'
+              : 'w-[325px] border-l border-r mobile:w-full'
+            : 'w-0',
           className,
         )}
         bodyClassName="flex flex-col overflow-hidden p-0"
         cssVars={cssVars}
+        resizable={resizable}
+        defaultWidth={defaultPanelWidth}
+        minWidth={minPanelWidth}
+        maxWidth={maxPanelWidth}
+        onResizeStop={onPanelResizeStop}
       >
         <NewChatButton
           label={newChatLabel}
