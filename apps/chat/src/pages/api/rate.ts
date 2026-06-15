@@ -34,7 +34,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
 
     const token = await getFullToken({ req });
 
-    const entities = await getSortedEntities(
+    const { entities } = await getSortedEntities(
       token?.token ?? '',
       token?.jobTitle ?? '',
     );

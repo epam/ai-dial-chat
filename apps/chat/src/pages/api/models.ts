@@ -17,9 +17,20 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
   const token = await getFullToken({ req });
 
   try {
-    const entities = await getSortedEntities(
+    const { entities, timings } = await getSortedEntities(
       token?.token ?? '',
       token?.jobTitle ?? '',
+    );
+
+    res.setHeader(
+      'Server-Timing',
+      [
+        `models;dur=${timings.modelsMs.toFixed(1)}`,
+        `apps;dur=${timings.applicationsMs.toFixed(1)}`,
+        `upstream;dur=${timings.bothAwaitMs.toFixed(1)}`,
+        `transform;dur=${timings.transformMs.toFixed(1)}`,
+        `total;dur=${timings.totalMs.toFixed(1)}`,
+      ].join(', '),
     );
 
     return res.status(200).json(entities);
