@@ -5,5 +5,9 @@ vi.mock('react-i18next', () => ({
     t: (key: string, params?: Record<string, string>) => {
       return key;
     },
+    i18n: {
+      language: 'en',
+      changeLanguage: vi.fn(),
+    },
   }),
 }));

@@ -187,9 +187,6 @@ export const ConversationPage: FC = () => {
   const loadConversation = useCallback(
     async (id: string) => {
       const decodedConversationId = decodeConversationId(id);
-      const conversationPath = decodedConversationId.substring(
-        decodedConversationId.indexOf('/') + 1,
-      );
 
       setIsFetching(true);
       try {
@@ -220,7 +217,7 @@ export const ConversationPage: FC = () => {
           setConversation(withPlaceholder);
           conversationRef.current = withPlaceholder;
           startStream(
-            conversationPath,
+            decodedConversationId,
             lastMsg.content,
             withPlaceholder.messages.length - 1,
             lastDeploymentId ?? result.model.id,

@@ -1,4 +1,7 @@
-import type { ConversationListItemDto } from '@epam/chat-api-client';
+import type {
+  ConversationDeletionResultDto,
+  ConversationListItemDto,
+} from '@epam/chat-api-client';
 import {
   createContext,
   type ReactNode,
@@ -10,6 +13,7 @@ import {
 } from 'react';
 import { normalizeConversationId } from '../constants/routes';
 import {
+  deleteAllConversations as apiDeleteAllConversations,
   deleteConversation as apiDeleteConversation,
   duplicateConversation as apiDuplicateConversation,
   listConversations,
@@ -35,6 +39,14 @@ interface ConversationsContextType {
   duplicateConversation: (id: string) => Promise<string>;
   /** Re-fetch the full conversation list from the server. */
   refreshConversations: () => Promise<void>;
+  /**
+   * Delete every conversation in the authenticated user's bucket.
+   * Returns the structured result. The list is re-fetched whenever at least one
+   * item was deleted or absent (preserving shared/public conversations).
+   * On total failure local state is unchanged.
+   * Throws if the API call itself fails before returning per-item results.
+   */
+  deleteAllConversations: () => Promise<ConversationDeletionResultDto>;
 }
 
 const ConversationsContext = createContext<
@@ -163,6 +175,21 @@ export const ConversationsProvider = ({
     [refreshConversations],
   );
 
+  const deleteAllConversations =
+    useCallback(async (): Promise<ConversationDeletionResultDto> => {
+      const result = await apiDeleteAllConversations();
+
+      if (
+        result.deleted > 0 ||
+        result.alreadyAbsent > 0 ||
+        result.failed.length === 0
+      ) {
+        await refreshConversations();
+      }
+
+      return result;
+    }, [refreshConversations]);
+
   const value = useMemo(
     () => ({
       conversations,
@@ -173,6 +200,7 @@ export const ConversationsProvider = ({
       renameConversation,
       duplicateConversation,
       refreshConversations,
+      deleteAllConversations,
     }),
     [
       conversations,
@@ -183,6 +211,7 @@ export const ConversationsProvider = ({
       renameConversation,
       duplicateConversation,
       refreshConversations,
+      deleteAllConversations,
     ],
   );
 

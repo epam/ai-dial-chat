@@ -90,12 +90,17 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
     children,
     isOpen,
     ariaLabel,
+    rightActions,
   }: {
     children: React.ReactNode;
     isOpen?: boolean;
     ariaLabel: string;
+    rightActions?: React.ReactNode;
   }) => (
     <aside role="complementary" aria-label={ariaLabel} aria-hidden={!isOpen}>
+      {rightActions && (
+        <div data-testid="panel-header-right">{rightActions}</div>
+      )}
       {children}
     </aside>
   ),
@@ -332,5 +337,22 @@ describe('ConversationPanel', () => {
     expect(
       screen.getByRole('tab', { name: 'All' }).getAttribute('aria-selected'),
     ).toBe('false');
+  });
+
+  it('renders headerActions in the panel header when provided', () => {
+    render(
+      <ConversationPanel
+        {...BASE_PROPS}
+        conversations={[]}
+        headerActions={<button>Test Action</button>}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Test Action' })).toBeTruthy();
+    expect(screen.getByTestId('panel-header-right')).toBeTruthy();
+  });
+
+  it('renders without error when headerActions is omitted', () => {
+    render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
+    expect(screen.queryByTestId('panel-header-right')).toBeNull();
   });
 });

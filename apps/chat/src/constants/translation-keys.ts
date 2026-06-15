@@ -45,6 +45,7 @@ export enum ButtonsI18nKeys {
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
   Delete = 'buttons.delete',
+  DeleteAll = 'buttons.deleteAll',
   Cancel = 'buttons.cancel',
   Confirm = 'buttons.confirm',
   Edit = 'buttons.edit',
@@ -115,6 +116,7 @@ export enum AuthI18nKeys {
 }
 
 export enum SettingsI18nKeys {
+  Language = 'settings.language',
   Theme = 'settings.theme',
   ThemeDark = 'settings.themeDark',
   ThemeLight = 'settings.themeLight',
@@ -147,6 +149,12 @@ export enum ConversationPanelI18nKeys {
   RenameTitleTooLong = 'conversationPanel.renameTitleTooLong',
   DuplicateReadOnlyDescription = 'conversationPanel.duplicateReadOnlyDescription',
   DuplicateError = 'conversationPanel.duplicateError',
+  PanelActionsLabel = 'conversationPanel.panelActionsLabel',
+  DeleteAllChatsLabel = 'conversationPanel.deleteAllChatsLabel',
+  DeleteAllConfirmTitle = 'conversationPanel.deleteAllConfirmTitle',
+  DeleteAllConfirmDescription = 'conversationPanel.deleteAllConfirmDescription',
+  DeleteAllError = 'conversationPanel.deleteAllError',
+  DeleteAllPartialError = 'conversationPanel.deleteAllPartialError',
 }
 
 export enum SidebarI18nKeys {

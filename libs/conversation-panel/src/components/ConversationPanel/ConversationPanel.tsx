@@ -60,6 +60,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     minPanelWidth = 312,
     maxPanelWidth = 600,
     onPanelResizeStop,
+    headerActions,
   }) => {
     const { colors, typography } = panelStyles ?? {};
     const [searchQuery, setSearchQuery] = useState('');
@@ -266,6 +267,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         minWidth={minPanelWidth}
         maxWidth={maxPanelWidth}
         onResizeStop={onPanelResizeStop}
+        rightActions={headerActions}
       >
         <NewChatButton
           label={newChatLabel}

@@ -4,7 +4,12 @@ import {
   Message,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  BadGatewayException,
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
 import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
@@ -17,6 +22,10 @@ import {
   ConversationListItemDto,
   ConversationListResponseDto,
 } from './dto/conversation-list.dto';
+import {
+  ConversationDeletionFailureDto,
+  ConversationDeletionResultDto,
+} from './dto/delete-conversations.dto';
 import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 import { RenameConversationResponseDto } from './dto/rename-conversation.dto';
@@ -141,9 +150,13 @@ export class ConversationService extends AppService {
     };
 
     try {
+      const encodedConversationPath = conversationPath
+        .split('/')
+        .map((segment) => encodeURIComponent(safeDecodeURIComponent(segment)))
+        .join('/');
       const { data, error } = (await this.client.saveConversation(
         bucket,
-        encodeDialResourcePath(conversationPath),
+        encodedConversationPath,
         {
           headers: getBearerAuthHeaders(token),
           body: conversation,
@@ -584,6 +597,167 @@ export class ConversationService extends AppService {
     }
   }
 
+  private isOwnedBySessionBucket(id: string, sessionBucket: string): boolean {
+    const prefix = `conversations/${sessionBucket}/`;
+    if (!id.startsWith(prefix)) return false;
+    const rawPath = id.slice(prefix.length);
+    return !rawPath.split('/').some((seg) => seg === '..');
+  }
+
+  async deleteConversations(
+    ids: string[],
+    token: string,
+    bucket: string,
+  ): Promise<ConversationDeletionResultDto> {
+    const uniqueIds = [...new Set(ids)];
+    const ownedIds: string[] = [];
+    const failed: ConversationDeletionFailureDto[] = [];
+
+    for (const id of uniqueIds) {
+      if (this.isOwnedBySessionBucket(id, bucket)) {
+        ownedIds.push(id);
+      } else {
+        failed.push({ id, code: 'FORBIDDEN' });
+      }
+    }
+
+    const prefix = `conversations/${bucket}/`;
+    this.logger.debug(
+      `deleteConversations: bucket=${bucket} total=${uniqueIds.length} owned=${ownedIds.length}`,
+    );
+
+    // IDs from the metadata listing are already URL-encoded (e.g. %20 for spaces).
+    // Decode each segment before passing to encodeDialResourcePath to avoid
+    // double-encoding (%20 → %2520).
+    const pathsForDelete = ownedIds.map((id) => {
+      const rawPath = id.slice(prefix.length);
+      return rawPath.split('/').map(safeDecodeURIComponent).join('/');
+    });
+
+    const results = await Promise.allSettled(
+      pathsForDelete.map((path, i) => {
+        const encodedPath = encodeDialResourcePath(path);
+        this.logger.debug(
+          `deleteConversations[${i}]: decodedPath=${path} encodedPath=${encodedPath}`,
+        );
+        return this.client.deleteConversation(bucket, encodedPath, {
+          headers: getBearerAuthHeaders(token),
+        });
+      }),
+    );
+
+    let deleted = 0;
+    let alreadyAbsent = 0;
+
+    for (const [i, id] of ownedIds.entries()) {
+      const result = results[i];
+
+      if (result.status === 'fulfilled') {
+        const { error } = result.value as { error?: unknown };
+        if (error == null) {
+          deleted++;
+          void this.pinConversation(id, false, token, bucket).catch((err) =>
+            this.logger.error('Failed to clean up pin on bulk delete', err),
+          );
+        } else if (isHttpLikeError(error) && error.status === 404) {
+          alreadyAbsent++;
+        } else if (isHttpLikeError(error) && error.status === 403) {
+          failed.push({ id, code: 'FORBIDDEN' });
+        } else {
+          this.logger.error(
+            `deleteConversations[${i}] UPSTREAM_ERROR id=${id} errorStatus=${isHttpLikeError(error) ? error.status : 'n/a'} error=${JSON.stringify(error)}`,
+          );
+          failed.push({ id, code: 'UPSTREAM_ERROR' });
+        }
+      } else {
+        this.logger.error(
+          `deleteConversations[${i}] threw unexpectedly id=${id}`,
+          (result.reason as Error | undefined)?.stack,
+        );
+        failed.push({ id, code: 'UPSTREAM_ERROR' });
+      }
+    }
+
+    return { requested: uniqueIds.length, deleted, alreadyAbsent, failed };
+  }
+
+  async deleteAllConversations(
+    token: string,
+    bucket: string,
+  ): Promise<ConversationDeletionResultDto> {
+    const allIds: string[] = [];
+    let cursor: string | undefined;
+
+    try {
+      do {
+        const { data, error } = (await this.client.getConversationMetadata(
+          bucket,
+          '',
+          {
+            headers: getBearerAuthHeaders(token),
+            params: {
+              query: {
+                recursive: true,
+                limit: 1000,
+                ...(cursor ? { token: cursor } : {}),
+              },
+            },
+          },
+        )) as MetadataResult;
+
+        if (error != null || !data) {
+          this.logger.error(
+            'DIAL Core metadata listing failed during deleteAll',
+            (error as Error | undefined)?.stack,
+          );
+          throw new BadGatewayException('DIAL Core metadata listing failed');
+        }
+
+        for (const item of data?.items ?? []) {
+          if (item.nodeType !== 'FOLDER') {
+            const id =
+              item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`;
+            allIds.push(id);
+          }
+        }
+
+        cursor = data?.nextToken ?? undefined;
+      } while (cursor != null && cursor !== '');
+    } catch (err) {
+      if (
+        err instanceof BadGatewayException ||
+        err instanceof ServiceUnavailableException
+      ) {
+        throw err;
+      }
+      this.logger.error(
+        'DIAL Core metadata listing threw during deleteAll',
+        (err as Error | undefined)?.stack,
+      );
+      if (
+        err instanceof TypeError ||
+        (err instanceof Error &&
+          (err.name === 'TimeoutError' ||
+            err.message.includes('ECONNREFUSED') ||
+            err.message.includes('ENOTFOUND') ||
+            err.message.includes('fetch failed')))
+      ) {
+        throw new ServiceUnavailableException('DIAL Core is unreachable');
+      }
+      throw new BadGatewayException('DIAL Core metadata listing failed');
+    }
+
+    this.logger.debug(
+      `deleteAllConversations: listed ${allIds.length} item(s) from bucket=${bucket}`,
+    );
+
+    if (allIds.length === 0) {
+      return { requested: 0, deleted: 0, alreadyAbsent: 0, failed: [] };
+    }
+
+    return this.deleteConversations(allIds, token, bucket);
+  }
+
   async streamCompletion(
     conversationPath: string,
     token: string,
@@ -695,3 +869,9 @@ export class ConversationService extends AppService {
     }
   }
 }
+
+const isHttpLikeError = (e: unknown): e is { status: number } =>
+  typeof e === 'object' &&
+  e != null &&
+  'status' in e &&
+  typeof (e as Record<string, unknown>).status === 'number';
