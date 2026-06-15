@@ -22,3 +22,8 @@ export type {
   AttachmentCardTypography,
 } from './models/AttachmentCard';
 export type { AttachmentTrayProps } from './models/AttachmentTray';
+export type { BottomSheetItem } from './components/BottomSheet/BottomSheet';
+export {
+  ChatSettingsModal,
+  type ChatSettingsModalProps,
+} from './components/ChatSettingsModal/ChatSettingsModal';

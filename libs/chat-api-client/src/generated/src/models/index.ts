@@ -659,6 +659,31 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   inputAttachmentTypes?: Array<string>;
+  /**
+   * Feature flags from DIAL Core controlling which per-conversation settings are available
+   * @type {DeploymentFeaturesDto}
+   * @memberof DeploymentItemDto
+   */
+  features?: DeploymentFeaturesDto;
+}
+
+/**
+ * Feature flags for a deployment controlling which per-conversation settings are available.
+ * @interface DeploymentFeaturesDto
+ */
+export interface DeploymentFeaturesDto {
+  /**
+   * Whether the deployment supports a custom system prompt
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  systemPrompt: boolean;
+  /**
+   * Whether the deployment supports temperature control
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  temperature: boolean;
 }
 
 /**

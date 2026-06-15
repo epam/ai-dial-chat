@@ -251,6 +251,26 @@
         "tags": ["auth"]
       }
     },
+    "/api/v1/config": {
+      "get": {
+        "operationId": "getConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppConfigDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get application feature configuration",
+        "tags": ["config"]
+      }
+    },
     "/api/v1/application-schemas": {
       "get": {
         "description": "Returns DIAL Core application type schemas visible to the authenticated user. Results are cached server-side for 60 seconds per user.",
@@ -566,19 +586,10 @@
         "tags": ["models"]
       }
     },
-    "/api/chat/completions/{deployment}": {
+    "/api/v1/chat/completions": {
       "post": {
         "operationId": "sendCompletion",
-        "parameters": [
-          {
-            "name": "deployment",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -1268,6 +1279,52 @@
         "summary": "Rate an assistant message",
         "tags": ["rate"]
       }
+    },
+    "/api/v1/transcription": {
+      "post": {
+        "operationId": "transcribeAudio",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscribeAudioDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "transcript": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "500": {
+            "description": "ASR_MODEL is not configured"
+          },
+          "502": {
+            "description": "Unexpected response from DIAL Core"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Transcribe audio using the configured ASR model",
+        "tags": ["transcription"]
+      }
     }
   },
   "info": {
@@ -1383,6 +1440,21 @@
         },
         "required": ["sub", "providerId", "claims", "bucket"]
       },
+      "AppConfigDto": {
+        "type": "object",
+        "properties": {
+          "asrModelId": {
+            "type": "object",
+            "description": "Deployment ID of the ASR model used for transcription. Null when ASR_MODEL is not configured.",
+            "nullable": true
+          },
+          "transcribeSizeLimitBytes": {
+            "type": "number",
+            "description": "Maximum audio file size in bytes accepted by the transcription endpoint."
+          }
+        },
+        "required": ["transcribeSizeLimitBytes"]
+      },
       "ApplicationSchemaSummaryDto": {
         "type": "object",
         "properties": {
@@ -1477,6 +1549,20 @@
         },
         "required": ["data"]
       },
+      "DeploymentFeaturesDto": {
+        "type": "object",
+        "properties": {
+          "systemPrompt": {
+            "type": "boolean",
+            "description": "Whether the deployment supports a custom system prompt"
+          },
+          "temperature": {
+            "type": "boolean",
+            "description": "Whether the deployment supports temperature control"
+          }
+        },
+        "required": ["systemPrompt", "temperature"]
+      },
       "DeploymentItemDto": {
         "type": "object",
         "properties": {
@@ -1517,6 +1603,14 @@
             "items": {
               "type": "string"
             }
+          },
+          "features": {
+            "description": "Feature flags from DIAL Core controlling which per-conversation settings are available",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeploymentFeaturesDto"
+              }
+            ]
           }
         },
         "required": ["id", "displayName", "type"]
@@ -1920,6 +2014,11 @@
       "ChatCompletionDto": {
         "type": "object",
         "properties": {
+          "deployment": {
+            "type": "string",
+            "description": "DIAL Core deployment name (may contain slashes and special characters)",
+            "example": "gpt-4o"
+          },
           "messages": {
             "description": "Ordered chat messages to send to DIAL Core",
             "type": "array",
@@ -1941,7 +2040,7 @@
             "minimum": 1
           }
         },
-        "required": ["messages"]
+        "required": ["deployment", "messages"]
       },
       "ChatCompletionChoiceDto": {
         "type": "object",
@@ -2362,6 +2461,20 @@
           }
         },
         "required": ["conversationId", "responseId", "modelId", "rate"]
+      },
+      "TranscribeAudioDto": {
+        "type": "object",
+        "properties": {
+          "audioUrl": {
+            "type": "string",
+            "description": "DIAL storage URL of the uploaded audio file."
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME type of the audio file (e.g. audio/webm;codecs=opus)."
+          }
+        },
+        "required": ["audioUrl", "mimeType"]
       }
     }
   }

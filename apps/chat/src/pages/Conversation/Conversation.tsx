@@ -317,6 +317,20 @@ export const ConversationPage: FC = () => {
     setPendingDislikeMessageIndex(null);
   }, []);
 
+  const handleSaveChatSettings = useCallback(
+    (values: { systemPrompt?: string; temperature?: number }) => {
+      setConversation((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          ...(values.systemPrompt !== undefined && { prompt: values.systemPrompt }),
+          ...(values.temperature !== undefined && { temperature: values.temperature }),
+        };
+      });
+    },
+    [setConversation],
+  );
+
   if (isFetching) return null;
 
   if (!conversation) {
@@ -353,6 +367,9 @@ export const ConversationPage: FC = () => {
           isTranscriptionSupported={isTranscriptionSupported}
           onUploadAudio={handleUploadAudio}
           onTranscribeAudio={handleTranscribeAudio}
+          conversationPrompt={conversation.prompt}
+          conversationTemperature={conversation.temperature}
+          onSaveChatSettings={handleSaveChatSettings}
         />
       </div>
 

@@ -9,6 +9,7 @@ import { IconPaperclip, IconPlus } from '@tabler/icons-react';
 import { CSSProperties, type FC, useMemo, useState } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
+import type { BottomSheetItem } from '../BottomSheet/BottomSheet';
 
 interface AddAttachmentButtonProps {
   /** Callback invoked when the user picks "Attach file". */
@@ -27,6 +28,8 @@ interface AddAttachmentButtonProps {
   listClassName?: string;
   /** When `true`, the trigger button is disabled and the menu cannot open. */
   isDisabled?: boolean;
+  /** Additional items appended after the built-in "Attach file" entry. */
+  extraMenuItems?: BottomSheetItem[];
 }
 
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
@@ -38,6 +41,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   style,
   listClassName = '!w-[240px] shadow-md',
   isDisabled = false,
+  extraMenuItems,
 }) => {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -50,8 +54,9 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
         icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
         onClick: onAttachClick,
       },
+      ...(extraMenuItems ?? []),
     ],
-    [attachLabel, onAttachClick],
+    [attachLabel, onAttachClick, extraMenuItems],
   );
 
   if (isMobile) {

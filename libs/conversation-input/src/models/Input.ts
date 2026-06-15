@@ -4,6 +4,7 @@ import type {
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
+import type { BottomSheetItem } from '../components/BottomSheet/BottomSheet';
 
 /**
  * Controls which key combination submits the message in the `Input` component.
@@ -190,4 +191,6 @@ export interface InputProps {
   prefixAttachments?: DisplayAttachment[];
   /** Called when the user removes an attachment from `prefixAttachments`. */
   onRemovePrefixAttachment?: (id: string) => void;
+  /** Additional items appended after the built-in "Attach file" entry in the add-menu dropdown. */
+  extraMenuItems?: BottomSheetItem[];
 }

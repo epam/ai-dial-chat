@@ -18,6 +18,7 @@ export enum ChatI18nKeys {
   Thinking = 'chat.thinking',
   ShowMoreUserMessage = 'chat.showMoreUserMessage',
   ShowLessUserMessage = 'chat.showLessUserMessage',
+  ChatSettings = 'chat.chatSettings',
 }
 
 export enum RateI18nKeys {
@@ -161,4 +162,10 @@ export enum SidebarI18nKeys {
 
 export enum AttachmentsI18nKeys {
   Download = 'attachments.downloadFile',
+}
+
+export enum ChatSettingsI18nKeys {
+  Title = 'chatSettings.title',
+  SystemPromptLabel = 'chatSettings.systemPromptLabel',
+  TemperatureLabel = 'chatSettings.temperatureLabel',
 }

@@ -23,7 +23,8 @@
     "stoppedGenerating": "You stopped generating the response",
     "thinking": "Thinking",
     "showMoreUserMessage": "Show full user message",
-    "showLessUserMessage": "Collapse user message"
+    "showLessUserMessage": "Collapse user message",
+    "chatSettings": "Chat settings"
   },
   "rate": {
     "negativeFeedbackTitle": "Send negative feedback",
@@ -171,5 +172,10 @@
   },
   "attachments": {
     "downloadFile": "Download file"
+  },
+  "chatSettings": {
+    "title": "Chat settings",
+    "systemPromptLabel": "System prompt",
+    "temperatureLabel": "Temperature"
   }
 }

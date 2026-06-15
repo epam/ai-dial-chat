@@ -11,6 +11,7 @@ import {
 import type { EnvironmentVariables } from '../config/environment.config';
 import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import type {
+  DeploymentFeaturesDto,
   DeploymentItemDto,
   DeploymentsResponseDto,
 } from './dto/deployment-item.dto';
@@ -36,6 +37,7 @@ type RawDeployment = {
   interfaces?: string | string[];
   application_type_schema_id?: string;
   input_attachment_types?: string[];
+  features?: DeploymentFeaturesDto;
 };
 
 const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
@@ -73,6 +75,7 @@ const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
     inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
       ? raw.input_attachment_types
       : undefined,
+    features: raw.features ?? undefined,
   };
 };
 

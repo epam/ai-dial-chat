@@ -3,6 +3,7 @@ import type {
   DeploymentItem,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
+import type { BottomSheetItem } from '../components/BottomSheet/BottomSheet';
 import type {
   InputColors,
   InputTypography,
@@ -162,4 +163,6 @@ export interface ConversationInputProps {
    * - `SendOnEnter.MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
    */
   sendOnEnter?: SendOnEnter;
+  /** Additional items appended after the built-in "Attach file" entry in the add-menu dropdown. */
+  extraMenuItems?: BottomSheetItem[];
 }

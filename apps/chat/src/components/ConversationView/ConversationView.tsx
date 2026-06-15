@@ -17,7 +17,7 @@ import {
   DialNotification,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
-import { IconCopy } from '@tabler/icons-react';
+import { IconCopy, IconSettings } from '@tabler/icons-react';
 import {
   FC,
   lazy,
@@ -29,11 +29,15 @@ import {
   useRef,
   useState,
 } from 'react';
+import type { BottomSheetItem } from '@epam/ai-dial-conversation-input';
+import { ChatSettingsModal } from '@epam/ai-dial-conversation-input';
+import { BASE_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
   BasicI18nKeys,
   ChatI18nKeys,
+  ChatSettingsI18nKeys,
   ConversationPanelI18nKeys,
   ConversationI18nKeys,
   DeploymentsI18nKeys,
@@ -47,6 +51,7 @@ const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
   return { default: module.ConversationInput };
 });
+
 
 interface Props {
   messages: MessageType[];
@@ -82,6 +87,12 @@ interface Props {
   isTranscriptionSupported?: boolean;
   onUploadAudio?: (file: File, contentType: string) => Promise<string>;
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
+  conversationPrompt?: string;
+  conversationTemperature?: number;
+  onSaveChatSettings?: (values: {
+    systemPrompt?: string;
+    temperature?: number;
+  }) => void;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -111,6 +122,9 @@ const ConversationView: FC<Props> = ({
   isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
+  conversationPrompt = '',
+  conversationTemperature = 1,
+  onSaveChatSettings,
 }) => {
   const { t } = useTranslation();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
@@ -122,6 +136,13 @@ const ConversationView: FC<Props> = ({
     isLoading,
     error,
   } = useDeployments();
+
+  const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
+
+  const selectedDeployment = useMemo(
+    () => items.find((d) => d.id === selectedItemId),
+    [items, selectedItemId],
+  );
 
   const isInputDisabled = useMemo(
     () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
@@ -178,6 +199,18 @@ const ConversationView: FC<Props> = ({
         inputAttachmentTypes,
       })),
     [items],
+  );
+
+  const extraMenuItems = useMemo(
+    () => [
+      {
+        key: 'chat-settings',
+        label: t(ChatI18nKeys.ChatSettings),
+        icon: <IconSettings size={BASE_ICON_SIZE} aria-hidden />,
+        onClick: () => setIsChatSettingsOpen(true),
+      },
+    ],
+    [t],
   );
 
   const tooltips = useMemo<MessageActionTooltips>(
@@ -406,27 +439,49 @@ const ConversationView: FC<Props> = ({
             />
           </div>
         ) : (
-          <Suspense fallback={null}>
-            <ConversationInput
-              onSend={onSend}
-              onUploadAttachment={onUploadAttachment}
-              onStop={onStop}
-              isStreaming={isAssistantTyping}
-              onAttachmentsChange={onAttachmentsChange}
-              placeholder={placeholder}
-              deployments={deploymentItems}
-              selectedDeploymentId={selectedItemId}
-              onDeploymentChange={setSelectedItemId}
-              isInputDisabled={isInputDisabled}
-              modelSelectorLabels={modelSelectorLabels}
-              sendLabel={t(ChatI18nKeys.SendMessage)}
-              stopLabel={t(ChatI18nKeys.StopStreaming)}
-              isTranscriptionSupported={isTranscriptionSupported}
-              onUploadAudio={onUploadAudio}
-              onTranscribeAudio={onTranscribeAudio}
-              sendOnEnter={sendOnEnter}
-            />
-          </Suspense>
+          <>
+            <Suspense fallback={null}>
+              <ConversationInput
+                onSend={onSend}
+                onUploadAttachment={onUploadAttachment}
+                onStop={onStop}
+                isStreaming={isAssistantTyping}
+                onAttachmentsChange={onAttachmentsChange}
+                placeholder={placeholder}
+                deployments={deploymentItems}
+                selectedDeploymentId={selectedItemId}
+                onDeploymentChange={setSelectedItemId}
+                isInputDisabled={isInputDisabled}
+                modelSelectorLabels={modelSelectorLabels}
+                sendLabel={t(ChatI18nKeys.SendMessage)}
+                stopLabel={t(ChatI18nKeys.StopStreaming)}
+                isTranscriptionSupported={isTranscriptionSupported}
+                onUploadAudio={onUploadAudio}
+                onTranscribeAudio={onTranscribeAudio}
+                sendOnEnter={sendOnEnter}
+                extraMenuItems={extraMenuItems}
+              />
+            </Suspense>
+            {isChatSettingsOpen && (
+              <ChatSettingsModal
+                features={
+                  selectedDeployment?.features ?? {
+                    systemPrompt: false,
+                    temperature: false,
+                  }
+                }
+                initialSystemPrompt={conversationPrompt}
+                initialTemperature={conversationTemperature}
+                onSave={(values) => onSaveChatSettings?.(values)}
+                onClose={() => setIsChatSettingsOpen(false)}
+                title={t(ChatSettingsI18nKeys.Title)}
+                systemPromptLabel={t(ChatSettingsI18nKeys.SystemPromptLabel)}
+                temperatureLabel={t(ChatSettingsI18nKeys.TemperatureLabel)}
+                saveLabel={t(ButtonsI18nKeys.Save)}
+                cancelLabel={t(ButtonsI18nKeys.Cancel)}
+              />
+            )}
+          </>
         )}
       </div>
     </>

@@ -1,5 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export class DeploymentFeaturesDto {
+  @ApiProperty({
+    description: 'Whether the deployment supports a custom system prompt',
+  })
+  systemPrompt!: boolean;
+
+  @ApiProperty({
+    description: 'Whether the deployment supports temperature control',
+  })
+  temperature!: boolean;
+}
+
 export class DeploymentItemDto {
   @ApiProperty({ description: 'Unique stable identifier from DIAL Core' })
   id!: string;
@@ -34,6 +46,13 @@ export class DeploymentItemDto {
       'Accepted MIME types for input attachments from DIAL Core (e.g. ["audio/*", "image/*"])',
   })
   inputAttachmentTypes?: string[];
+
+  @ApiPropertyOptional({
+    type: DeploymentFeaturesDto,
+    description:
+      'Feature flags from DIAL Core controlling which per-conversation settings are available',
+  })
+  features?: DeploymentFeaturesDto;
 }
 
 export class DeploymentsResponseDto {
