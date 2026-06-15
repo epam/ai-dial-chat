@@ -23,6 +23,7 @@ describe('Logo', () => {
 
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
+      selectedTheme: 'dark',
       currentThemeLogo: mockLogoName,
       themes: [],
       setTheme: vi.fn(),
@@ -44,6 +45,7 @@ describe('Logo', () => {
   it('should return null when logo is not available', () => {
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
+      selectedTheme: 'dark',
       currentThemeLogo: undefined,
       themes: [],
       setTheme: vi.fn(),
@@ -60,6 +62,7 @@ describe('Logo', () => {
 
     mockUseTheme.mockReturnValue({
       currentTheme: 'light',
+      selectedTheme: 'light',
       currentThemeLogo: mockLightLogo,
       themes: [],
       setTheme: vi.fn(),
@@ -80,6 +83,7 @@ describe('Logo', () => {
   it('should render as a link with correct href', () => {
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
+      selectedTheme: 'dark',
       currentThemeLogo: 'logo.svg',
       themes: [],
       setTheme: vi.fn(),
@@ -97,6 +101,7 @@ describe('Logo', () => {
   it('should apply correct CSS classes', () => {
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
+      selectedTheme: 'dark',
       currentThemeLogo: 'logo.svg',
       themes: [],
       setTheme: vi.fn(),
