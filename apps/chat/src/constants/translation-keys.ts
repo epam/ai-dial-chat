@@ -45,6 +45,7 @@ export enum ButtonsI18nKeys {
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
   Delete = 'buttons.delete',
+  DeleteAll = 'buttons.deleteAll',
   Cancel = 'buttons.cancel',
   Confirm = 'buttons.confirm',
   Edit = 'buttons.edit',
@@ -151,7 +152,6 @@ export enum ConversationPanelI18nKeys {
   DeleteAllChatsLabel = 'conversationPanel.deleteAllChatsLabel',
   DeleteAllConfirmTitle = 'conversationPanel.deleteAllConfirmTitle',
   DeleteAllConfirmDescription = 'conversationPanel.deleteAllConfirmDescription',
-  DeleteAllConfirmButton = 'conversationPanel.deleteAllConfirmButton',
   DeleteAllError = 'conversationPanel.deleteAllError',
   DeleteAllPartialError = 'conversationPanel.deleteAllPartialError',
 }

@@ -140,7 +140,14 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
           themes: config?.themes,
           isLoading,
         }),
-        [currentThemeId, selectedThemeId, setTheme, config, currentLogo, isLoading],
+        [
+          currentThemeId,
+          selectedThemeId,
+          setTheme,
+          config,
+          currentLogo,
+          isLoading,
+        ],
       )}
     >
       {children}

@@ -3,21 +3,14 @@ import {
   type ConversationHistoryItem,
 } from '@epam/ai-dial-conversation-panel';
 import {
-  ButtonAppearance,
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DialConfirmationPopup,
-  DialDropdown,
-  DialIconButton,
-  DialNotification,
-  ElementSize,
   NotificationVariant,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
-import type { ConversationDeletionResultDto } from '@epam/chat-api-client';
 import {
   IconCopy,
-  IconDotsVertical,
   IconPencilMinus,
   IconPin,
   IconPinnedFilled,
@@ -46,47 +39,17 @@ import {
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
+import DeleteAllConversationsAction from './DeleteAllConversationsAction';
 import { getConversationSource } from './get-conversation-source';
 
-const PanelMenuTrigger: FC<{ items: DropdownItem[]; label: string }> = ({
-  items,
-  label,
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  return (
-    <DialDropdown items={items} placement="bottom-end" onOpenChange={setIsOpen}>
-      <DialIconButton
-        aria-label={label}
-        appearance={ButtonAppearance.Ghost}
-        size={ElementSize.Small}
-        icon={
-          <IconDotsVertical
-            size={DIAL_ICON_SIZE.SM}
-            className={
-              isOpen
-                ? '[color:var(--text-accent-secondary)]'
-                : '[color:var(--text-secondary)]'
-            }
-          />
-        }
-        className={[
-          'flex items-center justify-center rounded',
-          isOpen
-            ? '[background:var(--controls-bg-accent-secondary-alpha-active)]'
-            : '',
-        ].join(' ')}
-      />
-    </DialDropdown>
-  );
-};
-
-interface Props {
+interface ConversationPanelViewProps {
   isOpen: boolean;
   activeConversationId?: string;
   onClose: () => void;
@@ -94,7 +57,7 @@ interface Props {
   onNewChat: () => void;
 }
 
-const ConversationPanelView: FC<Props> = ({
+const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   isOpen,
   activeConversationId,
   onClose,
@@ -114,6 +77,7 @@ const ConversationPanelView: FC<Props> = ({
     maxPanelWidth,
   );
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
   const {
     conversations: items,
     isLoading,
@@ -122,7 +86,6 @@ const ConversationPanelView: FC<Props> = ({
     renameConversation,
     duplicateConversation,
     refreshConversations,
-    deleteAllConversations,
   } = useConversations();
 
   const { items: deployments } = useDeployments();
@@ -159,14 +122,6 @@ const ConversationPanelView: FC<Props> = ({
   } | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
-  const [duplicateError, setDuplicateError] = useState<string | null>(null);
-
-  const [isDeleteAllPopupOpen, setIsDeleteAllPopupOpen] = useState(false);
-  const [isDeletingAll, setIsDeletingAll] = useState(false);
-  const [deleteAllError, setDeleteAllError] = useState<string | null>(null);
-  const [deleteAllPartialError, setDeleteAllPartialError] = useState<
-    string | null
-  >(null);
 
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
@@ -237,34 +192,6 @@ const ConversationPanelView: FC<Props> = ({
     [t],
   );
 
-  const panelMenuItems: DropdownItem[] = useMemo(
-    () => [
-      {
-        key: 'delete-all',
-        label: t(ConversationPanelI18nKeys.DeleteAllChatsLabel),
-        icon: (
-          <IconTrashX size={DIAL_ICON_SIZE.SM} className="text-secondary" />
-        ),
-        onClick: () => {
-          setDeleteAllError(null);
-          setDeleteAllPartialError(null);
-          setIsDeleteAllPopupOpen(true);
-        },
-      },
-    ],
-    [t],
-  );
-
-  const headerActions = useMemo(
-    () => (
-      <PanelMenuTrigger
-        items={panelMenuItems}
-        label={t(ConversationPanelI18nKeys.PanelActionsLabel)}
-      />
-    ),
-    [panelMenuItems, t],
-  );
-
   const getActions = useCallback(
     (panelItem: ConversationHistoryItem): DropdownItem[] => {
       const contextId = panelToContextId.get(panelItem.id);
@@ -305,12 +232,14 @@ const ConversationPanelView: FC<Props> = ({
             <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />
           ),
           onClick: async () => {
-            setDuplicateError(null);
             try {
               const newPath = await duplicateConversation(contextId);
               navigate(getConversationRoute(newPath));
             } catch {
-              setDuplicateError(t(ConversationPanelI18nKeys.DuplicateError));
+              showNotification({
+                variant: NotificationVariant.Error,
+                message: t(ConversationPanelI18nKeys.DuplicateError),
+              });
             }
           },
         },
@@ -329,8 +258,8 @@ const ConversationPanelView: FC<Props> = ({
       pinConversation,
       duplicateConversation,
       navigate,
+      showNotification,
       t,
-      setDuplicateError,
     ],
   );
 
@@ -413,67 +342,6 @@ const ConversationPanelView: FC<Props> = ({
     setRenameError(null);
   }, [isRenaming]);
 
-  const handleConfirmDeleteAll = useCallback(async () => {
-    setIsDeletingAll(true);
-    setDeleteAllError(null);
-
-    let result: ConversationDeletionResultDto;
-    try {
-      result = await deleteAllConversations();
-    } catch {
-      setDeleteAllError(t(ConversationPanelI18nKeys.DeleteAllError));
-      setIsDeletingAll(false);
-      return;
-    }
-
-    setIsDeletingAll(false);
-
-    const isTotalFailure =
-      result.failed.length > 0 &&
-      result.deleted === 0 &&
-      result.alreadyAbsent === 0;
-    const isPartialFailure =
-      result.failed.length > 0 &&
-      (result.deleted > 0 || result.alreadyAbsent > 0);
-
-    if (isTotalFailure) {
-      setDeleteAllError(t(ConversationPanelI18nKeys.DeleteAllError));
-      return;
-    }
-
-    setIsDeleteAllPopupOpen(false);
-
-    if (isPartialFailure) {
-      setDeleteAllPartialError(
-        t(ConversationPanelI18nKeys.DeleteAllPartialError),
-      );
-    }
-
-    if (activeConversationId) {
-      const activeItem = items.find((item) => {
-        const rawId = normalizeConversationId(item.id);
-        try {
-          return decodeURIComponent(rawId) === activeConversationId;
-        } catch {
-          return rawId === activeConversationId;
-        }
-      });
-      const isActiveOwned =
-        activeItem != null &&
-        !activeItem.sharedWithMe &&
-        !activeItem.publishedWithMe;
-      if (isActiveOwned) {
-        navigate(ROUTES.ROOT);
-      }
-    }
-  }, [deleteAllConversations, activeConversationId, items, navigate, t]);
-
-  const handleCancelDeleteAll = useCallback(() => {
-    if (isDeletingAll) return;
-    setIsDeleteAllPopupOpen(false);
-    setDeleteAllError(null);
-  }, [isDeletingAll]);
-
   return (
     <>
       <ConversationPanel
@@ -500,7 +368,11 @@ const ConversationPanelView: FC<Props> = ({
         defaultPanelWidth={defaultPanelWidth}
         maxPanelWidth={maxPanelWidth}
         onPanelResizeStop={setStoredPanelWidth}
-        headerActions={headerActions}
+        headerActions={
+          <DeleteAllConversationsAction
+            activeConversationId={activeConversationId}
+          />
+        }
       />
 
       <DialConfirmationPopup
@@ -537,49 +409,6 @@ const ConversationPanelView: FC<Props> = ({
         onSave={handleConfirmRename}
         onCancel={handleCloseRenameDialog}
       />
-
-      {duplicateError && (
-        <DialNotification
-          variant={NotificationVariant.Error}
-          message={duplicateError}
-          closable
-          onClose={() => setDuplicateError(null)}
-          className="fixed bottom-4 start-4 z-50 max-w-sm"
-        />
-      )}
-
-      <DialConfirmationPopup
-        open={isDeleteAllPopupOpen}
-        header={t(ConversationPanelI18nKeys.DeleteAllConfirmTitle)}
-        confirmLabel={t(ConversationPanelI18nKeys.DeleteAllConfirmButton)}
-        cancelLabel={t(ButtonsI18nKeys.Cancel)}
-        variant={ConfirmationPopupVariant.Danger}
-        isLoading={isDeletingAll}
-        disableConfirmButton={isDeletingAll}
-        description={
-          <>
-            <span>
-              {t(ConversationPanelI18nKeys.DeleteAllConfirmDescription)}
-            </span>
-            {deleteAllError && (
-              <span className="mt-1 block text-error">{deleteAllError}</span>
-            )}
-          </>
-        }
-        onConfirm={handleConfirmDeleteAll}
-        onCancel={handleCancelDeleteAll}
-        onClose={handleCancelDeleteAll}
-      />
-
-      {deleteAllPartialError && (
-        <DialNotification
-          variant={NotificationVariant.Error}
-          message={deleteAllPartialError}
-          closable
-          onClose={() => setDeleteAllPartialError(null)}
-          className="fixed bottom-4 start-4 z-50 max-w-sm"
-        />
-      )}
     </>
   );
 };

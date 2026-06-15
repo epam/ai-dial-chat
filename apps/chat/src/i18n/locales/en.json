@@ -72,6 +72,7 @@
     "showMore": "Show more",
     "showLess": "Show less",
     "delete": "Delete",
+    "deleteAll": "Delete all",
     "confirm": "Confirm",
     "cancel": "Cancel",
     "add": "Add",
@@ -150,7 +151,6 @@
     "deleteAllChatsLabel": "Delete all conversations",
     "deleteAllConfirmTitle": "Delete All Conversations?",
     "deleteAllConfirmDescription": "All conversations will be permanently deleted. This action cannot be undone.",
-    "deleteAllConfirmButton": "Delete all",
     "deleteAllError": "Failed to delete all conversations. Please try again.",
     "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed."
   },

@@ -9,6 +9,7 @@ import {
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { useConversations } from '../../../context/ConversationsContext';
+import { useNotification } from '../../../context/NotificationContext';
 import ConversationPanelView from '../ConversationPanelView';
 
 vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
@@ -68,7 +69,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       children,
       items,
     }: {
-      children: React.ReactNode;
+      children: React.ReactElement<{ onClick?: () => void }>;
       items: Array<{
         key: string;
         label: React.ReactNode;
@@ -78,7 +79,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       const [isOpen, setIsOpen] = React.useState(false);
       return (
         <div>
-          <div onClick={() => setIsOpen((v) => !v)}>{children}</div>
+          {React.cloneElement(children, {
+            onClick: () => setIsOpen((value) => !value),
+          })}
           {isOpen &&
             items.map((item) => (
               <button key={item.key} onClick={item.onClick}>
@@ -136,6 +139,7 @@ vi.mock('react-router-dom', () => ({
 }));
 
 vi.mock('../../../context/ConversationsContext');
+vi.mock('../../../context/NotificationContext');
 vi.mock('../../../context/DeploymentsContext', () => ({
   useDeployments: () => ({ items: [] }),
 }));
@@ -174,13 +178,14 @@ const mockNavigate = vi.fn();
 const PANEL_ACTIONS_LABEL = 'conversationPanel.panelActionsLabel';
 const DELETE_ALL_LABEL = 'conversationPanel.deleteAllChatsLabel';
 const CONFIRM_TITLE = 'conversationPanel.deleteAllConfirmTitle';
-const CONFIRM_BUTTON = 'conversationPanel.deleteAllConfirmButton';
+const CONFIRM_BUTTON = 'buttons.deleteAll';
 const CANCEL_BUTTON = 'buttons.cancel';
 const DELETE_ALL_ERROR = 'conversationPanel.deleteAllError';
 const PARTIAL_ERROR = 'conversationPanel.deleteAllPartialError';
 
 const mockDeleteAllConversations =
   vi.fn<() => Promise<ConversationDeletionResultDto>>();
+const mockShowNotification = vi.fn();
 
 const baseContextValue = {
   conversations: [
@@ -224,6 +229,11 @@ beforeEach(() => {
   vi.clearAllMocks();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   vi.mocked(useConversations).mockReturnValue(baseContextValue as any);
+  vi.mocked(useNotification).mockReturnValue({
+    notifications: [],
+    showNotification: mockShowNotification,
+    dismissNotification: vi.fn(),
+  });
 });
 
 describe('ConversationPanelView — delete-all header action', () => {
@@ -325,7 +335,7 @@ describe('ConversationPanelView — delete-all header action', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
-  it('partial failure: popup closes, notification shown, navigate called', async () => {
+  it('partial failure: popup closes, global notification shown, navigate called', async () => {
     mockDeleteAllConversations.mockResolvedValueOnce({
       requested: 2,
       deleted: 1,
@@ -341,8 +351,10 @@ describe('ConversationPanelView — delete-all header action', () => {
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
-      expect(screen.getByRole('alert')).toBeTruthy();
-      expect(screen.getByText(PARTIAL_ERROR)).toBeTruthy();
+    });
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'error',
+      message: PARTIAL_ERROR,
     });
     expect(mockNavigate).toHaveBeenCalledWith('/');
   });
@@ -366,7 +378,9 @@ describe('ConversationPanelView — delete-all header action', () => {
   });
 
   it('confirm button is disabled during in-flight request', async () => {
-    let resolveDelete: (result: ConversationDeletionResultDto) => void;
+    let resolveDelete:
+      | ((result: ConversationDeletionResultDto) => void)
+      | undefined;
     const pendingPromise = new Promise<ConversationDeletionResultDto>(
       (resolve) => {
         resolveDelete = resolve;
@@ -384,7 +398,7 @@ describe('ConversationPanelView — delete-all header action', () => {
     });
 
     await act(async () => {
-      resolveDelete!({
+      resolveDelete?.({
         requested: 1,
         deleted: 1,
         alreadyAbsent: 0,
@@ -393,12 +407,12 @@ describe('ConversationPanelView — delete-all header action', () => {
     });
   });
 
-  it('partial-error notification is dismissable', async () => {
+  it('does not show a global notification for complete success', async () => {
     mockDeleteAllConversations.mockResolvedValueOnce({
-      requested: 2,
+      requested: 1,
       deleted: 1,
       alreadyAbsent: 0,
-      failed: [{ id: 'conv1', code: 'UPSTREAM_ERROR' }],
+      failed: [],
     });
 
     render(<ConversationPanelView {...defaultProps} />);
@@ -408,17 +422,15 @@ describe('ConversationPanelView — delete-all header action', () => {
     });
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toBeTruthy();
+      expect(screen.queryByRole('dialog')).toBeNull();
     });
-
-    fireEvent.click(screen.getByRole('button', { name: 'Close notification' }));
-    await waitFor(() => {
-      expect(screen.queryByRole('alert')).toBeNull();
-    });
+    expect(mockShowNotification).not.toHaveBeenCalled();
   });
 
   it('cancel is a no-op while deletion is in progress', async () => {
-    let resolveDelete: (result: ConversationDeletionResultDto) => void;
+    let resolveDelete:
+      | ((result: ConversationDeletionResultDto) => void)
+      | undefined;
     const pendingPromise = new Promise<ConversationDeletionResultDto>(
       (resolve) => {
         resolveDelete = resolve;
@@ -440,7 +452,7 @@ describe('ConversationPanelView — delete-all header action', () => {
     expect(mockDeleteAllConversations).toHaveBeenCalledTimes(1);
 
     await act(async () => {
-      resolveDelete!({
+      resolveDelete?.({
         requested: 1,
         deleted: 1,
         alreadyAbsent: 0,
