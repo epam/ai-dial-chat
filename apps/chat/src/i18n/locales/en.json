@@ -17,6 +17,7 @@
     "welcomeScreen": "Welcome screen",
     "logo": "Logo",
     "conversationStarters": "Conversation starters",
+    "starterButtonsOverflow": "More conversation starters",
     "sendMessage": "Send message",
     "stopStreaming": "Stop streaming",
     "quickReplyButtons": "Quick reply buttons",
