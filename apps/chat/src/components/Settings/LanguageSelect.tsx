@@ -1,7 +1,8 @@
 import { MouseEvent, useState } from 'react';
 
-import classNames from 'classnames';
 import { useRouter } from 'next/router';
+
+import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
