@@ -94,7 +94,8 @@
     "deleteMessage": "Delete message",
     "regenerateResponse": "Regenerate response",
     "copyResponse": "Copy response",
-    "copyAsMarkdown": "Copy as markdown",
+    "copyAsMarkdown": "Copy markdown",
+    "copyText": "Copy text",
     "likeResponse": "Like response",
     "dislikeResponse": "Dislike response"
   },
