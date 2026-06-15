@@ -33,12 +33,14 @@ interface FileRowProps extends FileViewProps, FeatureRowProps {}
 export const FilesRow = ({
   item,
   additionalItemData,
+  level,
   onEvent,
 }: FileRowProps) => {
   return (
     <EntityRow
       entityId={item.id}
       additionalItemData={additionalItemData}
+      level={level}
       onEvent={onEvent}
       dataQA="file"
     >
