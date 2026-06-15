@@ -14,6 +14,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-label': string;
     onClick: () => void;
   }) => <button type="button" aria-label={ariaLabel} onClick={onClick} />,
+  ResizableContainerSide: {
+    Left: 'left',
+    Right: 'right',
+  },
+  DialConditionalResizableContainer: ({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) => <div>{children}</div>,
 }));
 
 const defaultProps = {

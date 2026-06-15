@@ -94,4 +94,18 @@ export interface SidebarPanelProps {
   bodyClassName?: string;
   /** CSS custom properties applied to the scrollable body `<div>`. */
   cssVars?: CSSProperties;
+  /**
+   * Enables drag-to-resize on the panel edge opposite to `side`.
+   * When false (default) the panel renders at a width determined by `className`.
+   * Automatically disabled when `isOpen` is false.
+   */
+  resizable?: boolean;
+  /** Initial panel width in px used when `resizable` is true. */
+  defaultWidth?: number;
+  /** Minimum panel width in px used when `resizable` is true. */
+  minWidth?: number;
+  /** Maximum panel width in px used when `resizable` is true. */
+  maxWidth?: number;
+  /** Called with the new width in px when the user finishes a resize drag. */
+  onResizeStop?: (width: number) => void;
 }

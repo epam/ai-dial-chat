@@ -80,7 +80,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   );
 
   return (
-    <li className="group relative">
+    <li className="group/conversation relative">
       <DialGhostButton
         iconBefore={avatar}
         label={
@@ -107,7 +107,9 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         <div
           className={mergeClasses(
             'absolute inset-y-0 end-1 flex items-center',
-            isMenuOpen ? 'opacity-100' : 'opacity-0 group-hover:opacity-100',
+            isMenuOpen
+              ? 'opacity-100'
+              : 'opacity-0 group-hover/conversation:opacity-100',
           )}
         >
           <DialDropdown

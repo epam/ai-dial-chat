@@ -9,6 +9,7 @@ import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import { StorageKey } from '../../constants/storage';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
@@ -17,8 +18,14 @@ import {
 } from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
+import useViewportWidth from '../../hooks/use-viewport-width';
+import useLocalStorage from '../../hooks/useLocalStorage';
 import FilesSection from './sections/FilesSection/FilesSection';
+
+const MIN_PANEL_WIDTH = 312;
+const DEFAULT_PANEL_WIDTH = 360;
 
 // TODO: need add libs for this panel
 const ConversationSourcesPanel: FC = () => {
@@ -27,6 +34,18 @@ const ConversationSourcesPanel: FC = () => {
   const { uploaded, generated } = useConversationSources(messages);
   const { handleAttachmentClick } = useAttachmentAction();
   const [searchQuery, setSearchQuery] = useState('');
+
+  const isMobile = useIsMobile();
+  const viewportWidth = useViewportWidth();
+  const maxPanelWidth = Math.floor(viewportWidth * 0.5);
+  const [storedWidth, setStoredWidth] = useLocalStorage(
+    StorageKey.ConversationSourcesWidth,
+    DEFAULT_PANEL_WIDTH,
+  );
+  const defaultPanelWidth = Math.min(
+    Math.max(storedWidth, MIN_PANEL_WIDTH),
+    maxPanelWidth,
+  );
 
   useLayoutEffect(() => {
     if (!isOpen) {
@@ -64,11 +83,16 @@ const ConversationSourcesPanel: FC = () => {
     <SidebarPanel
       isOpen={isOpen}
       side={SidebarSide.Right}
-      className={isOpen ? 'w-[360px] mobile:w-full' : 'w-0'}
+      className={isOpen ? 'mobile:w-full' : 'w-0'}
       ariaLabel={t(SidebarI18nKeys.AriaLabel)}
       closeLabel={t(ButtonsI18nKeys.Close)}
       onClose={handleClose}
       bodyClassName="flex flex-col overflow-hidden p-0"
+      resizable={!isMobile}
+      defaultWidth={defaultPanelWidth}
+      minWidth={MIN_PANEL_WIDTH}
+      maxWidth={maxPanelWidth}
+      onResizeStop={setStoredWidth}
       rightActions={
         !isEmpty && (
           <DialGhostIconButton
