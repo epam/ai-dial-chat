@@ -61,6 +61,10 @@ describe('isClientSessionValid', () => {
 describe('isServerSessionValid', () => {
   const origIframe = process.env.IS_IFRAME;
 
+  beforeEach(() => {
+    process.env.IS_IFRAME = 'false';
+  });
+
   afterEach(() => {
     process.env.IS_IFRAME = origIframe;
   });

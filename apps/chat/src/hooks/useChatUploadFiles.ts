@@ -1,4 +1,7 @@
-import { useUploadFilesHandler } from '@/src/hooks/useUploadFilesHandler';
+import {
+  DispatchPreparedFilesOptions,
+  useUploadFilesHandler,
+} from '@/src/hooks/useUploadFilesHandler';
 
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 
@@ -37,3 +40,5 @@ export const useChatUploadFiles = ({
     preUploadFiles,
   );
 };
+
+export type { DispatchPreparedFilesOptions };

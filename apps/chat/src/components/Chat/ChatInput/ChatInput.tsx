@@ -62,7 +62,7 @@ export const ChatInput = Inversify.register(
 
     const inputRef = useRef<HTMLDivElement | null>(null);
 
-    const handleUploadFiles = useChatUploadFiles();
+    const { uploadFiles } = useChatUploadFiles();
 
     const handlePaste = useCallback(
       (
@@ -70,7 +70,7 @@ export const ChatInput = Inversify.register(
         textContent?: string,
         selection?: { start: number; end: number },
       ) => {
-        if (canAttachFiles) handleUploadFiles(files);
+        if (canAttachFiles) uploadFiles(files);
         if (textContent) {
           dispatch(
             ChatActions.setInputContent(
@@ -86,7 +86,7 @@ export const ChatInput = Inversify.register(
           );
         }
       },
-      [canAttachFiles, chatInputContent, dispatch, handleUploadFiles],
+      [canAttachFiles, chatInputContent, dispatch, uploadFiles],
     );
 
     useFilePaste(textareaRef, handlePaste);

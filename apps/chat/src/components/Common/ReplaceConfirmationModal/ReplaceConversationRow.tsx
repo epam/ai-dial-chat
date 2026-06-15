@@ -79,6 +79,7 @@ export const ConversationRow = ({
   additionalItemData,
   itemComponentClassNames,
   featureContainerClassNames,
+  level,
   onEvent,
 }: ConversationRowProps) => {
   return (
@@ -86,6 +87,7 @@ export const ConversationRow = ({
       entityId={conversation.id}
       additionalItemData={additionalItemData}
       itemComponentClassNames={itemComponentClassNames}
+      level={level}
       dataQA="conversation"
       onEvent={onEvent}
     >
