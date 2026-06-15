@@ -1,7 +1,8 @@
 import { useEffect, useMemo } from 'react';
 
-import classNames from 'classnames';
 import { useRouter } from 'next/router';
+
+import classNames from 'classnames';
 
 import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
@@ -104,10 +105,18 @@ export const Marketplace = () => {
       ) : (
         <>
           <TabHeader isBannerVisible={isBannerVisible} />
-          <div className={classNames('flex min-h-0 grow flex-col', { hidden: !isAgentsTab })}>
+          <div
+            className={classNames('flex min-h-0 grow flex-col', {
+              hidden: !isAgentsTab,
+            })}
+          >
             <AgentsTabRenderer />
           </div>
-          <div className={classNames('flex min-h-0 grow flex-col', { hidden: isAgentsTab })}>
+          <div
+            className={classNames('flex min-h-0 grow flex-col', {
+              hidden: isAgentsTab,
+            })}
+          >
             <ToolsTabRenderer />
           </div>
         </>
