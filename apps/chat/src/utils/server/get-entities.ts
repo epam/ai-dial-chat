@@ -7,7 +7,17 @@ import {
 
 import { getApiHeaders } from './get-headers';
 
+import { Agent as HttpAgent } from 'http';
+import { Agent as HttpsAgent } from 'https';
 import fetch from 'node-fetch';
+
+// Singleton keep-alive agents so sockets to DIAL Core are pooled and reused
+// across requests, removing per-request TCP/TLS handshake overhead.
+const httpAgent = new HttpAgent({ keepAlive: true });
+const httpsAgent = new HttpsAgent({ keepAlive: true });
+
+const selectKeepAliveAgent = (parsedUrl: { protocol: string }) =>
+  parsedUrl.protocol === 'https:' ? httpsAgent : httpAgent;
 
 export async function getEntities<T>(
   type: EntityType,
@@ -18,6 +28,7 @@ export async function getEntities<T>(
   const errMsg = `Request for ${type}s returned an error`;
   const response = await fetch(url, {
     headers: getApiHeaders({ jwt, jobTitle }),
+    agent: selectKeepAliveAgent,
   }).catch((error) => {
     throw new Error(`${errMsg}: ${error.message}`);
   });
