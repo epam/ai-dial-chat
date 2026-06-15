@@ -11,6 +11,7 @@ import {
   IconColorSwatch,
   IconDeviceDesktop,
   IconKeyboard,
+  IconLanguage,
   IconLogout,
   IconMoon,
   IconSun,
@@ -29,6 +30,10 @@ import {
   metaKey,
   useKeyboardShortcutPreference,
 } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import {
+  SUPPORTED_LANGUAGES,
+  useLanguage,
+} from '../../hooks/language/useLanguage';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import AvatarInitials from './AvatarInitials';
 import MenuItemLabel from './MenuItemLabel';
@@ -38,6 +43,7 @@ export const UserMenu = memo(() => {
   const { t } = useTranslation();
   const { selectedTheme, setTheme, themes } = useTheme();
   const { preference, setPreference } = useKeyboardShortcutPreference();
+  const { language, changeLanguage } = useLanguage();
 
   const image = user?.claims?.['image'] as string | undefined;
   const [isFallbackIconShown, setIsFallbackIconShown] = useState(!image);
@@ -116,6 +122,14 @@ export const UserMenu = memo(() => {
       },
   ].filter((x): x is Exclude<typeof x, false> => Boolean(x)) as DropdownItem[];
 
+  const languageChildren = SUPPORTED_LANGUAGES.map(({ code, nativeName }) => ({
+    key: `language-${code}`,
+    label: (
+      <MenuItemLabel label={nativeName} isActive={language.startsWith(code)} />
+    ),
+    onClick: () => changeLanguage(code),
+  }));
+
   const menuItems = [
     {
       key: 'identity',
@@ -131,6 +145,20 @@ export const UserMenu = memo(() => {
       ),
     },
     { key: 'divider-1', type: DropdownItemType.Divider },
+    ...(SUPPORTED_LANGUAGES.length > 1
+      ? [
+          {
+            key: 'language',
+            label: (
+              <span className="dial-small-text">
+                {t(SettingsI18nKeys.Language)}
+              </span>
+            ),
+            icon: <IconLanguage size={DIAL_ICON_SIZE.SM} aria-hidden />,
+            children: languageChildren,
+          },
+        ]
+      : []),
     {
       key: 'theme',
       label: (

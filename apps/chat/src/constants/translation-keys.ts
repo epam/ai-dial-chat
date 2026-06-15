@@ -115,6 +115,7 @@ export enum AuthI18nKeys {
 }
 
 export enum SettingsI18nKeys {
+  Language = 'settings.language',
   Theme = 'settings.theme',
   ThemeDark = 'settings.themeDark',
   ThemeLight = 'settings.themeLight',
