@@ -1,7 +1,8 @@
 import { ChatEventsModal } from '@/src/components/Chat/ChatEventsModal/ChatEventsModal';
 import { AgentDialogs } from '@/src/components/Common/AgentDialogs';
 import { InfoModal } from '@/src/components/Common/InfoModal';
-import { ReplaceConfirmationModal } from '@/src/components/Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
+import { ChatUploadReplaceConfirmationModal } from '@/src/components/Common/ReplaceConfirmationModal/ChatUploadReplaceConfirmationModal';
+import { ImportReplaceConfirmationModal } from '@/src/components/Common/ReplaceConfirmationModal/ImportReplaceConfirmationModal';
 import { SystemDialogs } from '@/src/components/Common/SystemDialogs';
 import { ToolsetDialogs } from '@/src/components/Common/ToolsetDialogs';
 import { UnshareDialog } from '@/src/components/Common/UnshareDialog';
@@ -22,7 +23,8 @@ export function ChatModalsManager() {
       <UserMobile />
       <ShareModal />
       <UnshareDialog />
-      <ReplaceConfirmationModal />
+      <ImportReplaceConfirmationModal />
+      <ChatUploadReplaceConfirmationModal />
       <RenameConversationModal />
       <PromptVariablesForApplyDialog />
       <PromptModal />

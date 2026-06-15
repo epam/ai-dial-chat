@@ -43,6 +43,7 @@ import {
   getFileRootId,
   stripTrailingSlashForSelectedPath,
 } from '@/src/utils/app/id';
+import { applyUploadReplaceActions } from '@/src/utils/app/prepare-files-for-upload';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { translate } from '@/src/utils/app/translation';
 import { ApiUtils } from '@/src/utils/server/api';
@@ -139,7 +140,7 @@ const uploadFileEpic: AppEpic = (action$) =>
         formData,
         payload.relativePath,
         payload.name,
-        undefined,
+        payload.httpMethod,
         payload.bucket,
       ).pipe(
         filter(
@@ -1199,6 +1200,58 @@ const createNewFolderEpic: AppEpic = (action$) =>
     }),
   );
 
+const continueUploadReplaceDialogEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(FilesActions.continueUploadReplaceDialog.type),
+    switchMap(({ payload }) => {
+      const dialog = FilesSelectors.selectUploadReplaceDialog(state$.value);
+
+      if (!dialog) {
+        return EMPTY;
+      }
+
+      const existingFiles = FilesSelectors.selectFiles(state$.value);
+      const resolvedFiles = applyUploadReplaceActions({
+        duplicatedFiles: dialog.duplicatedFiles,
+        nonDuplicatedFiles: dialog.nonDuplicatedFiles,
+        mappedActions: payload.mappedActions,
+        existingFiles,
+        folderId: dialog.folderId,
+        bucket: dialog.bucket,
+      });
+
+      const actions: AppAction[] = [
+        FilesActions.clearUploadReplaceDialog(),
+        ...resolvedFiles.map((file, index) =>
+          FilesActions.uploadFile({
+            fileContent: file.fileContent,
+            id: file.id,
+            relativePath: dialog.folderPath,
+            name: file.name,
+            ...(dialog.bucket && { bucket: dialog.bucket }),
+            ...(file.httpMethod && { httpMethod: file.httpMethod }),
+            ...(dialog.showSuccessMessage && {
+              showSuccessMessage: index === resolvedFiles.length - 1,
+            }),
+            ...(dialog.isFromDeviceAttachment && {
+              isFromDeviceAttachment: true,
+            }),
+          }),
+        ),
+      ];
+
+      if (dialog.selectFileIds && resolvedFiles.length) {
+        actions.push(
+          FilesActions.selectFiles({
+            ids: resolvedFiles.map(({ id }) => id),
+          }),
+        );
+      }
+
+      return from(actions);
+    }),
+  );
+
 export const FilesEpics = combineEpics(
   initEpic,
   initFileSizeCacheEpic,
@@ -1231,4 +1284,5 @@ export const FilesEpics = combineEpics(
   uploadArchiveEpic,
   copyMoveFilesResultToastEpic,
   deleteFilesResultToastEpic,
+  continueUploadReplaceDialogEpic,
 );
