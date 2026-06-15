@@ -79,7 +79,7 @@ export const ResponseFormat: FC<ResponseFormatProps> = ({
         activeRadioButton={value}
         orientation={RadioGroupOrientation.Column}
         onChange={handleChange}
-        radioClassName="!mr-0 shrink-0 !me-3"
+        radioClassName="shrink-0 me-3"
       />
     </div>
   );
