@@ -62,7 +62,7 @@ export function RegexParamInput({
       <div className="flex h-[31px] w-full">
         <input
           ref={inputRef}
-          className="w-full bg-transparent py-1 pl-2 text-xs outline-none placeholder:text-secondary"
+          className="w-full bg-transparent py-1 ps-2 text-xs outline-none placeholder:text-secondary"
           type="text"
           placeholder={t(ChatI18nKeys.EnterRegularExpression) || ''}
           value={regEx}

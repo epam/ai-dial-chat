@@ -105,17 +105,17 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
       <div
         onClick={handlePublicationSelect}
         className={classNames(
-          'group relative flex h-[34px] items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          'group relative flex h-[34px] items-center rounded border-s-2 hover:bg-accent-primary-alpha',
           selectedPublicationUrl === publication.url &&
             !selectedConversationIds.length
-            ? 'border-l-accent-primary bg-accent-primary-alpha'
-            : 'border-l-transparent',
+            ? 'border-s-accent-primary bg-accent-primary-alpha'
+            : 'border-s-transparent',
         )}
         data-qa="folder"
       >
         <div
           className={classNames(
-            'group/button flex size-full items-center gap-1 py-2 pr-3',
+            'group/button flex size-full items-center gap-1 py-2 pe-3',
             isMessageStreaming ? 'cursor-not-allowed' : 'cursor-pointer',
           )}
         >
@@ -251,7 +251,7 @@ export const ApproveRequiredSection = ({
       isHighlighted={isSectionHighlighted}
       additionalNode={
         !!publicationsToReviewCount && (
-          <span className="absolute right-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded bg-accent-primary-alpha px-[2px] text-xxs font-semibold text-accent-primary">
+          <span className="absolute end-4 flex h-[14px] min-w-[14px] select-none items-center justify-center rounded bg-accent-primary-alpha px-[2px] text-xxs font-semibold text-accent-primary">
             {publicationsToReviewCount}
           </span>
         )

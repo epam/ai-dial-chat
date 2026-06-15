@@ -96,8 +96,8 @@ export function ShareIcon({
           'absolute z-50 bg-layer-3',
           isPublished && 'rounded-md',
           isApplication
-            ? 'bottom-0 left-0 rounded-none rounded-tr-[4px] stroke-[0.6]'
-            : '-bottom-1 -left-1 rounded-sm stroke-[1.5]',
+            ? 'bottom-0 start-0 rounded-none rounded-se-[4px] stroke-[0.6]'
+            : '-bottom-1 -start-1 rounded-sm stroke-[1.5]',
           iconWrapperClassName,
         )}
         data-qa={dataQA}
@@ -112,7 +112,7 @@ export function ShareIcon({
               (isHighlighted || isDraggingOver) && 'bg-accent-primary-alpha',
               isPublished && '!rounded-md',
               isApplication
-                ? 'rounded-none rounded-tr-[4px] stroke-[0.6]'
+                ? 'rounded-none rounded-se-[4px] stroke-[0.6]'
                 : 'rounded-sm stroke-[1.5]',
               (isExternal || isMyEntityIcon) && '!stroke-[1.5]',
               iconClassName,

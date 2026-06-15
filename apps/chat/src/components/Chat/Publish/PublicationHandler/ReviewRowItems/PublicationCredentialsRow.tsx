@@ -66,18 +66,18 @@ export const PublicationCredentialsRow: React.FC<PublicationItemProps> = ({
   ]);
 
   return (
-    <div className="mt-1 flex items-center justify-between rounded pr-2 hover:bg-accent-primary-alpha focus:bg-accent-primary-alpha">
+    <div className="mt-1 flex items-center justify-between rounded pe-2 hover:bg-accent-primary-alpha focus:bg-accent-primary-alpha">
       <span
         className="relative flex min-h-[34px] w-full flex-1 cursor-pointer items-center gap-2 truncate rounded px-4"
         style={{
-          paddingLeft: `${level * 24 + 16}px`,
+          paddingInlineStart: `${level * 24 + 16}px`,
         }}
         data-qa="credentials"
       >
         <Checkbox
           checked={isSelected}
           onChange={handleSelect}
-          className="mr-0"
+          className="me-0"
         />
         <IconKey size={18} className="text-secondary" />
         <p>{t(ChatI18nKeys.Credentials)}</p>

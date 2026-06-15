@@ -30,6 +30,10 @@ let capturedSelectedCheckboxVersionIds: string[] | undefined;
 
 const mockDispatch = vi.fn();
 
+const { mockT } = vi.hoisted(() => ({
+  mockT: (key: string) => key,
+}));
+
 // ---------------------------------------------------------------------------
 // Module mocks
 // vi.mock factories are hoisted to the top of the file by Vitest, so they
@@ -40,13 +44,21 @@ vi.mock('react-hook-form', () => ({
   useWatch: vi.fn().mockReturnValue('public'),
 }));
 
+vi.mock('next/router', () => ({
+  useRouter: vi.fn().mockReturnValue({
+    locale: 'en',
+    push: vi.fn(),
+    replace: vi.fn(),
+  }),
+}));
+
 vi.mock('@/src/hooks/usePublicVersionGroupIdFromPublicEntity', () => ({
   // The value must be a non-empty string so PublicVersionSelector renders.
   usePublicVersionGroupId: vi.fn().mockReturnValue('custom_app_api_group'),
 }));
 
 vi.mock('@/src/hooks/useTranslation', () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({ t: mockT }),
 }));
 
 vi.mock('@/src/store/hooks', () => ({

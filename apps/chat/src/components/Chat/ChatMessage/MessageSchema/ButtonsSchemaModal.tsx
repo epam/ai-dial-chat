@@ -2,7 +2,12 @@ import React from 'react';
 
 import classNames from 'classnames';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import { ModalState } from '@/src/types/modal';
+import { Translation } from '@/src/types/translation';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Modal } from '@/src/components/Common/Modal';
 
@@ -31,11 +36,13 @@ export const ButtonsSchemaModal: React.FC<Props> = ({
   onButtonClick,
   onClose,
 }) => {
+  const { t } = useTranslation(Translation.Chat);
+
   return (
     <Modal
       portalId="theme-main"
       dataQa="hidden-schema-buttons"
-      heading="Chat starters"
+      heading={t(ChatI18nKeys.ChatStarters)}
       state={ModalState.OPENED}
       containerClassName="h-fit flex flex-col md:py-6 py-4 md:px-6 px-3 max-h-full inline-block w-full max-w-[768px]"
       onClose={onClose}

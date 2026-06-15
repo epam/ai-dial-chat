@@ -12,7 +12,7 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { FilesSelectors } from '@/src/store/selectors';
 
 import { FEATURES_ENDPOINTS_NAMES } from '@/src/constants/applications';
-import { ChatI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 
 import { ReviewApplicationPropsSection } from '@/src/components/Chat/Publish/PublicationHandler/ReviewApplicationDialog/ReviewApplicationPropsSection';
 import { CodeEditor } from '@/src/components/Common/CodeEditor/CodeEditor';
@@ -30,6 +30,7 @@ const ReviewCodeAppSectionView = ({
   config,
 }: ReviewCodeAppSectionViewProps) => {
   const { t } = useTranslation(Translation.Chat);
+  const { t: tMarketplace } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
 
   const isFilesLoading = useAppSelector(FilesSelectors.selectAreFilesLoading);
@@ -42,14 +43,14 @@ const ReviewCodeAppSectionView = ({
     <>
       {!isEmpty(config.mapping) && (
         <ReviewApplicationPropsSection
-          label="Endpoints"
+          label={tMarketplace(MarketplaceI18nKeys.Endpoints)}
           appProps={config.mapping ?? {}}
           propsNames={FEATURES_ENDPOINTS_NAMES}
         />
       )}
       {!isEmpty(config.env) && (
         <ReviewApplicationPropsSection
-          label="Environment variables"
+          label={tMarketplace(MarketplaceI18nKeys.EnvironmentVariables)}
           appProps={config.env ?? {}}
         />
       )}

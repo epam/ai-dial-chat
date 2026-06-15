@@ -19,7 +19,12 @@ interface EnterTypeSelectProps {
 const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
   const { t } = useTranslation(Translation.Settings);
   const enterLabel = t(SettingsI18nKeys.Enter);
-  const shiftEnterLabel = t(SettingsI18nKeys.ShiftEnter);
+  const shiftLabel = t(SettingsI18nKeys.Shift);
+  const shiftEnterShortcutLabel = (
+    <>
+      {shiftLabel} + {enterLabel}
+    </>
+  );
   const ctrlEnterShortcutLabel = isMacOs() ? (
     <>⌘ + {enterLabel}</>
   ) : (
@@ -29,14 +34,15 @@ const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
   );
 
   return (
-    <div className="mt-1 flex flex-col gap-3">
+    <div className="mt-1 flex w-full flex-col gap-3">
       <DialRadioButton
         inputId={EnterType.Enter}
         name="enter-type-select"
+        className="me-3 shrink-0"
         label={
           <>
             <b>{enterLabel}</b> - {t(SettingsI18nKeys.SendMessages)},{' '}
-            <b>{shiftEnterLabel}</b> - {t(SettingsI18nKeys.NewLine)}
+            <b>{shiftEnterShortcutLabel}</b> - {t(SettingsI18nKeys.NewLine)}
           </>
         }
         onChange={onValueChange}
@@ -47,6 +53,7 @@ const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
       <DialRadioButton
         inputId={EnterType.CtrlEnter}
         name="enter-type-select"
+        className="me-3 shrink-0"
         label={
           <>
             <b>{ctrlEnterShortcutLabel}</b> - {t(SettingsI18nKeys.SendMessages)}
