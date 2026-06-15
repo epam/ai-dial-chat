@@ -1081,6 +1081,7 @@ export enum MarketplaceI18nKeys {
   SearchMarketplace = 'Search',
   SuggestedResults = 'Suggested results from DIAL Marketplace',
   NoResultsInMyWorkspace = 'No results found in My workspace. Look at suggested results from DIAL Marketplace.',
+  NoSearchResults = "Sorry, we couldn't find any results for your search.",
   VersionPrefixMarketplace = 'Version: ',
   ToolsetMarketplace = 'Toolset',
   ManageCreds = 'Manage creds',
