@@ -36,55 +36,42 @@ interface ControlledFormFieldProps<T extends FieldValues, K extends Path<T>> {
   defaultValue?: PathValue<T, K>;
 }
 
-const ControlledFormField = <T extends FieldValues, K extends Path<T>>({
-  control,
-  name,
-  children,
-  rules,
-  defaultValue = '' as PathValue<T, K>,
-}: ControlledFormFieldProps<T, K>) => {
-  const newRules = useMemo(() => omit(rules ?? {}, 'setValueAs'), [rules]);
-
-  const renderFn = useCallback(
-    (cbProps: TRenderFuncProps<T, K>) => {
-      const transform = (e: ChangeEvent<HTMLInputElement>) => {
-        const { value } = e.target;
-
-        cbProps.field.onChange(rules?.setValueAs?.(value));
-      };
-
-      const newField = {
-        ...cbProps.field,
-        onChange: rules?.setValueAs ? transform : cbProps.field.onChange,
-      };
-
-      return children({ ...cbProps, field: newField });
-    },
-    [rules, children],
-  );
-
-  return (
-    <Controller
-      control={control}
-      name={name}
-      render={renderFn}
-      rules={newRules}
-      defaultValue={defaultValue}
-    />
-  );
-};
-
 export function withController<T extends object>(Component: ComponentType<T>) {
   function ControllerWrapper<F extends FieldValues, K extends Path<F>>({
     control,
     name,
     rules,
+    defaultValue = '' as PathValue<F, K>,
     ...props
   }: T & Omit<ControlledFormFieldProps<F, K>, 'children'>) {
+    const newRules = useMemo(() => omit(rules ?? {}, 'setValueAs'), [rules]);
+
+    const renderFn = useCallback(
+      (cbProps: TRenderFuncProps<F, K>) => {
+        const transform = (e: ChangeEvent<HTMLInputElement>) => {
+          const { value } = e.target;
+
+          cbProps.field.onChange(rules?.setValueAs?.(value));
+        };
+
+        const newField = {
+          ...cbProps.field,
+          onChange: rules?.setValueAs ? transform : cbProps.field.onChange,
+        };
+
+        return <Component {...(props as T)} {...newField} />;
+      },
+      [props, rules],
+    );
+
     return (
-      <ControlledFormField control={control} name={name} rules={rules}>
-        {({ field }) => <Component {...(props as T)} {...field} />}
-      </ControlledFormField>
+      <Controller
+        control={control}
+        name={name}
+        render={renderFn}
+        rules={newRules}
+        defaultValue={defaultValue}
+      />
     );
   }
 

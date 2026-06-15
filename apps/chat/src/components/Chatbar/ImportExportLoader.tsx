@@ -12,38 +12,38 @@ import { ImportExportSelectors } from '@/src/store/selectors';
 import { FullPageLoader } from '@/src/components/Common/FullPageLoader';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
-function ImportExportLoaderView() {
-  const { t } = useTranslation(Translation.Chat);
-  const dispatch = useAppDispatch();
-  const operationName =
-    useAppSelector(ImportExportSelectors.selectOperationName) ?? '';
-  const stopLabel = operationName === Operation.Importing ? 'Stop' : 'Cancel';
+const view = withRenderWhen(ImportExportSelectors.selectIsLoadingImportExport)(
+  () => {
+    const { t } = useTranslation(Translation.Chat);
+    const dispatch = useAppDispatch();
+    const operationName =
+      useAppSelector(ImportExportSelectors.selectOperationName) ?? '';
+    const stopLabel = operationName === Operation.Importing ? 'Stop' : 'Cancel';
 
-  const handleCancelExport = useCallback(() => {
-    dispatch(ImportExportActions.exportCancel());
-  }, [dispatch]);
+    const handleCancelExport = useCallback(() => {
+      dispatch(ImportExportActions.exportCancel());
+    }, [dispatch]);
 
-  const handleStopImport = useCallback(() => {
-    dispatch(ImportExportActions.importStop());
-  }, [dispatch]);
+    const handleStopImport = useCallback(() => {
+      dispatch(ImportExportActions.importStop());
+    }, [dispatch]);
 
-  const onStop =
-    operationName === Operation.Importing
-      ? handleStopImport
-      : handleCancelExport;
-  return (
-    <FullPageLoader
-      loaderLabel={t(operationName)}
-      isOpen
-      onClose={() => {
-        return;
-      }}
-      onStop={onStop}
-      stopLabel={t(stopLabel)}
-    />
-  );
-}
+    const onStop =
+      operationName === Operation.Importing
+        ? handleStopImport
+        : handleCancelExport;
+    return (
+      <FullPageLoader
+        loaderLabel={t(operationName)}
+        isOpen
+        onClose={() => {
+          return;
+        }}
+        onStop={onStop}
+        stopLabel={t(stopLabel)}
+      />
+    );
+  },
+);
 
-export const ImportExportLoader = withRenderWhen(
-  ImportExportSelectors.selectIsLoadingImportExport,
-)(ImportExportLoaderView);
+export const ImportExportLoader = view;

@@ -241,6 +241,11 @@ const selectIsMovingFiles = createSelector(
   (state) => state.isMovingFiles,
 );
 
+const selectIsDeletingFiles = createSelector(
+  [rootSelector],
+  (state) => state.isDeletingFiles,
+);
+
 const selectLoadingFileMetadata = (state: RootState) =>
   rootSelector(state).loadingFileMetadata;
 
@@ -354,5 +359,6 @@ export const FilesSelectors = {
   selectIsMovingFiles,
   selectIsCopyingFiles,
   selectIsUploadingFiles,
+  selectIsDeletingFiles,
   selectSharedWithMeFilesAndFoldersIds,
 };

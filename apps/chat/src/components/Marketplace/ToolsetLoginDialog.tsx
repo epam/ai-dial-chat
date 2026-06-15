@@ -1,5 +1,5 @@
 import { IconLayoutGrid, IconUser } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -64,7 +64,9 @@ interface ToolsetLoginDialogProps {
   toolset: ToolsetModel;
 }
 
-const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
+const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
+  toolset: (state) => MarketplaceSelectors.selectLoginEntity(state)?.toolset,
+})(({ toolset }: ToolsetLoginDialogProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
   const { route } = useRouter();
@@ -350,9 +352,6 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
       </FormProvider>
     </Modal>
   );
-};
+});
 
-export const ToolsetLoginDialog =
-  withRenderWhenEntities<ToolsetLoginDialogProps>({
-    toolset: (state) => MarketplaceSelectors.selectLoginEntity(state)?.toolset,
-  })(ToolsetLoginDialogView);
+export const ToolsetLoginDialog = view;

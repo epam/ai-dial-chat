@@ -28,94 +28,6 @@ import { UserIcon } from './UserIcon';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { Feature } from '@epam/ai-dial-shared';
 
-const UserInfo = () => {
-  const { data: session } = useSession();
-
-  return (
-    <div className="w-full border-b border-tertiary p-4 text-primary">
-      <div className="flex items-start gap-2">
-        <UserIcon className="mx-2" />
-
-        <span className="self-center break-words" data-qa="username">
-          {session?.user?.name ?? ''}
-        </span>
-      </div>
-    </div>
-  );
-};
-
-const UserSettings = () => {
-  const dispatch = useAppDispatch();
-  const { t } = useTranslation(Translation.Header);
-
-  const onClick = useCallback(() => {
-    dispatch(UIActions.setIsUserSettingsOpen(true));
-  }, [dispatch]);
-
-  return (
-    <div
-      id="user-settings-menu-item"
-      className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
-      onClick={onClick}
-    >
-      <IconSettings className="text-secondary" size={18} />
-      <span>{t(HeaderI18nKeys.Settings)}</span>
-    </div>
-  );
-};
-
-const Logout = () => {
-  const { session, handleLogout } = useLogout();
-  const { t } = useTranslation(Translation.Header);
-  const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
-    useState(false);
-
-  return (
-    <>
-      <div
-        id="logout-menu-item"
-        className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
-        onClick={() => {
-          if (!session) {
-            handleLogout();
-            return;
-          }
-          setIsLogoutConfirmationOpened(true);
-        }}
-      >
-        <IconLogout className="text-secondary" size={18} />
-        <span>
-          {session ? t(HeaderI18nKeys.LogOut) : t(HeaderI18nKeys.Login)}
-        </span>
-      </div>
-      <ConfirmDialog
-        isOpen={isLogoutConfirmationOpened}
-        heading={t(HeaderI18nKeys.ConfirmLogout)}
-        description={t(HeaderI18nKeys.ConfirmLogoutDescription)}
-        confirmLabel={t(HeaderI18nKeys.LogOut)}
-        cancelLabel={t(HeaderI18nKeys.Cancel)}
-        onClose={(result) => {
-          setIsLogoutConfirmationOpened(false);
-          if (result) {
-            handleLogout();
-          }
-        }}
-      />
-    </>
-  );
-};
-const UserMenu = () => {
-  const isHideUserSettingsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.HideUserSettings),
-  );
-  return (
-    <div className="flex flex-col gap-1 p-2">
-      {!isHideUserSettingsEnabled && <UserSettings />}
-      <Logout />
-    </div>
-  );
-};
-
 const UserMobileView = Inversify.register('UserMobile', () => {
   const { t } = useTranslation(Translation.Header);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
@@ -127,6 +39,95 @@ const UserMobileView = Inversify.register('UserMobile', () => {
   const handleClose = useCallback(() => {
     dispatch(UIActions.setIsProfileOpen(false));
   }, [dispatch]);
+
+  const UserInfo = () => {
+    const { data: session } = useSession();
+
+    return (
+      <div className="w-full border-b border-tertiary p-4 text-primary">
+        <div className="flex items-start gap-2">
+          <UserIcon className="mx-2" />
+
+          <span className="self-center break-words" data-qa="username">
+            {session?.user?.name ?? ''}
+          </span>
+        </div>
+      </div>
+    );
+  };
+
+  const UserSettings = () => {
+    const dispatch = useAppDispatch();
+    const { t } = useTranslation(Translation.Header);
+
+    const onClick = useCallback(() => {
+      dispatch(UIActions.setIsUserSettingsOpen(true));
+    }, [dispatch]);
+
+    return (
+      <div
+        id="user-settings-menu-item"
+        className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
+        onClick={onClick}
+      >
+        <IconSettings className="text-secondary" size={18} />
+        <span>{t(HeaderI18nKeys.Settings)}</span>
+      </div>
+    );
+  };
+
+  const Logout = () => {
+    const { session, handleLogout } = useLogout();
+    const { t } = useTranslation(Translation.Header);
+    const [isLogoutConfirmationOpened, setIsLogoutConfirmationOpened] =
+      useState(false);
+
+    return (
+      <>
+        <div
+          id="logout-menu-item"
+          className="flex h-[42px] cursor-pointer items-center gap-2 px-2"
+          onClick={() => {
+            if (!session) {
+              handleLogout();
+              return;
+            }
+            setIsLogoutConfirmationOpened(true);
+          }}
+        >
+          <IconLogout className="text-secondary" size={18} />
+          <span>
+            {session ? t(HeaderI18nKeys.LogOut) : t(HeaderI18nKeys.Login)}
+          </span>
+        </div>
+        <ConfirmDialog
+          isOpen={isLogoutConfirmationOpened}
+          heading={t(HeaderI18nKeys.ConfirmLogout)}
+          description={t(HeaderI18nKeys.ConfirmLogoutDescription)}
+          confirmLabel={t(HeaderI18nKeys.LogOut)}
+          cancelLabel={t(HeaderI18nKeys.Cancel)}
+          onClose={(result) => {
+            setIsLogoutConfirmationOpened(false);
+            if (result) {
+              handleLogout();
+            }
+          }}
+        />
+      </>
+    );
+  };
+
+  const UserMenu = () => {
+    const isHideUserSettingsEnabled = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.HideUserSettings),
+    );
+    return (
+      <div className="flex flex-col gap-1 p-2">
+        {!isHideUserSettingsEnabled && <UserSettings />}
+        <Logout />
+      </div>
+    );
+  };
 
   return (
     <div
@@ -156,6 +157,8 @@ const UserMobileView = Inversify.register('UserMobile', () => {
   );
 });
 
-export const UserMobile = withRenderForScreen([ScreenState.SM])(
+const view = withRenderForScreen([ScreenState.SM])(
   withRenderWhen(UISelectors.selectIsProfileOpen)(UserMobileView),
 );
+
+export const UserMobile = view;

@@ -126,6 +126,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.RECENT_MODELS_IDS,
     ),
     defaultModelReference: DEFAULT_MODEL_ID,
+    isOptimisticLoadEnabled: process.env.ENABLE_OPTIMISTIC_LOAD === 'true',
     codeEditorPythonVersions: parseCommaSeparatedList(
       process.env.CODE_EDITOR_PYTHON_VERSIONS,
       ['python3.9', 'python3.10', 'python3.11', 'python3.12'],

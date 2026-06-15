@@ -1,4 +1,4 @@
-import { FC, useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { isDialAiEntityModel } from '@/src/utils/app/application';
 import { translate } from '@/src/utils/app/translation';
@@ -95,9 +95,9 @@ interface DeleteMarketplaceEntityDialogProps {
   };
 }
 
-const DeleteMarketplaceEntityDialogView: FC<
-  DeleteMarketplaceEntityDialogProps
-> = ({ deleteState }) => {
+const view = withRenderWhenEntities<DeleteMarketplaceEntityDialogProps>({
+  deleteState: MarketplaceSelectors.selectDeleteEntity,
+})(({ deleteState }: DeleteMarketplaceEntityDialogProps) => {
   const dispatch = useAppDispatch();
 
   const deleteAction = deleteState.action;
@@ -161,9 +161,6 @@ const DeleteMarketplaceEntityDialogView: FC<
       onClose={handleDeleteClose}
     />
   );
-};
+});
 
-export const DeleteMarketplaceEntityDialog =
-  withRenderWhenEntities<DeleteMarketplaceEntityDialogProps>({
-    deleteState: MarketplaceSelectors.selectDeleteEntity,
-  })(DeleteMarketplaceEntityDialogView);
+export const DeleteMarketplaceEntityDialog = view;

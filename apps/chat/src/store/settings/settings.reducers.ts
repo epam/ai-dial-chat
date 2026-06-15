@@ -20,6 +20,7 @@ const initialState: SettingsState = {
   codeWarning: '',
   announcement: '',
   defaultModelReference: undefined,
+  isOptimisticLoadEnabled: false,
   defaultRecentModelsIds: [],
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,

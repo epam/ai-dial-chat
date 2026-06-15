@@ -183,5 +183,6 @@
   "Agent settings": "Agent settings",
   "Agent-wide behavior switches that apply to every conversation.": "Agent-wide behavior switches that apply to every conversation.",
   "Time awareness": "Time awareness",
-  "No limits applied": "No limits applied"
+  "No limits applied": "No limits applied",
+  "Select model": "Select model"
 }

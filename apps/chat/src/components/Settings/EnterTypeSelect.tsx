@@ -16,7 +16,7 @@ interface EnterTypeSelectProps {
   onValueChange: (value: string) => void;
 }
 
-const EnterTypeSelect = ({ value, onValueChange }: EnterTypeSelectProps) => {
+const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
   const { t } = useTranslation(Translation.Settings);
   const enterLabel = t(SettingsI18nKeys.Enter);
   const shiftEnterLabel = t(SettingsI18nKeys.ShiftEnter);
@@ -59,6 +59,6 @@ const EnterTypeSelect = ({ value, onValueChange }: EnterTypeSelectProps) => {
       />
     </div>
   );
-};
+});
 
-export const EnterTypeSelectLabeled = withLabel(EnterTypeSelect);
+export const EnterTypeSelectLabeled = view;

@@ -26,9 +26,9 @@ interface ConversationMoveToDialogProps {
   moveToConversationId: string;
 }
 
-function ConversationMoveToDialogComponent({
-  moveToConversationId,
-}: ConversationMoveToDialogProps) {
+const view = withRenderWhenEntities<ConversationMoveToDialogProps>({
+  moveToConversationId: ConversationsSelectors.selectMoveToConversationId,
+})(({ moveToConversationId }: ConversationMoveToDialogProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -111,9 +111,6 @@ function ConversationMoveToDialogComponent({
       onSelect={handleMoveToFolder}
     />
   );
-}
+});
 
-export const ConversationMoveToDialog =
-  withRenderWhenEntities<ConversationMoveToDialogProps>({
-    moveToConversationId: ConversationsSelectors.selectMoveToConversationId,
-  })(ConversationMoveToDialogComponent);
+export const ConversationMoveToDialog = view;
