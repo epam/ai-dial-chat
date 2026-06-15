@@ -48,13 +48,7 @@ import {
   DialUploadFileItem,
   FileManagerGridRow,
 } from '@epam/ai-dial-ui-kit';
-import {
-  CellEditingStartedEvent,
-  CellEditingStoppedEvent,
-  GridApi,
-  IRowNode,
-  RowDataUpdatedEvent,
-} from 'ag-grid-community';
+import { IRowNode } from 'ag-grid-community';
 import uniqBy from 'lodash-es/uniqBy';
 
 const createTemporaryFolder = (folderPath: string): FolderInterface => {
@@ -93,39 +87,6 @@ const buildMissingFolderChain = (
   return result;
 };
 
-const findRowElement = (
-  node: IRowNode<FileManagerGridRow>,
-): HTMLElement | null => {
-  if (node.id) {
-    const byId = document.querySelector<HTMLElement>(`[row-id="${node.id}"]`);
-    if (byId) return byId;
-  }
-  if (node.rowIndex != null) {
-    return document.querySelector<HTMLElement>(
-      `[row-index="${node.rowIndex}"]`,
-    );
-  }
-  return null;
-};
-
-const scrollRowIntoView = (
-  api: GridApi<FileManagerGridRow>,
-  node: IRowNode<FileManagerGridRow>,
-): void => {
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (!api.isDestroyed() && node.rowIndex != null) {
-        api.ensureNodeVisible(node, 'middle');
-      }
-
-      findRowElement(node)?.scrollIntoView({
-        block: 'center',
-        behavior: 'auto',
-      });
-    });
-  });
-};
-
 interface Props {
   isOpen: boolean;
   initiallySelectedFolderId?: string;
@@ -148,12 +109,30 @@ export const ChangePathDialog = ({
   const fileManagerActionRef = useRef<DialFileManagerActionsRef>(null);
   const addedTempFolderIdsRef = useRef<Set<string>>(new Set());
 
-  const knownRowIdsRef = useRef<Set<string>>(new Set());
-  const knownRowIdsInitializedRef = useRef(false);
   const pendingNewFolderIdRef = useRef<string | null>(null);
-
-  const [isGridEditing, setIsGridEditing] = useState(false);
   const deduplicatedFileIdsRef = useRef<Set<string>>(new Set());
+
+  const resolveTargetNode = useCallback(
+    (newNodes: IRowNode<FileManagerGridRow>[]) => {
+      const tempNode = newNodes.find((node) => node.data?.isTemporary);
+      const pendingId = pendingNewFolderIdRef.current;
+      const pendingNode = pendingId
+        ? newNodes.find((node) => node.data?.id === pendingId)
+        : undefined;
+
+      if (tempNode || pendingNode) {
+        pendingNewFolderIdRef.current = null;
+        return tempNode ?? pendingNode ?? null;
+      }
+      return pendingId ? null : (newNodes[0] ?? null);
+    },
+    [],
+  );
+
+  const gridEditingOptions = useMemo(
+    () => ({ resolveTargetNode }),
+    [resolveTargetNode],
+  );
 
   const filesFolders = useAppSelector(FilesSelectors.selectFolders);
   const filesFoldersRef = useRef(filesFolders);
@@ -231,6 +210,7 @@ export const ChangePathDialog = ({
     gridOptions,
     navigationPanelOptions,
     handleRenameValidation,
+    resetGridEditing,
   } = useFileManager({
     initialTab: DialFileManagerTabs.Organization,
     actionLabelsOptions,
@@ -244,6 +224,7 @@ export const ChangePathDialog = ({
       files: [],
       folders: additionalOrganizationFolders,
     },
+    gridEditingOptions,
   });
 
   const isTempFolder = useCallback(
@@ -403,9 +384,8 @@ export const ChangePathDialog = ({
     }
 
     deduplicatedFileIdsRef.current.clear();
-    knownRowIdsRef.current = new Set();
-    knownRowIdsInitializedRef.current = false;
     pendingNewFolderIdRef.current = null;
+    resetGridEditing();
     dispatch(FilesActions.resetNewFolderId());
 
     if (addedTempFolderIdsRef.current.size > 0) {
@@ -421,7 +401,7 @@ export const ChangePathDialog = ({
       );
       addedTempFolderIdsRef.current.clear();
     }
-  }, [dispatch, isOpen]);
+  }, [dispatch, isOpen, resetGridEditing]);
 
   const handleCreateOrganizationFolder = useCallback(
     (_file: DialUploadFileItem, folderPath: string, fileId: string) => {
@@ -451,17 +431,6 @@ export const ChangePathDialog = ({
     [depth, handleRenameValidation, t],
   );
 
-  const frozenFileTreeItemsRef = useRef(fileTreeItems);
-  useEffect(() => {
-    if (!isGridEditing) {
-      frozenFileTreeItemsRef.current = fileTreeItems;
-    }
-  }, [fileTreeItems, isGridEditing]);
-
-  const rawItemsToRender = isGridEditing
-    ? frozenFileTreeItemsRef.current
-    : fileTreeItems;
-
   const itemsToRender = useMemo(() => {
     const applyTreePermissions = (items: DialFile[]): DialFile[] =>
       items.map((item) => ({
@@ -470,8 +439,8 @@ export const ChangePathDialog = ({
         items: item.items ? applyTreePermissions(item.items) : item.items,
       }));
 
-    return applyTreePermissions(rawItemsToRender);
-  }, [isTempFolder, rawItemsToRender]);
+    return applyTreePermissions(fileTreeItems);
+  }, [isTempFolder, fileTreeItems]);
 
   const handleClose = useCallback(() => onClose(false), [onClose]);
 
@@ -509,64 +478,7 @@ export const ChangePathDialog = ({
   );
 
   const modalGridOptions = useMemo(
-    () => ({
-      ...gridOptions,
-      showFiles: false,
-      additionalGridOptions: {
-        ...gridOptions.additionalGridOptions,
-        suppressRowVirtualisation: true,
-        onCellEditingStarted: (params: CellEditingStartedEvent) => {
-          setIsGridEditing(true);
-          if (params.api) {
-            setTimeout(() => {
-              params.api.ensureIndexVisible(params.rowIndex as number);
-            }, 0);
-          }
-          gridOptions.additionalGridOptions?.onCellEditingStarted?.(params);
-        },
-        onCellEditingStopped: (params: CellEditingStoppedEvent) => {
-          setIsGridEditing(false);
-          gridOptions.additionalGridOptions?.onCellEditingStopped?.(params);
-        },
-        onRowDataUpdated: (params: RowDataUpdatedEvent) => {
-          const currentIds = new Set<string>();
-          let firstNewNode: IRowNode<FileManagerGridRow> | null = null;
-          let tempNewNode: IRowNode<FileManagerGridRow> | null = null;
-          let pendingNode: IRowNode<FileManagerGridRow> | null = null;
-          const pendingId = pendingNewFolderIdRef.current;
-
-          params.api.forEachNode((node) => {
-            const id = node.data?.id;
-            if (!id) return;
-            currentIds.add(id);
-
-            if (
-              knownRowIdsInitializedRef.current &&
-              !knownRowIdsRef.current.has(id)
-            ) {
-              if (!firstNewNode) firstNewNode = node;
-              if (node.data?.isTemporary) tempNewNode = node;
-              if (pendingId && id === pendingId) pendingNode = node;
-            }
-          });
-
-          knownRowIdsRef.current = currentIds;
-          knownRowIdsInitializedRef.current = true;
-
-          if (tempNewNode) {
-            pendingNewFolderIdRef.current = null;
-            scrollRowIntoView(params.api, tempNewNode);
-          } else if (pendingNode) {
-            pendingNewFolderIdRef.current = null;
-            scrollRowIntoView(params.api, pendingNode);
-          } else if (firstNewNode && !pendingId) {
-            scrollRowIntoView(params.api, firstNewNode);
-          }
-
-          gridOptions.additionalGridOptions?.onRowDataUpdated?.(params);
-        },
-      },
-    }),
+    () => ({ ...gridOptions, showFiles: false }),
     [gridOptions],
   );
 

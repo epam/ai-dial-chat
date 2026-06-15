@@ -51,6 +51,10 @@ import {
 } from '@epam/ai-dial-ui-kit/dist/src/components/FileManager/FileManager';
 
 import { FilesUploadingModalOptions } from '../FilesUploadingModal';
+import {
+  UseGridEditingScrollOptions,
+  useGridEditingScroll,
+} from './useGridEditingScroll';
 
 import {
   FeatureType,
@@ -156,6 +160,7 @@ interface UseFileManagerOptions {
     files: LocalDialFileType[];
     folders?: FolderInterface[];
   };
+  gridEditingOptions?: UseGridEditingScrollOptions;
 }
 
 export const useFileManager = ({
@@ -165,6 +170,7 @@ export const useFileManager = ({
   reviewBucket,
   initialTab,
   additionalFilesAndFolders,
+  gridEditingOptions: gridEditingOptionsConfig,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
 
@@ -216,6 +222,12 @@ export const useFileManager = ({
   );
 
   const isRenamingRef = useRef(false);
+
+  const {
+    freezeItems,
+    additionalGridOptions: gridEditingOptions,
+    reset: resetGridEditing,
+  } = useGridEditingScroll(gridEditingOptionsConfig);
 
   const [uploadingFilesIds, setUploadingFilesIds] = useState<Set<string>>(
     new Set(),
@@ -550,6 +562,8 @@ export const useFileManager = ({
     };
   }, [files, folders, activeTab, reviewBucket, currentPath, t]);
 
+  const stableFileTreeItems = freezeItems(fileTreeItems);
+
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
       return count === 1 && name
@@ -786,8 +800,9 @@ export const useFileManager = ({
       actionLabels: gridActionLabels,
       visibleColumns: visibleColumns,
       selectionMode: GridSelectionMode.MULTIPLE,
+      additionalGridOptions: gridEditingOptions,
     }),
-    [gridActionLabels, visibleColumns],
+    [gridActionLabels, visibleColumns, gridEditingOptions],
   );
 
   const toolbarOptions = useMemo<ToolbarOptions>(
@@ -1073,7 +1088,7 @@ export const useFileManager = ({
     areFilesLoading,
     areFoldersLoading,
     isAnyOperationInProgress,
-    fileTreeItems,
+    fileTreeItems: stableFileTreeItems,
     rootFolder,
     sharedByMePaths,
     isLoadingSearchListing,
@@ -1091,6 +1106,7 @@ export const useFileManager = ({
     toolbarOptions,
     destinationFolderPopupOptions,
     deleteConfirmationOptions,
+    resetGridEditing,
 
     handleSearchFiles,
     handleClearSearch,
