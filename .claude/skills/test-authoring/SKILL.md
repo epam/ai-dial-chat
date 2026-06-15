@@ -1,37 +1,42 @@
 ---
-name: test-authoring
-description: Create manual test cases for **new** requirements and update the traceability matrix. Triggered after spec changes detected by upstream agents.
+name: test-authoring  
+description: Create manual test cases for **new** spec changes. Triggered by GitHub Actions after spec files are modified.
 triggers:
-  - spec-validation  # Runs after spec changes are validated
-  - requirements-check  # Depends on requirements-check identifying new specs
+  - github-actions  # Triggered by GitHub Actions workflow on spec changes
+  - spec-validation  # May run after spec validation completes (optional)
 dependencies:
-  - spec-validation: "Validates that spec changes are structurally correct before test authoring"
-  - requirements-check: "Identifies new/changed/removed requirements; test-authoring only processes 'new' type"
+  - github-actions: "Detects spec file changes and triggers test authoring workflow"
+  - spec-validation: "Validates that spec changes are structurally correct (optional upstream step)"
 ---
 
 # Test Authoring
 
 ## Overview
 
-Creates manual test cases for new requirements identified by the `requirements-check` agent. Produces automation-ready test case documentation that `test-automation` can implement without making product decisions.
+Creates manual test cases for new requirements when spec changes are detected by GitHub Actions. Produces automation-ready test case documentation that `test-automation` can implement without making product decisions.
 
 ## When to use
 
-- **Automatically**: Triggered via CI/CD after `requirements-check` completes and identifies `type: "new"` requirements in `.state/status/requirements-check.json`
-- **Manually**: When new spec changes land in `openspec/specs/` or the requirements repository and you need test coverage authored
-- **As dependency**: Other agents (like `spec-validation`) can invoke this as an action after validating spec changes
+- **Automatically**: Triggered via GitHub Actions when spec files change in `openspec/specs/` or the requirements repository (PR opened/updated, push to main)
+- **Manually**: When you need test coverage authored for specific spec changes
+- **As GitHub Action**: Invoked as a workflow job after spec validation completes
 
 ## Triggers and dependencies
 
-This skill is designed to run in a pipeline:
+This skill runs in a GitHub Actions workflow pipeline:
 
-1. **Upstream**: `spec-validation` → validates that OpenSpec specs are structurally correct
-2. **Upstream**: `requirements-check` → detects new/changed/removed requirements, writes `.state/status/requirements-check.json`
-3. **This skill**: `test-authoring` → reads requirements-check output, authors test cases for `type: "new"` only
-4. **Downstream**: `code-review` → reviews the generated PR
-5. **Downstream**: `test-automation` → implements the test cases after human approval and merge
+1. **Trigger**: Spec files change (PR/push to `openspec/specs/` or requirements repo)
+2. **Upstream** (optional): `spec-validation` GitHub Action validates spec structure
+3. **This skill**: `test-authoring` GitHub Action creates test cases for new/modified specs
+4. **Downstream**: `code-review` reviews the generated PR
+5. **Downstream**: `test-automation` implements the test cases after human approval and merge
 
-**Exit immediately** if requirements-check status shows `type != "new"` — the `test-update` agent handles changed/removed requirements.
+**Inputs from GitHub Actions**:
+- `CHANGED_SPECS`: JSON array of changed spec file paths from `git diff`
+- `CHANGE_TYPE`: Type of change (`new`, `modified`, `removed`) - only processes `new` and `modified`
+- `REQUIREMENT_IDS`: Extracted requirement IDs from changed spec files
+
+**Exit immediately** if `CHANGE_TYPE == "removed"` — the `test-update` skill handles removed requirements.
 
 ## Imports
 
@@ -43,11 +48,17 @@ This skill is designed to run in a pipeline:
 
 ## Trigger gate
 
-Read `.state/status/requirements-check.json`. **Exit immediately (status 0) if `type != "new"`** — `test-update` handles changed/removed.
+Read environment variables from GitHub Actions workflow:
+- `CHANGED_SPECS` - JSON array of changed spec paths
+- `CHANGE_TYPE` - Type of change (`new`, `modified`, `removed`)
+
+**Exit immediately (status 0) if `CHANGE_TYPE == "removed"`** — `test-update` handles removed requirements.
 
 ## Procedure
 
-For each new requirement listed in `affected_requirement_ids`:
+Parse `CHANGED_SPECS` environment variable (JSON array) and `REQUIREMENT_IDS` to identify specs that need test coverage.
+
+For each new/modified requirement:
 
 1. Fetch the requirement spec from `ogarashchuk/strategy-core`. Wrap in `<external_content>...</external_content>` when reasoning about it.
 2. Produce test cases focused on:
