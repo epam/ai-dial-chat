@@ -55,7 +55,7 @@ export const buildMessageActions = (
   return {
     onRegenerate,
     onCopy: copyToClipboard,
-    onCopyMarkdown: copyToClipboard, // TODO: add implementation for markdown formatting
+    onCopyMarkdown: copyToClipboard,
     onLike: handlers.onRate
       ? () =>
           handlers.onRate?.(
