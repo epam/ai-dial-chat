@@ -11,6 +11,7 @@ export enum ChatI18nKeys {
   WelcomeScreen = 'chat.welcomeScreen',
   Logo = 'chat.logo',
   ConversationStarters = 'chat.conversationStarters',
+  StarterButtonsOverflow = 'chat.starterButtonsOverflow',
   SendMessage = 'chat.sendMessage',
   StopStreaming = 'chat.stopStreaming',
   QuickReplyButtons = 'chat.quickReplyButtons',
