@@ -15,13 +15,13 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import { DataService } from '@/src/utils/app/data/data-service';
-import { isRtlLocale } from '@/src/utils/app/rtl';
 import {
   isSmallScreen,
   isTabletScreen,
   isTabletScreenOrMobile,
   shouldShowConversationsSectionByDefault,
 } from '@/src/utils/app/mobile';
+import { isRtlLocale } from '@/src/utils/app/rtl';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
