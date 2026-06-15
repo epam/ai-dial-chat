@@ -19,7 +19,6 @@ import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 import { ChatI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { NA_VERSION } from '@/src/constants/publication';
 import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { QuickApp2Form as QuickApp2FormType } from '@/src/components/AppsEditor/form';
