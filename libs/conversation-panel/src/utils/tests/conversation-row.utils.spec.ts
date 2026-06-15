@@ -4,8 +4,8 @@ import {
   GROUP_HEADER_ROW_HEIGHT,
   ITEM_ROW_HEIGHT,
 } from '../../constants/virtual-list';
-import { ConversationGroupKey } from '../../types/conversation-group-key';
 import { type RowRendererData, VirtualRowKind } from '../../models/virtual-row';
+import { ConversationGroupKey } from '../../types/conversation-group-key';
 import {
   getButtonPaddingEnd,
   getRowHeight,

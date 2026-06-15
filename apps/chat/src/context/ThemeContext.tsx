@@ -10,6 +10,13 @@ import {
 } from 'react';
 import { useFavicon } from '../hooks/favicon/useFavicon';
 import { ApiEndpoints, get } from '../server-api/base';
+import { StorageKey } from '../types/storage-key';
+import { ThemeId } from '../types/theme-id';
+import {
+  applyThemeColors,
+  getOsPreferredTheme,
+} from '../utils/apply-theme-colors';
+import { getFromLocalStorage, setToLocalStorage } from '../utils/local-storage';
 
 interface ThemeContextType {
   currentTheme: string;
@@ -19,13 +26,6 @@ interface ThemeContextType {
   setTheme: (themeId: string) => void;
   isLoading: boolean;
 }
-import { StorageKey } from '../types/storage-key';
-import { ThemeId } from '../types/theme-id';
-import {
-  applyThemeColors,
-  getOsPreferredTheme,
-} from '../utils/apply-theme-colors';
-import { getFromLocalStorage, setToLocalStorage } from '../utils/local-storage';
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 

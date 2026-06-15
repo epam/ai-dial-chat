@@ -25,7 +25,6 @@
     "react-dom": "^19.2.6"
   },
   "dependencies": {
-    "react-dropzone": "^15.0.0",
     "react-window": "^2.2.7"
   }
 }

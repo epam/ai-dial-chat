@@ -4,6 +4,7 @@ import type {
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { isAudioTranscriptionSupported } from '@epam/ai-dial-chat-shared';
+import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
 import {
   FC,
   lazy,
@@ -29,6 +30,7 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import {
   transcribeAudio,
   transcribeAudioWithAsrModel,
@@ -53,6 +55,7 @@ const ConversationInput = lazy(async () => {
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
@@ -234,6 +237,7 @@ const ConversationRoute: FC = () => {
 
   return (
     <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
+      <FileDndOverlay isVisible={isDragging} />
       <Suspense fallback={<RouteFallback />}>
         <div
           className="flex h-full flex-col items-center justify-center p-4 desktop:p-8"
@@ -258,6 +262,8 @@ const ConversationRoute: FC = () => {
             onUploadAudio={handleUploadAudio}
             onTranscribeAudio={handleTranscribeAudio}
             sendOnEnter={sendOnEnter}
+            pendingDropFiles={pendingFiles}
+            onDropFilesConsumed={onFilesConsumed}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
