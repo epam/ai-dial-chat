@@ -16,7 +16,7 @@ interface EnterTypeSelectProps {
   onValueChange: (value: string) => void;
 }
 
-const EnterTypeSelect = ({ value, onValueChange }: EnterTypeSelectProps) => {
+const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
   const { t } = useTranslation(Translation.Settings);
   return (
     <div className="mt-1 flex flex-col gap-3">
@@ -56,6 +56,6 @@ const EnterTypeSelect = ({ value, onValueChange }: EnterTypeSelectProps) => {
       />
     </div>
   );
-};
+});
 
-export const EnterTypeSelectLabeled = withLabel(EnterTypeSelect);
+export const EnterTypeSelectLabeled = view;

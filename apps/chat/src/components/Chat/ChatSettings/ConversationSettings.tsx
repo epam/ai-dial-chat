@@ -27,10 +27,6 @@ import { TemperatureSlider } from './Temperature';
 import { Inversify } from '@epam/ai-dial-modulify-ui';
 import { ConversationResponseFormat } from '@epam/ai-dial-shared';
 
-interface SettingContainerProps {
-  children: ReactNode;
-}
-
 interface Props {
   prompt: string | undefined;
   temperature: number | undefined;
@@ -42,17 +38,17 @@ interface Props {
   onChangeResponseFormat: (responseFormat: ConversationResponseFormat) => void;
 }
 
-function FieldContainer({ children }: SettingContainerProps) {
+const renderFieldContainer = (children: ReactNode) => {
   if (!children) {
     return null;
   }
 
   return <div className="px-3 py-4 md:px-6">{children}</div>;
-}
+};
 
-function SettingContainer({ children }: SettingContainerProps) {
+const renderSettingContainer = (children: ReactNode) => {
   if (!children) {
-    return <EmptySettings />;
+    return null;
   }
 
   return (
@@ -60,17 +56,11 @@ function SettingContainer({ children }: SettingContainerProps) {
       {children}
     </div>
   );
-}
+};
 
-function EmptySettings() {
-  const { t } = useTranslation(Translation.Chat);
-
-  return (
-    <SettingContainer>
-      <FieldContainer>{t(ChatI18nKeys.NoConversationSettings)}</FieldContainer>
-    </SettingContainer>
-  );
-}
+const renderEmptySettings = (label: string) => {
+  return renderSettingContainer(renderFieldContainer(label));
+};
 
 export const ConversationSettings = Inversify.register(
   'ConversationSettings',
@@ -92,60 +82,59 @@ export const ConversationSettings = Inversify.register(
     const isPlayback = isPlaybackConversation(conversation);
 
     if (!model) {
-      return (
-        <SettingContainer>
-          <FieldContainer>{t(ChatI18nKeys.AgentIsNotAvailable)}</FieldContainer>
-        </SettingContainer>
+      return renderSettingContainer(
+        renderFieldContainer(t(ChatI18nKeys.AgentIsNotAvailable)),
       );
     }
 
     if (!doesModelHaveSettings(model)) {
-      return (
-        <SettingContainer>
-          <FieldContainer>
-            <ResponseFormat
-              value={responseFormat}
-              onChange={onChangeResponseFormat}
-              disabled={isPlayback}
-            />
-          </FieldContainer>
-        </SettingContainer>
-      );
-    }
-
-    return (
-      <SettingContainer>
-        <FieldContainer>
+      return renderSettingContainer(
+        renderFieldContainer(
           <ResponseFormat
             value={responseFormat}
             onChange={onChangeResponseFormat}
             disabled={isPlayback}
-          />
-        </FieldContainer>
+          />,
+        ),
+      );
+    }
+
+    const settingsContent = (
+      <>
+        {renderFieldContainer(
+          <ResponseFormat
+            value={responseFormat}
+            onChange={onChangeResponseFormat}
+            disabled={isPlayback}
+          />,
+        )}
         {model.type === EntityType.Model &&
-          doesModelAllowSystemPrompt(model) && (
-            <FieldContainer>
-              <SystemPrompt
-                maxTokensLength={model?.limits?.maxRequestTokens ?? Infinity}
-                tokenizer={model?.tokenizer}
-                prompt={prompt}
-                prompts={prompts}
-                onChangePrompt={onChangePrompt}
-                disabled={isPlayback}
-              />
-            </FieldContainer>
+          doesModelAllowSystemPrompt(model) &&
+          renderFieldContainer(
+            <SystemPrompt
+              maxTokensLength={model?.limits?.maxRequestTokens ?? Infinity}
+              tokenizer={model?.tokenizer}
+              prompt={prompt}
+              prompts={prompts}
+              onChangePrompt={onChangePrompt}
+              disabled={isPlayback}
+            />,
           )}
-        {doesModelAllowTemperature(model) && (
-          <FieldContainer>
+        {doesModelAllowTemperature(model) &&
+          renderFieldContainer(
             <TemperatureSlider
               label={t(ChatI18nKeys.Temperature)}
               onChangeTemperature={onChangeTemperature}
               temperature={temperature}
               disabled={isPlayback}
-            />
-          </FieldContainer>
-        )}
-      </SettingContainer>
+            />,
+          )}
+      </>
+    );
+
+    return renderSettingContainer(
+      settingsContent ||
+        renderEmptySettings(t(ChatI18nKeys.NoConversationSettings)),
     );
   },
 );

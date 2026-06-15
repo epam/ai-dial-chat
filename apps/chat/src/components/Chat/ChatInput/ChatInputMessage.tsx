@@ -193,6 +193,9 @@ export const ChatInputMessage = Inversify.register(
     const supportedAudioTypes = useAppSelector(
       ConversationsSelectors.selectSupportedAudioRecordingTypes,
     );
+    const isOptimisticDefaultModelLoad = useAppSelector(
+      SettingsSelectors.selectIsOptimisticDefaultModelLoad,
+    );
 
     const {
       isRecording,
@@ -338,7 +341,7 @@ export const ChatInputMessage = Inversify.register(
       isReplay ||
       isMessageError ||
       isInputEmpty ||
-      !areModelsLoaded ||
+      (!areModelsLoaded && !isOptimisticDefaultModelLoad) ||
       isUploadingFilePresent ||
       isConversationNameInvalid ||
       isConversationPathInvalid ||

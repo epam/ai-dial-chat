@@ -28,7 +28,7 @@ import { MarketplaceNavigation } from './MarketplaceNavigation';
 import { NavigationButton } from './NavigationButton';
 import { WidgetsNavigation } from './WidgetsNavigation';
 
-const NavigationView = () => {
+const view = withRenderWhen(UISelectors.selectIsNavigationVisible)(() => {
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
@@ -76,8 +76,6 @@ const NavigationView = () => {
       <WidgetsNavigation />
     </div>
   );
-};
+});
 
-export const Navigation = withRenderWhen(UISelectors.selectIsNavigationVisible)(
-  NavigationView,
-);
+export const Navigation = view;

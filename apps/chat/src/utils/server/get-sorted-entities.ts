@@ -45,19 +45,48 @@ const getTokensPerMessage = (
   }
 };
 
+interface UpstreamTimings {
+  modelsMs: number;
+  applicationsMs: number;
+  bothAwaitMs: number;
+}
+
 async function getAllEntities(accessToken: string, jobTitle: string) {
+  const timings: UpstreamTimings = {
+    modelsMs: 0,
+    applicationsMs: 0,
+    bothAwaitMs: 0,
+  };
+
+  const measure =
+    (key: keyof Omit<UpstreamTimings, 'bothAwaitMs'>) =>
+    async <T>(factory: () => Promise<T>): Promise<T> => {
+      const start = performance.now();
+      try {
+        return await factory();
+      } finally {
+        timings[key] = performance.now() - start;
+      }
+    };
+
+  const bothStart = performance.now();
   const [modelsResult, applicationsResult] = await Promise.allSettled([
-    getEntities<CoreAIEntity<EntityType.Model>[]>(
-      EntityType.Model,
-      accessToken,
-      jobTitle,
+    measure('modelsMs')(() =>
+      getEntities<CoreAIEntity<EntityType.Model>[]>(
+        EntityType.Model,
+        accessToken,
+        jobTitle,
+      ),
     ),
-    getEntities<CoreAIEntity<EntityType.Application>[]>(
-      EntityType.Application,
-      accessToken,
-      jobTitle,
+    measure('applicationsMs')(() =>
+      getEntities<CoreAIEntity<EntityType.Application>[]>(
+        EntityType.Application,
+        accessToken,
+        jobTitle,
+      ),
     ),
   ]);
+  timings.bothAwaitMs = performance.now() - bothStart;
 
   const models: CoreAIEntity<EntityType.Model>[] =
     modelsResult.status === 'fulfilled'
@@ -69,7 +98,7 @@ async function getAllEntities(accessToken: string, jobTitle: string) {
       ? applicationsResult.value
       : (logger.error(applicationsResult.reason), []);
 
-  return { models, applications };
+  return { models, applications, timings };
 }
 
 const fixDate = (date: number) => (date === 1672534800 ? 1740006000000 : date); // 1/20/1970 -> 2/20/2025
@@ -78,9 +107,14 @@ export const getSortedEntities = async (
   accessToken: string,
   jobTitle: string,
 ) => {
+  const totalStart = performance.now();
   const entities: DialAIEntityModel[] = [];
-  const { models, applications } = await getAllEntities(accessToken, jobTitle);
+  const { models, applications, timings } = await getAllEntities(
+    accessToken,
+    jobTitle,
+  );
 
+  const transformStart = performance.now();
   const preProcessedEntities = [...models, ...applications];
   let defaultModelReference = preProcessedEntities.find(
     (model) =>
@@ -180,5 +214,23 @@ export const getSortedEntities = async (
     });
   }
 
-  return entities;
+  const transformMs = performance.now() - transformStart;
+  const totalMs = performance.now() - totalStart;
+
+  const responseTimings = {
+    ...timings,
+    transformMs,
+    totalMs,
+  };
+
+  logger.info(
+    {
+      ...responseTimings,
+      modelsCount: models.length,
+      applicationsCount: applications.length,
+    },
+    'getSortedEntities timing',
+  );
+
+  return { entities, timings: responseTimings };
 };

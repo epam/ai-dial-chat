@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -25,9 +25,9 @@ interface PromptMoveToDialogProps {
   moveToPromptId: string;
 }
 
-const PromptMoveToDialogComponent: FC<PromptMoveToDialogProps> = ({
-  moveToPromptId,
-}) => {
+const view = withRenderWhenEntities<PromptMoveToDialogProps>({
+  moveToPromptId: PromptsSelectors.selectMoveToPromptId,
+})(({ moveToPromptId }: PromptMoveToDialogProps) => {
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
@@ -111,9 +111,6 @@ const PromptMoveToDialogComponent: FC<PromptMoveToDialogProps> = ({
       onSelect={handleMoveToFolder}
     />
   );
-};
+});
 
-export const PromptMoveToDialog =
-  withRenderWhenEntities<PromptMoveToDialogProps>({
-    moveToPromptId: PromptsSelectors.selectMoveToPromptId,
-  })(PromptMoveToDialogComponent);
+export const PromptMoveToDialog = view;
