@@ -218,6 +218,12 @@ export interface ChatCompletionChoiceDtoMessage {
  */
 export interface ChatCompletionDto {
   /**
+   * DIAL Core deployment name (may contain slashes and special characters)
+   * @type {string}
+   * @memberof ChatCompletionDto
+   */
+  deployment: string;
+  /**
    * Ordered chat messages to send to DIAL Core
    * @type {Array<MessageDto>}
    * @memberof ChatCompletionDto
@@ -285,6 +291,56 @@ export interface Check200Response {
    * @memberof Check200Response
    */
   version?: string;
+}
+/**
+ *
+ * @export
+ * @interface ConversationDeletionFailureDto
+ */
+export interface ConversationDeletionFailureDto {
+  /**
+   * Conversation ID that failed to delete
+   * @type {string}
+   * @memberof ConversationDeletionFailureDto
+   */
+  id: string;
+  /**
+   * Stable application error code
+   * @type {string}
+   * @memberof ConversationDeletionFailureDto
+   */
+  code: string;
+}
+/**
+ *
+ * @export
+ * @interface ConversationDeletionResultDto
+ */
+export interface ConversationDeletionResultDto {
+  /**
+   * Total number of IDs received in the request (after deduplication)
+   * @type {number}
+   * @memberof ConversationDeletionResultDto
+   */
+  requested: number;
+  /**
+   * Number of conversations successfully deleted from DIAL Core
+   * @type {number}
+   * @memberof ConversationDeletionResultDto
+   */
+  deleted: number;
+  /**
+   * Number of IDs that were already absent from DIAL Core (counted as success)
+   * @type {number}
+   * @memberof ConversationDeletionResultDto
+   */
+  alreadyAbsent: number;
+  /**
+   * Items that could not be deleted
+   * @type {Array<ConversationDeletionFailureDto>}
+   * @memberof ConversationDeletionResultDto
+   */
+  failed: Array<ConversationDeletionFailureDto>;
 }
 /**
  *
@@ -684,6 +740,32 @@ export interface DeploymentsResponseDto {
    * @memberof DeploymentsResponseDto
    */
   deployments: Array<DeploymentItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface DeleteAllConversationsBodyDto
+ */
+export interface DeleteAllConversationsBodyDto {
+  /**
+   * Must be `true` to confirm intentional deletion of all conversations.
+   * @type {boolean}
+   * @memberof DeleteAllConversationsBodyDto
+   */
+  confirm: boolean;
+}
+/**
+ *
+ * @export
+ * @interface DeleteConversationsBodyDto
+ */
+export interface DeleteConversationsBodyDto {
+  /**
+   * Stable DIAL Core conversation IDs to delete. 1–100 IDs. Duplicates are silently deduplicated.
+   * @type {Array<string>}
+   * @memberof DeleteConversationsBodyDto
+   */
+  ids: Array<string>;
 }
 /**
  *

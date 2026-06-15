@@ -6,7 +6,6 @@ import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DialConfirmationPopup,
-  DialNotification,
   NotificationVariant,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
@@ -39,6 +38,7 @@ import {
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
@@ -46,9 +46,10 @@ import { StorageKey } from '../../types/storage-key';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
+import DeleteAllConversationsAction from './DeleteAllConversationsAction';
 import { getConversationSource } from './get-conversation-source';
 
-interface Props {
+interface ConversationPanelViewProps {
   isOpen: boolean;
   activeConversationId?: string;
   onClose: () => void;
@@ -56,7 +57,7 @@ interface Props {
   onNewChat: () => void;
 }
 
-const ConversationPanelView: FC<Props> = ({
+const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   isOpen,
   activeConversationId,
   onClose,
@@ -76,6 +77,7 @@ const ConversationPanelView: FC<Props> = ({
     maxPanelWidth,
   );
   const navigate = useNavigate();
+  const { showNotification } = useNotification();
   const {
     conversations: items,
     isLoading,
@@ -120,7 +122,6 @@ const ConversationPanelView: FC<Props> = ({
   } | null>(null);
   const [isRenaming, setIsRenaming] = useState(false);
   const [renameError, setRenameError] = useState<string | null>(null);
-  const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
@@ -231,12 +232,14 @@ const ConversationPanelView: FC<Props> = ({
             <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />
           ),
           onClick: async () => {
-            setDuplicateError(null);
             try {
               const newPath = await duplicateConversation(contextId);
               navigate(getConversationRoute(newPath));
             } catch {
-              setDuplicateError(t(ConversationPanelI18nKeys.DuplicateError));
+              showNotification({
+                variant: NotificationVariant.Error,
+                message: t(ConversationPanelI18nKeys.DuplicateError),
+              });
             }
           },
         },
@@ -255,8 +258,8 @@ const ConversationPanelView: FC<Props> = ({
       pinConversation,
       duplicateConversation,
       navigate,
+      showNotification,
       t,
-      setDuplicateError,
     ],
   );
 
@@ -365,6 +368,11 @@ const ConversationPanelView: FC<Props> = ({
         defaultPanelWidth={defaultPanelWidth}
         maxPanelWidth={maxPanelWidth}
         onPanelResizeStop={setStoredPanelWidth}
+        headerActions={
+          <DeleteAllConversationsAction
+            activeConversationId={activeConversationId}
+          />
+        }
       />
 
       <DialConfirmationPopup
@@ -401,16 +409,6 @@ const ConversationPanelView: FC<Props> = ({
         onSave={handleConfirmRename}
         onCancel={handleCloseRenameDialog}
       />
-
-      {duplicateError && (
-        <DialNotification
-          variant={NotificationVariant.Error}
-          message={duplicateError}
-          closable
-          onClose={() => setDuplicateError(null)}
-          className="fixed bottom-4 start-4 z-50 max-w-sm"
-        />
-      )}
     </>
   );
 };

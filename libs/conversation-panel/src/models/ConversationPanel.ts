@@ -1,4 +1,5 @@
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
+import type { ReactNode } from 'react';
 import { ConversationGroupKey } from '../types/conversation-group-key';
 import { ConversationSource } from '../types/conversation-source';
 import { FilterTab } from '../types/filter-tab';
@@ -181,4 +182,9 @@ export interface ConversationPanelProps {
   maxPanelWidth?: number;
   /** Called with the new width in px when the user finishes a resize drag. */
   onPanelResizeStop?: (width: number) => void;
+  /**
+   * Content rendered in the right action group of the panel header bar.
+   * The app supplies any ReactNode — the library does not prescribe its content.
+   */
+  headerActions?: ReactNode;
 }

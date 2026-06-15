@@ -14,10 +14,13 @@
 
 import * as runtime from '../runtime';
 import type {
+  ConversationDeletionResultDto,
   ConversationListResponseDto,
   ConversationMetadataDto,
   ConversationResponseDto,
   CreateConversationDto,
+  DeleteAllConversationsBodyDto,
+  DeleteConversationsBodyDto,
   DuplicateConversationResponseDto,
   RenameConversationBodyDto,
   RenameConversationResponseDto,
@@ -29,8 +32,16 @@ export interface CreateConversationRequest {
   createConversationDto: CreateConversationDto;
 }
 
+export interface DeleteAllConversationsRequest {
+  deleteAllConversationsBodyDto: DeleteAllConversationsBodyDto;
+}
+
 export interface DeleteConversationRequest {
   path: string;
+}
+
+export interface DeleteConversationsRequest {
+  deleteConversationsBodyDto: DeleteConversationsBodyDto;
 }
 
 export interface DuplicateConversationRequest {
@@ -167,6 +178,110 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.deleteConversationRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Deletes every conversation in the authenticated user\'s bucket.
+   * Delete all conversations in the user bucket
+   */
+  async deleteAllConversationsRaw(
+    requestParameters: DeleteAllConversationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationDeletionResultDto>> {
+    if (requestParameters['deleteAllConversationsBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'deleteAllConversationsBodyDto',
+        'Required parameter "deleteAllConversationsBodyDto" was null or undefined when calling deleteAllConversations().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/deletions/all`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['deleteAllConversationsBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationDeletionResultDto>(response);
+  }
+
+  /**
+   * Deletes every conversation in the authenticated user\'s bucket.
+   * Delete all conversations in the user bucket
+   */
+  async deleteAllConversations(
+    requestParameters: DeleteAllConversationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationDeletionResultDto> {
+    const response = await this.deleteAllConversationsRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Deletes up to 100 owned conversations in one request.
+   * Delete selected conversations
+   */
+  async deleteConversationsRaw(
+    requestParameters: DeleteConversationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationDeletionResultDto>> {
+    if (requestParameters['deleteConversationsBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'deleteConversationsBodyDto',
+        'Required parameter "deleteConversationsBodyDto" was null or undefined when calling deleteConversations().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/deletions`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['deleteConversationsBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationDeletionResultDto>(response);
+  }
+
+  /**
+   * Deletes up to 100 owned conversations in one request.
+   * Delete selected conversations
+   */
+  async deleteConversations(
+    requestParameters: DeleteConversationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationDeletionResultDto> {
+    const response = await this.deleteConversationsRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
   }
 
   /**

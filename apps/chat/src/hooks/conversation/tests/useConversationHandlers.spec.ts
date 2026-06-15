@@ -239,4 +239,23 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
       undefined,
     );
   });
+
+  it('preserves the bucket and nested application path when starting a stream', async () => {
+    mockAttachmentsToDtos.mockReturnValue(undefined);
+    const params = makeParams({
+      conversationId:
+        'user-bucket/applications/catalog/Untitled%20app%201__0.0.1__hello',
+    });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await result.current.handleSend('hello', []);
+
+    expect(params.startStream).toHaveBeenCalledWith(
+      'user-bucket/applications/catalog/Untitled app 1__0.0.1__hello',
+      'hello',
+      1,
+      'selected-deployment',
+      { attachments: undefined },
+    );
+  });
 });
