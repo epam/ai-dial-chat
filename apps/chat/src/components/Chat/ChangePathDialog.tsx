@@ -191,7 +191,7 @@ export const ChangePathDialog = ({
     [],
   );
   const organizationBreadcrumbLabel = t(ChatI18nKeys.Organization);
-  const [supplementalLabelsVersion, setSupplementalLabelsVersion] = useState(0);
+  const [, setSupplementalLabelsVersion] = useState(0);
 
   useEffect(() => {
     const locale = router.locale ?? 'en';
@@ -219,14 +219,8 @@ export const ChangePathDialog = ({
 
   const nameColumnLabel = t(ChatI18nKeys.Name);
   const pathColumnLabel = t(ChatI18nKeys.Path);
-  const modifiedDateColumnLabel = useMemo(
-    () => t(ChatI18nKeys.ModifiedDate),
-    [t, supplementalLabelsVersion],
-  );
-  const sizeColumnLabel = useMemo(
-    () => t(ChatI18nKeys.Size),
-    [t, supplementalLabelsVersion],
-  );
+  const modifiedDateColumnLabel = t(ChatI18nKeys.ModifiedDate);
+  const sizeColumnLabel = t(ChatI18nKeys.Size);
   const filesTreeLabel = t(ChatI18nKeys.Files);
   const newFolderBaseName = translateChrome(SideBarI18nKeys.NewFolder);
   const searchEmptyTitle = tCommon(CommonI18nKeys.NoResultsFound);
