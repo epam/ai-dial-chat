@@ -1,6 +1,6 @@
-import { ChatI18nKeys } from '@/src/constants/i18n';
-
 import { TranslationOptions } from '@/src/types/translation';
+
+import { ChatI18nKeys } from '@/src/constants/i18n';
 
 type TranslateFn = (key: string, options?: TranslationOptions) => string;
 

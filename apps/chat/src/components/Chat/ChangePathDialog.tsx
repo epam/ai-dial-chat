@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
-import { useRouter } from 'next/router';
 import { useTranslation as useNextTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
-import { translateFileManagerChrome } from '@/src/components/FileManager/translateFileManagerChrome';
 import { UseFileManagerActionLabelsOptions } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -13,15 +12,15 @@ import {
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
 import {
-  ensureLocaleNamespaceFromStaticFiles,
-  isLocaleNamespaceKeyMissing,
-} from '@/src/utils/app/translation';
-import {
   getOrganizationPublishPathDepth,
   organizationFolderIdToPublishPathSuffix,
   publishToUrlToOrganizationFolderId,
   remapPublicFolderToFilesNamespace,
 } from '@/src/utils/app/publications';
+import {
+  ensureLocaleNamespaceFromStaticFiles,
+  isLocaleNamespaceKeyMissing,
+} from '@/src/utils/app/translation';
 
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
@@ -44,6 +43,8 @@ import {
   SideBarI18nKeys,
 } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
+
+import { translateFileManagerChrome } from '@/src/components/FileManager/translateFileManagerChrome';
 
 import {
   FeatureType,
@@ -694,7 +695,9 @@ export const ChangePathDialog = ({
           applyGridHeaderLabels(params.api);
           gridOptions.additionalGridOptions?.onGridReady?.(params);
         },
-        onFirstDataRendered: (params: FirstDataRenderedEvent<FileManagerGridRow>) => {
+        onFirstDataRendered: (
+          params: FirstDataRenderedEvent<FileManagerGridRow>,
+        ) => {
           applyGridHeaderLabels(params.api);
           gridOptions.additionalGridOptions?.onFirstDataRendered?.(params);
         },
@@ -788,11 +791,7 @@ export const ChangePathDialog = ({
       rootItemPath: organizationRootPath,
       rootItemLabel: organizationBreadcrumbLabel,
     }),
-    [
-      navigationPanelOptions,
-      organizationBreadcrumbLabel,
-      organizationRootPath,
-    ],
+    [navigationPanelOptions, organizationBreadcrumbLabel, organizationRootPath],
   );
 
   useEffect(() => {
@@ -819,9 +818,8 @@ export const ChangePathDialog = ({
       const switchRoot = document.getElementById('hidden-files-switch-modal');
       const popupFooter = switchRoot?.closest('.flex.justify-between');
       const footerActions = popupFooter?.querySelector('.flex.space-x-4');
-      const cancelButton = footerActions?.querySelector<HTMLButtonElement>(
-        'button',
-      );
+      const cancelButton =
+        footerActions?.querySelector<HTMLButtonElement>('button');
 
       if (cancelButton?.textContent?.trim() === 'Cancel') {
         cancelButton.textContent = cancelLabel;
@@ -837,9 +835,8 @@ export const ChangePathDialog = ({
         });
       }
 
-      const switchLabelContainer = switchRoot?.parentElement?.querySelector(
-        'div.ml-2',
-      );
+      const switchLabelContainer =
+        switchRoot?.parentElement?.querySelector('div.ml-2');
       if (switchLabelContainer instanceof HTMLElement) {
         switchLabelContainer.style.marginLeft = '0';
         switchLabelContainer.style.marginRight = '0';
@@ -869,24 +866,20 @@ export const ChangePathDialog = ({
         }
       });
 
-      popupRoot
-        .querySelectorAll('.ag-header-cell[col-id]')
-        .forEach((cell) => {
-          const colId = cell.getAttribute('col-id');
-          const label =
-            colId &&
-            gridColumnHeaderLabels[
-              colId as keyof typeof gridColumnHeaderLabels
-            ];
-          if (!label) {
-            return;
-          }
+      popupRoot.querySelectorAll('.ag-header-cell[col-id]').forEach((cell) => {
+        const colId = cell.getAttribute('col-id');
+        const label =
+          colId &&
+          gridColumnHeaderLabels[colId as keyof typeof gridColumnHeaderLabels];
+        if (!label) {
+          return;
+        }
 
-          const headerText = cell.querySelector('.ag-header-cell-text');
-          if (headerText && headerText.textContent?.trim() !== label) {
-            headerText.textContent = label;
-          }
-        });
+        const headerText = cell.querySelector('.ag-header-cell-text');
+        if (headerText && headerText.textContent?.trim() !== label) {
+          headerText.textContent = label;
+        }
+      });
 
       const englishHeaderTextReplacements: Record<string, string> = {
         Files: filesTreeLabel,

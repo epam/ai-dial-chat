@@ -18,9 +18,7 @@ export function translateFileManagerChrome(
     lngOptions ? fn(key, lngOptions) : fn(key);
 
   const translators =
-    locale && locale !== 'en'
-      ? [translateChat, t]
-      : [t, translateChat];
+    locale && locale !== 'en' ? [translateChat, t] : [t, translateChat];
 
   for (const translate of translators) {
     const result = translateWithLocale(translate);

@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { hasDragEventEntityData } from '@/src/utils/app/move';
+
 import { SidebarSide } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';

@@ -15,10 +15,10 @@ import { useCopy } from '@/src/hooks/useCopy';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isQuickApp2 } from '@/src/utils/app/application';
-import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
 import { constructPath } from '@/src/utils/app/file';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { getShareType } from '@/src/utils/app/share';
+import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
 
 import { FeatureType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
@@ -33,7 +33,7 @@ import {
   ShareSelectors,
 } from '@/src/store/selectors';
 
-import { SideBarI18nKeys, ChatI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, SideBarI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { OUTSIDE_PRESS_AND_MOUSE_EVENT } from '@/src/constants/modal';
 

@@ -1,9 +1,9 @@
-import escapeRegExp from 'lodash-es/escapeRegExp';
+import { TranslationOptions } from '@/src/types/translation';
 
 import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
 import { SideBarI18nKeys } from '@/src/constants/i18n';
 
-import { TranslationOptions } from '@/src/types/translation';
+import escapeRegExp from 'lodash-es/escapeRegExp';
 
 type TranslateFn = (key: string, options?: TranslationOptions) => string;
 

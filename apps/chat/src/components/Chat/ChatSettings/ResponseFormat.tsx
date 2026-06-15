@@ -1,6 +1,7 @@
 import { IconHelp } from '@tabler/icons-react';
-import { useRouter } from 'next/router';
 import { FC, useCallback, useMemo } from 'react';
+
+import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 

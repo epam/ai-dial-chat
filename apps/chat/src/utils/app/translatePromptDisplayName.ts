@@ -1,9 +1,9 @@
-import escapeRegExp from 'lodash-es/escapeRegExp';
+import { TranslationOptions } from '@/src/types/translation';
 
 import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { PromptBarI18nKeys } from '@/src/constants/i18n';
 
-import { TranslationOptions } from '@/src/types/translation';
+import escapeRegExp from 'lodash-es/escapeRegExp';
 
 type TranslateFn = (key: string, options?: TranslationOptions) => string;
 

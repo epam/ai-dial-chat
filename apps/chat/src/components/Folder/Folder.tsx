@@ -55,11 +55,11 @@ import {
   doesEntityContainSearchItem,
   isHiddenEntity,
 } from '@/src/utils/app/search';
+import { isReplayConversation } from '@/src/utils/app/shared-utils';
 import {
   folderDisplayNameToStorage,
   translateFolderDisplayName,
 } from '@/src/utils/app/translateFolderDisplayName';
-import { isReplayConversation } from '@/src/utils/app/shared-utils';
 
 import {
   AdditionalItemData,

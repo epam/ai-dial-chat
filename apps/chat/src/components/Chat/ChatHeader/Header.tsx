@@ -16,12 +16,12 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isReplayAsIsConversation } from '@/src/utils/app/conversation';
-import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
 import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
   doesModelHaveSettings,
 } from '@/src/utils/app/models';
+import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType, ScreenState } from '@/src/types/common';

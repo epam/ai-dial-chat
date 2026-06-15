@@ -257,8 +257,7 @@ export const PromptComponent = memo(
             }
           }}
           style={{
-            paddingInlineStart:
-              (level && `${level * 30 + 16}px`) || '0.875rem',
+            paddingInlineStart: (level && `${level * 30 + 16}px`) || '0.875rem',
           }}
           ref={promptRef}
           data-qa="prompt"

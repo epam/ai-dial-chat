@@ -18,11 +18,11 @@ import {
   isPlaybackConversation,
   isReplayConversation,
 } from '@/src/utils/app/conversation';
-import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
 import { getEntityNameError } from '@/src/utils/app/errors';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
+import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
 
 import {
   AdditionalItemData,
@@ -111,8 +111,7 @@ function ConversationView({
   const isReplay = isReplayConversation(conversation);
   const isPlayback = isPlaybackConversation(conversation);
   const displayName = useMemo(
-    () =>
-      translateConversationDisplayName(conversation.name, router.locale, t),
+    () => translateConversationDisplayName(conversation.name, router.locale, t),
     [conversation.name, router.locale, t],
   );
 

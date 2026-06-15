@@ -42,7 +42,9 @@ export const MessageStages = ({ stages }: Props) => {
             textClassName="font-normal"
             data-no-context-menu
             data-qa={showMore ? 'show-less' : 'show-more'}
-            label={showMore ? t(ChatI18nKeys.ShowLess) : t(ChatI18nKeys.ShowMore)}
+            label={
+              showMore ? t(ChatI18nKeys.ShowLess) : t(ChatI18nKeys.ShowMore)
+            }
             iconAfter={
               <ChevronDown
                 height={18}

@@ -27,16 +27,16 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
-import { translatePromptContentPlaceholder } from '@/src/utils/app/translatePromptContentPlaceholder';
-import {
-  promptDisplayNameToStorage,
-  translatePromptDisplayName,
-} from '@/src/utils/app/translatePromptDisplayName';
 import {
   areSomePromptsFieldsChanged,
   generateSkillContent,
 } from '@/src/utils/app/prompts';
 import { onBlur } from '@/src/utils/app/style-helpers';
+import { translatePromptContentPlaceholder } from '@/src/utils/app/translatePromptContentPlaceholder';
+import {
+  promptDisplayNameToStorage,
+  translatePromptDisplayName,
+} from '@/src/utils/app/translatePromptDisplayName';
 
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
@@ -134,7 +134,9 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
     (selectedPrompt: Prompt) => {
       setSubmitted(true);
 
-      const preparedDisplayName = prepareEntityName(name, { forRenaming: true });
+      const preparedDisplayName = prepareEntityName(name, {
+        forRenaming: true,
+      });
       const newName = promptDisplayNameToStorage(
         preparedDisplayName,
         selectedPrompt.name ?? '',
@@ -177,7 +179,16 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
 
       setSubmitted(false);
     },
-    [allPrompts, content, description, dispatch, name, onEdit, router.locale, t],
+    [
+      allPrompts,
+      content,
+      description,
+      dispatch,
+      name,
+      onEdit,
+      router.locale,
+      t,
+    ],
   );
 
   const handleSubmit = useCallback(

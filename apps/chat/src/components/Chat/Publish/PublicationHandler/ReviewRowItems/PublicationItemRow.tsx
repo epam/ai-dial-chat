@@ -8,9 +8,9 @@ import React, {
 } from 'react';
 import { useWatch } from 'react-hook-form';
 
-import classNames from 'classnames';
-
 import { useRouter } from 'next/router';
+
+import classNames from 'classnames';
 
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -333,8 +333,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
-  const isConversation =
-    itemTypeName === BackendResourceTypeName.CONVERSATION;
+  const isConversation = itemTypeName === BackendResourceTypeName.CONVERSATION;
 
   const publicationModel = useAppSelector(
     PublicationSelectors.selectPublishModel,
@@ -421,7 +420,14 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       isNotUniqName,
     });
     setErrors(nameErrors);
-  }, [editState, inputName, item.folderId, item.id, itemTypeName, toStorageName]);
+  }, [
+    editState,
+    inputName,
+    item.folderId,
+    item.id,
+    itemTypeName,
+    toStorageName,
+  ]);
 
   const handleChangeName = useCallback(
     (name: string) => {

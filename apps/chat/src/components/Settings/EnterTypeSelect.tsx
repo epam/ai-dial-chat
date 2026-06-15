@@ -38,7 +38,7 @@ const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
       <DialRadioButton
         inputId={EnterType.Enter}
         name="enter-type-select"
-        className="shrink-0 me-3"
+        className="me-3 shrink-0"
         label={
           <>
             <b>{enterLabel}</b> - {t(SettingsI18nKeys.SendMessages)},{' '}
@@ -53,11 +53,11 @@ const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
       <DialRadioButton
         inputId={EnterType.CtrlEnter}
         name="enter-type-select"
-        className="shrink-0 me-3"
+        className="me-3 shrink-0"
         label={
           <>
-            <b>{ctrlEnterShortcutLabel}</b> - {t(SettingsI18nKeys.SendMessages)},{' '}
-            <b>{enterLabel}</b> - {t(SettingsI18nKeys.NewLine)}
+            <b>{ctrlEnterShortcutLabel}</b> - {t(SettingsI18nKeys.SendMessages)}
+            , <b>{enterLabel}</b> - {t(SettingsI18nKeys.NewLine)}
           </>
         }
         onChange={onValueChange}

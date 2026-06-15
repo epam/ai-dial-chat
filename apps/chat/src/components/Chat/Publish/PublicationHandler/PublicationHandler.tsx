@@ -1,6 +1,7 @@
-import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
+
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -65,15 +66,15 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { PublicationInfoSection } from '../PublicationInfoSection';
 import { PublishToSection } from '../PublishToSection';
 import {
-  getPublicationDefaultName,
-  translatePublicationDisplayName,
-} from '../translatePublicationName';
-import { translatePublicationSectionName } from '../translatePublicationSectionName';
-import {
   PublicationRequestFormData,
   PublicationRequestFormSchema,
   PublishRequestFieldsNames,
 } from '../form';
+import {
+  getPublicationDefaultName,
+  translatePublicationDisplayName,
+} from '../translatePublicationName';
+import { translatePublicationSectionName } from '../translatePublicationSectionName';
 import { BasePublicationResources } from './BasePublicationResources';
 import { CompareRulesModal } from './CompareRulesModal';
 import { PublicationFilters } from './PublicationFilters';
