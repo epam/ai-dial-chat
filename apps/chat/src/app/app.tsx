@@ -2,11 +2,11 @@ import {
   lazy,
   memo,
   Suspense,
-  type FC,
   useCallback,
   useEffect,
   useMemo,
   useState,
+  type FC,
 } from 'react';
 import {
   Route,
@@ -21,14 +21,14 @@ import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
 import {
-  ROUTES,
   getConversationRoute,
   normalizeConversationId,
+  ROUTES,
 } from '../constants/routes';
-import { StorageKey } from '../constants/storage';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import useLocalStorage from '../hooks/useLocalStorage';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
+import { StorageKey } from '../types/storage-key';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 
