@@ -1,0 +1,4 @@
+interface:
+  display_name: "Address Branch Review"
+  short_description: "Fix or reply to current branch review"
+  default_prompt: "Use $address-current-branch-review to process unresolved review comments on the current branch PR."
