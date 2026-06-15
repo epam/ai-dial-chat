@@ -1,5 +1,13 @@
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 
+/** Identifies one of the four collapsible groups in the conversation panel. */
+export enum ConversationGroupKey {
+  Pinned = 'pinned',
+  MyChats = 'myChats',
+  Shared = 'shared',
+  Organization = 'organization',
+}
+
 /** Source/ownership of a conversation — used by filter tabs. */
 export enum ConversationSource {
   MyChats = 'my-chats',
