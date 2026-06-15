@@ -18,6 +18,16 @@ interface EnterTypeSelectProps {
 
 const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
   const { t } = useTranslation(Translation.Settings);
+  const enterLabel = t(SettingsI18nKeys.Enter);
+  const shiftEnterLabel = t(SettingsI18nKeys.ShiftEnter);
+  const ctrlEnterShortcutLabel = isMacOs() ? (
+    <>⌘ + {enterLabel}</>
+  ) : (
+    <>
+      {t(SettingsI18nKeys.Ctrl)} + {enterLabel}
+    </>
+  );
+
   return (
     <div className="mt-1 flex flex-col gap-3">
       <DialRadioButton
@@ -25,10 +35,8 @@ const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
         name="enter-type-select"
         label={
           <>
-            <b>{t(SettingsI18nKeys.Enter)}</b> -{' '}
-            {t(SettingsI18nKeys.SendMessages)},{' '}
-            <b>{t(SettingsI18nKeys.ShiftEnter)}</b> -{' '}
-            {t(SettingsI18nKeys.NewLine)}
+            <b>{enterLabel}</b> - {t(SettingsI18nKeys.SendMessages)},{' '}
+            <b>{shiftEnterLabel}</b> - {t(SettingsI18nKeys.NewLine)}
           </>
         }
         onChange={onValueChange}
@@ -41,13 +49,8 @@ const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
         name="enter-type-select"
         label={
           <>
-            <b>
-              {t(
-                `${isMacOs() ? '⌘' : SettingsI18nKeys.Ctrl} + ${SettingsI18nKeys.Enter}`,
-              )}
-            </b>{' '}
-            - {t(SettingsI18nKeys.SendMessages)},{' '}
-            <b>{t(SettingsI18nKeys.Enter)}</b> - {t(SettingsI18nKeys.NewLine)}
+            <b>{ctrlEnterShortcutLabel}</b> - {t(SettingsI18nKeys.SendMessages)}
+            , <b>{enterLabel}</b> - {t(SettingsI18nKeys.NewLine)}
           </>
         }
         onChange={onValueChange}

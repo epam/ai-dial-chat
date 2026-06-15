@@ -94,9 +94,9 @@ export function Layout({
   }, [dispatch, previousRoute]);
 
   useEffect(() => {
-    dispatch(
-      UIActions.setLocale(router.locale ?? router.defaultLocale ?? 'en'),
-    );
+    const locale = router.locale ?? router.defaultLocale ?? 'en';
+
+    dispatch(UIActions.setLocale(locale));
   }, [dispatch, router.defaultLocale, router.locale]);
   useEffect(() => {
     setLoading(isApplyingModel);

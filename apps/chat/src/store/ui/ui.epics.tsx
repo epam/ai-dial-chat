@@ -21,6 +21,7 @@ import {
   isTabletScreenOrMobile,
   shouldShowConversationsSectionByDefault,
 } from '@/src/utils/app/mobile';
+import { isRtlLocale } from '@/src/utils/app/rtl';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -264,6 +265,18 @@ const saveThemeEpic: AppEpic = (action$) =>
       document.documentElement.className = `${payload} ${payload.startsWith('dark') ? 'dark' : 'light'}`;
     }),
     switchMap(({ payload }) => DataService.setTheme(payload)),
+    ignoreElements(),
+  );
+
+const setLocaleEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setLocale.type),
+    tap(({ payload }) => {
+      const dir = isRtlLocale(payload) ? 'rtl' : 'ltr';
+
+      document.documentElement.lang = payload;
+      document.documentElement.dir = dir;
+    }),
     ignoreElements(),
   );
 
@@ -537,6 +550,7 @@ export const UIEpics = combineEpics(
   applyShowConversationsSectionByDefaultEpic,
   initThemeEpic,
   saveThemeEpic,
+  setLocaleEpic,
   saveEnterTypeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,
