@@ -1,0 +1,68 @@
+# Agent manifest. An agent is a manifest + a skill reference.
+# All reusable agent logic lives in `.claude/skills/<skill>/SKILL.md` (or
+# `.claude/commands/<skill>.md`); the runtime wires CI and composes a
+# uniform prompt that invokes the skill. There is NO per-agent prompt.md.
+#
+# To add an agent: copy this directory, rename it, edit the required fields
+# below, point `skill:` at a local skill, commit. The dispatcher picks the
+# agent up on the next PR.
+
+contract_version: "0.1"               # required: pin schema version
+name: test-authoring                  # required: kebab-case; surfaces in PR comments + kill-switch var
+
+# The local skill this agent wraps. Must be addressable as `/<skill>` in a
+# prompt (e.g. `code-review-and-quality`, `opsx:verify`, `feature-research`).
+# If your task needs custom orchestration, put it INSIDE the skill file —
+# the agent layer is just CI plumbing.
+skill: test-authoring                        # required
+
+# When the agent runs.
+# Short form: triggers: [pull_request]
+# Long form with filters (branches + labels honored; paths reserved for v0.3):
+#   triggers:
+#     - on: pull_request
+#       filters:
+#         branches: [main, development-1.0]   # PR target branches
+#         labels: [review-me]                  # all must be present on PR
+triggers: [pull_request]               # required
+
+# Comma-separated Claude tool allowlist. Include the tools the wrapped
+# skill needs, plus `Skill` itself.
+# Tiers: read-only         = "Read,Grep,Glob,Skill"
+#        + git diff         = "Read,Grep,Glob,Bash(git diff:*),Skill"
+#        + MCP context      = append ",mcp__dial-context__*"
+allowed_tools: "Read,Grep,Glob,Skill"  # required
+
+# Optional metadata
+agent_version: "0.1.0"                 # appears in the output envelope
+description: "One-line description of what this agent does."
+model: claude-sonnet-4-5               # claude-opus-4-7 / claude-sonnet-4-6 / claude-haiku-4-5-20251001 / etc.
+phase: pilot                           # sandbox | pilot | production
+cost_class: light                      # light (<$0.50/run) | medium | heavy
+
+# Kill switch (optional override). Default derived from name: code-review → STAGE_CODE_REVIEW_ENABLED.
+# Set the corresponding repo or org variable to "false" to disable without a revert.
+# kill_switch_var: STAGE_MY_AGENT_ENABLED
+
+# Chaining (optional). List of upstream agents whose output this agent reads.
+# The platform downloads their stage-output.json files into upstream/{name}/
+# before running. Your skill reads upstream/<upstream-name>/stage-output.json.
+# Leave empty (or omit) if your agent runs independently — the common case.
+# needs: [scan-deps]
+
+# Per-agent timeout (optional, default 15 min, max 360).
+# timeout_minutes: 30
+
+# GHA permissions (optional). Validated against the platform-supported set:
+#   contents: read           — the default; you don't need to declare it
+#   pull-requests: write     — the default; you don't need to declare it
+#   checks: write            — opt-in: required only if you create check runs
+#   security-events: write   — opt-in: required only if you upload SARIF
+# Any value outside the supported set rejects the manifest at discovery.
+# permissions:
+#   checks: write
+
+# Concurrency override (optional). Default: dispatch-pr-<name>-<ref>.
+# concurrency:
+#   group: "${{ github.workflow }}-special-${{ github.ref }}"
+#   cancel_in_progress: true
