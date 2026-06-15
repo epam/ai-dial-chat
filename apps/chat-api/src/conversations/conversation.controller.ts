@@ -24,6 +24,9 @@ import { ConversationService } from './conversation.service';
 import { ConversationListResponseDto } from './dto/conversation-list.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
 import { CreateConversationDto } from './dto/create-conversation.dto';
+import { DeleteAllConversationsBodyDto } from './dto/delete-all-conversations-body.dto';
+import { DeleteConversationsBodyDto } from './dto/delete-conversations-body.dto';
+import { ConversationDeletionResultDto } from './dto/delete-conversations.dto';
 import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.dto';
 import { GetConversationMetadataDto } from './dto/get-conversation-metadata.dto';
 import { ListConversationsQueryDto } from './dto/list-conversations-query.dto';
@@ -321,6 +324,73 @@ export class ConversationController {
       at,
       bucket,
     );
+  }
+
+  @Post('deletions')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'deleteConversations',
+    summary: 'Delete selected conversations',
+    description:
+      'Deletes up to 100 owned conversations in one request. Returns a result counting deleted, already-absent, and failed items. Already-absent IDs are treated as success. IDs outside the authenticated bucket are rejected with code FORBIDDEN.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Deletion result',
+    type: ConversationDeletionResultDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description:
+      'ids is empty, exceeds 100, contains non-strings, or body is missing',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 500, description: 'Unexpected internal error' })
+  deleteConversations(
+    @Req() req: Request,
+    @Body() body: DeleteConversationsBodyDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.deleteConversations(body.ids, at, bucket);
+  }
+
+  @Post('deletions/all')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 2, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'deleteAllConversations',
+    summary: 'Delete all conversations in the user bucket',
+    description:
+      "Deletes every conversation in the authenticated user's bucket. Requires { confirm: true } in the request body to prevent accidental deletion. Returns a result counting deleted, already-absent, and failed items.",
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Deletion result',
+    type: ConversationDeletionResultDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'confirm is missing, false, or non-boolean',
+  })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 502,
+    description: 'DIAL Core metadata listing failed (bucket unreadable)',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable during metadata listing',
+  })
+  @ApiResponse({ status: 500, description: 'Unexpected internal error' })
+  deleteAllConversations(
+    @Req() req: Request,
+    @Body() _body: DeleteAllConversationsBodyDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.conversationService.deleteAllConversations(at, bucket);
   }
 
   @Delete()

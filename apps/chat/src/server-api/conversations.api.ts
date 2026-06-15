@@ -72,3 +72,13 @@ export const renameConversation = (path: string, newTitle: string) =>
 
 export const duplicateConversation = (conversationPath: string) =>
   conversationsApi.duplicateConversation({ path: conversationPath });
+
+export const deleteConversations = (ids: string[]) =>
+  conversationsApi.deleteConversations({
+    deleteConversationsBodyDto: { ids },
+  });
+
+export const deleteAllConversations = () =>
+  conversationsApi.deleteAllConversations({
+    deleteAllConversationsBodyDto: { confirm: true },
+  });

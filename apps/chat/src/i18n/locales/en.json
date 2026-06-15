@@ -145,7 +145,14 @@
     "renameError": "Failed to rename. Please try again.",
     "renameTitleTooLong": "The name is too long. Please shorten it and try again.",
     "duplicateReadOnlyDescription": "Duplicate the conversation to be able to edit it",
-    "duplicateError": "Failed to duplicate the conversation. Please try again."
+    "duplicateError": "Failed to duplicate the conversation. Please try again.",
+    "panelActionsLabel": "Conversation panel actions",
+    "deleteAllChatsLabel": "Delete all conversations",
+    "deleteAllConfirmTitle": "Delete All Conversations?",
+    "deleteAllConfirmDescription": "All conversations will be permanently deleted. This action cannot be undone.",
+    "deleteAllConfirmButton": "Delete all",
+    "deleteAllError": "Failed to delete all conversations. Please try again.",
+    "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed."
   },
   "auth": {
     "signOut": "Sign out",

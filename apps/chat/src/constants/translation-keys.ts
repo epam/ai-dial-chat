@@ -147,6 +147,13 @@ export enum ConversationPanelI18nKeys {
   RenameTitleTooLong = 'conversationPanel.renameTitleTooLong',
   DuplicateReadOnlyDescription = 'conversationPanel.duplicateReadOnlyDescription',
   DuplicateError = 'conversationPanel.duplicateError',
+  PanelActionsLabel = 'conversationPanel.panelActionsLabel',
+  DeleteAllChatsLabel = 'conversationPanel.deleteAllChatsLabel',
+  DeleteAllConfirmTitle = 'conversationPanel.deleteAllConfirmTitle',
+  DeleteAllConfirmDescription = 'conversationPanel.deleteAllConfirmDescription',
+  DeleteAllConfirmButton = 'conversationPanel.deleteAllConfirmButton',
+  DeleteAllError = 'conversationPanel.deleteAllError',
+  DeleteAllPartialError = 'conversationPanel.deleteAllPartialError',
 }
 
 export enum SidebarI18nKeys {

@@ -18,6 +18,8 @@ describe('ConversationController (integration)', () => {
     createConversation: ReturnType<typeof vi.fn>;
     listConversations: ReturnType<typeof vi.fn>;
     renameConversation: ReturnType<typeof vi.fn>;
+    deleteConversations: ReturnType<typeof vi.fn>;
+    deleteAllConversations: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -25,6 +27,8 @@ describe('ConversationController (integration)', () => {
       createConversation: vi.fn(),
       listConversations: vi.fn(),
       renameConversation: vi.fn(),
+      deleteConversations: vi.fn(),
+      deleteAllConversations: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -507,6 +511,98 @@ describe('ConversationController (integration)', () => {
       await request(app.getHttpServer())
         .patch('/conversations')
         .send({ newTitle: 'New Title' })
+        .expect(400);
+    });
+  });
+
+  describe('POST /conversations/deletions', () => {
+    const mockResult = {
+      requested: 1,
+      deleted: 1,
+      alreadyAbsent: 0,
+      failed: [],
+    };
+
+    it('returns 200 with deletion result for a valid body', async () => {
+      service.deleteConversations.mockResolvedValue(mockResult);
+
+      const result = await request(app.getHttpServer())
+        .post('/conversations/deletions')
+        .send({ ids: ['conversations/test-bucket/chat'] })
+        .expect(200);
+
+      expect(result.body).toEqual(mockResult);
+      expect(service.deleteConversations).toHaveBeenCalledWith(
+        ['conversations/test-bucket/chat'],
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 400 when ids is empty', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations/deletions')
+        .send({ ids: [] })
+        .expect(400);
+    });
+
+    it('returns 400 when ids has more than 100 items', async () => {
+      const ids = Array.from({ length: 101 }, (_, i) => `conv-${i}`);
+      await request(app.getHttpServer())
+        .post('/conversations/deletions')
+        .send({ ids })
+        .expect(400);
+    });
+
+    it('returns 400 when ids contains a non-string element', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations/deletions')
+        .send({ ids: [123] })
+        .expect(400);
+    });
+
+    it('returns 400 when body is missing', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations/deletions')
+        .send({})
+        .expect(400);
+    });
+  });
+
+  describe('POST /conversations/deletions/all', () => {
+    const mockResult = {
+      requested: 5,
+      deleted: 5,
+      alreadyAbsent: 0,
+      failed: [],
+    };
+
+    it('returns 200 with deletion result for { confirm: true }', async () => {
+      service.deleteAllConversations.mockResolvedValue(mockResult);
+
+      const result = await request(app.getHttpServer())
+        .post('/conversations/deletions/all')
+        .send({ confirm: true })
+        .expect(200);
+
+      expect(result.body).toEqual(mockResult);
+      expect(service.deleteAllConversations).toHaveBeenCalledWith(
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 400 when confirm is false', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations/deletions/all')
+        .send({ confirm: false })
+        .expect(400);
+    });
+
+    it('returns 400 when confirm is missing', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations/deletions/all')
+        .send({})
         .expect(400);
     });
   });

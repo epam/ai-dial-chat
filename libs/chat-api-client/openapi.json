@@ -251,6 +251,26 @@
         "tags": ["auth"]
       }
     },
+    "/api/v1/config": {
+      "get": {
+        "operationId": "getConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppConfigDto"
+                }
+              }
+            }
+          }
+        },
+        "summary": "Get application feature configuration",
+        "tags": ["config"]
+      }
+    },
     "/api/v1/application-schemas": {
       "get": {
         "description": "Returns DIAL Core application type schemas visible to the authenticated user. Results are cached server-side for 60 seconds per user.",
@@ -566,19 +586,10 @@
         "tags": ["models"]
       }
     },
-    "/api/chat/completions/{deployment}": {
+    "/api/v1/chat/completions": {
       "post": {
         "operationId": "sendCompletion",
-        "parameters": [
-          {
-            "name": "deployment",
-            "required": true,
-            "in": "path",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "requestBody": {
           "required": true,
           "content": {
@@ -1060,6 +1071,98 @@
         "tags": ["conversations"]
       }
     },
+    "/api/v1/conversations/deletions": {
+      "post": {
+        "description": "Deletes up to 100 owned conversations in one request. Returns a result counting deleted, already-absent, and failed items. Already-absent IDs are treated as success. IDs outside the authenticated bucket are rejected with code FORBIDDEN.",
+        "operationId": "deleteConversations",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteConversationsBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deletion result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDeletionResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ids is empty, exceeds 100, contains non-strings, or body is missing"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Unexpected internal error"
+          }
+        },
+        "summary": "Delete selected conversations",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/deletions/all": {
+      "post": {
+        "description": "Deletes every conversation in the authenticated user's bucket. Requires { confirm: true } in the request body to prevent accidental deletion. Returns a result counting deleted, already-absent, and failed items.",
+        "operationId": "deleteAllConversations",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAllConversationsBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deletion result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDeletionResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "confirm is missing, false, or non-boolean"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Unexpected internal error"
+          },
+          "502": {
+            "description": "DIAL Core metadata listing failed (bucket unreadable)"
+          },
+          "503": {
+            "description": "DIAL Core unreachable during metadata listing"
+          }
+        },
+        "summary": "Delete all conversations in the user bucket",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/user-config": {
       "get": {
         "operationId": "getConfig",
@@ -1268,6 +1371,52 @@
         "summary": "Rate an assistant message",
         "tags": ["rate"]
       }
+    },
+    "/api/v1/transcription": {
+      "post": {
+        "operationId": "transcribeAudio",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TranscribeAudioDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "properties": {
+                    "transcript": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "500": {
+            "description": "ASR_MODEL is not configured"
+          },
+          "502": {
+            "description": "Unexpected response from DIAL Core"
+          },
+          "503": {
+            "description": "DIAL Core is unreachable"
+          }
+        },
+        "summary": "Transcribe audio using the configured ASR model",
+        "tags": ["transcription"]
+      }
     }
   },
   "info": {
@@ -1382,6 +1531,21 @@
           }
         },
         "required": ["sub", "providerId", "claims", "bucket"]
+      },
+      "AppConfigDto": {
+        "type": "object",
+        "properties": {
+          "asrModelId": {
+            "type": "object",
+            "description": "Deployment ID of the ASR model used for transcription. Null when ASR_MODEL is not configured.",
+            "nullable": true
+          },
+          "transcribeSizeLimitBytes": {
+            "type": "number",
+            "description": "Maximum audio file size in bytes accepted by the transcription endpoint."
+          }
+        },
+        "required": ["transcribeSizeLimitBytes"]
       },
       "ApplicationSchemaSummaryDto": {
         "type": "object",
@@ -1920,6 +2084,11 @@
       "ChatCompletionDto": {
         "type": "object",
         "properties": {
+          "deployment": {
+            "type": "string",
+            "description": "DIAL Core deployment name (may contain slashes and special characters)",
+            "example": "gpt-4o"
+          },
           "messages": {
             "description": "Ordered chat messages to send to DIAL Core",
             "type": "array",
@@ -1941,7 +2110,7 @@
             "minimum": 1
           }
         },
-        "required": ["messages"]
+        "required": ["deployment", "messages"]
       },
       "ChatCompletionChoiceDto": {
         "type": "object",
@@ -2305,6 +2474,72 @@
         },
         "required": ["newPath"]
       },
+      "DeleteConversationsBodyDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "description": "Stable DIAL Core conversation IDs to delete. 1–100 IDs. Duplicates are silently deduplicated.",
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["ids"]
+      },
+      "ConversationDeletionFailureDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Conversation ID that failed to delete"
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable application error code",
+            "enum": ["NOT_FOUND", "FORBIDDEN", "UPSTREAM_ERROR", "UNKNOWN"]
+          }
+        },
+        "required": ["id", "code"]
+      },
+      "ConversationDeletionResultDto": {
+        "type": "object",
+        "properties": {
+          "requested": {
+            "type": "number",
+            "description": "Total number of IDs received in the request (after deduplication)"
+          },
+          "deleted": {
+            "type": "number",
+            "description": "Number of conversations successfully deleted from DIAL Core"
+          },
+          "alreadyAbsent": {
+            "type": "number",
+            "description": "Number of IDs that were already absent from DIAL Core (counted as success)"
+          },
+          "failed": {
+            "description": "Items that could not be deleted",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationDeletionFailureDto"
+            }
+          }
+        },
+        "required": ["requested", "deleted", "alreadyAbsent", "failed"]
+      },
+      "DeleteAllConversationsBodyDto": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "description": "Must be `true` to confirm intentional deletion of all conversations.",
+            "example": true
+          }
+        },
+        "required": ["confirm"]
+      },
       "UpdatePinsDto": {
         "type": "object",
         "properties": {
@@ -2362,6 +2597,20 @@
           }
         },
         "required": ["conversationId", "responseId", "modelId", "rate"]
+      },
+      "TranscribeAudioDto": {
+        "type": "object",
+        "properties": {
+          "audioUrl": {
+            "type": "string",
+            "description": "DIAL storage URL of the uploaded audio file."
+          },
+          "mimeType": {
+            "type": "string",
+            "description": "MIME type of the audio file (e.g. audio/webm;codecs=opus)."
+          }
+        },
+        "required": ["audioUrl", "mimeType"]
       }
     }
   }
