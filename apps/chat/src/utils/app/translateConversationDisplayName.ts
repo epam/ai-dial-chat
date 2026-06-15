@@ -14,6 +14,13 @@ export function translatePlaybackLabel(
   return t(ChatI18nKeys.Playback);
 }
 
+export function translateReplayLabel(
+  _locale: string | undefined,
+  t: TranslateFn,
+): string {
+  return t(ChatI18nKeys.Replay);
+}
+
 export function translateReplayAsIsLabel(
   _locale: string | undefined,
   t: TranslateFn,
@@ -35,7 +42,7 @@ export function translateConversationDisplayName(
 
   if (name.startsWith(REPLAY_CONVERSATION_NAME_PREFIX)) {
     const baseName = name.slice(REPLAY_CONVERSATION_NAME_PREFIX.length);
-    const replayLabel = translateReplayAsIsLabel(locale, t);
+    const replayLabel = translateReplayLabel(locale, t);
 
     return `[${replayLabel}] ${baseName}`;
   }
@@ -64,7 +71,7 @@ export function conversationDisplayNameToStorage(
   }
 
   if (storedName.startsWith(REPLAY_CONVERSATION_NAME_PREFIX)) {
-    const translatedPrefix = `[${translateReplayAsIsLabel(locale, t)}] `;
+    const translatedPrefix = `[${translateReplayLabel(locale, t)}] `;
 
     if (displayName.startsWith(translatedPrefix)) {
       return `${REPLAY_CONVERSATION_NAME_PREFIX}${displayName.slice(translatedPrefix.length)}`;

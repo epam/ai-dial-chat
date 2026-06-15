@@ -572,6 +572,7 @@ export enum ChatI18nKeys {
   ConversationEntity = 'Conversation',
   PleaseSelectAnotherConversation = 'Please select another conversation.',
   ReplayAsIs = 'Replay as is',
+  Replay = 'Replay',
   NotAllowedMoreNestedFolders = "It's not allowed to have more nested folders",
   ChangePath = 'Change path',
   ModifiedDate = 'Modified Date',
