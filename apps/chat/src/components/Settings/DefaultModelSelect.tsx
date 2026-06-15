@@ -84,11 +84,10 @@ export const DefaultModelSelect = ({
     ],
   );
 
-  const selected = modelsMap[modelReference];
+  const selectedFromModelsMap = modelsMap[modelReference];
 
   const allModels = useMemo(() => {
-    const selected = modelsMap[modelReference];
-    if (!selected) {
+    if (!selectedFromModelsMap) {
       return [
         localizedDefaultModelOption,
         localizedLastUsedModelOption,
@@ -96,20 +95,19 @@ export const DefaultModelSelect = ({
       ];
     }
     const filteredModels = models.filter(
-      (mod) => !selected || mod.reference !== selected.reference,
+      (mod) => mod.reference !== selectedFromModelsMap.reference,
     );
     return [
       localizedDefaultModelOption,
       localizedLastUsedModelOption,
-      selected,
+      selectedFromModelsMap,
       ...filteredModels,
     ];
   }, [
     localizedDefaultModelOption,
     localizedLastUsedModelOption,
-    modelReference,
     models,
-    modelsMap,
+    selectedFromModelsMap,
   ]);
 
   return (
@@ -120,7 +118,7 @@ export const DefaultModelSelect = ({
           value={selectedModel.id}
           onChange={onModelChange}
           models={allModels}
-          indexSeparator={selected ? 2 : 1}
+          indexSeparator={selectedFromModelsMap ? 2 : 1}
           additionalModelsMap={localizedSpecialModelsMap}
           inputClassName="focus-within:!border-primary"
           panelClassName="!bg-layer-0"

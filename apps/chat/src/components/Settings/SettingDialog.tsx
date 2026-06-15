@@ -71,7 +71,7 @@ const view = withRenderWhen((state) => {
     ModelsSelectors.selectDefaultModelOption,
   );
   const savedEnterType = useAppSelector(UISelectors.selectEnterType);
-  const savedLocale = router.locale ?? router.defaultLocale ?? 'en';
+  const savedLocale = useAppSelector(UISelectors.selectLocale);
 
   const [defaultModelReference, setDefaultModelReference] = useState<string>(
     savedDefaultModelReference,
@@ -148,7 +148,7 @@ const view = withRenderWhen((state) => {
     setLocalTheme(theme);
   }, []);
 
-  const onLocaleChangeHandler = useCallback((locale: string) => {
+  const localeChangeHandler = useCallback((locale: string) => {
     setLocalLocale(locale);
   }, []);
 
@@ -190,6 +190,7 @@ const view = withRenderWhen((state) => {
     handleCloseDialog();
 
     if (localLocale !== savedLocale) {
+      dispatch(UIActions.setLocale(localLocale));
       void router.push(
         { pathname: router.pathname, query: router.query },
         router.asPath,
@@ -229,8 +230,8 @@ const view = withRenderWhen((state) => {
           onThemeChangeHandler={onThemeChangeHandler}
         />
         <LanguageSelect
-          localLocale={localLocale}
-          onLocaleChangeHandler={onLocaleChangeHandler}
+          currentLocale={localLocale}
+          onLocaleChange={localeChangeHandler}
         />
         {isCustomLogoFeatureEnabled && (
           <CustomLogoSelect

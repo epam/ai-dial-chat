@@ -1,4 +1,4 @@
-import { MouseEvent, useMemo, useState } from 'react';
+import { MouseEvent, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -7,6 +7,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { SettingsI18nKeys } from '@/src/constants/i18n';
+import { LOCALE_DISPLAY_NAMES } from '@/src/constants/locale';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Label } from '@/src/components/Common/Forms/Label';
@@ -14,32 +15,24 @@ import { Label } from '@/src/components/Common/Forms/Label';
 import i18nextConfig from '@/next-i18next.config';
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 
-const LOCALE_DISPLAY_NAMES: Record<string, string> = {
-  en: 'English',
-  ar: 'العربية',
-};
-
 interface LanguageSelectProps {
-  localLocale: string;
-  onLocaleChangeHandler: (locale: string) => void;
+  currentLocale: string;
+  onLocaleChange: (locale: string) => void;
 }
 
 export const LanguageSelect = ({
-  localLocale,
-  onLocaleChangeHandler,
+  currentLocale,
+  onLocaleChange,
 }: LanguageSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const { t } = useTranslation(Translation.Settings);
   const availableLocales = i18nextConfig.i18n.locales;
 
-  const localeName = useMemo(
-    () => LOCALE_DISPLAY_NAMES[localLocale] ?? localLocale,
-    [localLocale],
-  );
+  const localeName = LOCALE_DISPLAY_NAMES[currentLocale] ?? currentLocale;
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
-    onLocaleChangeHandler(e.currentTarget.value);
+    onLocaleChange(e.currentTarget.value);
     setIsOpen(false);
   };
 
