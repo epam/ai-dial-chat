@@ -161,6 +161,7 @@
     "logOutConfirmDescription": "Are you sure you want to log out?"
   },
   "settings": {
+    "language": "Language",
     "theme": "Theme",
     "themeDark": "Dark",
     "themeLight": "Light",
