@@ -116,6 +116,29 @@ describe('ConversationService', () => {
       );
     });
 
+    it('does not double-encode a percent-encoded deployment ID', async () => {
+      const saveConversationSpy = vi.spyOn(
+        service['client'],
+        'saveConversation',
+      );
+      const deploymentId = 'applications/catalog/Untitled%20app%201__0.0.1';
+
+      const result = await service.createConversation(
+        'Hello',
+        'test-token',
+        'test-bucket',
+        deploymentId,
+      );
+
+      expect(saveConversationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Untitled%20app%201__0.0.1__Hello',
+        expect.any(Object),
+      );
+      expect(result.model.id).toBe(deploymentId);
+      expect(result.assistantModelId).toBe(deploymentId);
+    });
+
     it('uses a non-empty fallback name for conversations without message text', async () => {
       const result = await service.createConversation(
         '',
@@ -352,6 +375,24 @@ describe('ConversationService', () => {
       expect(spy).toHaveBeenCalledWith(
         'public',
         'gpt-4o__My%20chat__uuid',
+        expect.any(Object),
+      );
+    });
+
+    it('keeps nested application deployment segments in the conversation path', async () => {
+      const spy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
+
+      await service.getConversation(
+        'test-bucket/applications/catalog/Untitled app 1__0.0.1__hello',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(spy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Untitled%20app%201__0.0.1__hello',
         expect.any(Object),
       );
     });

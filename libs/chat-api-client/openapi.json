@@ -2166,10 +2166,11 @@
           },
           "deploymentId": {
             "type": "string",
-            "description": "ID of the catalog item (model or application) to use for this conversation",
-            "example": "anthropic.claude-v3-sonnet",
+            "description": "ID of the catalog item (model or application) to use for this conversation. May contain percent-encoded bytes.",
+            "example": "applications/catalog/Untitled%20app%201__0.0.1",
             "minLength": 1,
-            "maxLength": 256
+            "maxLength": 256,
+            "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$"
           },
           "custom_content": {
             "description": "Extra DIAL payload attached to the first user message",

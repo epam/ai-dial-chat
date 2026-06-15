@@ -150,9 +150,13 @@ export class ConversationService extends AppService {
     };
 
     try {
+      const encodedConversationPath = conversationPath
+        .split('/')
+        .map((segment) => encodeURIComponent(safeDecodeURIComponent(segment)))
+        .join('/');
       const { data, error } = (await this.client.saveConversation(
         bucket,
-        encodeDialResourcePath(conversationPath),
+        encodedConversationPath,
         {
           headers: getBearerAuthHeaders(token),
           body: conversation,

@@ -27,8 +27,8 @@ import {
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
-import { useNotification } from '../../context/NotificationContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
@@ -187,9 +187,6 @@ export const ConversationPage: FC = () => {
   const loadConversation = useCallback(
     async (id: string) => {
       const decodedConversationId = decodeConversationId(id);
-      const conversationPath = decodedConversationId.substring(
-        decodedConversationId.indexOf('/') + 1,
-      );
 
       setIsFetching(true);
       try {
@@ -220,7 +217,7 @@ export const ConversationPage: FC = () => {
           setConversation(withPlaceholder);
           conversationRef.current = withPlaceholder;
           startStream(
-            conversationPath,
+            decodedConversationId,
             lastMsg.content,
             withPlaceholder.messages.length - 1,
             lastDeploymentId ?? result.model.id,

@@ -136,6 +136,34 @@ describe('ConversationController (integration)', () => {
         .expect(400);
     });
 
+    it('accepts a percent-encoded deploymentId from the deployments API', async () => {
+      const conversation = { id: 'test-bucket/applications/app__Hello' };
+      const deploymentId =
+        'applications/6LLV3pmfwUbYZj3jFvKWdANHFmWwX3P6eFoFKoxZJVrEW5cQzK965U43R5kWqKCwtd/Untitled%20app%201__0.0.1';
+      service.createConversation.mockReturnValue(conversation);
+
+      const result = await request(app.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: 'Hello', deploymentId })
+        .expect(201);
+
+      expect(result.body).toEqual(conversation);
+      expect(service.createConversation).toHaveBeenCalledWith(
+        'Hello',
+        TEST_USER.at,
+        TEST_USER.bucket,
+        deploymentId,
+        undefined,
+      );
+    });
+
+    it('returns 400 when deploymentId contains malformed percent-encoding', async () => {
+      await request(app.getHttpServer())
+        .post('/conversations')
+        .send({ firstMessage: 'Hello', deploymentId: 'applications/bad%2-id' })
+        .expect(400);
+    });
+
     it('returns 201 with a valid conversation shape from the real service', async () => {
       const configService = {
         get: vi.fn((key: string) => {

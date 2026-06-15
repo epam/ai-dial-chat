@@ -26,7 +26,10 @@ import { uploadFile } from '../../server-api/files.api';
 import { rateMessage } from '../../server-api/rate.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
-import { getConversationPath } from '../../utils/conversation-path';
+import {
+  decodeConversationId,
+  getConversationPath,
+} from '../../utils/conversation-path';
 import { createMessagePair } from '../../utils/message-factory';
 import { isMessageChanged } from '../../utils/message-utils';
 import { getStarterSubmitText } from '../../utils/starter-option';
@@ -99,7 +102,7 @@ export const useConversationHandlers = ({
         undefined,
         selectedItemId,
       );
-      const conversationPath = getConversationPath(conversationId);
+      const conversationResourcePath = decodeConversationId(conversationId);
 
       setConversation((prev) => {
         if (!prev) return prev;
@@ -112,7 +115,7 @@ export const useConversationHandlers = ({
       });
 
       startStream(
-        conversationPath,
+        conversationResourcePath,
         message,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
@@ -142,7 +145,7 @@ export const useConversationHandlers = ({
       const userMsg = conversation.messages[messageIndex - 1];
       if (!userMsg || userMsg.role !== MessageRole.User) return;
 
-      const conversationPath = getConversationPath(conversationId);
+      const conversationResourcePath = decodeConversationId(conversationId);
 
       setConversation((prev) => {
         if (!prev) return prev;
@@ -171,7 +174,7 @@ export const useConversationHandlers = ({
       );
 
       startStream(
-        conversationPath,
+        conversationResourcePath,
         userMsg.content,
         messageIndex,
         selectedItemId ?? conversation.model.id,
@@ -328,7 +331,7 @@ export const useConversationHandlers = ({
         configurationValue,
         selectedItemId,
       );
-      const conversationPath = getConversationPath(conversationId);
+      const conversationResourcePath = decodeConversationId(conversationId);
 
       setConversation((prev) => {
         if (!prev) return prev;
@@ -341,7 +344,7 @@ export const useConversationHandlers = ({
       });
 
       startStream(
-        conversationPath,
+        conversationResourcePath,
         submitText,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
@@ -405,6 +408,7 @@ export const useConversationHandlers = ({
 
       const originalMessage = conversation.messages[idx];
       const conversationPath = getConversationPath(conversationId);
+      const conversationResourcePath = decodeConversationId(conversationId);
 
       if (
         !isMessageChanged(
@@ -472,7 +476,7 @@ export const useConversationHandlers = ({
       saveConversation(conversationPath, updated as ConversationResponseDto);
 
       startStream(
-        conversationPath,
+        conversationResourcePath,
         text,
         updatedMessages.length - 1,
         selectedItemId ?? conversation.model.id,
