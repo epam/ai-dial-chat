@@ -17,6 +17,9 @@
       "default": "./dist/index.js"
     }
   },
+  "dependencies": {
+    "react-window": "^2.2.7"
+  },
   "peerDependencies": {
     "react": "^19.0.0",
     "@tabler/icons-react": "^3.0.0",

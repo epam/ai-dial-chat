@@ -1,6 +1,6 @@
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { useCallback, useEffect, useState } from 'react';
-import { StorageKey } from '../../constants/storage';
+import { StorageKey } from '../../types/storage-key';
 import {
   getFromLocalStorage,
   setToLocalStorage,

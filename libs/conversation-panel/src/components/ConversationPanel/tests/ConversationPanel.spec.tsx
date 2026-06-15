@@ -102,6 +102,33 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
   SidebarSide: { Right: 'right', Left: 'left' },
 }));
 
+vi.mock('react-window', () => ({
+  List: ({
+    rowComponent: RowComponent,
+    rowCount,
+    rowProps,
+    role,
+  }: {
+    rowComponent: React.ComponentType<Record<string, unknown>>;
+    rowCount: number;
+    rowProps: Record<string, unknown>;
+    role?: string;
+    [key: string]: unknown;
+  }) => (
+    <div role={role}>
+      {Array.from({ length: rowCount }, (_, index) => (
+        <RowComponent
+          key={index}
+          index={index}
+          style={{}}
+          ariaAttributes={{}}
+          {...rowProps}
+        />
+      ))}
+    </div>
+  ),
+}));
+
 vi.mock('@tabler/icons-react', () => ({
   ...new Proxy(
     {
