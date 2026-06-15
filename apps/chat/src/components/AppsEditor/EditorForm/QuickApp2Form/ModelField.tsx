@@ -1,6 +1,8 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { Controller, useFormContext, useWatch } from 'react-hook-form';
 
+import classNames from 'classnames';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
@@ -150,8 +152,13 @@ export const ModelField = () => {
               />
 
               <div className="flex flex-col justify-center gap-1 truncate">
-                <span className="truncate text-sm font-semibold text-primary">
-                  {selectedEntity?.name}
+                <span
+                  className={classNames(
+                    'truncate text-sm font-semibold',
+                    selectedEntity ? 'text-primary' : 'text-secondary',
+                  )}
+                >
+                  {selectedEntity?.name ?? selectedModelId}
                 </span>
 
                 <div className="flex items-center gap-1">
