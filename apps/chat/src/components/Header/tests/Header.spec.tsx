@@ -50,6 +50,7 @@ describe('Header', () => {
     vi.clearAllMocks();
     mockUseTheme.mockReturnValue({
       currentTheme: 'dark',
+      selectedTheme: 'dark',
       currentThemeLogo: 'logo.svg',
       themes: [],
       setTheme: vi.fn(),

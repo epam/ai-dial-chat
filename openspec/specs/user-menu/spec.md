@@ -50,9 +50,9 @@ A **Theme** item SHALL appear in the dropdown below the first divider. It SHALL 
 
 - Selecting **Dark** SHALL call `setTheme('dark')` immediately (no confirm step).
 - Selecting **Light** SHALL call `setTheme('light')` immediately.
-- Selecting **System** SHALL call `setTheme('system')`. The `ThemeContext` SHALL then resolve the OS-preferred variant and subscribe to `window.matchMedia('(prefers-color-scheme: dark)')` changes.
+- Selecting **System** SHALL call `setTheme('system')`. The `ThemeContext` SHALL then resolve the OS-preferred variant and subscribe to `window.matchMedia('(prefers-color-scheme: dark)')` changes. `ThemeContext` SHALL expose `selectedTheme` (the raw stored preference: `"dark"`, `"light"`, or `"system"`) as a distinct value from `currentTheme` (the resolved variant). The active-indicator in the submenu SHALL use `selectedTheme`.
 
-The active theme option SHALL be visually indicated (e.g., checkmark or bold label).
+The active theme option SHALL be visually indicated (e.g., checkmark or bold label). The active indicator SHALL reflect the stored preference (`"dark"`, `"light"`, or `"system"`) — not the resolved theme — so that **Dark** and **System** are never both marked active simultaneously even when the OS is dark.
 
 i18n keys: `settings.theme`, `settings.themeDark`, `settings.themeLight`, `settings.themeSystem`
 
@@ -75,6 +75,13 @@ i18n keys: `settings.theme`, `settings.themeDark`, `settings.themeLight`, `setti
 ### Scenario: Active theme is visually indicated
 - **WHEN** the Theme submenu is open
 - **THEN** the currently active theme option is visually distinguished from the others
+
+### Scenario: Dark and System are mutually exclusive indicators when OS is dark
+- **GIVEN** the OS color scheme is dark
+- **WHEN** the user selects **Dark**
+- **THEN** only **Dark** shows the active indicator and **System** does not
+- **WHEN** the user then switches to **System**
+- **THEN** only **System** shows the active indicator and **Dark** does not
 
 ---
 

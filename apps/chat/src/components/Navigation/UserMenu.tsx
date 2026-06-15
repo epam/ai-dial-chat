@@ -17,7 +17,7 @@ import {
 } from '@tabler/icons-react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StorageKey, ThemeId } from '../../constants/storage';
+import { ThemeId } from '../../constants/storage';
 import {
   AuthI18nKeys,
   SettingsI18nKeys,
@@ -29,7 +29,6 @@ import {
   metaKey,
   useKeyboardShortcutPreference,
 } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
-import { getFromLocalStorage } from '../../utils/local-storage';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import AvatarInitials from './AvatarInitials';
 import MenuItemLabel from './MenuItemLabel';
@@ -37,7 +36,7 @@ import MenuItemLabel from './MenuItemLabel';
 export const UserMenu = memo(() => {
   const { status, user } = useUser();
   const { t } = useTranslation();
-  const { currentTheme, setTheme, themes } = useTheme();
+  const { selectedTheme, setTheme, themes } = useTheme();
   const { preference, setPreference } = useKeyboardShortcutPreference();
 
   const image = user?.claims?.['image'] as string | undefined;
@@ -77,8 +76,6 @@ export const UserMenu = memo(() => {
     />
   );
 
-  const storedTheme = getFromLocalStorage(StorageKey.Theme) ?? currentTheme;
-
   const hasDark = themes?.some((t) => t.id === ThemeId.Dark) ?? false;
   const hasLight = themes?.some((t) => t.id === ThemeId.Light) ?? false;
 
@@ -88,7 +85,7 @@ export const UserMenu = memo(() => {
       label: (
         <MenuItemLabel
           label={t(SettingsI18nKeys.ThemeDark)}
-          isActive={storedTheme === ThemeId.Dark}
+          isActive={selectedTheme === ThemeId.Dark}
           icon={<IconMoon size={DIAL_ICON_SIZE.SM} aria-hidden />}
         />
       ),
@@ -99,7 +96,7 @@ export const UserMenu = memo(() => {
       label: (
         <MenuItemLabel
           label={t(SettingsI18nKeys.ThemeLight)}
-          isActive={storedTheme === ThemeId.Light}
+          isActive={selectedTheme === ThemeId.Light}
           icon={<IconSun size={DIAL_ICON_SIZE.SM} aria-hidden />}
         />
       ),
@@ -111,7 +108,7 @@ export const UserMenu = memo(() => {
         label: (
           <MenuItemLabel
             label={t(SettingsI18nKeys.ThemeSystem)}
-            isActive={storedTheme === ThemeId.System}
+            isActive={selectedTheme === ThemeId.System}
             icon={<IconDeviceDesktop size={DIAL_ICON_SIZE.SM} aria-hidden />}
           />
         ),
