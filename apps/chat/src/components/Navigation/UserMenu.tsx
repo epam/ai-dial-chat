@@ -17,7 +17,6 @@ import {
 } from '@tabler/icons-react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { ThemeId } from '../../constants/storage';
 import {
   AuthI18nKeys,
   SettingsI18nKeys,
@@ -29,6 +28,7 @@ import {
   metaKey,
   useKeyboardShortcutPreference,
 } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { ThemeId } from '../../types/theme-id';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import AvatarInitials from './AvatarInitials';
 import MenuItemLabel from './MenuItemLabel';

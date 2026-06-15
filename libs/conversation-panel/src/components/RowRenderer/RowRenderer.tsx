@@ -1,6 +1,5 @@
 import type { RowComponentProps } from 'react-window';
-import { VirtualRowKind } from '../../types/virtual-row';
-import type { RowRendererData } from '../../types/virtual-row';
+import { type RowRendererData, VirtualRowKind } from '../../models/virtual-row';
 import { ConversationRow } from '../ConversationGroup/ConversationRow';
 import { ConversationGroupHeader } from '../ConversationGroupHeader/ConversationGroupHeader';
 

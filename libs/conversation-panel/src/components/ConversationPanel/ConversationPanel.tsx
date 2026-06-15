@@ -20,7 +20,7 @@ import {
   type RowRendererData,
   type VirtualRow,
   VirtualRowKind,
-} from '../../types/virtual-row';
+} from '../../models/virtual-row';
 import {
   getRowHeight,
   getSkeletonWidth,
