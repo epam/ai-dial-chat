@@ -5,9 +5,3 @@ export enum StorageKey {
   Theme = 'theme',
   KeyboardShortcut = 'keyboardShortcut',
 }
-
-export enum ThemeId {
-  Dark = 'dark',
-  Light = 'light',
-  System = 'system',
-}

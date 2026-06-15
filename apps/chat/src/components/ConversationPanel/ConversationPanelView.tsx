@@ -31,7 +31,6 @@ import {
   normalizeConversationId,
   ROUTES,
 } from '../../constants/routes';
-import { StorageKey } from '../../constants/storage';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -43,6 +42,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import { StorageKey } from '../../types/storage-key';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';

@@ -54,18 +54,6 @@ export const MessageActions: FC<MessageActionsProps> = ({
     setTimeout(() => setCopied(null), COPIED_RESET_MS);
   }, [onCopyMarkdown]);
 
-  const handleDislike = useCallback(() => {
-    if (activeRating !== MessageRating.Dislike) {
-      onDislike?.();
-    }
-  }, [activeRating, onDislike]);
-
-  const handleLike = useCallback(() => {
-    if (activeRating !== MessageRating.Like) {
-      onLike?.();
-    }
-  }, [activeRating, onLike]);
-
   return (
     <div
       className={mergeClasses(
@@ -156,7 +144,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.like ?? 'Like' }}
-              onClick={handleLike}
+              onClick={onLike}
             />
           )}
           {onDislike && (
@@ -170,7 +158,7 @@ export const MessageActions: FC<MessageActionsProps> = ({
                   : undefined
               }
               tooltipProps={{ tooltip: tooltips?.dislike ?? 'Dislike' }}
-              onClick={handleDislike}
+              onClick={onDislike}
             />
           )}
         </>

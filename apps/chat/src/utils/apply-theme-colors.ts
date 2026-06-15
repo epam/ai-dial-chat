@@ -1,5 +1,5 @@
 import { Theme } from '@epam/ai-dial-chat-shared';
-import { ThemeId } from '../constants/storage';
+import { ThemeId } from '../types/theme-id';
 
 export const getOsPreferredTheme = (): string =>
   window.matchMedia('(prefers-color-scheme: dark)').matches

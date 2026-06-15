@@ -1,20 +1,10 @@
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
+import { ConversationGroupKey } from '../types/conversation-group-key';
+import { ConversationSource } from '../types/conversation-source';
+import { FilterTab } from '../types/filter-tab';
 
-/** Source/ownership of a conversation — used by filter tabs. */
-export enum ConversationSource {
-  MyChats = 'my-chats',
-  Shared = 'shared',
-  Organization = 'organization',
-}
-
-/** Active filter tab value. */
-export enum FilterTab {
-  All = 'all',
-  MyChats = 'my-chats',
-  Shared = 'shared',
-  Organization = 'organization',
-}
+export { ConversationGroupKey, ConversationSource, FilterTab };
 
 /** Labels for each filter tab — provided as props so the app supplies i18n strings. */
 export interface FilterLabels {
