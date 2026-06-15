@@ -10,6 +10,25 @@ const mockDeployments = [
   { id: 'my-app', displayName: 'My App', type: 'application' as const },
 ];
 
+const getLabelText = (label: unknown): string | undefined => {
+  if (typeof label === 'string') {
+    return label;
+  }
+
+  if (
+    label != null &&
+    typeof label === 'object' &&
+    'props' in label &&
+    label.props != null &&
+    typeof label.props === 'object' &&
+    'text' in label.props
+  ) {
+    return label.props.text as string;
+  }
+
+  return undefined;
+};
+
 describe('useModelSelector — selectorAriaLabel', () => {
   it('uses default label when no deployment is selected', () => {
     const { result } = renderHook(() =>
@@ -129,18 +148,12 @@ describe('useModelSelector — menuItems', () => {
       }),
     );
     expect(result.current.menuItems).toHaveLength(3);
-    expect(result.current.menuItems[0]).toMatchObject({
-      key: 'gpt-4o',
-      label: 'GPT-4o',
-    });
-    expect(result.current.menuItems[1]).toMatchObject({
-      key: 'claude-3',
-      label: 'Claude 3',
-    });
-    expect(result.current.menuItems[2]).toMatchObject({
-      key: 'my-app',
-      label: 'My App',
-    });
+    expect(result.current.menuItems[0].key).toBe('gpt-4o');
+    expect(getLabelText(result.current.menuItems[0].label)).toBe('GPT-4o');
+    expect(result.current.menuItems[1].key).toBe('claude-3');
+    expect(getLabelText(result.current.menuItems[1].label)).toBe('Claude 3');
+    expect(result.current.menuItems[2].key).toBe('my-app');
+    expect(getLabelText(result.current.menuItems[2].label)).toBe('My App');
   });
 
   it('updates the active item when selectedDeploymentId changes', () => {
