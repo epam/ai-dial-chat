@@ -6,7 +6,7 @@ interface Props {
 
 export function ReviewDot({ className }: Props) {
   return (
-    <span className="absolute -left-px bottom-[-2px] z-10 flex size-[10px] items-center justify-center rounded-full bg-layer-3">
+    <span className="absolute -start-px bottom-[-2px] z-10 flex size-[10px] items-center justify-center rounded-full bg-layer-3">
       <span className={classNames('rounded-full', className)}>
         <svg
           width="4"

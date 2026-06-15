@@ -84,6 +84,7 @@ export enum SettingsI18nKeys {
   ChangingIconFileDescription = 'Are you sure you want to change the icon? Other users will see the default one immediately after confirmation.',
   ConfirmChangingDocumentUrls = 'Confirm changing document relative URLs',
   ChangingDocumentUrlsDescription = 'Changing document relative URLs will immediately stop sharing, and other users will no longer see this application.',
+  Shift = 'Shift',
 }
 
 // common.json
@@ -319,7 +320,7 @@ export enum CommonI18nKeys {
   ConnectToolset = 'Connect toolset',
   ConnectApplication = 'Connect application',
   CopyURL = 'Copy URL',
-  Copied = 'Copied ',
+  Copied = 'Copied',
   CopyToolsetEndpointURL = 'Copy endpoint URL to easily integrate toolset into your workflows',
   CopyApplicationEndpointURL = 'Copy endpoint URL to easily integrate application into your workflows',
   LimitExceeded = 'Limit exceeded',
@@ -461,6 +462,8 @@ export enum SideBarI18nKeys {
   UploadOrDragDropFiles = 'Upload or drag and drop files',
   CopyTo = 'Copy to',
   QuickApp2ContainsPrivateSkills = 'This Quick App uses personal skill prompts that may not be accessible to other users. To ensure access, share the skill prompts separately or replace them with public ones.',
+  Applications = 'Applications',
+  Models = 'Models',
 }
 
 // promptbar.json
@@ -486,7 +489,7 @@ export enum PromptBarI18nKeys {
   UnsavedChanges = 'Unsaved changes',
   UnsavedChangesCaption = 'There are unsaved changes. Do you want to save them before closing?',
   UnsavedChangesEmptyMandatoryFields = 'Unsaved changes contain empty mandatory fields. Please fill in mandatory fields or do not save changes.',
-  NotSave = 'Don`t save',
+  NotSave = "Don't save",
   BackToEditing = 'Back to editing',
   Unshare = 'Unshare',
   ConfirmDeletingPrompt = 'Confirm deleting prompt',
@@ -520,6 +523,8 @@ export enum PromptBarI18nKeys {
   AgentSkillStaleHint = 'Save to re-validate against the latest content.',
   AgentSkillValidationPending = 'Validation pending',
   AgentSkillValidationPendingHint = 'Open inside an agent editor to validate this prompt as a skill.',
+  ConversationEntity = 'conversation',
+  PromptEntity = 'prompt',
 }
 
 //chat.json
@@ -839,7 +844,6 @@ export enum ChatI18nKeys {
   AttachFoldersAndUploadedFiles = 'Attach folders and uploaded files',
   AttachUploadedFiles = 'Attach uploaded files',
   Attach = 'Attach',
-
   Address = 'Address',
   PasteLink = 'Paste link',
   Title = 'Title',
@@ -902,6 +906,25 @@ export enum ChatI18nKeys {
   YouDontHaveAnyFiles = "You don't have any files",
   SelectFileFromTree = 'Select a file from the tree',
   QuickApp2ContainsPrivateSkillsPublish = 'This Quick App uses personal skill prompts that are not publicly available. Please replace non-public skill prompts with public ones, otherwise recipients may not be able to access them.',
+  AttachmentImage = 'Attachment image',
+  SendFeedback = 'Send feedback',
+  OptionalFeedbackComment = 'Type an optional comment to your feedback',
+  ChatStarters = 'Chat starters',
+  Importing = 'Importing',
+  Exporting = 'Exporting',
+  Maximize = 'Maximize',
+  NothingIsSelectedAndRulesHaveNotChanged = 'Nothing is selected and rules have not changed',
+  RequestCantBePublishedAsSomeItemsAreInvalid = "Request can't be published as some items are invalid",
+  RequestCantBeApprovedAsSomeItemsAreUnpublished = "Request can't be approved as some items are unpublished",
+  RequestCantBeApprovedAsSomeConversationsHaveNoMessages = "Request can't be approved as some conversations have no messages",
+  RequestIsUpdating = 'Request is updating',
+  ThereAreNoChangesToApprove = 'There are no changes to approve',
+  ItsRequiredToReviewAllResources = "It's required to review all resources",
+  NewRequest = 'New request',
+  NewRequestBy = 'New request by {{userName}}',
+  SendRequest = 'Send request',
+  Approve = 'Approve',
+  ApproveSelected = 'Approve selected',
 }
 
 // files.json

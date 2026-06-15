@@ -1,5 +1,7 @@
 import { useCallback, useMemo } from 'react';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -12,6 +14,10 @@ import {
   isPlaybackConversation,
   isReplayAsIsConversation,
 } from '@/src/utils/app/conversation';
+import {
+  translatePlaybackLabel,
+  translateReplayAsIsLabel,
+} from '@/src/utils/app/translateConversationDisplayName';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
@@ -50,13 +56,15 @@ interface EmptyChatDescriptionViewProps {
 const getModelName = (
   conversation: Conversation,
   model: DialAIEntityModel | undefined,
+  locale: string | undefined,
+  t: (key: string) => string,
 ) => {
   if (isPlaybackConversation(conversation)) {
-    return 'Playback';
+    return translatePlaybackLabel(locale, t);
   }
 
   if (isReplayAsIsConversation(conversation)) {
-    return 'Replay as is';
+    return translateReplayAsIsLabel(locale, t);
   }
 
   if (model) {
@@ -73,6 +81,7 @@ const EmptyChatDescriptionView = ({
   isApplicationPreviewChat,
 }: EmptyChatDescriptionViewProps) => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const { t } = useTranslation(Translation.Chat);
 
@@ -141,6 +150,7 @@ const EmptyChatDescriptionView = ({
 
   const isReplayAsIs = isReplayAsIsConversation(conversation);
   const isPlayback = isPlaybackConversation(conversation);
+  const modelName = getModelName(conversation, model, router.locale, t);
   const isEmptyChatChangeAgentHidden =
     enabledFeatures.has(Feature.HideEmptyChatChangeAgent) ||
     isApplicationPreviewChat;
@@ -192,7 +202,7 @@ const EmptyChatDescriptionView = ({
                     'text-secondary',
                 )}
               >
-                {getModelName(conversation, model)}
+                {modelName}
               </span>
             </div>
           </div>

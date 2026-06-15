@@ -221,13 +221,13 @@ export function PublicVersionSelector({
       {onSelectCheckboxVersion && (
         <li
           className={classNames(
-            'flex items-center gap-1 py-[6.5px] pl-2 hover:bg-accent-primary-alpha',
+            'flex items-center gap-1 py-[6.5px] ps-2 hover:bg-accent-primary-alpha',
             isAllSelected && 'bg-accent-primary-alpha',
           )}
         >
           <DialCheckbox
             id={'all'}
-            className="mr-3 shrink-0"
+            className="me-3 shrink-0"
             checked={isAllSelected}
             indeterminate={
               !isAllSelected && !!selectedCheckboxVersionIds?.length
@@ -259,7 +259,7 @@ export function PublicVersionSelector({
             className={classNames(
               'flex items-center gap-1 hover:bg-accent-primary-alpha',
               isSelected && 'bg-accent-primary-alpha',
-              onSelectCheckboxVersion && 'pl-2',
+              onSelectCheckboxVersion && 'ps-2',
             )}
           >
             {onSelectCheckboxVersion && (

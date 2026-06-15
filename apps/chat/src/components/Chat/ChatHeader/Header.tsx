@@ -5,6 +5,8 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useFloatingPanelTogglePadding } from '@/src/hooks/useFloatingPanelTogglePadding';
@@ -14,6 +16,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityNameOrPathInvalid } from '@/src/utils/app/common';
 import { isReplayAsIsConversation } from '@/src/utils/app/conversation';
+import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
 import {
   doesModelAllowSystemPrompt,
   doesModelAllowTemperature,
@@ -89,6 +92,7 @@ export const ChatHeader = Inversify.register(
     setShowSettings,
     onModelClick,
   }: Props) => {
+    const router = useRouter();
     const { t } = useTranslation(Translation.Chat);
 
     const dispatch = useAppDispatch();
@@ -193,6 +197,12 @@ export const ChatHeader = Inversify.register(
       conversation.publicationInfo?.action === PublishActions.DELETE &&
       isApproveRequiredEntitySelected;
 
+    const displayName = useMemo(
+      () =>
+        translateConversationDisplayName(conversation.name, router.locale, t),
+      [conversation.name, router.locale, t],
+    );
+
     return (
       <>
         <div
@@ -210,7 +220,7 @@ export const ChatHeader = Inversify.register(
           {isShowChatInfo && (
             <>
               <Tooltip
-                tooltip={conversation.name}
+                tooltip={displayName}
                 triggerClassName={classNames(
                   'truncate text-center',
                   isChatFullWidth &&
@@ -227,7 +237,7 @@ export const ChatHeader = Inversify.register(
                   )}
                   data-qa="chat-title"
                 >
-                  {conversation.name}
+                  {displayName}
                 </span>
               </Tooltip>
               {publicVersionGroupId && (

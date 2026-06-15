@@ -10,8 +10,11 @@ import {
   MouseEvent,
   useCallback,
   useEffect,
+  useMemo,
   useState,
 } from 'react';
+
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -24,6 +27,11 @@ import {
   trimEndDots,
 } from '@/src/utils/app/common';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import { translatePromptContentPlaceholder } from '@/src/utils/app/translatePromptContentPlaceholder';
+import {
+  promptDisplayNameToStorage,
+  translatePromptDisplayName,
+} from '@/src/utils/app/translatePromptDisplayName';
 import {
   areSomePromptsFieldsChanged,
   generateSkillContent,
@@ -55,6 +63,7 @@ interface Props {
 }
 
 export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
+  const router = useRouter();
   const { t } = useTranslation(Translation.PromptBar);
 
   const dispatch = useAppDispatch();
@@ -64,9 +73,23 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
     PromptsSelectors.selectSelectedPromptId,
   );
 
-  const [name, setName] = useState<string>(prompt.name ?? '');
+  const displayPromptName = useMemo(
+    () => translatePromptDisplayName(prompt.name ?? '', router.locale, t),
+    [prompt.name, router.locale, t],
+  );
+  const [name, setName] = useState<string>(displayPromptName);
   const [description, setDescription] = useState(prompt?.description ?? '');
   const [content, setContent] = useState(prompt?.content ?? '');
+
+  const contentPlaceholder = useMemo(
+    () => translatePromptContentPlaceholder(router.locale, t),
+    [router.locale, t],
+  );
+
+  useEffect(() => {
+    setName(displayPromptName);
+  }, [displayPromptName, prompt.id]);
+
   const [submitted, setSubmitted] = useState(false);
   const [isDotError, setIsDotError] = useState(false);
   const [confirmClose, setConfirmClose] = useState(false);
@@ -111,8 +134,14 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
     (selectedPrompt: Prompt) => {
       setSubmitted(true);
 
-      const newName = prepareEntityName(name, { forRenaming: true });
-      setName(newName);
+      const preparedDisplayName = prepareEntityName(name, { forRenaming: true });
+      const newName = promptDisplayNameToStorage(
+        preparedDisplayName,
+        selectedPrompt.name ?? '',
+        router.locale,
+        t,
+      );
+      setName(preparedDisplayName);
 
       if (!newName) return;
 
@@ -141,14 +170,14 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
 
       onEdit({
         ...selectedPrompt,
-        name: trimEndDots(name),
+        name: trimEndDots(newName),
         description: description?.trim(),
         content: content.trim(),
       });
 
       setSubmitted(false);
     },
-    [allPrompts, content, description, dispatch, name, onEdit, t],
+    [allPrompts, content, description, dispatch, name, onEdit, router.locale, t],
   );
 
   const handleSubmit = useCallback(
@@ -242,7 +271,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
   return (
     <>
       <CloseButtonSmall
-        className="absolute right-2 top-2"
+        className="absolute end-2 top-2"
         onClick={handleEditClose}
         aria-label="Close dialog"
       />
@@ -254,7 +283,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
             htmlFor="promptName"
           >
             {t(PromptBarI18nKeys.Name)}
-            <span className="ml-1 inline text-accent-primary">*</span>
+            <span className="ms-1 inline text-accent-primary">*</span>
           </label>
           <input
             autoFocus
@@ -304,12 +333,12 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
           <div className="mb-1 flex items-center justify-between text-secondary">
             <label className="text-xs" htmlFor="content">
               {t(PromptBarI18nKeys.Prompt)}
-              <span className="ml-1 inline text-accent-primary">*</span>
+              <span className="ms-1 inline text-accent-primary">*</span>
             </label>
             {isQuickAppEditPrompt && (
               <span className="flex items-center">
                 {isSkillValidating ? (
-                  <Spinner className="mr-2" size={16} />
+                  <Spinner className="me-2" size={16} />
                 ) : isSkillValid ? (
                   <Tooltip
                     hideTooltip={!isSkillStale}
@@ -317,7 +346,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
                   >
                     <span
                       className={classNames(
-                        'mr-2 flex items-center gap-2',
+                        'me-2 flex items-center gap-2',
                         isSkillStale
                           ? 'text-secondary'
                           : 'text-accent-secondary',
@@ -333,7 +362,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
                       PromptBarI18nKeys.AgentSkillValidationPendingHint,
                     )}
                   >
-                    <span className="mr-2 flex items-center gap-2 text-secondary">
+                    <span className="me-2 flex items-center gap-2 text-secondary">
                       <IconCircleCheckFilled size={16} className="opacity-50" />
                       {t(PromptBarI18nKeys.AgentSkillValidationPending)}
                     </span>
@@ -384,7 +413,7 @@ export const EditPrompt: FC<Props> = ({ prompt, onEdit, onClose }) => {
             name="content"
             className={inputClassName}
             style={{ resize: 'none' }}
-            placeholder={t(PromptBarI18nKeys.ContentUseVariables)}
+            placeholder={contentPlaceholder}
             value={content}
             onChange={contentOnChangeHandler}
             onBlur={contentOnBlurHandler}

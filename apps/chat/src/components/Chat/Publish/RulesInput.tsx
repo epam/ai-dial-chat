@@ -63,7 +63,7 @@ export const RulesInput = ({
   return (
     <>
       <div
-        className="relative mb-2 flex h-auto min-h-[38px] w-full flex-wrap items-center gap-1 rounded border border-primary p-1 pr-10"
+        className="relative mb-2 flex h-auto min-h-[38px] w-full flex-wrap items-center gap-1 rounded border border-primary p-1 pe-10"
         data-qa="rules-list"
       >
         {filters.map((item) => (
@@ -113,7 +113,7 @@ export const RulesInput = ({
         {!!filters.length && (
           <CloseButtonSmall
             onClick={handleClear}
-            className="absolute right-3 top-[7px]"
+            className="absolute end-3 top-[7px]"
             aria-label="cancel-all-rules"
           />
         )}

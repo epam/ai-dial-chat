@@ -4,9 +4,7 @@ import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { EnumMapper } from '@/src/utils/app/mappers';
 import { hasDragEventEntityData } from '@/src/utils/app/move';
-
 import { SidebarSide } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
 import { FolderInterface } from '@/src/types/folder';
@@ -28,8 +26,6 @@ import { Search } from '@/src/components/Search/Search';
 
 import { ResizableSidebarWrapper } from './ResizableSidebarWrapper';
 import { SidebarSections } from './SidebarSections';
-
-import trimEnd from 'lodash-es/trimEnd';
 
 interface Props<T> {
   isOpen: boolean;
@@ -95,6 +91,16 @@ export const Sidebar = <T,>({
     }
   }, [dispatch, isLeftSidebar]);
 
+  const searchPlaceholder = useMemo(() => {
+    const entityKey =
+      featureType === FeatureType.Chat
+        ? PromptBarI18nKeys.ConversationEntity
+        : PromptBarI18nKeys.PromptEntity;
+    const entityName = t(entityKey);
+
+    return t(PromptBarI18nKeys.Search, { name: entityName });
+  }, [featureType, t]);
+
   if (!isOpen) {
     return null;
   }
@@ -128,11 +134,7 @@ export const Sidebar = <T,>({
             <CreateNewEntity iconSize={createIconSize} />
           </div>
           <Search
-            placeholder={t(PromptBarI18nKeys.Search, {
-              name: t(
-                trimEnd(EnumMapper.getApiKeyByFeatureType(featureType), 's'),
-              ),
-            })}
+            placeholder={searchPlaceholder}
             searchTerm={searchTerm}
             searchFilters={searchFilters}
             onSearch={onSearchTerm}

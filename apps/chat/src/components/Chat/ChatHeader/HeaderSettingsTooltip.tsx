@@ -1,4 +1,6 @@
 import classNames from 'classnames';
+import { useRouter } from 'next/router';
+import { useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -6,11 +8,15 @@ import { Translation } from '@/src/types/translation';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
+import { translateResponseFormatValue } from '@/src/components/Chat/ChatSettings/translateResponseFormatLabel';
+
+import { ConversationResponseFormat } from '@epam/ai-dial-shared';
+
 interface Props {
   systemPrompt: string;
   temperature: number | null;
   disallowChangeSettings: boolean;
-  responseFormat?: string;
+  responseFormat?: ConversationResponseFormat;
   hasSettings: boolean;
 }
 
@@ -29,7 +35,16 @@ export const HeaderSettingsTooltip = ({
   hasSettings,
   responseFormat,
 }: Props) => {
+  const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
+
+  const responseFormatLabel = useMemo(() => {
+    if (!responseFormat) {
+      return undefined;
+    }
+
+    return translateResponseFormatValue(responseFormat, router.locale, t);
+  }, [responseFormat, router.locale, t]);
 
   const lineClampClass =
     SM_HEIGHT_THRESHOLDS.find(
@@ -77,12 +92,12 @@ export const HeaderSettingsTooltip = ({
           </>
         )}
 
-        {responseFormat && (
+        {responseFormatLabel && (
           <>
             <span className="text-secondary">
               {t(ChatI18nKeys.ResponseFormat)}:
             </span>
-            <div data-qa="response-format">{responseFormat}</div>
+            <div data-qa="response-format">{responseFormatLabel}</div>
           </>
         )}
       </div>

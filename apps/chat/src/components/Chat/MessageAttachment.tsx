@@ -118,7 +118,7 @@ const ImageAttachmentRenderer = ({
           ? 'size-auto max-h-full max-w-full object-contain'
           : 'aspect-auto w-full',
       )}
-      alt="Attachment image"
+      alt={t(ChatI18nKeys.AttachmentImage)}
       onError={onImageError}
     />
   );
@@ -582,7 +582,11 @@ export const MessageAttachment = ({
                     size={ElementSize.Small}
                     icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
                     onClick={handleToggleFullScreen}
-                    aria-label={isFullScreen ? 'Minimize' : 'Maximize'}
+                    aria-label={
+                      isFullScreen
+                        ? t(ChatI18nKeys.Minimize)
+                        : t(ChatI18nKeys.Maximize)
+                    }
                   />
                 )}
                 {!isFullScreen && (

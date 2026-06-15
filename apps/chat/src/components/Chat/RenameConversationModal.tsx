@@ -7,6 +7,8 @@ import {
   useState,
 } from 'react';
 
+import { useRouter } from 'next/router';
+
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
@@ -16,6 +18,10 @@ import {
 } from '@/src/utils/app/common';
 import { getAvailableConversationNameBytes } from '@/src/utils/app/conversation';
 import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import {
+  conversationDisplayNameToStorage,
+  translateConversationDisplayName,
+} from '@/src/utils/app/translateConversationDisplayName';
 
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
@@ -41,9 +47,10 @@ interface RenameConversationViewProps {
   renamingConversation: ConversationInfo;
 }
 
-const view = withRenderWhenEntities<RenameConversationViewProps>({
-  renamingConversation: ConversationsSelectors.selectRenamingConversation,
-})(({ renamingConversation }: RenameConversationViewProps) => {
+function RenameConversationView({
+  renamingConversation,
+}: RenameConversationViewProps) {
+  const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -58,13 +65,20 @@ const view = withRenderWhenEntities<RenameConversationViewProps>({
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    setNewConversationName(renamingConversation.name || '');
-    setOriginConversationName(renamingConversation.name || '');
+    const storedName = renamingConversation.name || '';
+    const displayName = translateConversationDisplayName(
+      storedName,
+      router.locale,
+      t,
+    );
+
+    setNewConversationName(displayName);
+    setOriginConversationName(displayName);
     setTimeout(() => {
       inputRef.current?.focus();
       inputRef.current?.select();
     });
-  }, [renamingConversation]);
+  }, [renamingConversation, router.locale, t]);
 
   const availableNameBytes = useMemo(
     () => getAvailableConversationNameBytes(renamingConversation),
@@ -81,9 +95,16 @@ const view = withRenderWhenEntities<RenameConversationViewProps>({
   );
 
   const handleRename = useCallback(() => {
+    const storedName = conversationDisplayNameToStorage(
+      newName,
+      renamingConversation.name || '',
+      router.locale,
+      t,
+    );
+
     if (
       !isEntityNameOnSameLevelUnique(
-        newName,
+        storedName,
         renamingConversation,
         allConversations,
       )
@@ -92,7 +113,7 @@ const view = withRenderWhenEntities<RenameConversationViewProps>({
         UIActions.showErrorToast({
           message: t(ChatI18nKeys.ConversationNameExistsInFolder, {
             ns: Translation.Chat,
-            newName,
+            newName: storedName,
           }),
         }),
       );
@@ -100,7 +121,7 @@ const view = withRenderWhenEntities<RenameConversationViewProps>({
       return;
     }
 
-    if (doesHaveDotsInTheEnd(newName)) {
+    if (doesHaveDotsInTheEnd(storedName)) {
       dispatch(
         UIActions.showErrorToast({
           message: t(ChatI18nKeys.DotAtEndNotPermitted),
@@ -109,17 +130,24 @@ const view = withRenderWhenEntities<RenameConversationViewProps>({
       return;
     }
 
-    if (newName.length > 0) {
+    if (storedName.length > 0) {
       dispatch(
         ConversationsActions.updateConversation({
           id: renamingConversation.id,
-          values: { name: newName },
+          values: { name: storedName },
           publicationUrl: renamingConversation.publicationInfo?.publicationUrl,
         }),
       );
       dispatch(ConversationsActions.setRenamingConversationId(null));
     }
-  }, [renamingConversation, newName, allConversations, dispatch, t]);
+  }, [
+    renamingConversation,
+    newName,
+    allConversations,
+    dispatch,
+    router.locale,
+    t,
+  ]);
 
   const handleEnterDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -183,6 +211,9 @@ const view = withRenderWhenEntities<RenameConversationViewProps>({
       </div>
     </Modal>
   );
-});
+}
 
-export const RenameConversationModal = view;
+export const RenameConversationModal =
+  withRenderWhenEntities<RenameConversationViewProps>({
+    renamingConversation: ConversationsSelectors.selectRenamingConversation,
+  })(RenameConversationView);

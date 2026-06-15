@@ -1,3 +1,4 @@
+import { useRouter } from 'next/router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
@@ -23,7 +24,6 @@ import {
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
-  getPublicationDefaultName,
   getPublicationId,
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
@@ -49,7 +49,11 @@ import {
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
+import {
+  ChatI18nKeys,
+  PromptBarI18nKeys,
+  SideBarI18nKeys,
+} from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
@@ -60,6 +64,11 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublicationInfoSection } from '../PublicationInfoSection';
 import { PublishToSection } from '../PublishToSection';
+import {
+  getPublicationDefaultName,
+  translatePublicationDisplayName,
+} from '../translatePublicationName';
+import { translatePublicationSectionName } from '../translatePublicationSectionName';
 import {
   PublicationRequestFormData,
   PublicationRequestFormSchema,
@@ -100,31 +109,31 @@ const LEADING_SLASH_REGEX = /^\/+/;
 const sections = [
   {
     featureType: FeatureType.Chat,
-    sectionName: 'Conversations',
+    sectionName: PromptBarI18nKeys.Conversations,
     dataQa: 'conversations-tree',
     ItemComponent: PublicationConversationRow,
   },
   {
     featureType: FeatureType.Prompt,
-    sectionName: 'Prompts',
+    sectionName: PromptBarI18nKeys.Prompts,
     dataQa: 'prompts-tree',
     ItemComponent: PublicationPromptRow,
   },
   {
     featureType: FeatureType.Application,
-    sectionName: 'Applications',
+    sectionName: SideBarI18nKeys.Applications,
     dataQa: 'applications-tree',
     ItemComponent: PublicationApplicationRow,
   },
   {
     featureType: FeatureType.Toolset,
-    sectionName: 'Toolsets',
+    sectionName: ChatI18nKeys.Toolsets,
     dataQa: 'toolsets-tree',
     ItemComponent: PublicationToolsetRow,
   },
   {
     featureType: FeatureType.File,
-    sectionName: 'Files',
+    sectionName: ChatI18nKeys.Files,
     dataQa: 'files-tree',
     ItemComponent: PublicationFileRow,
   },
@@ -132,6 +141,7 @@ const sections = [
 
 export function PublicationHandler({ publication, onSubmit }: Props) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const { t } = useTranslation(Translation.Chat);
 
@@ -217,12 +227,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     () => ({
       publishRequestName: getPublicationDefaultName(
         replaceSpacesFromString(userName),
+        router.locale,
+        t,
       ),
       rules: initialState.rules,
       publicationAuthor: initialState.displayAuthor,
       publishToUrl: initialState.publishToUrl,
     }),
-    [initialState, userName],
+    [initialState, router.locale, t, userName],
   );
 
   const formMethods = useForm<PublicationRequestFormData>({
@@ -338,10 +350,16 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     setIsCompareModalOpened(false);
   }, []);
 
+  const organizationLabel = t(ChatI18nKeys.Organization);
   const displayPublishToUrl = editedPublishToUrl
-    ? editedPublishToUrl.replace(/^[^/]+/, 'Organization')
+    ? editedPublishToUrl.replace(/^[^/]+/, organizationLabel)
     : '';
-  const publicationName = publication.name || getPublicationId(publication.url);
+  const publicationName = translatePublicationDisplayName(
+    publication.name || getPublicationId(publication.url) || '',
+    router.locale,
+    t,
+  );
+
   const comparePath = isEditMode
     ? editedPublishToUrl
     : publication.targetFolder;
@@ -716,7 +734,11 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                           return (
                             <CollapsibleSection
                               key={featureType}
-                              name={t(sectionName)}
+                              name={translatePublicationSectionName(
+                                sectionName,
+                                router.locale,
+                                t,
+                              )}
                               openByDefault
                               dataQa={dataQa}
                               togglerClassName="!text-sm !text-primary"
@@ -741,7 +763,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                               )}
                               {isConversationSectionAndNoFiles && (
                                 <p
-                                  className="pl-3.5 text-secondary"
+                                  className="ps-3.5 text-secondary"
                                   data-qa="no-publishing-files"
                                 >
                                   {t(

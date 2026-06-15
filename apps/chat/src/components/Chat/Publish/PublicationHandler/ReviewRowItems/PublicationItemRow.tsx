@@ -10,6 +10,8 @@ import { useWatch } from 'react-hook-form';
 
 import classNames from 'classnames';
 
+import { useRouter } from 'next/router';
+
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -24,6 +26,10 @@ import {
 } from '@/src/utils/app/forms';
 import { isApplicationId, isFileId, isToolsetId } from '@/src/utils/app/id';
 import { constructPath } from '@/src/utils/app/shared-utils';
+import {
+  conversationDisplayNameToStorage,
+  translateConversationDisplayName,
+} from '@/src/utils/app/translateConversationDisplayName';
 import {
   ApiUtils,
   getIdWithoutVersionFromApiKey,
@@ -293,11 +299,11 @@ const PublicationVersionInfo: React.FC<PublicationVersionInfoProps> = ({
               'w-[70px] text-end text-xs',
               (errors.length || inputVersion === NA_VERSION) &&
                 '!border-b-error',
-              errors.length && 'pl-5',
+              errors.length && 'ps-5',
             )}
             placeholder={DEFAULT_VERSION}
             errors={errors}
-            tooltipIconClassName="ml-1"
+            tooltipIconClassName="ms-1"
             dataQA="version"
           />
         </span>
@@ -323,7 +329,12 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   itemTypeName,
   publicationUrl,
 }) => {
+  const router = useRouter();
+  const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
+
+  const isConversation =
+    itemTypeName === BackendResourceTypeName.CONVERSATION;
 
   const publicationModel = useAppSelector(
     PublicationSelectors.selectPublishModel,
@@ -354,19 +365,52 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   const [isFocused, setIsFocused] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
 
-  useEffect(() => {
-    const cleanName = replaceSpacesFromString(item.name);
-    setInputName(cleanName);
-  }, [item.name, isEditMode]);
+  const storedName = entityEditState?.name ?? item.name;
+
+  const toDisplayName = useCallback(
+    (name: string) => {
+      const cleanName = replaceSpacesFromString(name);
+      if (!isConversation) {
+        return cleanName;
+      }
+
+      return replaceSpacesFromString(
+        translateConversationDisplayName(cleanName, router.locale, t),
+      );
+    },
+    [isConversation, router.locale, t],
+  );
+
+  const toStorageName = useCallback(
+    (displayName: string) => {
+      if (!isConversation) {
+        return displayName;
+      }
+
+      return conversationDisplayNameToStorage(
+        displayName,
+        item.name,
+        router.locale,
+        t,
+      );
+    },
+    [isConversation, item.name, router.locale, t],
+  );
 
   useEffect(() => {
+    const displayName = toDisplayName(storedName);
+    setInputName(displayName);
+  }, [storedName, isEditMode, toDisplayName]);
+
+  useEffect(() => {
+    const inputStoredName = toStorageName(inputName);
     const isNotUniqName = Object.entries(editState).some(
       ([key, { name: editStateName }]) => {
         const keyFolderId = getFolderIdFromEntityId(key);
         return (
           item.id !== key &&
           item.folderId === keyFolderId &&
-          inputName.trim() === editStateName.trim()
+          inputStoredName.trim() === editStateName.trim()
         );
       },
     );
@@ -377,7 +421,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       isNotUniqName,
     });
     setErrors(nameErrors);
-  }, [editState, inputName, item.folderId, item.id, itemTypeName]);
+  }, [editState, inputName, item.folderId, item.id, itemTypeName, toStorageName]);
 
   const handleChangeName = useCallback(
     (name: string) => {
@@ -386,12 +430,12 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       dispatch(
         PublicationActions.setEntityEditStateByReviewUrl({
           reviewUrl: item.id,
-          name,
+          name: toStorageName(name),
           version: entityEditState?.version ?? NA_VERSION,
         }),
       );
     },
-    [dispatch, entityEditState?.version, item.id],
+    [dispatch, entityEditState?.version, item.id, toStorageName],
   );
 
   const handleSelect = useCallback(() => {
@@ -447,7 +491,7 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
   return (
     <div
       className={classNames(
-        'flex items-center justify-between rounded pr-2 hover:bg-accent-primary-alpha',
+        'flex items-center justify-between rounded pe-2 hover:bg-accent-primary-alpha',
         isFocused && 'bg-accent-primary-alpha',
       )}
       onFocus={() => setIsFocused(true)}
@@ -457,14 +501,14 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
       <span
         className="relative flex min-h-[34px] w-full flex-1 cursor-pointer items-center gap-2 truncate rounded px-4"
         style={{
-          paddingLeft: `${level * 24 + 16}px`,
+          paddingInlineStart: `${level * 24 + 16}px`,
         }}
         data-qa={dataQa}
       >
         <Checkbox
           checked={isSelected}
           onChange={handleSelect}
-          className="mr-0"
+          className="me-0"
         />
         <span className="flex">{Icon}</span>
         <EditableField
@@ -475,13 +519,13 @@ export const PublicationItemRow: React.FC<PublicationRowProps> = ({
               : isEditMode
           }
           onChange={handleChangeName}
-          inputClassName={classNames('w-full', errors.length && 'pr-5')}
+          inputClassName={classNames('w-full', errors.length && 'pe-5')}
           className={classNames(
             item.publicationInfo?.isNotExist && 'text-secondary',
             item.publicationInfo?.action === PublishActions.DELETE &&
               'text-error',
           )}
-          tooltipIconClassName="right-5"
+          tooltipIconClassName="end-5"
           errors={errors}
           dataQA="entity-input"
         />
