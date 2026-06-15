@@ -19,6 +19,7 @@ import { getFromLocalStorage, setToLocalStorage } from '../utils/local-storage';
 
 interface ThemeContextType {
   currentTheme: string;
+  selectedTheme: string;
   currentThemeLogo?: string;
   themes?: Theme[];
   setTheme: (themeId: string) => void;
@@ -30,6 +31,9 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [config, setConfig] = useState<ThemeConfiguration | null>(null);
   const [currentThemeId, setCurrentThemeId] = useState<string>(ThemeId.Dark);
+  const [selectedThemeId, setSelectedThemeId] = useState<string>(
+    () => getFromLocalStorage(StorageKey.Theme) ?? ThemeId.Dark,
+  );
   const [currentLogo, setCurrentLogo] = useState<string | undefined>(void 0);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -96,6 +100,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
         : null;
     const configuredTheme = storedTheme || config?.themes?.[0].id;
     if (configuredTheme) {
+      setSelectedThemeId(configuredTheme);
       updateTheme(configuredTheme);
     }
   }, [config, updateTheme]);
@@ -114,6 +119,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const setTheme = useCallback(
     (themeId: string) => {
       setToLocalStorage(StorageKey.Theme, themeId);
+      setSelectedThemeId(themeId);
       updateTheme(themeId);
     },
     [updateTheme],
@@ -128,12 +134,13 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       value={useMemo(
         () => ({
           currentTheme: currentThemeId,
+          selectedTheme: selectedThemeId,
           currentThemeLogo: currentLogo,
           setTheme,
           themes: config?.themes,
           isLoading,
         }),
-        [currentThemeId, setTheme, config, currentLogo, isLoading],
+        [currentThemeId, selectedThemeId, setTheme, config, currentLogo, isLoading],
       )}
     >
       {children}
