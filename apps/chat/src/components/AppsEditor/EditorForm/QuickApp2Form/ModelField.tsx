@@ -136,6 +136,7 @@ export const ModelField = () => {
     [selectedModelId, setValue],
   );
 
+  console.log(selectedEntity);
   return (
     <Controller
       name="model"
@@ -162,22 +163,20 @@ export const ModelField = () => {
                   />
                 </span>
 
-                {selectedEntity?.version && (
+                {selectedEntity?.version && versions.length > 0 && (
                   <div className="flex items-center gap-1">
                     <span className="text-xs text-secondary">
                       {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
                     </span>
 
-                    {selectedEntity?.version && (
-                      <ModelVersionSelect
-                        entities={versions}
-                        currentEntity={selectedEntity}
-                        onSelect={({ id }) => field.onChange(id)}
-                        className="truncate"
-                        triggerClassName="!text-xs"
-                        readonly={isAppPublic}
-                      />
-                    )}
+                    <ModelVersionSelect
+                      entities={versions}
+                      currentEntity={selectedEntity}
+                      onSelect={({ id }) => field.onChange(id)}
+                      className="truncate"
+                      triggerClassName="!text-xs"
+                      readonly={isAppPublic}
+                    />
                   </div>
                 )}
               </div>
