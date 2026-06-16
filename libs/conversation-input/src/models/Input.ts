@@ -190,4 +190,6 @@ export interface InputProps {
   prefixAttachments?: DisplayAttachment[];
   /** Called when the user removes an attachment from `prefixAttachments`. */
   onRemovePrefixAttachment?: (id: string) => void;
+  /** When `true`, focuses the textarea on mount. Defaults to `false`. */
+  autoFocus?: boolean;
 }
