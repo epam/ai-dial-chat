@@ -38,6 +38,7 @@ import {
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
   DeploymentsI18nKeys,
+  FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
@@ -116,7 +117,6 @@ const ConversationView: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
-  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag();
   const isEditActive = !!editingMessageIndexes?.size;
   const {
     items,
@@ -126,6 +126,14 @@ const ConversationView: FC<Props> = ({
     isLoading,
     error,
   } = useDeployments();
+
+  const isAttachmentsAllowed = useMemo(() => {
+    const selectedItem = items.find((item) => item.id === selectedItemId);
+    const types = selectedItem?.inputAttachmentTypes;
+    return types != null && types.length > 0;
+  }, [items, selectedItemId]);
+
+  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(isAttachmentsAllowed);
 
   const isInputDisabled = useMemo(
     () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
@@ -320,7 +328,20 @@ const ConversationView: FC<Props> = ({
 
   return (
     <>
-      <FileDndOverlay isVisible={isDragging} />
+      <FileDndOverlay
+        isVisible={isDragging}
+        isAttachmentsAllowed={isAttachmentsAllowed}
+        title={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlayTitle
+            : FileDndI18nKeys.OverlayDeniedTitle,
+        )}
+        subtitle={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlaySubtitle
+            : FileDndI18nKeys.OverlayDeniedSubtitle,
+        )}
+      />
       <div className="relative flex w-full flex-1 flex-col overflow-hidden">
         <div
           ref={containerRef}

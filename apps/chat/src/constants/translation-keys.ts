@@ -172,3 +172,10 @@ export enum SidebarI18nKeys {
 export enum AttachmentsI18nKeys {
   Download = 'attachments.downloadFile',
 }
+
+export enum FileDndI18nKeys {
+  OverlayTitle = 'fileDnd.overlayTitle',
+  OverlaySubtitle = 'fileDnd.overlaySubtitle',
+  OverlayDeniedTitle = 'fileDnd.overlayDeniedTitle',
+  OverlayDeniedSubtitle = 'fileDnd.overlayDeniedSubtitle',
+}

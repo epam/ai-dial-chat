@@ -97,6 +97,21 @@ describe('usePageFileDrag', () => {
     expect(result.current.pendingFiles).toHaveLength(0);
   });
 
+  it('does not populate pendingFiles on drop when isAttachmentsAllowed is false', () => {
+    const { result } = renderHook(() => usePageFileDrag(false));
+    const file = new File(['x'], 'test.txt', { type: 'text/plain' });
+
+    act(() => {
+      document.dispatchEvent(makeDragEvent('dragenter', ['Files']));
+    });
+    act(() => {
+      document.dispatchEvent(makeDragEvent('drop', ['Files'], [file]));
+    });
+
+    expect(result.current.pendingFiles).toHaveLength(0);
+    expect(result.current.isDragging).toBe(false);
+  });
+
   it('removes all four event listeners on unmount', () => {
     const removeSpy = vi.spyOn(document, 'removeEventListener');
     const { unmount } = renderHook(() => usePageFileDrag());

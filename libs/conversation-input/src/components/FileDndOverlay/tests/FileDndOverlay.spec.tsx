@@ -35,4 +35,50 @@ describe('FileDndOverlay', () => {
     const icon = container.querySelector('svg');
     expect(icon?.getAttribute('class')).toContain('text-red-500');
   });
+
+  it('renders denied title and subtitle when isAttachmentsAllowed is false', () => {
+    render(<FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />);
+    expect(screen.getByText('No attachments allowed')).toBeTruthy();
+    expect(
+      screen.getByText("Attachments can't be added to message"),
+    ).toBeTruthy();
+  });
+
+  it('applies default deniedIconClassName (text-error) when isAttachmentsAllowed is false', () => {
+    const { container } = render(
+      <FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />,
+    );
+    const icon = container.querySelector('svg');
+    expect(icon?.getAttribute('class')).toContain('text-error');
+  });
+
+  it('applies custom deniedIconClassName when isAttachmentsAllowed is false', () => {
+    const { container } = render(
+      <FileDndOverlay
+        isVisible={true}
+        isAttachmentsAllowed={false}
+        deniedIconClassName="text-warning"
+      />,
+    );
+    const icon = container.querySelector('svg');
+    expect(icon?.getAttribute('class')).toContain('text-warning');
+  });
+
+  it('applies cursor-not-allowed when isAttachmentsAllowed is false', () => {
+    const { container } = render(
+      <FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />,
+    );
+    const overlay = container.firstChild as HTMLElement;
+    expect(overlay.className).toContain('cursor-not-allowed');
+  });
+
+  it('calls preventDefault on drop when isAttachmentsAllowed is false', () => {
+    const { container } = render(
+      <FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />,
+    );
+    const overlay = container.firstChild as HTMLElement;
+    const dropEvent = new MouseEvent('drop', { bubbles: true, cancelable: true });
+    overlay.dispatchEvent(dropEvent);
+    expect(dropEvent.defaultPrevented).toBe(true);
+  });
 });

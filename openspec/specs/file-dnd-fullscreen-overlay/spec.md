@@ -12,11 +12,11 @@ The overlay SHALL display, centered vertically and horizontally:
 2. A title with default text `'Attach files'` (configurable via `title` prop)
 3. A subtitle with default text `'Drop files here to attach them to message'` (configurable via `subtitle` prop)
 
-The overlay SHALL be `pointer-events-none` so that the underlying drop zone continues to receive drop events.
+When `isAttachmentsAllowed` is `true` (default), the overlay SHALL be `pointer-events-none` so that the underlying drop zone continues to receive drop events.
 
 The overlay SHALL apply backdrop blur and use `--bg-blackout` (or equivalent semi-transparent background token) as its background.
 
-Typography classes SHALL be configurable via `titleClassName` (default `'dial-subheader2-bold-text'`) and `subtitleClassName` (default `'dial-body-text'`) props. Icon color SHALL be configurable via `iconClassName` (default `'text-accent-primary'`).
+Typography classes SHALL be configurable via `titleClassName` (default `'dial-subheader2-bold-text'`) and `subtitleClassName` (default `'dial-body-text'`) props. Icon color SHALL be configurable via `iconClassName` (default `'text-accent-primary'`) for the allowed state and `deniedIconClassName` (default `'text-error'`) for the denied state.
 
 #### Scenario: Overlay is hidden by default
 
@@ -35,6 +35,17 @@ Typography classes SHALL be configurable via `titleClassName` (default `'dial-su
 - **WHEN** `FileDndOverlay` is rendered with `isVisible={true}`, `title="Add attachments"`, and `subtitle="Drop here"`
 - **THEN** the overlay shows "Add attachments" as the title
 - **AND** the overlay shows "Drop here" as the subtitle
+
+#### Scenario: Overlay shows denied state when attachments are not allowed
+
+- **WHEN** `FileDndOverlay` is rendered with `isVisible={true}` and `isAttachmentsAllowed={false}`
+- **THEN** the overlay displays `IconFileX` (not `IconFileDescription`)
+- **AND** the icon is rendered in error color (`text-error`)
+- **AND** the title is `'No attachments allowed'`
+- **AND** the subtitle is `"Attachments can't be added to message"`
+- **AND** the overlay has `cursor-not-allowed` styling
+- **AND** the overlay is `pointer-events-auto` (intercepts rather than passes through drag events)
+- **AND** a `drop` event fired on the overlay does NOT propagate to the document drop handler (no files are added)
 
 ---
 
@@ -86,13 +97,29 @@ The hook SHALL NOT activate for drags that do not contain the `'Files'` MIME kin
 
 ### Requirement: Page-level DnD is wired in ConversationView and ConversationRoute
 
-`ConversationView` and `ConversationRoute` SHALL each use `usePageFileDrag` and render `<FileDndOverlay isVisible={isDragging} />`.
+`ConversationView` and `ConversationRoute` SHALL each use `usePageFileDrag` and render `<FileDndOverlay isVisible={isDragging} isAttachmentsAllowed={isAttachmentsAllowed} />`.
+
+`isAttachmentsAllowed` SHALL be derived from the currently selected deployment's `inputAttachmentTypes`: `true` only when `inputAttachmentTypes` is a defined, non-empty array (e.g. `['image/png']`); `false` when `inputAttachmentTypes` is `undefined` or an empty array `[]`.
 
 When no edit is active in `ConversationView`, dropped `pendingFiles` SHALL be passed to `<ConversationInput pendingDropFiles={pendingFiles} onDropFilesConsumed={onFilesConsumed} />`.
 
 When an edit is active (`editingMessageIndexes.size > 0`), dropped `pendingFiles` SHALL be passed through `ConversationMessageItem` to the `EditMessageInput` for the currently edited message.
 
 `ConversationRoute` (new chat) SHALL always pass `pendingFiles` to its `<ConversationInput>`.
+
+#### Scenario: Overlay shows denied state when selected model has empty input_attachment_types
+
+- **WHEN** the selected deployment has `inputAttachmentTypes: []`
+- **AND** a file drag is active over the page
+- **THEN** `isAttachmentsAllowed` is `false`
+- **AND** the `FileDndOverlay` renders the denied state
+
+#### Scenario: Overlay shows denied state when selected model has undefined input_attachment_types
+
+- **WHEN** the selected deployment has `inputAttachmentTypes: undefined`
+- **AND** a file drag is active over the page
+- **THEN** `isAttachmentsAllowed` is `false`
+- **AND** the `FileDndOverlay` renders the denied state
 
 #### Scenario: Dropped files reach ConversationInput in conversation view (no edit active)
 

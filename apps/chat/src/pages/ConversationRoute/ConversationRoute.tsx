@@ -25,6 +25,7 @@ import {
   BasicI18nKeys,
   ChatI18nKeys,
   DeploymentsI18nKeys,
+  FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
@@ -55,7 +56,6 @@ const ConversationInput = lazy(async () => {
 const ConversationRoute: FC = () => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
@@ -70,6 +70,14 @@ const ConversationRoute: FC = () => {
     isLoading,
     error,
   } = useDeployments();
+
+  const isAttachmentsAllowed = useMemo(() => {
+    const selectedItem = items.find((item) => item.id === selectedItemId);
+    const types = selectedItem?.inputAttachmentTypes;
+    return types != null && types.length > 0;
+  }, [items, selectedItemId]);
+
+  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(isAttachmentsAllowed);
 
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
@@ -237,7 +245,20 @@ const ConversationRoute: FC = () => {
 
   return (
     <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
-      <FileDndOverlay isVisible={isDragging} />
+      <FileDndOverlay
+        isVisible={isDragging}
+        isAttachmentsAllowed={isAttachmentsAllowed}
+        title={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlayTitle
+            : FileDndI18nKeys.OverlayDeniedTitle,
+        )}
+        subtitle={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlaySubtitle
+            : FileDndI18nKeys.OverlayDeniedSubtitle,
+        )}
+      />
       <Suspense fallback={<RouteFallback />}>
         <div
           className="flex h-full flex-col items-center justify-center p-4 desktop:p-8"

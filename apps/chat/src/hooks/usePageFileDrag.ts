@@ -6,10 +6,12 @@ interface PageFileDragState {
   onFilesConsumed: () => void;
 }
 
-export const usePageFileDrag = (): PageFileDragState => {
+export const usePageFileDrag = (isAttachmentsAllowed = true): PageFileDragState => {
   const [isDragging, setIsDragging] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const enterCountRef = useRef(0);
+  const isAttachmentsAllowedRef = useRef(isAttachmentsAllowed);
+  isAttachmentsAllowedRef.current = isAttachmentsAllowed;
 
   const onFilesConsumed = useCallback(() => {
     setPendingFiles([]);
@@ -43,9 +45,11 @@ export const usePageFileDrag = (): PageFileDragState => {
       e.preventDefault();
       enterCountRef.current = 0;
       setIsDragging(false);
-      const files = Array.from(e.dataTransfer?.files ?? []);
-      if (files.length > 0) {
-        setPendingFiles(files);
+      if (isAttachmentsAllowedRef.current) {
+        const files = Array.from(e.dataTransfer?.files ?? []);
+        if (files.length > 0) {
+          setPendingFiles(files);
+        }
       }
     };
 
