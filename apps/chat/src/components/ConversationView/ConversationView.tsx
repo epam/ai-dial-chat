@@ -3,10 +3,12 @@ import {
   isStatusMessage,
   StatusEvent,
   type Attachment,
+  type Conversation,
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
+import type { ChatSettingsValues } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
@@ -83,12 +85,8 @@ interface Props {
   isTranscriptionSupported?: boolean;
   onUploadAudio?: (file: File, contentType: string) => Promise<string>;
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
-  conversationPrompt?: string;
-  conversationTemperature?: number;
-  onSaveChatSettings?: (values: {
-    systemPrompt?: string;
-    temperature?: number;
-  }) => void;
+  conversation: Conversation;
+  onConversationChange: (conv: Conversation) => void;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -118,9 +116,8 @@ const ConversationView: FC<Props> = ({
   isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
-  conversationPrompt = '',
-  conversationTemperature = 1,
-  onSaveChatSettings,
+  conversation,
+  onConversationChange,
 }) => {
   const { t } = useTranslation();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
@@ -133,9 +130,31 @@ const ConversationView: FC<Props> = ({
     error,
   } = useDeployments();
 
+  const deploymentItems = useMemo(
+    () =>
+      items.map(
+        ({
+          id,
+          displayName,
+          iconUrl,
+          type,
+          inputAttachmentTypes,
+          features,
+        }) => ({
+          id,
+          displayName,
+          iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
+          type,
+          inputAttachmentTypes,
+          features,
+        }),
+      ),
+    [items],
+  );
+
   const selectedDeployment = useMemo(
-    () => items.find((d) => d.id === selectedItemId),
-    [items, selectedItemId],
+    () => deploymentItems.find((d) => d.id === selectedItemId),
+    [deploymentItems, selectedItemId],
   );
 
   const isInputDisabled = useMemo(
@@ -181,18 +200,6 @@ const ConversationView: FC<Props> = ({
         { ids: [], activeId: initialModelId },
       ).ids,
     [messages, initialModelId],
-  );
-
-  const deploymentItems = useMemo(
-    () =>
-      items.map(({ id, displayName, iconUrl, type, inputAttachmentTypes }) => ({
-        id,
-        displayName,
-        iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
-        type,
-        inputAttachmentTypes,
-      })),
-    [items],
   );
 
   const tooltips = useMemo<MessageActionTooltips>(
@@ -332,10 +339,18 @@ const ConversationView: FC<Props> = ({
   const chatSettings = useMemo(
     () => ({
       features: selectedDeployment?.features,
-      systemPrompt: conversationPrompt,
-      temperature: conversationTemperature,
-      onSave: (values: { systemPrompt?: string; temperature?: number }) =>
-        onSaveChatSettings?.(values),
+      systemPrompt: conversation.prompt ?? '',
+      temperature: conversation.temperature ?? 1,
+      onSave: (values: ChatSettingsValues) =>
+        onConversationChange({
+          ...conversation,
+          ...(values.systemPrompt != null && {
+            prompt: values.systemPrompt,
+          }),
+          ...(values.temperature != null && {
+            temperature: values.temperature,
+          }),
+        }),
       menuItemLabel: t(ChatI18nKeys.ChatSettings),
       title: t(ChatSettingsI18nKeys.Title),
       systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
@@ -343,13 +358,7 @@ const ConversationView: FC<Props> = ({
       saveLabel: t(ButtonsI18nKeys.Save),
       cancelLabel: t(ButtonsI18nKeys.Cancel),
     }),
-    [
-      selectedDeployment?.features,
-      conversationPrompt,
-      conversationTemperature,
-      onSaveChatSettings,
-      t,
-    ],
+    [selectedDeployment?.features, conversation, onConversationChange, t],
   );
 
   return (

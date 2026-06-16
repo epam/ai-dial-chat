@@ -199,6 +199,14 @@ export interface InputProps {
   chatSettings?: ChatSettingsConfig;
 }
 
+/** Values emitted by the chat-settings modal when the user clicks Save. */
+export interface ChatSettingsValues {
+  /** Updated system prompt, present when the system-prompt field was shown. */
+  systemPrompt?: string;
+  /** Updated temperature, present when the temperature field was shown. */
+  temperature?: number;
+}
+
 /** Configuration for the built-in chat-settings menu entry and modal. */
 export interface ChatSettingsConfig {
   /** Feature flags controlling which fields appear in the modal. */
@@ -208,7 +216,7 @@ export interface ChatSettingsConfig {
   /** Current temperature pre-populated in the modal numeric input. */
   temperature: number;
   /** Called with updated values when the user clicks Save. */
-  onSave: (values: { systemPrompt?: string; temperature?: number }) => void;
+  onSave: (values: ChatSettingsValues) => void;
   /** Label for the "Chat settings" dropdown item. Defaults to `'Chat settings'`. */
   menuItemLabel?: string;
   /** Modal title. Defaults to `'Chat settings'`. */

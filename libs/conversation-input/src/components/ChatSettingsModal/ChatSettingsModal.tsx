@@ -7,6 +7,7 @@ import {
   PopupSize,
 } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, useState, type FC } from 'react';
+import type { ChatSettingsValues } from '../../models/Input';
 
 /** Props for the ChatSettingsModal component. */
 export interface ChatSettingsModalProps {
@@ -17,7 +18,7 @@ export interface ChatSettingsModalProps {
   /** Current temperature value pre-populated in the numeric input. */
   initialTemperature: number;
   /** Called with the updated values when the user clicks Save. */
-  onSave: (values: { systemPrompt?: string; temperature?: number }) => void;
+  onSave: (values: ChatSettingsValues) => void;
   /** Called when the modal should close (Save or Cancel). */
   onClose: () => void;
   /** Modal title. Defaults to `'Chat settings'`. */
@@ -50,7 +51,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
   );
 
   const handleSubmit = useCallback(() => {
-    const values: { systemPrompt?: string; temperature?: number } = {};
+    const values: ChatSettingsValues = {};
     if (features.systemPrompt) {
       values.systemPrompt = systemPrompt;
     }
