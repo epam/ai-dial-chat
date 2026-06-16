@@ -86,6 +86,7 @@ const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
   const [authLevel, setAuthLevel] = useState<
     ToolsetCredentialsLevel | undefined
   >(undefined);
+  const [versionChanged, setVersionChanged] = useState(false);
 
   const isAppsEditor = route === Routes.AppsEditor;
 
@@ -199,6 +200,7 @@ const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
   const handleVersionChange = useCallback(
     (toolset: ToolsetModel) => {
       dispatch(MarketplaceActions.setLoginEntity({ toolset }));
+      setVersionChanged(true);
     },
     [dispatch],
   );
@@ -232,7 +234,7 @@ const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
     }
   }, [authType, formMethods]);
 
-  if (!isOrganizationView && isSignedIn)
+  if (!isOrganizationView && isSignedIn && !versionChanged)
     return (
       <ConfirmDialog
         isOpen
