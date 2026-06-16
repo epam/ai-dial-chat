@@ -252,8 +252,8 @@ export interface Attachment extends DisplayAttachment {
 export interface MessageAttachment {
   /** Zero-based position in the attachment list. */
   index?: number;
-  /** MIME type of the attachment content. */
-  type: MIMEType | string;
+  /** MIME type of the attachment content. May be absent in streamed runtime payloads. */
+  type?: MIMEType | string;
   /** Display name shown in the UI. */
   title: string;
   /** Inline base-64 encoded content (mutually exclusive with `url`). */
