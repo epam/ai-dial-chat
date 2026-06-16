@@ -85,9 +85,9 @@ i18n keys: `settings.keyboardShortcuts`, `settings.shortcutEnter`, `settings.sho
 
 #### Scenario: Platform-aware modifier key label
 - **WHEN** the user is on macOS
-- **THEN** the second option label reads "⌘+Enter — send message, Enter"
+- **THEN** the second option label reads "⌘+Enter — send message, Enter — new line"
 - **WHEN** the user is on Windows or Linux
-- **THEN** the second option label reads "Ctrl+Enter — send message, Enter"
+- **THEN** the second option label reads "Ctrl+Enter — send message, Enter — new line"
 
 ---
 
