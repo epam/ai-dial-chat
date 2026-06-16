@@ -9,7 +9,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { SettingsI18nKeys } from '@/src/constants/i18n';
-import { LOCALE_DISPLAY_NAMES } from '@/src/constants/locale';
+import { getLocaleDisplayName } from '@/src/constants/locale';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Label } from '@/src/components/Common/Forms/Label';
@@ -31,7 +31,7 @@ export const LanguageSelect = ({
   const { t } = useTranslation(Translation.Settings);
   const availableLocales = router.locales ?? ['en'];
 
-  const localeName = LOCALE_DISPLAY_NAMES[currentLocale] ?? currentLocale;
+  const localeName = getLocaleDisplayName(currentLocale);
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onLocaleChange(e.currentTarget.value);
@@ -69,7 +69,7 @@ export const LanguageSelect = ({
             <MenuItem
               key={locale}
               className="max-w-[350px] hover:bg-accent-primary-alpha"
-              item={LOCALE_DISPLAY_NAMES[locale] ?? locale}
+              item={getLocaleDisplayName(locale)}
               value={locale}
               onClick={onChangeHandler}
             />
