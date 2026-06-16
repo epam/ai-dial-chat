@@ -6,33 +6,15 @@ import { Input } from '../Input/Input';
 import styles from './ConversationInput.module.scss';
 
 export const ConversationInput: FC<ConversationInputProps> = ({
-  onSend,
-  onUploadAttachment,
-  onStop,
   isStreaming = false,
-  onAttachmentsChange,
-  message,
   placeholder = 'Type a prompt or use "/" to select one',
   welcomeText,
   styles: stylesProp,
   className,
   dropLabel = 'Drop files here',
   dropOverlayClassName = 'rounded',
-  pasteTextThreshold,
-  deployments,
-  selectedDeploymentId,
-  onDeploymentChange,
-  modelSelectorLabels,
-  sendLabel,
-  stopLabel,
   isInputDisabled = false,
-  isTranscriptionSupported,
-  onUploadAudio,
-  onTranscribeAudio,
-  micLabel,
-  sendOnEnter,
-  autoFocus,
-  messageHistory,
+  ...inputProps
 }) => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
@@ -94,32 +76,14 @@ export const ConversationInput: FC<ConversationInputProps> = ({
       )}
       <div className="relative w-full max-w-[748px]">
         <Input
-          message={message}
-          onSend={onSend}
-          onUploadAttachment={onUploadAttachment}
-          onStop={onStop}
-          isStreaming={isStreaming}
-          onAttachmentsChange={onAttachmentsChange}
           placeholder={placeholder}
+          isStreaming={isStreaming}
+          isInputDisabled={isInputDisabled}
+          {...inputProps}
           colors={colors?.input}
           typography={typography?.input}
           pendingDropFiles={pendingFiles}
           onDropFilesConsumed={handleDropFilesConsumed}
-          pasteTextThreshold={pasteTextThreshold}
-          deployments={deployments}
-          selectedDeploymentId={selectedDeploymentId}
-          onDeploymentChange={onDeploymentChange}
-          modelSelectorLabels={modelSelectorLabels}
-          sendLabel={sendLabel}
-          stopLabel={stopLabel}
-          isInputDisabled={isInputDisabled}
-          isTranscriptionSupported={isTranscriptionSupported}
-          onUploadAudio={onUploadAudio}
-          onTranscribeAudio={onTranscribeAudio}
-          micLabel={micLabel}
-          sendOnEnter={sendOnEnter}
-          autoFocus={autoFocus}
-          messageHistory={messageHistory}
         />
         {isDragActive && (
           <div
