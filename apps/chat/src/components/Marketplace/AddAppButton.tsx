@@ -58,6 +58,8 @@ export function AddAppButton() {
     [router, dispatch],
   );
 
+  const appEntityLabel = t(MarketplaceI18nKeys.AppEntity);
+
   const menuItems: AddMarketplaceEntityMenuItem[] = useMemo(
     () =>
       [
@@ -116,7 +118,7 @@ export function AddAppButton() {
   return (
     <AddMarketplaceEntityButton
       dataQa="add-app"
-      label="app"
+      label={appEntityLabel}
       menuItems={menuItems}
     />
   );

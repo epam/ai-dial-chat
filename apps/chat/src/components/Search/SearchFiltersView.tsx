@@ -1,5 +1,5 @@
 import { IconCircleFilled, IconFilter } from '@tabler/icons-react';
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -39,11 +39,25 @@ export function SearchFiltersView({
   searchFilters,
   featureType,
 }: Props) {
-  const { t } = useTranslation(
+  const translationNamespace =
     featureType === FeatureType.Chat
       ? Translation.SideBar
-      : Translation.PromptBar,
+      : Translation.PromptBar;
+
+  const { t } = useTranslation(translationNamespace);
+
+  const translateFilterLabel = useCallback(
+    (key: string) => {
+      const primary = t(key);
+      if (featureType !== FeatureType.Chat || primary !== key) {
+        return primary;
+      }
+
+      return t(key, { ns: Translation.PromptBar });
+    },
+    [featureType, t],
   );
+
   const [isOpen, setIsOpen] = useState(false);
   const screenState = useScreenState();
   const isMobileView = screenState === ScreenState.SM;
@@ -61,7 +75,7 @@ export function SearchFiltersView({
               ? Feature.ConversationsSharing
               : Feature.PromptsSharing,
           ),
-          name: t(PromptBarI18nKeys.SharedByMe),
+          name: translateFilterLabel(PromptBarI18nKeys.SharedByMe),
           dataQa: 'shared-by-me-filter',
           filterValue: SearchFilters.SharedByMe,
         },
@@ -88,7 +102,13 @@ export function SearchFiltersView({
           CustomTriggerRenderer: SearchFilterRenderer,
           customTriggerData: isSearchFilterSelected(searchFilters, filterValue),
         })),
-    [enabledFeatures, featureType, t, searchFilters, onSearchFiltersChanged],
+    [
+      enabledFeatures,
+      featureType,
+      translateFilterLabel,
+      searchFilters,
+      onSearchFiltersChanged,
+    ],
   );
 
   return (
@@ -99,7 +119,7 @@ export function SearchFiltersView({
       onOpenChange={setIsOpen}
       TriggerCustomRenderer={
         <Tooltip
-          tooltip={t(PromptBarI18nKeys.SearchFilters)}
+          tooltip={translateFilterLabel(PromptBarI18nKeys.SearchFilters)}
           hideTooltip={isOpen || isMobileView}
         >
           <IconFilter

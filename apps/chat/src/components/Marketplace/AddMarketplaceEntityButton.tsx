@@ -29,6 +29,7 @@ export function AddMarketplaceEntityButton({
   label,
 }: AddMarketplaceEntityButtonProps) {
   const { t } = useTranslation(Translation.Marketplace);
+  const addButtonLabel = t(MarketplaceI18nKeys.AddLabel, { label });
 
   const [isOpen, setIsOpen] = useState(false);
 
@@ -45,7 +46,7 @@ export function AddMarketplaceEntityButton({
     return (
       <DialPrimaryButton
         onClick={visibleActions[0].onClick}
-        label={t(MarketplaceI18nKeys.AddLabel, { label })}
+        label={addButtonLabel}
         iconBefore={<IconPlus size={18} />}
         className="shrink-0"
         data-qa={dataQa}
@@ -65,7 +66,7 @@ export function AddMarketplaceEntityButton({
           label={
             isScreenSmall
               ? t(MarketplaceI18nKeys.AddMarketplace)
-              : t(MarketplaceI18nKeys.AddLabel, { label })
+              : addButtonLabel
           }
           className="shrink-0"
           iconAfter={
