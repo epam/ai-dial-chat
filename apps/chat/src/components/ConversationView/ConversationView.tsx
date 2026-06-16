@@ -1,6 +1,7 @@
 import {
   DisplayAttachment,
   isStatusMessage,
+  MessageRole,
   StatusEvent,
   type Attachment,
   type Conversation,
@@ -42,6 +43,7 @@ import {
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import ConversationMessageItem from './ConversationMessageItem';
@@ -120,6 +122,7 @@ const ConversationView: FC<Props> = ({
   onConversationChange,
 }) => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const {
     items,
@@ -201,6 +204,13 @@ const ConversationView: FC<Props> = ({
       ).ids,
     [messages, initialModelId],
   );
+
+  const messageHistory = useMemo(
+    () =>
+      messages.filter((m) => m.role === MessageRole.User).map((m) => m.content),
+    [messages],
+  );
+
 
   const tooltips = useMemo<MessageActionTooltips>(
     () => ({
@@ -469,10 +479,12 @@ const ConversationView: FC<Props> = ({
               sendLabel={t(ChatI18nKeys.SendMessage)}
               stopLabel={t(ChatI18nKeys.StopStreaming)}
               isTranscriptionSupported={isTranscriptionSupported}
+              messageHistory={messageHistory}
               onUploadAudio={onUploadAudio}
               onTranscribeAudio={onTranscribeAudio}
               sendOnEnter={sendOnEnter}
               chatSettings={chatSettings}
+              autoFocus={!isMobile}
             />
           </Suspense>
         )}

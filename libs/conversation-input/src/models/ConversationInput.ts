@@ -168,4 +168,14 @@ export interface ConversationInputProps {
    * Clicking it opens a modal with fields gated by `features`.
    */
   chatSettings?: ChatSettingsConfig;
+  /** When `true`, focuses the textarea on mount. Defaults to `false`. */
+  autoFocus?: boolean;
+  /**
+   * Ordered list of previously sent message strings for the current
+   * conversation (oldest first, most-recent last). When provided, pressing
+   * Up in the textarea recalls the previous entry; pressing Down returns
+   * toward the current draft. Omit or pass an empty array to disable
+   * keyboard history navigation.
+   */
+  messageHistory?: readonly string[];
 }

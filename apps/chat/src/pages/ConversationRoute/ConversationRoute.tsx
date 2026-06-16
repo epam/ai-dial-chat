@@ -30,6 +30,7 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
@@ -204,6 +205,7 @@ const ConversationRoute: FC = () => {
     [asrModelId, selectedItemId],
   );
 
+  const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
 
   const isTranscriptionSupported = useMemo(() => {
@@ -276,6 +278,7 @@ const ConversationRoute: FC = () => {
             onUploadAudio={handleUploadAudio}
             onTranscribeAudio={handleTranscribeAudio}
             sendOnEnter={sendOnEnter}
+            autoFocus={!isMobile}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
