@@ -4,6 +4,7 @@ import type {
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { isAudioTranscriptionSupported } from '@epam/ai-dial-chat-shared';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   lazy,
@@ -28,7 +29,9 @@ import {
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   transcribeAudio,
   transcribeAudioWithAsrModel,
@@ -55,6 +58,7 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
+  const { showNotification } = useNotification();
   const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
@@ -130,11 +134,17 @@ const ConversationRoute: FC = () => {
           attachmentDtos,
         );
         navigate(getConversationRoute(conversation.id));
+      } catch (err) {
+        const errorMessage = await getApiErrorMessage(err);
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
+        });
       } finally {
         setIsSending(false);
       }
     },
-    [navigate, isSending, selectedItemId],
+    [navigate, isSending, selectedItemId, showNotification, t],
   );
 
   const handleUploadAttachment = useCallback(
@@ -214,13 +224,21 @@ const ConversationRoute: FC = () => {
           ? { [propertyKey]: starter.const }
           : undefined;
         const createAndNavigate = async () => {
-          const conversation = await apiCreateConversation(
-            text,
-            selectedItemId,
-            [],
-            configurationValue,
-          );
-          navigate(getConversationRoute(conversation.id));
+          try {
+            const conversation = await apiCreateConversation(
+              text,
+              selectedItemId,
+              [],
+              configurationValue,
+            );
+            navigate(getConversationRoute(conversation.id));
+          } catch (err) {
+            const errorMessage = await getApiErrorMessage(err);
+            showNotification({
+              variant: NotificationVariant.Error,
+              message: errorMessage ?? t(ChatI18nKeys.CreateConversationError),
+            });
+          }
         };
 
         void createAndNavigate();
@@ -229,7 +247,7 @@ const ConversationRoute: FC = () => {
         setInputMessage(text);
       }
     },
-    [description, propertyKey, selectedItemId, navigate],
+    [description, propertyKey, selectedItemId, navigate, showNotification, t],
   );
 
   return (
