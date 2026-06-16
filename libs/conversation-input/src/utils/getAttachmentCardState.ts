@@ -25,7 +25,7 @@ const getBottomIcon = (attachment: DisplayAttachment): Icon => {
   if (type === AttachmentType.Prompt) return IconTerminal2;
   if (type === AttachmentType.Pasted) return IconClipboard;
   if (type === AttachmentType.Image) return IconPhoto;
-  return getAttachmentIcon(contentType);
+  return getAttachmentIcon(contentType ?? '');
 };
 
 const getBottomLabel = (attachment: DisplayAttachment): string => {
@@ -37,7 +37,7 @@ const getBottomLabel = (attachment: DisplayAttachment): string => {
   if (name.includes('.')) {
     return `.${name.slice(name.lastIndexOf('.') + 1).toLowerCase()}`;
   }
-  const subtype = contentType.split('/')[1];
+  const subtype = contentType?.split('/')[1];
   return subtype ? `.${subtype.toLowerCase()}` : name;
 };
 
