@@ -12,6 +12,7 @@ describe('parseDefaultModel', () => {
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
