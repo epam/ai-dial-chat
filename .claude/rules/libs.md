@@ -12,7 +12,7 @@ paths:
 
 ## Component syntax
 
-Always use `FC<Props>` syntax:
+Name the component props interface `{ComponentName}Props` (not bare `Props`), and use `FC<{ComponentName}Props>` syntax:
 
 ```tsx
 export const MyComponent: FC<MyComponentProps> = ({ ... }) => { ... };
