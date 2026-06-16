@@ -1,5 +1,7 @@
 import { IconBlocks, IconMessage2 } from '@tabler/icons-react';
-import React, { memo } from 'react';
+import React, { memo, useCallback } from 'react';
+
+import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -9,6 +11,7 @@ import { Translation } from '@/src/types/translation';
 import { useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import {
   MarketplaceEntitiesTabs,
   MarketplaceTabs,
@@ -19,6 +22,7 @@ import { NoResultsFound } from '@/src/components/Common/NoResultsFound';
 
 import { MarketplaceEntitiesTable } from './MarketplaceEntitiesList/MarketplaceEntitiesTable/MarketplaceEntitiesTable';
 import { MarketplaceEntitiesTiles } from './MarketplaceEntitiesList/MarketplaceEntitiesTiles/MarketplaceEntitiesTiles';
+import { translateMarketplaceTabEmptyState } from './translateMarketplaceTabEmptyState';
 
 interface NoAgentsFoundProps {
   children: React.ReactNode;
@@ -32,6 +36,12 @@ const NoMarketplaceEntitiesFound = ({
   header,
 }: NoAgentsFoundProps) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const router = useRouter();
+
+  const translateLabel = useCallback(
+    (key: string) => translateMarketplaceTabEmptyState(key, router.locale, t),
+    [router.locale, t],
+  );
 
   return (
     <div
@@ -41,7 +51,7 @@ const NoMarketplaceEntitiesFound = ({
       {children}
       {header && (
         <span className="mt-5 text-lg font-semibold" data-qa="no-data-header">
-          {t(header)}
+          {translateLabel(header)}
         </span>
       )}
       {description && (
@@ -49,7 +59,7 @@ const NoMarketplaceEntitiesFound = ({
           className="mt-4 text-sm font-normal"
           data-qa="no-data-description"
         >
-          {t(description)}
+          {translateLabel(description)}
         </span>
       )}
     </div>
@@ -102,8 +112,16 @@ export const ResultsView = memo(
       const Icon = isAgentsTab ? IconMessage2 : IconBlocks;
       return (
         <NoMarketplaceEntitiesFound
-          header={isAgentsTab ? 'No agents' : 'No toolsets'}
-          description={`You don't have any ${isAgentsTab ? 'agents' : 'toolsets'}.`}
+          header={
+            isAgentsTab
+              ? MarketplaceI18nKeys.NoAgents
+              : MarketplaceI18nKeys.NoToolsets
+          }
+          description={
+            isAgentsTab
+              ? MarketplaceI18nKeys.YouDontHaveAnyAgents
+              : MarketplaceI18nKeys.YouDontHaveAnyToolsets
+          }
         >
           <Icon size={100} className="stroke-[0.2]" />
         </NoMarketplaceEntitiesFound>
@@ -111,7 +129,9 @@ export const ResultsView = memo(
     }
 
     return (
-      <NoMarketplaceEntitiesFound description="Sorry, we couldn't find any results for your search.">
+      <NoMarketplaceEntitiesFound
+        description={MarketplaceI18nKeys.NoSearchResults}
+      >
         <NoResultsFound
           iconSize={100}
           className="gap-5 text-lg font-semibold"
