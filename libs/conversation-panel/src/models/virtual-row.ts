@@ -21,6 +21,8 @@ export interface ConversationItemRow {
   kind: VirtualRowKind.Item;
   /** The conversation to render. */
   item: ConversationHistoryItem;
+  /** The group this item belongs to — used for drag-and-drop validation. */
+  groupKey: ConversationGroupKey;
 }
 
 /** Union of all possible virtual row shapes. */
@@ -46,4 +48,29 @@ export interface RowRendererData {
   groupHeaderClassName?: string;
   /** Typography class applied to conversation title text. */
   itemTitleClassName?: string;
+  /** Id of the conversation currently being dragged. `null` when no drag is in progress. */
+  draggingId: string | null;
+  /** Id of the row (item or group header sentinel) currently under the drag cursor. */
+  dragOverId: string | null;
+  /** Groups that are valid drop targets for the current drag. `null` when no drag is in progress. */
+  allowedDropGroups: Set<ConversationGroupKey> | null;
+  /** Called when the user starts dragging a conversation row. */
+  onDragStart: (id: string) => void;
+  /** Called when the drag ends (drop or cancel). */
+  onDragEnd: () => void;
+  /** Called when the drag cursor enters a row. */
+  onDragOver: (id: string) => void;
+  /** Called when the drag cursor leaves a row. */
+  onDragLeave: () => void;
+  /**
+   * Called when the user drops onto a target row or group header.
+   * `targetId` is the item id or `ConversationGroupKey` sentinel for header drops.
+   * `targetGroupKey` is the group the item was dropped into.
+   * `afterId` is the id of the item to insert after, or `null` for top of group.
+   */
+  onDrop: (
+    targetId: string,
+    targetGroupKey: ConversationGroupKey,
+    afterId: string | null,
+  ) => void;
 }

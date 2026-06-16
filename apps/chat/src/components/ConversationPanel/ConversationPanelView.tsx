@@ -1,6 +1,8 @@
 import {
+  ConversationGroupKey,
   ConversationPanel,
   type ConversationHistoryItem,
+  type ConversationMove,
 } from '@epam/ai-dial-conversation-panel';
 import {
   ConfirmationPopupVariant,
@@ -167,6 +169,24 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       organization: t(ConversationPanelI18nKeys.FilterOrganization),
     }),
     [t],
+  );
+
+  const handleMoveConversation = useCallback(
+    ({ draggedId, targetGroupKey }: ConversationMove) => {
+      const contextId = panelToContextId.get(draggedId);
+      if (!contextId) return;
+
+      const draggedItem = conversations.find((c) => c.id === draggedId);
+      if (!draggedItem) return;
+
+      if (targetGroupKey === ConversationGroupKey.Pinned) {
+        void pinConversation(contextId, true);
+      } else if (draggedItem.isPinned) {
+        void pinConversation(contextId, false);
+      }
+      // Same-group reorder: no API available in this iteration — no-op.
+    },
+    [panelToContextId, conversations, pinConversation],
   );
 
   const getActions = useCallback(
@@ -345,6 +365,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         defaultPanelWidth={defaultPanelWidth}
         maxPanelWidth={maxPanelWidth}
         onPanelResizeStop={setStoredPanelWidth}
+        onMoveConversation={handleMoveConversation}
         headerActions={
           <DeleteAllConversationsAction
             activeConversationId={activeConversationId}

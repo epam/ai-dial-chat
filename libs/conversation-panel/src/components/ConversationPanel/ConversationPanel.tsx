@@ -7,7 +7,7 @@ import {
   SidebarSide,
 } from '@epam/ai-dial-sidebar';
 import { DialSkeleton } from '@epam/ai-dial-ui-kit';
-import { type FC, memo, useCallback, useMemo, useState } from 'react';
+import { type FC, memo, useCallback, useMemo, useRef, useState } from 'react';
 import { List } from 'react-window';
 import { ITEM_ROW_HEIGHT } from '../../constants/virtual-list';
 import {
@@ -26,6 +26,10 @@ import {
   getSkeletonWidth,
   SKELETON_ROW_COUNT,
 } from '../../utils/conversation-row.utils';
+import {
+  computeAllowedDropGroups,
+  findGroupKeyForItem,
+} from '../../utils/drag';
 import { FilterTabs } from '../FilterTabs/FilterTabs';
 import { NewChatButton } from '../NewChatButton/NewChatButton';
 import { RowRenderer } from '../RowRenderer/RowRenderer';
@@ -61,6 +65,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     maxPanelWidth = 600,
     onPanelResizeStop,
     headerActions,
+    onMoveConversation,
   }) => {
     const { colors, typography } = panelStyles ?? {};
     const [searchQuery, setSearchQuery] = useState('');
@@ -69,6 +74,16 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       () => ALL_GROUP_KEYS,
     );
     const [overscanCount, setOverscanCount] = useState(5);
+
+    const [draggingId, setDraggingId] = useState<string | null>(null);
+    const [dragOverId, setDragOverId] = useState<string | null>(null);
+    const [allowedDropGroups, setAllowedDropGroups] =
+      useState<Set<ConversationGroupKey> | null>(null);
+
+    // Refs let the drop handler read current values without being in the useCallback dep array,
+    // avoiding recreating the handler (and remounting rows) on every drag-state change.
+    const draggingIdRef = useRef<string | null>(null);
+    const allowedDropGroupsRef = useRef<Set<ConversationGroupKey> | null>(null);
 
     const handleListResize = useCallback(({ height }: { height: number }) => {
       setOverscanCount(Math.ceil((height / ITEM_ROW_HEIGHT) * 2));
@@ -85,6 +100,62 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         return next;
       });
     }, []);
+
+    const clearDragState = useCallback(() => {
+      draggingIdRef.current = null;
+      allowedDropGroupsRef.current = null;
+      setDraggingId(null);
+      setDragOverId(null);
+      setAllowedDropGroups(null);
+    }, []);
+
+    const handleDragStart = useCallback(
+      (id: string, rows: VirtualRow[]) => {
+        const groupKey = findGroupKeyForItem(rows, id);
+        const allowed = computeAllowedDropGroups(id, groupKey, conversations);
+        draggingIdRef.current = id;
+        allowedDropGroupsRef.current = allowed;
+        setDraggingId(id);
+        setAllowedDropGroups(allowed);
+      },
+      [conversations],
+    );
+
+    const handleDragEnd = useCallback(() => {
+      clearDragState();
+    }, [clearDragState]);
+
+    const handleDragOver = useCallback((id: string) => {
+      setDragOverId(id);
+    }, []);
+
+    const handleDragLeave = useCallback(() => {
+      setDragOverId(null);
+    }, []);
+
+    const handleDrop = useCallback(
+      (
+        targetId: string,
+        targetGroupKey: ConversationGroupKey,
+        afterId: string | null,
+      ) => {
+        const currentDraggingId = draggingIdRef.current;
+        const currentAllowed = allowedDropGroupsRef.current;
+        clearDragState();
+        if (
+          currentDraggingId != null &&
+          currentDraggingId !== targetId &&
+          currentAllowed?.has(targetGroupKey)
+        ) {
+          onMoveConversation?.({
+            draggedId: currentDraggingId,
+            targetGroupKey,
+            afterId,
+          });
+        }
+      },
+      [clearDragState, onMoveConversation],
+    );
 
     const hasTypographyClass = Boolean(typography?.fontClassName);
     const cssVars = buildCssVars({
@@ -196,7 +267,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         });
         if (expandedGroups.has(group.key)) {
           for (const item of group.items) {
-            rows.push({ kind: VirtualRowKind.Item, item });
+            rows.push({ kind: VirtualRowKind.Item, item, groupKey: group.key });
           }
         }
       }
@@ -214,6 +285,14 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         actionsLabel,
         groupHeaderClassName: typography?.groupHeaderClassName,
         itemTitleClassName: typography?.itemTitleClassName,
+        draggingId,
+        dragOverId,
+        allowedDropGroups,
+        onDragStart: (id: string) => handleDragStart(id, virtualRows),
+        onDragEnd: handleDragEnd,
+        onDragOver: handleDragOver,
+        onDragLeave: handleDragLeave,
+        onDrop: handleDrop,
       }),
       [
         virtualRows,
@@ -225,6 +304,14 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         actionsLabel,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
+        draggingId,
+        dragOverId,
+        allowedDropGroups,
+        handleDragStart,
+        handleDragEnd,
+        handleDragOver,
+        handleDragLeave,
+        handleDrop,
       ],
     );
 
