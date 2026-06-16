@@ -281,18 +281,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setIsDeleting(false);
     setPendingDeleteId(null);
 
-    const activeContextId = activeConversationId
-      ? panelToContextId.get(activeConversationId)
-      : undefined;
-    if (activeContextId === idToDelete) navigate(ROUTES.ROOT);
-  }, [
-    pendingDeleteId,
-    deleteConversation,
-    activeConversationId,
-    panelToContextId,
-    navigate,
-    t,
-  ]);
+    if (
+      activeConversationId != null &&
+      normalizeConversationId(idToDelete) === activeConversationId
+    ) {
+      navigate(ROUTES.ROOT);
+    }
+  }, [pendingDeleteId, deleteConversation, activeConversationId, navigate, t]);
 
   const handleCloseDeleteDialog = useCallback(() => {
     if (isDeleting) return;
