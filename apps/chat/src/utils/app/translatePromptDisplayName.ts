@@ -70,7 +70,7 @@ export function promptDisplayNameToStorage(
       return displayName;
     }
 
-    return `${DEFAULT_PROMPT_NAME} ${displayName}`;
+    return displayName;
   }
 
   return displayName;
