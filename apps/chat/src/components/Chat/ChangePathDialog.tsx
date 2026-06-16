@@ -64,7 +64,6 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import {
   CellEditingStartedEvent,
-  CellEditingStoppedEvent,
   ColDef,
   FirstDataRenderedEvent,
   GridApi,
@@ -108,39 +107,6 @@ const buildMissingFolderChain = (
   }
 
   return result;
-};
-
-const findRowElement = (
-  node: IRowNode<FileManagerGridRow>,
-): HTMLElement | null => {
-  if (node.id) {
-    const byId = document.querySelector<HTMLElement>(`[row-id="${node.id}"]`);
-    if (byId) return byId;
-  }
-  if (node.rowIndex != null) {
-    return document.querySelector<HTMLElement>(
-      `[row-index="${node.rowIndex}"]`,
-    );
-  }
-  return null;
-};
-
-const scrollRowIntoView = (
-  api: GridApi<FileManagerGridRow>,
-  node: IRowNode<FileManagerGridRow>,
-): void => {
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
-      if (!api.isDestroyed() && node.rowIndex != null) {
-        api.ensureNodeVisible(node, 'middle');
-      }
-
-      findRowElement(node)?.scrollIntoView({
-        block: 'center',
-        behavior: 'auto',
-      });
-    });
-  });
 };
 
 interface Props {
@@ -309,12 +275,30 @@ export const ChangePathDialog = ({
   const fileManagerActionRef = useRef<DialFileManagerActionsRef>(null);
   const addedTempFolderIdsRef = useRef<Set<string>>(new Set());
 
-  const knownRowIdsRef = useRef<Set<string>>(new Set());
-  const knownRowIdsInitializedRef = useRef(false);
   const pendingNewFolderIdRef = useRef<string | null>(null);
-
-  const [isGridEditing, setIsGridEditing] = useState(false);
   const deduplicatedFileIdsRef = useRef<Set<string>>(new Set());
+
+  const resolveTargetNode = useCallback(
+    (newNodes: IRowNode<FileManagerGridRow>[]) => {
+      const tempNode = newNodes.find((node) => node.data?.isTemporary);
+      const pendingId = pendingNewFolderIdRef.current;
+      const pendingNode = pendingId
+        ? newNodes.find((node) => node.data?.id === pendingId)
+        : undefined;
+
+      if (tempNode || pendingNode) {
+        pendingNewFolderIdRef.current = null;
+        return tempNode ?? pendingNode ?? null;
+      }
+      return pendingId ? null : (newNodes[0] ?? null);
+    },
+    [],
+  );
+
+  const gridEditingOptions = useMemo(
+    () => ({ resolveTargetNode }),
+    [resolveTargetNode],
+  );
 
   const filesFolders = useAppSelector(FilesSelectors.selectFolders);
   const filesFoldersRef = useRef(filesFolders);
@@ -392,6 +376,7 @@ export const ChangePathDialog = ({
     gridOptions,
     navigationPanelOptions,
     handleRenameValidation,
+    resetGridEditing,
     emptyStateTitle,
     emptyStateDescription,
     deleteConfirmationOptions,
@@ -408,6 +393,7 @@ export const ChangePathDialog = ({
       files: [],
       folders: additionalOrganizationFolders,
     },
+    gridEditingOptions,
   });
 
   const isTempFolder = useCallback(
@@ -567,9 +553,8 @@ export const ChangePathDialog = ({
     }
 
     deduplicatedFileIdsRef.current.clear();
-    knownRowIdsRef.current = new Set();
-    knownRowIdsInitializedRef.current = false;
     pendingNewFolderIdRef.current = null;
+    resetGridEditing();
     dispatch(FilesActions.resetNewFolderId());
 
     if (addedTempFolderIdsRef.current.size > 0) {
@@ -585,7 +570,7 @@ export const ChangePathDialog = ({
       );
       addedTempFolderIdsRef.current.clear();
     }
-  }, [dispatch, isOpen]);
+  }, [dispatch, isOpen, resetGridEditing]);
 
   const handleCreateOrganizationFolder = useCallback(
     (_file: DialUploadFileItem, folderPath: string, fileId: string) => {
@@ -615,17 +600,6 @@ export const ChangePathDialog = ({
     [depth, handleRenameValidation, t],
   );
 
-  const frozenFileTreeItemsRef = useRef(fileTreeItems);
-  useEffect(() => {
-    if (!isGridEditing) {
-      frozenFileTreeItemsRef.current = fileTreeItems;
-    }
-  }, [fileTreeItems, isGridEditing]);
-
-  const rawItemsToRender = isGridEditing
-    ? frozenFileTreeItemsRef.current
-    : fileTreeItems;
-
   const itemsToRender = useMemo(() => {
     const applyTreePermissions = (items: DialFile[]): DialFile[] =>
       items.map((item) => ({
@@ -634,8 +608,8 @@ export const ChangePathDialog = ({
         items: item.items ? applyTreePermissions(item.items) : item.items,
       }));
 
-    return applyTreePermissions(rawItemsToRender);
-  }, [isTempFolder, rawItemsToRender]);
+    return applyTreePermissions(fileTreeItems);
+  }, [isTempFolder, fileTreeItems]);
 
   const handleClose = useCallback(() => onClose(false), [onClose]);
 
@@ -674,6 +648,16 @@ export const ChangePathDialog = ({
     ],
   );
 
+  const translateNewFolderNode = useCallback(
+    (node: Pick<IRowNode<FileManagerGridRow>, 'data' | 'setDataValue'>) => {
+      const folderName = node.data?.name;
+      if (folderName && /^New folder( \d+)?$/.test(folderName)) {
+        node.setDataValue('name', translateNewFolderName(folderName));
+      }
+    },
+    [translateNewFolderName],
+  );
+
   const modalGridOptions = useMemo(
     () => ({
       ...gridOptions,
@@ -684,7 +668,6 @@ export const ChangePathDialog = ({
         ...gridOptions.additionalGridOptions,
         emptyStateTitle: searchEmptyTitle,
         emptyStateDescription: searchEmptyDescription,
-        suppressRowVirtualisation: true,
         onGridReady: (params: GridReadyEvent<FileManagerGridRow>) => {
           applyGridHeaderLabels(params.api);
           gridOptions.additionalGridOptions?.onGridReady?.(params);
@@ -696,66 +679,11 @@ export const ChangePathDialog = ({
           gridOptions.additionalGridOptions?.onFirstDataRendered?.(params);
         },
         onCellEditingStarted: (params: CellEditingStartedEvent) => {
-          setIsGridEditing(true);
-          const folderName = params.data?.name;
-          if (folderName && /^New folder( \d+)?$/.test(folderName)) {
-            params.node?.setDataValue(
-              'name',
-              translateNewFolderName(folderName),
-            );
-          }
-          if (params.api) {
-            setTimeout(() => {
-              params.api.ensureIndexVisible(params.rowIndex as number);
-            }, 0);
-          }
+          if (params.node) translateNewFolderNode(params.node);
           gridOptions.additionalGridOptions?.onCellEditingStarted?.(params);
         },
-        onCellEditingStopped: (params: CellEditingStoppedEvent) => {
-          setIsGridEditing(false);
-          gridOptions.additionalGridOptions?.onCellEditingStopped?.(params);
-        },
         onRowDataUpdated: (params: RowDataUpdatedEvent) => {
-          const currentIds = new Set<string>();
-          let firstNewNode: IRowNode<FileManagerGridRow> | null = null;
-          let tempNewNode: IRowNode<FileManagerGridRow> | null = null;
-          let pendingNode: IRowNode<FileManagerGridRow> | null = null;
-          const pendingId = pendingNewFolderIdRef.current;
-
-          params.api.forEachNode((node) => {
-            const id = node.data?.id;
-            if (!id) return;
-
-            const folderName = node.data?.name;
-            if (folderName && /^New folder( \d+)?$/.test(folderName)) {
-              node.setDataValue('name', translateNewFolderName(folderName));
-            }
-
-            currentIds.add(id);
-
-            if (
-              knownRowIdsInitializedRef.current &&
-              !knownRowIdsRef.current.has(id)
-            ) {
-              if (!firstNewNode) firstNewNode = node;
-              if (node.data?.isTemporary) tempNewNode = node;
-              if (pendingId && id === pendingId) pendingNode = node;
-            }
-          });
-
-          knownRowIdsRef.current = currentIds;
-          knownRowIdsInitializedRef.current = true;
-
-          if (tempNewNode) {
-            pendingNewFolderIdRef.current = null;
-            scrollRowIntoView(params.api, tempNewNode);
-          } else if (pendingNode) {
-            pendingNewFolderIdRef.current = null;
-            scrollRowIntoView(params.api, pendingNode);
-          } else if (firstNewNode && !pendingId) {
-            scrollRowIntoView(params.api, firstNewNode);
-          }
-
+          params.api.forEachNode(translateNewFolderNode);
           applyGridHeaderLabels(params.api);
           gridOptions.additionalGridOptions?.onRowDataUpdated?.(params);
         },
@@ -766,7 +694,7 @@ export const ChangePathDialog = ({
       gridOptions,
       searchEmptyDescription,
       searchEmptyTitle,
-      translateNewFolderName,
+      translateNewFolderNode,
     ],
   );
 
