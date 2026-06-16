@@ -34,22 +34,26 @@ import {
   encodeToolsetRedirectState,
   fitToolsetNameToStorageLimits,
   getToolsetRedirectUri,
+  isToolsetSignedIn,
   regenerateToolsetId,
 } from '@/src/utils/app/toolsets';
 import { translate } from '@/src/utils/app/translation';
 import { signInToolset } from '@/src/utils/auth/auth-toolset';
 import { getVersionFromId } from '@/src/utils/server/api';
 
+import { ChatEventOperations } from '@/src/types/chat-events';
 import { AppAction, AppEpic } from '@/src/types/store';
 import {
   ToolsetAuthPayload,
   ToolsetCredentialsLevel,
   ToolsetEditorSteps,
+  ToolsetModel,
 } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
 import {
   ApplicationActions,
+  ChatEventsActions,
   ConversationsActions,
   MarketplaceActions,
   PublicationActions,
@@ -1156,6 +1160,49 @@ const exitEditorEpic: AppEpic = (action$, _state$, { router }) =>
     }),
   );
 
+const expireLoggedInToolsetsCredsEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ChatEventsActions.addEvents.type),
+    switchMap(({ payload }) => {
+      const toolsetEvents = payload.filter(
+        ({ method }) => method === ChatEventOperations.ToolsetSignIn,
+      );
+
+      if (!toolsetEvents.length) return EMPTY;
+
+      const toolsetsMap = ToolsetSelectors.selectToolsetsMap(state$.value);
+      const toolsetsWithExpiredCreds = (
+        toolsetEvents
+          .map(({ params }) => toolsetsMap[params.toolsetId])
+          .filter(
+            (t) =>
+              !!t &&
+              isToolsetSignedIn(
+                t,
+                isEntityIdPublic(t)
+                  ? ToolsetCredentialsLevel.USER
+                  : ToolsetCredentialsLevel.GLOBAL,
+              ),
+          ) as ToolsetModel[]
+      ).map((t) => ({
+        ...t,
+        authSettings: {
+          ...t.authSettings,
+          authStatus: {
+            ...t.authSettings.authStatus,
+            [isEntityIdPublic(t)
+              ? ToolsetCredentialsLevel.USER
+              : ToolsetCredentialsLevel.GLOBAL]: ToolsetAuthStatus.FAILED,
+          } as Record<ToolsetCredentialsLevel, ToolsetAuthStatus>,
+        },
+      }));
+
+      return toolsetsWithExpiredCreds.length
+        ? of(ToolsetActions.setToolsets(toolsetsWithExpiredCreds))
+        : EMPTY;
+    }),
+  );
+
 export const ToolsetEpics = combineEpics(
   initEpic,
   getToolsetsEpic,
@@ -1167,6 +1214,7 @@ export const ToolsetEpics = combineEpics(
   setQueryParamsEpic,
   initQueryParamsEpic,
   exitEditorEpic,
+  expireLoggedInToolsetsCredsEpic,
 
   //Delete
   deleteToolsetEpic,

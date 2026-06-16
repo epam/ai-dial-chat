@@ -375,6 +375,7 @@ export const FileManagerModal = memo(
       () => ({
         ...gridOptions,
         additionalGridOptions: {
+          ...gridOptions.additionalGridOptions,
           rowSelection: {
             mode: 'multiRow' as const,
             isRowSelectable: (node: { data?: FileManagerGridRow | null }) => {
