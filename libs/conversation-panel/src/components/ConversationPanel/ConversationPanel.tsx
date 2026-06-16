@@ -7,20 +7,35 @@ import {
   SidebarSide,
 } from '@epam/ai-dial-sidebar';
 import { DialSkeleton } from '@epam/ai-dial-ui-kit';
-import { type FC, memo, useMemo, useState } from 'react';
+import { type FC, memo, useCallback, useMemo, useRef, useState } from 'react';
+import { List } from 'react-window';
+import { ITEM_ROW_HEIGHT } from '../../constants/virtual-list';
 import {
+  ConversationGroupKey,
   type ConversationPanelProps,
   ConversationSource,
   FilterTab,
 } from '../../models/ConversationPanel';
 import {
+  type RowRendererData,
+  type VirtualRow,
+  VirtualRowKind,
+} from '../../models/virtual-row';
+import {
+  getRowHeight,
   getSkeletonWidth,
   SKELETON_ROW_COUNT,
 } from '../../utils/conversation-row.utils';
-import { ConversationGroup } from '../ConversationGroup/ConversationGroup';
+import {
+  computeAllowedDropGroups,
+  findGroupKeyForItem,
+} from '../../utils/drag';
 import { FilterTabs } from '../FilterTabs/FilterTabs';
 import { NewChatButton } from '../NewChatButton/NewChatButton';
+import { RowRenderer } from '../RowRenderer/RowRenderer';
 import { matchesSearch, matchesTab } from './utils';
+
+const ALL_GROUP_KEYS = new Set<string>(Object.values(ConversationGroupKey));
 
 /** Collapsible left-side panel showing the user's conversation history. */
 export const ConversationPanel: FC<ConversationPanelProps> = memo(
@@ -49,10 +64,98 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     minPanelWidth = 312,
     maxPanelWidth = 600,
     onPanelResizeStop,
+    headerActions,
+    onMoveConversation,
   }) => {
     const { colors, typography } = panelStyles ?? {};
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState<FilterTab>(FilterTab.All);
+    const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
+      () => ALL_GROUP_KEYS,
+    );
+    const [overscanCount, setOverscanCount] = useState(5);
+
+    const [draggingId, setDraggingId] = useState<string | null>(null);
+    const [dragOverId, setDragOverId] = useState<string | null>(null);
+    const [allowedDropGroups, setAllowedDropGroups] =
+      useState<Set<ConversationGroupKey> | null>(null);
+
+    // Refs let the drop handler read current values without being in the useCallback dep array,
+    // avoiding recreating the handler (and remounting rows) on every drag-state change.
+    const draggingIdRef = useRef<string | null>(null);
+    const allowedDropGroupsRef = useRef<Set<ConversationGroupKey> | null>(null);
+
+    const handleListResize = useCallback(({ height }: { height: number }) => {
+      setOverscanCount(Math.ceil((height / ITEM_ROW_HEIGHT) * 2));
+    }, []);
+
+    const handleToggleGroup = useCallback((key: string) => {
+      setExpandedGroups((prev) => {
+        const next = new Set(prev);
+        if (next.has(key)) {
+          next.delete(key);
+        } else {
+          next.add(key);
+        }
+        return next;
+      });
+    }, []);
+
+    const clearDragState = useCallback(() => {
+      draggingIdRef.current = null;
+      allowedDropGroupsRef.current = null;
+      setDraggingId(null);
+      setDragOverId(null);
+      setAllowedDropGroups(null);
+    }, []);
+
+    const handleDragStart = useCallback(
+      (id: string, rows: VirtualRow[]) => {
+        const groupKey = findGroupKeyForItem(rows, id);
+        const allowed = computeAllowedDropGroups(id, groupKey, conversations);
+        draggingIdRef.current = id;
+        allowedDropGroupsRef.current = allowed;
+        setDraggingId(id);
+        setAllowedDropGroups(allowed);
+      },
+      [conversations],
+    );
+
+    const handleDragEnd = useCallback(() => {
+      clearDragState();
+    }, [clearDragState]);
+
+    const handleDragOver = useCallback((id: string) => {
+      setDragOverId(id);
+    }, []);
+
+    const handleDragLeave = useCallback(() => {
+      setDragOverId(null);
+    }, []);
+
+    const handleDrop = useCallback(
+      (
+        targetId: string,
+        targetGroupKey: ConversationGroupKey,
+        afterId: string | null,
+      ) => {
+        const currentDraggingId = draggingIdRef.current;
+        const currentAllowed = allowedDropGroupsRef.current;
+        clearDragState();
+        if (
+          currentDraggingId != null &&
+          currentDraggingId !== targetId &&
+          currentAllowed?.has(targetGroupKey)
+        ) {
+          onMoveConversation?.({
+            draggedId: currentDraggingId,
+            targetGroupKey,
+            afterId,
+          });
+        }
+      },
+      [clearDragState, onMoveConversation],
+    );
 
     const hasTypographyClass = Boolean(typography?.fontClassName);
     const cssVars = buildCssVars({
@@ -127,6 +230,91 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       [filteredItems],
     );
 
+    const groups = useMemo(
+      () => [
+        {
+          key: ConversationGroupKey.Pinned,
+          label: groupLabels?.pinned ?? 'Pinned',
+          items: pinnedItems,
+        },
+        {
+          key: ConversationGroupKey.MyChats,
+          label: groupLabels?.myChats ?? 'My chats',
+          items: myChatsItems,
+        },
+        {
+          key: ConversationGroupKey.Shared,
+          label: groupLabels?.shared ?? 'Shared',
+          items: sharedItems,
+        },
+        {
+          key: ConversationGroupKey.Organization,
+          label: groupLabels?.organization ?? 'Organization',
+          items: organizationItems,
+        },
+      ],
+      [groupLabels, pinnedItems, myChatsItems, sharedItems, organizationItems],
+    );
+
+    const virtualRows = useMemo(() => {
+      const rows: VirtualRow[] = [];
+      for (const group of groups) {
+        if (group.items.length === 0) continue;
+        rows.push({
+          kind: VirtualRowKind.Header,
+          groupKey: group.key,
+          label: group.label,
+        });
+        if (expandedGroups.has(group.key)) {
+          for (const item of group.items) {
+            rows.push({ kind: VirtualRowKind.Item, item, groupKey: group.key });
+          }
+        }
+      }
+      return rows;
+    }, [groups, expandedGroups]);
+
+    const rowProps = useMemo<RowRendererData>(
+      () => ({
+        rows: virtualRows,
+        expandedGroups,
+        onToggleGroup: handleToggleGroup,
+        activeConversationId,
+        onSelectConversation,
+        getActions,
+        actionsLabel,
+        groupHeaderClassName: typography?.groupHeaderClassName,
+        itemTitleClassName: typography?.itemTitleClassName,
+        draggingId,
+        dragOverId,
+        allowedDropGroups,
+        onDragStart: (id: string) => handleDragStart(id, virtualRows),
+        onDragEnd: handleDragEnd,
+        onDragOver: handleDragOver,
+        onDragLeave: handleDragLeave,
+        onDrop: handleDrop,
+      }),
+      [
+        virtualRows,
+        expandedGroups,
+        handleToggleGroup,
+        activeConversationId,
+        onSelectConversation,
+        getActions,
+        actionsLabel,
+        typography?.groupHeaderClassName,
+        typography?.itemTitleClassName,
+        draggingId,
+        dragOverId,
+        allowedDropGroups,
+        handleDragStart,
+        handleDragEnd,
+        handleDragOver,
+        handleDragLeave,
+        handleDrop,
+      ],
+    );
+
     const isNoConversations = conversations.length === 0;
     const isNoResults = conversations.length > 0 && filteredItems.length === 0;
 
@@ -166,6 +354,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         minWidth={minPanelWidth}
         maxWidth={maxPanelWidth}
         onResizeStop={onPanelResizeStop}
+        rightActions={headerActions}
       >
         <NewChatButton
           label={newChatLabel}
@@ -187,7 +376,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           tabColorClassName={typography?.tabColorClassName}
         />
 
-        <div className="flex w-full flex-1 flex-col gap-2 overflow-y-auto px-2 py-1">
+        <div className="flex-1 overflow-hidden px-2 py-1">
           {isLoading ? (
             <div className="flex flex-col gap-3 px-2 py-3">
               {Array.from({ length: SKELETON_ROW_COUNT }, (_, i) => (
@@ -212,48 +401,16 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
               labelClassName={typography?.emptyLabelClassName}
             />
           ) : (
-            <>
-              <ConversationGroup
-                label={groupLabels?.pinned ?? 'Pinned'}
-                items={pinnedItems}
-                activeConversationId={activeConversationId}
-                onSelectConversation={onSelectConversation}
-                getActions={getActions}
-                actionsLabel={actionsLabel}
-                groupHeaderClassName={typography?.groupHeaderClassName}
-                itemTitleClassName={typography?.itemTitleClassName}
-              />
-              <ConversationGroup
-                label={groupLabels?.myChats ?? 'My chats'}
-                items={myChatsItems}
-                activeConversationId={activeConversationId}
-                onSelectConversation={onSelectConversation}
-                getActions={getActions}
-                actionsLabel={actionsLabel}
-                groupHeaderClassName={typography?.groupHeaderClassName}
-                itemTitleClassName={typography?.itemTitleClassName}
-              />
-              <ConversationGroup
-                label={groupLabels?.shared ?? 'Shared'}
-                items={sharedItems}
-                activeConversationId={activeConversationId}
-                onSelectConversation={onSelectConversation}
-                getActions={getActions}
-                actionsLabel={actionsLabel}
-                groupHeaderClassName={typography?.groupHeaderClassName}
-                itemTitleClassName={typography?.itemTitleClassName}
-              />
-              <ConversationGroup
-                label={groupLabels?.organization ?? 'Organization'}
-                items={organizationItems}
-                activeConversationId={activeConversationId}
-                onSelectConversation={onSelectConversation}
-                getActions={getActions}
-                actionsLabel={actionsLabel}
-                groupHeaderClassName={typography?.groupHeaderClassName}
-                itemTitleClassName={typography?.itemTitleClassName}
-              />
-            </>
+            <List<RowRendererData>
+              role="list"
+              style={{ height: '100%' }}
+              rowComponent={RowRenderer}
+              rowCount={virtualRows.length}
+              rowHeight={getRowHeight}
+              overscanCount={overscanCount}
+              onResize={handleListResize}
+              rowProps={rowProps}
+            />
           )}
         </div>
       </SidebarPanel>

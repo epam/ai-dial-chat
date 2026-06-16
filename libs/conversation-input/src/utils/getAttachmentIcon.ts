@@ -35,6 +35,7 @@ import type { Icon } from '@tabler/icons-react';
  * covers as many known file types as possible. Falls back to `IconFile`.
  */
 export const getAttachmentIcon = (contentType: string): Icon => {
+  if (!contentType) return IconFile;
   // Broad category checks first
   if (contentType.startsWith('image/')) {
     switch (contentType) {

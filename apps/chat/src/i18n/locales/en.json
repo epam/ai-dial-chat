@@ -8,6 +8,7 @@
     "welcomeText": "Hello World, good day for prompting!",
     "placeholder": "Ask anything...",
     "streamError": "Something went wrong while generating the response.",
+    "createConversationError": "Failed to create the conversation. Please try again.",
     "deleteMessageTitle": "Confirm deleting message?",
     "deleteMessageDescription": "Are you sure that you want to delete the message?",
     "starterConfirmTitle": "Confirm action",
@@ -17,6 +18,7 @@
     "welcomeScreen": "Welcome screen",
     "logo": "Logo",
     "conversationStarters": "Conversation starters",
+    "starterButtonsOverflow": "More conversation starters",
     "sendMessage": "Send message",
     "stopStreaming": "Stop streaming",
     "quickReplyButtons": "Quick reply buttons",
@@ -73,6 +75,7 @@
     "showMore": "Show more",
     "showLess": "Show less",
     "delete": "Delete",
+    "deleteAll": "Delete all",
     "confirm": "Confirm",
     "cancel": "Cancel",
     "add": "Add",
@@ -94,7 +97,8 @@
     "deleteMessage": "Delete message",
     "regenerateResponse": "Regenerate response",
     "copyResponse": "Copy response",
-    "copyAsMarkdown": "Copy as markdown",
+    "copyAsMarkdown": "Copy markdown",
+    "copyText": "Copy text",
     "likeResponse": "Like response",
     "dislikeResponse": "Dislike response"
   },
@@ -146,7 +150,13 @@
     "renameError": "Failed to rename. Please try again.",
     "renameTitleTooLong": "The name is too long. Please shorten it and try again.",
     "duplicateReadOnlyDescription": "Duplicate the conversation to be able to edit it",
-    "duplicateError": "Failed to duplicate the conversation. Please try again."
+    "duplicateError": "Failed to duplicate the conversation. Please try again.",
+    "panelActionsLabel": "Conversation panel actions",
+    "deleteAllChatsLabel": "Delete all conversations",
+    "deleteAllConfirmTitle": "Delete All Conversations?",
+    "deleteAllConfirmDescription": "All conversations will be permanently deleted. This action cannot be undone.",
+    "deleteAllError": "Failed to delete all conversations. Please try again.",
+    "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed."
   },
   "auth": {
     "signOut": "Sign out",
@@ -162,13 +172,14 @@
     "logOutConfirmDescription": "Are you sure you want to log out?"
   },
   "settings": {
+    "language": "Language",
     "theme": "Theme",
     "themeDark": "Dark",
     "themeLight": "Light",
     "themeSystem": "System",
     "keyboardShortcuts": "Keyboard shortcuts",
-    "shortcutEnter": "Enter — send message, Shift+Enter",
-    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter"
+    "shortcutEnter": "Enter — send message, Shift+Enter — new line",
+    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter — new line"
   },
   "attachments": {
     "downloadFile": "Download file"

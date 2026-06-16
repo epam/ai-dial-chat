@@ -26,6 +26,8 @@
 
 Full tech stack, path aliases, commands, and architecture layout live in `openspec/config.yaml` — read it before designing or implementing features. The `opsx:*` skills use it as their primary context.
 
+Spec work follows the OpenSpec lifecycle: **explore → propose → apply → archive** (`opsx:explore` to think through an idea, `opsx:propose` to create a change with design/specs/tasks, `opsx:apply` to implement the tasks, `opsx:archive` to finalize once done).
+
 ## Library isolation
 
 Libraries under `libs/*` must stay maximally isolated from host applications and external interfaces. A lib must not know host-owned integration details such as REST paths, `/api` routes, generated API clients, `apps/chat/src/server-api`, app contexts, auth/session/cookies, environment variables, feature flags, routing/navigation, analytics/telemetry, logging transports, persistence/storage keys and schemas, deployment/tenant/provider details, third-party SDK setup, platform bridges, or app-specific URL schemes.
@@ -50,11 +52,13 @@ Expected output:
 
 Use these local skills directly:
 
+- `./.agents/skills/address-current-branch-review/SKILL.md` for processing unresolved GitHub review threads on the current branch, including verified fixes and inline replies
 - `./.claude/skills/incremental-implementation/SKILL.md` for multi-file implementation and refactors
 - `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
 - `./.claude/skills/feature-research/SKILL.md` for broad feature research and trade-off analysis
 - `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components
 - `./.claude/skills/responsive-design/SKILL.md` for any UI work that must support both mobile and desktop, or any review of mobile parity
+- `./.claude/skills/dial-docs/SKILL.md` to find the right design doc in `docs/` on demand — app architecture, technical/product requirements, or the auth subsystem (read before changing documented behavior; update the doc in the same commit)
 
 Default behavior:
 

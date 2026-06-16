@@ -8,9 +8,10 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { StorageKey, ThemeId } from '../constants/storage';
 import { useFavicon } from '../hooks/favicon/useFavicon';
 import { ApiEndpoints, get } from '../server-api/base';
+import { StorageKey } from '../types/storage-key';
+import { ThemeId } from '../types/theme-id';
 import {
   applyThemeColors,
   getOsPreferredTheme,
@@ -21,6 +22,7 @@ interface ThemeContextType {
   currentTheme: string;
   selectedTheme: string;
   currentThemeLogo?: string;
+  currentThemeFavicon?: string;
   themes?: Theme[];
   setTheme: (themeId: string) => void;
   isLoading: boolean;
@@ -136,11 +138,19 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
           currentTheme: currentThemeId,
           selectedTheme: selectedThemeId,
           currentThemeLogo: currentLogo,
+          currentThemeFavicon: config?.images?.['chat-favicon'],
           setTheme,
           themes: config?.themes,
           isLoading,
         }),
-        [currentThemeId, selectedThemeId, setTheme, config, currentLogo, isLoading],
+        [
+          currentThemeId,
+          selectedThemeId,
+          setTheme,
+          config,
+          currentLogo,
+          isLoading,
+        ],
       )}
     >
       {children}

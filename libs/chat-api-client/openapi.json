@@ -1071,6 +1071,98 @@
         "tags": ["conversations"]
       }
     },
+    "/api/v1/conversations/deletions": {
+      "post": {
+        "description": "Deletes up to 100 owned conversations in one request. Returns a result counting deleted, already-absent, and failed items. Already-absent IDs are treated as success. IDs outside the authenticated bucket are rejected with code FORBIDDEN.",
+        "operationId": "deleteConversations",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteConversationsBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deletion result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDeletionResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "ids is empty, exceeds 100, contains non-strings, or body is missing"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Unexpected internal error"
+          }
+        },
+        "summary": "Delete selected conversations",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/deletions/all": {
+      "post": {
+        "description": "Deletes every conversation in the authenticated user's bucket. Requires { confirm: true } in the request body to prevent accidental deletion. Returns a result counting deleted, already-absent, and failed items.",
+        "operationId": "deleteAllConversations",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteAllConversationsBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deletion result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConversationDeletionResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "confirm is missing, false, or non-boolean"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Unexpected internal error"
+          },
+          "502": {
+            "description": "DIAL Core metadata listing failed (bucket unreadable)"
+          },
+          "503": {
+            "description": "DIAL Core unreachable during metadata listing"
+          }
+        },
+        "summary": "Delete all conversations in the user bucket",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/user-config": {
       "get": {
         "operationId": "getConfig",
@@ -2096,10 +2188,11 @@
           },
           "deploymentId": {
             "type": "string",
-            "description": "ID of the catalog item (model or application) to use for this conversation",
-            "example": "anthropic.claude-v3-sonnet",
+            "description": "ID of the catalog item (model or application) to use for this conversation. May contain percent-encoded bytes.",
+            "example": "applications/catalog/Untitled%20app%201__0.0.1",
             "minLength": 1,
-            "maxLength": 256
+            "maxLength": 256,
+            "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$"
           },
           "custom_content": {
             "description": "Extra DIAL payload attached to the first user message",
@@ -2403,6 +2496,72 @@
           }
         },
         "required": ["newPath"]
+      },
+      "DeleteConversationsBodyDto": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "description": "Stable DIAL Core conversation IDs to delete. 1–100 IDs. Duplicates are silently deduplicated.",
+            "minItems": 1,
+            "maxItems": 100,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["ids"]
+      },
+      "ConversationDeletionFailureDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Conversation ID that failed to delete"
+          },
+          "code": {
+            "type": "string",
+            "description": "Stable application error code",
+            "enum": ["NOT_FOUND", "FORBIDDEN", "UPSTREAM_ERROR", "UNKNOWN"]
+          }
+        },
+        "required": ["id", "code"]
+      },
+      "ConversationDeletionResultDto": {
+        "type": "object",
+        "properties": {
+          "requested": {
+            "type": "number",
+            "description": "Total number of IDs received in the request (after deduplication)"
+          },
+          "deleted": {
+            "type": "number",
+            "description": "Number of conversations successfully deleted from DIAL Core"
+          },
+          "alreadyAbsent": {
+            "type": "number",
+            "description": "Number of IDs that were already absent from DIAL Core (counted as success)"
+          },
+          "failed": {
+            "description": "Items that could not be deleted",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ConversationDeletionFailureDto"
+            }
+          }
+        },
+        "required": ["requested", "deleted", "alreadyAbsent", "failed"]
+      },
+      "DeleteAllConversationsBodyDto": {
+        "type": "object",
+        "properties": {
+          "confirm": {
+            "type": "boolean",
+            "description": "Must be `true` to confirm intentional deletion of all conversations.",
+            "example": true
+          }
+        },
+        "required": ["confirm"]
       },
       "UpdatePinsDto": {
         "type": "object",

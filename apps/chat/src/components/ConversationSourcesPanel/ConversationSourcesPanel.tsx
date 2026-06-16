@@ -9,7 +9,6 @@ import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { StorageKey } from '../../constants/storage';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
@@ -22,6 +21,7 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
 import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import { StorageKey } from '../../types/storage-key';
 import FilesSection from './sections/FilesSection/FilesSection';
 
 const MIN_PANEL_WIDTH = 312;

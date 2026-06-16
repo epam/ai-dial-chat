@@ -66,6 +66,7 @@ describe('ConversationService', () => {
   let mockUserConfigService: {
     getPinnedIds: ReturnType<typeof vi.fn>;
     updatePin: ReturnType<typeof vi.fn>;
+    migratePin: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -79,6 +80,7 @@ describe('ConversationService', () => {
     mockUserConfigService = {
       getPinnedIds: vi.fn().mockResolvedValue([]),
       updatePin: vi.fn().mockResolvedValue(undefined),
+      migratePin: vi.fn().mockResolvedValue(undefined),
     };
     service = new ConversationService(
       mockConfigService as ConfigService,
@@ -114,6 +116,29 @@ describe('ConversationService', () => {
         'form-example__What%20do%20you%20want%20to%20do%3F',
         expect.any(Object),
       );
+    });
+
+    it('does not double-encode percent-encoded deployment ID segments', async () => {
+      const saveConversationSpy = vi.spyOn(
+        service['client'],
+        'saveConversation',
+      );
+      const deploymentId = 'applications/catalog/Team%2FApp%20One__0.0.1';
+
+      const result = await service.createConversation(
+        'Hello',
+        'test-token',
+        'test-bucket',
+        deploymentId,
+      );
+
+      expect(saveConversationSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Team%2FApp%20One__0.0.1__Hello',
+        expect.any(Object),
+      );
+      expect(result.model.id).toBe(deploymentId);
+      expect(result.assistantModelId).toBe(deploymentId);
     });
 
     it('uses a non-empty fallback name for conversations without message text', async () => {
@@ -356,6 +381,24 @@ describe('ConversationService', () => {
       );
     });
 
+    it('keeps nested application deployment segments in the conversation path', async () => {
+      const spy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
+
+      await service.getConversation(
+        'test-bucket/applications/catalog/Untitled app 1__0.0.1__hello',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(spy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Untitled%20app%201__0.0.1__hello',
+        expect.any(Object),
+      );
+    });
+
     it('uses session bucket for a path with no slash', async () => {
       const spy = vi
         .spyOn(service['client'], 'getConversation')
@@ -370,6 +413,135 @@ describe('ConversationService', () => {
       expect(spy).toHaveBeenCalledWith(
         'test-bucket',
         'gpt-4o__My%20chat__uuid',
+        expect.any(Object),
+      );
+    });
+
+    it('keeps encoded separators inside a resource path segment', async () => {
+      const spy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
+
+      await service.getConversation(
+        'test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(spy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Team%2FApp%20One__0.0.1__hello',
+        expect.any(Object),
+      );
+    });
+  });
+
+  describe('encoded conversation resource paths', () => {
+    const conversationPath =
+      'applications/catalog/Team%2FApp%20One__0.0.1__hello';
+
+    it('does not double-encode delete paths', async () => {
+      const deleteSpy = vi
+        .spyOn(service['client'], 'deleteConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.deleteConversation(
+        conversationPath,
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(deleteSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        conversationPath,
+        expect.any(Object),
+      );
+    });
+
+    it('preserves nested deployment paths when renaming', async () => {
+      const moveSpy = vi
+        .spyOn(service['client'], 'moveResource')
+        .mockResolvedValue({ data: {} } as never);
+
+      const result = await service.renameConversation(
+        conversationPath,
+        'renamed',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(moveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: {
+            sourceUrl: `conversations/test-bucket/${conversationPath}`,
+            destinationUrl:
+              'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+            overwrite: false,
+          },
+        }),
+      );
+      expect(result.newPath).toBe(
+        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+      );
+    });
+
+    it('preserves nested deployment paths when duplicating', async () => {
+      const copySpy = vi
+        .spyOn(service['client'], 'copyResource')
+        .mockResolvedValue({ data: {} } as never);
+
+      const result = await service.duplicateConversation(
+        `source-bucket/${conversationPath}`,
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(copySpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: {
+            sourceUrl: `conversations/source-bucket/${conversationPath}`,
+            destinationUrl:
+              'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
+            overwrite: false,
+          },
+        }),
+      );
+      expect(result.newPath).toBe(
+        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
+      );
+    });
+
+    it('does not double-encode metadata paths', async () => {
+      const metadataSpy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.getConversationMetadata(
+        conversationPath,
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(metadataSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        conversationPath,
+        expect.any(Object),
+      );
+    });
+
+    it('does not double-encode save paths', async () => {
+      const saveSpy = vi.spyOn(service['client'], 'saveConversation');
+
+      await service.saveConversation(
+        conversationPath,
+        'test-token',
+        'test-bucket',
+        TEST_CONVERSATION,
+      );
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        conversationPath,
         expect.any(Object),
       );
     });
@@ -1347,6 +1519,239 @@ describe('ConversationService', () => {
 
       expect(result.items).toHaveLength(1);
       expect(result.items[0].id).toBe('conversations/test-bucket/user-conv');
+    });
+  });
+
+  describe('deleteConversations', () => {
+    let deleteConversationSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      deleteConversationSpy = vi
+        .spyOn(service['client'], 'deleteConversation')
+        .mockResolvedValue({ data: {}, error: null } as never);
+    });
+
+    it('deduplicates ids — 2 identical IDs count as requested: 1', async () => {
+      const id = 'conversations/test-bucket/gpt-4o__Chat__uuid';
+      const result = await service.deleteConversations(
+        [id, id],
+        'token',
+        'test-bucket',
+      );
+      expect(result.requested).toBe(1);
+      expect(deleteConversationSpy).toHaveBeenCalledTimes(1);
+    });
+
+    it('rejects ID from a different bucket with FORBIDDEN without calling DIAL Core', async () => {
+      const result = await service.deleteConversations(
+        ['conversations/other-bucket/chat'],
+        'token',
+        'test-bucket',
+      );
+      expect(result.failed).toEqual([
+        { id: 'conversations/other-bucket/chat', code: 'FORBIDDEN' },
+      ]);
+      expect(deleteConversationSpy).not.toHaveBeenCalled();
+    });
+
+    it('counts DIAL Core 200 (error: null) as deleted: 1', async () => {
+      const id = 'conversations/test-bucket/chat';
+      const result = await service.deleteConversations(
+        [id],
+        'token',
+        'test-bucket',
+      );
+      expect(result.deleted).toBe(1);
+      expect(result.alreadyAbsent).toBe(0);
+      expect(result.failed).toHaveLength(0);
+    });
+
+    it('counts DIAL Core 404 as alreadyAbsent: 1', async () => {
+      deleteConversationSpy.mockResolvedValueOnce({
+        error: { status: 404 },
+      } as never);
+      const id = 'conversations/test-bucket/chat';
+      const result = await service.deleteConversations(
+        [id],
+        'token',
+        'test-bucket',
+      );
+      expect(result.alreadyAbsent).toBe(1);
+      expect(result.deleted).toBe(0);
+      expect(result.failed).toHaveLength(0);
+    });
+
+    it('counts DIAL Core 500 as UPSTREAM_ERROR in failed', async () => {
+      deleteConversationSpy.mockResolvedValueOnce({
+        error: { status: 500 },
+      } as never);
+      const id = 'conversations/test-bucket/chat';
+      const result = await service.deleteConversations(
+        [id],
+        'token',
+        'test-bucket',
+      );
+      expect(result.failed).toEqual([{ id, code: 'UPSTREAM_ERROR' }]);
+    });
+
+    it('handles mixed results correctly', async () => {
+      const ids = [
+        'conversations/test-bucket/a',
+        'conversations/test-bucket/b',
+        'conversations/test-bucket/c',
+        'conversations/other-bucket/d',
+      ];
+      deleteConversationSpy
+        .mockResolvedValueOnce({ data: {}, error: null } as never)
+        .mockResolvedValueOnce({ error: { status: 404 } } as never)
+        .mockResolvedValueOnce({ error: { status: 500 } } as never);
+
+      const result = await service.deleteConversations(
+        ids,
+        'token',
+        'test-bucket',
+      );
+
+      expect(result.requested).toBe(4);
+      expect(result.deleted).toBe(1);
+      expect(result.alreadyAbsent).toBe(1);
+      expect(result.failed).toHaveLength(2);
+      expect(result.failed).toContainEqual({
+        id: 'conversations/test-bucket/c',
+        code: 'UPSTREAM_ERROR',
+      });
+      expect(result.failed).toContainEqual({
+        id: 'conversations/other-bucket/d',
+        code: 'FORBIDDEN',
+      });
+    });
+
+    it('calls pinConversation only for deleted IDs', async () => {
+      const deleted = 'conversations/test-bucket/deleted';
+      const absent = 'conversations/test-bucket/absent';
+      deleteConversationSpy
+        .mockResolvedValueOnce({ data: {}, error: null } as never)
+        .mockResolvedValueOnce({ error: { status: 404 } } as never);
+
+      await service.deleteConversations(
+        [deleted, absent],
+        'token',
+        'test-bucket',
+      );
+
+      await new Promise((r) => setTimeout(r, 0));
+      expect(mockUserConfigService.updatePin).toHaveBeenCalledTimes(1);
+      expect(mockUserConfigService.updatePin).toHaveBeenCalledWith(
+        deleted,
+        false,
+        'token',
+        'test-bucket',
+      );
+    });
+  });
+
+  describe('deleteAllConversations', () => {
+    let deleteConversationSpy: ReturnType<typeof vi.spyOn>;
+    let getMetadataSpy: ReturnType<typeof vi.spyOn>;
+
+    beforeEach(() => {
+      deleteConversationSpy = vi
+        .spyOn(service['client'], 'deleteConversation')
+        .mockResolvedValue({ data: {}, error: null } as never);
+      getMetadataSpy = vi.spyOn(service['client'], 'getConversationMetadata');
+    });
+
+    it('returns zero counts immediately when bucket is empty', async () => {
+      getMetadataSpy.mockResolvedValueOnce({
+        data: { items: [] },
+      } as never);
+
+      const result = await service.deleteAllConversations(
+        'token',
+        'test-bucket',
+      );
+
+      expect(result).toEqual({
+        requested: 0,
+        deleted: 0,
+        alreadyAbsent: 0,
+        failed: [],
+      });
+      expect(deleteConversationSpy).not.toHaveBeenCalled();
+    });
+
+    it('delegates to deleteConversations when metadata returns items', async () => {
+      getMetadataSpy.mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              url: 'conversations/test-bucket/a',
+              nodeType: 'ITEM',
+              name: 'a',
+            },
+            {
+              url: 'conversations/test-bucket/b',
+              nodeType: 'ITEM',
+              name: 'b',
+            },
+          ],
+        },
+      } as never);
+
+      const result = await service.deleteAllConversations(
+        'token',
+        'test-bucket',
+      );
+
+      expect(result.requested).toBe(2);
+      expect(result.deleted).toBe(2);
+      expect(deleteConversationSpy).toHaveBeenCalledTimes(2);
+    });
+
+    it('throws BadGatewayException when getConversationMetadata returns error', async () => {
+      getMetadataSpy.mockResolvedValueOnce({
+        data: undefined,
+        error: { status: 500 },
+      } as never);
+
+      await expect(
+        service.deleteAllConversations('token', 'test-bucket'),
+      ).rejects.toThrow('DIAL Core metadata listing failed');
+    });
+
+    it('throws BadGatewayException when getConversationMetadata throws', async () => {
+      getMetadataSpy.mockRejectedValueOnce(new Error('network error'));
+
+      await expect(
+        service.deleteAllConversations('token', 'test-bucket'),
+      ).rejects.toThrow();
+    });
+
+    it('excludes FOLDER items from deletion', async () => {
+      getMetadataSpy.mockResolvedValueOnce({
+        data: {
+          items: [
+            {
+              url: 'conversations/test-bucket/folder',
+              nodeType: 'FOLDER',
+              name: 'folder',
+            },
+            {
+              url: 'conversations/test-bucket/chat',
+              nodeType: 'ITEM',
+              name: 'chat',
+            },
+          ],
+        },
+      } as never);
+
+      const result = await service.deleteAllConversations(
+        'token',
+        'test-bucket',
+      );
+
+      expect(result.requested).toBe(1);
+      expect(deleteConversationSpy).toHaveBeenCalledTimes(1);
     });
   });
 });

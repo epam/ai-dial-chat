@@ -40,4 +40,6 @@ export interface CollapsedGroupProps {
   className?: string;
   /** Color and typography overrides applied as CSS custom properties. */
   styles?: CollapsedGroupStyles;
+  /** Minimum number of stages required to activate the collapse behaviour. Defaults to `7`. */
+  collapseThreshold?: number;
 }

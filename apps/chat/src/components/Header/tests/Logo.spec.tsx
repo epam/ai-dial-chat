@@ -32,11 +32,13 @@ describe('Logo', () => {
 
     mockGetIconPath.mockReturnValue(mockIconPath);
 
-    render(<Logo />);
+    const { container } = render(<Logo />);
 
     const logo = screen.getByLabelText(ChatI18nKeys.Logo);
+    const logoImage = container.querySelector('span.desktop\\:block');
     expect(logo).toBeTruthy();
-    expect((logo as HTMLElement).style.backgroundImage).toBe(
+    expect(logoImage).toBeTruthy();
+    expect((logoImage as HTMLElement).style.backgroundImage).toBe(
       `url(${mockIconPath})`,
     );
     expect(mockGetIconPath).toHaveBeenCalledWith(mockLogoName);
@@ -71,10 +73,11 @@ describe('Logo', () => {
 
     mockGetIconPath.mockReturnValue(mockLightPath);
 
-    render(<Logo />);
+    const { container } = render(<Logo />);
 
-    const logo = screen.getByLabelText(ChatI18nKeys.Logo);
-    expect((logo as HTMLElement).style.backgroundImage).toBe(
+    const logoImage = container.querySelector('span.desktop\\:block');
+    expect(logoImage).toBeTruthy();
+    expect((logoImage as HTMLElement).style.backgroundImage).toBe(
       `url(${mockLightPath})`,
     );
     expect(mockGetIconPath).toHaveBeenCalledWith(mockLightLogo);
@@ -110,14 +113,21 @@ describe('Logo', () => {
 
     mockGetIconPath.mockReturnValue('/api/themes/icon?iconName=logo.svg');
 
-    render(<Logo />);
+    const { container } = render(<Logo />);
 
-    const logo = screen.getByLabelText(ChatI18nKeys.Logo);
-    expect((logo as HTMLElement).classList.contains('min-w-[125px]')).toBe(
+    const logoImage = container.querySelector('span.desktop\\:block');
+    expect(logoImage).toBeTruthy();
+    expect((logoImage as HTMLElement).classList.contains('min-w-[125px]')).toBe(
       true,
     );
-    expect((logo as HTMLElement).classList.contains('bg-contain')).toBe(true);
-    expect((logo as HTMLElement).classList.contains('bg-right')).toBe(true);
-    expect((logo as HTMLElement).classList.contains('bg-no-repeat')).toBe(true);
+    expect((logoImage as HTMLElement).classList.contains('bg-contain')).toBe(
+      true,
+    );
+    expect((logoImage as HTMLElement).classList.contains('bg-right')).toBe(
+      true,
+    );
+    expect((logoImage as HTMLElement).classList.contains('bg-no-repeat')).toBe(
+      true,
+    );
   });
 });

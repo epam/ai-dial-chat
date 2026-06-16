@@ -99,8 +99,6 @@ export const useConversationHandlers = ({
         undefined,
         selectedItemId,
       );
-      const conversationPath = getConversationPath(conversationId);
-
       setConversation((prev) => {
         if (!prev) return prev;
         const next = {
@@ -112,7 +110,7 @@ export const useConversationHandlers = ({
       });
 
       startStream(
-        conversationPath,
+        conversationId,
         message,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
@@ -142,8 +140,6 @@ export const useConversationHandlers = ({
       const userMsg = conversation.messages[messageIndex - 1];
       if (!userMsg || userMsg.role !== MessageRole.User) return;
 
-      const conversationPath = getConversationPath(conversationId);
-
       setConversation((prev) => {
         if (!prev) return prev;
         const regeneratedMessage = {
@@ -171,7 +167,7 @@ export const useConversationHandlers = ({
       );
 
       startStream(
-        conversationPath,
+        conversationId,
         userMsg.content,
         messageIndex,
         selectedItemId ?? conversation.model.id,
@@ -328,8 +324,6 @@ export const useConversationHandlers = ({
         configurationValue,
         selectedItemId,
       );
-      const conversationPath = getConversationPath(conversationId);
-
       setConversation((prev) => {
         if (!prev) return prev;
         const next = {
@@ -341,7 +335,7 @@ export const useConversationHandlers = ({
       });
 
       startStream(
-        conversationPath,
+        conversationId,
         submitText,
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
@@ -472,7 +466,7 @@ export const useConversationHandlers = ({
       saveConversation(conversationPath, updated as ConversationResponseDto);
 
       startStream(
-        conversationPath,
+        conversationId,
         text,
         updatedMessages.length - 1,
         selectedItemId ?? conversation.model.id,
