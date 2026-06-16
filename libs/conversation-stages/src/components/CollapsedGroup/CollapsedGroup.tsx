@@ -15,14 +15,16 @@ import { StagesPanel } from '../StagesPanel/StagesPanel';
 import styles from './CollapsedGroup.module.scss';
 
 /**
- * Renders streaming stages directly via StagesPanel, or collapses completed
- * stages behind an expandable toggle while keeping active stages always visible.
+ * Shows all stages when there are fewer than `collapseThreshold`. When there are `collapseThreshold` or more,
+ * completed stages are collapsed behind an expandable toggle while active
+ * stages remain always visible.
  */
 export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   stages,
   isStreaming,
   executedLabel = 'Executed',
   stepsLabel = () => 'steps',
+  collapseThreshold = 7,
   className,
   styles: groupStyles,
 }) => {
@@ -40,6 +42,17 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     '--cs-cg-steps-count': colors?.stepsCountColor,
     '--cs-cg-border': colors?.contentBorderColor,
   });
+
+  if (stages.length < collapseThreshold) {
+    return (
+      <div
+        style={cssVars}
+        className={mergeClasses('flex flex-col gap-1', className)}
+      >
+        <StagesPanel stages={stages} isStreaming={false} />
+      </div>
+    );
+  }
 
   const completedStages = stages.filter(
     (s) => s.status === StageStatus.Completed,
@@ -67,7 +80,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
             label={
               <>
                 <span
-                  className={mergeClasses(typography.fontClassName, 'pr-1')}
+                  className={mergeClasses(typography.fontClassName, 'pe-1')}
                 >
                   {executedLabel}
                 </span>
