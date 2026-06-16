@@ -190,4 +190,10 @@ export interface InputProps {
   prefixAttachments?: DisplayAttachment[];
   /** Called when the user removes an attachment from `prefixAttachments`. */
   onRemovePrefixAttachment?: (id: string) => void;
+  /**
+   * Ordered list of previously sent message strings (oldest first, most-recent
+   * last). When provided, Up/Down arrow keys navigate through the history.
+   * Omit or pass an empty array to disable keyboard history navigation.
+   */
+  messageHistory?: readonly string[];
 }

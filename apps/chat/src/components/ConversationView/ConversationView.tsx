@@ -1,6 +1,7 @@
 import {
   DisplayAttachment,
   isStatusMessage,
+  MessageRole,
   StatusEvent,
   type Attachment,
   type MessageRating,
@@ -166,6 +167,12 @@ const ConversationView: FC<Props> = ({
         { ids: [], activeId: initialModelId },
       ).ids,
     [messages, initialModelId],
+  );
+
+  const messageHistory = useMemo(
+    () =>
+      messages.filter((m) => m.role === MessageRole.User).map((m) => m.content),
+    [messages],
   );
 
   const deploymentItems = useMemo(
@@ -422,6 +429,7 @@ const ConversationView: FC<Props> = ({
               sendLabel={t(ChatI18nKeys.SendMessage)}
               stopLabel={t(ChatI18nKeys.StopStreaming)}
               isTranscriptionSupported={isTranscriptionSupported}
+              messageHistory={messageHistory}
               onUploadAudio={onUploadAudio}
               onTranscribeAudio={onTranscribeAudio}
               sendOnEnter={sendOnEnter}
