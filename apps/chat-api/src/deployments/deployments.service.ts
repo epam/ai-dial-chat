@@ -15,6 +15,7 @@ import type {
   DeploymentItemDto,
   DeploymentsResponseDto,
 } from './dto/deployment-item.dto';
+import type { DeploymentInterfaceType } from './dto/deployments-query.dto';
 
 const isRecord = (val: unknown): val is Record<string, unknown> =>
   val != null && typeof val === 'object' && !Array.isArray(val);
@@ -91,10 +92,19 @@ export class DeploymentsService extends AppService {
   async listDeployments(
     userSub: string,
     accessToken: string,
-    interfaceType?: string[],
+    interfaceType?: DeploymentInterfaceType[],
   ): Promise<DeploymentsResponseDto> {
-    const cacheKey = `deployments:list:${userSub}`;
-    const cached = await this.cacheManager.get<DeploymentItemDto[]>(cacheKey);
+    const baseCacheKey = `deployments:list:${userSub}`;
+    const interfaceFilter =
+      interfaceType && interfaceType.length > 0 ? interfaceType : undefined;
+    const cacheKey = interfaceFilter
+      ? `${baseCacheKey}:interface:${interfaceFilter.join(',')}`
+      : baseCacheKey;
+    const cached =
+      (await this.cacheManager.get<DeploymentItemDto[]>(cacheKey)) ??
+      (interfaceFilter
+        ? await this.cacheManager.get<DeploymentItemDto[]>(baseCacheKey)
+        : undefined);
 
     let allItems: DeploymentItemDto[];
     if (cached) {
@@ -104,6 +114,9 @@ export class DeploymentsService extends AppService {
       try {
         const result = await this.client.getDeploymentsByInterfaceType({
           headers: getBearerAuthHeaders(accessToken),
+          params: interfaceFilter
+            ? { query: { interface_type: interfaceFilter } }
+            : undefined,
         });
         if (result.error) {
           return mapDialHttpStatus(
@@ -127,14 +140,16 @@ export class DeploymentsService extends AppService {
       }
     }
 
-    if (!interfaceType || interfaceType.length === 0) {
+    if (!interfaceFilter) {
       return { deployments: allItems };
     }
 
     const filtered = allItems.filter(
       (item) =>
         item.interfaces &&
-        item.interfaces.some((iface) => interfaceType.includes(iface)),
+        item.interfaces.some((iface) =>
+          interfaceFilter.includes(iface as DeploymentInterfaceType),
+        ),
     );
     return { deployments: filtered };
   }
