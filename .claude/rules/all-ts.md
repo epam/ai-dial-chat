@@ -2,6 +2,9 @@
 paths:
   - '**/*.ts'
   - '**/*.tsx'
+globs: '**/*.ts,**/*.tsx'
+applyTo: '**/*.ts,**/*.tsx'
+alwaysApply: false
 ---
 
 # TypeScript conventions

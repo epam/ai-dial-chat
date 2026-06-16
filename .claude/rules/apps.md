@@ -2,6 +2,9 @@
 paths:
   - 'apps/**/*.tsx'
   - 'apps/**/*.ts'
+globs: 'apps/**/*.ts,apps/**/*.tsx'
+applyTo: 'apps/**/*.ts,apps/**/*.tsx'
+alwaysApply: false
 ---
 
 @.claude/rules/rtl.md
