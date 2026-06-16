@@ -9,16 +9,28 @@ import { getIconPath } from '../../utils/icon-path';
  */
 const Logo: FC = () => {
   const { t } = useTranslation();
-  const { currentThemeLogo } = useTheme();
+  const { currentThemeLogo, currentThemeFavicon } = useTheme();
 
-  return currentThemeLogo ? (
-    <a
-      href="/"
-      aria-label={t(ChatI18nKeys.Logo)}
-      style={{ backgroundImage: `url(${getIconPath(currentThemeLogo)})` }}
-      className="h-[48px] min-w-[125px] bg-contain bg-right bg-no-repeat"
-    />
-  ) : null;
+  if (!currentThemeLogo && !currentThemeFavicon) return null;
+
+  return (
+    <a href="/" aria-label={t(ChatI18nKeys.Logo)} className="flex items-center">
+      {currentThemeFavicon && (
+        <span
+          style={{
+            backgroundImage: `url(${getIconPath(currentThemeFavicon)})`,
+          }}
+          className="h-[32px] w-[32px] bg-contain bg-center bg-no-repeat desktop:hidden"
+        />
+      )}
+      {currentThemeLogo && (
+        <span
+          style={{ backgroundImage: `url(${getIconPath(currentThemeLogo)})` }}
+          className="hidden h-[48px] min-w-[125px] bg-contain bg-right bg-no-repeat desktop:block"
+        />
+      )}
+    </a>
+  );
 };
 
 export default memo(Logo);
