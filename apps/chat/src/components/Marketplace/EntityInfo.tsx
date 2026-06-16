@@ -78,7 +78,7 @@ export function EntityInfo({ entity }: Props) {
       <div
         className={classNames(
           'flex flex-col gap-6 text-sm sm:flex-row sm:gap-12',
-          isCollapsibleSection && 'pl-7',
+          isCollapsibleSection && 'ps-7',
         )}
       >
         <InfoColumn

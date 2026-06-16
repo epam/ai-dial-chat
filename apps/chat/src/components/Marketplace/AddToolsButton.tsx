@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react';
 
-import router from 'next/router';
+import { useRouter } from 'next/router';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -20,9 +20,12 @@ import { AddMarketplaceEntityButton } from './AddMarketplaceEntityButton';
 import { FeatureType } from '@epam/ai-dial-shared';
 
 export function AddToolsButton() {
+  const router = useRouter();
   const { t } = useTranslation(Translation.Marketplace);
 
   const dispatch = useAppDispatch();
+
+  const toolsetEntityLabel = t(MarketplaceI18nKeys.ToolsetEntity);
 
   const menuItems: AddMarketplaceEntityMenuItem[] = useMemo(
     () =>
@@ -47,13 +50,13 @@ export function AddToolsButton() {
           },
         },
       ].sort((a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1)),
-    [t, dispatch],
+    [t, dispatch, router],
   );
 
   return (
     <AddMarketplaceEntityButton
       dataQa="add-toolset"
-      label="toolset"
+      label={toolsetEntityLabel}
       menuItems={menuItems}
     />
   );
