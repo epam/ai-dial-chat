@@ -31,6 +31,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   deploymentIconUrl,
   deploymentDisplayName,
   thinkingLabel,
+  markdownComponents,
+  onAttachmentClick,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
@@ -84,10 +86,14 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                 content={text}
                 isStreaming={isStreaming}
                 thinkingLabel={thinkingLabel}
+                components={markdownComponents}
               />
             </div>
           )}
-          <AttachmentTray attachments={attachments ?? []} />
+          <AttachmentTray
+            attachments={attachments ?? []}
+            onAttachmentClick={onAttachmentClick}
+          />
           {afterContent}
           <MessageActions
             {...actions}

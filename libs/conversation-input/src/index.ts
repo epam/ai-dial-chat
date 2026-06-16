@@ -7,6 +7,7 @@ export { EditMessageInput } from './components/EditMessageInput/EditMessageInput
 export { Input } from './components/Input/Input';
 export { AttachmentCard } from './components/AttachmentCard/AttachmentCard';
 export { AttachmentTray } from './components/AttachmentTray/AttachmentTray';
+export { getAttachmentIcon } from './utils/getAttachmentIcon';
 export type {
   ConversationInputProps,
   ConversationInputColors,

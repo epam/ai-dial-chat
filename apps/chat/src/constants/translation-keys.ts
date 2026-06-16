@@ -172,3 +172,16 @@ export enum SidebarI18nKeys {
 export enum AttachmentsI18nKeys {
   Download = 'attachments.downloadFile',
 }
+
+export enum CitationsI18nKeys {
+  MarkerLabel = 'citations.marker.label',
+  MarkerLabelWithOverflow = 'citations.marker.labelWithOverflow',
+  MarkerAriaLabel = 'citations.marker.ariaLabel',
+  PopupSwitcher = 'citations.popup.switcher',
+  PopupPreview = 'citations.popup.preview',
+  PopupOpenInBrowser = 'citations.popup.openInBrowser',
+  PopupDownload = 'citations.popup.download',
+  PopupPreviousCitation = 'citations.popup.previousCitation',
+  PopupNextCitation = 'citations.popup.nextCitation',
+  PopupAriaLabel = 'citations.popup.ariaLabel',
+}

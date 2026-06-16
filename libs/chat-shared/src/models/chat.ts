@@ -1,5 +1,6 @@
 import { AttachmentType } from '../types/attachment';
 import { MIMEType } from '../types/mime-type';
+import type { Annotation } from './annotation';
 import type { DeploymentConfigurationSchema } from './deployment-configuration';
 
 /** Metadata returned by the DIAL file/conversation listing API for a single resource node. */
@@ -83,6 +84,8 @@ export interface StatusMessageCustomContent {
 export interface MessageCustomContent {
   /** Files or media items associated with this message. */
   attachments?: MessageAttachment[];
+  /** Annotations produced by the model, each optionally citing a source document. */
+  annotations?: Annotation[];
   /** Form field values submitted via an embedded form widget. */
   form_value?: MessageFormValue;
   /**
@@ -180,6 +183,8 @@ export interface StreamChunkDelta {
     form_schema?: DeploymentConfigurationSchema;
     /** AI-generated files produced by the model; typically present in the final chunk. */
     attachments?: MessageAttachment[];
+    /** Partial annotation updates; merge by `index` into the accumulating annotation list. */
+    annotations?: Annotation[];
   };
 }
 

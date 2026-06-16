@@ -1,4 +1,5 @@
 import { type FC, memo } from 'react';
+import type { Components } from 'react-markdown';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 /** Props for the {@link MDMessageViewer} markdown renderer. */
@@ -12,15 +13,22 @@ interface Props {
    * Forwarded to {@link MarkdownRenderer}. Defaults to `'Thinking'`.
    */
   thinkingLabel?: string;
+  /**
+   * Additional react-markdown component overrides merged on top of the
+   * built-in map. Use to inject custom React nodes (e.g. citation markers)
+   * into specific markdown elements without modifying the viewer directly.
+   */
+  components?: Components;
 }
 
 /** Renders assistant message content as formatted markdown. */
 export const MDMessageViewer: FC<Props> = memo(
-  ({ content, isStreaming, thinkingLabel }) => (
+  ({ content, isStreaming, thinkingLabel, components }) => (
     <MarkdownRenderer
       content={content}
       isStreaming={isStreaming}
       thinkingLabel={thinkingLabel}
+      components={components}
       classNames={{
         h1: 'dial-h1-text mb-2',
         h2: 'dial-h2-text mb-2',
