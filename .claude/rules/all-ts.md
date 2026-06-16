@@ -23,7 +23,7 @@ Prefer using enums over union types for sets of related string or numeric consta
 
 Prefer using `interface` over `type` for defining object shapes, and `type` for unions, intersections, and other complex types. Don't place interfaces in a component file expect for Props and State interfaces that are tightly coupled to that component. Instead, place shared interfaces in a 'models' directory.
 
-Name a component's props interface `{ComponentName}Props` — never `Props` and never an inline anonymous type.
+A component's props interface must never be an inline anonymous type. Its name is scope-specific: in `apps/*` use `Props` (see `apps.md`); in `libs/*` use `{ComponentName}Props` (see `libs.md`).
 
 ## Event handler naming
 
