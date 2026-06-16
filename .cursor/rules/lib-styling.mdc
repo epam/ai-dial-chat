@@ -1,0 +1,1 @@
+../../.claude/rules/lib-styling.md

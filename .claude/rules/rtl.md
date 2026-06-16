@@ -1,3 +1,8 @@
+---
+alwaysApply: true
+applyTo: '**'
+---
+
 # RTL and Arabic language support
 
 All apps and libs must support Arabic (`ar`) and any other right-to-left locale. The active language drives `document.documentElement.dir` — `rtl` or `ltr` — which Tailwind's `rtl:` / `ltr:` variants and CSS logical properties key off.
