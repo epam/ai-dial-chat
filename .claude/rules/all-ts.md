@@ -31,10 +31,10 @@ Prefer using `interface` over `type` for defining object shapes, and `type` for 
 
 Boolean variables, state, and props must begin with a semantically clear prefix: `is`, `has`, `can`, `should`, or `will`.
 
-```ts
-// ✅
+```text
+// Correct
 isOpen, isLoading, hasError, canSend, shouldRedirect
 
-// ❌
-open, loading, error (as boolean), send, redirect
+// Wrong
+open, loading, error as boolean, send, redirect
 ```
