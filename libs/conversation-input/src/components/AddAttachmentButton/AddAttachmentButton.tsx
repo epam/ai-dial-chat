@@ -5,12 +5,14 @@ import {
   DialDropdown,
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconPaperclip, IconPlus } from '@tabler/icons-react';
+import { IconPaperclip, IconPlus, IconSettings } from '@tabler/icons-react';
 import { CSSProperties, type FC, useMemo, useState } from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import type { ChatSettingsConfig } from '../../models/Input';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
-import type { BottomSheetItem } from '../BottomSheet/BottomSheet';
+import { ChatSettingsModal } from '../ChatSettingsModal/ChatSettingsModal';
 
+/** Props for the AddAttachmentButton component. */
 interface AddAttachmentButtonProps {
   /** Callback invoked when the user picks "Attach file". */
   onAttachClick: () => void;
@@ -28,8 +30,8 @@ interface AddAttachmentButtonProps {
   listClassName?: string;
   /** When `true`, the trigger button is disabled and the menu cannot open. */
   isDisabled?: boolean;
-  /** Additional items appended after the built-in "Attach file" entry. */
-  extraMenuItems?: BottomSheetItem[];
+  /** When provided, adds a "Chat settings" item that opens the settings modal. */
+  chatSettings?: ChatSettingsConfig;
 }
 
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
@@ -41,10 +43,11 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   style,
   listClassName = '!w-[240px] shadow-md',
   isDisabled = false,
-  extraMenuItems,
+  chatSettings,
 }) => {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const [isChatSettingsOpen, setIsChatSettingsOpen] = useState(false);
 
   const menuItems = useMemo(
     () => [
@@ -54,48 +57,71 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
         icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
         onClick: onAttachClick,
       },
-      ...(extraMenuItems ?? []),
+      ...(chatSettings != null
+        ? [
+            {
+              key: 'chat-settings',
+              label: chatSettings.menuItemLabel ?? 'Chat settings',
+              icon: <IconSettings size={BASE_ICON_SIZE} aria-hidden />,
+              onClick: () => setIsChatSettingsOpen(true),
+            },
+          ]
+        : []),
     ],
-    [attachLabel, onAttachClick, extraMenuItems],
+    [attachLabel, onAttachClick, chatSettings],
   );
 
-  if (isMobile) {
-    return (
-      <>
-        <DialGhostIconButton
-          icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
-          aria-label={addMenuLabel}
-          className={mergeClasses(
-            'size-10 flex-shrink-0',
-            isDisabled && 'pointer-events-none opacity-50',
-          )}
-          onClick={() => setIsSheetOpen(true)}
-        />
-        <BottomSheet
-          isOpen={isSheetOpen}
-          title={menuTitle}
-          closeLabel={menuCloseLabel}
-          onClose={() => setIsSheetOpen(false)}
-          style={style}
-          items={menuItems}
-        />
-      </>
-    );
-  }
-
   return (
-    <DialDropdown
-      matchReferenceWidth={false}
-      placement="bottom-start"
-      listClassName={listClassName}
-      items={menuItems}
-    >
-      <DialGhostIconButton
-        icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
-        aria-label={addMenuLabel}
-        className="size-10 flex-shrink-0"
-        disabled={isDisabled}
-      />
-    </DialDropdown>
+    <>
+      {isMobile ? (
+        <>
+          <DialGhostIconButton
+            icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
+            aria-label={addMenuLabel}
+            className={mergeClasses(
+              'size-10 flex-shrink-0',
+              isDisabled && 'pointer-events-none opacity-50',
+            )}
+            onClick={() => setIsSheetOpen(true)}
+          />
+          <BottomSheet
+            isOpen={isSheetOpen}
+            title={menuTitle}
+            closeLabel={menuCloseLabel}
+            onClose={() => setIsSheetOpen(false)}
+            style={style}
+            items={menuItems}
+          />
+        </>
+      ) : (
+        <DialDropdown
+          matchReferenceWidth={false}
+          placement="bottom-start"
+          listClassName={listClassName}
+          items={menuItems}
+        >
+          <DialGhostIconButton
+            icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
+            aria-label={addMenuLabel}
+            className="size-10 flex-shrink-0"
+            disabled={isDisabled}
+          />
+        </DialDropdown>
+      )}
+      {chatSettings != null && isChatSettingsOpen && (
+        <ChatSettingsModal
+          features={chatSettings.features}
+          initialSystemPrompt={chatSettings.systemPrompt}
+          initialTemperature={chatSettings.temperature}
+          onSave={chatSettings.onSave}
+          onClose={() => setIsChatSettingsOpen(false)}
+          title={chatSettings.title}
+          systemPromptLabel={chatSettings.systemPromptLabel}
+          temperatureLabel={chatSettings.temperatureLabel}
+          saveLabel={chatSettings.saveLabel}
+          cancelLabel={chatSettings.cancelLabel}
+        />
+      )}
+    </>
   );
 };

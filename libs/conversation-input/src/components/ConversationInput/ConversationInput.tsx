@@ -31,7 +31,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   onTranscribeAudio,
   micLabel,
   sendOnEnter,
-  extraMenuItems,
+  chatSettings,
 }) => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
@@ -117,7 +117,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           onTranscribeAudio={onTranscribeAudio}
           micLabel={micLabel}
           sendOnEnter={sendOnEnter}
-          extraMenuItems={extraMenuItems}
+          chatSettings={chatSettings}
         />
         {isDragActive && (
           <div

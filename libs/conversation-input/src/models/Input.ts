@@ -1,10 +1,10 @@
 import type {
   Attachment,
+  DeploymentFeatures,
   DeploymentItem,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
-import type { BottomSheetItem } from '../components/BottomSheet/BottomSheet';
 
 /**
  * Controls which key combination submits the message in the `Input` component.
@@ -191,6 +191,34 @@ export interface InputProps {
   prefixAttachments?: DisplayAttachment[];
   /** Called when the user removes an attachment from `prefixAttachments`. */
   onRemovePrefixAttachment?: (id: string) => void;
-  /** Additional items appended after the built-in "Attach file" entry in the add-menu dropdown. */
-  extraMenuItems?: BottomSheetItem[];
+  /**
+   * When provided, a "Chat settings" item is added to the `+` menu.
+   * Clicking it opens a modal with fields gated by `features`.
+   * Modal state is managed internally by the component.
+   */
+  chatSettings?: ChatSettingsConfig;
+}
+
+/** Configuration for the built-in chat-settings menu entry and modal. */
+export interface ChatSettingsConfig {
+  /** Feature flags controlling which fields appear in the modal. */
+  features: DeploymentFeatures;
+  /** Current system prompt pre-populated in the modal textarea. */
+  systemPrompt: string;
+  /** Current temperature pre-populated in the modal numeric input. */
+  temperature: number;
+  /** Called with updated values when the user clicks Save. */
+  onSave: (values: { systemPrompt?: string; temperature?: number }) => void;
+  /** Label for the "Chat settings" dropdown item. Defaults to `'Chat settings'`. */
+  menuItemLabel?: string;
+  /** Modal title. Defaults to `'Chat settings'`. */
+  title?: string;
+  /** Label for the system prompt field. Defaults to `'System prompt'`. */
+  systemPromptLabel?: string;
+  /** Label for the temperature field. Defaults to `'Temperature'`. */
+  temperatureLabel?: string;
+  /** Label for the Save button. Defaults to `'Save'`. */
+  saveLabel?: string;
+  /** Label for the Cancel button. Defaults to `'Cancel'`. */
+  cancelLabel?: string;
 }

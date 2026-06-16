@@ -73,7 +73,7 @@ export const Input: FC<InputProps> = ({
   sendOnEnter = SendOnEnter.Enter,
   prefixAttachments = [],
   onRemovePrefixAttachment,
-  extraMenuItems,
+  chatSettings,
 }) => {
   const isMobile = useIsMobile();
   const cssVars = useMemo(
@@ -450,7 +450,7 @@ export const Input: FC<InputProps> = ({
                 menuCloseLabel={menuCloseLabel}
                 style={cssVars}
                 isDisabled={isInputDisabled}
-                extraMenuItems={extraMenuItems}
+                chatSettings={chatSettings}
               />
             </div>
           )}
