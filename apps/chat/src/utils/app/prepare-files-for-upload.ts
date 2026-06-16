@@ -191,7 +191,10 @@ export const applyUploadReplaceActions = ({
   });
 
   const postfixResolved = updateAttachmentsNames({
-    filesFromFolder: [...sameLevelFiles],
+    filesFromFolder: [
+      ...sameLevelFiles,
+      ...(nonDuplicatedFiles as unknown as DialFile[]),
+    ],
     attachmentsToPostfix,
   }).map((attachment) => ({
     id: constructPath(getFileRootId(bucket), folderPath, attachment.name),
