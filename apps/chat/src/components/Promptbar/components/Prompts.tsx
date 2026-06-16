@@ -55,7 +55,7 @@ const PromptsView: FC<Props> = ({ prompts }) => {
       dataQa="prompts-section"
     >
       <div
-        className="flex size-full flex-col gap-1 py-1 pr-0.5"
+        className="flex size-full flex-col gap-1 py-1 pe-0.5"
         data-qa="prompts"
       >
         {promptsToDisplay.map((prompt) => (

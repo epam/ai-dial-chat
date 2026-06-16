@@ -1,4 +1,6 @@
-import { DragEvent, memo, useCallback, useRef, useState } from 'react';
+import { DragEvent, memo, useCallback, useMemo, useRef, useState } from 'react';
+
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -20,6 +22,7 @@ import { getEntityNameError } from '@/src/utils/app/errors';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
+import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
 
 import {
   AdditionalItemData,
@@ -74,6 +77,7 @@ function ConversationView({
   isContextMenu,
   isDraggingOver,
 }: ViewProps) {
+  const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -106,6 +110,10 @@ function ConversationView({
   const isExternal = isEntityIdExternal(conversation);
   const isReplay = isReplayConversation(conversation);
   const isPlayback = isPlaybackConversation(conversation);
+  const displayName = useMemo(
+    () => translateConversationDisplayName(conversation.name, router.locale, t),
+    [conversation.name, router.locale, t],
+  );
 
   return (
     <>
@@ -180,10 +188,7 @@ function ConversationView({
           )}
           dataQa="entity-name"
         >
-          <DialEllipsisTooltip
-            text={conversation.name}
-            id="entity-name-value"
-          />
+          <DialEllipsisTooltip text={displayName} id="entity-name-value" />
         </Tooltip>
       </div>
     </>

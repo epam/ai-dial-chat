@@ -227,7 +227,7 @@ export function TargetAudienceFilterComponent({
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
                 {t(SideBarI18nKeys.Category)}
-                <span className="ml-1 inline text-accent-primary">*</span>
+                <span className="ms-1 inline text-accent-primary">*</span>
               </label>
               <RulesSelect
                 triggerClassName="h-[38px] items-center rounded border border-primary font-semibold"
@@ -241,7 +241,7 @@ export function TargetAudienceFilterComponent({
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
                 {t(SideBarI18nKeys.Condition)}
-                <span className="ml-1 inline text-accent-primary">*</span>
+                <span className="ms-1 inline text-accent-primary">*</span>
               </label>
               <RulesSelect
                 triggerClassName="h-[38px] items-center rounded border border-primary italic"
@@ -255,7 +255,7 @@ export function TargetAudienceFilterComponent({
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
                 {t(SideBarI18nKeys.Options)}
-                <span className="ml-1 inline text-accent-primary">*</span>
+                <span className="ms-1 inline text-accent-primary">*</span>
               </label>
               {filterFunction === PublicationFunctions.Regex ? (
                 <RegexParamInput
@@ -276,7 +276,7 @@ export function TargetAudienceFilterComponent({
                   placeholder={t(SideBarI18nKeys.EnterOneOrMoreOptions)}
                   inputRef={valuesInputRef}
                   hasDeleteAll
-                  closeButtonClassName="pt-1 pr-1"
+                  closeButtonClassName="pt-1 pe-1"
                   showConnectorBetweenSelectedItems
                   connectorLabel={tChat(ChatI18nKeys.Or)}
                 />

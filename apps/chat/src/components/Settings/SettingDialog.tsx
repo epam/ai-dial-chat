@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useRouter } from 'next/router';
+
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -33,6 +35,7 @@ import { ToggleSwitchLabeled } from '@/src/components/Common/ToggleSwitch/Toggle
 import { CustomLogoSelect } from './CustomLogoSelect';
 import { DefaultModelSelect } from './DefaultModelSelect';
 import { EnterTypeSelectLabeled } from './EnterTypeSelect';
+import { LanguageSelect } from './LanguageSelect';
 import { ThemeSelect } from './ThemeSelect';
 
 import { Feature } from '@epam/ai-dial-shared';
@@ -51,6 +54,7 @@ const view = withRenderWhen((state) => {
   return isOpen && !isUserMenuHidden;
 })(() => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
   const ToggleSwitchLabel = useMemo(() => withLabel(ToggleSwitchLabeled), []);
 
   const theme = useAppSelector(UISelectors.selectThemeState);
@@ -67,12 +71,14 @@ const view = withRenderWhen((state) => {
     ModelsSelectors.selectDefaultModelOption,
   );
   const savedEnterType = useAppSelector(UISelectors.selectEnterType);
+  const savedLocale = useAppSelector(UISelectors.selectLocale);
 
   const [defaultModelReference, setDefaultModelReference] = useState<string>(
     savedDefaultModelReference,
   );
 
   const [enterType, setEnterType] = useState(savedEnterType);
+  const [localLocale, setLocalLocale] = useState(savedLocale);
 
   const screenState = useScreenState();
 
@@ -87,6 +93,10 @@ const view = withRenderWhen((state) => {
   useEffect(() => {
     setEnterType(savedEnterType);
   }, [savedEnterType]);
+
+  useEffect(() => {
+    setLocalLocale(savedLocale);
+  }, [savedLocale]);
 
   const customLogoLocalStoreName = useMemo(() => {
     return getCustomLogoLocalStoreName(customLogoId);
@@ -115,12 +125,14 @@ const view = withRenderWhen((state) => {
     setDeleteLogo(false);
     setDefaultModelReference(savedDefaultModelReference);
     setEnterType(savedEnterType);
+    setLocalLocale(savedLocale);
     handleCloseDialog();
   }, [
     theme,
     isChatFullWidth,
     savedDefaultModelReference,
     savedEnterType,
+    savedLocale,
     handleCloseDialog,
   ]);
 
@@ -134,6 +146,10 @@ const view = withRenderWhen((state) => {
 
   const onThemeChangeHandler = useCallback((theme: string) => {
     setLocalTheme(theme);
+  }, []);
+
+  const localeChangeHandler = useCallback((locale: string) => {
+    setLocalLocale(locale);
   }, []);
 
   const onChangeHandlerFullWidth = useCallback(() => {
@@ -172,6 +188,15 @@ const view = withRenderWhen((state) => {
 
     setLocalLogoFile(undefined);
     handleCloseDialog();
+
+    if (localLocale !== savedLocale) {
+      dispatch(UIActions.setLocale(localLocale));
+      void router.push(
+        { pathname: router.pathname, query: router.query },
+        router.asPath,
+        { locale: localLocale },
+      );
+    }
   }, [
     dispatch,
     localTheme,
@@ -181,11 +206,10 @@ const view = withRenderWhen((state) => {
     deleteLogo,
     defaultModelReference,
     handleCloseDialog,
+    localLocale,
+    savedLocale,
+    router,
   ]);
-
-  if (!open) {
-    return null;
-  }
 
   return (
     <Modal
@@ -204,6 +228,10 @@ const view = withRenderWhen((state) => {
         <ThemeSelect
           localTheme={localTheme}
           onThemeChangeHandler={onThemeChangeHandler}
+        />
+        <LanguageSelect
+          currentLocale={localLocale}
+          onLocaleChange={localeChangeHandler}
         />
         {isCustomLogoFeatureEnabled && (
           <CustomLogoSelect

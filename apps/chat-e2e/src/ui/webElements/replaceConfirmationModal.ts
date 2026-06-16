@@ -27,6 +27,14 @@ export class ReplaceConfirmationModal extends BaseElement {
     ReplaceConfirmationModalSelectors.allItemsSelector,
   );
 
+  public title = this.getChildElementBySelector(
+    ReplaceConfirmationModalSelectors.title,
+  );
+
+  public description = this.getChildElementBySelector(
+    ReplaceConfirmationModalSelectors.description,
+  );
+
   private folders!: ReplaceConfirmationModalFolders;
 
   public getFolders(): ReplaceConfirmationModalFolders {
@@ -78,6 +86,12 @@ export class ReplaceConfirmationModal extends BaseElement {
    *                          Example: { '/conversations/chat1': 'POST', '/conversations/chat2': 'PUT' }
    *                          If not provided, the button is clicked without waiting for any requests.
    */
+  public async confirmUploadDuplicates() {
+    await this.waitForState({ state: 'visible' });
+    await this.continueButton.click();
+    await this.waitForState({ state: 'hidden' });
+  }
+
   public async clickContinue(expectedRequests?: Map<string, string>) {
     if (expectedRequests && expectedRequests.size > 0) {
       const responsePromises: Promise<unknown>[] = [];

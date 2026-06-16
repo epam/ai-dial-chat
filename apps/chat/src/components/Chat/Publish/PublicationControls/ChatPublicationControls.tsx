@@ -57,7 +57,7 @@ export const ChatPublicationControls = ({
       )}
       {showScrollDownButton && (
         <ScrollDownButton
-          className="-top-16 right-0 md:-top-20"
+          className="-top-16 end-0 md:-top-20"
           onScrollDownClick={onScrollDownClick}
         />
       )}

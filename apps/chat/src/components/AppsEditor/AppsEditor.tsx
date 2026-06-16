@@ -108,7 +108,9 @@ export const AppsEditor = () => {
   const appDetails = useAppSelector(
     ApplicationSelectors.selectApplicationDetail,
   );
-  const models = useAppSelector(ModelsSelectors.selectModels);
+  const models = useAppSelector((state) =>
+    ModelsSelectors.selectModels(state, true),
+  );
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
   const toolsetsMap = useAppSelector(ToolsetSelectors.selectToolsetsMap);
   const editorStep = useAppSelector(ApplicationSelectors.selectEditorStep);

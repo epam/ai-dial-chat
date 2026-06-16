@@ -33,12 +33,14 @@ interface PromptRowProps extends PromptViewProps, FeatureRowProps {}
 export const PromptsRow = ({
   item: prompt,
   additionalItemData,
+  level,
   onEvent,
 }: PromptRowProps) => {
   return (
     <EntityRow
       entityId={prompt.id}
       additionalItemData={additionalItemData}
+      level={level}
       onEvent={onEvent}
       dataQA="prompt"
     >

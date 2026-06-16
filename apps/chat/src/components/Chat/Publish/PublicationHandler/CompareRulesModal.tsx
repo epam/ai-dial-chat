@@ -56,20 +56,20 @@ export function CompareRulesModal({
       heading={t(ChatI18nKeys.Comparison)}
     >
       <div className="grid grid-cols-2 gap-x-5">
-        <p className="mb-3 pl-6 text-sm">
+        <p className="mb-3 ps-6 text-sm">
           {t(ChatI18nKeys.PreviousAccessSettings)}
         </p>
-        <p className="mb-3 pr-6 text-sm">
+        <p className="mb-3 pe-6 text-sm">
           {t(ChatI18nKeys.CurrentAccessSettings)}
         </p>
-        <div className="pl-6">
+        <div className="ps-6">
           <div>
             {allRuleEntries.map(([path, rules]) => (
               <RuleListItem key={path} path={path} rules={rules} />
             ))}
           </div>
         </div>
-        <div className="pr-6">
+        <div className="pe-6">
           <div>
             {allRuleEntries.map(([path, rules]) => (
               <RuleListItem key={path} path={path} rules={rules} />
