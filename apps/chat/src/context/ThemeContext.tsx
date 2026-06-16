@@ -10,15 +10,6 @@ import {
 } from 'react';
 import { useFavicon } from '../hooks/favicon/useFavicon';
 import { ApiEndpoints, get } from '../server-api/base';
-
-interface ThemeContextType {
-  currentTheme: string;
-  selectedTheme: string;
-  currentThemeLogo?: string;
-  themes?: Theme[];
-  setTheme: (themeId: string) => void;
-  isLoading: boolean;
-}
 import { StorageKey } from '../types/storage-key';
 import { ThemeId } from '../types/theme-id';
 import {
@@ -26,6 +17,16 @@ import {
   getOsPreferredTheme,
 } from '../utils/apply-theme-colors';
 import { getFromLocalStorage, setToLocalStorage } from '../utils/local-storage';
+
+interface ThemeContextType {
+  currentTheme: string;
+  selectedTheme: string;
+  currentThemeLogo?: string;
+  currentThemeFavicon?: string;
+  themes?: Theme[];
+  setTheme: (themeId: string) => void;
+  isLoading: boolean;
+}
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
@@ -137,6 +138,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
           currentTheme: currentThemeId,
           selectedTheme: selectedThemeId,
           currentThemeLogo: currentLogo,
+          currentThemeFavicon: config?.images?.['chat-favicon'],
           setTheme,
           themes: config?.themes,
           isLoading,

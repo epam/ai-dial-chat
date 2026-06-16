@@ -33,12 +33,12 @@ Process current-branch review feedback end to end: inspect thread state, decide 
 
 5. Classify each active thread.
 
-   | Classification | Action |
-   | --- | --- |
-   | `fix-required` | Change code, add or update tests, verify, then reply |
-   | `reply-only` | Do not change code; reply with the technical reason or clarification |
-   | `ambiguous` | Do not guess or post; ask the user for the missing decision |
-   | `conflicting` | Explain the conflict and ask before changing behavior |
+   | Classification | Action                                                               |
+   | -------------- | -------------------------------------------------------------------- |
+   | `fix-required` | Change code, add or update tests, verify, then reply                 |
+   | `reply-only`   | Do not change code; reply with the technical reason or clarification |
+   | `ambiguous`    | Do not guess or post; ask the user for the missing decision          |
+   | `conflicting`  | Explain the conflict and ask before changing behavior                |
 
 6. Implement `fix-required` threads.
    - Inspect the full affected file and related tests, not only the diff hunk.

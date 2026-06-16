@@ -1,6 +1,10 @@
 export { ConversationPanel } from './components/ConversationPanel/ConversationPanel';
-export { ConversationSource } from './models/ConversationPanel';
+export {
+  ConversationGroupKey,
+  ConversationSource,
+} from './models/ConversationPanel';
 export type {
+  ConversationMove,
   ConversationPanelProps,
   ConversationPanelStyles,
   ConversationHistoryColors,

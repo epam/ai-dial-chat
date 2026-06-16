@@ -268,3 +268,74 @@ The `Conversation` type declares `assistantModelId: string`, but conversations c
 
 - **WHEN** a conversation has both `model.id = 'gpt-4'` and `assistantModelId = 'anthropic/claude-3'`
 - **THEN** `initialModelId` is `'anthropic/claude-3'` (the `assistantModelId` wins)
+
+---
+
+### Requirement: Conversations can be reordered and pinned/unpinned via drag-and-drop
+
+`ConversationPanel` SHALL support native HTML5 drag-and-drop on conversation rows. Dragging is enabled only within the virtualised list (rows rendered by react-window); drag state is held in `ConversationPanel` so it survives virtual row recycling.
+
+`ConversationPanelProps` SHALL accept an optional `onMoveConversation?: (move: ConversationMove) => void` callback. `ConversationMove` is exported from `@epam/ai-dial-conversation-panel` and contains:
+
+```ts
+interface ConversationMove {
+  draggedId: string;
+  targetGroupKey: ConversationGroupKey;  // which group the item was dropped into
+  afterId: string | null;               // item to insert after; null = top of group
+}
+```
+
+`ConversationGroupKey` is also exported from the lib (`Pinned | MyChats | Shared | Organization`).
+
+**Drop rules enforced by the lib:**
+
+| Drag source → Drop target | Allowed? |
+|---|---|
+| Any group → same group | ✅ (reorder) |
+| MyChats / Shared / Organization → Pinned | ✅ (pin) |
+| Pinned → source group (item.source matches) | ✅ (unpin) |
+| Pinned → non-matching group | ❌ |
+| MyChats ↔ Organization / Shared | ❌ |
+
+The lib enforces rules via `computeAllowedDropGroups` (computed at drag start); invalid targets receive `cursor-not-allowed` and no ring.
+
+**Visual feedback:**
+
+- Dragged row: `opacity-50 cursor-grabbing`
+- Valid drop target (item row or Pinned header): `ring-1 ring-inset ring-accent-secondary`
+- Invalid drop target (drag is active, drop not allowed): `cursor-not-allowed`
+
+**Pinned group header as drop zone:** The Pinned section header is also a valid drop target. Dropping onto it is equivalent to inserting at the top of the Pinned list (`afterId: null`).
+
+**App wiring (`ConversationPanelView`):** `onMoveConversation` is wired to:
+- `targetGroupKey === Pinned` → call `pinConversation(contextId, true)`
+- Item is currently pinned and `targetGroupKey !== Pinned` → call `pinConversation(contextId, false)`
+- Same-group reorder → no-op (no reorder persistence API in this iteration)
+
+#### Scenario: Dragging a My Chats conversation to the Pinned section pins it
+
+- **WHEN** the user drags a My Chats conversation and drops it onto the Pinned section header
+- **THEN** `onMoveConversation` is called with `targetGroupKey: ConversationGroupKey.Pinned` and `afterId: null`
+- **AND** the app calls `pinConversation(contextId, true)`
+
+#### Scenario: Dragging a pinned conversation to My Chats unpins it
+
+- **WHEN** the user drags a pinned conversation (with `source: MyChats`) and drops it onto a My Chats row
+- **THEN** `onMoveConversation` is called with `targetGroupKey: ConversationGroupKey.MyChats`
+- **AND** the app calls `pinConversation(contextId, false)`
+
+#### Scenario: Cross-category drop is blocked
+
+- **WHEN** the user drags a My Chats conversation over an Organization row
+- **THEN** the Organization row shows `cursor-not-allowed` and no highlight ring
+- **AND** releasing the mouse produces no `onMoveConversation` call
+
+#### Scenario: Dragged row is visually dimmed
+
+- **WHEN** the user starts dragging a conversation row
+- **THEN** that row renders with `opacity-50`
+
+#### Scenario: Valid drop target is highlighted
+
+- **WHEN** the user drags a conversation over a row in the same group
+- **THEN** that row shows a highlight ring (`ring-1 ring-inset ring-accent-secondary`)
