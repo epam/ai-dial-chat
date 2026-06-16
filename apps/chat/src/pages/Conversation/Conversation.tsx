@@ -43,7 +43,7 @@ import {
 } from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
 import { buildUploadPath } from '../../utils/build-upload-path';
-import { decodeConversationId } from '../../utils/conversation-path';
+import { getConversationPath } from '../../utils/conversation-path';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 export const ConversationPage: FC = () => {
@@ -124,9 +124,8 @@ export const ConversationPage: FC = () => {
 
   const isReadOnly = useMemo(() => {
     if (!conversationId || !bucket) return false;
-    const decoded = decodeConversationId(conversationId);
-    const slashIndex = decoded.indexOf('/');
-    return slashIndex !== -1 && decoded.slice(0, slashIndex) !== bucket;
+    const slashIndex = conversationId.indexOf('/');
+    return slashIndex !== -1 && conversationId.slice(0, slashIndex) !== bucket;
   }, [conversationId, bucket]);
 
   const handleDuplicateConversation = useCallback(async () => {
@@ -151,8 +150,7 @@ export const ConversationPage: FC = () => {
   const addStatusMessage = useCallback(
     (msg: Message) => {
       if (!conversationId) return;
-      const decoded = decodeConversationId(conversationId);
-      const conversationPath = decoded.substring(decoded.indexOf('/') + 1);
+      const conversationPath = getConversationPath(conversationId);
       setConversation((prev) => {
         if (!prev) return prev;
         const next = { ...prev, messages: [...prev.messages, msg] };
@@ -186,11 +184,9 @@ export const ConversationPage: FC = () => {
 
   const loadConversation = useCallback(
     async (id: string) => {
-      const decodedConversationId = decodeConversationId(id);
-
       setIsFetching(true);
       try {
-        const dto = await apiGetConversation(decodedConversationId);
+        const dto = await apiGetConversation(id);
         const result = dto as Conversation; // adapt if API response shape differs
 
         // Restore the last selected agent from the conversation's change history
@@ -217,7 +213,7 @@ export const ConversationPage: FC = () => {
           setConversation(withPlaceholder);
           conversationRef.current = withPlaceholder;
           startStream(
-            decodedConversationId,
+            id,
             lastMsg.content,
             withPlaceholder.messages.length - 1,
             lastDeploymentId ?? result.model.id,

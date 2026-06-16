@@ -139,6 +139,25 @@ describe('useConversationHandlers — handleSend', () => {
     );
   });
 
+  it('preserves encoded separators in the conversation id passed to streaming', async () => {
+    mockAttachmentsToDtos.mockReturnValue(undefined);
+    const params = makeParams({
+      conversationId:
+        'bucket/applications/catalog/Team%2FApp%20One__0.0.1__title',
+    });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await result.current.handleSend('hello', []);
+
+    expect(params.startStream).toHaveBeenCalledWith(
+      'bucket/applications/catalog/Team%2FApp%20One__0.0.1__title',
+      'hello',
+      1,
+      'selected-deployment',
+      { attachments: undefined },
+    );
+  });
+
   it('does not call startStream when attachment DTO mapping rejects', async () => {
     const attachment = makeAttachment();
     mockAttachmentsToDtos.mockImplementation(() => {
@@ -251,7 +270,7 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
     await result.current.handleSend('hello', []);
 
     expect(params.startStream).toHaveBeenCalledWith(
-      'user-bucket/applications/catalog/Untitled app 1__0.0.1__hello',
+      'user-bucket/applications/catalog/Untitled%20app%201__0.0.1__hello',
       'hello',
       1,
       'selected-deployment',
