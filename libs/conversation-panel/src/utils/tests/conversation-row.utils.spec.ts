@@ -66,6 +66,7 @@ describe('getRowHeight', () => {
   const makeItemRow = (id: string) => ({
     kind: VirtualRowKind.Item as const,
     item: { id, title: id },
+    groupKey: ConversationGroupKey.MyChats,
   });
 
   const makeHeaderRow = (key: ConversationGroupKey) => ({
