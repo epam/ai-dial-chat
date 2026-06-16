@@ -66,7 +66,7 @@ export function folderDisplayNameToStorage(
       return displayName;
     }
 
-    return `${DEFAULT_FOLDER_NAME} ${displayName}`;
+    return displayName;
   }
 
   return displayName;

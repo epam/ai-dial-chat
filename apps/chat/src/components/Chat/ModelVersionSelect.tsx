@@ -87,7 +87,9 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
             className="max-w-full overflow-hidden truncate whitespace-nowrap"
             data-qa="version"
           >
-            {entities[0].version ?? t(MarketplaceI18nKeys.NA)}
+            <DialEllipsisTooltip
+              text={entities[0].version ?? t(MarketplaceI18nKeys.NA)}
+            />
           </span>
         </div>
       );

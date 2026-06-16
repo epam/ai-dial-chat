@@ -1,5 +1,7 @@
 import { MouseEvent, useState } from 'react';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -12,7 +14,6 @@ import { LOCALE_DISPLAY_NAMES } from '@/src/constants/locale';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Label } from '@/src/components/Common/Forms/Label';
 
-import i18nextConfig from '@/next-i18next.config';
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 
 interface LanguageSelectProps {
@@ -26,8 +27,9 @@ export const LanguageSelect = ({
 }: LanguageSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const router = useRouter();
   const { t } = useTranslation(Translation.Settings);
-  const availableLocales = i18nextConfig.i18n.locales;
+  const availableLocales = router.locales ?? ['en'];
 
   const localeName = LOCALE_DISPLAY_NAMES[currentLocale] ?? currentLocale;
 
@@ -35,7 +37,6 @@ export const LanguageSelect = ({
     onLocaleChange(e.currentTarget.value);
     setIsOpen(false);
   };
-
   if (availableLocales.length < 2) {
     return null;
   }
