@@ -13,15 +13,24 @@ import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { MarketplaceSelectors } from '@/src/store/selectors';
 
+import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { TableColumnSortKeys } from '@/src/constants/marketplace';
 
 import { HeaderItem } from './HeaderItem';
 
 const headerItems = [
-  { label: 'Version', size: 114 },
-  { label: 'Topics', size: 161 },
-  { label: 'Author', size: 130, sortKey: TableColumnSortKeys.OWNER },
-  { label: 'Released', size: 114, sortKey: TableColumnSortKeys.RELEASED },
+  { label: MarketplaceI18nKeys.Version, size: 114 },
+  { label: MarketplaceI18nKeys.Topics, size: 161 },
+  {
+    label: MarketplaceI18nKeys.AuthorMarketplace,
+    size: 130,
+    sortKey: TableColumnSortKeys.OWNER,
+  },
+  {
+    label: MarketplaceI18nKeys.ReleaseDateMarketplace,
+    size: 114,
+    sortKey: TableColumnSortKeys.RELEASED,
+  },
 ];
 
 export const MarketplaceEntitiesTableHeader = forwardRef<
@@ -66,11 +75,13 @@ export const MarketplaceEntitiesTableHeader = forwardRef<
     <div className="flex min-w-full items-center px-0 md:px-5 xl:px-16">
       <div
         ref={leftColumnHeaderRef}
-        className="min-w-[195px] flex-1 cursor-pointer items-center pb-3 pl-1.5 pr-3 md:min-w-[316px] xl:min-w-[245px]"
+        className="min-w-[195px] flex-1 cursor-pointer items-center pb-3 pe-3 ps-1.5 md:min-w-[316px] xl:min-w-[245px]"
       >
         <HeaderItem
           label={
-            screenState === ScreenState.SM ? 'Name' : 'Name and Description'
+            screenState === ScreenState.SM
+              ? MarketplaceI18nKeys.Name
+              : MarketplaceI18nKeys.NameAndDescription
           }
           sortKey={TableColumnSortKeys.NAME}
           sortOrder={
@@ -83,7 +94,7 @@ export const MarketplaceEntitiesTableHeader = forwardRef<
       </div>
       <div ref={rightColumnHeaderRef} className="no-scrollbar overflow-x-auto">
         <div className="inline-flex flex-col divide-y divide-secondary">
-          <div className="flex shrink-0 grow gap-3 pb-3 pl-4 pr-3 md:gap-5 md:px-4">
+          <div className="flex shrink-0 grow gap-3 pb-3 pe-3 ps-4 md:gap-5 md:px-4">
             {headerItems.map((item) => (
               <HeaderItem
                 {...item}

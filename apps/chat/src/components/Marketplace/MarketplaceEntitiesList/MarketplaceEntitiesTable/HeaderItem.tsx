@@ -1,6 +1,8 @@
 import { IconArrowNarrowDown, IconArrowNarrowUp } from '@tabler/icons-react';
 import React from 'react';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -12,6 +14,8 @@ import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 import { TableColumnSortKeys } from '@/src/constants/marketplace';
+
+import { translateMarketplaceHeaderLabel } from './translateMarketplaceHeaderLabel';
 
 import { DialButton } from '@epam/ai-dial-ui-kit';
 
@@ -31,6 +35,12 @@ export const HeaderItem: React.FC<Props> = ({
   onApplySorting,
 }) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const router = useRouter();
+  const translatedLabel = translateMarketplaceHeaderLabel(
+    label,
+    router.locale,
+    t,
+  );
 
   const SortIcon =
     sortOrder && sortOrder === 'desc' ? IconArrowNarrowDown : IconArrowNarrowUp;
@@ -44,7 +54,7 @@ export const HeaderItem: React.FC<Props> = ({
         !sortKey && 'cursor-default',
       )}
       style={size ? { width: `${size}px`, minWidth: `${size}px` } : undefined}
-      label={t(label)}
+      label={translatedLabel}
       iconAfter={
         sortKey && (
           <SortIcon

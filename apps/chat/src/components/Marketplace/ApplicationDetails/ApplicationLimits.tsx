@@ -63,7 +63,7 @@ interface ApplicationLimitsViewProps {
 
 const ApplicationLimitsView: FC<ApplicationLimitsViewProps> = ({ limits }) => {
   return (
-    <div className="flex flex-col gap-5 pl-7">
+    <div className="flex flex-col gap-5 ps-7">
       <div className="grid grid-cols-1 gap-x-6 gap-y-4 md:grid-cols-2">
         {limits.map((limit) => (
           <LimitItem key={limit.title} limit={limit} title={limit.title} />
@@ -129,7 +129,7 @@ export const ApplicationLimits: FC<ApplicationLimitsProps> = ({ entity }) => {
       ) : filteredLimits.length ? (
         <ApplicationLimitsView limits={filteredLimits} />
       ) : (
-        <span className="pl-7 text-base text-secondary">
+        <span className="ps-7 text-base text-secondary">
           {t(MarketplaceI18nKeys.NoLimitsApplied)}
         </span>
       )}
