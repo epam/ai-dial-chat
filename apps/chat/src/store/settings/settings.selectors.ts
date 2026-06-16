@@ -10,6 +10,7 @@ import { RootState } from '@/src/types/store';
 
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 
+import { DEFAULT_AGENT } from '@/src/constants/chat';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
@@ -261,11 +262,14 @@ const selectInitialDataStatus = (state: RootState) =>
 const selectIsOptimisticLoadEnabled = (state: RootState) =>
   rootSelector(state).isOptimisticLoadEnabled;
 
-// True only when optimistic load is enabled via env and a default model is
-// known from server-side settings.
+// True only when optimistic load is enabled via env, a default model is
+// known from server-side settings, and the user's model selection is
+// DEFAULT_AGENT (meaning "use system default"). When the user has chosen a
+// specific model we don't know if it'll be available until models fully load.
 const selectIsOptimisticDefaultModelLoad = (state: RootState) =>
   rootSelector(state).isOptimisticLoadEnabled &&
-  !!rootSelector(state).defaultModelReference;
+  !!rootSelector(state).defaultModelReference &&
+  state.models.defaultModelReference === DEFAULT_AGENT;
 
 const selectProviderId = (state: RootState) => rootSelector(state).providerId;
 
