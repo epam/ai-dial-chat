@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@epam/ai-dial-ui-kit": "0.11.0-dev.32",
-    "@epam/pdf-highlighter-kit": "^0.0.13",
+    "@epam/pdf-highlighter-kit": "^0.0.17",
     "@floating-ui/react": "^0.27.19",
     "@hookform/resolvers": "^5.2.1",
     "@monaco-editor/react": "^4.7.0",
@@ -189,7 +189,7 @@
     "ts-node": "10.9.1",
     "ts-unused-exports": "^11.0.1",
     "typescript": "5.9.3",
-    "vite": "7.3.2",
+    "vite": "7.3.5",
     "vitest": "4.1.8"
   },
   "overrides": {
@@ -197,13 +197,14 @@
     "axios": "1.16.0",
     "glob": "13.0.6",
     "prismjs": "1.30.0",
-    "dompurify": "3.3.2",
+    "protobufjs": "8.6.3",
+    "dompurify": "3.4.10",
     "minimatch": "10.2.4",
     "serialize-javascript": "7.0.5",
     "picomatch": "4.0.4",
     "lodash": "4.18.0",
-    "protobufjs": "8.0.2",
     "tmp": "0.2.6",
+    "form-data": "4.0.6",
     "shell-quote": "1.8.4"
   },
   "engines": {

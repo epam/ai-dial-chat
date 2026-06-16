@@ -573,6 +573,7 @@ export enum ChatI18nKeys {
   PleaseSelectAnotherConversation = 'Please select another conversation.',
   Replay = 'Replay',
   ReplayAsIs = 'Replay as is',
+  Replay = 'Replay',
   NotAllowedMoreNestedFolders = "It's not allowed to have more nested folders",
   ChangePath = 'Change path',
   ModifiedDate = 'Modified Date',
@@ -933,6 +934,8 @@ export enum ChatI18nKeys {
   SendRequest = 'Send request',
   Approve = 'Approve',
   ApproveSelected = 'Approve selected',
+  TimeAwareness = 'Time awareness',
+  AgentSkills = 'Agent skills',
 }
 
 // files.json
@@ -1134,6 +1137,10 @@ export enum MarketplaceI18nKeys {
   ManageToolsetsDaily = 'Here you can manage the toolsets used in your daily work',
   CannotChangeSharedApp = 'You cannot change the {{context}} of a shared application.',
   AddLabel = 'Add {{label}}',
+  AppEntity = 'app',
+  ToolsetEntity = 'toolset',
+  ApplicationEntity = 'application',
+  ModelEntity = 'model',
   ApplicationIsStatus = 'Application is {{status}}',
   MyCredentials = 'My credentials',
   EntireOrganizationCredentials = 'Entire organization credentials',
@@ -1170,4 +1177,14 @@ export enum MarketplaceI18nKeys {
   TimeAwareness = 'Time awareness',
   NoLimitsApplied = 'No limits applied',
   SelectModel = 'Select model',
+  Topics = 'Topics',
+  Released = 'Released',
+  NameAndDescription = 'Name and Description',
+  Name = 'Name',
+  Applications = 'Applications',
+  Models = 'Models',
+  NoToolsets = 'No toolsets',
+  YouDontHaveAnyToolsets = "You don't have any toolsets.",
+  NoAgents = 'No agents',
+  YouDontHaveAnyAgents = "You don't have any agents.",
 }

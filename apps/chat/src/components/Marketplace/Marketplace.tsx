@@ -2,6 +2,8 @@ import { useEffect, useMemo } from 'react';
 
 import { useRouter } from 'next/router';
 
+import classNames from 'classnames';
+
 import { MarketplaceActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
@@ -18,6 +20,7 @@ import { Routes } from '@/src/constants/routes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { AgentsTabRenderer } from '@/src/components/Marketplace/AgentsTabRenderer';
+import { ConnectToolsetModal } from '@/src/components/Marketplace/ConnectToolsetModal';
 
 import { TabHeader } from './TabHeader';
 import { ToolsTabRenderer } from './ToolsTabRenderer';
@@ -103,7 +106,21 @@ export const Marketplace = () => {
       ) : (
         <>
           <TabHeader isBannerVisible={isBannerVisible} />
-          {isAgentsTab ? <AgentsTabRenderer /> : <ToolsTabRenderer />}
+          <div
+            className={classNames('flex min-h-0 grow flex-col', {
+              hidden: !isAgentsTab,
+            })}
+          >
+            <AgentsTabRenderer />
+          </div>
+          <div
+            className={classNames('flex min-h-0 grow flex-col', {
+              hidden: isAgentsTab,
+            })}
+          >
+            <ToolsTabRenderer />
+          </div>
+          <ConnectToolsetModal />
         </>
       )}
     </div>

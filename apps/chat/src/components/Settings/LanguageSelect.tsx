@@ -1,5 +1,7 @@
 import { MouseEvent, useState } from 'react';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -7,12 +9,11 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { Translation } from '@/src/types/translation';
 
 import { SettingsI18nKeys } from '@/src/constants/i18n';
-import { LOCALE_DISPLAY_NAMES } from '@/src/constants/locale';
+import { getLocaleDisplayName } from '@/src/constants/locale';
 
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 import { Label } from '@/src/components/Common/Forms/Label';
 
-import i18nextConfig from '@/next-i18next.config';
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
 
 interface LanguageSelectProps {
@@ -26,16 +27,16 @@ export const LanguageSelect = ({
 }: LanguageSelectProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const router = useRouter();
   const { t } = useTranslation(Translation.Settings);
-  const availableLocales = i18nextConfig.i18n.locales;
+  const availableLocales = router.locales ?? ['en'];
 
-  const localeName = LOCALE_DISPLAY_NAMES[currentLocale] ?? currentLocale;
+  const localeName = getLocaleDisplayName(currentLocale);
 
   const onChangeHandler = (e: MouseEvent<HTMLButtonElement>) => {
     onLocaleChange(e.currentTarget.value);
     setIsOpen(false);
   };
-
   if (availableLocales.length < 2) {
     return null;
   }
@@ -68,7 +69,7 @@ export const LanguageSelect = ({
             <MenuItem
               key={locale}
               className="max-w-[350px] hover:bg-accent-primary-alpha"
-              item={LOCALE_DISPLAY_NAMES[locale] ?? locale}
+              item={getLocaleDisplayName(locale)}
               value={locale}
               onClick={onChangeHandler}
             />
