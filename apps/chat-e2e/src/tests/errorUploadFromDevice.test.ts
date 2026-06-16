@@ -174,6 +174,9 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
+    const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
+    const uploadFolder = `${ExpectedConstants.fileUploadFolder}/${yearMonthSubfolder}`;
+
     const sanitizedFilename = ExpectedConstants.replacedRestrictedCharsName(
       Attachment.restrictedSemicolonCharFilename,
     );
@@ -192,7 +195,7 @@ dialTest(
 
     await dialTest.step('Upload file with valid name to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName, {
-        parentPath: `${ExpectedConstants.fileUploadFolder}/${DateUtil.getCurrentYearMonth()}`,
+        parentPath: uploadFolder,
       });
       await localStorageManager.setShowSideBarPanels();
     });
@@ -220,6 +223,7 @@ dialTest(
               {
                 isHttpMethodTriggered: true,
                 triggeredHttpMethod: 'GET',
+                apiHost: uploadFolder,
               },
             ),
         );
