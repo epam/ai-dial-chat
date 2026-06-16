@@ -42,7 +42,7 @@ export class Marketplace extends BaseElement {
     MarketplaceSelectors.marketplaceSuggestions,
   );
   public marketplaceNoDataContainer = this.getChildElementBySelector(
-    MarketplaceSelectors.marketplaceNoDataContainer,
+    `${MarketplaceSelectors.marketplaceNoDataContainer}:visible`,
   );
   public noWorkspaceResultsFound = this.getChildElementBySelector(
     MarketplaceSelectors.noWorkspaceResultsFound,

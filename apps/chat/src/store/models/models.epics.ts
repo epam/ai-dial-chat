@@ -590,8 +590,30 @@ const getUsageStatsEpic: AppEpic = (action$) =>
     }),
   );
 
+const getDefaultModelEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ModelsActions.init.type),
+    filter(() =>
+      SettingsSelectors.selectIsOptimisticDefaultModelLoad(state$.value),
+    ),
+    switchMap(() =>
+      fromFetch('/api/default-model', {
+        headers: { 'Content-Type': 'application/json' },
+      }).pipe(
+        switchMap((resp) =>
+          resp.ok ? from(resp.json()) : throwError(() => resp),
+        ),
+        map((model: DialAIEntityModel) =>
+          ModelsActions.getDefaultModelSuccess({ model }),
+        ),
+        catchError(() => EMPTY), // ignore errors, as this is an optimistic load getModelsEpic will handle the actual load and error handling
+      ),
+    ),
+  );
+
 export const ModelsEpics = combineEpics(
   initEpic,
+  getDefaultModelEpic,
   getModelsEpic,
   getModelsSuccessEpic,
   getModelsFailEpic,
