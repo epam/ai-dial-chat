@@ -305,7 +305,7 @@ export const MarketplaceEntitiesTable: React.FC<
 
   return (
     <>
-      <SuggestedMessage shouldRender={!entities.length} className="md:ml-3" />
+      <SuggestedMessage shouldRender={!entities.length} className="md:ms-3" />
       <MarketplaceEntitiesTableHeader ref={headerRefs} />
       <MarketplaceEntitiesListWrapper
         ref={wrapperRefs}

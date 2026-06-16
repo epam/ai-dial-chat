@@ -118,7 +118,7 @@ export const MarketplaceEditorView = ({
             className={classNames(
               'flex h-full min-h-0 flex-col transition-all duration-300 ease-in-out',
               {
-                'w-1/2 border-l border-secondary opacity-100': isPreviewHalf,
+                'w-1/2 border-s border-secondary opacity-100': isPreviewHalf,
                 'w-full opacity-100': isPreviewFull,
                 'w-0 overflow-hidden opacity-0': isPreviewClosed,
               },
@@ -130,7 +130,7 @@ export const MarketplaceEditorView = ({
 
           {isPreviewClosed && (
             <div
-              className="flex h-full w-10 flex-col items-center space-y-3 border-l border-secondary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer max-md:hidden xl:pt-4"
+              className="flex h-full w-10 flex-col items-center space-y-3 border-s border-secondary pt-4 transition-all duration-300 ease-in-out hover:cursor-pointer max-md:hidden xl:pt-4"
               onClick={handleOpenPreview}
             >
               <PreviewModeButton mode={PreviewMode.full} />

@@ -222,7 +222,7 @@ export const MarketplaceEntitiesTiles: React.FC<
                 key={virtualRow.key}
                 ref={isHeaderRow ? rowVirtualizer.measureElement : undefined}
                 data-index={virtualRow.index}
-                className="absolute left-0 top-0 grid min-w-full"
+                className="absolute start-0 top-0 grid min-w-full"
                 style={{
                   ...(isHeaderRow ? null : { height: `${virtualRow.size}px` }),
                   transform: `translateY(${virtualRow.start}px)`,

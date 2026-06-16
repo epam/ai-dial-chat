@@ -185,5 +185,19 @@
   "Agent-wide behavior switches that apply to every conversation.": "Agent-wide behavior switches that apply to every conversation.",
   "Time awareness": "Time awareness",
   "No limits applied": "No limits applied",
-  "Select model": "Select model"
+  "Select model": "Select model",
+  "app": "app",
+  "toolset": "toolset",
+  "application": "application",
+  "model": "model",
+  "Topics": "Topics",
+  "Released": "Released",
+  "Name and Description": "Name and Description",
+  "Name": "Name",
+  "Applications": "Applications",
+  "Models": "Models",
+  "No toolsets": "No toolsets",
+  "You don't have any toolsets.": "You don't have any toolsets.",
+  "No agents": "No agents",
+  "You don't have any agents.": "You don't have any agents."
 }
