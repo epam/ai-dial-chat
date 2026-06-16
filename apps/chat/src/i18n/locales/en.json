@@ -174,8 +174,8 @@
     "themeLight": "Light",
     "themeSystem": "System",
     "keyboardShortcuts": "Keyboard shortcuts",
-    "shortcutEnter": "Enter — send message, Shift+Enter",
-    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter"
+    "shortcutEnter": "Enter — send message, Shift+Enter — new line",
+    "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter — new line"
   },
   "attachments": {
     "downloadFile": "Download file"
