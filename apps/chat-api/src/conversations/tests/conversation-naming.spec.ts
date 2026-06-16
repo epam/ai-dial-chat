@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
+  buildRenamedConversationPath,
+  getConversationTitleFromName,
   getConversationName,
   prepareEntityName,
 } from '../utils/conversation.utils';
@@ -83,6 +85,40 @@ describe('conversation naming helpers', () => {
         'Custom :prompt; with "special" chars',
       );
       expect(result).toBe('Custom  prompt  with  special  chars');
+    });
+  });
+
+  describe('conversation filename parsing', () => {
+    it('extracts a title after a versioned application deployment ID', () => {
+      expect(
+        getConversationTitleFromName(
+          'Team%2FApp%20One__0.0.1__My conversation',
+        ),
+      ).toBe('My conversation');
+    });
+
+    it('supports the legacy arbitrary suffix format', () => {
+      expect(getConversationTitleFromName('gpt-4__title__legacy-id')).toBe(
+        'title',
+      );
+    });
+
+    it('preserves a versioned deployment ID when renaming', () => {
+      expect(
+        buildRenamedConversationPath(
+          'applications/catalog/Team%2FApp%20One__0.0.1__old',
+          'new',
+        ),
+      ).toBe('applications/catalog/Team%2FApp%20One__0.0.1__new');
+    });
+
+    it('preserves a legacy UUID suffix when renaming', () => {
+      expect(
+        buildRenamedConversationPath(
+          'gpt-4__old__123e4567-e89b-42d3-a456-426614174000',
+          'new',
+        ),
+      ).toBe('gpt-4__new__123e4567-e89b-42d3-a456-426614174000');
     });
   });
 });

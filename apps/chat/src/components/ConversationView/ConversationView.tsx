@@ -189,7 +189,7 @@ const ConversationView: FC<Props> = ({
       edit: t(ButtonsI18nKeys.Edit),
       delete: t(ButtonsI18nKeys.Delete),
       regenerate: t(ButtonsI18nKeys.Regenerate),
-      copy: t(ButtonsI18nKeys.Copy),
+      copy: t(ButtonsI18nKeys.CopyText),
       copied: t(ButtonsI18nKeys.Copied),
       copyMarkdown: t(ButtonsI18nKeys.CopyAsMarkdown),
       copiedMarkdown: t(ButtonsI18nKeys.Copied),

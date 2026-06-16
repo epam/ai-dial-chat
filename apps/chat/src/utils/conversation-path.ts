@@ -1,17 +1,7 @@
-export const decodeConversationId = (conversationId: string): string => {
-  try {
-    return decodeURIComponent(conversationId);
-  } catch {
-    return conversationId;
-  }
-};
-
-/** Strips the tenant prefix from a full conversationId to get the storage path, decoded for API use. */
+/** Strips the tenant prefix while preserving percent-encoded resource segments. */
 export const getConversationPath = (conversationId: string): string => {
-  const path = conversationId.substring(conversationId.indexOf('/') + 1);
-  try {
-    return decodeURIComponent(path);
-  } catch {
-    return path;
-  }
+  const slashIndex = conversationId.indexOf('/');
+  return slashIndex === -1
+    ? conversationId
+    : conversationId.substring(slashIndex + 1);
 };

@@ -27,7 +27,7 @@ interface Params {
 
 interface Result {
   startStream: (
-    conversationPath: string,
+    conversationId: string,
     userContent: string,
     messageIndex: number,
     model: string,
@@ -57,7 +57,7 @@ export const useConversationStream = ({
 
   const startStream = useCallback(
     (
-      conversationPath: string,
+      currentConversationId: string,
       userContent: string,
       messageIndex: number,
       model: string,
@@ -69,7 +69,7 @@ export const useConversationStream = ({
       setIsStreaming(true);
 
       streamCompletion(
-        conversationPath,
+        currentConversationId,
         userContent,
         model,
         {
@@ -95,7 +95,7 @@ export const useConversationStream = ({
             if (final) {
               try {
                 await saveConversation(
-                  conversationPath,
+                  getConversationPath(currentConversationId),
                   final as ConversationResponseDto,
                 );
               } catch (err: unknown) {

@@ -24,12 +24,20 @@ describe('getModelIdFromConversationId', () => {
     ).toBe('provider/family/model');
   });
 
-  it('decodes percent-encoded characters in the deployment id segments', () => {
+  it('preserves percent-encoded characters in deployment id segments', () => {
     expect(
       getModelIdFromConversationId(
         'conversations/bucket/my%20org/model__title',
       ),
-    ).toBe('my org/model');
+    ).toBe('my%20org/model');
+  });
+
+  it('includes the version suffix of an application deployment id', () => {
+    expect(
+      getModelIdFromConversationId(
+        'conversations/bucket/applications/catalog/Team%2FApp%20One__0.0.1__title',
+      ),
+    ).toBe('applications/catalog/Team%2FApp%20One__0.0.1');
   });
 
   it('handles titles that contain double-underscore', () => {

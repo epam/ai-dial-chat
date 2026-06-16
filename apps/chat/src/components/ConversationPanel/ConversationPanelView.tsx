@@ -100,14 +100,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
 
   useEffect(() => {
     if (!activeConversationId) return;
-    const isListed = items.some((item) => {
-      const rawId = normalizeConversationId(item.id);
-      try {
-        return decodeURIComponent(rawId) === activeConversationId;
-      } catch {
-        return rawId === activeConversationId;
-      }
-    });
+    const isListed = items.some(
+      (item) => normalizeConversationId(item.id) === activeConversationId,
+    );
     if (!isListed) void refreshConversations();
     // Intentionally not including items or refreshConversations in the dependency array to avoid re-triggering on every list update.
   }, [activeConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -126,32 +121,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
     () =>
-      new Map(
-        items.map((item) => {
-          const rawId = normalizeConversationId(item.id);
-          let panelId: string;
-          try {
-            panelId = decodeURIComponent(rawId);
-          } catch {
-            panelId = rawId;
-          }
-          return [panelId, item.id];
-        }),
-      ),
+      new Map(items.map((item) => [normalizeConversationId(item.id), item.id])),
     [items],
   );
 
   const conversations: ConversationHistoryItem[] = useMemo(
     () =>
       items.map((item) => {
-        const rawId = normalizeConversationId(item.id);
-        let id: string;
-        try {
-          id = decodeURIComponent(rawId);
-        } catch (e) {
-          console.error('Failed to decode conversation id:', rawId, e);
-          id = rawId;
-        }
+        const id = normalizeConversationId(item.id);
         const modelId = getModelIdFromConversationId(item.id);
         const iconUrl = modelId
           ? deploymentIconByModelId.get(modelId)
