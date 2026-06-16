@@ -5,6 +5,7 @@ import {
   arrow,
   autoUpdate,
   flip,
+  hide,
   offset,
   safePolygon,
   shift,
@@ -78,6 +79,7 @@ function useTooltip({
       arrow({
         element: arrowRef,
       }),
+      hide(),
     ],
   });
 
@@ -204,12 +206,15 @@ const TooltipContent = forwardRef<HTMLDivElement, HTMLProps<HTMLDivElement>>(
 
     if (!context.open) return null;
 
+    const isReferenceHidden = context.middlewareData.hide?.referenceHidden;
+
     return (
       <FloatingPortal id="theme-main">
         <div
           ref={ref}
           style={{
             ...context.floatingStyles,
+            visibility: isReferenceHidden ? 'hidden' : 'visible',
             ...style,
           }}
           {...context.getFloatingProps(props)}
