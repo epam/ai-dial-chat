@@ -26,6 +26,7 @@ declare global {
       ALLOW_VISUALIZER_SEND_MESSAGES?: boolean;
       ALLOW_TOKEN_IN_SESSION?: boolean;
       ENABLED_FEATURES?: string;
+      AVAILABLE_LOCALES?: string;
       PUBLICATION_FILTERS?: string;
       ADMIN_ROLE_NAMES?: string;
       DIAL_ROLES_FIELD?: string;
