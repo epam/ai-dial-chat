@@ -2,6 +2,7 @@ export enum ChatI18nKeys {
   Placeholder = 'chat.placeholder',
   WelcomeText = 'chat.welcomeText',
   StreamError = 'chat.streamError',
+  CreateConversationError = 'chat.createConversationError',
   DeleteMessageTitle = 'chat.deleteMessageTitle',
   DeleteMessageDescription = 'chat.deleteMessageDescription',
   StarterConfirmTitle = 'chat.starterConfirmTitle',
