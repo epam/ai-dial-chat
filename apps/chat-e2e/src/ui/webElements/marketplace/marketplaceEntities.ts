@@ -63,16 +63,22 @@ export class MarketplaceEntities extends BaseElement {
     ).getElementLocator();
 
   public entityVersion = (version: string) =>
-    new BaseElement(
-      this.page,
-      `${MarketplaceEntitySelectors.version}:text-is('${version}')`,
-    ).getElementLocator();
+    this.page
+      .locator(MarketplaceEntitySelectors.version)
+      .filter({
+        hasText: new RegExp(
+          `^\\s*${RegexUtil.escapeRegexChars(version)}\\s*$`,
+        ),
+      });
 
   public entityVersionWithPrefix = (version: string) =>
-    new BaseElement(
-      this.page,
-      `${MarketplaceEntitySelectors.version}:text-is('${ExpectedConstants.versionPrefix}${version}')`,
-    ).getElementLocator();
+    this.page
+      .locator(MarketplaceEntitySelectors.version)
+      .filter({
+        hasText: new RegExp(
+          `^\\s*${RegexUtil.escapeRegexChars(`${ExpectedConstants.versionPrefix}${version}`)}\\s*$`,
+        ),
+      });
 
   public getEntity = (entity: DialAIEntityModel | ToolsetModel | string) => {
     let entityLocator;
