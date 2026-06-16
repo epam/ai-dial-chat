@@ -1,6 +1,9 @@
 ---
 paths:
   - '**/*.tsx'
+globs: '**/*.tsx'
+applyTo: '**/*.tsx'
+alwaysApply: false
 ---
 
 # JSX / TSX conventions
