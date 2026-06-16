@@ -136,7 +136,6 @@ export const ModelField = () => {
     [selectedModelId, setValue],
   );
 
-  console.log(selectedEntity);
   return (
     <Controller
       name="model"
