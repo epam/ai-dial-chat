@@ -65,15 +65,8 @@ describe('useInputHistoryNavigation', () => {
     it('restores saved draft when pressing Down past the most-recent entry', () => {
       const { result } = renderHook(() => useInputHistoryNavigation(HISTORY));
       result.current.navigate('up', 'my draft', 7); // enters history, saves draft
-      // navigate back down through all entries
-      result.current.navigate('down', 'third message', 'third message'.length);
-      result.current.navigate(
-        'down',
-        'second message',
-        'second message'.length,
-      ); // wait — we only went up once, index is at last
-      // Actually, after one up we're at index history.length-1 (2 = third).
-      // Pressing down once should restore draft since we're at most recent.
+      // After one up we're at the most-recent entry.
+      // Pressing down once should restore the saved draft.
       const value = result.current.navigate(
         'down',
         'third message',
@@ -115,14 +108,14 @@ describe('useInputHistoryNavigation', () => {
       expect(result.current.navigate('down', 'anything', 8)).toBeNull();
     });
 
-    it('returns null when cursor is not on the last line', () => {
+    it('returns saved draft when cursor is on the last line', () => {
       const { result } = renderHook(() => useInputHistoryNavigation(HISTORY));
       result.current.navigate('up', '', 0); // enter history mode
       // cursor is mid-content with text after it on the same line
       const value = result.current.navigate('down', 'third message', 3);
-      // "third message" — cursor at 3, text after cursor → still on last (and only) line
-      // Actually 'third message'.slice(3) = 'd message' — no \n → still last line
-      expect(value).toBe('second message'); // so it should navigate
+      // 'third message'.slice(3) has no \n, so cursor is on the last line.
+      // Because we're at the most-recent history item, Down restores saved draft.
+      expect(value).toBe('');
     });
 
     it('returns null when cursor is not on the last line with newlines', () => {
