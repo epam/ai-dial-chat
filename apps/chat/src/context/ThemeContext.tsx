@@ -22,6 +22,7 @@ interface ThemeContextType {
   currentTheme: string;
   selectedTheme: string;
   currentThemeLogo?: string;
+  currentThemeFavicon?: string;
   themes?: Theme[];
   setTheme: (themeId: string) => void;
   isLoading: boolean;
@@ -137,6 +138,7 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
           currentTheme: currentThemeId,
           selectedTheme: selectedThemeId,
           currentThemeLogo: currentLogo,
+          currentThemeFavicon: config?.images?.['chat-favicon'],
           setTheme,
           themes: config?.themes,
           isLoading,

@@ -3,6 +3,7 @@ import { COMPOUND_TOKEN_PREFIX } from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 
 const notAllowedSymbolsRegex = /[:;,=/{}%&"]/g;
+const trailingDotsRegex = /\.+$/g;
 const MAX_ENTITY_BYTES = 255;
 const CONVERSATION_NAME_SEPARATOR = '__';
 const UUID_PART_LENGTHS = [8, 4, 4, 4, 12] as const;
@@ -45,7 +46,9 @@ export const prepareEntityName = (prompt?: string): string => {
       .map((s) => s.replace(notAllowedSymbolsRegex, ' ').trim())
       .filter(Boolean)[0] ?? '';
 
-  return StringUtils.truncateToUtf8Bytes(clearName, MAX_ENTITY_BYTES);
+  return StringUtils.truncateToUtf8Bytes(clearName, MAX_ENTITY_BYTES)
+    .replace(trailingDotsRegex, '')
+    .trimEnd();
 };
 
 export const getConversationName = (

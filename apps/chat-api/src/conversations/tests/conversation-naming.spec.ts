@@ -38,6 +38,16 @@ describe('conversation naming helpers', () => {
       expect(result).toBe('Hello world');
     });
 
+    it('should remove trailing dots rejected by DIAL Core resource names', () => {
+      const result = prepareEntityName('Hello world.');
+      expect(result).toBe('Hello world');
+    });
+
+    it('should trim whitespace left after removing trailing dots', () => {
+      const result = prepareEntityName('Hello world .');
+      expect(result).toBe('Hello world');
+    });
+
     it('should truncate ASCII input to 255 UTF-8 bytes', () => {
       const longString = 'a'.repeat(300);
       const result = prepareEntityName(longString);
@@ -50,6 +60,11 @@ describe('conversation naming helpers', () => {
       const result = prepareEntityName('日'.repeat(100));
       expect(result).toBe('日'.repeat(85));
       expect(new TextEncoder().encode(result).byteLength).toBe(255);
+    });
+
+    it('should remove trailing dots after truncation', () => {
+      const result = prepareEntityName(`${'a'.repeat(254)}.ignored`);
+      expect(result).toBe('a'.repeat(254));
     });
 
     it('should filter out empty lines and use first non-empty line', () => {
@@ -71,6 +86,11 @@ describe('conversation naming helpers', () => {
 
     it('should use defaultName if prompt contains only whitespace', () => {
       const result = getConversationName('Default Name', '   \n ');
+      expect(result).toBe('Default Name');
+    });
+
+    it('should use defaultName if prompt contains only dots', () => {
+      const result = getConversationName('Default Name', '...');
       expect(result).toBe('Default Name');
     });
 
