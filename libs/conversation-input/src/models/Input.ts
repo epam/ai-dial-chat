@@ -190,6 +190,8 @@ export interface InputProps {
   prefixAttachments?: DisplayAttachment[];
   /** Called when the user removes an attachment from `prefixAttachments`. */
   onRemovePrefixAttachment?: (id: string) => void;
+  /** When `true`, focuses the textarea on mount. Defaults to `false`. */
+  autoFocus?: boolean;
   /**
    * Ordered list of previously sent message strings (oldest first, most-recent
    * last). When provided, Up/Down arrow keys navigate through the history.

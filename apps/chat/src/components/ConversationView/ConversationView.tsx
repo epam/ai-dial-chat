@@ -40,6 +40,7 @@ import {
   DeploymentsI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import ConversationMessageItem from './ConversationMessageItem';
@@ -114,6 +115,7 @@ const ConversationView: FC<Props> = ({
   onTranscribeAudio,
 }) => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const {
     items,
@@ -433,6 +435,7 @@ const ConversationView: FC<Props> = ({
               onUploadAudio={onUploadAudio}
               onTranscribeAudio={onTranscribeAudio}
               sendOnEnter={sendOnEnter}
+              autoFocus={!isMobile}
             />
           </Suspense>
         )}

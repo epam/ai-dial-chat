@@ -74,6 +74,7 @@ export const Input: FC<InputProps> = ({
   sendOnEnter = SendOnEnter.Enter,
   prefixAttachments = [],
   onRemovePrefixAttachment,
+  autoFocus = false,
   messageHistory,
 }) => {
   const isMobile = useIsMobile();
@@ -393,6 +394,7 @@ export const Input: FC<InputProps> = ({
         'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
       )}
       ref={textareaRef}
+      autoFocus={autoFocus}
       value={message}
       onChange={(e) => {
         setMessage(e.target.value);
