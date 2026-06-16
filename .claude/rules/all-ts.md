@@ -23,6 +23,8 @@ Prefer using enums over union types for sets of related string or numeric consta
 
 Prefer using `interface` over `type` for defining object shapes, and `type` for unions, intersections, and other complex types. Don't place interfaces in a component file expect for Props and State interfaces that are tightly coupled to that component. Instead, place shared interfaces in a 'models' directory.
 
+A component's props interface must never be an inline anonymous type. Its name is scope-specific: in `apps/*` use `Props` (see `apps.md`); in `libs/*` use `{ComponentName}Props` (see `libs.md`).
+
 ## Event handler naming
 
 @.cursor/rules/react-event-handler-naming.mdc
@@ -32,9 +34,9 @@ Prefer using `interface` over `type` for defining object shapes, and `type` for 
 Boolean variables, state, and props must begin with a semantically clear prefix: `is`, `has`, `can`, `should`, or `will`.
 
 ```ts
-// ✅
+// Correct
 isOpen, isLoading, hasError, canSend, shouldRedirect
 
-// ❌
-open, loading, error (as boolean), send, redirect
+// Wrong
+open, loading, error as boolean, send, redirect
 ```
