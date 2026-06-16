@@ -37,4 +37,14 @@ describe('getConversationRoute', () => {
       '/conversations/tenant/path',
     );
   });
+
+  it('protects encoded resource data from router decoding', () => {
+    expect(
+      getConversationRoute(
+        'tenant/applications/catalog/Team%2FApp%20One__0.0.1__title',
+      ),
+    ).toBe(
+      '/conversations/tenant/applications/catalog/Team%252FApp%2520One__0.0.1__title',
+    );
+  });
 });

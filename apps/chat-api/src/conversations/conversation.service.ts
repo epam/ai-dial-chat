@@ -309,7 +309,7 @@ export class ConversationService extends AppService {
       prepareEntityName(sourceTitle),
       existingTitles,
     );
-    const destFilename = buildRenamedConversationPath(filename, uniqueTitle);
+    const destinationPath = buildRenamedConversationPath(subPath, uniqueTitle);
 
     const sourceUrl = buildConversationUrl(
       sourceBucket,
@@ -317,7 +317,7 @@ export class ConversationService extends AppService {
     );
     const destinationUrl = buildConversationUrl(
       sessionBucket,
-      encodeURIComponent(destFilename),
+      encodeDialResourcePath(destinationPath),
     );
 
     try {
@@ -334,7 +334,7 @@ export class ConversationService extends AppService {
       return handleDialError(error);
     }
 
-    return { newPath: buildConversationUrl(sessionBucket, destFilename) };
+    return { newPath: buildConversationUrl(sessionBucket, destinationPath) };
   }
 
   async listConversations(

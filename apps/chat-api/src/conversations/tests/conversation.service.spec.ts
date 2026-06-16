@@ -66,6 +66,7 @@ describe('ConversationService', () => {
   let mockUserConfigService: {
     getPinnedIds: ReturnType<typeof vi.fn>;
     updatePin: ReturnType<typeof vi.fn>;
+    migratePin: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(() => {
@@ -79,6 +80,7 @@ describe('ConversationService', () => {
     mockUserConfigService = {
       getPinnedIds: vi.fn().mockResolvedValue([]),
       updatePin: vi.fn().mockResolvedValue(undefined),
+      migratePin: vi.fn().mockResolvedValue(undefined),
     };
     service = new ConversationService(
       mockConfigService as ConfigService,
@@ -116,12 +118,12 @@ describe('ConversationService', () => {
       );
     });
 
-    it('does not double-encode a percent-encoded deployment ID', async () => {
+    it('does not double-encode percent-encoded deployment ID segments', async () => {
       const saveConversationSpy = vi.spyOn(
         service['client'],
         'saveConversation',
       );
-      const deploymentId = 'applications/catalog/Untitled%20app%201__0.0.1';
+      const deploymentId = 'applications/catalog/Team%2FApp%20One__0.0.1';
 
       const result = await service.createConversation(
         'Hello',
@@ -132,7 +134,7 @@ describe('ConversationService', () => {
 
       expect(saveConversationSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'applications/catalog/Untitled%20app%201__0.0.1__Hello',
+        'applications/catalog/Team%2FApp%20One__0.0.1__Hello',
         expect.any(Object),
       );
       expect(result.model.id).toBe(deploymentId);
@@ -411,6 +413,135 @@ describe('ConversationService', () => {
       expect(spy).toHaveBeenCalledWith(
         'test-bucket',
         'gpt-4o__My%20chat__uuid',
+        expect.any(Object),
+      );
+    });
+
+    it('keeps encoded separators inside a resource path segment', async () => {
+      const spy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
+
+      await service.getConversation(
+        'test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(spy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Team%2FApp%20One__0.0.1__hello',
+        expect.any(Object),
+      );
+    });
+  });
+
+  describe('encoded conversation resource paths', () => {
+    const conversationPath =
+      'applications/catalog/Team%2FApp%20One__0.0.1__hello';
+
+    it('does not double-encode delete paths', async () => {
+      const deleteSpy = vi
+        .spyOn(service['client'], 'deleteConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.deleteConversation(
+        conversationPath,
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(deleteSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        conversationPath,
+        expect.any(Object),
+      );
+    });
+
+    it('preserves nested deployment paths when renaming', async () => {
+      const moveSpy = vi
+        .spyOn(service['client'], 'moveResource')
+        .mockResolvedValue({ data: {} } as never);
+
+      const result = await service.renameConversation(
+        conversationPath,
+        'renamed',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(moveSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: {
+            sourceUrl: `conversations/test-bucket/${conversationPath}`,
+            destinationUrl:
+              'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+            overwrite: false,
+          },
+        }),
+      );
+      expect(result.newPath).toBe(
+        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+      );
+    });
+
+    it('preserves nested deployment paths when duplicating', async () => {
+      const copySpy = vi
+        .spyOn(service['client'], 'copyResource')
+        .mockResolvedValue({ data: {} } as never);
+
+      const result = await service.duplicateConversation(
+        `source-bucket/${conversationPath}`,
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(copySpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          body: {
+            sourceUrl: `conversations/source-bucket/${conversationPath}`,
+            destinationUrl:
+              'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
+            overwrite: false,
+          },
+        }),
+      );
+      expect(result.newPath).toBe(
+        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
+      );
+    });
+
+    it('does not double-encode metadata paths', async () => {
+      const metadataSpy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.getConversationMetadata(
+        conversationPath,
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(metadataSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        conversationPath,
+        expect.any(Object),
+      );
+    });
+
+    it('does not double-encode save paths', async () => {
+      const saveSpy = vi.spyOn(service['client'], 'saveConversation');
+
+      await service.saveConversation(
+        conversationPath,
+        'test-token',
+        'test-bucket',
+        TEST_CONVERSATION,
+      );
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        conversationPath,
         expect.any(Object),
       );
     });
