@@ -7,7 +7,10 @@ import CitationPopup from '../CitationPopup';
 
 // react-i18next is globally mocked — t(key) returns the key string.
 
-const makeGroup = (count = 1): AnnotationGroup => ({
+const makeGroup = (
+  count = 1,
+  attachmentType = 'application/pdf',
+): AnnotationGroup => ({
   sourceUrl: 'https://files.example.com/report.pdf',
   sourceName: 'report.pdf',
   annotations: Array.from({ length: count }, (_, i) => ({
@@ -18,7 +21,7 @@ const makeGroup = (count = 1): AnnotationGroup => ({
       source: {
         type: 'attachment' as const,
         attachment: {
-          type: 'application/pdf',
+          type: attachmentType,
           url: 'https://files.example.com/report.pdf',
         },
       },
@@ -109,7 +112,7 @@ describe('CitationPopup', () => {
 
   it('"Open in browser" button calls onOpenInBrowser with the active annotation', async () => {
     const onOpenInBrowser = vi.fn();
-    const group = makeGroup(1);
+    const group = makeGroup(1, 'text/html');
     render(<CitationPopup {...defaultProps({ group, onOpenInBrowser })} />);
     await userEvent.click(
       screen.getByRole('button', {
