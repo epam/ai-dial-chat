@@ -22,7 +22,9 @@
     "openapi:spec": "nx run chat-api:openapi-spec",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
-    "graph": "nx graph"
+    "graph": "nx graph",
+    "validate:agent-docs": "node scripts/validate-agent-docs.mjs",
+    "prepare": "git config core.hooksPath .githooks"
   },
   "devDependencies": {
     "@eslint/js": "^9.8.0",
@@ -86,7 +88,8 @@
     "vite-plugin-svgr": "^5.2.0",
     "vitest": "~4.1.0",
     "webpack-cli": "^5.1.4",
-    "webpack-node-externals": "^3.0.0"
+    "webpack-node-externals": "^3.0.0",
+    "yaml": "2.8.3"
   },
   "dependencies": {
     "@epam/ai-dial-typescript-sdk": "^0.1.0-dev.24",
