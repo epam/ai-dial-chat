@@ -19,7 +19,6 @@ import { ModelsSelectors } from '@/src/store/models/models.selectors';
 import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 import { ChatI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { MarketplaceTabs } from '@/src/constants/marketplace';
-import { NA_VERSION } from '@/src/constants/publication';
 import { SuggestedCard } from '@/src/constants/talkTo';
 
 import { QuickApp2Form as QuickApp2FormType } from '@/src/components/AppsEditor/form';
@@ -29,7 +28,7 @@ import { ItemCardView } from '@/src/components/Chat/TalkTo/ItemCardView';
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { SuggestionButton } from '@/src/components/Common/SuggestionButton';
 
-import { DialLinkButton } from '@epam/ai-dial-ui-kit';
+import { DialEllipsisTooltip, DialLinkButton } from '@epam/ai-dial-ui-kit';
 
 interface SliderItemProps {
   selectedModelId: string;
@@ -144,43 +143,43 @@ export const ModelField = () => {
       render={({ field }) => (
         <>
           <div className="flex items-center justify-between rounded-[4px] border border-tertiary bg-layer-3 px-4 py-3">
-            <div className="flex grow items-center gap-3">
+            <div className="flex min-w-0 flex-1 grow items-center gap-3">
               <ModelIcon
                 size={32}
                 entityId={selectedModelId}
                 entity={selectedEntity}
               />
 
-              <div className="flex flex-col justify-center gap-1 truncate">
+              <div className="flex min-w-0 flex-1 flex-col justify-center gap-1">
                 <span
                   className={classNames(
                     'truncate text-sm font-semibold',
                     selectedEntity ? 'text-primary' : 'text-secondary',
                   )}
                 >
-                  {selectedEntity?.name ?? selectedModelId}
+                  <DialEllipsisTooltip
+                    text={selectedEntity?.name ?? selectedModelId}
+                  />
                 </span>
 
-                <div className="flex items-center gap-1">
-                  <span className="text-xs text-secondary">
-                    {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
-                  </span>
-
-                  {selectedEntity?.version ? (
-                    <ModelVersionSelect
-                      entities={versions}
-                      currentEntity={selectedEntity}
-                      onSelect={({ id }) => field.onChange(id)}
-                      className="truncate"
-                      triggerClassName="!text-xs"
-                      readonly={isAppPublic}
-                    />
-                  ) : (
+                {selectedEntity?.version && (
+                  <div className="flex items-center gap-1">
                     <span className="text-xs text-secondary">
-                      {t(NA_VERSION)}
+                      {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
                     </span>
-                  )}
-                </div>
+
+                    {selectedEntity?.version && (
+                      <ModelVersionSelect
+                        entities={versions}
+                        currentEntity={selectedEntity}
+                        onSelect={({ id }) => field.onChange(id)}
+                        className="truncate"
+                        triggerClassName="!text-xs"
+                        readonly={isAppPublic}
+                      />
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
