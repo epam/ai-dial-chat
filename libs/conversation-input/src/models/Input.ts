@@ -192,4 +192,10 @@ export interface InputProps {
   onRemovePrefixAttachment?: (id: string) => void;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */
   autoFocus?: boolean;
+  /**
+   * Ordered list of previously sent message strings (oldest first, most-recent
+   * last). When provided, Up/Down arrow keys navigate through the history.
+   * Omit or pass an empty array to disable keyboard history navigation.
+   */
+  messageHistory?: readonly string[];
 }

@@ -32,6 +32,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   micLabel,
   sendOnEnter,
   autoFocus,
+  messageHistory,
 }) => {
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
 
@@ -118,6 +119,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           micLabel={micLabel}
           sendOnEnter={sendOnEnter}
           autoFocus={autoFocus}
+          messageHistory={messageHistory}
         />
         {isDragActive && (
           <div
