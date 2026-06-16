@@ -933,6 +933,8 @@ export enum ChatI18nKeys {
   SendRequest = 'Send request',
   Approve = 'Approve',
   ApproveSelected = 'Approve selected',
+  TimeAwareness = 'Time awareness',
+  AgentSkills = 'Agent skills',
 }
 
 // files.json

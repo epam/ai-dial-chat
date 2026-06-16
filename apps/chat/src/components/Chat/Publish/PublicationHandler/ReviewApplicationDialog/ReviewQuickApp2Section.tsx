@@ -44,6 +44,7 @@ import { MarketplaceEntityInfoRow } from '../MarketplaceEntityInfoRow';
 import { DocumentField } from './DocumentField';
 
 import { Feature } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import groupBy from 'lodash-es/groupBy';
 
 interface ReviewQuickApp2SectionViewProps {
@@ -132,12 +133,32 @@ const ReviewQuickApp2SectionView = ({
         )
       : config.orchestrator.deployment.deployment_id;
   const hasToolsets = toolsets.length > 0 || unknownToolsets.length > 0;
+  const timeAwareness =
+    'timestamp' in (config?.features ?? {})
+      ? !!config?.features?.timestamp
+      : true;
+  const skills = useMemo(
+    () =>
+      (config?.skills ?? []).map(({ url }) => ({
+        name: parseEntityApiKey(splitEntityId(url).name, { parseVersion: true })
+          .name,
+        url,
+      })),
+    [config.skills],
+  );
 
   return (
     <>
       {isCodeInterpreterEnabled && isCodeInterpreter && (
         <MarketplaceEntityInfoRow
           label={t(ChatI18nKeys.CodeInterpreter)}
+          value={t(ChatI18nKeys.On)}
+          valueClassName="max-w-[414px] break-all text-primary"
+        />
+      )}
+      {timeAwareness && (
+        <MarketplaceEntityInfoRow
+          label={t(ChatI18nKeys.TimeAwareness)}
           value={t(ChatI18nKeys.On)}
           valueClassName="max-w-[414px] break-all text-primary"
         />
@@ -232,6 +253,23 @@ const ReviewQuickApp2SectionView = ({
         }
         valueClassName=""
       />
+      {skills.length && (
+        <MarketplaceEntityInfoRow
+          label={t(ChatI18nKeys.AgentSkills)}
+          value={
+            <div className="flex flex-wrap items-center gap-2 truncate">
+              {skills.map(({ name, url }) => (
+                <span
+                  key={url}
+                  className="max-w-[300px] truncate rounded border border-primary bg-controls-disable px-2 py-1 text-primary"
+                >
+                  <DialEllipsisTooltip text={name} />
+                </span>
+              ))}
+            </div>
+          }
+        />
+      )}
     </>
   );
 };
