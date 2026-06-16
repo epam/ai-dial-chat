@@ -112,6 +112,19 @@ export const modelsSlice = createSlice({
         ...payload.models,
       );
     },
+    getDefaultModelSuccess: (
+      state,
+      { payload }: PayloadAction<{ model: DialAIEntityModel }>,
+    ) => {
+      if (state.status === UploadStatus.LOADED) return;
+      state.modelsMap = addToMarketplaceEntitiesMap(
+        state.modelsMap,
+        payload.model,
+      );
+      if (!state.models.some((m) => m.reference === payload.model.reference)) {
+        state.models = [...state.models, payload.model];
+      }
+    },
     getModelsFail: (
       state,
       {

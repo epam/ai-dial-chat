@@ -20,6 +20,7 @@ import { Routes } from '@/src/constants/routes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
 import { AgentsTabRenderer } from '@/src/components/Marketplace/AgentsTabRenderer';
+import { ConnectToolsetModal } from '@/src/components/Marketplace/ConnectToolsetModal';
 
 import { TabHeader } from './TabHeader';
 import { ToolsTabRenderer } from './ToolsTabRenderer';
@@ -119,6 +120,7 @@ export const Marketplace = () => {
           >
             <ToolsTabRenderer />
           </div>
+          <ConnectToolsetModal />
         </>
       )}
     </div>
