@@ -297,6 +297,7 @@
   "Unshare": "Unshare",
   "Info": "Info",
   "Save and exit": "Save and exit",
+  "Exit": "Exit",
   "It's not allowed to move parent folder in child folder": "It's not allowed to move parent folder in child folder",
   "Folder with name \"{{folderName}}\" already exists in this folder.": "Folder with name \"{{folderName}}\" already exists in this folder.",
   "Using a dot at the start of a name is not permitted.": "Using a dot at the start of a name is not permitted.",

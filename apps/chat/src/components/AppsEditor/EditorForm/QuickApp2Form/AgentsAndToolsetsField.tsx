@@ -292,7 +292,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
   const EditorButtons = useCallback(
     () => (
-      <div className="flex h-full grow items-center justify-end gap-2 pr-3">
+      <div className="flex h-full grow items-center justify-end gap-2 pe-3">
         <DialNeutralButton
           label={t(MarketplaceI18nKeys.DiscardMarketplace)}
           size={ElementSize.Small}
@@ -385,7 +385,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
               hidden: !isJsonView,
             })}
           >
-            <div className="absolute right-0 top-[-9px]">
+            <div className="absolute end-0 top-[-9px]">
               <ToggleSwitch
                 disabled={
                   !!errors.agentsAndToolsetsJson ||

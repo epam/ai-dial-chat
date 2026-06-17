@@ -2,6 +2,7 @@ import { FC, MouseEvent, useRef } from 'react';
 import toast from 'react-hot-toast';
 
 import { getFileWithType } from '@/src/utils/app/file';
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
 import { CustomTriggerMenuRendererProps } from '@/src/types/menu';
 
@@ -57,7 +58,11 @@ export const Import: FC<CustomTriggerMenuRendererProps> = ({
             return;
           }
 
-          toast.error(errorsMessages.unsupportedConversationsDataFormat);
+          toast.error(
+            translateErrorMessage(
+              errorsMessages.unsupportedConversationsDataFormat,
+            ),
+          );
         }}
       />
       <Renderer

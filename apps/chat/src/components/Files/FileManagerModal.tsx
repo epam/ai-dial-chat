@@ -347,6 +347,7 @@ export const FileManagerModal = memo(
       navigationPanelOptions,
       toolbarOptions,
       deleteConfirmationOptions,
+      conflictResolutionPopupOptions,
 
       handleSearchFiles,
       handleDeleteFiles,
@@ -361,6 +362,8 @@ export const FileManagerModal = memo(
 
       uploadEnabled,
       gridOptions,
+      emptyStateTitle,
+      emptyStateDescription,
     } = useFileManager({
       actionLabelsOptions,
       toolbarOptions: {
@@ -375,6 +378,7 @@ export const FileManagerModal = memo(
       () => ({
         ...gridOptions,
         additionalGridOptions: {
+          ...gridOptions.additionalGridOptions,
           rowSelection: {
             mode: 'multiRow' as const,
             isRowSelectable: (node: { data?: FileManagerGridRow | null }) => {
@@ -482,6 +486,7 @@ export const FileManagerModal = memo(
               onDownloadFiles={handleDownloadFiles}
               onTableFileClick={handleTableFileClick}
               deleteConfirmationOptions={deleteConfirmationOptions}
+              conflictResolutionPopupOptions={conflictResolutionPopupOptions}
               onUploadFiles={handleUploadFiles}
               onCreateFolder={handleCreateFolder}
               onUploadArchive={handleUploadArchive}
@@ -491,6 +496,8 @@ export const FileManagerModal = memo(
               sharedWithMeIds={sharedWithMeIds}
               uploadEnabled={uploadEnabled}
               getDisabledTooltip={getDisabledTooltip}
+              emptyStateTitle={emptyStateTitle}
+              emptyStateDescription={emptyStateDescription}
               hideSearchPathItemName
               autoSelectUploadedItems
             />

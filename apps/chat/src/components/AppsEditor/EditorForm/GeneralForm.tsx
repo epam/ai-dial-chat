@@ -4,6 +4,7 @@ import { Controller, useFormContext, useFormState } from 'react-hook-form';
 import { useRouter } from 'next/router';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTopicTranslation } from '@/src/hooks/useTopicTranslation';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getSharedTooltip, topicToOption } from '@/src/utils/app/application';
@@ -50,6 +51,7 @@ interface GeneralFormProps {
 
 export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
   const { t } = useTranslation(Translation.Common);
+  const { translateTopic, supplementalLabelsVersion } = useTopicTranslation();
   const router = useRouter();
 
   const { [AppsEditorQuery.PublicationUrl]: publicationUrl = '' } =
@@ -81,7 +83,14 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
 
   const { errors, isValid } = useFormState<BaseAppForm>({ control });
 
-  const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
+  const topicOptions = useMemo(
+    () =>
+      topics.map((topic) => ({
+        ...topicToOption(topic),
+        label: translateTopic(topic),
+      })),
+    [topics, translateTopic, supplementalLabelsVersion],
+  );
 
   const getLogoId = useCallback(
     (filesIds: string[]) => files.find((f) => f.id === filesIds[0])?.id,
@@ -176,7 +185,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
               onDeleteLocalLogoHandler={() => field.onChange('')}
               customPlaceholder={t(CommonI18nKeys.NoIcon)}
               className="max-w-full"
-              fileManagerModalTitle="Select application icon"
+              fileManagerModalTitle={t(CommonI18nKeys.SelectApplicationIcon)}
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
               disabled={isSharedWithMe || isAppPublic}
@@ -207,7 +216,10 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
           render={({ field }) => (
             <TopicsSelector
               label={t(CommonI18nKeys.Topics)}
-              value={field.value?.map(topicToOption)}
+              value={field.value?.map((topic) => ({
+                ...topicToOption(topic),
+                label: translateTopic(topic),
+              }))}
               isDisabled={isAppPublic}
               tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
               options={topicOptions}

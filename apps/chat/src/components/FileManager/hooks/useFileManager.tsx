@@ -1,12 +1,15 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { useTranslation as useNextTranslation } from 'next-i18next';
+import { useRouter } from 'next/router';
+
 import {
   UseFileManagerActionLabelsOptions,
   useFileManagerActionLabels,
 } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { constructPath, prepareFileName } from '@/src/utils/app/file';
+import { constructPath, formatFileSize, prepareFileName } from '@/src/utils/app/file';
 import {
   buildFileTree,
   convertToUIKitFile,
@@ -24,7 +27,14 @@ import {
 } from '@/src/utils/app/search';
 import { hasWritePermission } from '@/src/utils/app/share';
 import { getEntityBucket } from '@/src/utils/app/shared-utils';
-import { translate } from '@/src/utils/app/translation';
+import {
+  folderDisplayNameToStorage,
+  translateFolderDisplayName,
+} from '@/src/utils/app/translateFolderDisplayName';
+import {
+  ensureLocaleNamespaceFromStaticFiles,
+  isLocaleNamespaceKeyMissing,
+} from '@/src/utils/app/translation';
 
 import { DialFile as LocalDialFileType } from '@/src/types/files';
 import type { RootState } from '@/src/types/store';
@@ -41,7 +51,7 @@ import {
   REVIEW_FILES_SECTION,
   SHARED_WITH_ME_FILES_SECTION,
 } from '@/src/constants/fileManager';
-import { SideBarI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, CommonI18nKeys, MarketplaceI18nKeys, SideBarI18nKeys } from '@/src/constants/i18n';
 import { getEntityNameSchema } from '@/src/constants/validation-helpers';
 
 import {
@@ -51,6 +61,13 @@ import {
 } from '@epam/ai-dial-ui-kit/dist/src/components/FileManager/FileManager';
 
 import { FilesUploadingModalOptions } from '../FilesUploadingModal';
+import {
+  translateFileManagerChrome,
+  findDestinationFolderPopupRoot,
+  findConflictResolutionPopupRoot,
+  patchConflictResolutionPopupDom,
+  patchDestinationFolderPopupDom,
+} from '../translateFileManagerChrome';
 
 import {
   FeatureType,
@@ -66,9 +83,18 @@ import {
   DialFileNodeType,
   DialUploadFileItem,
   FileManagerColumnKey,
+  FileManagerGridRow,
   GridSelectionMode,
   useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
+import {
+  CellEditingStartedEvent,
+  ColDef,
+  FirstDataRenderedEvent,
+  GridApi,
+  GridReadyEvent,
+  RowDataUpdatedEvent,
+} from 'ag-grid-community';
 import cloneDeep from 'lodash-es/cloneDeep';
 import uniqBy from 'lodash-es/uniqBy';
 
@@ -101,22 +127,6 @@ function extractHiddenSharedPathPart(
 
   return hidden.replace(/\/$/, '') || null;
 }
-
-const newActions = {
-  uploadFiles: {
-    label: translate(SideBarI18nKeys.UploadFiles, {
-      ns: Translation.SideBar,
-    }),
-  },
-  newFolder: {
-    label: translate(SideBarI18nKeys.NewFolder, { ns: Translation.SideBar }),
-  },
-  uploadArchive: {
-    label: translate(SideBarI18nKeys.UploadArchive, {
-      ns: Translation.SideBar,
-    }),
-  },
-};
 
 const dateOptions = {
   year: 'numeric' as const,
@@ -167,8 +177,74 @@ export const useFileManager = ({
   additionalFilesAndFolders,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const { t } = useTranslation(Translation.SideBar);
+  const { i18n } = useNextTranslation(Translation.SideBar);
+  const [supplementalSidebarVersion, setSupplementalSidebarVersion] =
+    useState(0);
+
+  useEffect(() => {
+    const locale = router.locale ?? 'en';
+    if (locale === 'en') {
+      return;
+    }
+
+    if (
+      !isLocaleNamespaceKeyMissing(
+        locale,
+        Translation.SideBar,
+        SideBarI18nKeys.ReplaceOrDuplicateItem,
+        i18n,
+      )
+    ) {
+      return;
+    }
+
+    void ensureLocaleNamespaceFromStaticFiles(
+      locale,
+      Translation.SideBar,
+      i18n,
+    ).then(() => {
+      setSupplementalSidebarVersion((version) => version + 1);
+    });
+  }, [i18n, router.locale]);
+
+  const translateChat = useCallback(
+    (key: string) => t(key, { ns: Translation.Chat }),
+    [t],
+  );
+
+  const translateCommon = useCallback(
+    (key: string) => t(key, { ns: Translation.Common }),
+    [t],
+  );
+
+  const translateMarketplace = useCallback(
+    (key: string) => t(key, { ns: Translation.Marketplace }),
+    [t],
+  );
+
+  const translateChrome = useCallback(
+    (key: string) =>
+      translateFileManagerChrome(key, router.locale, t, translateChat),
+    [router.locale, t, translateChat],
+  );
+
+  const newActions = useMemo(
+    () => ({
+      uploadFiles: {
+        label: t(SideBarI18nKeys.UploadFiles),
+      },
+      newFolder: {
+        label: t(SideBarI18nKeys.NewFolder),
+      },
+      uploadArchive: {
+        label: t(SideBarI18nKeys.UploadArchive),
+      },
+    }),
+    [t],
+  );
 
   const isFileMetadataLoading = useAppSelector(
     FilesSelectors.selectLoadingFileMetadata,
@@ -284,10 +360,10 @@ export const useFileManager = ({
 
   const { activeTab, handleTabChange, tabs } = useDialFileManagerTabs(
     {
-      my_files: t(MY_FILES_SECTION),
-      shared: t(SHARED_WITH_ME_FILES_SECTION),
-      organization: t(ORGANIZATION_FILES_SECTION),
-      review: t(REVIEW_FILES_SECTION),
+      my_files: translateChat(MY_FILES_SECTION),
+      shared: translateChat(SHARED_WITH_ME_FILES_SECTION),
+      organization: translateChat(ORGANIZATION_FILES_SECTION),
+      review: translateChat(REVIEW_FILES_SECTION),
     },
     resolvedInitialTab,
   );
@@ -340,11 +416,11 @@ export const useFileManager = ({
         if (activeTab === DialFileManagerTabs.Shared) {
           uiFolder.parentPath = formatSharedPath(
             uiFolder.parentPath,
-            t(SHARED_WITH_ME_FILES_SECTION),
+            translateChat(SHARED_WITH_ME_FILES_SECTION),
           );
           uiFolder.folderId = formatSharedPath(
             uiFolder.folderId,
-            t(SHARED_WITH_ME_FILES_SECTION),
+            translateChat(SHARED_WITH_ME_FILES_SECTION),
           ) as string;
         }
         return uiFolder;
@@ -354,17 +430,17 @@ export const useFileManager = ({
         if (activeTab === DialFileManagerTabs.Shared) {
           uiFile.parentPath = formatSharedPath(
             uiFile.parentPath,
-            t(SHARED_WITH_ME_FILES_SECTION),
+            translateChat(SHARED_WITH_ME_FILES_SECTION),
           );
           uiFile.folderId = formatSharedPath(
             uiFile.folderId,
-            t(SHARED_WITH_ME_FILES_SECTION),
+            translateChat(SHARED_WITH_ME_FILES_SECTION),
           ) as string;
         }
         return uiFile;
       }),
     ],
-    [searchResults, activeTab, t],
+    [searchResults, activeTab, translateChat],
   );
 
   const filteredTabs = useMemo(() => {
@@ -455,7 +531,7 @@ export const useFileManager = ({
   } = useMemo(() => {
     let filteredFiles = files;
     let filteredFolders = folders;
-    let pathRootAlias = t(MY_FILES_SECTION);
+    let pathRootAlias = translateChat(MY_FILES_SECTION);
     let uploadEnabled = true;
     const visibleColumns: FileManagerColumnKey[] = [
       FileManagerColumnKey.Name,
@@ -475,12 +551,12 @@ export const useFileManager = ({
           folders,
           defaultMyItemsFilters,
         );
-        pathRootAlias = t(MY_FILES_SECTION);
+        pathRootAlias = translateChat(MY_FILES_SECTION);
         break;
       case DialFileManagerTabs.Shared:
         filteredFiles = filterFilesByFilters(files, SharedWithMeFilters);
         filteredFolders = filterFoldersByFilters(folders, SharedWithMeFilters);
-        pathRootAlias = t(SHARED_WITH_ME_FILES_SECTION);
+        pathRootAlias = translateChat(SHARED_WITH_ME_FILES_SECTION);
         visibleColumns.push(FileManagerColumnKey.Author);
         break;
       case DialFileManagerTabs.Organization:
@@ -489,7 +565,7 @@ export const useFileManager = ({
           folders,
           PublishedWithMeFilter,
         );
-        pathRootAlias = t(ORGANIZATION_FILES_SECTION);
+        pathRootAlias = translateChat(ORGANIZATION_FILES_SECTION);
         uploadEnabled = false;
         break;
       case DialFileManagerTabs.Review:
@@ -499,7 +575,7 @@ export const useFileManager = ({
         filteredFolders = folders.filter(
           (f) => getEntityBucket(f) === reviewBucket,
         );
-        pathRootAlias = t(REVIEW_FILES_SECTION);
+        pathRootAlias = translateChat(REVIEW_FILES_SECTION);
         uploadEnabled = false;
         break;
       default:
@@ -548,24 +624,26 @@ export const useFileManager = ({
       currentPathRootAlias: pathRootAlias,
       uploadEnabled,
     };
-  }, [files, folders, activeTab, reviewBucket, currentPath, t]);
+  }, [files, folders, activeTab, reviewBucket, currentPath, translateChat]);
 
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
-      return count === 1 && name
-        ? t(SideBarI18nKeys.CopyNameTo, { name })
+      const displayName = name ? translateFolderDisplayName(name, router.locale, t) : name;
+      return count === 1 && displayName
+        ? t(SideBarI18nKeys.CopyNameTo, { name: displayName })
         : t(SideBarI18nKeys.CopyItemsTo, { count });
     },
-    [t],
+    [router.locale, t],
   );
 
   const getDestinationFolderMoveHeader = useCallback(
     (count: number, name: string | undefined) => {
-      return count === 1 && name
-        ? t(SideBarI18nKeys.MoveNameTo, { name })
+      const displayName = name ? translateFolderDisplayName(name, router.locale, t) : name;
+      return count === 1 && displayName
+        ? t(SideBarI18nKeys.MoveNameTo, { name: displayName })
         : t(SideBarI18nKeys.MoveItemsTo, { count });
     },
-    [t],
+    [router.locale, t],
   );
 
   const { bulkActionLabels, treeActionLabels, gridActionLabels } =
@@ -710,6 +788,7 @@ export const useFileManager = ({
       loadedPaths: loadedFoldersPaths,
       actionLabels: treeActionLabels,
       onExpandedPathsChange: setExpandedPaths,
+      newFolderDefaultName: t(SideBarI18nKeys.NewFolder),
     }),
     [
       expandedPaths,
@@ -747,6 +826,11 @@ export const useFileManager = ({
     };
   }, [t, isFileMetadataLoading, fileMetadata, currentPathRootAlias]);
 
+  const fileManagerSearchPlaceholder = useMemo(
+    () => translateChrome(SideBarI18nKeys.FileManagerSearchPlaceholder),
+    [translateChrome],
+  );
+
   const navigationPanelOptions = useMemo<NavigationPanelOptions>(() => {
     const options: NavigationPanelOptions = {
       searchable: true,
@@ -778,16 +862,324 @@ export const useFileManager = ({
     return options;
   }, [currentPath, rootFolder, activeTab]);
 
+  const loadingOverlayText = translateChrome(SideBarI18nKeys.Loading);
+
+  const gridColumnHeaderLabels = useMemo(
+    () => ({
+      name: translateChat(ChatI18nKeys.Name),
+      path: translateChat(ChatI18nKeys.Path),
+      updatedAt: translateChat(ChatI18nKeys.ModifiedDate),
+      modifiedDate: translateChat(ChatI18nKeys.ModifiedDate),
+      size: translateChat(ChatI18nKeys.Size),
+      author: translateChat(ChatI18nKeys.Author),
+    }),
+    [translateChat],
+  );
+
+  const searchEmptyTitle = useMemo(
+    () => translateCommon(CommonI18nKeys.NoResultsFound),
+    [translateCommon],
+  );
+
+  const searchEmptyDescription = useMemo(
+    () => translateMarketplace(MarketplaceI18nKeys.NoSearchResults),
+    [translateMarketplace],
+  );
+
+  const translateNewFolderName = useCallback(
+    (value: string) => translateFolderDisplayName(value, router.locale, t),
+    [router.locale, t],
+  );
+
+  useEffect(() => {
+    if (router.locale === 'en') {
+      return;
+    }
+
+    const searchInputIds = ['file-manager-search', 'file-manager-destination-search'];
+    const destinationLabels = {
+      searchPlaceholder: fileManagerSearchPlaceholder,
+      cancelLabel: translateCommon(CommonI18nKeys.Cancel),
+      emptyStateTitle: searchEmptyTitle,
+      emptyStateDescription: searchEmptyDescription,
+      gridColumnHeaderLabels,
+      translateNewFolderName,
+    };
+
+    let rafId = 0;
+    let popupObserver: MutationObserver | null = null;
+    let conflictObserver: MutationObserver | null = null;
+    let setupObserver: MutationObserver | null = null;
+    let destinationSearchInput: HTMLInputElement | null = null;
+    let onDestinationSearchInput: (() => void) | null = null;
+
+    const conflictLabels = {
+      singleFileTitle: t(SideBarI18nKeys.ReplaceOrDuplicateItem),
+      multipleFilesTitle: t(SideBarI18nKeys.ReplaceOrDuplicateItems),
+      replaceLabel: t(SideBarI18nKeys.FileConflictReplace),
+      itemExistsPrefix: t(SideBarI18nKeys.FileConflictItemExistsPrefix),
+      itemExistsSuffix: t(SideBarI18nKeys.FileConflictItemExistsSuffix),
+      multipleItemsExists: (count: string) =>
+        t(SideBarI18nKeys.FileConflictMultipleItemsExists, { count }),
+    };
+
+    const patch = () => {
+      for (const id of searchInputIds) {
+        const input = document.getElementById(id);
+        if (
+          input instanceof HTMLInputElement &&
+          input.placeholder !== fileManagerSearchPlaceholder
+        ) {
+          input.placeholder = fileManagerSearchPlaceholder;
+        }
+      }
+
+      const popupRoot = findDestinationFolderPopupRoot();
+      patchDestinationFolderPopupDom(destinationLabels, popupRoot);
+
+      patchConflictResolutionPopupDom(conflictLabels);
+    };
+
+    const attachDestinationSearchListener = () => {
+      const input = document.getElementById('file-manager-destination-search');
+      if (!(input instanceof HTMLInputElement) || input === destinationSearchInput) {
+        return;
+      }
+
+      if (destinationSearchInput && onDestinationSearchInput) {
+        destinationSearchInput.removeEventListener('input', onDestinationSearchInput);
+      }
+
+      destinationSearchInput = input;
+      onDestinationSearchInput = () => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => patch());
+      };
+      destinationSearchInput.addEventListener('input', onDestinationSearchInput);
+    };
+
+    const attachConflictObserver = (conflictRoot: Element) => {
+      if (conflictObserver) {
+        return;
+      }
+
+      patch();
+
+      conflictObserver = new MutationObserver(() => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => patch());
+      });
+
+      conflictObserver.observe(conflictRoot, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    };
+
+    const tryAttachConflictObserver = () => {
+      const conflictRoot = findConflictResolutionPopupRoot();
+      if (conflictRoot) {
+        attachConflictObserver(conflictRoot);
+      }
+    };
+
+    const attachPopupObserver = (popupRoot: Element) => {
+      if (popupObserver) {
+        return;
+      }
+
+      attachDestinationSearchListener();
+      patch();
+
+      popupObserver = new MutationObserver(() => {
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => patch());
+      });
+
+      popupObserver.observe(popupRoot, {
+        childList: true,
+        subtree: true,
+        characterData: true,
+      });
+    };
+
+    const tryAttachPopupObserver = () => {
+      const popupRoot = findDestinationFolderPopupRoot();
+      if (popupRoot) {
+        setupObserver?.disconnect();
+        setupObserver = null;
+        attachPopupObserver(popupRoot);
+      }
+    };
+
+    patch();
+    tryAttachPopupObserver();
+    tryAttachConflictObserver();
+
+    const container = document.querySelector('[data-qa="file-manager"]');
+    if (container) {
+      setupObserver = new MutationObserver(() => {
+        tryAttachPopupObserver();
+        tryAttachConflictObserver();
+        cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => patch());
+      });
+      setupObserver.observe(container, { childList: true, subtree: true });
+    }
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      popupObserver?.disconnect();
+      conflictObserver?.disconnect();
+      setupObserver?.disconnect();
+      if (destinationSearchInput && onDestinationSearchInput) {
+        destinationSearchInput.removeEventListener('input', onDestinationSearchInput);
+      }
+    };
+  }, [
+    fileManagerSearchPlaceholder,
+    gridColumnHeaderLabels,
+    router.locale,
+    searchEmptyDescription,
+    searchEmptyTitle,
+    translateCommon,
+    translateNewFolderName,
+    t,
+    supplementalSidebarVersion,
+  ]);
+
+  const applyDefaultFolderNameTranslations = useCallback(
+    (api: GridApi<FileManagerGridRow>) => {
+      api.forEachNode((node) => {
+        const folderName = node.data?.name;
+        if (!folderName) {
+          return;
+        }
+
+        const translated = translateNewFolderName(folderName);
+        if (translated !== folderName) {
+          node.setDataValue('name', translated);
+        }
+      });
+    },
+    [translateNewFolderName],
+  );
+
+  const applyGridHeaderLabels = useCallback(
+    (api: GridApi<FileManagerGridRow>) => {
+      if (api.isDestroyed()) {
+        return;
+      }
+
+      const columnDefs = api.getColumnDefs();
+      if (!columnDefs?.length) {
+        return;
+      }
+
+      let updated = false;
+      const nextColumnDefs = columnDefs.map((col) => {
+        if (!('field' in col) && !('colId' in col)) {
+          return col;
+        }
+
+        const colId = (col.colId ?? col.field) as
+          | keyof typeof gridColumnHeaderLabels
+          | undefined;
+        const label = colId ? gridColumnHeaderLabels[colId] : undefined;
+
+        if (colId === 'size' && label) {
+          updated = true;
+          return {
+            ...col,
+            headerName: label,
+            cellRenderer: (params: { data?: FileManagerGridRow | null }) =>
+              params.data?.nodeType === DialFileNodeType.ITEM &&
+              params.data.contentLength != null
+                ? formatFileSize(params.data.contentLength)
+                : '',
+          } as ColDef<FileManagerGridRow>;
+        }
+
+        if (label && col.headerName !== label) {
+          updated = true;
+          return { ...col, headerName: label } as ColDef<FileManagerGridRow>;
+        }
+
+        return col;
+      });
+
+      if (updated) {
+        api.setGridOption('columnDefs', nextColumnDefs);
+        api.refreshHeader();
+      }
+    },
+    [gridColumnHeaderLabels],
+  );
+
+  const dateLocale: Intl.LocalesArgument =
+    router.locale && router.locale !== 'default' ? router.locale : 'en-US';
+
   const gridOptions: GridOptions = useMemo(
     () => ({
       filterable: false,
-      dateLocale: 'en-US',
+      dateLocale,
       dateOptions: dateOptions,
       actionLabels: gridActionLabels,
       visibleColumns: visibleColumns,
       selectionMode: GridSelectionMode.MULTIPLE,
+      ...(isSearching && {
+        emptyStateTitle: searchEmptyTitle,
+        emptyStateDescription: searchEmptyDescription,
+      }),
+      additionalGridOptions: {
+        overlayComponentParams: {
+          loading: {
+            overlayText: loadingOverlayText,
+          },
+        },
+        ...(isSearching && {
+          emptyStateTitle: searchEmptyTitle,
+          emptyStateDescription: searchEmptyDescription,
+        }),
+        onGridReady: (params: GridReadyEvent<FileManagerGridRow>) => {
+          applyGridHeaderLabels(params.api);
+        },
+        onFirstDataRendered: (
+          params: FirstDataRenderedEvent<FileManagerGridRow>,
+        ) => {
+          applyDefaultFolderNameTranslations(params.api);
+          applyGridHeaderLabels(params.api);
+        },
+        onCellEditingStarted: (
+          params: CellEditingStartedEvent<FileManagerGridRow>,
+        ) => {
+          const folderName = params.data?.name;
+          if (folderName) {
+            const translated = translateNewFolderName(folderName);
+            if (translated !== folderName) {
+              params.node?.setDataValue('name', translated);
+            }
+          }
+        },
+        onRowDataUpdated: (params: RowDataUpdatedEvent<FileManagerGridRow>) => {
+          applyDefaultFolderNameTranslations(params.api);
+          applyGridHeaderLabels(params.api);
+        },
+      },
     }),
-    [gridActionLabels, visibleColumns],
+    [
+      applyDefaultFolderNameTranslations,
+      applyGridHeaderLabels,
+      dateLocale,
+      gridActionLabels,
+      isSearching,
+      loadingOverlayText,
+      searchEmptyDescription,
+      searchEmptyTitle,
+      translateNewFolderName,
+      visibleColumns,
+    ],
   );
 
   const toolbarOptions = useMemo<ToolbarOptions>(
@@ -798,6 +1190,8 @@ export const useFileManager = ({
       newButtonVariant: ButtonVariant.Primary,
       newActions,
       showHiddenFilesToggle: true,
+      hiddenFilesSwitcherLabel: translateChrome(SideBarI18nKeys.HiddenFiles),
+      newButtonLabel: translateChrome(SideBarI18nKeys.NewButton),
       isNewButtonDisabled:
         activeTab === DialFileManagerTabs.Organization ||
         (activeTab === DialFileManagerTabs.Shared && !canWriteCurrentFolder),
@@ -809,7 +1203,9 @@ export const useFileManager = ({
       activeTab,
       handleTabChangeWithRefresh,
       canWriteCurrentFolder,
+      newActions,
       t,
+      translateChrome,
       externalToolbarOptions,
     ],
   );
@@ -820,20 +1216,55 @@ export const useFileManager = ({
       setDestinationFolderPath: setDestinationPath,
       getCopyHeader: getDestinationFolderCopyHeader,
       getMoveHeader: getDestinationFolderMoveHeader,
+      moveLabel: translateChat(ChatI18nKeys.Move),
+      copyLabel: translateChat(ChatI18nKeys.Copy),
+      addFolderLabel: translateCommon(CommonI18nKeys.AddFolder),
+      hiddenFilesSwitcherLabel: translateChrome(SideBarI18nKeys.HiddenFiles),
+      emptyStateTitle: searchEmptyTitle,
+      emptyStateDescription: searchEmptyDescription,
     }),
     [
       destinationPath,
       getDestinationFolderCopyHeader,
       getDestinationFolderMoveHeader,
+      searchEmptyDescription,
+      searchEmptyTitle,
+      translateChat,
+      translateChrome,
+      translateCommon,
     ],
   );
 
   const deleteConfirmationOptions = useMemo(
     () => ({
+      cancelLabel: t(SideBarI18nKeys.Cancel),
+      confirmLabel: t(SideBarI18nKeys.Delete),
       titleRenderer: renderDeleteConfirmationTitle,
       contentRenderer: renderDeleteConfirmationContent,
     }),
-    [renderDeleteConfirmationTitle, renderDeleteConfirmationContent],
+    [renderDeleteConfirmationTitle, renderDeleteConfirmationContent, t],
+  );
+
+  const conflictResolutionPopupOptions = useMemo(
+    () => ({
+      singleFileTitle: t(SideBarI18nKeys.ReplaceOrDuplicateItem),
+      multipleFilesTitle: t(SideBarI18nKeys.ReplaceOrDuplicateItems),
+      confirmLabel: translateCommon(CommonI18nKeys.Confirm),
+      cancelLabel: translateCommon(CommonI18nKeys.Cancel),
+      nameColumnLabel: translateChat(ChatI18nKeys.Name),
+      actionColumnLabel: t(SideBarI18nKeys.ActionColumn),
+      actionLabels: {
+        replace: t(SideBarI18nKeys.FileConflictReplace),
+        duplicate: t(SideBarI18nKeys.Duplicate),
+        cancel: translateCommon(CommonI18nKeys.Cancel),
+      },
+      strategyLabels: {
+        replaceAll: t(SideBarI18nKeys.ReplaceAll),
+        duplicateAll: t(SideBarI18nKeys.DuplicateAll),
+        decideForEach: t(SideBarI18nKeys.DecideForEach),
+      },
+    }),
+    [supplementalSidebarVersion, t, translateChat, translateCommon],
   );
 
   const handleCopyFiles = useCallback(
@@ -1025,6 +1456,12 @@ export const useFileManager = ({
 
   const handleRenameValidation = useCallback(
     (value: string, item: DialFile) => {
+      const storageName = folderDisplayNameToStorage(
+        value,
+        item.name,
+        router.locale,
+        t,
+      );
       const schema = getEntityNameSchema({
         name:
           item.nodeType === DialFileNodeType.FOLDER
@@ -1034,7 +1471,7 @@ export const useFileManager = ({
         checkDotsInTheStart: true,
       });
 
-      const validationResult = schema.safeParse(value);
+      const validationResult = schema.safeParse(storageName);
 
       if (validationResult.success) {
         return null;
@@ -1042,7 +1479,7 @@ export const useFileManager = ({
         return validationResult.error.issues[0].message;
       }
     },
-    [t],
+    [router.locale, t],
   );
 
   const emptyStateTitle = useMemo(() => {
@@ -1091,6 +1528,7 @@ export const useFileManager = ({
     toolbarOptions,
     destinationFolderPopupOptions,
     deleteConfirmationOptions,
+    conflictResolutionPopupOptions,
 
     handleSearchFiles,
     handleClearSearch,

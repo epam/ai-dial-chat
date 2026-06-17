@@ -2,9 +2,7 @@ import { ComponentType, forwardRef } from 'react';
 
 import classNames from 'classnames';
 
-import { useTranslation } from '@/src/hooks/useTranslation';
-
-import { Translation } from '@/src/types/translation';
+import { translateFormError } from '@/src/utils/app/translateFormError';
 
 interface Props {
   error?: string;
@@ -12,8 +10,6 @@ interface Props {
 }
 
 export const FieldErrorMessage = ({ error, className }: Props) => {
-  const { t } = useTranslation(Translation.Settings);
-
   if (!error) {
     return null;
   }
@@ -23,7 +19,7 @@ export const FieldErrorMessage = ({ error, className }: Props) => {
       className={classNames('text-xxs text-error', className)}
       data-qa="error-message"
     >
-      {t(error)}
+      {translateFormError(error)}
     </div>
   );
 };

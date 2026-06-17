@@ -6,6 +6,7 @@ import {
   deleteFromMarketplaceEntitiesMap,
   getGroupMarketplaceEntityKey,
 } from '@/src/utils/app/marketplace';
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -126,11 +127,7 @@ export const modelsSlice = createSlice({
         code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [
-              translate(errorsMessages.generalServer, {
-                ns: Translation.Common,
-              }),
-            ],
+          : [translateErrorMessage(errorsMessages.generalServer)],
       } as ErrorMessage;
     },
 

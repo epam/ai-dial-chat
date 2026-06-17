@@ -1,5 +1,6 @@
 import { IconChevronDown } from '@tabler/icons-react';
-import { MouseEvent, useCallback, useState } from 'react';
+import { Placement } from '@floating-ui/react';
+import { MouseEvent, useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';
 
@@ -9,6 +10,11 @@ import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
 
 import startCase from 'lodash-es/startCase';
 import toLower from 'lodash-es/toLower';
+
+const getMenuPlacement = (): Placement =>
+  typeof document !== 'undefined' && document.documentElement.dir === 'rtl'
+    ? 'bottom-end'
+    : 'bottom-start';
 
 interface FilterTypeProps {
   id: string;
@@ -35,8 +41,20 @@ export function RulesSelect({
   onMenuOpenChange,
 }: FilterTypeProps) {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [menuPlacement, setMenuPlacement] = useState<Placement>('bottom-start');
   const isControlled = isMenuOpen !== undefined;
   const menuOpen = isControlled ? isMenuOpen : internalOpen;
+
+  useEffect(() => {
+    const syncPlacement = () => setMenuPlacement(getMenuPlacement());
+    syncPlacement();
+    const observer = new MutationObserver(syncPlacement);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['dir'],
+    });
+    return () => observer.disconnect();
+  }, []);
 
   const handleOpenChange = useCallback(
     (opened: boolean) => {
@@ -60,6 +78,7 @@ export function RulesSelect({
   return (
     <Menu
       className={classNames('w-full grow bg-layer-3', menuClassName)}
+      placement={menuPlacement}
       {...(isControlled ? { isMenuOpen } : {})}
       onOpenChange={handleOpenChange}
       listClassName="rounded-none w-full"
@@ -67,11 +86,13 @@ export function RulesSelect({
         <div
           data-qa={`filter-selector-${id}`}
           className={classNames(
-            'flex w-full justify-between gap-2 px-2 py-[6.5px] text-xs',
+            'flex w-full items-center gap-2 px-2 py-[6.5px] text-xs',
             triggerClassName,
           )}
         >
-          {selectedFilterLabel}
+          <span className="min-w-0 flex-1 truncate text-start">
+            {selectedFilterLabel}
+          </span>
           <IconChevronDown
             data-qa={`open-filter-dropdown-${id}`}
             className={classNames(

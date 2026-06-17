@@ -2,6 +2,7 @@ import React, { FormEvent, useCallback, useMemo } from 'react';
 import { Controller, useFormContext, useFormState } from 'react-hook-form';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
+import { useTopicTranslation } from '@/src/hooks/useTopicTranslation';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { topicToOption } from '@/src/utils/app/application';
@@ -48,6 +49,7 @@ export const GeneralForm = ({
   isToolsetPublic,
 }: GeneralFormProps) => {
   const { t } = useTranslation(Translation.Common);
+  const { translateTopic, supplementalLabelsVersion } = useTopicTranslation();
 
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -62,7 +64,14 @@ export const GeneralForm = ({
   const { register, control } = useFormContext<ToolsetEditorForm>();
   const { errors, isValid } = useFormState<ToolsetEditorForm>({ control });
 
-  const topicOptions = useMemo(() => topics.map(topicToOption), [topics]);
+  const topicOptions = useMemo(
+    () =>
+      topics.map((topic) => ({
+        ...topicToOption(topic),
+        label: translateTopic(topic),
+      })),
+    [topics, translateTopic, supplementalLabelsVersion],
+  );
 
   const getLogoId = useCallback(
     (filesIds: string[]) => files.find((f) => f.id === filesIds[0])?.id,
@@ -116,7 +125,7 @@ export const GeneralForm = ({
               onDeleteLocalLogoHandler={() => field.onChange('')}
               customPlaceholder={t(CommonI18nKeys.NoIcon)}
               className="max-w-full"
-              fileManagerModalTitle="Select toolset icon"
+              fileManagerModalTitle={t(CommonI18nKeys.SelectToolsetIcon)}
               allowedTypes={IMAGE_TYPES}
               error={errors.iconUrl?.message}
               disabled={isToolsetPublic}
@@ -142,7 +151,10 @@ export const GeneralForm = ({
           render={({ field }) => (
             <TopicsSelector
               label={t(CommonI18nKeys.Topics)}
-              value={field.value?.map(topicToOption)}
+              value={field.value?.map((topic) => ({
+                ...topicToOption(topic),
+                label: translateTopic(topic),
+              }))}
               options={topicOptions}
               placeholder={t(CommonI18nKeys.SelectOneOrMoreTopics)}
               onChange={(v) => field.onChange(v.map((o) => o.value))}

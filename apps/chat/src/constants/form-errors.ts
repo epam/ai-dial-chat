@@ -1,45 +1,71 @@
 import { notAllowedSymbols } from '@/src/utils/app/file';
-import { translate } from '@/src/utils/app/translation';
+import { translateFormError } from '@/src/utils/app/translateFormError';
 
-import { Translation } from '@/src/types/translation';
-
-import { MIN_ENTITY_LENGTH } from './default-ui-settings';
+import { MIN_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
+import { ErrorsI18nKeys } from '@/src/constants/i18n';
 
 export const formErrors = {
-  required: translate('This field is required'),
-  notValidString: (name = 'Name') =>
-    translate(
-      `${name} cannot be empty, too long, or contain special characters.`,
-    ),
+  get required() {
+    return translateFormError(ErrorsI18nKeys.ThisFieldIsRequired);
+  },
+  notValidString: (
+    name = 'Name',
+    minLength = MIN_ENTITY_LENGTH,
+    maxLength = 128,
+  ) =>
+    translateFormError(ErrorsI18nKeys.NameShouldBeMinToMaxCharsNoSpecial, {
+      name,
+      minLength,
+      maxLength,
+    }),
   hasSpecialCharacters: (name = 'Name') =>
-    translate(
-      `${name} should not contain special symbols ${notAllowedSymbols}`,
-    ),
+    translateFormError(ErrorsI18nKeys.NameShouldNotContainSpecialSymbols, {
+      name,
+      notAllowedSymbols,
+    }),
   tooShort: (name = 'Name', minLength = MIN_ENTITY_LENGTH) =>
-    translate(`${name} should be at least ${minLength} characters long`),
+    translateFormError(ErrorsI18nKeys.NameShouldBeAtLeastChars, {
+      name,
+      minLength,
+    }),
   tooLong: (name = 'Name') =>
-    translate(`The ${name} is too long. Please shorten it and try again.`),
+    translateFormError(ErrorsI18nKeys.NameIsTooLong, { name }),
   noDotInTheEnd: (name = 'Name') =>
-    translate(`Using a dot at the end of a ${name} is not permitted.`),
+    translateFormError(ErrorsI18nKeys.DotAtEndOfNameNotPermitted, { name }),
   noDotInTheStart: (name = 'Name') =>
-    translate(`Using a dot at the start of a ${name} is not permitted.`),
+    translateFormError(ErrorsI18nKeys.DotAtStartOfNameNotPermitted, { name }),
   notUniqName: (name = 'Name', newName: string) =>
-    translate(`${name} "{{newName}}" already exists in this folder.`, {
-      ns: Translation.Errors,
+    translateFormError(ErrorsI18nKeys.NameAlreadyExistsInFolder, {
+      name,
       newName,
     }),
 };
 
 export const urlErrors = {
-  notValidUrl: translate('URL is not correct'),
-  notValidProtocol: translate('URL must start with a valid protocol'),
-  notValidEnding: translate('Endpoint cannot end with . or //'),
+  get notValidUrl() {
+    return translateFormError(ErrorsI18nKeys.UrlIsNotCorrect);
+  },
+  get notValidProtocol() {
+    return translateFormError(ErrorsI18nKeys.UrlMustStartWithValidProtocol);
+  },
+  get notValidEnding() {
+    return translateFormError(
+      ErrorsI18nKeys.EndpointCannotEndWithDotOrDoubleSlash,
+    );
+  },
 };
 
 export const versionsErrors = {
-  required: 'Version is required',
-  notValid: 'Version format is invalid (example: 0.0.1)',
-  versionExists: 'This version already exists',
-  tooLongPart:
-    'Each part of the version should contain no more than five numbers.',
+  get required() {
+    return translateFormError(ErrorsI18nKeys.VersionIsRequired);
+  },
+  get notValid() {
+    return translateFormError(ErrorsI18nKeys.VersionFormatInvalid);
+  },
+  get versionExists() {
+    return translateFormError(ErrorsI18nKeys.VersionAlreadyExists);
+  },
+  get tooLongPart() {
+    return translateFormError(ErrorsI18nKeys.VersionPartTooLong);
+  },
 };

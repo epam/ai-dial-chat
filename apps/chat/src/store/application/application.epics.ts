@@ -45,6 +45,7 @@ import {
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
 import { mergeFeatures } from '@/src/utils/app/models';
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
@@ -211,7 +212,7 @@ const createFailEpic: AppEpic = (action$) =>
     switchMap(() =>
       of(
         UIActions.showErrorToast({
-          message: translate(errorsMessages.createFailed, {
+          message: translateErrorMessage(errorsMessages.createFailed, {
             entity: 'application',
           }),
         }),

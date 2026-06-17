@@ -5,16 +5,15 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getLastPathSegment } from '@/src/utils/app/common';
-import { getFilterLabel } from '@/src/utils/app/rules';
 
 import { PublicationRule } from '@/src/types/publication';
 import { Translation } from '@/src/types/translation';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
+import { usePublicationFilterTranslation } from '@/src/components/Chat/Publish/usePublicationFilterTranslation';
+
 import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
-import startCase from 'lodash-es/startCase';
-import toLower from 'lodash-es/toLower';
 
 interface Props {
   path: string;
@@ -30,6 +29,8 @@ export function RuleListItem({
   ruleClassNames,
 }: Props) {
   const { t } = useTranslation(Translation.Chat);
+  const { translateSource, translateFunction } =
+    usePublicationFilterTranslation();
 
   return (
     <>
@@ -54,10 +55,10 @@ export function RuleListItem({
               )}
             >
               <span className="font-semibold" data-qa="rule-target">
-                {startCase(toLower(rule.source))}
+                {translateSource(rule.source)}
               </span>
               <span className="font-normal italic" data-qa="rule-function">
-                {toLower(getFilterLabel(rule.function))}
+                {translateFunction(rule.function).toLowerCase()}
               </span>
               {rule.targets.map((target, index) => (
                 <Fragment key={`${target}-${index}`}>

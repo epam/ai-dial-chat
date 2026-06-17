@@ -6,7 +6,6 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { getFilterLabel } from '@/src/utils/app/rules';
 
 import { ModalState } from '@/src/types/modal';
 import {
@@ -27,6 +26,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
 import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
+import { usePublicationFilterTranslation } from './usePublicationFilterTranslation';
 
 import {
   DialPrimaryButton,
@@ -73,6 +73,11 @@ export function TargetAudienceFilterComponent({
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
   const { t: tChat } = useTranslation(Translation.Chat);
+  const {
+    supplementalLabelsVersion,
+    translateSource,
+    translateFunction,
+  } = usePublicationFilterTranslation();
 
   const [filterFunction, setFilterFunction] = useState<PublicationFunctions>(
     PublicationFunctions.Contain,
@@ -81,7 +86,8 @@ export function TargetAudienceFilterComponent({
   const [filterRegexParam, setFilterRegexParam] = useState<string>('');
   const [isRegexValid, setIsRegexValid] = useState(true);
   const [selectedTarget, setSelectedTarget] = useState(t(emptySelector));
-  const [targetMenuOpen, setTargetMenuOpen] = useState(true);
+  const [targetMenuOpen, setTargetMenuOpen] = useState(false);
+  const [filterFnsMenuOpen, setFilterFnsMenuOpen] = useState(false);
 
   const filterRowRef = useRef<HTMLDivElement>(null);
   const valuesInputRef = useRef<HTMLInputElement>(null);
@@ -91,6 +97,24 @@ export function TargetAudienceFilterComponent({
 
   const publicationFilters = useAppSelector(
     SettingsSelectors.selectPublicationFilters,
+  );
+
+  const emptyTargetLabel = t(emptySelector);
+
+  const formatSourceLabel = useCallback(
+    (source: string) => {
+      if (source === emptySelector || source === emptyTargetLabel) {
+        return emptyTargetLabel;
+      }
+
+      return translateSource(source);
+    },
+    [emptyTargetLabel, supplementalLabelsVersion, translateSource],
+  );
+
+  const formatFunctionLabel = useCallback(
+    (filterType: string) => translateFunction(filterType),
+    [supplementalLabelsVersion, translateFunction],
   );
 
   const handleSaveFilter = useCallback(() => {
@@ -140,7 +164,9 @@ export function TargetAudienceFilterComponent({
     [],
   );
 
-  const isTargetSelected = selectedTarget !== emptySelector;
+  const isTargetUnselected =
+    selectedTarget === emptySelector || selectedTarget === emptyTargetLabel;
+  const isTargetSelected = !isTargetUnselected;
   const areSomeFilterParamSelected = filterParams.length || filterRegexParam;
   const isRegexFilledInButNotSelected = !!(
     filterRegexParam &&
@@ -161,13 +187,26 @@ export function TargetAudienceFilterComponent({
 
   isSaveBtnDisabledRef.current = isSaveBtnDisabled;
 
-  const targetMenuControlProps =
-    selectedTarget === emptySelector
-      ? {
-          isMenuOpen: targetMenuOpen,
-          onMenuOpenChange: setTargetMenuOpen,
-        }
-      : {};
+  const handleTargetMenuOpenChange = useCallback((open: boolean) => {
+    setTargetMenuOpen(open);
+    if (open) {
+      setFilterFnsMenuOpen(false);
+    }
+  }, []);
+
+  const handleFilterFnsMenuOpenChange = useCallback((open: boolean) => {
+    setFilterFnsMenuOpen(open);
+    if (open) {
+      setTargetMenuOpen(false);
+    }
+  }, []);
+
+  const targetMenuControlProps = isTargetUnselected
+    ? {
+        isMenuOpen: targetMenuOpen,
+        onMenuOpenChange: handleTargetMenuOpenChange,
+      }
+    : {};
 
   useEffect(() => {
     const wasEmpty = prevSelectedTargetRef.current === emptySelector;
@@ -234,6 +273,7 @@ export function TargetAudienceFilterComponent({
                 filters={publicationFilters}
                 selectedFilter={selectedTarget}
                 onChangeFilter={handleChangeTarget}
+                formattingFunction={formatSourceLabel}
                 id="targets"
                 {...targetMenuControlProps}
               />
@@ -248,8 +288,10 @@ export function TargetAudienceFilterComponent({
                 filters={filterFunctionValues}
                 selectedFilter={filterFunction}
                 onChangeFilter={handleChangeFilterFunction}
-                formattingFunction={(fn) => getFilterLabel(fn)}
+                formattingFunction={formatFunctionLabel}
                 id="filterFns"
+                isMenuOpen={filterFnsMenuOpen}
+                onMenuOpenChange={handleFilterFnsMenuOpenChange}
               />
             </div>
             <div className="flex flex-col gap-1">
@@ -306,6 +348,7 @@ export function TargetAudienceFilterComponent({
         filters={publicationFilters}
         selectedFilter={selectedTarget}
         onChangeFilter={handleChangeTarget}
+        formattingFunction={formatSourceLabel}
         id="targets"
         {...targetMenuControlProps}
       />
@@ -313,9 +356,11 @@ export function TargetAudienceFilterComponent({
         menuClassName="max-w-full italic md:max-w-[100px]"
         filters={filterFunctionValues}
         selectedFilter={filterFunction}
-        formattingFunction={(filterType) => getFilterLabel(filterType)}
+        formattingFunction={formatFunctionLabel}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
+        isMenuOpen={filterFnsMenuOpen}
+        onMenuOpenChange={handleFilterFnsMenuOpenChange}
       />
       {filterFunction === PublicationFunctions.Regex ? (
         <RegexParamInput
