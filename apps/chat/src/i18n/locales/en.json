@@ -183,6 +183,22 @@
   "attachments": {
     "downloadFile": "Download file"
   },
+  "citations": {
+    "marker": {
+      "label": "{{source}}",
+      "labelWithOverflow": "{{source}} +{{count}}",
+      "ariaLabel": "Citation from {{source}}"
+    },
+    "popup": {
+      "switcher": "{{current}}/{{total}}",
+      "preview": "Preview",
+      "openInBrowser": "Open in browser",
+      "download": "Download",
+      "previousCitation": "Previous citation",
+      "nextCitation": "Next citation",
+      "ariaLabel": "Citation from {{source}}"
+    }
+  },
   "fileDnd": {
     "overlayTitle": "Attach files",
     "overlaySubtitle": "Drop files here to attach them to message",

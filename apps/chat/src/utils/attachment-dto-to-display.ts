@@ -1,4 +1,5 @@
 import type {
+  Annotation,
   DisplayAttachment,
   MessageAttachment,
 } from '@epam/ai-dial-chat-shared';
@@ -27,6 +28,24 @@ export const attachmentDtoToDisplayAttachment = (
     status: RequestStatus.Idle,
     ...(dto.url ? { url: dto.url } : {}),
     ...(isImage && (dto.url || dto.data) && dto.type ? { previewUrl } : {}),
+  };
+};
+
+/** Maps an annotation's source attachment to the display-only attachment model. */
+export const annotationToDisplayAttachment = (
+  annotation: Annotation,
+): DisplayAttachment | null => {
+  const att = annotation.body?.source?.attachment;
+  if (att == null) return null;
+  return {
+    id: att.url,
+    name: att.url.split('/').pop() ?? att.url,
+    contentType: att.type,
+    type: att.type.startsWith('image/')
+      ? AttachmentType.Image
+      : AttachmentType.File,
+    status: RequestStatus.Idle,
+    url: att.url,
   };
 };
 
