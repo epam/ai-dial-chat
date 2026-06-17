@@ -1040,6 +1040,7 @@ export enum MarketplaceI18nKeys {
   SelectDocuments = 'Select documents',
   DocumentsLowercase = 'documents',
   ModelMarketplace = 'Model',
+  ModelEntity = 'model',
   ConfigureToolsets = 'Configure toolsets',
   InstructionsMarketplace = 'Instructions',
   InstructionsPlaceholder = 'Instructions of your application',
