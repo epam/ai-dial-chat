@@ -1,0 +1,22 @@
+.model {
+  color: var(
+    --cat-entity-type-model,
+    var(--controls-bg-accent-primary, #3664e2)
+  );
+}
+
+.toolset {
+  color: var(--cat-entity-type-toolset, var(--text-accent-tertiary, #a972ff));
+}
+
+.mcp {
+  color: var(--cat-entity-type-mcp, var(--text-accent-secondary, #37babc));
+}
+
+.guardrail {
+  color: var(--cat-entity-type-guardrail, var(--bg-orange-400, #d97c27));
+}
+
+.fallback {
+  color: var(--cat-entity-type-fallback, var(--text-secondary, #9fa6bd));
+}

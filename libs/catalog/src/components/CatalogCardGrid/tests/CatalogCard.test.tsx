@@ -33,8 +33,8 @@ vi.mock('../../Highlight/Highlight', () => ({
 vi.mock('../../PricingTag/PricingTag', () => ({
   PricingTag: ({ label }: { label: string }) => <span>{label}</span>,
 }));
-vi.mock('../../ProviderMark/ProviderMark', () => ({
-  ProviderMark: ({ initial }: { initial: string }) => <span>{initial}</span>,
+vi.mock('../../ProviderLogo/ProviderLogo', () => ({
+  ProviderLogo: ({ initial }: { initial: string }) => <span>{initial}</span>,
 }));
 
 const item = {

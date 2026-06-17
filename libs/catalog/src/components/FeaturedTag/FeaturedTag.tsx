@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
-import styles from '../CatalogCardGrid.module.scss';
+import styles from './FeaturedTag.module.scss';
 
 /** Props for FeaturedTag. */
 export interface FeaturedTagProps {

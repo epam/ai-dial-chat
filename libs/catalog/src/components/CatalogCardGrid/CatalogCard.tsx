@@ -1,15 +1,15 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import type { CatalogCardProps } from '../../../models/CatalogCardProps';
-import { EntityTypeBadge } from '../../EntityTypeBadge/EntityTypeBadge';
-import { FolderPath } from '../../FolderPath/FolderPath';
-import { Highlight } from '../../Highlight/Highlight';
-import { PricingTag } from '../../PricingTag/PricingTag';
-import { ProviderMark } from '../../ProviderMark/ProviderMark';
-import styles from '../CatalogCardGrid.module.scss';
-import { FeaturedTag } from './FeaturedTag';
+import type { CatalogCardProps } from '../../models/CatalogCardProps';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
+import { FeaturedTag } from '../FeaturedTag/FeaturedTag';
+import { FolderPath } from '../FolderPath/FolderPath';
+import { Highlight } from '../Highlight/Highlight';
+import { PricingTag } from '../PricingTag/PricingTag';
+import { ProviderLogo } from '../ProviderLogo/ProviderLogo';
+import styles from './CatalogCardGrid.module.scss';
 
 /** Card for the Browse grid with highlighted search text and optional featured styling. */
 export const CatalogCard: FC<CatalogCardProps> = ({
@@ -68,7 +68,7 @@ export const CatalogCard: FC<CatalogCardProps> = ({
       )}
 
       <div className="flex items-center gap-3">
-        <ProviderMark color={item.logoColor} initial={item.logoInitial} />
+        <ProviderLogo color={item.logoColor} initial={item.logoInitial} />
         <div className="min-w-0 flex-1">
           <EntityTypeBadge type={item.type} />
           <div className="mt-0.5 flex items-start gap-1">
@@ -103,9 +103,12 @@ export const CatalogCard: FC<CatalogCardProps> = ({
         <DialGhostIconButton
           icon={
             isStarred ? (
-              <IconStarFilled size={16} className={styles.starFilledIcon} />
+              <IconStarFilled
+                size={DIAL_ICON_SIZE.SM}
+                className={styles.starFilledIcon}
+              />
             ) : (
-              <IconStar size={16} />
+              <IconStar size={DIAL_ICON_SIZE.SM} />
             )
           }
           onClick={handleToggle}
