@@ -51,7 +51,7 @@ const DataRowItem: FC<DataRowItemProps> = ({
           '!border-t-0',
         (isSentinel || isPrevSentinel) && '!border-t-0',
         isNextSentinel && '!border-b !border-b-secondary',
-        'absolute left-0 top-0',
+        'absolute start-0 top-0',
         shouldStretchSentinel ? '' : 'w-full',
       )}
       style={{
