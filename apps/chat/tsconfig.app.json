@@ -63,6 +63,9 @@
       "path": "../../libs/chat-shared/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/starter-buttons/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/conversation-panel/tsconfig.lib.json"
     }
   ]
