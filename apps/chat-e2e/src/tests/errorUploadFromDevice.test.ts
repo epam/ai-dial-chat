@@ -5,7 +5,7 @@ import {
   ImportResolutionOption,
   UploadMenuOptions,
 } from '@/src/testData';
-import { FileUtil, GeneratorUtil } from '@/src/utils';
+import { DateUtil, FileUtil, GeneratorUtil } from '@/src/utils';
 
 dialTest(
   '[Upload from device] Error appears if to load the file with the same name and extension if it already exists in a folder.\n' +
@@ -174,6 +174,9 @@ dialTest(
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
+    const yearMonthSubfolder = DateUtil.getCurrentYearMonth();
+    const uploadFolder = `${ExpectedConstants.fileUploadFolder}/${yearMonthSubfolder}`;
+
     const sanitizedFilename = ExpectedConstants.replacedRestrictedCharsName(
       Attachment.restrictedSemicolonCharFilename,
     );
@@ -191,7 +194,9 @@ dialTest(
     );
 
     await dialTest.step('Upload file with valid name to app', async () => {
-      await fileApiHelper.putFile(Attachment.sunImageName);
+      await fileApiHelper.putFile(Attachment.sunImageName, {
+        parentPath: uploadFolder,
+      });
       await localStorageManager.setShowSideBarPanels();
     });
 
@@ -218,6 +223,7 @@ dialTest(
               {
                 isHttpMethodTriggered: true,
                 triggeredHttpMethod: 'GET',
+                apiHost: uploadFolder,
               },
             ),
         );

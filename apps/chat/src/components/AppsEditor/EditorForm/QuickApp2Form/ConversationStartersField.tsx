@@ -1,5 +1,5 @@
 import { IconTrashX } from '@tabler/icons-react';
-import { FC } from 'react';
+import { FC, FocusEvent } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -52,8 +52,15 @@ export const ConversationStartersList: FC<ConversationStartersListProps> = ({
     }
   };
 
+  const handleContainerBlur = (e: FocusEvent<HTMLDivElement>) => {
+    if (!onBlur) return;
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      onBlur();
+    }
+  };
+
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2" onBlur={handleContainerBlur}>
       {value.map((item, index) => {
         const isLastRow = index === value.length - 1;
 
@@ -62,7 +69,6 @@ export const ConversationStartersList: FC<ConversationStartersListProps> = ({
             <DialInput
               value={item.title}
               onChange={(value) => handleChange(index, 'title', value ?? '')}
-              onBlur={onBlur}
               containerClassName="flex-1"
               placeholder={t(MarketplaceI18nKeys.ButtonTitleTravelTips) ?? ''}
               disabled={disabled}
@@ -70,7 +76,6 @@ export const ConversationStartersList: FC<ConversationStartersListProps> = ({
             <DialInput
               value={item.text}
               onChange={(value) => handleChange(index, 'text', value ?? '')}
-              onBlur={onBlur}
               containerClassName="flex-[2]"
               placeholder={t(MarketplaceI18nKeys.PromptToSendInChat) ?? ''}
               disabled={disabled}

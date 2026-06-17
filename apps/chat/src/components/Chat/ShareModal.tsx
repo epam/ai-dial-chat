@@ -25,7 +25,7 @@ import { ModalState } from '@/src/types/modal';
 import { QuickApp2Config } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
-import { ApplicationActions, ShareActions } from '@/src/store/actions';
+import { ShareActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationSelectors,
@@ -145,12 +145,6 @@ function ShareModalView() {
   const sharingType = useMemo(() => {
     return getShareType(shareFeatureType, isFolder);
   }, [shareFeatureType, isFolder]);
-
-  useEffect(() => {
-    if (entity && isQuickApp2(entity) && shareResourceId) {
-      dispatch(ApplicationActions.get({ applicationId: shareResourceId }));
-    }
-  }, [shareResourceId, entity, dispatch]);
 
   const hasPrivateSkills = useMemo(() => {
     if (!entity || !isQuickApp2(entity)) return false;

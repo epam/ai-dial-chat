@@ -694,6 +694,30 @@ const uploadPromptsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
             );
           }
 
+          const emptySharedFolderIds =
+            payload.cleanUpEmptySharedFolderPaths?.filter(
+              (requestedPath) =>
+                !prompts.some((prompt) =>
+                  prompt.id.startsWith(`${requestedPath}/`),
+                ),
+            ) ?? [];
+
+          if (emptySharedFolderIds.length) {
+            const currentFolders = PromptsSelectors.selectFolders(state$.value);
+            actions.push(
+              of(
+                PromptsActions.setFolders({
+                  folders: currentFolders.filter(
+                    (f) =>
+                      !emptySharedFolderIds.some(
+                        (id) => f.id === id || f.id.startsWith(`${id}/`),
+                      ),
+                  ),
+                }),
+              ),
+            );
+          }
+
           return concat(
             of(
               PromptsActions.addPrompts({

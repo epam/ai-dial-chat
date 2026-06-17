@@ -3309,6 +3309,32 @@ const uploadConversationsFromMultipleFoldersEpic: AppEpic = (action$, state$) =>
             );
           }
 
+          const emptySharedFolderIds =
+            payload.cleanUpEmptySharedFolderPaths?.filter(
+              (requestedPath) =>
+                !conversations.some((conv) =>
+                  conv.id.startsWith(`${requestedPath}/`),
+                ),
+            ) ?? [];
+
+          if (emptySharedFolderIds.length) {
+            const currentFolders = ConversationsSelectors.selectFolders(
+              state$.value,
+            );
+            actions.push(
+              of(
+                ConversationsActions.setFolders({
+                  folders: currentFolders.filter(
+                    (f) =>
+                      !emptySharedFolderIds.some(
+                        (id) => f.id === id || f.id.startsWith(`${id}/`),
+                      ),
+                  ),
+                }),
+              ),
+            );
+          }
+
           return concat(
             of(
               ConversationsActions.addConversations({

@@ -77,6 +77,10 @@ import {
   patchDestinationFolderPopupDom,
   translateFileManagerChrome,
 } from '../translateFileManagerChrome';
+import {
+  UseGridEditingScrollOptions,
+  useGridEditingScroll,
+} from './useGridEditingScroll';
 
 import {
   FeatureType,
@@ -175,6 +179,7 @@ interface UseFileManagerOptions {
     files: LocalDialFileType[];
     folders?: FolderInterface[];
   };
+  gridEditingOptions?: UseGridEditingScrollOptions;
 }
 
 export const useFileManager = ({
@@ -184,6 +189,7 @@ export const useFileManager = ({
   reviewBucket,
   initialTab,
   additionalFilesAndFolders,
+  gridEditingOptions: gridEditingOptionsConfig,
 }: UseFileManagerOptions = {}) => {
   const dispatch = useAppDispatch();
   const router = useRouter();
@@ -307,6 +313,12 @@ export const useFileManager = ({
   );
 
   const isRenamingRef = useRef(false);
+
+  const {
+    freezeItems,
+    additionalGridOptions: gridEditingOptions,
+    reset: resetGridEditing,
+  } = useGridEditingScroll(gridEditingOptionsConfig);
 
   const [uploadingFilesIds, setUploadingFilesIds] = useState<Set<string>>(
     new Set(),
@@ -640,6 +652,8 @@ export const useFileManager = ({
       uploadEnabled,
     };
   }, [files, folders, activeTab, reviewBucket, currentPath, translateChat]);
+
+  const stableFileTreeItems = freezeItems(fileTreeItems);
 
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
@@ -1166,8 +1180,11 @@ export const useFileManager = ({
         emptyStateDescription: searchEmptyDescription,
       }),
       additionalGridOptions: {
+        ...gridEditingOptions,
         overlayComponentParams: {
+          ...gridEditingOptions?.overlayComponentParams,
           loading: {
+            ...gridEditingOptions?.overlayComponentParams?.loading,
             overlayText: loadingOverlayText,
           },
         },
@@ -1176,17 +1193,20 @@ export const useFileManager = ({
           emptyStateDescription: searchEmptyDescription,
         }),
         onGridReady: (params: GridReadyEvent<FileManagerGridRow>) => {
+          gridEditingOptions?.onGridReady?.(params);
           applyGridHeaderLabels(params.api);
         },
         onFirstDataRendered: (
           params: FirstDataRenderedEvent<FileManagerGridRow>,
         ) => {
+          gridEditingOptions?.onFirstDataRendered?.(params);
           applyDefaultFolderNameTranslations(params.api);
           applyGridHeaderLabels(params.api);
         },
         onCellEditingStarted: (
           params: CellEditingStartedEvent<FileManagerGridRow>,
         ) => {
+          gridEditingOptions?.onCellEditingStarted?.(params);
           const folderName = params.data?.name;
           if (folderName) {
             const translated = translateNewFolderName(folderName);
@@ -1196,6 +1216,7 @@ export const useFileManager = ({
           }
         },
         onRowDataUpdated: (params: RowDataUpdatedEvent<FileManagerGridRow>) => {
+          gridEditingOptions?.onRowDataUpdated?.(params);
           applyDefaultFolderNameTranslations(params.api);
           applyGridHeaderLabels(params.api);
         },
@@ -1206,6 +1227,7 @@ export const useFileManager = ({
       applyGridHeaderLabels,
       dateLocale,
       gridActionLabels,
+      gridEditingOptions,
       isSearching,
       loadingOverlayText,
       searchEmptyDescription,
@@ -1543,7 +1565,7 @@ export const useFileManager = ({
     areFilesLoading,
     areFoldersLoading,
     isAnyOperationInProgress,
-    fileTreeItems,
+    fileTreeItems: stableFileTreeItems,
     rootFolder,
     sharedByMePaths,
     isLoadingSearchListing,
@@ -1562,6 +1584,7 @@ export const useFileManager = ({
     destinationFolderPopupOptions,
     deleteConfirmationOptions,
     conflictResolutionPopupOptions,
+    resetGridEditing,
 
     handleSearchFiles,
     handleClearSearch,
