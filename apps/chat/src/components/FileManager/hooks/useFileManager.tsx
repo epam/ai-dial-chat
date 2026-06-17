@@ -1218,7 +1218,6 @@ export const useFileManager = ({
         onRowDataUpdated: (params: RowDataUpdatedEvent<FileManagerGridRow>) => {
           gridEditingOptions?.onRowDataUpdated?.(params);
           applyDefaultFolderNameTranslations(params.api);
-          applyGridHeaderLabels(params.api);
         },
       },
     }),
