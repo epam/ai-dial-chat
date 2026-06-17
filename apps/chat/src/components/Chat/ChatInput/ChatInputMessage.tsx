@@ -24,6 +24,7 @@ import {
   isFormValueValid,
 } from '@/src/utils/app/form-schema';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
 import { DialFile, DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
@@ -585,10 +586,10 @@ export const ChatInputMessage = Inversify.register(
         return t(ChatI18nKeys.WaitForAttachmentToLoad);
       }
       if (isConversationNameInvalid) {
-        return t(errorsMessages.entityNameInvalid);
+        return translateErrorMessage(errorsMessages.entityNameInvalid);
       }
       if (isConversationPathInvalid) {
-        return t(errorsMessages.entityPathInvalid);
+        return translateErrorMessage(errorsMessages.entityPathInvalid);
       }
       if (!isSchemaValueValid) {
         return t(ChatI18nKeys.SelectOneOfOptions);

@@ -568,9 +568,6 @@ export const regenerateApiKeyNameAndVersionParts = (
   return [preparedName, version].join(pathKeySeparator);
 };
 
-export const getPublicationDefaultName = (userName?: string) =>
-  `New request by ${userName ?? 'Unknown Author'}`;
-
 export const allEditedFoldersAreValid = (obj: unknown) => {
   for (const key in obj as Record<string, string>) {
     const value = (obj as Record<string, string>)[key];

@@ -23,8 +23,8 @@ export const errorsMessages = {
     'Server is taking too long to respond due to either poor internet connection or excessive load. Please check your internet connection and try again. You also may try different model.',
   customThemesConfigNotProvided:
     'The custom config host url not provided. Please recheck application settings',
-  errorDuringEntityRequest: (entityType: string) =>
-    `Error happened during ${entityType} request. Please try again later.`,
+  errorDuringEntityRequest:
+    'Error happened during {{entityType}} request. Please try again later.',
   errorGettingUserBucket:
     'Error happened during getting file user bucket. Please contact your administrator or try to reload the page.',
   noModelsAvailable:
@@ -74,10 +74,9 @@ export const errorsMessages = {
     'Fetching application schemas failed. Please try again later.',
   fetchSchemaFailed:
     'Fetching application schema failed. Please try again later.',
-  removeFromMarketplaceFailed: (entityType: string) =>
-    `Failed to remove ${entityType} from my workspace`,
-  addToMarketplaceFailed: (entityType: string) =>
-    `Failed to add ${entityType} to my workspace`,
+  removeFromMarketplaceFailed:
+    'Failed to remove {{entityType}} from my workspace',
+  addToMarketplaceFailed: 'Failed to add {{entityType}} to my workspace',
 
   // Toolsets
   // params: {{name}}

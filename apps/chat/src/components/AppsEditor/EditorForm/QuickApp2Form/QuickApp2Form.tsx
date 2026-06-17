@@ -364,7 +364,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               placeholder={t(MarketplaceI18nKeys.EnterAttachmentTypes)}
               id="attachmentTypes"
               className={classNames(
-                'input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full',
+                'input-form input-invalid peer mx-0 flex items-start py-1 ps-0 md:max-w-full',
                 isAppPublic && 'hover:border-primary',
               )}
               hasDeleteAll

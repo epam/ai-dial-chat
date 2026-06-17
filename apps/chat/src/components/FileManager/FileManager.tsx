@@ -61,6 +61,7 @@ export const FileManager: React.FC = () => {
     toolbarOptions,
     destinationFolderPopupOptions,
     deleteConfirmationOptions,
+    conflictResolutionPopupOptions,
 
     handleSearchFiles,
     handleClearSearch,
@@ -151,6 +152,7 @@ export const FileManager: React.FC = () => {
           onTableFileClick={handleTableFileClick}
           destinationFolderPopupOptions={destinationFolderPopupOptions}
           deleteConfirmationOptions={deleteConfirmationOptions}
+          conflictResolutionPopupOptions={conflictResolutionPopupOptions}
           onUploadFiles={handleUploadFiles}
           onCreateFolder={handleCreateFolder}
           onUploadArchive={handleUploadArchive}

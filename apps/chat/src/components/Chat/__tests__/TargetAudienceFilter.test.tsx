@@ -17,6 +17,30 @@ vi.mock('@/src/utils/app/mobile', () => ({
   isSmallScreen: () => false,
 }));
 
+vi.mock('next/router', () => ({
+  useRouter: vi.fn().mockReturnValue({
+    locale: 'en',
+    push: vi.fn(),
+    replace: vi.fn(),
+  }),
+}));
+
+vi.mock('next-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+    i18n: {
+      language: 'en',
+      getResourceBundle: () => ({}),
+      addResourceBundle: vi.fn(),
+    },
+  }),
+  i18n: {
+    t: (key: string) => key,
+    getResourceBundle: () => ({}),
+    addResourceBundle: vi.fn(),
+  },
+}));
+
 vi.mock('@/src/store/hooks', async () => {
   return {
     useAppSelector: (selector: any) => selector({}),

@@ -22,6 +22,7 @@ import {
   shouldShowConversationsSectionByDefault,
 } from '@/src/utils/app/mobile';
 import { isRtlLocale } from '@/src/utils/app/rtl';
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
@@ -369,7 +370,9 @@ const showToastEpic: AppEpic = (action$) =>
       });
     }),
     tap(({ payload, responseMessage }) => {
-      let message = payload.message ?? errorsMessages.generalServer;
+      let message = translateErrorMessage(
+        payload.message ?? errorsMessages.generalServer,
+      );
       if (
         payload.response &&
         responseMessage &&
