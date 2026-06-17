@@ -20,7 +20,7 @@ import { AttachmentsI18nKeys } from '../../constants/translation-keys';
 import { useAnnotations } from '../../hooks/annotations/useAnnotations';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
 import { useCitationMarkdownComponents } from '../../hooks/citations/useCitationMarkdownComponents';
-import { useCitationPopup } from '../../hooks/citations/useCitationPopup';
+import { useCitationCard } from '../../hooks/citations/useCitationCard';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
 import { groupAnnotationsBySource } from '../../utils/group-annotations-by-source';
 import { messageHasStages } from '../../utils/message-utils';
@@ -139,12 +139,12 @@ const ConversationMessageItem: FC<Props> = ({
     () => groupAnnotationsBySource(annotations),
     [annotations],
   );
-  const citationPopup = useCitationPopup();
+  const citationCard = useCitationCard();
   const { processedContent, markdownComponents } =
     useCitationMarkdownComponents(
       msg.content,
       citationGroups,
-      citationPopup,
+      citationCard,
       handleAttachmentClick,
     );
 

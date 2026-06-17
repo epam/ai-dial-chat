@@ -47,7 +47,7 @@ DIAL Core auto-shares cited files from `custom_content.annotations[].body.source
 
 ### D4 — Popup implemented as a controlled `Popover` anchored to the marker button
 
-**Decision**: Use the UI kit `Popover` (or equivalent positioning primitive) positioned relative to the `<CitationMarker>` button. The popup is a standalone `CitationPopup` component that receives the annotation group as props.
+**Decision**: Use the UI kit `Popover` (or equivalent positioning primitive) positioned relative to the `<CitationMarker>` button. The popup is a standalone `CitationCard` component that receives the annotation group as props.
 
 **Rationale**: The UI kit already provides accessible, focus-managed popovers. Building on it avoids reimplementing z-index stacking, keyboard dismissal, and focus trapping.
 

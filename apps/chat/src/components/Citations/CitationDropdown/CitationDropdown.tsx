@@ -3,7 +3,7 @@ import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback } from 'react';
 import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
 import CitationMarker from '../CitationMarker/CitationMarker';
-import CitationPopup from '../CitationPopup/CitationPopup';
+import CitationCard from '../CitationCard/CitationCard';
 
 interface Props {
   /** The annotation group represented by this marker+popup pair. */
@@ -49,7 +49,7 @@ const CitationDropdown: FC<Props> = ({
       triggerClassName="ms-1 inline-flex align-middle"
       contentClassName="!p-0 !bg-transparent !border-0 !shadow-none !max-w-none !rounded-none"
       tooltip={
-        <CitationPopup
+        <CitationCard
           group={group}
           activeIndex={activeIndex}
           onIndexChange={onIndexChange}

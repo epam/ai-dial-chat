@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CitationsI18nKeys } from '../../../../constants/translation-keys';
 import type { AnnotationGroup } from '../../../../utils/group-annotations-by-source';
-import CitationPopup from '../CitationPopup';
+import CitationCard from '../CitationCard';
 
 // react-i18next is globally mocked — t(key) returns the key string.
 
@@ -33,7 +33,7 @@ const makeGroup = (
 });
 
 const defaultProps = (
-  overrides: Partial<Parameters<typeof CitationPopup>[0]> = {},
+  overrides: Partial<Parameters<typeof CitationCard>[0]> = {},
 ) => ({
   group: makeGroup(),
   activeIndex: 0,
@@ -43,20 +43,20 @@ const defaultProps = (
   ...overrides,
 });
 
-describe('CitationPopup', () => {
+describe('CitationCard', () => {
   it('renders with role="dialog"', () => {
-    render(<CitationPopup {...defaultProps()} />);
+    render(<CitationCard {...defaultProps()} />);
     expect(screen.getByRole('dialog')).toBeTruthy();
   });
 
   it('hides the switcher when there is only one annotation', () => {
-    render(<CitationPopup {...defaultProps({ group: makeGroup(1) })} />);
+    render(<CitationCard {...defaultProps({ group: makeGroup(1) })} />);
     expect(screen.queryByText(CitationsI18nKeys.PopupSwitcher)).toBeFalsy();
   });
 
   it('shows the switcher when there are multiple annotations', () => {
     render(
-      <CitationPopup
+      <CitationCard
         {...defaultProps({ group: makeGroup(3), activeIndex: 0 })}
       />,
     );
@@ -66,7 +66,7 @@ describe('CitationPopup', () => {
   it('calls onIndexChange with incremented index when next is clicked', async () => {
     const onIndexChange = vi.fn();
     render(
-      <CitationPopup
+      <CitationCard
         {...defaultProps({
           group: makeGroup(3),
           activeIndex: 0,
@@ -83,7 +83,7 @@ describe('CitationPopup', () => {
 
   it('previous button is disabled when activeIndex is 0', () => {
     render(
-      <CitationPopup
+      <CitationCard
         {...defaultProps({ group: makeGroup(3), activeIndex: 0 })}
       />,
     );
@@ -95,7 +95,7 @@ describe('CitationPopup', () => {
 
   it('renders body title and quote for the active annotation', () => {
     const group = makeGroup(1);
-    render(<CitationPopup {...defaultProps({ group })} />);
+    render(<CitationCard {...defaultProps({ group })} />);
     expect(screen.getByText('Title 0')).toBeTruthy();
     expect(screen.getByText('Quote 0')).toBeTruthy();
   });
@@ -103,7 +103,7 @@ describe('CitationPopup', () => {
   it('"Preview" button calls onPreview with the active annotation', async () => {
     const onPreview = vi.fn();
     const group = makeGroup(1);
-    render(<CitationPopup {...defaultProps({ group, onPreview })} />);
+    render(<CitationCard {...defaultProps({ group, onPreview })} />);
     await userEvent.click(
       screen.getByRole('button', { name: CitationsI18nKeys.PopupPreview }),
     );
@@ -113,7 +113,7 @@ describe('CitationPopup', () => {
   it('"Open in browser" button calls onOpenInBrowser with the active annotation', async () => {
     const onOpenInBrowser = vi.fn();
     const group = makeGroup(1, 'text/html');
-    render(<CitationPopup {...defaultProps({ group, onOpenInBrowser })} />);
+    render(<CitationCard {...defaultProps({ group, onOpenInBrowser })} />);
     await userEvent.click(
       screen.getByRole('button', {
         name: CitationsI18nKeys.PopupOpenInBrowser,

@@ -17,8 +17,8 @@
 
 ## 4. Citation Popup State Hook — `apps/chat`
 
-- [x] 4.1 Create `apps/chat/src/hooks/citations/useCitationPopup.ts` — tracks open group and active index per group
-- [x] 4.2 Add unit tests for `useCitationPopup` in `apps/chat/src/hooks/citations/tests/useCitationPopup.spec.ts`
+- [x] 4.1 Create `apps/chat/src/hooks/citations/useCitationCard.ts` — tracks open group and active index per group
+- [x] 4.2 Add unit tests for `useCitationCard` in `apps/chat/src/hooks/citations/tests/useCitationCard.spec.ts`
 
 ## 5. `CitationMarker` Component — `apps/chat`
 
@@ -26,17 +26,17 @@
 - [x] 5.2 Add i18n keys `citations.marker.label`, `citations.marker.labelWithOverflow`, `citations.marker.ariaLabel` to `apps/chat/src/i18n/locales/en.json`
 - [x] 5.3 Add unit tests in `apps/chat/src/components/Citations/CitationMarker/tests/CitationMarker.spec.tsx`
 
-## 6. `CitationPopup` Component — `apps/chat`
+## 6. `CitationCard` Component — `apps/chat`
 
-- [x] 6.1 Create `apps/chat/src/components/Citations/CitationPopup/CitationPopup.tsx` — `DialTooltip`-based popover with header (file icon + source name + looping switcher), body (title + optional quote), footer ("Preview" + "Download"/"Open in browser" depending on source type)
+- [x] 6.1 Create `apps/chat/src/components/Citations/CitationCard/CitationCard.tsx` — `DialTooltip`-based popover with header (file icon + source name + looping switcher), body (title + optional quote), footer ("Preview" + "Download"/"Open in browser" depending on source type)
 - [x] 6.2 Add i18n keys `citations.popup.switcher`, `citations.popup.preview`, `citations.popup.openInBrowser`, `citations.popup.download`, `citations.popup.previousCitation`, `citations.popup.nextCitation`, `citations.popup.ariaLabel` to `en.json`
-- [x] 6.3 Add unit tests in `apps/chat/src/components/Citations/CitationPopup/tests/CitationPopup.spec.tsx`
+- [x] 6.3 Add unit tests in `apps/chat/src/components/Citations/CitationCard/tests/CitationCard.spec.tsx`
 
 ## 7. Inline Marker Injection into Assistant Message Renderer — `apps/chat`
 
 - [x] 7.1 Located assistant message markdown renderer and identified injection point (`ConversationMessageItem` → `MessageBubble` → `MDMessageViewer`)
 - [x] 7.2 Implemented sentinel string injection (`⟦C{idx}⟧`) and `replaceSentinelsInChildren` post-processor splitting text nodes at offsets
-- [x] 7.3 Wired `useAnnotations`, `groupAnnotationsBySource`, and `useCitationPopup` into `ConversationMessageItem`; markers suppressed when `isStreaming: true`
+- [x] 7.3 Wired `useAnnotations`, `groupAnnotationsBySource`, and `useCitationCard` into `ConversationMessageItem`; markers suppressed when `isStreaming: true`
 - [x] 7.4 Passed `onOpen` to `CitationDropdown` which wraps `CitationMarker` in a `DialTooltip` (controlled, `placement="bottom-end"`)
 - [x] 7.5 Implemented `onPreview` handler — converts `annotation.body.source.attachment` to `DisplayAttachment` and invokes attachment-preview callback
 - [x] 7.6 Implemented `onOpenInBrowser`/download handler — calls `window.open(url, '_blank', 'noopener,noreferrer')`

@@ -8,9 +8,9 @@ import {
   replaceSentinelsInChildren,
 } from '../../utils/citation-injection';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
-import type { useCitationPopup } from './useCitationPopup';
+import type { useCitationCard } from './useCitationCard';
 
-type CitationPopupHook = ReturnType<typeof useCitationPopup>;
+type CitationCardHook = ReturnType<typeof useCitationCard>;
 
 /**
  * Builds react-markdown component overrides that inject citation markers into
@@ -24,7 +24,7 @@ type CitationPopupHook = ReturnType<typeof useCitationPopup>;
 export const useCitationMarkdownComponents = (
   content: string,
   groups: AnnotationGroup[],
-  citationPopup: CitationPopupHook,
+  citationCard: CitationCardHook,
   onAttachmentPreview: (attachment: DisplayAttachment) => void,
 ): { processedContent: string; markdownComponents: Components } => {
   const onOpenInBrowser = useCallback((annotation: Annotation) => {
@@ -57,13 +57,11 @@ export const useCitationMarkdownComponents = (
         <CitationDropdown
           key={`citation-${group.sourceUrl}`}
           group={group}
-          isOpen={citationPopup.isOpen(group.sourceUrl)}
-          activeIndex={citationPopup.getActiveIndex(group.sourceUrl)}
-          onOpen={() => citationPopup.openPopup(group.sourceUrl)}
-          onClose={citationPopup.closePopup}
-          onIndexChange={(i) =>
-            citationPopup.setActiveIndex(group.sourceUrl, i)
-          }
+          isOpen={citationCard.isOpen(group.sourceUrl)}
+          activeIndex={citationCard.getActiveIndex(group.sourceUrl)}
+          onOpen={() => citationCard.openPopup(group.sourceUrl)}
+          onClose={citationCard.closePopup}
+          onIndexChange={(i) => citationCard.setActiveIndex(group.sourceUrl, i)}
           onPreview={onPreview}
           onOpenInBrowser={onOpenInBrowser}
         />
@@ -82,7 +80,7 @@ export const useCitationMarkdownComponents = (
         </li>
       ),
     };
-  }, [groups, citationPopup, onPreview, onOpenInBrowser]);
+  }, [groups, citationCard, onPreview, onOpenInBrowser]);
 
   return { processedContent, markdownComponents };
 };

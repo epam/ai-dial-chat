@@ -2,9 +2,9 @@
 
 ---
 
-### Requirement: `CitationPopup` renders source details in a positioned tooltip
+### Requirement: `CitationCard` renders source details in a positioned tooltip
 
-`apps/chat/src/components/Citations/CitationPopup/CitationPopup.tsx` SHALL render a panel inside a `DialTooltip` (controlled, `placement="bottom-end"`) anchored to the `CitationMarker` trigger with:
+`apps/chat/src/components/Citations/CitationCard/CitationCard.tsx` SHALL render a panel inside a `DialTooltip` (controlled, `placement="bottom-end"`) anchored to the `CitationMarker` trigger with:
 
 **Header** (horizontal flex, space-between):
 - Left: file type icon (from `getAttachmentIcon`) + source name (`DialEllipsisTooltip` for truncation)
@@ -24,7 +24,7 @@ Panel styling: `w-[400px]`, `bg-layer-0`, `border border-primary`, `rounded-lg`,
 
 The component SHALL accept:
 ```ts
-interface CitationPopupProps {
+interface CitationCardProps {
   group: AnnotationGroup;
   activeIndex: number;
   onIndexChange: (i: number) => void;
@@ -40,12 +40,12 @@ interface CitationPopupProps {
 
 #### Scenario: Single annotation hides the switcher
 
-- **WHEN** `CitationPopup` is rendered with a group containing one annotation
+- **WHEN** `CitationCard` is rendered with a group containing one annotation
 - **THEN** no switcher control is rendered
 
 #### Scenario: Multiple annotations show looping switcher
 
-- **WHEN** `CitationPopup` is rendered with a group of three annotations and `activeIndex={2}`
+- **WHEN** `CitationCard` is rendered with a group of three annotations and `activeIndex={2}`
 - **THEN** clicking next wraps to index `0`
 
 #### Scenario: Body shows title and quote
@@ -75,9 +75,9 @@ interface CitationPopupProps {
 
 ---
 
-### Requirement: Citation popup state managed by `useCitationPopup` hook
+### Requirement: Citation popup state managed by `useCitationCard` hook
 
-`apps/chat/src/hooks/citations/useCitationPopup.ts` SHALL export `useCitationPopup` that:
+`apps/chat/src/hooks/citations/useCitationCard.ts` SHALL export `useCitationCard` that:
 - Tracks `openGroupSourceUrl: string | null` (which group's popup is open, or null when closed).
 - Tracks `activeIndexByGroup: Record<string, number>` (the current switcher index per source URL).
 - Exposes: `openPopup(sourceUrl: string)`, `closePopup()`, `setActiveIndex(sourceUrl: string, index: number)`.
@@ -104,7 +104,7 @@ interface CitationPopupProps {
 
 ### Requirement: "Preview" action opens the cited attachment inline
 
-When the "Preview" button is clicked in `CitationPopup`, the app SHALL invoke the existing attachment-preview flow with the `Annotation.body.source.attachment` converted to a `DisplayAttachment`.
+When the "Preview" button is clicked in `CitationCard`, the app SHALL invoke the existing attachment-preview flow with the `Annotation.body.source.attachment` converted to a `DisplayAttachment`.
 
 #### Scenario: Preview opens the attachment
 

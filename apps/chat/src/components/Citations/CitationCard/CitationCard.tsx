@@ -26,7 +26,7 @@ interface Props {
   onOpenInBrowser: (annotation: Annotation) => void;
 }
 
-const CitationPopup: FC<Props> = ({
+const CitationCard: FC<Props> = ({
   group,
   activeIndex,
   onIndexChange,
@@ -127,4 +127,4 @@ const CitationPopup: FC<Props> = ({
   );
 };
 
-export default memo(CitationPopup);
+export default memo(CitationCard);
