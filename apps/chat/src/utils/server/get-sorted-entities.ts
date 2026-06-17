@@ -1,50 +1,66 @@
 import { EntityType } from '@/src/types/common';
 import { CoreAIEntity, DialAIEntityModel } from '@/src/types/models';
 
-import {
-  DEFAULT_MODEL_ID,
-  DIAL_API_HOST,
-} from '@/src/constants/default-server-settings';
+import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
 
-import { getApiHeaders } from './get-headers';
+import { getEntities } from './get-entities';
 import { logger } from './logger';
 import { mapCoreEntityToDialModel } from './map-core-entity';
 
-import { Agent as HttpAgent } from 'http';
-import { Agent as HttpsAgent } from 'https';
-import fetch from 'node-fetch';
+interface UpstreamTimings {
+  modelsMs: number;
+  applicationsMs: number;
+  bothAwaitMs: number;
+}
 
-const httpAgent = new HttpAgent({ keepAlive: true });
-const httpsAgent = new HttpsAgent({ keepAlive: true });
+async function getAllEntities(accessToken: string, jobTitle: string) {
+  const timings: UpstreamTimings = {
+    modelsMs: 0,
+    applicationsMs: 0,
+    bothAwaitMs: 0,
+  };
 
-const selectKeepAliveAgent = (parsedUrl: { protocol: string }) =>
-  parsedUrl.protocol === 'https:' ? httpsAgent : httpAgent;
+  const measure =
+    (key: keyof Omit<UpstreamTimings, 'bothAwaitMs'>) =>
+    async <T>(factory: () => Promise<T>): Promise<T> => {
+      const start = performance.now();
+      try {
+        return await factory();
+      } finally {
+        timings[key] = performance.now() - start;
+      }
+    };
 
-async function getDeployments(accessToken: string, jobTitle: string) {
-  const start = performance.now();
-  // TODO: add ?interface_type=chat once the backend filter is fixed
-  const url = `${DIAL_API_HOST}/v1/deployments`;
-  const errMsg = 'Request for deployments returned an error';
-  const response = await fetch(url, {
-    headers: getApiHeaders({ jwt: accessToken, jobTitle }),
-    agent: selectKeepAliveAgent,
-  }).catch((error) => {
-    throw new Error(`${errMsg}: ${error.message}`);
-  });
+  const bothStart = performance.now();
+  const [modelsResult, applicationsResult] = await Promise.allSettled([
+    measure('modelsMs')(() =>
+      getEntities<CoreAIEntity<EntityType.Model>[]>(
+        EntityType.Model,
+        accessToken,
+        jobTitle,
+      ),
+    ),
+    measure('applicationsMs')(() =>
+      getEntities<CoreAIEntity<EntityType.Application>[]>(
+        EntityType.Application,
+        accessToken,
+        jobTitle,
+      ),
+    ),
+  ]);
+  timings.bothAwaitMs = performance.now() - bothStart;
 
-  if (response.status !== 200) {
-    throw new Error(`${errMsg} ${response.status}: ${await response.text()}`);
-  }
+  const models: CoreAIEntity<EntityType.Model>[] =
+    modelsResult.status === 'fulfilled'
+      ? modelsResult.value
+      : (logger.error(modelsResult.reason), []);
 
-  const data = (await response.json()) as Array<
-    CoreAIEntity<EntityType.Model | EntityType.Application | EntityType.Toolset>
-  >;
-  // TODO: remove filter once backend supports object-type or interface_type filtering
-  const deployments = data.filter(
-    (e): e is CoreAIEntity<EntityType.Model | EntityType.Application> =>
-      e.object !== EntityType.Toolset,
-  );
-  return { deployments, deploymentsMs: performance.now() - start };
+  const applications: CoreAIEntity<EntityType.Application>[] =
+    applicationsResult.status === 'fulfilled'
+      ? applicationsResult.value
+      : (logger.error(applicationsResult.reason), []);
+
+  return { models, applications, timings };
 }
 
 export const getSortedEntities = async (
@@ -53,27 +69,19 @@ export const getSortedEntities = async (
 ) => {
   const totalStart = performance.now();
   const entities: DialAIEntityModel[] = [];
-
-  let deployments: Array<
-    CoreAIEntity<EntityType.Model> | CoreAIEntity<EntityType.Application>
-  > = [];
-  let deploymentsMs = 0;
-
-  try {
-    const result = await getDeployments(accessToken, jobTitle);
-    deployments = result.deployments;
-    deploymentsMs = result.deploymentsMs;
-  } catch (error) {
-    logger.error(error);
-  }
+  const { models, applications, timings } = await getAllEntities(
+    accessToken,
+    jobTitle,
+  );
 
   const transformStart = performance.now();
-  let defaultModelReference = deployments.find(
+  const preProcessedEntities = [...models, ...applications];
+  let defaultModelReference = preProcessedEntities.find(
     (model) =>
       model.reference === DEFAULT_MODEL_ID || model.id === DEFAULT_MODEL_ID,
   )?.reference;
 
-  for (const entity of deployments) {
+  for (const entity of preProcessedEntities) {
     if (
       entity.capabilities?.embeddings ||
       (entity.object === EntityType.Model &&
@@ -101,23 +109,20 @@ export const getSortedEntities = async (
   const transformMs = performance.now() - transformStart;
   const totalMs = performance.now() - totalStart;
 
-  const timings = {
-    deploymentsMs,
+  const responseTimings = {
+    ...timings,
     transformMs,
     totalMs,
   };
 
   logger.info(
     {
-      ...timings,
-      modelsCount: deployments.filter((e) => e.object === EntityType.Model)
-        .length,
-      applicationsCount: deployments.filter(
-        (e) => e.object === EntityType.Application,
-      ).length,
+      ...responseTimings,
+      modelsCount: models.length,
+      applicationsCount: applications.length,
     },
     'getSortedEntities timing',
   );
 
-  return { entities, timings };
+  return { entities, timings: responseTimings };
 };

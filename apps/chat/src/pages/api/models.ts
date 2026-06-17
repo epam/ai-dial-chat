@@ -25,7 +25,9 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     res.setHeader(
       'Server-Timing',
       [
-        `deployments;dur=${timings.deploymentsMs.toFixed(1)}`,
+        `models;dur=${timings.modelsMs.toFixed(1)}`,
+        `apps;dur=${timings.applicationsMs.toFixed(1)}`,
+        `upstream;dur=${timings.bothAwaitMs.toFixed(1)}`,
         `transform;dur=${timings.transformMs.toFixed(1)}`,
         `total;dur=${timings.totalMs.toFixed(1)}`,
       ].join(', '),
