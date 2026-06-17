@@ -46,8 +46,8 @@ const getEntityTypeLabel = (
       return t(MarketplaceI18nKeys.AppEntity);
     }
     case EntityType.Model: {
-      const model = t(MarketplaceI18nKeys.ModelEntity);
-      if (model !== MarketplaceI18nKeys.ModelEntity) {
+      const model = t(MarketplaceI18nKeys.ModelMarketplace);
+      if (model !== MarketplaceI18nKeys.ModelMarketplace) {
         return model;
       }
 

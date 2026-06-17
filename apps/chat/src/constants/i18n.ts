@@ -1139,7 +1139,6 @@ export enum MarketplaceI18nKeys {
   AppEntity = 'app',
   ToolsetEntity = 'toolset',
   ApplicationEntity = 'application',
-  ModelEntity = 'model',
   ApplicationIsStatus = 'Application is {{status}}',
   MyCredentials = 'My credentials',
   EntireOrganizationCredentials = 'Entire organization credentials',
