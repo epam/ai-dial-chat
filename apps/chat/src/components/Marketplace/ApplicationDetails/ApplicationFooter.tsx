@@ -34,16 +34,14 @@ import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 
 const getEntityTypeLabel = (
   entityType: EntityType,
+  isMobile: boolean,
   t: (key: string) => string,
 ): string => {
   switch (entityType) {
     case EntityType.Application: {
-      const application = t(MarketplaceI18nKeys.ApplicationEntity);
-      if (application !== MarketplaceI18nKeys.ApplicationEntity) {
-        return application;
-      }
-
-      return t(MarketplaceI18nKeys.AppEntity);
+      return isMobile
+        ? t(MarketplaceI18nKeys.AppEntity)
+        : t(MarketplaceI18nKeys.ApplicationEntity);
     }
     case EntityType.Model: {
       const model = t(MarketplaceI18nKeys.ModelMarketplace);
@@ -128,8 +126,8 @@ export const ApplicationDetailsFooter = ({
   );
 
   const translatedEntityTypeLabel = useMemo(
-    () => getEntityTypeLabel(entity.type, t),
-    [entity.type, t],
+    () => getEntityTypeLabel(entity.type, isScreenSmall, t),
+    [entity.type, isScreenSmall, t],
   );
 
   const buttonLabel = showAsUseButton
