@@ -133,7 +133,6 @@ export const Input: FC<InputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const singleRowHeightRef = useRef<number>(0);
-  const restoreCursorPosRef = useRef<number | null>(null);
   const [isMultiLine, setIsMultiLine] = useState(false);
 
   useEffect(() => {
@@ -179,14 +178,14 @@ export const Input: FC<InputProps> = ({
 
   const updateAttachments = useCallback(
     (updater: (current: Attachment[]) => Attachment[]) => {
-      setAttachments((prev) => updater(prev));
+      setAttachments((prev) => {
+        const updated = updater(prev);
+        onAttachmentsChange?.(updated);
+        return updated;
+      });
     },
-    [],
+    [onAttachmentsChange],
   );
-
-  useEffect(() => {
-    onAttachmentsChange?.(attachments);
-  }, [attachments, onAttachmentsChange]);
 
   const uploadAttachment = useCallback(
     async (attachment: Attachment) => {
@@ -280,15 +279,6 @@ export const Input: FC<InputProps> = ({
     }
   };
 
-  useLayoutEffect(() => {
-    const pos = restoreCursorPosRef.current;
-    if (pos != null && isStackedLayout && textareaRef.current) {
-      restoreCursorPosRef.current = null;
-      textareaRef.current.focus();
-      textareaRef.current.setSelectionRange(pos, pos);
-    }
-  }, [isStackedLayout]);
-
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (!e.nativeEvent.isComposing && !isInputDisabled && !isStreaming) {
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -319,13 +309,6 @@ export const Input: FC<InputProps> = ({
       if (!isStreaming && canSend && hasModelSelected) {
         handleSend();
       }
-    } else if (!isStackedLayout) {
-      // A newline will be inserted and the layout will transition from
-      // non-stacked to stacked, remounting the textarea and losing focus.
-      // Capture the position after the inserted '\n' so the layout-effect
-      // can restore both focus and the cursor to the correct location.
-      const pos = e.currentTarget.selectionStart ?? 0;
-      restoreCursorPosRef.current = pos + 1;
     }
   };
 
@@ -435,24 +418,20 @@ export const Input: FC<InputProps> = ({
           retryLabel={retryLabel}
         />
       )}
-      {isStackedLayout && textarea}
-
-      {!hideActionBar && (
+      {hideActionBar ? (
+        isStackedLayout && textarea
+      ) : (
         <div
           className={mergeClasses(
             'flex items-center gap-2',
-            isStackedLayout
-              ? hideAddButton
-                ? 'justify-end'
-                : 'justify-between'
-              : 'flex-wrap desktop:flex-nowrap',
+            isStackedLayout ? 'flex-wrap' : 'flex-wrap desktop:flex-nowrap',
           )}
         >
           {!hideAddButton && (
             <div
               className={mergeClasses(
-                'flex',
-                !isStackedLayout && 'order-2 desktop:order-1',
+                'order-2 flex',
+                !isStackedLayout && 'desktop:order-1',
               )}
             >
               <input
@@ -475,15 +454,20 @@ export const Input: FC<InputProps> = ({
               />
             </div>
           )}
-          {!isStackedLayout && (
-            <div className="order-1 flex w-full min-w-0 items-center self-stretch desktop:order-2 desktop:w-auto desktop:flex-1">
-              {textarea}
-            </div>
-          )}
+          <div
+            className={mergeClasses(
+              'order-1 flex w-full min-w-0 items-center self-stretch',
+              !isStackedLayout &&
+                'desktop:order-2 desktop:w-auto desktop:flex-1',
+            )}
+          >
+            {textarea}
+          </div>
           <div
             className={mergeClasses(
               'flex flex-shrink-0 items-center gap-2',
-              !isStackedLayout && 'order-3 ms-auto desktop:ms-0',
+              'order-3 ms-auto',
+              !isStackedLayout && 'desktop:ms-0',
             )}
           >
             {renderFooterActions ? (

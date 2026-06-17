@@ -11,7 +11,7 @@ export interface HeaderProps {
   title?: ReactNode;
   /**
    * Typography class applied to the title element.
-   * Defaults to `'dial-body-semi-bold-text'`.
+   * Defaults to `'dial-body-semi-text'`.
    */
   titleClassName?: string;
   /** Content rendered in the start (left) group of the header bar. */
@@ -24,7 +24,7 @@ export interface HeaderProps {
 export const Header: FC<HeaderProps> = memo(
   ({
     title,
-    titleClassName = 'dial-body-semi-bold-text',
+    titleClassName = 'dial-body-semi-text',
     leftActions,
     rightActions,
   }) => (

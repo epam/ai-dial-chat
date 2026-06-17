@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { BASE_ICON_SIZE, DialCloseButton } from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DialCloseButton } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { useBottomSheet } from '../../hooks/useBottomSheet';
@@ -17,7 +17,7 @@ export interface BottomSheetShellProps {
   onClose: () => void;
   /** Inline CSS custom properties forwarded to the sheet root for theming. */
   style?: CSSProperties;
-  /** Typography class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
+  /** Typography class applied to the sheet title. Defaults to `'dial-body-semi-text'`. */
   titleClassName?: string;
   /** Extra classes appended to the sheet container (e.g. a max-height constraint). */
   className?: string;
@@ -36,7 +36,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   closeLabel,
   onClose,
   style,
-  titleClassName = 'dial-body-semi-bold-text',
+  titleClassName = 'dial-body-semi-text',
   className,
   children,
 }) => {
@@ -48,7 +48,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
     <>
       {/* Backdrop */}
       <div
-        className="bg-black/50 fixed inset-0 z-40"
+        className={mergeClasses(styles.backdrop, 'fixed inset-0 z-40')}
         onPointerDown={onClose}
         aria-hidden
       />
@@ -70,10 +70,10 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
           <span className={mergeClasses(styles.title, titleClassName)}>
             {title}
           </span>
-          <div className="absolute end-2">
+          <div className="absolute end-4">
             <DialCloseButton
               ariaLabel={closeLabel}
-              size={BASE_ICON_SIZE}
+              size={DIAL_ICON_SIZE.LG}
               onClose={onClose}
             />
           </div>
