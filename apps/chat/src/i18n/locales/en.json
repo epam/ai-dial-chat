@@ -8,6 +8,7 @@
     "welcomeText": "Hello World, good day for prompting!",
     "placeholder": "Ask anything...",
     "streamError": "Something went wrong while generating the response.",
+    "createConversationError": "Failed to create the conversation. Please try again.",
     "deleteMessageTitle": "Confirm deleting message?",
     "deleteMessageDescription": "Are you sure that you want to delete the message?",
     "starterConfirmTitle": "Confirm action",
@@ -197,5 +198,11 @@
       "nextCitation": "Next citation",
       "ariaLabel": "Citation from {{source}}"
     }
+  },
+  "fileDnd": {
+    "overlayTitle": "Attach files",
+    "overlaySubtitle": "Drop files here to attach them to message",
+    "overlayDeniedTitle": "No attachments allowed",
+    "overlayDeniedSubtitle": "Attachments can't be added to message"
   }
 }

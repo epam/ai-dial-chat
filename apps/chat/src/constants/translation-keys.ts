@@ -2,6 +2,7 @@ export enum ChatI18nKeys {
   Placeholder = 'chat.placeholder',
   WelcomeText = 'chat.welcomeText',
   StreamError = 'chat.streamError',
+  CreateConversationError = 'chat.createConversationError',
   DeleteMessageTitle = 'chat.deleteMessageTitle',
   DeleteMessageDescription = 'chat.deleteMessageDescription',
   StarterConfirmTitle = 'chat.starterConfirmTitle',
@@ -184,4 +185,11 @@ export enum CitationsI18nKeys {
   PopupPreviousCitation = 'citations.popup.previousCitation',
   PopupNextCitation = 'citations.popup.nextCitation',
   PopupAriaLabel = 'citations.popup.ariaLabel',
+}
+
+export enum FileDndI18nKeys {
+  OverlayTitle = 'fileDnd.overlayTitle',
+  OverlaySubtitle = 'fileDnd.overlaySubtitle',
+  OverlayDeniedTitle = 'fileDnd.overlayDeniedTitle',
+  OverlayDeniedSubtitle = 'fileDnd.overlayDeniedSubtitle',
 }

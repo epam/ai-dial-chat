@@ -1,0 +1,1 @@
+../../.claude/rules/all-tsx.md

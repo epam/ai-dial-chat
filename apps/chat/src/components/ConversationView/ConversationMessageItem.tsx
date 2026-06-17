@@ -62,6 +62,8 @@ interface Props {
     newAttachments: Attachment[],
   ) => void;
   onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  pendingDropFiles?: File[];
+  onDropFilesConsumed?: () => void;
   deploymentLookup: Record<
     string,
     { displayName: string; iconUrl: string | undefined }
@@ -100,6 +102,8 @@ const ConversationMessageItem: FC<Props> = ({
   onCancelEdit,
   onEditMessage,
   onUploadAttachment,
+  pendingDropFiles,
+  onDropFilesConsumed,
   deploymentLookup,
   effectiveDeploymentId,
   tooltips,
@@ -179,6 +183,8 @@ const ConversationMessageItem: FC<Props> = ({
             saveLabel={saveLabel}
             ariaLabel={editMessageAriaLabel}
             className="w-full max-w-[748px]"
+            pendingDropFiles={pendingDropFiles}
+            onDropFilesConsumed={onDropFilesConsumed}
           />
         </Suspense>
       </div>

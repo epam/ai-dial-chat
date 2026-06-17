@@ -2,6 +2,9 @@
 paths:
   - '**/*.ts'
   - '**/*.tsx'
+globs: '**/*.ts,**/*.tsx'
+applyTo: '**/*.ts,**/*.tsx'
+alwaysApply: false
 ---
 
 # TypeScript conventions
@@ -33,7 +36,7 @@ A component's props interface must never be an inline anonymous type. Its name i
 
 Boolean variables, state, and props must begin with a semantically clear prefix: `is`, `has`, `can`, `should`, or `will`.
 
-```ts
+```text
 // Correct
 isOpen, isLoading, hasError, canSend, shouldRedirect
 

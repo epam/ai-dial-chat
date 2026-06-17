@@ -153,6 +153,25 @@ describe('DeploymentsService', () => {
       expect(result.deployments[0].id).toBe('chat-model');
     });
 
+    it('forwards interface_type filter to DIAL Core on cache miss', async () => {
+      const { service, sdkClient } = makeService();
+
+      await service.listDeployments('user1', 'token', ['chat', 'mcp']);
+
+      expect(sdkClient.getDeploymentsByInterfaceType).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+          }),
+          params: {
+            query: {
+              interface_type: ['chat', 'mcp'],
+            },
+          },
+        }),
+      );
+    });
+
     it('maps application_type_schema_id to applicationTypeSchemaId for application deployments', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({

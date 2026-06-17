@@ -58,6 +58,7 @@ Use these local skills directly:
 - `./.claude/skills/feature-research/SKILL.md` for broad feature research and trade-off analysis
 - `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components
 - `./.claude/skills/responsive-design/SKILL.md` for any UI work that must support both mobile and desktop, or any review of mobile parity
+- `./.claude/skills/dial-docs/SKILL.md` to find the right design doc in `docs/` on demand — app architecture, technical/product requirements, or the auth subsystem (read before changing documented behavior; update the doc in the same commit)
 
 Default behavior:
 

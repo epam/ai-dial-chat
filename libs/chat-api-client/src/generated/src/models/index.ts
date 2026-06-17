@@ -3,6 +3,25 @@
 /**
  *
  * @export
+ * @interface AppConfigDto
+ */
+export interface AppConfigDto {
+  /**
+   * Deployment ID of the ASR model used for transcription. Null when ASR_MODEL is not configured.
+   * @type {object}
+   * @memberof AppConfigDto
+   */
+  asrModelId?: object | null;
+  /**
+   * Maximum audio file size in bytes accepted by the transcription endpoint.
+   * @type {number}
+   * @memberof AppConfigDto
+   */
+  transcribeSizeLimitBytes: number;
+}
+/**
+ *
+ * @export
  * @interface ApplicationDto
  */
 export interface ApplicationDto {
@@ -309,8 +328,21 @@ export interface ConversationDeletionFailureDto {
    * @type {string}
    * @memberof ConversationDeletionFailureDto
    */
-  code: string;
+  code: ConversationDeletionFailureDtoCodeEnum;
 }
+
+/**
+ * @export
+ */
+export const ConversationDeletionFailureDtoCodeEnum = {
+  NotFound: 'NOT_FOUND',
+  Forbidden: 'FORBIDDEN',
+  UpstreamError: 'UPSTREAM_ERROR',
+  Unknown: 'UNKNOWN',
+} as const;
+export type ConversationDeletionFailureDtoCodeEnum =
+  (typeof ConversationDeletionFailureDtoCodeEnum)[keyof typeof ConversationDeletionFailureDtoCodeEnum];
+
 /**
  *
  * @export
@@ -612,7 +644,7 @@ export interface CreateConversationDto {
    */
   firstMessage: string;
   /**
-   * ID of the catalog item (model or application) to use for this conversation
+   * ID of the catalog item (model or application) to use for this conversation. May contain percent-encoded bytes.
    * @type {string}
    * @memberof CreateConversationDto
    */
@@ -623,6 +655,32 @@ export interface CreateConversationDto {
    * @memberof CreateConversationDto
    */
   customContent?: MessageCustomContentDto;
+}
+/**
+ *
+ * @export
+ * @interface DeleteAllConversationsBodyDto
+ */
+export interface DeleteAllConversationsBodyDto {
+  /**
+   * Must be `true` to confirm intentional deletion of all conversations.
+   * @type {boolean}
+   * @memberof DeleteAllConversationsBodyDto
+   */
+  confirm: boolean;
+}
+/**
+ *
+ * @export
+ * @interface DeleteConversationsBodyDto
+ */
+export interface DeleteConversationsBodyDto {
+  /**
+   * Stable DIAL Core conversation IDs to delete. 1–100 IDs. Duplicates are silently deduplicated.
+   * @type {Array<string>}
+   * @memberof DeleteConversationsBodyDto
+   */
+  ids: Array<string>;
 }
 /**
  *
@@ -740,32 +798,6 @@ export interface DeploymentsResponseDto {
    * @memberof DeploymentsResponseDto
    */
   deployments: Array<DeploymentItemDto>;
-}
-/**
- *
- * @export
- * @interface DeleteAllConversationsBodyDto
- */
-export interface DeleteAllConversationsBodyDto {
-  /**
-   * Must be `true` to confirm intentional deletion of all conversations.
-   * @type {boolean}
-   * @memberof DeleteAllConversationsBodyDto
-   */
-  confirm: boolean;
-}
-/**
- *
- * @export
- * @interface DeleteConversationsBodyDto
- */
-export interface DeleteConversationsBodyDto {
-  /**
-   * Stable DIAL Core conversation IDs to delete. 1–100 IDs. Duplicates are silently deduplicated.
-   * @type {Array<string>}
-   * @memberof DeleteConversationsBodyDto
-   */
-  ids: Array<string>;
 }
 /**
  *
@@ -1417,6 +1449,38 @@ export interface ThemeDto {
 /**
  *
  * @export
+ * @interface TranscribeAudio200Response
+ */
+export interface TranscribeAudio200Response {
+  /**
+   *
+   * @type {string}
+   * @memberof TranscribeAudio200Response
+   */
+  transcript?: string;
+}
+/**
+ *
+ * @export
+ * @interface TranscribeAudioDto
+ */
+export interface TranscribeAudioDto {
+  /**
+   * DIAL storage URL of the uploaded audio file.
+   * @type {string}
+   * @memberof TranscribeAudioDto
+   */
+  audioUrl: string;
+  /**
+   * MIME type of the audio file (e.g. audio/webm;codecs=opus).
+   * @type {string}
+   * @memberof TranscribeAudioDto
+   */
+  mimeType: string;
+}
+/**
+ *
+ * @export
  * @interface UpdatePinsDto
  */
 export interface UpdatePinsDto {
@@ -1432,6 +1496,25 @@ export interface UpdatePinsDto {
    * @memberof UpdatePinsDto
    */
   isPinned: boolean;
+}
+/**
+ *
+ * @export
+ * @interface UserConfigDto
+ */
+export interface UserConfigDto {
+  /**
+   * User configuration schema version.
+   * @type {number}
+   * @memberof UserConfigDto
+   */
+  version: number;
+  /**
+   * Pinned conversation identifiers.
+   * @type {Array<string>}
+   * @memberof UserConfigDto
+   */
+  pinnedConversationIds: Array<string>;
 }
 /**
  *

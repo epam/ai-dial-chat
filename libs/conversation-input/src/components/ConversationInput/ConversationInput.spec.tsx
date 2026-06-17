@@ -101,52 +101,19 @@ describe('ConversationInput — attachments', () => {
     vi.unstubAllGlobals();
   });
 
-  const makeDragEvent = (types: string[] = ['Files'], files: File[] = []) => {
-    const items = files.map((f) => ({
-      kind: 'file',
-      type: f.type,
-      getAsFile: () => f,
-    }));
-    return {
-      dataTransfer: {
-        types,
-        files: files as unknown as FileList,
-        items: items as unknown as DataTransferItemList,
-      },
-      preventDefault: vi.fn(),
-    } as unknown as DragEvent;
-  };
-
-  it('shows drop overlay when dragging files over and hides it on drag leave', async () => {
-    const { container } = render(<ConversationInput dropLabel="Drop here" />);
-    const root = container.firstElementChild as HTMLElement;
-
-    const file = new File(['x'], 'x.txt', { type: 'text/plain' });
-    fireEvent.dragEnter(root, makeDragEvent(['Files'], [file]));
-    await waitFor(() => expect(screen.getByText('Drop here')).toBeTruthy());
-
-    fireEvent.dragLeave(root, makeDragEvent(['Files'], [file]));
-    await waitFor(() => expect(screen.queryByText('Drop here')).toBeNull());
-  });
-
-  it('does not show drop overlay for non-file drags', () => {
-    const { container } = render(<ConversationInput dropLabel="Drop here" />);
-    const root = container.firstElementChild as HTMLElement;
-
-    fireEvent.dragEnter(root, makeDragEvent(['text/plain']));
-    expect(screen.queryByText('Drop here')).toBeNull();
-  });
-
-  it('dropping a file creates an attachment card', async () => {
-    const { container } = render(<ConversationInput />);
-    const root = container.firstElementChild as HTMLElement;
+  it('pendingDropFiles creates an attachment card', async () => {
+    const onConsumed = vi.fn();
     const file = new File(['content'], 'report.pdf', {
       type: 'application/pdf',
     });
-
-    fireEvent.drop(root, makeDragEvent(['Files'], [file]));
-
+    render(
+      <ConversationInput
+        pendingDropFiles={[file]}
+        onDropFilesConsumed={onConsumed}
+      />,
+    );
     await waitFor(() => expect(screen.getByText('report')).toBeTruthy());
+    expect(onConsumed).toHaveBeenCalled();
   });
 
   it('pasting an image creates an image attachment card', () => {

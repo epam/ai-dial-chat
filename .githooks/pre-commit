@@ -1,0 +1,12 @@
+#!/bin/sh
+# Hard gate: never let a broken agent-config file land.
+# Validates staged rules/skills/config.yaml/AGENTS.md/CLAUDE.md before the commit.
+# Bypass in emergencies with `git commit --no-verify`.
+
+files=$(git diff --cached --name-only --diff-filter=ACM | grep -E \
+  '^(\.claude/rules/.*\.md|\.claude/skills/.*\.md|AGENTS\.md|CLAUDE\.md|openspec/config\.yaml)$')
+
+[ -z "$files" ] && exit 0
+
+# shellcheck disable=SC2086
+node scripts/validate-agent-docs.mjs $files

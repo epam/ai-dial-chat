@@ -32,8 +32,6 @@ export interface ConversationInputTypography {
   welcomeFontWeight?: string | number;
   /** Line height of the welcome heading. Ignored when `welcomeClassName` is set. */
   welcomeLineHeight?: string | number;
-  /** Tailwind (or custom) class applied to the drop-overlay label. Defaults to `'dial-tiny-text'`. */
-  dropLabelClassName?: string;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;
 }
@@ -87,6 +85,10 @@ export interface EditMessageInputProps {
   menuCloseLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
+  /** Files supplied by a page-level drag-and-drop handler to be added as attachments. */
+  pendingDropFiles?: File[];
+  /** Called after the files have been consumed, signalling the parent to clear its state. */
+  onDropFilesConsumed?: () => void;
 }
 
 /** Props accepted by the `ConversationInput` component. */
@@ -114,10 +116,10 @@ export interface ConversationInputProps {
   styles?: ConversationInputStyles;
   /** Extra class name(s) merged onto the root wrapper element. */
   className?: string;
-  /** Text displayed inside the drag-over overlay. Defaults to `"Drop files here"`. */
-  dropLabel?: string;
-  /** Tailwind (or custom) class applied to the drag-over overlay container. Defaults to `'rounded'`. */
-  dropOverlayClassName?: string;
+  /** Files supplied by a page-level drag-and-drop handler to be added as attachments. */
+  pendingDropFiles?: File[];
+  /** Called after the inner `Input` has consumed `pendingDropFiles`, signalling the parent to clear its state. */
+  onDropFilesConsumed?: () => void;
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
   /**
@@ -162,4 +164,14 @@ export interface ConversationInputProps {
    * - `SendOnEnter.MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
    */
   sendOnEnter?: SendOnEnter;
+  /** When `true`, focuses the textarea on mount. Defaults to `false`. */
+  autoFocus?: boolean;
+  /**
+   * Ordered list of previously sent message strings for the current
+   * conversation (oldest first, most-recent last). When provided, pressing
+   * Up in the textarea recalls the previous entry; pressing Down returns
+   * toward the current draft. Omit or pass an empty array to disable
+   * keyboard history navigation.
+   */
+  messageHistory?: readonly string[];
 }

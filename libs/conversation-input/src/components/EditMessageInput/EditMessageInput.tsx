@@ -1,7 +1,14 @@
 import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { RequestStatus, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialNeutralButton, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
-import { ChangeEvent, type FC, useCallback, useRef, useState } from 'react';
+import {
+  ChangeEvent,
+  type FC,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import type { EditMessageInputProps } from '../../models/ConversationInput';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { Input } from '../Input/Input';
@@ -22,9 +29,17 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   menuTitle = 'Menu',
   menuCloseLabel = 'Close',
   className,
+  pendingDropFiles: externalPendingFiles,
+  onDropFilesConsumed,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDropFiles, setPendingDropFiles] = useState<File[]>([]);
+
+  useEffect(() => {
+    if (!externalPendingFiles?.length) return;
+    setPendingDropFiles(externalPendingFiles);
+    onDropFilesConsumed?.();
+  }, [externalPendingFiles, onDropFilesConsumed]);
   const [currentText, setCurrentText] = useState(message ?? '');
   const [currentNewAttachments, setCurrentNewAttachments] = useState<
     Attachment[]
@@ -61,6 +76,11 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
     }
   };
 
+  const handleDropFilesConsumed = useCallback(
+    () => setPendingDropFiles([]),
+    [],
+  );
+
   const handleFileChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
@@ -77,7 +97,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         isStacked
         hideActionBar
         pendingDropFiles={pendingDropFiles}
-        onDropFilesConsumed={() => setPendingDropFiles([])}
+        onDropFilesConsumed={handleDropFilesConsumed}
         onSend={handleSend}
         onUploadAttachment={onUploadAttachment}
         onChange={setCurrentText}
