@@ -4,7 +4,6 @@ import { Fragment, useCallback } from 'react';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getRuleFilterId } from '@/src/utils/app/publications';
-import { getFilterLabel } from '@/src/utils/app/rules';
 
 import {
   TargetAudienceFilter,
@@ -16,11 +15,10 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { TargetAudienceFilterComponent } from '@/src/components/Chat/Publish/TargetAudienceFilterComponent';
+import { usePublicationFilterTranslation } from '@/src/components/Chat/Publish/usePublicationFilterTranslation';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
 
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
-import startCase from 'lodash-es/startCase';
-import toLower from 'lodash-es/toLower';
 
 interface RulesInputProps {
   isOpen: boolean;
@@ -36,6 +34,8 @@ export const RulesInput = ({
   onSwitchRulesSetter,
 }: RulesInputProps) => {
   const { t } = useTranslation(Translation.Chat);
+  const { translateSource, translateFunction } =
+    usePublicationFilterTranslation();
 
   const handleRemoveFilter = useCallback(
     (removeId: string) => {
@@ -71,10 +71,10 @@ export const RulesInput = ({
             <div className="flex min-h-[30px] items-center justify-center gap-2 break-all rounded bg-accent-primary-alpha px-3 text-xs">
               <div className="flex flex-wrap gap-1 py-2 leading-3">
                 <span className="font-semibold" data-qa="rule-target">
-                  {startCase(toLower(item.source))}
+                  {translateSource(item.source)}
                 </span>
                 <span className="italic" data-qa="rule-function">
-                  {toLower(getFilterLabel(item.filterFunction))}
+                  {translateFunction(item.filterFunction).toLowerCase()}
                 </span>
                 {item.filterParams.map((param, index) => (
                   <Fragment key={index}>

@@ -66,10 +66,10 @@ export const GeneralPreview = ({ entity, dataQA }: GeneralPreviewProps) => {
         className="hidden max-w-full items-center justify-between md:flex xl:justify-end"
         data-qa="preview-toggle-container"
       >
-        <span className="mr-2 flex min-w-0 shrink grow select-none gap-2 text-primary">
+        <span className="me-2 flex min-w-0 shrink grow select-none gap-2 text-primary">
           {t(ChatI18nKeys.Preview)}
         </span>
-        <div className="w-min border-r border-secondary pr-3 xl:border-none xl:pr-0">
+        <div className="w-min border-e border-secondary pe-3 xl:border-none xl:pe-0">
           <ToggleSwitchLabeled
             isOn={isDetailed}
             handleSwitch={handleSwitch}
@@ -81,7 +81,7 @@ export const GeneralPreview = ({ entity, dataQA }: GeneralPreviewProps) => {
         </div>
         <PreviewModeButton
           mode={PreviewMode.closed}
-          className="hidden pl-3 max-xl:flex"
+          className="hidden ps-3 max-xl:flex"
         />
       </div>
       <div className="flex flex-1 items-center justify-center">

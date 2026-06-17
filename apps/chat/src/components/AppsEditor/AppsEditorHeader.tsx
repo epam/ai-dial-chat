@@ -3,6 +3,7 @@ import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
+import { useEditorSaveLabel } from '@/src/hooks/useEditorSaveLabel';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isApplicationType } from '@/src/utils/app/application';
@@ -41,11 +42,6 @@ const tabKeysInfo = {
   },
 };
 
-const applicationTypeNames = {
-  [ApplicationType.CODE_APP]: 'Code app',
-  [ApplicationType.CUSTOM_APP]: 'Custom app',
-};
-
 const generalStepFields = ['name', 'version'];
 
 interface AppsEditorHeaderProps {
@@ -57,13 +53,14 @@ export const AppsEditorHeader = ({
   onTabClick,
   onSave,
 }: AppsEditorHeaderProps) => {
+  const router = useRouter();
   const {
     query: {
       [AppsEditorQuery.Id]: id = '',
       [AppsEditorQuery.Schema]: schemaId = '',
       [AppsEditorQuery.IsCreating]: isCreating,
     },
-  } = useRouter();
+  } = router;
 
   // 1 stands for true
   const isCreatingApp = !id || isTruthyQuery(isCreating);
@@ -97,9 +94,11 @@ export const AppsEditorHeader = ({
   const applicationTypeDisplayName = isSchemaApplicationType
     ? (schema?.[ApplicationTypeSchemaProperties.applicationTypeDisplayName] ??
       '')
-    : applicationTypeNames[
-        decodeURIComponent(schemaId.toString()) as ApplicationType
-      ];
+    : t(
+        decodeURIComponent(schemaId.toString()) === ApplicationType.CODE_APP
+          ? MarketplaceI18nKeys.CodeApp
+          : MarketplaceI18nKeys.CustomApp,
+      );
   const hasCustomEditor =
     !!schema?.[ApplicationTypeSchemaProperties.applicationTypeEditorUrl];
 
@@ -217,10 +216,9 @@ export const AppsEditorHeader = ({
     [applicationTypeDisplayName],
   );
 
-  const saveLabel =
-    isExistingApp && !hasCustomEditor && !isPublicApp
-      ? 'Save and exit'
-      : 'Exit';
+  const saveLabel = useEditorSaveLabel(
+    isExistingApp && !hasCustomEditor && !isPublicApp,
+  );
 
   return (
     <>

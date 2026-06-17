@@ -168,10 +168,7 @@ export const chatErrorHandler = ({
     const config = ERROR_CONFIG[error.code];
     statusCode = config.status;
     const errorMessage = errorsMessages[config.messageKey];
-    fallbackErrorMessage =
-      typeof errorMessage === 'function'
-        ? errorMessage('entity')
-        : errorMessage;
+    fallbackErrorMessage = errorMessage;
 
     if (error.code === '429' && error.message) {
       console.error(error.message);

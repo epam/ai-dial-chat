@@ -1,5 +1,5 @@
 {
-  "Uploading failed. Please, try again":"Uploading failed. Please, try again",
+  "Uploading failed. Please, try again": "Uploading failed. Please, try again",
   "Confirm removing access: {{fileName}}": "Confirm removing access: {{fileName}}",
   "Are you sure you want to remove access to the file for all users?": "Are you sure you want to remove access to the file for all users?",
   "Cancel": "Cancel",
@@ -33,5 +33,10 @@
   "Please check your internet connection and try again.": "Please check your internet connection and try again.",
   "Upload failed": "Upload failed",
   "Failed to download the file. Please, try again": "Failed to download the file. Please, try again",
-  "Deleting file {{fileName}} failed. Please try again later": "Deleting file {{fileName}} failed. Please try again later"
+  "Deleting file {{fileName}} failed. Please try again later": "Deleting file {{fileName}} failed. Please try again later",
+  "deleted": "deleted",
+  "copied": "copied",
+  "moved": "moved",
+  "copying": "copying",
+  "moving": "moving"
 }

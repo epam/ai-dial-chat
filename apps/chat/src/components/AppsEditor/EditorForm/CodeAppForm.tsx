@@ -139,7 +139,7 @@ export const CodeAppForm = () => {
             getItemValue={castToString}
             onChangeSelectedItems={field.onChange}
             placeholder={t(MarketplaceI18nKeys.EnterAttachmentTypes)}
-            className="input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full"
+            className="input-form input-invalid peer mx-0 flex items-start py-1 ps-0 md:max-w-full"
             hasDeleteAll
             hideSuggestions
             itemHeightClassName="h-[31px]"

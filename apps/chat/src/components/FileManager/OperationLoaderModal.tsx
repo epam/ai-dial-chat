@@ -1,6 +1,12 @@
 import { IconFolderShare } from '@tabler/icons-react';
 import { useState } from 'react';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
+import { Translation } from '@/src/types/translation';
+
+import { SideBarI18nKeys } from '@/src/constants/i18n';
+
 import { DialSpinner } from './Spinner';
 
 import { DialLinkButton, DialPopup } from '@epam/ai-dial-ui-kit';
@@ -16,6 +22,7 @@ export const OperationLoaderModal = ({
   text,
   onCancel,
 }: OperationLoaderModalProps) => {
+  const { t } = useTranslation(Translation.SideBar);
   const [isOpen, setIsOpen] = useState(true);
 
   return (
@@ -42,7 +49,7 @@ export const OperationLoaderModal = ({
         </div>
         <DialLinkButton
           className="w-fit"
-          label="Cancel"
+          label={t(SideBarI18nKeys.Cancel)}
           onClick={() => {
             setIsOpen(false);
             onCancel?.();

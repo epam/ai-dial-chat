@@ -1,3 +1,5 @@
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
+
 import { errorsMessages } from '@/src/constants/errors';
 
 export const getEntityNameError = (
@@ -6,13 +8,17 @@ export const getEntityNameError = (
   isExternal: boolean,
 ) => {
   if (isNameInvalid) {
-    return isExternal
-      ? errorsMessages.entityNameInvalidExternal
-      : errorsMessages.entityNameInvalid;
+    return translateErrorMessage(
+      isExternal
+        ? errorsMessages.entityNameInvalidExternal
+        : errorsMessages.entityNameInvalid,
+    );
   } else if (isPathInvalid) {
-    return isExternal
-      ? errorsMessages.entityPathInvalidExternal
-      : errorsMessages.entityPathInvalid;
+    return translateErrorMessage(
+      isExternal
+        ? errorsMessages.entityPathInvalidExternal
+        : errorsMessages.entityPathInvalid,
+    );
   }
   return '';
 };

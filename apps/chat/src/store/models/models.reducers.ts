@@ -6,6 +6,7 @@ import {
   deleteFromMarketplaceEntitiesMap,
   getGroupMarketplaceEntityKey,
 } from '@/src/utils/app/marketplace';
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 import { translate } from '@/src/utils/app/translation';
 
 import { ApplicationStatus } from '@/src/types/applications';
@@ -16,7 +17,6 @@ import {
   InstalledModel,
   PublishRequestDialAIEntityModel,
 } from '@/src/types/models';
-import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_AGENT, RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
@@ -139,11 +139,7 @@ export const modelsSlice = createSlice({
         code: payload.error.status?.toString() ?? 'unknown',
         messageLines: payload.error.statusText
           ? [payload.error.statusText]
-          : [
-              translate(errorsMessages.generalServer, {
-                ns: Translation.Common,
-              }),
-            ],
+          : [translateErrorMessage(errorsMessages.generalServer)],
       } as ErrorMessage;
     },
 
