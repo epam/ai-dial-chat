@@ -10,4 +10,6 @@ export interface DeploymentItem {
   type?: string;
   /** MIME types accepted as input attachments (e.g. `['audio/*', 'image/*']`). Undefined when not specified by DIAL Core. */
   inputAttachmentTypes?: string[];
+  /** Human-readable description of the deployment. */
+  description?: string;
 }

@@ -2,10 +2,10 @@ import { DialConfirmationPopup } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../../constants/routes';
 import { AuthI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { logout } from '../../server-api/auth.api';
+import { ROUTES } from '../../types/routes';
 
 interface Props {
   isOpen: boolean;
@@ -24,7 +24,7 @@ const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
       console.error('Logout request failed', err);
     }
     reset();
-    navigate(ROUTES.LOGIN);
+    navigate(ROUTES.Login);
   };
 
   return (

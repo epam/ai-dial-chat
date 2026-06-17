@@ -8,7 +8,6 @@ import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatch } from 'react-router-dom';
-import { ROUTES } from '../../constants/routes';
 import {
   ConversationPanelI18nKeys,
   NavigationI18nKeys,
@@ -17,6 +16,7 @@ import {
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import SideBarLeft from '../../icons/side-bar-left.svg?react';
 import SideBarRight from '../../icons/side-bar-right.svg?react';
+import { ROUTES } from '../../types/routes';
 import Logo from './Logo';
 
 interface Props {
@@ -31,7 +31,7 @@ const Header: FC<Props> = ({
   onHistoryPanelToggle,
 }) => {
   const { t } = useTranslation();
-  const isConversationRoute = !!useMatch(`${ROUTES.CONVERSATIONS}/*`);
+  const isConversationRoute = !!useMatch(`${ROUTES.Conversations}/*`);
   const { isOpen: isSourcesSidebarOpen, handleOpen: handleOpenSourcesSidebar } =
     useSourcesSidebar();
 

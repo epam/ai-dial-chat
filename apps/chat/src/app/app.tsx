@@ -23,11 +23,11 @@ import RouteFallback from '../components/RouteFallback/RouteFallback';
 import {
   getConversationRoute,
   normalizeConversationId,
-  ROUTES,
 } from '../constants/routes';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import useLocalStorage from '../hooks/useLocalStorage';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
+import { ROUTES } from '../types/routes';
 import { StorageKey } from '../types/storage-key';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
@@ -64,11 +64,11 @@ const App: FC = () => {
     if (isMobile) closeHistoryPanel();
   }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const matchRoot = useMatch(ROUTES.ROOT);
-  const matchConversation = useMatch(`${ROUTES.CONVERSATIONS}/*`);
+  const matchRoot = useMatch(ROUTES.Root);
+  const matchConversation = useMatch(`${ROUTES.Conversations}/*`);
   const isConversationRoute = !!(matchRoot ?? matchConversation);
   const activeConversationId = useMemo(() => {
-    const prefix = `${ROUTES.CONVERSATIONS}/`;
+    const prefix = `${ROUTES.Conversations}/`;
     if (!pathname.startsWith(prefix)) return;
 
     const id = pathname.slice(prefix.length);
@@ -102,7 +102,7 @@ const App: FC = () => {
         activeConversationId={activeConversationId}
         onClose={closeHistoryPanel}
         onSelectConversation={handleSelectConversation}
-        onNewChat={() => navigate(ROUTES.ROOT)}
+        onNewChat={() => navigate(ROUTES.Root)}
       />
 
       <main
@@ -116,9 +116,9 @@ const App: FC = () => {
           onHistoryPanelToggle={toggleHistoryPanel}
         />
         <Routes>
-          <Route path={ROUTES.ROOT} element={<ConversationRoute />} />
+          <Route path={ROUTES.Root} element={<ConversationRoute />} />
           <Route
-            path={ROUTES.CATALOG}
+            path={ROUTES.Catalog}
             element={
               <Suspense fallback={<RouteFallback />}>
                 <CatalogView />

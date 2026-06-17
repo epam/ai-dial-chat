@@ -46,6 +46,8 @@ export enum BasicI18nKeys {
 export enum ButtonsI18nKeys {
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
+  Create = 'buttons.create',
+  Browse = 'buttons.browse',
   Delete = 'buttons.delete',
   DeleteAll = 'buttons.deleteAll',
   Cancel = 'buttons.cancel',
@@ -83,7 +85,10 @@ export enum NavigationI18nKeys {
 
 export enum CatalogI18nKeys {
   AriaLabel = 'catalog.ariaLabel',
-  ComingSoon = 'catalog.comingSoon',
+  PageTitle = 'catalog.pageTitle',
+  FavoritesTitle = 'catalog.favoritesTitle',
+  SearchPlaceholder = 'catalog.searchPlaceholder',
+  NoResultsDescription = 'catalog.noResultsDescription',
 }
 
 export enum DeploymentsI18nKeys {
