@@ -14,11 +14,13 @@ import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import {
+  DialAppToolset,
   DialDeploymentSimpleTool,
   MCPToolset,
   QuickApp2Config,
   UnknownToolset,
   isCodeInterpreterToolset,
+  isDialAppToolset,
   isDialDeploymentToolset,
   isMcpToolset,
 } from '@/src/types/quick-apps';
@@ -66,7 +68,9 @@ const ReviewQuickApp2SectionView = ({
   const { agents, toolsets, unknownToolsets, isCodeInterpreter } = useMemo(
     () =>
       (config.tool_sets ?? []).reduce<{
-        agents: (DialDeploymentSimpleTool & { name: string })[];
+        agents: ((DialAppToolset | DialDeploymentSimpleTool) & {
+          name: string;
+        })[];
         toolsets: (MCPToolset & { name: string })[];
         unknownToolsets: (UnknownToolset & { name: string })[];
         isCodeInterpreter: boolean;
@@ -80,16 +84,23 @@ const ReviewQuickApp2SectionView = ({
                   ? 'appTools'
                   : 'otherTools',
             );
-            acc.agents = appTools.map((tool) => ({
-              ...tool,
-              name: getQuickAppItemNameFromConfig(tool),
-            }));
+            acc.agents.push(
+              ...appTools.map((tool) => ({
+                ...tool,
+                name: getQuickAppItemNameFromConfig(tool),
+              })),
+            );
             acc.unknownToolsets.push(
               ...otherTools.map((tool) => ({
                 ...tool,
                 name: getQuickAppItemNameFromConfig(tool),
               })),
             );
+          } else if (isDialAppToolset(toolset)) {
+            acc.agents.push({
+              ...toolset,
+              name: getQuickAppItemNameFromConfig(toolset),
+            });
           } else if (isMcpToolset(toolset)) {
             acc.toolsets.push({
               ...toolset,
