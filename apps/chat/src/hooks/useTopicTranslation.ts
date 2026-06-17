@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation as useNextTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -6,13 +6,13 @@ import { useRouter } from 'next/router';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import {
-  ensureLocaleNamespaceFromStaticFiles,
-  shouldSupplementLocaleNamespace,
-} from '@/src/utils/app/translation';
-import {
   TOPIC_I18N_KEY_VALUES,
   translateTopicLabel,
 } from '@/src/utils/app/translateTopicLabel';
+import {
+  ensureLocaleNamespaceFromStaticFiles,
+  shouldSupplementLocaleNamespace,
+} from '@/src/utils/app/translation';
 
 import { Translation } from '@/src/types/translation';
 
@@ -48,8 +48,13 @@ export function useTopicTranslation() {
     });
   }, [i18n, router.locale]);
 
-  return {
-    supplementalLabelsVersion,
-    translateTopic: (topic: string) => translateTopicLabel(topic, t),
-  };
+  const translateTopic = useCallback(
+    (topic: string) => {
+      void supplementalLabelsVersion;
+      return translateTopicLabel(topic, t);
+    },
+    [supplementalLabelsVersion, t],
+  );
+
+  return { translateTopic };
 }

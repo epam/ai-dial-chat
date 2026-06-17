@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useTranslation as useNextTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -47,11 +47,21 @@ export function usePublicationFilterTranslation() {
     });
   }, [i18n, router.locale]);
 
-  return {
-    supplementalLabelsVersion,
-    translateSource: (source: string) =>
-      translatePublicationFilterSourceLabel(source, t),
-    translateFunction: (filterType: string) =>
-      translatePublicationFunctionLabel(filterType, t),
-  };
+  const translateSource = useCallback(
+    (source: string) => {
+      void supplementalLabelsVersion;
+      return translatePublicationFilterSourceLabel(source, t);
+    },
+    [supplementalLabelsVersion, t],
+  );
+
+  const translateFunction = useCallback(
+    (filterType: string) => {
+      void supplementalLabelsVersion;
+      return translatePublicationFunctionLabel(filterType, t);
+    },
+    [supplementalLabelsVersion, t],
+  );
+
+  return { translateSource, translateFunction };
 }

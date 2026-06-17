@@ -9,7 +9,11 @@ import {
 } from '@/src/hooks/useFileManagerActionLabels';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { constructPath, formatFileSize, prepareFileName } from '@/src/utils/app/file';
+import {
+  constructPath,
+  formatFileSize,
+  prepareFileName,
+} from '@/src/utils/app/file';
 import {
   buildFileTree,
   convertToUIKitFile,
@@ -51,7 +55,12 @@ import {
   REVIEW_FILES_SECTION,
   SHARED_WITH_ME_FILES_SECTION,
 } from '@/src/constants/fileManager';
-import { ChatI18nKeys, CommonI18nKeys, MarketplaceI18nKeys, SideBarI18nKeys } from '@/src/constants/i18n';
+import {
+  ChatI18nKeys,
+  CommonI18nKeys,
+  MarketplaceI18nKeys,
+  SideBarI18nKeys,
+} from '@/src/constants/i18n';
 import { getEntityNameSchema } from '@/src/constants/validation-helpers';
 
 import {
@@ -62,11 +71,11 @@ import {
 
 import { FilesUploadingModalOptions } from '../FilesUploadingModal';
 import {
-  translateFileManagerChrome,
-  findDestinationFolderPopupRoot,
   findConflictResolutionPopupRoot,
+  findDestinationFolderPopupRoot,
   patchConflictResolutionPopupDom,
   patchDestinationFolderPopupDom,
+  translateFileManagerChrome,
 } from '../translateFileManagerChrome';
 
 import {
@@ -211,13 +220,19 @@ export const useFileManager = ({
   }, [i18n, router.locale]);
 
   const translateChat = useCallback(
-    (key: string) => t(key, { ns: Translation.Chat }),
-    [t],
+    (key: string) => {
+      void supplementalSidebarVersion;
+      return t(key, { ns: Translation.Chat });
+    },
+    [supplementalSidebarVersion, t],
   );
 
   const translateCommon = useCallback(
-    (key: string) => t(key, { ns: Translation.Common }),
-    [t],
+    (key: string) => {
+      void supplementalSidebarVersion;
+      return t(key, { ns: Translation.Common });
+    },
+    [supplementalSidebarVersion, t],
   );
 
   const translateMarketplace = useCallback(
@@ -628,7 +643,9 @@ export const useFileManager = ({
 
   const getDestinationFolderCopyHeader = useCallback(
     (count: number, name: string | undefined) => {
-      const displayName = name ? translateFolderDisplayName(name, router.locale, t) : name;
+      const displayName = name
+        ? translateFolderDisplayName(name, router.locale, t)
+        : name;
       return count === 1 && displayName
         ? t(SideBarI18nKeys.CopyNameTo, { name: displayName })
         : t(SideBarI18nKeys.CopyItemsTo, { count });
@@ -638,7 +655,9 @@ export const useFileManager = ({
 
   const getDestinationFolderMoveHeader = useCallback(
     (count: number, name: string | undefined) => {
-      const displayName = name ? translateFolderDisplayName(name, router.locale, t) : name;
+      const displayName = name
+        ? translateFolderDisplayName(name, router.locale, t)
+        : name;
       return count === 1 && displayName
         ? t(SideBarI18nKeys.MoveNameTo, { name: displayName })
         : t(SideBarI18nKeys.MoveItemsTo, { count });
@@ -896,7 +915,10 @@ export const useFileManager = ({
       return;
     }
 
-    const searchInputIds = ['file-manager-search', 'file-manager-destination-search'];
+    const searchInputIds = [
+      'file-manager-search',
+      'file-manager-destination-search',
+    ];
     const destinationLabels = {
       searchPlaceholder: fileManagerSearchPlaceholder,
       cancelLabel: translateCommon(CommonI18nKeys.Cancel),
@@ -942,12 +964,18 @@ export const useFileManager = ({
 
     const attachDestinationSearchListener = () => {
       const input = document.getElementById('file-manager-destination-search');
-      if (!(input instanceof HTMLInputElement) || input === destinationSearchInput) {
+      if (
+        !(input instanceof HTMLInputElement) ||
+        input === destinationSearchInput
+      ) {
         return;
       }
 
       if (destinationSearchInput && onDestinationSearchInput) {
-        destinationSearchInput.removeEventListener('input', onDestinationSearchInput);
+        destinationSearchInput.removeEventListener(
+          'input',
+          onDestinationSearchInput,
+        );
       }
 
       destinationSearchInput = input;
@@ -955,7 +983,10 @@ export const useFileManager = ({
         cancelAnimationFrame(rafId);
         rafId = requestAnimationFrame(() => patch());
       };
-      destinationSearchInput.addEventListener('input', onDestinationSearchInput);
+      destinationSearchInput.addEventListener(
+        'input',
+        onDestinationSearchInput,
+      );
     };
 
     const attachConflictObserver = (conflictRoot: Element) => {
@@ -1034,7 +1065,10 @@ export const useFileManager = ({
       conflictObserver?.disconnect();
       setupObserver?.disconnect();
       if (destinationSearchInput && onDestinationSearchInput) {
-        destinationSearchInput.removeEventListener('input', onDestinationSearchInput);
+        destinationSearchInput.removeEventListener(
+          'input',
+          onDestinationSearchInput,
+        );
       }
     };
   }, [
@@ -1046,7 +1080,6 @@ export const useFileManager = ({
     translateCommon,
     translateNewFolderName,
     t,
-    supplementalSidebarVersion,
   ]);
 
   const applyDefaultFolderNameTranslations = useCallback(
@@ -1264,7 +1297,7 @@ export const useFileManager = ({
         decideForEach: t(SideBarI18nKeys.DecideForEach),
       },
     }),
-    [supplementalSidebarVersion, t, translateChat, translateCommon],
+    [t, translateChat, translateCommon],
   );
 
   const handleCopyFiles = useCallback(

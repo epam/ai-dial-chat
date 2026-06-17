@@ -1,5 +1,5 @@
-import { IconChevronDown } from '@tabler/icons-react';
 import { Placement } from '@floating-ui/react';
+import { IconChevronDown } from '@tabler/icons-react';
 import { MouseEvent, useCallback, useEffect, useState } from 'react';
 
 import classNames from 'classnames';

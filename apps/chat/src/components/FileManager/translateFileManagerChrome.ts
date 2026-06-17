@@ -159,10 +159,7 @@ export function patchDestinationFolderPopupDom(
       labels.emptyStateDescription,
   };
 
-  const textWalker = document.createTreeWalker(
-    popupRoot,
-    NodeFilter.SHOW_TEXT,
-  );
+  const textWalker = document.createTreeWalker(popupRoot, NodeFilter.SHOW_TEXT);
   let textNode: Node | null = textWalker.nextNode();
 
   while (textNode) {
@@ -263,10 +260,7 @@ export function patchConflictResolutionPopupDom(
     }
   });
 
-  const textWalker = document.createTreeWalker(
-    popupRoot,
-    NodeFilter.SHOW_TEXT,
-  );
+  const textWalker = document.createTreeWalker(popupRoot, NodeFilter.SHOW_TEXT);
   let textNode: Node | null = textWalker.nextNode();
 
   while (textNode) {

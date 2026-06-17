@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 import { useTranslation as useNextTranslation } from 'next-i18next';
 import { useRouter } from 'next/router';
@@ -48,13 +48,9 @@ export function useEditorSaveLabel(isSaveAndExit: boolean) {
     });
   }, [i18n, router.locale]);
 
-  const saveLabel = useMemo(
-    () =>
-      isSaveAndExit
-        ? tChat(ChatI18nKeys.SaveAndExit)
-        : tChat(ChatI18nKeys.Exit),
-    [isSaveAndExit, supplementalLabelsVersion, tChat],
-  );
+  void supplementalLabelsVersion;
 
-  return saveLabel;
+  return isSaveAndExit
+    ? tChat(ChatI18nKeys.SaveAndExit)
+    : tChat(ChatI18nKeys.Exit);
 }

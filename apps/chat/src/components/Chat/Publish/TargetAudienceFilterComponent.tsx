@@ -73,11 +73,8 @@ export function TargetAudienceFilterComponent({
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
   const { t: tChat } = useTranslation(Translation.Chat);
-  const {
-    supplementalLabelsVersion,
-    translateSource,
-    translateFunction,
-  } = usePublicationFilterTranslation();
+  const { translateSource, translateFunction } =
+    usePublicationFilterTranslation();
 
   const [filterFunction, setFilterFunction] = useState<PublicationFunctions>(
     PublicationFunctions.Contain,
@@ -109,12 +106,12 @@ export function TargetAudienceFilterComponent({
 
       return translateSource(source);
     },
-    [emptyTargetLabel, supplementalLabelsVersion, translateSource],
+    [emptyTargetLabel, translateSource],
   );
 
   const formatFunctionLabel = useCallback(
     (filterType: string) => translateFunction(filterType),
-    [supplementalLabelsVersion, translateFunction],
+    [translateFunction],
   );
 
   const handleSaveFilter = useCallback(() => {

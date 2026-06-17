@@ -49,7 +49,7 @@ export const GeneralForm = ({
   isToolsetPublic,
 }: GeneralFormProps) => {
   const { t } = useTranslation(Translation.Common);
-  const { translateTopic, supplementalLabelsVersion } = useTopicTranslation();
+  const { translateTopic } = useTopicTranslation();
 
   const topics = useAppSelector(SettingsSelectors.selectTopics);
   const files = useAppSelector(FilesSelectors.selectFiles);
@@ -70,7 +70,7 @@ export const GeneralForm = ({
         ...topicToOption(topic),
         label: translateTopic(topic),
       })),
-    [topics, translateTopic, supplementalLabelsVersion],
+    [topics, translateTopic],
   );
 
   const getLogoId = useCallback(

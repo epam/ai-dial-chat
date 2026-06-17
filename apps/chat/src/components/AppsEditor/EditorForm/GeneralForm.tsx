@@ -51,7 +51,7 @@ interface GeneralFormProps {
 
 export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
   const { t } = useTranslation(Translation.Common);
-  const { translateTopic, supplementalLabelsVersion } = useTopicTranslation();
+  const { translateTopic } = useTopicTranslation();
   const router = useRouter();
 
   const { [AppsEditorQuery.PublicationUrl]: publicationUrl = '' } =
@@ -89,7 +89,7 @@ export const GeneralForm = ({ onNextClick }: GeneralFormProps) => {
         ...topicToOption(topic),
         label: translateTopic(topic),
       })),
-    [topics, translateTopic, supplementalLabelsVersion],
+    [topics, translateTopic],
   );
 
   const getLogoId = useCallback(

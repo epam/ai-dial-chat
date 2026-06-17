@@ -3,8 +3,8 @@ import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
-import { useTranslation } from '@/src/hooks/useTranslation';
 import { useEditorSaveLabel } from '@/src/hooks/useEditorSaveLabel';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isTruthyQuery } from '@/src/utils/app/route';

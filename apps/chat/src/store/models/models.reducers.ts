@@ -17,7 +17,6 @@ import {
   InstalledModel,
   PublishRequestDialAIEntityModel,
 } from '@/src/types/models';
-import { Translation } from '@/src/types/translation';
 
 import { DEFAULT_AGENT, RECENT_MODELS_COUNT } from '@/src/constants/chat';
 import { errorsMessages } from '@/src/constants/errors';
