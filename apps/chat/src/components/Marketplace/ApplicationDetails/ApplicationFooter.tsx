@@ -44,12 +44,12 @@ const getEntityTypeLabel = (
         : t(MarketplaceI18nKeys.ApplicationEntity);
     }
     case EntityType.Model: {
-      const model = t(MarketplaceI18nKeys.ModelMarketplace);
-      if (model !== MarketplaceI18nKeys.ModelMarketplace) {
+      const model = t(MarketplaceI18nKeys.ModelEntity);
+      if (model !== MarketplaceI18nKeys.ModelEntity) {
         return model;
       }
 
-      return t(MarketplaceI18nKeys.ModelMarketplace);
+      return t(MarketplaceI18nKeys.ModelEntity);
     }
     case EntityType.Toolset: {
       const toolset = t(MarketplaceI18nKeys.ToolsetEntity);
