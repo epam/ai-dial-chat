@@ -134,6 +134,58 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
+   * Deletes every conversation in the authenticated user\'s bucket. Requires { confirm: true } in the request body to prevent accidental deletion. Returns a result counting deleted, already-absent, and failed items.
+   * Delete all conversations in the user bucket
+   */
+  async deleteAllConversationsRaw(
+    requestParameters: DeleteAllConversationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ConversationDeletionResultDto>> {
+    if (requestParameters['deleteAllConversationsBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'deleteAllConversationsBodyDto',
+        'Required parameter "deleteAllConversationsBodyDto" was null or undefined when calling deleteAllConversations().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/deletions/all`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['deleteAllConversationsBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ConversationDeletionResultDto>(response);
+  }
+
+  /**
+   * Deletes every conversation in the authenticated user\'s bucket. Requires { confirm: true } in the request body to prevent accidental deletion. Returns a result counting deleted, already-absent, and failed items.
+   * Delete all conversations in the user bucket
+   */
+  async deleteAllConversations(
+    requestParameters: DeleteAllConversationsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ConversationDeletionResultDto> {
+    const response = await this.deleteAllConversationsRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    * Delete a conversation by path
    */
   async deleteConversationRaw(
@@ -181,59 +233,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Deletes every conversation in the authenticated user\'s bucket.
-   * Delete all conversations in the user bucket
-   */
-  async deleteAllConversationsRaw(
-    requestParameters: DeleteAllConversationsRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<ConversationDeletionResultDto>> {
-    if (requestParameters['deleteAllConversationsBodyDto'] == null) {
-      throw new runtime.RequiredError(
-        'deleteAllConversationsBodyDto',
-        'Required parameter "deleteAllConversationsBodyDto" was null or undefined when calling deleteAllConversations().',
-      );
-    }
-
-    const queryParameters: runtime.HTTPQuery = {};
-
-    const headerParameters: runtime.HTTPHeaders = {};
-
-    headerParameters['Content-Type'] = 'application/json';
-
-    let urlPath = `/api/v1/conversations/deletions/all`;
-
-    const response = await this.request(
-      {
-        path: urlPath,
-        method: 'POST',
-        headers: headerParameters,
-        query: queryParameters,
-        body: requestParameters['deleteAllConversationsBodyDto'],
-      },
-      initOverrides,
-    );
-
-    return new runtime.JSONApiResponse<ConversationDeletionResultDto>(response);
-  }
-
-  /**
-   * Deletes every conversation in the authenticated user\'s bucket.
-   * Delete all conversations in the user bucket
-   */
-  async deleteAllConversations(
-    requestParameters: DeleteAllConversationsRequest,
-    initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<ConversationDeletionResultDto> {
-    const response = await this.deleteAllConversationsRaw(
-      requestParameters,
-      initOverrides,
-    );
-    return await response.value();
-  }
-
-  /**
-   * Deletes up to 100 owned conversations in one request.
+   * Deletes up to 100 owned conversations in one request. Returns a result counting deleted, already-absent, and failed items. Already-absent IDs are treated as success. IDs outside the authenticated bucket are rejected with code FORBIDDEN.
    * Delete selected conversations
    */
   async deleteConversationsRaw(
@@ -270,7 +270,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Deletes up to 100 owned conversations in one request.
+   * Deletes up to 100 owned conversations in one request. Returns a result counting deleted, already-absent, and failed items. Already-absent IDs are treated as success. IDs outside the authenticated bucket are rejected with code FORBIDDEN.
    * Delete selected conversations
    */
   async deleteConversations(

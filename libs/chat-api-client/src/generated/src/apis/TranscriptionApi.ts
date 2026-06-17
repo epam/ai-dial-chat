@@ -14,29 +14,29 @@
 
 import * as runtime from '../runtime';
 import type {
-  ChatCompletionDto,
-  ChatCompletionResponseDto,
+  TranscribeAudio200Response,
+  TranscribeAudioDto,
 } from '../models/index';
 
-export interface SendCompletionRequest {
-  chatCompletionDto: ChatCompletionDto;
+export interface TranscribeAudioRequest {
+  transcribeAudioDto: TranscribeAudioDto;
 }
 
 /**
  *
  */
-export class ChatApi extends runtime.BaseAPI {
+export class TranscriptionApi extends runtime.BaseAPI {
   /**
-   * Send a chat completion request to DIAL Core
+   * Transcribe audio using the configured ASR model
    */
-  async sendCompletionRaw(
-    requestParameters: SendCompletionRequest,
+  async transcribeAudioRaw(
+    requestParameters: TranscribeAudioRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<ChatCompletionResponseDto>> {
-    if (requestParameters['chatCompletionDto'] == null) {
+  ): Promise<runtime.ApiResponse<TranscribeAudio200Response>> {
+    if (requestParameters['transcribeAudioDto'] == null) {
       throw new runtime.RequiredError(
-        'chatCompletionDto',
-        'Required parameter "chatCompletionDto" was null or undefined when calling sendCompletion().',
+        'transcribeAudioDto',
+        'Required parameter "transcribeAudioDto" was null or undefined when calling transcribeAudio().',
       );
     }
 
@@ -46,7 +46,7 @@ export class ChatApi extends runtime.BaseAPI {
 
     headerParameters['Content-Type'] = 'application/json';
 
-    let urlPath = `/api/v1/chat/completions`;
+    let urlPath = `/api/v1/transcription`;
 
     const response = await this.request(
       {
@@ -54,22 +54,22 @@ export class ChatApi extends runtime.BaseAPI {
         method: 'POST',
         headers: headerParameters,
         query: queryParameters,
-        body: requestParameters['chatCompletionDto'],
+        body: requestParameters['transcribeAudioDto'],
       },
       initOverrides,
     );
 
-    return new runtime.JSONApiResponse<ChatCompletionResponseDto>(response);
+    return new runtime.JSONApiResponse<TranscribeAudio200Response>(response);
   }
 
   /**
-   * Send a chat completion request to DIAL Core
+   * Transcribe audio using the configured ASR model
    */
-  async sendCompletion(
-    requestParameters: SendCompletionRequest,
+  async transcribeAudio(
+    requestParameters: TranscribeAudioRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<ChatCompletionResponseDto> {
-    const response = await this.sendCompletionRaw(
+  ): Promise<TranscribeAudio200Response> {
+    const response = await this.transcribeAudioRaw(
       requestParameters,
       initOverrides,
     );
