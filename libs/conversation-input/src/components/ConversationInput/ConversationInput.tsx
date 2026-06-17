@@ -1,6 +1,5 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { useCallback, useState, type FC } from 'react';
-import { useDropzone } from 'react-dropzone';
+import type { FC } from 'react';
 import type { ConversationInputProps } from '../../models/ConversationInput';
 import { Input } from '../Input/Input';
 import styles from './ConversationInput.module.scss';
@@ -16,8 +15,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   welcomeText,
   styles: stylesProp,
   className,
-  dropLabel = 'Drop files here',
-  dropOverlayClassName = 'rounded',
+  pendingDropFiles,
+  onDropFilesConsumed,
   pasteTextThreshold,
   deployments,
   selectedDeploymentId,
@@ -34,23 +33,7 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   autoFocus,
   messageHistory,
 }) => {
-  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
-
-  const handleDropFilesConsumed = useCallback(() => {
-    setPendingFiles([]);
-  }, []);
-
   const { colors, typography } = stylesProp ?? {};
-
-  const { getRootProps, isDragActive } = useDropzone({
-    onDrop: (files) => {
-      if (isInputDisabled) return;
-      setPendingFiles(files);
-    },
-    noClick: true,
-    noKeyboard: true,
-    disabled: isInputDisabled,
-  });
 
   const noCustomClass = !typography?.welcomeClassName;
   const cssVars = buildCssVars({
@@ -72,13 +55,11 @@ export const ConversationInput: FC<ConversationInputProps> = ({
 
   return (
     <div
-      {...getRootProps({
-        style: cssVars,
-        className: mergeClasses(
-          'relative flex w-full flex-col items-center gap-6 px-4 py-5 desktop:p-5',
-          className,
-        ),
-      })}
+      style={cssVars}
+      className={mergeClasses(
+        'relative flex w-full flex-col items-center gap-6 px-4 py-5 desktop:p-5',
+        className,
+      )}
     >
       {welcomeText && (
         <h1
@@ -103,8 +84,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           placeholder={placeholder}
           colors={colors?.input}
           typography={typography?.input}
-          pendingDropFiles={pendingFiles}
-          onDropFilesConsumed={handleDropFilesConsumed}
+          pendingDropFiles={pendingDropFiles}
+          onDropFilesConsumed={onDropFilesConsumed}
           pasteTextThreshold={pasteTextThreshold}
           deployments={deployments}
           selectedDeploymentId={selectedDeploymentId}
@@ -121,21 +102,6 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           autoFocus={autoFocus}
           messageHistory={messageHistory}
         />
-        {isDragActive && (
-          <div
-            className={mergeClasses(
-              styles.dropOverlay,
-              'pointer-events-none absolute inset-0 z-10 flex items-center justify-center border border-dashed',
-              dropOverlayClassName,
-            )}
-          >
-            <span
-              className={typography?.dropLabelClassName ?? 'dial-tiny-text'}
-            >
-              {dropLabel}
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );

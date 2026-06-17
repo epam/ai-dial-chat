@@ -8,6 +8,7 @@ import {
   type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
+import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
@@ -32,16 +33,18 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ButtonsI18nKeys,
   BasicI18nKeys,
+  ButtonsI18nKeys,
   ChatI18nKeys,
-  ConversationPanelI18nKeys,
   ConversationI18nKeys,
+  ConversationPanelI18nKeys,
   DeploymentsI18nKeys,
+  FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import ConversationMessageItem from './ConversationMessageItem';
 
@@ -117,6 +120,7 @@ const ConversationView: FC<Props> = ({
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const isEditActive = !!editingMessageIndexes?.size;
   const {
     items,
     selectedItemId,
@@ -125,6 +129,15 @@ const ConversationView: FC<Props> = ({
     isLoading,
     error,
   } = useDeployments();
+
+  const isAttachmentsAllowed = useMemo(() => {
+    const selectedItem = items.find((item) => item.id === selectedItemId);
+    const types = selectedItem?.inputAttachmentTypes;
+    return types != null && types.length > 0;
+  }, [items, selectedItemId]);
+
+  const { isDragging, pendingFiles, onFilesConsumed } =
+    usePageFileDrag(isAttachmentsAllowed);
 
   const isInputDisabled = useMemo(
     () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
@@ -325,6 +338,20 @@ const ConversationView: FC<Props> = ({
 
   return (
     <>
+      <FileDndOverlay
+        isVisible={isDragging}
+        isAttachmentsAllowed={isAttachmentsAllowed}
+        title={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlayTitle
+            : FileDndI18nKeys.OverlayDeniedTitle,
+        )}
+        subtitle={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlaySubtitle
+            : FileDndI18nKeys.OverlayDeniedSubtitle,
+        )}
+      />
       <div className="relative flex w-full flex-1 flex-col overflow-hidden">
         <div
           ref={containerRef}
@@ -336,6 +363,7 @@ const ConversationView: FC<Props> = ({
         >
           <div className="mx-auto flex w-full max-w-[748px] flex-1 flex-col gap-6 px-4 pt-2">
             {messages.map((msg, index) => {
+              const isThisMessageEditing = editingMessageIndexes?.has(index);
               return (
                 <ConversationMessageItem
                   key={index.toString()}
@@ -378,6 +406,16 @@ const ConversationView: FC<Props> = ({
                   executedLabel={t(ConversationI18nKeys.StagesExecuted)}
                   stepsLabel={(count) =>
                     t(ConversationI18nKeys.StagesStep, { count })
+                  }
+                  pendingDropFiles={
+                    isEditActive && isThisMessageEditing
+                      ? pendingFiles
+                      : undefined
+                  }
+                  onDropFilesConsumed={
+                    isEditActive && isThisMessageEditing
+                      ? onFilesConsumed
+                      : undefined
                   }
                 />
               );
@@ -435,6 +473,8 @@ const ConversationView: FC<Props> = ({
               onUploadAudio={onUploadAudio}
               onTranscribeAudio={onTranscribeAudio}
               sendOnEnter={sendOnEnter}
+              pendingDropFiles={!isEditActive ? pendingFiles : undefined}
+              onDropFilesConsumed={!isEditActive ? onFilesConsumed : undefined}
               autoFocus={!isMobile}
             />
           </Suspense>

@@ -182,5 +182,11 @@
   },
   "attachments": {
     "downloadFile": "Download file"
+  },
+  "fileDnd": {
+    "overlayTitle": "Attach files",
+    "overlaySubtitle": "Drop files here to attach them to message",
+    "overlayDeniedTitle": "No attachments allowed",
+    "overlayDeniedSubtitle": "Attachments can't be added to message"
   }
 }
