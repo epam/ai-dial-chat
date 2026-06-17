@@ -91,14 +91,9 @@ const ChipConfigureButton: React.FC<ChipConfigureButtonProps> = ({
   item,
   onConfigure,
 }) => {
-  const isConfigurableApp =
-    item && isDialAiEntityModel(item) && doesAgentSupportMcp(item);
-
   const handleClick = () => {
     if (item) onConfigure?.(item);
   };
-
-  if (!isConfigurableApp) return null;
 
   return (
     <DialGhostIconButton
@@ -120,6 +115,7 @@ interface ChipBodyProps {
   isInvalid: boolean;
   readonly?: boolean;
   onClick?: (id: string) => void;
+  isConfigurable?: boolean;
 }
 
 const ChipBody: React.FC<ChipBodyProps> = ({
@@ -131,6 +127,7 @@ const ChipBody: React.FC<ChipBodyProps> = ({
   isInvalid,
   readonly,
   onClick,
+  isConfigurable,
 }) => {
   const handleClick = () => {
     if (readonly || isInvalid) return;
@@ -138,9 +135,6 @@ const ChipBody: React.FC<ChipBodyProps> = ({
   };
 
   const isCustomTool = !isApplicationId(id) && !isToolsetId(id) && !item;
-
-  const isConfigurable =
-    !readonly && item && isDialAiEntityModel(item) && doesAgentSupportMcp(item);
 
   return (
     <div
@@ -199,6 +193,13 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
       ? getVersionFromId(id)
       : item.version;
 
+  const isConfigurableApp =
+    !readonly &&
+    typeof onConfigure === 'function' &&
+    !!item &&
+    isDialAiEntityModel(item) &&
+    doesAgentSupportMcp(item);
+
   const tooltipContent = useMemo(() => {
     return (
       <ChipTooltipContent
@@ -225,10 +226,11 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
           isInvalid={isInvalid}
           readonly={readonly}
           onClick={onItemClick}
+          isConfigurable={isConfigurableApp}
         />
       </Tooltip>
 
-      {!readonly && (
+      {isConfigurableApp && (
         <ChipConfigureButton item={item} onConfigure={onConfigure} />
       )}
 
