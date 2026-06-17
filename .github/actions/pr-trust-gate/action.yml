@@ -1,0 +1,204 @@
+name: PR trust gate (M2 reject + fork gate)
+description: >
+  Round-0 gate for AI-agent dispatchers (ADR-0005 M1/M2). Classifies the PR
+  source as trusted (same-repo branch / allowlisted author / trust label) or
+  untrusted (fork), and rejects the run if the PR diff touches agent-trust
+  paths (.claude, CLAUDE.md, .mcp.json, workflows, actions, agents) or adds
+  symlinks. Non-PR events (schedule / workflow_dispatch) are a no-op: they run
+  from the trusted default branch and have no fork surface.
+
+inputs:
+  event_name:
+    description: 'github.event_name (e.g. pull_request, pull_request_target, schedule).'
+    required: true
+  pr:
+    description: "toJSON(github.event.pull_request). Empty or 'null' for non-PR events."
+    required: false
+    default: ''
+  repo:
+    description: 'github.repository (owner/name) — used for the PR-files API call.'
+    required: true
+  github_token:
+    description: 'Token for the gh PR-files API call (github.token is sufficient).'
+    required: true
+  trust_paths:
+    description: >
+      Newline-separated globs that are agent-trust surfaces. A PR touching any
+      of these cannot run the agents. Supports `dir/**` (prefix), `**/name`
+      (basename at any depth incl. root), and exact paths. Case-insensitive.
+    required: false
+    default: |
+      .claude/**
+      **/CLAUDE.md
+      .mcp.json
+      .claude.json
+      .github/workflows/**
+      .github/actions/**
+      agents/**
+  allowed_associations:
+    description: 'Comma-separated author_association values trusted on a fork PR.'
+    required: false
+    default: 'OWNER,MEMBER,COLLABORATOR'
+  trust_label:
+    description: >
+      Optional label that, when present on a fork PR, authorizes the run (the
+      human trust boundary, per ADR-0005 worked example 1). Empty = no label override.
+    required: false
+    default: ''
+  apply_reject_to:
+    description: "Which PRs get the M2 trust-path reject: 'all' (recommended, also catches insiders) or 'external' (untrusted only)."
+    required: false
+    default: 'all'
+  fail_on_untrusted:
+    description: >
+      'true' (default) hard-blocks untrusted (fork) PRs — the internal-only
+      posture. Set 'false' for fork-facing dispatchers that branch on the
+      `trusted` output to run a locked-down M1-M6 flow instead of blocking.
+    required: false
+    default: 'true'
+
+outputs:
+  trusted:
+    description: "'true' if the PR source is trusted, else 'false'. 'true' for non-PR events."
+    value: ${{ steps.gate.outputs.trusted }}
+  reason:
+    description: 'Human-readable basis for the trust decision.'
+    value: ${{ steps.gate.outputs.reason }}
+
+runs:
+  using: composite
+  steps:
+    - id: gate
+      shell: bash
+      env:
+        EVENT_NAME: ${{ inputs.event_name }}
+        PR_JSON: ${{ inputs.pr }}
+        REPO: ${{ inputs.repo }}
+        GH_TOKEN: ${{ inputs.github_token }}
+        TRUST_PATHS: ${{ inputs.trust_paths }}
+        ALLOWED_ASSOC: ${{ inputs.allowed_associations }}
+        TRUST_LABEL: ${{ inputs.trust_label }}
+        APPLY_REJECT: ${{ inputs.apply_reject_to }}
+        FAIL_ON_UNTRUSTED: ${{ inputs.fail_on_untrusted }}
+      run: |
+        set -euo pipefail
+        python3 - <<'PY'
+        import json, os, sys, subprocess, fnmatch
+
+        def emit(k, v):
+            with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+                f.write(f"{k}={v}\n")
+
+        def fail(msg):
+            sys.stderr.write(f"::error::{msg}\n")
+            sys.exit(1)
+
+        event = os.environ["EVENT_NAME"]
+        pr_raw = (os.environ.get("PR_JSON") or "").strip()
+
+        # Non-PR events run from the trusted default branch — nothing to gate.
+        if not pr_raw or pr_raw == "null":
+            print(f"::notice::{event} is not a PR event — trust gate not applicable.")
+            emit("trusted", "true")
+            emit("reason", "non-pr-event")
+            sys.exit(0)
+
+        pr = json.loads(pr_raw)
+        number = pr.get("number")
+        base_repo = ((pr.get("base") or {}).get("repo") or {}).get("full_name")
+        head_repo = ((pr.get("head") or {}).get("repo") or {}).get("full_name")
+        assoc = pr.get("author_association", "") or ""
+        labels = {(l or {}).get("name") for l in (pr.get("labels") or [])}
+
+        allowed = {a.strip() for a in os.environ["ALLOWED_ASSOC"].split(",") if a.strip()}
+        trust_label = (os.environ.get("TRUST_LABEL") or "").strip()
+
+        # --- Fork gate: classify the PR source ---------------------------------
+        # Same-repo branch ⇒ author had write access ⇒ trusted (ADR-0005 §Trust
+        # boundary). Forks need an explicit allow: allowlisted association or a
+        # maintainer-applied trust label.
+        same_repo = bool(base_repo and head_repo and base_repo == head_repo)
+        if same_repo:
+            trusted, why = True, "same-repo branch (push requires write access)"
+        elif assoc in allowed:
+            trusted, why = True, f"author_association={assoc}"
+        elif trust_label and trust_label in labels:
+            trusted, why = True, f"trust label '{trust_label}' present"
+        else:
+            trusted, why = False, f"fork PR from {head_repo} (author_association={assoc}, no trust label)"
+
+        print(f"::notice::PR #{number} trust={str(trusted).lower()} — {why}")
+        emit("trusted", str(trusted).lower())
+        emit("reason", why)
+
+        # --- M2 reject: trust-path edits + symlinks ----------------------------
+        apply = os.environ["APPLY_REJECT"]
+        do_reject = apply == "all" or (apply == "external" and not trusted)
+
+        if do_reject:
+            globs = [g.strip() for g in os.environ["TRUST_PATHS"].splitlines() if g.strip()]
+
+            def path_matches(path, glob):
+                p = path.lower().lstrip("./")
+                g = glob.lower().lstrip("./")
+                if g.endswith("/**"):                       # dir/** → under dir/
+                    base = g[:-3]
+                    return p == base or p.startswith(base + "/")
+                if g.startswith("**/"):                      # **/name → any depth incl. root
+                    suffix = g[3:]
+                    return p == suffix or p.endswith("/" + suffix)
+                return p == g or fnmatch.fnmatch(p, g)       # exact / glob
+
+            # Changed files via the API: reflects the current PR head with no
+            # local history / merge-base gymnastics. --paginate for large PRs.
+            res = subprocess.run(
+                ["gh", "api", "--paginate",
+                 f"repos/{os.environ['REPO']}/pulls/{number}/files",
+                 "--jq", ".[].filename"],
+                capture_output=True, text=True)
+            if res.returncode != 0:
+                fail(f"could not list PR files: {res.stderr.strip()}")
+            changed = [l for l in res.stdout.splitlines() if l]
+
+            offenders = [(p, next(g for g in globs if path_matches(p, g)))
+                         for p in changed if any(path_matches(p, g) for g in globs)]
+
+            # Symlinks introduced by the PR (mode 120000 in the head tree).
+            sym = []
+            if changed:
+                subprocess.run(
+                    ["git", "fetch", "--no-tags", "--depth=1", "origin",
+                     f"refs/pull/{number}/head"],
+                    check=False, capture_output=True)
+                ls = subprocess.run(["git", "ls-tree", "-r", "FETCH_HEAD"],
+                                    capture_output=True, text=True)
+                symset = set()
+                for line in ls.stdout.splitlines():
+                    meta, _, path = line.partition("\t")
+                    parts = meta.split()
+                    if parts and parts[0] == "120000":
+                        symset.add(path)
+                sym = [p for p in changed if p in symset]
+
+            if offenders or sym:
+                for p, g in offenders:
+                    sys.stderr.write(f"::error::PR touches agent-trust path '{p}' (matched '{g}')\n")
+                for p in sym:
+                    sys.stderr.write(f"::error::PR adds/modifies symlink '{p}' (symlinks rejected)\n")
+                fail(
+                    f"M2 reject: {len(offenders)} trust-path edit(s), {len(sym)} symlink(s). "
+                    "A PR that touches agent-trust files (or adds symlinks) cannot run the "
+                    "AI agents — it is a config-poisoning / prompt-injection vector. Split "
+                    "trust-file changes into a separate, human-reviewed PR.")
+            print(f"::notice::M2 reject passed — no trust-path edits or symlinks in {len(changed)} changed file(s).")
+        else:
+            print("::notice::M2 reject skipped (apply_reject_to=external and PR is trusted).")
+
+        # --- Fork-gate enforcement ---------------------------------------------
+        if not trusted and os.environ["FAIL_ON_UNTRUSTED"] == "true":
+            hint = f"add the '{trust_label}' label" if trust_label else "configure a trust_label and apply it"
+            fail(
+                f"Fork gate: untrusted PR ({why}). Secret-bearing agents will not run. "
+                f"A maintainer can {hint} to authorize, or set fail_on_untrusted=false "
+                "to run a locked-down (ADR-0005 M1-M6) fork flow.")
+        PY

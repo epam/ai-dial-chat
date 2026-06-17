@@ -2,11 +2,12 @@
 # Discover agents whose manifests match a given GitHub event, validate each
 # manifest against the schema, apply kill-switch vars, honor trigger filters
 # (branches, labels), validate `permissions:` against the platform-supported
-# set, and group results into topologically-sorted rounds.
+# set, validate the `needs:` DAG (prune agents whose deps are unavailable, fail
+# on cycles), and emit the matched agents as a flat list.
 #
-# Output: JSON object with round1..roundN arrays. Each entry includes per-agent
-# runtime metadata: {name, needs, timeout_minutes, concurrency_group}.
-# Dispatcher caps active rounds at MAX_ROUNDS.
+# Output: {"agents": [...]} — each entry has {name, needs, timeout_minutes,
+# concurrency_group}. The dispatcher runs them all in ONE matrix; each agent
+# waits for its own `needs:` upstreams inside its job, so there are no rounds.
 import argparse
 import glob
 import json
@@ -36,7 +37,6 @@ for _ch in "yYnNoO":
             if tag != "tag:yaml.org,2002:bool"
         ]
 
-MAX_ROUNDS = 3
 DEFAULT_TIMEOUT = 15
 
 # Platform-supported permissions. Any manifest requesting permissions OUTSIDE
@@ -218,17 +218,14 @@ def main():
             event_ctx = json.load(f) or {}
 
     agents = discover_agents(args.root, args.event, event_ctx, vars_dict, schema)
+    # topo_sort_rounds still runs — for cycle detection and for pruning agents
+    # whose `needs:` are unavailable — but we flatten its output: the dispatcher
+    # no longer uses rounds. Every matched agent runs in one matrix and waits for
+    # its own `needs:` upstream jobs, so per-edge scheduling replaces round
+    # barriers (a dependent starts as soon as ITS upstream is done).
     rounds = topo_sort_rounds(agents)
-
-    if len(rounds) > MAX_ROUNDS:
-        overflow = sum(len(r) for r in rounds[MAX_ROUNDS:])
-        fail(
-            f"dependency chain has {len(rounds)} rounds; dispatcher caps at {MAX_ROUNDS}. "
-            f"{overflow} downstream agents would not run. Shorten the chain or raise MAX_ROUNDS."
-        )
-
-    output = {f"round{i + 1}": rounds[i] if i < len(rounds) else [] for i in range(MAX_ROUNDS)}
-    print(json.dumps(output))
+    flat = [a for r in rounds for a in r]
+    print(json.dumps({"agents": flat}))
 
 
 if __name__ == "__main__":

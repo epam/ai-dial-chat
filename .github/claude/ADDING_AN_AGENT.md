@@ -69,6 +69,21 @@ Five fields. That's the entire required surface.
 
 ---
 
+## PR agents vs batch/scheduled agents
+
+The minimal manifest above is a **PR agent** — it runs on `pull_request` and
+posts a sticky comment. Agents can also run on a schedule or manual dispatch
+(triage a standing backlog, nightly audits) by declaring
+`triggers: [pull_request, schedule, workflow_dispatch]`, and can keep their
+output private (encrypted artifact + counts-only job summary) with
+`private_output: true`. See
+[`../../docs/sdlc/scheduled-batch-agents.md`](../../docs/sdlc/scheduled-batch-agents.md)
+for the as-built batch pattern and
+[`AGENT_REFERENCE.md`](./AGENT_REFERENCE.md) for `secrets`, `analysis_ref`,
+`private_output`, and `emit_sarif`.
+
+---
+
 ## Disabling a live agent
 
 Set the kill-switch variable `STAGE_<NAME_UPPER>_ENABLED=false` in

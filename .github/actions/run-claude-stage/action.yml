@@ -31,6 +31,14 @@ inputs:
     description: 'Comma-separated names of upstream agents whose stage-output.json artifacts have been downloaded into upstream/<name>/ (same value the calling workflow passes to the gh run download step). Used to render the per-agent upstream-inputs section of the composed prompt.'
     required: false
     default: ''
+  private_output:
+    description: 'When "true", encrypt stage-output.json (openssl, key from SDLC_ARTIFACT_KEY in env) before uploading it as an artifact, so the artifact is not readable on a public repo. Local plaintext is consumed on the runner first (verify/render/SARIF) then removed.'
+    required: false
+    default: 'false'
+  emit_sarif:
+    description: 'When "true", convert payload.findings[] to SARIF and upload to GitHub code scanning (Security tab). Scoped to ANALYSIS_REF_FULL/ANALYSIS_SHA from env when set (the scanned branch), else the current ref/sha.'
+    required: false
+    default: 'false'
 
 outputs:
   message:
@@ -154,7 +162,19 @@ runs:
           ARGS="${ARGS} --verbose"
         fi
         if [ -n "${MODEL}" ]; then
-          ARGS="${ARGS} --model ${MODEL}"
+          # In DIAL mode (SDLC_DIAL_MODE=1, set by run-agent's inference-route
+          # step) route the model through DIAL's Anthropic-compatible deployment
+          # as `dial,anthropic.<model>`. Manifests stay provider-agnostic
+          # (model: claude-sonnet-4-6); the platform adds the routing.
+          if [ "${SDLC_DIAL_MODE:-}" = "1" ]; then
+            # Route to the DIAL deployment: prefer the explicit DIAL_MODEL id
+            # (set by run-agent from vars.DIAL_MODEL — DIAL deployment names
+            # rarely match Anthropic model strings), else assume an
+            # `anthropic.<model>` deployment exists.
+            ARGS="${ARGS} --model dial,${SDLC_DIAL_MODEL:-anthropic.${MODEL}}"
+          else
+            ARGS="${ARGS} --model ${MODEL}"
+          fi
         fi
         # Append `Write` to allowed_tools so the agent can produce
         # stage-output.json. Every agent needs this — structural, not
@@ -207,7 +227,7 @@ runs:
 
     - name: Run Claude
       id: claude
-      uses: anthropics/claude-code-action@787c5a0ce96a9a6cfb050ea0c8f4c05f2447c251 # v1.0.133
+      uses: anthropics/claude-code-action@11ba60486e4aec9ddfeafcf4bb3f00b028ac2c16 # v1.0.142
       with:
         anthropic_api_key: ${{ env.ANTHROPIC_API_KEY }}
         # Pass the runner's GITHUB_TOKEN directly so the action skips its
@@ -224,6 +244,57 @@ runs:
         prompt: ${{ steps.prep.outputs.prompt }}
         claude_args: ${{ steps.prep.outputs.claude_args }}
 
+    - name: Persist input prompt (audit)
+      # Baseline audit (ADR-0005): persist INPUT alongside output, so a run can
+      # be reconstructed from "what was sent" + "what came back". Captures the
+      # composed prompt + agent-facing schema. `always()` so a failed/garbled
+      # agent run is still auditable. Encrypted for private_output agents to
+      # match the output artifact (public repo → world-downloadable artifacts);
+      # the prompt is wrapper boilerplate + skill/upstream names today, but
+      # encrypting keeps the "private agent ⇒ ciphertext" invariant if the
+      # composition ever starts inlining sensitive context.
+      # Guard inside bash, not via hashFiles(): hashFiles only globs under
+      # GITHUB_WORKSPACE, and the prompt lives in runner.temp.
+      if: always()
+      shell: bash
+      env:
+        PRIVATE_OUTPUT: ${{ inputs.private_output }}
+        RUNNER_TEMP: ${{ runner.temp }}
+      run: |
+        set -euo pipefail
+        if [ ! -f "${RUNNER_TEMP}/composed-prompt.md" ]; then
+          echo "::notice::no composed prompt to persist (prep did not complete)"
+          exit 0
+        fi
+        AUDIT_DIR="${RUNNER_TEMP}/stage-input"
+        mkdir -p "$AUDIT_DIR"
+        cp "${RUNNER_TEMP}/composed-prompt.md" "$AUDIT_DIR/composed-prompt.md"
+        [ -f "${RUNNER_TEMP}/agent-schema.json" ] && cp "${RUNNER_TEMP}/agent-schema.json" "$AUDIT_DIR/agent-schema.json" || true
+        if [ "${PRIVATE_OUTPUT}" = "true" ]; then
+          if [ -z "${SDLC_ARTIFACT_KEY:-}" ]; then
+            echo "::error::private_output is true but SDLC_ARTIFACT_KEY is not in env — cannot encrypt the audit input. Add it to the agent manifest \`secrets:\` and repo/org Actions secrets."
+            exit 1
+          fi
+          for f in "$AUDIT_DIR"/*; do
+            openssl enc -aes-256-cbc -pbkdf2 -salt -in "$f" -out "$f.enc" -pass env:SDLC_ARTIFACT_KEY
+            rm -f "$f"
+          done
+          echo "Persisted encrypted audit input (private agent)."
+        else
+          echo "Persisted audit input (plaintext)."
+        fi
+
+    - name: Upload input prompt artifact
+      # if-no-files-found: ignore — the dir is absent when prep didn't complete
+      # (the persist step above exits early); no audit input to upload then.
+      if: always()
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+      with:
+        name: stage-input-${{ inputs.stage_name }}
+        path: ${{ runner.temp }}/stage-input/
+        retention-days: 90
+        if-no-files-found: ignore
+
     - name: Verify stage-output.json
       shell: bash
       run: |
@@ -233,8 +304,10 @@ runs:
           exit 1
         fi
         echo "stage-output.json present ($(wc -c < stage-output.json) bytes)"
-        echo "--- contents ---"
-        cat stage-output.json
+        # Do NOT cat the file: this repo is PUBLIC and run logs are world-
+        # readable, so dumping the findings here would leak internal security
+        # data. The renderer validates shape in the next step; the artifact
+        # carries the full content for the (private, in-run) chain handoff.
 
     - name: Validate and render sticky comment
       id: extract
@@ -244,24 +317,121 @@ runs:
         AGENT_VERSION: ${{ inputs.agent_version }}
       run: python3 ./.github/claude/scripts/render-stage-comment.py
 
+    - name: Scrub output (M4 — secret scan + URL/HTML neutralize)
+      # ADR-0005 M4: deterministic, LLM-free, fail-closed gate on the rendered
+      # PUBLIC body before any posting step. Fails the stage on a secret hit
+      # (stops "Comment and Control") and neutralizes outbound-exfil vectors
+      # (zero-click images, non-allowlisted links, dangerous HTML). The posting
+      # steps below consume `steps.scrub.outputs.comment` — the scrubbed body —
+      # never the raw render. Only runs for public (non-private_output) agents;
+      # private agents publish counts-only aggregates, not this body.
+      id: scrub
+      if: inputs.private_output != 'true' && steps.extract.outputs.comment != ''
+      shell: bash
+      env:
+        BODY: ${{ steps.extract.outputs.comment }}
+        GITHUB_SERVER_URL: ${{ github.server_url }}
+      run: python3 ./.github/claude/scripts/scrub-output.py
+
+    - name: Emit SARIF to code scanning
+      # Convert payload.findings[] -> SARIF and upload to the Security tab (a
+      # write-access-gated surface, unlike public PR comments/summaries). Runs
+      # on the local plaintext, BEFORE the encrypt step removes it. Scoped to
+      # the scanned branch/commit (ANALYSIS_*) when analysis_ref is set, so
+      # alerts render against real code; falls back to the current ref/sha.
+      if: inputs.emit_sarif == 'true' && hashFiles('stage-output.json') != ''
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        REPO: ${{ github.repository }}
+      run: |
+        set -euo pipefail
+        python3 ./.github/claude/scripts/findings-to-sarif.py stage-output.json triage.sarif
+        SARIF_REF="${ANALYSIS_REF_FULL:-$GITHUB_REF}"
+        SARIF_SHA="${ANALYSIS_SHA:-$GITHUB_SHA}"
+        B64="$(gzip -c triage.sarif | base64 -w0)"
+        echo "Uploading SARIF for ${SARIF_REF}@${SARIF_SHA:0:7}"
+        gh api -X POST "repos/${REPO}/code-scanning/sarifs" \
+          -f commit_sha="${SARIF_SHA}" \
+          -f ref="${SARIF_REF}" \
+          -f sarif="${B64}" \
+          && echo "SARIF accepted by code scanning." \
+          || { echo "::warning::SARIF upload failed (code scanning may be disabled, or ref/sha not accepted). Triage still succeeded."; }
+
+    - name: Publish aggregate report (sensitive agents)
+      # private_output (sensitive) agents publish ONLY aggregate counts — no file
+      # paths, per-finding verdicts, or any detail — to the Actions run's job
+      # summary (the pipeline view), NOT a PR comment: these are batch/scheduled
+      # agents over a standing backlog, not PR reviewers. Counts are safe on a
+      # public repo. Runs on the local plaintext, BEFORE the encrypt step removes it.
+      if: inputs.private_output == 'true' && hashFiles('stage-output.json') != ''
+      shell: bash
+      run: |
+        set -euo pipefail
+        python3 ./.github/claude/scripts/findings-aggregate.py stage-output.json >> "$GITHUB_STEP_SUMMARY"
+        echo "Published aggregate counts to the job summary."
+
+    - name: Encrypt stage output (private agents)
+      # Runs AFTER the renderer (and any SARIF emitter) have consumed the local
+      # plaintext. Encrypts stage-output.json -> stage-output.json.enc and
+      # removes the plaintext, so only ciphertext is uploaded as an artifact —
+      # required on a PUBLIC repo, where artifacts are world-downloadable. The
+      # key (SDLC_ARTIFACT_KEY) is injected by run-agent from the manifest's
+      # declared secrets; the downstream agent's run-agent decrypts it.
+      if: inputs.private_output == 'true' && hashFiles('stage-output.json') != ''
+      shell: bash
+      run: |
+        set -euo pipefail
+        if [ -z "${SDLC_ARTIFACT_KEY:-}" ]; then
+          echo "::error::private_output is true but SDLC_ARTIFACT_KEY is not in env. Add it to the agent's manifest \`secrets:\` list and the repo/org Actions secrets."
+          exit 1
+        fi
+        openssl enc -aes-256-cbc -pbkdf2 -salt \
+          -in stage-output.json -out stage-output.json.enc -pass env:SDLC_ARTIFACT_KEY
+        rm -f stage-output.json
+        echo "Encrypted stage-output.json -> stage-output.json.enc (plaintext removed)"
+
     - name: Upload stage output artifact
-      if: always() && hashFiles('stage-output.json') != ''
+      # Uploads whichever exists: stage-output.json (public agents) or
+      # stage-output.json.enc (private_output agents). The artifact name is the
+      # same either way; the downstream decrypt step handles the .enc variant.
+      if: always() && (hashFiles('stage-output.json') != '' || hashFiles('stage-output.json.enc') != '')
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: stage-output-${{ inputs.stage_name }}
-        path: stage-output.json
+        path: |
+          stage-output.json
+          stage-output.json.enc
         retention-days: 90
         if-no-files-found: warn
 
+    - name: Publish to job summary
+      # FULL detail — only for NON-sensitive agents (private_output != true).
+      # Sensitive agents use the aggregate (counts-only) step above instead,
+      # because this repo is public and the job summary is world-readable.
+      if: inputs.private_output != 'true' && steps.scrub.outputs.comment != ''
+      shell: bash
+      env:
+        STAGE_NAME: ${{ inputs.stage_name }}
+        BODY: ${{ steps.scrub.outputs.comment }}
+      run: |
+        {
+          echo "## ${STAGE_NAME}"
+          echo ""
+          echo "${BODY}"
+        } >> "$GITHUB_STEP_SUMMARY"
+
     - name: Post sticky PR comment
-      if: github.event_name == 'pull_request'
+      # FULL detail — only for NON-sensitive agents (private_output != true).
+      # Sensitive agents post the aggregate (counts-only) sticky comment above.
+      if: github.event_name == 'pull_request' && inputs.private_output != 'true' && steps.scrub.outputs.comment != ''
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
         PR_NUMBER: ${{ github.event.pull_request.number }}
         REPO: ${{ github.repository }}
         STAGE_NAME: ${{ inputs.stage_name }}
-        BODY: ${{ steps.extract.outputs.comment }}
+        BODY: ${{ steps.scrub.outputs.comment }}
       run: |
         set -euo pipefail
         MARKER="<!-- dial-sdlc:${STAGE_NAME} -->"

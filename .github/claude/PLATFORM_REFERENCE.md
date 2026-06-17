@@ -4,8 +4,9 @@ For **platform maintainers**, not agent authors. The author quickstart is
 [`ADDING_AN_AGENT.md`](./ADDING_AN_AGENT.md); exhaustive author detail is
 in [`AGENT_REFERENCE.md`](./AGENT_REFERENCE.md).
 
-Covers: framework relationship, context tiers, cross-run state consumption,
-and triggers for updating platform docs.
+Covers: framework relationship, dispatch architecture, the security model
+(ADR-0005), the `analysis_ref` overlay, private/encrypted output, context
+tiers, cross-run state consumption, and triggers for updating platform docs.
 
 ---
 
@@ -21,12 +22,18 @@ here as canonical; downstream changes happen here first, framework PRs later.
 whichever comes first):
 
 - `.github/actions/run-claude-stage/` — composite action
+- `.github/actions/pr-trust-gate/` — round-0 trust gate (ADR-0005 M1/M2)
 - `.github/claude/scripts/render-stage-comment.py`
 - `.github/claude/scripts/match-agents.py`
+- `.github/claude/scripts/scrub-output.py` — M4 output post-processor
+- `.github/claude/scripts/findings-to-sarif.py` — `emit_sarif` converter
+- `.github/claude/scripts/findings-aggregate.py` — counts-only public surface
 - `.github/claude/schemas/stage-message.schema.json`
 - `.github/claude/schemas/agent-manifest.schema.json`
 - `.github/claude/prompts/agent-wrapper.md`
-- `.github/workflows/dispatch-pr.yml`, `.github/workflows/run-agent.yml`
+- `.github/workflows/dispatch-core.yml` — shared dispatch pipeline
+- `.github/workflows/dispatch-pr.yml`, `.github/workflows/dispatch-schedule.yml` — trigger entry points
+- `.github/workflows/run-agent.yml`
 - `agents/_template/agent.yml`
 - `.github/claude/ADDING_AN_AGENT.md`, `.github/claude/AGENT_REFERENCE.md`, `.github/claude/PLATFORM_REFERENCE.md`
 - The three `docs/sdlc/orchestration*.md` design docs
@@ -41,6 +48,37 @@ whichever comes first):
 
 Keep the framework-bound surface DIAL-name-free. When extraction happens, it
 should be a mechanical `git mv` + filename rename, not a refactor.
+
+---
+
+## Dispatch architecture
+
+One reusable core, multiple trigger-specific entry points:
+
+```
+dispatch-pr.yml         (on: pull_request)        ─┐
+dispatch-schedule.yml   (on: schedule,             ├─→ dispatch-core.yml ─→ run-agent.yml (per agent)
+                             workflow_dispatch)    ─┘     gate → discover → round1..3
+```
+
+- **`dispatch-core.yml`** (`workflow_call`) — the shared pipeline. Reads the
+  caller's event from `github.event_name`, runs the round-0 **trust gate**, then
+  the matcher, then fans agents into topologically-sorted rounds via
+  `run-agent.yml`. One core serves every trigger without modification.
+- **`dispatch-pr.yml`** — `on: pull_request` (PR-gating agents).
+- **`dispatch-schedule.yml`** — `on: schedule` (cron) + `workflow_dispatch`
+  (manual). For batch agents over a standing backlog. See
+  [`scheduled-batch-agents.md`](../../docs/sdlc/scheduled-batch-agents.md).
+
+**Default-branch constraint:** GitHub registers `schedule` /
+`workflow_dispatch` only when the workflow file is on the repository's default
+branch. On a non-default sandbox base neither fires; batch agents keep a
+temporary `pull_request` trigger for sandbox testing until the framework lands
+on the default branch.
+
+The job graph is `gate → discover → round1 → round2 → round3`. A failed gate
+skips `discover`, and the rounds gate on `discover` succeeding, so a gate
+failure blocks the entire dispatch.
 
 ---
 
@@ -95,26 +133,32 @@ The matcher rejects manifests requesting permissions outside this set:
 | `checks` | `write` |
 | `security-events` | `read`, `write` |
 
-`run-agent.yml` and `dispatch-pr.yml` both declare the union as their job
-permissions. Manifests that omit the `permissions:` field get the same
-union (the runner runs with those scopes; the validator is permissive
-about absence).
+Every workflow layer declares the union as its job permissions:
+`run-agent.yml`, the shared `dispatch-core.yml`, and both entry points
+(`dispatch-pr.yml`, `dispatch-schedule.yml`). Manifests that omit the
+`permissions:` field get the same union (the runner runs with those scopes;
+the validator is permissive about absence).
 
-Both workflows also grant `actions: read` — **not** an agent-requestable
-tier, so it is absent from `SUPPORTED_PERMISSIONS`. It exists purely so the
+Every layer also grants `actions: read` — **not** an agent-requestable tier,
+so it is absent from `SUPPORTED_PERMISSIONS`. It exists purely so the
 upstream-artifact step (`gh run download` in `run-agent.yml`) can hit the
 Actions API; without it, any `needs:`-based chain fails the download with a
 403. Because a reusable workflow's token is capped by its caller, the grant
-must appear in `dispatch-pr.yml` too, not just `run-agent.yml`. Don't remove
-it while `needs:`-based chaining exists.
+must appear at **every** caller layer (entry point → core → runner), not just
+`run-agent.yml`. Don't remove it while `needs:`-based chaining exists.
+
+The trust gate (`pr-trust-gate`) needs no extra tier — it reads PR files with
+the existing `pull-requests` scope. `issues: write` is **not** in the set; the
+deferred `issue` output channel would add it (see the scheduled-agents archive).
 
 To add a new tier (e.g., `contents: write` for spec-edit agents that
 commit to `specs/`):
 
 1. Add it to `SUPPORTED_PERMISSIONS` in `match-agents.py`.
-2. Grant it in `dispatch-pr.yml`'s top-level `permissions:`.
-3. Grant it in `run-agent.yml`'s top-level `permissions:`.
-4. Document the new tier in this section + `AGENT_REFERENCE.md` → *Tool tiers*.
+2. Grant it in every workflow layer's top-level `permissions:`
+   (`dispatch-pr.yml`, `dispatch-schedule.yml`, `dispatch-core.yml`,
+   `run-agent.yml`).
+3. Document the new tier in this section + `AGENT_REFERENCE.md` → *Tool tiers*.
 
 Don't widen permissions speculatively — every grant is a real privilege
 exposure.
@@ -131,6 +175,11 @@ The matcher honors:
 
 Both are passed to the matcher via `--event-context /tmp/event.json` (dump
 of `toJSON(github.event)` set by the dispatcher).
+
+**Filters apply to PR events only.** They read `github.event.pull_request`,
+which is absent for `schedule` / `workflow_dispatch` — so a scheduled agent
+matches purely on the trigger, and its analyzed branch is controlled by
+`analysis_ref` (and the workflow's checkout), not by a `branches:` filter.
 
 `paths` is reserved (schema accepts it) but **not yet evaluated** — that
 needs a `git diff` against the PR base, which the matcher would do in the
@@ -155,6 +204,130 @@ accept expressions, so a single runner can't dynamically dispatch to
 its third-party reference. Framework's ROADMAP §4.5 imagines a centralized
 adapter pattern; we deferred it until the first real third-party adoption
 demands more uniformity than per-file copying provides.
+
+---
+
+## Security model (ADR-0005)
+
+The framework's CI AI-agent threat model is
+[`adr/0005-ci-ai-agent-threat-model.md`](https://gitlab.deltixhub.com/Deltix/openai-apps/poc/ai-native-sdlc-framework/-/blob/master/adr/0005-ci-ai-agent-threat-model.md).
+This platform is its "Worked example 2 — orchestrator." The trust boundary
+hinges on **where the PR branch lives, not the trigger name**:
+
+- **Internal** (same-repo branch, `pull_request`) — author had write access ⇒
+  trusted. Baseline controls only. **This is the current tier.**
+- **External** (fork) under `pull_request_target` — untrusted; requires the
+  full M1–M6 stack.
+
+### Round-0 trust gate (`pr-trust-gate`)
+
+Runs first in `dispatch-core.yml`; `discover` depends on it. Two controls:
+
+- **Fork gate (M1):** classifies the PR source — trusted if same-repo branch /
+  `author_association ∈ {OWNER,MEMBER,COLLABORATOR}` / a configured
+  `trust_label` is present; otherwise a fork. Hard-blocks untrusted PRs by
+  default (`fail_on_untrusted: true`), or emits a `trusted` output for
+  fork-facing flows to branch on.
+- **M2 reject:** fails the run if the PR diff touches **agent-trust paths**
+  (`.claude/**`, `**/CLAUDE.md`, `.mcp.json`, `.claude.json`,
+  `.github/workflows/**`, `.github/actions/**`, **`agents/**`**) or adds
+  symlinks. `agents/**` is in the set because a manifest drives `tools.extra` /
+  `secrets:` / `allowed_tools` — an orchestrator-specific trust surface the
+  ADR's generic list omits.
+
+The gate is a **no-op for `schedule` / `workflow_dispatch`** (no PR, trusted
+default branch).
+
+### M2 scrub — overlay exclusions
+
+The `analysis_ref` overlay (below) excludes `.github` / `.claude` / `agents`,
+so an overlaid ref's trust files are never mounted. This is the "scrub before
+mount" half of M2, enforced structurally rather than by step ordering.
+
+### M4 output post-processor (`scrub-output.py`)
+
+Deterministic, LLM-free, fail-closed gate on the rendered **public** body
+before any posting step:
+
+- **Secret scan** → fails the stage (nothing posted) on `sk-ant-` / `sk-` /
+  `AKIA|ASIA` / `ghp_` / `github_pat_` / Slack / JWT / PEM, plus a guarded
+  high-entropy backstop (skips git SHAs / numeric ids). Stops "Comment and
+  Control" credential exfiltration.
+- **URL/HTML neutralize** → strips zero-click images, non-allowlisted links,
+  bare autolinks, and outbound-capable HTML tags; allowlists the GitHub host so
+  the run-details footer survives.
+
+For `private_output` agents the public surface is **counts-only aggregate**, a
+stronger-than-M4 control (no free text reaches the public surface at all), so
+M4 primarily guards non-private agents.
+
+### Baseline (all tiers)
+
+SHA-pin every `uses:`; per-agent kill switch; **persist input AND output** as
+audit artifacts (`stage-input-<name>`, `stage-output-<name>`); structured
+output + advisory verdict (no auto-merge — M6).
+
+### Flipping to `pull_request_target`
+
+`pull_request_target` loads the workflow + secrets from the base branch, so PR
+runs get the framework from base natively (the sandbox-base host becomes
+unnecessary). But it puts secrets in scope for fork PRs — crossing into the
+untrusted tier. Activation checklist: set `trust_label` + `fail_on_untrusted:
+false` on the gate; pin PR-head overlays to `head.sha` (not `head.ref`); lock
+the agent tool surface (M3 — no `Bash`/`WebFetch`/`WebSearch`/MCP on fork
+flows); migrate the inference key to OIDC (ADR-0004). Until then the platform
+stays on internal-only `pull_request`.
+
+---
+
+## Analysis-ref overlay
+
+When a manifest declares `analysis_ref: <branch>`, the agent inspects **that
+ref's code** instead of the triggering checkout — so a batch agent can run
+*from* the default branch while triaging findings scanned against another
+branch. `run-agent.yml`:
+
+```bash
+git fetch --depth=1 origin "$ANALYSIS_REF"
+git checkout FETCH_HEAD -- . ':(exclude).github' ':(exclude).claude' ':(exclude)agents'
+# capture FETCH_HEAD sha → ANALYSIS_SHA / ANALYSIS_REF_FULL for SARIF scoping
+```
+
+It is an **overlay, not a checkout**: the analyzed ref's source replaces the
+working tree *except* the framework paths (`.github`, `.claude`, `agents`),
+which would otherwise be stripped (they live only on the framework branch). The
+exclusions double as the **security boundary** — the analyzed ref can supply
+inert source for the agent to read, but never a skill, workflow, action, or
+manifest the platform would execute. The captured SHA scopes any `emit_sarif`
+upload to the scanned commit.
+
+Limitations: branch tips only (`refs/heads/<ref>`); single ref per agent; the
+overlay is uncommitted, so an agent's `git diff` shows it as changes vs the base
+HEAD.
+
+---
+
+## Private output, SARIF, and the public surface
+
+Three manifest fields control how a sensitive agent's output is handled (this
+repo is **public**, so artifacts and the job summary are world-readable):
+
+- **`private_output: true`** — `stage-output.json` is AES-encrypted
+  (`openssl`, key from `SDLC_ARTIFACT_KEY`) before upload; plaintext is consumed
+  on the runner first (render / SARIF / aggregate) then removed. A downstream
+  agent's `run-agent.yml` decrypts the upstream `.enc` artifact it consumes.
+  The input audit artifact is encrypted the same way.
+- **Aggregate public surface** — instead of a full sticky comment, sensitive
+  agents publish **counts only** (`findings-aggregate.py`) to the Actions **job
+  summary**. No file paths or per-finding verdicts on the public surface.
+- **`emit_sarif: true`** — converts `payload.findings[]` to SARIF 2.1.0 and
+  uploads to GitHub code scanning (the Security tab, a write-gated surface),
+  scoped to `analysis_ref`'s branch/commit. Non-actionable verdicts upload as
+  dismissed. Currently paused for the snyk chain while encryption + the
+  aggregate surface are validated.
+
+Non-private agents keep the full path: M4-scrubbed sticky PR comment + full job
+summary + plaintext artifact.
 
 ---
 
@@ -223,19 +396,31 @@ when neither convention is present.
 
 ### Runtime path
 
-1. Composite action composes the prompt and writes `stage-output.json`
-   instruction into it.
+1. Composite action composes the prompt (4 placeholders: `{{stage}}`,
+   `{{skill}}`, `{{base_ref}}`, `{{upstream_inputs}}`) and the agent-facing
+   schema.
 2. `anthropics/claude-code-action` runs Claude; tool calls stream live
    (no buffering since no `--json-schema`).
-3. Agent uses the `Write` tool to save its JSON to `stage-output.json`.
-   `Write` is appended to `allowed_tools` automatically by the composite
-   action — agents don't need to declare it.
-4. Composite action's "Verify stage-output.json" step confirms the file
-   exists and dumps its contents to the GHA log.
-5. `render-stage-comment.py` validates required fields, injects envelope,
-   renders sticky comment markdown.
-6. Sticky-comment step posts (or updates) the comment via `gh api`.
-7. `upload-artifact` ships `stage-output-<name>` (90-day retention).
+3. **Persist input** — the composed prompt + schema upload as
+   `stage-input-<name>` (encrypted for `private_output`), with `always()` so a
+   failed run is still auditable.
+4. Agent uses the `Write` tool to save its JSON to `stage-output.json`.
+   `Write` is appended to `allowed_tools` automatically.
+5. "Verify stage-output.json" confirms the file exists (it does **not** cat the
+   contents — public repo, world-readable logs).
+6. `render-stage-comment.py` validates required fields, injects envelope,
+   renders the sticky-comment body.
+7. **M4 scrub** (`scrub-output.py`, non-private agents) — secret scan
+   (fail-closed) + URL/HTML neutralize on the rendered body; posting steps
+   consume the scrubbed output.
+8. **`emit_sarif`** (if enabled) → `findings-to-sarif.py` → Security tab,
+   scoped to `analysis_ref`.
+9. **Aggregate** (`private_output` agents) → counts-only to the job summary.
+10. **Encrypt** (`private_output`) → `stage-output.json.enc`, plaintext removed.
+11. `upload-artifact` ships `stage-output-<name>` (plaintext or `.enc`,
+    90-day retention).
+12. Non-private agents: full job summary + sticky PR comment (scrubbed body)
+    via `gh api`.
 
 **Model requirement**: any Claude model that supports the `Write` tool
 and produces valid JSON when instructed — i.e., any modern Claude. The
@@ -274,8 +459,11 @@ action. Keep watching:
 ## Cross-run state — consuming a prior agent's artifact
 
 Every agent's `stage-output.json` is uploaded as a workflow artifact named
-`stage-output-{name}` and kept for 90 days. The composite action handles the
-upload; agents don't add anything per-stage.
+`stage-output-{name}` and kept for 90 days (the composed input prompt is
+uploaded alongside as `stage-input-{name}`). For `private_output` agents both
+are AES-encrypted; `run-agent.yml` decrypts an upstream's `.enc` artifact
+before a downstream agent reads it. The composite action handles all of this;
+agents don't add anything per-stage.
 
 ### Same workflow run
 
@@ -326,8 +514,11 @@ implicit contract on comment shape that rots.
 Touching any of these means changing platform code, not just an
 `agents/<name>/agent.yml` manifest:
 
-- A new event trigger (`schedule`, `workflow_run`, `repository_dispatch`):
-  new dispatcher workflow + matcher support.
+- A new event trigger beyond those wired (`pull_request`, `schedule`,
+  `workflow_dispatch` are done — see *Dispatch architecture*). A new one
+  (`workflow_run`, `repository_dispatch`) needs a new entry-point workflow
+  delegating to `dispatch-core.yml`; the core + matcher already handle any
+  `github.event_name`.
 - A new permission tier (spec-edit, docs-edit, etc.): `run-agent.yml`
   hardcodes `contents: read`; needs a sibling reusable workflow with write
   scopes.

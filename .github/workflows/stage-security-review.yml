@@ -1,9 +1,13 @@
 name: SDLC Stage / Security Review
 
+# DISABLED on PRs (kept as the reference example of the third-party-action
+# form-factor). Security review now runs as a native orchestrator skill agent
+# — agents/security-review/ wrapping the built-in /security-review skill — which
+# supersedes this specialized claude-code-security-review Action (it could not
+# route through DIAL; see ADR-0004). Re-enable by restoring the pull_request
+# trigger, or run manually via workflow_dispatch.
 on:
-  pull_request:
-    branches: [development-1.0]
-    types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
 permissions:
   contents: read

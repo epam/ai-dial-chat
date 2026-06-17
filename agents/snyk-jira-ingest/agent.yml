@@ -3,7 +3,13 @@ name: snyk-jira-ingest
 skill: snyk-jira-ingest
 agent_version: "0.1.0"
 description: "Pulls real Snyk SAST findings from EPAM Jira (Data Center) via the search-export API using a PAT, and emits them under payload as a Jira XML export artifact for downstream triage. Real-data counterpart to the synthetic snyk-scan-stub producer."
-triggers: [pull_request]
+# This is a batch job over the standing Jira backlog, so its real triggers are
+# `schedule` (daily) + `workflow_dispatch` (manual) — both via dispatch-schedule.yml.
+# `pull_request` is a TEMPORARY sandbox-only harness: schedule/workflow_dispatch
+# don't fire from the non-default sdlc-test-base branch, so PR is the only way to
+# exercise the chain there. Drop `pull_request` once the framework lands on the
+# default branch.
+triggers: [pull_request, schedule, workflow_dispatch]
 
 # The agent's only Bash capability is invoking the committed fetch script.
 # The PAT is read inside that script from env (injected below) — the model
@@ -12,12 +18,23 @@ allowed_tools: "Bash(bash .claude/skills/snyk-jira-ingest/fetch.sh:*),Read,Skill
 
 # Declared secrets. run-agent.yml promotes ONLY these from the inherited
 # secret bag into the job env before the agent runs, and fails loudly if any
-# is absent. Add JIRA_PAT under repo/org Settings → Secrets → Actions.
-secrets: [JIRA_PAT]
+# is absent. Add JIRA_PAT and SDLC_ARTIFACT_KEY under repo/org Settings →
+# Secrets → Actions. SDLC_ARTIFACT_KEY is the shared key for `private_output`.
+secrets: [JIRA_PAT, SDLC_ARTIFACT_KEY]
 
-# Haiku: the work is deterministic — run one script, confirm the envelope.
-# No reasoning needed; keeps token footprint and rate-limit pressure low.
-model: claude-haiku-4-5-20251001
+# Operator-tunable, non-secret knobs injected from Actions Variables (Settings →
+# Variables). JIRA_MAX_FINDINGS caps how many findings reach triage — change it
+# in the UI/`gh variable set`, no skill edit. Unset → fetch.sh default (10).
+vars: [JIRA_MAX_FINDINGS]
+
+# This repo is PUBLIC and artifacts are world-downloadable, so encrypt the Jira
+# findings before they're uploaded for the triage handoff; triage decrypts.
+private_output: true
+
+# Sonnet: matches the triage agent so a single DIAL deployment
+# (claude-sonnet-4-6) serves the whole chain. The work is light — run one
+# script and confirm the envelope — so cost stays low regardless of model.
+model: claude-sonnet-4-6
 phase: sandbox
 cost_class: light
 

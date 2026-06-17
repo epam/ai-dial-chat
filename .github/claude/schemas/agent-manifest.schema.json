@@ -126,6 +126,26 @@
       "items": { "type": "string" },
       "description": "Declared secret names to inject into the agent's job env. run-agent.yml promotes ONLY these from the inherited secret bag (toJSON(secrets)) into $GITHUB_ENV before invoking the agent, and fails loudly if a declared secret is absent. The wrapped skill reads them via committed helper scripts — the model never types secret values (the agent-wrapper forbids shell expansion in Bash tool calls). ANTHROPIC_API_KEY is always passed and need not be declared."
     },
+    "vars": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Declared NON-secret config names to inject into the agent's job env from the GitHub Actions Variables (`vars`) context. run-agent.yml promotes ONLY these into $GITHUB_ENV before the agent runs; missing ones are skipped (the skill's own default applies). Use for operational knobs an operator changes in Settings → Variables (e.g. JIRA_MAX_FINDINGS) without editing the skill. Sensitive values belong in `secrets`, not here.",
+      "default": []
+    },
+    "private_output": {
+      "type": "boolean",
+      "description": "When true, the agent's stage-output.json is AES-encrypted (openssl, key from the SDLC_ARTIFACT_KEY secret) before it is uploaded as an artifact, and any encrypted upstream artifacts it downloads are decrypted on the runner before the agent reads them. Use for agents whose output is internal/sensitive on a PUBLIC repo (artifacts are world-downloadable). Requires SDLC_ARTIFACT_KEY in this agent's `secrets:` list. Local plaintext (used by the renderer / SARIF emitter on the runner) is never uploaded.",
+      "default": false
+    },
+    "emit_sarif": {
+      "type": "boolean",
+      "description": "When true, the platform converts the agent's payload.findings[] into SARIF 2.1.0 and uploads it to GitHub code scanning (Security tab) — a write-access-gated surface, unlike public PR comments/summaries. Findings with non-actionable verdicts (FALSE_POSITIVE/NOT_APPLICABLE/DUPLICATE) are uploaded as dismissed. If analysis_ref is set, the SARIF is scoped to that branch/commit so alerts render against the scanned code.",
+      "default": false
+    },
+    "analysis_ref": {
+      "type": "string",
+      "description": "Optional git ref whose code the agent should inspect instead of the PR working tree (e.g. the branch a scanner ran against). run-agent.yml fetches it and overlays its source onto the working tree before invoking the agent, preserving the framework paths (.github, .claude) so the composite action and skills keep working. The agent reads the findings' repo-relative paths directly — no skill/prompt awareness of branches needed. Also scopes emit_sarif uploads to this ref/commit."
+    },
     "tools": {
       "type": "object",
       "additionalProperties": false,

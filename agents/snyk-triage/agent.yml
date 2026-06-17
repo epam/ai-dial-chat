@@ -3,8 +3,18 @@ name: snyk-triage
 skill: snyk-triage
 agent_version: "0.1.0"
 description: "Read-only AppSec triage wrapping the local /snyk-triage skill: validates scanner (Snyk SAST / Code, Jira-exported) findings against repo evidence and emits per-finding verdicts."
-triggers: [pull_request]
+# Batch triage of the standing backlog: real triggers are `schedule` (daily) +
+# `workflow_dispatch` (manual) via dispatch-schedule.yml. `pull_request` is a
+# TEMPORARY sandbox-only harness (schedule/workflow_dispatch can't fire from the
+# non-default sdlc-test-base branch); drop it once on the default branch.
+triggers: [pull_request, schedule, workflow_dispatch]
 allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Bash(python3:*),Skill"
+
+# Public repo: encrypt this agent's artifact, and decrypt the encrypted ingest
+# artifact it consumes. SDLC_ARTIFACT_KEY is the shared key (add it under repo/
+# org Actions secrets); run-agent injects it for both encrypt and decrypt.
+secrets: [SDLC_ARTIFACT_KEY]
+private_output: true
 model: claude-sonnet-4-6
 phase: sandbox
 cost_class: medium
@@ -27,3 +37,15 @@ max_turns: 60
 # underscore-prefixed); to fall back to it, re-enable the stub and point this
 # `needs:` at snyk-scan-stub (findings under .payload.sarif).
 needs: [snyk-jira-ingest]
+
+# The Snyk findings were scanned against `development` (verified: the findings'
+# file paths exist on origin/development, not on development-1.0 or the sandbox
+# base). The platform overlays development's source so triage validates against
+# the right code, and scopes the SARIF upload to that branch/commit.
+analysis_ref: development
+
+# SARIF -> Security tab is wired (platform converts payload.findings[] -> SARIF
+# and uploads it), but PAUSED for now while we validate artifact encryption and
+# the aggregate (counts-only) public surface. Flip to true to publish to the
+# Security tab (scoped to analysis_ref's branch/commit).
+emit_sarif: false

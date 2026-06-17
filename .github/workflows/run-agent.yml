@@ -32,23 +32,77 @@ permissions:
 
 jobs:
   agent:
+    # Generic name so the matrix path reads `dispatch / <agent> / agent` (the
+    # agent name appears once, at the matrix level, instead of doubled). The
+    # upstream-wait step matches the agent name as a path segment, so this is
+    # safe.
     name: agent
     runs-on: ubuntu-latest
+    # TEMPORARY (validation): use the security-review environment's DIAL key,
+    # which has the Anthropic route + the anthropic.claude-sonnet-4-6 deployment
+    # (same as the claude-security-review reference). Remove once the repo-level
+    # DIAL key has its own Anthropic-route model access. No protection rules, so
+    # it doesn't gate runs.
+    environment: security-review
     timeout-minutes: ${{ inputs.timeout_minutes }}
     concurrency:
       group: ${{ inputs.concurrency_group != '' && inputs.concurrency_group || format('{0}-{1}-{2}', github.workflow, inputs.agent_name, github.ref) }}
       cancel-in-progress: true
     env:
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      # ANTHROPIC_API_KEY MUST be a job-level env: the composite action reads it
+      # via `${{ env.ANTHROPIC_API_KEY }}`, and a composite action's expression
+      # context does NOT see vars set with GITHUB_ENV in caller steps (only its
+      # process env does). DIAL key when DIAL_CORE_URL is set, else the direct
+      # Anthropic key.
+      ANTHROPIC_API_KEY: ${{ vars.DIAL_CORE_URL != '' && secrets.DIAL_API_KEY || secrets.ANTHROPIC_API_KEY }}
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0
 
+      - name: Configure inference route
+        # ANTHROPIC_API_KEY is the job-level env above. Here we add the DIAL-only
+        # vars that claude-code-action reads from the PROCESS env (GITHUB_ENV DOES
+        # propagate to later steps' / the composite action's process env, even
+        # though it's invisible to their `${{ env.X }}` expressions). In direct-
+        # Anthropic mode these stay unset — exactly the prior behavior.
+        env:
+          DIAL_CORE_URL: ${{ vars.DIAL_CORE_URL }}
+          DIAL_API_KEY: ${{ secrets.DIAL_API_KEY }}
+          # DIAL deployment id to route to (e.g. anthropic.claude-sonnet-4-5-
+          # 20250929-v1:0). DIAL names rarely match Anthropic model strings, so
+          # set this to a deployment your key actually has. If unset, the
+          # platform falls back to `anthropic.<manifest model>`.
+          DIAL_MODEL: ${{ vars.DIAL_MODEL }}
+        run: |
+          set -euo pipefail
+          if [ -n "${DIAL_CORE_URL:-}" ]; then
+            if [ -z "${DIAL_API_KEY:-}" ]; then
+              echo "::error::DIAL_CORE_URL is set but the DIAL_API_KEY secret is missing."
+              exit 1
+            fi
+            base="${DIAL_CORE_URL%/}/anthropic"
+            { echo "ANTHROPIC_BASE_URL=${base}"
+              echo "ANTHROPIC_AUTH_TOKEN=${DIAL_API_KEY}"
+              echo "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"
+              echo "SDLC_DIAL_MODE=1"
+              if [ -n "${DIAL_MODEL:-}" ]; then echo "SDLC_DIAL_MODEL=${DIAL_MODEL}"; fi
+            } >> "$GITHUB_ENV"
+            echo "Inference route: DIAL (${base}) deployment=${DIAL_MODEL:-anthropic.<manifest model>}"
+          else
+            echo "Inference route: direct Anthropic"
+          fi
+
       - name: Install YAML parser
         run: pip install --quiet pyyaml
 
-      - name: Download upstream artifacts
+      - name: Wait for and download upstream artifacts
+        # No rounds: every matched agent starts at once, so a `needs:` upstream
+        # may still be running. For each one, poll until its artifact is ready
+        # (download succeeds), or until its job finishes WITHOUT one (failed /
+        # cancelled) — then proceed and let the agent-wrapper handle the absent
+        # artifact. This gives per-edge scheduling: a dependent waits only for
+        # ITS upstream, not a whole round.
         if: inputs.upstream_artifacts != ''
         env:
           GH_TOKEN: ${{ github.token }}
@@ -56,16 +110,33 @@ jobs:
           REPO: ${{ github.repository }}
           RUN_ID: ${{ github.run_id }}
         run: |
-          set -euo pipefail
+          set -uo pipefail   # NOT -e: the download retries are expected to fail until ready
           mkdir -p upstream
           IFS=',' read -ra NAMES <<< "$UPSTREAM"
           for name in "${NAMES[@]}"; do
             [ -z "$name" ] && continue
-            echo "Downloading stage-output-${name} from this run..."
-            gh run download "$RUN_ID" -R "$REPO" -n "stage-output-${name}" -D "upstream/${name}/"
+            echo "Waiting for upstream agent: ${name}"
+            got=0
+            for i in $(seq 1 160); do   # ~40 min cap (160 × 15s)
+              if gh run download "$RUN_ID" -R "$REPO" -n "stage-output-${name}" -D "upstream/${name}/" 2>/dev/null; then
+                echo "  ✓ downloaded stage-output-${name}"; got=1; break
+              fi
+              # Break early if the upstream JOB has finished without an artifact.
+              # The dispatcher's matrix job is named after the agent, so the
+              # agent name is always a path segment of the job's full name
+              # (e.g. "dispatch / <agent> / …") — match it as a segment.
+              concl=$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/jobs" --paginate \
+                --jq "[.jobs[] | select(.name | test(\"(^| / )${name}( / |\$)\")) | .conclusion] | map(select(. != null)) | last // \"\"" 2>/dev/null || echo "")
+              if [ -n "$concl" ] && [ "$concl" != "success" ]; then
+                echo "::warning::upstream ${name} finished as '${concl}' with no artifact; proceeding without it"
+                break
+              fi
+              sleep 15
+            done
+            [ "$got" = 1 ] || echo "::notice::upstream ${name} not available; the agent will note the absent artifact"
           done
           echo "Upstream payloads available at:"
-          find upstream/ -type f -name 'stage-output.json'
+          find upstream/ -type f -name 'stage-output.json' 2>/dev/null || true
 
       - name: Load manifest
         id: manifest
@@ -112,6 +183,17 @@ jobs:
           print(f"max_turns={m.get('max_turns', 18)}")
           print(f"tools_extra_json={json.dumps(extra)}")
           print(f"secrets_json={json.dumps(secrets)}")
+          # vars: declared NON-secret config names to inject from the Actions
+          # Variables context (operator-tunable knobs, e.g. JIRA_MAX_FINDINGS).
+          print(f"vars_json={json.dumps(m.get('vars') or [])}")
+          # private_output: encrypt this agent's artifact and decrypt encrypted
+          # upstream artifacts (public-repo leak protection). See the encrypt
+          # step in run-claude-stage and the decrypt step below.
+          print(f"private_output={str(m.get('private_output', False)).lower()}")
+          # analysis_ref: overlay this ref's source for the agent to inspect.
+          # emit_sarif: convert findings[] -> SARIF and upload to code scanning.
+          print(f"analysis_ref={m.get('analysis_ref', '')}")
+          print(f"emit_sarif={str(m.get('emit_sarif', False)).lower()}")
           EOF
 
       - name: Install agent-declared CLI tools
@@ -193,6 +275,81 @@ jobs:
           print(f"Injected {len(declared)} declared secret(s) into job env: {', '.join(declared)}")
           PY
 
+      - name: Inject declared vars
+        # Non-secret counterpart of secret injection: promote ONLY the Actions
+        # Variables a manifest declares (`vars:`) into the job env, so an
+        # operator can tune knobs (e.g. JIRA_MAX_FINDINGS) in Settings ->
+        # Variables WITHOUT editing the skill. Missing vars are skipped — the
+        # skill's own default applies — so this never fails the run.
+        if: steps.manifest.outputs.vars_json != '[]' && steps.manifest.outputs.vars_json != ''
+        env:
+          VARS_JSON: ${{ toJSON(vars) }}
+          DECLARED: ${{ steps.manifest.outputs.vars_json }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          allvars = json.loads(os.environ["VARS_JSON"])
+          declared = json.loads(os.environ["DECLARED"])
+          injected = []
+          with open(os.environ["GITHUB_ENV"], "a") as fh:
+              for name in declared:
+                  val = allvars.get(name)
+                  if val not in (None, ""):
+                      fh.write(f"{name}<<__SDLC_VAR_EOF__\n{val}\n__SDLC_VAR_EOF__\n")
+                      injected.append(name)
+          print(f"Injected vars: {injected or '(none set; skill defaults apply)'}")
+          PY
+
+      - name: Decrypt upstream artifacts
+        # Upstream producers flagged `private_output` upload their stage-output
+        # AES-encrypted (.enc). Decrypt any here — after secret injection, so
+        # SDLC_ARTIFACT_KEY is in the env — into the plaintext path the agent
+        # expects (upstream/<name>/stage-output.json). No-op when no .enc exists.
+        if: inputs.upstream_artifacts != ''
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          enc_found=0
+          for enc in upstream/*/stage-output.json.enc; do
+            enc_found=1
+            if [ -z "${SDLC_ARTIFACT_KEY:-}" ]; then
+              echo "::error::Encrypted upstream artifact ${enc} but SDLC_ARTIFACT_KEY is not in env. Add it to this agent's manifest \`secrets:\` list."
+              exit 1
+            fi
+            out="$(dirname "$enc")/stage-output.json"
+            openssl enc -d -aes-256-cbc -pbkdf2 -in "$enc" -out "$out" -pass env:SDLC_ARTIFACT_KEY
+            echo "Decrypted ${enc} -> ${out}"
+          done
+          if [ "$enc_found" = 0 ]; then echo "No encrypted upstream artifacts to decrypt."; fi
+
+      - name: Overlay analysis-ref source
+        # When a manifest declares `analysis_ref`, the agent must inspect THAT
+        # ref's code (e.g. snyk-triage validates findings against `development`,
+        # the branch the scanner ran on — not the sandbox base). We cannot
+        # `actions/checkout` that ref: the framework (composite action, prompts,
+        # schemas, skills) lives ONLY on the sandbox base, so a full checkout
+        # would strip it. Instead overlay the ref's source while preserving the
+        # framework paths (.github, .claude, agents). Also capture its sha/ref so
+        # an emit_sarif upload can be scoped to the scanned commit.
+        #
+        # `agents` is excluded alongside .github/.claude because the overlaid ref
+        # is untrusted under pull_request_target (a fork PR head). The base
+        # manifest — already read into step outputs before this step — must keep
+        # governing the run; letting the overlaid ref replace agents/<name>/agent.yml
+        # would expose tools.extra/secrets/allowed_tools to attacker control.
+        if: steps.manifest.outputs.analysis_ref != ''
+        env:
+          ANALYSIS_REF: ${{ steps.manifest.outputs.analysis_ref }}
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin "$ANALYSIS_REF"
+          SHA="$(git rev-parse FETCH_HEAD)"
+          git checkout FETCH_HEAD -- . ':(exclude).github' ':(exclude).claude' ':(exclude)agents'
+          echo "ANALYSIS_SHA=${SHA}" >> "$GITHUB_ENV"
+          echo "ANALYSIS_REF_FULL=refs/heads/${ANALYSIS_REF}" >> "$GITHUB_ENV"
+          echo "Overlaid source from ${ANALYSIS_REF}@${SHA:0:7}; .github/.claude/agents preserved."
+
       - id: stage
         uses: ./.github/actions/run-claude-stage
         with:
@@ -203,3 +360,5 @@ jobs:
           model: ${{ steps.manifest.outputs.model }}
           max_turns: ${{ steps.manifest.outputs.max_turns }}
           upstream_artifacts: ${{ inputs.upstream_artifacts }}
+          private_output: ${{ steps.manifest.outputs.private_output }}
+          emit_sarif: ${{ steps.manifest.outputs.emit_sarif }}

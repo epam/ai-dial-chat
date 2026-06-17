@@ -63,7 +63,7 @@ doc = {
             "filter_id": int(fid) if fid.isdigit() else fid,
             "jql": os.environ["JQL"], "repo_name": os.environ["REPO_NAME"],
             "fetched_count": 0, "matched_count": 0, "dropped_count": 0,
-            "analyzed_count": 0, "max_findings": int(os.environ.get("JIRA_MAX_FINDINGS", "0") or "0"),
+            "analyzed_count": 0, "max_findings": int(os.environ.get("JIRA_MAX_FINDINGS", "10") or "0"),
         },
         "issues": [], "deferred": [], "dropped": [],
     },
@@ -161,11 +161,12 @@ for it in root.findall(".//item"):
 
 fetched, matched, ndropped = len(kept) + len(dropped), len(kept), len(dropped)
 
-# Optional cap on how many repo-matched findings we hand to triage. Default 0
-# = no cap (analyze all). Set JIRA_MAX_FINDINGS=N to keep only the top-N
-# priority findings (the JQL is priority-ordered) when triage's turn budget is
-# tight. Deferred keys (beyond the cap) are recorded so the backlog stays visible.
-cap = int(os.environ.get("JIRA_MAX_FINDINGS", "0") or "0")
+# Cap on how many repo-matched findings we hand to triage. Default 10 keeps
+# triage within its turn budget (all ~34 real findings overran). Set
+# JIRA_MAX_FINDINGS=0 for no cap (analyze all), or =N for the top-N priority
+# findings (the JQL is priority-ordered). Deferred keys (beyond the cap) are
+# recorded so the backlog stays visible.
+cap = int(os.environ.get("JIRA_MAX_FINDINGS", "10") or "0")
 analyzed_issues = kept[:cap] if cap > 0 else kept
 deferred = [i["key"] for i in kept[cap:]] if cap > 0 else []
 analyzed = len(analyzed_issues)
