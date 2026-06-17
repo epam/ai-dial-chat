@@ -26,5 +26,18 @@ export function translateFormError(
     ...options,
   });
 
-  return chatTranslated !== error ? chatTranslated : error;
+  if (chatTranslated !== error) {
+    return chatTranslated;
+  }
+
+  // i18n not yet initialized — manually substitute known interpolation vars from options
+  if (options) {
+    return Object.entries(options).reduce(
+      (result, [key, value]) =>
+        result.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), String(value)),
+      error,
+    );
+  }
+
+  return error;
 }
