@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 interface PageFileDragState {
   isDragging: boolean;
@@ -13,7 +19,10 @@ export const usePageFileDrag = (
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const enterCountRef = useRef(0);
   const isAttachmentsAllowedRef = useRef(isAttachmentsAllowed);
-  isAttachmentsAllowedRef.current = isAttachmentsAllowed;
+
+  useLayoutEffect(() => {
+    isAttachmentsAllowedRef.current = isAttachmentsAllowed;
+  });
 
   const onFilesConsumed = useCallback(() => {
     setPendingFiles([]);
