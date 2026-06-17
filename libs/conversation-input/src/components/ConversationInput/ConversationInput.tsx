@@ -30,6 +30,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   onTranscribeAudio,
   micLabel,
   sendOnEnter,
+  autoFocus,
+  messageHistory,
 }) => {
   const { colors, typography } = stylesProp ?? {};
 
@@ -97,6 +99,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           onTranscribeAudio={onTranscribeAudio}
           micLabel={micLabel}
           sendOnEnter={sendOnEnter}
+          autoFocus={autoFocus}
+          messageHistory={messageHistory}
         />
       </div>
     </div>

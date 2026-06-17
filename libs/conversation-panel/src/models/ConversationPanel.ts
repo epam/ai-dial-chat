@@ -187,4 +187,30 @@ export interface ConversationPanelProps {
    * The app supplies any ReactNode — the library does not prescribe its content.
    */
   headerActions?: ReactNode;
+  /**
+   * Called when the user completes a valid drag-and-drop move.
+   * `draggedId` is the conversation that was moved.
+   * `targetGroupKey` is the group it was dropped into.
+   * `afterId` is the id of the item the dragged conversation should be placed after,
+   * or `null` when dropped at the top of the target group.
+   *
+   * The app derives the action type from `targetGroupKey`:
+   * - dropping into `Pinned` → pin the conversation
+   * - dragging from `Pinned` into another group → unpin
+   * - same-group drop → reorder
+   */
+  onMoveConversation?: (move: ConversationMove) => void;
+}
+
+/** Describes a completed drag-and-drop move in the conversation panel. */
+export interface ConversationMove {
+  /** Id of the conversation that was dragged. */
+  draggedId: string;
+  /** The group the item was dropped into. */
+  targetGroupKey: ConversationGroupKey;
+  /**
+   * Id of the item the dragged conversation should be placed after.
+   * `null` means the item was dropped at the top of the target group.
+   */
+  afterId: string | null;
 }

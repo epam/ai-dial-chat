@@ -22,7 +22,9 @@ export const FileDndOverlay: FC<FileDndOverlayProps> = ({
     (isAttachmentsAllowed
       ? 'Drop files here to attach them to message'
       : "Attachments can't be added to message");
-  const resolvedIconClassName = isAttachmentsAllowed ? iconClassName : deniedIconClassName;
+  const resolvedIconClassName = isAttachmentsAllowed
+    ? iconClassName
+    : deniedIconClassName;
 
   const suppressDrop = (e: DragEvent) => {
     e.preventDefault();

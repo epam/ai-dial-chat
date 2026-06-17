@@ -19,6 +19,7 @@ import {
   useState,
 } from 'react';
 import { useClipboardPaste } from '../../hooks/useClipboardPaste';
+import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { SendOnEnter } from '../../models/Input';
@@ -73,8 +74,11 @@ export const Input: FC<InputProps> = ({
   sendOnEnter = SendOnEnter.Enter,
   prefixAttachments = [],
   onRemovePrefixAttachment,
+  autoFocus = false,
+  messageHistory,
 }) => {
   const isMobile = useIsMobile();
+  const historyNav = useInputHistoryNavigation(messageHistory);
   const cssVars = useMemo(
     () =>
       buildCssVars({
@@ -261,6 +265,7 @@ export const Input: FC<InputProps> = ({
     const currentMessage = message;
     const currentAttachments = attachments;
     setMessage('');
+    historyNav.reset();
     try {
       await onSend?.(currentMessage, currentAttachments);
       currentAttachments.forEach((a) => {
@@ -285,6 +290,22 @@ export const Input: FC<InputProps> = ({
   }, [isStackedLayout]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (!e.nativeEvent.isComposing && !isInputDisabled && !isStreaming) {
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        const cursorPos = e.currentTarget.selectionStart ?? 0;
+        const newValue = historyNav.navigate(
+          e.key === 'ArrowUp' ? 'up' : 'down',
+          message,
+          cursorPos,
+        );
+        if (newValue !== null) {
+          e.preventDefault();
+          setMessage(newValue);
+          return;
+        }
+      }
+    }
+
     const isEnterKey = e.key === 'Enter';
     if (!isEnterKey) return;
 
@@ -373,9 +394,11 @@ export const Input: FC<InputProps> = ({
         'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
       )}
       ref={textareaRef}
+      autoFocus={autoFocus}
       value={message}
       onChange={(e) => {
         setMessage(e.target.value);
+        historyNav.notifyChange();
         onChange?.(e.target.value);
       }}
       onKeyDown={handleKeyDown}

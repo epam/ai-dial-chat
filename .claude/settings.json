@@ -12,5 +12,18 @@
         "repo": "nrwl/nx-ai-agents-config"
       }
     }
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.claude/rules/*.md|*.claude/skills/*.md|*/AGENTS.md|*/CLAUDE.md|*openspec/config.yaml) node scripts/validate-agent-docs.mjs \"$f\" 1>&2 || exit 2 ;; esac"
+          }
+        ]
+      }
+    ]
   }
 }

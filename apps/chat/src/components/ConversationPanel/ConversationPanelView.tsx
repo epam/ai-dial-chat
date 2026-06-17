@@ -1,6 +1,8 @@
 import {
+  ConversationGroupKey,
   ConversationPanel,
   type ConversationHistoryItem,
+  type ConversationMove,
 } from '@epam/ai-dial-conversation-panel';
 import {
   ConfirmationPopupVariant,
@@ -169,6 +171,24 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [t],
   );
 
+  const handleMoveConversation = useCallback(
+    ({ draggedId, targetGroupKey }: ConversationMove) => {
+      const contextId = panelToContextId.get(draggedId);
+      if (!contextId) return;
+
+      const draggedItem = conversations.find((c) => c.id === draggedId);
+      if (!draggedItem) return;
+
+      if (targetGroupKey === ConversationGroupKey.Pinned) {
+        void pinConversation(contextId, true);
+      } else if (draggedItem.isPinned) {
+        void pinConversation(contextId, false);
+      }
+      // Same-group reorder: no API available in this iteration — no-op.
+    },
+    [panelToContextId, conversations, pinConversation],
+  );
+
   const getActions = useCallback(
     (panelItem: ConversationHistoryItem): DropdownItem[] => {
       const contextId = panelToContextId.get(panelItem.id);
@@ -261,18 +281,13 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setIsDeleting(false);
     setPendingDeleteId(null);
 
-    const activeContextId = activeConversationId
-      ? panelToContextId.get(activeConversationId)
-      : undefined;
-    if (activeContextId === idToDelete) navigate(ROUTES.ROOT);
-  }, [
-    pendingDeleteId,
-    deleteConversation,
-    activeConversationId,
-    panelToContextId,
-    navigate,
-    t,
-  ]);
+    if (
+      activeConversationId != null &&
+      normalizeConversationId(idToDelete) === activeConversationId
+    ) {
+      navigate(ROUTES.ROOT);
+    }
+  }, [pendingDeleteId, deleteConversation, activeConversationId, navigate, t]);
 
   const handleCloseDeleteDialog = useCallback(() => {
     if (isDeleting) return;
@@ -345,6 +360,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         defaultPanelWidth={defaultPanelWidth}
         maxPanelWidth={maxPanelWidth}
         onPanelResizeStop={setStoredPanelWidth}
+        onMoveConversation={handleMoveConversation}
         headerActions={
           <DeleteAllConversationsAction
             activeConversationId={activeConversationId}

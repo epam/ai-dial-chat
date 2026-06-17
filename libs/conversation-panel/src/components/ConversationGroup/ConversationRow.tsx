@@ -11,9 +11,18 @@ import {
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
-import { useCallback, useState, type FC, type MouseEvent } from 'react';
+import {
+  useCallback,
+  useState,
+  type DragEvent,
+  type FC,
+  type MouseEvent,
+} from 'react';
 import type { ConversationHistoryItem } from '../../models/ConversationPanel';
+import type { VirtualRow } from '../../models/virtual-row';
+import { ConversationGroupKey } from '../../types/conversation-group-key';
 import { getButtonPaddingEnd } from '../../utils/conversation-row.utils';
+import { getDropAfterId } from '../../utils/drag';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
 export interface ConversationRowProps {
@@ -33,6 +42,33 @@ export interface ConversationRowProps {
   actionsLabel?: string;
   /** Typography class for the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
+  /**
+   * The group this row belongs to — required to enable drag-and-drop.
+   * When absent the row is not draggable (used by `ConversationGroup`).
+   */
+  rowGroupKey?: ConversationGroupKey;
+  /** The full virtual rows array — used to compute drop position. */
+  rows?: VirtualRow[];
+  /** Id of the conversation currently being dragged. `null` when no drag is active. */
+  draggingId?: string | null;
+  /** Id of the row currently under the drag cursor. */
+  dragOverId?: string | null;
+  /** Groups that are valid drop targets for the current drag. `null` when no drag is active. */
+  allowedDropGroups?: Set<ConversationGroupKey> | null;
+  /** Called when the user starts dragging this row. */
+  onDragStart?: (id: string) => void;
+  /** Called when the drag ends (drop or cancel). */
+  onDragEnd?: () => void;
+  /** Called when the drag cursor enters this row. */
+  onDragOver?: (id: string) => void;
+  /** Called when the drag cursor leaves this row. */
+  onDragLeave?: () => void;
+  /** Called when the user drops onto this row. */
+  onDrop?: (
+    targetId: string,
+    targetGroupKey: ConversationGroupKey,
+    afterId: string | null,
+  ) => void;
 }
 
 export const ConversationRow: FC<ConversationRowProps> = ({
@@ -42,6 +78,16 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   getActions,
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
+  rowGroupKey,
+  rows,
+  draggingId,
+  dragOverId,
+  allowedDropGroups,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+  onDragLeave,
+  onDrop,
 }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
@@ -60,7 +106,6 @@ export const ConversationRow: FC<ConversationRowProps> = ({
 
   const handleAuxClick = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
-      // Middle mouse button (button === 1) — open conversation in a new tab
       if (e.button === 1 && item.href) {
         e.preventDefault();
         window.open(item.href, '_blank', 'noreferrer');
@@ -71,7 +116,6 @@ export const ConversationRow: FC<ConversationRowProps> = ({
 
   const handleMouseDown = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
-      // Prevent the browser autoscroll indicator from appearing on middle click
       if (e.button === 1 && item.href) {
         e.preventDefault();
       }
@@ -79,8 +123,58 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     [item.href],
   );
 
+  const isDragEnabled = rowGroupKey != null;
+
+  const handleDragLeave = useCallback(
+    (e: DragEvent<HTMLLIElement>) => {
+      // Only clear dragOver when truly leaving the row (not moving between child elements)
+      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+        onDragLeave?.();
+      }
+    },
+    [onDragLeave],
+  );
+
+  const handleDrop = useCallback(
+    (e: DragEvent<HTMLLIElement>) => {
+      if (!rowGroupKey || !rows || !onDrop) return;
+      e.preventDefault();
+      const afterId = getDropAfterId(e, item.id, rows, rowGroupKey);
+      onDrop(item.id, rowGroupKey, afterId);
+    },
+    [item.id, rows, rowGroupKey, onDrop],
+  );
+
+  const isDragging = item.id === draggingId;
+  const isDropTarget = item.id === dragOverId;
+  const isDropAllowed =
+    rowGroupKey != null && (allowedDropGroups?.has(rowGroupKey) ?? false);
+  const isDragActive = draggingId != null;
+
   return (
-    <li className="group/conversation relative">
+    <li
+      className={mergeClasses(
+        'group/conversation relative',
+        isDragging && 'cursor-grabbing opacity-50',
+        isDropTarget &&
+          isDropAllowed &&
+          'ring-accent-secondary rounded ring-1 ring-inset',
+        isDragActive && !isDragging && !isDropAllowed && 'cursor-not-allowed',
+      )}
+      draggable={isDragEnabled || undefined}
+      onDragStart={isDragEnabled ? () => onDragStart?.(item.id) : undefined}
+      onDragEnd={isDragEnabled ? onDragEnd : undefined}
+      onDragOver={
+        isDragEnabled
+          ? (e) => {
+              e.preventDefault();
+              onDragOver?.(item.id);
+            }
+          : undefined
+      }
+      onDragLeave={isDragEnabled ? handleDragLeave : undefined}
+      onDrop={isDragEnabled ? handleDrop : undefined}
+    >
       <DialGhostButton
         iconBefore={avatar}
         label={

@@ -6,7 +6,9 @@ interface PageFileDragState {
   onFilesConsumed: () => void;
 }
 
-export const usePageFileDrag = (isAttachmentsAllowed = true): PageFileDragState => {
+export const usePageFileDrag = (
+  isAttachmentsAllowed = true,
+): PageFileDragState => {
   const [isDragging, setIsDragging] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const enterCountRef = useRef(0);

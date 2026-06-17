@@ -22,28 +22,23 @@ Implement tasks from an OpenSpec change.
 
 2. **Check status to understand the schema**
 
-   First try the CLI:
-
    ```bash
    openspec status --change "<name>" --json
    ```
 
    Parse the JSON to understand:
    - `schemaName`: The workflow being used (e.g., "spec-driven")
+   - `planningHome`, `changeRoot`, and `actionContext`: planning scope and edit constraints
    - Which artifact contains the tasks (typically "tasks" for spec-driven, check status for others)
 
-   **If `openspec` is not found / CLI unavailable:** skip to step 3b (direct file fallback).
-
 3. **Get apply instructions**
-
-   **3a — CLI path (preferred):**
 
    ```bash
    openspec instructions apply --change "<name>" --json
    ```
 
    This returns:
-   - `contextFiles`: artifact ID -> array of concrete file paths
+   - `contextFiles`: artifact ID -> array of concrete file paths (varies by schema)
    - Progress (total, complete, remaining)
    - Task list with status
    - Dynamic instruction based on current state
@@ -51,23 +46,16 @@ Implement tasks from an OpenSpec change.
    **Handle states:**
    - If `state: "blocked"` (missing artifacts): show message, suggest using `/opsx:continue`
    - If `state: "all_done"`: congratulate, suggest archive
-   - Otherwise: proceed to step 4
+   - Otherwise: proceed to implementation
 
-   **3b — Fallback (CLI unavailable):**
-   List files under `openspec/changes/<name>/` and read what exists.
-   Treat `tasks.md` as the task list. Note that schema metadata is unavailable; proceed as spec-driven by default.
+   **Workspace guard:** If status JSON reports `actionContext.mode: "workspace-planning"` and `allowedEditRoots` is empty, explain that full workspace apply is not supported in this slice. Treat linked repos and folders as read-only context, ask the user to select an affected area through an explicit implementation workflow, and STOP before editing files.
 
 4. **Read context files**
 
-   Read only files that **actually exist**. Skip any that are missing without error.
-
-   **CLI path:** read every file path listed under `contextFiles` from the apply instructions output.
-
-   **Fallback path:** check and read from `openspec/changes/<name>/` in this order:
-   - `proposal.md` (if present)
-   - `specs/` directory contents (if present)
-   - `design.md` (if present)
-   - `tasks.md` (required — if missing, stop and report)
+   Read every file path listed under `contextFiles` from the apply instructions output.
+   The files depend on the schema being used:
+   - **spec-driven**: proposal, specs, design, tasks
+   - Other schemas: follow the contextFiles from CLI output
 
 5. **Show current progress**
 
@@ -154,14 +142,13 @@ What would you like to do?
 **Guardrails**
 
 - Keep going through tasks until done or blocked
-- Always read context files before starting; skip gracefully if a file doesn't exist
-- If the openspec CLI is unavailable, fall back to reading files directly from the change directory
-- `tasks.md` is the only required file; everything else is optional context
+- Always read context files before starting (from the apply instructions output)
 - If task is ambiguous, pause and ask before implementing
 - If implementation reveals issues, pause and suggest artifact updates
 - Keep code changes minimal and scoped to each task
 - Update task checkbox immediately after completing each task
 - Pause on errors, blockers, or unclear requirements - don't guess
+- Use contextFiles from CLI output, don't assume specific file names
 
 **Fluid Workflow Integration**
 

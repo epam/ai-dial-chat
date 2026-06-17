@@ -1,6 +1,7 @@
 import {
   DisplayAttachment,
   isStatusMessage,
+  MessageRole,
   StatusEvent,
   type Attachment,
   type MessageRating,
@@ -41,6 +42,7 @@ import {
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -116,6 +118,7 @@ const ConversationView: FC<Props> = ({
   onTranscribeAudio,
 }) => {
   const { t } = useTranslation();
+  const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const isEditActive = !!editingMessageIndexes?.size;
   const {
@@ -133,7 +136,8 @@ const ConversationView: FC<Props> = ({
     return types != null && types.length > 0;
   }, [items, selectedItemId]);
 
-  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(isAttachmentsAllowed);
+  const { isDragging, pendingFiles, onFilesConsumed } =
+    usePageFileDrag(isAttachmentsAllowed);
 
   const isInputDisabled = useMemo(
     () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
@@ -178,6 +182,12 @@ const ConversationView: FC<Props> = ({
         { ids: [], activeId: initialModelId },
       ).ids,
     [messages, initialModelId],
+  );
+
+  const messageHistory = useMemo(
+    () =>
+      messages.filter((m) => m.role === MessageRole.User).map((m) => m.content),
+    [messages],
   );
 
   const deploymentItems = useMemo(
@@ -459,11 +469,13 @@ const ConversationView: FC<Props> = ({
               sendLabel={t(ChatI18nKeys.SendMessage)}
               stopLabel={t(ChatI18nKeys.StopStreaming)}
               isTranscriptionSupported={isTranscriptionSupported}
+              messageHistory={messageHistory}
               onUploadAudio={onUploadAudio}
               onTranscribeAudio={onTranscribeAudio}
               sendOnEnter={sendOnEnter}
               pendingDropFiles={!isEditActive ? pendingFiles : undefined}
               onDropFilesConsumed={!isEditActive ? onFilesConsumed : undefined}
+              autoFocus={!isMobile}
             />
           </Suspense>
         )}

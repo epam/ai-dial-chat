@@ -77,7 +77,10 @@ describe('FileDndOverlay', () => {
       <FileDndOverlay isVisible={true} isAttachmentsAllowed={false} />,
     );
     const overlay = container.firstChild as HTMLElement;
-    const dropEvent = new MouseEvent('drop', { bubbles: true, cancelable: true });
+    const dropEvent = new MouseEvent('drop', {
+      bubbles: true,
+      cancelable: true,
+    });
     overlay.dispatchEvent(dropEvent);
     expect(dropEvent.defaultPrevented).toBe(true);
   });

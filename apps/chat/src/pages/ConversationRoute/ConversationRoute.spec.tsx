@@ -1,10 +1,12 @@
 import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as DeploymentsContextModule from '../../context/DeploymentsContext';
+import * as NotificationContextModule from '../../context/NotificationContext';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as filesApi from '../../server-api/files.api';
@@ -13,6 +15,7 @@ import ConversationRoute from './ConversationRoute';
 
 vi.mock('../../context/DeploymentsContext');
 vi.mock('../../context/auth/UserContext');
+vi.mock('../../context/NotificationContext');
 vi.mock('../../hooks/keyboard-shortcut/useKeyboardShortcutPreference');
 vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/files.api');
@@ -143,11 +146,15 @@ describe('ConversationRoute', () => {
   const mockUseKeyboardShortcutPreference = vi.mocked(
     KeyboardShortcutModule.useKeyboardShortcutPreference,
   );
+  const mockUseNotification = vi.mocked(
+    NotificationContextModule.useNotification,
+  );
   const mockCreateConversation = vi.mocked(conversationsApi.createConversation);
   const mockUploadFile = vi.mocked(filesApi.uploadFile);
   const mockAttachmentsToDtos = vi.mocked(
     attachmentToDtoModule.attachmentsToDtos,
   );
+  const mockShowNotification = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -174,6 +181,11 @@ describe('ConversationRoute', () => {
     mockUseKeyboardShortcutPreference.mockReturnValue({
       preference: SendOnEnter.Enter,
       setPreference: vi.fn(),
+    });
+    mockUseNotification.mockReturnValue({
+      notifications: [],
+      showNotification: mockShowNotification,
+      dismissNotification: vi.fn(),
     });
   });
 
@@ -203,6 +215,35 @@ describe('ConversationRoute', () => {
         'gpt-4o',
         undefined,
       );
+    });
+  });
+
+  it('shows API validation message in a toast when conversation creation fails', async () => {
+    mockCreateConversation.mockRejectedValueOnce({
+      response: {
+        json: vi.fn().mockResolvedValue({
+          message: [
+            'deploymentId must contain only supported characters or valid percent-encoded bytes',
+          ],
+          error: 'Bad Request',
+          statusCode: 400,
+        }),
+      },
+    });
+
+    renderRoute();
+    const sendButton = await screen.findByRole('button', { name: 'Send' });
+
+    await act(async () => {
+      sendButton.click();
+    });
+
+    await waitFor(() => {
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message:
+          'deploymentId must contain only supported characters or valid percent-encoded bytes',
+      });
     });
   });
 
@@ -373,6 +414,58 @@ describe('ConversationRoute', () => {
         [],
         { button: 2 },
       );
+    });
+  });
+
+  it('shows API validation message in a toast when submitted starter creation fails', async () => {
+    const selectedDeploymentConfiguration: DeploymentConfigurationSchema = {
+      type: 'object',
+      properties: {
+        starter: {
+          oneOf: [
+            {
+              const: 0,
+              title: 'OCR image',
+              'dial:widgetOptions': {
+                populateText: 'Scan this image',
+                submit: true,
+                confirmationMessage: null,
+              },
+            },
+          ],
+        },
+      },
+    };
+    mockUseDeployments.mockReturnValue({
+      items: mockItems,
+      selectedItemId: 'deepseek-ocr-2',
+      setSelectedItemId: vi.fn(),
+      restoreSelectedItemId: vi.fn(),
+      selectedDeploymentConfiguration,
+      isLoading: false,
+      error: null,
+    });
+    mockCreateConversation.mockRejectedValueOnce({
+      response: {
+        json: vi.fn().mockResolvedValue({
+          message: 'Deployment is not available',
+          error: 'Bad Request',
+          statusCode: 400,
+        }),
+      },
+    });
+
+    renderRoute();
+
+    await act(async () => {
+      screen.getByText('OCR image').click();
+    });
+
+    await waitFor(() => {
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message: 'Deployment is not available',
+      });
     });
   });
 

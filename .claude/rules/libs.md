@@ -2,6 +2,9 @@
 paths:
   - 'libs/**/*.ts'
   - 'libs/**/*.tsx'
+globs: 'libs/**/*.ts,libs/**/*.tsx'
+applyTo: 'libs/**/*.ts,libs/**/*.tsx'
+alwaysApply: false
 ---
 
 # Libs coding conventions
@@ -12,7 +15,7 @@ paths:
 
 ## Component syntax
 
-Always use `FC<Props>` syntax:
+Name the component props interface `{ComponentName}Props` (not bare `Props`), and use `FC<{ComponentName}Props>` syntax:
 
 ```tsx
 export const MyComponent: FC<MyComponentProps> = ({ ... }) => { ... };
@@ -31,7 +34,7 @@ Every exported symbol (interfaces, enums, types, functions) must have a JSDoc co
 **Never hardcode typography or color utility classes** (e.g. `dial-body-semi-bold-text`, `dial-small-text`, `text-sm`, `font-bold`, `text-primary`, `text-secondary`, `text-accent`) directly in lib component JSX. The consuming app decides which type scale and color tokens to use. Instead, accept an optional prop and use a sensible default:
 
 ```tsx
-// ✅ correct — configurable with a sensible default
+// Correct — configurable with a sensible default
 interface MyProps {
   /** Typography class applied to the title. Defaults to `'dial-body-semi-bold-text'`. */
   titleClassName?: string;
@@ -48,7 +51,7 @@ export const MyComponent: FC<MyProps> = ({
   </>
 );
 
-// ❌ wrong — hardcoded in JSX
+// Wrong — hardcoded in JSX
 <span className={mergeClasses(styles.title, 'dial-body-semi-bold-text')}>…</span>
 <Icon className="text-secondary" />
 ```
