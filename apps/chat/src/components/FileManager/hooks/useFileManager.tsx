@@ -1192,17 +1192,17 @@ export const useFileManager = ({
           emptyStateTitle: searchEmptyTitle,
           emptyStateDescription: searchEmptyDescription,
         }),
-        onGridReady: (params: GridReadyEvent<FileManagerGridRow>) => {
-          gridEditingOptions?.onGridReady?.(params);
-          applyGridHeaderLabels(params.api);
-        },
-        onFirstDataRendered: (
-          params: FirstDataRenderedEvent<FileManagerGridRow>,
-        ) => {
-          gridEditingOptions?.onFirstDataRendered?.(params);
-          applyDefaultFolderNameTranslations(params.api);
-          applyGridHeaderLabels(params.api);
-        },
+        // onGridReady: (params: GridReadyEvent<FileManagerGridRow>) => {
+        //   // gridEditingOptions?.onGridReady?.(params);
+        //   // applyGridHeaderLabels(params.api);
+        // },
+        // onFirstDataRendered: (
+        //   params: FirstDataRenderedEvent<FileManagerGridRow>,
+        // ) => {
+        //   gridEditingOptions?.onFirstDataRendered?.(params);
+        //   applyDefaultFolderNameTranslations(params.api);
+        //   applyGridHeaderLabels(params.api);
+        // },
         onCellEditingStarted: (
           params: CellEditingStartedEvent<FileManagerGridRow>,
         ) => {
@@ -1218,6 +1218,7 @@ export const useFileManager = ({
         onRowDataUpdated: (params: RowDataUpdatedEvent<FileManagerGridRow>) => {
           gridEditingOptions?.onRowDataUpdated?.(params);
           applyDefaultFolderNameTranslations(params.api);
+          applyGridHeaderLabels(params.api);
         },
       },
     }),
