@@ -635,6 +635,7 @@ export const conversationsSlice = createSlice({
         paths: string[];
         recursive?: boolean;
         pathToSelectFrom?: string;
+        cleanUpEmptySharedFolderPaths?: string[];
       }>,
     ) => state,
     uploadConversationsWithFoldersRecursive: (
