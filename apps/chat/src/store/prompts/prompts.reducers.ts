@@ -62,6 +62,7 @@ export const promptsSlice = createSlice({
         paths: string[];
         recursive?: boolean;
         pathToSelectFrom?: string;
+        cleanUpEmptySharedFolderPaths?: string[];
       }>,
     ) => state,
     uploadPromptsWithFoldersRecursive: (

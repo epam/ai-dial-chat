@@ -956,12 +956,16 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
               .filter(Boolean) as AppAction[]),
           );
         } else {
+          const sharedFolderIds = payload.resources.folders.map(
+            (folder) => folder.id,
+          );
           actions.push(
             ConversationsActions.uploadConversationsFromMultipleFolders({
-              paths: payload.resources.folders.map((folder) => folder.id),
+              paths: sharedFolderIds,
               recursive: true,
               pathToSelectFrom:
                 isFolderAccepted && isConversation ? acceptedId : undefined,
+              cleanUpEmptySharedFolderPaths: sharedFolderIds,
             }),
           );
 
@@ -1051,12 +1055,16 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
                 .filter(Boolean) as AppAction[]),
             );
         } else {
+          const sharedPromptFolderIds = payload.resources.folders.map(
+            (folder) => folder.id,
+          );
           actions.push(
             PromptsActions.uploadPromptsFromMultipleFolders({
-              paths: payload.resources.folders.map((folder) => folder.id),
+              paths: sharedPromptFolderIds,
               recursive: true,
               pathToSelectFrom:
                 isFolderAccepted && isPrompt ? acceptedId : undefined,
+              cleanUpEmptySharedFolderPaths: sharedPromptFolderIds,
             }),
           );
 
