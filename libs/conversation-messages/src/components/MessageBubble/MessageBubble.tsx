@@ -31,12 +31,5 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
     );
   }
 
-  return (
-    <AssistantMessageBubble
-      {...props}
-      deploymentIconUrl={props.deploymentIconUrl}
-      deploymentDisplayName={props.deploymentDisplayName}
-      thinkingLabel={props.thinkingLabel}
-    />
-  );
+  return <AssistantMessageBubble {...props} />;
 };
