@@ -4,6 +4,7 @@ import type {
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import { isAudioTranscriptionSupported } from '@epam/ai-dial-chat-shared';
+import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -25,6 +26,7 @@ import {
   BasicI18nKeys,
   ChatI18nKeys,
   DeploymentsI18nKeys,
+  FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
@@ -32,6 +34,7 @@ import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   transcribeAudio,
@@ -72,6 +75,15 @@ const ConversationRoute: FC = () => {
     isLoading,
     error,
   } = useDeployments();
+
+  const isAttachmentsAllowed = useMemo(() => {
+    const selectedItem = items.find((item) => item.id === selectedItemId);
+    const types = selectedItem?.inputAttachmentTypes;
+    return types != null && types.length > 0;
+  }, [items, selectedItemId]);
+
+  const { isDragging, pendingFiles, onFilesConsumed } =
+    usePageFileDrag(isAttachmentsAllowed);
 
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
@@ -254,6 +266,20 @@ const ConversationRoute: FC = () => {
 
   return (
     <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
+      <FileDndOverlay
+        isVisible={isDragging}
+        isAttachmentsAllowed={isAttachmentsAllowed}
+        title={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlayTitle
+            : FileDndI18nKeys.OverlayDeniedTitle,
+        )}
+        subtitle={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlaySubtitle
+            : FileDndI18nKeys.OverlayDeniedSubtitle,
+        )}
+      />
       <Suspense fallback={<RouteFallback />}>
         <div
           className="flex h-full flex-col items-center justify-center p-4 desktop:p-8"
@@ -278,6 +304,8 @@ const ConversationRoute: FC = () => {
             onUploadAudio={handleUploadAudio}
             onTranscribeAudio={handleTranscribeAudio}
             sendOnEnter={sendOnEnter}
+            pendingDropFiles={pendingFiles}
+            onDropFilesConsumed={onFilesConsumed}
             autoFocus={!isMobile}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />

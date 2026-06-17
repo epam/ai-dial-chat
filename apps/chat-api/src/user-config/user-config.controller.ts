@@ -3,6 +3,7 @@ import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { UpdatePinsDto } from './dto/update-pins.dto';
+import { UserConfigDto } from './dto/user-config.dto';
 import { UserConfigService } from './user-config.service';
 
 @ApiTags('user-config')
@@ -12,9 +13,13 @@ export class UserConfigController {
 
   @Get()
   @ApiOperation({ summary: 'Get current user configuration' })
-  @ApiResponse({ status: 200, description: 'User configuration' })
+  @ApiResponse({
+    status: 200,
+    description: 'User configuration',
+    type: UserConfigDto,
+  })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  getConfig(@Req() req: Request) {
+  getUserConfig(@Req() req: Request): Promise<UserConfigDto> {
     const { at, bucket } = req.user as SessionUser;
     return this.userConfigService.readConfig(at, bucket);
   }

@@ -1165,11 +1165,18 @@
     },
     "/api/v1/user-config": {
       "get": {
-        "operationId": "getConfig",
+        "operationId": "getUserConfig",
         "parameters": [],
         "responses": {
           "200": {
-            "description": "User configuration"
+            "description": "User configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserConfigDto"
+                }
+              }
+            }
           },
           "401": {
             "description": "Not authenticated"
@@ -2540,6 +2547,25 @@
           }
         },
         "required": ["confirm"]
+      },
+      "UserConfigDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "description": "User configuration schema version.",
+            "example": 1
+          },
+          "pinnedConversationIds": {
+            "description": "Pinned conversation identifiers.",
+            "example": ["conversations/default-bucket/gpt-4__My chat__uuid"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["version", "pinnedConversationIds"]
       },
       "UpdatePinsDto": {
         "type": "object",

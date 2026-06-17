@@ -179,14 +179,14 @@ export const Input: FC<InputProps> = ({
 
   const updateAttachments = useCallback(
     (updater: (current: Attachment[]) => Attachment[]) => {
-      setAttachments((prev) => {
-        const updated = updater(prev);
-        onAttachmentsChange?.(updated);
-        return updated;
-      });
+      setAttachments((prev) => updater(prev));
     },
-    [onAttachmentsChange],
+    [],
   );
+
+  useEffect(() => {
+    onAttachmentsChange?.(attachments);
+  }, [attachments, onAttachmentsChange]);
 
   const uploadAttachment = useCallback(
     async (attachment: Attachment) => {

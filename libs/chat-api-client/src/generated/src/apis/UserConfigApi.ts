@@ -13,7 +13,7 @@
  */
 
 import * as runtime from '../runtime';
-import type { UpdatePinsDto } from '../models/index';
+import type { UpdatePinsDto, UserConfigDto } from '../models/index';
 
 export interface UpdatePinRequest {
   updatePinsDto: UpdatePinsDto;
@@ -26,9 +26,9 @@ export class UserConfigApi extends runtime.BaseAPI {
   /**
    * Get current user configuration
    */
-  async getConfigRaw(
+  async getUserConfigRaw(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<runtime.ApiResponse<void>> {
+  ): Promise<runtime.ApiResponse<UserConfigDto>> {
     const queryParameters: runtime.HTTPQuery = {};
 
     const headerParameters: runtime.HTTPHeaders = {};
@@ -45,16 +45,17 @@ export class UserConfigApi extends runtime.BaseAPI {
       initOverrides,
     );
 
-    return new runtime.VoidApiResponse(response);
+    return new runtime.JSONApiResponse<UserConfigDto>(response);
   }
 
   /**
    * Get current user configuration
    */
-  async getConfig(
+  async getUserConfig(
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
-  ): Promise<void> {
-    await this.getConfigRaw(initOverrides);
+  ): Promise<UserConfigDto> {
+    const response = await this.getUserConfigRaw(initOverrides);
+    return await response.value();
   }
 
   /**

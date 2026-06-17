@@ -1,4 +1,7 @@
-import type { ConversationDeletionResultDto } from '@epam/chat-api-client';
+import {
+  ConversationDeletionFailureDtoCodeEnum,
+  type ConversationDeletionResultDto,
+} from '@epam/chat-api-client';
 import {
   act,
   fireEvent,
@@ -319,7 +322,12 @@ describe('ConversationPanelView — delete-all header action', () => {
       requested: 1,
       deleted: 0,
       alreadyAbsent: 0,
-      failed: [{ id: 'conv1', code: 'UPSTREAM_ERROR' }],
+      failed: [
+        {
+          id: 'conv1',
+          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+        },
+      ],
     });
 
     render(<ConversationPanelView {...defaultProps} />);
@@ -340,7 +348,12 @@ describe('ConversationPanelView — delete-all header action', () => {
       requested: 2,
       deleted: 1,
       alreadyAbsent: 0,
-      failed: [{ id: 'conv1', code: 'UPSTREAM_ERROR' }],
+      failed: [
+        {
+          id: 'conv1',
+          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+        },
+      ],
     });
 
     render(<ConversationPanelView {...defaultProps} />);
