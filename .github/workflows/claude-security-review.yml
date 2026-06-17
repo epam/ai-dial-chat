@@ -3,7 +3,10 @@ name: Claude Security Review
 on:
   pull_request:
     types: [opened, synchronize, ready_for_review, reopened] # Allowed types: https://github.com/anthropics/claude-code-action/blob/4481e6d3c7bbb88db2a928ca3444c536f589c7c1/src/modes/detector.ts#L101
-    branches: [development-1.0]
+    branches:
+      - development
+      - development-1.0
+      - release-*.*
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.head_ref || github.ref }}
