@@ -338,6 +338,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             fontFamily: hasTypographyClass ? undefined : typography?.fontFamily,
             fontSize: hasTypographyClass ? undefined : typography?.fontSize,
           },
+          bodyClassName: 'flex flex-col overflow-hidden p-0',
+          cssVars,
         }}
         className={mergeClasses(
           isOpen
@@ -347,8 +349,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             : 'w-0',
           className,
         )}
-        bodyClassName="flex flex-col overflow-hidden p-0"
-        cssVars={cssVars}
         resizable={resizable}
         defaultWidth={defaultPanelWidth}
         minWidth={minPanelWidth}

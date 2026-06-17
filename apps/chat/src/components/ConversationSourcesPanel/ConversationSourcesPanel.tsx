@@ -84,10 +84,12 @@ const ConversationSourcesPanel: FC = () => {
       isOpen={isOpen}
       side={SidebarSide.Right}
       className={isOpen ? 'mobile:w-full' : 'w-0'}
+      styles={{
+        bodyClassName: 'flex flex-col overflow-hidden p-0',
+      }}
       ariaLabel={t(SidebarI18nKeys.AriaLabel)}
       closeLabel={t(ButtonsI18nKeys.Close)}
       onClose={handleClose}
-      bodyClassName="flex flex-col overflow-hidden p-0"
       resizable={!isMobile}
       defaultWidth={defaultPanelWidth}
       minWidth={MIN_PANEL_WIDTH}

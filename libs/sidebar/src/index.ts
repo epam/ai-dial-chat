@@ -3,7 +3,7 @@ export { SearchInput } from './components/SearchInput/SearchInput';
 export { PanelEmptyState } from './components/PanelEmptyState/PanelEmptyState';
 export { PanelEmpty } from './components/PanelEmptyState/PanelEmpty';
 export { PanelNoResults } from './components/PanelEmptyState/PanelNoResults';
-export { SidebarSide } from './models/SidebarPanel';
+export { SidebarSide } from './types/SidebarSide';
 export type { SearchInputProps } from './components/SearchInput/SearchInput';
 export type { PanelEmptyStateProps } from './components/PanelEmptyState/PanelEmptyState';
 export type { PanelEmptyProps } from './components/PanelEmptyState/PanelEmpty';

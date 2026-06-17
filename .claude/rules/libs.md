@@ -36,7 +36,7 @@ Every exported symbol (interfaces, enums, types, functions) must have a JSDoc co
 ```tsx
 // Correct — configurable with a sensible default
 interface MyProps {
-  /** Typography class applied to the title. Defaults to `'dial-body-semi-bold-text'`. */
+  /** CSS class applied to the title. Defaults to `'dial-body-semi-bold-text'`. */
   titleClassName?: string;
   /** Color class applied to the placeholder icon. Defaults to `'text-secondary'`. */
   placeholderIconClassName?: string;

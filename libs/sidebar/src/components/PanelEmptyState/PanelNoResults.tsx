@@ -8,15 +8,19 @@ export interface PanelNoResultsProps {
   label: string;
   /** Typography class applied to the label. Defaults to `'dial-small-text'`. */
   labelClassName?: string;
+  /** Icon component rendered above the label. Defaults to `IconZoomCancel`. */
+  icon?: typeof IconZoomCancel;
+  /** Icon size in px. Defaults to `45`. */
+  iconSize?: number;
 }
 
 /** Empty-state block rendered when a search or filter produces no matches. */
 export const PanelNoResults: FC<PanelNoResultsProps> = memo(
-  ({ label, labelClassName }) => (
+  ({ label, labelClassName, icon: Icon = IconZoomCancel, iconSize = 45 }) => (
     <PanelEmptyState
-      icon={<IconZoomCancel aria-hidden size={45} stroke={1} />}
+      icon={<Icon aria-hidden size={iconSize} stroke={1} />}
       label={label}
-      labelClassName={labelClassName}
+      styles={{ labelClassName }}
     />
   ),
 );

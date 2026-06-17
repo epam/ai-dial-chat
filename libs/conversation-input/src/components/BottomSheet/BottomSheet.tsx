@@ -30,9 +30,9 @@ export interface BottomSheetProps {
   style?: CSSProperties;
   /** Actions displayed in the sheet body. */
   items: BottomSheetItem[];
-  /** Typography class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
+  /** CSS class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
   titleClassName?: string;
-  /** Typography class applied to each item label. Defaults to `'dial-small-text'`. */
+  /** CSS class applied to each item label. Defaults to `'dial-small-text'`. */
   itemLabelClassName?: string;
 }
 

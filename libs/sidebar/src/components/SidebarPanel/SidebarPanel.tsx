@@ -7,7 +7,8 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
 import { useMemo, type FC } from 'react';
-import { type SidebarPanelProps, SidebarSide } from '../../models/SidebarPanel';
+import { type SidebarPanelProps } from '../../models/SidebarPanel';
+import { SidebarSide } from '../../types/SidebarSide';
 import { Header } from '../Header/Header';
 import styles from './SidebarPanel.module.scss';
 
@@ -22,17 +23,15 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   ariaLabel,
   closeLabel,
   children,
-  styles: panelStyles,
   className,
-  bodyClassName,
-  cssVars,
+  styles: panelStyles,
   resizable,
   defaultWidth = 360,
   minWidth = 280,
   maxWidth = 600,
   onResizeStop,
 }) => {
-  const { colors, typography } = panelStyles ?? {};
+  const { colors, typography, bodyClassName, cssVars } = panelStyles ?? {};
   const noCustomFont = !typography?.fontClassName;
 
   const panelCssVars = useMemo(
