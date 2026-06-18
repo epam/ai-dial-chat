@@ -10,7 +10,7 @@ export type {
   FavoriteItem,
   TreeNode,
 } from './models/CatalogItem';
-export type { CatalogProps, CatalogTexts } from './models/CatalogProps';
+export type { CatalogProps, CatalogTitles } from './models/CatalogProps';
 
 // Constants
 export {

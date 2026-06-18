@@ -12,4 +12,8 @@ export interface DeploymentItem {
   inputAttachmentTypes?: string[];
   /** Human-readable description of the deployment. */
   description?: string;
+  /** ISO timestamp of last update time from DIAL Core (e.g. "2024-05-01T12:34:56Z"). */
+  updatedAt?: string;
+  /** Display version string. */
+  displayVersion?: string;
 }

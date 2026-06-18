@@ -18,10 +18,10 @@
   },
   "peerDependencies": {
     "react": "^19.2.6",
-    "@epam/ai-dial-ui-kit": "0.11.0-dev.42"
+    "@epam/ai-dial-ui-kit": "0.11.0-dev.42",
+    "vitest": "~4.1.0"
   },
   "dependencies": {
-    "tslib": "^2.3.0",
     "classnames": "2.5.1",
     "tailwind-merge": "^3.6.0"
   }

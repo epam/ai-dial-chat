@@ -1,14 +1,9 @@
 import { TabModel } from '@epam/ai-dial-ui-kit';
-import type {
-  CatalogItem,
-  CatalogSortOption,
-  FavoriteItem,
-  TreeNode,
-} from './CatalogItem';
+import type { CatalogItem, FavoriteItem, TreeNode } from './CatalogItem';
 import type { CatalogStyles } from './CatalogStyles';
 
 /** Text labels used by the `Catalog` surface. */
-export interface CatalogTexts {
+export interface CatalogTitles {
   /** Page heading. Default: 'Catalog'. */
   pageTitle?: string;
   /** Create button label. Default: 'Create'. */
@@ -21,6 +16,17 @@ export interface CatalogTexts {
   searchPlaceholder?: string;
   /** "No results" description. Default: 'Try a different keyword'. */
   noResultsDescription?: string;
+  /**
+   * Returns the "no results" heading given the active query.
+   * Default: (q) => `No results for "${q}"`.
+   */
+  noResultsTitle?: (query: string) => string;
+  /** Label for the "Recently Updated" sort option. Default: 'Recently Updated'. */
+  sortRecentlyUpdatedLabel?: string;
+  /** Label for the "Newest" sort option. Default: 'Newest'. */
+  sortNewestLabel?: string;
+  /** Label for the "Name A-Z" sort option. Default: 'Name A-Z'. */
+  sortNameAZLabel?: string;
   /** ARIA label for the page/grid. Default: 'Catalog'. */
   ariaLabel?: string;
 }
@@ -32,7 +38,7 @@ export interface CatalogProps {
   /** Items to display in the Favorites section. */
   favorites: FavoriteItem[];
   /** Grouped text labels for headings and actions. */
-  texts?: CatalogTexts;
+  titles?: CatalogTitles;
   /** Whether catalog data is loading (reserved for future loading state). */
   isLoading?: boolean;
   /** Error to display if data loading failed (reserved for future error state). */
@@ -43,8 +49,6 @@ export interface CatalogProps {
   onCreateClick?: () => void;
   /** Tab definitions for entity-type filtering. */
   tabs?: TabModel[];
-  /** Available sort options. Default: DEFAULT_SORT_OPTIONS. */
-  sortOptions?: CatalogSortOption[];
   /** Maturity filter options. Default: DEFAULT_MATURITY_OPTIONS. */
   maturityOptions?: string[];
   /** Use-case filter options. Default: DEFAULT_USE_CASE_OPTIONS. */
@@ -55,11 +59,6 @@ export interface CatalogProps {
   fromTree?: TreeNode[];
   /** All "from" IDs (determines initial filter state). Default: DEFAULT_ALL_FROM_IDS. */
   allFromIds?: Set<string>;
-  /**
-   * Returns the "no results" heading given the active query.
-   * Default: (q) => `No results for "${q}"`.
-   */
-  noResultsTitle?: (query: string) => string;
   /** Optional color and typography overrides. */
   styles?: CatalogStyles;
 }

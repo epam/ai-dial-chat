@@ -89,6 +89,10 @@ export enum CatalogI18nKeys {
   FavoritesTitle = 'catalog.favoritesTitle',
   SearchPlaceholder = 'catalog.searchPlaceholder',
   NoResultsDescription = 'catalog.noResultsDescription',
+  NoResultsTitle = 'catalog.noResultsTitle',
+  SortRecentlyUpdated = 'catalog.sortRecentlyUpdated',
+  SortNewest = 'catalog.sortNewest',
+  SortNameAZ = 'catalog.sortNameAZ',
 }
 
 export enum DeploymentsI18nKeys {

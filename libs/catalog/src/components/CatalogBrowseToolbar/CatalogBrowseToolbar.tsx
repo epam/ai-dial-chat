@@ -280,11 +280,13 @@ export const CatalogBrowseToolbar: FC<CatalogBrowseToolbarProps> = ({
       </div>
 
       {/* Tab bar — [&>div]:justify-center targets DialTabs' inner flex container */}
-      <div
-        className={['border-b [&>div]:justify-center', styles.tabs].join(' ')}
-      >
-        <DialTabs tabs={tabs} activeTab={activeTab} onClick={onTabChange} />
-      </div>
+      {activeTab && (
+        <div
+          className={['border-b [&>div]:justify-center', styles.tabs].join(' ')}
+        >
+          <DialTabs tabs={tabs} activeTab={activeTab} onClick={onTabChange} />
+        </div>
+      )}
     </section>
   );
 };

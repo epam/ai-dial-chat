@@ -1,4 +1,4 @@
-import { DIAL_ICON_SIZE, DialTooltip } from '@epam/ai-dial-ui-kit';
+import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react';
 import FallbackEntityIcon from '../../assets/fallback-entity-icon.svg?react';
 import { mergeClasses } from '../../utils/merge-class';

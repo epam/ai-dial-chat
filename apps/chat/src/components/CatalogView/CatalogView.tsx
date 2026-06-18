@@ -25,15 +25,18 @@ const CatalogView: FC = () => {
   return (
     <Catalog
       items={catalogItems}
-      tabs={[{ id: 'all', label: 'sss' }]}
       favorites={EMPTY_FAVORITES}
-      texts={{
+      titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),
         createLabel: t(ButtonsI18nKeys.Create),
         favoritesTitle: t(CatalogI18nKeys.FavoritesTitle),
         browseTitle: t(ButtonsI18nKeys.Browse),
         searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
         noResultsDescription: t(CatalogI18nKeys.NoResultsDescription),
+        noResultsTitle: (query) => t(CatalogI18nKeys.NoResultsTitle, { query }),
+        sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
+        sortNewestLabel: t(CatalogI18nKeys.SortNewest),
+        sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
         ariaLabel: t(CatalogI18nKeys.AriaLabel),
       }}
     />

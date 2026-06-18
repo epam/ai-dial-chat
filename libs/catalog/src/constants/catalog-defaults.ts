@@ -43,5 +43,5 @@ export const DEFAULT_DOMAIN_OPTIONS: string[] = [
 export const DEFAULT_SORT_OPTIONS: CatalogSortOption[] = [
   { value: CatalogSortKey.RecentlyUpdated, label: 'Recently Updated' },
   { value: CatalogSortKey.Newest, label: 'Newest' },
-  { value: CatalogSortKey.NameAZ, label: 'Name A–Z' },
+  { value: CatalogSortKey.NameAZ, label: 'Name A-Z' },
 ];

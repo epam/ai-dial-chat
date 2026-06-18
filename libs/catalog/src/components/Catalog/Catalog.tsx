@@ -1,11 +1,10 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import { IconPlus } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import {
   DEFAULT_DOMAIN_OPTIONS,
   DEFAULT_MATURITY_OPTIONS,
-  DEFAULT_SORT_OPTIONS,
   DEFAULT_USE_CASE_OPTIONS,
 } from '../../constants/catalog-defaults';
 import {
@@ -17,6 +16,7 @@ import { CatalogSortKey } from '../../types/CatalogSortKey';
 import { CatalogViewMode } from '../../types/CatalogViewMode';
 import { filterCatalogItems } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
+import { getStyles } from '../../utils/styles';
 import { CatalogBrowseToolbar } from '../CatalogBrowseToolbar/CatalogBrowseToolbar';
 import { CatalogCardGrid } from '../CatalogCardGrid/CatalogCardGrid';
 import { CatalogFavorites } from '../CatalogFavorites/CatalogFavorites';
@@ -31,58 +31,52 @@ import styles from './Catalog.module.scss';
 export const Catalog: FC<CatalogProps> = ({
   items,
   favorites,
-  texts,
+  titles,
   onToggleFavorite,
   onCreateClick,
   tabs = [],
-  sortOptions = DEFAULT_SORT_OPTIONS,
+  styles: catalogStyles,
+
+  // TODO: review
   maturityOptions = DEFAULT_MATURITY_OPTIONS,
   useCaseOptions = DEFAULT_USE_CASE_OPTIONS,
   domainOptions = DEFAULT_DOMAIN_OPTIONS,
   fromTree = DEFAULT_FROM_TREE,
   allFromIds = DEFAULT_ALL_FROM_IDS,
-  noResultsTitle = (q) => `No results for "${q}"`,
-  styles: catalogStyles,
 }) => {
-  const { colors, typography } = catalogStyles ?? {};
+  const { typography } = catalogStyles ?? {};
 
-  const hasPageHeadingClass = Boolean(typography?.pageHeadingFontClassName);
-  const cssVars = buildCssVars({
-    '--cat-bg': colors?.background,
-    '--cat-text-primary': colors?.text,
-    '--cat-text-secondary': colors?.textSecondary,
-    '--cat-heading-border': colors?.headingBorder,
-    '--cat-heading-bg': colors?.headingBackground,
-    '--cat-heading-title-text': colors?.headingTitleText,
-    '--cat-content-bg': colors?.contentBackground,
-    '--cat-section-heading-text': colors?.sectionHeadingText,
-    '--cat-no-results-title-text': colors?.noResultsTitleText,
-    '--cat-no-results-description-text': colors?.noResultsDescriptionText,
-    '--cat-page-heading-font-family': hasPageHeadingClass
-      ? undefined
-      : typography?.pageHeadingFontFamily,
-    '--cat-page-heading-font-size': hasPageHeadingClass
-      ? undefined
-      : typography?.pageHeadingFontSize,
-    '--cat-page-heading-font-weight': hasPageHeadingClass
-      ? undefined
-      : typography?.pageHeadingFontWeight?.toString(),
-    '--cat-page-heading-line-height': hasPageHeadingClass
-      ? undefined
-      : typography?.pageHeadingLineHeight,
-  });
+  const cssVars = getStyles(catalogStyles);
 
-  const pageTitle = texts?.pageTitle ?? 'Catalog';
-  const createLabel = texts?.createLabel ?? 'Create';
-  const favoritesTitle = texts?.favoritesTitle ?? 'Your Favorites';
-  const browseTitle = texts?.browseTitle ?? 'Browse';
+  const pageTitle = titles?.pageTitle ?? 'Catalog';
+  const createLabel = titles?.createLabel ?? 'Create';
+  const favoritesTitle = titles?.favoritesTitle ?? 'Your Favorites';
+  const browseTitle = titles?.browseTitle ?? 'Browse';
   const searchPlaceholder =
-    texts?.searchPlaceholder ?? 'Search models, tools, agents…';
+    titles?.searchPlaceholder ?? 'Search models, tools, agents…';
   const noResultsDescription =
-    texts?.noResultsDescription ?? 'Try a different keyword';
-  const resolvedAriaLabel = texts?.ariaLabel ?? 'Catalog';
+    titles?.noResultsDescription ?? 'Try a different keyword';
+  const noResultsTitle =
+    titles?.noResultsTitle ?? ((q: string) => `No results for "${q}"`);
+  const resolvedAriaLabel = titles?.ariaLabel ?? 'Catalog';
+
+  const sortOptions = [
+    {
+      value: CatalogSortKey.RecentlyUpdated,
+      label: titles?.sortRecentlyUpdatedLabel ?? 'Recently Updated',
+    },
+    {
+      value: CatalogSortKey.Newest,
+      label: titles?.sortNewestLabel ?? 'Newest',
+    },
+    {
+      value: CatalogSortKey.NameAZ,
+      label: titles?.sortNameAZLabel ?? 'Name A-Z',
+    },
+  ];
 
   const [query, setQuery] = useState('');
+
   const [viewMode, setViewMode] = useState<CatalogViewMode>(
     CatalogViewMode.Grid,
   );
@@ -91,6 +85,7 @@ export const Catalog: FC<CatalogProps> = ({
     CatalogSortKey.RecentlyUpdated,
   );
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
+  // TODO: review
   const [fromChecked, setFromChecked] = useState<Set<string>>(
     new Set(allFromIds),
   );
@@ -142,18 +137,18 @@ export const Catalog: FC<CatalogProps> = ({
       {/* Page heading */}
       <div
         className={mergeClasses(
-          'flex h-16 flex-shrink-0 items-center justify-between border-b px-6',
+          'flex h-16 flex-shrink-0 items-center justify-between border-b px-6 py-3',
           styles.heading,
         )}
       >
-        <h2
+        <h1
           className={mergeClasses(
-            typography?.pageHeadingFontClassName ?? 'dial-h2-text',
+            typography?.pageHeadingFontClassName ?? 'dial-h1-text',
             styles.headingTitle,
           )}
         >
           {pageTitle}
-        </h2>
+        </h1>
         <DialPrimaryButton
           label={createLabel}
           iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
