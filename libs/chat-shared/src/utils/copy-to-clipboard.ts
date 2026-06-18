@@ -1,7 +1,9 @@
 /// <reference lib="dom" />
 
 /**
- * Copies `text` to the clipboard.
+ * Copies `text` to the clipboard. Returns `true` when the write succeeded,
+ * `false` when both paths failed (e.g. sandboxed iframe without clipboard
+ * permission).
  *
  * Strategy:
  * 1. Async Clipboard API (`navigator.clipboard.writeText`) — the preferred
@@ -11,19 +13,19 @@
  *    unavailable (HTTP, older browsers) or rejects. Uses `setSelectionRange`
  *    instead of `select()` because iOS Safari ignores `textarea.select()`.
  */
-export const copyToClipboard = (text: string): void => {
+export const copyToClipboard = (text: string): Promise<boolean> => {
   if (typeof navigator !== 'undefined' && navigator.clipboard?.writeText) {
     // Clipboard API must be called synchronously within the user-gesture
     // handler; do NOT await before calling it.
-    navigator.clipboard.writeText(text).catch(() => {
-      execCommandFallback(text);
-    });
-    return;
+    return navigator.clipboard
+      .writeText(text)
+      .then(() => true)
+      .catch(() => execCommandFallback(text));
   }
-  execCommandFallback(text);
+  return Promise.resolve(execCommandFallback(text));
 };
 
-const execCommandFallback = (text: string): void => {
+const execCommandFallback = (text: string): boolean => {
   const textarea = document.createElement('textarea');
   textarea.innerText = text;
   // Keep it out of the viewport and non-interactive.
@@ -39,7 +41,7 @@ const execCommandFallback = (text: string): void => {
     // `textarea.select()` is ignored on iOS Safari — use setSelectionRange.
     textarea.removeAttribute('readonly');
     textarea.setSelectionRange(0, text.length);
-    document.execCommand('copy');
+    return document.execCommand('copy');
   } finally {
     document.body.removeChild(textarea);
   }

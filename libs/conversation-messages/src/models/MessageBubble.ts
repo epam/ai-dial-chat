@@ -5,6 +5,7 @@ import type {
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type { Components } from 'react-markdown';
+import type { CodeBlockTheme } from '../components/Markdown/MarkdownCodeBlock';
 import type { BubblePosition } from '../types/bubble-position';
 import type { MessageActionsProps } from './MessageActions';
 
@@ -113,6 +114,12 @@ export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
    * Pass a translated string from the consuming app. Defaults to `'Thinking'`.
    */
   thinkingLabel?: string;
+  /** Accessible label for the copy button in code blocks. Forwarded to `MDMessageViewer`. */
+  codeBlockCopyLabel?: string;
+  /** Accessible label for the copy button after copying. Forwarded to `MDMessageViewer`. */
+  codeBlockCopiedLabel?: string;
+  /** Syntax highlight color theme for code blocks. Forwarded to `MDMessageViewer`. Defaults to `'dark'`. */
+  codeBlockTheme?: CodeBlockTheme;
 }
 
 /** Props accepted by the `MessageBubble` role-switching wrapper. */
@@ -170,6 +177,12 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
    * Ignored for user and status messages.
    */
   markdownComponents?: Components;
+  /** Accessible label for the copy button in code blocks. Forwarded to `AssistantMessageBubble`. */
+  codeBlockCopyLabel?: string;
+  /** Accessible label for the copy button after copying. Forwarded to `AssistantMessageBubble`. */
+  codeBlockCopiedLabel?: string;
+  /** Syntax highlight color theme for code blocks. Forwarded to `AssistantMessageBubble`. Defaults to `'dark'`. */
+  codeBlockTheme?: CodeBlockTheme;
   /** Called when the user clicks an attachment card. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   /** Accessible label forwarded to each attachment card's root when it is interactive. Forwarded to `UserMessageBubble`; ignored for assistant messages. */

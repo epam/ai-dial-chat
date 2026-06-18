@@ -48,7 +48,7 @@ export const buildMessageActions = (
     return { onRegenerate, tooltips, ariaLabels };
   }
 
-  const handleCopy = () => copyToClipboard(msg.content);
+  const handleCopy = () => void copyToClipboard(msg.content);
 
   return {
     onRegenerate,

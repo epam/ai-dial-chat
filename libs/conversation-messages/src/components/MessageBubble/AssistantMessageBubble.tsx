@@ -33,6 +33,9 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   thinkingLabel,
   markdownComponents,
   onAttachmentClick,
+  codeBlockCopyLabel,
+  codeBlockCopiedLabel,
+  codeBlockTheme,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
@@ -87,6 +90,9 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                 isStreaming={isStreaming}
                 thinkingLabel={thinkingLabel}
                 components={markdownComponents}
+                codeBlockCopyLabel={codeBlockCopyLabel}
+                codeBlockCopiedLabel={codeBlockCopiedLabel}
+                codeBlockTheme={codeBlockTheme}
               />
             </div>
           )}
