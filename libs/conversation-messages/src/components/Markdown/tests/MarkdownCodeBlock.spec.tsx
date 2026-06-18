@@ -1,6 +1,7 @@
+import { copyToClipboard } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 vi.mock('@epam/ai-dial-chat-shared', () => ({
   copyToClipboard: vi.fn(),
   mergeClasses: (...classes: (string | undefined | false | null)[]) =>
@@ -20,6 +21,10 @@ vi.mock('react-syntax-highlighter/dist/cjs/styles/prism', () => ({
 import { MarkdownCodeBlock } from '../MarkdownCodeBlock';
 
 describe('MarkdownCodeBlock', () => {
+  beforeEach(() => {
+    vi.mocked(copyToClipboard).mockResolvedValue(true);
+  });
+
   it('renders the language label when language is non-empty', () => {
     render(<MarkdownCodeBlock language="typescript" value="const x = 1;" />);
 
@@ -75,7 +80,9 @@ describe('MarkdownCodeBlock', () => {
 
     await user.click(screen.getByRole('button', { name: 'Copy code' }));
 
-    expect(screen.getByRole('button', { name: 'Copied!' })).toBeTruthy();
+    expect(
+      await screen.findByRole('button', { name: 'Copied!' }),
+    ).toBeTruthy();
   });
 
   it('sets dir="ltr" on the scroll container', () => {

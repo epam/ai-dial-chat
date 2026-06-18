@@ -9,6 +9,7 @@ import { useCodeCopy } from '../useCodeCopy';
 describe('useCodeCopy', () => {
   beforeEach(() => {
     vi.useFakeTimers();
+    vi.mocked(copyToClipboard).mockResolvedValue(true);
   });
 
   afterEach(() => {
@@ -16,21 +17,23 @@ describe('useCodeCopy', () => {
     vi.useRealTimers();
   });
 
-  it('sets isCopied to true after copy()', () => {
+  it('sets isCopied to true after copy()', async () => {
     const { result } = renderHook(() => useCodeCopy('hello'));
 
-    act(() => {
+    await act(async () => {
       result.current.copy();
+      await Promise.resolve();
     });
 
     expect(result.current.isCopied).toBe(true);
   });
 
-  it('resets isCopied to false after resetDelay', () => {
+  it('resets isCopied to false after resetDelay', async () => {
     const { result } = renderHook(() => useCodeCopy('hello', 1000));
 
-    act(() => {
+    await act(async () => {
       result.current.copy();
+      await Promise.resolve();
     });
 
     expect(result.current.isCopied).toBe(true);
@@ -42,22 +45,24 @@ describe('useCodeCopy', () => {
     expect(result.current.isCopied).toBe(false);
   });
 
-  it('calls copyToClipboard with the correct value', () => {
+  it('calls copyToClipboard with the correct value', async () => {
     const { result } = renderHook(() => useCodeCopy('test code'));
 
-    act(() => {
+    await act(async () => {
       result.current.copy();
+      await Promise.resolve();
     });
 
     expect(copyToClipboard).toHaveBeenCalledWith('test code');
   });
 
-  it('clears the timeout on unmount', () => {
+  it('clears the timeout on unmount', async () => {
     const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
     const { result, unmount } = renderHook(() => useCodeCopy('hello'));
 
-    act(() => {
+    await act(async () => {
       result.current.copy();
+      await Promise.resolve();
     });
 
     unmount();
