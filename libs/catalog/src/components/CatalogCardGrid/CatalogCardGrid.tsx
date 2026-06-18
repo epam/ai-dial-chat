@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
 import type { CatalogCardGridProps } from '../../models/CatalogCardGridProps';
-import { CatalogCard } from './Card/CatalogCard';
+import { CatalogCard } from './CatalogCard';
 import styles from './CatalogCardGrid.module.scss';
 
 /** Three-column grid of CatalogCard items, with an empty state when there are no results. */

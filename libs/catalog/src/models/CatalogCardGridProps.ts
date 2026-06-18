@@ -1,4 +1,4 @@
-import type { CatalogItem } from './catalog';
+import type { CatalogItem } from './CatalogItem';
 
 /** Text overrides for `CatalogCardGrid` empty state. */
 export interface CatalogCardGridTitles {
@@ -10,9 +10,9 @@ export interface CatalogCardGridTitles {
 
 /** Class-name overrides for `CatalogCardGrid` empty state elements. */
 export interface CatalogCardGridStyles {
-  /** Typography and color class for the empty-state heading. Default: `'dial-h3-text text-secondary'`. */
+  /** Typography class for the empty-state heading. Default: `'dial-h3-text'`. */
   noResultsTitleClassName?: string;
-  /** Typography and color class for the empty-state description. Default: `'dial-small-text text-secondary'`. */
+  /** Typography class for the empty-state description. Default: `'dial-small-text'`. */
   noResultsDescriptionClassName?: string;
 }
 
