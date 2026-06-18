@@ -38,8 +38,8 @@ vi.mock('../../Toolbar/Toolbar', () => ({
     </div>
   ),
 }));
-vi.mock('../../CatalogCardGrid/CatalogCardGrid', () => ({
-  CatalogCardGrid: ({ items }: { items: { id: string }[] }) => (
+vi.mock('../../CardGrid/CardGrid', () => ({
+  CardGrid: ({ items }: { items: { id: string }[] }) => (
     <div role="grid" aria-label="catalog grid">
       {items.length} items
     </div>
@@ -50,8 +50,8 @@ vi.mock('../../CatalogFavorites/CatalogFavorites', () => ({
     <div>{title ?? 'Your Favorites'}</div>
   ),
 }));
-vi.mock('../../CatalogListView/CatalogListView', () => ({
-  CatalogListView: () => <div role="grid" aria-label="catalog list" />,
+vi.mock('../../ListView/ListView', () => ({
+  ListView: () => <div role="grid" aria-label="catalog list" />,
 }));
 
 const makeItem = (id: string, name: string) => ({

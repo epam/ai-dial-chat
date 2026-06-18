@@ -15,7 +15,7 @@ import type { CardProps } from '../../models/card-props';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { PricingTag } from '../PricingTag/PricingTag';
-import styles from './CatalogCardGrid.module.scss';
+import styles from './CardGrid.module.scss';
 
 /** Card for the Browse grid with highlighted search text and optional featured styling. */
 export const Card: FC<CardProps> = ({
