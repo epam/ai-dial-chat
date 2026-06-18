@@ -5,14 +5,14 @@ import {
   DialRoundedButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconDots, IconDotsVertical } from '@tabler/icons-react';
-import { FC, memo, useCallback, useEffect, useRef, useState } from 'react';
-import type { StarterButtonsProps } from '../../models/StarterButtons';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import type { StarterButtonsProps } from '../../models/starter-props';
 
 const MAX_VISIBLE = 4;
 const OVERFLOW_BUTTON_WIDTH = 56;
 const GAP = 8;
 
-const StarterButtons: FC<StarterButtonsProps> = ({
+export const StarterButtons: FC<StarterButtonsProps> = ({
   starters,
   onSelect,
   isMobile,
@@ -147,5 +147,3 @@ const StarterButtons: FC<StarterButtonsProps> = ({
     </div>
   );
 };
-
-export default memo(StarterButtons);
