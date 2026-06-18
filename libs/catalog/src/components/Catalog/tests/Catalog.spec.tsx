@@ -3,9 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
 import { CatalogEntityType } from '../../../types/entity-type';
 import { Catalog } from '../Catalog';
+
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
-  DialSpinner: () => <div data-testid="spinner" />,
+  DialSpinner: () => <div role="status" aria-label="Loading" />,
   DialPrimaryButton: ({
     label,
     onClick,
@@ -39,7 +40,9 @@ vi.mock('../../CatalogBrowseToolbar/CatalogBrowseToolbar', () => ({
 }));
 vi.mock('../../CatalogCardGrid/CatalogCardGrid', () => ({
   CatalogCardGrid: ({ items }: { items: { id: string }[] }) => (
-    <div data-testid="card-grid">{items.length} items</div>
+    <div role="grid" aria-label="catalog grid">
+      {items.length} items
+    </div>
   ),
 }));
 vi.mock('../../CatalogFavorites/CatalogFavorites', () => ({
@@ -48,7 +51,7 @@ vi.mock('../../CatalogFavorites/CatalogFavorites', () => ({
   ),
 }));
 vi.mock('../../CatalogListView/CatalogListView', () => ({
-  CatalogListView: () => <div data-testid="list-view" />,
+  CatalogListView: () => <div role="grid" aria-label="catalog list" />,
 }));
 
 const makeItem = (id: string, name: string) => ({
@@ -59,7 +62,6 @@ const makeItem = (id: string, name: string) => ({
   description: 'desc',
   pricing: ['Free'],
   folder: ['EPAM'],
-  logoInitial: 'X',
   lastUsed: '',
   from: 'dial',
   domain: 'Engineering',
@@ -103,7 +105,6 @@ describe('Catalog', () => {
       name: 'Claude',
       version: '1',
       lastUsed: 'now',
-      logoInitial: 'C',
     };
     render(<Catalog items={[]} favorites={[fav]} />);
     expect(screen.getByText('Your Favorites')).toBeTruthy();
@@ -116,6 +117,8 @@ describe('Catalog', () => {
 
   it('renders items in the card grid', () => {
     render(<Catalog items={[makeItem('1', 'Claude')]} favorites={[]} />);
-    expect(screen.getByTestId('card-grid').textContent).toContain('1 items');
+    expect(
+      screen.getByRole('grid', { name: 'catalog grid' }).textContent,
+    ).toContain('1 items');
   });
 });

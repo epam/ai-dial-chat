@@ -22,6 +22,8 @@ export interface FavoriteItem {
   version: string;
   /** Human-readable "last used" timestamp, e.g. "10 min ago". */
   lastUsed: string;
+  /** ISO 8601 timestamp used for chronological sorting; omit when unknown. */
+  updatedAt?: string;
   /** URL of the icon displayed inside the logo mark. */
   iconUrl?: string;
   /** Whether this item is currently starred. Default: true in the Favorites strip. */
