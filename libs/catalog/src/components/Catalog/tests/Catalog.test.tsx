@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from 'vitest';
 import { CatalogEntityType } from '../../../types/entity-type';
 import { Catalog } from '../Catalog';
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
+  DialSpinner: () => <div data-testid="spinner" />,
   DialPrimaryButton: ({
     label,
     onClick,
