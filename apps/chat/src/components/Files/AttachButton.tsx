@@ -15,7 +15,7 @@ import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
 import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 
 import { FeatureType } from '@/src/types/common';
-import { DialFile, DialLink, FileSourceType } from '@/src/types/files';
+import { DialLink, FileSourceType } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 

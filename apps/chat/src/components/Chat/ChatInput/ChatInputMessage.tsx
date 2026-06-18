@@ -24,10 +24,10 @@ import {
   isFormValueValid,
 } from '@/src/utils/app/form-schema';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
-import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
+import type { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
-import { DialFile, DialLink } from '@/src/types/files';
+import { DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
@@ -537,10 +537,7 @@ export const ChatInputMessage = Inversify.register(
     const { dispatchPreparedFiles } = useChatUploadFiles();
 
     const handleUploadFromDevice = useCallback(
-      (
-        selectedFiles: ResolvedUploadFile[],
-        folderPath: string | undefined,
-      ) => {
+      (selectedFiles: ResolvedUploadFile[], folderPath: string | undefined) => {
         dispatchPreparedFiles(selectedFiles, folderPath, {
           showSuccessMessage: true,
           isFromDeviceAttachment: true,

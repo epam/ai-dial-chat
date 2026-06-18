@@ -35,8 +35,8 @@ import {
 } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
+import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -490,10 +490,7 @@ export const UserMessage = memo(function UserMessage({
     });
 
   const handleUploadFromDevice = useCallback(
-    (
-      selectedFiles: ResolvedUploadFile[],
-      folderPath: string | undefined,
-    ) => {
+    (selectedFiles: ResolvedUploadFile[], folderPath: string | undefined) => {
       const ids = dispatchPreparedFiles(selectedFiles, folderPath, {
         isFromDeviceAttachment: true,
       });

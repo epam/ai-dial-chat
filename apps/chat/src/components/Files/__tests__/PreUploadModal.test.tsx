@@ -27,7 +27,9 @@ vi.mock('@/src/hooks/useTranslation', () => ({
 
 vi.mock('@/src/utils/app/prepare-files-for-upload', async (importOriginal) => {
   const actual =
-    await importOriginal<typeof import('@/src/utils/app/prepare-files-for-upload')>();
+    await importOriginal<
+      typeof import('@/src/utils/app/prepare-files-for-upload')
+    >();
 
   return {
     ...actual,
