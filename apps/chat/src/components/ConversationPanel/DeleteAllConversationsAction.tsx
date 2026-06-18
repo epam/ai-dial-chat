@@ -14,13 +14,14 @@ import { IconDotsVertical, IconTrashX } from '@tabler/icons-react';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { normalizeConversationId, ROUTES } from '../../constants/routes';
+import { normalizeConversationId } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { ROUTES } from '../../types/routes';
 
 interface PanelMenuTriggerProps {
   items: DropdownItem[];
@@ -126,7 +127,7 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
         !activeConversation.publishedWithMe;
 
       if (isActiveConversationOwned) {
-        navigate(ROUTES.ROOT);
+        navigate(ROUTES.Root);
       }
     } catch {
       setDeleteError(t(ConversationPanelI18nKeys.DeleteAllError));

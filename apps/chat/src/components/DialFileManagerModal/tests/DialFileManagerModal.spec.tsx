@@ -40,7 +40,8 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
     }) => (
       <div
         className={className}
-        data-testid="dial-file-manager"
+        role="region"
+        aria-label="file manager"
         data-grid-class={gridClassName}
         data-grid-layout={gridOptions?.additionalGridOptions?.domLayout}
         data-loading={filesLoading}
@@ -159,7 +160,7 @@ describe('DialFileManagerModal', () => {
   it('renders DialFileManager when error is null', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} />);
-    const fileManager = screen.getByTestId('dial-file-manager');
+    const fileManager = screen.getByRole('region', { name: 'file manager' });
     expect(fileManager.classList.contains('grow')).toBe(true);
     expect(fileManager.classList.contains('bg-layer-2')).toBe(true);
     expect(fileManager.getAttribute('data-grid-class')).toBe('size-full');

@@ -16,7 +16,7 @@ const LazyImageLoadHarness: FC<LazyImageLoadHarnessProps> = ({
 
   return (
     <>
-      <span data-testid="status">{imageLoadStatus}</span>
+      <span role="status">{imageLoadStatus}</span>
       {enabled && src && <img ref={imageRef} src={src} alt="Preview" />}
     </>
   );
@@ -25,7 +25,7 @@ const LazyImageLoadHarness: FC<LazyImageLoadHarnessProps> = ({
 describe('useLazyImageLoad', () => {
   it('starts in loading state when enabled with a source', () => {
     render(<LazyImageLoadHarness enabled src="https://example.com/a.png" />);
-    expect(screen.getByTestId('status').textContent).toBe(
+    expect(screen.getByRole('status').textContent).toBe(
       LazyImageLoadStatus.Loading,
     );
   });
@@ -33,7 +33,7 @@ describe('useLazyImageLoad', () => {
   it('moves to loaded when the image loads', () => {
     render(<LazyImageLoadHarness enabled src="https://example.com/a.png" />);
     fireEvent.load(screen.getByAltText('Preview'));
-    expect(screen.getByTestId('status').textContent).toBe(
+    expect(screen.getByRole('status').textContent).toBe(
       LazyImageLoadStatus.Loaded,
     );
   });
@@ -41,7 +41,7 @@ describe('useLazyImageLoad', () => {
   it('moves to error when the image fails to load', () => {
     render(<LazyImageLoadHarness enabled src="https://example.com/a.png" />);
     fireEvent.error(screen.getByAltText('Preview'));
-    expect(screen.getByTestId('status').textContent).toBe(
+    expect(screen.getByRole('status').textContent).toBe(
       LazyImageLoadStatus.Error,
     );
   });
@@ -54,7 +54,7 @@ describe('useLazyImageLoad', () => {
 
     rerender(<LazyImageLoadHarness enabled={false} />);
 
-    expect(screen.getByTestId('status').textContent).toBe(
+    expect(screen.getByRole('status').textContent).toBe(
       LazyImageLoadStatus.Idle,
     );
   });
@@ -67,7 +67,7 @@ describe('useLazyImageLoad', () => {
 
     rerender(<LazyImageLoadHarness enabled src="https://example.com/b.png" />);
 
-    expect(screen.getByTestId('status').textContent).toBe(
+    expect(screen.getByRole('status').textContent).toBe(
       LazyImageLoadStatus.Loading,
     );
   });

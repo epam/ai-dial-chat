@@ -57,7 +57,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
           navigate(path);
           if (isMobile) onClose?.();
         }}
-        className={isActive ? 'text-accent-primary' : undefined}
+        className={isActive ? '!text-accent-primary' : undefined}
       />
     );
   });

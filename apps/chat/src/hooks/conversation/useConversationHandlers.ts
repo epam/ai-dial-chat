@@ -18,7 +18,6 @@ import {
   useState,
 } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
-import { ROUTES } from '../../constants/routes';
 import { useDeployments } from '../../context/DeploymentsContext';
 import {
   deleteConversation as apiDeleteConversation,
@@ -26,6 +25,7 @@ import {
 } from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
 import { rateMessage } from '../../server-api/rate.api';
+import { ROUTES } from '../../types/routes';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
@@ -242,7 +242,7 @@ export const useConversationHandlers = ({
         (next.length === 1 && next[0].role === MessageRole.Status)
       ) {
         apiDeleteConversation(conversationPath);
-        navigate(ROUTES.ROOT);
+        navigate(ROUTES.Root);
         return prev;
       }
 
