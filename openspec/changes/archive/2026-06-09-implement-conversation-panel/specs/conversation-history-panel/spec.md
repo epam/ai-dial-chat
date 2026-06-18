@@ -4,7 +4,7 @@
 
 A new library `@epam/ai-dial-conversation-panel` SHALL exist at `libs/conversation-panel/`. It SHALL export `ConversationPanel` and the types: `ConversationPanelProps`, `ConversationPanelStyles`, `ConversationHistoryColors`, `ConversationHistoryTypography`, `ConversationHistoryItem`, `ConversationSource` (string enum), `FilterTab` (string enum), `FilterLabels`, `ConversationGroupProps`. The library SHALL declare `react`, `@epam/ai-dial-ui-kit`, `@tabler/icons-react` as peer dependencies. It SHALL have `"license": "Apache-2.0"` in `package.json`.
 
-> **Implementation note:** `libs/conversation-panel` imports `SidebarPanel`, `SearchInput`, and `SidebarSide` from `@epam/ai-dial-sidebar` to use as the panel shell. Design decision 1 (no cross-lib sidebar dependency) was revised during implementation — sharing the `SidebarPanel` shell avoids duplicating panel layout and CSS custom-property logic across libs.
+> **Implementation note:** `libs/conversation-panel` imports `SidebarPanel`, `SearchInput`, and `SidebarOrientation` from `@epam/ai-dial-sidebar` to use as the panel shell. Design decision 1 (no cross-lib sidebar dependency) was revised during implementation — sharing the `SidebarPanel` shell avoids duplicating panel layout and CSS custom-property logic across libs.
 
 #### Scenario: ConversationPanel is importable in apps/chat
 

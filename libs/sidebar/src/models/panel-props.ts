@@ -1,12 +1,5 @@
 import type { CSSProperties, ReactNode } from 'react';
-
-/** Which edge of the viewport the panel anchors to. */
-export enum SidebarSide {
-  /** Panel anchors to the left edge. */
-  Left = 'left',
-  /** Panel anchors to the right edge. */
-  Right = 'right',
-}
+import { SidebarOrientation } from '../types/orientation';
 
 /** CSS custom-property overrides for the `SidebarPanel` component. */
 export interface SidebarPanelColors {
@@ -37,6 +30,15 @@ export interface SidebarPanelStyles {
   colors?: SidebarPanelColors;
   /** Typography overrides applied via CSS custom properties. */
   typography?: SidebarPanelTypography;
+  /**
+   * CSS class applied to the title element.
+   * Defaults to `'dial-body-semi-bold-text'`.
+   */
+  titleClassName?: string;
+  /** Extra class name(s) merged onto the scrollable body `<div>`. */
+  bodyClassName?: string;
+  /** CSS custom properties applied to the panel `<aside>` element. */
+  cssVars?: CSSProperties;
 }
 
 /** Props accepted by the `SidebarPanel` component. */
@@ -54,22 +56,18 @@ export interface SidebarPanelProps {
    * `leftActions` / `rightActions` are header-bar positions and are
    * independent of this prop.
    */
-  side: SidebarSide;
+  orientation: SidebarOrientation;
   /**
    * Title text rendered in the header bar between the action groups.
    * Truncated with an ellipsis when the panel is too narrow.
    */
   title?: ReactNode;
-  /**
-   * Typography class applied to the title element.
-   * Defaults to `'dial-body-semi-text'`.
-   */
-  titleClassName?: string;
+
   /** Rendered in the left group of the 48 px header bar. */
   leftActions?: ReactNode;
   /**
    * Rendered in the right group of the 48 px header bar, immediately
-   * before the built-in close button when `side === 'right'`.
+   * before the built-in close button when `orientation === SidebarOrientation.Right`.
    */
   rightActions?: ReactNode;
   /**
@@ -86,16 +84,12 @@ export interface SidebarPanelProps {
   closeLabel?: string;
   /** Body content rendered below the header bar in the scrollable region. */
   children: ReactNode;
-  /** Color and typography overrides applied as CSS custom properties. */
-  styles?: SidebarPanelStyles;
-  /** Extra class name(s) merged onto the root `<aside>` element. */
+  /** Extra class name(s) merged onto the panel width wrapper `<div>`. */
   className?: string;
-  /** Extra class name(s) merged onto the scrollable body `<div>`. */
-  bodyClassName?: string;
-  /** CSS custom properties applied to the scrollable body `<div>`. */
-  cssVars?: CSSProperties;
+  /** Style overrides for colors, typography, and element class names. */
+  styles?: SidebarPanelStyles;
   /**
-   * Enables drag-to-resize on the panel edge opposite to `side`.
+   * Enables drag-to-resize on the panel edge opposite to `orientation`.
    * When false (default) the panel renders at a width determined by `className`.
    * Automatically disabled when `isOpen` is false.
    */

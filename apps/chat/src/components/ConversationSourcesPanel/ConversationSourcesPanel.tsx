@@ -3,7 +3,7 @@ import {
   PanelNoResults,
   SearchInput,
   SidebarPanel,
-  SidebarSide,
+  SidebarOrientation,
 } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
@@ -82,12 +82,14 @@ const ConversationSourcesPanel: FC = () => {
   return (
     <SidebarPanel
       isOpen={isOpen}
-      side={SidebarSide.Right}
+      orientation={SidebarOrientation.Right}
       className={isOpen ? 'mobile:w-full' : 'w-0'}
+      styles={{
+        bodyClassName: 'flex flex-col overflow-hidden p-0',
+      }}
       ariaLabel={t(SidebarI18nKeys.AriaLabel)}
       closeLabel={t(ButtonsI18nKeys.Close)}
       onClose={handleClose}
-      bodyClassName="flex flex-col overflow-hidden p-0"
       resizable={!isMobile}
       defaultWidth={defaultPanelWidth}
       minWidth={MIN_PANEL_WIDTH}

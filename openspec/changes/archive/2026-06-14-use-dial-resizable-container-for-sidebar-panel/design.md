@@ -22,13 +22,13 @@ Both panels rendered at fixed widths: `ConversationSourcesPanel` at `w-[360px]` 
 
 **Why:** `SidebarPanel` is the unit that owns panel width (its root div has `transition-[width]` and accepts a `className` for width). Putting the resize container here avoids every caller having to wrap it, keeps the API symmetrical with `isOpen`/`side`, and requires zero changes to call sites that don't need resize.
 
-**Alternative considered:** Each caller wraps with `DialConditionalResizableContainer`. Rejected — duplicates resize logic at every call site and leaks the container's `side` ↔ `SidebarSide` mapping responsibility to callers.
+**Alternative considered:** Each caller wraps with `DialConditionalResizableContainer`. Rejected — duplicates resize logic at every call site and leaks the container's `side` ↔ `SidebarOrientation` mapping responsibility to callers.
 
 **Alternative considered:** App-level `ResizableSidebarPanel` wraps and controls the container externally. Rejected — `SidebarPanel`'s root div has its own `transition-[width]`; the external container and the inner fixed-width `className` interact poorly without lib changes anyway.
 
 ### 2. Resize handle side derived from `side` prop
 
-Inside `SidebarPanel`: `resizableSide = side === SidebarSide.Right ? ResizableContainerSide.Left : ResizableContainerSide.Right`.
+Inside `SidebarPanel`: `resizableSide = side === SidebarOrientation.Right ? ResizableContainerSide.Left : ResizableContainerSide.Right`.
 
 **Why:** The handle must always be on the inner edge (toward the chat area), which is the opposite of where the panel is anchored. Deriving it from `side` removes the need for callers to know about `ResizableContainerSide`.
 
