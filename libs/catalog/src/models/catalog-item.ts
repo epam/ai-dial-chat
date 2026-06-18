@@ -1,15 +1,5 @@
 import type { CatalogEntityType } from '../types/entity-type';
 
-/** A node in the hierarchical "From" source filter tree. */
-export interface TreeNode {
-  /** Unique identifier used in checked-state sets. */
-  id: string;
-  /** Human-readable label shown in the checkbox tree. */
-  label: string;
-  /** Child nodes; empty array for leaf nodes. */
-  children: TreeNode[];
-}
-
 /** Minimal data for rendering a card in the Favorites section. */
 export interface FavoriteItem {
   /** Unique identifier. */
@@ -42,12 +32,4 @@ export interface CatalogItem extends FavoriteItem {
   isHidden?: boolean;
   /** Folder breadcrumb path segments, outermost first. */
   folder: string[];
-  /** Source/provider identifier used for the "From" tree filter. */
-  from: string;
-  /** Domain category matched by the "Domain" dropdown filter. */
-  domain: string;
-  /** Use-case category matched by the "Use Case" dropdown filter. */
-  useCase: string;
-  /** Maturity stage matched by the "Maturity" dropdown filter. */
-  maturity: string;
 }

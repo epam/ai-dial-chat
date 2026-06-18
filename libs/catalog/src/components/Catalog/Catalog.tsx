@@ -3,33 +3,25 @@ import {
   DIAL_ICON_SIZE,
   DialPrimaryButton,
   DialSpinner,
+  TabModel,
 } from '@epam/ai-dial-ui-kit';
 import { IconPlus } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import {
-  DEFAULT_DOMAIN_OPTIONS,
-  DEFAULT_MATURITY_OPTIONS,
-  DEFAULT_USE_CASE_OPTIONS,
-} from '../../constants/catalog-defaults';
-import {
-  DEFAULT_ALL_FROM_IDS,
-  DEFAULT_FROM_TREE,
-} from '../../constants/from-tree';
 import type { CatalogProps } from '../../models/catalog-props';
 import { CatalogSortKey } from '../../types/sort';
 import { CatalogViewMode } from '../../types/view-mode';
 import { filterCatalogItems } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { getStyles } from '../../utils/styles';
-import { CatalogBrowseToolbar } from '../CatalogBrowseToolbar/CatalogBrowseToolbar';
 import { CatalogCardGrid } from '../CatalogCardGrid/CatalogCardGrid';
 import { CatalogFavorites } from '../CatalogFavorites/CatalogFavorites';
 import { CatalogListView } from '../CatalogListView/CatalogListView';
+import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
 
 /**
  * Root catalog component. Owns all filter/sort/pagination state and wires
- * CatalogFavorites, CatalogBrowseToolbar, CatalogCardGrid, and CatalogListView.
+ * CatalogFavorites, Toolbar, CatalogCardGrid, and CatalogListView.
  * Consumers provide data via props; no direct API or context access.
  */
 export const Catalog: FC<CatalogProps> = ({
@@ -40,14 +32,6 @@ export const Catalog: FC<CatalogProps> = ({
   onCreateClick,
   isLoading,
   styles: catalogStyles,
-
-  // TODO: review
-  tabs = [],
-  maturityOptions = DEFAULT_MATURITY_OPTIONS,
-  useCaseOptions = DEFAULT_USE_CASE_OPTIONS,
-  domainOptions = DEFAULT_DOMAIN_OPTIONS,
-  fromTree = DEFAULT_FROM_TREE,
-  allFromIds = DEFAULT_ALL_FROM_IDS,
 }) => {
   const { typography } = catalogStyles ?? {};
 
@@ -92,18 +76,8 @@ export const Catalog: FC<CatalogProps> = ({
   const [sortKey, setSortKey] = useState<string>(
     CatalogSortKey.RecentlyUpdated,
   );
+  const tabs = [] as TabModel[]; // TODO: implement tabs and remove this placeholder
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
-  // TODO: review
-  const [fromChecked, setFromChecked] = useState<Set<string>>(
-    new Set(allFromIds),
-  );
-  const [domainSelected, setDomainSelected] = useState<Set<string>>(new Set());
-  const [useCaseSelected, setUseCaseSelected] = useState<Set<string>>(
-    new Set(),
-  );
-  const [maturitySelected, setMaturitySelected] = useState<Set<string>>(
-    new Set(),
-  );
 
   if (isLoading) {
     return (
@@ -119,27 +93,14 @@ export const Catalog: FC<CatalogProps> = ({
   };
 
   const clearAllFilters = () => {
-    setFromChecked(new Set(allFromIds));
-    setDomainSelected(new Set());
-    setUseCaseSelected(new Set());
-    setMaturitySelected(new Set());
+    // TODO: implement when filters are added
   };
 
   const sorted = sortCatalogItems(filteredItems, sortKey);
-  const filtered = filterCatalogItems(sorted, {
-    fromChecked,
-    allFromIds,
-    domainSelected,
-    useCaseSelected,
-    maturitySelected,
-    query,
-  });
+  const filtered = filterCatalogItems(sorted, query);
 
-  const isAnyFilterActive =
-    fromChecked.size < allFromIds.size ||
-    domainSelected.size > 0 ||
-    useCaseSelected.size > 0 ||
-    maturitySelected.size > 0;
+  // TODO: determine if any filter is active (for now we have no filters, so this is always false)
+  const isAnyFilterActive = false;
 
   const emptyTitle = query ? noResultsTitle(query) : 'No items';
   const emptyDesc = query ? noResultsDescription : '';
@@ -183,7 +144,7 @@ export const Catalog: FC<CatalogProps> = ({
       )}
 
       {/* Browse toolbar (title, view toggle, sort, search, filters, tabs) */}
-      <CatalogBrowseToolbar
+      <Toolbar
         totalCount={filteredItems.length}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
@@ -191,19 +152,6 @@ export const Catalog: FC<CatalogProps> = ({
         onSortChange={setSortKey}
         query={query}
         onQueryChange={setQuery}
-        fromChecked={fromChecked}
-        allFromIds={allFromIds}
-        fromTree={fromTree}
-        onFromChange={setFromChecked}
-        domainSelected={domainSelected}
-        domainOptions={domainOptions}
-        onDomainChange={setDomainSelected}
-        useCaseSelected={useCaseSelected}
-        useCaseOptions={useCaseOptions}
-        onUseCaseChange={setUseCaseSelected}
-        maturitySelected={maturitySelected}
-        maturityOptions={maturityOptions}
-        onMaturityChange={setMaturitySelected}
         isAnyFilterActive={isAnyFilterActive}
         onClearFilters={clearAllFilters}
         tabs={tabs}

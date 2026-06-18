@@ -18,8 +18,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <svg />,
 }));
-vi.mock('../../CatalogBrowseToolbar/CatalogBrowseToolbar', () => ({
-  CatalogBrowseToolbar: ({
+vi.mock('../../Toolbar/Toolbar', () => ({
+  Toolbar: ({
     title,
     query,
     onQueryChange,
@@ -63,10 +63,6 @@ const makeItem = (id: string, name: string) => ({
   pricing: ['Free'],
   folder: ['EPAM'],
   lastUsed: '',
-  from: 'dial',
-  domain: 'Engineering',
-  useCase: 'Code generation',
-  maturity: 'Production',
 });
 
 describe('Catalog', () => {

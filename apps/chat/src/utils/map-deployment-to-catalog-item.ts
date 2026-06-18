@@ -27,9 +27,5 @@ export const mapDeploymentToCatalogItem = (
     isHidden: deployment.isHidden ?? false,
     pricing: [],
     folder: [],
-    from: '',
-    domain: '',
-    useCase: '',
-    maturity: '',
   };
 };
