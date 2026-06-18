@@ -143,5 +143,8 @@
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",
     "@types/cookie-parser": "^1.4.10"
+  },
+  "overrides": {
+    "js-yaml": "4.2.0"
   }
 }

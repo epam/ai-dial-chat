@@ -1278,6 +1278,108 @@
         "tags": ["files"]
       }
     },
+    "/api/v1/files/list": {
+      "get": {
+        "description": "Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility.",
+        "operationId": "listFiles",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Folder path within bucket (no leading slash, no ..)",
+            "schema": {
+              "example": "reports/",
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "required": false,
+            "in": "query",
+            "description": "Pagination token from previous response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max items to return",
+            "schema": {
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "recursive",
+            "required": false,
+            "in": "query",
+            "description": "Return items recursively",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "permissions",
+            "required": false,
+            "in": "query",
+            "description": "Include item permissions",
+            "schema": {
+              "default": true,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of files and folders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket, path, or query parameter"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden — user does not own the bucket"
+          },
+          "404": {
+            "description": "Bucket or path not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "List files and folders",
+        "tags": ["files"]
+      }
+    },
     "/api/v1/files/download": {
       "get": {
         "operationId": "downloadFile",
@@ -2597,6 +2699,77 @@
           }
         },
         "required": ["url"]
+      },
+      "ListFilesItemDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "folderId": {
+            "type": "string"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": ["item", "folder"]
+          },
+          "bucket": {
+            "type": "string"
+          },
+          "parentPath": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "contentLength": {
+            "type": "number"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp ms"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "path", "folderId", "nodeType", "bucket"]
+      },
+      "ListFilesResponseDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListFilesItemDto"
+            }
+          },
+          "nextToken": {
+            "type": "string"
+          }
+        },
+        "required": ["bucket", "path", "items"]
       },
       "RateMessageDto": {
         "type": "object",

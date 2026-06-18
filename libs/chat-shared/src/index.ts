@@ -1,3 +1,4 @@
+export * from './models/annotation';
 export * from './models/chat';
 export * from './models/theme';
 export * from './models/auth';

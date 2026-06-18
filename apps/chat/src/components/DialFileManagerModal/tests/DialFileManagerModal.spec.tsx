@@ -1,0 +1,238 @@
+import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
+import { fireEvent, render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import * as useDialFileManagerModule from '../../../hooks/files/useDialFileManager';
+import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileManager';
+import DialFileManagerModal from '../DialFileManagerModal';
+
+vi.mock('../../../hooks/files/useDialFileManager');
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    ...actual,
+    DialFileManager: ({
+      className,
+      gridClassName,
+      gridOptions,
+      toolbarOptions,
+      bulkActionsToolbarOptions,
+      filesLoading,
+      selectedPaths,
+      onSelectedPathsChange,
+    }: {
+      className?: string;
+      gridClassName?: string;
+      gridOptions?: {
+        additionalGridOptions?: { domLayout?: string };
+      };
+      toolbarOptions?: {
+        showHiddenFilesToggle?: boolean;
+        hiddenFilesSwitcherLabel?: string;
+        showHiddenFilesLabel?: string;
+        hideHiddenFilesLabel?: string;
+      };
+      bulkActionsToolbarOptions?: {
+        getSelectionLabel: (count: number) => string;
+      };
+      filesLoading?: boolean;
+      selectedPaths?: Set<string>;
+      onSelectedPathsChange?: (paths: Set<string>) => void;
+    }) => (
+      <div
+        className={className}
+        data-testid="dial-file-manager"
+        data-grid-class={gridClassName}
+        data-grid-layout={gridOptions?.additionalGridOptions?.domLayout}
+        data-loading={filesLoading}
+        data-show-hidden-files-toggle={toolbarOptions?.showHiddenFilesToggle}
+        data-hidden-files-label={toolbarOptions?.hiddenFilesSwitcherLabel}
+        data-show-hidden-files-label={toolbarOptions?.showHiddenFilesLabel}
+        data-hide-hidden-files-label={toolbarOptions?.hideHiddenFilesLabel}
+      >
+        {selectedPaths?.size ? (
+          <>
+            <span>
+              {bulkActionsToolbarOptions?.getSelectionLabel(selectedPaths.size)}
+            </span>
+            <button
+              type="button"
+              onClick={() => onSelectedPathsChange?.(new Set())}
+            >
+              Clear selection
+            </button>
+          </>
+        ) : null}
+        <button
+          type="button"
+          onClick={() =>
+            onSelectedPathsChange?.(new Set(['/All files/report.pdf']))
+          }
+        >
+          Select report
+        </button>
+      </div>
+    ),
+  };
+});
+
+const mockUseDialFileManager = vi.mocked(
+  useDialFileManagerModule.useDialFileManager,
+);
+
+const defaultHookResult: UseDialFileManagerResult = {
+  items: [
+    {
+      id: 'bucket-root',
+      name: 'All files',
+      path: '/All files',
+      parentPath: '',
+      nodeType: DialFileNodeType.FOLDER,
+      folderId: 'test-bucket',
+      items: [
+        {
+          id: 'report.pdf',
+          name: 'report.pdf',
+          path: '/All files/report.pdf',
+          parentPath: '/All files',
+          nodeType: DialFileNodeType.ITEM,
+          folderId: 'test-bucket',
+          contentType: 'application/pdf',
+        },
+      ],
+    },
+  ],
+  isLoading: false,
+  error: null,
+  path: '/All files',
+  onPathChange: vi.fn(),
+  retry: vi.fn(),
+};
+
+const defaultProps = {
+  isOpen: true,
+  onClose: vi.fn(),
+  onAttach: vi.fn(),
+  bucket: 'test-bucket',
+  title: 'DIAL file system',
+  attachLabel: 'Attach',
+  emptyTitle: 'This folder is empty',
+  emptyDescription: '',
+  errorMessage: 'Failed to load files',
+  retryLabel: 'Retry',
+  hiddenFilesLabel: 'Hidden files',
+  showHiddenFilesLabel: 'Show hidden files',
+  hideHiddenFilesLabel: 'Hide hidden files',
+  getSelectionLabel: (count: number) =>
+    `${count} ${count === 1 ? 'item' : 'items'} selected`,
+};
+
+describe('DialFileManagerModal', () => {
+  it('renders with the given title when isOpen is true', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} />);
+    expect(screen.getByText('DIAL file system')).toBeTruthy();
+  });
+
+  it('renders error card with role="alert" when error is set', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      error: 'dialFileManager.error',
+    });
+    render(<DialFileManagerModal {...defaultProps} />);
+    expect(screen.getByRole('alert')).toBeTruthy();
+    expect(screen.getByText('Failed to load files')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
+  });
+
+  it('calls retry when the retry button is clicked', () => {
+    const retry = vi.fn();
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      error: 'dialFileManager.error',
+      retry,
+    });
+    render(<DialFileManagerModal {...defaultProps} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+    expect(retry).toHaveBeenCalledOnce();
+  });
+
+  it('renders DialFileManager when error is null', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} />);
+    const fileManager = screen.getByTestId('dial-file-manager');
+    expect(fileManager.classList.contains('grow')).toBe(true);
+    expect(fileManager.classList.contains('bg-layer-2')).toBe(true);
+    expect(fileManager.getAttribute('data-grid-class')).toBe('size-full');
+    expect(fileManager.getAttribute('data-grid-layout')).toBe('normal');
+    expect(fileManager.getAttribute('data-show-hidden-files-toggle')).toBe(
+      'true',
+    );
+    expect(fileManager.getAttribute('data-hidden-files-label')).toBe(
+      'Hidden files',
+    );
+    expect(fileManager.getAttribute('data-show-hidden-files-label')).toBe(
+      'Show hidden files',
+    );
+    expect(fileManager.getAttribute('data-hide-hidden-files-label')).toBe(
+      'Hide hidden files',
+    );
+    expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('keeps a fixed modal height and pads the footer', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    const dialog = screen.getByRole('dialog');
+    expect(dialog.classList.contains('!h-[min(800px,100dvh)]')).toBe(true);
+    expect(dialog.classList.contains('!bg-layer-2')).toBe(true);
+    expect(
+      dialog.classList.contains("[&>[aria-label='popup-description']]:min-h-0"),
+    ).toBe(true);
+
+    const footer = screen.getByRole('button', { name: 'Attach' }).parentElement;
+    expect(footer?.classList.contains('px-6')).toBe(true);
+    expect(footer?.classList.contains('py-4')).toBe(true);
+  });
+
+  it('attaches selected files', () => {
+    const onAttach = vi.fn();
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} onAttach={onAttach} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
+
+    expect(onAttach).toHaveBeenCalledWith([
+      expect.objectContaining({ name: 'report.pdf' }),
+    ]);
+  });
+
+  it('shows the selection count and clears the selection', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
+
+    expect(screen.getByText('1 item selected')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(false);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+
+    expect(screen.queryByText('1 item selected')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(true);
+  });
+
+  it('does not render content when isOpen is false', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} isOpen={false} />);
+    expect(screen.queryByText('DIAL file system')).toBeNull();
+  });
+});
