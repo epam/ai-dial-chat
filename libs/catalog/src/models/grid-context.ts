@@ -1,4 +1,4 @@
-import { CatalogListViewTypography } from '../components/CatalogListView/CatalogListView';
+import { CatalogListViewTypography } from './list-props';
 
 /** ag-grid context shape passed to all cell renderers. */
 export interface GridContext {

@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-import { CatalogEntityType } from '../../../types/CatalogEntityType';
+import { CatalogEntityType } from '../../../types/entity-type';
 import { CatalogCardGrid } from '../CatalogCardGrid';
 
 vi.mock('../../CatalogCard/CatalogCard', () => ({

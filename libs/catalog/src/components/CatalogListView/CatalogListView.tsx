@@ -1,9 +1,9 @@
 import { DialGrid } from '@epam/ai-dial-ui-kit';
 import type { GridApi } from 'ag-grid-community';
 import { type CSSProperties, FC, useEffect, useRef } from 'react';
-import type { CatalogItem } from '../../models/CatalogItem';
-import { CatalogListViewProps } from '../../models/CatalogListViewProps';
-import { GridContext } from '../../models/GridContext';
+import type { CatalogItem } from '../../models/catalog-item';
+import { GridContext } from '../../models/grid-context';
+import { CatalogListViewProps } from '../../models/list-props';
 import { CATALOG_COLUMNS } from './columns';
 
 /**
@@ -35,7 +35,7 @@ export const CatalogListView: FC<CatalogListViewProps> = ({
   }, [items, query]);
 
   return (
-    <div style={cssVars as CSSProperties}>
+    <div style={cssVars as CSSProperties} className="size-full px-4">
       <DialGrid<CatalogItem>
         columnDefs={CATALOG_COLUMNS()}
         rowData={items}
@@ -47,7 +47,6 @@ export const CatalogListView: FC<CatalogListViewProps> = ({
         emptyStateTitle={emptyStateTitle}
         emptyStateDescription={emptyStateDescription}
         additionalGridOptions={{
-          domLayout: 'autoHeight',
           rowHeight: 90,
           defaultColDef: { filter: false, floatingFilter: false },
           context: { searchQuery: query, typography } satisfies GridContext,

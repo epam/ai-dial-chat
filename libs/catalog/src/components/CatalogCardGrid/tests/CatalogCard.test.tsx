@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { CatalogEntityType } from '../../../types/CatalogEntityType';
+import { CatalogEntityType } from '../../../types/entity-type';
 import { CatalogCard } from '../CatalogCard';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({

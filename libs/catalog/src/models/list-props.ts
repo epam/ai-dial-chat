@@ -1,4 +1,4 @@
-import { CatalogItem } from './Catalog';
+import { CatalogItem } from './catalog-item';
 
 /** Typography class overrides for `CatalogListView` cells. */
 export interface CatalogListViewTypography {

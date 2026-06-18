@@ -1,5 +1,5 @@
 import type { CatalogItem } from '../models/CatalogItem';
-import { CatalogSortKey } from '../types/CatalogSortKey';
+import { CatalogSortKey } from '../types/sort';
 
 /**
  * Returns a sorted copy of the items array.

@@ -1,4 +1,4 @@
-import type { CatalogEntityType } from '../types/CatalogEntityType';
+import type { CatalogEntityType } from '../types/entity-type';
 
 /** A node in the hierarchical "From" source filter tree. */
 export interface TreeNode {
@@ -46,12 +46,4 @@ export interface CatalogItem extends FavoriteItem {
   useCase: string;
   /** Maturity stage matched by the "Maturity" dropdown filter. */
   maturity: string;
-}
-
-/** A single option in the sort dropdown. */
-export interface CatalogSortOption {
-  /** Unique key, should match a CatalogSortKey value. */
-  value: string;
-  /** Display label shown in the dropdown. */
-  label: string;
 }

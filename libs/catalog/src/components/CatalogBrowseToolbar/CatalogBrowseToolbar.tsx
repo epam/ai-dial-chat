@@ -1,3 +1,4 @@
+import type { TabModel } from '@epam/ai-dial-ui-kit';
 import {
   ButtonAppearance,
   ButtonVariant,
@@ -9,7 +10,6 @@ import {
   DialTabs,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import type { TabModel } from '@epam/ai-dial-ui-kit';
 import {
   IconFilter,
   IconLayoutCards,
@@ -18,8 +18,8 @@ import {
 } from '@tabler/icons-react';
 import { type CSSProperties, FC } from 'react';
 import { DEFAULT_SORT_OPTIONS } from '../../constants/catalog-defaults';
-import type { CatalogSortOption, TreeNode } from '../../models/CatalogItem';
-import { CatalogViewMode } from '../../types/CatalogViewMode';
+import { CatalogSortOption } from '../../models/sort';
+import { CatalogViewMode } from '../../types/view-mode';
 import { DomainFilter } from '../DomainFilter/DomainFilter';
 import { FromFilter } from '../FromFilter/FromFilter';
 import { MaturityFilter } from '../MaturityFilter/MaturityFilter';

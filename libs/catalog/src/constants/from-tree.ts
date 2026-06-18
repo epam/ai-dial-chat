@@ -1,6 +1,6 @@
-import type { TreeNode } from '../models/CatalogItem';
+import type { TreeNode } from '../models/catalog-item';
 import { getAllNodeIds } from '../utils/catalog-tree';
-
+// TODO: REVIEW
 /**
  * Default source hierarchy for the "From" filter.
  * Consumers should replace this with their own org structure via props.

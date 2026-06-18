@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import { CatalogEntityType } from '../../types/CatalogEntityType';
+import { CatalogEntityType } from '../../types/entity-type';
 import styles from './EntityTypeBadge.module.scss';
 
 /** CSS module class names keyed by `CatalogEntityType`. */

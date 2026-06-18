@@ -1,16 +1,15 @@
 // Types
-export { CatalogEntityType } from './types/CatalogEntityType';
-export { CatalogSortKey } from './types/CatalogSortKey';
-export { CatalogViewMode } from './types/CatalogViewMode';
+export { CatalogEntityType } from './types/entity-type';
+export { CatalogSortKey } from './types/sort';
+export { CatalogViewMode } from './types/view-mode';
 
 // Models
 export type {
   CatalogItem,
-  CatalogSortOption,
   FavoriteItem,
   TreeNode,
-} from './models/CatalogItem';
-export type { CatalogProps, CatalogTitles } from './models/CatalogProps';
+} from './models/catalog-item';
+export type { CatalogProps, CatalogTitles } from './models/catalog-props';
 
 // Constants
 export {
@@ -51,20 +50,20 @@ export type {
   CatalogCardProps,
   CatalogCardStyles,
   CatalogCardTypography,
-} from './models/CatalogCardProps';
+} from './models/card-props';
 
 export { CatalogCardGrid } from './components/CatalogCardGrid/CatalogCardGrid';
 export type {
   CatalogCardGridProps,
   CatalogCardGridStyles,
   CatalogCardGridTitles,
-} from './models/CatalogCardGridProps';
+} from './models/card-grid-props';
 
 export { CatalogFavorites } from './components/CatalogFavorites/CatalogFavorites';
 export type { CatalogFavoritesProps } from './components/CatalogFavorites/CatalogFavorites';
 
 export { CatalogListView } from './components/CatalogListView/CatalogListView';
-export type { CatalogListViewProps } from './models/CatalogListViewProps';
+export type { CatalogListViewProps } from './models/list-props';
 
 export { DomainFilter } from './components/DomainFilter/DomainFilter';
 export type { DomainFilterProps } from './components/DomainFilter/DomainFilter';

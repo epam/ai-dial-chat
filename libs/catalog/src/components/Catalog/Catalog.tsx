@@ -15,9 +15,9 @@ import {
   DEFAULT_ALL_FROM_IDS,
   DEFAULT_FROM_TREE,
 } from '../../constants/from-tree';
-import type { CatalogProps } from '../../models/CatalogProps';
-import { CatalogSortKey } from '../../types/CatalogSortKey';
-import { CatalogViewMode } from '../../types/CatalogViewMode';
+import type { CatalogProps } from '../../models/catalog-props';
+import { CatalogSortKey } from '../../types/sort';
+import { CatalogViewMode } from '../../types/view-mode';
 import { filterCatalogItems } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { getStyles } from '../../utils/styles';
@@ -239,12 +239,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* List view — mounted only after first shown to avoid initializing ag-grid eagerly */}
       {listEverShown && viewMode === CatalogViewMode.List && (
-        <div
-          className={mergeClasses(
-            'flex min-h-0 flex-1 overflow-auto',
-            styles.listView,
-          )}
-        >
+        <div className={mergeClasses('flex min-h-0 flex-1', styles.listView)}>
           <CatalogListView
             items={filtered}
             query={query}

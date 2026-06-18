@@ -1,5 +1,12 @@
-import type { CatalogSortOption } from '../models/CatalogItem';
-import { CatalogSortKey } from '../types/CatalogSortKey';
+import type { CatalogSortOption } from '../models/sort';
+import { CatalogSortKey } from '../types/sort';
+
+/** Default sort options for the browse toolbar. */
+export const DEFAULT_SORT_OPTIONS: CatalogSortOption[] = [
+  { value: CatalogSortKey.RecentlyUpdated, label: 'Recently Updated' },
+  { value: CatalogSortKey.Newest, label: 'Newest' },
+  { value: CatalogSortKey.NameAZ, label: 'Name A-Z' },
+];
 
 /** Default maturity stage options for the Maturity dropdown filter. */
 export const DEFAULT_MATURITY_OPTIONS: string[] = [
@@ -37,11 +44,4 @@ export const DEFAULT_DOMAIN_OPTIONS: string[] = [
   'Legal&Compliance',
   'Data&Analytics',
   'Operations',
-];
-
-/** Default sort options for the browse toolbar. */
-export const DEFAULT_SORT_OPTIONS: CatalogSortOption[] = [
-  { value: CatalogSortKey.RecentlyUpdated, label: 'Recently Updated' },
-  { value: CatalogSortKey.Newest, label: 'Newest' },
-  { value: CatalogSortKey.NameAZ, label: 'Name A-Z' },
 ];
