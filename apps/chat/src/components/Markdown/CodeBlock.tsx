@@ -85,13 +85,13 @@ export const CodeBlock: FC<Props> = memo(
     return (
       <div
         className={classNames(
-          'codeblock relative max-h-[68vh] overflow-auto rounded border font text-sm text-primary',
+          'codeblock relative rounded border font text-sm text-primary',
           isInner ? 'border-primary' : 'border-secondary',
         )}
       >
         <div
           className={classNames(
-            'sticky top-0 z-10 flex items-center justify-between border-b p-3',
+            'flex items-center justify-between border-b p-3',
             isInner
               ? 'border-primary bg-layer-3'
               : 'border-secondary bg-layer-1',
@@ -144,23 +144,25 @@ export const CodeBlock: FC<Props> = memo(
           )}
         </div>
 
-        <SyntaxHighlighter
-          language={displayLanguage}
-          style={codeBlockTheme[theme] || oneDark}
-          customStyle={{
-            margin: 0,
-            borderRadius: 0,
-            fontSize: 14,
-            padding: 12,
-            letterSpacing: 0,
-          }}
-          className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'} font-codeblock`}
-          codeTagProps={{
-            className: 'font-codeblock',
-          }}
-        >
-          {value}
-        </SyntaxHighlighter>
+        <div className="max-h-[60vh] overflow-auto">
+          <SyntaxHighlighter
+            language={displayLanguage}
+            style={codeBlockTheme[theme] || oneDark}
+            customStyle={{
+              margin: 0,
+              borderRadius: 0,
+              fontSize: 14,
+              padding: 12,
+              letterSpacing: 0,
+            }}
+            className={`${isInner ? '!bg-layer-3' : '!bg-layer-1'} font-codeblock`}
+            codeTagProps={{
+              className: 'font-codeblock',
+            }}
+          >
+            {value}
+          </SyntaxHighlighter>
+        </div>
       </div>
     );
   },
