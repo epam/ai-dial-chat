@@ -15,7 +15,6 @@ concurrency:
   cancel-in-progress: true
 
 permissions:
-  id-token: write
   contents: write
   packages: write
   security-events: write
@@ -27,5 +26,4 @@ jobs:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
       node-version: 24
       maximize-build-space: true
-      draft-stable-releases: true
     secrets: inherit
