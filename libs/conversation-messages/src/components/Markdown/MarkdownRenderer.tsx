@@ -102,10 +102,10 @@ export const defaultMarkdownComponents: Components = {
 
 const buildMarkdownComponents = (
   cn: MarkdownRendererClassNames,
-  isStreaming: boolean | undefined,
-  codeBlockCopyLabel: string | undefined,
-  codeBlockCopiedLabel: string | undefined,
-  codeBlockTheme: CodeBlockTheme | undefined,
+  isStreaming?: boolean,
+  codeBlockCopyLabel?: string,
+  codeBlockCopiedLabel?: string,
+  codeBlockTheme?: CodeBlockTheme,
 ): Components => ({
   h1: ({ children }) => <h1 className={cn.h1}>{children}</h1>,
   h2: ({ children }) => <h2 className={cn.h2}>{children}</h2>,
