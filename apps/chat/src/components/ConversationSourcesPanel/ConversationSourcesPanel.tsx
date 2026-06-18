@@ -22,7 +22,9 @@ import { useConversationSources } from '../../hooks/conversation-sources/useConv
 import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { StorageKey } from '../../types/storage-key';
+import { includesIgnoreCase } from '../../utils/string-utils';
 import FilesSection from './sections/FilesSection/FilesSection';
+import SourcesSection from './sections/SourcesSection/SourcesSection';
 
 const MIN_PANEL_WIDTH = 312;
 const DEFAULT_PANEL_WIDTH = 360;
@@ -31,7 +33,7 @@ const DEFAULT_PANEL_WIDTH = 360;
 const ConversationSourcesPanel: FC = () => {
   const { t } = useTranslation();
   const { handleClose, isOpen, messages } = useSourcesSidebar();
-  const { uploaded, generated } = useConversationSources(messages);
+  const { uploaded, generated, sources } = useConversationSources(messages);
   const { handleAttachmentClick } = useAttachmentAction();
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -73,11 +75,26 @@ const ConversationSourcesPanel: FC = () => {
     [generated, searchQuery],
   );
 
-  const isEmpty = uploaded.length === 0 && generated.length === 0;
+  const filteredSources = useMemo(
+    () =>
+      searchQuery
+        ? sources.filter(
+            (s) =>
+              includesIgnoreCase(s.title, searchQuery) ||
+              includesIgnoreCase(s.url, searchQuery) ||
+              (s.quote != null && includesIgnoreCase(s.quote, searchQuery)),
+          )
+        : sources,
+    [sources, searchQuery],
+  );
+
+  const isEmpty =
+    uploaded.length === 0 && generated.length === 0 && sources.length === 0;
   const isNoResults =
     searchQuery !== '' &&
     filteredUploaded.length === 0 &&
-    filteredGenerated.length === 0;
+    filteredGenerated.length === 0 &&
+    filteredSources.length === 0;
 
   return (
     <SidebarPanel
@@ -131,9 +148,11 @@ const ConversationSourcesPanel: FC = () => {
               onAttachmentClick={handleAttachmentClick}
               attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
             />
-            {/* TODO: restore after implementing sources extraction from assistant
-            messages */}
-            {/* <SourcesSection title={t(SidebarI18nKeys.SectionSources)} /> */}
+            <SourcesSection
+              sources={filteredSources}
+              title={t(SidebarI18nKeys.SectionSources)}
+              copyLabel={t(SidebarI18nKeys.CopySource)}
+            />
           </>
         )}
       </div>
