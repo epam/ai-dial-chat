@@ -1,4 +1,4 @@
-import type { CatalogItem } from './CatalogItem';
+import type { CatalogItem } from './catalog-item';
 
 /** Text overrides for `CatalogCardGrid` empty state. */
 export interface CatalogCardGridTitles {

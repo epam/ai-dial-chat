@@ -38,8 +38,10 @@ describe('CatalogCardGrid', () => {
     render(
       <CatalogCardGrid
         items={[]}
-        noResultsTitle='No results for "foo"'
-        noResultsDescription="Try a different keyword"
+        titles={{
+          noResultsTitle: 'No results for "foo"',
+          noResultsDescription: 'Try a different keyword',
+        }}
       />,
     );
     expect(screen.getByText('No results for "foo"')).toBeTruthy();

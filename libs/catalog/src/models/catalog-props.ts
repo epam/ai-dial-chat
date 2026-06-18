@@ -1,6 +1,6 @@
 import { TabModel } from '@epam/ai-dial-ui-kit';
-import type { CatalogItem, FavoriteItem, TreeNode } from './CatalogItem';
-import type { CatalogStyles } from './CatalogStyles';
+import type { CatalogItem, FavoriteItem, TreeNode } from './catalog-item';
+import type { CatalogStyles } from './catalog-styles';
 
 /** Text labels used by the `Catalog` surface. */
 export interface CatalogTitles {
