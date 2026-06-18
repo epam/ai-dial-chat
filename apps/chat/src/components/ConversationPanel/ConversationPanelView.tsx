@@ -31,7 +31,6 @@ import { useNavigate } from 'react-router-dom';
 import {
   getConversationRoute,
   normalizeConversationId,
-  ROUTES,
 } from '../../constants/routes';
 import {
   BasicI18nKeys,
@@ -44,6 +43,7 @@ import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
+import { ROUTES } from '../../types/routes';
 import { StorageKey } from '../../types/storage-key';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -285,7 +285,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       activeConversationId != null &&
       normalizeConversationId(idToDelete) === activeConversationId
     ) {
-      navigate(ROUTES.ROOT);
+      navigate(ROUTES.Root);
     }
   }, [pendingDeleteId, deleteConversation, activeConversationId, navigate, t]);
 

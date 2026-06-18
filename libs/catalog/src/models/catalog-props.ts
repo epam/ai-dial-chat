@@ -1,0 +1,66 @@
+import { TabModel } from '@epam/ai-dial-ui-kit';
+import type { CatalogItem, FavoriteItem, TreeNode } from './catalog-item';
+import type { CatalogStyles } from './catalog-styles';
+
+/** Text labels used by the `Catalog` surface. */
+export interface CatalogTitles {
+  /** Page heading. Default: 'Catalog'. */
+  pageTitle?: string;
+  /** Create button label. Default: 'Create'. */
+  createLabel?: string;
+  /** Favorites section heading. Default: 'Your Favorites'. */
+  favoritesTitle?: string;
+  /** Browse section heading. Default: 'Browse'. */
+  browseTitle?: string;
+  /** Search input placeholder. Default: 'Search models, tools, agents…'. */
+  searchPlaceholder?: string;
+  /** "No results" description. Default: 'Try a different keyword'. */
+  noResultsDescription?: string;
+  /**
+   * Returns the "no results" heading given the active query.
+   * Default: (q) => `No results for "${q}"`.
+   */
+  noResultsTitle?: (query: string) => string;
+  /** Label for the "Recently Updated" sort option. Default: 'Recently Updated'. */
+  sortRecentlyUpdatedLabel?: string;
+  /** Label for the "Newest" sort option. Default: 'Newest'. */
+  sortNewestLabel?: string;
+  /** Label for the "Name A-Z" sort option. Default: 'Name A-Z'. */
+  sortNameAZLabel?: string;
+  /** Label for the "Featured" tag on cards. Default: 'Featured'. */
+  featuredLabel?: string;
+  /** ARIA label for the page/grid. Default: 'Catalog'. */
+  ariaLabel?: string;
+}
+
+/** Props for Catalog. */
+export interface CatalogProps {
+  /** Items to display in the Browse section. */
+  items: CatalogItem[];
+  /** Items to display in the Favorites section. */
+  favorites: FavoriteItem[];
+  /** Grouped text labels for headings and actions. */
+  titles?: CatalogTitles;
+  /** Whether catalog data is loading (reserved for future loading state). */
+  isLoading?: boolean;
+  /** Error to display if data loading failed (reserved for future error state). */
+  error?: Error | null;
+  /** Called when any item's star is toggled. */
+  onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /** Called when the Create button is clicked. */
+  onCreateClick?: () => void;
+  /** Tab definitions for entity-type filtering. */
+  tabs?: TabModel[];
+  /** Maturity filter options. Default: DEFAULT_MATURITY_OPTIONS. */
+  maturityOptions?: string[];
+  /** Use-case filter options. Default: DEFAULT_USE_CASE_OPTIONS. */
+  useCaseOptions?: string[];
+  /** Domain filter options. Default: DEFAULT_DOMAIN_OPTIONS. */
+  domainOptions?: string[];
+  /** "From" source tree. Default: DEFAULT_FROM_TREE. */
+  fromTree?: TreeNode[];
+  /** All "from" IDs (determines initial filter state). Default: DEFAULT_ALL_FROM_IDS. */
+  allFromIds?: Set<string>;
+  /** Optional color and typography overrides. */
+  styles?: CatalogStyles;
+}
