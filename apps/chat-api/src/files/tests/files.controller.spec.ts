@@ -1,4 +1,5 @@
 import {
+  BadGatewayException,
   ForbiddenException,
   HttpException,
   INestApplication,
@@ -21,6 +22,20 @@ const TEST_USER = {
   sub: 'user-123',
   at: 'test-access-token',
   bucket: 'user-bucket',
+};
+
+const MOCK_LIST_RESPONSE = {
+  bucket: 'my-bucket',
+  path: '',
+  items: [
+    {
+      name: 'folder',
+      path: 'folder/',
+      folderId: 'my-bucket:folder/',
+      nodeType: 'folder',
+      bucket: 'my-bucket',
+    },
+  ],
 };
 
 async function buildApp(
@@ -321,5 +336,136 @@ describe('FilesController — download', () => {
       .get('/api/v1/files/download')
       .query({ bucket: 'my-bucket', path: 'file.pdf' })
       .expect(503);
+  });
+});
+
+describe('FilesController — listFiles', () => {
+  let app: INestApplication;
+  let service: {
+    uploadFile: ReturnType<typeof vi.fn>;
+    downloadFile: ReturnType<typeof vi.fn>;
+    listFiles: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    service = {
+      uploadFile: vi.fn(),
+      downloadFile: vi.fn(),
+      listFiles: vi.fn().mockResolvedValue(MOCK_LIST_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with ListFilesResponseDto shape for valid bucket', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket' })
+      .expect(200);
+
+    expect(res.body).toMatchObject({
+      bucket: 'my-bucket',
+      items: expect.any(Array),
+    });
+  });
+
+  it('returns 200 with items array for bucket + path + limit', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket', path: 'folder/', limit: '10' })
+      .expect(200);
+
+    expect(res.body.items).toBeInstanceOf(Array);
+  });
+
+  it('returns 400 when bucket is missing', async () => {
+    await request(app.getHttpServer()).get('/api/v1/files/list').expect(400);
+    expect(service.listFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for bucket with slash', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my/bucket' })
+      .expect(400);
+    expect(service.listFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for path with ..', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket', path: '../../etc' })
+      .expect(400);
+    expect(service.listFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for limit=0', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket', limit: '0' })
+      .expect(400);
+    expect(service.listFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for limit=1001', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket', limit: '1001' })
+      .expect(400);
+    expect(service.listFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 403 when service throws ForbiddenException', async () => {
+    service.listFiles.mockRejectedValue(new ForbiddenException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket' })
+      .expect(403);
+  });
+
+  it('returns 404 when service throws NotFoundException', async () => {
+    service.listFiles.mockRejectedValue(new NotFoundException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket' })
+      .expect(404);
+  });
+
+  it('returns 429 when service throws TooManyRequestsException', async () => {
+    service.listFiles.mockRejectedValue(
+      new HttpException('Too many requests', 429),
+    );
+    await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket' })
+      .expect(429);
+  });
+
+  it('returns 502 when service throws BadGatewayException', async () => {
+    service.listFiles.mockRejectedValue(new BadGatewayException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket' })
+      .expect(502);
+  });
+
+  it('returns 503 when service throws ServiceUnavailableException', async () => {
+    service.listFiles.mockRejectedValue(new ServiceUnavailableException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket' })
+      .expect(503);
+  });
+
+  it('returns 401 when unauthenticated (no user on request)', async () => {
+    service.listFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/list')
+      .query({ bucket: 'my-bucket' })
+      .expect(401);
   });
 });

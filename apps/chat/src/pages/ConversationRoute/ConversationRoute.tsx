@@ -25,7 +25,9 @@ import { getConversationRoute } from '../../constants/routes';
 import {
   BasicI18nKeys,
   ChatI18nKeys,
+  ConversationI18nKeys,
   DeploymentsI18nKeys,
+  DialFileManagerI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -33,6 +35,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { getApiErrorMessage } from '../../server-api/api-error';
@@ -55,6 +58,12 @@ const ConversationInput = lazy(async () => {
   return { default: module.ConversationInput };
 });
 
+const DialFileManagerModal = lazy(async () => {
+  const module =
+    await import('../../components/DialFileManagerModal/DialFileManagerModal');
+  return { default: module.default };
+});
+
 // TODO: rename page and component
 // TODO: review component after ConversationPage implementation, maybe move ConversationInput here and remove ConversationInput component
 const ConversationRoute: FC = () => {
@@ -66,6 +75,14 @@ const ConversationRoute: FC = () => {
   const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
+  const {
+    isOpen: isDialFileManagerOpen,
+    openModal: openDialFileManager,
+    closeModal: closeDialFileManager,
+    pendingAttachments: pendingDialAttachments,
+    clearPendingAttachments: clearPendingDialAttachments,
+    handleAttach: handleAttachDialFiles,
+  } = useDialFileManagerState(bucket);
   const inputRef = useRef<HTMLDivElement>(null);
   const {
     items,
@@ -306,10 +323,36 @@ const ConversationRoute: FC = () => {
             sendOnEnter={sendOnEnter}
             pendingDropFiles={pendingFiles}
             onDropFilesConsumed={onFilesConsumed}
+            pendingAttachments={pendingDialAttachments}
+            onPendingAttachmentsConsumed={clearPendingDialAttachments}
             autoFocus={!isMobile}
+            onDialFileSystemClick={openDialFileManager}
+            dialFileSystemLabel={t(
+              ConversationI18nKeys.AttachMenuDialFileSystem,
+            )}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
+        {isDialFileManagerOpen && (
+          <DialFileManagerModal
+            isOpen={isDialFileManagerOpen}
+            onClose={closeDialFileManager}
+            onAttach={handleAttachDialFiles}
+            bucket={bucket}
+            title={t(DialFileManagerI18nKeys.Title)}
+            attachLabel={t(DialFileManagerI18nKeys.Attach)}
+            emptyTitle={t(DialFileManagerI18nKeys.Empty)}
+            emptyDescription=""
+            errorMessage={t(DialFileManagerI18nKeys.Error)}
+            retryLabel={t(DialFileManagerI18nKeys.Retry)}
+            hiddenFilesLabel={t(DialFileManagerI18nKeys.HiddenFiles)}
+            showHiddenFilesLabel={t(DialFileManagerI18nKeys.ShowHiddenFiles)}
+            hideHiddenFilesLabel={t(DialFileManagerI18nKeys.HideHiddenFiles)}
+            getSelectionLabel={(count) =>
+              t(DialFileManagerI18nKeys.ItemsSelected, { count })
+            }
+          />
+        )}
       </Suspense>
     </div>
   );

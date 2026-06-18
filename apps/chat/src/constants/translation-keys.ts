@@ -102,6 +102,19 @@ export enum ConversationI18nKeys {
   StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
   StagesExecuted = 'conversation.stages.executed',
   StagesStep = 'conversation.stages.step',
+  AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
+}
+
+export enum DialFileManagerI18nKeys {
+  Title = 'dialFileManager.title',
+  Attach = 'dialFileManager.attach',
+  Empty = 'dialFileManager.empty',
+  Error = 'dialFileManager.error',
+  Retry = 'dialFileManager.retry',
+  HiddenFiles = 'dialFileManager.hiddenFiles',
+  ShowHiddenFiles = 'dialFileManager.showHiddenFiles',
+  HideHiddenFiles = 'dialFileManager.hideHiddenFiles',
+  ItemsSelected = 'dialFileManager.itemsSelected',
 }
 
 export enum AuthI18nKeys {
