@@ -14,8 +14,8 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
-import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
+  NotificationVariant,
   DialFabButton,
   DialNeutralButton,
   DialNotification,

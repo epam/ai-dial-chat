@@ -2,8 +2,8 @@ import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, memo, useCallback } from 'react';
 import type { AnnotationGroup } from '../../../utils/group-annotations-by-source';
-import CitationMarker from '../CitationMarker/CitationMarker';
 import CitationCard from '../CitationCard/CitationCard';
+import CitationMarker from '../CitationMarker/CitationMarker';
 
 interface Props {
   /** The annotation group represented by this marker+popup pair. */
