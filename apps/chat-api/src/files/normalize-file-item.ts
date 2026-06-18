@@ -1,3 +1,4 @@
+import { FileNodeType } from './dto/list-files.dto';
 import type { ListFilesItemDto } from './dto/list-files.dto';
 
 interface DialFileItem {
@@ -18,7 +19,7 @@ export const normalizeFileItem = (
   bucket: string,
 ): ListFilesItemDto => {
   const rawNodeType = (item.nodeType ?? '').toLowerCase();
-  const isFolder = rawNodeType === 'folder';
+  const isFolder = rawNodeType === FileNodeType.Folder;
 
   const rawPath =
     item.url ??

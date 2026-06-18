@@ -4,6 +4,7 @@ import type { ListFilesItemDto } from '@epam/chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { listFiles } from '../../server-api/files.api';
+import { safeDecodeURI } from '../../utils/string-utils';
 
 export interface UseDialFileManagerOptions {
   /** DIAL Core bucket to browse. */
@@ -26,14 +27,6 @@ export interface UseDialFileManagerResult {
   /** Re-runs the fetch for the current `folderPath`. */
   retry: () => void;
 }
-
-const safeDecodeURI = (path: string): string => {
-  try {
-    return decodeURIComponent(path);
-  } catch {
-    return path;
-  }
-};
 
 /**
  * Recursively builds a DialFile[] for a folder from the cache.

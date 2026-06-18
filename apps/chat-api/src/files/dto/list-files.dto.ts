@@ -66,6 +66,11 @@ export class ListFilesQueryDto {
   permissions?: boolean;
 }
 
+export enum FileNodeType {
+  Item = 'item',
+  Folder = 'folder',
+}
+
 export class ListFilesItemDto {
   @ApiProperty()
   name!: string;
@@ -76,7 +81,7 @@ export class ListFilesItemDto {
   @ApiProperty()
   folderId!: string;
 
-  @ApiProperty({ enum: ['item', 'folder'] })
+  @ApiProperty({ enum: FileNodeType })
   nodeType!: string;
 
   @ApiProperty()
