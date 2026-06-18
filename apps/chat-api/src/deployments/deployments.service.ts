@@ -32,6 +32,7 @@ const toAdditionalProperties = (
 const mapToDeploymentItem = (
   raw: RawDeploymentDto,
   featuredIds: Set<string>,
+  hiddenTags: Set<string>,
 ): DeploymentItemDto | null => {
   if (!raw.id) return null;
 
@@ -61,6 +62,7 @@ const mapToDeploymentItem = (
     description: raw.description,
     displayVersion: raw.display_version,
     isFeatured: featuredIds.has(raw.id),
+    isHidden: hiddenTags.has(raw.id),
     updatedAt: typeof raw.updated_at === 'string' ? raw.updated_at : undefined,
     interfaces,
     applicationTypeSchemaId:
@@ -77,6 +79,7 @@ const mapToDeploymentItem = (
 export class DeploymentsService extends AppService {
   protected override readonly logger = new Logger(DeploymentsService.name);
   private readonly featuredIds: Set<string>;
+  private readonly hiddenTags: Set<string>;
 
   constructor(
     configService: ConfigService<EnvironmentVariables>,
@@ -85,6 +88,10 @@ export class DeploymentsService extends AppService {
     super(configService);
     this.featuredIds = new Set(
       this.configService.get<string[]>('FEATURED_MODEL_IDS') ?? [],
+    );
+
+    this.hiddenTags = new Set(
+      this.configService.get<string[]>('HIDDEN_ENTITY_TAGS') ?? [],
     );
   }
 
@@ -132,7 +139,9 @@ export class DeploymentsService extends AppService {
 
         allItems = rawItems
           .filter((item) => item.id && !item.id.includes(HIDDEN_FILE))
-          .map((item) => mapToDeploymentItem(item, this.featuredIds))
+          .map((item) =>
+            mapToDeploymentItem(item, this.featuredIds, this.hiddenTags),
+          )
           .filter((item): item is DeploymentItemDto => item !== null);
         await this.cacheManager.set(cacheKey, allItems, 30_000);
       } catch (err) {
