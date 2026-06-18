@@ -143,7 +143,7 @@ export const Catalog: FC<CatalogProps> = ({
   const emptyDesc = query ? noResultsDescription : '';
 
   return (
-    <div
+    <section
       aria-label={resolvedAriaLabel}
       className="flex min-h-0 flex-1 flex-col"
       style={cssVars}
@@ -250,6 +250,6 @@ export const Catalog: FC<CatalogProps> = ({
           />
         </div>
       )}
-    </div>
+    </section>
   );
 };

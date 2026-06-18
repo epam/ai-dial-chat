@@ -24,7 +24,11 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
       headerActions,
     }: {
       headerActions?: React.ReactNode;
-    }) => <div data-testid="conversation-panel">{headerActions}</div>,
+    }) => (
+      <div role="region" aria-label="conversation panel">
+        {headerActions}
+      </div>
+    ),
   };
 });
 

@@ -27,8 +27,8 @@
 
 .gridView {
   background: var(--cat-content-bg, var(--cat-bg-layer-1));
-  padding-left: 15%;
-  padding-right: 15%;
+  padding-inline-start: 15%;
+  padding-inline-end: 15%;
 }
 
 .listView {

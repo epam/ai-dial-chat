@@ -99,7 +99,9 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
   }) => (
     <aside role="complementary" aria-label={ariaLabel} aria-hidden={!isOpen}>
       {rightActions && (
-        <div data-testid="panel-header-right">{rightActions}</div>
+        <div role="group" aria-label="panel header actions">
+          {rightActions}
+        </div>
       )}
       {children}
     </aside>
@@ -348,11 +350,15 @@ describe('ConversationPanel', () => {
       />,
     );
     expect(screen.getByRole('button', { name: 'Test Action' })).toBeTruthy();
-    expect(screen.getByTestId('panel-header-right')).toBeTruthy();
+    expect(
+      screen.getByRole('group', { name: 'panel header actions' }),
+    ).toBeTruthy();
   });
 
   it('renders without error when headerActions is omitted', () => {
     render(<ConversationPanel {...BASE_PROPS} conversations={[]} />);
-    expect(screen.queryByTestId('panel-header-right')).toBeNull();
+    expect(
+      screen.queryByRole('group', { name: 'panel header actions' }),
+    ).toBeNull();
   });
 });
