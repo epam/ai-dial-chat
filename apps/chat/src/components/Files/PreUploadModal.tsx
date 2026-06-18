@@ -23,9 +23,15 @@ import {
   validatePreUploadFiles,
 } from '@/src/utils/app/file';
 import { getFileRootId, isMyBucket } from '@/src/utils/app/id';
-import { detectUploadFileConflicts } from '@/src/utils/app/prepare-files-for-upload';
+import {
+  PreparedUploadFile,
+  ResolvedUploadFile,
+  applyUploadReplaceActions,
+  detectUploadFileConflicts,
+} from '@/src/utils/app/prepare-files-for-upload';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
+import { MappedReplaceActions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
@@ -41,6 +47,7 @@ import { SHARED_WITH_ME_SECTION_NAME } from '@/src/constants/sections';
 
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
+import { ReplaceConfirmationModal } from '@/src/components/Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 
 import { SelectFolderModal } from './SelectFolderModal';
 
@@ -60,7 +67,7 @@ interface Props {
   allowedTypesLabel?: string;
   onClose: (result: boolean) => void;
   onUploadFiles: (
-    selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+    selectedFiles: ResolvedUploadFile[],
     folderPath: string | undefined,
   ) => void;
   uploadFolderId?: string;
@@ -91,9 +98,11 @@ export const PreUploadDialog = ({
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const [selectedFiles, setSelectedFiles] = useState<
-    Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[]
-  >([]);
+  const [selectedFiles, setSelectedFiles] = useState<PreparedUploadFile[]>([]);
+  const [pendingUploadConflict, setPendingUploadConflict] = useState<{
+    duplicatedFiles: DialFile[];
+    nonDuplicatedFiles: PreparedUploadFile[];
+  } | null>(null);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(
@@ -201,19 +210,7 @@ export const PreUploadDialog = ({
     }
 
     if (duplicatedFiles.length) {
-      dispatch(
-        FilesActions.showUploadReplaceDialog({
-          duplicatedFiles,
-          nonDuplicatedFiles,
-          folderId: selectedFolderId,
-          folderPath,
-          bucket: uploadBucket,
-          showSuccessMessage: true,
-          selectFileIds: true,
-          isFromDeviceAttachment: true,
-        }),
-      );
-      onClose(true);
+      setPendingUploadConflict({ duplicatedFiles, nonDuplicatedFiles });
       return;
     }
 
@@ -225,7 +222,6 @@ export const PreUploadDialog = ({
     files,
     folderPath,
     maximumAttachmentsAmount,
-    dispatch,
     onClose,
     onUploadFiles,
     selectedFiles,
@@ -233,6 +229,44 @@ export const PreUploadDialog = ({
     t,
     uploadBucket,
   ]);
+
+  const handleReplaceConfirm = useCallback(
+    (mappedActions: MappedReplaceActions) => {
+      if (!pendingUploadConflict) {
+        return;
+      }
+
+      const resolvedFiles = applyUploadReplaceActions({
+        duplicatedFiles: pendingUploadConflict.duplicatedFiles,
+        nonDuplicatedFiles: pendingUploadConflict.nonDuplicatedFiles,
+        mappedActions,
+        existingFiles: files,
+        folderId: selectedFolderId,
+        bucket: uploadBucket,
+      });
+
+      setPendingUploadConflict(null);
+
+      if (resolvedFiles.length) {
+        onUploadFiles(resolvedFiles, folderPath);
+      }
+
+      onClose(true);
+    },
+    [
+      pendingUploadConflict,
+      files,
+      selectedFolderId,
+      uploadBucket,
+      folderPath,
+      onUploadFiles,
+      onClose,
+    ],
+  );
+
+  const handleReplaceCancel = useCallback(() => {
+    setPendingUploadConflict(null);
+  }, []);
 
   const handleRenameFile = useCallback(
     (changedFileIndex: number) => {
@@ -470,6 +504,19 @@ export const PreUploadDialog = ({
           setIsChangeFolderModalOpened(false);
         }}
       />
+      {pendingUploadConflict && (
+        <ReplaceConfirmationModal
+          title={t(ChatI18nKeys.SomeFilesFailedToUploadDuplicateNames)}
+          description={t(ChatI18nKeys.AddPostfixIgnoreOrReplaceUpload)}
+          cancelLabel={t(ChatI18nKeys.Cancel)}
+          confirmLabel={t(ChatI18nKeys.ContinueUpload)}
+          onCancel={handleReplaceCancel}
+          onConfirm={handleReplaceConfirm}
+          duplicatedFiles={pendingUploadConflict.duplicatedFiles}
+          cancelDataQa="cancel-upload"
+          confirmDataQa="continue-upload"
+        />
+      )}
     </Modal>
   );
 };

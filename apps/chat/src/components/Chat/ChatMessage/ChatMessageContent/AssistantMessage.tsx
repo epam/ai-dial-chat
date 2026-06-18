@@ -34,6 +34,7 @@ import {
 } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
 import { isEntityReadOnly } from '@/src/utils/app/permissions';
+import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -392,10 +393,7 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
     });
 
   const handleUploadFromDevice = useCallback(
-    (
-      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
-      folderPath: string | undefined,
-    ) => {
+    (selectedFiles: ResolvedUploadFile[], folderPath: string | undefined) => {
       const ids = dispatchPreparedFiles(selectedFiles, folderPath, {
         isFromDeviceAttachment: true,
       });

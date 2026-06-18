@@ -12,9 +12,10 @@ import { useIsPublicationReview } from '@/src/hooks/useIsPublicationReview';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
+import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 
 import { FeatureType } from '@/src/types/common';
-import { DialFile, DialLink, FileSourceType } from '@/src/types/files';
+import { DialLink, FileSourceType } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
 import { Translation } from '@/src/types/translation';
 
@@ -46,7 +47,7 @@ interface Props {
   contextMenuPlacement?: Placement;
   onSelectAlreadyUploaded: (result: string[]) => void;
   onUploadFromDevice: (
-    selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+    selectedFiles: ResolvedUploadFile[],
     folderPath: string | undefined,
   ) => void;
   onAddLinkToMessage: (link: DialLink) => void;
