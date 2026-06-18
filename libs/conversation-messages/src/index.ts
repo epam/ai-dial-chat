@@ -6,11 +6,11 @@ export type {
   MarkdownRendererClassNames,
   MarkdownRendererProps,
 } from './components/Markdown/MarkdownRenderer';
-export { MarkdownCodeBlock } from './components/Markdown/MarkdownCodeBlock';
-export type {
-  MarkdownCodeBlockProps,
+export {
   CodeBlockTheme,
+  MarkdownCodeBlock,
 } from './components/Markdown/MarkdownCodeBlock';
+export type { MarkdownCodeBlockProps } from './components/Markdown/MarkdownCodeBlock';
 export { MessageBubble } from './components/MessageBubble/MessageBubble';
 export { UserMessageBubble } from './components/MessageBubble/UserMessageBubble';
 export { AssistantMessageBubble } from './components/MessageBubble/AssistantMessageBubble';
