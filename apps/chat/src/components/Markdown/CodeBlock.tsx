@@ -144,7 +144,7 @@ export const CodeBlock: FC<Props> = memo(
           )}
         </div>
 
-        <div className="max-h-[60vh] overflow-auto">
+        <div className="thin-scrollbar max-h-[60vh] overflow-auto">
           <SyntaxHighlighter
             language={displayLanguage}
             style={codeBlockTheme[theme] || oneDark}
