@@ -52,9 +52,15 @@
   },
   "catalog": {
     "ariaLabel": "Catalog",
-    "comingSoon": "Catalog coming soon",
-    "loading": "Loading catalog…",
-    "error": "Failed to load catalog. Please try again."
+    "pageTitle": "Catalog",
+    "favoritesTitle": "Your Favorites",
+    "searchPlaceholder": "Search models, tools, agents…",
+    "noResultsDescription": "Try a different keyword",
+    "noResultsTitle": "No results for \"{{query}}\"",
+    "sortRecentlyUpdated": "Recently Updated",
+    "sortNewest": "Newest",
+    "sortNameAZ": "Name A-Z",
+    "featuredLabel": "Featured"
   },
   "deployments": {
     "empty": "No models or applications available.",
@@ -73,6 +79,8 @@
   "buttons": {
     "showMore": "Show more",
     "showLess": "Show less",
+    "create": "Create",
+    "browse": "Browse",
     "delete": "Delete",
     "deleteAll": "Delete all",
     "confirm": "Confirm",

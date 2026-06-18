@@ -156,7 +156,6 @@ vi.mock('../../../hooks/useLocalStorage', () => ({
   default: () => [325, vi.fn()],
 }));
 vi.mock('../../../constants/routes', () => ({
-  ROUTES: { ROOT: '/' },
   getConversationRoute: (id: string) => `/conversations/${id}`,
   normalizeConversationId: (id: string) => id,
 }));

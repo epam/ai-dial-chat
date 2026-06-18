@@ -762,6 +762,12 @@ export interface DeploymentItemDto {
    */
   interfaces?: Array<string>;
   /**
+   * Display version from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  displayVersion?: string;
+  /**
    * Application type schema id from DIAL Core (present only for application deployments)
    * @type {string}
    * @memberof DeploymentItemDto

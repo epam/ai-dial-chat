@@ -29,6 +29,9 @@
     },
     {
       "path": "./libs/conversation-panel"
+    },
+    {
+      "path": "./libs/catalog"
     }
   ]
 }

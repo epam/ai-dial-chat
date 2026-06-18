@@ -3,13 +3,13 @@ import userEvent from '@testing-library/user-event';
 import type { AriaAttributes } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { ROUTES } from '../../../constants/routes';
 import {
   ChatI18nKeys,
   SidebarI18nKeys,
 } from '../../../constants/translation-keys';
 import { SourcesSidebarProvider } from '../../../context/SourcesSidebarContext';
 import * as ThemeContext from '../../../context/ThemeContext';
+import { ROUTES } from '../../../types/routes';
 import Header from '../Header';
 
 vi.mock('../../../context/ThemeContext');
@@ -36,7 +36,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 
 const renderHeader = () =>
   render(
-    <MemoryRouter initialEntries={[`${ROUTES.CONVERSATIONS}/test`]}>
+    <MemoryRouter initialEntries={[`${ROUTES.Conversations}/test`]}>
       <SourcesSidebarProvider>
         <Header onMenuToggle={vi.fn()} />
       </SourcesSidebarProvider>

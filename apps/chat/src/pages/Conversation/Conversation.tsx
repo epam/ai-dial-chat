@@ -2,9 +2,9 @@ import {
   Attachment,
   isAudioTranscriptionSupported,
   MessageRating,
+  MessageRole,
   type Conversation,
   type Message,
-  MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import {
   ConfirmationPopupVariant,
@@ -17,7 +17,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
-import { getConversationRoute, ROUTES } from '../../constants/routes';
+import { getConversationRoute } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   ChatI18nKeys,
@@ -42,6 +42,7 @@ import {
   saveConversation,
 } from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
+import { ROUTES } from '../../types/routes';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { getLastDeploymentId } from '../../utils/message-utils';
@@ -223,7 +224,7 @@ export const ConversationPage: FC = () => {
           setConversation(result);
         }
       } catch {
-        navigate(ROUTES.ROOT);
+        navigate(ROUTES.Root);
       } finally {
         setIsFetching(false);
       }
@@ -313,7 +314,7 @@ export const ConversationPage: FC = () => {
   if (isFetching) return null;
 
   if (!conversation) {
-    navigate(ROUTES.ROOT);
+    navigate(ROUTES.Root);
     return null;
   }
 
