@@ -24,6 +24,7 @@ import {
   isFormValueValid,
 } from '@/src/utils/app/form-schema';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
+import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
 import { DialFile, DialLink } from '@/src/types/files';
@@ -537,9 +538,7 @@ export const ChatInputMessage = Inversify.register(
 
     const handleUploadFromDevice = useCallback(
       (
-        selectedFiles: Required<
-          Pick<DialFile, 'fileContent' | 'id' | 'name'>
-        >[],
+        selectedFiles: ResolvedUploadFile[],
         folderPath: string | undefined,
       ) => {
         dispatchPreparedFiles(selectedFiles, folderPath, {

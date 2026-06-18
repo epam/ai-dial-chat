@@ -36,6 +36,7 @@ import {
 import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
+import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 import { ApiUtils } from '@/src/utils/server/api';
 
 import { Conversation } from '@/src/types/chat';
@@ -490,7 +491,7 @@ export const UserMessage = memo(function UserMessage({
 
   const handleUploadFromDevice = useCallback(
     (
-      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+      selectedFiles: ResolvedUploadFile[],
       folderPath: string | undefined,
     ) => {
       const ids = dispatchPreparedFiles(selectedFiles, folderPath, {
