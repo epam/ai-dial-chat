@@ -1,4 +1,3 @@
-import type { TabModel } from '@epam/ai-dial-ui-kit';
 import type { CatalogEntityType } from '../types/CatalogEntityType';
 
 /** A node in the hierarchical "From" source filter tree. */
@@ -25,8 +24,8 @@ export interface FavoriteItem {
   lastUsed: string;
   /** Background fill color for the provider logo mark. */
   logoColor: string;
-  /** Single character displayed inside the logo mark. */
-  logoInitial: string;
+  /** URL of the icon displayed inside the logo mark. */
+  iconUrl?: string;
   /** Whether this item is currently starred. Default: true in the Favorites strip. */
   isStarred?: boolean;
 }

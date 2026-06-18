@@ -1,4 +1,4 @@
-import type { CatalogItem } from '../models/catalog';
+import type { CatalogItem } from '../models/CatalogItem';
 import { CatalogSortKey } from '../types/CatalogSortKey';
 
 /**

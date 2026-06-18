@@ -68,7 +68,7 @@ export const CatalogCard: FC<CatalogCardProps> = ({
       )}
 
       <div className="flex items-center gap-3">
-        <ProviderLogo color={item.logoColor} initial={item.logoInitial} />
+        <ProviderLogo color={item.logoColor} initial={item.iconUrl} />
         <div className="min-w-0 flex-1">
           <EntityTypeBadge type={item.type} />
           <div className="mt-0.5 flex items-start gap-1">

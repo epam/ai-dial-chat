@@ -17,10 +17,14 @@ export class DeploymentItemDto {
   description?: string;
 
   @ApiPropertyOptional({
-    type: [String],
     description: 'Interface types supported by this deployment',
   })
   interfaces?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Display version from DIAL Core',
+  })
+  displayVersion?: string;
 
   @ApiPropertyOptional({
     description:
@@ -29,7 +33,6 @@ export class DeploymentItemDto {
   applicationTypeSchemaId?: string;
 
   @ApiPropertyOptional({
-    type: [String],
     description:
       'Accepted MIME types for input attachments from DIAL Core (e.g. ["audio/*", "image/*"])',
   })

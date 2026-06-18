@@ -1,4 +1,4 @@
-import type { TreeNode } from '../models/catalog';
+import type { TreeNode } from '../models/CatalogItem';
 import { getAllNodeIds } from '../utils/catalog-tree';
 
 /**

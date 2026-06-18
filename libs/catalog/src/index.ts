@@ -8,9 +8,8 @@ export type {
   CatalogItem,
   CatalogSortOption,
   FavoriteItem,
-  TabModel,
   TreeNode,
-} from './models/catalog';
+} from './models/CatalogItem';
 export type { CatalogProps, CatalogTexts } from './models/CatalogProps';
 
 // Constants

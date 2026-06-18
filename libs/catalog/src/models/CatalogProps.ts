@@ -2,9 +2,8 @@ import type {
   CatalogItem,
   CatalogSortOption,
   FavoriteItem,
-  TabModel,
   TreeNode,
-} from './catalog';
+} from './CatalogItem';
 import type { CatalogStyles } from './CatalogStyles';
 
 /** Text labels used by the `Catalog` surface. */
@@ -42,7 +41,7 @@ export interface CatalogProps {
   /** Called when the Create button is clicked. */
   onCreateClick?: () => void;
   /** Tab definitions for entity-type filtering. */
-  tabs?: TabModel[];
+  tabs?: any[]; // TODO: add ui kit type when available
   /** Available sort options. Default: DEFAULT_SORT_OPTIONS. */
   sortOptions?: CatalogSortOption[];
   /** Maturity filter options. Default: DEFAULT_MATURITY_OPTIONS. */

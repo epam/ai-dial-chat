@@ -73,7 +73,9 @@ describe('Catalog', () => {
   });
 
   it('renders custom page title', () => {
-    render(<Catalog items={[]} favorites={[]} pageTitle="My Catalog" />);
+    render(
+      <Catalog items={[]} favorites={[]} texts={{ pageTitle: 'My Catalog' }} />,
+    );
     expect(screen.getByText('My Catalog')).toBeTruthy();
   });
 

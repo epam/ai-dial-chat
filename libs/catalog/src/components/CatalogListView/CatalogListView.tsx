@@ -1,7 +1,7 @@
 import { DialGrid } from '@epam/ai-dial-ui-kit';
 import type { GridApi } from 'ag-grid-community';
 import { type CSSProperties, FC, useEffect, useRef } from 'react';
-import type { CatalogItem } from '../../models/catalog';
+import type { CatalogItem } from '../../models/CatalogItem';
 import { CatalogListViewProps } from '../../models/CatalogListViewProps';
 import { GridContext } from '../../models/GridContext';
 import { CATALOG_COLUMNS } from './columns';

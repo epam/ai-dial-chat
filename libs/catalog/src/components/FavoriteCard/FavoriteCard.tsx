@@ -5,7 +5,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconHistory, IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import type { FavoriteItem } from '../../models/catalog';
+import type { FavoriteItem } from '../../models/CatalogItem';
 import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
 import { ProviderLogo } from '../ProviderLogo/ProviderLogo';
 

@@ -52,6 +52,7 @@ const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
     type = 'model';
   }
 
+  console.log('Raw deployment from DIAL Core:', raw); // Debug log to inspect the raw deployment data
   let interfaces: string[] | undefined;
   if (raw.interfaces) {
     if (Array.isArray(raw.interfaces)) {

@@ -1,4 +1,4 @@
-import type { TreeNode } from '../models/catalog';
+import type { TreeNode } from '../models/CatalogItem';
 
 /** Returns all node IDs in a tree (root + all descendants) in depth-first order. */
 export const getAllNodeIds = (nodes: TreeNode[]): string[] =>

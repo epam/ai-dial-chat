@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { CatalogEntityType } from '../../../types/CatalogEntityType';
 import { CatalogCardGrid } from '../CatalogCardGrid';
+
 vi.mock('../../CatalogCard/CatalogCard', () => ({
   CatalogCard: ({ item }: { item: { name: string } }) => <div>{item.name}</div>,
 }));

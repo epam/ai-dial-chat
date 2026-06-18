@@ -1678,6 +1678,10 @@
               "type": "string"
             }
           },
+          "displayVersion": {
+            "type": "string",
+            "description": "Display version from DIAL Core"
+          },
           "applicationTypeSchemaId": {
             "type": "string",
             "description": "Application type schema id from DIAL Core (present only for application deployments)"

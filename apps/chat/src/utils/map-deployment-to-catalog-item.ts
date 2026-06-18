@@ -18,7 +18,7 @@ export const mapDeploymentToCatalogItem = (
     type: TYPE_MAP[normalizedType] ?? CatalogEntityType.Model,
     name,
     description: deployment.description ?? '',
-    logoInitial: name.charAt(0).toUpperCase(),
+    iconUrl: deployment.iconUrl,
     pricing: [],
     folder: [],
     version: '',

@@ -1,4 +1,4 @@
-import type { CatalogSortOption } from '../models/catalog';
+import type { CatalogSortOption } from '../models/CatalogItem';
 import { CatalogSortKey } from '../types/CatalogSortKey';
 
 /** Default maturity stage options for the Maturity dropdown filter. */
