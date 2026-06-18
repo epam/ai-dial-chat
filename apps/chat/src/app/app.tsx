@@ -112,8 +112,8 @@ const App: FC = () => {
       >
         <Header
           onMenuToggle={toggleNav}
-          isHistoryPanelOpen={isHistoryPanelOpen}
-          onHistoryPanelToggle={toggleHistoryPanel}
+          isConversationPanelOpen={isHistoryPanelOpen}
+          onConversationPanelToggle={toggleHistoryPanel}
         />
         <Routes>
           <Route path={ROUTES.Root} element={<ConversationRoute />} />
