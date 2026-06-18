@@ -6,7 +6,7 @@ import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { getRelativePath } from '@/src/utils/app/file';
 import { isRootId } from '@/src/utils/app/id';
 import {
-  PreparedUploadFile,
+  ResolvedUploadFile,
   detectUploadFileConflicts,
   dispatchPreparedFileUploads,
 } from '@/src/utils/app/prepare-files-for-upload';
@@ -67,7 +67,7 @@ export const useUploadFilesHandler = (
 
   const dispatchPreparedFiles = useCallback(
     (
-      preparedFiles: PreparedUploadFile[],
+      preparedFiles: ResolvedUploadFile[],
       targetFolderPath: string | undefined = folderPath,
       options: DispatchPreparedFilesOptions = {},
     ) => {
