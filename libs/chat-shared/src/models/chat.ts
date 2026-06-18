@@ -1,4 +1,4 @@
-import { AttachmentType } from '../types/attachment';
+import { AttachmentErrorReason, AttachmentType } from '../types/attachment';
 import { MIMEType } from '../types/mime-type';
 import type { Annotation } from './annotation';
 import type { DeploymentConfigurationSchema } from './deployment-configuration';
@@ -237,6 +237,8 @@ export interface DisplayAttachment {
   type: AttachmentType;
   /** Upload / processing lifecycle state. */
   status: RequestStatus;
+  /** Reason the upload failed; only set when `status === RequestStatus.Error`. */
+  errorReason?: AttachmentErrorReason;
   /** Object URL for image preview; only set when `type === AttachmentType.Image`. */
   previewUrl?: string;
   /** Remote URL for an attachment that has already been uploaded. */

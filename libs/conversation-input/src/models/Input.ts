@@ -1,5 +1,6 @@
 import type {
   Attachment,
+  AttachmentErrorReason,
   DeploymentItem,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
@@ -206,4 +207,12 @@ export interface InputProps {
   onDialFileSystemClick?: () => void;
   /** Label for the "DIAL file system" menu item. Defaults to `'DIAL file system'`. */
   dialFileSystemLabel?: string;
+  /**
+   * Called synchronously for each attachment after it is added, before upload begins.
+   * Return an `AttachmentErrorReason` to reject the attachment (it enters error state
+   * and `onUploadAttachment` is NOT called). Return `undefined` to allow normal upload.
+   */
+  validateAttachment?: (
+    attachment: Attachment,
+  ) => AttachmentErrorReason | undefined;
 }

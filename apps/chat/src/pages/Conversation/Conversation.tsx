@@ -19,6 +19,7 @@ import ConversationView from '../../components/ConversationView/ConversationView
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
 import { getConversationRoute, ROUTES } from '../../constants/routes';
 import {
+  AttachmentsI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
   ConversationPanelI18nKeys,
@@ -117,6 +118,33 @@ export const ConversationPage: FC = () => {
   );
 
   const { showNotification } = useNotification();
+
+  const handleNetworkUploadError = useCallback(
+    (filenames: string[]) => {
+      showNotification({
+        variant: NotificationVariant.Error,
+        title: t(AttachmentsI18nKeys.NetworkErrorTitle),
+        message: (
+          <div className="min-w-0 overflow-hidden">
+            <span className="whitespace-pre-line">
+              {t(AttachmentsI18nKeys.NetworkErrorMessage)}
+            </span>
+            <ul className="mt-1 max-w-[508px]">
+              {filenames.map((name, i) => (
+                <li key={i} className="flex items-center gap-1 overflow-hidden">
+                  <span className="shrink-0" aria-hidden>
+                    •
+                  </span>
+                  <span className="flex-1 min-w-0 truncate">{name}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ),
+      });
+    },
+    [showNotification, t],
+  );
 
   const [pendingDislikeMessageIndex, setPendingDislikeMessageIndex] = useState<
     number | null
@@ -265,6 +293,7 @@ export const ConversationPage: FC = () => {
     conversationRef,
     setConversation,
     navigate,
+    showNetworkError: handleNetworkUploadError,
   });
 
   const handleLike = useCallback(

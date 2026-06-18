@@ -15,7 +15,7 @@ export interface AttachmentCardState {
   isImage: boolean;
   areActionsVisible: boolean;
   BottomIcon: Icon;
-  bottomLabel: string;
+  typeLabel: string;
   cardColorClass: string;
   removeBtnClass: string;
 }
@@ -73,7 +73,7 @@ export const getAttachmentCardState = (
     isImage,
     areActionsVisible: isError || shouldAlwaysShowActions,
     BottomIcon: getBottomIcon(attachment),
-    bottomLabel: getBottomLabel(attachment),
+    typeLabel: getBottomLabel(attachment),
     cardColorClass,
     removeBtnClass: isImage ? styles.removeBtnImage : styles.actionBtn,
   };

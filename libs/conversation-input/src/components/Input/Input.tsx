@@ -1,5 +1,6 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
+  AttachmentErrorReason,
   AttachmentType,
   RequestStatus,
   buildCssVars,
@@ -84,6 +85,7 @@ export const Input: FC<InputProps> = ({
   messageHistory,
   onDialFileSystemClick,
   dialFileSystemLabel,
+  validateAttachment,
 }) => {
   const isMobile = useIsMobile();
   const historyNav = useInputHistoryNavigation(messageHistory);
@@ -231,11 +233,24 @@ export const Input: FC<InputProps> = ({
               : item,
           ),
         );
-      } catch {
+      } catch (err) {
+        const errorReason =
+          err != null &&
+          typeof err === 'object' &&
+          'errorReason' in err &&
+          Object.values(AttachmentErrorReason).includes(
+            (err as { errorReason: AttachmentErrorReason }).errorReason,
+          )
+            ? (err as { errorReason: AttachmentErrorReason }).errorReason
+            : undefined;
         updateAttachments((current) =>
           current.map((item) =>
             item.id === attachment.id
-              ? { ...item, status: RequestStatus.Error }
+              ? {
+                  ...item,
+                  status: RequestStatus.Error,
+                  ...(errorReason != null && { errorReason }),
+                }
               : item,
           ),
         );
@@ -256,11 +271,22 @@ export const Input: FC<InputProps> = ({
       });
       if (upload) {
         toAdd.forEach((attachment) => {
-          void uploadAttachment(attachment);
+          const errorReason = validateAttachment?.(attachment);
+          if (errorReason != null) {
+            updateAttachments((current) =>
+              current.map((item) =>
+                item.id === attachment.id
+                  ? { ...item, status: RequestStatus.Error, errorReason }
+                  : item,
+              ),
+            );
+          } else {
+            void uploadAttachment(attachment);
+          }
         });
       }
     },
-    [updateAttachments, uploadAttachment],
+    [updateAttachments, uploadAttachment, validateAttachment],
   );
 
   useEffect(() => {
