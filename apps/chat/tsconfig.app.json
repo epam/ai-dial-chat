@@ -45,9 +45,6 @@
   ],
   "references": [
     {
-      "path": "../../libs/chat-api-client/tsconfig.lib.json"
-    },
-    {
       "path": "../../libs/conversation-stages/tsconfig.lib.json"
     },
     {
@@ -60,6 +57,9 @@
       "path": "../../libs/sidebar/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/chat-api-client/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/chat-shared/tsconfig.lib.json"
     },
     {
@@ -67,6 +67,9 @@
     },
     {
       "path": "../../libs/conversation-panel/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/catalog/tsconfig.lib.json"
     }
   ]
 }

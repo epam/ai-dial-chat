@@ -32,6 +32,9 @@
     },
     {
       "path": "./libs/starter-buttons"
+    },
+    {
+      "path": "./libs/catalog"
     }
   ]
 }

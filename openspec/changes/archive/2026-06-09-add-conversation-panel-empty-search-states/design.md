@@ -2,7 +2,7 @@
 
 `ConversationPanel` (in `libs/conversation-panel`) currently uses an internal `EmptyState` component that renders a centered text paragraph — no icon. It is used for a single `isEmpty` condition: `filteredItems.length === 0`, which collapses two distinct scenarios into one indistinguishable state.
 
-`PanelEmptyState` (in `libs/sidebar`) was recently created and renders a centered icon + label. `libs/conversation-panel` already imports from `@epam/ai-dial-sidebar` (`SearchInput`, `SidebarPanel`, `SidebarSide`), so importing `PanelEmptyState` from there adds no new dependency.
+`PanelEmptyState` (in `libs/sidebar`) was recently created and renders a centered icon + label. `libs/conversation-panel` already imports from `@epam/ai-dial-sidebar` (`SearchInput`, `SidebarPanel`, `SidebarOrientation`), so importing `PanelEmptyState` from there adds no new dependency.
 
 ## Goals / Non-Goals
 

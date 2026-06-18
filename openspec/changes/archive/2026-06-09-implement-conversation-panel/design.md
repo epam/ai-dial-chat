@@ -30,7 +30,7 @@ The app has a `Navigation` icon bar on the left and a `ConversationSourcesPanelV
 
 `SidebarPanel` is a generic panel shell. The conversation panel has domain-specific content (conversation rows, search, filter tabs, grouped sections). A dedicated `libs/conversation-panel` lib keeps domain knowledge co-located.
 
-**Decision:** New `libs/conversation-panel` lib at `@epam/ai-dial-conversation-panel`. It imports `SidebarPanel`, `SearchInput`, and `SidebarSide` from `@epam/ai-dial-sidebar` to use as the panel shell, avoiding duplication of panel layout and CSS custom-property logic.
+**Decision:** New `libs/conversation-panel` lib at `@epam/ai-dial-conversation-panel`. It imports `SidebarPanel`, `SearchInput`, and `SidebarOrientation` from `@epam/ai-dial-sidebar` to use as the panel shell, avoiding duplication of panel layout and CSS custom-property logic.
 
 > **Implementation note:** The original decision said the lib would not depend on `libs/sidebar`. This was revised during implementation — sharing the `SidebarPanel` shell is safe (both are in `libs/*`, neither owns host-level integration details) and avoids maintaining a parallel panel wrapper.
 

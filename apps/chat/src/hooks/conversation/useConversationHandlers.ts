@@ -1,4 +1,5 @@
 import {
+  AttachmentErrorReason,
   type Attachment,
   type Conversation,
   type DisplayAttachment,
@@ -13,10 +14,10 @@ import {
   type MutableRefObject,
   type SetStateAction,
   useCallback,
+  useRef,
   useState,
 } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
-import { ROUTES } from '../../constants/routes';
 import { useDeployments } from '../../context/DeploymentsContext';
 import {
   deleteConversation as apiDeleteConversation,
@@ -24,6 +25,7 @@ import {
 } from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
 import { rateMessage } from '../../server-api/rate.api';
+import { ROUTES } from '../../types/routes';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
@@ -46,6 +48,8 @@ interface Params {
   conversationRef: MutableRefObject<Conversation | null>;
   setConversation: Dispatch<SetStateAction<Conversation | null>>;
   navigate: NavigateFunction;
+  /** Called with batched filenames after a burst of network-error upload failures. */
+  showNetworkError?: (filenames: string[]) => void;
 }
 
 export const useConversationHandlers = ({
@@ -57,7 +61,11 @@ export const useConversationHandlers = ({
   conversationRef,
   setConversation,
   navigate,
+  showNetworkError,
 }: Params) => {
+  const pendingNetworkFilesRef = useRef<string[]>([]);
+  const networkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const [pendingDeleteIndex, setPendingDeleteIndex] = useState<number | null>(
     null,
   );
@@ -78,14 +86,34 @@ export const useConversationHandlers = ({
         throw new Error('User bucket is not available');
       }
 
-      const response = await uploadFile(
-        bucket,
-        buildUploadPath(attachment),
-        attachment.file,
-      );
-      return response.url;
+      try {
+        const response = await uploadFile(
+          bucket,
+          buildUploadPath(attachment),
+          attachment.file,
+        );
+        return response.url;
+      } catch (err) {
+        if (!navigator.onLine) {
+          pendingNetworkFilesRef.current.push(attachment.name);
+          if (networkTimerRef.current != null) {
+            clearTimeout(networkTimerRef.current);
+          }
+          networkTimerRef.current = setTimeout(() => {
+            const filenames = pendingNetworkFilesRef.current.splice(0);
+            showNetworkError?.(filenames);
+            networkTimerRef.current = null;
+          }, 100);
+
+          const error = err instanceof Error ? err : new Error('Network upload failed');
+          (error as Error & { errorReason: AttachmentErrorReason }).errorReason =
+            AttachmentErrorReason.Network;
+          throw error;
+        }
+        throw err;
+      }
     },
-    [bucket],
+    [bucket, showNetworkError],
   );
 
   const handleSend = useCallback(
@@ -214,7 +242,7 @@ export const useConversationHandlers = ({
         (next.length === 1 && next[0].role === MessageRole.Status)
       ) {
         apiDeleteConversation(conversationPath);
-        navigate(ROUTES.ROOT);
+        navigate(ROUTES.Root);
         return prev;
       }
 

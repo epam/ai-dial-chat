@@ -16,6 +16,7 @@ import type {
   DeploymentsResponseDto,
 } from './dto/deployment-item.dto';
 import type { DeploymentInterfaceType } from './dto/deployments-query.dto';
+import { RawDeploymentDto } from './dto/raw-deployment.dto';
 
 const isRecord = (val: unknown): val is Record<string, unknown> =>
   val != null && typeof val === 'object' && !Array.isArray(val);
@@ -28,19 +29,10 @@ const toAdditionalProperties = (
   return undefined;
 };
 
-type RawDeployment = {
-  id?: string;
-  display_name?: string;
-  object?: string;
-  toolset?: string;
-  icon_url?: string;
-  description?: string;
-  interfaces?: string | string[];
-  application_type_schema_id?: string;
-  input_attachment_types?: string[];
-};
-
-const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
+const mapToDeploymentItem = (
+  raw: RawDeploymentDto,
+  featuredIds: Set<string>,
+): DeploymentItemDto | null => {
   if (!raw.id) return null;
 
   let type: 'model' | 'application' | 'toolset';
@@ -67,6 +59,9 @@ const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
     type,
     iconUrl: raw.icon_url,
     description: raw.description,
+    displayVersion: raw.display_version,
+    isFeatured: featuredIds.has(raw.id),
+    updatedAt: typeof raw.updated_at === 'string' ? raw.updated_at : undefined,
     interfaces,
     applicationTypeSchemaId:
       type === 'application' && raw.application_type_schema_id
@@ -81,12 +76,16 @@ const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
 @Injectable()
 export class DeploymentsService extends AppService {
   protected override readonly logger = new Logger(DeploymentsService.name);
+  private readonly featuredIds: Set<string>;
 
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
     super(configService);
+    this.featuredIds = new Set(
+      this.configService.get<string[]>('FEATURED_MODEL_IDS') ?? [],
+    );
   }
 
   async listDeployments(
@@ -127,12 +126,13 @@ export class DeploymentsService extends AppService {
         }
         const rawData = result.data as unknown;
         const rawItems = Array.isArray(rawData)
-          ? (rawData as RawDeployment[])
-          : ((rawData as { deployments?: RawDeployment[] }).deployments ?? []);
+          ? (rawData as RawDeploymentDto[])
+          : ((rawData as { deployments?: RawDeploymentDto[] }).deployments ??
+            []);
 
         allItems = rawItems
           .filter((item) => item.id && !item.id.includes(HIDDEN_FILE))
-          .map(mapToDeploymentItem)
+          .map((item) => mapToDeploymentItem(item, this.featuredIds))
           .filter((item): item is DeploymentItemDto => item !== null);
         await this.cacheManager.set(cacheKey, allItems, 30_000);
       } catch (err) {

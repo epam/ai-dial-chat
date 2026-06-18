@@ -4,7 +4,9 @@ import { AppService } from '../app/app.service';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import type { EnvironmentVariables } from '../config/environment.config';
+import type { ListFilesResponseDto } from './dto/list-files.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
+import { normalizeFileItem } from './normalize-file-item';
 
 export const SAFE_DOWNLOAD_HEADERS = [
   'content-type',
@@ -84,6 +86,64 @@ export class FilesService extends AppService {
       return { url };
     } catch (err) {
       this.logger.error(`Upload failed for ${bucket}/${path}`, err);
+      return handleDialError(err);
+    }
+  }
+
+  async listFiles(
+    bucket: string,
+    path: string | undefined,
+    query: {
+      token?: string;
+      limit?: number;
+      recursive?: boolean;
+      permissions?: boolean;
+    },
+    at: string,
+  ): Promise<ListFilesResponseDto> {
+    const normalizedPath =
+      path != null && path !== '' && !path.endsWith('/')
+        ? `${path}/`
+        : (path ?? '');
+    try {
+      const { data, error, response } = await this.client.getFileMetadata(
+        bucket,
+        normalizedPath,
+        {
+          headers: getBearerAuthHeaders(at),
+          query: {
+            token: query.token,
+            limit: query.limit,
+            recursive: query.recursive ?? false,
+            permissions: query.permissions ?? true,
+          },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        },
+      );
+
+      if (error != null) {
+        this.logger.warn(
+          `DIAL Core listFiles returned error: status=${response.status}, bucket=${bucket}`,
+        );
+        return handleDialError({ status: response.status });
+      }
+
+      const dialData = data as typeof data & { nextToken?: string };
+      const items = (dialData.items ?? []).map((item) =>
+        normalizeFileItem(item, bucket),
+      );
+
+      this.logger.debug(
+        `listFiles succeeded: bucket=${bucket}, path=${normalizedPath}, count=${items.length}`,
+      );
+      return {
+        bucket,
+        path: normalizedPath,
+        items,
+        nextToken: dialData.nextToken,
+      };
+    } catch (err) {
+      this.logger.warn(`listFiles failed for bucket=${bucket}`, err);
       return handleDialError(err);
     }
   }

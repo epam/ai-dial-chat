@@ -1,5 +1,9 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
-import { AttachmentType, RequestStatus } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentErrorReason,
+  AttachmentType,
+  RequestStatus,
+} from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import { AttachmentCard } from '../AttachmentCard';
@@ -141,6 +145,77 @@ describe('AttachmentCard', () => {
     );
     fireEvent.click(screen.getByLabelText('Retry upload'));
     expect(onRetry).toHaveBeenCalledWith('a1');
+  });
+
+  it('hides retry button when errorReason is UnsupportedType', () => {
+    const attachment = makeAttachment({
+      status: RequestStatus.Error,
+      errorReason: AttachmentErrorReason.UnsupportedType,
+    });
+    render(
+      <AttachmentCard
+        attachment={attachment}
+        onRemove={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
+    expect(screen.queryByLabelText('Retry upload')).toBeNull();
+    expect(screen.getByLabelText('Remove attachment')).toBeTruthy();
+  });
+
+  it('shows retry button when errorReason is Network', () => {
+    const attachment = makeAttachment({
+      status: RequestStatus.Error,
+      errorReason: AttachmentErrorReason.Network,
+    });
+    render(
+      <AttachmentCard
+        attachment={attachment}
+        onRemove={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText('Retry upload')).toBeTruthy();
+  });
+
+  it('shows retry button when errorReason is undefined (generic error)', () => {
+    const attachment = makeAttachment({ status: RequestStatus.Error });
+    render(
+      <AttachmentCard
+        attachment={attachment}
+        onRemove={vi.fn()}
+        onRetry={vi.fn()}
+      />,
+    );
+    expect(screen.getByLabelText('Retry upload')).toBeTruthy();
+  });
+});
+
+describe('AttachmentCard — error card layout', () => {
+  it('renders file name in the bottom area in error state', () => {
+    const attachment = makeAttachment({ status: RequestStatus.Error });
+    const { container } = render(
+      <AttachmentCard attachment={attachment} onRemove={vi.fn()} />,
+    );
+    const nonImageContent = container.querySelector('.flex.flex-col.gap-3.p-3');
+    expect(nonImageContent).toBeTruthy();
+    const children = Array.from(nonImageContent?.children ?? []);
+    // First child: icon+label row; second child (flex-1): filename
+    expect(children.length).toBeGreaterThanOrEqual(2);
+    const filenameArea = children[1];
+    expect(filenameArea?.textContent).toContain('report');
+  });
+
+  it('renders file name in the top area in normal (non-error) state', () => {
+    const attachment = makeAttachment({ status: RequestStatus.Idle });
+    const { container } = render(
+      <AttachmentCard attachment={attachment} onRemove={vi.fn()} />,
+    );
+    const nonImageContent = container.querySelector('.flex.flex-col.gap-3.p-3');
+    const children = Array.from(nonImageContent?.children ?? []);
+    // First child (flex-1): filename; second child: icon+label row
+    const filenameArea = children[0];
+    expect(filenameArea?.textContent).toContain('report');
   });
 });
 

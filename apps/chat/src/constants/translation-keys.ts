@@ -46,6 +46,8 @@ export enum BasicI18nKeys {
 export enum ButtonsI18nKeys {
   ShowMore = 'buttons.showMore',
   ShowLess = 'buttons.showLess',
+  Create = 'buttons.create',
+  Browse = 'buttons.browse',
   Delete = 'buttons.delete',
   DeleteAll = 'buttons.deleteAll',
   Cancel = 'buttons.cancel',
@@ -83,7 +85,15 @@ export enum NavigationI18nKeys {
 
 export enum CatalogI18nKeys {
   AriaLabel = 'catalog.ariaLabel',
-  ComingSoon = 'catalog.comingSoon',
+  PageTitle = 'catalog.pageTitle',
+  FavoritesTitle = 'catalog.favoritesTitle',
+  SearchPlaceholder = 'catalog.searchPlaceholder',
+  NoResultsDescription = 'catalog.noResultsDescription',
+  NoResultsTitle = 'catalog.noResultsTitle',
+  SortRecentlyUpdated = 'catalog.sortRecentlyUpdated',
+  SortNewest = 'catalog.sortNewest',
+  SortNameAZ = 'catalog.sortNameAZ',
+  FeaturedLabel = 'catalog.featuredLabel',
 }
 
 export enum DeploymentsI18nKeys {
@@ -102,6 +112,19 @@ export enum ConversationI18nKeys {
   StatusModelChangedBody = 'conversation.statusMessage.modelChangedBody',
   StagesExecuted = 'conversation.stages.executed',
   StagesStep = 'conversation.stages.step',
+  AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
+}
+
+export enum DialFileManagerI18nKeys {
+  Title = 'dialFileManager.title',
+  Attach = 'dialFileManager.attach',
+  Empty = 'dialFileManager.empty',
+  Error = 'dialFileManager.error',
+  Retry = 'dialFileManager.retry',
+  HiddenFiles = 'dialFileManager.hiddenFiles',
+  ShowHiddenFiles = 'dialFileManager.showHiddenFiles',
+  HideHiddenFiles = 'dialFileManager.hideHiddenFiles',
+  ItemsSelected = 'dialFileManager.itemsSelected',
 }
 
 export enum AuthI18nKeys {
@@ -172,6 +195,23 @@ export enum SidebarI18nKeys {
 
 export enum AttachmentsI18nKeys {
   Download = 'attachments.downloadFile',
+  UnsupportedTypeTitle = 'attachments.unsupportedType.title',
+  UnsupportedTypeMessage = 'attachments.unsupportedType.message',
+  NetworkErrorTitle = 'attachments.networkError.title',
+  NetworkErrorMessage = 'attachments.networkError.message',
+}
+
+export enum CitationsI18nKeys {
+  MarkerLabel = 'citations.marker.label',
+  MarkerLabelWithOverflow = 'citations.marker.labelWithOverflow',
+  MarkerAriaLabel = 'citations.marker.ariaLabel',
+  PopupSwitcher = 'citations.popup.switcher',
+  PopupPreview = 'citations.popup.preview',
+  PopupOpenInBrowser = 'citations.popup.openInBrowser',
+  PopupDownload = 'citations.popup.download',
+  PopupPreviousCitation = 'citations.popup.previousCitation',
+  PopupNextCitation = 'citations.popup.nextCitation',
+  PopupAriaLabel = 'citations.popup.ariaLabel',
 }
 
 export enum FileDndI18nKeys {

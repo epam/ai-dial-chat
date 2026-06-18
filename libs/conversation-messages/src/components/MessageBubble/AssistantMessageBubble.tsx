@@ -1,12 +1,10 @@
 import {
   buildCssVars,
+  DeploymentIcon,
   mergeClasses,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
-import {
-  AttachmentTray,
-  DeploymentIcon,
-} from '@epam/ai-dial-conversation-input';
+import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble';
@@ -31,6 +29,8 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   deploymentIconUrl,
   deploymentDisplayName,
   thinkingLabel,
+  markdownComponents,
+  onAttachmentClick,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
   const noCustomClass = !typography?.fontClassName;
@@ -84,10 +84,14 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
                 content={text}
                 isStreaming={isStreaming}
                 thinkingLabel={thinkingLabel}
+                components={markdownComponents}
               />
             </div>
           )}
-          <AttachmentTray attachments={attachments ?? []} />
+          <AttachmentTray
+            attachments={attachments ?? []}
+            onAttachmentClick={onAttachmentClick}
+          />
           {afterContent}
           <MessageActions
             {...actions}
