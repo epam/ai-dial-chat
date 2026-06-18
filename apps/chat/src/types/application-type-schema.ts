@@ -6,6 +6,8 @@ export enum ApplicationTypeSchemaProperties {
   applicationTypeViewerUrl = 'dial:applicationTypeViewerUrl',
   applicationTypeIconUrl = 'dial:applicationTypeIconUrl',
   applicationTypePlaybackSupport = 'dial:applicationTypePlaybackSupport',
+  applicationTypeMcp = 'dial:applicationTypeMcp',
+  endpoint = 'dial:endpoint',
 }
 
 export interface ApiApplicationTypeSchema {
@@ -15,6 +17,9 @@ export interface ApiApplicationTypeSchema {
   [ApplicationTypeSchemaProperties.applicationTypeViewerUrl]?: string;
   [ApplicationTypeSchemaProperties.applicationTypeIconUrl]?: string;
   [ApplicationTypeSchemaProperties.applicationTypePlaybackSupport]?: boolean;
+  [ApplicationTypeSchemaProperties.applicationTypeMcp]?: {
+    [ApplicationTypeSchemaProperties.endpoint]: string;
+  };
 }
 
 export interface ApplicationTypeSchema {
@@ -24,6 +29,7 @@ export interface ApplicationTypeSchema {
   viewerUrl?: string;
   iconUrl?: string;
   applicationTypePlaybackSupport?: boolean;
+  mcpEndpoint?: string;
 }
 
 export interface ApiDetailedApplicationTypeSchema extends JSONSchema7 {
@@ -32,4 +38,7 @@ export interface ApiDetailedApplicationTypeSchema extends JSONSchema7 {
   [ApplicationTypeSchemaProperties.applicationTypeEditorUrl]?: string;
   [ApplicationTypeSchemaProperties.applicationTypeViewerUrl]?: string;
   [ApplicationTypeSchemaProperties.applicationTypeIconUrl]?: string;
+  [ApplicationTypeSchemaProperties.applicationTypeMcp]?: {
+    [ApplicationTypeSchemaProperties.endpoint]: string;
+  };
 }
