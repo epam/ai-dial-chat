@@ -16,4 +16,6 @@ export interface DeploymentItem {
   updatedAt?: string;
   /** Display version string. */
   displayVersion?: string;
+  /** Whether this deployment is featured (configured via env). */
+  isFeatured?: boolean;
 }

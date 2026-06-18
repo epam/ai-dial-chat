@@ -23,6 +23,7 @@ export const mapDeploymentToCatalogItem = (
     version: deployment.displayVersion ?? '',
     lastUsed: formatLastUsed(deployment.updatedAt),
     updatedAt: deployment.updatedAt,
+    isFeatured: deployment.isFeatured ?? false,
     pricing: [],
     folder: [],
     from: '',

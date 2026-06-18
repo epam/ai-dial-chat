@@ -27,6 +27,11 @@ export class DeploymentItemDto {
   displayVersion?: string;
 
   @ApiPropertyOptional({
+    description: 'Whether this deployment is featured (configured via env)',
+  })
+  isFeatured?: boolean;
+
+  @ApiPropertyOptional({
     description:
       'ISO timestamp of last update time from DIAL Core (e.g. "2024-05-01T12:34:56Z")',
   })
