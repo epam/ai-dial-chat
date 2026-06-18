@@ -13,9 +13,9 @@ import { CatalogViewMode } from '../../types/view-mode';
 import { filterCatalogItems } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { getStyles } from '../../utils/styles';
-import { CatalogCardGrid } from '../CatalogCardGrid/CatalogCardGrid';
+import { CardGrid } from '../CardGrid/CardGrid';
 import { CatalogFavorites } from '../CatalogFavorites/CatalogFavorites';
-import { CatalogListView } from '../CatalogListView/CatalogListView';
+import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
 
@@ -167,7 +167,7 @@ export const Catalog: FC<CatalogProps> = ({
             styles.gridView,
           )}
         >
-          <CatalogCardGrid
+          <CardGrid
             items={filtered}
             query={query}
             onToggleFavorite={onToggleFavorite}
@@ -182,7 +182,7 @@ export const Catalog: FC<CatalogProps> = ({
       {/* List view — mounted only after first shown to avoid initializing ag-grid eagerly */}
       {listEverShown && viewMode === CatalogViewMode.List && (
         <div className={mergeClasses('flex min-h-0 flex-1', styles.listView)}>
-          <CatalogListView
+          <ListView
             items={filtered}
             query={query}
             ariaLabel={resolvedAriaLabel}

@@ -18,29 +18,25 @@ export { Catalog } from './components/Catalog/Catalog';
 export { Toolbar } from './components/Toolbar/Toolbar';
 export type { ToolbarProps } from './models/toolbar-props';
 
-export { CatalogCard } from './components/CatalogCardGrid/CatalogCard';
+export { Card } from './components/CardGrid/Card';
 export type {
-  CatalogCardColors,
-  CatalogCardProps,
-  CatalogCardStyles,
-  CatalogCardTypography,
+  CardColors,
+  CardProps,
+  CardStyles,
+  CardTypography,
 } from './models/card-props';
 
-export { CatalogCardGrid } from './components/CatalogCardGrid/CatalogCardGrid';
-export type {
-  CatalogCardGridProps,
-  CatalogCardGridStyles,
-  CatalogCardGridTitles,
-} from './models/card-grid-props';
+export { CardGrid } from './components/CardGrid/CardGrid';
+export type { CardGridProps, CardGridTitles } from './models/grid-props';
 
 export { CatalogFavorites } from './components/CatalogFavorites/CatalogFavorites';
 export type { CatalogFavoritesProps } from './components/CatalogFavorites/CatalogFavorites';
 
-export { CatalogListView } from './components/CatalogListView/CatalogListView';
-export type { CatalogListViewProps } from './models/list-props';
+export { ListView } from './components/ListView/ListView';
+export type { ListViewProps } from './models/list-props';
 
-export { EntityTypeBadge } from './components/EntityTypeBadge/EntityTypeBadge';
-export type { EntityTypeBadgeProps } from './components/EntityTypeBadge/EntityTypeBadge';
+export { EntityBadge } from './components/EntityBadge/EntityBadge';
+export type { EntityBadgeProps } from './components/EntityBadge/EntityBadge';
 
 export { FavoriteCard } from './components/FavoriteCard/FavoriteCard';
 export type { FavoriteCardProps } from './components/FavoriteCard/FavoriteCard';

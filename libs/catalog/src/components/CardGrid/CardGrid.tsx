@@ -1,11 +1,10 @@
-import { mergeClasses, PanelEmptyState } from '@epam/ai-dial-chat-shared';
+import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { CatalogCardGridProps } from '../../models/card-grid-props';
-import { CatalogCard } from './CatalogCard';
-import styles from './CatalogCardGrid.module.scss';
+import type { CardGridProps } from '../../models/grid-props';
+import { Card } from './Card';
 
-/** Three-column grid of CatalogCard items, with an empty state when there are no results. */
-export const CatalogCardGrid: FC<CatalogCardGridProps> = ({
+/** Three-column grid of Card items, with an empty state when there are no results. */
+export const CardGrid: FC<CardGridProps> = ({
   items,
   query = '',
   onToggleFavorite,
@@ -18,7 +17,7 @@ export const CatalogCardGrid: FC<CatalogCardGridProps> = ({
     return (
       <div className="small_tablet:grid-cols-2 grid w-full grid-cols-1 gap-5 desktop:grid-cols-3">
         {items.map((item) => (
-          <CatalogCard
+          <Card
             key={item.id}
             item={item}
             query={query}

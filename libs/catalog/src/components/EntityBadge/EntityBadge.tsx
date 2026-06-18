@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
 import { CatalogEntityType } from '../../types/entity-type';
-import styles from './EntityTypeBadge.module.scss';
+import styles from './EntityBadge.module.scss';
 
 /** CSS module class names keyed by `CatalogEntityType`. */
 const ENTITY_TYPE_CLASS_NAME: Record<CatalogEntityType, string> = {
@@ -12,7 +12,7 @@ const ENTITY_TYPE_CLASS_NAME: Record<CatalogEntityType, string> = {
 };
 
 /** Props for EntityTypeBadge. */
-export interface EntityTypeBadgeProps {
+export interface EntityBadgeProps {
   /** The entity type to display. */
   type: CatalogEntityType;
   /** CSS class for the badge text. Default: 'dial-caption-text'. */
@@ -20,7 +20,7 @@ export interface EntityTypeBadgeProps {
 }
 
 /** Small uppercase badge showing the entity category with its accent color. */
-export const EntityTypeBadge: FC<EntityTypeBadgeProps> = ({
+export const EntityBadge: FC<EntityBadgeProps> = ({
   type,
   className = 'dial-caption-text',
 }) => {

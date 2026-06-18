@@ -63,6 +63,10 @@ const makeItem = (id: string, name: string) => ({
   pricing: ['Free'],
   folder: ['EPAM'],
   lastUsed: '',
+  from: '',
+  domain: '',
+  useCase: '',
+  maturity: '',
 });
 
 describe('Catalog', () => {
