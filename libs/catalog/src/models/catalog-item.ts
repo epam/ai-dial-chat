@@ -38,6 +38,8 @@ export interface CatalogItem extends FavoriteItem {
   pricing: string[];
   /** When true the card gets accent border and glow. */
   isFeatured?: boolean;
+  /** When true the item is hidden from the main Browse view and only shown in Search results. */
+  isHidden?: boolean;
   /** Folder breadcrumb path segments, outermost first. */
   folder: string[];
   /** Source/provider identifier used for the "From" tree filter. */

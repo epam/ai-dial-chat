@@ -81,6 +81,8 @@ export const Catalog: FC<CatalogProps> = ({
     },
   ];
 
+  const filteredItems = items.filter((item) => !item.isHidden);
+
   const [query, setQuery] = useState('');
 
   const [viewMode, setViewMode] = useState<CatalogViewMode>(
@@ -123,7 +125,7 @@ export const Catalog: FC<CatalogProps> = ({
     setMaturitySelected(new Set());
   };
 
-  const sorted = sortCatalogItems(items, sortKey);
+  const sorted = sortCatalogItems(filteredItems, sortKey);
   const filtered = filterCatalogItems(sorted, {
     fromChecked,
     allFromIds,
@@ -182,7 +184,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* Browse toolbar (title, view toggle, sort, search, filters, tabs) */}
       <CatalogBrowseToolbar
-        totalCount={items.length}
+        totalCount={filteredItems.length}
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         sortKey={sortKey}

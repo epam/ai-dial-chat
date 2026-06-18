@@ -18,4 +18,6 @@ export interface DeploymentItem {
   displayVersion?: string;
   /** Whether this deployment is featured (configured via env). */
   isFeatured?: boolean;
+  /** Whether this deployment is hidden (configured via env). */
+  isHidden?: boolean;
 }
