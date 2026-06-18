@@ -63,13 +63,8 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     const { isCopied, copy } = useCodeCopy(value);
 
     return (
-      <div
-        className={mergeClasses(
-          'my-2 overflow-hidden rounded border border-secondary bg-layer-4',
-          containerClassName,
-        )}
-      >
-        <div className="sticky top-0 flex items-center justify-between border-b border-secondary bg-layer-4 px-3 py-2">
+      <div className={mergeClasses(styles.container, containerClassName)}>
+        <div className={styles.header}>
           <span className="text-start text-xs opacity-60">{language}</span>
           {!isStreaming && (
             <DialGhostIconButton

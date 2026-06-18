@@ -80,9 +80,7 @@ describe('MarkdownCodeBlock', () => {
 
     await user.click(screen.getByRole('button', { name: 'Copy code' }));
 
-    expect(
-      await screen.findByRole('button', { name: 'Copied!' }),
-    ).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Copied!' })).toBeTruthy();
   });
 
   it('sets dir="ltr" on the scroll container', () => {

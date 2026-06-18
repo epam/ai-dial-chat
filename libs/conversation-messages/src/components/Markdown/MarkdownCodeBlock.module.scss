@@ -1,3 +1,11 @@
+.container {
+  @apply my-2 overflow-hidden rounded border border-secondary bg-layer-4;
+}
+
+.header {
+  @apply sticky top-0 flex items-center justify-between border-b border-secondary bg-layer-4 px-3 py-2;
+}
+
 .scrollContainer {
   scrollbar-width: thin;
   scrollbar-color: var(--bg-layer-4, #242c42) transparent;
