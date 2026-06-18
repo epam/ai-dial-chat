@@ -1,5 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialPrimaryButton,
+  DialSpinner,
+} from '@epam/ai-dial-ui-kit';
 import { IconPlus } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import {
@@ -34,16 +38,24 @@ export const Catalog: FC<CatalogProps> = ({
   titles,
   onToggleFavorite,
   onCreateClick,
-  tabs = [],
+  isLoading,
   styles: catalogStyles,
 
   // TODO: review
+  tabs = [],
   maturityOptions = DEFAULT_MATURITY_OPTIONS,
   useCaseOptions = DEFAULT_USE_CASE_OPTIONS,
   domainOptions = DEFAULT_DOMAIN_OPTIONS,
   fromTree = DEFAULT_FROM_TREE,
   allFromIds = DEFAULT_ALL_FROM_IDS,
 }) => {
+  if (isLoading) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <DialSpinner size={44} />
+      </div>
+    );
+  }
   const { typography } = catalogStyles ?? {};
 
   const cssVars = getStyles(catalogStyles);

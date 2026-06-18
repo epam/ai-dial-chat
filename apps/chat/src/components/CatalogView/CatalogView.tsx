@@ -15,7 +15,7 @@ const EMPTY_FAVORITES: FavoriteItem[] = [];
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
-  const { items: deployments } = useDeployments();
+  const { items: deployments, isLoading } = useDeployments();
 
   const catalogItems = useMemo(
     () => deployments.map(mapDeploymentToCatalogItem),
@@ -25,6 +25,7 @@ const CatalogView: FC = () => {
   return (
     <Catalog
       items={catalogItems}
+      isLoading={isLoading}
       favorites={EMPTY_FAVORITES}
       titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),

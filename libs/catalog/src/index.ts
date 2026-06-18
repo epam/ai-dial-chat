@@ -90,9 +90,6 @@ export type { MaturityFilterProps } from './components/MaturityFilter/MaturityFi
 export { PricingTag } from './components/PricingTag/PricingTag';
 export type { PricingTagProps } from './components/PricingTag/PricingTag';
 
-export { ProviderLogo } from './components/ProviderLogo/ProviderLogo';
-export type { ProviderLogoProps } from './components/ProviderLogo/ProviderLogo';
-
 export { TabLabel } from './components/TabLabel/TabLabel';
 export type { TabLabelProps } from './components/TabLabel/TabLabel';
 
