@@ -70,6 +70,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
   PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
+  SidebarOrientation: { Left: 'left', Right: 'right' },
   SearchInput: ({
     onChange,
     placeholder,

@@ -6,6 +6,7 @@ import { SidebarPanel } from '../SidebarPanel';
 
 // Minimal mock so DialGhostIconButton passes through aria-label and calls onClick.
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: { LG: 24 },
   DialGhostIconButton: ({
     'aria-label': ariaLabel,
     onClick,
@@ -13,12 +14,15 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     'aria-label': string;
     onClick: () => void;
   }) => <button type="button" aria-label={ariaLabel} onClick={onClick} />,
+  ResizableContainerSide: {
+    Left: 'left',
+    Right: 'right',
+  },
   DialConditionalResizableContainer: ({
     children,
   }: {
     children: React.ReactNode;
   }) => <div>{children}</div>,
-  ResizableContainerSide: { Left: 'left', Right: 'right' },
 }));
 
 const defaultProps = {
