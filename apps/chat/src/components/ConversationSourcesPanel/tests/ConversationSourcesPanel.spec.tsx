@@ -65,7 +65,6 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
       onChange={(e) => onChange(e.target.value)}
     />
   ),
-  F,
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({

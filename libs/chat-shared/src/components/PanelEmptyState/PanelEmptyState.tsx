@@ -1,5 +1,6 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { memo, useMemo, type FC, type ReactNode } from 'react';
+import { buildCssVars } from '../../utils/build-css-vars';
+import { mergeClasses } from '../../utils/merge-class';
 import styles from './PanelEmptyState.module.scss';
 
 /** Style overrides for `PanelEmptyState`. */

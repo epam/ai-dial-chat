@@ -1,6 +1,6 @@
+import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 import { IconMessageCircle } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
-import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
 
 /** Props for `PanelEmpty`. */
 export interface PanelEmptyProps {

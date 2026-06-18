@@ -8,7 +8,6 @@ import {
 import { ConversationPanel } from '../ConversationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_ICON_SIZE: { SM: 16, LG: 24 },
   DialGhostButton: ({
     onClick,
     label,
@@ -64,7 +63,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </button>
   ),
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
-  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
 }));
 
 vi.mock('@epam/ai-dial-sidebar', () => ({
