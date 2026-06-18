@@ -62,7 +62,7 @@ export interface SidebarPanelProps {
   title?: ReactNode;
   /**
    * Typography class applied to the title element.
-   * Defaults to `'dial-body-semi-bold-text'`.
+   * Defaults to `'dial-body-semi-text'`.
    */
   titleClassName?: string;
   /** Rendered in the left group of the 48 px header bar. */
