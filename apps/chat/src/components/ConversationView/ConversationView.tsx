@@ -184,6 +184,7 @@ const ConversationView: FC<Props> = ({
         }, 100);
         return AttachmentErrorReason.UnsupportedType;
       }
+      return undefined;
     },
     [inputAttachmentTypes, showNotification, t],
   );

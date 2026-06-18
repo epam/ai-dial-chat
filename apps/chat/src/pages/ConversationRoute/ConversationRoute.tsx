@@ -135,6 +135,7 @@ const ConversationRoute: FC = () => {
         }, 100);
         return AttachmentErrorReason.UnsupportedType;
       }
+      return undefined;
     },
     [inputAttachmentTypes, showNotification, t],
   );
@@ -247,11 +248,14 @@ const ConversationRoute: FC = () => {
                   </span>
                   <ul className="mt-1 max-w-[508px]">
                     {filenames.map((name, i) => (
-                      <li key={i} className="flex items-center gap-1 overflow-hidden">
+                      <li
+                        key={i}
+                        className="flex items-center gap-1 overflow-hidden"
+                      >
                         <span className="shrink-0" aria-hidden>
                           •
                         </span>
-                        <span className="flex-1 min-w-0 truncate">{name}</span>
+                        <span className="min-w-0 flex-1 truncate">{name}</span>
                       </li>
                     ))}
                   </ul>
