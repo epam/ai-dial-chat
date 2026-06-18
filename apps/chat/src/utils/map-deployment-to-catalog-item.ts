@@ -5,7 +5,7 @@ import { resolveCatalogIconUrl } from './icon-path';
 const TYPE_MAP: Record<string, CatalogEntityType> = {
   model: CatalogEntityType.Model,
   toolset: CatalogEntityType.Toolset,
-  application: CatalogEntityType.Application,
+  application: CatalogEntityType.Model,
 };
 
 export const mapDeploymentToCatalogItem = (
