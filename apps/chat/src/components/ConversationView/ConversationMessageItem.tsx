@@ -8,6 +8,7 @@ import {
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
+  CodeBlockTheme,
   MessageBubble,
   type MessageActionAriaLabels,
   type MessageActionTooltips,
@@ -287,7 +288,11 @@ const ConversationMessageItem: FC<Props> = ({
       thinkingLabel={thinkingLabel}
       codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
       codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
-      codeBlockTheme={currentTheme === ThemeId.Light ? 'light' : 'dark'}
+      codeBlockTheme={
+        currentTheme === ThemeId.Light
+          ? CodeBlockTheme.Light
+          : CodeBlockTheme.Dark
+      }
       onAttachmentClick={handleAttachmentClick}
       attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
       {...statusProps}

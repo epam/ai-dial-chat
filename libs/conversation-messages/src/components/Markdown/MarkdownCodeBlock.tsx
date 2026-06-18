@@ -15,7 +15,10 @@ import { useCodeCopy } from '../../hooks/useCodeCopy';
 import styles from './MarkdownCodeBlock.module.scss';
 
 /** Color theme for syntax highlighting. */
-export type CodeBlockTheme = 'dark' | 'light';
+export enum CodeBlockTheme {
+  Dark = 'dark',
+  Light = 'light',
+}
 
 /** Props for {@link MarkdownCodeBlock}. */
 export interface MarkdownCodeBlockProps {
@@ -51,7 +54,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     language,
     value,
     isStreaming,
-    theme = 'dark',
+    theme = CodeBlockTheme.Dark,
     copyLabel = 'Copy code',
     copiedLabel = 'Copied!',
     containerClassName,
