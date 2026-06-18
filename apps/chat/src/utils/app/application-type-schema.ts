@@ -19,6 +19,12 @@ export const convertApplicationTypeSchemaFromApi = (
     iconUrl: schema[ApplicationTypeSchemaProperties.applicationTypeIconUrl],
     applicationTypePlaybackSupport:
       schema[ApplicationTypeSchemaProperties.applicationTypePlaybackSupport],
+    ...(schema[ApplicationTypeSchemaProperties.applicationTypeMcp] && {
+      mcpEndpoint:
+        schema[ApplicationTypeSchemaProperties.applicationTypeMcp][
+          ApplicationTypeSchemaProperties.endpoint
+        ],
+    }),
   };
 };
 
@@ -53,4 +59,11 @@ export const getDefaultSchemaModel = (
   )?.default as JSONSchema7Object | undefined;
 
   return deploymentDefault?.deployment_id as string;
+};
+
+export const doesSchemaContainMcpEndpoint = (
+  schema: ApiApplicationTypeSchema | ApplicationTypeSchema,
+) => {
+  if (ApplicationTypeSchemaProperties.applicationTypeMcp in schema) return true;
+  return !!('mcpEndpoint' in schema && schema.mcpEndpoint);
 };
