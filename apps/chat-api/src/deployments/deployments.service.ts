@@ -31,6 +31,7 @@ const toAdditionalProperties = (
 
 const mapToDeploymentItem = (
   raw: RawDeploymentDto,
+  featuredIds: Set<string>,
 ): DeploymentItemDto | null => {
   if (!raw.id) return null;
 
@@ -59,6 +60,7 @@ const mapToDeploymentItem = (
     iconUrl: raw.icon_url,
     description: raw.description,
     displayVersion: raw.display_version,
+    isFeatured: featuredIds.has(raw.id),
     updatedAt: typeof raw.updated_at === 'string' ? raw.updated_at : undefined,
     interfaces,
     applicationTypeSchemaId:
@@ -74,12 +76,16 @@ const mapToDeploymentItem = (
 @Injectable()
 export class DeploymentsService extends AppService {
   protected override readonly logger = new Logger(DeploymentsService.name);
+  private readonly featuredIds: Set<string>;
 
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
     super(configService);
+    this.featuredIds = new Set(
+      this.configService.get<string[]>('FEATURED_MODEL_IDS') ?? [],
+    );
   }
 
   async listDeployments(
@@ -126,7 +132,7 @@ export class DeploymentsService extends AppService {
 
         allItems = rawItems
           .filter((item) => item.id && !item.id.includes(HIDDEN_FILE))
-          .map(mapToDeploymentItem)
+          .map((item) => mapToDeploymentItem(item, this.featuredIds))
           .filter((item): item is DeploymentItemDto => item !== null);
         await this.cacheManager.set(cacheKey, allItems, 30_000);
       } catch (err) {

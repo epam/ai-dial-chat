@@ -53,3 +53,7 @@
 .starFilledIcon {
   color: var(--cat-card-star-filled, var(--text-warning-icon, #eec840));
 }
+
+.cardFooter {
+  border-color: var(--cat-card-footer-border, var(--stroke-tertiary, #363d56));
+}

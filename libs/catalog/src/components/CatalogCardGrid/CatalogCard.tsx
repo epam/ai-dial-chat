@@ -108,7 +108,12 @@ export const CatalogCard: FC<CatalogCardProps> = ({
         ))}
       </div>
 
-      <div className="mt-auto flex items-center justify-between">
+      <div
+        className={mergeClasses(
+          'mt-auto flex items-center justify-between border-t pt-4',
+          styles.cardFooter,
+        )}
+      >
         <FolderPath segments={item.folder} />
         <DialGhostIconButton
           icon={
