@@ -1,5 +1,9 @@
+.backdrop {
+  background: var(--ci-background-Backdrop, #0c101db2);
+}
+
 .sheet {
-  background: var(--ci-sheet-bg, var(--bg-layer-2, #161b2d));
+  background: var(--ci-sheet-bg, var(--bg-layer-0, #000000));
 }
 
 .title {

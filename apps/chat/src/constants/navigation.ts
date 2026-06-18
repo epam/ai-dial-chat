@@ -1,5 +1,6 @@
-import { IconMessage } from '@tabler/icons-react';
+import { IconBook2, IconMessage } from '@tabler/icons-react';
 import type { FC } from 'react';
+import { ROUTES } from '../types/routes';
 import { NavigationI18nKeys } from './translation-keys';
 
 interface NavigationItem {
@@ -10,14 +11,13 @@ interface NavigationItem {
 
 export const NAVIGATION_CONFIG: NavigationItem[] = [
   {
-    path: '/',
+    path: ROUTES.Root,
     icon: IconMessage,
     labelKey: NavigationI18nKeys.Home,
   },
-  // TODO: temporarily removed until the catalog page is implemented
-  // {
-  //   path: '/catalog',
-  //   icon: IconBook2,
-  //   labelKey: NavigationI18nKeys.Catalog,
-  // },
+  {
+    path: ROUTES.Catalog,
+    icon: IconBook2,
+    labelKey: NavigationI18nKeys.Catalog,
+  },
 ];

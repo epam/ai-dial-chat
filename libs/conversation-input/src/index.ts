@@ -1,12 +1,11 @@
 export { ConversationInput } from './components/ConversationInput/ConversationInput';
-export {
-  DeploymentIcon,
-  type DeploymentIconProps,
-} from './components/Input/Icon/DeploymentIcon';
+export { FileDndOverlay } from './components/FileDndOverlay/FileDndOverlay';
+export type { FileDndOverlayProps } from './models/FileDndOverlay';
 export { EditMessageInput } from './components/EditMessageInput/EditMessageInput';
 export { Input } from './components/Input/Input';
 export { AttachmentCard } from './components/AttachmentCard/AttachmentCard';
 export { AttachmentTray } from './components/AttachmentTray/AttachmentTray';
+export { getAttachmentIcon } from './utils/getAttachmentIcon';
 export type {
   ConversationInputProps,
   ConversationInputColors,

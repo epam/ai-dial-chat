@@ -14,6 +14,7 @@ import { FilesService } from '../files.service';
 type SdkClient = {
   uploadFile: ReturnType<typeof vi.fn>;
   downloadFile: ReturnType<typeof vi.fn>;
+  getFileMetadata: ReturnType<typeof vi.fn>;
 };
 
 function makeService() {
@@ -28,6 +29,7 @@ function makeService() {
   const sdkClient: SdkClient = {
     uploadFile: vi.fn(),
     downloadFile: vi.fn(),
+    getFileMetadata: vi.fn(),
   };
 
   const service = new FilesService(configService);
@@ -238,6 +240,128 @@ describe('FilesService', () => {
       sdkClient.downloadFile.mockRejectedValue(new TypeError('ECONNREFUSED'));
       await expect(service.downloadFile('b', 'p', 't')).rejects.toThrow(
         ServiceUnavailableException,
+      );
+    });
+  });
+
+  describe('listFiles', () => {
+    const okList = (items: object[], nextToken?: string) => ({
+      error: undefined,
+      response: { status: 200 },
+      data: { items, ...(nextToken != null ? { nextToken } : {}) },
+    });
+
+    it('returns normalized items on happy path', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(
+        okList([
+          { nodeType: 'FOLDER', url: 'folder/', name: 'folder' },
+          {
+            nodeType: 'ITEM',
+            url: 'file.pdf',
+            name: 'file.pdf',
+            parentPath: '',
+          },
+        ]),
+      );
+
+      const result = await service.listFiles(
+        'my-bucket',
+        'folder/',
+        {},
+        'token',
+      );
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].nodeType).toBe('folder');
+      expect(result.items[1].nodeType).toBe('item');
+    });
+
+    it('includes nextToken when DIAL returns one', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(okList([], 'cursor-abc'));
+
+      const result = await service.listFiles(
+        'my-bucket',
+        undefined,
+        {},
+        'token',
+      );
+      expect(result.nextToken).toBe('cursor-abc');
+    });
+
+    it('returns empty items and no nextToken for empty folder', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(okList([]));
+
+      const result = await service.listFiles('my-bucket', '', {}, 'token');
+      expect(result.items).toEqual([]);
+      expect(result.nextToken).toBeUndefined();
+    });
+
+    it('throws ForbiddenException on 403', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(errResponse(403));
+      await expect(service.listFiles('b', undefined, {}, 't')).rejects.toThrow(
+        ForbiddenException,
+      );
+    });
+
+    it('throws NotFoundException on 404', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(errResponse(404));
+      await expect(service.listFiles('b', undefined, {}, 't')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('throws HttpException(429) on 429', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(errResponse(429));
+      await expect(service.listFiles('b', undefined, {}, 't')).rejects.toThrow(
+        HttpException,
+      );
+    });
+
+    it('throws BadGatewayException on 5xx', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(errResponse(500));
+      await expect(service.listFiles('b', undefined, {}, 't')).rejects.toThrow(
+        BadGatewayException,
+      );
+    });
+
+    it('throws ServiceUnavailableException on timeout (AbortError)', async () => {
+      const { service, sdkClient } = makeService();
+      const timeoutErr = Object.assign(new Error('The operation was aborted'), {
+        name: 'TimeoutError',
+      });
+      sdkClient.getFileMetadata.mockRejectedValue(timeoutErr);
+      await expect(service.listFiles('b', undefined, {}, 't')).rejects.toThrow(
+        ServiceUnavailableException,
+      );
+    });
+
+    it('normalizes undefined path to empty string before SDK call', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(okList([]));
+
+      await service.listFiles('my-bucket', undefined, {}, 'at');
+      expect(sdkClient.getFileMetadata).toHaveBeenCalledWith(
+        'my-bucket',
+        '',
+        expect.anything(),
+      );
+    });
+
+    it('normalizes path without trailing slash before SDK call', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(okList([]));
+
+      await service.listFiles('my-bucket', 'reports', {}, 'at');
+      expect(sdkClient.getFileMetadata).toHaveBeenCalledWith(
+        'my-bucket',
+        'reports/',
+        expect.anything(),
       );
     });
   });

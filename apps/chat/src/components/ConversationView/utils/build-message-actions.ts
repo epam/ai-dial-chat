@@ -1,6 +1,7 @@
 import {
   MessageRating,
   MessageRole,
+  copyToClipboard,
   type Message,
 } from '@epam/ai-dial-chat-shared';
 import type {
@@ -47,15 +48,12 @@ export const buildMessageActions = (
     return { onRegenerate, tooltips, ariaLabels };
   }
 
-  const copyToClipboard = () =>
-    navigator.clipboard.writeText(msg.content).catch(() => {
-      console.error('Failed to copy message content to clipboard');
-    });
+  const handleCopy = () => copyToClipboard(msg.content);
 
   return {
     onRegenerate,
-    onCopy: copyToClipboard,
-    onCopyMarkdown: copyToClipboard,
+    onCopy: handleCopy,
+    onCopyMarkdown: handleCopy,
     onLike: handlers.onRate
       ? () =>
           handlers.onRate?.(

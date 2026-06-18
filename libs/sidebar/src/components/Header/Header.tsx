@@ -24,7 +24,7 @@ export interface HeaderProps {
 export const Header: FC<HeaderProps> = memo(
   ({
     title,
-    titleClassName = 'dial-body-semi-bold-text',
+    titleClassName = 'dial-body-semi-text',
     leftActions,
     rightActions,
   }) => (

@@ -1,5 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DeploymentIcon } from '@epam/ai-dial-conversation-input';
+import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,

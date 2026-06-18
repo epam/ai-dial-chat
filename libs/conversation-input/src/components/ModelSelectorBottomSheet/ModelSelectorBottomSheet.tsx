@@ -132,7 +132,7 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
   errorLabel,
   emptyLabel,
   style,
-  titleClassName = 'dial-body-semi-bold-text',
+  titleClassName = 'dial-body-semi-text',
   labelClassName = 'dial-small-text',
 }) => {
   const [query, setQuery] = useState('');

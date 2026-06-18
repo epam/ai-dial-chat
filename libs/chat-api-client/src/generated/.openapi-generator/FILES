@@ -5,6 +5,7 @@ package.json
 src/apis/ApplicationsApi.ts
 src/apis/AuthApi.ts
 src/apis/ChatApi.ts
+src/apis/ConfigApi.ts
 src/apis/ConversationsApi.ts
 src/apis/DeploymentsApi.ts
 src/apis/FilesApi.ts
@@ -12,6 +13,7 @@ src/apis/HealthApi.ts
 src/apis/ModelsApi.ts
 src/apis/RateApi.ts
 src/apis/ThemesApi.ts
+src/apis/TranscriptionApi.ts
 src/apis/UserConfigApi.ts
 src/apis/index.ts
 src/index.ts

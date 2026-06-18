@@ -47,7 +47,7 @@ export const BottomSheet: FC<BottomSheetProps> = ({
   onClose,
   style,
   items,
-  titleClassName = 'dial-body-semi-bold-text',
+  titleClassName = 'dial-body-semi-text',
   itemLabelClassName = 'dial-small-text',
 }) => {
   const handleItemClick = (onClick: () => void) => {

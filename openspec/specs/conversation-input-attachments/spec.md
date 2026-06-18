@@ -1,5 +1,9 @@
-## MODIFIED Requirements
+# conversation-input-attachments Specification
 
+## Purpose
+
+Specifies how the conversation input library handles file attachments: uploading via a host callback, attachment card image previews, voice recording props, and tray click forwarding.
+## Requirements
 ### Requirement: Input uploads attachments immediately through a host callback
 
 `Input`, `ConversationInput`, and `EditMessageInput` SHALL accept an optional `onUploadAttachment?: (attachment: Attachment) => Promise<string>` prop.
@@ -139,3 +143,22 @@ When `onAttachmentClick` is not provided, no `onClick` is passed to cards, and c
 
 - **WHEN** `AttachmentTray` is rendered with both `onRemove` and `onAttachmentClick`
 - **THEN** clicking the remove button calls `onRemove` and does NOT invoke `onAttachmentClick`
+
+### Requirement: EditMessageInput accepts externally-supplied pending drop files
+
+`EditMessageInput` SHALL accept two new optional props:
+- `pendingDropFiles?: File[]` — files supplied from outside (e.g., page-level drag-and-drop)
+- `onDropFilesConsumed?: () => void` — signals that the files have been consumed by the input
+
+When `pendingDropFiles` changes to a non-empty array, `EditMessageInput` SHALL merge those files with its internal `pendingDropFiles` state (or set it directly when the internal queue is empty) and call `onDropFilesConsumed`.
+
+#### Scenario: External pending files appear in edit input
+
+- **WHEN** `EditMessageInput` receives a non-empty `pendingDropFiles` prop
+- **THEN** those files are added to the attachment tray in the edit input
+
+#### Scenario: onDropFilesConsumed is called after consuming external files
+
+- **WHEN** `EditMessageInput` processes the externally-supplied files
+- **THEN** it calls the `onDropFilesConsumed` callback to allow the parent to clear its state
+

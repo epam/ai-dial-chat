@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { copyToClipboard, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialGhostIconButton,
@@ -26,14 +26,10 @@ export const StageCodeBlock: FC<Props> = ({
   const [isCopied, setIsCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const handleCopy = useCallback(async () => {
+  const handleCopy = useCallback(() => {
     const text =
       typeof children === 'string' ? children : String(children ?? '');
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      return;
-    }
+    copyToClipboard(text);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setIsCopied(true);
     timeoutRef.current = setTimeout(() => setIsCopied(false), 2000);

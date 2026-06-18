@@ -1,4 +1,7 @@
-import type { ConversationDeletionResultDto } from '@epam/chat-api-client';
+import {
+  ConversationDeletionFailureDtoCodeEnum,
+  type ConversationDeletionResultDto,
+} from '@epam/chat-api-client';
 import {
   act,
   fireEvent,
@@ -21,7 +24,11 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
       headerActions,
     }: {
       headerActions?: React.ReactNode;
-    }) => <div data-testid="conversation-panel">{headerActions}</div>,
+    }) => (
+      <div role="region" aria-label="conversation panel">
+        {headerActions}
+      </div>
+    ),
   };
 });
 
@@ -153,7 +160,6 @@ vi.mock('../../../hooks/useLocalStorage', () => ({
   default: () => [325, vi.fn()],
 }));
 vi.mock('../../../constants/routes', () => ({
-  ROUTES: { ROOT: '/' },
   getConversationRoute: (id: string) => `/conversations/${id}`,
   normalizeConversationId: (id: string) => id,
 }));
@@ -319,7 +325,12 @@ describe('ConversationPanelView — delete-all header action', () => {
       requested: 1,
       deleted: 0,
       alreadyAbsent: 0,
-      failed: [{ id: 'conv1', code: 'UPSTREAM_ERROR' }],
+      failed: [
+        {
+          id: 'conv1',
+          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+        },
+      ],
     });
 
     render(<ConversationPanelView {...defaultProps} />);
@@ -340,7 +351,12 @@ describe('ConversationPanelView — delete-all header action', () => {
       requested: 2,
       deleted: 1,
       alreadyAbsent: 0,
-      failed: [{ id: 'conv1', code: 'UPSTREAM_ERROR' }],
+      failed: [
+        {
+          id: 'conv1',
+          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+        },
+      ],
     });
 
     render(<ConversationPanelView {...defaultProps} />);

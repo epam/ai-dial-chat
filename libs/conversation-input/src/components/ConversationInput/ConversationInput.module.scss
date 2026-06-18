@@ -1,12 +1,3 @@
-.dropOverlay {
-  background: var(--ci-drop-overlay-bg, var(--bg-blackout, #0c101db2));
-  border-color: var(
-    --ci-drop-overlay-border,
-    var(--stroke-accent-primary, #7da4ff)
-  );
-  color: var(--ci-drop-overlay-text, var(--text-secondary, #9fa6bd));
-}
-
 .welcome {
   color: var(--ci-welcome-color, var(--text-primary, #eef1f7));
 }
