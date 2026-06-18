@@ -35,6 +35,7 @@ type RawDeployment = {
   toolset?: string;
   icon_url?: string;
   description?: string;
+  display_version?: string;
   interfaces?: string | string[];
   application_type_schema_id?: string;
   input_attachment_types?: string[];
@@ -52,7 +53,6 @@ const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
     type = 'model';
   }
 
-  console.log('Raw deployment from DIAL Core:', raw); // Debug log to inspect the raw deployment data
   let interfaces: string[] | undefined;
   if (raw.interfaces) {
     if (Array.isArray(raw.interfaces)) {
@@ -68,6 +68,7 @@ const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
     type,
     iconUrl: raw.icon_url,
     description: raw.description,
+    displayVersion: raw.display_version,
     interfaces,
     applicationTypeSchemaId:
       type === 'application' && raw.application_type_schema_id
