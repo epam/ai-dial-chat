@@ -5,8 +5,12 @@ import {
   buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconMicrophone } from '@tabler/icons-react';
+import {
+  BASE_ICON_SIZE,
+  DIAL_ICON_SIZE,
+  DialGhostIconButton,
+} from '@epam/ai-dial-ui-kit';
+import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
   ChangeEvent,
   type FC,
@@ -57,6 +61,8 @@ export const Input: FC<InputProps> = ({
   className,
   pendingDropFiles = [],
   onDropFilesConsumed,
+  pendingAttachments = [],
+  onPendingAttachmentsConsumed,
   pasteTextThreshold = 4000,
   deployments,
   selectedDeploymentId,
@@ -76,6 +82,8 @@ export const Input: FC<InputProps> = ({
   onRemovePrefixAttachment,
   autoFocus = false,
   messageHistory,
+  onDialFileSystemClick,
+  dialFileSystemLabel,
 }) => {
   const isMobile = useIsMobile();
   const historyNav = useInputHistoryNavigation(messageHistory);
@@ -96,6 +104,21 @@ export const Input: FC<InputProps> = ({
         '--ci-line-height': typography?.lineHeight,
       }),
     [colors, typography],
+  );
+
+  const dialFileSystemMenuItem = useMemo(
+    () =>
+      onDialFileSystemClick
+        ? [
+            {
+              key: 'dial-fs',
+              label: dialFileSystemLabel ?? 'DIAL file system',
+              icon: <IconFile size={BASE_ICON_SIZE} aria-hidden />,
+              onClick: onDialFileSystemClick,
+            },
+          ]
+        : [],
+    [onDialFileSystemClick, dialFileSystemLabel],
   );
 
   const [message, setMessage] = useState(messageProp);
@@ -222,11 +245,20 @@ export const Input: FC<InputProps> = ({
   );
 
   const addAttachments = useCallback(
-    (newAttachments: Attachment[]) => {
-      updateAttachments((prev) => [...prev, ...newAttachments]);
-      newAttachments.forEach((attachment) => {
-        void uploadAttachment(attachment);
+    (newAttachments: Attachment[], upload = true) => {
+      let toAdd: Attachment[] = [];
+      updateAttachments((prev) => {
+        const existingIds = new Set(prev.map((attachment) => attachment.id));
+        toAdd = newAttachments.filter(
+          (attachment) => !existingIds.has(attachment.id),
+        );
+        return [...prev, ...toAdd];
       });
+      if (upload) {
+        toAdd.forEach((attachment) => {
+          void uploadAttachment(attachment);
+        });
+      }
     },
     [updateAttachments, uploadAttachment],
   );
@@ -237,6 +269,12 @@ export const Input: FC<InputProps> = ({
     addAttachments(built);
     onDropFilesConsumed?.();
   }, [addAttachments, buildAttachments, onDropFilesConsumed, pendingDropFiles]);
+
+  useEffect(() => {
+    if (pendingAttachments.length === 0) return;
+    addAttachments(pendingAttachments, false);
+    onPendingAttachmentsConsumed?.();
+  }, [addAttachments, onPendingAttachmentsConsumed, pendingAttachments]);
 
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
@@ -451,6 +489,7 @@ export const Input: FC<InputProps> = ({
                 menuCloseLabel={menuCloseLabel}
                 style={cssVars}
                 isDisabled={isInputDisabled}
+                extraMenuItems={dialFileSystemMenuItem}
               />
             </div>
           )}

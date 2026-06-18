@@ -1,5 +1,17 @@
-import type { FileUploadResponseDto } from '@epam/chat-api-client';
+import type {
+  FileUploadResponseDto,
+  ListFilesResponseDto,
+} from '@epam/chat-api-client';
 import { filesApi } from './api-client';
+
+export const listFiles = (params: {
+  bucket: string;
+  path?: string;
+  token?: string;
+  limit?: number;
+  recursive?: boolean;
+  permissions?: boolean;
+}): Promise<ListFilesResponseDto> => filesApi.listFiles(params);
 
 export const uploadFile = (
   bucket: string,

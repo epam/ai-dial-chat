@@ -1,3 +1,8 @@
+import {
+  AttachmentType,
+  RequestStatus,
+  type Attachment,
+} from '@epam/ai-dial-chat-shared';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -260,6 +265,32 @@ describe('Input', () => {
     );
     expect(screen.getByText('dropped')).toBeTruthy();
     expect(onDropFilesConsumed).toHaveBeenCalled();
+  });
+
+  it('adds already-uploaded pending attachments without uploading them again', () => {
+    const onPendingAttachmentsConsumed = vi.fn();
+    const onUploadAttachment = vi.fn();
+    const attachment: Attachment = {
+      id: 'files/my-bucket/report.pdf',
+      name: 'report.pdf',
+      contentType: 'application/pdf',
+      type: AttachmentType.File,
+      status: RequestStatus.Idle,
+      url: 'files/my-bucket/report.pdf',
+      file: new File([], 'report.pdf', { type: 'application/pdf' }),
+    };
+
+    render(
+      <Input
+        pendingAttachments={[attachment]}
+        onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
+        onUploadAttachment={onUploadAttachment}
+      />,
+    );
+
+    expect(screen.getByText('report')).toBeTruthy();
+    expect(onUploadAttachment).not.toHaveBeenCalled();
+    expect(onPendingAttachmentsConsumed).toHaveBeenCalledOnce();
   });
 
   it('should call onAttachmentsChange when a file is added', () => {

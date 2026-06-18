@@ -39,18 +39,26 @@ import {
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
   DeploymentsI18nKeys,
+  DialFileManagerI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
+import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
   return { default: module.ConversationInput };
+});
+
+const DialFileManagerModal = lazy(async () => {
+  const module = await import('../DialFileManagerModal/DialFileManagerModal');
+  return { default: module.default };
 });
 
 interface Props {
@@ -120,6 +128,13 @@ const ConversationView: FC<Props> = ({
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const { user } = useUser();
+  // bucket is the authenticated user's DIAL Core storage bucket from their profile
+  const bucket = user?.bucket ?? '';
+  const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
+  const [pendingDialAttachments, setPendingDialAttachments] = useState<
+    Attachment[]
+  >([]);
   const isEditActive = !!editingMessageIndexes?.size;
   const {
     items,
@@ -336,6 +351,14 @@ const ConversationView: FC<Props> = ({
     scrollToBottom(false);
   }, [scrollToBottom]);
 
+  const handleAttachDialFiles = useCallback(
+    (files: Parameters<typeof dialFilesToAttachments>[0]) => {
+      setPendingDialAttachments(dialFilesToAttachments(files, bucket));
+      setIsDialFileManagerOpen(false);
+    },
+    [bucket],
+  );
+
   return (
     <>
       <FileDndOverlay
@@ -453,31 +476,73 @@ const ConversationView: FC<Props> = ({
             />
           </div>
         ) : (
-          <Suspense fallback={null}>
-            <ConversationInput
-              onSend={onSend}
-              onUploadAttachment={onUploadAttachment}
-              onStop={onStop}
-              isStreaming={isAssistantTyping}
-              onAttachmentsChange={onAttachmentsChange}
-              placeholder={placeholder}
-              deployments={deploymentItems}
-              selectedDeploymentId={selectedItemId}
-              onDeploymentChange={setSelectedItemId}
-              isInputDisabled={isInputDisabled}
-              modelSelectorLabels={modelSelectorLabels}
-              sendLabel={t(ChatI18nKeys.SendMessage)}
-              stopLabel={t(ChatI18nKeys.StopStreaming)}
-              isTranscriptionSupported={isTranscriptionSupported}
-              messageHistory={messageHistory}
-              onUploadAudio={onUploadAudio}
-              onTranscribeAudio={onTranscribeAudio}
-              sendOnEnter={sendOnEnter}
-              pendingDropFiles={!isEditActive ? pendingFiles : undefined}
-              onDropFilesConsumed={!isEditActive ? onFilesConsumed : undefined}
-              autoFocus={!isMobile}
-            />
-          </Suspense>
+          <>
+            <Suspense fallback={null}>
+              <ConversationInput
+                onSend={onSend}
+                onUploadAttachment={onUploadAttachment}
+                onStop={onStop}
+                isStreaming={isAssistantTyping}
+                onAttachmentsChange={onAttachmentsChange}
+                placeholder={placeholder}
+                deployments={deploymentItems}
+                selectedDeploymentId={selectedItemId}
+                onDeploymentChange={setSelectedItemId}
+                isInputDisabled={isInputDisabled}
+                modelSelectorLabels={modelSelectorLabels}
+                sendLabel={t(ChatI18nKeys.SendMessage)}
+                stopLabel={t(ChatI18nKeys.StopStreaming)}
+                isTranscriptionSupported={isTranscriptionSupported}
+                messageHistory={messageHistory}
+                onUploadAudio={onUploadAudio}
+                onTranscribeAudio={onTranscribeAudio}
+                sendOnEnter={sendOnEnter}
+                pendingDropFiles={!isEditActive ? pendingFiles : undefined}
+                pendingAttachments={
+                  !isEditActive ? pendingDialAttachments : undefined
+                }
+                onDropFilesConsumed={
+                  !isEditActive ? onFilesConsumed : undefined
+                }
+                onPendingAttachmentsConsumed={
+                  !isEditActive
+                    ? () => setPendingDialAttachments([])
+                    : undefined
+                }
+                autoFocus={!isMobile}
+                onDialFileSystemClick={() => setIsDialFileManagerOpen(true)}
+                dialFileSystemLabel={t(
+                  ConversationI18nKeys.AttachMenuDialFileSystem,
+                )}
+              />
+            </Suspense>
+            <Suspense fallback={null}>
+              {isDialFileManagerOpen && (
+                <DialFileManagerModal
+                  isOpen={isDialFileManagerOpen}
+                  onClose={() => setIsDialFileManagerOpen(false)}
+                  onAttach={handleAttachDialFiles}
+                  bucket={bucket}
+                  title={t(DialFileManagerI18nKeys.Title)}
+                  attachLabel={t(DialFileManagerI18nKeys.Attach)}
+                  emptyTitle={t(DialFileManagerI18nKeys.Empty)}
+                  emptyDescription=""
+                  errorMessage={t(DialFileManagerI18nKeys.Error)}
+                  retryLabel={t(DialFileManagerI18nKeys.Retry)}
+                  hiddenFilesLabel={t(DialFileManagerI18nKeys.HiddenFiles)}
+                  showHiddenFilesLabel={t(
+                    DialFileManagerI18nKeys.ShowHiddenFiles,
+                  )}
+                  hideHiddenFilesLabel={t(
+                    DialFileManagerI18nKeys.HideHiddenFiles,
+                  )}
+                  getSelectionLabel={(count) =>
+                    t(DialFileManagerI18nKeys.ItemsSelected, { count })
+                  }
+                />
+              )}
+            </Suspense>
+          </>
         )}
       </div>
     </>
