@@ -137,6 +137,7 @@ const buildMarkdownComponents = (
           copyLabel={codeBlockCopyLabel}
           copiedLabel={codeBlockCopiedLabel}
           containerClassName={cn.codeBlockContainer}
+          headerClassName={cn.codeBlockHeader}
           codeClassName={cn.codeFont}
         />
       );

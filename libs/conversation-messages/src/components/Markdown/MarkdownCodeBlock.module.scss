@@ -1,9 +1,11 @@
 .container {
-  @apply my-2 overflow-hidden rounded border border-secondary bg-layer-4;
+  background: var(--cm-code-block-bg, var(--bg-layer-4, #242c42));
+  border-color: var(--cm-code-block-border, var(--stroke-secondary, #242c42));
 }
 
 .header {
-  @apply sticky top-0 flex items-center justify-between border-b border-secondary bg-layer-4 px-3 py-2;
+  background: var(--cm-code-block-bg, var(--bg-layer-4, #242c42));
+  border-color: var(--cm-code-block-border, var(--stroke-secondary, #242c42));
 }
 
 .scrollContainer {

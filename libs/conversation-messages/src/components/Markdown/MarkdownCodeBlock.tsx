@@ -36,6 +36,8 @@ export interface MarkdownCodeBlockProps {
   copiedLabel?: string;
   /** Extra classes applied to the outer container element. */
   containerClassName?: string;
+  /** Extra classes applied to the sticky header bar. */
+  headerClassName?: string;
   /** Typography class for the `<code>` element (used when no language is detected). Defaults to `'font-mono text-sm'`. */
   codeClassName?: string;
 }
@@ -58,13 +60,26 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     copyLabel = 'Copy code',
     copiedLabel = 'Copied!',
     containerClassName,
+    headerClassName,
     codeClassName = 'font-mono text-sm',
   }) => {
     const { isCopied, copy } = useCodeCopy(value);
 
     return (
-      <div className={mergeClasses(styles.container, containerClassName)}>
-        <div className={styles.header}>
+      <div
+        className={mergeClasses(
+          'my-2 overflow-hidden rounded border',
+          styles.container,
+          containerClassName,
+        )}
+      >
+        <div
+          className={mergeClasses(
+            'sticky top-0 flex items-center justify-between border-b px-3 py-2',
+            styles.header,
+            headerClassName,
+          )}
+        >
           <span className="text-start text-xs opacity-60">{language}</span>
           {!isStreaming && (
             <DialGhostIconButton
