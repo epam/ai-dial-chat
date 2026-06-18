@@ -125,7 +125,8 @@
       "executed": "Executed",
       "step_one": "step",
       "step_other": "steps"
-    }
+    },
+    "attachMenuDialFileSystem": "DIAL file system"
   },
   "conversationPanel": {
     "title": "Chats",
@@ -188,5 +189,17 @@
     "overlaySubtitle": "Drop files here to attach them to message",
     "overlayDeniedTitle": "No attachments allowed",
     "overlayDeniedSubtitle": "Attachments can't be added to message"
+  },
+  "dialFileManager": {
+    "title": "DIAL file system",
+    "attach": "Attach",
+    "empty": "This folder is empty",
+    "error": "Failed to load files",
+    "retry": "Retry",
+    "hiddenFiles": "Hidden files",
+    "showHiddenFiles": "Show hidden files",
+    "hideHiddenFiles": "Hide hidden files",
+    "itemsSelected_one": "{{count}} item selected",
+    "itemsSelected_other": "{{count}} items selected"
   }
 }

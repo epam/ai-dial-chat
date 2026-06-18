@@ -17,6 +17,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   className,
   pendingDropFiles,
   onDropFilesConsumed,
+  pendingAttachments,
+  onPendingAttachmentsConsumed,
   pasteTextThreshold,
   deployments,
   selectedDeploymentId,
@@ -32,6 +34,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
   sendOnEnter,
   autoFocus,
   messageHistory,
+  onDialFileSystemClick,
+  dialFileSystemLabel,
 }) => {
   const { colors, typography } = stylesProp ?? {};
 
@@ -86,6 +90,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           typography={typography?.input}
           pendingDropFiles={pendingDropFiles}
           onDropFilesConsumed={onDropFilesConsumed}
+          pendingAttachments={pendingAttachments}
+          onPendingAttachmentsConsumed={onPendingAttachmentsConsumed}
           pasteTextThreshold={pasteTextThreshold}
           deployments={deployments}
           selectedDeploymentId={selectedDeploymentId}
@@ -101,6 +107,8 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           sendOnEnter={sendOnEnter}
           autoFocus={autoFocus}
           messageHistory={messageHistory}
+          onDialFileSystemClick={onDialFileSystemClick}
+          dialFileSystemLabel={dialFileSystemLabel}
         />
       </div>
     </div>
