@@ -25,6 +25,6 @@
     "@epam/ai-dial-conversation-input": "0.0.1",
     "react-markdown": "^10.0.0",
     "remark-gfm": "^4.0.0",
-    "react-syntax-highlighter": "^15.0.0"
+    "react-syntax-highlighter": "^16.1.1"
   }
 }
