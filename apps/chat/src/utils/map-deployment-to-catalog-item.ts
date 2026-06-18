@@ -22,6 +22,7 @@ export const mapDeploymentToCatalogItem = (
     iconUrl: resolveCatalogIconUrl(deployment.iconUrl),
     version: deployment.displayVersion ?? '',
     lastUsed: formatLastUsed(deployment.updatedAt),
+    updatedAt: deployment.updatedAt,
     pricing: [],
     folder: [],
     from: '',

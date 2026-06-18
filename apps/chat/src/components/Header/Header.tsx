@@ -30,8 +30,8 @@ const Header: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const isConversationRoute = !!useMatch(`${ROUTES.Conversations}/*`);
-  const isRouteRoute = !!useMatch(`${ROUTES.Root}/*`);
-  const isConversationPanel = isConversationRoute || isRouteRoute;
+  const isRootRoute = !!useMatch(ROUTES.Root);
+  const isConversationPanel = isConversationRoute || isRootRoute;
   const { isOpen: isSourcesSidebarOpen, handleOpen: handleOpenSourcesSidebar } =
     useSourcesSidebar();
 
