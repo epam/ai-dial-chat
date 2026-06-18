@@ -7,16 +7,15 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconX } from '@tabler/icons-react';
 import { useMemo, type FC } from 'react';
-import { type SidebarPanelProps } from '../../models/SidebarPanel';
-import { SidebarSide } from '../../types/SidebarSide';
+import { type SidebarPanelProps } from '../../models/panel-props';
+import { SidebarOrientation } from '../../types/orientation';
 import { Header } from '../Header/Header';
 import styles from './SidebarPanel.module.scss';
 
 export const SidebarPanel: FC<SidebarPanelProps> = ({
   isOpen,
-  side,
+  orientation,
   title,
-  titleClassName,
   leftActions,
   rightActions,
   onClose,
@@ -31,7 +30,8 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   maxWidth = 600,
   onResizeStop,
 }) => {
-  const { colors, typography, bodyClassName, cssVars } = panelStyles ?? {};
+  const { colors, typography, bodyClassName, cssVars, titleClassName } =
+    panelStyles ?? {};
   const noCustomFont = !typography?.fontClassName;
 
   const panelCssVars = useMemo(
@@ -46,9 +46,10 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
     [colors, typography, noCustomFont],
   );
 
-  const dividerClass = side === 'right' ? 'border-l' : 'border-r';
+  const dividerClass =
+    orientation === SidebarOrientation.Right ? 'border-l' : 'border-r';
   const resizableSide =
-    side === SidebarSide.Right
+    orientation === SidebarOrientation.Right
       ? ResizableContainerSide.Left
       : ResizableContainerSide.Right;
 
@@ -60,6 +61,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
       onClick={onClose}
     />
   ) : null;
+
   return (
     <DialConditionalResizableContainer
       enabled={(resizable ?? false) && isOpen}

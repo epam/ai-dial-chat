@@ -114,6 +114,19 @@ export interface <Name>Typography {
 export interface <Name>Styles {
   colors?: <Name>Colors;
   typography?: <Name>Typography;
+  /**
+   * Extra class name(s) merged onto a named inner element (e.g. the scrollable
+   * body `<div>`). Add one `<element>ClassName` field per inner element that
+   * consumers may need to style independently.
+   */
+  bodyClassName?: string;
+  /**
+   * Arbitrary CSS custom properties applied inline to the component's root
+   * element. Use as a last-resort escape hatch when the typed `colors` /
+   * `typography` fields do not expose a needed variable. Values are merged
+   * after the `buildCssVars` output, so they can override typed fields.
+   */
+  cssVars?: CSSProperties;
 }
 ```
 

@@ -106,7 +106,6 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
       {children}
     </aside>
   ),
-  SidebarSide: { Right: 'right', Left: 'left' },
 }));
 
 vi.mock('react-window', () => ({

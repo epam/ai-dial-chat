@@ -65,11 +65,10 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
       onChange={(e) => onChange(e.target.value)}
     />
   ),
-  SidebarSide: { Right: 'right', Left: 'left' },
+  F,
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DIAL_ICON_SIZE: { LG: 24 },
   DialGhostIconButton: ({
     'aria-label': ariaLabel,
     disabled,

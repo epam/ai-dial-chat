@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { userEvent } from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import { SidebarSide } from '../../../types/SidebarSide';
+import { SidebarOrientation } from '../../../types/orientation';
 import { SidebarPanel } from '../SidebarPanel';
 
 // Minimal mock so DialGhostIconButton passes through aria-label and calls onClick.
@@ -27,7 +27,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 
 const defaultProps = {
   isOpen: true,
-  side: SidebarSide.Right,
+  side: SidebarOrientation.Right,
   onClose: vi.fn(),
   ariaLabel: 'Test panel',
   closeLabel: 'Close',
@@ -83,7 +83,7 @@ describe('SidebarPanel', () => {
     render(
       <SidebarPanel
         {...defaultProps}
-        side={SidebarSide.Right}
+        orientation={SidebarOrientation.Right}
         rightActions={<button aria-label="download" />}
       >
         <span />
@@ -97,7 +97,7 @@ describe('SidebarPanel', () => {
 
   it('side=right: applies border-l divider', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} side={SidebarSide.Right}>
+      <SidebarPanel {...defaultProps} orientation={SidebarOrientation.Right}>
         <span />
       </SidebarPanel>,
     );
@@ -114,7 +114,7 @@ describe('SidebarPanel', () => {
     render(
       <SidebarPanel
         {...defaultProps}
-        side={SidebarSide.Left}
+        orientation={SidebarOrientation.Left}
         rightActions={<button aria-label="download" />}
       >
         <span />
@@ -128,7 +128,7 @@ describe('SidebarPanel', () => {
 
   it('side=left: applies border-r divider', () => {
     const { container } = render(
-      <SidebarPanel {...defaultProps} side={SidebarSide.Left}>
+      <SidebarPanel {...defaultProps} orientation={SidebarOrientation.Left}>
         <span />
       </SidebarPanel>,
     );
