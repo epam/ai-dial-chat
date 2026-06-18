@@ -89,9 +89,6 @@ export type { MaturityFilterProps } from './components/MaturityFilter/MaturityFi
 export { PricingTag } from './components/PricingTag/PricingTag';
 export type { PricingTagProps } from './components/PricingTag/PricingTag';
 
-export { TabLabel } from './components/TabLabel/TabLabel';
-export type { TabLabelProps } from './components/TabLabel/TabLabel';
-
 export { TreeCheckboxRow } from './components/TreeCheckboxRow/TreeCheckboxRow';
 export type { TreeCheckboxRowProps } from './components/TreeCheckboxRow/TreeCheckboxRow';
 
