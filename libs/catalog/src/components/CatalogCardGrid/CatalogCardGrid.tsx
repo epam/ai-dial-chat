@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { CatalogCardGridProps } from '../../models/CatalogCardGridProps';
+import type { CatalogCardGridProps } from '../../models/card-grid-props';
 import { CatalogCard } from './CatalogCard';
 import styles from './CatalogCardGrid.module.scss';
 
@@ -23,7 +23,7 @@ export const CatalogCardGrid: FC<CatalogCardGridProps> = ({
 
   if (items.length > 0) {
     return (
-      <div className="grid w-full grid-cols-3 gap-5">
+      <div className="small_tablet:grid-cols-2 grid w-full grid-cols-1 gap-5 desktop:grid-cols-3">
         {items.map((item) => (
           <CatalogCard
             key={item.id}

@@ -1,4 +1,4 @@
-import type { CatalogItem, TreeNode } from '../models/CatalogItem';
+import type { CatalogItem, TreeNode } from '../models/catalog-item';
 import { findNodeLabel } from './catalog-tree';
 
 /** Returns the display label for the Maturity dropdown button. */

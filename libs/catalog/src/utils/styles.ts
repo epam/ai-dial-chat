@@ -1,6 +1,6 @@
 import { buildCssVars } from '@epam/ai-dial-chat-shared';
 import { CSSProperties } from 'react';
-import { CatalogStyles } from '../models/CatalogStyles';
+import { CatalogStyles } from '../models/catalog-styles';
 
 export const getStyles = (catalogStyles?: CatalogStyles): CSSProperties => {
   const { colors, typography } = catalogStyles ?? {};
