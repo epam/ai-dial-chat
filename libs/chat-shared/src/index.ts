@@ -11,6 +11,5 @@ export * from './utils/build-css-vars';
 export * from './utils/message';
 export * from './utils/is-audio-transcription-supported';
 export * from './utils/copy-to-clipboard';
-export * from './utils/map-deployment-to-catalog-item';
 export * from './constants/mime-types';
 export * from './constants/dial';

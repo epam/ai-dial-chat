@@ -1,6 +1,5 @@
 import type { FavoriteItem } from '@epam/ai-dial-catalog';
 import { Catalog } from '@epam/ai-dial-catalog';
-import { mapDeploymentToCatalogItem } from '@epam/ai-dial-chat-shared';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -9,6 +8,7 @@ import {
   CatalogI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
 // TODO: add favorites functionality and replace with actual favorites from backend
 const EMPTY_FAVORITES: FavoriteItem[] = [];
