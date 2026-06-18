@@ -18,6 +18,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   }: {
     children: React.ReactNode;
   }) => <div>{children}</div>,
+  ResizableContainerSide: { Left: 'left', Right: 'right' },
 }));
 
 const defaultProps = {

@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { StagesPanel } from './StagesPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
+  DIAL_ICON_SIZE: { MD: 16 },
   DialSpinner: () => <span role="status" aria-label="Stage loading" />,
   DialEllipsisTooltip: ({ text }: { text: string }) => <span>{text}</span>,
 }));
