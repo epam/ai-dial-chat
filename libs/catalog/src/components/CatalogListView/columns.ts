@@ -1,5 +1,5 @@
 import type { ColDef } from 'ag-grid-community';
-import { CatalogItem } from '../../models/CatalogItem';
+import { CatalogItem } from '../../models/catalog-item';
 import { FolderCellRenderer } from './Renders/FolderCellRenderer';
 import { NameCellRenderer } from './Renders/NameCellRenderer';
 import { TagsCellRenderer } from './Renders/TagsCellRenderer';

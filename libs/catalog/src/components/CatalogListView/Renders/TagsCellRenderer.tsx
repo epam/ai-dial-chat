@@ -1,6 +1,6 @@
 import type { ICellRendererParams } from 'ag-grid-community';
 import { FC } from 'react';
-import type { CatalogItem } from '../../../models/CatalogItem';
+import type { CatalogItem } from '../../../models/catalog-item';
 import { PricingTag } from '../../PricingTag/PricingTag';
 
 export const TagsCellRenderer: FC<ICellRendererParams<CatalogItem>> = ({

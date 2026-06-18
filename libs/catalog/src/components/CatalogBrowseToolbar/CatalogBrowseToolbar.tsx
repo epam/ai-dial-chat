@@ -18,6 +18,7 @@ import {
 } from '@tabler/icons-react';
 import { type CSSProperties, FC } from 'react';
 import { DEFAULT_SORT_OPTIONS } from '../../constants/catalog-defaults';
+import { TreeNode } from '../../models/catalog-item';
 import { CatalogSortOption } from '../../models/sort';
 import { CatalogViewMode } from '../../types/view-mode';
 import { DomainFilter } from '../DomainFilter/DomainFilter';

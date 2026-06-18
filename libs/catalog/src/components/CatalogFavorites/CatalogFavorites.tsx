@@ -1,6 +1,6 @@
 import { DialPagination } from '@epam/ai-dial-ui-kit';
 import { type CSSProperties, FC, useState } from 'react';
-import type { FavoriteItem } from '../../models/CatalogItem';
+import type { FavoriteItem } from '../../models/catalog-item';
 import { useFavColumns } from '../../utils/use-fav-columns';
 import { FavoriteCard } from '../FavoriteCard/FavoriteCard';
 import styles from './CatalogFavorites.module.scss';

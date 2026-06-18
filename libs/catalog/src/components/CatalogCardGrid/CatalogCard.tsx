@@ -11,7 +11,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import type { CatalogCardProps } from '../../models/CatalogCardProps';
+import type { CatalogCardProps } from '../../models/card-props';
 import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { PricingTag } from '../PricingTag/PricingTag';

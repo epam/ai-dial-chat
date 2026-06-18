@@ -1,4 +1,4 @@
-import type { CatalogItem } from './CatalogItem';
+import type { CatalogItem } from './catalog-item';
 
 /** Typography class overrides for `CatalogCard` content. */
 export interface CatalogCardTypography {

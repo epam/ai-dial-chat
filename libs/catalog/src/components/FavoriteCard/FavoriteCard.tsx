@@ -6,7 +6,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconHistory, IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import type { FavoriteItem } from '../../models/CatalogItem';
+import type { FavoriteItem } from '../../models/catalog-item';
 import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
 
 /** Props for FavoriteCard. */

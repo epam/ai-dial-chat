@@ -1,6 +1,6 @@
 import { DialCheckbox } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
-import type { TreeNode } from '../../models/CatalogItem';
+import type { TreeNode } from '../../models/catalog-item';
 import { getNodeCheckState } from '../../utils/catalog-tree';
 
 /** Props for TreeCheckboxRow. */

@@ -5,7 +5,7 @@ import {
   DEFAULT_ALL_FROM_IDS,
   DEFAULT_FROM_TREE,
 } from '../../constants/from-tree';
-import type { TreeNode } from '../../models/CatalogItem';
+import type { TreeNode } from '../../models/catalog-item';
 import { getFromLabel } from '../../utils/catalog-filter';
 import { applyToggle } from '../../utils/catalog-tree';
 import { TreeCheckboxRow } from '../TreeCheckboxRow/TreeCheckboxRow';
