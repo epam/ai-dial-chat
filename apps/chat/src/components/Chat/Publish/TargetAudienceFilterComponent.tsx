@@ -83,7 +83,7 @@ export function TargetAudienceFilterComponent({
   const [filterRegexParam, setFilterRegexParam] = useState<string>('');
   const [isRegexValid, setIsRegexValid] = useState(true);
   const [selectedTarget, setSelectedTarget] = useState(t(emptySelector));
-  const [targetMenuOpen, setTargetMenuOpen] = useState(false);
+  const [targetMenuOpen, setTargetMenuOpen] = useState(true);
   const [filterFnsMenuOpen, setFilterFnsMenuOpen] = useState(false);
 
   const filterRowRef = useRef<HTMLDivElement>(null);

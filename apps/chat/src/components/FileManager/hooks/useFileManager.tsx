@@ -105,7 +105,6 @@ import {
   ColDef,
   FirstDataRenderedEvent,
   GridApi,
-  GridReadyEvent,
   RowDataUpdatedEvent,
 } from 'ag-grid-community';
 import cloneDeep from 'lodash-es/cloneDeep';
@@ -1192,10 +1191,6 @@ export const useFileManager = ({
           emptyStateTitle: searchEmptyTitle,
           emptyStateDescription: searchEmptyDescription,
         }),
-        onGridReady: (params: GridReadyEvent<FileManagerGridRow>) => {
-          gridEditingOptions?.onGridReady?.(params);
-          applyGridHeaderLabels(params.api);
-        },
         onFirstDataRendered: (
           params: FirstDataRenderedEvent<FileManagerGridRow>,
         ) => {

@@ -5,7 +5,17 @@ import {
   IconMarkdown,
   IconTxt,
 } from '@tabler/icons-react';
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Children,
+  ReactElement,
+  ReactNode,
+  isValidElement,
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -49,36 +59,128 @@ interface Props {
   isLastMessageStreaming: boolean;
 }
 
+const isThead = (node: ReactNode) =>
+  isValidElement(node) && (node as ReactElement).type === 'thead';
+
 export const Table = ({ children, isLastMessageStreaming }: Props) => {
   const { t } = useTranslation(Translation.Chat);
 
-  const tableRef = useRef<HTMLTableElement | null>(null);
+  const headerTableRef = useRef<HTMLTableElement | null>(null);
+  const bodyTableRef = useRef<HTMLTableElement | null>(null);
+  const bodyScrollRef = useRef<HTMLDivElement | null>(null);
+  const headerScrollRef = useRef<HTMLDivElement | null>(null);
 
   const [copiedType, setCopiedType] = useState<CopyTableType | undefined>(
     undefined,
   );
   const [timer, setTimer] = useState<NodeJS.Timeout | undefined>(undefined);
 
-  const withCopyToClipboard = useCallback(
-    (type: CopyTableType, fn: (table: HTMLTableElement) => string) => () => {
-      if (tableRef.current) {
-        const text = fn(tableRef.current);
-        writeTextToClipboard(text, () => {
-          if (timer && type !== copiedType) {
-            clearTimeout(timer);
-          }
+  const childArray = Children.toArray(children);
+  const head = childArray.find(isThead);
+  const body = childArray.filter((child) => !isThead(child));
 
-          setCopiedType(type);
-          const newTimer = setTimeout(() => {
-            setCopiedType(undefined);
-            setTimer(undefined);
-          }, 2000);
+  const syncHeaderScroll = useCallback(() => {
+    if (headerScrollRef.current && bodyScrollRef.current) {
+      headerScrollRef.current.scrollLeft = bodyScrollRef.current.scrollLeft;
+    }
+  }, []);
 
-          setTimer(newTimer);
-        });
+  const syncColumnWidths = useCallback(() => {
+    const headerRow = headerTableRef.current?.rows[0];
+    const bodyRow = bodyTableRef.current?.rows[0];
+
+    if (!headerRow || !bodyRow) {
+      return;
+    }
+
+    const headerCells = Array.from(headerRow.cells);
+    const bodyCells = Array.from(bodyRow.cells);
+
+    [headerTableRef.current, bodyTableRef.current].forEach((table) => {
+      if (table) {
+        table.style.width = 'max-content';
       }
-    },
-    [copiedType, tableRef, timer],
+    });
+    [...headerCells, ...bodyCells].forEach((cell) => {
+      cell.style.width = '';
+      cell.style.minWidth = '';
+      cell.style.maxWidth = '';
+    });
+
+    const widths = headerCells.map((headerCell, index) => {
+      const bodyCell = bodyCells[index];
+
+      return Math.ceil(
+        Math.max(
+          headerCell.getBoundingClientRect().width,
+          bodyCell ? bodyCell.getBoundingClientRect().width : 0,
+        ),
+      );
+    });
+
+    [headerTableRef.current, bodyTableRef.current].forEach((table) => {
+      if (table) {
+        table.style.width = '';
+      }
+    });
+    widths.forEach((width, index) => {
+      const value = `${width}px`;
+      [headerCells[index], bodyCells[index]].forEach((cell) => {
+        if (cell) {
+          cell.style.width = value;
+          cell.style.minWidth = value;
+          cell.style.maxWidth = value;
+        }
+      });
+    });
+  }, []);
+
+  useLayoutEffect(() => {
+    syncColumnWidths();
+
+    const bodyTable = bodyTableRef.current;
+
+    if (!bodyTable || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => syncColumnWidths());
+    observer.observe(bodyTable);
+    window.addEventListener('resize', syncColumnWidths);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', syncColumnWidths);
+    };
+  }, [syncColumnWidths, children]);
+
+  const withCopyToClipboard = useCallback(
+    (type: CopyTableType, fn: (rows: HTMLTableRowElement[]) => string) =>
+      () => {
+        if (bodyTableRef.current) {
+          const rows = [
+            ...(headerTableRef.current
+              ? Array.from(headerTableRef.current.rows)
+              : []),
+            ...Array.from(bodyTableRef.current.rows),
+          ];
+          const text = fn(rows);
+          writeTextToClipboard(text, () => {
+            if (timer && type !== copiedType) {
+              clearTimeout(timer);
+            }
+
+            setCopiedType(type);
+            const newTimer = setTimeout(() => {
+              setCopiedType(undefined);
+              setTimer(undefined);
+            }, 2000);
+
+            setTimer(newTimer);
+          });
+        }
+      },
+    [copiedType, timer],
   );
 
   useEffect(() => {
@@ -91,7 +193,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
 
   const copyTableToMD = useCallback(
     () =>
-      withCopyToClipboard(CopyTableType.MD, (table) => {
+      withCopyToClipboard(CopyTableType.MD, (rows) => {
         const getAlignment = (alignment: string) => {
           if (alignment === 'left') return ':--';
           if (alignment === 'right') return '--:';
@@ -99,13 +201,13 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
           return ':-:';
         };
 
-        const markdown = Array.from(table.rows).reduce((acc: string[], row) => {
+        const markdown = rows.reduce((acc: string[], row, rowIndex) => {
           const rowArray = Array.from(row.cells).map((cell) =>
             cell.textContent ? cell.textContent.trim() : '',
           );
           acc.push('| ' + rowArray.join(' | ') + ' |');
 
-          if (row.rowIndex === 0) {
+          if (rowIndex === 0) {
             const alignmentArray = Array.from(row.cells).map((cell) => {
               return getAlignment(cell.style.textAlign || 'left');
             });
@@ -122,8 +224,8 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
 
   const copyTableToTXT = useCallback(
     () =>
-      withCopyToClipboard(CopyTableType.TXT, (table) => {
-        const txt = Array.from(table.rows).map((row) => {
+      withCopyToClipboard(CopyTableType.TXT, (rows) => {
+        const txt = rows.map((row) => {
           const rowArray = Array.from(row.cells).map((cell) =>
             cell.textContent ? cell.textContent.trim() : '',
           );
@@ -138,8 +240,8 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
 
   const copyTableToCSV = useCallback(
     () =>
-      withCopyToClipboard(CopyTableType.CSV, (table) => {
-        const csv = Array.from(table.rows).map((row) => {
+      withCopyToClipboard(CopyTableType.CSV, (rows) => {
+        const csv = rows.map((row) => {
           const rowArray = Array.from(row.cells).map((cell) =>
             cell.textContent?.trim()
               ? `"${cell.textContent.trim().replace(/"/g, '""')}"`
@@ -155,7 +257,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
   );
 
   return (
-    <div className="mt-7 max-w-full overflow-auto" data-qa="table">
+    <div className="mt-7 max-w-full" data-qa="table">
       {!isLastMessageStreaming && (
         <div
           className="flex max-w-full justify-end rounded-t border border-b-0 border-tertiary bg-layer-3 px-2 py-1"
@@ -204,12 +306,32 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
           </div>
         </div>
       )}
-      <table
-        ref={tableRef}
-        className="mt-0 border-collapse border border-tertiary px-3 py-1 text-sm"
+      {head && (
+        <div
+          ref={headerScrollRef}
+          className="overflow-hidden border-l border-t border-tertiary"
+        >
+          <table
+            ref={headerTableRef}
+            className="my-0 w-full border-separate border-spacing-0 text-sm"
+            aria-hidden
+          >
+            {head}
+          </table>
+        </div>
+      )}
+      <div
+        ref={bodyScrollRef}
+        onScroll={syncHeaderScroll}
+        className="max-h-[68vh] overflow-auto border-l border-tertiary"
       >
-        {children}
-      </table>
+        <table
+          ref={bodyTableRef}
+          className="my-0 w-full border-separate border-spacing-0 text-sm"
+        >
+          {body}
+        </table>
+      </div>
     </div>
   );
 };
