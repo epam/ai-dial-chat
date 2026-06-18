@@ -105,9 +105,11 @@ export const useConversationHandlers = ({
             networkTimerRef.current = null;
           }, 100);
 
-          const error = err instanceof Error ? err : new Error('Network upload failed');
-          (error as Error & { errorReason: AttachmentErrorReason }).errorReason =
-            AttachmentErrorReason.Network;
+          const error =
+            err instanceof Error ? err : new Error('Network upload failed');
+          (
+            error as Error & { errorReason: AttachmentErrorReason }
+          ).errorReason = AttachmentErrorReason.Network;
           throw error;
         }
         throw err;

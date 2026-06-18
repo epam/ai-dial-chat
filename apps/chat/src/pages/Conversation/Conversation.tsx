@@ -136,7 +136,7 @@ export const ConversationPage: FC = () => {
                   <span className="shrink-0" aria-hidden>
                     •
                   </span>
-                  <span className="flex-1 min-w-0 truncate">{name}</span>
+                  <span className="min-w-0 flex-1 truncate">{name}</span>
                 </li>
               ))}
             </ul>
