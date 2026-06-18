@@ -9,10 +9,10 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutCards, IconLayoutList } from '@tabler/icons-react';
 import { FC } from 'react';
-import { DEFAULT_SORT_OPTIONS } from '../../constants/catalog-defaults';
-import { ToolbarProps } from '../../models/toolbar-props';
-import { CatalogViewMode } from '../../types/view-mode';
-import styles from './Toolbar.module.scss';
+import { DEFAULT_SORT_OPTIONS } from '../../../constants/catalog-defaults';
+import { ToolbarProps } from '../../../models/toolbar-props';
+import { CatalogViewMode } from '../../../types/view-mode';
+import styles from '../Toolbar.module.scss';
 
 interface TitleRowProps {
   totalCount?: number;

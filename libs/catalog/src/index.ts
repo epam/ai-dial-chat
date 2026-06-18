@@ -8,7 +8,7 @@ export type { CatalogItem, FavoriteItem } from './models/catalog-item';
 export type { CatalogProps, CatalogTitles } from './models/catalog-props';
 
 // Utils
-export { filterCatalogItems, getFromLabel } from './utils/catalog-filter';
+export { filterCatalogItems } from './utils/catalog-filter';
 export { sortCatalogItems } from './utils/catalog-sort';
 export { useFavColumns } from './utils/use-fav-columns';
 
@@ -48,11 +48,8 @@ export type { FavoriteCardProps } from './components/FavoriteCard/FavoriteCard';
 export { FolderPath } from './components/FolderPath/FolderPath';
 export type { FolderPathProps } from './components/FolderPath/FolderPath';
 
-export { FromFilter } from './components/FromFilter/FromFilter';
-export type { FromFilterProps } from './components/FromFilter/FromFilter';
+export { Filter } from './components/Filter/Filter';
+export type { FilterProps as FromFilterProps } from './components/Filter/Filter';
 
 export { PricingTag } from './components/PricingTag/PricingTag';
 export type { PricingTagProps } from './components/PricingTag/PricingTag';
-
-export { TreeCheckboxRow } from './components/TreeCheckboxRow/TreeCheckboxRow';
-export type { TreeCheckboxRowProps } from './components/TreeCheckboxRow/TreeCheckboxRow';

@@ -5,7 +5,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconFilter, IconX } from '@tabler/icons-react';
 import { FC } from 'react';
-import styles from './Toolbar.module.scss';
+import styles from '../Toolbar.module.scss';
 
 interface FilterRowProps {
   clearAllLabel?: string;

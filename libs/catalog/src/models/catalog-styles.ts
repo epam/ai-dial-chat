@@ -46,10 +46,6 @@ export interface CatalogTypography {
   pageHeadingFontClassName?: string;
   /** Typography class applied to section headings (Browse, Favorites). Defaults to `'dial-body-semi-text'`. */
   sectionHeadingClassName?: string;
-  /** Typography class applied to "no results" title. Defaults to `'dial-body-semi-text'`. */
-  noResultsTitleClassName?: string;
-  /** Typography class applied to "no results" description. Defaults to `'dial-small-text'`. */
-  noResultsDescriptionClassName?: string;
 }
 
 /**

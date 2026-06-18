@@ -4,18 +4,8 @@ import type { CatalogItem } from './catalog-item';
 export interface CatalogCardGridTitles {
   /** Empty-state heading text. Default: `'No results'`. */
   noResultsTitle?: string;
-  /** Empty-state description text. Default: `'Try a different keyword'`. */
-  noResultsDescription?: string;
   /** Label for the "Featured" tag on cards. Default: `'Featured'`. */
   featuredLabel?: string;
-}
-
-/** Class-name overrides for `CatalogCardGrid` empty state elements. */
-export interface CatalogCardGridStyles {
-  /** Typography class for the empty-state heading. Default: `'dial-h3-text'`. */
-  noResultsTitleClassName?: string;
-  /** Typography class for the empty-state description. Default: `'dial-small-text'`. */
-  noResultsDescriptionClassName?: string;
 }
 
 /** Props for `CatalogCardGrid`. */
@@ -28,6 +18,4 @@ export interface CatalogCardGridProps {
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /** Grouped empty-state text overrides. */
   titles?: CatalogCardGridTitles;
-  /** Grouped class-name overrides for empty-state elements. */
-  styles?: CatalogCardGridStyles;
 }

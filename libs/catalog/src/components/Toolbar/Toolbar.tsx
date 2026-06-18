@@ -2,8 +2,8 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialSearch, DialTabs } from '@epam/ai-dial-ui-kit';
 import { type CSSProperties, FC } from 'react';
 import { ToolbarProps } from '../../models/toolbar-props';
-import { FilterRow } from './FilterRow';
-import { TitleRow } from './TitleRow';
+import { FilterRow } from './Rows/FilterRow';
+import { TitleRow } from './Rows/TitleRow';
 import styles from './Toolbar.module.scss';
 
 /** Browse section header: title, view/sort controls, search bar, filter row, and tabs. */

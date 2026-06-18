@@ -13,8 +13,6 @@ export interface CatalogTitles {
   browseTitle?: string;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
   searchPlaceholder?: string;
-  /** "No results" description. Default: 'Try a different keyword'. */
-  noResultsDescription?: string;
   /**
    * Returns the "no results" heading given the active query.
    * Default: (q) => `No results for "${q}"`.

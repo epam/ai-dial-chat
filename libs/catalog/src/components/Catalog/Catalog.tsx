@@ -43,8 +43,6 @@ export const Catalog: FC<CatalogProps> = ({
   const browseTitle = titles?.browseTitle ?? 'Browse';
   const searchPlaceholder =
     titles?.searchPlaceholder ?? 'Search models, tools, agents…';
-  const noResultsDescription =
-    titles?.noResultsDescription ?? 'Try a different keyword';
   const noResultsTitle =
     titles?.noResultsTitle ?? ((q: string) => `No results for "${q}"`);
   const featuredLabel = titles?.featuredLabel ?? 'Featured';
@@ -103,7 +101,6 @@ export const Catalog: FC<CatalogProps> = ({
   const isAnyFilterActive = false;
 
   const emptyTitle = query ? noResultsTitle(query) : 'No items';
-  const emptyDesc = query ? noResultsDescription : '';
 
   return (
     <section
@@ -176,13 +173,7 @@ export const Catalog: FC<CatalogProps> = ({
             onToggleFavorite={onToggleFavorite}
             titles={{
               noResultsTitle: emptyTitle,
-              noResultsDescription: emptyDesc,
               featuredLabel,
-            }}
-            styles={{
-              noResultsTitleClassName: typography?.noResultsTitleClassName,
-              noResultsDescriptionClassName:
-                typography?.noResultsDescriptionClassName,
             }}
           />
         </div>
@@ -196,7 +187,6 @@ export const Catalog: FC<CatalogProps> = ({
             query={query}
             ariaLabel={resolvedAriaLabel}
             emptyStateTitle={emptyTitle}
-            emptyStateDescription={emptyDesc}
           />
         </div>
       )}
