@@ -19,6 +19,18 @@
   box-shadow: 0 0 15px 0 var(--cat-card-featured-glow, rgba(125, 164, 255, 0.5));
 }
 
+.featuredTag {
+  background: var(
+    --cat-featured-tag-bg,
+    var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
+  );
+  border-color: var(
+    --cat-featured-tag-border,
+    var(--stroke-accent-secondary, #37babc)
+  );
+  color: var(--cat-featured-tag-text, var(--text-accent-secondary, #37babc));
+}
+
 .featuredTopBar {
   background: var(
     --cat-card-featured-bar,

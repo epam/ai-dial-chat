@@ -1,10 +1,9 @@
-import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
+import { DeploymentIcon, Highlight } from '@epam/ai-dial-chat-shared';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { FC } from 'react';
 import type { CatalogItem } from '../../../models/CatalogItem';
 import { GridContext } from '../../../models/GridContext';
 import { EntityTypeBadge } from '../../EntityTypeBadge/EntityTypeBadge';
-import { Highlight } from '../../Highlight/Highlight';
 import styles from '../CatalogListView.module.scss';
 
 export const NameCellRenderer: FC<

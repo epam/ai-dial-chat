@@ -1,16 +1,19 @@
 import {
   buildCssVars,
   DeploymentIcon,
+  Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialGhostIconButton,
+  DialTag,
+} from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type { CatalogCardProps } from '../../models/CatalogCardProps';
 import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
-import { FeaturedTag } from '../FeaturedTag/FeaturedTag';
 import { FolderPath } from '../FolderPath/FolderPath';
-import { Highlight } from '../Highlight/Highlight';
 import { PricingTag } from '../PricingTag/PricingTag';
 import styles from './CatalogCardGrid.module.scss';
 
@@ -21,6 +24,7 @@ export const CatalogCard: FC<CatalogCardProps> = ({
   initialIsStarred = false,
   onToggle,
   styles: cardStyles,
+  featuredLabel = 'Featured',
 }) => {
   const { colors, typography } = cardStyles ?? {};
   const nameClassName = typography?.nameClassName ?? 'dial-h3-text';
@@ -65,7 +69,10 @@ export const CatalogCard: FC<CatalogCardProps> = ({
             )}
           />
           <div className="absolute end-[17px] top-[17px]">
-            <FeaturedTag />
+            <DialTag
+              label={featuredLabel}
+              className={mergeClasses('px-[6px]', styles.featuredTag)}
+            />
           </div>
         </>
       )}

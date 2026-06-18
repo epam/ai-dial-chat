@@ -37,6 +37,7 @@ const CatalogView: FC = () => {
         sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
         sortNewestLabel: t(CatalogI18nKeys.SortNewest),
         sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
+        featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
         ariaLabel: t(CatalogI18nKeys.AriaLabel),
       }}
     />

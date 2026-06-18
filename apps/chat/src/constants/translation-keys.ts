@@ -93,6 +93,7 @@ export enum CatalogI18nKeys {
   SortRecentlyUpdated = 'catalog.sortRecentlyUpdated',
   SortNewest = 'catalog.sortNewest',
   SortNameAZ = 'catalog.sortNameAZ',
+  FeaturedLabel = 'catalog.featuredLabel',
 }
 
 export enum DeploymentsI18nKeys {

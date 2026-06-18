@@ -6,6 +6,8 @@ export interface CatalogCardGridTitles {
   noResultsTitle?: string;
   /** Empty-state description text. Default: `'Try a different keyword'`. */
   noResultsDescription?: string;
+  /** Label for the "Featured" tag on cards. Default: `'Featured'`. */
+  featuredLabel?: string;
 }
 
 /** Class-name overrides for `CatalogCardGrid` empty state elements. */

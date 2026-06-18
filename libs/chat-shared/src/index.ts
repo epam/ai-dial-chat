@@ -15,3 +15,4 @@ export * from './utils/format-last-used';
 export * from './constants/mime-types';
 export * from './constants/dial';
 export * from './components/DeploymentIcon/DeploymentIcon';
+export * from './components/Highlight/Highlight';

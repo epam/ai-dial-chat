@@ -59,7 +59,8 @@
     "noResultsTitle": "No results for \"{{query}}\"",
     "sortRecentlyUpdated": "Recently Updated",
     "sortNewest": "Newest",
-    "sortNameAZ": "Name A-Z"
+    "sortNameAZ": "Name A-Z",
+    "featuredLabel": "Featured"
   },
   "deployments": {
     "empty": "No models or applications available.",

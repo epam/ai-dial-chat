@@ -1,7 +1,7 @@
 import { FC } from 'react';
 import styles from './Highlight.module.scss';
 
-/** Props for Highlight. */
+/** Props for `Highlight`. */
 export interface HighlightProps {
   /** Full text to display. */
   text: string;
@@ -11,8 +11,7 @@ export interface HighlightProps {
   markClassName?: string;
 }
 
-// TODO: use for other text elements in the catalog, like folder paths and card titles, to surface matches more clearly. Consider adding a tooltip for long texts that are truncated with ellipsis.
-/** Renders text with the first occurrence of query wrapped in a highlight mark. */
+/** Renders text with the first occurrence of `query` wrapped in a highlight mark. */
 export const Highlight: FC<HighlightProps> = ({
   text,
   query,

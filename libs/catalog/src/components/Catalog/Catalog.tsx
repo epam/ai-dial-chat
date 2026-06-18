@@ -58,6 +58,7 @@ export const Catalog: FC<CatalogProps> = ({
     titles?.noResultsDescription ?? 'Try a different keyword';
   const noResultsTitle =
     titles?.noResultsTitle ?? ((q: string) => `No results for "${q}"`);
+  const featuredLabel = titles?.featuredLabel ?? 'Featured';
   const resolvedAriaLabel = titles?.ariaLabel ?? 'Catalog';
 
   const sortOptions = [
@@ -202,7 +203,7 @@ export const Catalog: FC<CatalogProps> = ({
       {viewMode === CatalogViewMode.Grid && (
         <div
           className={mergeClasses(
-            'flex min-h-0 flex-1 overflow-auto',
+            'flex min-h-0 flex-1 overflow-auto pt-5',
             styles.gridView,
           )}
         >
@@ -213,6 +214,7 @@ export const Catalog: FC<CatalogProps> = ({
             titles={{
               noResultsTitle: emptyTitle,
               noResultsDescription: emptyDesc,
+              featuredLabel,
             }}
             styles={{
               noResultsTitleClassName: typography?.noResultsTitleClassName,

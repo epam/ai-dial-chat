@@ -64,7 +64,7 @@ export { CatalogFavorites } from './components/CatalogFavorites/CatalogFavorites
 export type { CatalogFavoritesProps } from './components/CatalogFavorites/CatalogFavorites';
 
 export { CatalogListView } from './components/CatalogListView/CatalogListView';
-export type { CatalogListViewProps } from './components/CatalogListView/CatalogListView';
+export type { CatalogListViewProps } from './models/CatalogListViewProps';
 
 export { DomainFilter } from './components/DomainFilter/DomainFilter';
 export type { DomainFilterProps } from './components/DomainFilter/DomainFilter';
@@ -75,17 +75,14 @@ export type { EntityTypeBadgeProps } from './components/EntityTypeBadge/EntityTy
 export { FavoriteCard } from './components/FavoriteCard/FavoriteCard';
 export type { FavoriteCardProps } from './components/FavoriteCard/FavoriteCard';
 
-export { FeaturedTag } from './components/FeaturedTag/FeaturedTag';
-export type { FeaturedTagProps } from './components/FeaturedTag/FeaturedTag';
-
 export { FolderPath } from './components/FolderPath/FolderPath';
 export type { FolderPathProps } from './components/FolderPath/FolderPath';
 
 export { FromFilter } from './components/FromFilter/FromFilter';
 export type { FromFilterProps } from './components/FromFilter/FromFilter';
 
-export { Highlight } from './components/Highlight/Highlight';
-export type { HighlightProps } from './components/Highlight/Highlight';
+export { Highlight } from '@epam/ai-dial-chat-shared';
+export type { HighlightProps } from '@epam/ai-dial-chat-shared';
 
 export { MaturityFilter } from './components/MaturityFilter/MaturityFilter';
 export type { MaturityFilterProps } from './components/MaturityFilter/MaturityFilter';

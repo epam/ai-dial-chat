@@ -50,4 +50,6 @@ export interface CatalogCardProps {
   onToggle?: (id: string, isStarred: boolean) => void;
   /** Grouped color and typography overrides. */
   styles?: CatalogCardStyles;
+  /** Label for the "Featured" tag. Default: `'Featured'`. */
+  featuredLabel?: string;
 }

@@ -27,6 +27,8 @@ export interface CatalogTitles {
   sortNewestLabel?: string;
   /** Label for the "Name A-Z" sort option. Default: 'Name A-Z'. */
   sortNameAZLabel?: string;
+  /** Label for the "Featured" tag on cards. Default: 'Featured'. */
+  featuredLabel?: string;
   /** ARIA label for the page/grid. Default: 'Catalog'. */
   ariaLabel?: string;
 }
