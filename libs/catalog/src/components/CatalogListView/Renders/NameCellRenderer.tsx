@@ -4,6 +4,7 @@ import type { CatalogItem } from '../../../models/CatalogItem';
 import { GridContext } from '../../../models/GridContext';
 import { EntityTypeBadge } from '../../EntityTypeBadge/EntityTypeBadge';
 import { Highlight } from '../../Highlight/Highlight';
+import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
 import { ProviderLogo } from '../../ProviderLogo/ProviderLogo';
 import styles from '../CatalogListView.module.scss';
 
@@ -20,7 +21,7 @@ export const NameCellRenderer: FC<
   if (!data) return null;
   return (
     <div className="flex h-full items-center gap-2.5">
-      <ProviderLogo color={data.logoColor} initial={data.logoInitial} />
+      <DeploymentIcon src={data.iconUrl} size={48} />
       <div className="flex min-w-0 flex-col gap-0.5">
         <EntityTypeBadge type={data.type} />
         <div className="flex items-baseline gap-1.5">

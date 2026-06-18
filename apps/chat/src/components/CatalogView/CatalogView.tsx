@@ -25,6 +25,7 @@ const CatalogView: FC = () => {
   return (
     <Catalog
       items={catalogItems}
+      tabs={[{ id: 'all', label: 'sss' }]}
       favorites={EMPTY_FAVORITES}
       texts={{
         pageTitle: t(CatalogI18nKeys.PageTitle),

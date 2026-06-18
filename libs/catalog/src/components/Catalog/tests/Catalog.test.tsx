@@ -57,7 +57,6 @@ const makeItem = (id: string, name: string) => ({
   description: 'desc',
   pricing: ['Free'],
   folder: ['EPAM'],
-  logoColor: '#000',
   logoInitial: 'X',
   lastUsed: '',
   from: 'dial',
@@ -98,7 +97,6 @@ describe('Catalog', () => {
       name: 'Claude',
       version: '1',
       lastUsed: 'now',
-      logoColor: '#000',
       logoInitial: 'C',
     };
     render(<Catalog items={[]} favorites={[fav]} />);

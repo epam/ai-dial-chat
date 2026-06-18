@@ -1,10 +1,11 @@
 import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
 import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
+import { resolveCatalogIconUrl } from './icon-path';
 
 const TYPE_MAP: Record<string, CatalogEntityType> = {
   model: CatalogEntityType.Model,
   toolset: CatalogEntityType.Toolset,
-  application: CatalogEntityType.Model,
+  application: CatalogEntityType.Mcp,
 };
 
 export const mapDeploymentToCatalogItem = (
@@ -12,16 +13,18 @@ export const mapDeploymentToCatalogItem = (
 ): CatalogItem => {
   const name = deployment.displayName ?? deployment.id;
   const normalizedType = (deployment.type ?? '').toLowerCase();
-
+  console.log('Mapping deployment to catalog item:', {
+    normalizedType,
+    catalog: TYPE_MAP[normalizedType] ?? CatalogEntityType.Model,
+  });
   return {
     id: deployment.id,
     type: TYPE_MAP[normalizedType] ?? CatalogEntityType.Model,
     name,
     description: deployment.description ?? '',
-    iconUrl: deployment.iconUrl,
+    iconUrl: resolveCatalogIconUrl(deployment.iconUrl),
     version: deployment.displayVersion ?? '',
     lastUsed: '',
-    logoColor: '',
     pricing: [],
     folder: [],
     from: '',

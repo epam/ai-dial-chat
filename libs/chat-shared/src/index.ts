@@ -13,3 +13,4 @@ export * from './utils/is-audio-transcription-supported';
 export * from './utils/copy-to-clipboard';
 export * from './constants/mime-types';
 export * from './constants/dial';
+export * from './components/DeploymentIcon/DeploymentIcon';

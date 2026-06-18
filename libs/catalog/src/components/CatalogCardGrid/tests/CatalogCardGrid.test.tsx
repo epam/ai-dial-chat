@@ -15,7 +15,6 @@ const makeItem = (id: string, name: string) => ({
   description: 'desc',
   pricing: ['Free'],
   folder: ['EPAM'],
-  logoColor: '#000',
   logoInitial: 'X',
   lastUsed: '',
   from: 'dial',

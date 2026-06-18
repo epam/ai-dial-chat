@@ -47,7 +47,6 @@ const item = {
   pricing: ['Free'],
   isFeatured: true,
   folder: ['EPAM', 'Research'],
-  logoColor: '#D97C27',
   logoInitial: 'A',
   lastUsed: '',
   from: 'dial',

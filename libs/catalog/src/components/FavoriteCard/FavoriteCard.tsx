@@ -1,3 +1,4 @@
+import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
 import {
   DialGhostIconButton,
   DialIcon,
@@ -7,7 +8,6 @@ import { IconHistory, IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type { FavoriteItem } from '../../models/CatalogItem';
 import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
-import { ProviderLogo } from '../ProviderLogo/ProviderLogo';
 
 /** Props for FavoriteCard. */
 export interface FavoriteCardProps {
@@ -65,7 +65,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       }}
     >
       <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
-        <ProviderLogo color={item.logoColor} initial={item.logoInitial} />
+        <DeploymentIcon src={item.iconUrl} size={48} />
         <div
           style={{
             flex: 1,

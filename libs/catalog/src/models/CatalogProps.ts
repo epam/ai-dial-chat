@@ -1,3 +1,4 @@
+import { TabModel } from '@epam/ai-dial-ui-kit';
 import type {
   CatalogItem,
   CatalogSortOption,
@@ -41,7 +42,7 @@ export interface CatalogProps {
   /** Called when the Create button is clicked. */
   onCreateClick?: () => void;
   /** Tab definitions for entity-type filtering. */
-  tabs?: any[]; // TODO: add ui kit type when available
+  tabs?: TabModel[];
   /** Available sort options. Default: DEFAULT_SORT_OPTIONS. */
   sortOptions?: CatalogSortOption[];
   /** Maturity filter options. Default: DEFAULT_MATURITY_OPTIONS. */

@@ -1,14 +1,17 @@
+import {
+  buildCssVars,
+  DeploymentIcon,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type { CatalogCardProps } from '../../models/CatalogCardProps';
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
 import { FeaturedTag } from '../FeaturedTag/FeaturedTag';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { Highlight } from '../Highlight/Highlight';
 import { PricingTag } from '../PricingTag/PricingTag';
-import { ProviderLogo } from '../ProviderLogo/ProviderLogo';
 import styles from './CatalogCardGrid.module.scss';
 
 /** Card for the Browse grid with highlighted search text and optional featured styling. */
@@ -68,7 +71,7 @@ export const CatalogCard: FC<CatalogCardProps> = ({
       )}
 
       <div className="flex items-center gap-3">
-        <ProviderLogo color={item.logoColor} initial={item.iconUrl} />
+        <DeploymentIcon src={item.iconUrl} size={48} />
         <div className="min-w-0 flex-1">
           <EntityTypeBadge type={item.type} />
           <div className="mt-0.5 flex items-start gap-1">

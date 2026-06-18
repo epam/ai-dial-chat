@@ -22,8 +22,6 @@ export interface FavoriteItem {
   version: string;
   /** Human-readable "last used" timestamp, e.g. "10 min ago". */
   lastUsed: string;
-  /** Background fill color for the provider logo mark. */
-  logoColor: string;
   /** URL of the icon displayed inside the logo mark. */
   iconUrl?: string;
   /** Whether this item is currently starred. Default: true in the Favorites strip. */

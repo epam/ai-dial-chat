@@ -1,10 +1,6 @@
 export { ConversationInput } from './components/ConversationInput/ConversationInput';
 export { FileDndOverlay } from './components/FileDndOverlay/FileDndOverlay';
 export type { FileDndOverlayProps } from './models/FileDndOverlay';
-export {
-  DeploymentIcon,
-  type DeploymentIconProps,
-} from './components/Input/Icon/DeploymentIcon';
 export { EditMessageInput } from './components/EditMessageInput/EditMessageInput';
 export { Input } from './components/Input/Input';
 export { AttachmentCard } from './components/AttachmentCard/AttachmentCard';

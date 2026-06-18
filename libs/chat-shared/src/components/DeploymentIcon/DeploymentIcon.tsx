@@ -1,7 +1,7 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialTooltip } from '@epam/ai-dial-ui-kit';
 import { type FC, type ReactNode, useEffect, useRef, useState } from 'react';
-import FallbackEntityIcon from '../../../assets/fallback-entity-icon.svg?react';
+import FallbackEntityIcon from '../../assets/fallback-entity-icon.svg?react';
+import { mergeClasses } from '../../utils/merge-class';
 import styles from './DeploymentIcon.module.scss';
 
 /** Props for `DeploymentIcon`. */
@@ -28,11 +28,7 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
   src,
   size,
   fallback = (
-    <FallbackEntityIcon
-      width={DIAL_ICON_SIZE.LG}
-      height={DIAL_ICON_SIZE.LG}
-      className="shrink-0"
-    />
+    <FallbackEntityIcon width={size} height={size} className="shrink-0" />
   ),
   badgeClassName,
   tooltip,
