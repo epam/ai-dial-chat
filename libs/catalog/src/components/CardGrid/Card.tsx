@@ -10,7 +10,7 @@ import {
   DialTag,
 } from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
-import { FC, KeyboardEvent, MouseEvent, useState } from 'react';
+import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import type { CardProps } from '../../models/card-props';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
@@ -56,14 +56,17 @@ export const Card: FC<CardProps> = ({
 
   const handleClick = onClick ? () => onClick(item) : undefined;
 
-  const handleKeyDown = onClick
-    ? (e: KeyboardEvent<HTMLDivElement>) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          onClick(item);
-        }
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLElement>) => {
+      if (!onClick) return;
+
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onClick?.(item);
       }
-    : undefined;
+    },
+    [onClick, item],
+  );
 
   return (
     <div

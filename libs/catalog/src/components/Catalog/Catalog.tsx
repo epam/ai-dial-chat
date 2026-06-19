@@ -240,7 +240,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* Grid view */}
       {viewMode === CatalogViewMode.Grid && (
-        <div className={styles.gridView}>
+        <div className={mergeClasses('min-h-0 flex-1 pb-5', styles.gridView)}>
           <CardGrid
             items={tabFiltered}
             query={query}
@@ -256,7 +256,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* List view — mounted only after first shown to avoid initializing ag-grid eagerly */}
       {listEverShown && viewMode === CatalogViewMode.List && (
-        <div className={styles.listView}>
+        <div className={mergeClasses('min-h-0 flex-1 pb-5', styles.listView)}>
           <ListView
             items={tabFiltered}
             query={query}
