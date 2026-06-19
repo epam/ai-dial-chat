@@ -33,6 +33,7 @@ export const StageIcon: FC<Props> = ({ status, isLive }) => {
       />
     );
   }
+
   return (
     <IconAlertCircle
       size={DIAL_ICON_SIZE.MD}
