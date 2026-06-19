@@ -1,10 +1,34 @@
 import { render, screen } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+vi.mock('@epam/ai-dial-chat-shared', () => ({
+  mergeClasses: (...classes: (string | undefined | false | null)[]) =>
+    classes.filter(Boolean).join(' '),
+  copyToClipboard: vi.fn(),
+}));
+vi.mock('react-syntax-highlighter', () => ({
+  Prism: ({ children, language }: { children: string; language: string }) => (
+    <pre data-language={language}>
+      <code>{children}</code>
+    </pre>
+  ),
+}));
+vi.mock('react-syntax-highlighter/dist/cjs/styles/prism', () => ({
+  oneDark: {},
+  oneLight: {},
+}));
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 const TABLE_MARKDOWN = `| Name | Description |
 | --- | --- |
 | Alpha | A long table value |`;
+
+const FENCED_TS_MARKDOWN = `\`\`\`typescript
+const x = 1;
+\`\`\``;
+
+const FENCED_NO_LANG_MARKDOWN = `\`\`\`
+plain code
+\`\`\``;
 
 describe('MarkdownRenderer', () => {
   it('renders GFM tables in a horizontally scrollable container', () => {
@@ -49,5 +73,74 @@ describe('MarkdownRenderer', () => {
     expect(cell.className).toContain('max-w-96');
     expect(cell.className).toContain('border-secondary');
     expect(cell.className).toContain('[overflow-wrap:anywhere]');
+  });
+
+  it('renders a fenced TypeScript block with language label and copy button', () => {
+    render(
+      <MarkdownRenderer
+        content={FENCED_TS_MARKDOWN}
+        codeBlockCopyLabel="Copy code"
+      />,
+    );
+
+    expect(screen.getByText('typescript')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
+  });
+
+  it('renders a fenced block without language: no label text, copy button present', () => {
+    const { container } = render(
+      <MarkdownRenderer
+        content={FENCED_NO_LANG_MARKDOWN}
+        codeBlockCopyLabel="Copy code"
+      />,
+    );
+
+    const labelSpan = container.querySelector('span.opacity-60');
+    expect(labelSpan?.textContent).toBe('');
+    expect(screen.getByRole('button', { name: 'Copy code' })).toBeTruthy();
+  });
+
+  it('renders inline `code` as a <code> element without a header', () => {
+    render(<MarkdownRenderer content="Use `const` here." />);
+
+    const codeEl = screen.getByText('const');
+    expect(codeEl.tagName).toBe('CODE');
+    expect(codeEl.closest('[class*="sticky"]')).toBeNull();
+  });
+
+  it('hides the copy button when isStreaming is true', () => {
+    render(
+      <MarkdownRenderer
+        content={FENCED_TS_MARKDOWN}
+        isStreaming={true}
+        codeBlockCopyLabel="Copy code"
+      />,
+    );
+
+    expect(screen.queryByRole('button', { name: 'Copy code' })).toBeNull();
+  });
+
+  it('passes codeBlockCopyLabel to the copy button accessible label', () => {
+    render(
+      <MarkdownRenderer
+        content={FENCED_TS_MARKDOWN}
+        codeBlockCopyLabel="Custom copy label"
+      />,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Custom copy label' }),
+    ).toBeTruthy();
+  });
+
+  it('applies classNames.codeBlockContainer to the block container', () => {
+    const { container } = render(
+      <MarkdownRenderer
+        content={FENCED_TS_MARKDOWN}
+        classNames={{ codeBlockContainer: 'custom-container' }}
+      />,
+    );
+
+    expect(container.querySelector('.custom-container')).toBeTruthy();
   });
 });

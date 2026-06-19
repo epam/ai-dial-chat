@@ -1,8 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { type FC, memo } from 'react';
+import { type FC, memo, useMemo } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent';
+import { MarkdownCodeBlock, type CodeBlockTheme } from './MarkdownCodeBlock';
 import styles from './MarkdownRenderer.module.scss';
 import { MarkdownTable, type MarkdownTableClassNames } from './MarkdownTable';
 
@@ -24,10 +25,20 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   strong?: string;
   /** Typography class for `<em>`. Defaults to `'italic'`. */
   em?: string;
-  /** Extra classes on `<pre>` block code (base: `overflow-x-auto rounded p-3`). */
+  /**
+   * @deprecated The `<pre>` wrapper is now a fragment passthrough; this class no longer applies
+   * to fenced code blocks. Migrate to `codeBlockContainer` for the block container.
+   */
   codeBlock?: string;
-  /** Typography class for the `<pre>` block (size). Defaults to `'text-sm'`. */
+  /**
+   * @deprecated Was the font-size class on the `<pre>` wrapper; has no effect on fenced blocks
+   * now that `<pre>` is a passthrough.
+   */
   codeBlockFont?: string;
+  /** Extra classes on the {@link MarkdownCodeBlock} outer container. */
+  codeBlockContainer?: string;
+  /** Extra classes on the {@link MarkdownCodeBlock} header bar. */
+  codeBlockHeader?: string;
   /** Typography class for the `<code>` element inside a code block. Defaults to `'font-mono'`. */
   codeFont?: string;
   /** Extra classes on inline `<code>` (base: `rounded px-1 py-0.5`). */
@@ -66,10 +77,19 @@ export interface MarkdownRendererProps {
    * Defaults to `'Thinking'`. Pass a translated string from the consuming app.
    */
   thinkingLabel?: string;
+  /** Accessible label for the copy button in code blocks. Defaults to `'Copy code'`. */
+  codeBlockCopyLabel?: string;
+  /** Accessible label for the copy button after copying. Defaults to `'Copied!'`. */
+  codeBlockCopiedLabel?: string;
+  /** Syntax highlight color theme for code blocks. Defaults to `'dark'`. */
+  codeBlockTheme?: CodeBlockTheme;
 }
 
 /** GFM remark plugins list, shared across all markdown instances. */
 export const remarkPlugins = [remarkGfm];
+
+/** Stable empty classNames object used as the default when no `classNames` prop is passed. */
+const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
 
 /**
  * Shared component definitions for elements whose rendering is identical across
@@ -82,6 +102,10 @@ export const defaultMarkdownComponents: Components = {
 
 const buildMarkdownComponents = (
   cn: MarkdownRendererClassNames,
+  isStreaming?: boolean,
+  codeBlockCopyLabel?: string,
+  codeBlockCopiedLabel?: string,
+  codeBlockTheme?: CodeBlockTheme,
 ): Components => ({
   h1: ({ children }) => <h1 className={cn.h1}>{children}</h1>,
   h2: ({ children }) => <h2 className={cn.h2}>{children}</h2>,
@@ -97,25 +121,29 @@ const buildMarkdownComponents = (
     <strong className={cn.strong ?? 'font-semibold'}>{children}</strong>
   ),
   em: ({ children }) => <em className={cn.em ?? 'italic'}>{children}</em>,
-  pre: ({ children }) => (
-    <pre
-      className={mergeClasses(
-        'overflow-x-auto rounded p-3',
-        cn.codeBlockFont ?? 'text-sm',
-        cn.codeBlock,
-      )}
-    >
-      {children}
-    </pre>
-  ),
+  pre: ({ children }) => <>{children}</>,
   code: ({ children, className }) => {
-    const isBlock =
-      className?.includes('language-') || String(children).includes('\n');
-    return isBlock ? (
-      <code className={mergeClasses(cn.codeFont ?? 'font-mono', className)}>
-        {children}
-      </code>
-    ) : (
+    const language = /language-(\w+)/.exec(className ?? '')?.[1] ?? '';
+    const raw = String(children);
+    const isBlock = !!language || raw.includes('\n');
+
+    if (isBlock) {
+      return (
+        <MarkdownCodeBlock
+          language={language}
+          value={raw.replace(/\n$/, '')}
+          isStreaming={isStreaming}
+          theme={codeBlockTheme}
+          copyLabel={codeBlockCopyLabel}
+          copiedLabel={codeBlockCopiedLabel}
+          containerClassName={cn.codeBlockContainer}
+          headerClassName={cn.codeBlockHeader}
+          codeClassName={cn.codeFont}
+        />
+      );
+    }
+
+    return (
       <code
         className={mergeClasses(
           'rounded px-1 py-0.5',
@@ -180,14 +208,39 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     content,
     isStreaming,
     streamCharactersPerSecond,
-    classNames = {},
+    classNames = EMPTY_CLASS_NAMES,
     components,
     thinkingLabel = 'Thinking',
+    codeBlockCopyLabel,
+    codeBlockCopiedLabel,
+    codeBlockTheme,
   }) => {
     const displayedContent = useStreamedMarkdownContent(
       content,
       isStreaming,
       streamCharactersPerSecond,
+    );
+
+    const mergedComponents = useMemo(
+      () => ({
+        ...buildMarkdownComponents(
+          classNames,
+          isStreaming,
+          codeBlockCopyLabel,
+          codeBlockCopiedLabel,
+          codeBlockTheme,
+        ),
+        ...defaultMarkdownComponents,
+        ...components,
+      }),
+      [
+        classNames,
+        isStreaming,
+        codeBlockCopyLabel,
+        codeBlockCopiedLabel,
+        codeBlockTheme,
+        components,
+      ],
     );
 
     if (isStreaming && !displayedContent) {
@@ -197,11 +250,7 @@ export const MarkdownRenderer: FC<MarkdownRendererProps> = memo(
     return (
       <ReactMarkdown
         remarkPlugins={remarkPlugins}
-        components={{
-          ...buildMarkdownComponents(classNames),
-          ...defaultMarkdownComponents,
-          ...components,
-        }}
+        components={mergedComponents}
       >
         {displayedContent}
       </ReactMarkdown>
