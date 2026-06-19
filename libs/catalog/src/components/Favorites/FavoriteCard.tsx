@@ -1,5 +1,6 @@
-import { DeploymentIcon } from '@epam/ai-dial-chat-shared';
+import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  DIAL_ICON_SIZE,
   DialGhostIconButton,
   DialIcon,
   ElementSize,
@@ -8,6 +9,8 @@ import { IconHistory, IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type { FavoriteItem } from '../../models/catalog-item';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
+import { ItemHeader } from '../ItemHeader/ItemHeader';
+import styles from './Favorites.module.scss';
 
 /** Props for FavoriteCard. */
 export interface FavoriteCardProps {
@@ -35,7 +38,6 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   lastUsedClassName = 'dial-caption-text text-secondary',
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
-  const [isHovered, setIsHovered] = useState(false);
 
   const handleToggle = () => {
     const next = !isStarred;
@@ -45,61 +47,27 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
 
   return (
     <div
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        borderRadius: 6,
-        border: '1px solid var(--stroke-secondary, #242C42)',
-        padding: '13px 13px 9px',
-        boxSizing: 'border-box',
-        minWidth: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 4,
-        background: isHovered
-          ? 'var(--controls-bg-accent-tertiary-alpha-active, #A972FF5C)'
-          : 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
-        transform: isHovered ? 'translateY(-3px)' : 'translateY(0)',
-        transition: 'transform 150ms ease-out, background 150ms ease-out',
-        cursor: 'pointer',
-      }}
+      className={mergeClasses(
+        'box-border flex min-w-0 cursor-pointer flex-col gap-1 rounded-[6px] p-[13px] pb-[9px]',
+        styles.card,
+      )}
     >
-      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start' }}>
+      <div className="flex items-start gap-2">
         <DeploymentIcon src={item.iconUrl} size={48} />
-        <div
-          style={{
-            flex: 1,
-            minWidth: 0,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 4,
-          }}
-        >
+
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
           <EntityBadge type={item.type} />
-          <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
-            <span
-              className={nameClassName}
-              style={{
-                whiteSpace: 'nowrap',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-              }}
-            >
-              {item.name}
-            </span>
-            <span className={versionClassName}>{item.version}</span>
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: -3,
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <ItemHeader
+            title={item.name}
+            count={item.version}
+            countClassName={versionClassName}
+            titleClassName={nameClassName}
+          />
+
+          <div className="-mt-[3px] flex items-center justify-between">
+            <div className="flex items-center gap-1">
               <DialIcon
-                icon={<IconHistory size={16} />}
+                icon={<IconHistory size={DIAL_ICON_SIZE.SM} />}
                 className="text-secondary"
               />
               <span className={lastUsedClassName}>{item.lastUsed}</span>
@@ -109,11 +77,11 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
               icon={
                 isStarred ? (
                   <IconStarFilled
-                    size={16}
-                    style={{ color: 'var(--text-warning-icon, #EEC840)' }}
+                    size={DIAL_ICON_SIZE.SM}
+                    className={styles.starFilledIcon}
                   />
                 ) : (
-                  <IconStar size={16} />
+                  <IconStar size={DIAL_ICON_SIZE.SM} />
                 )
               }
               onClick={handleToggle}
