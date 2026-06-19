@@ -157,8 +157,7 @@ const ReviewQuickApp2SectionView = ({
       })),
     [config.skills],
   );
-  console.log('toolsets:', toolsets);
-  console.log('unknownToolsets:', unknownToolsets);
+
   return (
     <>
       {isCodeInterpreterEnabled && isCodeInterpreter && (
