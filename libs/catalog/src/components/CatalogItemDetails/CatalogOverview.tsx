@@ -2,7 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconCircleCheckFilled } from '@tabler/icons-react';
 import { FC } from 'react';
-import type { OverviewSection } from '../../models/CatalogItemOverview';
+import type { OverviewSection } from '../../models/item-overview';
 import styles from './CatalogOverview.module.scss';
 
 interface SpecValueProps {

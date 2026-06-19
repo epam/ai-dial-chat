@@ -1,20 +1,17 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialSearch, DialTabs } from '@epam/ai-dial-ui-kit';
+import { DialSearch } from '@epam/ai-dial-ui-kit';
 import { type CSSProperties, FC } from 'react';
 import { ToolbarProps } from '../../models/toolbar-props';
 import { FilterRow } from './Rows/FilterRow';
 import { TitleRow } from './Rows/TitleRow';
 import styles from './Toolbar.module.scss';
 
-/** Browse section header: title, view/sort controls, search bar, filter row, and tabs. */
+/** Browse section header: title, view/sort controls, search bar, filter row. */
 export const Toolbar: FC<ToolbarProps> = ({
   query,
   onQueryChange,
   isAnyFilterActive,
   onClearFilters,
-  tabs,
-  activeTab,
-  onTabChange,
   searchPlaceholder = 'Search models, tools, agents…',
   styles: browseStyles,
   clearAllLabel = 'Clear all',
@@ -27,7 +24,6 @@ export const Toolbar: FC<ToolbarProps> = ({
     '--cat-browse-icon': browseStyles?.colors?.icon,
     '--cat-browse-divider': browseStyles?.colors?.divider,
     '--cat-browse-clear-all': browseStyles?.colors?.clearAll,
-    '--cat-browse-tabs-border': browseStyles?.colors?.tabsBorder,
   } as CSSProperties;
 
   return (
@@ -53,18 +49,6 @@ export const Toolbar: FC<ToolbarProps> = ({
         onClearFilters={onClearFilters}
         clearAllLabel={clearAllLabel}
       />
-
-      {/* Tab bar — [&>div]:justify-center targets DialTabs' inner flex container */}
-      {activeTab && (
-        <div
-          className={mergeClasses(
-            'border-b [&>div]:justify-center',
-            styles.tabs,
-          )}
-        >
-          <DialTabs tabs={tabs} activeTab={activeTab} onClick={onTabChange} />
-        </div>
-      )}
     </section>
   );
 };

@@ -1,7 +1,7 @@
-import type { CatalogItem } from './CatalogItem';
+import type { CatalogItem } from './catalog-item';
 
 /** Text overrides for all user-visible strings in `CatalogItemDetails`. */
-export interface CatalogItemDetailsTexts {
+export interface ItemDetailsTexts {
   /** "Use in chat" action button label. Default: `'Use in chat'`. */
   useInChatLabel?: string;
   /** "Share" action button label. Default: `'Share'`. */
@@ -31,7 +31,7 @@ export interface CatalogItemDetailsTexts {
 }
 
 /** Typography class overrides for `CatalogItemDetails` text elements. */
-export interface CatalogItemDetailsTypography {
+export interface ItemDetailsTypography {
   /** Typography class for the entity name. Default: `'dial-display-2-text'`. */
   nameClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
@@ -55,13 +55,13 @@ export interface CatalogItemDetailsTypography {
 }
 
 /** Grouped style overrides for `CatalogItemDetails`. */
-export interface CatalogItemDetailsStyles {
+export interface ItemDetailsStyles {
   /** Typography class overrides for text elements. */
-  typography?: CatalogItemDetailsTypography;
+  typography?: ItemDetailsTypography;
 }
 
 /** Props for `CatalogItemDetails`. */
-export interface CatalogItemDetailsProps {
+export interface ItemDetailsProps {
   /** The catalog item to display in the panel. */
   item: CatalogItem;
   /** Controls whether the panel is visible. */
@@ -84,7 +84,7 @@ export interface CatalogItemDetailsProps {
   /** Called when the "Share" button is clicked. */
   onShare?: (item: CatalogItem) => void;
   /** Text overrides for all user-visible strings. */
-  texts?: CatalogItemDetailsTexts;
+  texts?: ItemDetailsTexts;
   /** Grouped style overrides. */
-  styles?: CatalogItemDetailsStyles;
+  styles?: ItemDetailsStyles;
 }

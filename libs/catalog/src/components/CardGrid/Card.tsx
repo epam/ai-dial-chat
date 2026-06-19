@@ -1,4 +1,3 @@
-<<<<<<< HEAD:libs/catalog/src/components/CardGrid/Card.tsx
 import {
   buildCssVars,
   DeploymentIcon,
@@ -11,18 +10,9 @@ import {
   DialTag,
 } from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
-import { FC, useState } from 'react';
+import { FC, KeyboardEvent, MouseEvent, useState } from 'react';
 import type { CardProps } from '../../models/card-props';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
-=======
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconStar, IconStarFilled } from '@tabler/icons-react';
-import { FC, useState, type KeyboardEvent, type MouseEvent } from 'react';
-import type { CatalogCardProps } from '../../models/CatalogCardProps';
-import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
-import { FeaturedTag } from '../FeaturedTag/FeaturedTag';
->>>>>>> b4b22eef2c3e54e0f61784c59613d383bcdd3a5e:libs/catalog/src/components/CatalogCardGrid/CatalogCard.tsx
 import { FolderPath } from '../FolderPath/FolderPath';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { PricingTag } from '../PricingTag/PricingTag';
@@ -57,7 +47,7 @@ export const Card: FC<CardProps> = ({
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
 
-  const handleToggle = (e: MouseEvent) => {
+  const handleToggle = (e: MouseEvent<HTMLElement>) => {
     e.stopPropagation();
     const next = !isStarred;
     setIsStarred(next);
@@ -67,7 +57,7 @@ export const Card: FC<CardProps> = ({
   const handleClick = onClick ? () => onClick(item) : undefined;
 
   const handleKeyDown = onClick
-    ? (e: KeyboardEvent) => {
+    ? (e: KeyboardEvent<HTMLDivElement>) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           onClick(item);
@@ -76,18 +66,21 @@ export const Card: FC<CardProps> = ({
     : undefined;
 
   return (
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
+      {...(onClick
+        ? {
+            role: 'button' as const,
+            tabIndex: 0,
+            onClick: handleClick,
+            onKeyDown: handleKeyDown,
+          }
+        : {})}
       className={mergeClasses(
         'relative box-border flex cursor-pointer flex-col gap-2.5 rounded-[6px] border p-[17px] transition-transform duration-150 ease-out hover:-translate-y-[3px]',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
       )}
       style={cssVars}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
     >
       {item.isFeatured && (
         <>
@@ -138,28 +131,6 @@ export const Card: FC<CardProps> = ({
           ))}
         </div>
 
-<<<<<<< HEAD:libs/catalog/src/components/CardGrid/Card.tsx
-      <div
-        className={mergeClasses(
-          'mt-auto flex items-center justify-between border-t pt-4',
-          styles.cardFooter,
-        )}
-      >
-        <FolderPath segments={item.folder} />
-        <DialGhostIconButton
-          icon={
-            isStarred ? (
-              <IconStarFilled
-                size={DIAL_ICON_SIZE.SM}
-                className={styles.starFilledIcon}
-              />
-            ) : (
-              <IconStar size={DIAL_ICON_SIZE.SM} />
-            )
-          }
-          onClick={handleToggle}
-        />
-=======
         <div className="mt-4 flex items-center justify-between border-t border-secondary pt-2">
           <FolderPath segments={item.folder} />
           <DialGhostIconButton
@@ -176,7 +147,6 @@ export const Card: FC<CardProps> = ({
             onClick={handleToggle}
           />
         </div>
->>>>>>> b4b22eef2c3e54e0f61784c59613d383bcdd3a5e:libs/catalog/src/components/CatalogCardGrid/CatalogCard.tsx
       </div>
     </div>
   );

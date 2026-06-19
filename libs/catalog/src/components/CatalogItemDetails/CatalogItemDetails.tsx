@@ -15,8 +15,8 @@ import {
   IconStarFilled,
 } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
-import type { CatalogItemDetailsProps } from '../../models/CatalogItemDetailsProps';
-import { CatalogDetailsTab } from '../../types/CatalogDetailsTab';
+import type { ItemDetailsProps } from '../../models/item-details-props';
+import { CatalogDetailsTab } from '../../types/detail-tab';
 import type { AboutRun } from '../../utils/parse-about-content';
 import { parseAboutContent } from '../../utils/parse-about-content';
 import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
@@ -49,7 +49,7 @@ const AboutRunView: FC<AboutRunViewProps> = ({ run, contentClassName }) => {
 };
 
 /** Right-side slide-in panel displaying full details for a catalog item. */
-export const CatalogItemDetails: FC<CatalogItemDetailsProps> = ({
+export const CatalogItemDetails: FC<ItemDetailsProps> = ({
   item,
   isOpen,
   isStarred: initialIsStarred = false,

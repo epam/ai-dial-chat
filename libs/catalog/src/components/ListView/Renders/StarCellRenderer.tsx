@@ -2,9 +2,9 @@ import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { FC, useState } from 'react';
-import type { CatalogItem } from '../../../models/catalog';
-import { GridContext } from '../../../models/GridContext';
-import styles from '../CatalogListView.module.scss';
+import { CatalogItem } from '../../../models/catalog-item';
+import { GridContext } from '../../../models/grid-context';
+import styles from '../ListView.module.scss';
 
 export const StarCellRenderer: FC<
   ICellRendererParams<CatalogItem, unknown, GridContext>
