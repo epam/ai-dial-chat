@@ -1,4 +1,3 @@
-import type { FavoriteItem } from '@epam/ai-dial-catalog';
 import { Catalog } from '@epam/ai-dial-catalog';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
