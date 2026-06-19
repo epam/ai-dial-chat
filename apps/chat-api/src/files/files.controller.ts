@@ -25,6 +25,8 @@ import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { DownloadFileDto } from './dto/download-file.dto';
+import { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
+import { GetFileMetadataQueryDto } from './dto/get-file-metadata.dto';
 import { ListFilesQueryDto, ListFilesResponseDto } from './dto/list-files.dto';
 import { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
@@ -115,6 +117,39 @@ export class FilesController {
       },
       at,
     );
+  }
+
+  @Get('metadata')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'Get file metadata',
+    description:
+      'Returns metadata for a single named file from DIAL Core. Path must not end with /.',
+  })
+  @ApiResponse({
+    status: 200,
+    type: FileMetadataResponseDto,
+    description: 'File metadata',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid bucket or path' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden — user lacks READ permission on the file',
+  })
+  @ApiResponse({ status: 404, description: 'File not found' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async getFileMetadata(
+    @Query() query: GetFileMetadataQueryDto,
+    @Req() req: Request,
+  ): Promise<FileMetadataResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.getFileMetadata(query.bucket, query.path, at);
   }
 
   @Get('download')
