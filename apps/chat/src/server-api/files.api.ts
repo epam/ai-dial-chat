@@ -1,4 +1,5 @@
 import type {
+  FileMetadataResponseDto,
   FileUploadResponseDto,
   ListFilesResponseDto,
 } from '@epam/chat-api-client';
@@ -19,6 +20,11 @@ export const uploadFile = (
   file: File,
 ): Promise<FileUploadResponseDto> =>
   filesApi.uploadFile({ bucket, path, file });
+
+export const getFileMetadata = (params: {
+  bucket: string;
+  path: string;
+}): Promise<FileMetadataResponseDto> => filesApi.getFileMetadata(params);
 
 // downloadFileRaw() is used instead of downloadFile() because the generator
 // emits `Blob | void` for application/octet-stream responses, which loses stream

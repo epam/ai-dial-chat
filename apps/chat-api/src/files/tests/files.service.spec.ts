@@ -244,6 +244,113 @@ describe('FilesService', () => {
     });
   });
 
+  describe('getFileMetadata', () => {
+    const okMeta = (fields: object = {}) => ({
+      error: undefined,
+      response: { status: 200 },
+      data: {
+        name: 'file.pdf',
+        nodeType: 'item',
+        bucket: 'my-bucket',
+        parentPath: 'reports/',
+        url: 'files/my-bucket/reports/file.pdf',
+        resourceType: 'file',
+        etag: '"abc123"',
+        contentLength: 204800,
+        contentType: 'application/pdf',
+        createdAt: 1710000000000,
+        updatedAt: 1712345678000,
+        permissions: ['READ', 'WRITE'],
+        author: 'user@example.com',
+        ...fields,
+      },
+    });
+
+    it('returns FileMetadataResponseDto on success', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(okMeta());
+
+      const result = await service.getFileMetadata(
+        'my-bucket',
+        'reports/file.pdf',
+        'token',
+      );
+
+      expect(result.name).toBe('file.pdf');
+      expect(result.nodeType).toBe('item');
+      expect(result.etag).toBe('"abc123"');
+      expect(result.contentLength).toBe(204800);
+    });
+
+    it('passes path to SDK without appending trailing slash', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(okMeta());
+
+      await service.getFileMetadata('my-bucket', 'reports/file.pdf', 'token');
+
+      expect(sdkClient.getFileMetadata).toHaveBeenCalledWith(
+        'my-bucket',
+        'reports/file.pdf',
+        expect.anything(),
+      );
+      const calledPath = sdkClient.getFileMetadata.mock.calls[0][1] as string;
+      expect(calledPath.endsWith('/')).toBe(false);
+    });
+
+    it('throws NotFoundException when SDK returns 404', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(errResponse(404));
+      await expect(
+        service.getFileMetadata('b', 'file.pdf', 't'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ForbiddenException when SDK returns 403', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(errResponse(403));
+      await expect(
+        service.getFileMetadata('b', 'file.pdf', 't'),
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('throws HttpException(429) when SDK returns 429', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(errResponse(429));
+      await expect(
+        service.getFileMetadata('b', 'file.pdf', 't'),
+      ).rejects.toThrow(HttpException);
+    });
+
+    it('throws BadGatewayException when SDK returns 5xx', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue(errResponse(500));
+      await expect(
+        service.getFileMetadata('b', 'file.pdf', 't'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+
+    it('throws ServiceUnavailableException on network failure', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+      await expect(
+        service.getFileMetadata('b', 'file.pdf', 't'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('throws ServiceUnavailableException on timeout', async () => {
+      const { service, sdkClient } = makeService();
+      const timeoutErr = Object.assign(new Error('The operation was aborted'), {
+        name: 'TimeoutError',
+      });
+      sdkClient.getFileMetadata.mockRejectedValue(timeoutErr);
+      await expect(
+        service.getFileMetadata('b', 'file.pdf', 't'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+  });
+
   describe('listFiles', () => {
     const okList = (items: object[], nextToken?: string) => ({
       error: undefined,

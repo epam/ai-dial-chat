@@ -288,7 +288,7 @@
             }
           },
           "401": {
-            "description": "Not authenticated — valid session cookie required"
+            "description": "Not authenticated \u2014 valid session cookie required"
           },
           "403": {
             "description": "Caller lacks permission to list application schemas"
@@ -339,7 +339,7 @@
             "description": "Invalid or empty id"
           },
           "401": {
-            "description": "Not authenticated — valid session cookie required"
+            "description": "Not authenticated \u2014 valid session cookie required"
           },
           "403": {
             "description": "Caller lacks permission to access this schema"
@@ -378,7 +378,7 @@
             }
           },
           "401": {
-            "description": "Not authenticated — valid session cookie required"
+            "description": "Not authenticated \u2014 valid session cookie required"
           },
           "403": {
             "description": "Caller lacks permission to list applications"
@@ -430,7 +430,7 @@
             "description": "Invalid query parameter"
           },
           "401": {
-            "description": "Not authenticated — valid session cookie required"
+            "description": "Not authenticated \u2014 valid session cookie required"
           },
           "403": {
             "description": "Caller lacks permission"
@@ -508,7 +508,7 @@
             }
           },
           "401": {
-            "description": "Not authenticated — valid session cookie required"
+            "description": "Not authenticated \u2014 valid session cookie required"
           },
           "403": {
             "description": "Caller lacks permission to list models"
@@ -558,10 +558,10 @@
             }
           },
           "400": {
-            "description": "Invalid model name — disallowed characters"
+            "description": "Invalid model name \u2014 disallowed characters"
           },
           "401": {
-            "description": "Not authenticated — valid session cookie required"
+            "description": "Not authenticated \u2014 valid session cookie required"
           },
           "403": {
             "description": "Caller lacks permission to access this model"
@@ -655,7 +655,7 @@
             }
           },
           "400": {
-            "description": "Invalid request body — firstMessage or deploymentId missing or out of range"
+            "description": "Invalid request body \u2014 firstMessage or deploymentId missing or out of range"
           },
           "500": {
             "description": "Internal server error"
@@ -788,7 +788,7 @@
         },
         "responses": {
           "200": {
-            "description": "Conversation renamed — new path returned",
+            "description": "Conversation renamed \u2014 new path returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -1042,7 +1042,7 @@
         ],
         "responses": {
           "201": {
-            "description": "Conversation duplicated — new path returned",
+            "description": "Conversation duplicated \u2014 new path returned",
             "content": {
               "application/json": {
                 "schema": {
@@ -1361,7 +1361,7 @@
             "description": "Not authenticated"
           },
           "403": {
-            "description": "Forbidden — user does not own the bucket"
+            "description": "Forbidden \u2014 user does not own the bucket"
           },
           "404": {
             "description": "Bucket or path not found"
@@ -1459,13 +1459,13 @@
         },
         "responses": {
           "204": {
-            "description": "Rating accepted — no content returned"
+            "description": "Rating accepted \u2014 no content returned"
           },
           "400": {
-            "description": "Invalid request body — missing or invalid fields"
+            "description": "Invalid request body \u2014 missing or invalid fields"
           },
           "401": {
-            "description": "Not authenticated — valid session cookie required"
+            "description": "Not authenticated \u2014 valid session cookie required"
           },
           "429": {
             "description": "Rate limit exceeded"
@@ -1525,6 +1525,69 @@
         },
         "summary": "Transcribe audio using the configured ASR model",
         "tags": ["transcription"]
+      }
+    },
+    "/api/v1/files/metadata": {
+      "get": {
+        "description": "Returns metadata for a single named file from DIAL Core. Path must not end with /.",
+        "operationId": "getFileMetadata",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "File path within the bucket (no leading slash, no .., no trailing /)",
+            "schema": {
+              "example": "reports/q1-2024.pdf",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileMetadataResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket or path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden \u2014 user lacks READ permission on the file"
+          },
+          "404": {
+            "description": "File not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Get file metadata",
+        "tags": ["files"]
       }
     }
   },
@@ -2592,7 +2655,7 @@
         "type": "object",
         "properties": {
           "ids": {
-            "description": "Stable DIAL Core conversation IDs to delete. 1–100 IDs. Duplicates are silently deduplicated.",
+            "description": "Stable DIAL Core conversation IDs to delete. 1\u2013100 IDs. Duplicates are silently deduplicated.",
             "minItems": 1,
             "maxItems": 100,
             "type": "array",
@@ -2791,7 +2854,7 @@
           },
           "rate": {
             "type": "number",
-            "description": "Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.",
+            "description": "Rating value \u2014 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.",
             "enum": [1, -1]
           },
           "comment": {
@@ -2815,6 +2878,61 @@
           }
         },
         "required": ["audioUrl", "mimeType"]
+      },
+      "FileMetadataResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "File name without path"
+          },
+          "nodeType": {
+            "type": "string",
+            "description": "Node type, expected \"item\" for files"
+          },
+          "bucket": {
+            "type": "string"
+          },
+          "parentPath": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "description": "DIAL Core resource URL"
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "etag": {
+            "type": "string",
+            "description": "ETag; not available for folders"
+          },
+          "contentLength": {
+            "type": "number"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Creation time in Unix milliseconds; not supported by all storage providers"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Last-modified time in Unix milliseconds"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "READ | WRITE | SHARE"
+          },
+          "author": {
+            "type": "string",
+            "description": "Author; not available for folders"
+          }
+        }
       }
     }
   }

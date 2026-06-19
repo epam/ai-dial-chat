@@ -469,3 +469,150 @@ describe('FilesController — listFiles', () => {
       .expect(401);
   });
 });
+
+describe('FilesController — getFileMetadata', () => {
+  const MOCK_METADATA = {
+    name: 'file.pdf',
+    nodeType: 'item',
+    bucket: 'my-bucket',
+    parentPath: 'folder/',
+    url: 'files/my-bucket/folder/file.pdf',
+    resourceType: 'file',
+    etag: '"abc123"',
+    contentLength: 204800,
+    contentType: 'application/pdf',
+    updatedAt: 1712345678000,
+    permissions: ['READ'],
+  };
+
+  let app: INestApplication;
+  let service: {
+    uploadFile: ReturnType<typeof vi.fn>;
+    downloadFile: ReturnType<typeof vi.fn>;
+    listFiles: ReturnType<typeof vi.fn>;
+    getFileMetadata: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    service = {
+      uploadFile: vi.fn(),
+      downloadFile: vi.fn(),
+      listFiles: vi.fn(),
+      getFileMetadata: vi.fn().mockResolvedValue(MOCK_METADATA),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with FileMetadataResponseDto shape for a valid request', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'my-bucket', path: 'folder/file.pdf' })
+      .expect(200);
+
+    expect(res.body).toMatchObject({
+      name: 'file.pdf',
+      nodeType: 'item',
+      etag: '"abc123"',
+    });
+    expect(service.getFileMetadata).toHaveBeenCalledWith(
+      'my-bucket',
+      'folder/file.pdf',
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when bucket is missing', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ path: 'folder/file.pdf' })
+      .expect(400);
+    expect(service.getFileMetadata).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when bucket contains invalid characters', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'bad/bucket', path: 'file.pdf' })
+      .expect(400);
+    expect(service.getFileMetadata).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when path is empty', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'my-bucket', path: '' })
+      .expect(400);
+    expect(service.getFileMetadata).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when path is absent', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'my-bucket' })
+      .expect(400);
+    expect(service.getFileMetadata).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when path ends with /', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'my-bucket', path: 'folder/' })
+      .expect(400);
+    expect(service.getFileMetadata).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when path contains ..', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'my-bucket', path: '../../etc/passwd' })
+      .expect(400);
+    expect(service.getFileMetadata).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.getFileMetadata.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'my-bucket', path: 'file.pdf' })
+      .expect(401);
+  });
+
+  it('returns 403 when service throws ForbiddenException', async () => {
+    service.getFileMetadata.mockRejectedValue(new ForbiddenException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'my-bucket', path: 'file.pdf' })
+      .expect(403);
+  });
+
+  it('returns 404 when service throws NotFoundException', async () => {
+    service.getFileMetadata.mockRejectedValue(new NotFoundException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'my-bucket', path: 'file.pdf' })
+      .expect(404);
+  });
+
+  it('returns 502 when service throws BadGatewayException', async () => {
+    service.getFileMetadata.mockRejectedValue(new BadGatewayException());
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'my-bucket', path: 'file.pdf' })
+      .expect(502);
+  });
+
+  it('returns 503 when service throws ServiceUnavailableException', async () => {
+    service.getFileMetadata.mockRejectedValue(
+      new ServiceUnavailableException(),
+    );
+    await request(app.getHttpServer())
+      .get('/api/v1/files/metadata')
+      .query({ bucket: 'my-bucket', path: 'file.pdf' })
+      .expect(503);
+  });
+});

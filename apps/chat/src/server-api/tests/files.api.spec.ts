@@ -1,7 +1,10 @@
-import type { ListFilesResponseDto } from '@epam/chat-api-client';
+import type {
+  FileMetadataResponseDto,
+  ListFilesResponseDto,
+} from '@epam/chat-api-client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { filesApi } from '../api-client';
-import { listFiles } from '../files.api';
+import { getFileMetadata, listFiles } from '../files.api';
 
 const MOCK_RESPONSE: ListFilesResponseDto = {
   bucket: 'my-bucket',
@@ -52,5 +55,58 @@ describe('listFiles', () => {
     vi.spyOn(filesApi, 'listFiles').mockRejectedValue(error);
 
     await expect(listFiles({ bucket: 'my-bucket' })).rejects.toBe(error);
+  });
+});
+
+const MOCK_METADATA: FileMetadataResponseDto = {
+  name: 'file.pdf',
+  nodeType: 'item',
+  bucket: 'my-bucket',
+  etag: '"abc123"',
+  contentLength: 204800,
+  contentType: 'application/pdf',
+};
+
+describe('getFileMetadata', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('delegates to the generated FilesApi with correct params', async () => {
+    const spy = vi
+      .spyOn(filesApi, 'getFileMetadata')
+      .mockResolvedValue(MOCK_METADATA);
+
+    const result = await getFileMetadata({
+      bucket: 'my-bucket',
+      path: 'reports/file.pdf',
+    });
+
+    expect(spy).toHaveBeenCalledWith({
+      bucket: 'my-bucket',
+      path: 'reports/file.pdf',
+    });
+    expect(result).toEqual(MOCK_METADATA);
+  });
+
+  it('returns the resolved FileMetadataResponseDto', async () => {
+    vi.spyOn(filesApi, 'getFileMetadata').mockResolvedValue(MOCK_METADATA);
+
+    const result = await getFileMetadata({
+      bucket: 'my-bucket',
+      path: 'folder/file.txt',
+    });
+
+    expect(result.name).toBe('file.pdf');
+    expect(result.etag).toBe('"abc123"');
+  });
+
+  it('propagates rejection from the generated client', async () => {
+    const error = new Response(null, { status: 404 });
+    vi.spyOn(filesApi, 'getFileMetadata').mockRejectedValue(error);
+
+    await expect(
+      getFileMetadata({ bucket: 'my-bucket', path: 'missing.pdf' }),
+    ).rejects.toBe(error);
   });
 });
