@@ -31,10 +31,7 @@ import {
   isApplicationType,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
-import {
-  cleanSchemaId,
-  doesSchemaContainMcpEndpoint,
-} from '@/src/utils/app/application-type-schema';
+import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
@@ -141,13 +138,14 @@ const createApplicationEpic: AppEpic = (action$) =>
         schema,
       ).pipe(
         switchMap((application) =>
-          ApplicationService.get(application.id).pipe(
-            switchMap((retrievedApplication) => {
+          forkJoin({
+            retrievedApplication: ApplicationService.get(application.id),
+            dialEntity: ApplicationService.getDialEntity(application.id),
+          }).pipe(
+            switchMap(({ retrievedApplication, dialEntity }) => {
               if (retrievedApplication) {
-                const featuresRecord: Record<string, boolean | undefined> = {
-                  ...(retrievedApplication.features || {}),
-                  mcp: schema ? doesSchemaContainMcpEndpoint(schema) : false,
-                };
+                const featuresRecord =
+                  dialEntity?.features ?? retrievedApplication.features ?? {};
 
                 const modelData = {
                   ...retrievedApplication,

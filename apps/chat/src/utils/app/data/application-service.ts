@@ -1,4 +1,7 @@
-import { Observable } from 'rxjs';
+import { Observable, catchError, map, of } from 'rxjs';
+
+import { ApiUtils } from '@/src/utils/server/api';
+import { mapCoreEntityToDialModel } from '@/src/utils/server/map-core-entity';
 
 import { ApiDetailedApplicationTypeSchema } from '@/src/types/application-type-schema';
 import {
@@ -6,7 +9,13 @@ import {
   ApplicationLogsType,
   CustomApplicationModel,
 } from '@/src/types/applications';
-import { AgentUsageStats } from '@/src/types/models';
+import { EntityType } from '@/src/types/common';
+import { HTTPMethod } from '@/src/types/http';
+import {
+  AgentUsageStats,
+  CoreAIEntity,
+  DialAIEntityModel,
+} from '@/src/types/models';
 
 import { DataService } from './data-service';
 
@@ -41,6 +50,22 @@ export class ApplicationService {
     applicationId: string,
   ): Observable<CustomApplicationModel | null> {
     return DataService.getDataStorage().getApplication(applicationId);
+  }
+
+  public static getDialEntity(
+    name: string,
+  ): Observable<DialAIEntityModel | null> {
+    return ApiUtils.request(`/api/models/applications/${name}`, {
+      method: HTTPMethod.GET,
+    }).pipe(
+      map((entity) =>
+        mapCoreEntityToDialModel(
+          entity as CoreAIEntity<EntityType.Application>,
+          false,
+        ),
+      ),
+      catchError(() => of(null)),
+    );
   }
 
   public static getAllByPath(
