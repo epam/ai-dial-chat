@@ -264,7 +264,7 @@ const ReviewQuickApp2SectionView = ({
         }
         valueClassName=""
       />
-      {skills.length && (
+      {!!skills.length && (
         <MarketplaceEntityInfoRow
           label={t(ChatI18nKeys.AgentSkills)}
           value={
