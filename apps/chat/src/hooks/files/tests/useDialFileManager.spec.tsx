@@ -1,5 +1,5 @@
 import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
-import { DialFileNodeType, DialFilePermission } from '@epam/ai-dial-ui-kit';
+import { DialFilePermission } from '@epam/ai-dial-ui-kit';
 import type { ListFilesItemDto } from '@epam/chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -174,6 +174,80 @@ describe('useDialFileManager', () => {
       DialFilePermission.READ,
       DialFilePermission.WRITE,
     ]);
+    expect(result.current.uploadEnabled).toBe(true);
+    expect(result.current.isNewButtonDisabled).toBe(false);
+  });
+
+  it('disables upload and new folder when current folder lacks WRITE permission', async () => {
+    mockListFiles.mockResolvedValue({
+      bucket: BUCKET,
+      path: '',
+      items: [],
+      nextToken: undefined,
+      permissions: ['READ'],
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.uploadEnabled).toBe(false);
+    expect(result.current.isNewButtonDisabled).toBe(true);
+  });
+
+  it('reflects WRITE permission for the browsed subfolder', async () => {
+    const writableFolder: ListFilesItemDto = {
+      name: 'reports',
+      path: 'reports/',
+      folderId: `${BUCKET}:reports/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      bucket: BUCKET,
+      permissions: ['READ', 'WRITE'],
+    };
+    mockListFiles
+      .mockResolvedValueOnce({
+        bucket: BUCKET,
+        path: '',
+        items: [writableFolder],
+        permissions: ['READ', 'WRITE'],
+      })
+      .mockResolvedValueOnce({
+        bucket: BUCKET,
+        path: 'reports/',
+        items: [],
+        permissions: ['READ', 'WRITE'],
+      });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => result.current.onPathChange('/All files/reports/'));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    expect(result.current.uploadEnabled).toBe(true);
+    expect(result.current.isNewButtonDisabled).toBe(false);
+  });
+
+  it('propagates createFolder rejection to the caller (e.g. 409 conflict)', async () => {
+    const mockCreateFolder = vi.mocked(filesApi.createFolder);
+    const conflict = new Error('Conflict');
+    mockCreateFolder.mockRejectedValue(conflict);
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await expect(
+      act(async () => {
+        await result.current.onCreateFolder(
+          {
+            name: HIDDEN_FILE,
+            fileContent: new File([], HIDDEN_FILE),
+          },
+          '/All files/2026',
+          `/All files/2026/${HIDDEN_FILE}`,
+        );
+      }),
+    ).rejects.toThrow('Conflict');
+    expect(result.current.isCreatingFolder).toBe(false);
   });
 
   it('creates a folder using the name from the virtual path, not the marker file', async () => {

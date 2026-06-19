@@ -14,6 +14,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       className,
       gridClassName,
       gridOptions,
+      uploadEnabled,
       toolbarOptions,
       bulkActionsToolbarOptions,
       filesLoading,
@@ -25,11 +26,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       gridOptions?: {
         additionalGridOptions?: { domLayout?: string };
       };
+      uploadEnabled?: boolean;
       toolbarOptions?: {
         showHiddenFilesToggle?: boolean;
         hiddenFilesSwitcherLabel?: string;
         showHiddenFilesLabel?: string;
         hideHiddenFilesLabel?: string;
+        isNewButtonDisabled?: boolean;
+        disabledNewButtonTooltip?: string;
       };
       bulkActionsToolbarOptions?: {
         getSelectionLabel: (count: number) => string;
@@ -45,6 +49,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         data-grid-class={gridClassName}
         data-grid-layout={gridOptions?.additionalGridOptions?.domLayout}
         data-loading={filesLoading}
+        data-upload-enabled={uploadEnabled}
+        data-new-button-disabled={toolbarOptions?.isNewButtonDisabled}
+        data-new-button-tooltip={toolbarOptions?.disabledNewButtonTooltip}
         data-show-hidden-files-toggle={toolbarOptions?.showHiddenFilesToggle}
         data-hidden-files-label={toolbarOptions?.hiddenFilesSwitcherLabel}
         data-show-hidden-files-label={toolbarOptions?.showHiddenFilesLabel}
@@ -119,6 +126,9 @@ const defaultHookResult: UseDialFileManagerResult = {
   isDownloading: false,
   downloadError: null,
   clearDownloadError: vi.fn(),
+  uploadEnabled: true,
+  isNewButtonDisabled: false,
+  disabledNewButtonTooltip: 'No permission',
 };
 
 const defaultProps = {
@@ -290,5 +300,24 @@ describe('DialFileManagerModal', () => {
 
     fireEvent.click(screen.getByRole('alert'));
     expect(clearDownloadError).toHaveBeenCalledOnce();
+  });
+
+  it('disables upload and new folder when the hook reports no WRITE permission', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      uploadEnabled: false,
+      isNewButtonDisabled: true,
+      disabledNewButtonTooltip:
+        "You don't have permission to create items in this folder",
+    });
+
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-upload-enabled')).toBe('false');
+    expect(manager.getAttribute('data-new-button-disabled')).toBe('true');
+    expect(manager.getAttribute('data-new-button-tooltip')).toBe(
+      "You don't have permission to create items in this folder",
+    );
   });
 });

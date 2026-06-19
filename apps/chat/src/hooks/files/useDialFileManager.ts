@@ -96,6 +96,13 @@ export interface UseDialFileManagerResult {
   downloadError: string | null;
   /** Clears `downloadError`. */
   clearDownloadError: () => void;
+
+  /** True when the current folder grants WRITE (upload + new folder). */
+  uploadEnabled: boolean;
+  /** True when Upload/New must be disabled (no WRITE on current folder). */
+  isNewButtonDisabled: boolean;
+  /** Tooltip for disabled New/Upload when `isNewButtonDisabled` is true. */
+  disabledNewButtonTooltip: string;
 }
 
 interface FileUploadValidationResult {
@@ -123,6 +130,28 @@ const mapCorePermissions = (
     );
   return mapped.length > 0 ? mapped : undefined;
 };
+
+const normalizeVirtualPath = (value: string): string => {
+  const trimmed = value.replace(/\/+$/, '');
+  return trimmed || '/';
+};
+
+const findFolderByVirtualPath = (
+  nodes: DialFile[],
+  virtualPath: string,
+): DialFile | undefined => {
+  const target = normalizeVirtualPath(virtualPath);
+  for (const node of nodes) {
+    if (node.nodeType !== DialFileNodeType.FOLDER) continue;
+    if (normalizeVirtualPath(node.path) === target) return node;
+    const nested = findFolderByVirtualPath(node.items ?? [], virtualPath);
+    if (nested) return nested;
+  }
+  return undefined;
+};
+
+const hasDialFileWritePermission = (folder?: DialFile): boolean =>
+  folder?.permissions?.includes(DialFilePermission.WRITE) ?? false;
 
 /**
  * DialFileManager passes the new folder's full virtual path (including the name),
@@ -698,6 +727,18 @@ export const useDialFileManager = ({
 
   const path = folderPath ? `/${rootLabel}/${folderPath}` : `/${rootLabel}`;
 
+  const currentFolder = useMemo((): DialFile | undefined => {
+    const root = items[0];
+    if (!root) return undefined;
+    if (normalizeVirtualPath(path) === normalizeVirtualPath(`/${rootLabel}`)) {
+      return root;
+    }
+    return findFolderByVirtualPath(root.items ?? [], path);
+  }, [items, path, rootLabel]);
+
+  const canWriteCurrentFolder = hasDialFileWritePermission(currentFolder);
+  const disabledNewButtonTooltip = t('dialFileManager.noPermissionToCreate');
+
   return {
     items,
     isLoading,
@@ -717,5 +758,8 @@ export const useDialFileManager = ({
     isDownloading,
     downloadError,
     clearDownloadError,
+    uploadEnabled: canWriteCurrentFolder,
+    isNewButtonDisabled: !canWriteCurrentFolder,
+    disabledNewButtonTooltip,
   };
 };

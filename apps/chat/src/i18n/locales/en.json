@@ -252,7 +252,8 @@
     "folderNameInvalidChars": "Folder name cannot contain / or \\",
     "folderNameHidden": "Folder name cannot start with a dot",
     "folderNameReserved": "This folder name is reserved",
-    "folderNameTooLong": "Folder name is too long"
+    "folderNameTooLong": "Folder name is too long",
+    "noPermissionToCreate": "You don't have permission to create items in this folder"
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."

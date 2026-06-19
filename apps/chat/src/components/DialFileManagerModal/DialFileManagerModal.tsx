@@ -90,6 +90,9 @@ const DialFileManagerModal: FC<Props> = ({
     isDownloading,
     downloadError,
     clearDownloadError,
+    uploadEnabled,
+    isNewButtonDisabled,
+    disabledNewButtonTooltip,
   } = useDialFileManager({ bucket });
 
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
@@ -159,7 +162,8 @@ const DialFileManagerModal: FC<Props> = ({
       hiddenFilesSwitcherLabel: hiddenFilesLabel,
       showHiddenFilesLabel,
       hideHiddenFilesLabel,
-      isNewButtonDisabled: false,
+      isNewButtonDisabled,
+      disabledNewButtonTooltip,
       newActions: {
         uploadFiles: { label: uploadFilesLabel },
         newFolder: { label: newFolderLabel },
@@ -169,6 +173,8 @@ const DialFileManagerModal: FC<Props> = ({
       hiddenFilesLabel,
       showHiddenFilesLabel,
       hideHiddenFilesLabel,
+      isNewButtonDisabled,
+      disabledNewButtonTooltip,
       uploadFilesLabel,
       newFolderLabel,
     ],
@@ -229,7 +235,7 @@ const DialFileManagerModal: FC<Props> = ({
               bulkActionsToolbarOptions={bulkActionsToolbarOptions}
               emptyStateTitle={emptyTitle}
               emptyStateDescription={emptyDescription}
-              uploadEnabled={true}
+              uploadEnabled={uploadEnabled}
               onUploadFiles={onUploadFiles}
               onValidateUpload={onValidateUpload}
               onCreateFolder={onCreateFolder}
