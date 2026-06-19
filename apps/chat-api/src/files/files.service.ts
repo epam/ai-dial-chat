@@ -14,6 +14,8 @@ export const SAFE_DOWNLOAD_HEADERS = [
   'content-length',
 ] as const;
 
+const INSTALLED_DEPLOYMENTS = 'clientdata/installed_deployments.json';
+
 interface UploadedFile {
   buffer: Buffer;
   mimetype: string;
@@ -39,7 +41,7 @@ const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
 
 @Injectable()
 export class FilesService extends AppService {
-  protected readonly logger = new Logger(FilesService.name);
+  protected override readonly logger = new Logger(FilesService.name);
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     super(configService);
@@ -47,6 +49,52 @@ export class FilesService extends AppService {
 
   private getTimeoutMs(): number {
     return this.configService.get<number>('FILE_TRANSFER_TIMEOUT_MS') ?? 30_000;
+  }
+
+  async listInstalledDeployments(
+    bucket: string,
+    at: string,
+  ): Promise<string[]> {
+    try {
+      const { data, error, response } = await this.client.getFileMetadata(
+        bucket,
+        INSTALLED_DEPLOYMENTS,
+        {
+          headers: getBearerAuthHeaders(at),
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        },
+      );
+
+      console.log('listInstalledDeployments', {
+        bucket,
+        at,
+        data,
+        error,
+        response,
+      });
+
+      if (error != null) {
+        this.logger.warn(
+          `Could not read installed deployments list from DIAL Core at ${INSTALLED_DEPLOYMENTS}. Returning empty list. Error: ${error}`,
+        );
+        return [];
+      }
+
+      if (Array.isArray(data)) {
+        return data.filter((id): id is string => typeof id === 'string');
+      } else {
+        this.logger.warn(
+          `Unexpected format for installed deployments list from DIAL Core at ${INSTALLED_DEPLOYMENTS}. Expected an array of strings. Returning empty list.`,
+        );
+        return [];
+      }
+    } catch (err) {
+      this.logger.error(
+        `Failed to fetch installed deployments list from DIAL Core at ${INSTALLED_DEPLOYMENTS}. Returning empty list.`,
+        err,
+      );
+      return [];
+    }
   }
 
   async uploadFile(

@@ -12,6 +12,7 @@ import { FC } from 'react';
 import { DEFAULT_SORT_OPTIONS } from '../../../constants/catalog-defaults';
 import { ToolbarProps } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
+import { ItemHeader } from '../../ItemHeader/ItemHeader';
 import styles from '../Toolbar.module.scss';
 
 interface TitleRowProps {
@@ -45,14 +46,13 @@ export const TitleRow: FC<TitleRowProps> = ({
 
   return (
     <div className="mb-4 flex items-center">
-      <div className="flex flex-1 items-center gap-2">
-        <h3 className={mergeClasses(titleClassName, styles.title)}>{title}</h3>
-        {totalCount != null && (
-          <span className={mergeClasses(countClassName, styles.count)}>
-            {totalCount}
-          </span>
-        )}
-      </div>
+      <ItemHeader
+        title={title}
+        count={totalCount}
+        titleClassName={titleClassName}
+        countClassName={countClassName}
+        className="flex-1"
+      />
 
       <div className="flex items-center gap-2">
         {[CatalogViewMode.Grid, CatalogViewMode.List].map((mode) => (

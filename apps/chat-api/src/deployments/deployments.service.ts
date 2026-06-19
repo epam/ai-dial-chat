@@ -10,6 +10,7 @@ import {
   mapDialHttpStatus,
 } from '../common/utils/dial-fetch-error';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { FilesService } from '../files/files.service';
 import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import type {
   DeploymentItemDto,
@@ -75,7 +76,8 @@ const mapToDeploymentItem = (
       ? raw.input_attachment_types
       : undefined,
     topics,
-  };
+    other: { ...raw },
+  } as any;
 };
 
 @Injectable()
@@ -87,6 +89,7 @@ export class DeploymentsService extends AppService {
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly filesService: FilesService,
   ) {
     super(configService);
     this.featuredIds = new Set(
@@ -100,6 +103,7 @@ export class DeploymentsService extends AppService {
 
   async listDeployments(
     userSub: string,
+    bucket: string,
     accessToken: string,
     interfaceType?: DeploymentInterfaceType[],
   ): Promise<DeploymentsResponseDto> {
@@ -151,6 +155,20 @@ export class DeploymentsService extends AppService {
         return handleDialFetchError(err, 'list deployments', this.logger, 0);
       }
     }
+
+    const installedIds = await this.filesService.listInstalledDeployments(
+      bucket,
+      accessToken,
+    );
+
+    const installedSet = new Set(installedIds);
+    allItems =
+      installedSet.size > 0
+        ? allItems.map((item) => ({
+            ...item,
+            isUserFavorite: installedSet.has(item.id),
+          }))
+        : allItems;
 
     if (!interfaceFilter) {
       return { deployments: allItems };

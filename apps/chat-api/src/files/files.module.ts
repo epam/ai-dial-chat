@@ -22,5 +22,6 @@ const { memoryStorage } = require('multer') as { memoryStorage: () => unknown };
   ],
   controllers: [FilesController],
   providers: [FilesService],
+  exports: [FilesService],
 })
 export class FilesModule {}

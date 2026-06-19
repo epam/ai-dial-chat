@@ -29,8 +29,8 @@ export type {
 export { CardGrid } from './components/CardGrid/CardGrid';
 export type { CardGridProps, CardGridTitles } from './models/grid-props';
 
-export { CatalogFavorites } from './components/CatalogFavorites/CatalogFavorites';
-export type { CatalogFavoritesProps } from './components/CatalogFavorites/CatalogFavorites';
+export { Favorites } from './components/Favorites/Favorites';
+export type { FavoritesProps } from './models/favorites';
 
 export { ListView } from './components/ListView/ListView';
 export type { ListViewProps } from './models/list-props';
@@ -38,8 +38,8 @@ export type { ListViewProps } from './models/list-props';
 export { EntityBadge } from './components/EntityBadge/EntityBadge';
 export type { EntityBadgeProps } from './components/EntityBadge/EntityBadge';
 
-export { FavoriteCard } from './components/FavoriteCard/FavoriteCard';
-export type { FavoriteCardProps } from './components/FavoriteCard/FavoriteCard';
+export { FavoriteCard } from './components/Favorites/FavoriteCard';
+export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 
 export { FolderPath } from './components/FolderPath/FolderPath';
 export type { FolderPathProps } from './components/FolderPath/FolderPath';

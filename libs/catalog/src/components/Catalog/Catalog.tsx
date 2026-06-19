@@ -14,7 +14,7 @@ import { filterCatalogItems } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { getStyles } from '../../utils/styles';
 import { CardGrid } from '../CardGrid/CardGrid';
-import { CatalogFavorites } from '../CatalogFavorites/CatalogFavorites';
+import { Favorites } from '../Favorites/Favorites';
 import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
@@ -132,7 +132,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* Favorites strip */}
       {favorites.length > 0 && (
-        <CatalogFavorites
+        <Favorites
           items={favorites}
           totalCount={favorites.length}
           title={favoritesTitle}
