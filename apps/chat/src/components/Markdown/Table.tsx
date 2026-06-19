@@ -27,7 +27,6 @@ import { Translation } from '@/src/types/translation';
 import { MarkdownI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
-import { OverlayScrollArea } from '@/src/components/Common/OverlayScrollArea';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 interface CopyIconProps {
@@ -321,11 +320,10 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
           </table>
         </div>
       )}
-      <OverlayScrollArea
+      <div
         ref={bodyScrollRef}
         onScroll={syncHeaderScroll}
-        deps={[children]}
-        className="max-h-[68vh] overflow-auto border-l border-tertiary"
+        className="thin-scrollbar max-h-[68vh] overflow-auto border-l border-tertiary"
       >
         <table
           ref={bodyTableRef}
@@ -333,7 +331,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
         >
           {body}
         </table>
-      </OverlayScrollArea>
+      </div>
     </div>
   );
 };

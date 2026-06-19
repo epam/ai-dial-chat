@@ -26,8 +26,6 @@ import { UISelectors } from '@/src/store/selectors';
 import { MarkdownI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
-import { OverlayScrollArea } from '@/src/components/Common/OverlayScrollArea';
-
 import Download from '@/public/images/icons/download.svg';
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 
@@ -146,10 +144,7 @@ export const CodeBlock: FC<Props> = memo(
           )}
         </div>
 
-        <OverlayScrollArea
-          deps={[value]}
-          className="max-h-[60vh] overflow-auto"
-        >
+        <div className="thin-scrollbar max-h-[60vh] overflow-auto">
           <SyntaxHighlighter
             language={displayLanguage}
             style={codeBlockTheme[theme] || oneDark}
@@ -167,7 +162,7 @@ export const CodeBlock: FC<Props> = memo(
           >
             {value}
           </SyntaxHighlighter>
-        </OverlayScrollArea>
+        </div>
       </div>
     );
   },
