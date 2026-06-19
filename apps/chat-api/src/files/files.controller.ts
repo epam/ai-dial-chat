@@ -24,6 +24,11 @@ import {
 import { Throttle } from '@nestjs/throttler';
 import type { Request, Response } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
+import {
+  CreateFolderDto,
+  CreateFolderResponseDto,
+} from './dto/create-folder.dto';
+import { DownloadArchiveDto } from './dto/download-archive.dto';
 import { DownloadFileDto } from './dto/download-file.dto';
 import { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
 import { GetFileMetadataQueryDto } from './dto/get-file-metadata.dto';
@@ -150,6 +155,68 @@ export class FilesController {
   ): Promise<FileMetadataResponseDto> {
     const { at } = req.user as SessionUser;
     return this.filesService.getFileMetadata(query.bucket, query.path, at);
+  }
+
+  @Post('folders')
+  @HttpCode(201)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Create a folder' })
+  @ApiResponse({ status: 201, type: CreateFolderResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid bucket, path, or name' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'Bucket or parent path not found' })
+  @ApiResponse({ status: 409, description: 'Folder already exists' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  createFolder(
+    @Body() body: CreateFolderDto,
+    @Req() req: Request,
+  ): Promise<CreateFolderResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.createFolder(
+      body.bucket,
+      body.parentPath ?? '',
+      body.name,
+      at,
+    );
+  }
+
+  @Post('download-archive')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  @ApiProduces('application/zip')
+  @ApiOperation({ summary: 'Download files and folders as a ZIP archive' })
+  @ApiResponse({
+    status: 200,
+    description: 'Streamed ZIP archive',
+    schema: { type: 'string', format: 'binary' },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({ status: 404, description: 'File or folder not found' })
+  @ApiResponse({
+    status: 413,
+    description: 'Too many items or archive too large',
+  })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async downloadArchive(
+    @Body() body: DownloadArchiveDto,
+    @Req() req: Request,
+    @Res() res: Response,
+  ): Promise<void> {
+    const { at } = req.user as SessionUser;
+    await this.filesService.downloadArchive(body.items, at, res);
   }
 
   @Get('download')

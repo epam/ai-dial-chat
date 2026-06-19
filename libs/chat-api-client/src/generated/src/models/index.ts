@@ -146,6 +146,48 @@ export interface ApplicationsResponseDto {
 /**
  *
  * @export
+ * @interface ArchiveItemDto
+ */
+export interface ArchiveItemDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof ArchiveItemDto
+   */
+  bucket: string;
+  /**
+   * File or folder path within the bucket
+   * @type {string}
+   * @memberof ArchiveItemDto
+   */
+  path: string;
+  /**
+   * Display name for archive entry
+   * @type {string}
+   * @memberof ArchiveItemDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ArchiveItemDto
+   */
+  nodeType: ArchiveItemDtoNodeTypeEnum;
+}
+
+/**
+ * @export
+ */
+export const ArchiveItemDtoNodeTypeEnum = {
+  Item: 'item',
+  Folder: 'folder',
+} as const;
+export type ArchiveItemDtoNodeTypeEnum =
+  (typeof ArchiveItemDtoNodeTypeEnum)[keyof typeof ArchiveItemDtoNodeTypeEnum];
+
+/**
+ *
+ * @export
  * @interface AttachmentDto
  */
 export interface AttachmentDto {
@@ -655,6 +697,74 @@ export interface CreateConversationDto {
    * @memberof CreateConversationDto
    */
   customContent?: MessageCustomContentDto;
+}
+/**
+ *
+ * @export
+ * @interface CreateFolderDto
+ */
+export interface CreateFolderDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof CreateFolderDto
+   */
+  bucket: string;
+  /**
+   * Parent folder path within bucket (no leading slash, no ..)
+   * @type {string}
+   * @memberof CreateFolderDto
+   */
+  parentPath?: string;
+  /**
+   * Folder name
+   * @type {string}
+   * @memberof CreateFolderDto
+   */
+  name: string;
+}
+/**
+ *
+ * @export
+ * @interface CreateFolderResponseDto
+ */
+export interface CreateFolderResponseDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFolderResponseDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFolderResponseDto
+   */
+  path: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFolderResponseDto
+   */
+  parentPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFolderResponseDto
+   */
+  bucket: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFolderResponseDto
+   */
+  nodeType: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateFolderResponseDto
+   */
+  folderId: string;
 }
 /**
  *
@@ -1180,6 +1290,19 @@ export interface DialModelPricingDto {
 /**
  *
  * @export
+ * @interface DownloadArchiveDto
+ */
+export interface DownloadArchiveDto {
+  /**
+   *
+   * @type {Array<ArchiveItemDto>}
+   * @memberof DownloadArchiveDto
+   */
+  items: Array<ArchiveItemDto>;
+}
+/**
+ *
+ * @export
  * @interface DuplicateConversationResponseDto
  */
 export interface DuplicateConversationResponseDto {
@@ -1414,6 +1537,12 @@ export interface ListFilesResponseDto {
    * @memberof ListFilesResponseDto
    */
   nextToken?: string;
+  /**
+   * READ/WRITE/SHARE permissions on the listed folder
+   * @type {Array<string>}
+   * @memberof ListFilesResponseDto
+   */
+  permissions?: Array<string>;
 }
 /**
  *

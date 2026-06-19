@@ -3,6 +3,21 @@
 # Validates staged rules/skills/config.yaml/AGENTS.md/CLAUDE.md before the commit.
 # Bypass in emergencies with `git commit --no-verify`.
 
+if ! command -v node >/dev/null 2>&1; then
+  nvm_dir=${NVM_DIR:-"$HOME/.nvm"}
+
+  if [ -s "$nvm_dir/nvm.sh" ]; then
+    # Git clients launched from macOS GUI apps do not inherit the interactive shell's NVM PATH.
+    # shellcheck disable=SC1090
+    . "$nvm_dir/nvm.sh"
+  fi
+fi
+
+if ! command -v node >/dev/null 2>&1; then
+  echo "pre-commit: Node.js is required to validate staged agent configuration files." >&2
+  exit 1
+fi
+
 files=$(git diff --cached --name-only --diff-filter=ACM | grep -E \
   '^(\.claude/rules/.*\.md|\.claude/skills/.*\.md|AGENTS\.md|CLAUDE\.md|openspec/config\.yaml)$')
 

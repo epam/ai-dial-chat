@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   INestApplication,
@@ -335,6 +336,125 @@ describe('FilesController — download', () => {
     await request(app.getHttpServer())
       .get('/api/v1/files/download')
       .query({ bucket: 'my-bucket', path: 'file.pdf' })
+      .expect(503);
+  });
+});
+
+describe('FilesController — createFolder', () => {
+  let app: INestApplication;
+  let service: {
+    uploadFile: ReturnType<typeof vi.fn>;
+    downloadFile: ReturnType<typeof vi.fn>;
+    listFiles: ReturnType<typeof vi.fn>;
+    createFolder: ReturnType<typeof vi.fn>;
+  };
+
+  const MOCK_FOLDER_RESPONSE = {
+    name: 'reports',
+    path: 'reports/',
+    parentPath: '',
+    bucket: 'my-bucket',
+    nodeType: 'folder',
+    folderId: 'my-bucket:reports/',
+  };
+
+  beforeEach(async () => {
+    service = {
+      uploadFile: vi.fn(),
+      downloadFile: vi.fn(),
+      listFiles: vi.fn(),
+      createFolder: vi.fn().mockResolvedValue(MOCK_FOLDER_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 201 with CreateFolderResponseDto on success', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: 'reports' })
+      .expect(201);
+
+    expect(res.body).toEqual(MOCK_FOLDER_RESPONSE);
+    expect(service.createFolder).toHaveBeenCalledWith(
+      'my-bucket',
+      '',
+      'reports',
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 201 with parentPath when provided', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', parentPath: 'parent/', name: 'child' })
+      .expect(201);
+
+    expect(service.createFolder).toHaveBeenCalledWith(
+      'my-bucket',
+      'parent/',
+      'child',
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 for missing name', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket' })
+      .expect(400);
+    expect(service.createFolder).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for name starting with dot', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: '.hidden' })
+      .expect(400);
+    expect(service.createFolder).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for name containing slash', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: 'a/b' })
+      .expect(400);
+    expect(service.createFolder).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for reserved marker name', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: '.dial_folder' })
+      .expect(400);
+    expect(service.createFolder).not.toHaveBeenCalled();
+  });
+
+  it('returns 409 when service throws ConflictException', async () => {
+    service.createFolder.mockRejectedValue(new ConflictException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: 'reports' })
+      .expect(409);
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.createFolder.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: 'reports' })
+      .expect(401);
+  });
+
+  it('returns 503 when service throws ServiceUnavailableException', async () => {
+    service.createFolder.mockRejectedValue(new ServiceUnavailableException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: 'reports' })
       .expect(503);
   });
 });

@@ -107,6 +107,18 @@ const defaultHookResult: UseDialFileManagerResult = {
   path: '/All files',
   onPathChange: vi.fn(),
   retry: vi.fn(),
+  onUploadFiles: vi.fn(),
+  onValidateUpload: vi.fn(),
+  uploadBatchState: null,
+  cancelUpload: vi.fn(),
+  clearUploadBatch: vi.fn(),
+  onCreateFolder: vi.fn(),
+  onCreateFolderValidate: vi.fn(),
+  isCreatingFolder: false,
+  onDownloadFiles: vi.fn(),
+  isDownloading: false,
+  downloadError: null,
+  clearDownloadError: vi.fn(),
 };
 
 const defaultProps = {
@@ -125,6 +137,18 @@ const defaultProps = {
   hideHiddenFilesLabel: 'Hide hidden files',
   getSelectionLabel: (count: number) =>
     `${count} ${count === 1 ? 'item' : 'items'} selected`,
+  uploadFilesLabel: 'Upload files',
+  newFolderLabel: 'New folder',
+  downloadLabel: 'Download',
+  downloadingLabel: 'Preparing download…',
+  uploadProgressTitle: 'Uploading files',
+  uploadQueuedLabel: 'Queued',
+  uploadingLabel: 'Uploading',
+  uploadCompleteLabel: 'Complete',
+  uploadFailedLabel: 'Failed',
+  uploadCancelledLabel: 'Cancelled',
+  cancelAllLabel: 'Cancel all',
+  uploadDoneLabel: 'Done',
 };
 
 describe('DialFileManagerModal', () => {
@@ -235,5 +259,36 @@ describe('DialFileManagerModal', () => {
     mockUseDialFileManager.mockReturnValue(defaultHookResult);
     render(<DialFileManagerModal {...defaultProps} isOpen={false} />);
     expect(screen.queryByText('DIAL file system')).toBeNull();
+  });
+
+  it('shows a loader while an archive is being prepared', () => {
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      isDownloading: true,
+    });
+
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    expect(
+      screen.getByRole('img', { name: 'Preparing download…' }),
+    ).toBeTruthy();
+    expect(screen.queryByText('Preparing download…')).toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Attach' }).hasAttribute('disabled'),
+    ).toBe(true);
+  });
+
+  it('shows and dismisses a download error', () => {
+    const clearDownloadError = vi.fn();
+    mockUseDialFileManager.mockReturnValue({
+      ...defaultHookResult,
+      downloadError: 'Download failed',
+      clearDownloadError,
+    });
+
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    fireEvent.click(screen.getByRole('alert'));
+    expect(clearDownloadError).toHaveBeenCalledOnce();
   });
 });

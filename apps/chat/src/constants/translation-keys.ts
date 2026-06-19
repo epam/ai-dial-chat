@@ -124,6 +124,18 @@ export enum DialFileManagerI18nKeys {
   ShowHiddenFiles = 'dialFileManager.showHiddenFiles',
   HideHiddenFiles = 'dialFileManager.hideHiddenFiles',
   ItemsSelected = 'dialFileManager.itemsSelected',
+  Upload = 'dialFileManager.upload',
+  NewFolder = 'dialFileManager.newFolder',
+  Download = 'dialFileManager.download',
+  Downloading = 'dialFileManager.downloading',
+  Uploading = 'dialFileManager.uploading',
+  UploadComplete = 'dialFileManager.uploadComplete',
+  UploadFailed = 'dialFileManager.uploadFailed',
+  UploadCancelled = 'dialFileManager.uploadCancelled',
+  UploadQueued = 'dialFileManager.uploadQueued',
+  UploadCancelAll = 'dialFileManager.uploadCancelAll',
+  UploadDone = 'dialFileManager.uploadDone',
+  UploadProgressTitle = 'dialFileManager.uploadProgressTitle',
 }
 
 export enum AuthI18nKeys {

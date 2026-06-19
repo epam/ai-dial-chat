@@ -140,8 +140,10 @@ const ConversationRoute: FC = () => {
     [inputAttachmentTypes, showNotification, t],
   );
 
-  const { isDragging, pendingFiles, onFilesConsumed } =
-    usePageFileDrag(isAttachmentsAllowed);
+  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
+    isAttachmentsAllowed,
+    !isDialFileManagerOpen,
+  );
 
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
@@ -438,6 +440,18 @@ const ConversationRoute: FC = () => {
             getSelectionLabel={(count) =>
               t(DialFileManagerI18nKeys.ItemsSelected, { count })
             }
+            uploadFilesLabel={t(DialFileManagerI18nKeys.Upload)}
+            newFolderLabel={t(DialFileManagerI18nKeys.NewFolder)}
+            downloadLabel={t(DialFileManagerI18nKeys.Download)}
+            downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
+            uploadProgressTitle={t(DialFileManagerI18nKeys.UploadProgressTitle)}
+            uploadQueuedLabel={t(DialFileManagerI18nKeys.UploadQueued)}
+            uploadingLabel={t(DialFileManagerI18nKeys.Uploading)}
+            uploadCompleteLabel={t(DialFileManagerI18nKeys.UploadComplete)}
+            uploadFailedLabel={t(DialFileManagerI18nKeys.UploadFailed)}
+            uploadCancelledLabel={t(DialFileManagerI18nKeys.UploadCancelled)}
+            cancelAllLabel={t(DialFileManagerI18nKeys.UploadCancelAll)}
+            uploadDoneLabel={t(DialFileManagerI18nKeys.UploadDone)}
           />
         )}
       </Suspense>

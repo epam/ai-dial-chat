@@ -124,4 +124,10 @@ export class ListFilesResponseDto {
 
   @ApiPropertyOptional()
   nextToken?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    description: 'READ/WRITE/SHARE permissions on the listed folder',
+  })
+  permissions?: string[];
 }

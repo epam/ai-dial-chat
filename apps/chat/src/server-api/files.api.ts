@@ -1,4 +1,7 @@
 import type {
+  ArchiveItemDto,
+  CreateFolderDto,
+  CreateFolderResponseDto,
   FileMetadataResponseDto,
   FileUploadResponseDto,
   ListFilesResponseDto,
@@ -18,8 +21,9 @@ export const uploadFile = (
   bucket: string,
   path: string,
   file: File,
+  signal?: AbortSignal,
 ): Promise<FileUploadResponseDto> =>
-  filesApi.uploadFile({ bucket, path, file });
+  filesApi.uploadFile({ bucket, path, file }, signal ? { signal } : undefined);
 
 export const getFileMetadata = (params: {
   bucket: string;
@@ -35,5 +39,21 @@ export const downloadFile = async (
   path: string,
 ): Promise<Response> => {
   const raw = await filesApi.downloadFileRaw({ bucket, path });
+  return raw.raw;
+};
+
+export const createFolder = (
+  params: CreateFolderDto,
+): Promise<CreateFolderResponseDto> =>
+  filesApi.createFolder({ createFolderDto: params });
+
+// downloadArchiveRaw() is used instead of downloadArchive() for the same reason
+// as downloadFileRaw() above — binary response semantics require the raw fetch Response.
+export const downloadArchive = async (
+  items: ArchiveItemDto[],
+): Promise<Response> => {
+  const raw = await filesApi.downloadArchiveRaw({
+    downloadArchiveDto: { items },
+  });
   return raw.raw;
 };

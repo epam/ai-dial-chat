@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { ApiEndpoints } from '../../server-api/base';
-import { getIconPath, resolveDialFileDownloadUrl } from '../icon-path';
+import { getIconPath, resolveDialFileDownloadUrl, resolveRelativeDialFilePath } from '../icon-path';
 
 describe('getIconPath', () => {
   it('should return correct URL format for icon name', () => {
@@ -78,5 +78,31 @@ describe('resolveDialFileDownloadUrl', () => {
 
   it('returns undefined when there is no path segment after the bucket', () => {
     expect(resolveDialFileDownloadUrl('files/only-bucket')).toBeUndefined();
+  });
+});
+
+describe('resolveRelativeDialFilePath', () => {
+  it('strips the files/{bucket}/ prefix from a DIAL file ID', () => {
+    expect(
+      resolveRelativeDialFilePath(
+        'files/my-bucket/reports/q1.pdf',
+        'my-bucket',
+      ),
+    ).toBe('reports/q1.pdf');
+  });
+
+  it('decodes percent-encoded path segments', () => {
+    expect(
+      resolveRelativeDialFilePath(
+        'files/my-bucket/folder%2Fname.pdf',
+        'my-bucket',
+      ),
+    ).toBe('folder/name.pdf');
+  });
+
+  it('returns relative paths unchanged', () => {
+    expect(resolveRelativeDialFilePath('reports/q1.pdf', 'my-bucket')).toBe(
+      'reports/q1.pdf',
+    );
   });
 });

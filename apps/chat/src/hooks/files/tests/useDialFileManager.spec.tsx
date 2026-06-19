@@ -1,3 +1,5 @@
+import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
+import { DialFileNodeType, DialFilePermission } from '@epam/ai-dial-ui-kit';
 import type { ListFilesItemDto } from '@epam/chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -138,6 +140,103 @@ describe('useDialFileManager', () => {
     await waitFor(() => expect(result.current.path).toBe('/All files'));
     expect(mockListFiles).toHaveBeenLastCalledWith(
       expect.objectContaining({ path: '' }),
+    );
+  });
+
+  it('maps folder permissions from DIAL Core listing data', async () => {
+    const item: ListFilesItemDto = {
+      name: 'reports',
+      path: 'reports/',
+      folderId: `${BUCKET}:reports/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      bucket: BUCKET,
+      permissions: ['READ', 'WRITE'],
+    };
+    mockListFiles.mockResolvedValue({
+      bucket: BUCKET,
+      path: '',
+      items: [item],
+      nextToken: undefined,
+      permissions: ['READ', 'WRITE'],
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    const root = result.current.items[0];
+    expect(root.permissions).toEqual([
+      DialFilePermission.READ,
+      DialFilePermission.WRITE,
+    ]);
+
+    const reports = root.items?.[0];
+    expect(reports?.permissions).toEqual([
+      DialFilePermission.READ,
+      DialFilePermission.WRITE,
+    ]);
+  });
+
+  it('creates a folder using the name from the virtual path, not the marker file', async () => {
+    const mockCreateFolder = vi.mocked(filesApi.createFolder);
+    mockCreateFolder.mockResolvedValue({
+      name: '2026',
+      path: `files/${BUCKET}/2026/`,
+      parentPath: '',
+      bucket: BUCKET,
+      nodeType: 'folder',
+      folderId: `${BUCKET}:files/${BUCKET}/2026/`,
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.onCreateFolder(
+        {
+          name: HIDDEN_FILE,
+          fileContent: new File([], HIDDEN_FILE),
+        },
+        '/All files/2026',
+        `/All files/2026/${HIDDEN_FILE}`,
+      );
+    });
+
+    expect(mockCreateFolder).toHaveBeenCalledWith({
+      bucket: BUCKET,
+      parentPath: undefined,
+      name: '2026',
+    });
+  });
+
+  it('merges created folder into parent cache immediately', async () => {
+    const mockCreateFolder = vi.mocked(filesApi.createFolder);
+    mockCreateFolder.mockResolvedValue({
+      name: '2026',
+      path: `files/${BUCKET}/2026/`,
+      parentPath: '',
+      bucket: BUCKET,
+      nodeType: 'folder',
+      folderId: `${BUCKET}:files/${BUCKET}/2026/`,
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.onCreateFolder(
+        {
+          name: HIDDEN_FILE,
+          fileContent: new File([], HIDDEN_FILE),
+        },
+        '/All files/2026',
+        `/All files/2026/${HIDDEN_FILE}`,
+      );
+    });
+
+    await waitFor(() =>
+      expect(
+        result.current.items[0].items?.some((item) => item.name === '2026'),
+      ).toBe(true),
     );
   });
 

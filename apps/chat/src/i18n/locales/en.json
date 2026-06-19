@@ -231,6 +231,27 @@
     "showHiddenFiles": "Show hidden files",
     "hideHiddenFiles": "Hide hidden files",
     "itemsSelected_one": "{{count}} item selected",
-    "itemsSelected_other": "{{count}} items selected"
+    "itemsSelected_other": "{{count}} items selected",
+    "upload": "Upload files",
+    "newFolder": "New folder",
+    "download": "Download",
+    "downloading": "Preparing download…",
+    "uploading": "Uploading",
+    "uploadComplete": "Complete",
+    "uploadFailed": "Failed",
+    "uploadCancelled": "Cancelled",
+    "uploadQueued": "Queued",
+    "uploadCancelAll": "Cancel all",
+    "uploadDone": "Done",
+    "uploadProgressTitle": "Uploading files",
+    "uploadConflict": "A file with this name already exists",
+    "downloadError": "Download failed",
+    "folderCreateError": "Failed to create folder",
+    "folderConflict": "A folder with this name already exists",
+    "folderNameEmpty": "Folder name cannot be empty",
+    "folderNameInvalidChars": "Folder name cannot contain / or \\",
+    "folderNameHidden": "Folder name cannot start with a dot",
+    "folderNameReserved": "This folder name is reserved",
+    "folderNameTooLong": "Folder name is too long"
   }
 }

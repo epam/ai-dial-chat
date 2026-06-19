@@ -1,8 +1,10 @@
 import {
   DialFileManager,
+  DialFileManagerActions,
   DialFileNodeType,
   DialPopup,
   DialPrimaryButton,
+  DialLoader,
   GridSelectionMode,
   PopupSize,
   type DialFile,
@@ -10,6 +12,7 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, useCallback, useMemo, useState } from 'react';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
+import UploadProgressModal from './UploadProgressModal';
 
 interface Props {
   isOpen: boolean;
@@ -26,6 +29,18 @@ interface Props {
   showHiddenFilesLabel: string;
   hideHiddenFilesLabel: string;
   getSelectionLabel: (count: number) => string;
+  uploadFilesLabel: string;
+  newFolderLabel: string;
+  downloadLabel: string;
+  downloadingLabel: string;
+  uploadProgressTitle: string;
+  uploadQueuedLabel: string;
+  uploadingLabel: string;
+  uploadCompleteLabel: string;
+  uploadFailedLabel: string;
+  uploadCancelledLabel: string;
+  cancelAllLabel: string;
+  uploadDoneLabel: string;
 }
 
 const DialFileManagerModal: FC<Props> = ({
@@ -43,9 +58,40 @@ const DialFileManagerModal: FC<Props> = ({
   showHiddenFilesLabel,
   hideHiddenFilesLabel,
   getSelectionLabel,
+  uploadFilesLabel,
+  newFolderLabel,
+  downloadLabel,
+  downloadingLabel,
+  uploadProgressTitle,
+  uploadQueuedLabel,
+  uploadingLabel,
+  uploadCompleteLabel,
+  uploadFailedLabel,
+  uploadCancelledLabel,
+  cancelAllLabel,
+  uploadDoneLabel,
 }) => {
-  const { items, isLoading, error, path, onPathChange, retry } =
-    useDialFileManager({ bucket });
+  const {
+    items,
+    isLoading,
+    error,
+    path,
+    onPathChange,
+    retry,
+    onUploadFiles,
+    onValidateUpload,
+    uploadBatchState,
+    cancelUpload,
+    clearUploadBatch,
+    onCreateFolder,
+    onCreateFolderValidate,
+    isCreatingFolder,
+    onDownloadFiles,
+    isDownloading,
+    downloadError,
+    clearDownloadError,
+  } = useDialFileManager({ bucket });
+
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
     () => new Set(),
   );
@@ -77,6 +123,9 @@ const DialFileManagerModal: FC<Props> = ({
     onAttach(selectedFiles);
   }, [onAttach, selectedFiles]);
 
+  const isOperationInProgress =
+    isDownloading || isCreatingFolder || uploadBatchState != null;
+
   const gridOptions = useMemo(
     () => ({
       selectionMode: GridSelectionMode.MULTIPLE,
@@ -88,8 +137,20 @@ const DialFileManagerModal: FC<Props> = ({
             node.data?.nodeType === DialFileNodeType.ITEM,
         },
       },
+      actionLabels: {
+        [DialFileManagerActions.Download]: downloadLabel,
+      },
     }),
-    [],
+    [downloadLabel],
+  );
+
+  const treeOptions = useMemo(
+    () => ({
+      actionLabels: {
+        [DialFileManagerActions.Download]: downloadLabel,
+      },
+    }),
+    [downloadLabel],
   );
 
   const toolbarOptions = useMemo(
@@ -98,56 +159,125 @@ const DialFileManagerModal: FC<Props> = ({
       hiddenFilesSwitcherLabel: hiddenFilesLabel,
       showHiddenFilesLabel,
       hideHiddenFilesLabel,
+      isNewButtonDisabled: false,
+      newActions: {
+        uploadFiles: { label: uploadFilesLabel },
+        newFolder: { label: newFolderLabel },
+      },
     }),
-    [hiddenFilesLabel, showHiddenFilesLabel, hideHiddenFilesLabel],
+    [
+      hiddenFilesLabel,
+      showHiddenFilesLabel,
+      hideHiddenFilesLabel,
+      uploadFilesLabel,
+      newFolderLabel,
+    ],
+  );
+
+  const bulkActionsToolbarOptions = useMemo(
+    () => ({
+      getSelectionLabel,
+      actionLabels: {
+        [DialFileManagerActions.Download]: downloadLabel,
+      },
+    }),
+    [getSelectionLabel, downloadLabel],
   );
 
   return (
-    <DialPopup
-      open={isOpen}
-      header={title}
-      size={PopupSize.Lg}
-      className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-2 [&>[aria-label='popup-description']]:flex [&>[aria-label='popup-description']]:min-h-0 [&>[aria-label='popup-description']]:flex-col"
-      onClose={onClose}
-      footer={
-        <div className="flex justify-end px-6 py-4">
-          <DialPrimaryButton
-            label={attachLabel}
-            disabled={selectedFiles.length === 0 || isLoading}
-            onClick={handleAttach}
-          />
-        </div>
-      }
-    >
-      {error != null ? (
-        <div role="alert" className="flex flex-col items-center gap-4 p-6">
-          <p>{errorMessage}</p>
-          <DialPrimaryButton label={retryLabel} onClick={retry} />
-        </div>
-      ) : (
-        <div className="flex min-h-0 w-full grow overflow-auto bg-layer-2">
-          <DialFileManager
-            className="min-h-0 w-full grow bg-layer-2"
-            gridClassName="size-full"
-            items={items}
-            path={path}
-            onPathChange={onPathChange}
-            filesLoading={isLoading}
-            selectedPaths={selectedPaths}
-            onSelectedPathsChange={setSelectedPaths}
-            navigationPanelOptions={{
-              searchable: false,
-            }}
-            gridOptions={gridOptions}
-            toolbarOptions={toolbarOptions}
-            bulkActionsToolbarOptions={{ getSelectionLabel }}
-            emptyStateTitle={emptyTitle}
-            emptyStateDescription={emptyDescription}
-            uploadEnabled={false}
-          />
-        </div>
+    <>
+      <DialPopup
+        open={isOpen}
+        header={title}
+        size={PopupSize.Lg}
+        className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-2 [&>[aria-label='popup-description']]:flex [&>[aria-label='popup-description']]:min-h-0 [&>[aria-label='popup-description']]:flex-col"
+        onClose={onClose}
+        footer={
+          <div className="flex justify-end px-6 py-4">
+            <DialPrimaryButton
+              label={attachLabel}
+              disabled={
+                selectedFiles.length === 0 || isLoading || isOperationInProgress
+              }
+              onClick={handleAttach}
+            />
+          </div>
+        }
+      >
+        {error != null ? (
+          <div role="alert" className="flex flex-col items-center gap-4 p-6">
+            <p>{errorMessage}</p>
+            <DialPrimaryButton label={retryLabel} onClick={retry} />
+          </div>
+        ) : (
+          <div className="relative flex min-h-0 w-full grow overflow-auto bg-layer-2">
+            <DialFileManager
+              className="min-h-0 w-full grow bg-layer-2"
+              gridClassName="size-full"
+              items={items}
+              path={path}
+              onPathChange={onPathChange}
+              filesLoading={isLoading}
+              selectedPaths={selectedPaths}
+              onSelectedPathsChange={setSelectedPaths}
+              navigationPanelOptions={{
+                searchable: false,
+              }}
+              gridOptions={gridOptions}
+              treeOptions={treeOptions}
+              toolbarOptions={toolbarOptions}
+              bulkActionsToolbarOptions={bulkActionsToolbarOptions}
+              emptyStateTitle={emptyTitle}
+              emptyStateDescription={emptyDescription}
+              uploadEnabled={true}
+              onUploadFiles={onUploadFiles}
+              onValidateUpload={onValidateUpload}
+              onCreateFolder={onCreateFolder}
+              onCreateFolderValidate={onCreateFolderValidate}
+              onDownloadFiles={onDownloadFiles}
+            />
+            {isDownloading && (
+              <div
+                aria-live="polite"
+                className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
+              >
+                <DialLoader
+                  size={32}
+                  fullWidth={false}
+                  ariaLabel={downloadingLabel}
+                />
+              </div>
+            )}
+            {downloadError != null && !isDownloading && (
+              <button
+                type="button"
+                role="alert"
+                className="absolute inset-x-4 bottom-4 z-10 rounded bg-error px-4 py-3 text-start text-sm text-primary shadow"
+                onClick={clearDownloadError}
+              >
+                {downloadError}
+              </button>
+            )}
+          </div>
+        )}
+      </DialPopup>
+
+      {uploadBatchState != null && (
+        <UploadProgressModal
+          batchState={uploadBatchState}
+          uploadProgressTitle={uploadProgressTitle}
+          queuedLabel={uploadQueuedLabel}
+          uploadingLabel={uploadingLabel}
+          completeLabel={uploadCompleteLabel}
+          failedLabel={uploadFailedLabel}
+          cancelledLabel={uploadCancelledLabel}
+          cancelAllLabel={cancelAllLabel}
+          doneLabel={uploadDoneLabel}
+          onCancelAll={cancelUpload}
+          onDone={clearUploadBatch}
+        />
       )}
-    </DialPopup>
+    </>
   );
 };
 

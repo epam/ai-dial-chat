@@ -1,10 +1,36 @@
-import type { DialFile } from '@epam/ai-dial-ui-kit';
-import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
-import type { ListFilesItemDto } from '@epam/chat-api-client';
-import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { listFiles } from '../../server-api/files.api';
+import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
+import type { DialFile, DialUploadFileItem } from '@epam/ai-dial-ui-kit';
+import { DialFileNodeType, DialFilePermission } from '@epam/ai-dial-ui-kit';
+import type { CreateFolderResponseDto, ListFilesItemDto } from '@epam/chat-api-client';
+import {
+  ArchiveItemDtoNodeTypeEnum,
+  ListFilesItemDtoNodeTypeEnum,
+} from '@epam/chat-api-client';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import type {
+  FileUploadBatchState,
+  FileUploadEntry,
+} from '../../components/DialFileManagerModal/types/upload';
+import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
+import {
+  createFolder,
+  downloadArchive,
+  downloadFile,
+  listFiles,
+  uploadFile,
+} from '../../server-api/files.api';
+import {
+  DownloadDestinationType,
+  prepareDownloadDestination,
+  triggerBrowserDownload,
+} from '../../utils/file-download';
+import { resolveRelativeDialFilePath } from '../../utils/icon-path';
 import { safeDecodeURI } from '../../utils/string-utils';
+import {
+  logDialFileManagerDebug,
+  summarizeDialFileManagerCache,
+} from './dial-file-manager-debug';
 
 export interface UseDialFileManagerOptions {
   /** DIAL Core bucket to browse. */
@@ -26,7 +52,130 @@ export interface UseDialFileManagerResult {
   onPathChange: (nextPath?: string) => void;
   /** Re-runs the fetch for the current `folderPath`. */
   retry: () => void;
+
+  /** Upload: start a new batch. */
+  onUploadFiles: (
+    files: DialUploadFileItem[],
+    destinationFolder: string,
+  ) => void;
+  /** Upload: validate file names before upload (called by DialFileManager). */
+  onValidateUpload: (
+    files: DialUploadFileItem[],
+    existingFiles: DialFile[],
+    destinationFolder: string,
+  ) => Promise<FileUploadValidationResult>;
+  /** Upload: current batch state (null when idle). */
+  uploadBatchState: FileUploadBatchState | null;
+  /** Upload: abort all in-flight and queued uploads. */
+  cancelUpload: () => void;
+  /** Upload: dismiss the progress modal after the batch has settled. */
+  clearUploadBatch: () => void;
+
+  /** Folder creation: called when user confirms a new folder name. */
+  onCreateFolder: (
+    file: DialUploadFileItem,
+    folderPath: string,
+    fileId: string,
+  ) => Promise<void>;
+  /** Folder creation: inline synchronous validation (returns error message or null). */
+  onCreateFolderValidate: (
+    name: string,
+    parentFolder: DialFile,
+  ) => string | null;
+  /** True while a folder creation request is in flight. */
+  isCreatingFolder: boolean;
+
+  /** Download: called when user triggers download on one or more items. */
+  onDownloadFiles: (dialFiles: DialFile[]) => void;
+  /** True while a download is in progress. */
+  isDownloading: boolean;
+  /** Non-null when the last download failed. Cleared by `clearDownloadError`. */
+  downloadError: string | null;
+  /** Clears `downloadError`. */
+  clearDownloadError: () => void;
 }
+
+interface FileUploadValidationResult {
+  valid: boolean;
+  message?: string;
+}
+
+const UPLOAD_CONCURRENCY = 3;
+const RESERVED_MARKER_NAME = HIDDEN_FILE;
+
+const CORE_PERMISSION_MAP: Record<string, DialFilePermission> = {
+  READ: DialFilePermission.READ,
+  WRITE: DialFilePermission.WRITE,
+  SHARE: DialFilePermission.SHARE,
+};
+
+const mapCorePermissions = (
+  permissions?: string[],
+): DialFile['permissions'] | undefined => {
+  if (!permissions?.length) return undefined;
+  const mapped = permissions
+    .map((permission) => CORE_PERMISSION_MAP[permission.toUpperCase()])
+    .filter((permission): permission is DialFilePermission => permission != null);
+  return mapped.length > 0 ? mapped : undefined;
+};
+
+/**
+ * DialFileManager passes the new folder's full virtual path (including the name),
+ * e.g. "/All files/reports" or "/All files/reports/Q1".
+ */
+const parseNewFolderVirtualPath = (
+  newFolderVirtualPath: string,
+  rootLabel: string,
+): { parentVirtualPath: string; name: string } => {
+  const trimmed = newFolderVirtualPath.replace(/\/$/, '');
+  const slashIndex = trimmed.lastIndexOf('/');
+
+  if (slashIndex <= 0) {
+    const name = slashIndex === 0 ? trimmed.slice(1) : trimmed;
+    return { parentVirtualPath: `/${rootLabel}`, name };
+  }
+
+  return {
+    parentVirtualPath: trimmed.slice(0, slashIndex),
+    name: trimmed.slice(slashIndex + 1),
+  };
+};
+
+/**
+ * Converts a DialFileManager virtual path to an API folder path.
+ * e.g. "/All files" → "", "/All files/reports/" → "reports/"
+ */
+const virtualPathToApiPath = (
+  virtualPath: string,
+  rootLabel: string,
+): string => {
+  const rootExact = `/${rootLabel}`;
+  const rootWithSlash = `/${rootLabel}/`;
+  const labelWithSlash = `${rootLabel}/`;
+
+  if (
+    virtualPath === rootExact ||
+    virtualPath === `${rootLabel}` ||
+    virtualPath === rootWithSlash ||
+    virtualPath === labelWithSlash
+  ) {
+    return '';
+  }
+
+  let stripped: string;
+  if (virtualPath.startsWith(rootWithSlash)) {
+    stripped = virtualPath.slice(rootWithSlash.length);
+  } else if (virtualPath.startsWith(labelWithSlash)) {
+    stripped = virtualPath.slice(labelWithSlash.length);
+  } else {
+    const withoutLeadingSlash = virtualPath.replace(/^\//, '');
+    stripped = withoutLeadingSlash.startsWith(labelWithSlash)
+      ? withoutLeadingSlash.slice(labelWithSlash.length)
+      : withoutLeadingSlash;
+  }
+
+  return stripped && !stripped.endsWith('/') ? `${stripped}/` : stripped;
+};
 
 /**
  * Recursively builds a DialFile[] for a folder from the cache.
@@ -36,6 +185,7 @@ export interface UseDialFileManagerResult {
  */
 const buildFromCache = (
   cache: Map<string, ListFilesItemDto[]>,
+  listingPermissionsCache: Map<string, string[] | undefined>,
   apiPath: string,
   virtualBasePath: string,
   folderId: string,
@@ -69,9 +219,14 @@ const buildFromCache = (
     };
 
     if (isFolder) {
+      const folderApiPath = `${apiPath}${name}/`;
+      base.permissions =
+        mapCorePermissions(item.permissions) ??
+        mapCorePermissions(listingPermissionsCache.get(folderApiPath));
       base.items = buildFromCache(
         cache,
-        `${apiPath}${name}/`,
+        listingPermissionsCache,
+        folderApiPath,
         `${virtualBasePath}/${name}`,
         item.path,
       );
@@ -79,6 +234,79 @@ const buildFromCache = (
 
     return base;
   });
+};
+
+const mergeListingItems = (
+  existing: ListFilesItemDto[],
+  incoming: ListFilesItemDto[],
+  cacheKey: string,
+): ListFilesItemDto[] => {
+  const merged = new Map(
+    incoming.map((item) => [item.name.toLowerCase(), item]),
+  );
+  for (const item of existing) {
+    const key = item.name.toLowerCase();
+    if (!merged.has(key)) {
+      merged.set(key, item);
+    }
+  }
+  const result = Array.from(merged.values());
+  logDialFileManagerDebug('cache merge listing', {
+    cacheKey: cacheKey || '(root)',
+    existing: existing.map((item) => item.name),
+    incoming: incoming.map((item) => item.name),
+    merged: result.map((item) => item.name),
+  });
+  return result;
+};
+
+const mergeCreatedFolderIntoCache = (
+  cache: Map<string, ListFilesItemDto[]>,
+  parentApiPath: string,
+  created: CreateFolderResponseDto,
+  inheritedPermissions?: string[],
+): Map<string, ListFilesItemDto[]> => {
+  const next = new Map(cache);
+  const parentItems = [...(next.get(parentApiPath) ?? [])];
+  const folderItem: ListFilesItemDto = {
+    name: created.name,
+    path: created.path,
+    folderId: created.folderId,
+    nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+    bucket: created.bucket,
+    parentPath: created.parentPath || undefined,
+    url: created.path,
+    permissions: inheritedPermissions,
+  };
+
+  if (
+    !parentItems.some(
+      (item) => item.name.toLowerCase() === created.name.toLowerCase(),
+    )
+  ) {
+    parentItems.push(folderItem);
+  }
+
+  next.set(parentApiPath, parentItems);
+  logDialFileManagerDebug('cache merge created folder', {
+    parentApiPath: parentApiPath || '(root)',
+    folderName: created.name,
+    folderPath: created.path,
+    folderId: created.folderId,
+    parentItems: parentItems.map((item) => item.name),
+    cache: summarizeDialFileManagerCache(next),
+  });
+  return next;
+};
+
+const updateEntry = (
+  prev: FileUploadBatchState | null,
+  index: number,
+  status: FileUploadStatus,
+): FileUploadBatchState | null => {
+  if (!prev) return prev;
+  const files = prev.files.map((f, i) => (i === index ? { ...f, status } : f));
+  return { ...prev, files };
 };
 
 /**
@@ -101,23 +329,52 @@ export const useDialFileManager = ({
   bucket,
   rootLabel = 'All files',
 }: UseDialFileManagerOptions): UseDialFileManagerResult => {
+  const { t } = useTranslation();
   const [folderPath, setFolderPath] = useState('');
   const [cache, setCache] = useState<Map<string, ListFilesItemDto[]>>(
     () => new Map(),
   );
+  const [listingPermissionsCache, setListingPermissionsCache] = useState<
+    Map<string, string[] | undefined>
+  >(() => new Map());
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCounter, setRetryCounter] = useState(0);
+
+  const [uploadBatchState, setUploadBatchState] =
+    useState<FileUploadBatchState | null>(null);
+  const uploadAbortControllerRef = useRef<AbortController | null>(null);
+
+  const [isCreatingFolder, setIsCreatingFolder] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
     setError(null);
 
-    listFiles({ bucket, path: folderPath })
-      .then(({ items: flat }) => {
+    listFiles({ bucket, path: folderPath, permissions: true })
+      .then(({ items: flat, permissions }) => {
         if (cancelled) return;
-        setCache((prev) => new Map(prev).set(folderPath, flat));
+        logDialFileManagerDebug('listFiles response', {
+          folderPath: folderPath || '(root)',
+          incoming: flat.map((item) => item.name),
+          permissions,
+          retryCounter,
+        });
+        setCache((prev) => {
+          const next = new Map(prev);
+          const existing = next.get(folderPath) ?? [];
+          next.set(folderPath, mergeListingItems(existing, flat, folderPath));
+          logDialFileManagerDebug('cache after listFiles', {
+            cache: summarizeDialFileManagerCache(next),
+          });
+          return next;
+        });
+        setListingPermissionsCache((prev) =>
+          new Map(prev).set(folderPath, permissions),
+        );
       })
       .catch(() => {
         if (cancelled) return;
@@ -141,10 +398,17 @@ export const useDialFileManager = ({
         parentPath: '',
         nodeType: DialFileNodeType.FOLDER,
         folderId: bucket,
-        items: buildFromCache(cache, '', `/${rootLabel}`, bucket),
+        permissions: mapCorePermissions(listingPermissionsCache.get('')),
+        items: buildFromCache(
+          cache,
+          listingPermissionsCache,
+          '',
+          `/${rootLabel}`,
+          bucket,
+        ),
       },
     ],
-    [cache, rootLabel, bucket],
+    [cache, listingPermissionsCache, rootLabel, bucket],
   );
 
   const onPathChange = useCallback(
@@ -194,7 +458,259 @@ export const useDialFileManager = ({
     setRetryCounter((c) => c + 1);
   }, []);
 
+  const onUploadFiles = useCallback(
+    (files: DialUploadFileItem[], destinationFolder: string) => {
+      const controller = new AbortController();
+      uploadAbortControllerRef.current = controller;
+
+      const entries: FileUploadEntry[] = files.map((f, i) => ({
+        id: `${Date.now()}-${i}`,
+        name: f.name,
+        status: FileUploadStatus.Queued,
+      }));
+
+      setUploadBatchState({ files: entries, isOpen: true });
+
+      const destinationApiPath = virtualPathToApiPath(
+        destinationFolder,
+        rootLabel,
+      );
+
+      const processBatch = async () => {
+        let nextIndex = 0;
+
+        const worker = async () => {
+          while (nextIndex < files.length) {
+            const i = nextIndex++;
+            const file = files[i];
+
+            if (controller.signal.aborted) {
+              setUploadBatchState((prev) =>
+                updateEntry(prev, i, FileUploadStatus.Cancelled),
+              );
+              continue;
+            }
+
+            setUploadBatchState((prev) =>
+              updateEntry(prev, i, FileUploadStatus.Uploading),
+            );
+
+            try {
+              await uploadFile(
+                bucket,
+                `${destinationApiPath}${file.name}`,
+                file.fileContent,
+                controller.signal,
+              );
+              setUploadBatchState((prev) =>
+                updateEntry(prev, i, FileUploadStatus.Completed),
+              );
+            } catch {
+              const status = controller.signal.aborted
+                ? FileUploadStatus.Cancelled
+                : FileUploadStatus.Failed;
+              setUploadBatchState((prev) => updateEntry(prev, i, status));
+            }
+          }
+        };
+
+        await Promise.all(
+          Array.from({ length: UPLOAD_CONCURRENCY }, () => worker()),
+        );
+
+        setCache((prev) => {
+          const next = new Map(prev);
+          next.delete(destinationApiPath);
+          return next;
+        });
+        setRetryCounter((c) => c + 1);
+        uploadAbortControllerRef.current = null;
+      };
+
+      void processBatch();
+    },
+    [bucket, rootLabel],
+  );
+
+  const onValidateUpload = useCallback(
+    async (
+      files: DialUploadFileItem[],
+      existingFiles: DialFile[],
+      _destinationFolder: string,
+    ): Promise<FileUploadValidationResult> => {
+      const existingNames = new Set(
+        existingFiles.map((f) => f.name.toLowerCase()),
+      );
+      const conflict = files.some((f) =>
+        existingNames.has(f.name.toLowerCase()),
+      );
+      if (conflict) {
+        return {
+          valid: false,
+          message: t('dialFileManager.uploadConflict'),
+        };
+      }
+      return { valid: true };
+    },
+    [t],
+  );
+
+  const cancelUpload = useCallback(() => {
+    uploadAbortControllerRef.current?.abort();
+  }, []);
+
+  const onCreateFolder = useCallback(
+    async (
+      _file: DialUploadFileItem,
+      folderPath: string,
+      _fileId: string,
+    ): Promise<void> => {
+      setIsCreatingFolder(true);
+      const { parentVirtualPath, name } = parseNewFolderVirtualPath(
+        folderPath,
+        rootLabel,
+      );
+      const parentApiPath = virtualPathToApiPath(parentVirtualPath, rootLabel);
+      logDialFileManagerDebug('createFolder start', {
+        folderPath,
+        parentVirtualPath,
+        parentApiPath: parentApiPath || '(root)',
+        name,
+        currentFolderPath: folderPath || '(root)',
+      });
+      try {
+        const created = await createFolder({
+          bucket,
+          parentPath: parentApiPath || undefined,
+          name,
+        });
+        setCache((prev) =>
+          mergeCreatedFolderIntoCache(
+            prev,
+            parentApiPath,
+            created,
+            listingPermissionsCache.get(parentApiPath),
+          ),
+        );
+        setRetryCounter((c) => c + 1);
+      } finally {
+        setIsCreatingFolder(false);
+      }
+    },
+    [bucket, rootLabel, listingPermissionsCache, folderPath],
+  );
+
+  const onCreateFolderValidate = useCallback(
+    (name: string, parentFolder: DialFile): string | null => {
+      if (!name || name.trim() === '') {
+        return t('dialFileManager.folderNameEmpty');
+      }
+      if (/[/\\]/.test(name)) {
+        return t('dialFileManager.folderNameInvalidChars');
+      }
+      if (name.startsWith('.')) {
+        return t('dialFileManager.folderNameHidden');
+      }
+      if (name === RESERVED_MARKER_NAME) {
+        return t('dialFileManager.folderNameReserved');
+      }
+      if (name.length > 255) {
+        return t('dialFileManager.folderNameTooLong');
+      }
+      const siblings = parentFolder.items ?? [];
+      const lowerName = name.toLowerCase();
+      if (siblings.some((s) => s.name.toLowerCase() === lowerName)) {
+        return t('dialFileManager.folderConflict');
+      }
+      return null;
+    },
+    [t],
+  );
+
+  const onDownloadFiles = useCallback(
+    (dialFiles: DialFile[]) => {
+      const run = async () => {
+        setIsDownloading(true);
+        setDownloadError(null);
+        try {
+          const filename =
+            dialFiles.length === 1
+              ? dialFiles[0].nodeType === DialFileNodeType.ITEM
+                ? dialFiles[0].name
+                : `${dialFiles[0].name}.zip`
+              : 'files.zip';
+          const destination = await prepareDownloadDestination(
+            filename,
+            dialFiles.length === 1 &&
+              dialFiles[0].nodeType === DialFileNodeType.ITEM
+              ? (dialFiles[0].contentType ?? 'application/octet-stream')
+              : 'application/zip',
+          );
+          if (destination.type === DownloadDestinationType.Cancelled) return;
+
+          if (
+            dialFiles.length === 1 &&
+            dialFiles[0].nodeType === DialFileNodeType.ITEM
+          ) {
+            const file = dialFiles[0];
+            if (!file.bucket || !file.id) {
+              throw new Error('File is missing bucket or id');
+            }
+            const filePath = resolveRelativeDialFilePath(file.id, file.bucket);
+            const response = await downloadFile(file.bucket, filePath);
+            await triggerBrowserDownload(response, file.name, destination);
+          } else {
+            const archiveItems = dialFiles.map((f) => ({
+              bucket: f.bucket ?? '',
+              path: resolveRelativeDialFilePath(f.id ?? f.path, f.bucket ?? ''),
+              name: f.name,
+              nodeType:
+                f.nodeType === DialFileNodeType.FOLDER
+                  ? ArchiveItemDtoNodeTypeEnum.Folder
+                  : ArchiveItemDtoNodeTypeEnum.Item,
+            }));
+            const response = await downloadArchive(archiveItems);
+            await triggerBrowserDownload(response, filename, destination);
+          }
+        } catch {
+          setDownloadError(t('dialFileManager.downloadError'));
+        } finally {
+          setIsDownloading(false);
+        }
+      };
+      void run();
+    },
+    [t],
+  );
+
+  const clearDownloadError = useCallback(() => {
+    setDownloadError(null);
+  }, []);
+
+  const clearUploadBatch = useCallback(() => {
+    setUploadBatchState(null);
+  }, []);
+
   const path = folderPath ? `/${rootLabel}/${folderPath}` : `/${rootLabel}`;
 
-  return { items, isLoading, error, path, onPathChange, retry };
+  return {
+    items,
+    isLoading,
+    error,
+    path,
+    onPathChange,
+    retry,
+    onUploadFiles,
+    onValidateUpload,
+    uploadBatchState,
+    cancelUpload,
+    clearUploadBatch,
+    onCreateFolder,
+    onCreateFolderValidate,
+    isCreatingFolder,
+    onDownloadFiles,
+    isDownloading,
+    downloadError,
+    clearDownloadError,
+  };
 };
