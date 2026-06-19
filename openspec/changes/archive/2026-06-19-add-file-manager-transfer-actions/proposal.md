@@ -19,7 +19,8 @@ The three new `DialFileManager` callbacks — `onUploadFiles`, `onCreateFolder`,
 - Delete, rename, move, copy files or folders
 - Sharing and permissions management
 - Uploading ZIP archives and auto-extracting them (`onUploadArchive`)
-- Resumable or chunked upload (no byte-level progress if the generated client cannot report it)
+- Resumable or chunked upload
+- Server-side upload progress streaming (progress is measured client-side during the HTTP request body upload to the BFF)
 - Background download jobs that survive page navigation
 - Persisting upload/download operation state after page reload
 - New global state-management solution
@@ -29,12 +30,12 @@ The three new `DialFileManager` callbacks — `onUploadFiles`, `onCreateFolder`,
 
 ### Upload
 - [ ] Users can select one or more local files from the toolbar "Upload files" action; they are uploaded into the current folder.
-- [ ] An upload status modal shows per-file name and status (queued → uploading → completed | failed | cancelled).
-- [ ] Only per-file indeterminate status is shown (no byte-level progress bar) unless the transport can report it.
+- [ ] An upload progress modal (legacy `FilesUploadingModal` layout) shows each file name and a byte-level progress bar while the transport reports `percent`.
+- [ ] Internal upload state still tracks `queued → uploading → completed | failed | cancelled`, but those status labels are not rendered in the modal UI.
 - [ ] Duplicate filenames: `onValidateUpload` checks existing items and returns an error result; the upload does not silently overwrite.
 - [ ] A partially failed batch keeps successfully uploaded files.
-- [ ] Cancellation is offered; confirmed cancellable files are skipped.
-- [ ] The folder cache is invalidated and refreshed after the batch completes.
+- [ ] Cancellation is offered via a single **Cancel** button; confirmed cancellable files are skipped.
+- [ ] The folder cache is invalidated and refreshed after the batch completes; the modal auto-closes when the batch settles (legacy behavior).
 
 ### Folder creation
 - [ ] Users can click "New folder" in the toolbar to create a named folder.
@@ -124,14 +125,8 @@ New user-visible strings required (keys in `apps/chat/src/i18n/locales/en.json`)
 | `dialFileManager.upload` | `"Upload files"` |
 | `dialFileManager.newFolder` | `"New folder"` |
 | `dialFileManager.download` | `"Download"` |
-| `dialFileManager.uploading` | `"Uploading"` |
-| `dialFileManager.uploadComplete` | `"Complete"` |
-| `dialFileManager.uploadFailed` | `"Failed"` |
-| `dialFileManager.uploadCancelled` | `"Cancelled"` |
-| `dialFileManager.uploadQueued` | `"Queued"` |
-| `dialFileManager.uploadCancelAll` | `"Cancel all"` |
-| `dialFileManager.uploadDone` | `"Done"` |
 | `dialFileManager.uploadProgressTitle` | `"Uploading files"` |
+| `dialFileManager.uploadProgressSummary` | `"{{done}} of {{total}} complete"` |
 | `dialFileManager.uploadConflict` | `"A file with this name already exists"` |
 | `dialFileManager.downloadError` | `"Download failed"` |
 | `dialFileManager.folderCreateError` | `"Failed to create folder"` |

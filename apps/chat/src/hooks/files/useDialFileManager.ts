@@ -336,10 +336,16 @@ const mergeCreatedFolderIntoCache = (
 const updateEntry = (
   prev: FileUploadBatchState | null,
   index: number,
-  status: FileUploadStatus,
+  patch:
+    | FileUploadStatus
+    | Partial<Pick<FileUploadEntry, 'status' | 'percent'>>,
 ): FileUploadBatchState | null => {
   if (!prev) return prev;
-  const files = prev.files.map((f, i) => (i === index ? { ...f, status } : f));
+  const changes =
+    typeof patch === 'string' ? { status: patch } : patch;
+  const files = prev.files.map((f, i) =>
+    i === index ? { ...f, ...changes } : f,
+  );
   return { ...prev, files };
 };
 
@@ -526,7 +532,10 @@ export const useDialFileManager = ({
             }
 
             setUploadBatchState((prev) =>
-              updateEntry(prev, i, FileUploadStatus.Uploading),
+              updateEntry(prev, i, {
+                status: FileUploadStatus.Uploading,
+                percent: 0,
+              }),
             );
 
             try {
@@ -534,10 +543,23 @@ export const useDialFileManager = ({
                 bucket,
                 `${destinationApiPath}${file.name}`,
                 file.fileContent,
-                controller.signal,
+                {
+                  signal: controller.signal,
+                  onProgress: (percent) => {
+                    setUploadBatchState((prev) =>
+                      updateEntry(prev, i, {
+                        status: FileUploadStatus.Uploading,
+                        percent,
+                      }),
+                    );
+                  },
+                },
               );
               setUploadBatchState((prev) =>
-                updateEntry(prev, i, FileUploadStatus.Completed),
+                updateEntry(prev, i, {
+                  status: FileUploadStatus.Completed,
+                  percent: 100,
+                }),
               );
             } catch {
               const status = controller.signal.aborted
@@ -559,6 +581,7 @@ export const useDialFileManager = ({
         });
         setRetryCounter((c) => c + 1);
         uploadAbortControllerRef.current = null;
+        setUploadBatchState(null);
       };
 
       void processBatch();

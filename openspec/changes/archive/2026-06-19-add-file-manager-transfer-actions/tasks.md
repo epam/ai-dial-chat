@@ -264,15 +264,13 @@ npm exec nx typecheck chat
 **Files to create:**
 
 1. **`apps/chat/src/components/DialFileManagerModal/UploadProgressModal.tsx`** (new)
-   - `Props` interface with all labels passed in (no `useTranslation` inside; lib boundary pattern).
-   - `DialPopup` wrapper, `closeOnOutsideClick={false}`, `hideClose` during upload.
-   - File list with `role="log"` + `aria-live="polite"`.
-   - Per-file status chip (Queued / Uploading / Completed / Failed / Cancelled).
-   - Footer: "Cancel all" (while active) / "Done" (when settled).
+   - Legacy `FilesUploadingModal` layout: fixed width, title + summary, per-file progress bar when `percent` is set, single Cancel footer.
+   - All strings passed as props (no `useTranslation` inside; lib boundary pattern).
+   - `data-qa="uploading-indicator"` / `data-qa="uploading-items-count"`.
    - `export default memo(UploadProgressModal)`.
 
 2. **`apps/chat/src/components/DialFileManagerModal/tests/UploadProgressModal.spec.tsx`** (new)
-   - Tests: renders all file statuses, shows Cancel while uploading, shows Done when settled, calls `onCancelAll`, calls `onDone`, RTL class assertions, `role="log"` / `role="alert"` presence.
+   - Tests: progress bar, summary text, Cancel action.
 
 **Architecture guard:** No `useTranslation` inside `UploadProgressModal` — all strings passed as props. No imports from `server-api` or generated client.
 
@@ -321,7 +319,7 @@ npm exec nx typecheck chat
 
 1. **`apps/chat/src/i18n/locales/en.json`** (modify)
    - Add all keys from `proposal.md §i18n Impact` and the three specs.
-   - Keys: `dialFileManager.upload`, `dialFileManager.newFolder`, `dialFileManager.download`, `dialFileManager.uploading`, `dialFileManager.uploadComplete`, `dialFileManager.uploadFailed`, `dialFileManager.uploadCancelled`, `dialFileManager.uploadQueued`, `dialFileManager.uploadCancelAll`, `dialFileManager.uploadDone`, `dialFileManager.uploadProgressTitle`, `dialFileManager.uploadConflict`, `dialFileManager.downloadError`, `dialFileManager.folderCreateError`, `dialFileManager.folderConflict`, `dialFileManager.folderNameEmpty`, `dialFileManager.folderNameInvalidChars`, `dialFileManager.folderNameHidden`, `dialFileManager.folderNameReserved`, `dialFileManager.folderNameTooLong`.
+   - Keys: `dialFileManager.upload`, `dialFileManager.newFolder`, `dialFileManager.download`, `dialFileManager.uploadProgressTitle`, `dialFileManager.uploadProgressSummary`, `dialFileManager.uploadConflict`, `dialFileManager.downloadError`, `dialFileManager.folderCreateError`, `dialFileManager.folderConflict`, `dialFileManager.folderNameEmpty`, `dialFileManager.folderNameInvalidChars`, `dialFileManager.folderNameHidden`, `dialFileManager.folderNameReserved`, `dialFileManager.folderNameTooLong`. Reuse `buttons.cancel` for the upload modal footer.
 
 2. **Caller sites** (wherever `DialFileManagerModal` is rendered in `apps/chat`) — pass the new label props via `t()`.
 

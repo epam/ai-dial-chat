@@ -26,10 +26,11 @@ No changes to the existing contract (see `openspec/specs/file-upload/spec.md`).
 
 - **operationId**: `uploadFile` (existing)
 - **Generated SDK method**: `filesApi.uploadFile({ file, bucket, path })` (existing)
-- **Frontend wrapper**: `uploadFile(bucket, path, file)` in `apps/chat/src/server-api/files.api.ts` (existing)
-- **Generator gap**: None — returns JSON `{ url: string }`.
+- **Frontend wrapper**: `uploadFile(bucket, path, file, options?)` in `apps/chat/src/server-api/files.api.ts`
+- **Progress transport**: when `options.onProgress` is provided, the wrapper uses `uploadFileWithProgress()` (`XMLHttpRequest` → `POST /api/v1/files` with the same multipart fields: `file`, `bucket`, `path`). Otherwise it uses `filesApi.uploadFile()` (fetch via generated client).
+- **Generator gap**: None for JSON response — returns `{ url: string }`. Progress requires the hand-authored XHR wrapper because fetch does not expose upload events.
 
-For cancellation, `filesApi.uploadFile` is called with `initOverrides: { signal: AbortSignal }` — the generated client passes `initOverrides` to the underlying `fetch` call.
+For cancellation, both transport paths accept `signal?: AbortSignal`.
 
 ---
 
@@ -76,35 +77,32 @@ onValidateUpload: async (
 
 ## Upload progress UI
 
-New component `UploadProgressModal` in `apps/chat/src/components/DialFileManagerModal/UploadProgressModal.tsx`.
+`UploadProgressModal` in `apps/chat/src/components/DialFileManagerModal/UploadProgressModal.tsx` — visual parity with legacy [`FilesUploadingModal`](https://github.com/epam/ai-dial-chat/blob/development/apps/chat/src/components/FileManager/FilesUploadingModal.tsx).
 
 **Props interface:**
 ```ts
 interface Props {
   batchState: FileUploadBatchState;
   uploadProgressTitle: string;
-  queuedLabel: string;
-  uploadingLabel: string;
-  completeLabel: string;
-  failedLabel: string;
-  cancelledLabel: string;
-  cancelAllLabel: string;
-  doneLabel: string;
-  onCancelAll: () => void;
-  onDone: () => void;
+  uploadProgressText: string;
+  cancelLabel: string;
+  onCancel: () => void;
 }
 ```
 
 **Behavior:**
-- Opens automatically when `uploadBatchState` becomes non-null.
-- Renders each `FileUploadEntry` as a row: filename (truncated if necessary) + status chip.
-- No byte-level progress bar — uses indeterminate per-file status only.
-- Footer shows "Cancel all" button while any file is `Queued` or `Uploading`.
-- Footer shows "Done" button when all files are `Completed`, `Failed`, or `Cancelled`.
-- `closeOnOutsideClick={false}`, `hideClose` while uploads are in progress (prevents accidental dismissal).
-- After "Done" is clicked, `uploadBatchState` is cleared to `null`.
-- `role="log"` + `aria-live="polite"` on the file-list container.
-- Individual failure rows: `role="alert"`.
+- Opens when `uploadBatchState` is set (non-null).
+- Fixed-width popup (`400px`), `dividers={false}`, `closeOnOutsideClick={false}`, `hideClose`.
+- Header: title + pre-computed summary text (`{{done}} of {{total}} complete`; `done` = files whose status is not `Uploading`).
+- Each row: `DialFileName` + optional progress bar when `entry.percent` is defined. No status chip, no numeric `%` label.
+- Footer: single **Cancel** button. Calls `cancelUpload()` then clears `uploadBatchState`.
+- When the batch settles (`Completed`, `Failed`, or `Cancelled` for all files), `useDialFileManager` auto-clears `uploadBatchState` (legacy auto-dismiss).
+- Internal state still uses `FileUploadStatus` for orchestration; only the progress bar is surfaced in the modal UI.
+- QA hooks: `data-qa="uploading-indicator"` on the bar, `data-qa="uploading-items-count"` on the summary.
+
+**Parent wiring (`DialFileManagerModal`):**
+- Computes `uploadProgressText` via `useTranslation` and passes it with `buttons.cancel` as `cancelLabel`.
+- No `useTranslation` inside `UploadProgressModal` (lib boundary pattern).
 
 ---
 
@@ -113,17 +111,12 @@ interface Props {
 | Key | English |
 |-----|---------|
 | `dialFileManager.upload` | `"Upload files"` |
-| `dialFileManager.uploading` | `"Uploading"` |
-| `dialFileManager.uploadComplete` | `"Complete"` |
-| `dialFileManager.uploadFailed` | `"Failed"` |
-| `dialFileManager.uploadCancelled` | `"Cancelled"` |
-| `dialFileManager.uploadQueued` | `"Queued"` |
-| `dialFileManager.uploadCancelAll` | `"Cancel all"` |
-| `dialFileManager.uploadDone` | `"Done"` |
 | `dialFileManager.uploadProgressTitle` | `"Uploading files"` |
+| `dialFileManager.uploadProgressSummary` | `"{{done}} of {{total}} complete"` |
 | `dialFileManager.uploadConflict` | `"A file with this name already exists"` |
+| `buttons.cancel` | `"Cancel"` (reused common key for modal footer) |
 
-All keys go in `apps/chat/src/i18n/locales/en.json`. Passed as props to `UploadProgressModal` (lib boundary respected).
+All `dialFileManager.*` keys go in `apps/chat/src/i18n/locales/en.json`. Summary and cancel label are resolved in `DialFileManagerModal` and passed as props to `UploadProgressModal`.
 
 ---
 
@@ -144,17 +137,15 @@ setRetryCounter((c) => c + 1); // re-fetch current folder
 
 ## RTL / direction impact
 
-- `UploadProgressModal` uses logical Tailwind classes: `ms-*`, `me-*`, `ps-*`, `pe-*`, `text-start`.
-- No directional icons in the upload modal body (status chips are text-only).
-- Cancel/Done buttons are symmetric — no mirroring needed.
+- `UploadProgressModal` uses symmetric layout (filename + full-width bar); no directional icons.
+- Cancel button is symmetric — no mirroring needed.
 
 ---
 
 ## Accessibility
 
-- `UploadProgressModal` file-list container: `role="log"`, `aria-live="polite"`.
-- Failed-file rows: `role="alert"`.
-- All buttons have visible text labels.
+- Progress bars expose `role="progressbar"` with `aria-valuenow/min/max`.
+- Cancel button has a visible text label (`buttons.cancel`).
 - Focus is trapped inside `DialPopup` while open (ui-kit built-in).
 
 ---
@@ -187,11 +178,11 @@ Reuses `POST /api/v1/files` limit: `@Throttle({ default: { limit: 20, ttl: 60000
 - **WHEN** the user clicks "Upload files", selects `report.pdf`, and confirms
 - **THEN** `onUploadFiles([{ name: 'report.pdf', fileContent: File }], '/All files')` is called
 - **AND** `uploadBatchState` is set with one entry `{ name: 'report.pdf', status: FileUploadStatus.Queued }`
-- **AND** `UploadProgressModal` opens showing the file as "Queued"
-- **AND** the file transitions to "Uploading", then "Completed"
-- **AND** `POST /api/v1/files` is called with `{ bucket, path: 'report.pdf', file }`
+- **AND** `UploadProgressModal` opens showing the file name (no status label)
+- **AND** the file transitions through internal `Uploading` with a progress bar, then `Completed`
+- **AND** `POST /api/v1/files` is called with `{ bucket, path: 'report.pdf', file }` via the XHR progress transport
 - **AND** after completion the root folder cache is invalidated and re-fetched
-- **AND** "Done" button appears; clicking it closes the modal
+- **AND** the modal auto-closes when the batch settles
 
 ---
 
@@ -229,16 +220,16 @@ Reuses `POST /api/v1/files` limit: `@Throttle({ default: { limit: 20, ttl: 60000
 
 - **GIVEN** the user uploads 3 files; the second fails with a `502` from the BFF
 - **WHEN** the batch completes
-- **THEN** files 1 and 3 show "Completed"; file 2 shows "Failed"
+- **THEN** files 1 and 3 reach `Completed` internally; file 2 reaches `Failed`
 - **AND** the folder cache is still invalidated and re-fetched (successfully uploaded files appear)
-- **AND** the user can see which file failed before clicking "Done"
+- **AND** the modal auto-closes when the batch settles
 
 ---
 
 ### Scenario: Upload cancellation
 
 - **GIVEN** an upload batch of 4 files is in progress (2 uploading, 2 queued)
-- **WHEN** the user clicks "Cancel all"
+- **WHEN** the user clicks **Cancel**
 - **THEN** `cancelUpload()` is called; the `AbortController` is aborted
 - **AND** the 2 in-flight requests receive an abort signal and reject
 - **AND** the 2 in-flight files transition to "Cancelled"; the 2 queued files also transition to "Cancelled"
@@ -260,7 +251,7 @@ Reuses `POST /api/v1/files` limit: `@Throttle({ default: { limit: 20, ttl: 60000
 - **GIVEN** the user selects a file larger than `FILE_UPLOAD_MAX_BYTES` (default 512 MB)
 - **WHEN** `POST /api/v1/files` receives the request
 - **THEN** multer rejects the request; the BFF returns `413 Payload Too Large`
-- **AND** the file entry transitions to "Failed" in the upload modal
+- **AND** the file entry transitions to `Failed` internally; the modal auto-closes when the batch settles
 
 ---
 

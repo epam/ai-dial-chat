@@ -1,107 +1,87 @@
 import {
-  DialGhostButton,
+  DialFileName,
+  DialNeutralButton,
   DialPopup,
-  DialPrimaryButton,
-  PopupSize,
 } from '@epam/ai-dial-ui-kit';
-import { memo, type FC } from 'react';
+import { memo, useCallback, type FC, type ReactNode } from 'react';
 import type { FileUploadBatchState } from './types/upload';
-import { FileUploadStatus } from './types/upload';
 
 interface Props {
   batchState: FileUploadBatchState;
   uploadProgressTitle: string;
-  queuedLabel: string;
-  uploadingLabel: string;
-  completeLabel: string;
-  failedLabel: string;
-  cancelledLabel: string;
-  cancelAllLabel: string;
-  doneLabel: string;
-  onCancelAll: () => void;
-  onDone: () => void;
+  uploadProgressText: string;
+  cancelLabel: string;
+  onCancel: () => void;
 }
-
-const STATUS_CLASS: Record<FileUploadStatus, string> = {
-  [FileUploadStatus.Queued]: 'text-secondary-bg-accent',
-  [FileUploadStatus.Uploading]: 'text-accent',
-  [FileUploadStatus.Completed]: 'text-success',
-  [FileUploadStatus.Failed]: 'text-error',
-  [FileUploadStatus.Cancelled]: 'text-secondary',
-};
 
 const UploadProgressModal: FC<Props> = ({
   batchState,
   uploadProgressTitle,
-  queuedLabel,
-  uploadingLabel,
-  completeLabel,
-  failedLabel,
-  cancelledLabel,
-  cancelAllLabel,
-  doneLabel,
-  onCancelAll,
-  onDone,
+  uploadProgressText,
+  cancelLabel,
+  onCancel,
 }) => {
   const { files } = batchState;
 
-  const isActive = files.some(
-    (f) =>
-      f.status === FileUploadStatus.Queued ||
-      f.status === FileUploadStatus.Uploading,
-  );
+  const renderDetails = useCallback((percent?: number): ReactNode => {
+    if (percent === undefined) {
+      return null;
+    }
 
-  const statusLabel: Record<FileUploadStatus, string> = {
-    [FileUploadStatus.Queued]: queuedLabel,
-    [FileUploadStatus.Uploading]: uploadingLabel,
-    [FileUploadStatus.Completed]: completeLabel,
-    [FileUploadStatus.Failed]: failedLabel,
-    [FileUploadStatus.Cancelled]: cancelledLabel,
-  };
+    return (
+      <div
+        className="h-1 w-full overflow-hidden rounded-full bg-layer-1"
+        data-qa="uploading-indicator"
+        role="progressbar"
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={percent}
+      >
+        <div
+          className="bg-accent-primary h-full rounded-full transition-all duration-300"
+          style={{ width: `${percent}%` }}
+        />
+      </div>
+    );
+  }, []);
 
   return (
     <DialPopup
+      className="!h-fit !max-h-full !w-[400px] large_tablet:!max-h-[693px]"
       open={batchState.isOpen}
-      header={uploadProgressTitle}
-      size={PopupSize.Md}
+      dividers={false}
       closeOnOutsideClick={false}
-      hideClose={isActive}
-      onClose={onDone}
+      hideClose
+      onClose={onCancel}
       footer={
-        <div className="flex justify-end px-6 py-4">
-          {isActive ? (
-            <DialGhostButton label={cancelAllLabel} onClick={onCancelAll} />
-          ) : (
-            <DialPrimaryButton label={doneLabel} onClick={onDone} />
-          )}
+        <div className="flex justify-end gap-2 px-6 py-4">
+          <DialNeutralButton label={cancelLabel} onClick={onCancel} />
+        </div>
+      }
+      header={
+        <div className="flex flex-col gap-2">
+          <div>{uploadProgressTitle}</div>
+          <div
+            className="text-sm text-secondary"
+            data-qa="uploading-items-count"
+          >
+            {uploadProgressText}
+          </div>
         </div>
       }
     >
-      <ul
-        role="log"
-        aria-live="polite"
-        aria-label={uploadProgressTitle}
-        className="flex flex-col gap-1 overflow-y-auto px-6 py-4"
-      >
-        {files.map((entry) => (
-          <li
-            key={entry.id}
-            className="flex items-center justify-between gap-2 py-1"
-            role={
-              entry.status === FileUploadStatus.Failed ? 'alert' : undefined
-            }
-          >
-            <span className="min-w-0 flex-1 truncate text-sm text-primary">
-              {entry.name}
-            </span>
-            <span
-              className={`shrink-0 text-xs font-medium ${STATUS_CLASS[entry.status]}`}
-            >
-              {statusLabel[entry.status]}
-            </span>
-          </li>
-        ))}
-      </ul>
+      <div className="flex h-full max-h-full flex-col gap-4 px-6">
+        <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto">
+          {files.map((entry) => (
+            <div key={entry.id} className="rounded bg-layer-2 px-3 py-2">
+              <DialFileName
+                name={entry.name}
+                details={renderDetails(entry.percent)}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
     </DialPopup>
   );
 };

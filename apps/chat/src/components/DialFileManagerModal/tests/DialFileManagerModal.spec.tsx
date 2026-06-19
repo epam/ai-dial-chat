@@ -152,13 +152,7 @@ const defaultProps = {
   downloadLabel: 'Download',
   downloadingLabel: 'Preparing download…',
   uploadProgressTitle: 'Uploading files',
-  uploadQueuedLabel: 'Queued',
-  uploadingLabel: 'Uploading',
-  uploadCompleteLabel: 'Complete',
-  uploadFailedLabel: 'Failed',
-  uploadCancelledLabel: 'Cancelled',
-  cancelAllLabel: 'Cancel all',
-  uploadDoneLabel: 'Done',
+  cancelLabel: 'Cancel',
 };
 
 describe('DialFileManagerModal', () => {

@@ -250,6 +250,57 @@ describe('useDialFileManager', () => {
     expect(result.current.isCreatingFolder).toBe(false);
   });
 
+  it('updates upload percent while a file is uploading', async () => {
+    const mockUploadFile = vi.mocked(filesApi.uploadFile);
+    let finishUpload: (() => void) | undefined;
+
+    mockUploadFile.mockImplementation(
+      (_bucket, _path, _file, options) =>
+        new Promise((resolve) => {
+          const resolved =
+            options instanceof AbortSignal
+              ? { signal: options }
+              : (options ?? {});
+          resolved.onProgress?.(35);
+          finishUpload = () => {
+            resolved.onProgress?.(100);
+            resolve({ url: 'files/test-bucket/report.pdf' });
+          };
+        }),
+    );
+    mockListFiles.mockResolvedValue({
+      bucket: BUCKET,
+      path: '',
+      items: [],
+      permissions: ['READ', 'WRITE'],
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onUploadFiles(
+        [
+          {
+            name: 'report.pdf',
+            fileContent: new File(['data'], 'report.pdf'),
+          },
+        ],
+        '/All files',
+      );
+    });
+
+    await waitFor(() =>
+      expect(result.current.uploadBatchState?.files[0]?.percent).toBe(35),
+    );
+
+    await act(async () => {
+      finishUpload?.();
+    });
+
+    await waitFor(() => expect(result.current.uploadBatchState).toBeNull());
+  });
+
   it('creates a folder using the name from the virtual path, not the marker file', async () => {
     const mockCreateFolder = vi.mocked(filesApi.createFolder);
     mockCreateFolder.mockResolvedValue({

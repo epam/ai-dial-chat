@@ -32,6 +32,7 @@ import {
   ConversationI18nKeys,
   DeploymentsI18nKeys,
   DialFileManagerI18nKeys,
+  ButtonsI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
@@ -445,13 +446,7 @@ const ConversationRoute: FC = () => {
             downloadLabel={t(DialFileManagerI18nKeys.Download)}
             downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
             uploadProgressTitle={t(DialFileManagerI18nKeys.UploadProgressTitle)}
-            uploadQueuedLabel={t(DialFileManagerI18nKeys.UploadQueued)}
-            uploadingLabel={t(DialFileManagerI18nKeys.Uploading)}
-            uploadCompleteLabel={t(DialFileManagerI18nKeys.UploadComplete)}
-            uploadFailedLabel={t(DialFileManagerI18nKeys.UploadFailed)}
-            uploadCancelledLabel={t(DialFileManagerI18nKeys.UploadCancelled)}
-            cancelAllLabel={t(DialFileManagerI18nKeys.UploadCancelAll)}
-            uploadDoneLabel={t(DialFileManagerI18nKeys.UploadDone)}
+            cancelLabel={t(ButtonsI18nKeys.Cancel)}
           />
         )}
       </Suspense>

@@ -86,16 +86,20 @@ The generated `@epam/chat-api-client` `FilesApi` has methods: `downloadFile`, `d
 
 ### 3.4 Upload progress
 
-The generated OpenAPI fetch client does not expose `XMLHttpRequest.onprogress`; therefore byte-level progress is **not available**. The UI shows per-file status only: `Queued`, `Uploading` (indeterminate), `Completed`, `Failed`, `Cancelled`. No byte-level progress bar is displayed.
+The generated OpenAPI fetch client does not expose `XMLHttpRequest.upload.onprogress`. When byte-level progress is required, `apps/chat/src/server-api/files.api.ts` routes uploads with an `onProgress` callback through `uploadFileWithProgress()` (`XMLHttpRequest` to `POST /api/v1/files`). Uploads without `onProgress` continue to use the generated client.
 
-### 3.5 Upload status modal
+Progress reflects bytes sent from the browser to the chat-api BFF (not BFF → DIAL Core). Each `FileUploadEntry` stores optional `percent` (0–100) while uploading.
 
-A new `UploadProgressModal` component in `apps/chat/src/components/DialFileManagerModal/UploadProgressModal.tsx`:
-- Renders as a `DialPopup` (`closeOnOutsideClick={false}`, `hideClose` while uploads are in progress).
-- Shows each file as a row: name + status chip.
-- Footer: "Cancel all" button (visible while any file is `Queued` or `Uploading`); "Done" button (visible when all files have settled).
-- `role="log"` + `aria-live="polite"` on the file-list container for screen-reader announcements.
-- Errors use `role="alert"` on individual failure rows.
+### 3.5 Upload progress modal
+
+`UploadProgressModal` in `apps/chat/src/components/DialFileManagerModal/UploadProgressModal.tsx` matches the legacy [`FilesUploadingModal`](https://github.com/epam/ai-dial-chat/blob/development/apps/chat/src/components/FileManager/FilesUploadingModal.tsx) layout:
+
+- `DialPopup` with fixed width (`400px`), `dividers={false}`, `closeOnOutsideClick={false}`, `hideClose`.
+- Header: title + summary (`{{done}} of {{total}} complete`, where `done` counts files whose status is not `Uploading`).
+- Body: file rows with `DialFileName` and an optional progress bar when `percent` is defined (no per-file status text, no numeric `%` label).
+- Footer: single **Cancel** button (`buttons.cancel`); aborts in-flight uploads and closes the modal.
+- When the batch settles, `useDialFileManager` clears `uploadBatchState` automatically (legacy auto-dismiss).
+- QA hooks: `data-qa="uploading-indicator"`, `data-qa="uploading-items-count"`.
 
 ---
 
@@ -338,13 +342,7 @@ interface Props {
   newFolderLabel: string;
   downloadLabel: string;
   uploadProgressTitle: string;
-  uploadQueuedLabel: string;
-  uploadingLabel: string;
-  uploadCompleteLabel: string;
-  uploadFailedLabel: string;
-  uploadCancelledLabel: string;
-  cancelAllLabel: string;
-  uploadDoneLabel: string;
+  cancelLabel: string;
   folderConflictMessage: string;
 }
 ```
@@ -445,7 +443,7 @@ npm exec nx lint chat-api-client
 ## 14. Accessibility, RTL, Responsive, i18n
 
 ### Accessibility
-- `UploadProgressModal`: file list uses `role="log"` + `aria-live="polite"` for status updates; error rows use `role="alert"`; all buttons have visible text labels (no icon-only buttons without `aria-label`).
+- `UploadProgressModal`: progress bars use `role="progressbar"`; Cancel button has a visible text label.
 - All icon buttons in new toolbar actions have `aria-label` via i18n `t()`.
 - `DialFileManager` provides built-in keyboard navigation for tree, grid, and context menus.
 

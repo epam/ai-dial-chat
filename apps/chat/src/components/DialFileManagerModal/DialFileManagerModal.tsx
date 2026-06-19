@@ -11,8 +11,10 @@ import {
   type FileManagerGridRow,
 } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, useCallback, useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
 import UploadProgressModal from './UploadProgressModal';
+import { FileUploadStatus } from './types/upload';
 
 interface Props {
   isOpen: boolean;
@@ -34,13 +36,7 @@ interface Props {
   downloadLabel: string;
   downloadingLabel: string;
   uploadProgressTitle: string;
-  uploadQueuedLabel: string;
-  uploadingLabel: string;
-  uploadCompleteLabel: string;
-  uploadFailedLabel: string;
-  uploadCancelledLabel: string;
-  cancelAllLabel: string;
-  uploadDoneLabel: string;
+  cancelLabel: string;
 }
 
 const DialFileManagerModal: FC<Props> = ({
@@ -63,14 +59,9 @@ const DialFileManagerModal: FC<Props> = ({
   downloadLabel,
   downloadingLabel,
   uploadProgressTitle,
-  uploadQueuedLabel,
-  uploadingLabel,
-  uploadCompleteLabel,
-  uploadFailedLabel,
-  uploadCancelledLabel,
-  cancelAllLabel,
-  uploadDoneLabel,
+  cancelLabel,
 }) => {
+  const { t } = useTranslation();
   const {
     items,
     isLoading,
@@ -125,6 +116,26 @@ const DialFileManagerModal: FC<Props> = ({
   const handleAttach = useCallback(() => {
     onAttach(selectedFiles);
   }, [onAttach, selectedFiles]);
+
+  const uploadProgressText = useMemo(() => {
+    if (uploadBatchState == null) {
+      return '';
+    }
+
+    const done = uploadBatchState.files.filter(
+      (file) => file.status !== FileUploadStatus.Uploading,
+    ).length;
+
+    return t('dialFileManager.uploadProgressSummary', {
+      done,
+      total: uploadBatchState.files.length,
+    });
+  }, [uploadBatchState, t]);
+
+  const handleUploadCancel = useCallback(() => {
+    cancelUpload();
+    clearUploadBatch();
+  }, [cancelUpload, clearUploadBatch]);
 
   const isOperationInProgress =
     isDownloading || isCreatingFolder || uploadBatchState != null;
@@ -272,15 +283,9 @@ const DialFileManagerModal: FC<Props> = ({
         <UploadProgressModal
           batchState={uploadBatchState}
           uploadProgressTitle={uploadProgressTitle}
-          queuedLabel={uploadQueuedLabel}
-          uploadingLabel={uploadingLabel}
-          completeLabel={uploadCompleteLabel}
-          failedLabel={uploadFailedLabel}
-          cancelledLabel={uploadCancelledLabel}
-          cancelAllLabel={cancelAllLabel}
-          doneLabel={uploadDoneLabel}
-          onCancelAll={cancelUpload}
-          onDone={clearUploadBatch}
+          uploadProgressText={uploadProgressText}
+          cancelLabel={cancelLabel}
+          onCancel={handleUploadCancel}
         />
       )}
     </>

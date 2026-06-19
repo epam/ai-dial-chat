@@ -7,6 +7,17 @@ import type {
   ListFilesResponseDto,
 } from '@epam/chat-api-client';
 import { filesApi } from './api-client';
+import {
+  type UploadFileWithProgressOptions,
+  uploadFileWithProgress,
+} from './upload-file-with-progress';
+
+export type UploadFileOptions = UploadFileWithProgressOptions;
+
+const resolveUploadOptions = (
+  options?: AbortSignal | UploadFileOptions,
+): UploadFileOptions =>
+  options instanceof AbortSignal ? { signal: options } : (options ?? {});
 
 export const listFiles = (params: {
   bucket: string;
@@ -21,9 +32,19 @@ export const uploadFile = (
   bucket: string,
   path: string,
   file: File,
-  signal?: AbortSignal,
-): Promise<FileUploadResponseDto> =>
-  filesApi.uploadFile({ bucket, path, file }, signal ? { signal } : undefined);
+  options?: AbortSignal | UploadFileOptions,
+): Promise<FileUploadResponseDto> => {
+  const { signal, onProgress } = resolveUploadOptions(options);
+
+  if (onProgress != null) {
+    return uploadFileWithProgress(bucket, path, file, { signal, onProgress });
+  }
+
+  return filesApi.uploadFile(
+    { bucket, path, file },
+    signal ? { signal } : undefined,
+  );
+};
 
 export const getFileMetadata = (params: {
   bucket: string;
