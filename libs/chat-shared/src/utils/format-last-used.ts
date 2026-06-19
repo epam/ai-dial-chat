@@ -1,13 +1,13 @@
 /**
- * Converts an ISO 8601 timestamp to a human-readable "last used" string,
+ * Converts a timestamp to a human-readable "last used" string,
  * e.g. "just now", "5 min ago", "3 hours ago", "2 days ago".
  *
  * Returns an empty string when the input is falsy or not a valid date.
  */
-export const formatLastUsed = (iso?: string): string => {
-  if (!iso) return '';
+export const formatLastUsed = (timestamp?: number): string => {
+  if (!timestamp) return '';
 
-  const date = new Date(iso);
+  const date = new Date(timestamp);
   if (isNaN(date.getTime())) return '';
 
   const diffMs = Date.now() - date.getTime();

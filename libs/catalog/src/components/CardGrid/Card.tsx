@@ -4,17 +4,13 @@ import {
   Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DialGhostIconButton,
-  DialTag,
-} from '@epam/ai-dial-ui-kit';
-import { IconStar, IconStarFilled } from '@tabler/icons-react';
+import { DialTag } from '@epam/ai-dial-ui-kit';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import type { CardProps } from '../../models/card-props';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
+import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { TopicTag } from '../TopicTag/TopicTag';
 import styles from './CardGrid.module.scss';
 
@@ -109,21 +105,15 @@ export const Card: FC<CardProps> = ({
           <ItemHeader
             title={item.name}
             query={query}
-            count={item.version}
-            countClassName={versionClassName}
+            postfix={item.version}
+            postfixClassName={versionClassName}
             titleClassName={nameClassName}
             className="mt-0.5 flex items-start gap-1"
           />
         </div>
       </div>
 
-      <p
-        className={mergeClasses(
-          'm-0 overflow-hidden [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [display:-webkit-box]',
-          descriptionClassName,
-          styles.description,
-        )}
-      >
+      <p className={mergeClasses(descriptionClassName, styles.description)}>
         <Highlight text={item.description} query={query} />
       </p>
 
@@ -136,19 +126,7 @@ export const Card: FC<CardProps> = ({
 
         <div className="mt-4 flex items-center justify-between border-t border-secondary pt-2">
           <FolderPath segments={item.folder} />
-          <DialGhostIconButton
-            icon={
-              isStarred ? (
-                <IconStarFilled
-                  size={DIAL_ICON_SIZE.SM}
-                  className={styles.starFilledIcon}
-                />
-              ) : (
-                <IconStar size={DIAL_ICON_SIZE.SM} />
-              )
-            }
-            onClick={handleToggle}
-          />
+          <StarToggleButton isStarred={isStarred} onClick={handleToggle} />
         </div>
       </div>
     </div>

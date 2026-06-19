@@ -155,7 +155,7 @@ export const Catalog: FC<CatalogProps> = ({
     label: (
       <ItemHeader
         title={typeof tab.label === 'string' ? tab.label : String(tab.label)}
-        count={filtered.filter((item) => item.type === tab.id).length}
+        postfix={filtered.filter((item) => item.type === tab.id).length}
       />
     ),
   }));

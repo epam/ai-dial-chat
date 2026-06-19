@@ -27,19 +27,13 @@ export const NameCellRenderer: FC<
       <div className="flex min-w-0 flex-col gap-0.5">
         <ItemHeader
           title={data.name}
-          count={data.version}
-          countClassName={versionClassName}
+          postfix={data.version}
+          postfixClassName={versionClassName}
           query={searchQuery}
           titleClassName={nameClassName}
           className="items-baseline gap-1.5"
         />
-        <p
-          className={mergeClasses(
-            'm-0 overflow-hidden [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [display:-webkit-box]',
-            descriptionClassName,
-            styles.secondaryText,
-          )}
-        >
+        <p className={mergeClasses(descriptionClassName, styles.secondaryText)}>
           <Highlight text={data.description} query={searchQuery} />
         </p>
       </div>
