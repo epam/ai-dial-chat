@@ -2,14 +2,6 @@
   background: var(--cat-browse-bg, var(--bg-layer-1, #0c101d));
 }
 
-.title {
-  color: var(--cat-browse-title-text, var(--text-primary, #eef1f7));
-}
-
-.count {
-  color: var(--cat-browse-count-text, var(--text-secondary, #9fa6bd));
-}
-
 .icon {
   color: var(--cat-browse-icon, var(--text-secondary, #9fa6bd));
 }

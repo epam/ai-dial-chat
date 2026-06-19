@@ -1,4 +1,3 @@
-import type { FavoriteItem } from '@epam/ai-dial-catalog';
 import { Catalog } from '@epam/ai-dial-catalog';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
@@ -10,9 +9,6 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
-// TODO: add favorites functionality and replace with actual favorites from backend
-const EMPTY_FAVORITES: FavoriteItem[] = [];
-
 const CatalogView: FC = () => {
   const { t } = useTranslation();
   const { items: deployments, isLoading } = useDeployments();
@@ -22,11 +18,21 @@ const CatalogView: FC = () => {
     [deployments],
   );
 
+  const favorites = useMemo(
+    () => catalogItems.filter((item) => item.isUserFavorite),
+    [catalogItems],
+  );
+
+  const filteredItems = useMemo(
+    () => catalogItems.filter((item) => !item.isUserFavorite),
+    [catalogItems],
+  );
+
   return (
     <Catalog
-      items={catalogItems}
+      items={filteredItems}
       isLoading={isLoading}
-      favorites={EMPTY_FAVORITES}
+      favorites={favorites}
       titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),
         createLabel: t(ButtonsI18nKeys.Create),

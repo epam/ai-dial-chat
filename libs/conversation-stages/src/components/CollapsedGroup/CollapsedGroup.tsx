@@ -96,10 +96,10 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
             }
           />
           <div
-            className={[
+            className={mergeClasses(
               'grid pt-1 transition-[grid-template-rows] duration-300 ease-in-out',
               isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]',
-            ].join(' ')}
+            )}
           >
             <div className="overflow-hidden">
               <div

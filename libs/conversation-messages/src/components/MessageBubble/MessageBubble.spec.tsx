@@ -351,19 +351,17 @@ describe('AssistantMessageBubble — attachments', () => {
     expect(container.querySelector('.min-w-0.max-w-full')).not.toBeNull();
   });
 
-  it('allows long unbroken code block lines to wrap inside the bubble', () => {
+  it('allows long unbroken code block lines to scroll horizontally inside the bubble', () => {
     const longToken = `integrity sha512-${'f2'.repeat(120)}`;
 
     const { container } = render(
       <AssistantMessageBubble text={`\`\`\`\n${longToken}\n\`\`\``} />,
     );
 
-    const pre = container.querySelector('pre');
+    const scrollContainer = container.querySelector('[dir="ltr"]');
     const code = container.querySelector('pre code');
-    expect(pre?.className).toContain('whitespace-pre-wrap');
-    expect(pre?.className).toContain('[overflow-wrap:anywhere]');
-    expect(code?.className).toContain('whitespace-pre-wrap');
-    expect(code?.className).toContain('[overflow-wrap:anywhere]');
+    expect(scrollContainer?.className).toContain('overflow-auto');
+    expect(code?.className).toContain('whitespace-pre');
   });
 
   it('reveals appended streaming text gradually', () => {
