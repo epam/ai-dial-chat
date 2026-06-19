@@ -9,8 +9,8 @@ import {
   mapDialHttpStatus,
 } from '../common/utils/dial-fetch-error';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { HIDDEN_FILE } from '../constants/dial.constants';
 import { UserConfigService } from '../user-config/user-config.service';
-import { HIDDEN_FILE } from './constants/dial.constants';
 import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import type {
   DeploymentItemDto,

@@ -48,6 +48,7 @@ import {
   safeDecodeURIComponent,
 } from './utils/conversation.utils';
 import { resolveUniqueConversationName } from './utils/resolve-unique-conversation-name';
+import { HIDDEN_FILE } from '../constants/dial.constants';
 
 const getValidAttachments = (
   customContent?: ConversationMessageDto['custom_content'],
@@ -531,9 +532,11 @@ export class ConversationService extends AppService {
               })
           : [];
 
-      const items = [...userItems, ...publicItems, ...sharedItems].sort(
-        (a, b) => b.updatedAt - a.updatedAt,
-      );
+      const items = [...userItems, ...publicItems, ...sharedItems]
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+        .filter(
+          (item) => item.id !== HIDDEN_FILE && !item.id.includes(HIDDEN_FILE),
+        );
 
       return {
         items,
