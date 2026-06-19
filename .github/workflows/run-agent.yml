@@ -32,11 +32,14 @@ permissions:
 
 jobs:
   agent:
-    # Generic name so the matrix path reads `dispatch / <agent> / agent` (the
-    # agent name appears once, at the matrix level, instead of doubled). The
-    # upstream-wait step matches the agent name as a path segment, so this is
-    # safe.
-    name: agent
+    # Name the inner (leaf) reusable job after the agent. GitHub's "All jobs"
+    # sidebar — the primary nav — shows the LEAF reusable job's name, so this is
+    # what makes each matrix row distinguishable (a generic `agent` rendered
+    # every row identically). The dispatcher's matrix job uses a constant middle
+    # segment, so the graph path reads `dispatch / agent / <agent>` (no doubling)
+    # while the sidebar reads `<agent>`. The upstream-wait step matches the agent
+    # name as the trailing path segment.
+    name: ${{ inputs.agent_name }}
     runs-on: ubuntu-latest
     # TEMPORARY (validation): use the security-review environment's DIAL key,
     # which has the Anthropic route + the anthropic.claude-sonnet-4-6 deployment

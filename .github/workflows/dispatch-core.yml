@@ -79,7 +79,14 @@ jobs:
   # as soon as ITS upstream finishes rather than waiting on a whole round.
   # fail-fast: false keeps independent agents running if one fails.
   run-agents:
-    name: ${{ matrix.agent.name }}
+    # Constant middle segment (NOT the agent name). GitHub's "All jobs" sidebar
+    # shows the LEAF reusable job's name — run-agent's `agent` job, which we name
+    # after the agent — so the agent name belongs there, not here. Putting it
+    # here too would double the graph path to `dispatch / <agent> / <agent>`.
+    # With a constant the path reads cleanly as `dispatch / agent / <agent>` in
+    # the graph while the sidebar stays `<agent>`. The upstream-wait step matches
+    # the agent name as the trailing path segment, so this is safe.
+    name: agent
     needs: discover
     if: needs.discover.outputs.agents != '[]'
     strategy:
