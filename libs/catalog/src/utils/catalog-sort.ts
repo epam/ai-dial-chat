@@ -25,7 +25,7 @@ export const sortCatalogItems = (
         if (!a.updatedAt && !b.updatedAt) return 0;
         if (!a.updatedAt) return 1;
         if (!b.updatedAt) return -1;
-        return b.updatedAt.localeCompare(a.updatedAt);
+        return b.updatedAt - a.updatedAt;
       });
     }
     return group;
