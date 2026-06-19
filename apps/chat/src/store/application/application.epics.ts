@@ -31,7 +31,10 @@ import {
   isApplicationType,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
-import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
+import {
+  cleanSchemaId,
+  doesSchemaContainMcpEndpoint,
+} from '@/src/utils/app/application-type-schema';
 import { getLastPathSegment, getSafeRedirectUrl } from '@/src/utils/app/common';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
@@ -143,6 +146,7 @@ const createApplicationEpic: AppEpic = (action$) =>
               if (retrievedApplication) {
                 const featuresRecord: Record<string, boolean | undefined> = {
                   ...(retrievedApplication.features || {}),
+                  mcp: schema ? doesSchemaContainMcpEndpoint(schema) : false,
                 };
 
                 const modelData = {
