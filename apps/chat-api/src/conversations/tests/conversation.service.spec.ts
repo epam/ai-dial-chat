@@ -1,8 +1,11 @@
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialError } from '../../common/utils/dial-error';
-import { MessageRole, StatusEvent } from '../types/dial-core-conversation';
 import { ConversationService } from '../conversation.service';
+import {
+  ConversationMessageRole,
+  StatusEvent,
+} from '../dto/conversation-message.dto';
 
 vi.mock('../../common/utils/dial-error', () => ({
   handleDialError: vi.fn(),
@@ -560,19 +563,19 @@ describe('ConversationService', () => {
       updatedAt: 0,
     };
 
-    it('excludes MessageRole.Status messages from the DIAL Core payload', async () => {
+    it('excludes ConversationMessageRole.Status messages from the DIAL Core payload', async () => {
       const conversation = {
         ...baseConversation,
         messages: [
           {
             id: 'u1',
-            role: MessageRole.User,
+            role: ConversationMessageRole.User,
             content: 'Hello',
             timestamp: '2024-01-01T00:00:00.000Z',
           },
           {
             id: 's1',
-            role: MessageRole.Status,
+            role: ConversationMessageRole.Status,
             content: '',
             timestamp: '2024-01-01T00:00:01.000Z',
             custom_content: {
@@ -583,7 +586,7 @@ describe('ConversationService', () => {
           },
           {
             id: 'a1',
-            role: MessageRole.Assistant,
+            role: ConversationMessageRole.Assistant,
             content: 'Hi there',
             timestamp: '2024-01-01T00:00:02.000Z',
           },
@@ -611,13 +614,15 @@ describe('ConversationService', () => {
 
       const sentMessages: { role: string }[] =
         sendSpy.mock.calls[0][1].body.messages;
-      expect(sentMessages.some((m) => m.role === MessageRole.Status)).toBe(
-        false,
-      );
-      expect(sentMessages.some((m) => m.role === MessageRole.User)).toBe(true);
-      expect(sentMessages.some((m) => m.role === MessageRole.Assistant)).toBe(
-        true,
-      );
+      expect(
+        sentMessages.some((m) => m.role === ConversationMessageRole.Status),
+      ).toBe(false);
+      expect(
+        sentMessages.some((m) => m.role === ConversationMessageRole.User),
+      ).toBe(true);
+      expect(
+        sentMessages.some((m) => m.role === ConversationMessageRole.Assistant),
+      ).toBe(true);
     });
 
     it('includes all non-status messages in the DIAL Core payload', async () => {
@@ -626,13 +631,13 @@ describe('ConversationService', () => {
         messages: [
           {
             id: 'u1',
-            role: MessageRole.User,
+            role: ConversationMessageRole.User,
             content: 'First',
             timestamp: '2024-01-01T00:00:00.000Z',
           },
           {
             id: 's1',
-            role: MessageRole.Status,
+            role: ConversationMessageRole.Status,
             content: '',
             timestamp: '2024-01-01T00:00:01.000Z',
             custom_content: {
@@ -643,7 +648,7 @@ describe('ConversationService', () => {
           },
           {
             id: 'a1',
-            role: MessageRole.Assistant,
+            role: ConversationMessageRole.Assistant,
             content: 'Response',
             timestamp: '2024-01-01T00:00:02.000Z',
           },
@@ -673,15 +678,15 @@ describe('ConversationService', () => {
         sendSpy.mock.calls[0][1].body.messages;
       expect(sentMessages).toHaveLength(3); // user + assistant + new user
       expect(sentMessages[0]).toMatchObject({
-        role: MessageRole.User,
+        role: ConversationMessageRole.User,
         content: 'First',
       });
       expect(sentMessages[1]).toMatchObject({
-        role: MessageRole.Assistant,
+        role: ConversationMessageRole.Assistant,
         content: 'Response',
       });
       expect(sentMessages[2]).toMatchObject({
-        role: MessageRole.User,
+        role: ConversationMessageRole.User,
         content: 'Follow-up',
       });
     });
@@ -692,7 +697,7 @@ describe('ConversationService', () => {
         messages: [
           {
             id: 'u1',
-            role: MessageRole.User,
+            role: ConversationMessageRole.User,
             content: 'Pick a number',
             timestamp: '2024-01-01T00:00:00.000Z',
             custom_content: {
@@ -725,7 +730,7 @@ describe('ConversationService', () => {
       expect(sendSpy.mock.calls[0][1].body).toMatchObject({
         messages: [
           {
-            role: MessageRole.User,
+            role: ConversationMessageRole.User,
             content: '',
           },
         ],
@@ -745,7 +750,7 @@ describe('ConversationService', () => {
         messages: [
           {
             id: 'u1',
-            role: MessageRole.User,
+            role: ConversationMessageRole.User,
             content: 'Pick a number',
             timestamp: '2024-01-01T00:00:00.000Z',
             custom_content: {
@@ -754,7 +759,7 @@ describe('ConversationService', () => {
           },
           {
             id: 'a1',
-            role: MessageRole.Assistant,
+            role: ConversationMessageRole.Assistant,
             content: 'Pick a number',
             timestamp: '2024-01-01T00:00:01.000Z',
             custom_content: {
@@ -774,7 +779,7 @@ describe('ConversationService', () => {
           },
           {
             id: 's1',
-            role: MessageRole.Status,
+            role: ConversationMessageRole.Status,
             content: '',
             timestamp: '2024-01-01T00:00:02.000Z',
             custom_content: {
@@ -808,11 +813,11 @@ describe('ConversationService', () => {
 
       expect(sendSpy.mock.calls[0][1].body.messages).toEqual([
         {
-          role: MessageRole.User,
+          role: ConversationMessageRole.User,
           content: '',
         },
         {
-          role: MessageRole.Assistant,
+          role: ConversationMessageRole.Assistant,
           content: 'Pick a number',
           custom_content: {
             form_schema: {
@@ -822,7 +827,7 @@ describe('ConversationService', () => {
           },
         },
         {
-          role: MessageRole.User,
+          role: ConversationMessageRole.User,
           content: '',
           custom_content: {
             form_value: { button: 2 },

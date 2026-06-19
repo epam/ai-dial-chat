@@ -1,5 +1,11 @@
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
+import {
+  act,
+  render,
+  renderHook,
+  screen,
+  waitFor,
+} from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as userConfigApi from '../../server-api/user-config.api';
@@ -25,8 +31,12 @@ vi.mock('../NotificationContext', () => ({
 
 const mockGetUserConfig = vi.mocked(userConfigApi.getUserConfig);
 const mockPinConversation = vi.mocked(userConfigApi.pinConversation);
-const mockUpdateInstalledToolset = vi.mocked(userConfigApi.updateInstalledToolset);
-const mockUpdateInstalledDeployment = vi.mocked(userConfigApi.updateInstalledDeployment);
+const mockUpdateInstalledToolset = vi.mocked(
+  userConfigApi.updateInstalledToolset,
+);
+const mockUpdateInstalledDeployment = vi.mocked(
+  userConfigApi.updateInstalledDeployment,
+);
 
 const fullConfig = {
   version: 2,
@@ -136,9 +146,7 @@ describe('UserConfigContext', () => {
 
     it('calls getUserConfig exactly once — no duplicate on re-render', async () => {
       const { rerender } = renderHook(() => useUserConfig(), { wrapper });
-      await waitFor(() =>
-        expect(mockGetUserConfig).toHaveBeenCalledOnce(),
-      );
+      await waitFor(() => expect(mockGetUserConfig).toHaveBeenCalledOnce());
       rerender();
       expect(mockGetUserConfig).toHaveBeenCalledOnce();
     });
@@ -169,9 +177,7 @@ describe('UserConfigContext', () => {
           <div data-testid="child" />
         </UserConfigProvider>,
       );
-      await waitFor(() =>
-        expect(screen.getByTestId('child')).toBeTruthy(),
-      );
+      await waitFor(() => expect(screen.getByTestId('child')).toBeTruthy());
       expect(screen.queryByTestId('dial-spinner')).toBeNull();
     });
 
@@ -182,9 +188,7 @@ describe('UserConfigContext', () => {
           <div data-testid="child" />
         </UserConfigProvider>,
       );
-      await waitFor(() =>
-        expect(screen.getByTestId('child')).toBeTruthy(),
-      );
+      await waitFor(() => expect(screen.getByTestId('child')).toBeTruthy());
     });
   });
 

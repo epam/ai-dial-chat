@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { ConversationMessageDto } from '../conversations/dto/conversation-message.dto';
 
 export class ProviderInfoDto {
   @ApiProperty({ example: 'local' })
@@ -276,17 +277,6 @@ export class ChatCompletionResponseDto {
 
   @ApiProperty({ type: () => [ChatCompletionChoiceDto] })
   choices!: ChatCompletionChoiceDto[];
-}
-
-export class ConversationMessageDto {
-  @ApiProperty({ enum: ['user', 'assistant'], example: 'user' })
-  role!: 'user' | 'assistant';
-
-  @ApiProperty({ example: 'Hello!' })
-  content!: string;
-
-  @ApiProperty({ example: '2026-05-19T16:00:00.000Z' })
-  timestamp!: string;
 }
 
 export class ConversationModelDto {

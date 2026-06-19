@@ -28,9 +28,7 @@
           }
         },
         "summary": "Get themes configuration",
-        "tags": [
-          "themes"
-        ]
+        "tags": ["themes"]
       }
     },
     "/api/themes/icon": {
@@ -88,9 +86,7 @@
           }
         },
         "summary": "Get theme icon",
-        "tags": [
-          "themes"
-        ]
+        "tags": ["themes"]
       }
     },
     "/api/health": {
@@ -128,9 +124,7 @@
           }
         },
         "summary": "Check application health status",
-        "tags": [
-          "health"
-        ]
+        "tags": ["health"]
       }
     },
     "/api/v1/auth/providers": {
@@ -153,9 +147,7 @@
           }
         },
         "summary": "List configured identity providers",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/login/{providerId}": {
@@ -185,9 +177,7 @@
           }
         },
         "summary": "Start OIDC login flow",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/callback/{providerId}": {
@@ -217,9 +207,7 @@
           }
         },
         "summary": "OIDC authorization callback",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/logout": {
@@ -232,9 +220,7 @@
           }
         },
         "summary": "Log out and clear session cookie",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/me": {
@@ -262,9 +248,7 @@
           }
         ],
         "summary": "Get current user profile",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/config": {
@@ -284,9 +268,7 @@
           }
         },
         "summary": "Get application feature configuration",
-        "tags": [
-          "config"
-        ]
+        "tags": ["config"]
       }
     },
     "/api/v1/application-schemas": {
@@ -322,9 +304,7 @@
           }
         },
         "summary": "List application type schemas",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/application-schemas/{id}": {
@@ -378,9 +358,7 @@
           }
         },
         "summary": "Get application type schema by id",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications": {
@@ -416,9 +394,7 @@
           }
         },
         "summary": "List available applications",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/deployments": {
@@ -434,13 +410,7 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": [
-                  "chat",
-                  "embeddings",
-                  "mcp",
-                  "custom_ui",
-                  "all"
-                ]
+                "enum": ["chat", "embeddings", "mcp", "custom_ui", "all"]
               }
             }
           }
@@ -476,9 +446,7 @@
           }
         },
         "summary": "List deployments by interface type",
-        "tags": [
-          "deployments"
-        ]
+        "tags": ["deployments"]
       }
     },
     "/api/v1/deployments/{deployment}/configuration": {
@@ -520,9 +488,7 @@
           }
         },
         "summary": "Get JSON Schema configuration for a deployment",
-        "tags": [
-          "deployments"
-        ]
+        "tags": ["deployments"]
       }
     },
     "/api/v1/user-config": {
@@ -545,9 +511,7 @@
           }
         },
         "summary": "Get current user configuration",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/pins": {
@@ -576,9 +540,7 @@
           }
         },
         "summary": "Pin or unpin a conversation",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/toolsets": {
@@ -607,9 +569,7 @@
           }
         },
         "summary": "Install or uninstall a toolset",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/deployments": {
@@ -638,9 +598,7 @@
           }
         },
         "summary": "Install or uninstall a deployment",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/models": {
@@ -679,9 +637,7 @@
           }
         },
         "summary": "List available models",
-        "tags": [
-          "models"
-        ]
+        "tags": ["models"]
       }
     },
     "/api/v1/models/{modelName}": {
@@ -737,9 +693,7 @@
           }
         },
         "summary": "Get model by name",
-        "tags": [
-          "models"
-        ]
+        "tags": ["models"]
       }
     },
     "/api/v1/chat/completions": {
@@ -781,9 +735,7 @@
           }
         },
         "summary": "Send a chat completion request to DIAL Core",
-        "tags": [
-          "chat"
-        ]
+        "tags": ["chat"]
       }
     },
     "/api/v1/conversations": {
@@ -820,9 +772,7 @@
           }
         },
         "summary": "Create a new conversation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "get": {
         "operationId": "getConversation",
@@ -866,9 +816,7 @@
           }
         },
         "summary": "Get a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "put": {
         "operationId": "saveConversation",
@@ -922,9 +870,7 @@
           }
         },
         "summary": "Save (overwrite) a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "patch": {
         "operationId": "renameConversation",
@@ -981,9 +927,7 @@
           }
         },
         "summary": "Rename a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "delete": {
         "operationId": "deleteConversation",
@@ -1020,9 +964,7 @@
           }
         },
         "summary": "Delete a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/list": {
@@ -1089,9 +1031,7 @@
           }
         },
         "summary": "List conversations",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/metadata": {
@@ -1147,9 +1087,7 @@
           }
         },
         "summary": "Get metadata for a conversation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/completions": {
@@ -1194,9 +1132,7 @@
           }
         },
         "summary": "Stream a chat completion",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/duplicate": {
@@ -1242,9 +1178,7 @@
           }
         },
         "summary": "Duplicate a conversation into the user's own bucket",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/deletions": {
@@ -1287,9 +1221,7 @@
           }
         },
         "summary": "Delete selected conversations",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/deletions/all": {
@@ -1338,9 +1270,7 @@
           }
         },
         "summary": "Delete all conversations in the user bucket",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/files": {
@@ -1353,11 +1283,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "file",
-                  "bucket",
-                  "path"
-                ],
+                "required": ["file", "bucket", "path"],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -1407,9 +1333,7 @@
             "description": "DIAL Core unreachable or timed out"
           }
         },
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/list": {
@@ -1511,9 +1435,7 @@
           }
         },
         "summary": "List files and folders",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/metadata": {
@@ -1576,9 +1498,7 @@
           }
         },
         "summary": "Get file metadata",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/download": {
@@ -1640,9 +1560,7 @@
             "description": "DIAL Core unreachable or timed out"
           }
         },
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/rate": {
@@ -1681,9 +1599,7 @@
           }
         },
         "summary": "Rate an assistant message",
-        "tags": [
-          "rate"
-        ]
+        "tags": ["rate"]
       }
     },
     "/api/v1/transcription": {
@@ -1729,9 +1645,7 @@
           }
         },
         "summary": "Transcribe audio using the configured ASR model",
-        "tags": [
-          "transcription"
-        ]
+        "tags": ["transcription"]
       }
     }
   },
@@ -1807,12 +1721,7 @@
             "example": "https://example.com/logo-light.svg"
           }
         },
-        "required": [
-          "id",
-          "displayName",
-          "colors",
-          "app-logo"
-        ]
+        "required": ["id", "displayName", "colors", "app-logo"]
       },
       "ThemeImagesDto": {
         "type": "object",
@@ -1842,11 +1751,7 @@
             "example": "https://example.com/chat-favicon.png"
           }
         },
-        "required": [
-          "default-addon",
-          "default-model",
-          "favicon"
-        ]
+        "required": ["default-addon", "default-model", "favicon"]
       },
       "ThemeConfigResponseDto": {
         "type": "object",
@@ -1861,10 +1766,7 @@
             "$ref": "#/components/schemas/ThemeImagesDto"
           }
         },
-        "required": [
-          "themes",
-          "images"
-        ]
+        "required": ["themes", "images"]
       },
       "ProviderInfoDto": {
         "type": "object",
@@ -1878,10 +1780,7 @@
             "example": "Local"
           }
         },
-        "required": [
-          "id",
-          "label"
-        ]
+        "required": ["id", "label"]
       },
       "UserProfileDto": {
         "type": "object",
@@ -1903,12 +1802,7 @@
             "example": "default-bucket"
           }
         },
-        "required": [
-          "sub",
-          "providerId",
-          "claims",
-          "bucket"
-        ]
+        "required": ["sub", "providerId", "claims", "bucket"]
       },
       "AppConfigDto": {
         "type": "object",
@@ -1923,9 +1817,7 @@
             "description": "Maximum audio file size in bytes accepted by the transcription endpoint."
           }
         },
-        "required": [
-          "transcribeSizeLimitBytes"
-        ]
+        "required": ["transcribeSizeLimitBytes"]
       },
       "ApplicationSchemaSummaryDto": {
         "type": "object",
@@ -1966,9 +1858,7 @@
             }
           }
         },
-        "required": [
-          "schemas"
-        ]
+        "required": ["schemas"]
       },
       "ApplicationDto": {
         "type": "object",
@@ -1998,9 +1888,7 @@
             "example": "A custom application."
           },
           "input_attachment_types": {
-            "example": [
-              "image/png"
-            ],
+            "example": ["image/png"],
             "type": "array",
             "items": {
               "type": "string"
@@ -2011,10 +1899,7 @@
             "example": 5
           }
         },
-        "required": [
-          "id",
-          "object"
-        ]
+        "required": ["id", "object"]
       },
       "ApplicationsResponseDto": {
         "type": "object",
@@ -2026,9 +1911,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "DeploymentItemDto": {
         "type": "object",
@@ -2043,11 +1926,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "model",
-              "application",
-              "toolset"
-            ]
+            "enum": ["model", "application", "toolset"]
           },
           "iconUrl": {
             "type": "string",
@@ -2103,11 +1982,7 @@
             "description": "Whether this deployment is installed by the current user (from user config)"
           }
         },
-        "required": [
-          "id",
-          "displayName",
-          "type"
-        ]
+        "required": ["id", "displayName", "type"]
       },
       "DeploymentsResponseDto": {
         "type": "object",
@@ -2119,9 +1994,7 @@
             }
           }
         },
-        "required": [
-          "deployments"
-        ]
+        "required": ["deployments"]
       },
       "DeploymentConfigurationDto": {
         "type": "object",
@@ -2154,54 +2027,42 @@
         "properties": {
           "pinnedIds": {
             "description": "Pinned conversation identifiers.",
-            "example": [
-              "conversations/default-bucket/gpt-4__My chat__uuid"
-            ],
+            "example": ["conversations/default-bucket/gpt-4__My chat__uuid"],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": [
-          "pinnedIds"
-        ]
+        "required": ["pinnedIds"]
       },
       "ToolsetsConfigDto": {
         "type": "object",
         "properties": {
           "installed": {
             "description": "Installed toolset identifiers.",
-            "example": [
-              "toolset-abc"
-            ],
+            "example": ["toolset-abc"],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": [
-          "installed"
-        ]
+        "required": ["installed"]
       },
       "DeploymentsConfigDto": {
         "type": "object",
         "properties": {
           "installed": {
             "description": "Installed deployment identifiers.",
-            "example": [
-              "deployment-xyz"
-            ],
+            "example": ["deployment-xyz"],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": [
-          "installed"
-        ]
+        "required": ["installed"]
       },
       "UserConfigDto": {
         "type": "object",
@@ -2221,12 +2082,7 @@
             "$ref": "#/components/schemas/DeploymentsConfigDto"
           }
         },
-        "required": [
-          "version",
-          "conversations",
-          "toolsets",
-          "deployments"
-        ]
+        "required": ["version", "conversations", "toolsets", "deployments"]
       },
       "UpdatePinsDto": {
         "type": "object",
@@ -2242,10 +2098,7 @@
             "example": true
           }
         },
-        "required": [
-          "path",
-          "isPinned"
-        ]
+        "required": ["path", "isPinned"]
       },
       "UpdateInstalledDto": {
         "type": "object",
@@ -2261,10 +2114,7 @@
             "example": true
           }
         },
-        "required": [
-          "id",
-          "isInstalled"
-        ]
+        "required": ["id", "isInstalled"]
       },
       "DialModelFeaturesDto": {
         "type": "object",
@@ -2347,9 +2197,7 @@
         "type": "object",
         "properties": {
           "scale_types": {
-            "example": [
-              "standard"
-            ],
+            "example": ["standard"],
             "type": "array",
             "items": {
               "type": "string"
@@ -2462,10 +2310,7 @@
             "$ref": "#/components/schemas/DialModelFeaturesDto"
           },
           "input_attachment_types": {
-            "example": [
-              "image/png",
-              "application/pdf"
-            ],
+            "example": ["image/png", "application/pdf"],
             "type": "array",
             "items": {
               "type": "string"
@@ -2484,10 +2329,7 @@
             "additionalProperties": true
           },
           "description_keywords": {
-            "example": [
-              "Text Generation",
-              "Image Recognition"
-            ],
+            "example": ["Text Generation", "Image Recognition"],
             "type": "array",
             "items": {
               "type": "string"
@@ -2522,10 +2364,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "object"
-        ]
+        "required": ["id", "object"]
       },
       "DialModelListResponseDto": {
         "type": "object",
@@ -2537,9 +2376,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "AttachmentDto": {
         "type": "object",
@@ -2573,10 +2410,7 @@
             "description": "URL of the reference resource"
           }
         },
-        "required": [
-          "type",
-          "title"
-        ]
+        "required": ["type", "title"]
       },
       "MessageCustomContentDto": {
         "type": "object",
@@ -2616,11 +2450,7 @@
           "role": {
             "type": "string",
             "description": "Message author role",
-            "enum": [
-              "system",
-              "user",
-              "assistant"
-            ],
+            "enum": ["system", "user", "assistant"],
             "example": "user"
           },
           "content": {
@@ -2642,10 +2472,7 @@
             ]
           }
         },
-        "required": [
-          "role",
-          "content"
-        ]
+        "required": ["role", "content"]
       },
       "ChatCompletionDto": {
         "type": "object",
@@ -2676,10 +2503,7 @@
             "minimum": 1
           }
         },
-        "required": [
-          "deployment",
-          "messages"
-        ]
+        "required": ["deployment", "messages"]
       },
       "ChatCompletionChoiceDto": {
         "type": "object",
@@ -2702,10 +2526,7 @@
             }
           }
         },
-        "required": [
-          "index",
-          "message"
-        ]
+        "required": ["index", "message"]
       },
       "ChatCompletionResponseDto": {
         "type": "object",
@@ -2725,11 +2546,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "object",
-          "choices"
-        ]
+        "required": ["id", "object", "choices"]
       },
       "CreateConversationDto": {
         "type": "object",
@@ -2757,10 +2574,7 @@
             ]
           }
         },
-        "required": [
-          "firstMessage",
-          "deploymentId"
-        ]
+        "required": ["firstMessage", "deploymentId"]
       },
       "ConversationModelDto": {
         "type": "object",
@@ -2770,19 +2584,62 @@
             "example": "anthropic.claude-v3-sonnet"
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
+      },
+      "ConversationMessageCustomContentDto": {
+        "type": "object",
+        "properties": {
+          "attachments": {
+            "description": "DIAL API attachments to include with the message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
+          },
+          "configuration_value": {
+            "type": "object",
+            "description": "Form/button submission value (e.g. `{ button: 1 }`).",
+            "example": {
+              "button": 1
+            }
+          },
+          "form_value": {
+            "type": "object",
+            "description": "Key-value map of form field values submitted via an embedded form widget.",
+            "example": {
+              "field1": "value",
+              "field2": 42
+            }
+          },
+          "event_type": {
+            "type": "string",
+            "enum": ["model_changed"],
+            "description": "Status event discriminator when role is status"
+          },
+          "previous_deployment_id": {
+            "type": "object",
+            "description": "Deployment active before a model_changed event",
+            "example": "gpt-4o",
+            "nullable": true
+          },
+          "new_deployment_id": {
+            "type": "string",
+            "description": "Deployment selected after a model_changed event",
+            "example": "claude-3"
+          }
+        }
       },
       "ConversationMessageDto": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique message identifier",
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          },
           "role": {
             "type": "string",
-            "enum": [
-              "user",
-              "assistant"
-            ],
+            "enum": ["user", "assistant", "status"],
             "example": "user"
           },
           "content": {
@@ -2792,13 +2649,12 @@
           "timestamp": {
             "type": "string",
             "example": "2026-05-19T16:00:00.000Z"
+          },
+          "custom_content": {
+            "$ref": "#/components/schemas/ConversationMessageCustomContentDto"
           }
         },
-        "required": [
-          "role",
-          "content",
-          "timestamp"
-        ]
+        "required": ["role", "content", "timestamp"]
       },
       "ConversationResponseDto": {
         "type": "object",
@@ -2924,9 +2780,7 @@
             "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "ConversationMetadataDto": {
         "type": "object",
@@ -2972,10 +2826,7 @@
             "example": 1779206400000
           },
           "permissions": {
-            "example": [
-              "READ",
-              "WRITE"
-            ],
+            "example": ["READ", "WRITE"],
             "type": "array",
             "items": {
               "type": "string"
@@ -3003,9 +2854,7 @@
             ]
           }
         },
-        "required": [
-          "conversation"
-        ]
+        "required": ["conversation"]
       },
       "SendCompletionDto": {
         "type": "object",
@@ -3035,11 +2884,7 @@
             ]
           }
         },
-        "required": [
-          "path",
-          "message",
-          "model"
-        ]
+        "required": ["path", "message", "model"]
       },
       "RenameConversationBodyDto": {
         "type": "object",
@@ -3050,9 +2895,7 @@
             "example": "My renamed chat"
           }
         },
-        "required": [
-          "newTitle"
-        ]
+        "required": ["newTitle"]
       },
       "RenameConversationResponseDto": {
         "type": "object",
@@ -3063,9 +2906,7 @@
             "example": "conversations/bucket/gpt-4o__My renamed chat__uuid"
           }
         },
-        "required": [
-          "newPath"
-        ]
+        "required": ["newPath"]
       },
       "DuplicateConversationResponseDto": {
         "type": "object",
@@ -3076,9 +2917,7 @@
             "example": "conversations/bucket/gpt-4o__My conversation"
           }
         },
-        "required": [
-          "newPath"
-        ]
+        "required": ["newPath"]
       },
       "DeleteConversationsBodyDto": {
         "type": "object",
@@ -3093,9 +2932,7 @@
             }
           }
         },
-        "required": [
-          "ids"
-        ]
+        "required": ["ids"]
       },
       "ConversationDeletionFailureDto": {
         "type": "object",
@@ -3107,18 +2944,10 @@
           "code": {
             "type": "string",
             "description": "Stable application error code",
-            "enum": [
-              "NOT_FOUND",
-              "FORBIDDEN",
-              "UPSTREAM_ERROR",
-              "UNKNOWN"
-            ]
+            "enum": ["NOT_FOUND", "FORBIDDEN", "UPSTREAM_ERROR", "UNKNOWN"]
           }
         },
-        "required": [
-          "id",
-          "code"
-        ]
+        "required": ["id", "code"]
       },
       "ConversationDeletionResultDto": {
         "type": "object",
@@ -3143,12 +2972,7 @@
             }
           }
         },
-        "required": [
-          "requested",
-          "deleted",
-          "alreadyAbsent",
-          "failed"
-        ]
+        "required": ["requested", "deleted", "alreadyAbsent", "failed"]
       },
       "DeleteAllConversationsBodyDto": {
         "type": "object",
@@ -3159,9 +2983,7 @@
             "example": true
           }
         },
-        "required": [
-          "confirm"
-        ]
+        "required": ["confirm"]
       },
       "FileUploadResponseDto": {
         "type": "object",
@@ -3172,9 +2994,7 @@
             "example": "files/my-bucket/folder/file.pdf"
           }
         },
-        "required": [
-          "url"
-        ]
+        "required": ["url"]
       },
       "ListFilesItemDto": {
         "type": "object",
@@ -3190,10 +3010,7 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           },
           "bucket": {
             "type": "string"
@@ -3227,13 +3044,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "path",
-          "folderId",
-          "nodeType",
-          "bucket"
-        ]
+        "required": ["name", "path", "folderId", "nodeType", "bucket"]
       },
       "ListFilesResponseDto": {
         "type": "object",
@@ -3254,11 +3065,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "bucket",
-          "path",
-          "items"
-        ]
+        "required": ["bucket", "path", "items"]
       },
       "FileMetadataResponseDto": {
         "type": "object",
@@ -3336,10 +3143,7 @@
           "rate": {
             "type": "number",
             "description": "Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.",
-            "enum": [
-              1,
-              -1
-            ]
+            "enum": [1, -1]
           },
           "comment": {
             "type": "string",
@@ -3347,12 +3151,7 @@
             "example": "The response was too brief"
           }
         },
-        "required": [
-          "conversationId",
-          "responseId",
-          "modelId",
-          "rate"
-        ]
+        "required": ["conversationId", "responseId", "modelId", "rate"]
       },
       "TranscribeAudioDto": {
         "type": "object",
@@ -3366,10 +3165,7 @@
             "description": "MIME type of the audio file (e.g. audio/webm;codecs=opus)."
           }
         },
-        "required": [
-          "audioUrl",
-          "mimeType"
-        ]
+        "required": ["audioUrl", "mimeType"]
       }
     }
   }

@@ -439,9 +439,68 @@ export interface ConversationListResponseDto {
 /**
  *
  * @export
+ * @interface ConversationMessageCustomContentDto
+ */
+export interface ConversationMessageCustomContentDto {
+  /**
+   * DIAL API attachments to include with the message
+   * @type {Array<AttachmentDto>}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  attachments?: Array<AttachmentDto>;
+  /**
+   * Form/button submission value (e.g. `{ button: 1 }`).
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  configurationValue?: object;
+  /**
+   * Key-value map of form field values submitted via an embedded form widget.
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  formValue?: object;
+  /**
+   * Status event discriminator when role is status
+   * @type {string}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  eventType?: ConversationMessageCustomContentDtoEventTypeEnum;
+  /**
+   * Deployment active before a model_changed event
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  previousDeploymentId?: object | null;
+  /**
+   * Deployment selected after a model_changed event
+   * @type {string}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  newDeploymentId?: string;
+}
+
+/**
+ * @export
+ */
+export const ConversationMessageCustomContentDtoEventTypeEnum = {
+  ModelChanged: 'model_changed',
+} as const;
+export type ConversationMessageCustomContentDtoEventTypeEnum =
+  (typeof ConversationMessageCustomContentDtoEventTypeEnum)[keyof typeof ConversationMessageCustomContentDtoEventTypeEnum];
+
+/**
+ *
+ * @export
  * @interface ConversationMessageDto
  */
 export interface ConversationMessageDto {
+  /**
+   * Unique message identifier
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  id?: string;
   /**
    *
    * @type {string}
@@ -460,6 +519,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   timestamp: string;
+  /**
+   *
+   * @type {ConversationMessageCustomContentDto}
+   * @memberof ConversationMessageDto
+   */
+  customContent?: ConversationMessageCustomContentDto;
 }
 
 /**
@@ -468,6 +533,7 @@ export interface ConversationMessageDto {
 export const ConversationMessageDtoRoleEnum = {
   User: 'user',
   Assistant: 'assistant',
+  Status: 'status',
 } as const;
 export type ConversationMessageDtoRoleEnum =
   (typeof ConversationMessageDtoRoleEnum)[keyof typeof ConversationMessageDtoRoleEnum];
