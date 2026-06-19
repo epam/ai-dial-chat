@@ -214,5 +214,6 @@
   "No toolsets": "No toolsets",
   "You don't have any toolsets.": "You don't have any toolsets.",
   "No agents": "No agents",
-  "You don't have any agents.": "You don't have any agents."
+  "You don't have any agents.": "You don't have any agents.",
+  "This application has no chat endpoint and cannot be selected for conversations": "This application has no chat endpoint and cannot be selected for conversations"
 }

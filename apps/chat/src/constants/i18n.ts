@@ -981,6 +981,7 @@ export enum ChatI18nKeys {
   YouDontHaveAnyFiles = "You don't have any files",
   SelectFileFromTree = 'Select a file from the tree',
   QuickApp2ContainsPrivateSkillsPublish = 'This Quick App uses personal skill prompts that are not publicly available. Please replace non-public skill prompts with public ones, otherwise recipients may not be able to access them.',
+  AbsentChatCompletionDisabledMessage = 'This application has no chat endpoint and cannot be selected for conversations',
 }
 
 // files.json
@@ -1237,4 +1238,5 @@ export enum MarketplaceI18nKeys {
   YouDontHaveAnyToolsets = "You don't have any toolsets.",
   NoAgents = 'No agents',
   YouDontHaveAnyAgents = "You don't have any agents.",
+  AbsentChatCompletionDisabledMessage = 'This application has no chat endpoint and cannot be selected for conversations',
 }
