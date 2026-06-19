@@ -14,9 +14,9 @@ import { FC, useState } from 'react';
 import type { CardProps } from '../../models/card-props';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
+import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { PricingTag } from '../PricingTag/PricingTag';
 import styles from './CardGrid.module.scss';
-import { ItemHeader } from '../ItemHeader/ItemHeader';
 
 /** Card for the Browse grid with highlighted search text and optional featured styling. */
 export const Card: FC<CardProps> = ({
@@ -88,15 +88,8 @@ export const Card: FC<CardProps> = ({
             count={item.version}
             countClassName={versionClassName}
             titleClassName={nameClassName}
+            className="mt-0.5 flex items-start gap-1"
           />
-          {/* <div className="mt-0.5 flex items-start gap-1">
-            <span className={mergeClasses(nameClassName, styles.name)}>
-              <Highlight text={item.name} query={query} />
-            </span>
-            <span className={mergeClasses(versionClassName, styles.version)}>
-              {item.version}
-            </span>
-          </div> */}
         </div>
       </div>
 

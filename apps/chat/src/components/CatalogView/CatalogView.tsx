@@ -20,7 +20,7 @@ const CatalogView: FC = () => {
   );
 
   const favorites = useMemo(
-    () => catalogItems.filter((item) => item.isFeatured),
+    () => catalogItems.filter((item) => item.isUserFavorite),
     [catalogItems],
   );
 
@@ -29,7 +29,6 @@ const CatalogView: FC = () => {
     [catalogItems],
   );
 
-  console.log('CatalogView render', { catalogItems, favorites, filteredItems });
   return (
     <Catalog
       items={filteredItems}

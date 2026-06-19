@@ -33,6 +33,7 @@ export const NameCellRenderer: FC<
           countClassName={versionClassName}
           query={searchQuery}
           titleClassName={nameClassName}
+          className="items-baseline gap-1.5"
         />
         <p
           className={mergeClasses(

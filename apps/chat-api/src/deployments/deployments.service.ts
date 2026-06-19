@@ -10,7 +10,6 @@ import {
   mapDialHttpStatus,
 } from '../common/utils/dial-fetch-error';
 import type { EnvironmentVariables } from '../config/environment.config';
-import { FilesService } from '../files/files.service';
 import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import type {
   DeploymentItemDto,
@@ -88,7 +87,6 @@ export class DeploymentsService extends AppService {
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
-    private readonly filesService: FilesService,
   ) {
     super(configService);
     this.featuredIds = new Set(
@@ -155,10 +153,7 @@ export class DeploymentsService extends AppService {
       }
     }
 
-    const installedIds = await this.filesService.listInstalledDeployments(
-      bucket,
-      accessToken,
-    );
+    const installedIds = [] as string[];
 
     const installedSet = new Set(installedIds);
     allItems =
