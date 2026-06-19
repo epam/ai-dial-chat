@@ -246,7 +246,7 @@ const deleteApplicationEpic: AppEpic = (action$) =>
     ),
   );
 
-const updateApplicationEpic: AppEpic = (action$) =>
+const updateApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ApplicationActions.update.type),
     switchMap(({ payload }) => {
@@ -372,9 +372,10 @@ const updateApplicationEpic: AppEpic = (action$) =>
               payload.schema,
             ).pipe(
               switchMap(() => {
-                const featuresRecord: Record<string, boolean | undefined> = {
-                  ...(updatedCustomApplication.features || {}),
-                };
+                const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+                const model = modelsMap[updatedCustomApplication.id];
+                const featuresRecord =
+                  model?.features ?? updatedCustomApplication.features ?? {};
 
                 const modelData = {
                   ...updatedCustomApplication,
@@ -474,7 +475,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
     }),
   );
 
-const editApplicationEpic: AppEpic = (action$) =>
+const editApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ApplicationActions.edit.type),
     switchMap(({ payload }) => {
@@ -487,9 +488,10 @@ const editApplicationEpic: AppEpic = (action$) =>
         payload.schema,
       ).pipe(
         switchMap(() => {
-          const featuresRecord: Record<string, boolean | undefined> = {
-            ...(payload.updatedApplication.features || {}),
-          };
+          const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+          const model = modelsMap[payload.updatedApplication.id];
+          const featuresRecord =
+            model?.features ?? payload.updatedApplication.features ?? {};
 
           const modelData = {
             ...payload.updatedApplication,
