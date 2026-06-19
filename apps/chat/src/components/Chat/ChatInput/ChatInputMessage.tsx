@@ -24,6 +24,7 @@ import {
   isFormValueValid,
 } from '@/src/utils/app/form-schema';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
+import { doesAgentHaveChatCompletion } from '@/src/utils/app/models';
 import type { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
@@ -214,6 +215,10 @@ export const ChatInputMessage = Inversify.register(
     const shouldRegenerate =
       isLastMessageError ||
       (isLastAssistantMessageEmpty && !messageIsStreaming);
+
+    const doesSupportChatCompletion = selectedModels.every(
+      doesAgentHaveChatCompletion,
+    );
 
     useEffect(() => {
       if (shouldFocusAndScroll && textareaRef.current) {
@@ -566,6 +571,9 @@ export const ChatInputMessage = Inversify.register(
       if (isDisabledInputFeature && disabledInputFeatureData?.description) {
         return disabledInputFeatureData.description;
       }
+      if (!doesSupportChatCompletion) {
+        return t(ChatI18nKeys.AbsentChatCompletionDisabledMessage);
+      }
       if (messageIsStreaming) {
         return t(ChatI18nKeys.StopGenerating);
       }
@@ -599,8 +607,17 @@ export const ChatInputMessage = Inversify.register(
     }, [isChatInputDisabled, t]);
 
     const isDisabled = useMemo(
-      () => isLoading || isChatInputDisabled || isTranscribing,
-      [isLoading, isChatInputDisabled, isTranscribing],
+      () =>
+        isLoading ||
+        isChatInputDisabled ||
+        isTranscribing ||
+        !doesSupportChatCompletion,
+      [
+        isLoading,
+        isChatInputDisabled,
+        isTranscribing,
+        doesSupportChatCompletion,
+      ],
     );
 
     const isMicDisabled = useMemo(
