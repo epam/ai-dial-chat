@@ -66,7 +66,7 @@ const mapToDeploymentItem = (
     displayVersion: raw.display_version,
     isFeatured: featuredIds.has(raw.id || raw.reference || ''),
     isHidden: topics.some((tag) => hiddenTags.has(tag)),
-    updatedAt: typeof raw.updated_at === 'string' ? raw.updated_at : undefined,
+    updatedAt: raw.updated_at,
     interfaces,
     applicationTypeSchemaId:
       type === 'application' && raw.application_type_schema_id

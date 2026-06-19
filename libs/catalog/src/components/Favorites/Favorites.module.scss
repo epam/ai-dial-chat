@@ -42,15 +42,6 @@
   animation: favFadeIn 400ms ease-out;
 }
 
-.paginationRow {
-  // Tailwind Preflight resets button{background-color:transparent} in @layer base,
-  // which overrides the DS's .bg-secondary in @layer ui (lower cascade priority).
-  // This unlayered rule wins over both named layers and restores the dot color.
-  :global(nav[aria-label='Pagination'] button.bg-secondary) {
-    background-color: var(--text-secondary, #9fa6bd);
-  }
-}
-
 @keyframes favFadeIn {
   from {
     opacity: 0;
@@ -63,6 +54,6 @@
   }
 }
 
-.starFilledIcon {
-  color: var(--cat-fav-star-filled, var(--text-warning-icon, #eec840));
+.historyIcon {
+  color: var(--cat-fav-history-icon, var(--text-secondary, #9fa6bd));
 }

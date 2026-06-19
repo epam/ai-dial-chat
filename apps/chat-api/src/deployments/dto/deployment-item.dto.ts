@@ -38,9 +38,9 @@ export class DeploymentItemDto {
 
   @ApiPropertyOptional({
     description:
-      'ISO timestamp of last update time from DIAL Core (e.g. "2024-05-01T12:34:56Z")',
+      'Timestamp of last update time from DIAL Core (e.g. 1714768496000)',
   })
-  updatedAt?: string;
+  updatedAt?: number;
 
   @ApiPropertyOptional({
     description:

@@ -102,9 +102,9 @@ export const Favorites: FC<FavoritesProps> = ({
     >
       <ItemHeader
         title={title}
-        count={displayCount}
+        postfix={displayCount}
         titleClassName={titleClassName}
-        countClassName={countClassName}
+        postfixClassName={countClassName}
       />
 
       <div
@@ -128,12 +128,7 @@ export const Favorites: FC<FavoritesProps> = ({
       </div>
 
       {favTotalPages > 1 && (
-        <div
-          className={mergeClasses(
-            'flex justify-center pt-2',
-            styles.paginationRow,
-          )}
-        >
+        <div className="flex justify-center pt-2">
           <DialPagination
             page={favPage}
             totalPages={favTotalPages}
