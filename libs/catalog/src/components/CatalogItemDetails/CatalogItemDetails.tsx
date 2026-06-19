@@ -329,7 +329,7 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
                 ))}
               </div>
             ))}
-          {/* {activeTab === CatalogDetailsTab.Overview &&
+          {activeTab === CatalogDetailsTab.Overview &&
             item.overview != null && (
               <CatalogOverview
                 sections={item.overview.sections}
@@ -340,7 +340,7 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
                 yesLabel={overviewYesLabel}
                 noLabel={overviewNoLabel}
               />
-            )} */}
+            )}
         </div>
       </div>
     </>

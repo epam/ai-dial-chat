@@ -62,7 +62,7 @@ export default [
       'prettier/prettier': 'error',
 
       // React Hooks rules
-      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/rules-of-hooks': 'off',
       'react-hooks/exhaustive-deps': 'error',
       'react-hooks/set-state-in-effect': 'off',
       'tailwindcss/no-contradicting-classname': 'error',

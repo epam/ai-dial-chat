@@ -34,4 +34,5 @@ export interface CatalogItem extends FavoriteItem {
   folder: string[];
   /** Topics associated with the item. */
   topics: string[];
+  overview: any; // TODO: type this properly when we implement the overview section
 }
