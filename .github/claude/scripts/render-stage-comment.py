@@ -150,8 +150,11 @@ def main():
             out.write(comment)
             out.write("\nCOMMENT_EOF\n")
 
-    if status == "failed":
-        fail(f"Stage {stage_name} reported status=failed: {summary}")
+    # NOTE: a well-formed status=failed is NOT an error here — this renderer must
+    # exit 0 so the downstream steps (scrub, job summary, PR comment) still run
+    # and the blocking findings reach the PR. The job is failed by a dedicated
+    # gate step AFTER the comment is posted (see run-claude-stage/action.yml).
+    # Only genuine render errors above (bad JSON, missing/invalid fields) exit 1.
 
 
 if __name__ == "__main__":

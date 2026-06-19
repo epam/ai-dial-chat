@@ -445,3 +445,22 @@ runs:
           gh api -X POST "repos/${REPO}/issues/${PR_NUMBER}/comments" -f body="$BODY" > /dev/null
           echo "Created sticky comment for stage ${STAGE_NAME}"
         fi
+
+    - name: Enforce stage gate (fail job on status=failed)
+      # The job-failing gate is DELIBERATELY the LAST step. The renderer used to
+      # exit 1 on a well-formed status=failed, but that ran in the same step that
+      # produced the comment body — so every step after it (scrub, job summary,
+      # PR comment, aggregate, artifact upload) was skipped and the blocking
+      # findings never reached the PR. Now the renderer stays exit-0 on a valid
+      # failed result, all surfacing steps run, and THEN we fail the job here.
+      # `always()` so a failed status still gates even if an earlier surfacing
+      # step was skipped (e.g. private agents post no PR comment). Genuine render
+      # errors (bad JSON / invalid fields) already failed the extract step and
+      # the job; this only adds the gate for the valid-but-failed case.
+      if: always() && steps.extract.outputs.status == 'failed'
+      shell: bash
+      env:
+        STAGE_NAME: ${{ inputs.stage_name }}
+      run: |
+        echo "::error::Stage ${STAGE_NAME} reported status=failed — blocking findings surfaced in the PR comment / job summary above."
+        exit 1
