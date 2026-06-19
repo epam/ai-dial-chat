@@ -31,6 +31,7 @@ export enum Feature {
   DislikeComment = 'dislike-comment', // Enable adding comment when disliking a message
   InputFiles = 'input-files', // Allow attach files to conversation
   InputLinks = 'input-links', // Allow attach links to conversation
+  ConflictDialogDragDrop = 'conflict-dialog-drag-drop', // Show conflict resolution dialog for drag-and-drop and paste uploads; auto-postfix when disabled
   MessageTemplates = 'message-templates', // message templates
   LiveChatInteraction = 'live-chat-interaction', // Enable interactive tool login flow during chat completion when agent tools are logged out
 

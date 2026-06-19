@@ -7,20 +7,22 @@ import { getRelativePath } from '@/src/utils/app/file';
 import { isRootId } from '@/src/utils/app/id';
 import {
   ResolvedUploadFile,
+  applyUploadReplaceActions,
   detectUploadFileConflicts,
   dispatchPreparedFileUploads,
 } from '@/src/utils/app/prepare-files-for-upload';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
+import { ReplaceOptions } from '@/src/types/common';
 import { Translation } from '@/src/types/translation';
 
 import { FilesActions, UIActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
-import { FilesSelectors } from '@/src/store/selectors';
+import { FilesSelectors, SettingsSelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 export interface DispatchPreparedFilesOptions {
   bucket?: string;
@@ -40,6 +42,9 @@ export const useUploadFilesHandler = (
   const dispatch = useAppDispatch();
 
   const allFiles = useAppSelector(FilesSelectors.selectFiles);
+  const isConflictDialogEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.ConflictDialogDragDrop),
+  );
 
   const { bucket } = useMemo(
     () =>
@@ -114,6 +119,24 @@ export const useUploadFilesHandler = (
       if (!duplicatedFiles.length && !nonDuplicatedFiles.length) return;
 
       if (duplicatedFiles.length) {
+        if (!isConflictDialogEnabled) {
+          const mappedActions = Object.fromEntries(
+            duplicatedFiles.map((f) => [f.id, ReplaceOptions.Postfix]),
+          );
+          const resolvedFiles = applyUploadReplaceActions({
+            duplicatedFiles,
+            nonDuplicatedFiles,
+            mappedActions,
+            existingFiles: allFiles,
+            folderId,
+            bucket,
+          });
+          dispatchPreparedFiles(resolvedFiles, folderPath, {
+            showSuccessMessage: true,
+          });
+          return Promise.resolve(resolvedFiles);
+        }
+
         dispatch(
           FilesActions.showUploadReplaceDialog({
             duplicatedFiles,
@@ -141,6 +164,7 @@ export const useUploadFilesHandler = (
       dispatch,
       allFiles,
       dispatchPreparedFiles,
+      isConflictDialogEnabled,
       t,
       folderId,
       bucket,
