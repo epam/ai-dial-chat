@@ -1,4 +1,3 @@
-import type { TabModel } from '@epam/ai-dial-ui-kit';
 import type { CatalogEntityType } from '../types/CatalogEntityType';
 
 /** A node in the hierarchical "From" source filter tree. */
@@ -21,8 +20,10 @@ export interface FavoriteItem {
   name: string;
   /** Version string shown next to the name. */
   version: string;
-  /** Human-readable "last used" timestamp, e.g. "10 min ago". */
+  /** Human-readable "last used" label, e.g. "10 min ago". */
   lastUsed: string;
+  /** Unix timestamp (ms) of last use. Used for sorting; absent items sort last. */
+  lastUsedAt?: number;
   /** Background fill color for the provider logo mark. */
   logoColor: string;
   /** Single character displayed inside the logo mark. */
@@ -35,6 +36,8 @@ export interface FavoriteItem {
 export interface CatalogItem extends FavoriteItem {
   /** Short description, typically 1–2 lines. */
   description: string;
+  /** Full description shown in the details panel About tab. Markdown or plain text. */
+  longDescription?: string;
   /** Pricing tier labels, e.g. ['Free'] or ['Pay-as-you-go', 'By request']. */
   pricing: string[];
   /** When true the card gets accent border and glow. */

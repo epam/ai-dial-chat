@@ -1,4 +1,5 @@
 .section {
+  overflow-anchor: none;
   background:
     linear-gradient(
       180deg,
@@ -22,18 +23,25 @@
   color: var(--cat-favorites-count-text, var(--text-secondary, #9fa6bd));
 }
 
-.gridPage {
+.gridPage > * {
   animation: favFadeIn 180ms ease-out;
+}
+
+.paginationRow {
+  // Tailwind Preflight resets button{background-color:transparent} in @layer base,
+  // which overrides the DS's .bg-secondary in @layer ui (lower cascade priority).
+  // This unlayered rule wins over both named layers and restores the dot color.
+  :global(nav[aria-label='Pagination'] button.bg-secondary) {
+    background-color: var(--text-secondary, #9fa6bd);
+  }
 }
 
 @keyframes favFadeIn {
   from {
     opacity: 0;
-    transform: scale(0.97);
   }
 
   to {
     opacity: 1;
-    transform: scale(1);
   }
 }

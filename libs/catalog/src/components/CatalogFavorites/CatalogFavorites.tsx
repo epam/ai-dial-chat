@@ -1,5 +1,13 @@
 import { DialPagination } from '@epam/ai-dial-ui-kit';
-import { type CSSProperties, FC, useState } from 'react';
+import {
+  type CSSProperties,
+  FC,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { FavoriteItem } from '../../models/CatalogItem';
 import { useFavColumns } from '../../utils/use-fav-columns';
 import { FavoriteCard } from '../FavoriteCard/FavoriteCard';
@@ -78,17 +86,56 @@ export const CatalogFavorites: FC<CatalogFavoritesProps> = ({
     '--cat-favorites-count-text': favoritesStyles?.colors?.countText,
   } as CSSProperties;
 
+  const sortedItems = useMemo(
+    () => [...items].sort((a, b) => (b.lastUsedAt ?? 0) - (a.lastUsedAt ?? 0)),
+    [items],
+  );
+
   const [favPage, setFavPage] = useState(1);
   const favColumns = useFavColumns();
   const favPerPage = favColumns * FAV_ROWS;
   const favStart = (favPage - 1) * favPerPage;
-  const favSlice = items.slice(favStart, favStart + favPerPage);
-  const favTotalPages = Math.ceil(items.length / favPerPage);
+  const favSlice = sortedItems.slice(favStart, favStart + favPerPage);
+  const favTotalPages = Math.ceil(sortedItems.length / favPerPage);
   const displayCount = totalCount ?? items.length;
+
+  // Lock the grid height to its page-1 size so that shorter last pages don't
+  // cause a layout shift. Measured after the first full-page render via
+  // useLayoutEffect (fires before paint → no visible flash).
+  const gridRef = useRef<HTMLDivElement>(null);
+  const [lockedGridHeight, setLockedGridHeight] = useState<
+    number | undefined
+  >();
+  const prevColumnsRef = useRef(favColumns);
+
+  // When the column count changes (viewport resize), go back to page 1 and
+  // re-measure so the locked height stays accurate.
+  useEffect(() => {
+    if (prevColumnsRef.current === favColumns) return;
+    prevColumnsRef.current = favColumns;
+    setFavPage(1);
+    setLockedGridHeight(undefined);
+  }, [favColumns]);
+
+  // Capture height while on the first (full) page; skip if already locked.
+  useLayoutEffect(() => {
+    if (
+      !gridRef.current ||
+      favTotalPages <= 1 ||
+      favPage !== 1 ||
+      lockedGridHeight !== undefined
+    )
+      return;
+    // offsetHeight is transform-unaware; getBoundingClientRect() would return the
+    // scaled value during the favFadeIn animation and produce a ~3% under-count.
+    setLockedGridHeight(gridRef.current.offsetHeight);
+  }, [favTotalPages, favPage, lockedGridHeight]);
 
   return (
     <section
-      className={['flex-shrink-0 border-b px-6 pt-6', styles.section].join(' ')}
+      className={['flex-shrink-0 border-b px-6 pb-6 pt-6', styles.section].join(
+        ' ',
+      )}
       style={cssVars}
     >
       <div className="mb-4 flex items-center gap-2">
@@ -101,33 +148,33 @@ export const CatalogFavorites: FC<CatalogFavoritesProps> = ({
       </div>
 
       <div
-        key={favPage}
-        className={['grid gap-x-6 gap-y-5', styles.gridPage].join(' ')}
-        style={{ gridTemplateColumns: `repeat(${favColumns}, minmax(0, 1fr))` }}
+        ref={gridRef}
+        className={['grid content-start gap-x-6 gap-y-5', styles.gridPage].join(
+          ' ',
+        )}
+        style={{
+          gridTemplateColumns: `repeat(${favColumns}, minmax(0, 1fr))`,
+          minHeight: lockedGridHeight,
+        }}
       >
         {favSlice.map((item) => (
           <FavoriteCard key={item.id} item={item} onToggle={onToggleFavorite} />
         ))}
-
-        {/* Invisible placeholders keep the grid height constant across pages. */}
-        {Array.from({ length: favPerPage - favSlice.length }).map(
-          (_, index) => (
-            <div key={`ph-${index}`} className="invisible" aria-hidden>
-              {items[0] && <FavoriteCard item={items[0]} />}
-            </div>
-          ),
-        )}
       </div>
 
-      <div className="flex justify-center py-4">
-        {favTotalPages > 1 && (
+      {favTotalPages > 1 && (
+        <div
+          className={['flex justify-center py-4', styles.paginationRow].join(
+            ' ',
+          )}
+        >
           <DialPagination
             page={favPage}
             totalPages={favTotalPages}
             onPageChange={setFavPage}
           />
-        )}
-      </div>
+        </div>
+      )}
     </section>
   );
 };
