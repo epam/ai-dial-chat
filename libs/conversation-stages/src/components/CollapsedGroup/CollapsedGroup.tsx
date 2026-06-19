@@ -10,7 +10,7 @@ import {
   IconChevronRight,
 } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import type { CollapsedGroupProps } from '../../models/CollapsedGroup';
+import type { CollapsedGroupProps } from '../../models/collapsed-group';
 import { StagesPanel } from '../StagesPanel/StagesPanel';
 import styles from './CollapsedGroup.module.scss';
 
@@ -36,11 +36,13 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
 
   const { colors, typography = { fontClassName: 'dial-tiny-text' } } =
     groupStyles ?? {};
+  const noCustomFont = !typography.fontClassName;
   const cssVars = buildCssVars({
     '--cs-cg-label': colors?.labelColor,
     '--cs-cg-label-hover': colors?.labelHoverColor,
     '--cs-cg-steps-count': colors?.stepsCountColor,
     '--cs-cg-border': colors?.contentBorderColor,
+    '--cs-cg-font-family': noCustomFont ? typography.fontFamily : undefined,
   });
 
   if (stages.length < collapseThreshold) {
