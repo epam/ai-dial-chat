@@ -48,6 +48,8 @@ export interface CardProps {
   initialIsStarred?: boolean;
   /** Called when the star button is toggled. */
   onToggle?: (id: string, isStarred: boolean) => void;
+  /** Called when the card body is clicked (excluding the star button). */
+  onClick?: (item: CatalogItem) => void;
   /** Grouped color and typography overrides. */
   styles?: CardStyles;
   /** Label for the "Featured" tag. Default: `'Featured'`. */

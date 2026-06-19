@@ -8,6 +8,7 @@ export const CardGrid: FC<CardGridProps> = ({
   items,
   query = '',
   onToggleFavorite,
+  onItemClick,
   titles,
 }) => {
   const noResultsTitle = titles?.noResultsTitle ?? 'No results';
@@ -22,6 +23,7 @@ export const CardGrid: FC<CardGridProps> = ({
             item={item}
             query={query}
             onToggle={onToggleFavorite}
+            onClick={onItemClick}
             featuredLabel={featuredLabel}
           />
         ))}

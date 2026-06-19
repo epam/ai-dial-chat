@@ -33,7 +33,6 @@
 
 .listView {
   background: var(--cat-content-bg, var(--cat-bg-layer-1));
-  padding: 20px 0 40px;
 }
 
 .sectionHeading {
@@ -42,4 +41,9 @@
 
 .noResultsTitle {
   color: var(--cat-no-results-title-text, var(--cat-text-primary));
+}
+
+.stickyTabsRow {
+  background: var(--cat-bg, var(--bg-layer-1, #0c101d));
+  border-bottom-color: var(--stroke-secondary, #242c42);
 }

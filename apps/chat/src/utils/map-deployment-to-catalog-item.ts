@@ -26,8 +26,9 @@ export const mapDeploymentToCatalogItem = (
     updatedAt: deployment.updatedAt,
     isFeatured: deployment.isFeatured ?? false,
     isHidden: deployment.isHidden ?? false,
+    topics: deployment.topics ?? [],
     isUserFavorite: deployment.isInstalled ?? false,
-    pricing: [],
     folder: [],
+    overview: undefined,
   };
 };

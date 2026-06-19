@@ -45,7 +45,7 @@ export { FolderPath } from './components/FolderPath/FolderPath';
 export type { FolderPathProps } from './components/FolderPath/FolderPath';
 
 export { Filter } from './components/Filter/Filter';
-export type { FilterProps as FromFilterProps } from './components/Filter/Filter';
+export type { FilterProps } from './components/Filter/Filter';
 
-export { PricingTag } from './components/PricingTag/PricingTag';
-export type { PricingTagProps } from './components/PricingTag/PricingTag';
+export { TopicTag } from './components/TopicTag/TopicTag';
+export type { TopicTagProps } from './components/TopicTag/TopicTag';

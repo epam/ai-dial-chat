@@ -1,4 +1,3 @@
-import type { TabModel } from '@epam/ai-dial-ui-kit';
 import { CatalogViewMode } from '../types/view-mode';
 import { CatalogSortOption } from './sort';
 
@@ -56,12 +55,6 @@ export interface ToolbarProps {
   isAnyFilterActive: boolean;
   /** Called when "Clear all" is clicked. */
   onClearFilters: () => void;
-  /** Tabs for the entity type tabs. */
-  tabs: TabModel[];
-  /** Currently active tab ID. */
-  activeTab: string;
-  /** Called when a tab is clicked. */
-  onTabChange: (id: string) => void;
   /** Section heading text. Default: 'Browse'. */
   title?: string;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */

@@ -10,6 +10,8 @@ export interface ListViewTypography {
   descriptionClassName?: string;
   /** Typography class for folder path text. Default: `'dial-small-text'`. */
   folderClassName?: string;
+  /** Typography class for the last (deepest) folder segment. Default: `'dial-small-semi-text'`. */
+  folderLastSegmentClassName?: string;
 }
 
 /** Color overrides for `ListView` cells, applied via CSS custom properties. */
@@ -40,4 +42,6 @@ export interface ListViewProps {
   emptyStateTitle?: string;
   /** Grouped typography and color overrides for table cells. */
   styles?: ListViewStyles;
+  /** Called when the star icon is toggled on a row. */
+  onToggleFavorite?: (id: string, isStarred: boolean) => void;
 }

@@ -24,8 +24,6 @@ export interface FavoriteItem {
 export interface CatalogItem extends FavoriteItem {
   /** Short description, typically 1–2 lines. */
   description: string;
-  /** Pricing tier labels, e.g. ['Free'] or ['Pay-as-you-go', 'By request']. */
-  pricing: string[];
   /** When true the card gets accent border and glow. */
   isFeatured?: boolean;
   /** When true the item is hidden from the main Browse view and only shown in Search results. */
@@ -34,4 +32,7 @@ export interface CatalogItem extends FavoriteItem {
   isUserFavorite?: boolean;
   /** Folder breadcrumb path segments, outermost first. */
   folder: string[];
+  /** Topics associated with the item. */
+  topics: string[];
+  overview: any; // TODO: type this properly when we implement the overview section
 }

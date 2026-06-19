@@ -39,7 +39,7 @@
 }
 
 .gridPage > * {
-  animation: favFadeIn 180ms ease-out;
+  animation: favFadeIn 400ms ease-out;
 }
 
 .paginationRow {
@@ -54,10 +54,12 @@
 @keyframes favFadeIn {
   from {
     opacity: 0;
+    transform: translateY(4px);
   }
 
   to {
     opacity: 1;
+    transform: translateY(0);
   }
 }
 

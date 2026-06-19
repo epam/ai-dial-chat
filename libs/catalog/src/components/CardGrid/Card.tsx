@@ -10,12 +10,12 @@ import {
   DialTag,
 } from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
-import { FC, useState } from 'react';
+import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import type { CardProps } from '../../models/card-props';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
-import { PricingTag } from '../PricingTag/PricingTag';
+import { TopicTag } from '../TopicTag/TopicTag';
 import styles from './CardGrid.module.scss';
 
 /** Card for the Browse grid with highlighted search text and optional featured styling. */
@@ -24,6 +24,7 @@ export const Card: FC<CardProps> = ({
   query = '',
   initialIsStarred = false,
   onToggle,
+  onClick,
   styles: cardStyles,
   featuredLabel = 'Featured',
 }) => {
@@ -46,14 +47,37 @@ export const Card: FC<CardProps> = ({
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
 
-  const handleToggle = () => {
+  const handleToggle = (e: MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
     const next = !isStarred;
     setIsStarred(next);
     onToggle?.(item.id, next);
   };
 
+  const handleClick = onClick ? () => onClick(item) : undefined;
+
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLElement>) => {
+      if (!onClick) return;
+
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onClick?.(item);
+      }
+    },
+    [onClick, item],
+  );
+
   return (
     <div
+      {...(onClick
+        ? {
+            role: 'button' as const,
+            tabIndex: 0,
+            onClick: handleClick,
+            onKeyDown: handleKeyDown,
+          }
+        : {})}
       className={mergeClasses(
         'relative box-border flex cursor-pointer flex-col gap-2.5 rounded-[6px] border p-[17px] transition-transform duration-150 ease-out hover:-translate-y-[3px]',
         styles.card,
@@ -103,32 +127,29 @@ export const Card: FC<CardProps> = ({
         <Highlight text={item.description} query={query} />
       </p>
 
-      <div className="flex flex-wrap gap-1.5">
-        {item.pricing.map((p) => (
-          <PricingTag key={p} label={p} />
-        ))}
-      </div>
+      <div className="mt-auto">
+        <div className="flex flex-wrap gap-1.5">
+          {item.topics.map((p) => (
+            <TopicTag key={p} label={p} />
+          ))}
+        </div>
 
-      <div
-        className={mergeClasses(
-          'mt-auto flex items-center justify-between border-t pt-4',
-          styles.cardFooter,
-        )}
-      >
-        <FolderPath segments={item.folder} />
-        <DialGhostIconButton
-          icon={
-            isStarred ? (
-              <IconStarFilled
-                size={DIAL_ICON_SIZE.SM}
-                className={styles.starFilledIcon}
-              />
-            ) : (
-              <IconStar size={DIAL_ICON_SIZE.SM} />
-            )
-          }
-          onClick={handleToggle}
-        />
+        <div className="mt-4 flex items-center justify-between border-t border-secondary pt-2">
+          <FolderPath segments={item.folder} />
+          <DialGhostIconButton
+            icon={
+              isStarred ? (
+                <IconStarFilled
+                  size={DIAL_ICON_SIZE.SM}
+                  className={styles.starFilledIcon}
+                />
+              ) : (
+                <IconStar size={DIAL_ICON_SIZE.SM} />
+              )
+            }
+            onClick={handleToggle}
+          />
+        </div>
       </div>
     </div>
   );
