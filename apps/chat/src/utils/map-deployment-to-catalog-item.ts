@@ -29,5 +29,6 @@ export const mapDeploymentToCatalogItem = (
     topics: deployment.topics ?? [],
     isUserFavorite: deployment.isInstalled ?? false,
     folder: [],
+    overview: undefined,
   };
 };

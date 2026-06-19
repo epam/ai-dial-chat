@@ -29,9 +29,9 @@ const CatalogView: FC = () => {
   );
   // TODO: replace with a real API call, e.g. GET /api/catalog/{id}/about
   const fetchAboutContent = useCallback(
-    (item: CatalogItem): Promise<string | undefined> =>
-      console.log('Fetch about content for', item) ||
-      Promise.resolve(undefined),
+    (item: CatalogItem): Promise<string | undefined> => {
+      return Promise.resolve(undefined);
+    },
     [],
   );
 

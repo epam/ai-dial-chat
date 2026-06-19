@@ -95,7 +95,7 @@ export const Favorites: FC<FavoritesProps> = ({
   return (
     <section
       className={mergeClasses(
-        'flex-shrink-0 border-b px-6 py-6',
+        'flex flex-shrink-0 flex-col gap-4 border-b px-6 py-6',
         styles.section,
       )}
       style={cssVars}
@@ -105,7 +105,6 @@ export const Favorites: FC<FavoritesProps> = ({
         count={displayCount}
         titleClassName={titleClassName}
         countClassName={countClassName}
-        className="mb-4"
       />
 
       <div
@@ -131,7 +130,7 @@ export const Favorites: FC<FavoritesProps> = ({
       {favTotalPages > 1 && (
         <div
           className={mergeClasses(
-            'flex justify-center py-4',
+            'flex justify-center pt-2',
             styles.paginationRow,
           )}
         >
