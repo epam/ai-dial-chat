@@ -43,10 +43,6 @@
   color: var(--cat-no-results-title-text, var(--cat-text-primary));
 }
 
-.tabCount {
-  color: var(--cat-tab-count-text, var(--text-secondary, #9fa6bd));
-}
-
 .stickyTabsRow {
   background: var(--cat-bg, var(--bg-layer-1, #0c101d));
   border-bottom-color: var(--stroke-secondary, #242c42);

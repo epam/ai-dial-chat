@@ -21,6 +21,7 @@ import { Favorites } from '../Favorites/Favorites';
 import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
+import { ItemHeader } from '../ItemHeader/ItemHeader';
 
 /**
  * Root catalog component. Owns all filter/sort/pagination state and wires
@@ -152,10 +153,9 @@ export const Catalog: FC<CatalogProps> = ({
   const tabsWithCounts: TabModel[] = tabs.map((tab) => ({
     ...tab,
     label: (
-      <TabLabel
-        text={typeof tab.label === 'string' ? tab.label : String(tab.label)}
+      <ItemHeader
+        title={typeof tab.label === 'string' ? tab.label : String(tab.label)}
         count={filtered.filter((item) => item.type === tab.id).length}
-        countClassName={styles.tabCount}
       />
     ),
   }));

@@ -120,7 +120,11 @@ export const Favorites: FC<FavoritesProps> = ({
         }}
       >
         {favSlice.map((item) => (
-          <FavoriteCard key={item.id} item={item} onToggle={onToggleFavorite} />
+          <FavoriteCard
+            key={`${favPage}-${item.id}`}
+            item={item}
+            onToggle={onToggleFavorite}
+          />
         ))}
       </div>
 
