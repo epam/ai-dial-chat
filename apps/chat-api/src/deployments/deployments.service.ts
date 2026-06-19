@@ -76,8 +76,7 @@ const mapToDeploymentItem = (
       ? raw.input_attachment_types
       : undefined,
     topics,
-    other: { ...raw },
-  } as any;
+  };
 };
 
 @Injectable()
