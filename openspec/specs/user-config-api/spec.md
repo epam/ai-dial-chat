@@ -148,10 +148,20 @@ If no IDs were added by either merge, `writeConfig` is NOT called.
 - **THEN** the second call returns a config with `toolsets.installed` containing `"ts-a"` exactly once
 - **AND** the second call does NOT call `writeConfig` because no new IDs were added
 
+#### Scenario: Partial migration — only one legacy installation file exists
+
+- **WHEN** `clientdata/installed_toolsets.json` contains `["ts-a"]` and `clientdata/installed_deployments.json` is absent
+- **THEN** `toolsets.installed` in the returned config contains `"ts-a"` and `deployments.installed` is unchanged
+
 #### Scenario: conversations section is preserved during installation file migration
 
 - **WHEN** `.client_data/.user-config.json` contains `{ "conversations": { "pinnedIds": ["conv-1"] }, "toolsets": { "installed": [] }, "deployments": { "installed": [] } }` and `clientdata/installed_toolsets.json` contains `["ts-a"]`
 - **THEN** the returned config has `conversations.pinnedIds = ["conv-1"]` and `toolsets.installed = ["ts-a"]`
+
+#### Scenario: Non-string entries in legacy file are filtered before merging
+
+- **WHEN** `clientdata/installed_toolsets.json` contains `["ts-valid", 42, null, "ts-also-valid"]`
+- **THEN** only `"ts-valid"` and `"ts-also-valid"` are merged into `toolsets.installed`
 
 ---
 
