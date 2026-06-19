@@ -4,7 +4,7 @@ import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DIAL_ICON_SIZE, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconChevronRight } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import type { StageTypography } from '../../models/StagesPanel';
+import type { StageTypography } from '../../models/stages-props';
 import { toDisplayAttachment } from '../../utils/to-display-attachment';
 import { StageIcon } from '../StageIcon/StageIcon';
 import { StageMarkdownContent } from '../StageMarkdownContent/StageMarkdownContent';
@@ -28,7 +28,7 @@ export const StageItem: FC<Props> = ({
   stage,
   isLive,
   typography,
-  copyAriaLabel,
+  copyAriaLabel = 'Copy stage content',
   attachmentsAriaLabel = 'Stage attachments',
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -94,6 +94,7 @@ export const StageItem: FC<Props> = ({
                 />
               </div>
             )}
+
             {displayAttachments.length > 0 && (
               <AttachmentTray
                 attachments={displayAttachments}

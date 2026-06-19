@@ -253,5 +253,8 @@
     "folderNameHidden": "Folder name cannot start with a dot",
     "folderNameReserved": "This folder name is reserved",
     "folderNameTooLong": "Folder name is too long"
+  },
+  "userConfig": {
+    "loadError": "Failed to load your settings. Some personalization may be unavailable."
   }
 }

@@ -25,7 +25,11 @@ const mockResponse: DeploymentsResponseDto = {
   ],
 };
 
-const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
+const TEST_USER = {
+  sub: 'user-123',
+  at: 'test-access-token',
+  bucket: 'test-bucket',
+};
 
 async function buildApp(service: unknown): Promise<INestApplication> {
   const injectUser = true;
@@ -87,6 +91,7 @@ describe('DeploymentsController (integration)', () => {
       expect(service.listDeployments).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        TEST_USER.bucket,
         undefined,
       );
     });
@@ -112,6 +117,7 @@ describe('DeploymentsController (integration)', () => {
       expect(service.listDeployments).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        TEST_USER.bucket,
         ['chat'],
       );
     });

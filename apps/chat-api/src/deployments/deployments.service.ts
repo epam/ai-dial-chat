@@ -1,4 +1,3 @@
-import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -10,6 +9,8 @@ import {
   mapDialHttpStatus,
 } from '../common/utils/dial-fetch-error';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { UserConfigService } from '../user-config/user-config.service';
+import { HIDDEN_FILE } from './constants/dial.constants';
 import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import type {
   DeploymentItemDto,
@@ -87,6 +88,7 @@ export class DeploymentsService extends AppService {
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
+    private readonly userConfigService: UserConfigService,
   ) {
     super(configService);
     this.featuredIds = new Set(
@@ -101,6 +103,7 @@ export class DeploymentsService extends AppService {
   async listDeployments(
     userSub: string,
     accessToken: string,
+    bucket: string,
     interfaceType?: DeploymentInterfaceType[],
   ): Promise<DeploymentsResponseDto> {
     const baseCacheKey = `deployments:list:${userSub}`;
@@ -152,22 +155,24 @@ export class DeploymentsService extends AppService {
       }
     }
 
-    const installedIds = [] as string[];
+    const { toolsets: toolsetIds, deployments: deploymentIds } =
+      await this.userConfigService.getInstalledIds(accessToken, bucket);
+    const toolsetsSet = new Set(toolsetIds);
+    const deploymentsSet = new Set(deploymentIds);
 
-    const installedSet = new Set(installedIds);
-    allItems =
-      installedSet.size > 0
-        ? allItems.map((item) => ({
-            ...item,
-            isUserFavorite: installedSet.has(item.id),
-          }))
-        : allItems;
+    const withInstalled = allItems.map((item) => ({
+      ...item,
+      isInstalled:
+        item.type === 'toolset'
+          ? toolsetsSet.has(item.id)
+          : deploymentsSet.has(item.id),
+    }));
 
     if (!interfaceFilter) {
-      return { deployments: allItems };
+      return { deployments: withInstalled };
     }
 
-    const filtered = allItems.filter(
+    const filtered = withInstalled.filter(
       (item) =>
         item.interfaces &&
         item.interfaces.some((iface) =>

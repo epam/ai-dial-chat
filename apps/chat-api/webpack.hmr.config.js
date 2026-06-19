@@ -3,6 +3,10 @@ const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 const webpack = require('webpack');
 const nodeExternals = require('webpack-node-externals');
+const {
+  NESTJS_IGNORED_WARNINGS,
+  NESTJS_RESOLVE_ALIASES,
+} = require('./webpack.shared');
 
 module.exports = {
   entry: {
@@ -10,6 +14,7 @@ module.exports = {
   },
   target: 'node',
   devtool: 'inline-source-map',
+  ignoreWarnings: NESTJS_IGNORED_WARNINGS,
   output: {
     path: join(__dirname, 'dist'),
     filename: '[name].js',
@@ -33,11 +38,7 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     alias: {
-      '@nestjs/websockets/socket-module': false,
-      '@nestjs/microservices/microservices-module': false,
-      '@nestjs/microservices': false,
-      'class-transformer/storage': false,
-      '@fastify/static': false,
+      ...NESTJS_RESOLVE_ALIASES,
     },
     plugins: [
       new TsconfigPathsPlugin({

@@ -334,8 +334,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           },
           typography: {
             fontClassName: typography?.fontClassName,
-            fontFamily: hasTypographyClass ? undefined : typography?.fontFamily,
-            fontSize: hasTypographyClass ? undefined : typography?.fontSize,
           },
           bodyClassName: 'flex flex-col overflow-hidden p-0',
           cssVars,

@@ -11,7 +11,10 @@ import {
   migrateConfig,
 } from './dto/user-config.dto';
 
-const CONFIG_PATH = '.user-config.json';
+const CONFIG_PATH = '.client_data/.user-config.json';
+const LEGACY_CONFIG_PATH = '.user-config.json';
+const LEGACY_TOOLSETS_PATH = 'clientdata/installed_toolsets.json';
+const LEGACY_DEPLOYMENTS_PATH = 'clientdata/installed_deployments.json';
 
 @Injectable()
 export class UserConfigService extends AppService {
@@ -23,26 +26,155 @@ export class UserConfigService extends AppService {
 
   async readConfig(token: string, bucket: string): Promise<UserConfig> {
     try {
-      const { response } = (await this.client.downloadFile(
-        bucket,
-        CONFIG_PATH,
-        {
-          headers: getBearerAuthHeaders(token),
-          parseAs: 'stream',
-        },
-      )) as { response: Response };
+      let config = await this.readConfigFromPath(CONFIG_PATH, token, bucket);
 
-      if (!response.ok) return { ...DEFAULT_USER_CONFIG };
+      if (config == null) {
+        const legacyConfig = await this.readConfigFromPath(
+          LEGACY_CONFIG_PATH,
+          token,
+          bucket,
+        );
+        if (legacyConfig != null) {
+          config = legacyConfig;
+          await this.writeConfig(config, token, bucket);
+          await this.deleteFileBestEffort(LEGACY_CONFIG_PATH, token, bucket);
+        } else {
+          config = {
+            ...DEFAULT_USER_CONFIG,
+            conversations: { pinnedIds: [] },
+            toolsets: { installed: [] },
+            deployments: { installed: [] },
+          };
+        }
+      }
+
+      const { config: merged, changed } =
+        await this.consolidateLegacyInstallationFiles(config, token, bucket);
+
+      if (changed) {
+        await this.writeConfig(merged, token, bucket);
+      }
+
+      return merged;
+    } catch {
+      this.logger.warn('Failed to read user config, using default');
+      return {
+        ...DEFAULT_USER_CONFIG,
+        conversations: { pinnedIds: [] },
+        toolsets: { installed: [] },
+        deployments: { installed: [] },
+      };
+    }
+  }
+
+  private async readConfigFromPath(
+    path: string,
+    token: string,
+    bucket: string,
+  ): Promise<UserConfig | null> {
+    try {
+      const { response } = (await this.client.downloadFile(bucket, path, {
+        headers: getBearerAuthHeaders(token),
+        parseAs: 'stream',
+      })) as { response: Response };
+
+      if (!response.ok) return null;
 
       const text = await response.text();
       return migrateConfig(JSON.parse(text) as unknown);
     } catch {
-      console.warn('Failed to read user config, using default', {
-        token,
-        bucket,
-      });
-      return { ...DEFAULT_USER_CONFIG };
+      return null;
     }
+  }
+
+  private async deleteFileBestEffort(
+    path: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    try {
+      await this.client.deleteFile(bucket, path, {
+        headers: getBearerAuthHeaders(token),
+      });
+    } catch (err) {
+      this.logger.warn(`Failed to delete legacy config file at ${path}`, err);
+    }
+  }
+
+  private mergeInstalledIds(base: string[], legacy: string[]): string[] {
+    const set = new Set(base);
+    const additions = legacy.filter((id) => !set.has(id));
+    return additions.length > 0 ? [...base, ...additions] : base;
+  }
+
+  private async consolidateLegacyInstallationFiles(
+    config: UserConfig,
+    token: string,
+    bucket: string,
+  ): Promise<{ config: UserConfig; changed: boolean }> {
+    let changed = false;
+    let current = config;
+
+    for (const [path, section] of [
+      [LEGACY_TOOLSETS_PATH, 'toolsets'],
+      [LEGACY_DEPLOYMENTS_PATH, 'deployments'],
+    ] as const) {
+      try {
+        const { response } = (await this.client.downloadFile(bucket, path, {
+          headers: getBearerAuthHeaders(token),
+          parseAs: 'stream',
+        })) as { response: Response };
+
+        if (!response.ok) continue;
+
+        const text = await response.text();
+        let parsed: unknown;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          this.logger.warn(
+            `Malformed legacy installation file at ${path}, skipping`,
+          );
+          continue;
+        }
+
+        if (!Array.isArray(parsed)) {
+          this.logger.warn(
+            `Legacy installation file at ${path} is not an array, skipping`,
+          );
+          continue;
+        }
+
+        const legacyIds = (parsed as unknown[])
+          .map((entry) => {
+            if (typeof entry === 'string') return entry;
+            if (
+              entry != null &&
+              typeof entry === 'object' &&
+              'id' in entry &&
+              typeof (entry as Record<string, unknown>)['id'] === 'string'
+            ) {
+              return (entry as Record<string, unknown>)['id'] as string;
+            }
+            return null;
+          })
+          .filter((id): id is string => id != null);
+
+        const merged = this.mergeInstalledIds(
+          current[section].installed,
+          legacyIds,
+        );
+
+        if (merged !== current[section].installed) {
+          current = { ...current, [section]: { installed: merged } };
+          changed = true;
+        }
+      } catch {
+        // non-ok download is handled above; unexpected errors are ignored
+      }
+    }
+
+    return { config: current, changed };
   }
 
   async writeConfig(
@@ -80,9 +212,20 @@ export class UserConfigService extends AppService {
     }
   }
 
+  async getInstalledIds(
+    token: string,
+    bucket: string,
+  ): Promise<{ toolsets: string[]; deployments: string[] }> {
+    const config = await this.readConfig(token, bucket);
+    return {
+      toolsets: config.toolsets.installed,
+      deployments: config.deployments.installed,
+    };
+  }
+
   async getPinnedIds(token: string, bucket: string): Promise<string[]> {
     const config = await this.readConfig(token, bucket);
-    return config.pinnedConversationIds;
+    return config.conversations.pinnedIds;
   }
 
   async updatePin(
@@ -92,7 +235,7 @@ export class UserConfigService extends AppService {
     bucket: string,
   ): Promise<void> {
     const config = await this.readConfig(token, bucket);
-    const ids = config.pinnedConversationIds;
+    const ids = config.conversations.pinnedIds;
 
     if (isPinned) {
       if (!ids.includes(conversationId)) ids.push(conversationId);
@@ -119,12 +262,66 @@ export class UserConfigService extends AppService {
     bucket: string,
   ): Promise<void> {
     const config = await this.readConfig(token, bucket);
-    const ids = config.pinnedConversationIds;
+    const ids = config.conversations.pinnedIds;
     const index = ids.indexOf(oldId);
     if (index === -1) return;
     ids[index] = newId;
     await this.writeConfig(
       { ...config, version: CURRENT_CONFIG_VERSION },
+      token,
+      bucket,
+    );
+  }
+
+  private async updateInstalledEntry(
+    section: 'toolsets' | 'deployments',
+    id: string,
+    isInstalled: boolean,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    const config = await this.readConfig(token, bucket);
+    const ids = config[section].installed;
+
+    if (isInstalled) {
+      if (!ids.includes(id)) ids.push(id);
+    } else {
+      const index = ids.indexOf(id);
+      if (index !== -1) ids.splice(index, 1);
+    }
+
+    await this.writeConfig(
+      { ...config, version: CURRENT_CONFIG_VERSION },
+      token,
+      bucket,
+    );
+  }
+
+  async updateInstalledToolset(
+    id: string,
+    isInstalled: boolean,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    return this.updateInstalledEntry(
+      'toolsets',
+      id,
+      isInstalled,
+      token,
+      bucket,
+    );
+  }
+
+  async updateInstalledDeployment(
+    id: string,
+    isInstalled: boolean,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    return this.updateInstalledEntry(
+      'deployments',
+      id,
+      isInstalled,
       token,
       bucket,
     );

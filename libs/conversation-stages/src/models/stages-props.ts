@@ -8,18 +8,10 @@ import type { Stage } from '@epam/ai-dial-chat-shared';
 export interface StageTypography {
   /** CSS utility class applied to stage text elements (`p`, `ul`, `ol`). */
   fontClassName?: string;
-  /** Explicit font-size override (e.g. `'14px'` or `'0.875rem'`). */
-  fontSize?: string;
-  /** Explicit font-weight override. */
-  fontWeight?: string | number;
-  /** Explicit line-height override. */
-  lineHeight?: string | number;
-  /** Explicit letter-spacing override. */
-  letterSpacing?: string;
-  /** Explicit font-family override. */
-  fontFamily?: string;
   /** CSS utility class applied to inline code elements. Defaults to `'font-mono text-sm'`. */
   codeClassName?: string;
+  /** Font family applied to the panel root via CSS custom property. */
+  fontFamily?: string;
 }
 
 /** Color overrides for the `StagesPanel` component applied as CSS custom properties. */

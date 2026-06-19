@@ -61,9 +61,10 @@ export class DeploymentItemDto {
   topics?: string[];
 
   @ApiPropertyOptional({
-    description: 'Installed deployment by user',
+    description:
+      'Whether this deployment is installed by the current user (from user config)',
   })
-  isUserFavorite?: boolean;
+  isInstalled?: boolean;
 }
 
 export class DeploymentsResponseDto {

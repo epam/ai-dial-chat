@@ -168,8 +168,12 @@ export const Input: FC<InputProps> = ({
 
   useLayoutEffect(() => {
     if (!textareaRef.current || singleRowHeightRef.current === 0) return;
-    setIsMultiLine(
-      textareaRef.current.offsetHeight > singleRowHeightRef.current,
+    const isNowMultiLine =
+      textareaRef.current.offsetHeight > singleRowHeightRef.current;
+    // Only set to false when message is empty: switching from stacked to non-stacked
+    // changes textarea width, which can re-trigger wrapping and cause an infinite toggle.
+    setIsMultiLine((prev) =>
+      isNowMultiLine ? true : message === '' ? false : prev,
     );
   }, [message]);
 
