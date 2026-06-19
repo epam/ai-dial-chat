@@ -1789,18 +1789,63 @@
             "type": "string",
             "example": "light"
           },
-          "name": {
+          "displayName": {
             "type": "string",
             "example": "Light Theme"
           },
-          "icon": {
+          "colors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "primary-color": "#ffffff"
+            }
+          },
+          "app-logo": {
             "type": "string",
-            "example": "icon-light.svg"
+            "example": "https://example.com/logo-light.svg"
           }
         },
         "required": [
           "id",
-          "name"
+          "displayName",
+          "colors",
+          "app-logo"
+        ]
+      },
+      "ThemeImagesDto": {
+        "type": "object",
+        "properties": {
+          "default-addon": {
+            "type": "string",
+            "example": "https://example.com/addon.png"
+          },
+          "default-model": {
+            "type": "string",
+            "example": "https://example.com/model.png"
+          },
+          "favicon": {
+            "type": "string",
+            "example": "https://example.com/favicon.ico"
+          },
+          "chat-logo-light": {
+            "type": "string",
+            "example": "chat-logo-light.svg"
+          },
+          "chat-logo-dark": {
+            "type": "string",
+            "example": "chat-logo-dark.svg"
+          },
+          "chat-favicon": {
+            "type": "string",
+            "example": "https://example.com/chat-favicon.png"
+          }
+        },
+        "required": [
+          "default-addon",
+          "default-model",
+          "favicon"
         ]
       },
       "ThemeConfigResponseDto": {
@@ -1811,10 +1856,14 @@
             "items": {
               "$ref": "#/components/schemas/ThemeDto"
             }
+          },
+          "images": {
+            "$ref": "#/components/schemas/ThemeImagesDto"
           }
         },
         "required": [
-          "themes"
+          "themes",
+          "images"
         ]
       },
       "ProviderInfoDto": {

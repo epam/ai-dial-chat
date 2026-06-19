@@ -212,15 +212,45 @@ export class ThemeDto {
   id!: string;
 
   @ApiProperty({ example: 'Light Theme' })
-  name!: string;
+  displayName!: string;
 
-  @ApiPropertyOptional({ example: 'icon-light.svg' })
-  icon?: string;
+  @ApiProperty({
+    type: 'object',
+    additionalProperties: { type: 'string' },
+    example: { 'primary-color': '#ffffff' },
+  })
+  colors!: Record<string, string>;
+
+  @ApiProperty({ example: 'https://example.com/logo-light.svg' })
+  'app-logo'!: string;
+}
+
+export class ThemeImagesDto {
+  @ApiProperty({ example: 'https://example.com/addon.png' })
+  'default-addon'!: string;
+
+  @ApiProperty({ example: 'https://example.com/model.png' })
+  'default-model'!: string;
+
+  @ApiProperty({ example: 'https://example.com/favicon.ico' })
+  favicon!: string;
+
+  @ApiPropertyOptional({ example: 'chat-logo-light.svg' })
+  'chat-logo-light'?: string;
+
+  @ApiPropertyOptional({ example: 'chat-logo-dark.svg' })
+  'chat-logo-dark'?: string;
+
+  @ApiPropertyOptional({ example: 'https://example.com/chat-favicon.png' })
+  'chat-favicon'?: string;
 }
 
 export class ThemeConfigResponseDto {
   @ApiProperty({ type: () => [ThemeDto] })
   themes!: ThemeDto[];
+
+  @ApiProperty({ type: () => ThemeImagesDto })
+  images!: ThemeImagesDto;
 }
 
 export class ChatCompletionChoiceDto {

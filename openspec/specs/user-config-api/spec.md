@@ -100,6 +100,32 @@ If no IDs were added by either merge, `writeConfig` is NOT called.
 - **THEN** `readConfig` returns `{ "version": 2, "conversations": { "pinnedIds": [] }, "toolsets": { "installed": ["toolset-a", "toolset-b"] }, "deployments": { "installed": [] } }`
 - **AND** the merged config is written to `.client_data/.user-config.json`
 
+#### Scenario: Only legacy deployment file exists — no user-config at any path
+
+- **WHEN** `.client_data/.user-config.json` is absent, `.user-config.json` is absent, and `clientdata/installed_deployments.json` contains `["dep-1"]`
+- **THEN** `readConfig` returns `{ "version": 2, "conversations": { "pinnedIds": [] }, "toolsets": { "installed": [] }, "deployments": { "installed": ["dep-1"] } }`
+
+#### Scenario: Both legacy installation files exist — no user-config at any path
+
+- **WHEN** `.client_data/.user-config.json` is absent and `clientdata/installed_toolsets.json` contains `["ts-1"]` and `clientdata/installed_deployments.json` contains `["dep-1"]`
+- **THEN** `readConfig` returns a config with `toolsets.installed = ["ts-1"]` and `deployments.installed = ["dep-1"]`
+
+#### Scenario: Legacy toolsets merged into existing new user-config that already has entries
+
+- **WHEN** `.client_data/.user-config.json` contains `{ "toolsets": { "installed": ["ts-existing"] }, ... }` and `clientdata/installed_toolsets.json` contains `["ts-new"]`
+- **THEN** `readConfig` returns a config with `toolsets.installed = ["ts-existing", "ts-new"]`
+
+#### Scenario: New config wins — duplicate IDs in legacy file are not added again
+
+- **WHEN** `.client_data/.user-config.json` contains `{ "toolsets": { "installed": ["ts-a"] }, ... }` and `clientdata/installed_toolsets.json` contains `["ts-a", "ts-b"]`
+- **THEN** `readConfig` returns a config with `toolsets.installed = ["ts-a", "ts-b"]` (no duplicate `"ts-a"`)
+
+#### Scenario: New config wins — legacy file entirely overlaps with existing config
+
+- **WHEN** `.client_data/.user-config.json` contains `{ "toolsets": { "installed": ["ts-a", "ts-b"] }, ... }` and `clientdata/installed_toolsets.json` contains `["ts-a", "ts-b"]`
+- **THEN** `readConfig` returns a config with `toolsets.installed = ["ts-a", "ts-b"]` (unchanged)
+- **AND** `writeConfig` is NOT called because no new IDs were added
+
 #### Scenario: Both legacy files absent — no migration attempted
 
 - **WHEN** `.client_data/.user-config.json` exists and both `clientdata/installed_toolsets.json` and `clientdata/installed_deployments.json` are absent (DIAL Core returns non-ok for both)

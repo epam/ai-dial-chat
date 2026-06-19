@@ -1,8 +1,13 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
-import type { MessageRating } from '../../domain/message-rating';
 
 const rateValues = [1, -1] as const;
+
+/** User thumbs-up / thumbs-down rating sent to DIAL Core. */
+export enum MessageRating {
+  Like = 1,
+  Dislike = -1,
+}
 
 export class RateMessageDto {
   @ApiProperty({

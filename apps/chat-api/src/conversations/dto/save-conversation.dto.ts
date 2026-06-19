@@ -1,6 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
 import { IsObject } from 'class-validator';
-import type { Conversation } from '../../domain/conversation';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 import { ConversationPathDto } from './conversation-path.dto';
 
@@ -12,5 +11,5 @@ export class SaveConversationBodyDto {
     type: ConversationResponseDto,
   })
   @IsObject()
-  conversation!: Conversation;
+  conversation!: ConversationResponseDto;
 }

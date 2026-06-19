@@ -11,11 +11,11 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
 import {
-  Conversation,
-  ConversationMetadata,
-  Message,
+  DialCoreConversation,
+  DialCoreMessage,
   MessageRole,
-} from '../domain/conversation';
+} from '../domain/dial-core-conversation';
+import { ConversationMetadataDto } from '../openapi/openapi-response.dto';
 import { UserConfigService } from '../user-config/user-config.service';
 import { PUBLIC_BUCKET } from './constants/conversation.constants';
 import {
@@ -47,7 +47,9 @@ import {
 } from './utils/conversation.utils';
 import { resolveUniqueConversationName } from './utils/resolve-unique-conversation-name';
 
-const getValidAttachments = (customContent?: Message['custom_content']) =>
+const getValidAttachments = (
+  customContent?: DialCoreMessage['custom_content'],
+) =>
   (customContent?.attachments ?? []).filter((attachment) =>
     Boolean(attachment.data || attachment.url),
   );
@@ -117,7 +119,7 @@ export class ConversationService extends AppService {
     bucket: string,
     deploymentId: string,
     customContent?: MessageCustomContentDto,
-  ): Promise<Conversation> {
+  ): Promise<DialCoreConversation> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
     const baseName = getConversationName('New chat', firstMessage);
@@ -135,7 +137,7 @@ export class ConversationService extends AppService {
     };
 
     // TODO: add temperature and other conversation settings
-    const conversation: Conversation = {
+    const conversation: DialCoreConversation = {
       id: `${folderId}/${conversationPath}`,
       folderId,
       name,
@@ -167,7 +169,7 @@ export class ConversationService extends AppService {
         return handleDialError(error);
       }
 
-      return { ...data, ...conversation } as Conversation;
+      return { ...data, ...conversation } as DialCoreConversation;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
       return handleDialError(error);
@@ -178,7 +180,7 @@ export class ConversationService extends AppService {
     conversationPath: string,
     token: string,
     sessionBucket: string,
-  ): Promise<Conversation> {
+  ): Promise<DialCoreConversation> {
     const slashIndex = conversationPath.indexOf('/');
     const bucket =
       slashIndex === -1 ? sessionBucket : conversationPath.slice(0, slashIndex);
@@ -197,7 +199,7 @@ export class ConversationService extends AppService {
         this.logger.error('DIAL Core rejected getConversation', error);
         return handleDialError(error);
       }
-      return data as Conversation;
+      return data as DialCoreConversation;
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversation', error);
       return handleDialError(error);
@@ -549,7 +551,7 @@ export class ConversationService extends AppService {
     token: string,
     bucket: string,
     permissions?: boolean,
-  ): Promise<ConversationMetadata> {
+  ): Promise<ConversationMetadataDto> {
     try {
       const { data, error } = (await this.client.getConversationMetadata(
         bucket,
@@ -564,7 +566,7 @@ export class ConversationService extends AppService {
         this.logger.error('DIAL Core rejected getConversationMetadata', error);
         return handleDialError(error);
       }
-      return data as ConversationMetadata;
+      return data as ConversationMetadataDto;
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversationMetadata', error);
       return handleDialError(error);
@@ -575,8 +577,8 @@ export class ConversationService extends AppService {
     conversationPath: string,
     token: string,
     bucket: string,
-    conversation: Conversation,
-  ): Promise<Conversation> {
+    conversation: DialCoreConversation,
+  ): Promise<DialCoreConversation> {
     try {
       const { data, error } = (await this.client.saveConversation(
         bucket,
@@ -590,7 +592,7 @@ export class ConversationService extends AppService {
         this.logger.error('DIAL Core rejected saveConversation', error);
         return handleDialError(error);
       }
-      return { ...data, ...conversation } as Conversation;
+      return { ...data, ...conversation } as DialCoreConversation;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
       return handleDialError(error);
@@ -776,7 +778,7 @@ export class ConversationService extends AppService {
       bucket,
     );
 
-    const userMessage: Message = {
+    const userMessage: DialCoreMessage = {
       id: crypto.randomUUID(),
       role: MessageRole.User,
       content: message,

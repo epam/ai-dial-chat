@@ -1694,6 +1694,12 @@ export interface ThemeConfigResponseDto {
    * @memberof ThemeConfigResponseDto
    */
   themes: Array<ThemeDto>;
+  /**
+   *
+   * @type {ThemeImagesDto}
+   * @memberof ThemeConfigResponseDto
+   */
+  images: ThemeImagesDto;
 }
 /**
  *
@@ -1712,13 +1718,62 @@ export interface ThemeDto {
    * @type {string}
    * @memberof ThemeDto
    */
-  name: string;
+  displayName: string;
+  /**
+   *
+   * @type {{ [key: string]: string; }}
+   * @memberof ThemeDto
+   */
+  colors: { [key: string]: string };
   /**
    *
    * @type {string}
    * @memberof ThemeDto
    */
-  icon?: string;
+  appLogo: string;
+}
+/**
+ *
+ * @export
+ * @interface ThemeImagesDto
+ */
+export interface ThemeImagesDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  defaultAddon: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  defaultModel: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  favicon: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  chatLogoLight?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  chatLogoDark?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  chatFavicon?: string;
 }
 /**
  *

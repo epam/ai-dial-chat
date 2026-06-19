@@ -9,7 +9,10 @@ import {
   mapDialHttpStatus,
 } from '../common/utils/dial-fetch-error';
 import type { EnvironmentVariables } from '../config/environment.config';
-import type { DialModel, DialModelListResponse } from '../domain/dial-model';
+import type {
+  DialModelDto,
+  DialModelListResponseDto,
+} from '../openapi/openapi-response.dto';
 
 @Injectable()
 export class ModelsService extends AppService {
@@ -25,9 +28,10 @@ export class ModelsService extends AppService {
   async listModels(
     userSub: string,
     accessToken: string,
-  ): Promise<DialModelListResponse> {
+  ): Promise<DialModelListResponseDto> {
     const cacheKey = `models:list:${userSub}`;
-    const cached = await this.cacheManager.get<DialModelListResponse>(cacheKey);
+    const cached =
+      await this.cacheManager.get<DialModelListResponseDto>(cacheKey);
     if (cached) {
       this.logger.debug(`Cache hit for models list (sub: ${userSub})`);
       return cached;
@@ -44,8 +48,9 @@ export class ModelsService extends AppService {
           this.logger,
         );
       }
-      const { data: models } = result.data as unknown as DialModelListResponse;
-      const data: DialModelListResponse = { data: models };
+      const { data: models } =
+        result.data as unknown as DialModelListResponseDto;
+      const data: DialModelListResponseDto = { data: models };
       await this.cacheManager.set(cacheKey, data, 30 * 1000);
       return data;
     } catch (err) {
@@ -57,9 +62,9 @@ export class ModelsService extends AppService {
     userSub: string,
     accessToken: string,
     modelName: string,
-  ): Promise<DialModel> {
+  ): Promise<DialModelDto> {
     const cacheKey = `models:single:${userSub}:${modelName}`;
-    const cached = await this.cacheManager.get<DialModel>(cacheKey);
+    const cached = await this.cacheManager.get<DialModelDto>(cacheKey);
     if (cached) {
       this.logger.debug(`Cache hit for model "${modelName}" (sub: ${userSub})`);
       return cached;
@@ -76,7 +81,7 @@ export class ModelsService extends AppService {
           this.logger,
         );
       }
-      const data = result.data as unknown as DialModel;
+      const data = result.data as unknown as DialModelDto;
       await this.cacheManager.set(cacheKey, data, 60 * 1000);
       return data;
     } catch (err) {

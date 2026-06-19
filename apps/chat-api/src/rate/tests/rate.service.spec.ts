@@ -5,7 +5,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
-import { MessageRating } from '../../domain/message-rating';
+import { MessageRating } from '../dto/rate-message.dto';
 import type { RateMessageDto } from '../dto/rate-message.dto';
 import { RateService } from '../rate.service';
 

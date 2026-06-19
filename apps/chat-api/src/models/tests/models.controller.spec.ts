@@ -9,16 +9,19 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { DialModel, DialModelListResponse } from '../../domain/dial-model';
+import type {
+  DialModelDto,
+  DialModelListResponseDto,
+} from '../../openapi/openapi-response.dto';
 import { ModelsController } from '../models.controller';
 import { ModelsService } from '../models.service';
 
-const mockModel: DialModel = {
+const mockModel: DialModelDto = {
   id: 'gpt-4o',
   object: 'model',
   owned_by: 'openai',
 };
-const mockList: DialModelListResponse = { data: [mockModel] };
+const mockList: DialModelListResponseDto = { data: [mockModel] };
 
 const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
 
