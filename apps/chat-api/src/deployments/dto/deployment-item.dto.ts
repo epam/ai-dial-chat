@@ -27,6 +27,16 @@ export class DeploymentItemDto {
   displayVersion?: string;
 
   @ApiPropertyOptional({
+    description: 'Whether this deployment is featured (configured via env)',
+  })
+  isFeatured?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether this deployment is hidden (configured via env)',
+  })
+  isHidden?: boolean;
+
+  @ApiPropertyOptional({
     description:
       'ISO timestamp of last update time from DIAL Core (e.g. "2024-05-01T12:34:56Z")',
   })
@@ -43,6 +53,12 @@ export class DeploymentItemDto {
       'Accepted MIME types for input attachments from DIAL Core (e.g. ["audio/*", "image/*"])',
   })
   inputAttachmentTypes?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Topics associated with this deployment from DIAL Core (e.g. ["topic1", "topic2"])',
+  })
+  topics?: string[];
 }
 
 export class DeploymentsResponseDto {

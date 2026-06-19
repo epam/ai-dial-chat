@@ -14,11 +14,17 @@
 
 import * as runtime from '../runtime';
 import type {
+  FileMetadataResponseDto,
   FileUploadResponseDto,
   ListFilesResponseDto,
 } from '../models/index';
 
 export interface DownloadFileRequest {
+  bucket: string;
+  path: string;
+}
+
+export interface GetFileMetadataRequest {
   bucket: string;
   path: string;
 }
@@ -96,6 +102,70 @@ export class FilesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<Blob> {
     const response = await this.downloadFileRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns metadata for a single named file from DIAL Core. Path must not end with /.
+   * Get file metadata
+   */
+  async getFileMetadataRaw(
+    requestParameters: GetFileMetadataRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<FileMetadataResponseDto>> {
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling getFileMetadata().',
+      );
+    }
+
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling getFileMetadata().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
+    }
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/metadata`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<FileMetadataResponseDto>(response);
+  }
+
+  /**
+   * Returns metadata for a single named file from DIAL Core. Path must not end with /.
+   * Get file metadata
+   */
+  async getFileMetadata(
+    requestParameters: GetFileMetadataRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<FileMetadataResponseDto> {
+    const response = await this.getFileMetadataRaw(
       requestParameters,
       initOverrides,
     );

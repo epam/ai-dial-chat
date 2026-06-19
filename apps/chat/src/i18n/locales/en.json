@@ -55,7 +55,6 @@
     "pageTitle": "Catalog",
     "favoritesTitle": "Your Favorites",
     "searchPlaceholder": "Search models, tools, agents…",
-    "noResultsDescription": "Try a different keyword",
     "noResultsTitle": "No results for \"{{query}}\"",
     "sortRecentlyUpdated": "Recently Updated",
     "sortNewest": "Newest",
@@ -190,7 +189,15 @@
     "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter — new line"
   },
   "attachments": {
-    "downloadFile": "Download file"
+    "downloadFile": "Download file",
+    "unsupportedType": {
+      "title": "File extension not supported",
+      "message": "This model can only process {{formats}}. Please upload a file in a supported format."
+    },
+    "networkError": {
+      "title": "Network unavailable",
+      "message": "Some files were not uploaded because your internet connection was lost.\n Please try again:\n"
+    }
   },
   "citations": {
     "marker": {

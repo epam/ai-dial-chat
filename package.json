@@ -20,6 +20,8 @@
     "openapi:check": "node tools/openapi/check-client.mjs",
     "openapi:sdk": "nx run chat-api:openapi-sdk",
     "openapi:spec": "nx run chat-api:openapi-spec",
+    "postman": "node tools/postman/generate-collection.mjs",
+    "postman:refresh": "npm run openapi:spec && npm run postman",
     "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "graph": "nx graph",

@@ -31,6 +31,8 @@ const toAdditionalProperties = (
 
 const mapToDeploymentItem = (
   raw: RawDeploymentDto,
+  featuredIds: Set<string>,
+  hiddenTags: Set<string>,
 ): DeploymentItemDto | null => {
   if (!raw.id) return null;
 
@@ -52,6 +54,8 @@ const mapToDeploymentItem = (
     }
   }
 
+  const topics = raw.description_keywords || [];
+
   return {
     id: raw.id,
     displayName: raw.display_name ?? raw.id,
@@ -59,6 +63,8 @@ const mapToDeploymentItem = (
     iconUrl: raw.icon_url,
     description: raw.description,
     displayVersion: raw.display_version,
+    isFeatured: featuredIds.has(raw.id || raw.reference || ''),
+    isHidden: topics.some((tag) => hiddenTags.has(tag)),
     updatedAt: typeof raw.updated_at === 'string' ? raw.updated_at : undefined,
     interfaces,
     applicationTypeSchemaId:
@@ -68,18 +74,28 @@ const mapToDeploymentItem = (
     inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
       ? raw.input_attachment_types
       : undefined,
+    topics,
   };
 };
 
 @Injectable()
 export class DeploymentsService extends AppService {
   protected override readonly logger = new Logger(DeploymentsService.name);
+  private readonly featuredIds: Set<string>;
+  private readonly hiddenTags: Set<string>;
 
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     @Inject(CACHE_MANAGER) private readonly cacheManager: Cache,
   ) {
     super(configService);
+    this.featuredIds = new Set(
+      this.configService.get<string[]>('FEATURED_MODEL_IDS') ?? [],
+    );
+
+    this.hiddenTags = new Set(
+      this.configService.get<string[]>('HIDDEN_ENTITY_TAGS') ?? [],
+    );
   }
 
   async listDeployments(
@@ -126,7 +142,9 @@ export class DeploymentsService extends AppService {
 
         allItems = rawItems
           .filter((item) => item.id && !item.id.includes(HIDDEN_FILE))
-          .map(mapToDeploymentItem)
+          .map((item) =>
+            mapToDeploymentItem(item, this.featuredIds, this.hiddenTags),
+          )
           .filter((item): item is DeploymentItemDto => item !== null);
         await this.cacheManager.set(cacheKey, allItems, 30_000);
       } catch (err) {

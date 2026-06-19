@@ -1193,6 +1193,91 @@ export interface DuplicateConversationResponseDto {
 /**
  *
  * @export
+ * @interface FileMetadataResponseDto
+ */
+export interface FileMetadataResponseDto {
+  /**
+   * File name without path
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  name?: string;
+  /**
+   * Node type, expected "item" for files
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  nodeType?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  bucket?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  parentPath?: string;
+  /**
+   * DIAL Core resource URL
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  url?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  resourceType?: string;
+  /**
+   * ETag; not available for folders
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  etag?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof FileMetadataResponseDto
+   */
+  contentLength?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  contentType?: string;
+  /**
+   * Creation time in Unix milliseconds; not supported by all storage providers
+   * @type {number}
+   * @memberof FileMetadataResponseDto
+   */
+  createdAt?: number;
+  /**
+   * Last-modified time in Unix milliseconds
+   * @type {number}
+   * @memberof FileMetadataResponseDto
+   */
+  updatedAt?: number;
+  /**
+   * READ | WRITE | SHARE
+   * @type {Array<string>}
+   * @memberof FileMetadataResponseDto
+   */
+  permissions?: Array<string>;
+  /**
+   * Author; not available for folders
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  author?: string;
+}
+/**
+ *
+ * @export
  * @interface FileUploadResponseDto
  */
 export interface FileUploadResponseDto {

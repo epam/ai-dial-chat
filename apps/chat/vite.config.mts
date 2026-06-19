@@ -52,6 +52,10 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/sidebar/src/index.ts',
       ),
+      '@epam/ai-dial-starter-buttons': path.resolve(
+        __dirname,
+        '../../libs/starter-buttons/src/index.ts',
+      ),
       '@epam/ai-dial-catalog': path.resolve(
         __dirname,
         '../../libs/catalog/src/index.ts',

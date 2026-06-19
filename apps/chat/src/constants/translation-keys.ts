@@ -88,7 +88,6 @@ export enum CatalogI18nKeys {
   PageTitle = 'catalog.pageTitle',
   FavoritesTitle = 'catalog.favoritesTitle',
   SearchPlaceholder = 'catalog.searchPlaceholder',
-  NoResultsDescription = 'catalog.noResultsDescription',
   NoResultsTitle = 'catalog.noResultsTitle',
   SortRecentlyUpdated = 'catalog.sortRecentlyUpdated',
   SortNewest = 'catalog.sortNewest',
@@ -195,6 +194,10 @@ export enum SidebarI18nKeys {
 
 export enum AttachmentsI18nKeys {
   Download = 'attachments.downloadFile',
+  UnsupportedTypeTitle = 'attachments.unsupportedType.title',
+  UnsupportedTypeMessage = 'attachments.unsupportedType.message',
+  NetworkErrorTitle = 'attachments.networkError.title',
+  NetworkErrorMessage = 'attachments.networkError.message',
 }
 
 export enum CitationsI18nKeys {

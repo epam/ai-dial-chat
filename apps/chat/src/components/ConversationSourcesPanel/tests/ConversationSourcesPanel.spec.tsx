@@ -27,6 +27,7 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
 vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
   PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
+  SidebarOrientation: { Left: 'left', Right: 'right' },
   SidebarPanel: ({
     children,
     isOpen,
@@ -65,7 +66,6 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
       onChange={(e) => onChange(e.target.value)}
     />
   ),
-  SidebarSide: { Right: 'right', Left: 'left' },
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
