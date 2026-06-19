@@ -6,6 +6,9 @@ import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileM
 import DialFileManagerModal from '../DialFileManagerModal';
 
 vi.mock('../../../hooks/files/useDialFileManager');
+vi.mock('../../../context/NotificationContext', () => ({
+  useNotification: () => ({ showNotification: vi.fn() }),
+}));
 vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
   return {
@@ -235,9 +238,10 @@ describe('DialFileManagerModal', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Select report' }));
     fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
 
-    expect(onAttach).toHaveBeenCalledWith([
-      expect.objectContaining({ name: 'report.pdf' }),
-    ]);
+    expect(onAttach).toHaveBeenCalledWith({
+      files: [expect.objectContaining({ name: 'report.pdf' })],
+      folderPaths: [],
+    });
   });
 
   it('shows the selection count and clears the selection', () => {

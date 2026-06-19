@@ -993,6 +993,12 @@ export interface DeploymentItemDto {
    */
   topics?: Array<string>;
   /**
+   * Maximum number of attachments allowed per message; undefined when not specified by DIAL Core
+   * @type {number}
+   * @memberof DeploymentItemDto
+   */
+  maxInputAttachments?: number;
+  /**
    * Whether this deployment is installed by the current user (from user config)
    * @type {boolean}
    * @memberof DeploymentItemDto

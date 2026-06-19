@@ -129,6 +129,15 @@ export enum DialFileManagerI18nKeys {
   Download = 'dialFileManager.download',
   Downloading = 'dialFileManager.downloading',
   UploadProgressTitle = 'dialFileManager.uploadProgressTitle',
+  MaxSizeSupportedTypes = 'dialFileManager.maxSizeSupportedTypes',
+  MaxSizeOnly = 'dialFileManager.maxSizeOnly',
+  AllTypes = 'dialFileManager.allTypes',
+  UpToFiles = 'dialFileManager.upToFiles',
+  AttachingHiddenFilesNotAllowed = 'dialFileManager.attachingHiddenFilesNotAllowed',
+  UnsupportedFilesSkipped = 'dialFileManager.unsupportedFilesSkipped',
+  UnsupportedFilesDescription = 'dialFileManager.unsupportedFilesDescription',
+  TooManyFilesSelected = 'dialFileManager.tooManyFilesSelected',
+  TooManyFilesDescription = 'dialFileManager.tooManyFilesDescription',
 }
 
 export enum AuthI18nKeys {

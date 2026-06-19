@@ -685,7 +685,10 @@ export class FilesService extends AppService {
     try {
       const pendingDownloads = new Map<
         number,
-        Promise<{ index: number; result: StagedArchiveFile | FailedArchiveFile }>
+        Promise<{
+          index: number;
+          result: StagedArchiveFile | FailedArchiveFile;
+        }>
       >();
       const startDownload = (index: number): void => {
         const file = expanded[index];

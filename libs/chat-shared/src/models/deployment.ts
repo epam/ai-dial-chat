@@ -10,6 +10,8 @@ export interface DeploymentItem {
   type?: string;
   /** MIME types accepted as input attachments (e.g. `['audio/*', 'image/*']`). Undefined when not specified by DIAL Core. */
   inputAttachmentTypes?: string[];
+  /** Maximum number of attachments allowed per message. Undefined when not specified by DIAL Core. */
+  maxInputAttachments?: number;
   /** Human-readable description of the deployment. */
   description?: string;
   /** ISO timestamp of last update time from DIAL Core (e.g. "2024-05-01T12:34:56Z"). */

@@ -247,7 +247,17 @@
     "folderNameHidden": "Folder name cannot start with a dot",
     "folderNameReserved": "This folder name is reserved",
     "folderNameTooLong": "Folder name is too long",
-    "noPermissionToCreate": "You don't have permission to create items in this folder"
+    "noPermissionToCreate": "You don't have permission to create items in this folder",
+    "maxSizeSupportedTypes": "Maximum size: {{maxSize}}. Supported types: {{allowedExtensions}}",
+    "maxSizeOnly": "Maximum size: {{maxSize}}",
+    "allTypes": "all",
+    "upToFiles_one": "Up to {{count}} file",
+    "upToFiles_other": "Up to {{count}} files",
+    "attachingHiddenFilesNotAllowed": "Attaching hidden files is not allowed",
+    "unsupportedFilesSkipped": "Some files were skipped",
+    "unsupportedFilesDescription": "Files with unsupported type were not attached",
+    "tooManyFilesSelected": "Too many files selected",
+    "tooManyFilesDescription": "You selected {{count}} files, limit is {{limit}}"
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."

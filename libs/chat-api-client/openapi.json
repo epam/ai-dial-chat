@@ -2086,6 +2086,10 @@
               "type": "string"
             }
           },
+          "maxInputAttachments": {
+            "type": "number",
+            "description": "Maximum number of attachments allowed per message; undefined when not specified by DIAL Core"
+          },
           "isInstalled": {
             "type": "boolean",
             "description": "Whether this deployment is installed by the current user (from user config)"

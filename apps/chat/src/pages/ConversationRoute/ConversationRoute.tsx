@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
+import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
@@ -102,14 +103,17 @@ const ConversationRoute: FC = () => {
     error,
   } = useDeployments();
 
-  const inputAttachmentTypes = useMemo(
-    () =>
-      items.find((item) => item.id === selectedItemId)?.inputAttachmentTypes ??
-      [],
+  const selectedDeployment = useMemo(
+    () => items.find((item) => item.id === selectedItemId),
     [items, selectedItemId],
   );
 
-  const isAttachmentsAllowed = inputAttachmentTypes.length > 0;
+  const inputAttachmentTypes = useMemo(
+    () => selectedDeployment?.inputAttachmentTypes ?? [],
+    [selectedDeployment],
+  );
+
+  const isAttachmentsAllowed = selectedDeployment?.inputAttachmentTypes != null;
 
   const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -429,6 +433,9 @@ const ConversationRoute: FC = () => {
             onClose={closeDialFileManager}
             onAttach={handleAttachDialFiles}
             bucket={bucket}
+            allowedTypes={inputAttachmentTypes}
+            maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
+            maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
             title={t(DialFileManagerI18nKeys.Title)}
             attachLabel={t(DialFileManagerI18nKeys.Attach)}
             emptyTitle={t(DialFileManagerI18nKeys.Empty)}

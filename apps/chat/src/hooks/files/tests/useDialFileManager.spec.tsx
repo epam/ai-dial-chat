@@ -299,7 +299,9 @@ describe('useDialFileManager', () => {
     });
 
     await waitFor(() =>
-      expect(result.current.uploadBatchState?.files[0]?.status).toBe('completed'),
+      expect(result.current.uploadBatchState?.files[0]?.status).toBe(
+        'completed',
+      ),
     );
   });
 

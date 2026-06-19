@@ -11,5 +11,6 @@ export interface RawDeploymentDto {
   interfaces?: string | string[];
   application_type_schema_id?: string;
   input_attachment_types?: string[];
+  max_input_attachments?: number;
   description_keywords?: string[];
 }

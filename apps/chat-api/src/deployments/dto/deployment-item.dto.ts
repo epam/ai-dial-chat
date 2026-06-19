@@ -62,6 +62,12 @@ export class DeploymentItemDto {
 
   @ApiPropertyOptional({
     description:
+      'Maximum number of attachments allowed per message; undefined when not specified by DIAL Core',
+  })
+  maxInputAttachments?: number;
+
+  @ApiPropertyOptional({
+    description:
       'Whether this deployment is installed by the current user (from user config)',
   })
   isInstalled?: boolean;

@@ -64,7 +64,10 @@ describe('uploadFileWithProgress', () => {
   });
 
   it('reports upload progress and resolves JSON response', async () => {
-    vi.stubGlobal('XMLHttpRequest', MockXMLHttpRequest as unknown as typeof XMLHttpRequest);
+    vi.stubGlobal(
+      'XMLHttpRequest',
+      MockXMLHttpRequest as unknown as typeof XMLHttpRequest,
+    );
 
     const progress: number[] = [];
     const result = await uploadFileWithProgress(
