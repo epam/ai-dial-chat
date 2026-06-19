@@ -74,6 +74,7 @@ const makeItem = (id: string, name: string) => ({
   domain: '',
   useCase: '',
   maturity: '',
+  overview: undefined,
 });
 
 describe('Catalog', () => {
