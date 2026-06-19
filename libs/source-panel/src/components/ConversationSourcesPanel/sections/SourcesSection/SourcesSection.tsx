@@ -1,22 +1,40 @@
-import { DIAL_ICON_SIZE, DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialGhostIconButton,
+  ElementSize,
+  mergeClasses,
+} from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
 import type { QuotationSource } from '../../../../models/quotation-source';
 
-interface Props {
+interface SourcesSectionProps {
   title: string;
   sources: QuotationSource[];
   copyLabel: string;
+  /** CSS class applied to the section heading. Defaults to `'dial-body-semi-text'`. */
+  titleClassName?: string;
+  /** CSS class applied to each source link. Defaults to `'dial-small-text !text-accent-primary'`. */
+  linkClassName?: string;
+  /** CSS class applied to the quote text. Defaults to `'dial-tiny-text text-secondary'`. */
+  quoteClassName?: string;
 }
 
-const SourcesSection: FC<Props> = ({ title, sources, copyLabel }) => {
+const SourcesSection: FC<SourcesSectionProps> = ({
+  title,
+  sources,
+  copyLabel,
+  titleClassName = 'dial-body-semi-text',
+  linkClassName = 'dial-small-text !text-accent-primary',
+  quoteClassName = 'dial-tiny-text text-secondary',
+}) => {
   if (sources.length === 0) {
     return null;
   }
 
   return (
     <section className="mb-6">
-      <h2 className="dial-body-semi-text mb-3">{title}</h2>
+      <h2 className={mergeClasses(titleClassName, 'mb-3')}>{title}</h2>
       <ul className="flex flex-col gap-3">
         {sources.map((source) => (
           <li key={source.url} className="flex flex-col gap-1">
@@ -25,7 +43,10 @@ const SourcesSection: FC<Props> = ({ title, sources, copyLabel }) => {
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="dial-small-text !text-accent-primary min-w-0 flex-1 truncate"
+                className={mergeClasses(
+                  linkClassName,
+                  'min-w-0 flex-1 truncate',
+                )}
               >
                 {source.title}
               </a>
@@ -37,7 +58,12 @@ const SourcesSection: FC<Props> = ({ title, sources, copyLabel }) => {
               />
             </div>
             {source.quote && (
-              <p className="dial-tiny-text text-secondary line-clamp-5 max-h-[80px] overflow-hidden">
+              <p
+                className={mergeClasses(
+                  quoteClassName,
+                  'line-clamp-5 max-h-[80px] overflow-hidden',
+                )}
+              >
                 {source.quote}
               </p>
             )}

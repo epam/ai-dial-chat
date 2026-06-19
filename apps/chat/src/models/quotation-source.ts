@@ -1,5 +1,1 @@
-export interface QuotationSource {
-  url: string;
-  title: string;
-  quote?: string;
-}
+export type { QuotationSource } from '@epam/ai-dial-source-panel';
