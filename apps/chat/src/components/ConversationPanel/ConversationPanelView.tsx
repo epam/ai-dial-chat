@@ -47,6 +47,7 @@ import { ROUTES } from '../../types/routes';
 import { StorageKey } from '../../types/storage-key';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { safeDecodeURIComponent } from '../../utils/string-utils';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
 import DeleteAllConversationsAction from './DeleteAllConversationsAction';
 import { getConversationSource } from './get-conversation-source';
@@ -281,10 +282,12 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setIsDeleting(false);
     setPendingDeleteId(null);
 
-    if (
+    const normalizedId = normalizeConversationId(idToDelete);
+    const isActiveDeletion =
       activeConversationId != null &&
-      normalizeConversationId(idToDelete) === activeConversationId
-    ) {
+      safeDecodeURIComponent(normalizedId) ===
+        safeDecodeURIComponent(activeConversationId);
+    if (isActiveDeletion) {
       navigate(ROUTES.Root);
     }
   }, [pendingDeleteId, deleteConversation, activeConversationId, navigate, t]);
