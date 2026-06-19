@@ -113,13 +113,7 @@ export const Card: FC<CardProps> = ({
         </div>
       </div>
 
-      <p
-        className={mergeClasses(
-          'm-0 overflow-hidden [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [display:-webkit-box]',
-          descriptionClassName,
-          styles.description,
-        )}
-      >
+      <p className={mergeClasses(descriptionClassName, styles.description)}>
         <Highlight text={item.description} query={query} />
       </p>
 

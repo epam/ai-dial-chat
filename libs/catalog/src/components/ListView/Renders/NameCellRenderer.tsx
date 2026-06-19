@@ -33,13 +33,7 @@ export const NameCellRenderer: FC<
           titleClassName={nameClassName}
           className="items-baseline gap-1.5"
         />
-        <p
-          className={mergeClasses(
-            'm-0 overflow-hidden [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [display:-webkit-box]',
-            descriptionClassName,
-            styles.secondaryText,
-          )}
-        >
+        <p className={mergeClasses(descriptionClassName, styles.secondaryText)}>
           <Highlight text={data.description} query={searchQuery} />
         </p>
       </div>
