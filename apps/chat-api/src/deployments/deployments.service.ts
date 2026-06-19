@@ -100,7 +100,6 @@ export class DeploymentsService extends AppService {
 
   async listDeployments(
     userSub: string,
-    bucket: string,
     accessToken: string,
     interfaceType?: DeploymentInterfaceType[],
   ): Promise<DeploymentsResponseDto> {
