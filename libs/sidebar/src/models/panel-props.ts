@@ -20,8 +20,6 @@ export interface SidebarPanelTypography {
   fontClassName?: string;
   /** Font family applied to the panel root via CSS custom property. */
   fontFamily?: string;
-  /** Font size applied to the panel root via CSS custom property. */
-  fontSize?: string;
 }
 
 /** Combined style overrides (colors and typography) for the `SidebarPanel` component. */
