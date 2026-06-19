@@ -38,6 +38,7 @@ import {
   isApplicationId,
   isConversationId,
   isEntityIdExternal,
+  isFileId,
   isFolderId,
   isMyEntity,
   isPromptId,
@@ -639,7 +640,7 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
       history.replaceState({}, '', window.location.origin);
 
       const { message: errorMessage, details, traceId } = payload;
-      const resourceUrl = sortBy(
+      let resourceUrl = sortBy(
         details?.resources ?? [],
         getResourceSoringWeight,
       )?.[0]?.url;
@@ -668,6 +669,9 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
         ) &&
         resourceUrl
       ) {
+        const parsedUrl = errorMessage?.split(':')?.[1]?.trim();
+        resourceUrl =
+          parsedUrl && isFileId(parsedUrl) ? parsedUrl : resourceUrl;
         const isFolderResource = isFolderId(resourceUrl);
         const { name, version } = parseEntityApiKey(
           splitEntityId(resourceUrl).name,
