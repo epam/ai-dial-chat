@@ -833,6 +833,7 @@ export enum ChatI18nKeys {
   Toolsets = 'Toolsets',
   CodeInterpreter = 'Code Interpreter',
   On = 'On',
+  Off = 'Off',
   TimeAwareness = 'Time awareness',
   AgentSkills = 'Agent Skills',
   Agents = 'Agents',
