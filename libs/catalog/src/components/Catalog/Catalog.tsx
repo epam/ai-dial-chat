@@ -1,13 +1,14 @@
-<<<<<<< HEAD
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialPrimaryButton,
   DialSpinner,
+  DialTabs,
   TabModel,
 } from '@epam/ai-dial-ui-kit';
 import { IconPlus } from '@tabler/icons-react';
-import { FC, useState } from 'react';
+import { FC, useCallback, useRef, useState } from 'react';
+import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import { CatalogSortKey } from '../../types/sort';
 import { CatalogViewMode } from '../../types/view-mode';
@@ -15,42 +16,10 @@ import { filterCatalogItems } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { getStyles } from '../../utils/styles';
 import { CardGrid } from '../CardGrid/CardGrid';
+import { CatalogItemDetails } from '../CatalogItemDetails/CatalogItemDetails';
 import { Favorites } from '../Favorites/Favorites';
 import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
-=======
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DialPrimaryButton,
-  DialTabs,
-  type TabModel,
-} from '@epam/ai-dial-ui-kit';
-import { IconPlus } from '@tabler/icons-react';
-import { FC, useCallback, useRef, useState } from 'react';
-import { TabLabel } from '../../components/TabLabel/TabLabel';
-import {
-  DEFAULT_DOMAIN_OPTIONS,
-  DEFAULT_MATURITY_OPTIONS,
-  DEFAULT_SORT_OPTIONS,
-  DEFAULT_USE_CASE_OPTIONS,
-} from '../../constants/catalog-defaults';
-import {
-  DEFAULT_ALL_FROM_IDS,
-  DEFAULT_FROM_TREE,
-} from '../../constants/from-tree';
-import type { CatalogItem } from '../../models/CatalogItem';
-import type { CatalogProps } from '../../models/CatalogProps';
-import { CatalogSortKey } from '../../types/CatalogSortKey';
-import { CatalogViewMode } from '../../types/CatalogViewMode';
-import { filterCatalogItems } from '../../utils/catalog-filter';
-import { sortCatalogItems } from '../../utils/catalog-sort';
-import { CatalogBrowseToolbar } from '../CatalogBrowseToolbar/CatalogBrowseToolbar';
-import { CatalogCardGrid } from '../CatalogCardGrid/CatalogCardGrid';
-import { CatalogFavorites } from '../CatalogFavorites/CatalogFavorites';
-import { CatalogItemDetails } from '../CatalogItemDetails/CatalogItemDetails';
-import { CatalogListView } from '../CatalogListView/CatalogListView';
->>>>>>> b4b22eef2c3e54e0f61784c59613d383bcdd3a5e
 import styles from './Catalog.module.scss';
 
 /**
@@ -114,14 +83,6 @@ export const Catalog: FC<CatalogProps> = ({
   const tabs = [] as TabModel[]; // TODO: implement tabs and remove this placeholder
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-0 flex-1 items-center justify-center">
-        <DialSpinner size={44} />
-      </div>
-    );
-  }
-
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [aboutContent, setAboutContent] = useState<string | undefined>(
@@ -129,6 +90,14 @@ export const Catalog: FC<CatalogProps> = ({
   );
   const [isAboutLoading, setIsAboutLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <DialSpinner size={44} />
+      </div>
+    );
+  }
 
   const handleViewModeChange = (mode: CatalogViewMode) => {
     if (mode === CatalogViewMode.List) setListEverShown(true);
@@ -139,10 +108,9 @@ export const Catalog: FC<CatalogProps> = ({
     // TODO: implement when filters are added
   };
 
-<<<<<<< HEAD
   const sorted = sortCatalogItems(filteredItems, sortKey);
   const filtered = filterCatalogItems(sorted, query);
-=======
+
   const handleOpenDetails = useCallback(
     async (item: CatalogItem) => {
       setSelectedItem(item);
@@ -177,15 +145,6 @@ export const Catalog: FC<CatalogProps> = ({
     }, 300);
   }, []);
 
-  const sorted = sortCatalogItems(items, sortKey);
-  const filtered = filterCatalogItems(sorted, {
-    fromChecked,
-    allFromIds,
-    domainSelected,
-    useCaseSelected,
-    maturitySelected,
-    query,
-  });
   const tabFiltered = activeTab
     ? filtered.filter((item) => item.type === activeTab)
     : filtered;
@@ -200,7 +159,6 @@ export const Catalog: FC<CatalogProps> = ({
       />
     ),
   }));
->>>>>>> b4b22eef2c3e54e0f61784c59613d383bcdd3a5e
 
   // TODO: determine if any filter is active (for now we have no filters, so this is always false)
   const isAnyFilterActive = false;
@@ -219,11 +177,7 @@ export const Catalog: FC<CatalogProps> = ({
       {/* Page heading */}
       <div
         className={mergeClasses(
-<<<<<<< HEAD
-          'flex h-16 flex-shrink-0 items-center justify-between border-b px-6 py-3',
-=======
           'flex h-16 shrink-0 items-center justify-between border-b px-6',
->>>>>>> b4b22eef2c3e54e0f61784c59613d383bcdd3a5e
           styles.heading,
         )}
       >
@@ -252,15 +206,9 @@ export const Catalog: FC<CatalogProps> = ({
         />
       )}
 
-<<<<<<< HEAD
       {/* Browse toolbar (title, view toggle, sort, search, filters, tabs) */}
       <Toolbar
         totalCount={filteredItems.length}
-=======
-      {/* Browse toolbar */}
-      <CatalogBrowseToolbar
-        totalCount={items.length}
->>>>>>> b4b22eef2c3e54e0f61784c59613d383bcdd3a5e
         viewMode={viewMode}
         onViewModeChange={handleViewModeChange}
         sortKey={sortKey}
@@ -278,14 +226,6 @@ export const Catalog: FC<CatalogProps> = ({
       {tabs.length > 0 && (
         <div
           className={mergeClasses(
-<<<<<<< HEAD
-            'flex min-h-0 flex-1 overflow-auto pt-5',
-            styles.gridView,
-          )}
-        >
-          <CardGrid
-            items={filtered}
-=======
             'sticky top-0 z-10 shrink-0 border-b [&>div]:justify-center',
             styles.stickyTabsRow,
           )}
@@ -301,9 +241,8 @@ export const Catalog: FC<CatalogProps> = ({
       {/* Grid view */}
       {viewMode === CatalogViewMode.Grid && (
         <div className={styles.gridView}>
-          <CatalogCardGrid
+          <CardGrid
             items={tabFiltered}
->>>>>>> b4b22eef2c3e54e0f61784c59613d383bcdd3a5e
             query={query}
             onToggleFavorite={onToggleFavorite}
             onItemClick={handleOpenDetails}
@@ -317,25 +256,12 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* List view — mounted only after first shown to avoid initializing ag-grid eagerly */}
       {listEverShown && viewMode === CatalogViewMode.List && (
-<<<<<<< HEAD
-        <div className={mergeClasses('flex min-h-0 flex-1', styles.listView)}>
-          <ListView
-            items={filtered}
-            query={query}
-            ariaLabel={resolvedAriaLabel}
-            emptyStateTitle={emptyTitle}
-          />
-        </div>
-      )}
-    </section>
-=======
         <div className={styles.listView}>
-          <CatalogListView
+          <ListView
             items={tabFiltered}
             query={query}
             ariaLabel={resolvedAriaLabel}
             emptyStateTitle={emptyTitle}
-            emptyStateDescription={emptyDesc}
             onToggleFavorite={onToggleFavorite}
           />
         </div>
@@ -354,7 +280,6 @@ export const Catalog: FC<CatalogProps> = ({
           onShare={onShare}
         />
       )}
-    </div>
->>>>>>> b4b22eef2c3e54e0f61784c59613d383bcdd3a5e
+    </section>
   );
 };
