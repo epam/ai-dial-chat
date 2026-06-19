@@ -18,10 +18,10 @@ import { getStyles } from '../../utils/styles';
 import { CardGrid } from '../CardGrid/CardGrid';
 import { CatalogItemDetails } from '../CatalogItemDetails/CatalogItemDetails';
 import { Favorites } from '../Favorites/Favorites';
+import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
-import { ItemHeader } from '../ItemHeader/ItemHeader';
 
 /**
  * Root catalog component. Owns all filter/sort/pagination state and wires
@@ -92,26 +92,6 @@ export const Catalog: FC<CatalogProps> = ({
   const [isAboutLoading, setIsAboutLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-0 flex-1 items-center justify-center">
-        <DialSpinner size={44} />
-      </div>
-    );
-  }
-
-  const handleViewModeChange = (mode: CatalogViewMode) => {
-    if (mode === CatalogViewMode.List) setListEverShown(true);
-    setViewMode(mode);
-  };
-
-  const clearAllFilters = () => {
-    // TODO: implement when filters are added
-  };
-
-  const sorted = sortCatalogItems(filteredItems, sortKey);
-  const filtered = filterCatalogItems(sorted, query);
-
   const handleOpenDetails = useCallback(
     async (item: CatalogItem) => {
       setSelectedItem(item);
@@ -145,6 +125,26 @@ export const Catalog: FC<CatalogProps> = ({
       setIsAboutLoading(false);
     }, 300);
   }, []);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <DialSpinner size={44} />
+      </div>
+    );
+  }
+
+  const handleViewModeChange = (mode: CatalogViewMode) => {
+    if (mode === CatalogViewMode.List) setListEverShown(true);
+    setViewMode(mode);
+  };
+
+  const clearAllFilters = () => {
+    // TODO: implement when filters are added
+  };
+
+  const sorted = sortCatalogItems(filteredItems, sortKey);
+  const filtered = filterCatalogItems(sorted, query);
 
   const tabFiltered = activeTab
     ? filtered.filter((item) => item.type === activeTab)

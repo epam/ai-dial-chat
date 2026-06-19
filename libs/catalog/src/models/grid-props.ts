@@ -18,4 +18,6 @@ export interface CardGridProps {
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /** Grouped empty-state text overrides. */
   titles?: CardGridTitles;
+  /** Called when a card body is clicked. */
+  onItemClick?: (item: CatalogItem) => void;
 }
