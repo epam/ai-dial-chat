@@ -18,7 +18,10 @@ const summarizeCacheItems = (
     .join(', ') || '(none)';
 
 export const summarizeDialFileManagerCache = (
-  cache: Map<string, Array<{ name?: string; nodeType?: string; path?: string }>>,
+  cache: Map<
+    string,
+    Array<{ name?: string; nodeType?: string; path?: string }>
+  >,
 ): Record<string, string> =>
   Object.fromEntries(
     Array.from(cache.entries()).map(([key, items]) => [

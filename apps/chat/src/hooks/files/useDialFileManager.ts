@@ -1,7 +1,10 @@
 import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
 import type { DialFile, DialUploadFileItem } from '@epam/ai-dial-ui-kit';
 import { DialFileNodeType, DialFilePermission } from '@epam/ai-dial-ui-kit';
-import type { CreateFolderResponseDto, ListFilesItemDto } from '@epam/chat-api-client';
+import type {
+  CreateFolderResponseDto,
+  ListFilesItemDto,
+} from '@epam/chat-api-client';
 import {
   ArchiveItemDtoNodeTypeEnum,
   ListFilesItemDtoNodeTypeEnum,
@@ -115,7 +118,9 @@ const mapCorePermissions = (
   if (!permissions?.length) return undefined;
   const mapped = permissions
     .map((permission) => CORE_PERMISSION_MAP[permission.toUpperCase()])
-    .filter((permission): permission is DialFilePermission => permission != null);
+    .filter(
+      (permission): permission is DialFilePermission => permission != null,
+    );
   return mapped.length > 0 ? mapped : undefined;
 };
 

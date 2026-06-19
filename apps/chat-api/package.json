@@ -118,7 +118,6 @@
     }
   },
   "dependencies": {
-    "@epam/ai-dial-chat-shared": "0.0.1",
     "archiver": "^7.0.1",
     "@epam/ai-dial-typescript-sdk": "0.1.0-dev.24",
     "@nestjs/cache-manager": "^3.1.2",

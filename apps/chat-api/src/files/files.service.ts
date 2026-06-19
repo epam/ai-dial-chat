@@ -305,11 +305,14 @@ export class FilesService extends AppService {
     );
 
     try {
-      const { data, error: metaError, response: metaResponse } =
-        await this.client.getFileMetadata(bucket, markerPath, {
-          headers: getBearerAuthHeaders(at),
-          signal: AbortSignal.timeout(this.getTimeoutMs()),
-        });
+      const {
+        data,
+        error: metaError,
+        response: metaResponse,
+      } = await this.client.getFileMetadata(bucket, markerPath, {
+        headers: getBearerAuthHeaders(at),
+        signal: AbortSignal.timeout(this.getTimeoutMs()),
+      });
 
       const metaStatus = (metaResponse as { status: number }).status;
       const markerExists =

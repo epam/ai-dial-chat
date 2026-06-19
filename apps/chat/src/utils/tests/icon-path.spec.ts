@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { ApiEndpoints } from '../../server-api/base';
-import { getIconPath, resolveDialFileDownloadUrl, resolveRelativeDialFilePath } from '../icon-path';
+import {
+  getIconPath,
+  resolveDialFileDownloadUrl,
+  resolveRelativeDialFilePath,
+} from '../icon-path';
 
 describe('getIconPath', () => {
   it('should return correct URL format for icon name', () => {
