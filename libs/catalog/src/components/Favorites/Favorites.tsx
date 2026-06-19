@@ -43,7 +43,12 @@ export const Favorites: FC<FavoritesProps> = ({
   } as CSSProperties;
 
   const sortedItems = useMemo(
-    () => [...items].sort((a, b) => (b.lastUsedAt ?? 0) - (a.lastUsedAt ?? 0)),
+    () =>
+      [...items].sort(
+        (a, b) =>
+          (new Date(b.updatedAt || '').getTime() ?? 0) -
+          (new Date(a.updatedAt || '').getTime() ?? 0),
+      ),
     [items],
   );
 
