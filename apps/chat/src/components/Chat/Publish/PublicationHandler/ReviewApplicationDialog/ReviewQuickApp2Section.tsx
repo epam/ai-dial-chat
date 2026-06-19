@@ -151,8 +151,10 @@ const ReviewQuickApp2SectionView = ({
   const skills = useMemo(
     () =>
       (config?.skills ?? []).map(({ url }) => ({
-        name: parseEntityApiKey(splitEntityId(url).name, { parseVersion: true })
-          .name,
+        name: ApiUtils.decodeApiUrl(
+          parseEntityApiKey(splitEntityId(url).name, { parseVersion: true })
+            .name,
+        ),
         url,
       })),
     [config.skills],
@@ -160,20 +162,20 @@ const ReviewQuickApp2SectionView = ({
 
   return (
     <>
-      {isCodeInterpreterEnabled && isCodeInterpreter && (
+      {isCodeInterpreterEnabled && (
         <MarketplaceEntityInfoRow
           label={t(ChatI18nKeys.CodeInterpreter)}
-          value={t(ChatI18nKeys.On)}
+          value={t(isCodeInterpreter ? ChatI18nKeys.On : ChatI18nKeys.Off)}
           valueClassName="max-w-[414px] break-all text-primary"
         />
       )}
-      {timeAwareness && (
-        <MarketplaceEntityInfoRow
-          label={t(ChatI18nKeys.TimeAwareness)}
-          value={t(ChatI18nKeys.On)}
-          valueClassName="max-w-[414px] break-all text-primary"
-        />
-      )}
+
+      <MarketplaceEntityInfoRow
+        label={t(ChatI18nKeys.TimeAwareness)}
+        value={t(timeAwareness ? ChatI18nKeys.On : ChatI18nKeys.Off)}
+        valueClassName="max-w-[414px] break-all text-primary"
+      />
+
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.Model)}
         value={orchestratorName}
