@@ -1,3 +1,7 @@
 .secondaryText {
   color: var(--cat-list-secondary-text, var(--text-secondary, #9fa6bd));
 }
+
+.starFilledIcon {
+  color: var(--cat-card-star-filled, var(--text-warning-icon, #eec840));
+}
