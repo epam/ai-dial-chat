@@ -30,6 +30,8 @@ export interface CatalogItem extends FavoriteItem {
   isFeatured?: boolean;
   /** When true the item is hidden from the main Browse view and only shown in Search results. */
   isHidden?: boolean;
+  /** Whether the item is marked as a favorite by the user. */
+  isUserFavorite?: boolean;
   /** Folder breadcrumb path segments, outermost first. */
   folder: string[];
 }

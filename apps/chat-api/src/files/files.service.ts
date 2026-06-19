@@ -40,7 +40,7 @@ const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
 
 @Injectable()
 export class FilesService extends AppService {
-  protected readonly logger = new Logger(FilesService.name);
+  protected override readonly logger = new Logger(FilesService.name);
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     super(configService);

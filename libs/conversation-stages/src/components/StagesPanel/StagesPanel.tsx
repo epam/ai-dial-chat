@@ -1,6 +1,6 @@
 import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { FC } from 'react';
-import type { StagesPanelProps } from '../../models/StagesPanel';
+import type { StagesPanelProps } from '../../models/stages-props';
 import { StageItem } from '../StageItem/StageItem';
 import styles from './StagesPanel.module.scss';
 
@@ -27,16 +27,6 @@ export const StagesPanel: FC<StagesPanelProps> = ({
     '--cs-completed': colors?.completedColor,
     '--cs-failed': colors?.failedColor,
     '--cs-button-bg': colors?.buttonBackground,
-    '--cs-font-size': noCustomClass ? typography?.fontSize : undefined,
-    '--cs-font-weight': noCustomClass
-      ? typography?.fontWeight?.toString()
-      : undefined,
-    '--cs-line-height': noCustomClass
-      ? typography?.lineHeight?.toString()
-      : undefined,
-    '--cs-letter-spacing': noCustomClass
-      ? typography?.letterSpacing
-      : undefined,
     '--cs-font-family': noCustomClass ? typography?.fontFamily : undefined,
   });
 

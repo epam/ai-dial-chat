@@ -5,10 +5,10 @@ export type {
   CollapsedGroupProps,
   CollapsedGroupStyles,
   CollapsedGroupTypography,
-} from './models/CollapsedGroup';
+} from './models/collapsed-group';
 export type {
   StagesPanelColors,
   StagesPanelProps,
   StagesPanelStyles,
   StageTypography,
-} from './models/StagesPanel';
+} from './models/stages-props';

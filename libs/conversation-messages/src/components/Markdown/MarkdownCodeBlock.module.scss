@@ -1,0 +1,28 @@
+.container {
+  background: var(--cm-code-block-bg, var(--bg-layer-4, #242c42));
+  border-color: var(--cm-code-block-border, var(--stroke-secondary, #242c42));
+}
+
+.header {
+  background: var(--cm-code-block-bg, var(--bg-layer-4, #242c42));
+  border-color: var(--cm-code-block-border, var(--stroke-secondary, #242c42));
+}
+
+.scrollContainer {
+  scrollbar-width: thin;
+  scrollbar-color: var(--bg-layer-4, #242c42) transparent;
+
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  &::-webkit-scrollbar-track {
+    background-color: transparent;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background-color: var(--bg-layer-4, #242c42);
+    border-radius: 4px;
+  }
+}

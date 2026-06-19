@@ -152,6 +152,17 @@ export class DeploymentsService extends AppService {
       }
     }
 
+    const installedIds = [] as string[];
+
+    const installedSet = new Set(installedIds);
+    allItems =
+      installedSet.size > 0
+        ? allItems.map((item) => ({
+            ...item,
+            isUserFavorite: installedSet.has(item.id),
+          }))
+        : allItems;
+
     if (!interfaceFilter) {
       return { deployments: allItems };
     }

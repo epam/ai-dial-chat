@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { FC } from 'react';
 import type { CatalogItem } from '../../../models/catalog-item';
@@ -13,7 +14,7 @@ export const FolderCellRenderer: FC<
   if (!data) return null;
   return (
     <div className="flex h-full items-center">
-      <span className={[folderClassName, styles.secondaryText].join(' ')}>
+      <span className={mergeClasses(folderClassName, styles.secondaryText)}>
         {data.folder.join(' / ')}
       </span>
     </div>

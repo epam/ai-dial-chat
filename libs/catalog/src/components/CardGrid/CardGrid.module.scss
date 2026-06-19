@@ -30,14 +30,6 @@
   );
 }
 
-.name {
-  color: var(--cat-card-text-primary, var(--text-primary, #eef1f7));
-}
-
-.version {
-  color: var(--cat-card-text-secondary, var(--text-secondary, #9fa6bd));
-}
-
 .description {
   color: var(--cat-card-text-primary, var(--text-primary, #eef1f7));
 }
