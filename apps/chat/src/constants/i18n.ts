@@ -831,7 +831,7 @@ export enum ChatI18nKeys {
   DocumentUrls = 'Document URLs',
   Instructions = 'Instructions',
   Toolsets = 'Toolsets',
-  CodeInterpreter = 'Code Interpreter',
+  CodeInterpreter = 'Code interpreter',
   On = 'On',
   Off = 'Off',
   TimeAwareness = 'Time awareness',
