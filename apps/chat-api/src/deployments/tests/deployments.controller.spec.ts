@@ -5,7 +5,11 @@ import { DeploymentsController } from '../deployments.controller';
 import type { DeploymentsService } from '../deployments.service';
 import type { DeploymentsQueryDto } from '../dto/deployments-query.dto';
 
-const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
+const TEST_USER = {
+  sub: 'user-123',
+  at: 'test-access-token',
+  bucket: 'test-bucket',
+};
 const mockReq = { user: TEST_USER } as unknown as Request;
 
 function makeController() {
@@ -28,6 +32,7 @@ describe('DeploymentsController', () => {
     expect(service.listDeployments).toHaveBeenCalledWith(
       TEST_USER.sub,
       TEST_USER.at,
+      TEST_USER.bucket,
       ['chat'],
     );
   });
@@ -41,6 +46,7 @@ describe('DeploymentsController', () => {
     expect(service.listDeployments).toHaveBeenCalledWith(
       TEST_USER.sub,
       TEST_USER.at,
+      TEST_USER.bucket,
       undefined,
     );
   });

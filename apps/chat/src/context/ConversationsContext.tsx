@@ -19,8 +19,8 @@ import {
   listConversations,
   renameConversation as apiRenameConversation,
 } from '../server-api/conversations.api';
-import { pinConversation as apiPinConversation } from '../server-api/user-config.api';
 import { getConversationPath } from '../utils/conversation-path';
+import { useUserConfig } from './UserConfigContext';
 
 interface ConversationsContextType {
   /** Flat list of all loaded conversations. */
@@ -58,6 +58,7 @@ export const ConversationsProvider = ({
 }: {
   children: ReactNode;
 }) => {
+  const { setPinnedConversation } = useUserConfig();
   const [conversations, setConversations] = useState<ConversationListItemDto[]>(
     [],
   );
@@ -101,19 +102,22 @@ export const ConversationsProvider = ({
     };
   }, []);
 
-  const pinConversation = useCallback(async (id: string, isPinned: boolean) => {
-    setConversations((prev) =>
-      prev.map((c) => (c.id === id ? { ...c, isPinned } : c)),
-    );
-    try {
-      await apiPinConversation(id, isPinned);
-    } catch (err) {
+  const pinConversation = useCallback(
+    async (id: string, isPinned: boolean) => {
       setConversations((prev) =>
-        prev.map((c) => (c.id === id ? { ...c, isPinned: !isPinned } : c)),
+        prev.map((c) => (c.id === id ? { ...c, isPinned } : c)),
       );
-      console.error('Failed to persist pin state', err);
-    }
-  }, []);
+      try {
+        await setPinnedConversation(id, isPinned);
+      } catch (err) {
+        setConversations((prev) =>
+          prev.map((c) => (c.id === id ? { ...c, isPinned: !isPinned } : c)),
+        );
+        console.error('Failed to persist pin state', err);
+      }
+    },
+    [setPinnedConversation],
+  );
 
   const deleteConversation = useCallback(async (id: string) => {
     let snapshot: ConversationListItemDto[] | undefined;

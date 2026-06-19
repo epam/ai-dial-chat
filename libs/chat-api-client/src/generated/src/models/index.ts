@@ -439,9 +439,68 @@ export interface ConversationListResponseDto {
 /**
  *
  * @export
+ * @interface ConversationMessageCustomContentDto
+ */
+export interface ConversationMessageCustomContentDto {
+  /**
+   * DIAL API attachments to include with the message
+   * @type {Array<AttachmentDto>}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  attachments?: Array<AttachmentDto>;
+  /**
+   * Form/button submission value (e.g. `{ button: 1 }`).
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  configurationValue?: object;
+  /**
+   * Key-value map of form field values submitted via an embedded form widget.
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  formValue?: object;
+  /**
+   * Status event discriminator when role is status
+   * @type {string}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  eventType?: ConversationMessageCustomContentDtoEventTypeEnum;
+  /**
+   * Deployment active before a model_changed event
+   * @type {object}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  previousDeploymentId?: object | null;
+  /**
+   * Deployment selected after a model_changed event
+   * @type {string}
+   * @memberof ConversationMessageCustomContentDto
+   */
+  newDeploymentId?: string;
+}
+
+/**
+ * @export
+ */
+export const ConversationMessageCustomContentDtoEventTypeEnum = {
+  ModelChanged: 'model_changed',
+} as const;
+export type ConversationMessageCustomContentDtoEventTypeEnum =
+  (typeof ConversationMessageCustomContentDtoEventTypeEnum)[keyof typeof ConversationMessageCustomContentDtoEventTypeEnum];
+
+/**
+ *
+ * @export
  * @interface ConversationMessageDto
  */
 export interface ConversationMessageDto {
+  /**
+   * Unique message identifier
+   * @type {string}
+   * @memberof ConversationMessageDto
+   */
+  id?: string;
   /**
    *
    * @type {string}
@@ -460,6 +519,12 @@ export interface ConversationMessageDto {
    * @memberof ConversationMessageDto
    */
   timestamp: string;
+  /**
+   *
+   * @type {ConversationMessageCustomContentDto}
+   * @memberof ConversationMessageDto
+   */
+  customContent?: ConversationMessageCustomContentDto;
 }
 
 /**
@@ -468,6 +533,7 @@ export interface ConversationMessageDto {
 export const ConversationMessageDtoRoleEnum = {
   User: 'user',
   Assistant: 'assistant',
+  Status: 'status',
 } as const;
 export type ConversationMessageDtoRoleEnum =
   (typeof ConversationMessageDtoRoleEnum)[keyof typeof ConversationMessageDtoRoleEnum];
@@ -634,6 +700,19 @@ export interface ConversationResponseDto {
 /**
  *
  * @export
+ * @interface ConversationsConfigDto
+ */
+export interface ConversationsConfigDto {
+  /**
+   * Pinned conversation identifiers.
+   * @type {Array<string>}
+   * @memberof ConversationsConfigDto
+   */
+  pinnedIds: Array<string>;
+}
+/**
+ *
+ * @export
  * @interface CreateConversationDto
  */
 export interface CreateConversationDto {
@@ -768,6 +847,24 @@ export interface DeploymentItemDto {
    */
   displayVersion?: string;
   /**
+   * Whether this deployment is featured (configured via env)
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  isFeatured?: boolean;
+  /**
+   * Whether this deployment is hidden (configured via env)
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  isHidden?: boolean;
+  /**
+   * ISO timestamp of last update time from DIAL Core (e.g. "2024-05-01T12:34:56Z")
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  updatedAt?: string;
+  /**
    * Application type schema id from DIAL Core (present only for application deployments)
    * @type {string}
    * @memberof DeploymentItemDto
@@ -779,6 +876,18 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   inputAttachmentTypes?: Array<string>;
+  /**
+   * Topics associated with this deployment from DIAL Core (e.g. ["topic1", "topic2"])
+   * @type {Array<string>}
+   * @memberof DeploymentItemDto
+   */
+  topics?: Array<string>;
+  /**
+   * Whether this deployment is installed by the current user (from user config)
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  isInstalled?: boolean;
 }
 
 /**
@@ -792,6 +901,19 @@ export const DeploymentItemDtoTypeEnum = {
 export type DeploymentItemDtoTypeEnum =
   (typeof DeploymentItemDtoTypeEnum)[keyof typeof DeploymentItemDtoTypeEnum];
 
+/**
+ *
+ * @export
+ * @interface DeploymentsConfigDto
+ */
+export interface DeploymentsConfigDto {
+  /**
+   * Installed deployment identifiers.
+   * @type {Array<string>}
+   * @memberof DeploymentsConfigDto
+   */
+  installed: Array<string>;
+}
 /**
  *
  * @export
@@ -1638,6 +1760,12 @@ export interface ThemeConfigResponseDto {
    * @memberof ThemeConfigResponseDto
    */
   themes: Array<ThemeDto>;
+  /**
+   *
+   * @type {ThemeImagesDto}
+   * @memberof ThemeConfigResponseDto
+   */
+  images: ThemeImagesDto;
 }
 /**
  *
@@ -1656,13 +1784,75 @@ export interface ThemeDto {
    * @type {string}
    * @memberof ThemeDto
    */
-  name: string;
+  displayName: string;
+  /**
+   *
+   * @type {{ [key: string]: string; }}
+   * @memberof ThemeDto
+   */
+  colors: { [key: string]: string };
   /**
    *
    * @type {string}
    * @memberof ThemeDto
    */
-  icon?: string;
+  appLogo: string;
+}
+/**
+ *
+ * @export
+ * @interface ThemeImagesDto
+ */
+export interface ThemeImagesDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  defaultAddon: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  defaultModel: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  favicon: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  chatLogoLight?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  chatLogoDark?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ThemeImagesDto
+   */
+  chatFavicon?: string;
+}
+/**
+ *
+ * @export
+ * @interface ToolsetsConfigDto
+ */
+export interface ToolsetsConfigDto {
+  /**
+   * Installed toolset identifiers.
+   * @type {Array<string>}
+   * @memberof ToolsetsConfigDto
+   */
+  installed: Array<string>;
 }
 /**
  *
@@ -1699,6 +1889,25 @@ export interface TranscribeAudioDto {
 /**
  *
  * @export
+ * @interface UpdateInstalledDto
+ */
+export interface UpdateInstalledDto {
+  /**
+   * Identifier of the resource to install or uninstall.
+   * @type {string}
+   * @memberof UpdateInstalledDto
+   */
+  id: string;
+  /**
+   * Pass `true` to install the resource, `false` to uninstall.
+   * @type {boolean}
+   * @memberof UpdateInstalledDto
+   */
+  isInstalled: boolean;
+}
+/**
+ *
+ * @export
  * @interface UpdatePinsDto
  */
 export interface UpdatePinsDto {
@@ -1728,11 +1937,23 @@ export interface UserConfigDto {
    */
   version: number;
   /**
-   * Pinned conversation identifiers.
-   * @type {Array<string>}
+   *
+   * @type {ConversationsConfigDto}
    * @memberof UserConfigDto
    */
-  pinnedConversationIds: Array<string>;
+  conversations: ConversationsConfigDto;
+  /**
+   *
+   * @type {ToolsetsConfigDto}
+   * @memberof UserConfigDto
+   */
+  toolsets: ToolsetsConfigDto;
+  /**
+   *
+   * @type {DeploymentsConfigDto}
+   * @memberof UserConfigDto
+   */
+  deployments: DeploymentsConfigDto;
 }
 /**
  *
