@@ -27,6 +27,7 @@ vi.mock('../../../context/SourcesSidebarContext', () => ({
 vi.mock('@epam/ai-dial-sidebar', () => ({
   PanelEmpty: ({ label }: { label: string }) => <div>{label}</div>,
   PanelNoResults: ({ label }: { label: string }) => <div>{label}</div>,
+  SidebarOrientation: { Left: 'left', Right: 'right' },
   SidebarPanel: ({
     children,
     isOpen,
@@ -65,7 +66,6 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
       onChange={(e) => onChange(e.target.value)}
     />
   ),
-  SidebarSide: { Right: 'right', Left: 'left' },
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -88,7 +88,7 @@ vi.mock('@epam/ai-dial-conversation-input', () => ({
     onClick?: () => void;
   }) =>
     onClick ? (
-      <button type="button" data-testid="attachment-card" onClick={onClick}>
+      <button type="button" aria-label={attachment.name} onClick={onClick}>
         {attachment.name}
       </button>
     ) : (
@@ -163,7 +163,10 @@ describe('ConversationSourcesPanel', () => {
       makeUserMessage('upload.pdf'),
       makeAssistantMessage('result.csv'),
     ]);
-    const cards = screen.getAllByTestId('attachment-card');
+    const cards = [
+      screen.getByRole('button', { name: 'upload.pdf' }),
+      screen.getByRole('button', { name: 'result.csv' }),
+    ];
     expect(cards).toHaveLength(2);
   });
 

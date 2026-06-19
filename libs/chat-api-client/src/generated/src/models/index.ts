@@ -762,6 +762,12 @@ export interface DeploymentItemDto {
    */
   interfaces?: Array<string>;
   /**
+   * Display version from DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  displayVersion?: string;
+  /**
    * Application type schema id from DIAL Core (present only for application deployments)
    * @type {string}
    * @memberof DeploymentItemDto
@@ -1187,6 +1193,91 @@ export interface DuplicateConversationResponseDto {
 /**
  *
  * @export
+ * @interface FileMetadataResponseDto
+ */
+export interface FileMetadataResponseDto {
+  /**
+   * File name without path
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  name?: string;
+  /**
+   * Node type, expected "item" for files
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  nodeType?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  bucket?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  parentPath?: string;
+  /**
+   * DIAL Core resource URL
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  url?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  resourceType?: string;
+  /**
+   * ETag; not available for folders
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  etag?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof FileMetadataResponseDto
+   */
+  contentLength?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  contentType?: string;
+  /**
+   * Creation time in Unix milliseconds; not supported by all storage providers
+   * @type {number}
+   * @memberof FileMetadataResponseDto
+   */
+  createdAt?: number;
+  /**
+   * Last-modified time in Unix milliseconds
+   * @type {number}
+   * @memberof FileMetadataResponseDto
+   */
+  updatedAt?: number;
+  /**
+   * READ | WRITE | SHARE
+   * @type {Array<string>}
+   * @memberof FileMetadataResponseDto
+   */
+  permissions?: Array<string>;
+  /**
+   * Author; not available for folders
+   * @type {string}
+   * @memberof FileMetadataResponseDto
+   */
+  author?: string;
+}
+/**
+ *
+ * @export
  * @interface FileUploadResponseDto
  */
 export interface FileUploadResponseDto {
@@ -1196,6 +1287,133 @@ export interface FileUploadResponseDto {
    * @memberof FileUploadResponseDto
    */
   url: string;
+}
+/**
+ *
+ * @export
+ * @interface ListFilesItemDto
+ */
+export interface ListFilesItemDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesItemDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesItemDto
+   */
+  path: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesItemDto
+   */
+  folderId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesItemDto
+   */
+  nodeType: ListFilesItemDtoNodeTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesItemDto
+   */
+  bucket: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesItemDto
+   */
+  parentPath?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesItemDto
+   */
+  url?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof ListFilesItemDto
+   */
+  contentLength?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesItemDto
+   */
+  contentType?: string;
+  /**
+   * Unix timestamp ms
+   * @type {number}
+   * @memberof ListFilesItemDto
+   */
+  updatedAt?: number;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ListFilesItemDto
+   */
+  permissions?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesItemDto
+   */
+  resourceType?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesItemDto
+   */
+  author?: string;
+}
+
+/**
+ * @export
+ */
+export const ListFilesItemDtoNodeTypeEnum = {
+  Item: 'item',
+  Folder: 'folder',
+} as const;
+export type ListFilesItemDtoNodeTypeEnum =
+  (typeof ListFilesItemDtoNodeTypeEnum)[keyof typeof ListFilesItemDtoNodeTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ListFilesResponseDto
+ */
+export interface ListFilesResponseDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesResponseDto
+   */
+  bucket: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesResponseDto
+   */
+  path: string;
+  /**
+   *
+   * @type {Array<ListFilesItemDto>}
+   * @memberof ListFilesResponseDto
+   */
+  items: Array<ListFilesItemDto>;
+  /**
+   *
+   * @type {string}
+   * @memberof ListFilesResponseDto
+   */
+  nextToken?: string;
 }
 /**
  *

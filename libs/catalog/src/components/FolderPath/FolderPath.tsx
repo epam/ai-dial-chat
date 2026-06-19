@@ -23,7 +23,6 @@ export const FolderPath: FC<FolderPathProps> = ({
   labelClassName = 'dial-small-text',
   leafClassName = 'dial-small-semi-text',
 }) => {
-  const n = segments.length;
   const folderIcon = (
     <DialIcon
       icon={<IconFolder size={DIAL_ICON_SIZE.SM} />}
@@ -31,7 +30,12 @@ export const FolderPath: FC<FolderPathProps> = ({
     />
   );
   const pathItems = segments.map((seg, i) => ({
-    label: i === n - 1 ? <span className={leafClassName}>{seg}</span> : seg,
+    label:
+      i === segments.length - 1 ? (
+        <span className={leafClassName}>{seg}</span>
+      ) : (
+        seg
+      ),
     ...(i === 0 ? { iconBefore: folderIcon } : {}),
   }));
 

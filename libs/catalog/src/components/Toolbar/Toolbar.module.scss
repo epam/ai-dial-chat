@@ -1,0 +1,22 @@
+.section {
+  background: var(--cat-browse-bg, var(--bg-layer-1, #0c101d));
+}
+
+.icon {
+  color: var(--cat-browse-icon, var(--text-secondary, #9fa6bd));
+}
+
+.divider {
+  background: var(--cat-browse-divider, var(--stroke-secondary, #242c42));
+}
+
+.clearAll {
+  color: var(--cat-browse-clear-all, var(--text-error, #f76464));
+}
+
+.tabs {
+  border-bottom-color: var(
+    --cat-browse-tabs-border,
+    var(--stroke-secondary, #242c42)
+  );
+}

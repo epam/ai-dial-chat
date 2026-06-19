@@ -10,8 +10,8 @@ export interface HeaderProps {
    */
   title?: ReactNode;
   /**
-   * Typography class applied to the title element.
-   * Defaults to `'dial-body-semi-text'`.
+   * CSS class applied to the title element.
+   * Defaults to `'dial-body-semi-bold-text'`.
    */
   titleClassName?: string;
   /** Content rendered in the start (left) group of the header bar. */

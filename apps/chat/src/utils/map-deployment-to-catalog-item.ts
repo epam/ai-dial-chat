@@ -1,5 +1,6 @@
 import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
-import type { DeploymentItem } from '@epam/ai-dial-chat-shared';
+import { formatLastUsed, DeploymentItem } from '@epam/ai-dial-chat-shared';
+import { resolveCatalogIconUrl } from './icon-path';
 
 const TYPE_MAP: Record<string, CatalogEntityType> = {
   model: CatalogEntityType.Model,
@@ -18,15 +19,13 @@ export const mapDeploymentToCatalogItem = (
     type: TYPE_MAP[normalizedType] ?? CatalogEntityType.Model,
     name,
     description: deployment.description ?? '',
-    logoInitial: name.charAt(0).toUpperCase(),
+    iconUrl: resolveCatalogIconUrl(deployment.iconUrl),
+    version: deployment.displayVersion ?? '',
+    lastUsed: formatLastUsed(deployment.updatedAt),
+    updatedAt: deployment.updatedAt,
+    isFeatured: deployment.isFeatured ?? false,
+    isHidden: deployment.isHidden ?? false,
     pricing: [],
     folder: [],
-    version: '',
-    lastUsed: '',
-    logoColor: '',
-    from: '',
-    domain: '',
-    useCase: '',
-    maturity: '',
   };
 };

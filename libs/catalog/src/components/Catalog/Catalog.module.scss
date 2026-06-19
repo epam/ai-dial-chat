@@ -27,7 +27,8 @@
 
 .gridView {
   background: var(--cat-content-bg, var(--cat-bg-layer-1));
-  padding: 20px 13.2% 40px;
+  padding-inline-start: 15%;
+  padding-inline-end: 15%;
 }
 
 .listView {
@@ -41,8 +42,4 @@
 
 .noResultsTitle {
   color: var(--cat-no-results-title-text, var(--cat-text-primary));
-}
-
-.noResultsDescription {
-  color: var(--cat-no-results-description-text, var(--cat-text-secondary));
 }

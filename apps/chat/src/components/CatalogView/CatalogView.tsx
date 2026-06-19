@@ -1,4 +1,3 @@
-import type { FavoriteItem } from '@epam/ai-dial-catalog';
 import { Catalog } from '@epam/ai-dial-catalog';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
@@ -10,29 +9,41 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
-// TODO: add favorites functionality and replace with actual favorites from backend
-const EMPTY_FAVORITES: FavoriteItem[] = [];
-
 const CatalogView: FC = () => {
   const { t } = useTranslation();
-  const { items: deployments } = useDeployments();
+  const { items: deployments, isLoading } = useDeployments();
 
   const catalogItems = useMemo(
     () => deployments.map(mapDeploymentToCatalogItem),
     [deployments],
   );
 
+  const favorites = useMemo(
+    () => catalogItems.filter((item) => item.isUserFavorite),
+    [catalogItems],
+  );
+
+  const filteredItems = useMemo(
+    () => catalogItems.filter((item) => !item.isUserFavorite),
+    [catalogItems],
+  );
+
   return (
     <Catalog
-      items={catalogItems}
-      favorites={EMPTY_FAVORITES}
-      texts={{
+      items={filteredItems}
+      isLoading={isLoading}
+      favorites={favorites}
+      titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),
         createLabel: t(ButtonsI18nKeys.Create),
         favoritesTitle: t(CatalogI18nKeys.FavoritesTitle),
         browseTitle: t(ButtonsI18nKeys.Browse),
         searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
-        noResultsDescription: t(CatalogI18nKeys.NoResultsDescription),
+        noResultsTitle: (query) => t(CatalogI18nKeys.NoResultsTitle, { query }),
+        sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
+        sortNewestLabel: t(CatalogI18nKeys.SortNewest),
+        sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
+        featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
         ariaLabel: t(CatalogI18nKeys.AriaLabel),
       }}
     />

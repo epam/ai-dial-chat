@@ -1,107 +1,51 @@
 // Types
-export { CatalogEntityType } from './types/CatalogEntityType';
-export { CatalogSortKey } from './types/CatalogSortKey';
-export { CatalogViewMode } from './types/CatalogViewMode';
+export { CatalogEntityType } from './types/entity-type';
+export { CatalogSortKey } from './types/sort';
+export { CatalogViewMode } from './types/view-mode';
 
 // Models
-export type {
-  CatalogItem,
-  CatalogSortOption,
-  FavoriteItem,
-  TabModel,
-  TreeNode,
-} from './models/catalog';
-export type { CatalogProps, CatalogTexts } from './models/CatalogProps';
-
-// Constants
-export {
-  DEFAULT_DOMAIN_OPTIONS,
-  DEFAULT_MATURITY_OPTIONS,
-  DEFAULT_SORT_OPTIONS,
-  DEFAULT_USE_CASE_OPTIONS,
-} from './constants/catalog-defaults';
-export { DEFAULT_ALL_FROM_IDS, DEFAULT_FROM_TREE } from './constants/from-tree';
+export type { CatalogItem, FavoriteItem } from './models/catalog-item';
+export type { CatalogProps, CatalogTitles } from './models/catalog-props';
 
 // Utils
-export {
-  filterCatalogItems,
-  getDomainLabel,
-  getFromLabel,
-  getMaturityLabel,
-  getUseCaseLabel,
-} from './utils/catalog-filter';
+export { filterCatalogItems } from './utils/catalog-filter';
 export { sortCatalogItems } from './utils/catalog-sort';
-export {
-  applyToggle,
-  findNodeLabel,
-  getAllNodeIds,
-  getDescendantIds,
-  getNodeCheckState,
-} from './utils/catalog-tree';
 export { useFavColumns } from './utils/use-fav-columns';
 
 // Components
 export { Catalog } from './components/Catalog/Catalog';
 
-export { CatalogBrowseToolbar } from './components/CatalogBrowseToolbar/CatalogBrowseToolbar';
-export type { CatalogBrowseToolbarProps } from './components/CatalogBrowseToolbar/CatalogBrowseToolbar';
+export { Toolbar } from './components/Toolbar/Toolbar';
+export type { ToolbarProps } from './models/toolbar-props';
 
-export { CatalogCard } from './components/CatalogCardGrid/CatalogCard';
+export { Card } from './components/CardGrid/Card';
 export type {
-  CatalogCardColors,
-  CatalogCardProps,
-  CatalogCardStyles,
-  CatalogCardTypography,
-} from './models/CatalogCardProps';
+  CardColors,
+  CardProps,
+  CardStyles,
+  CardTypography,
+} from './models/card-props';
 
-export { CatalogCardGrid } from './components/CatalogCardGrid/CatalogCardGrid';
-export type {
-  CatalogCardGridProps,
-  CatalogCardGridStyles,
-  CatalogCardGridTitles,
-} from './models/CatalogCardGridProps';
+export { CardGrid } from './components/CardGrid/CardGrid';
+export type { CardGridProps, CardGridTitles } from './models/grid-props';
 
-export { CatalogFavorites } from './components/CatalogFavorites/CatalogFavorites';
-export type { CatalogFavoritesProps } from './components/CatalogFavorites/CatalogFavorites';
+export { Favorites } from './components/Favorites/Favorites';
+export type { FavoritesProps } from './models/favorites';
 
-export { CatalogListView } from './components/CatalogListView/CatalogListView';
-export type { CatalogListViewProps } from './components/CatalogListView/CatalogListView';
+export { ListView } from './components/ListView/ListView';
+export type { ListViewProps } from './models/list-props';
 
-export { DomainFilter } from './components/DomainFilter/DomainFilter';
-export type { DomainFilterProps } from './components/DomainFilter/DomainFilter';
+export { EntityBadge } from './components/EntityBadge/EntityBadge';
+export type { EntityBadgeProps } from './components/EntityBadge/EntityBadge';
 
-export { EntityTypeBadge } from './components/EntityTypeBadge/EntityTypeBadge';
-export type { EntityTypeBadgeProps } from './components/EntityTypeBadge/EntityTypeBadge';
-
-export { FavoriteCard } from './components/FavoriteCard/FavoriteCard';
-export type { FavoriteCardProps } from './components/FavoriteCard/FavoriteCard';
-
-export { FeaturedTag } from './components/FeaturedTag/FeaturedTag';
-export type { FeaturedTagProps } from './components/FeaturedTag/FeaturedTag';
+export { FavoriteCard } from './components/Favorites/FavoriteCard';
+export type { FavoriteCardProps } from './components/Favorites/FavoriteCard';
 
 export { FolderPath } from './components/FolderPath/FolderPath';
 export type { FolderPathProps } from './components/FolderPath/FolderPath';
 
-export { FromFilter } from './components/FromFilter/FromFilter';
-export type { FromFilterProps } from './components/FromFilter/FromFilter';
-
-export { Highlight } from './components/Highlight/Highlight';
-export type { HighlightProps } from './components/Highlight/Highlight';
-
-export { MaturityFilter } from './components/MaturityFilter/MaturityFilter';
-export type { MaturityFilterProps } from './components/MaturityFilter/MaturityFilter';
+export { Filter } from './components/Filter/Filter';
+export type { FilterProps as FromFilterProps } from './components/Filter/Filter';
 
 export { PricingTag } from './components/PricingTag/PricingTag';
 export type { PricingTagProps } from './components/PricingTag/PricingTag';
-
-export { ProviderLogo } from './components/ProviderLogo/ProviderLogo';
-export type { ProviderLogoProps } from './components/ProviderLogo/ProviderLogo';
-
-export { TabLabel } from './components/TabLabel/TabLabel';
-export type { TabLabelProps } from './components/TabLabel/TabLabel';
-
-export { TreeCheckboxRow } from './components/TreeCheckboxRow/TreeCheckboxRow';
-export type { TreeCheckboxRowProps } from './components/TreeCheckboxRow/TreeCheckboxRow';
-
-export { UseCaseFilter } from './components/UseCaseFilter/UseCaseFilter';
-export type { UseCaseFilterProps } from './components/UseCaseFilter/UseCaseFilter';

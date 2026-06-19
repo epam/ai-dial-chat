@@ -9,6 +9,8 @@ export enum MIMEType {
   Plain = 'text/plain',
   /** HTML markup. */
   HTML = 'text/html',
+  /** XHTML markup. */
+  XHTML = 'application/xhtml+xml',
   /** JPEG raster image. */
   JPEG = 'image/jpeg',
   /** PNG raster image. */

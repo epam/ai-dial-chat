@@ -1,5 +1,6 @@
 import type {
   Attachment,
+  AttachmentErrorReason,
   DeploymentItem,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
@@ -120,6 +121,10 @@ export interface ConversationInputProps {
   pendingDropFiles?: File[];
   /** Called after the inner `Input` has consumed `pendingDropFiles`, signalling the parent to clear its state. */
   onDropFilesConsumed?: () => void;
+  /** Already-uploaded attachments supplied by the host and awaiting insertion into the local tray. */
+  pendingAttachments?: Attachment[];
+  /** Called after `pendingAttachments` have been inserted into the local tray. */
+  onPendingAttachmentsConsumed?: () => void;
   /** Character count above which a pasted plain-text string is converted to an attachment rather than inserted inline. Defaults to `4000`. Pass `Infinity` to disable. */
   pasteTextThreshold?: number;
   /**
@@ -174,4 +179,16 @@ export interface ConversationInputProps {
    * keyboard history navigation.
    */
   messageHistory?: readonly string[];
+  /** Called when user selects "DIAL file system" from the attach menu. When absent, the menu item is not rendered. */
+  onDialFileSystemClick?: () => void;
+  /** Label for the "DIAL file system" menu item. Defaults to `'DIAL file system'`. */
+  dialFileSystemLabel?: string;
+  /**
+   * Called synchronously for each attachment after it is added, before upload begins.
+   * Return an `AttachmentErrorReason` to reject the attachment (it enters error state
+   * and `onUploadAttachment` is NOT called). Return `undefined` to allow normal upload.
+   */
+  validateAttachment?: (
+    attachment: Attachment,
+  ) => AttachmentErrorReason | undefined;
 }

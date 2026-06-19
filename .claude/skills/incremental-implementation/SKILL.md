@@ -50,6 +50,8 @@ Build in thin vertical slices — implement one piece, test it, verify it, then 
 
 **Module specifiers:** relative imports and re-exports between `.ts`/`.tsx` source modules omit `.js`, `.jsx`, `.ts`, and `.tsx`. Preserve extensions for resources such as CSS/JSON and explicit package subpaths. Vite-built projects use bundler module resolution; do not add `.js` to source to satisfy Node ESM resolution.
 
+**TypeScript enums:** prefer string enums over string-literal unions for named finite sets of statuses, modes, variants, or lifecycle states, especially when values are exported, reused, or compared in logic and tests.
+
 **One thing at a time:** one logical change per increment; do not mix unrelated refactors with features.
 
 **Keep it compilable:** after each increment, the repo should build and existing tests should pass for the scope you are responsible for.
@@ -66,6 +68,7 @@ After each increment:
 - [ ] If hand-authored `libs/*` changed, host/external integration knowledge stayed outside the lib boundary
 - [ ] If `libs/chat-api-client` changed, it was regenerated from OpenAPI sources rather than manually edited
 - [ ] Relative TypeScript source imports are extensionless; resource and explicit package-subpath extensions are preserved
+- [ ] Named finite TypeScript value sets use string enums instead of string-literal unions when exported, reused, or compared
 - [ ] Tests pass for the Nx project(s) you changed (`npx nx test <project>`)
 - [ ] Lint passes for touched projects (`npx nx lint <project>` or affected lint)
 - [ ] Build passes when your slice affects build output (`npx nx build <project>`)

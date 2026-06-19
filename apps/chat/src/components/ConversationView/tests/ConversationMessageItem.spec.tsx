@@ -12,6 +12,10 @@ vi.mock('../../../hooks/attachment/useAttachmentAction', () => ({
   }),
 }));
 
+vi.mock('../../../context/ThemeContext', () => ({
+  useTheme: () => ({ currentTheme: 'dark' }),
+}));
+
 vi.mock('@epam/ai-dial-conversation-stages', () => ({
   StagesPanel: () => null,
 }));

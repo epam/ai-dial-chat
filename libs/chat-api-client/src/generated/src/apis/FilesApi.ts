@@ -13,11 +13,29 @@
  */
 
 import * as runtime from '../runtime';
-import type { FileUploadResponseDto } from '../models/index';
+import type {
+  FileMetadataResponseDto,
+  FileUploadResponseDto,
+  ListFilesResponseDto,
+} from '../models/index';
 
 export interface DownloadFileRequest {
   bucket: string;
   path: string;
+}
+
+export interface GetFileMetadataRequest {
+  bucket: string;
+  path: string;
+}
+
+export interface ListFilesRequest {
+  bucket: string;
+  path?: string;
+  token?: string;
+  limit?: number;
+  recursive?: boolean;
+  permissions?: boolean;
 }
 
 export interface UploadFileRequest {
@@ -87,6 +105,140 @@ export class FilesApi extends runtime.BaseAPI {
       requestParameters,
       initOverrides,
     );
+    return await response.value();
+  }
+
+  /**
+   * Returns metadata for a single named file from DIAL Core. Path must not end with /.
+   * Get file metadata
+   */
+  async getFileMetadataRaw(
+    requestParameters: GetFileMetadataRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<FileMetadataResponseDto>> {
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling getFileMetadata().',
+      );
+    }
+
+    if (requestParameters['path'] == null) {
+      throw new runtime.RequiredError(
+        'path',
+        'Required parameter "path" was null or undefined when calling getFileMetadata().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
+    }
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/metadata`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<FileMetadataResponseDto>(response);
+  }
+
+  /**
+   * Returns metadata for a single named file from DIAL Core. Path must not end with /.
+   * Get file metadata
+   */
+  async getFileMetadata(
+    requestParameters: GetFileMetadataRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<FileMetadataResponseDto> {
+    const response = await this.getFileMetadataRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility.
+   * List files and folders
+   */
+  async listFilesRaw(
+    requestParameters: ListFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListFilesResponseDto>> {
+    if (requestParameters['bucket'] == null) {
+      throw new runtime.RequiredError(
+        'bucket',
+        'Required parameter "bucket" was null or undefined when calling listFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['bucket'] != null) {
+      queryParameters['bucket'] = requestParameters['bucket'];
+    }
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['token'] != null) {
+      queryParameters['token'] = requestParameters['token'];
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['recursive'] != null) {
+      queryParameters['recursive'] = requestParameters['recursive'];
+    }
+
+    if (requestParameters['permissions'] != null) {
+      queryParameters['permissions'] = requestParameters['permissions'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/list`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListFilesResponseDto>(response);
+  }
+
+  /**
+   * Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility.
+   * List files and folders
+   */
+  async listFiles(
+    requestParameters: ListFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListFilesResponseDto> {
+    const response = await this.listFilesRaw(requestParameters, initOverrides);
     return await response.value();
   }
 
