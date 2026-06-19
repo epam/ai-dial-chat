@@ -1,4 +1,3 @@
-import { ThemeConfiguration } from '@epam/ai-dial-chat-shared';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
@@ -11,6 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { EnvironmentVariables } from '../config/environment.config';
+import { ThemeConfiguration } from '../domain/theme';
 
 /**
  * Service for fetching theme configuration and icons from an external theme service.

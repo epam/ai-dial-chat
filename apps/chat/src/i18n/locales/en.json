@@ -232,5 +232,8 @@
     "hideHiddenFiles": "Hide hidden files",
     "itemsSelected_one": "{{count}} item selected",
     "itemsSelected_other": "{{count}} items selected"
+  },
+  "userConfig": {
+    "loadError": "Failed to load your settings. Some personalization may be unavailable."
   }
 }

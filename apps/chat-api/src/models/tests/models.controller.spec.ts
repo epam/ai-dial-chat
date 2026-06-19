@@ -1,7 +1,3 @@
-import type {
-  DialModel,
-  DialModelListResponse,
-} from '@epam/ai-dial-chat-shared';
 import {
   INestApplication,
   NotFoundException,
@@ -13,6 +9,7 @@ import {
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DialModel, DialModelListResponse } from '../../domain/dial-model';
 import { ModelsController } from '../models.controller';
 import { ModelsService } from '../models.service';
 

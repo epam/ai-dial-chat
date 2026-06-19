@@ -1,7 +1,3 @@
-import type {
-  DialModel,
-  DialModelListResponse,
-} from '@epam/ai-dial-chat-shared';
 import {
   BadGatewayException,
   ForbiddenException,
@@ -13,6 +9,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import type { DialModel, DialModelListResponse } from '../../domain/dial-model';
 import { ModelsService } from '../models.service';
 
 const mockModel: DialModel = {

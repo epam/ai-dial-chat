@@ -1,10 +1,4 @@
 import {
-  Conversation,
-  ConversationMetadata,
-  Message,
-  MessageRole,
-} from '@epam/ai-dial-chat-shared';
-import {
   BadGatewayException,
   Injectable,
   Logger,
@@ -16,6 +10,12 @@ import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
+import {
+  Conversation,
+  ConversationMetadata,
+  Message,
+  MessageRole,
+} from '../domain/conversation';
 import { UserConfigService } from '../user-config/user-config.service';
 import { PUBLIC_BUCKET } from './constants/conversation.constants';
 import {

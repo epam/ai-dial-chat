@@ -1,7 +1,7 @@
-import { MessageRole, StatusEvent } from '@epam/ai-dial-chat-shared';
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialError } from '../../common/utils/dial-error';
+import { MessageRole, StatusEvent } from '../../domain/conversation';
 import { ConversationService } from '../conversation.service';
 
 vi.mock('../../common/utils/dial-error', () => ({

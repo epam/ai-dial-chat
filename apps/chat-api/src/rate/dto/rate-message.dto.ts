@@ -1,6 +1,6 @@
-import type { MessageRating } from '@epam/ai-dial-chat-shared';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import type { MessageRating } from '../../domain/message-rating';
 
 const rateValues = [1, -1] as const;
 

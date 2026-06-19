@@ -1,7 +1,3 @@
-import type {
-  DialModel,
-  DialModelListResponse,
-} from '@epam/ai-dial-chat-shared';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -13,6 +9,7 @@ import {
   mapDialHttpStatus,
 } from '../common/utils/dial-fetch-error';
 import type { EnvironmentVariables } from '../config/environment.config';
+import type { DialModel, DialModelListResponse } from '../domain/dial-model';
 
 @Injectable()
 export class ModelsService extends AppService {

@@ -634,6 +634,19 @@ export interface ConversationResponseDto {
 /**
  *
  * @export
+ * @interface ConversationsConfigDto
+ */
+export interface ConversationsConfigDto {
+  /**
+   * Pinned conversation identifiers.
+   * @type {Array<string>}
+   * @memberof ConversationsConfigDto
+   */
+  pinnedIds: Array<string>;
+}
+/**
+ *
+ * @export
  * @interface CreateConversationDto
  */
 export interface CreateConversationDto {
@@ -768,6 +781,24 @@ export interface DeploymentItemDto {
    */
   displayVersion?: string;
   /**
+   * Whether this deployment is featured (configured via env)
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  isFeatured?: boolean;
+  /**
+   * Whether this deployment is hidden (configured via env)
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  isHidden?: boolean;
+  /**
+   * ISO timestamp of last update time from DIAL Core (e.g. "2024-05-01T12:34:56Z")
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  updatedAt?: string;
+  /**
    * Application type schema id from DIAL Core (present only for application deployments)
    * @type {string}
    * @memberof DeploymentItemDto
@@ -779,6 +810,18 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   inputAttachmentTypes?: Array<string>;
+  /**
+   * Topics associated with this deployment from DIAL Core (e.g. ["topic1", "topic2"])
+   * @type {Array<string>}
+   * @memberof DeploymentItemDto
+   */
+  topics?: Array<string>;
+  /**
+   * Whether this deployment is installed by the current user (from user config)
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  isInstalled?: boolean;
 }
 
 /**
@@ -792,6 +835,19 @@ export const DeploymentItemDtoTypeEnum = {
 export type DeploymentItemDtoTypeEnum =
   (typeof DeploymentItemDtoTypeEnum)[keyof typeof DeploymentItemDtoTypeEnum];
 
+/**
+ *
+ * @export
+ * @interface DeploymentsConfigDto
+ */
+export interface DeploymentsConfigDto {
+  /**
+   * Installed deployment identifiers.
+   * @type {Array<string>}
+   * @memberof DeploymentsConfigDto
+   */
+  installed: Array<string>;
+}
 /**
  *
  * @export
@@ -1667,6 +1723,19 @@ export interface ThemeDto {
 /**
  *
  * @export
+ * @interface ToolsetsConfigDto
+ */
+export interface ToolsetsConfigDto {
+  /**
+   * Installed toolset identifiers.
+   * @type {Array<string>}
+   * @memberof ToolsetsConfigDto
+   */
+  installed: Array<string>;
+}
+/**
+ *
+ * @export
  * @interface TranscribeAudio200Response
  */
 export interface TranscribeAudio200Response {
@@ -1695,6 +1764,25 @@ export interface TranscribeAudioDto {
    * @memberof TranscribeAudioDto
    */
   mimeType: string;
+}
+/**
+ *
+ * @export
+ * @interface UpdateInstalledDto
+ */
+export interface UpdateInstalledDto {
+  /**
+   * Identifier of the resource to install or uninstall.
+   * @type {string}
+   * @memberof UpdateInstalledDto
+   */
+  id: string;
+  /**
+   * Pass `true` to install the resource, `false` to uninstall.
+   * @type {boolean}
+   * @memberof UpdateInstalledDto
+   */
+  isInstalled: boolean;
 }
 /**
  *
@@ -1728,11 +1816,23 @@ export interface UserConfigDto {
    */
   version: number;
   /**
-   * Pinned conversation identifiers.
-   * @type {Array<string>}
+   *
+   * @type {ConversationsConfigDto}
    * @memberof UserConfigDto
    */
-  pinnedConversationIds: Array<string>;
+  conversations: ConversationsConfigDto;
+  /**
+   *
+   * @type {ToolsetsConfigDto}
+   * @memberof UserConfigDto
+   */
+  toolsets: ToolsetsConfigDto;
+  /**
+   *
+   * @type {DeploymentsConfigDto}
+   * @memberof UserConfigDto
+   */
+  deployments: DeploymentsConfigDto;
 }
 /**
  *

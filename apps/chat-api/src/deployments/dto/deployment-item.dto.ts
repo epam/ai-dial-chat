@@ -59,6 +59,12 @@ export class DeploymentItemDto {
       'Topics associated with this deployment from DIAL Core (e.g. ["topic1", "topic2"])',
   })
   topics?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Whether this deployment is installed by the current user (from user config)',
+  })
+  isInstalled?: boolean;
 }
 
 export class DeploymentsResponseDto {

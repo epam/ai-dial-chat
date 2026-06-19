@@ -1,8 +1,8 @@
-import { MessageRating } from '@epam/ai-dial-chat-shared';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MessageRating } from '../../domain/message-rating';
 import { RateController } from '../rate.controller';
 import { RateService } from '../rate.service';
 
