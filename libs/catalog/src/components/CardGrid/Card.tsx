@@ -15,7 +15,7 @@ import type { CardProps } from '../../models/card-props';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
-import { PricingTag } from '../PricingTag/PricingTag';
+import { TopicTag } from '../TopicTag/TopicTag';
 import styles from './CardGrid.module.scss';
 
 /** Card for the Browse grid with highlighted search text and optional featured styling. */
@@ -126,8 +126,8 @@ export const Card: FC<CardProps> = ({
 
       <div className="mt-auto">
         <div className="flex flex-wrap gap-1.5">
-          {item.pricing.map((p) => (
-            <PricingTag key={p} label={p} />
+          {item.topics.map((p) => (
+            <TopicTag key={p} label={p} />
           ))}
         </div>
 

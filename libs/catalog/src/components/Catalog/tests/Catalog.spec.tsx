@@ -67,7 +67,7 @@ const makeItem = (id: string, name: string) => ({
   name,
   version: '1.0',
   description: 'desc',
-  pricing: ['Free'],
+  topics: ['Free'],
   folder: ['EPAM'],
   lastUsed: '',
   from: '',

@@ -35,6 +35,7 @@ export const CATALOG_COLUMNS = (): ColDef<CatalogItem>[] => [
     filter: false,
     sortable: false,
     cellRenderer: TagsCellRenderer,
+    valueGetter: (p) => p.data?.topics,
   },
   {
     headerName: '',

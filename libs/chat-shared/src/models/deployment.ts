@@ -20,4 +20,6 @@ export interface DeploymentItem {
   isFeatured?: boolean;
   /** Whether this deployment is hidden (configured via env). */
   isHidden?: boolean;
+  /** Topics associated with the deployment. */
+  topics?: string[];
 }

@@ -7,7 +7,6 @@ import type { ICellRendererParams } from 'ag-grid-community';
 import { FC } from 'react';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
-import { EntityBadge } from '../../EntityBadge/EntityBadge';
 import { ItemHeader } from '../../ItemHeader/ItemHeader';
 import styles from '../ListView.module.scss';
 

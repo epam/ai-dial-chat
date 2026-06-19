@@ -19,11 +19,9 @@ import type { ItemDetailsProps } from '../../models/item-details-props';
 import { CatalogDetailsTab } from '../../types/detail-tab';
 import type { AboutRun } from '../../utils/parse-about-content';
 import { parseAboutContent } from '../../utils/parse-about-content';
-import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
-import { FeaturedTag } from '../FeaturedTag/FeaturedTag';
+import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
-import { PricingTag } from '../PricingTag/PricingTag';
-import { ProviderLogo } from '../ProviderLogo/ProviderLogo';
+import { TopicTag } from '../TopicTag/TopicTag';
 import styles from './CatalogItemDetails.module.scss';
 import { CatalogOverview } from './CatalogOverview';
 
@@ -117,11 +115,8 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
   );
 
   const parsedAboutBlocks = useMemo(
-    () =>
-      parseAboutContent(
-        aboutContent ?? item.longDescription ?? item.description,
-      ),
-    [aboutContent, item.longDescription, item.description],
+    () => parseAboutContent(aboutContent ?? item.description),
+    [aboutContent, item.description],
   );
 
   const overviewYesLabel = texts?.overviewYesLabel ?? 'Yes';
@@ -182,18 +177,16 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
 
         {/* Identity: logo, type, name, folder path, action buttons */}
         <div className="flex shrink-0 gap-3.5 px-[22px] py-4">
-          <ProviderLogo
+          {/* <ProviderLogo
             color={item.logoColor}
             initial={item.logoInitial}
             size={52}
-          />
+          /> */}
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex items-center gap-1">
-              <EntityTypeBadge type={item.type} />
+              <EntityBadge type={item.type} />
               {item.isFeatured && (
-                <div className="ms-auto">
-                  <FeaturedTag />
-                </div>
+                <div className="ms-auto">{/* <FeaturedTag /> */}</div>
               )}
             </div>
             <div className="flex items-end gap-1">
@@ -221,7 +214,7 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
 
         <div className="shrink-0 border-b border-tertiary" />
 
-        {/* Summary: intro + pricing */}
+        {/* Summary: intro + topics */}
         <div className="flex shrink-0 flex-col gap-5 px-[22px] py-4">
           <div className="flex flex-col gap-2.5">
             <span className={introCaptionClassName}>
@@ -231,10 +224,10 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
               {item.description}
             </p>
           </div>
-          {item.pricing.length > 0 && (
+          {item.topics.length > 0 && (
             <div className="flex flex-wrap gap-2">
-              {item.pricing.map((p) => (
-                <PricingTag key={p} label={p} />
+              {item.topics.map((p) => (
+                <TopicTag key={p} label={p} />
               ))}
             </div>
           )}
@@ -258,9 +251,7 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
           )}
         >
           {activeTab === CatalogDetailsTab.About &&
-            (isAboutLoading &&
-            aboutContent == null &&
-            item.longDescription == null ? (
+            (isAboutLoading && aboutContent == null ? (
               <div className="flex animate-pulse flex-col gap-3">
                 <div
                   className={mergeClasses(
@@ -338,7 +329,7 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
                 ))}
               </div>
             ))}
-          {activeTab === CatalogDetailsTab.Overview &&
+          {/* {activeTab === CatalogDetailsTab.Overview &&
             item.overview != null && (
               <CatalogOverview
                 sections={item.overview.sections}
@@ -349,7 +340,7 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
                 yesLabel={overviewYesLabel}
                 noLabel={overviewNoLabel}
               />
-            )}
+            )} */}
         </div>
       </div>
     </>
