@@ -23,12 +23,14 @@ import {
   useRef,
   useState,
 } from 'react';
+import { MAX_UPLOADS_PER_MINUTE } from '../../constants/upload';
 import { useClipboardPaste } from '../../hooks/useClipboardPaste';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
+import { runAtRate } from '../../utils/concurrency';
 import { generateAttachmentId } from '../../utils/generateAttachmentId';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray';
@@ -274,6 +276,7 @@ export const Input: FC<InputProps> = ({
         return [...prev, ...toAdd];
       });
       if (upload) {
+        const validToUpload: Attachment[] = [];
         toAdd.forEach((attachment) => {
           const errorReason = validateAttachment?.(attachment);
           if (errorReason != null) {
@@ -285,9 +288,10 @@ export const Input: FC<InputProps> = ({
               ),
             );
           } else {
-            void uploadAttachment(attachment);
+            validToUpload.push(attachment);
           }
         });
+        void runAtRate(validToUpload, MAX_UPLOADS_PER_MINUTE, uploadAttachment);
       }
     },
     [updateAttachments, uploadAttachment, validateAttachment],
