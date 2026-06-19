@@ -18,8 +18,8 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
 vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <svg />,
 }));
-vi.mock('../../CatalogBrowseToolbar/CatalogBrowseToolbar', () => ({
-  CatalogBrowseToolbar: ({
+vi.mock('../../Toolbar/Toolbar', () => ({
+  Toolbar: ({
     title,
     query,
     onQueryChange,
@@ -38,8 +38,8 @@ vi.mock('../../CatalogBrowseToolbar/CatalogBrowseToolbar', () => ({
     </div>
   ),
 }));
-vi.mock('../../CatalogCardGrid/CatalogCardGrid', () => ({
-  CatalogCardGrid: ({ items }: { items: { id: string }[] }) => (
+vi.mock('../../CardGrid/CardGrid', () => ({
+  CardGrid: ({ items }: { items: { id: string }[] }) => (
     <div role="grid" aria-label="catalog grid">
       {items.length} items
     </div>
@@ -50,8 +50,8 @@ vi.mock('../../CatalogFavorites/CatalogFavorites', () => ({
     <div>{title ?? 'Your Favorites'}</div>
   ),
 }));
-vi.mock('../../CatalogListView/CatalogListView', () => ({
-  CatalogListView: () => <div role="grid" aria-label="catalog list" />,
+vi.mock('../../ListView/ListView', () => ({
+  ListView: () => <div role="grid" aria-label="catalog list" />,
 }));
 
 const makeItem = (id: string, name: string) => ({
@@ -63,10 +63,10 @@ const makeItem = (id: string, name: string) => ({
   pricing: ['Free'],
   folder: ['EPAM'],
   lastUsed: '',
-  from: 'dial',
-  domain: 'Engineering',
-  useCase: 'Code generation',
-  maturity: 'Production',
+  from: '',
+  domain: '',
+  useCase: '',
+  maturity: '',
 });
 
 describe('Catalog', () => {

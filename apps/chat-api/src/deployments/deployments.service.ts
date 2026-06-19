@@ -54,6 +54,8 @@ const mapToDeploymentItem = (
     }
   }
 
+  const topics = raw.description_keywords || [];
+
   return {
     id: raw.id,
     displayName: raw.display_name ?? raw.id,
@@ -61,8 +63,8 @@ const mapToDeploymentItem = (
     iconUrl: raw.icon_url,
     description: raw.description,
     displayVersion: raw.display_version,
-    isFeatured: featuredIds.has(raw.id),
-    isHidden: hiddenTags.has(raw.id),
+    isFeatured: featuredIds.has(raw.id || raw.reference || ''),
+    isHidden: topics.some((tag) => hiddenTags.has(tag)),
     updatedAt: typeof raw.updated_at === 'string' ? raw.updated_at : undefined,
     interfaces,
     applicationTypeSchemaId:
@@ -72,6 +74,7 @@ const mapToDeploymentItem = (
     inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
       ? raw.input_attachment_types
       : undefined,
+    topics,
   };
 };
 

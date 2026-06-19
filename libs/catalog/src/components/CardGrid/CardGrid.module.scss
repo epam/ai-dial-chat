@@ -1,11 +1,3 @@
-.emptyTitle {
-  color: var(--cat-no-results-title-text, var(--text-secondary, #9fa6bd));
-}
-
-.emptyDescription {
-  color: var(--cat-no-results-description-text, var(--text-secondary, #9fa6bd));
-}
-
 .card {
   background: var(--cat-card-bg, var(--bg-layer-2, #161b2d));
   border-color: var(--cat-card-border, var(--stroke-secondary, #242c42));

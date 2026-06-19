@@ -1,7 +1,7 @@
 import { CatalogItem } from './catalog-item';
 
-/** Typography class overrides for `CatalogListView` cells. */
-export interface CatalogListViewTypography {
+/** Typography class overrides for `ListView` cells. */
+export interface ListViewTypography {
   /** Typography class for item name text. Default: `'dial-h3-text'`. */
   nameClassName?: string;
   /** Typography class for item version text. Default: `'dial-tiny-text'`. */
@@ -12,24 +12,24 @@ export interface CatalogListViewTypography {
   folderClassName?: string;
 }
 
-/** Color overrides for `CatalogListView` cells, applied via CSS custom properties. */
-export interface CatalogListViewColors {
+/** Color overrides for `ListView` cells, applied via CSS custom properties. */
+export interface ListViewColors {
   /** Color for item name text. Fallback: `--text-primary`. */
   nameText?: string;
   /** Color for version/description/folder text. Fallback: `--text-secondary`. */
   secondaryText?: string;
 }
 
-/** Combined style overrides for `CatalogListView`. */
-export interface CatalogListViewStyles {
+/** Combined style overrides for `ListView`. */
+export interface ListViewStyles {
   /** Typography class overrides. */
-  typography?: CatalogListViewTypography;
+  typography?: ListViewTypography;
   /** Color overrides applied as CSS variables. */
-  colors?: CatalogListViewColors;
+  colors?: ListViewColors;
 }
 
-/** Props for CatalogListView. */
-export interface CatalogListViewProps {
+/** Props for ListView. */
+export interface ListViewProps {
   /** Items to display in the table. */
   items: CatalogItem[];
   /** Active search query — passed through grid context so cell renderers can highlight. */
@@ -38,8 +38,6 @@ export interface CatalogListViewProps {
   ariaLabel?: string;
   /** Grid empty-state title. */
   emptyStateTitle?: string;
-  /** Grid empty-state description. */
-  emptyStateDescription?: string;
   /** Grouped typography and color overrides for table cells. */
-  styles?: CatalogListViewStyles;
+  styles?: ListViewStyles;
 }

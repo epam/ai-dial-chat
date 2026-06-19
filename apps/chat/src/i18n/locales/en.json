@@ -55,7 +55,6 @@
     "pageTitle": "Catalog",
     "favoritesTitle": "Your Favorites",
     "searchPlaceholder": "Search models, tools, agents…",
-    "noResultsDescription": "Try a different keyword",
     "noResultsTitle": "No results for \"{{query}}\"",
     "sortRecentlyUpdated": "Recently Updated",
     "sortNewest": "Newest",

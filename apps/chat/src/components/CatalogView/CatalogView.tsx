@@ -33,7 +33,6 @@ const CatalogView: FC = () => {
         favoritesTitle: t(CatalogI18nKeys.FavoritesTitle),
         browseTitle: t(ButtonsI18nKeys.Browse),
         searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
-        noResultsDescription: t(CatalogI18nKeys.NoResultsDescription),
         noResultsTitle: (query) => t(CatalogI18nKeys.NoResultsTitle, { query }),
         sortRecentlyUpdatedLabel: t(CatalogI18nKeys.SortRecentlyUpdated),
         sortNewestLabel: t(CatalogI18nKeys.SortNewest),

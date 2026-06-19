@@ -3,7 +3,7 @@ import type { GridApi } from 'ag-grid-community';
 import { type CSSProperties, FC, useEffect, useRef } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
 import { GridContext } from '../../models/grid-context';
-import { CatalogListViewProps } from '../../models/list-props';
+import { ListViewProps } from '../../models/list-props';
 import { CATALOG_COLUMNS } from './columns';
 
 /**
@@ -11,12 +11,11 @@ import { CATALOG_COLUMNS } from './columns';
  * Passes searchQuery via grid context so cell renderers can highlight without
  * relying on a module-level variable.
  */
-export const CatalogListView: FC<CatalogListViewProps> = ({
+export const ListView: FC<ListViewProps> = ({
   items,
   query = '',
   ariaLabel = 'Catalog',
   emptyStateTitle,
-  emptyStateDescription,
   styles: listStyles,
 }) => {
   const typography = listStyles?.typography ?? {};
@@ -45,7 +44,6 @@ export const CatalogListView: FC<CatalogListViewProps> = ({
           gridApiRef.current = api;
         }}
         emptyStateTitle={emptyStateTitle}
-        emptyStateDescription={emptyStateDescription}
         additionalGridOptions={{
           rowHeight: 90,
           defaultColDef: { filter: false, floatingFilter: false },

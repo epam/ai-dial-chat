@@ -7,7 +7,7 @@ import {
 import { IconHistory, IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type { FavoriteItem } from '../../models/catalog-item';
-import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
+import { EntityBadge } from '../EntityBadge/EntityBadge';
 
 /** Props for FavoriteCard. */
 export interface FavoriteCardProps {
@@ -75,7 +75,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
             gap: 4,
           }}
         >
-          <EntityTypeBadge type={item.type} />
+          <EntityBadge type={item.type} />
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: 4 }}>
             <span
               className={nameClassName}

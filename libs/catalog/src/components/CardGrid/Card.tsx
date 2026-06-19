@@ -11,14 +11,14 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
-import type { CatalogCardProps } from '../../models/card-props';
-import { EntityTypeBadge } from '../EntityTypeBadge/EntityTypeBadge';
+import type { CardProps } from '../../models/card-props';
+import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { PricingTag } from '../PricingTag/PricingTag';
-import styles from './CatalogCardGrid.module.scss';
+import styles from './CardGrid.module.scss';
 
 /** Card for the Browse grid with highlighted search text and optional featured styling. */
-export const CatalogCard: FC<CatalogCardProps> = ({
+export const Card: FC<CardProps> = ({
   item,
   query = '',
   initialIsStarred = false,
@@ -80,7 +80,7 @@ export const CatalogCard: FC<CatalogCardProps> = ({
       <div className="flex items-center gap-3">
         <DeploymentIcon src={item.iconUrl} size={48} />
         <div className="min-w-0 flex-1">
-          <EntityTypeBadge type={item.type} />
+          <EntityBadge type={item.type} />
           <div className="mt-0.5 flex items-start gap-1">
             <span className={mergeClasses(nameClassName, styles.name)}>
               <Highlight text={item.name} query={query} />

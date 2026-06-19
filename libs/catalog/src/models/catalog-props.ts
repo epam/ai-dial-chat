@@ -1,5 +1,4 @@
-import { TabModel } from '@epam/ai-dial-ui-kit';
-import type { CatalogItem, FavoriteItem, TreeNode } from './catalog-item';
+import type { CatalogItem, FavoriteItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 
 /** Text labels used by the `Catalog` surface. */
@@ -14,8 +13,6 @@ export interface CatalogTitles {
   browseTitle?: string;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
   searchPlaceholder?: string;
-  /** "No results" description. Default: 'Try a different keyword'. */
-  noResultsDescription?: string;
   /**
    * Returns the "no results" heading given the active query.
    * Default: (q) => `No results for "${q}"`.
@@ -49,18 +46,6 @@ export interface CatalogProps {
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
   /** Called when the Create button is clicked. */
   onCreateClick?: () => void;
-  /** Tab definitions for entity-type filtering. */
-  tabs?: TabModel[];
-  /** Maturity filter options. Default: DEFAULT_MATURITY_OPTIONS. */
-  maturityOptions?: string[];
-  /** Use-case filter options. Default: DEFAULT_USE_CASE_OPTIONS. */
-  useCaseOptions?: string[];
-  /** Domain filter options. Default: DEFAULT_DOMAIN_OPTIONS. */
-  domainOptions?: string[];
-  /** "From" source tree. Default: DEFAULT_FROM_TREE. */
-  fromTree?: TreeNode[];
-  /** All "from" IDs (determines initial filter state). Default: DEFAULT_ALL_FROM_IDS. */
-  allFromIds?: Set<string>;
   /** Optional color and typography overrides. */
   styles?: CatalogStyles;
 }

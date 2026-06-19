@@ -1,7 +1,7 @@
 import type { CatalogItem } from './catalog-item';
 
-/** Typography class overrides for `CatalogCard` content. */
-export interface CatalogCardTypography {
+/** Typography class overrides for `Card` content. */
+export interface CardTypography {
   /** Typography class applied to the item name. Default: `'dial-h3-text'`. */
   nameClassName?: string;
   /** Typography class applied to the version text. Default: `'dial-tiny-text'`. */
@@ -10,8 +10,8 @@ export interface CatalogCardTypography {
   descriptionClassName?: string;
 }
 
-/** Color overrides applied as CSS custom properties for `CatalogCard`. */
-export interface CatalogCardColors {
+/** Color overrides applied as CSS custom properties for `Card`. */
+export interface CardColors {
   /** Default card background color. Fallback: `--bg-layer-2`. */
   background?: string;
   /** Hovered card background color. Fallback: `--bg-layer-3`. */
@@ -30,16 +30,16 @@ export interface CatalogCardColors {
   starFilled?: string;
 }
 
-/** Grouped style overrides for `CatalogCard`. */
-export interface CatalogCardStyles {
+/** Grouped style overrides for `Card`. */
+export interface CardStyles {
   /** Color overrides applied as CSS custom properties. */
-  colors?: CatalogCardColors;
+  colors?: CardColors;
   /** Typography class overrides for card text elements. */
-  typography?: CatalogCardTypography;
+  typography?: CardTypography;
 }
 
-/** Props for `CatalogCard`. */
-export interface CatalogCardProps {
+/** Props for `Card`. */
+export interface CardProps {
   /** The catalog item to display. */
   item: CatalogItem;
   /** Active search query for highlighting matches. */
@@ -49,7 +49,7 @@ export interface CatalogCardProps {
   /** Called when the star button is toggled. */
   onToggle?: (id: string, isStarred: boolean) => void;
   /** Grouped color and typography overrides. */
-  styles?: CatalogCardStyles;
+  styles?: CardStyles;
   /** Label for the "Featured" tag. Default: `'Featured'`. */
   featuredLabel?: string;
 }
