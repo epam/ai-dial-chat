@@ -13,7 +13,9 @@
     scrollbar-width: none; /* Firefox */
   }
 
-  /* Thin scrollbar, consistent across platforms. */
+  /* Thin scrollbar whose track blends with the content background, so the
+     space the scrollbar reserves on Windows does not look like a cut-off
+     empty strip. */
   .thin-scrollbar {
     scrollbar-width: thin; /* Firefox */
     scrollbar-color: rgba(128, 128, 128, 0.5) transparent;
@@ -21,9 +23,10 @@
   .thin-scrollbar::-webkit-scrollbar {
     width: 6px;
     height: 6px;
+    background-color: var(--bg-layer-1);
   }
   .thin-scrollbar::-webkit-scrollbar-track {
-    background: transparent;
+    background-color: var(--bg-layer-1);
   }
   .thin-scrollbar::-webkit-scrollbar-thumb {
     background-color: rgba(128, 128, 128, 0.5);
@@ -33,7 +36,7 @@
     background-color: rgba(128, 128, 128, 0.8);
   }
   .thin-scrollbar::-webkit-scrollbar-corner {
-    background: transparent;
+    background-color: var(--bg-layer-1);
   }
 }
 
