@@ -157,7 +157,8 @@ const ReviewQuickApp2SectionView = ({
       })),
     [config.skills],
   );
-
+  console.log('toolsets:', toolsets);
+  console.log('unknownToolsets:', unknownToolsets);
   return (
     <>
       {isCodeInterpreterEnabled && isCodeInterpreter && (
@@ -264,7 +265,7 @@ const ReviewQuickApp2SectionView = ({
         }
         valueClassName=""
       />
-      {skills.length && (
+      {!!skills.length && (
         <MarketplaceEntityInfoRow
           label={t(ChatI18nKeys.AgentSkills)}
           value={
