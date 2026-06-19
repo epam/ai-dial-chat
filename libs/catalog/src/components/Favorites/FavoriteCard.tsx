@@ -9,6 +9,7 @@ import { IconHistory, IconStar, IconStarFilled } from '@tabler/icons-react';
 import { FC, useState } from 'react';
 import type { FavoriteItem } from '../../models/catalog-item';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
+import { ItemHeader } from '../ItemHeader/ItemHeader';
 import styles from './Favorites.module.scss';
 
 /** Props for FavoriteCard. */
@@ -56,12 +57,13 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
 
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <EntityBadge type={item.type} />
-          <div className="flex items-start gap-1">
-            <span className={mergeClasses(nameClassName, 'truncate')}>
-              {item.name}
-            </span>
-            <span className={versionClassName}>{item.version}</span>
-          </div>
+          <ItemHeader
+            title={item.name}
+            count={item.version}
+            countClassName={versionClassName}
+            titleClassName={nameClassName}
+          />
+
           <div className="-mt-[3px] flex items-center justify-between">
             <div className="flex items-center gap-1">
               <DialIcon

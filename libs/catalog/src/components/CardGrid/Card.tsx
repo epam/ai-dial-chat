@@ -16,6 +16,7 @@ import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { PricingTag } from '../PricingTag/PricingTag';
 import styles from './CardGrid.module.scss';
+import { ItemHeader } from '../ItemHeader/ItemHeader';
 
 /** Card for the Browse grid with highlighted search text and optional featured styling. */
 export const Card: FC<CardProps> = ({
@@ -81,14 +82,21 @@ export const Card: FC<CardProps> = ({
         <DeploymentIcon src={item.iconUrl} size={48} />
         <div className="min-w-0 flex-1">
           <EntityBadge type={item.type} />
-          <div className="mt-0.5 flex items-start gap-1">
+          <ItemHeader
+            title={item.name}
+            query={query}
+            count={item.version}
+            countClassName={versionClassName}
+            titleClassName={nameClassName}
+          />
+          {/* <div className="mt-0.5 flex items-start gap-1">
             <span className={mergeClasses(nameClassName, styles.name)}>
               <Highlight text={item.name} query={query} />
             </span>
             <span className={mergeClasses(versionClassName, styles.version)}>
               {item.version}
             </span>
-          </div>
+          </div> */}
         </div>
       </div>
 
