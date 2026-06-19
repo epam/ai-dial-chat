@@ -14,7 +14,7 @@ import {
   DialCoreConversation,
   DialCoreMessage,
   MessageRole,
-} from '../domain/dial-core-conversation';
+} from './types/dial-core-conversation';
 import { ConversationMetadataDto } from '../openapi/openapi-response.dto';
 import { UserConfigService } from '../user-config/user-config.service';
 import { PUBLIC_BUCKET } from './constants/conversation.constants';

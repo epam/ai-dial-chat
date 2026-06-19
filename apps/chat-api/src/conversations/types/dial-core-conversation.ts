@@ -1,5 +1,5 @@
-import type { MessageCustomContentDto } from '../conversations/dto/message-custom-content.dto';
-import type { ConversationResponseDto } from '../openapi/openapi-response.dto';
+import type { MessageCustomContentDto } from '../dto/message-custom-content.dto';
+import type { ConversationResponseDto } from '../../openapi/openapi-response.dto';
 
 /** Message roles persisted in DIAL Core conversation payloads (includes client-only status events). */
 export enum MessageRole {

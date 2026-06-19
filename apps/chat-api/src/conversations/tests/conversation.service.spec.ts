@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialError } from '../../common/utils/dial-error';
-import { MessageRole, StatusEvent } from '../../domain/dial-core-conversation';
+import { MessageRole, StatusEvent } from '../types/dial-core-conversation';
 import { ConversationService } from '../conversation.service';
 
 vi.mock('../../common/utils/dial-error', () => ({
