@@ -5,7 +5,14 @@ import {
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconCopy } from '@tabler/icons-react';
-import { type FC, type ReactNode, useCallback, useRef, useState } from 'react';
+import {
+  type FC,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 
 interface Props {
@@ -26,10 +33,18 @@ export const StageCodeBlock: FC<Props> = ({
   const [isCopied, setIsCopied] = useState(false);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current != null) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
   const handleCopy = useCallback(() => {
     const text =
       typeof children === 'string' ? children : String(children ?? '');
-    copyToClipboard(text);
+    void copyToClipboard(text);
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     setIsCopied(true);
     timeoutRef.current = setTimeout(() => setIsCopied(false), 2000);

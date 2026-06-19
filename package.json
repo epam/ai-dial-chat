@@ -104,6 +104,7 @@
     "@nestjs/swagger": "^11.4.1",
     "@nestjs/throttler": "^6.5.0",
     "@tabler/icons-react": "^3.44.0",
+    "@types/react-syntax-highlighter": "^15.5.13",
     "cache-manager": "^7.2.8",
     "express": "^5.2.1",
     "helmet": "^8.1.0",
@@ -115,13 +116,14 @@
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-i18next": "^17.0.8",
+    "react-markdown": "^10.1.0",
     "react-router-dom": "^7.15.1",
+    "react-syntax-highlighter": "^16.1.1",
     "reflect-metadata": "^0.2.2",
+    "remark-gfm": "^4.0.1",
     "rxjs": "^7.8.2",
     "swagger-ui-express": "^5.0.1",
-    "tailwind-merge": "^3.6.0",
-    "react-markdown": "^10.1.0",
-    "remark-gfm": "^4.0.1"
+    "tailwind-merge": "^3.6.0"
   },
   "overrides": {
     "axios": "1.16.0",
