@@ -1,9 +1,14 @@
-import { DeploymentIcon, Highlight } from '@epam/ai-dial-chat-shared';
+import {
+  DeploymentIcon,
+  Highlight,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { FC } from 'react';
 import type { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
 import { EntityBadge } from '../../EntityBadge/EntityBadge';
+import { ItemHeader } from '../../ItemHeader/ItemHeader';
 import styles from '../ListView.module.scss';
 
 export const NameCellRenderer: FC<
@@ -22,20 +27,20 @@ export const NameCellRenderer: FC<
       <DeploymentIcon src={data.iconUrl} size={48} />
       <div className="flex min-w-0 flex-col gap-0.5">
         <EntityBadge type={data.type} />
-        <div className="flex items-baseline gap-1.5">
-          <span className={[nameClassName, styles.nameText].join(' ')}>
-            <Highlight text={data.name} query={searchQuery} />
-          </span>
-          <span className={[versionClassName, styles.secondaryText].join(' ')}>
-            {data.version}
-          </span>
-        </div>
+        <ItemHeader
+          title={data.name}
+          count={data.version}
+          countClassName={versionClassName}
+          query={searchQuery}
+          titleClassName={nameClassName}
+          className="items-baseline gap-1.5"
+        />
         <p
-          className={[
+          className={mergeClasses(
             'm-0 overflow-hidden [-webkit-box-orient:vertical] [-webkit-line-clamp:2] [display:-webkit-box]',
             descriptionClassName,
             styles.secondaryText,
-          ].join(' ')}
+          )}
         >
           <Highlight text={data.description} query={searchQuery} />
         </p>

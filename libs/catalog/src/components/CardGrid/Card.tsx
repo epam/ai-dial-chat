@@ -14,6 +14,7 @@ import { FC, useState } from 'react';
 import type { CardProps } from '../../models/card-props';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
+import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { PricingTag } from '../PricingTag/PricingTag';
 import styles from './CardGrid.module.scss';
 
@@ -81,14 +82,14 @@ export const Card: FC<CardProps> = ({
         <DeploymentIcon src={item.iconUrl} size={48} />
         <div className="min-w-0 flex-1">
           <EntityBadge type={item.type} />
-          <div className="mt-0.5 flex items-start gap-1">
-            <span className={mergeClasses(nameClassName, styles.name)}>
-              <Highlight text={item.name} query={query} />
-            </span>
-            <span className={mergeClasses(versionClassName, styles.version)}>
-              {item.version}
-            </span>
-          </div>
+          <ItemHeader
+            title={item.name}
+            query={query}
+            count={item.version}
+            countClassName={versionClassName}
+            titleClassName={nameClassName}
+            className="mt-0.5 flex items-start gap-1"
+          />
         </div>
       </div>
 

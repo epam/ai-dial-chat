@@ -7,6 +7,13 @@ import { Catalog } from '../Catalog';
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, MD: 20, LG: 24 },
   DialSpinner: () => <div role="status" aria-label="Loading" />,
+  DialEllipsisTooltip: ({
+    text,
+    className,
+  }: {
+    text: unknown;
+    className?: string;
+  }) => <span className={className}>{text as string}</span>,
   DialPrimaryButton: ({
     label,
     onClick,
@@ -45,8 +52,8 @@ vi.mock('../../CardGrid/CardGrid', () => ({
     </div>
   ),
 }));
-vi.mock('../../CatalogFavorites/CatalogFavorites', () => ({
-  CatalogFavorites: ({ title }: { title?: string }) => (
+vi.mock('../../Favorites/Favorites', () => ({
+  Favorites: ({ title }: { title?: string }) => (
     <div>{title ?? 'Your Favorites'}</div>
   ),
 }));

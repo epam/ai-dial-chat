@@ -14,7 +14,15 @@ Always prefer Tailwind utility classes over inline `style` props. Use the `style
 
 ## Conditional class composition
 
-Compose conditional classes with `mergeClasses` — not template-literal concatenation or string interpolation.
+Compose conditional classes with `mergeClasses` — not template-literal concatenation, string interpolation, or array `.join(' ')`.
+
+```tsx
+// Wrong
+className={[nameClassName, styles.nameText].join(' ')}
+
+// Correct
+className={mergeClasses(nameClassName, styles.nameText)}
+```
 
 ## Component-First Development
 
