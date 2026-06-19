@@ -27,8 +27,8 @@ export const NameCellRenderer: FC<
       <div className="flex min-w-0 flex-col gap-0.5">
         <ItemHeader
           title={data.name}
-          count={data.version}
-          countClassName={versionClassName}
+          postfix={data.version}
+          postfixClassName={versionClassName}
           query={searchQuery}
           titleClassName={nameClassName}
           className="items-baseline gap-1.5"

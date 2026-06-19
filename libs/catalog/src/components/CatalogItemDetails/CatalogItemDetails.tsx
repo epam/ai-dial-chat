@@ -3,7 +3,6 @@ import {
   DIAL_ICON_SIZE,
   DialCloseButton,
   DialGhostButton,
-  DialGhostIconButton,
   DialPrimaryButton,
   DialTabs,
 } from '@epam/ai-dial-ui-kit';
@@ -11,8 +10,6 @@ import {
   IconChevronDown,
   IconPlayerPlayFilled,
   IconShare,
-  IconStar,
-  IconStarFilled,
 } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import type { ItemDetailsProps } from '../../models/item-details-props';
@@ -21,6 +18,7 @@ import type { AboutRun } from '../../utils/parse-about-content';
 import { parseAboutContent } from '../../utils/parse-about-content';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
+import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { TopicTag } from '../TopicTag/TopicTag';
 import styles from './CatalogItemDetails.module.scss';
 import { CatalogOverview } from './CatalogOverview';
@@ -156,18 +154,9 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
       >
         {/* Header: favorite + close */}
         <div className="flex shrink-0 items-center justify-end gap-1.5 px-[22px] py-3">
-          <DialGhostIconButton
-            icon={
-              isStarred ? (
-                <IconStarFilled
-                  size={DIAL_ICON_SIZE.SM}
-                  className={styles.starFilledIcon}
-                />
-              ) : (
-                <IconStar size={DIAL_ICON_SIZE.SM} />
-              )
-            }
-            aria-label={starAriaLabel}
+          <StarToggleButton
+            isStarred={isStarred}
+            ariaLabel={starAriaLabel}
             onClick={handleToggleFavorite}
           />
           <DialCloseButton onClose={onClose} ariaLabel={closeAriaLabel} />

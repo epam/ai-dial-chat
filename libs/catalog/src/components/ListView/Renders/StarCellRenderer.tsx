@@ -1,10 +1,8 @@
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconStar, IconStarFilled } from '@tabler/icons-react';
 import type { ICellRendererParams } from 'ag-grid-community';
 import { FC, useState } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
-import styles from '../ListView.module.scss';
+import { StarToggleButton } from '../../StarToggleButton/StarToggleButton';
 
 export const StarCellRenderer: FC<
   ICellRendererParams<CatalogItem, unknown, GridContext>
@@ -21,19 +19,7 @@ export const StarCellRenderer: FC<
 
   return (
     <div className="flex h-full items-center justify-center pe-4">
-      <DialGhostIconButton
-        icon={
-          isStarred ? (
-            <IconStarFilled
-              size={DIAL_ICON_SIZE.SM}
-              className={styles.starFilledIcon}
-            />
-          ) : (
-            <IconStar size={DIAL_ICON_SIZE.SM} />
-          )
-        }
-        onClick={handleToggle}
-      />
+      <StarToggleButton isStarred={isStarred} onClick={handleToggle} />
     </div>
   );
 };
