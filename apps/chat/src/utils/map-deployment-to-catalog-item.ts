@@ -1,5 +1,6 @@
 import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
-import { formatLastUsed, DeploymentItem } from '@epam/ai-dial-chat-shared';
+import { formatLastUsed } from '@epam/ai-dial-chat-shared';
+import type { DeploymentItemDto } from '@epam/chat-api-client';
 import { resolveCatalogIconUrl } from './icon-path';
 
 const TYPE_MAP: Record<string, CatalogEntityType> = {
@@ -9,7 +10,7 @@ const TYPE_MAP: Record<string, CatalogEntityType> = {
 };
 
 export const mapDeploymentToCatalogItem = (
-  deployment: DeploymentItem,
+  deployment: DeploymentItemDto,
 ): CatalogItem => {
   const name = deployment.displayName ?? deployment.id;
   const normalizedType = (deployment.type ?? '').toLowerCase();
