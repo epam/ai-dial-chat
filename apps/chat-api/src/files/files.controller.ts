@@ -187,7 +187,6 @@ export class FilesController {
   }
 
   @Post('download-archive')
-  @HttpCode(200)
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   @ApiProduces('application/zip')
   @ApiOperation({ summary: 'Download files and folders as a ZIP archive' })

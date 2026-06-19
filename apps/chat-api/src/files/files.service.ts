@@ -25,14 +25,14 @@ import type { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
 import type { ListFilesResponseDto } from './dto/list-files.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import { FOLDER_NODE_TYPE, MARKER_NAME } from './files.constants';
-import type { DialFileItem } from './normalize-file-item';
-import { markerMetadataMatches } from './marker-metadata';
-import { normalizeFileItem } from './normalize-file-item';
-import { resolveListingPermissions } from './resolve-listing-permissions';
 import {
   summarizeDialRawItems,
   summarizeListFilesItems,
 } from './list-items-debug';
+import { markerMetadataMatches } from './marker-metadata';
+import type { DialFileItem } from './normalize-file-item';
+import { normalizeFileItem } from './normalize-file-item';
+import { resolveListingPermissions } from './resolve-listing-permissions';
 
 interface ExpandedFile {
   bucket: string;
@@ -40,12 +40,6 @@ interface ExpandedFile {
   name: string;
   size: number;
   archivePath: string;
-}
-
-interface ArchiveDownloadResult {
-  data?: ReadableStream;
-  error?: unknown;
-  response?: Response;
 }
 
 interface StagedArchiveFile {
@@ -335,7 +329,7 @@ export class FilesService extends AppService {
           `createFolder marker probe mismatch: requested=${markerPath}, probeName=${probe.name ?? '(none)'}, probeUrl=${probe.url ?? '(none)'}`,
         );
       } else if (metaError != null && metaStatus !== 404) {
-        return handleDialError({ status: metaStatus });
+        handleDialError({ status: metaStatus });
       }
 
       await this.uploadFile(
@@ -382,15 +376,17 @@ export class FilesService extends AppService {
     };
   }
 
+  private toRelativePath(path: string, bucket: string): string {
+    const prefix = `files/${bucket}/`;
+    return path.startsWith(prefix) ? path.slice(prefix.length) : path;
+  }
+
   async downloadFile(
     bucket: string,
     path: string,
     token: string,
   ): Promise<{ stream: ReadableStream; headers: Record<string, string> }> {
-    const resourcePrefix = `files/${bucket}/`;
-    const relativePath = path.startsWith(resourcePrefix)
-      ? path.slice(resourcePrefix.length)
-      : path;
+    const relativePath = this.toRelativePath(path, bucket);
 
     try {
       const { error, response } = (await this.client.downloadFile(
@@ -431,10 +427,7 @@ export class FilesService extends AppService {
   ): Promise<ExpandedFile[]> {
     // DialFile.path is the full DIAL resource path: "files/{bucket}/reports/"
     // Both the metadata API and download SDK expect the relative path: "reports/"
-    const resourcePrefix = `files/${bucket}/`;
-    const relFolderPath = folderPath.startsWith(resourcePrefix)
-      ? folderPath.slice(resourcePrefix.length)
-      : folderPath;
+    const relFolderPath = this.toRelativePath(folderPath, bucket);
 
     const results: ExpandedFile[] = [];
     let token: string | undefined;
@@ -492,9 +485,7 @@ export class FilesService extends AppService {
 
         // item.url may be a full resource path or already relative — normalise to relative
         const rawUrl = item.url ?? item.name ?? '';
-        const relItemPath = rawUrl.startsWith(resourcePrefix)
-          ? rawUrl.slice(resourcePrefix.length)
-          : rawUrl;
+        const relItemPath = this.toRelativePath(rawUrl, bucket);
 
         const relative = relItemPath.startsWith(relFolderPath)
           ? relItemPath.slice(relFolderPath.length)
@@ -537,7 +528,6 @@ export class FilesService extends AppService {
       return null;
     }
     const joined = root ? `${root}/${relative}` : relative;
-    if (!joined.startsWith(root)) return null;
     return joined;
   }
 
@@ -610,10 +600,7 @@ export class FilesService extends AppService {
         }
       } else {
         // Strip "files/{bucket}/" prefix so the SDK download URL is correct
-        const resourcePrefix = `files/${item.bucket}/`;
-        const relPath = item.path.startsWith(resourcePrefix)
-          ? item.path.slice(resourcePrefix.length)
-          : item.path;
+        const relPath = this.toRelativePath(item.path, item.bucket);
         const key = `${item.bucket}:${relPath}`;
         if (!seenPaths.has(key)) {
           seenPaths.add(key);
@@ -698,7 +685,7 @@ export class FilesService extends AppService {
     try {
       const pendingDownloads = new Map<
         number,
-        Promise<StagedArchiveFile | FailedArchiveFile>
+        Promise<{ index: number; result: StagedArchiveFile | FailedArchiveFile }>
       >();
       const startDownload = (index: number): void => {
         const file = expanded[index];
@@ -708,52 +695,14 @@ export class FilesService extends AppService {
         );
         pendingDownloads.set(
           index,
-          (async (): Promise<StagedArchiveFile | FailedArchiveFile> => {
-            try {
-              const {
-                data: downloadedStream,
-                error,
-                response,
-              } = (await this.client.downloadFile(file.bucket, file.path, {
-                headers: getBearerAuthHeaders(at),
-                parseAs: 'stream',
-                signal: AbortSignal.any([
-                  archiveAbortController.signal,
-                  AbortSignal.timeout(timeoutMs),
-                ]),
-              })) as ArchiveDownloadResult;
-
-              if (error != null) {
-                return { file, error, status: response?.status };
-              }
-
-              const webStream = downloadedStream ?? response?.body;
-              if (webStream == null) {
-                return {
-                  file,
-                  error: new Error('DIAL Core returned no file stream'),
-                  status: response?.status,
-                };
-              }
-
-              await pipeline(
-                Readable.fromWeb(webStream),
-                createWriteStream(tempPath),
-              );
-              this.logger.debug(
-                `Archive file staged: index=${index}, bucket=${file.bucket}, path=${file.path}, archivePath=${file.archivePath}, status=${response?.status ?? 'unknown'}`,
-              );
-              return {
-                file,
-                tempPath,
-                status: response?.status ?? 200,
-                contentLength:
-                  response?.headers.get('content-length') ?? 'unknown',
-              };
-            } catch (error) {
-              return { file, error };
-            }
-          })(),
+          this.stageArchiveFile(
+            index,
+            file,
+            tempPath,
+            at,
+            archiveAbortController,
+            timeoutMs,
+          ),
         );
       };
 
@@ -764,12 +713,7 @@ export class FilesService extends AppService {
       }
 
       while (pendingDownloads.size > 0) {
-        const completed = await Promise.race(
-          Array.from(pendingDownloads, async ([index, download]) => ({
-            index,
-            result: await download,
-          })),
-        );
+        const completed = await Promise.race(pendingDownloads.values());
         pendingDownloads.delete(completed.index);
 
         if (nextIndex < expanded.length) {
@@ -818,6 +762,69 @@ export class FilesService extends AppService {
       clearTimeout(timeout);
       archiveAbortController.abort();
       await rm(tempDirectory, { recursive: true, force: true });
+    }
+  }
+
+  private async stageArchiveFile(
+    index: number,
+    file: ExpandedFile,
+    tempPath: string,
+    at: string,
+    abortController: AbortController,
+    timeoutMs: number,
+  ): Promise<{ index: number; result: StagedArchiveFile | FailedArchiveFile }> {
+    try {
+      const {
+        data: downloadedStream,
+        error,
+        response,
+      } = (await this.client.downloadFile(file.bucket, file.path, {
+        headers: getBearerAuthHeaders(at),
+        parseAs: 'stream',
+        signal: AbortSignal.any([
+          abortController.signal,
+          AbortSignal.timeout(timeoutMs),
+        ]),
+      })) as { data?: ReadableStream; error?: unknown; response?: Response };
+
+      if (error != null) {
+        return {
+          index,
+          result: {
+            file,
+            error,
+            status: response?.status,
+          },
+        };
+      }
+
+      const webStream = downloadedStream ?? response?.body;
+      if (webStream == null) {
+        return {
+          index,
+          result: {
+            file,
+            error: new Error('DIAL Core returned no file stream'),
+            status: response?.status,
+          },
+        };
+      }
+
+      await pipeline(Readable.fromWeb(webStream), createWriteStream(tempPath));
+      this.logger.debug(
+        `Archive file staged: index=${index}, bucket=${file.bucket}, path=${file.path}, archivePath=${file.archivePath}, status=${response?.status ?? 'unknown'}`,
+      );
+      return {
+        index,
+        result: {
+          file,
+          tempPath,
+          status: response?.status ?? 200,
+          contentLength: response?.headers.get('content-length') ?? 'unknown',
+        },
+      };
+    } catch (error) {
+      return { index, result: { file, error } };
     }
   }
 }

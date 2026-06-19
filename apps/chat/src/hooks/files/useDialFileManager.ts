@@ -270,30 +270,6 @@ const buildFromCache = (
   });
 };
 
-const mergeListingItems = (
-  existing: ListFilesItemDto[],
-  incoming: ListFilesItemDto[],
-  cacheKey: string,
-): ListFilesItemDto[] => {
-  const merged = new Map(
-    incoming.map((item) => [item.name.toLowerCase(), item]),
-  );
-  for (const item of existing) {
-    const key = item.name.toLowerCase();
-    if (!merged.has(key)) {
-      merged.set(key, item);
-    }
-  }
-  const result = Array.from(merged.values());
-  logDialFileManagerDebug('cache merge listing', {
-    cacheKey: cacheKey || '(root)',
-    existing: existing.map((item) => item.name),
-    incoming: incoming.map((item) => item.name),
-    merged: result.map((item) => item.name),
-  });
-  return result;
-};
-
 const mergeCreatedFolderIntoCache = (
   cache: Map<string, ListFilesItemDto[]>,
   parentApiPath: string,
@@ -341,8 +317,7 @@ const updateEntry = (
     | Partial<Pick<FileUploadEntry, 'status' | 'percent'>>,
 ): FileUploadBatchState | null => {
   if (!prev) return prev;
-  const changes =
-    typeof patch === 'string' ? { status: patch } : patch;
+  const changes = typeof patch === 'string' ? { status: patch } : patch;
   const files = prev.files.map((f, i) =>
     i === index ? { ...f, ...changes } : f,
   );
@@ -405,8 +380,7 @@ export const useDialFileManager = ({
         });
         setCache((prev) => {
           const next = new Map(prev);
-          const existing = next.get(folderPath) ?? [];
-          next.set(folderPath, mergeListingItems(existing, flat, folderPath));
+          next.set(folderPath, flat);
           logDialFileManagerDebug('cache after listFiles', {
             cache: summarizeDialFileManagerCache(next),
           });
@@ -581,7 +555,6 @@ export const useDialFileManager = ({
         });
         setRetryCounter((c) => c + 1);
         uploadAbortControllerRef.current = null;
-        setUploadBatchState(null);
       };
 
       void processBatch();
@@ -649,12 +622,11 @@ export const useDialFileManager = ({
             listingPermissionsCache.get(parentApiPath),
           ),
         );
-        setRetryCounter((c) => c + 1);
       } finally {
         setIsCreatingFolder(false);
       }
     },
-    [bucket, rootLabel, listingPermissionsCache, folderPath],
+    [bucket, rootLabel, listingPermissionsCache],
   );
 
   const onCreateFolderValidate = useCallback(

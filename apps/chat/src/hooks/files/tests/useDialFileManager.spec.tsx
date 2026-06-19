@@ -298,7 +298,9 @@ describe('useDialFileManager', () => {
       finishUpload?.();
     });
 
-    await waitFor(() => expect(result.current.uploadBatchState).toBeNull());
+    await waitFor(() =>
+      expect(result.current.uploadBatchState?.files[0]?.status).toBe('completed'),
+    );
   });
 
   it('creates a folder using the name from the virtual path, not the marker file', async () => {
