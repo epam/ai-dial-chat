@@ -9,6 +9,7 @@ export const CatalogCardGrid: FC<CatalogCardGridProps> = ({
   items,
   query = '',
   onToggleFavorite,
+  onItemClick,
   titles,
   styles: cardGridStyles,
 }) => {
@@ -29,6 +30,7 @@ export const CatalogCardGrid: FC<CatalogCardGridProps> = ({
             item={item}
             query={query}
             onToggle={onToggleFavorite}
+            onClick={onItemClick}
           />
         ))}
       </div>

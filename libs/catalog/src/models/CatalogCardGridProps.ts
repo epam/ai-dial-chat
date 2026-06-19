@@ -24,6 +24,8 @@ export interface CatalogCardGridProps {
   query?: string;
   /** Called when a card's star is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /** Called when a card body is clicked to open the details panel. */
+  onItemClick?: (item: CatalogItem) => void;
   /** Grouped empty-state text overrides. */
   titles?: CatalogCardGridTitles;
   /** Grouped class-name overrides for empty-state elements. */

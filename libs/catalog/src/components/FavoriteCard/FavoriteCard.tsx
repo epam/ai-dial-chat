@@ -44,6 +44,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}

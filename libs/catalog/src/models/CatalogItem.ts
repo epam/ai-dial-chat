@@ -1,4 +1,5 @@
 import type { CatalogEntityType } from '../types/CatalogEntityType';
+import type { CatalogItemOverview } from './CatalogItemOverview';
 
 /** A node in the hierarchical "From" source filter tree. */
 export interface TreeNode {
@@ -38,6 +39,8 @@ export interface CatalogItem extends FavoriteItem {
   description: string;
   /** Full description shown in the details panel About tab. Markdown or plain text. */
   longDescription?: string;
+  /** Structured data for the Overview tab. When absent the tab renders empty. */
+  overview?: CatalogItemOverview;
   /** Pricing tier labels, e.g. ['Free'] or ['Pay-as-you-go', 'By request']. */
   pricing: string[];
   /** When true the card gets accent border and glow. */

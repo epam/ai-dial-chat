@@ -54,7 +54,8 @@ export const getFromLabel = (
   const n = checked.size;
   if (n === 0 || n === total) return defaultLabel;
   if (total - n === 1) {
-    const excludedId = [...allIds].find((id) => !checked.has(id))!;
+    const excludedId = [...allIds].find((id) => !checked.has(id));
+    if (excludedId == null) return defaultLabel;
     return `${defaultLabel}: All except ${findNodeLabel(tree, excludedId) ?? excludedId}`;
   }
   return `${defaultLabel}: ${n} of ${total}`;

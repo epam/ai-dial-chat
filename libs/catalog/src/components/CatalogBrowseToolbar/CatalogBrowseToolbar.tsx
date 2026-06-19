@@ -6,10 +6,8 @@ import {
   DialIconButton,
   DialLinkButton,
   DialSearch,
-  DialTabs,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import type { TabModel } from '@epam/ai-dial-ui-kit';
 import {
   IconFilter,
   IconLayoutCards,
@@ -106,12 +104,6 @@ export interface CatalogBrowseToolbarProps {
   isAnyFilterActive: boolean;
   /** Called when "Clear all" is clicked. */
   onClearFilters: () => void;
-  /** Tabs for the entity type tabs. */
-  tabs: TabModel[];
-  /** Currently active tab ID. */
-  activeTab: string;
-  /** Called when a tab is clicked. */
-  onTabChange: (id: string) => void;
   /** Section heading text. Default: 'Browse'. */
   title?: string;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
@@ -148,9 +140,6 @@ export const CatalogBrowseToolbar: FC<CatalogBrowseToolbarProps> = ({
   onMaturityChange,
   isAnyFilterActive,
   onClearFilters,
-  tabs,
-  activeTab,
-  onTabChange,
   title = 'Browse',
   searchPlaceholder = 'Search models, tools, agents…',
   sortOptions = DEFAULT_SORT_OPTIONS,
@@ -277,13 +266,6 @@ export const CatalogBrowseToolbar: FC<CatalogBrowseToolbarProps> = ({
             onClick={onClearFilters}
           />
         )}
-      </div>
-
-      {/* Tab bar — [&>div]:justify-center targets DialTabs' inner flex container */}
-      <div
-        className={['border-b [&>div]:justify-center', styles.tabs].join(' ')}
-      >
-        <DialTabs tabs={tabs} activeTab={activeTab} onClick={onTabChange} />
       </div>
     </section>
   );

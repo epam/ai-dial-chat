@@ -1,4 +1,5 @@
 // Types
+export { CatalogDetailsTab } from './types/CatalogDetailsTab';
 export { CatalogEntityType } from './types/CatalogEntityType';
 export { CatalogSortKey } from './types/CatalogSortKey';
 export { CatalogViewMode } from './types/CatalogViewMode';
@@ -12,6 +13,17 @@ export type {
   TreeNode,
 } from './models/catalog';
 export type { CatalogProps, CatalogTexts } from './models/CatalogProps';
+export type {
+  CatalogItemDetailsProps,
+  CatalogItemDetailsStyles,
+  CatalogItemDetailsTexts,
+  CatalogItemDetailsTypography,
+} from './models/CatalogItemDetailsProps';
+export type {
+  CatalogItemOverview,
+  OverviewSection,
+  OverviewSpec,
+} from './models/CatalogItemOverview';
 
 // Constants
 export {
@@ -42,6 +54,8 @@ export { useFavColumns } from './utils/use-fav-columns';
 
 // Components
 export { Catalog } from './components/Catalog/Catalog';
+
+export { CatalogItemDetails } from './components/CatalogItemDetails/CatalogItemDetails';
 
 export { CatalogBrowseToolbar } from './components/CatalogBrowseToolbar/CatalogBrowseToolbar';
 export type { CatalogBrowseToolbarProps } from './components/CatalogBrowseToolbar/CatalogBrowseToolbar';
