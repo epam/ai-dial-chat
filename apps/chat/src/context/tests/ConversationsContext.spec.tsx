@@ -16,6 +16,11 @@ vi.mock('../../server-api/user-config.api');
 vi.mock('../../utils/conversation-path', () => ({
   getConversationPath: (id: string) => id,
 }));
+vi.mock('../UserConfigContext', () => ({
+  useUserConfig: () => ({
+    setPinnedConversation: vi.fn().mockResolvedValue(undefined),
+  }),
+}));
 
 const mockListConversations = vi.mocked(conversationsApi.listConversations);
 const mockDeleteAllConversations = vi.mocked(

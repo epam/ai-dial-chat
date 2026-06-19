@@ -339,3 +339,30 @@ The lib enforces rules via `computeAllowedDropGroups` (computed at drag start); 
 
 - **WHEN** the user drags a conversation over a row in the same group
 - **THEN** that row shows a highlight ring (`ring-1 ring-inset ring-accent-secondary`)
+
+---
+
+### Requirement: Deleting the active conversation from the panel row navigates to root
+
+When the user confirms single-row deletion of the conversation currently open in the conversation view, `ConversationPanelView` SHALL navigate to `ROUTES.Root` after the deletion succeeds.
+
+The comparison between the deleted conversation ID and `activeConversationId` MUST be encoding-safe: apply `decodeURIComponent` to the normalized deleted ID before comparing, with a try/catch fallback to the raw normalized form (matching the decoding applied to `activeConversationId` in `apps/chat/src/app/app.tsx`).
+
+Navigation MUST occur regardless of whether the conversation is owned, shared, or published — the deletion request was explicit and the view is no longer valid.
+
+#### Scenario: navigates to root after deleting the active conversation
+
+- **WHEN** the user deletes the conversation whose ID matches `activeConversationId`
+- **THEN** `navigate(ROUTES.Root)` is called after the deletion API call succeeds
+
+#### Scenario: no navigation when deleting a non-active conversation
+
+- **WHEN** the user deletes a conversation whose ID does NOT match `activeConversationId`
+- **THEN** `navigate` is NOT called
+
+#### Scenario: encoding-safe comparison navigates correctly for percent-encoded IDs
+
+- **WHEN** the API returns an ID such as `conversations/bucket/gpt-4__My%20Chat.json` (percent-encoded)
+- **AND** `activeConversationId` holds the decoded form `bucket/gpt-4__My Chat.json`
+- **WHEN** the user deletes that conversation
+- **THEN** `navigate(ROUTES.Root)` is called (the percent-encoded and decoded forms are recognized as equal)

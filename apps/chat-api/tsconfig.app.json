@@ -18,6 +18,5 @@
     "src/**/*.spec.tsx",
     "src/**/*.test.ts",
     "src/**/*.test.tsx"
-  ],
-  "references": [{ "path": "../../libs/chat-shared/tsconfig.lib.json" }]
+  ]
 }

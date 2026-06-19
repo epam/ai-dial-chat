@@ -41,7 +41,6 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
         '--sb-border': colors?.border,
         '--sb-header-border': colors?.headerBorder,
         '--sb-font-family': noCustomFont ? typography?.fontFamily : undefined,
-        '--sb-font-size': noCustomFont ? typography?.fontSize : undefined,
       }),
     [colors, typography, noCustomFont],
   );

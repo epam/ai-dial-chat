@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { MarkdownRenderer } from '@epam/ai-dial-conversation-messages';
 import { type FC, memo } from 'react';
-import type { StageTypography } from '../../models/StagesPanel';
+import type { StageTypography } from '../../models/stages-props';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 import { StageCodeBlock } from './StageCodeBlock';
 

@@ -1,4 +1,3 @@
-import type { Conversation } from '@epam/ai-dial-chat-shared';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsObject } from 'class-validator';
 import { ConversationResponseDto } from '../../openapi/openapi-response.dto';
@@ -12,5 +11,5 @@ export class SaveConversationBodyDto {
     type: ConversationResponseDto,
   })
   @IsObject()
-  conversation!: Conversation;
+  conversation!: ConversationResponseDto;
 }

@@ -219,3 +219,7 @@ export enum FileDndI18nKeys {
   OverlayDeniedTitle = 'fileDnd.overlayDeniedTitle',
   OverlayDeniedSubtitle = 'fileDnd.overlayDeniedSubtitle',
 }
+
+export enum UserConfigI18nKeys {
+  LoadError = 'userConfig.loadError',
+}

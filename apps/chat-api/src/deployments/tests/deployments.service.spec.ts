@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EnvironmentVariables } from '../../config/environment.config';
 import { DeploymentsService } from '../deployments.service';
 import type { DeploymentItemDto } from '../dto/deployment-item.dto';
+import { DeploymentInterfaceType } from '../dto/deployments-query.dto';
 
 const mockModel = {
   id: 'gpt-4o',
@@ -30,7 +31,12 @@ const mockToolset = {
 const mockNoId = { object: 'model', display_name: 'No ID' };
 const mockNoDisplayName = { id: 'no-name', object: 'model' };
 
-function makeService(overrides: { cached?: DeploymentItemDto[] } = {}) {
+function makeService(
+  overrides: {
+    cached?: DeploymentItemDto[];
+    installedIds?: { toolsets: string[]; deployments: string[] };
+  } = {},
+) {
   const store = new Map<string, unknown>();
   if (overrides.cached) {
     store.set('deployments:list:user1', overrides.cached);
@@ -57,10 +63,22 @@ function makeService(overrides: { cached?: DeploymentItemDto[] } = {}) {
     get: vi.fn().mockReturnValue('http://dial-core'),
   } as unknown as ConfigService<EnvironmentVariables>;
 
-  const service = new DeploymentsService(configService, cacheManager as never);
+  const userConfigService = {
+    getInstalledIds: vi
+      .fn()
+      .mockResolvedValue(
+        overrides.installedIds ?? { toolsets: [], deployments: [] },
+      ),
+  };
+
+  const service = new DeploymentsService(
+    configService,
+    cacheManager as never,
+    userConfigService as never,
+  );
   (service as unknown as { client: typeof sdkClient }).client = sdkClient;
 
-  return { service, sdkClient, cacheManager };
+  return { service, sdkClient, cacheManager, userConfigService };
 }
 
 const okResponse = <T>(data: T) =>
@@ -85,7 +103,11 @@ describe('DeploymentsService', () => {
   describe('listDeployments', () => {
     it('maps model, application, and toolset correctly', async () => {
       const { service } = makeService();
-      const result = await service.listDeployments('user1', 'token');
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
       expect(result.deployments).toHaveLength(3);
       expect(result.deployments.find((d) => d.id === 'gpt-4o')?.type).toBe(
         'model',
@@ -105,7 +127,11 @@ describe('DeploymentsService', () => {
         response: { status: 200 },
         data: [mockModel, mockNoId],
       });
-      const result = await service.listDeployments('user1', 'token');
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
       expect(result.deployments).toHaveLength(1);
       expect(result.deployments[0].id).toBe('gpt-4o');
     });
@@ -117,7 +143,11 @@ describe('DeploymentsService', () => {
         response: { status: 200 },
         data: [mockNoDisplayName],
       });
-      const result = await service.listDeployments('user1', 'token');
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
       expect(result.deployments[0].displayName).toBe('no-name');
     });
 
@@ -126,8 +156,12 @@ describe('DeploymentsService', () => {
         { id: 'cached', displayName: 'Cached', type: 'model' },
       ];
       const { service, sdkClient } = makeService({ cached });
-      const result = await service.listDeployments('user1', 'token');
-      expect(result.deployments).toEqual(cached);
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0]).toMatchObject(cached[0]);
       expect(sdkClient.getDeploymentsByInterfaceType).not.toHaveBeenCalled();
     });
 
@@ -148,7 +182,12 @@ describe('DeploymentsService', () => {
         { id: 'no-iface', displayName: 'None', type: 'model' },
       ];
       const { service } = makeService({ cached });
-      const result = await service.listDeployments('user1', 'token', ['chat']);
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+        [DeploymentInterfaceType.Chat],
+      );
       expect(result.deployments).toHaveLength(1);
       expect(result.deployments[0].id).toBe('chat-model');
     });
@@ -156,7 +195,10 @@ describe('DeploymentsService', () => {
     it('forwards interface_type filter to DIAL Core on cache miss', async () => {
       const { service, sdkClient } = makeService();
 
-      await service.listDeployments('user1', 'token', ['chat', 'mcp']);
+      await service.listDeployments('user1', 'token', 'bucket-1', [
+        DeploymentInterfaceType.Chat,
+        DeploymentInterfaceType.Mcp,
+      ]);
 
       expect(sdkClient.getDeploymentsByInterfaceType).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -184,7 +226,11 @@ describe('DeploymentsService', () => {
           },
         ],
       });
-      const result = await service.listDeployments('user1', 'token');
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
       expect(result.deployments[0].applicationTypeSchemaId).toBe(
         'https://example.com/schemas/quick-app',
       );
@@ -197,7 +243,11 @@ describe('DeploymentsService', () => {
         response: { status: 200 },
         data: [mockModel],
       });
-      const result = await service.listDeployments('user1', 'token');
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
       expect(result.deployments[0].applicationTypeSchemaId).toBeUndefined();
     });
 
@@ -210,7 +260,11 @@ describe('DeploymentsService', () => {
           { ...mockModel, input_attachment_types: ['audio/*', 'image/*'] },
         ],
       });
-      const result = await service.listDeployments('user1', 'token');
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
       expect(result.deployments[0].inputAttachmentTypes).toEqual([
         'audio/*',
         'image/*',
@@ -224,7 +278,11 @@ describe('DeploymentsService', () => {
         response: { status: 200 },
         data: [mockModel],
       });
-      const result = await service.listDeployments('user1', 'token');
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
       expect(result.deployments[0].inputAttachmentTypes).toBeUndefined();
     });
 
@@ -235,9 +293,9 @@ describe('DeploymentsService', () => {
         response: { status: 502 },
         data: undefined,
       });
-      await expect(service.listDeployments('user1', 'token')).rejects.toThrow(
-        BadGatewayException,
-      );
+      await expect(
+        service.listDeployments('user1', 'token', 'bucket-1'),
+      ).rejects.toThrow(BadGatewayException);
     });
 
     it('throws ServiceUnavailableException when DIAL Core is unreachable', async () => {
@@ -245,9 +303,83 @@ describe('DeploymentsService', () => {
       const abortError = new Error('fetch failed');
       abortError.name = 'AbortError';
       sdkClient.getDeploymentsByInterfaceType.mockRejectedValue(abortError);
-      await expect(service.listDeployments('user1', 'token')).rejects.toThrow(
-        ServiceUnavailableException,
+      await expect(
+        service.listDeployments('user1', 'token', 'bucket-1'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('sets isInstalled=true for installed model and application deployments', async () => {
+      const { service } = makeService({
+        installedIds: { toolsets: [], deployments: ['gpt-4o', 'my-app'] },
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
       );
+      expect(
+        result.deployments.find((d) => d.id === 'gpt-4o')?.isInstalled,
+      ).toBe(true);
+      expect(
+        result.deployments.find((d) => d.id === 'my-app')?.isInstalled,
+      ).toBe(true);
+      expect(
+        result.deployments.find((d) => d.id === 'search-tool')?.isInstalled,
+      ).toBe(false);
+    });
+
+    it('sets isInstalled=true for installed toolset', async () => {
+      const { service } = makeService({
+        installedIds: { toolsets: ['search-tool'], deployments: [] },
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(
+        result.deployments.find((d) => d.id === 'search-tool')?.isInstalled,
+      ).toBe(true);
+      expect(
+        result.deployments.find((d) => d.id === 'gpt-4o')?.isInstalled,
+      ).toBe(false);
+    });
+
+    it('sets isInstalled=false for all items when nothing is installed', async () => {
+      const { service } = makeService();
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments.every((d) => d.isInstalled === false)).toBe(
+        true,
+      );
+    });
+
+    it('passes token and bucket to userConfigService.getInstalledIds', async () => {
+      const { service, userConfigService } = makeService();
+      await service.listDeployments('user1', 'my-token', 'my-bucket');
+      expect(userConfigService.getInstalledIds).toHaveBeenCalledWith(
+        'my-token',
+        'my-bucket',
+      );
+    });
+
+    it('overlays isInstalled after cache hit', async () => {
+      const cached: DeploymentItemDto[] = [
+        { id: 'gpt-4o', displayName: 'GPT-4o', type: 'model' },
+      ];
+      const { service } = makeService({
+        cached,
+        installedIds: { toolsets: [], deployments: ['gpt-4o'] },
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].isInstalled).toBe(true);
     });
   });
 
