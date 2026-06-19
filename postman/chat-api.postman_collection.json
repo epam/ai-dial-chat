@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Chat API (1.0.0)",
-    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 36 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
+    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 38 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -249,7 +249,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"conversation\": {\n    \"id\": \"test-bucket/uuid__Hello\",\n    \"folderId\": \"test-bucket\",\n    \"name\": \"Hello\",\n    \"model\": {\n      \"id\": \"anthropic.claude-v3-sonnet\"\n    },\n    \"prompt\": \"\",\n    \"temperature\": 1,\n    \"messages\": [\n      {\n        \"role\": \"user\",\n        \"content\": \"Hello!\",\n        \"timestamp\": \"2026-05-19T16:00:00.000Z\"\n      }\n    ],\n    \"lastActivityDate\": 1779206400000,\n    \"updatedAt\": 1779206400000,\n    \"selectedAddons\": [],\n    \"assistantModelId\": \"anthropic.claude-v3-sonnet\"\n  }\n}\n",
+              "raw": "{\n  \"conversation\": {\n    \"id\": \"test-bucket/uuid__Hello\",\n    \"folderId\": \"test-bucket\",\n    \"name\": \"Hello\",\n    \"model\": {\n      \"id\": \"anthropic.claude-v3-sonnet\"\n    },\n    \"prompt\": \"\",\n    \"temperature\": 1,\n    \"messages\": [\n      {\n        \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n        \"role\": \"user\",\n        \"content\": \"Hello!\",\n        \"timestamp\": \"2026-05-19T16:00:00.000Z\",\n        \"custom_content\": {\n          \"attachments\": [\n            {\n              \"index\": 0,\n              \"type\": \"type\",\n              \"title\": \"title\",\n              \"data\": \"data\",\n              \"url\": \"url\",\n              \"reference_type\": \"reference_type\",\n              \"reference_url\": \"reference_url\"\n            }\n          ],\n          \"configuration_value\": {\n            \"button\": 1\n          },\n          \"form_value\": {\n            \"field1\": \"value\",\n            \"field2\": 42\n          },\n          \"event_type\": \"model_changed\",\n          \"previous_deployment_id\": \"gpt-4o\",\n          \"new_deployment_id\": \"claude-3\"\n        }\n      }\n    ],\n    \"lastActivityDate\": 1779206400000,\n    \"updatedAt\": 1779206400000,\n    \"selectedAddons\": [],\n    \"assistantModelId\": \"anthropic.claude-v3-sonnet\"\n  }\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -593,6 +593,31 @@
           }
         },
         {
+          "name": "Get file metadata",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/metadata?bucket={{bucket}}&path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "metadata"],
+              "query": [
+                {
+                  "key": "bucket",
+                  "value": "{{bucket}}",
+                  "description": "DIAL Core bucket name"
+                },
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "File path within the bucket (no leading slash, no .., no trailing /)"
+                }
+              ]
+            },
+            "description": "Returns metadata for a single named file from DIAL Core. Path must not end with /."
+          }
+        },
+        {
           "name": "downloadFile",
           "request": {
             "method": "GET",
@@ -616,31 +641,6 @@
                 }
               ]
             }
-          }
-        },
-        {
-          "name": "Get file metadata",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/files/metadata?bucket={{bucket}}&path={{path}}",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "files", "metadata"],
-              "query": [
-                {
-                  "key": "bucket",
-                  "value": "{{bucket}}",
-                  "description": "DIAL Core bucket name"
-                },
-                {
-                  "key": "path",
-                  "value": "{{path}}",
-                  "description": "File path within the bucket (no leading slash, no .., no trailing /)"
-                }
-              ]
-            },
-            "description": "Returns metadata for a single named file from DIAL Core. Path must not end with /."
           }
         }
       ]
@@ -819,6 +819,50 @@
               "raw": "{{baseUrl}}/api/v1/user-config/pins",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "user-config", "pins"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Install or uninstall a toolset",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"toolset-abc\",\n  \"isInstalled\": true\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user-config/toolsets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user-config", "toolsets"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Install or uninstall a deployment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"toolset-abc\",\n  \"isInstalled\": true\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user-config/deployments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user-config", "deployments"]
             },
             "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }

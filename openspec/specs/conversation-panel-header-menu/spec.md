@@ -152,6 +152,8 @@ After the API returns with `failed.length === 0`:
 
 The same applies to the already-empty-bucket case (`requested: 0, deleted: 0, alreadyAbsent: 0, failed: []`).
 
+Navigation MUST be triggered by checking `activeConversationId` directly — NOT by searching the `conversations` list for the active conversation and checking its `sharedWithMe` or `publishedWithMe` flags. The `conversations` list may reflect a post-refresh (empty) state at the point the check runs, causing a stale-closure false-negative. An ownership check is also semantically unnecessary: delete-all only deletes owned conversations, so shared/published ones remain accessible via re-navigation from root.
+
 #### Scenario: navigation to root when active conversation is open
 
 - **GIVEN** `activeConversationId` is set to a valid conversation ID
@@ -163,6 +165,13 @@ The same applies to the already-empty-bucket case (`requested: 0, deleted: 0, al
 - **GIVEN** `activeConversationId` is undefined
 - **WHEN** the delete-all API call succeeds with `failed.length === 0`
 - **THEN** `navigate` is NOT called
+
+#### Scenario: navigation occurs even when conversations list is empty at check time
+
+- **GIVEN** `activeConversationId` is set
+- **AND** the `conversations` state is empty (post-refresh) at the time the delete-all callback runs
+- **WHEN** the delete-all API call succeeds
+- **THEN** `navigate(ROUTES.ROOT)` is still called
 
 ---
 
@@ -309,9 +318,12 @@ Tests in `apps/chat/src/components/ConversationPanel/tests/ConversationPanelView
 - Cancelling the popup calls neither the API nor `navigate`.
 - Confirming: complete success — popup closes, `navigate(ROUTES.ROOT)` called when `activeConversationId` is set.
 - Confirming: complete success with no active conversation — `navigate` not called.
+- Confirming: complete success when the conversations list is empty at callback time — `navigate(ROUTES.ROOT)` is still called (guards against stale-closure regression).
 - Confirming: total failure — popup stays open with inline error; list unchanged.
 - Confirming: partial failure — popup closes, notification appears, `navigate` called.
 - Confirming: thrown error — popup stays open with inline error.
 - In-flight state: confirm button disabled after first click; second click does not issue a second call.
 - Notification close button dismisses the partial-error notification.
 - `isDeletingAll` resets to false after the request resolves (success or failure).
+- Single delete: navigates to root when the deleted conversation is the active one.
+- Single delete: does not navigate when the deleted conversation is not the active one.

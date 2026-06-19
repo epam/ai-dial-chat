@@ -20,3 +20,5 @@ export const safeDecodeURI = (path: string): string => {
     return path;
   }
 };
+
+export const safeDecodeURIComponent = safeDecodeURI;

@@ -14,7 +14,6 @@ import { IconDotsVertical, IconTrashX } from '@tabler/icons-react';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { normalizeConversationId } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
@@ -61,7 +60,7 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { conversations, deleteAllConversations } = useConversations();
+  const { deleteAllConversations } = useConversations();
   const { showNotification } = useNotification();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -111,22 +110,7 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
         });
       }
 
-      if (!activeConversationId) return;
-
-      const activeConversation = conversations.find((conversation) => {
-        const rawId = normalizeConversationId(conversation.id);
-        try {
-          return decodeURIComponent(rawId) === activeConversationId;
-        } catch {
-          return rawId === activeConversationId;
-        }
-      });
-      const isActiveConversationOwned =
-        activeConversation != null &&
-        !activeConversation.sharedWithMe &&
-        !activeConversation.publishedWithMe;
-
-      if (isActiveConversationOwned) {
+      if (activeConversationId) {
         navigate(ROUTES.Root);
       }
     } catch {
@@ -136,7 +120,6 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
     }
   }, [
     activeConversationId,
-    conversations,
     deleteAllConversations,
     navigate,
     showNotification,

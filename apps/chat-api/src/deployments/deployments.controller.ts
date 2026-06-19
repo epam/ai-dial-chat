@@ -45,10 +45,11 @@ export class DeploymentsController {
     description: 'DIAL Core is unavailable or timed out',
   })
   listDeployments(@Query() query: DeploymentsQueryDto, @Req() req: Request) {
-    const { sub, at } = req.user as SessionUser;
+    const { sub, at, bucket } = req.user as SessionUser;
     return this.deploymentsService.listDeployments(
       sub,
       at,
+      bucket,
       query.interface_type,
     );
   }
