@@ -18,6 +18,10 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.css$/,
+        use: require.resolve('null-loader'),
+      },
+      {
         test: /\.tsx?$/,
         exclude: /node_modules/,
         use: {
@@ -33,6 +37,7 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     alias: {
+      'file-type': false,
       '@nestjs/websockets/socket-module': false,
       '@nestjs/microservices/microservices-module': false,
       '@nestjs/microservices': false,
