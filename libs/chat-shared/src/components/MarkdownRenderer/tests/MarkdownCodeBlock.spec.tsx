@@ -1,12 +1,9 @@
-import { copyToClipboard } from '@epam/ai-dial-chat-shared';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-vi.mock('@epam/ai-dial-chat-shared', () => ({
-  copyToClipboard: vi.fn(),
-  mergeClasses: (...classes: (string | undefined | false | null)[]) =>
-    classes.filter(Boolean).join(' '),
-}));
+import { copyToClipboard } from '../../../utils/copy-to-clipboard';
+import { MarkdownCodeBlock } from '../CodeBlock/CodeBlock';
+
 vi.mock('react-syntax-highlighter', () => ({
   Prism: ({ children, language }: { children: string; language: string }) => (
     <pre data-language={language}>
@@ -18,7 +15,6 @@ vi.mock('react-syntax-highlighter/dist/cjs/styles/prism', () => ({
   oneDark: {},
   oneLight: {},
 }));
-import { MarkdownCodeBlock } from '../CodeBlock/CodeBlock';
 
 describe('MarkdownCodeBlock', () => {
   beforeEach(() => {
