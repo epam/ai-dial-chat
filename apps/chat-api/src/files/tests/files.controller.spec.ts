@@ -12,12 +12,11 @@ import {
 } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { Test, TestingModule } from '@nestjs/testing';
+import { memoryStorage } from 'multer';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../files.service';
-
-const { memoryStorage } = require('multer') as { memoryStorage: () => unknown };
 
 const TEST_USER = {
   sub: 'user-123',
