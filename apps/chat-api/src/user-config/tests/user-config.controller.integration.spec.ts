@@ -1,14 +1,23 @@
-import type { NextFunction, Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
+import type {
+  NextFunction,
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+} from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserConfigController } from '../user-config.controller';
 import { UserConfigService } from '../user-config.service';
 
 const TEST_USER = {
+  sid: 'test-sid',
+  sub: 'test-sub',
+  providerId: 'keycloak',
   at: 'test-access-token',
   bucket: 'test-bucket',
+  claims: {},
+  csrf: 'test-csrf',
 };
 
 describe('UserConfigController (integration)', () => {
@@ -34,10 +43,12 @@ describe('UserConfigController (integration)', () => {
     }).compile();
 
     app = module.createNestApplication();
-    app.use((req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
-      req.user = TEST_USER;
-      next();
-    });
+    app.use(
+      (req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
+        req.user = TEST_USER;
+        next();
+      },
+    );
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,

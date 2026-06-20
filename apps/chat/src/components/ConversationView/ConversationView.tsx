@@ -413,7 +413,7 @@ const ConversationView: FC<Props> = ({
 
   const chatSettings = useMemo(
     () => ({
-      features: selectedDeployment?.features,
+      features: selectedDeployment?.features ?? { systemPrompt: false, temperature: false },
       systemPrompt: conversation.prompt ?? '',
       temperature: conversation.temperature ?? 0.5,
       onSave: (values: ChatSettingsValues) =>

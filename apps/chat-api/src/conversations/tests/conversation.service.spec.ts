@@ -1,7 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
-import type { EnvironmentVariables } from '../../config/environment.config';
 import { handleDialError } from '../../common/utils/dial-error';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { ConversationService } from '../conversation.service';
 import {
   ConversationMessageRole,

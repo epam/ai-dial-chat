@@ -1,7 +1,11 @@
-import type { NextFunction, Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Test, TestingModule } from '@nestjs/testing';
+import type {
+  NextFunction,
+  Request as ExpressRequest,
+  Response as ExpressResponse,
+} from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserConfigService } from '../../user-config/user-config.service';
@@ -43,10 +47,12 @@ describe('ConversationController (integration)', () => {
     }).compile();
 
     app = module.createNestApplication();
-    app.use((req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
-      req.user = TEST_USER;
-      next();
-    });
+    app.use(
+      (req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
+        req.user = TEST_USER;
+        next();
+      },
+    );
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -189,10 +195,12 @@ describe('ConversationController (integration)', () => {
       }).compile();
 
       const realApp = realModule.createNestApplication();
-      realApp.use((req, _res, next) => {
-        req.user = TEST_USER;
-        next();
-      });
+      realApp.use(
+        (req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
+          req.user = TEST_USER;
+          next();
+        },
+      );
       realApp.useGlobalPipes(
         new ValidationPipe({ whitelist: true, transform: true }),
       );

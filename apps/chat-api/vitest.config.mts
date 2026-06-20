@@ -3,7 +3,7 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig(() => ({
   root: __dirname,
-  oxc: false,
+  oxc: false as const,
   cacheDir: '../../node_modules/.vite/apps/chat-api',
   plugins: [
     swc.vite({
