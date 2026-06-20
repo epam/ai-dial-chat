@@ -1,8 +1,4 @@
 export { ConversationPanel } from './components/ConversationPanel/ConversationPanel';
-export {
-  ConversationGroupKey,
-  ConversationSource,
-} from './models/ConversationPanel';
 export type {
   ConversationMove,
   ConversationPanelProps,
@@ -10,7 +6,6 @@ export type {
   ConversationHistoryColors,
   ConversationHistoryTypography,
   ConversationHistoryItem,
-  FilterTab,
   FilterLabels,
-} from './models/ConversationPanel';
+} from './models/panel-props';
 export type { ConversationGroupProps } from './components/ConversationGroup/ConversationGroup';

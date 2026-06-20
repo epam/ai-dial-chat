@@ -1,10 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
-import {
-  ConversationSource,
-  type ConversationHistoryItem,
-} from '../../../models/ConversationPanel';
+import { type ConversationHistoryItem } from '../../../models/panel-props';
+import { ConversationSource } from '../../../types/conversation-source';
 import { ConversationPanel } from '../ConversationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
