@@ -1,10 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
-vi.mock('@epam/ai-dial-chat-shared', () => ({
-  mergeClasses: (...classes: (string | undefined | false | null)[]) =>
-    classes.filter(Boolean).join(' '),
-  copyToClipboard: vi.fn(),
-}));
+import { MarkdownRenderer } from '../MarkdownRenderer';
+
 vi.mock('react-syntax-highlighter', () => ({
   Prism: ({ children, language }: { children: string; language: string }) => (
     <pre data-language={language}>
@@ -16,7 +13,6 @@ vi.mock('react-syntax-highlighter/dist/cjs/styles/prism', () => ({
   oneDark: {},
   oneLight: {},
 }));
-import { MarkdownRenderer } from './MarkdownRenderer';
 
 const TABLE_MARKDOWN = `| Name | Description |
 | --- | --- |

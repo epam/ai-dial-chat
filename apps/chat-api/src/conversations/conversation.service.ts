@@ -10,6 +10,7 @@ import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
+import { HIDDEN_FILE } from '../constants/dial.constants';
 import {
   ConversationMetadataDto,
   ConversationResponseDto,
@@ -48,7 +49,6 @@ import {
   safeDecodeURIComponent,
 } from './utils/conversation.utils';
 import { resolveUniqueConversationName } from './utils/resolve-unique-conversation-name';
-import { HIDDEN_FILE } from '../constants/dial.constants';
 
 const getValidAttachments = (
   customContent?: ConversationMessageDto['custom_content'],

@@ -1,4 +1,3 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialGhostIconButton,
@@ -11,14 +10,10 @@ import {
   oneDark,
   oneLight,
 } from 'react-syntax-highlighter/dist/cjs/styles/prism';
-import { useCodeCopy } from '../../hooks/useCodeCopy';
-import styles from './MarkdownCodeBlock.module.scss';
-
-/** Color theme for syntax highlighting. */
-export enum CodeBlockTheme {
-  Dark = 'dark',
-  Light = 'light',
-}
+import { useCodeCopy } from '../../../hooks/useCodeCopy';
+import { CodeBlockTheme } from '../../../types/code-editor';
+import { mergeClasses } from '../../../utils/merge-class';
+import styles from './CodeBlock.module.scss';
 
 /** Props for {@link MarkdownCodeBlock}. */
 export interface MarkdownCodeBlockProps {

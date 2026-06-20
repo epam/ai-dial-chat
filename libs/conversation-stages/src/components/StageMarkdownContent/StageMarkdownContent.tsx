@@ -1,5 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { MarkdownRenderer } from '@epam/ai-dial-conversation-messages';
+import { MarkdownRenderer, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC, memo, type ReactNode } from 'react';
 import type { StageTypography } from '../../models/stages-props';
 import styles from '../StagesPanel/StagesPanel.module.scss';

@@ -1,6 +1,7 @@
 import {
   buildCssVars,
   DeploymentIcon,
+  MDMessageViewer,
   mergeClasses,
   MessageRole,
 } from '@epam/ai-dial-chat-shared';
@@ -8,7 +9,6 @@ import { AttachmentTray } from '@epam/ai-dial-conversation-input';
 import { DialRoundedButton } from '@epam/ai-dial-ui-kit';
 import { FC } from 'react';
 import type { AssistantMessageBubbleProps } from '../../models/MessageBubble';
-import { MDMessageViewer } from '../Markdown/MDMessageViewer';
 import { MessageActions } from '../Message/MessageActions';
 import styles from './MessageBubble.module.scss';
 

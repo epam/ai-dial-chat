@@ -1,6 +1,6 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type FC, type ReactNode, memo } from 'react';
-import { useTableScroll } from '../../hooks/useTableScroll';
+import { useTableScroll } from '../../../hooks/useTableScroll';
+import { mergeClasses } from '../../../utils/merge-class';
 import styles from './MarkdownTable.module.scss';
 
 export interface MarkdownTableClassNames {

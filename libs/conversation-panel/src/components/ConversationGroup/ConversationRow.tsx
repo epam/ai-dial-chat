@@ -17,10 +17,10 @@ import {
   type FC,
   type MouseEvent,
 } from 'react';
-import type { ConversationHistoryItem } from '../../models/ConversationPanel';
+import { ConversationHistoryItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
 import { ConversationGroupKey } from '../../types/conversation-group-key';
-import { getButtonPaddingEnd } from '../../utils/conversation-row.utils';
+import { getButtonPaddingEnd } from '../../utils/conversation-row';
 import { getDropAfterId } from '../../utils/drag';
 import styles from '../ConversationPanel/ConversationPanel.module.scss';
 
@@ -151,6 +151,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const isDragActive = draggingId != null;
 
   return (
+    // eslint-disable-next-line jsx-a11y/no-noninteractive-element-interactions
     <li
       className={mergeClasses(
         'group/conversation relative',

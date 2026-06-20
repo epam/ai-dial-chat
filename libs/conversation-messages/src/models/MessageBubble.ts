@@ -1,11 +1,11 @@
 import type {
+  CodeBlockTheme,
   DisplayAttachment,
   MessageRole,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 import type { Components } from 'react-markdown';
-import type { CodeBlockTheme } from '../components/Markdown/MarkdownCodeBlock';
 import type { BubblePosition } from '../types/bubble-position';
 import type { MessageActionsProps } from './MessageActions';
 
