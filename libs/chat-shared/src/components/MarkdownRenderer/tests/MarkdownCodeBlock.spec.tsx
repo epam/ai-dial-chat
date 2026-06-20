@@ -18,7 +18,7 @@ vi.mock('react-syntax-highlighter/dist/cjs/styles/prism', () => ({
   oneDark: {},
   oneLight: {},
 }));
-import { MarkdownCodeBlock } from '../MarkdownCodeBlock';
+import { MarkdownCodeBlock } from '../CodeBlock/CodeBlock';
 
 describe('MarkdownCodeBlock', () => {
   beforeEach(() => {
