@@ -18,7 +18,7 @@
   },
   "peerDependencies": {
     "react": "^19.2.6",
-    "@epam/ai-dial-ui-kit": "0.11.0-dev.47",
+    "@epam/ai-dial-ui-kit": "0.11.0",
     "vitest": "~4.1.0"
   },
   "dependencies": {

@@ -129,7 +129,7 @@ export const Catalog: FC<CatalogProps> = ({
   if (isLoading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
-        <DialSpinner size={44} />
+        <DialSpinner />
       </div>
     );
   }

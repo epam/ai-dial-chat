@@ -41,3 +41,8 @@
 .cardFooter {
   border-color: var(--cat-card-footer-border, var(--stroke-tertiary, #363d56));
 }
+
+.skeletonCard {
+  border-color: var(--cat-card-border, var(--stroke-secondary, #242c42));
+  --cat-skeleton-bg: var(--bg-layer-4);
+}
