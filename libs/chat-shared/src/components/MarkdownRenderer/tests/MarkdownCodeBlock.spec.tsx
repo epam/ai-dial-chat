@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { copyToClipboard } from '../../../utils/copy-to-clipboard';
 import { MarkdownCodeBlock } from '../CodeBlock/CodeBlock';
 
+vi.mock('../../../utils/copy-to-clipboard');
+
 vi.mock('react-syntax-highlighter', () => ({
   Prism: ({ children, language }: { children: string; language: string }) => (
     <pre data-language={language}>

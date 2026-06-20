@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { useCodeCopy } from '../../../../chat-shared/src/hooks/useCodeCopy';
 import { copyToClipboard } from '../../utils/copy-to-clipboard';
 
+vi.mock('../../utils/copy-to-clipboard');
+
 describe('useCodeCopy', () => {
   beforeEach(() => {
     vi.useFakeTimers();

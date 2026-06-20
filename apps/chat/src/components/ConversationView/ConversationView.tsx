@@ -10,7 +10,10 @@ import {
   type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import { FileDndOverlay, type ChatSettingsValues } from '@epam/ai-dial-conversation-input';
+import {
+  FileDndOverlay,
+  type ChatSettingsValues,
+} from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
@@ -276,7 +279,6 @@ const ConversationView: FC<Props> = ({
     [messages],
   );
 
-
   const tooltips = useMemo<MessageActionTooltips>(
     () => ({
       edit: t(ButtonsI18nKeys.Edit),
@@ -413,7 +415,10 @@ const ConversationView: FC<Props> = ({
 
   const chatSettings = useMemo(
     () => ({
-      features: selectedDeployment?.features ?? { systemPrompt: false, temperature: false },
+      features: selectedDeployment?.features ?? {
+        systemPrompt: false,
+        temperature: false,
+      },
       systemPrompt: conversation.prompt ?? '',
       temperature: conversation.temperature ?? 0.5,
       onSave: (values: ChatSettingsValues) =>
