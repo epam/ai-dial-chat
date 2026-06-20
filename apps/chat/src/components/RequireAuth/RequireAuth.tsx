@@ -12,7 +12,11 @@ const RequireAuth: FC<Props> = ({ children }) => {
   useAuthRedirect();
 
   if (status === 'loading') {
-    return <DialSpinner />;
+    return (
+      <div className="flex size-full items-center justify-center">
+        <DialSpinner />
+      </div>
+    );
   }
 
   if (status !== 'authenticated') {

@@ -42,12 +42,16 @@ export interface CardStyles {
 export interface CardProps {
   /** The catalog item to display. */
   item: CatalogItem;
+  /** Optional CSS class applied to the card root element. */
+  className?: string;
   /** Active search query for highlighting matches. */
   query?: string;
   /** Initial starred state. Default: false. */
   initialIsStarred?: boolean;
   /** Called when the star button is toggled. */
   onToggle?: (id: string, isStarred: boolean) => void;
+  /** Called when the card body is clicked (excluding the star button). */
+  onClick?: (item: CatalogItem) => void;
   /** Grouped color and typography overrides. */
   styles?: CardStyles;
   /** Label for the "Featured" tag. Default: `'Featured'`. */

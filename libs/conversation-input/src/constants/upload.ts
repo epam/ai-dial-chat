@@ -1,0 +1,1 @@
+export const MAX_UPLOADS_PER_MINUTE = 100;

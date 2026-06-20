@@ -1,6 +1,6 @@
-import { Catalog } from '@epam/ai-dial-catalog';
+import { Catalog, CatalogItem } from '@epam/ai-dial-catalog';
 import type { FC } from 'react';
-import { memo, useMemo } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   ButtonsI18nKeys,
@@ -27,12 +27,20 @@ const CatalogView: FC = () => {
     () => catalogItems.filter((item) => !item.isUserFavorite),
     [catalogItems],
   );
+  // TODO: replace with a real API call, e.g. GET /api/catalog/{id}/about
+  const fetchAboutContent = useCallback(
+    (item: CatalogItem): Promise<string | undefined> => {
+      return Promise.resolve(undefined);
+    },
+    [],
+  );
 
   return (
     <Catalog
       items={filteredItems}
       isLoading={isLoading}
       favorites={favorites}
+      onFetchAboutContent={fetchAboutContent}
       titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),
         createLabel: t(ButtonsI18nKeys.Create),

@@ -17,6 +17,7 @@ export const ListView: FC<ListViewProps> = ({
   ariaLabel = 'Catalog',
   emptyStateTitle,
   styles: listStyles,
+  onToggleFavorite,
 }) => {
   const typography = listStyles?.typography ?? {};
   const colors = listStyles?.colors;
@@ -47,7 +48,11 @@ export const ListView: FC<ListViewProps> = ({
         additionalGridOptions={{
           rowHeight: 90,
           defaultColDef: { filter: false, floatingFilter: false },
-          context: { searchQuery: query, typography } satisfies GridContext,
+          context: {
+            searchQuery: query,
+            typography,
+            onToggleFavorite,
+          } satisfies GridContext,
         }}
         ariaLabel={ariaLabel}
       />

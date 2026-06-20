@@ -3,10 +3,12 @@ import {
   DIAL_ICON_SIZE,
   DialPrimaryButton,
   DialSpinner,
+  DialTabs,
   TabModel,
 } from '@epam/ai-dial-ui-kit';
 import { IconPlus } from '@tabler/icons-react';
-import { FC, useState } from 'react';
+import { FC, useCallback, useRef, useState } from 'react';
+import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import { CatalogSortKey } from '../../types/sort';
 import { CatalogViewMode } from '../../types/view-mode';
@@ -14,7 +16,9 @@ import { filterCatalogItems } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { getStyles } from '../../utils/styles';
 import { CardGrid } from '../CardGrid/CardGrid';
+import { CatalogItemDetails } from '../CatalogItemDetails/CatalogItemDetails';
 import { Favorites } from '../Favorites/Favorites';
+import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
@@ -29,6 +33,9 @@ export const Catalog: FC<CatalogProps> = ({
   favorites,
   titles,
   onToggleFavorite,
+  onUseInChat,
+  onShare,
+  onFetchAboutContent,
   onCreateClick,
   isLoading,
   styles: catalogStyles,
@@ -77,10 +84,52 @@ export const Catalog: FC<CatalogProps> = ({
   const tabs = [] as TabModel[]; // TODO: implement tabs and remove this placeholder
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
 
+  const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [aboutContent, setAboutContent] = useState<string | undefined>(
+    undefined,
+  );
+  const [isAboutLoading, setIsAboutLoading] = useState(false);
+  const pendingItemIdRef = useRef<string | null>(null);
+
+  const handleOpenDetails = useCallback(
+    async (item: CatalogItem) => {
+      setSelectedItem(item);
+      setIsDetailsOpen(true);
+      setAboutContent(undefined);
+
+      if (onFetchAboutContent) {
+        setIsAboutLoading(true);
+        pendingItemIdRef.current = item.id;
+        try {
+          const content = await onFetchAboutContent(item);
+          if (pendingItemIdRef.current === item.id) {
+            setAboutContent(content);
+          }
+        } finally {
+          if (pendingItemIdRef.current === item.id) {
+            setIsAboutLoading(false);
+          }
+        }
+      }
+    },
+    [onFetchAboutContent],
+  );
+
+  const handleCloseDetails = useCallback(() => {
+    setIsDetailsOpen(false);
+    pendingItemIdRef.current = null;
+    setTimeout(() => {
+      setSelectedItem(null);
+      setAboutContent(undefined);
+      setIsAboutLoading(false);
+    }, 300);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
-        <DialSpinner size={44} />
+        <DialSpinner />
       </div>
     );
   }
@@ -97,6 +146,20 @@ export const Catalog: FC<CatalogProps> = ({
   const sorted = sortCatalogItems(filteredItems, sortKey);
   const filtered = filterCatalogItems(sorted, query);
 
+  const tabFiltered = activeTab
+    ? filtered.filter((item) => item.type === activeTab)
+    : filtered;
+
+  const tabsWithCounts: TabModel[] = tabs.map((tab) => ({
+    ...tab,
+    label: (
+      <ItemHeader
+        title={typeof tab.label === 'string' ? tab.label : String(tab.label)}
+        postfix={filtered.filter((item) => item.type === tab.id).length}
+      />
+    ),
+  }));
+
   // TODO: determine if any filter is active (for now we have no filters, so this is always false)
   const isAnyFilterActive = false;
 
@@ -105,13 +168,16 @@ export const Catalog: FC<CatalogProps> = ({
   return (
     <section
       aria-label={resolvedAriaLabel}
-      className="flex min-h-0 flex-1 flex-col"
+      className={mergeClasses(
+        'flex min-h-0 flex-1 flex-col overflow-auto',
+        styles.root,
+      )}
       style={cssVars}
     >
       {/* Page heading */}
       <div
         className={mergeClasses(
-          'flex h-16 flex-shrink-0 items-center justify-between border-b px-6 py-3',
+          'flex h-16 shrink-0 items-center justify-between border-b px-6',
           styles.heading,
         )}
       >
@@ -151,26 +217,35 @@ export const Catalog: FC<CatalogProps> = ({
         onQueryChange={setQuery}
         isAnyFilterActive={isAnyFilterActive}
         onClearFilters={clearAllFilters}
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
         title={browseTitle}
         searchPlaceholder={searchPlaceholder}
         sortOptions={sortOptions}
       />
 
-      {/* Grid view */}
-      {viewMode === CatalogViewMode.Grid && (
+      {/* Entity-type tabs — sticky as the page scrolls */}
+      {tabs.length > 0 && (
         <div
           className={mergeClasses(
-            'flex min-h-0 flex-1 overflow-auto pt-5',
-            styles.gridView,
+            'sticky top-0 z-10 shrink-0 border-b [&>div]:justify-center',
+            styles.stickyTabsRow,
           )}
         >
+          <DialTabs
+            tabs={tabsWithCounts}
+            activeTab={activeTab}
+            onClick={setActiveTab}
+          />
+        </div>
+      )}
+
+      {/* Grid view */}
+      {viewMode === CatalogViewMode.Grid && (
+        <div className={mergeClasses('min-h-0 flex-1 pb-5', styles.gridView)}>
           <CardGrid
-            items={filtered}
+            items={tabFiltered}
             query={query}
             onToggleFavorite={onToggleFavorite}
+            onItemClick={handleOpenDetails}
             titles={{
               noResultsTitle: emptyTitle,
               featuredLabel,
@@ -181,14 +256,29 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* List view — mounted only after first shown to avoid initializing ag-grid eagerly */}
       {listEverShown && viewMode === CatalogViewMode.List && (
-        <div className={mergeClasses('flex min-h-0 flex-1', styles.listView)}>
+        <div className={mergeClasses('min-h-0 flex-1 pb-5', styles.listView)}>
           <ListView
-            items={filtered}
+            items={tabFiltered}
             query={query}
             ariaLabel={resolvedAriaLabel}
             emptyStateTitle={emptyTitle}
+            onToggleFavorite={onToggleFavorite}
           />
         </div>
+      )}
+
+      {/* Details panel */}
+      {selectedItem != null && (
+        <CatalogItemDetails
+          item={selectedItem}
+          isOpen={isDetailsOpen}
+          aboutContent={aboutContent}
+          isAboutLoading={isAboutLoading}
+          onClose={handleCloseDetails}
+          onToggleFavorite={onToggleFavorite}
+          onUseInChat={onUseInChat}
+          onShare={onShare}
+        />
       )}
     </section>
   );

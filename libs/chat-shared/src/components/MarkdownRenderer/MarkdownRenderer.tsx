@@ -1,11 +1,15 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { type FC, memo, useMemo } from 'react';
+import { memo, useMemo, type FC } from 'react';
 import ReactMarkdown, { type Components } from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { useStreamedMarkdownContent } from '../../hooks/useStreamedMarkdownContent';
-import { MarkdownCodeBlock, type CodeBlockTheme } from './MarkdownCodeBlock';
+import { CodeBlockTheme } from '../../types/code-editor';
+import { mergeClasses } from '../../utils/merge-class';
+import { MarkdownCodeBlock } from './CodeBlock/CodeBlock';
 import styles from './MarkdownRenderer.module.scss';
-import { MarkdownTable, type MarkdownTableClassNames } from './MarkdownTable';
+import {
+  MarkdownTable,
+  type MarkdownTableClassNames,
+} from './Table/MarkdownTable';
 
 /** Per-element className overrides passed to {@link MarkdownRenderer}. */
 export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
@@ -86,7 +90,7 @@ export interface MarkdownRendererProps {
 }
 
 /** GFM remark plugins list, shared across all markdown instances. */
-export const remarkPlugins = [remarkGfm];
+const remarkPlugins = [remarkGfm];
 
 /** Stable empty classNames object used as the default when no `classNames` prop is passed. */
 const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};

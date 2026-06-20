@@ -1,4 +1,5 @@
 import {
+  CodeBlockTheme,
   isStatusMessage,
   MessageRole,
   type Attachment,
@@ -8,7 +9,6 @@ import {
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
-  CodeBlockTheme,
   MessageBubble,
   type MessageActionAriaLabels,
   type MessageActionTooltips,

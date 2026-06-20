@@ -9,8 +9,8 @@ import {
   mapDialHttpStatus,
 } from '../common/utils/dial-fetch-error';
 import type { EnvironmentVariables } from '../config/environment.config';
+import { HIDDEN_FILE } from '../constants/dial.constants';
 import { UserConfigService } from '../user-config/user-config.service';
-import { HIDDEN_FILE } from './constants/dial.constants';
 import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import type {
   DeploymentItemDto,
@@ -66,7 +66,7 @@ const mapToDeploymentItem = (
     displayVersion: raw.display_version,
     isFeatured: featuredIds.has(raw.id || raw.reference || ''),
     isHidden: topics.some((tag) => hiddenTags.has(tag)),
-    updatedAt: typeof raw.updated_at === 'string' ? raw.updated_at : undefined,
+    updatedAt: raw.updated_at,
     interfaces,
     applicationTypeSchemaId:
       type === 'application' && raw.application_type_schema_id

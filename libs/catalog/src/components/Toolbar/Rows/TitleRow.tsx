@@ -48,9 +48,9 @@ export const TitleRow: FC<TitleRowProps> = ({
     <div className="mb-4 flex items-center">
       <ItemHeader
         title={title}
-        count={totalCount}
+        postfix={totalCount}
         titleClassName={titleClassName}
-        countClassName={countClassName}
+        postfixClassName={countClassName}
         className="flex-1"
       />
 

@@ -95,17 +95,16 @@ export const Favorites: FC<FavoritesProps> = ({
   return (
     <section
       className={mergeClasses(
-        'flex-shrink-0 border-b px-6 py-6',
+        'flex flex-shrink-0 flex-col gap-4 border-b px-6 py-6',
         styles.section,
       )}
       style={cssVars}
     >
       <ItemHeader
         title={title}
-        count={displayCount}
+        postfix={displayCount}
         titleClassName={titleClassName}
-        countClassName={countClassName}
-        className="mb-4"
+        postfixClassName={countClassName}
       />
 
       <div
@@ -120,17 +119,16 @@ export const Favorites: FC<FavoritesProps> = ({
         }}
       >
         {favSlice.map((item) => (
-          <FavoriteCard key={item.id} item={item} onToggle={onToggleFavorite} />
+          <FavoriteCard
+            key={`${favPage}-${item.id}`}
+            item={item}
+            onToggle={onToggleFavorite}
+          />
         ))}
       </div>
 
       {favTotalPages > 1 && (
-        <div
-          className={mergeClasses(
-            'flex justify-center py-4',
-            styles.paginationRow,
-          )}
-        >
+        <div className="flex justify-center pt-2">
           <DialPagination
             page={favPage}
             totalPages={favTotalPages}

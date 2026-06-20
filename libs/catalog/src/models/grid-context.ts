@@ -6,4 +6,6 @@ export interface GridContext {
   searchQuery: string;
   /** Typography class overrides for list cells. */
   typography: ListViewTypography;
+  /** Called when the star button is toggled in a row. */
+  onToggleFavorite?: (id: string, isStarred: boolean) => void;
 }
