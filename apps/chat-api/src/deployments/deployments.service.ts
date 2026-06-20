@@ -13,7 +13,6 @@ import { HIDDEN_FILE } from '../constants/dial.constants';
 import { UserConfigService } from '../user-config/user-config.service';
 import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import type {
-  DeploymentFeaturesDto,
   DeploymentItemDto,
   DeploymentsResponseDto,
 } from './dto/deployment-item.dto';

@@ -78,6 +78,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
         icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
         onClick: onAttachClick,
       },
+      ...(extraMenuItems ?? []),
       ...(chatSettings != null
         ? [
             {
@@ -88,7 +89,6 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             },
           ]
         : []),
-      ...(extraMenuItems ?? []),
     ],
     [attachLabel, onAttachClick, chatSettings, extraMenuItems],
   );

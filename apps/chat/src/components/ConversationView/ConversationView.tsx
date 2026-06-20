@@ -440,6 +440,8 @@ const ConversationView: FC<Props> = ({
       saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
     }),
     [selectedDeployment?.features, conversation, onConversationChange, t],
+  );
+
   const handleAttachDialFiles = useCallback(
     (files: Parameters<typeof dialFilesToAttachments>[0]) => {
       setPendingDialAttachments(dialFilesToAttachments(files, bucket));
