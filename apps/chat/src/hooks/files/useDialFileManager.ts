@@ -35,7 +35,10 @@ import {
   prepareDownloadDestination,
   triggerBrowserDownload,
 } from '../../utils/file-download';
-import { resolveRelativeDialFilePath } from '../../utils/icon-path';
+import {
+  resolveDialFileApiPath,
+  virtualPathToApiPath,
+} from '../../utils/resolve-dial-file-api-path';
 import { safeDecodeURI } from '../../utils/string-utils';
 
 export interface UseDialFileManagerOptions {
@@ -185,42 +188,6 @@ const parseNewFolderVirtualPath = (
     parentVirtualPath: trimmed.slice(0, slashIndex),
     name: trimmed.slice(slashIndex + 1),
   };
-};
-
-/**
- * Converts a DialFileManager virtual path to an API folder path.
- * e.g. "/All files" → "", "/All files/reports/" → "reports/"
- */
-const virtualPathToApiPath = (
-  virtualPath: string,
-  rootLabel: string,
-): string => {
-  const rootExact = `/${rootLabel}`;
-  const rootWithSlash = `/${rootLabel}/`;
-  const labelWithSlash = `${rootLabel}/`;
-
-  if (
-    virtualPath === rootExact ||
-    virtualPath === `${rootLabel}` ||
-    virtualPath === rootWithSlash ||
-    virtualPath === labelWithSlash
-  ) {
-    return '';
-  }
-
-  let stripped: string;
-  if (virtualPath.startsWith(rootWithSlash)) {
-    stripped = virtualPath.slice(rootWithSlash.length);
-  } else if (virtualPath.startsWith(labelWithSlash)) {
-    stripped = virtualPath.slice(labelWithSlash.length);
-  } else {
-    const withoutLeadingSlash = virtualPath.replace(/^\//, '');
-    stripped = withoutLeadingSlash.startsWith(labelWithSlash)
-      ? withoutLeadingSlash.slice(labelWithSlash.length)
-      : withoutLeadingSlash;
-  }
-
-  return stripped && !stripped.endsWith('/') ? `${stripped}/` : stripped;
 };
 
 /**
@@ -672,16 +639,23 @@ export const useDialFileManager = ({
             dialFiles[0].nodeType === DialFileNodeType.ITEM
           ) {
             const file = dialFiles[0];
-            if (!file.bucket || !file.id) {
-              throw new Error('File is missing bucket or id');
+            if (!file.bucket) {
+              throw new Error('File is missing bucket');
             }
-            const filePath = resolveRelativeDialFilePath(file.id, file.bucket);
+            const filePath = resolveDialFileApiPath(
+              file,
+              file.bucket,
+              rootLabel,
+            );
             const response = await downloadFile(file.bucket, filePath);
+            if (!response.ok) {
+              throw new Error(`Download failed with status ${response.status}`);
+            }
             await triggerBrowserDownload(response, file.name, destination);
           } else {
             const archiveItems = dialFiles.map((f) => ({
-              bucket: f.bucket ?? '',
-              path: resolveRelativeDialFilePath(f.id ?? f.path, f.bucket ?? ''),
+              bucket: f.bucket ?? bucket,
+              path: resolveDialFileApiPath(f, f.bucket ?? bucket, rootLabel),
               name: f.name,
               nodeType:
                 f.nodeType === DialFileNodeType.FOLDER
@@ -689,6 +663,9 @@ export const useDialFileManager = ({
                   : ArchiveItemDtoNodeTypeEnum.Item,
             }));
             const response = await downloadArchive(archiveItems);
+            if (!response.ok) {
+              throw new Error(`Download failed with status ${response.status}`);
+            }
             await triggerBrowserDownload(response, filename, destination);
           }
         } catch {
@@ -699,7 +676,7 @@ export const useDialFileManager = ({
       };
       void run();
     },
-    [t],
+    [bucket, rootLabel, t],
   );
 
   const clearDownloadError = useCallback(() => {

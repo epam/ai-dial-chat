@@ -1,5 +1,5 @@
 import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
-import { DialFilePermission } from '@epam/ai-dial-ui-kit';
+import { DialFileNodeType, DialFilePermission } from '@epam/ai-dial-ui-kit';
 import type { ListFilesItemDto } from '@epam/chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -8,8 +8,18 @@ import * as filesApi from '../../../server-api/files.api';
 import { useDialFileManager } from '../useDialFileManager';
 
 vi.mock('../../../server-api/files.api');
+vi.mock('../../../utils/file-download', () => ({
+  DownloadDestinationType: {
+    Blob: 'blob',
+    Stream: 'stream',
+    Cancelled: 'cancelled',
+  },
+  prepareDownloadDestination: vi.fn().mockResolvedValue({ type: 'blob' }),
+  triggerBrowserDownload: vi.fn().mockResolvedValue(undefined),
+}));
 
 const mockListFiles = vi.mocked(filesApi.listFiles);
+const mockDownloadArchive = vi.mocked(filesApi.downloadArchive);
 
 const BUCKET = 'test-bucket';
 
@@ -367,6 +377,53 @@ describe('useDialFileManager', () => {
         result.current.items[0].items?.some((item) => item.name === '2026'),
       ).toBe(true),
     );
+  });
+
+  it('downloads multiple files using API paths derived from virtual paths', async () => {
+    mockDownloadArchive.mockResolvedValue(new Response('zip', { status: 200 }));
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onDownloadFiles([
+        {
+          id: '/All files/report-a.pdf',
+          name: 'report-a.pdf',
+          path: '/All files/report-a.pdf',
+          parentPath: '/All files',
+          nodeType: DialFileNodeType.ITEM,
+          folderId: BUCKET,
+          bucket: BUCKET,
+        },
+        {
+          id: '/All files/report-b.pdf',
+          name: 'report-b.pdf',
+          path: '/All files/report-b.pdf',
+          parentPath: '/All files',
+          nodeType: DialFileNodeType.ITEM,
+          folderId: BUCKET,
+          bucket: BUCKET,
+        },
+      ]);
+    });
+
+    await waitFor(() => expect(result.current.isDownloading).toBe(false));
+
+    expect(mockDownloadArchive).toHaveBeenCalledWith([
+      {
+        bucket: BUCKET,
+        path: 'report-a.pdf',
+        name: 'report-a.pdf',
+        nodeType: 'item',
+      },
+      {
+        bucket: BUCKET,
+        path: 'report-b.pdf',
+        name: 'report-b.pdf',
+        nodeType: 'item',
+      },
+    ]);
   });
 
   it('does not call setState after unmount during an in-flight fetch', async () => {

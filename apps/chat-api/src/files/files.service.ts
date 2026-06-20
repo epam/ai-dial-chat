@@ -1,9 +1,5 @@
-import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdtemp, rm } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
-import { join } from 'node:path';
 import { Readable } from 'node:stream';
-import { finished, pipeline } from 'node:stream/promises';
+import { finished } from 'node:stream/promises';
 import {
   ConflictException,
   HttpException,
@@ -46,19 +42,6 @@ interface ExpandedFile {
   name: string;
   size: number;
   archivePath: string;
-}
-
-interface StagedArchiveFile {
-  file: ExpandedFile;
-  tempPath: string;
-  status: number;
-  contentLength: string;
-}
-
-interface FailedArchiveFile {
-  file: ExpandedFile;
-  error: unknown;
-  status?: number;
 }
 
 export const SAFE_DOWNLOAD_HEADERS = [
@@ -550,12 +533,10 @@ export class FilesService extends AppService {
       5_368_709_120;
     const timeoutMs =
       this.configService.get<number>('ARCHIVE_TIMEOUT_MS') ?? 300_000;
-    const downloadConcurrency =
-      this.configService.get<number>('ARCHIVE_DOWNLOAD_CONCURRENCY') ?? 32;
     const startedAt = Date.now();
 
     this.logger.log(
-      `Archive download started: requestedItems=${items.length}, timeoutMs=${timeoutMs}, downloadConcurrency=${downloadConcurrency}, items=${items
+      `Archive download started: requestedItems=${items.length}, timeoutMs=${timeoutMs}, items=${items
         .map(
           (item) =>
             `${item.nodeType}:${item.bucket}:${item.path}->${item.name}`,
@@ -686,72 +667,31 @@ export class FilesService extends AppService {
 
     let appendedFiles = 0;
     let failedFiles = 0;
-    const tempDirectory = await mkdtemp(join(tmpdir(), 'dial-archive-'));
 
     try {
-      const pendingDownloads = new Map<
-        number,
-        Promise<{
-          index: number;
-          result: StagedArchiveFile | FailedArchiveFile;
-        }>
-      >();
-      const startDownload = (index: number): void => {
+      for (let index = 0; index < expanded.length; index += 1) {
         const file = expanded[index];
-        const tempPath = join(tempDirectory, `${index}.download`);
-        this.logger.debug(
-          `Archive file prefetch started: index=${index}, bucket=${file.bucket}, path=${file.path}, archivePath=${file.archivePath}`,
-        );
-        pendingDownloads.set(
-          index,
-          this.stageArchiveFile(
-            index,
-            file,
-            tempPath,
-            at,
-            archiveAbortController,
-            timeoutMs,
-          ),
-        );
-      };
-
-      let nextIndex = 0;
-      while (nextIndex < Math.min(downloadConcurrency, expanded.length)) {
-        startDownload(nextIndex);
-        nextIndex += 1;
-      }
-
-      while (pendingDownloads.size > 0) {
-        const completed = await Promise.race(pendingDownloads.values());
-        pendingDownloads.delete(completed.index);
-
-        if (nextIndex < expanded.length) {
-          startDownload(nextIndex);
-          nextIndex += 1;
-        }
-
-        const result = completed.result;
-        if ('error' in result) {
-          failedFiles += 1;
-          this.logger.warn(
-            `Archive file download failed: bucket=${result.file.bucket}, path=${result.file.path}, archivePath=${result.file.archivePath}, status=${result.status ?? 'network-error'}, error=${result.error instanceof Error ? result.error.message : 'unknown'}`,
-          );
-          continue;
-        }
-
-        const nodeStream = createReadStream(result.tempPath);
-        archive.append(nodeStream, { name: result.file.archivePath });
-        appendedFiles += 1;
-        this.logger.debug(
-          `Archive file queued: bucket=${result.file.bucket}, path=${result.file.path}, archivePath=${result.file.archivePath}, status=${result.status}, contentLength=${result.contentLength}`,
-        );
-
         const fileStartedAt = Date.now();
-        await finished(nodeStream);
-        await rm(result.tempPath, { force: true });
         this.logger.debug(
-          `Archive file streamed: bucket=${result.file.bucket}, path=${result.file.path}, archivePath=${result.file.archivePath}, archiveBytes=${archive.pointer()}, elapsedMs=${Date.now() - fileStartedAt}`,
+          `Archive file streaming started: index=${index}, bucket=${file.bucket}, path=${file.path}, archivePath=${file.archivePath}`,
         );
+
+        const appended = await this.appendDialFileToArchive(
+          archive,
+          file,
+          at,
+          archiveAbortController,
+          timeoutMs,
+        );
+
+        if (appended) {
+          appendedFiles += 1;
+          this.logger.debug(
+            `Archive file streamed: index=${index}, bucket=${file.bucket}, path=${file.path}, archivePath=${file.archivePath}, archiveBytes=${archive.pointer()}, elapsedMs=${Date.now() - fileStartedAt}`,
+          );
+        } else {
+          failedFiles += 1;
+        }
       }
 
       if (appendedFiles === 0) {
@@ -770,7 +710,6 @@ export class FilesService extends AppService {
     } finally {
       clearTimeout(timeout);
       archiveAbortController.abort();
-      await rm(tempDirectory, { recursive: true, force: true });
     }
   }
 
@@ -884,14 +823,13 @@ export class FilesService extends AppService {
     return { path: item.path, success: true };
   }
 
-  private async stageArchiveFile(
-    index: number,
+  private async appendDialFileToArchive(
+    archive: archiver.Archiver,
     file: ExpandedFile,
-    tempPath: string,
     at: string,
     abortController: AbortController,
     timeoutMs: number,
-  ): Promise<{ index: number; result: StagedArchiveFile | FailedArchiveFile }> {
+  ): Promise<boolean> {
     try {
       const {
         data: downloadedStream,
@@ -907,43 +845,29 @@ export class FilesService extends AppService {
       })) as { data?: ReadableStream; error?: unknown; response?: Response };
 
       if (error != null) {
-        return {
-          index,
-          result: {
-            file,
-            error,
-            status: response?.status,
-          },
-        };
+        this.logger.warn(
+          `Archive file download failed: bucket=${file.bucket}, path=${file.path}, archivePath=${file.archivePath}, status=${response?.status ?? 'network-error'}, error=${error instanceof Error ? error.message : 'unknown'}`,
+        );
+        return false;
       }
 
       const webStream = downloadedStream ?? response?.body;
       if (webStream == null) {
-        return {
-          index,
-          result: {
-            file,
-            error: new Error('DIAL Core returned no file stream'),
-            status: response?.status,
-          },
-        };
+        this.logger.warn(
+          `Archive file download failed: bucket=${file.bucket}, path=${file.path}, archivePath=${file.archivePath}, status=${response?.status ?? 'network-error'}, error=DIAL Core returned no file stream`,
+        );
+        return false;
       }
 
-      await pipeline(Readable.fromWeb(webStream), createWriteStream(tempPath));
-      this.logger.debug(
-        `Archive file staged: index=${index}, bucket=${file.bucket}, path=${file.path}, archivePath=${file.archivePath}, status=${response?.status ?? 'unknown'}`,
-      );
-      return {
-        index,
-        result: {
-          file,
-          tempPath,
-          status: response?.status ?? 200,
-          contentLength: response?.headers.get('content-length') ?? 'unknown',
-        },
-      };
+      const nodeStream = Readable.fromWeb(webStream);
+      archive.append(nodeStream, { name: file.archivePath });
+      await finished(nodeStream);
+      return true;
     } catch (error) {
-      return { index, result: { file, error } };
+      this.logger.warn(
+        `Archive file download failed: bucket=${file.bucket}, path=${file.path}, archivePath=${file.archivePath}, error=${error instanceof Error ? error.message : 'unknown'}`,
+      );
+      return false;
     }
   }
 }
