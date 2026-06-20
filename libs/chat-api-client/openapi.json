@@ -1610,6 +1610,51 @@
         "tags": ["files"]
       }
     },
+    "/api/v1/files/delete": {
+      "post": {
+        "operationId": "deleteFiles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteFilesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Delete files and folders",
+        "tags": ["files"]
+      }
+    },
     "/api/v1/files/download": {
       "get": {
         "operationId": "downloadFile",
@@ -3336,6 +3381,73 @@
           }
         },
         "required": ["items"]
+      },
+      "DeleteItemDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "path": {
+            "type": "string",
+            "description": "File or folder path within the bucket",
+            "example": "reports/"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name (used in error messages)",
+            "example": "reports"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": ["item", "folder"]
+          }
+        },
+        "required": ["bucket", "path", "name", "nodeType"]
+      },
+      "DeleteFilesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeleteItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "DeleteItemResultDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Same path from the request"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "true when DIAL Core returned 2xx or 404"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error reason when success is false"
+          }
+        },
+        "required": ["path", "success"]
+      },
+      "DeleteFilesResponseDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeleteItemResultDto"
+            }
+          }
+        },
+        "required": ["results"]
       },
       "RateMessageDto": {
         "type": "object",

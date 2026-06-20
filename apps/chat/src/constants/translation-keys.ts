@@ -138,6 +138,14 @@ export enum DialFileManagerI18nKeys {
   UnsupportedFilesDescription = 'dialFileManager.unsupportedFilesDescription',
   TooManyFilesSelected = 'dialFileManager.tooManyFilesSelected',
   TooManyFilesDescription = 'dialFileManager.tooManyFilesDescription',
+  DeleteAction = 'dialFileManager.deleteAction',
+  DeletingLabel = 'dialFileManager.deletingLabel',
+  DeleteConfirmTitleSingle = 'dialFileManager.deleteConfirmTitleSingle',
+  DeleteConfirmTitleMultiple = 'dialFileManager.deleteConfirmTitleMultiple',
+  DeleteConfirmBodySingle = 'dialFileManager.deleteConfirmBodySingle',
+  DeleteConfirmBodyMultiple = 'dialFileManager.deleteConfirmBodyMultiple',
+  DeleteConfirmBodyItems = 'dialFileManager.deleteConfirmBodyItems',
+  DeleteConfirmButton = 'dialFileManager.deleteConfirmButton',
 }
 
 export enum AuthI18nKeys {

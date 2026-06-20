@@ -19,6 +19,12 @@ import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import type { EnvironmentVariables } from '../config/environment.config';
 import type { CreateFolderResponseDto } from './dto/create-folder.dto';
+import type { DeleteItemDto } from './dto/delete-files.dto';
+import {
+  DeleteFilesResponseDto,
+  DeleteItemNodeType,
+  DeleteItemResultDto,
+} from './dto/delete-files.dto';
 import type { ArchiveItemDto } from './dto/download-archive.dto';
 import { ArchiveItemNodeType } from './dto/download-archive.dto';
 import type { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
@@ -766,6 +772,116 @@ export class FilesService extends AppService {
       archiveAbortController.abort();
       await rm(tempDirectory, { recursive: true, force: true });
     }
+  }
+
+  async deleteFiles(
+    items: DeleteItemDto[],
+    at: string,
+  ): Promise<DeleteFilesResponseDto> {
+    this.logger.log(`Delete files started: batchSize=${items.length}`);
+
+    const results: DeleteItemResultDto[] = await Promise.all(
+      items.map((item) => this.deleteItem(item, at)),
+    );
+
+    const successCount = results.filter((r) => r.success).length;
+    this.logger.log(
+      `Delete files completed: batchSize=${items.length}, success=${successCount}, failed=${items.length - successCount}`,
+    );
+
+    return { results };
+  }
+
+  private async deleteItem(
+    item: DeleteItemDto,
+    at: string,
+  ): Promise<DeleteItemResultDto> {
+    if (item.nodeType === DeleteItemNodeType.Folder) {
+      return this.deleteFolderItem(item, at);
+    }
+    return this.deleteFileItem(item.bucket, item.path, at);
+  }
+
+  private async deleteFileItem(
+    bucket: string,
+    relPath: string,
+    at: string,
+  ): Promise<DeleteItemResultDto> {
+    this.logger.debug(`deleteFileItem: bucket=${bucket}, relPath=${relPath}`);
+    try {
+      const { error, response } = (await this.client.deleteFile(
+        bucket,
+        relPath,
+        {
+          headers: getBearerAuthHeaders(at),
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        },
+      )) as { error?: unknown; response: { status: number } };
+
+      this.logger.debug(
+        `deleteFileItem result: bucket=${bucket}, relPath=${relPath}, status=${response.status}, hasError=${error != null}`,
+      );
+
+      if (response.status === 404 || error == null) {
+        return { path: relPath, success: true };
+      }
+
+      if (response.status === 403) {
+        return { path: relPath, success: false, error: 'Forbidden' };
+      }
+
+      this.logger.warn(
+        `deleteFileItem failed: bucket=${bucket}, relPath=${relPath}, status=${response.status}, error=${JSON.stringify(error)}`,
+      );
+      return { path: relPath, success: false, error: 'Delete failed' };
+    } catch (err) {
+      this.logger.error(
+        `deleteFileItem exception: bucket=${bucket}, relPath=${relPath}, err=${err instanceof Error ? err.message : String(err)}`,
+      );
+      return { path: relPath, success: false, error: 'Delete failed' };
+    }
+  }
+
+  private async deleteFolderItem(
+    item: DeleteItemDto,
+    at: string,
+  ): Promise<DeleteItemResultDto> {
+    const folderRelPath = item.path.endsWith('/') ? item.path : `${item.path}/`;
+
+    let children: ExpandedFile[];
+    try {
+      children = await this.expandFolderContents(
+        item.bucket,
+        folderRelPath,
+        '',
+        at,
+      );
+    } catch {
+      return { path: item.path, success: false, error: 'Delete failed' };
+    }
+
+    const childResults = await Promise.all(
+      children.map((child) =>
+        this.deleteFileItem(child.bucket, child.path, at),
+      ),
+    );
+
+    const markerPath = `${folderRelPath}${MARKER_NAME}`;
+    const markerResult = await this.deleteFileItem(item.bucket, markerPath, at);
+
+    const anyChildFailed = childResults.some((r) => !r.success);
+    if (
+      anyChildFailed ||
+      (!markerResult.success && markerResult.error !== undefined)
+    ) {
+      return {
+        path: item.path,
+        success: false,
+        error: 'Partial folder delete',
+      };
+    }
+
+    return { path: item.path, success: true };
   }
 
   private async stageArchiveFile(

@@ -17,6 +17,7 @@ type SdkClient = {
   uploadFile: ReturnType<typeof vi.fn>;
   downloadFile: ReturnType<typeof vi.fn>;
   getFileMetadata: ReturnType<typeof vi.fn>;
+  deleteFile: ReturnType<typeof vi.fn>;
 };
 
 function makeService() {
@@ -34,6 +35,7 @@ function makeService() {
     uploadFile: vi.fn(),
     downloadFile: vi.fn(),
     getFileMetadata: vi.fn(),
+    deleteFile: vi.fn(),
   };
 
   const service = new FilesService(configService);
@@ -935,6 +937,200 @@ describe('FilesService', () => {
           signal: expect.any(AbortSignal),
         }),
       );
+    });
+  });
+
+  describe('deleteFiles', () => {
+    const okDelete = () => ({
+      error: undefined,
+      response: { status: 200 },
+      data: undefined,
+    });
+
+    const notFoundDelete = () => ({
+      error: new Error('Not found'),
+      response: { status: 404 },
+      data: undefined,
+    });
+
+    const forbiddenDelete = () => ({
+      error: new Error('Forbidden'),
+      response: { status: 403 },
+      data: undefined,
+    });
+
+    it('returns success for a single file that is deleted successfully', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.deleteFile = vi.fn().mockResolvedValue(okDelete());
+
+      const result = await service.deleteFiles(
+        [
+          {
+            bucket: 'user-files',
+            path: 'reports/q1.pdf',
+            name: 'q1.pdf',
+            nodeType: 'item' as never,
+          },
+        ],
+        'token',
+      );
+
+      expect(result.results).toEqual([
+        { path: 'reports/q1.pdf', success: true },
+      ]);
+      expect(sdkClient.deleteFile).toHaveBeenCalledWith(
+        'user-files',
+        'reports/q1.pdf',
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+        }),
+      );
+    });
+
+    it('treats SDK 404 (file already gone) as success', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.deleteFile = vi.fn().mockResolvedValue(notFoundDelete());
+
+      const result = await service.deleteFiles(
+        [
+          {
+            bucket: 'user-files',
+            path: 'reports/q1.pdf',
+            name: 'q1.pdf',
+            nodeType: 'item' as never,
+          },
+        ],
+        'token',
+      );
+
+      expect(result.results[0]).toEqual({
+        path: 'reports/q1.pdf',
+        success: true,
+      });
+    });
+
+    it('returns success=false with "Forbidden" for SDK 403', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.deleteFile = vi.fn().mockResolvedValue(forbiddenDelete());
+
+      const result = await service.deleteFiles(
+        [
+          {
+            bucket: 'user-files',
+            path: 'reports/q1.pdf',
+            name: 'q1.pdf',
+            nodeType: 'item' as never,
+          },
+        ],
+        'token',
+      );
+
+      expect(result.results[0]).toEqual({
+        path: 'reports/q1.pdf',
+        success: false,
+        error: 'Forbidden',
+      });
+    });
+
+    it('expands folder, deletes children and marker; returns success', async () => {
+      const { service, sdkClient } = makeService();
+
+      sdkClient.getFileMetadata = vi.fn().mockResolvedValue({
+        error: undefined,
+        response: { status: 200 },
+        data: {
+          items: [
+            {
+              url: 'files/user-files/old-data/file1.txt',
+              name: 'file1.txt',
+              nodeType: 'item',
+              contentLength: 100,
+            },
+          ],
+          nextToken: undefined,
+        },
+      });
+      sdkClient.deleteFile = vi.fn().mockResolvedValue(okDelete());
+
+      const result = await service.deleteFiles(
+        [
+          {
+            bucket: 'user-files',
+            path: 'old-data/',
+            name: 'old-data',
+            nodeType: 'folder' as never,
+          },
+        ],
+        'token',
+      );
+
+      expect(result.results[0]).toEqual({ path: 'old-data/', success: true });
+      expect(sdkClient.deleteFile).toHaveBeenCalledWith(
+        'user-files',
+        'old-data/file1.txt',
+        expect.anything(),
+      );
+    });
+
+    it('treats missing folder marker (404) as success', async () => {
+      const { service, sdkClient } = makeService();
+
+      sdkClient.getFileMetadata = vi.fn().mockResolvedValue({
+        error: undefined,
+        response: { status: 200 },
+        data: { items: [], nextToken: undefined },
+      });
+      sdkClient.deleteFile = vi.fn().mockResolvedValue(notFoundDelete());
+
+      const result = await service.deleteFiles(
+        [
+          {
+            bucket: 'user-files',
+            path: 'empty-folder/',
+            name: 'empty-folder',
+            nodeType: 'folder' as never,
+          },
+        ],
+        'token',
+      );
+
+      expect(result.results[0]).toEqual({
+        path: 'empty-folder/',
+        success: true,
+      });
+    });
+
+    it('returns independent results per item in a partial batch', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.deleteFile = vi
+        .fn()
+        .mockResolvedValueOnce(okDelete())
+        .mockResolvedValueOnce(forbiddenDelete());
+
+      const result = await service.deleteFiles(
+        [
+          {
+            bucket: 'b',
+            path: 'file1.txt',
+            name: 'file1.txt',
+            nodeType: 'item' as never,
+          },
+          {
+            bucket: 'b',
+            path: 'file2.txt',
+            name: 'file2.txt',
+            nodeType: 'item' as never,
+          },
+        ],
+        'token',
+      );
+
+      expect(result.results[0]).toEqual({ path: 'file1.txt', success: true });
+      expect(result.results[1]).toEqual({
+        path: 'file2.txt',
+        success: false,
+        error: 'Forbidden',
+      });
     });
   });
 });

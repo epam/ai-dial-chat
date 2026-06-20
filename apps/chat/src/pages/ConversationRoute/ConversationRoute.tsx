@@ -452,6 +452,37 @@ const ConversationRoute: FC = () => {
             newFolderLabel={t(DialFileManagerI18nKeys.NewFolder)}
             downloadLabel={t(DialFileManagerI18nKeys.Download)}
             downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
+            deleteLabel={t(DialFileManagerI18nKeys.DeleteAction)}
+            deletingLabel={t(DialFileManagerI18nKeys.DeletingLabel)}
+            deleteConfirmTitle={(names) =>
+              names.length === 1
+                ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)
+                : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
+            }
+            deleteConfirmBody={(names) => (
+              <div className="px-6 py-3 text-sm">
+                <p className="mb-3 text-secondary">
+                  {names.length === 1 ? (
+                    <>
+                      {t(DialFileManagerI18nKeys.DeleteConfirmBodySingle)}{' '}
+                      <span className="break-all text-primary">
+                        &quot;{names[0].split('/').pop()}&quot;?
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      {t(DialFileManagerI18nKeys.DeleteConfirmBodyMultiple)}{' '}
+                      <span className="text-primary">
+                        {names.length}{' '}
+                        {t(DialFileManagerI18nKeys.DeleteConfirmBodyItems)}
+                      </span>
+                    </>
+                  )}
+                </p>
+              </div>
+            )}
+            deleteConfirmLabel={t(DialFileManagerI18nKeys.DeleteConfirmButton)}
+            deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}
             uploadProgressTitle={t(DialFileManagerI18nKeys.UploadProgressTitle)}
             cancelLabel={t(ButtonsI18nKeys.Cancel)}
           />

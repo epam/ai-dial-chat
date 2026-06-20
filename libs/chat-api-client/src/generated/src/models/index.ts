@@ -874,6 +874,99 @@ export interface DeleteConversationsBodyDto {
 /**
  *
  * @export
+ * @interface DeleteFilesDto
+ */
+export interface DeleteFilesDto {
+  /**
+   *
+   * @type {Array<DeleteItemDto>}
+   * @memberof DeleteFilesDto
+   */
+  items: Array<DeleteItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface DeleteFilesResponseDto
+ */
+export interface DeleteFilesResponseDto {
+  /**
+   *
+   * @type {Array<DeleteItemResultDto>}
+   * @memberof DeleteFilesResponseDto
+   */
+  results: Array<DeleteItemResultDto>;
+}
+/**
+ *
+ * @export
+ * @interface DeleteItemDto
+ */
+export interface DeleteItemDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof DeleteItemDto
+   */
+  bucket: string;
+  /**
+   * File or folder path within the bucket
+   * @type {string}
+   * @memberof DeleteItemDto
+   */
+  path: string;
+  /**
+   * Display name (used in error messages)
+   * @type {string}
+   * @memberof DeleteItemDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DeleteItemDto
+   */
+  nodeType: DeleteItemDtoNodeTypeEnum;
+}
+
+/**
+ * @export
+ */
+export const DeleteItemDtoNodeTypeEnum = {
+  Item: 'item',
+  Folder: 'folder',
+} as const;
+export type DeleteItemDtoNodeTypeEnum =
+  (typeof DeleteItemDtoNodeTypeEnum)[keyof typeof DeleteItemDtoNodeTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface DeleteItemResultDto
+ */
+export interface DeleteItemResultDto {
+  /**
+   * Same path from the request
+   * @type {string}
+   * @memberof DeleteItemResultDto
+   */
+  path: string;
+  /**
+   * true when DIAL Core returned 2xx or 404
+   * @type {boolean}
+   * @memberof DeleteItemResultDto
+   */
+  success: boolean;
+  /**
+   * Human-readable error reason when success is false
+   * @type {string}
+   * @memberof DeleteItemResultDto
+   */
+  error?: string;
+}
+/**
+ *
+ * @export
  * @interface DeploymentConfigurationDto
  */
 export interface DeploymentConfigurationDto {

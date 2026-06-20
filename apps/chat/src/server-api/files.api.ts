@@ -2,6 +2,8 @@ import type {
   ArchiveItemDto,
   CreateFolderDto,
   CreateFolderResponseDto,
+  DeleteFilesResponseDto,
+  DeleteItemDto,
   FileMetadataResponseDto,
   FileUploadResponseDto,
   ListFilesResponseDto,
@@ -67,6 +69,11 @@ export const createFolder = (
   params: CreateFolderDto,
 ): Promise<CreateFolderResponseDto> =>
   filesApi.createFolder({ createFolderDto: params });
+
+export const deleteFiles = (
+  items: DeleteItemDto[],
+): Promise<DeleteFilesResponseDto> =>
+  filesApi.deleteFiles({ deleteFilesDto: { items } });
 
 // downloadArchiveRaw() is used instead of downloadArchive() for the same reason
 // as downloadFileRaw() above — binary response semantics require the raw fetch Response.

@@ -1,3 +1,8 @@
+> **Sync note (add-file-manager-delete):** `DialFileManagerModal` now accepts
+> `onDeleteFiles` and `deleteConfirmationOptions` wired from `useDialFileManager`.
+> The spec previously noted delete was absent; that is no longer the case when
+> this change ships.
+
 ## ADDED Requirements
 
 ### Requirement: Show DIAL file system button in attachment menu

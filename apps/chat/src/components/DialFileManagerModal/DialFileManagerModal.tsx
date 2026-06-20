@@ -11,7 +11,14 @@ import {
   type DialFile,
   type FileManagerGridRow,
 } from '@epam/ai-dial-ui-kit';
-import { memo, type FC, useCallback, useMemo, useState } from 'react';
+import {
+  memo,
+  type FC,
+  type ReactNode,
+  useCallback,
+  useMemo,
+  useState,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
@@ -45,6 +52,12 @@ interface Props {
   newFolderLabel: string;
   downloadLabel: string;
   downloadingLabel: string;
+  deleteLabel: string;
+  deletingLabel: string;
+  deleteConfirmTitle: (names: string[]) => ReactNode;
+  deleteConfirmBody: (names: string[]) => ReactNode;
+  deleteConfirmLabel: string;
+  deleteCancelLabel: string;
   uploadProgressTitle: string;
   cancelLabel: string;
   allowedTypes?: string[];
@@ -73,6 +86,12 @@ const DialFileManagerModal: FC<Props> = ({
   newFolderLabel,
   downloadLabel,
   downloadingLabel,
+  deleteLabel,
+  deletingLabel,
+  deleteConfirmTitle,
+  deleteConfirmBody,
+  deleteConfirmLabel,
+  deleteCancelLabel,
   uploadProgressTitle,
   cancelLabel,
   allowedTypes,
@@ -102,6 +121,10 @@ const DialFileManagerModal: FC<Props> = ({
     isDownloading,
     downloadError,
     clearDownloadError,
+    onDeleteFiles,
+    isDeleting,
+    deleteError,
+    clearDeleteError,
     uploadEnabled,
     isNewButtonDisabled,
     disabledNewButtonTooltip,
@@ -304,7 +327,22 @@ const DialFileManagerModal: FC<Props> = ({
   );
 
   const isOperationInProgress =
-    isDownloading || isCreatingFolder || uploadBatchState != null;
+    isDownloading || isDeleting || isCreatingFolder || uploadBatchState != null;
+
+  const deleteConfirmationOptions = useMemo(
+    () => ({
+      cancelLabel: deleteCancelLabel,
+      confirmLabel: deleteConfirmLabel,
+      titleRenderer: deleteConfirmTitle,
+      contentRenderer: deleteConfirmBody,
+    }),
+    [
+      deleteCancelLabel,
+      deleteConfirmLabel,
+      deleteConfirmTitle,
+      deleteConfirmBody,
+    ],
+  );
 
   const gridOptions = useMemo(
     () => ({
@@ -350,18 +388,26 @@ const DialFileManagerModal: FC<Props> = ({
       },
       actionLabels: {
         [DialFileManagerActions.Download]: downloadLabel,
+        [DialFileManagerActions.Delete]: deleteLabel,
       },
     }),
-    [downloadLabel, allowedTypes, maxSelectableFileSize, canAttachFolders],
+    [
+      downloadLabel,
+      deleteLabel,
+      allowedTypes,
+      maxSelectableFileSize,
+      canAttachFolders,
+    ],
   );
 
   const treeOptions = useMemo(
     () => ({
       actionLabels: {
         [DialFileManagerActions.Download]: downloadLabel,
+        [DialFileManagerActions.Delete]: deleteLabel,
       },
     }),
-    [downloadLabel],
+    [downloadLabel, deleteLabel],
   );
 
   const toolbarOptions = useMemo(
@@ -393,9 +439,10 @@ const DialFileManagerModal: FC<Props> = ({
       getSelectionLabel,
       actionLabels: {
         [DialFileManagerActions.Download]: downloadLabel,
+        [DialFileManagerActions.Delete]: deleteLabel,
       },
     }),
-    [getSelectionLabel, downloadLabel],
+    [getSelectionLabel, downloadLabel, deleteLabel],
   );
 
   return (
@@ -458,6 +505,8 @@ const DialFileManagerModal: FC<Props> = ({
               onCreateFolder={onCreateFolder}
               onCreateFolderValidate={onCreateFolderValidate}
               onDownloadFiles={onDownloadFiles}
+              onDeleteFiles={onDeleteFiles}
+              deleteConfirmationOptions={deleteConfirmationOptions}
               getDisabledTooltip={getDisabledTooltip}
             />
             {isDownloading && (
@@ -480,6 +529,28 @@ const DialFileManagerModal: FC<Props> = ({
                 onClick={clearDownloadError}
               >
                 {downloadError}
+              </button>
+            )}
+            {isDeleting && (
+              <div
+                aria-live="polite"
+                className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
+              >
+                <DialLoader
+                  size={32}
+                  fullWidth={false}
+                  ariaLabel={deletingLabel}
+                />
+              </div>
+            )}
+            {deleteError != null && !isDeleting && (
+              <button
+                type="button"
+                role="alert"
+                className="absolute inset-x-4 bottom-4 z-10 rounded bg-error px-4 py-3 text-start text-sm text-primary shadow"
+                onClick={clearDeleteError}
+              >
+                {deleteError}
               </button>
             )}
           </div>

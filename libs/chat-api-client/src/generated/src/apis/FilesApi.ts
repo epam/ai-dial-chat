@@ -16,6 +16,8 @@ import * as runtime from '../runtime';
 import type {
   CreateFolderDto,
   CreateFolderResponseDto,
+  DeleteFilesDto,
+  DeleteFilesResponseDto,
   DownloadArchiveDto,
   FileMetadataResponseDto,
   FileUploadResponseDto,
@@ -24,6 +26,10 @@ import type {
 
 export interface CreateFolderRequest {
   createFolderDto: CreateFolderDto;
+}
+
+export interface DeleteFilesRequest {
+  deleteFilesDto: DeleteFilesDto;
 }
 
 export interface DownloadArchiveRequest {
@@ -103,6 +109,56 @@ export class FilesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<CreateFolderResponseDto> {
     const response = await this.createFolderRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Delete files and folders
+   */
+  async deleteFilesRaw(
+    requestParameters: DeleteFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<DeleteFilesResponseDto>> {
+    if (requestParameters['deleteFilesDto'] == null) {
+      throw new runtime.RequiredError(
+        'deleteFilesDto',
+        'Required parameter "deleteFilesDto" was null or undefined when calling deleteFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/delete`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['deleteFilesDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<DeleteFilesResponseDto>(response);
+  }
+
+  /**
+   * Delete files and folders
+   */
+  async deleteFiles(
+    requestParameters: DeleteFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<DeleteFilesResponseDto> {
+    const response = await this.deleteFilesRaw(
       requestParameters,
       initOverrides,
     );

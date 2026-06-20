@@ -257,7 +257,17 @@
     "unsupportedFilesSkipped": "Some files were skipped",
     "unsupportedFilesDescription": "Files with unsupported type were not attached",
     "tooManyFilesSelected": "Too many files selected",
-    "tooManyFilesDescription": "You selected {{count}} files, limit is {{limit}}"
+    "tooManyFilesDescription": "You selected {{count}} files, limit is {{limit}}",
+    "deleteAction": "Delete",
+    "deletingLabel": "Deleting…",
+    "deleteConfirmTitleSingle": "Confirm deleting",
+    "deleteConfirmTitleMultiple": "Confirm deleting items",
+    "deleteConfirmBodySingle": "Are you sure you want to delete",
+    "deleteConfirmBodyMultiple": "Do you want to delete following",
+    "deleteConfirmBodyItems": "items?",
+    "deleteConfirmButton": "Delete",
+    "deleteError": "Delete failed. Please try again.",
+    "deletePartialError": "{{count}} item(s) could not be deleted."
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."

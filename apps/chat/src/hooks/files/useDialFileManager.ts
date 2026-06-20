@@ -1,12 +1,18 @@
 import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
-import type { DialFile, DialUploadFileItem } from '@epam/ai-dial-ui-kit';
+import type {
+  DialDeletedItem,
+  DialFile,
+  DialUploadFileItem,
+} from '@epam/ai-dial-ui-kit';
 import { DialFileNodeType, DialFilePermission } from '@epam/ai-dial-ui-kit';
 import type {
   CreateFolderResponseDto,
+  DeleteItemDto,
   ListFilesItemDto,
 } from '@epam/chat-api-client';
 import {
   ArchiveItemDtoNodeTypeEnum,
+  DeleteItemDtoNodeTypeEnum,
   ListFilesItemDtoNodeTypeEnum,
 } from '@epam/chat-api-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -18,6 +24,7 @@ import type {
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
 import {
   createFolder,
+  deleteFiles,
   downloadArchive,
   downloadFile,
   listFiles,
@@ -96,6 +103,15 @@ export interface UseDialFileManagerResult {
   downloadError: string | null;
   /** Clears `downloadError`. */
   clearDownloadError: () => void;
+
+  /** Delete: called when user confirms deletion of one or more items. */
+  onDeleteFiles: (items: DialDeletedItem[], sourceFolder: string) => void;
+  /** True while a delete request is in flight. */
+  isDeleting: boolean;
+  /** Non-null when the last delete had at least one failure. Cleared by `clearDeleteError`. */
+  deleteError: string | null;
+  /** Clears `deleteError`. */
+  clearDeleteError: () => void;
 
   /** True when the current folder grants WRITE (upload + new folder). */
   uploadEnabled: boolean;
@@ -363,6 +379,8 @@ export const useDialFileManager = ({
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadError, setDownloadError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -716,6 +734,93 @@ export const useDialFileManager = ({
     setDownloadError(null);
   }, []);
 
+  const onDeleteFiles = useCallback(
+    (deletedItems: DialDeletedItem[], _sourceFolder: string) => {
+      const run = async () => {
+        setIsDeleting(true);
+        setDeleteError(null);
+
+        const dtos: DeleteItemDto[] = deletedItems.map((item) => {
+          const isFolder = item.nodeType === DialFileNodeType.FOLDER;
+          // virtualPathToApiPath always appends "/", which is correct for folders
+          // but wrong for files — strip it for item nodes
+          const relPath = isFolder
+            ? virtualPathToApiPath(item.sourceUrl, rootLabel)
+            : virtualPathToApiPath(item.sourceUrl, rootLabel).replace(
+                /\/$/,
+                '',
+              );
+          const segments = item.sourceUrl.split('/').filter(Boolean);
+          const name = segments[segments.length - 1] ?? relPath;
+          return {
+            bucket,
+            path: relPath,
+            name,
+            nodeType: isFolder
+              ? DeleteItemDtoNodeTypeEnum.Folder
+              : DeleteItemDtoNodeTypeEnum.Item,
+          };
+        });
+
+        try {
+          const { results } = await deleteFiles(dtos);
+          const failedCount = results.filter((r) => !r.success).length;
+
+          if (failedCount === results.length) {
+            setDeleteError(t('dialFileManager.deleteError'));
+          } else if (failedCount > 0) {
+            setDeleteError(
+              t('dialFileManager.deletePartialError', { count: failedCount }),
+            );
+          }
+        } catch {
+          setDeleteError(t('dialFileManager.deleteError'));
+        }
+
+        const deletedFolderPaths = dtos
+          .filter((d) => d.nodeType === DeleteItemDtoNodeTypeEnum.Folder)
+          .map((d) => (d.path.endsWith('/') ? d.path : `${d.path}/`));
+
+        const affectedFolderKeys = new Set<string>(
+          dtos.map((d) => {
+            if (d.nodeType === DeleteItemDtoNodeTypeEnum.Folder) {
+              return d.path.endsWith('/') ? d.path : `${d.path}/`;
+            }
+            const lastSlash = d.path.lastIndexOf('/');
+            return lastSlash > 0 ? d.path.slice(0, lastSlash + 1) : '';
+          }),
+        );
+
+        setCache((prev) => {
+          const next = new Map(prev);
+          affectedFolderKeys.forEach((k) => next.delete(k));
+          return next;
+        });
+        setListingPermissionsCache((prev) => {
+          const next = new Map(prev);
+          affectedFolderKeys.forEach((k) => next.delete(k));
+          return next;
+        });
+
+        const isCurrentFolderDeleted = deletedFolderPaths.some(
+          (fp) => folderPath === fp || folderPath.startsWith(fp),
+        );
+        if (isCurrentFolderDeleted) {
+          setFolderPath((prev) => prev.replace(/[^/]+\/$/, ''));
+        }
+
+        setRetryCounter((c) => c + 1);
+        setIsDeleting(false);
+      };
+      void run();
+    },
+    [bucket, rootLabel, t, folderPath],
+  );
+
+  const clearDeleteError = useCallback(() => {
+    setDeleteError(null);
+  }, []);
+
   const clearUploadBatch = useCallback(() => {
     setUploadBatchState(null);
   }, []);
@@ -753,6 +858,10 @@ export const useDialFileManager = ({
     isDownloading,
     downloadError,
     clearDownloadError,
+    onDeleteFiles,
+    isDeleting,
+    deleteError,
+    clearDeleteError,
     uploadEnabled: canWriteCurrentFolder,
     isNewButtonDisabled: !canWriteCurrentFolder,
     disabledNewButtonTooltip,

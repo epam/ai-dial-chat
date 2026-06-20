@@ -28,6 +28,7 @@ import {
   CreateFolderDto,
   CreateFolderResponseDto,
 } from './dto/create-folder.dto';
+import { DeleteFilesDto, DeleteFilesResponseDto } from './dto/delete-files.dto';
 import { DownloadArchiveDto } from './dto/download-archive.dto';
 import { DownloadFileDto } from './dto/download-file.dto';
 import { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
@@ -216,6 +217,28 @@ export class FilesController {
   ): Promise<void> {
     const { at } = req.user as SessionUser;
     await this.filesService.downloadArchive(body.items, at, res);
+  }
+
+  @Post('delete')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Delete files and folders' })
+  @ApiBody({ type: DeleteFilesDto })
+  @ApiResponse({ status: 200, type: DeleteFilesResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async deleteFiles(
+    @Body() body: DeleteFilesDto,
+    @Req() req: Request,
+  ): Promise<DeleteFilesResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.deleteFiles(body.items, at);
   }
 
   @Get('download')

@@ -736,3 +736,91 @@ describe('FilesController — getFileMetadata', () => {
       .expect(503);
   });
 });
+
+describe('FilesController — deleteFiles', () => {
+  const MOCK_DELETE_RESPONSE = {
+    results: [
+      { path: 'reports/q1.pdf', success: true },
+      { path: 'old-data/', success: true },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: { deleteFiles: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      deleteFiles: vi.fn().mockResolvedValue(MOCK_DELETE_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with results array on success', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/delete')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            path: 'reports/q1.pdf',
+            name: 'q1.pdf',
+            nodeType: 'item',
+          },
+          {
+            bucket: 'user-files',
+            path: 'old-data/',
+            name: 'old-data',
+            nodeType: 'folder',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.body).toEqual(MOCK_DELETE_RESPONSE);
+    expect(service.deleteFiles).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'reports/q1.pdf', nodeType: 'item' }),
+        expect.objectContaining({ path: 'old-data/', nodeType: 'folder' }),
+      ]),
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when items array is missing', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/delete')
+      .send({})
+      .expect(400);
+    expect(service.deleteFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/delete')
+      .send({ items: [] })
+      .expect(400);
+    expect(service.deleteFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.deleteFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/delete')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            path: 'file.pdf',
+            name: 'file.pdf',
+            nodeType: 'item',
+          },
+        ],
+      })
+      .expect(401);
+  });
+});
