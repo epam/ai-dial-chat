@@ -2,6 +2,7 @@ import { FC, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { doesAgentHaveChatCompletion } from '@/src/utils/app/models';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
 import { DialAppToolset, DialAppTransportType } from '@/src/types/quick-apps';
@@ -18,9 +19,8 @@ import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import {
   DialPopup,
   DialPrimaryButton,
-  DialRadioGroup,
+  DialRadioButton,
   PopupSize,
-  RadioGroupOrientation,
 } from '@epam/ai-dial-ui-kit';
 
 interface DialAppConfigurationModalProps {
@@ -46,6 +46,8 @@ export const DialAppConfigurationModal: FC<DialAppConfigurationModalProps> = ({
   const { version: parsedVersion } = parseEntityApiKey(toolset.deployment_id, {
     parseVersion: true,
   });
+
+  const doesSupportChatCompletion = doesAgentHaveChatCompletion(entity);
 
   const version = entity?.version || parsedVersion || undefined;
 
@@ -87,25 +89,26 @@ export const DialAppConfigurationModal: FC<DialAppConfigurationModalProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-col px-6 py-4">
-          <DialRadioGroup
-            elementId="configuration-radio-group"
-            radioButtons={[
-              {
-                id: DialAppTransportType.MCP,
-                name: t(MarketplaceI18nKeys.MCP),
-              },
-              {
-                id: DialAppTransportType.ChatCompletion,
-                name: t(MarketplaceI18nKeys.ChatCompletion),
-              },
-            ]}
-            activeRadioButton={transportType}
-            orientation={RadioGroupOrientation.Column}
+        <div className="flex flex-col gap-3 px-6 py-4">
+          <span className="text-xs text-secondary">
+            {t(MarketplaceI18nKeys.ConnectVia)}
+          </span>
+          <DialRadioButton
+            name={DialAppTransportType.MCP}
+            label={t(MarketplaceI18nKeys.MCP)}
+            value={DialAppTransportType.MCP}
+            inputId={DialAppTransportType.MCP}
             onChange={handleSelect}
-            containerClassName="mb-4"
-            fieldTitle={t(MarketplaceI18nKeys.ConnectVia)}
-            groupLabelClassName="mb-2"
+            checked={transportType === DialAppTransportType.MCP}
+          />
+          <DialRadioButton
+            name={DialAppTransportType.ChatCompletion}
+            label={t(MarketplaceI18nKeys.ChatCompletion)}
+            value={DialAppTransportType.ChatCompletion}
+            inputId={DialAppTransportType.ChatCompletion}
+            onChange={handleSelect}
+            checked={transportType === DialAppTransportType.ChatCompletion}
+            disabled={!doesSupportChatCompletion}
           />
 
           <div className="flex justify-end">
