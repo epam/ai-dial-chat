@@ -261,9 +261,10 @@ const DialFileManagerModal: FC<Props> = ({
             ? mimeTypesToExtensionLabels(allowedTypes ?? [])
             : undefined);
 
-      const maxSize = hasSizeConstraint
-        ? formatFileSize(maxSelectableFileSize!)
-        : undefined;
+      const maxSize =
+        hasSizeConstraint && maxSelectableFileSize != null
+          ? formatFileSize(maxSelectableFileSize)
+          : undefined;
 
       if (typeLabel != null && maxSize != null) {
         parts.push(

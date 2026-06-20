@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
-import UploadProgressModal from '../UploadProgressModal';
 import { FileUploadStatus } from '../types/upload';
+import UploadProgressModal from '../UploadProgressModal';
 
 describe('UploadProgressModal', () => {
   it('renders legacy-style progress rows, summary, and cancel action', async () => {

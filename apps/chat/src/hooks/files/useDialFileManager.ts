@@ -37,10 +37,6 @@ import {
 } from '../../utils/file-download';
 import { resolveRelativeDialFilePath } from '../../utils/icon-path';
 import { safeDecodeURI } from '../../utils/string-utils';
-import {
-  logDialFileManagerDebug,
-  summarizeDialFileManagerCache,
-} from './dial-file-manager-debug';
 
 export interface UseDialFileManagerOptions {
   /** DIAL Core bucket to browse. */
@@ -314,14 +310,6 @@ const mergeCreatedFolderIntoCache = (
   }
 
   next.set(parentApiPath, parentItems);
-  logDialFileManagerDebug('cache merge created folder', {
-    parentApiPath: parentApiPath || '(root)',
-    folderName: created.name,
-    folderPath: created.path,
-    folderId: created.folderId,
-    parentItems: parentItems.map((item) => item.name),
-    cache: summarizeDialFileManagerCache(next),
-  });
   return next;
 };
 
@@ -390,18 +378,9 @@ export const useDialFileManager = ({
     listFiles({ bucket, path: folderPath, permissions: true })
       .then(({ items: flat, permissions }) => {
         if (cancelled) return;
-        logDialFileManagerDebug('listFiles response', {
-          folderPath: folderPath || '(root)',
-          incoming: flat.map((item) => item.name),
-          permissions,
-          retryCounter,
-        });
         setCache((prev) => {
           const next = new Map(prev);
           next.set(folderPath, flat);
-          logDialFileManagerDebug('cache after listFiles', {
-            cache: summarizeDialFileManagerCache(next),
-          });
           return next;
         });
         setListingPermissionsCache((prev) =>
@@ -619,13 +598,6 @@ export const useDialFileManager = ({
         rootLabel,
       );
       const parentApiPath = virtualPathToApiPath(parentVirtualPath, rootLabel);
-      logDialFileManagerDebug('createFolder start', {
-        folderPath,
-        parentVirtualPath,
-        parentApiPath: parentApiPath || '(root)',
-        name,
-        currentFolderPath: folderPath || '(root)',
-      });
       try {
         const created = await createFolder({
           bucket,
