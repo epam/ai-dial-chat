@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { ConversationHistoryItem } from '../../../models/panel-props';
 import { ConversationSource } from '../../../types/conversation-source';
 import { ConversationPanel } from '../ConversationPanel';
-import { ConversationHistoryItem } from '../../../models/panel-props';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, LG: 24 },
