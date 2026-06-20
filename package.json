@@ -95,7 +95,7 @@
   },
   "dependencies": {
     "@epam/ai-dial-typescript-sdk": "^0.1.0-dev.24",
-    "@epam/ai-dial-ui-kit": "0.11.0-dev.42",
+    "@epam/ai-dial-ui-kit": "0.11.0",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
@@ -126,15 +126,14 @@
     "tailwind-merge": "^3.6.0"
   },
   "overrides": {
-    "axios": "1.16.0",
-    "yaml": "2.8.3",
-    "dompurify": "3.4.10",
+    "dompurify": "3.4.11",
     "tmp": "0.2.7",
     "js-yaml": "4.2.0",
     "form-data": "4.0.6",
     "uuid": "14.0.0",
     "shell-quote": "1.8.4",
-    "multer": "2.2.0"
+    "http-proxy-middleware": "3.0.7",
+    "undici": "7.28.0"
   },
   "workspaces": [
     "packages/*",

@@ -17,6 +17,14 @@
   color: var(--cat-entity-type-guardrail, var(--bg-orange-400, #d97c27));
 }
 
+.agent {
+  color: var(--cat-entity-type-agent, var(--text-success, #5fbeae));
+}
+
+.skill {
+  color: var(--cat-entity-type-skill, var(--text-accent-secondary, #37babc));
+}
+
 .fallback {
   color: var(--cat-entity-type-fallback, var(--text-secondary, #9fa6bd));
 }

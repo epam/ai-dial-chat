@@ -45,7 +45,7 @@ export class FilesController {
 
   @Post()
   @HttpCode(201)
-  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
   @ApiBody({

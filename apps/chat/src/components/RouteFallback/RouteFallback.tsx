@@ -3,7 +3,7 @@ import { memo, type FC } from 'react';
 
 const RouteFallback: FC = () => (
   <div className="flex size-full items-center justify-center">
-    <DialSpinner size={20} />
+    <DialSpinner />
   </div>
 );
 

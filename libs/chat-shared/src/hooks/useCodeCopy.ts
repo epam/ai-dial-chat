@@ -1,5 +1,5 @@
-import { copyToClipboard } from '@epam/ai-dial-chat-shared';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { copyToClipboard } from '../utils/copy-to-clipboard';
 
 const DEFAULT_RESET_DELAY_MS = 2000;
 

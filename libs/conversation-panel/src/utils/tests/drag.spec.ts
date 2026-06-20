@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ConversationHistoryItem } from '../../models/ConversationPanel';
+import type { ConversationHistoryItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
 import { ConversationGroupKey } from '../../types/conversation-group-key';
 import { ConversationSource } from '../../types/conversation-source';

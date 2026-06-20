@@ -1,16 +1,26 @@
 import type { ColDef } from 'ag-grid-community';
 import { CatalogItem } from '../../models/catalog-item';
+import { EntityTypeCellRenderer } from './Renders/EntityTypeCellRenderer';
 import { FolderCellRenderer } from './Renders/FolderCellRenderer';
 import { NameCellRenderer } from './Renders/NameCellRenderer';
+import { StarCellRenderer } from './Renders/StarCellRenderer';
 import { TagsCellRenderer } from './Renders/TagsCellRenderer';
 
 export const CATALOG_COLUMNS = (): ColDef<CatalogItem>[] => [
   {
     headerName: 'Name',
-    flex: 5,
+    flex: 4,
     filter: false,
     cellRenderer: NameCellRenderer,
     valueGetter: (p) => p.data?.name,
+  },
+  {
+    headerName: 'Type',
+    flex: 2,
+    filter: false,
+    sortable: false,
+    cellRenderer: EntityTypeCellRenderer,
+    valueGetter: (p) => p.data?.type,
   },
   {
     headerName: 'Folder',
@@ -25,5 +35,15 @@ export const CATALOG_COLUMNS = (): ColDef<CatalogItem>[] => [
     filter: false,
     sortable: false,
     cellRenderer: TagsCellRenderer,
+    valueGetter: (p) => p.data?.topics,
+  },
+  {
+    headerName: '',
+    width: 72,
+    flex: undefined,
+    filter: false,
+    sortable: false,
+    resizable: false,
+    cellRenderer: StarCellRenderer,
   },
 ];

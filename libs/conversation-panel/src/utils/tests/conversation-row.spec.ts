@@ -11,7 +11,7 @@ import {
   getRowHeight,
   getSkeletonWidth,
   SKELETON_ROW_COUNT,
-} from '../conversation-row.utils';
+} from '../conversation-row';
 
 describe('SKELETON_ROW_COUNT', () => {
   it('is 15', () => {

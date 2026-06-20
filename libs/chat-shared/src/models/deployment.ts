@@ -14,12 +14,14 @@ export interface DeploymentItem {
   maxInputAttachments?: number;
   /** Human-readable description of the deployment. */
   description?: string;
-  /** ISO timestamp of last update time from DIAL Core (e.g. "2024-05-01T12:34:56Z"). */
-  updatedAt?: string;
+  /** Timestamp of last update time from DIAL Core (e.g. 1714768496000). */
+  updatedAt?: number;
   /** Display version string. */
   displayVersion?: string;
   /** Whether this deployment is featured (configured via env). */
   isFeatured?: boolean;
   /** Whether this deployment is hidden (configured via env). */
   isHidden?: boolean;
+  /** Topics associated with the deployment. */
+  topics?: string[];
 }

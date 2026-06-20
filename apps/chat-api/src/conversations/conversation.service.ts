@@ -10,6 +10,7 @@ import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
+import { HIDDEN_FILE } from '../constants/dial.constants';
 import {
   ConversationMetadataDto,
   ConversationResponseDto,
@@ -531,9 +532,11 @@ export class ConversationService extends AppService {
               })
           : [];
 
-      const items = [...userItems, ...publicItems, ...sharedItems].sort(
-        (a, b) => b.updatedAt - a.updatedAt,
-      );
+      const items = [...userItems, ...publicItems, ...sharedItems]
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+        .filter(
+          (item) => item.id !== HIDDEN_FILE && !item.id.includes(HIDDEN_FILE),
+        );
 
       return {
         items,

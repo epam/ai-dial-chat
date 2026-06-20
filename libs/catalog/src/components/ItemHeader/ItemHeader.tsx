@@ -5,30 +5,34 @@ import styles from './ItemHeader.module.scss';
 
 interface ItemHeaderProps {
   title: string;
-  count?: number | string;
+  postfix?: number | string;
   titleClassName?: string;
-  countClassName?: string;
+  postfixClassName?: string;
   className?: string;
   query?: string;
 }
 
 export const ItemHeader: FC<ItemHeaderProps> = ({
   title,
-  count,
-  countClassName,
-  titleClassName,
+  postfix,
+  titleClassName = 'dial-h3-text',
+  postfixClassName = 'dial-tiny-text',
   className,
   query,
 }) => {
   return (
     <div className={mergeClasses('flex items-center gap-2', className)}>
-      <h3 className={mergeClasses(titleClassName, styles.title)}>
-        {query ? <Highlight text={title} query={query} /> : title}
+      <h3 className={mergeClasses('min-w-0', titleClassName, styles.title)}>
+        {query ? (
+          <Highlight text={title} query={query} />
+        ) : (
+          <DialEllipsisTooltip text={title} />
+        )}
       </h3>
-      {count != null && (
+      {postfix != null && (
         <DialEllipsisTooltip
-          className={mergeClasses(countClassName, styles.count)}
-          text={count}
+          className={mergeClasses(postfixClassName, styles.count)}
+          text={postfix}
         />
       )}
     </div>

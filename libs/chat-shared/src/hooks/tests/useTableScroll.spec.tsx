@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import { type FC } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useTableScroll } from '../useTableScroll';
+import { useTableScroll } from '../../../../chat-shared/src/hooks/useTableScroll';
 
 let resizeObserverCallback: ResizeObserverCallback;
 

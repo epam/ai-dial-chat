@@ -1,6 +1,6 @@
 import { type FC, memo } from 'react';
 import type { Components } from 'react-markdown';
-import type { CodeBlockTheme } from './MarkdownCodeBlock';
+import { CodeBlockTheme } from '../../types/code-editor';
 import { MarkdownRenderer } from './MarkdownRenderer';
 
 /** Props for the {@link MDMessageViewer} markdown renderer. */

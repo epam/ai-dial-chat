@@ -160,7 +160,11 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   );
 
   if (status === UserConfigStatus.Loading) {
-    return <DialSpinner />;
+    return (
+      <div className="flex size-full items-center justify-center">
+        <DialSpinner />
+      </div>
+    );
   }
 
   return (

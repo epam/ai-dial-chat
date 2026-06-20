@@ -23,6 +23,8 @@ export interface CatalogColors {
   noResultsTitleText?: string;
   /** "No results" description text color. Fallback: `--text-secondary`. */
   noResultsDescriptionText?: string;
+  /** Tab result-count text color. Fallback: `--text-secondary`. */
+  tabCountText?: string;
 }
 
 /**
@@ -46,6 +48,12 @@ export interface CatalogTypography {
   pageHeadingFontClassName?: string;
   /** Typography class applied to section headings (Browse, Favorites). Defaults to `'dial-body-semi-text'`. */
   sectionHeadingClassName?: string;
+  /** Typography class applied to "no results" title. Defaults to `'dial-body-semi-text'`. */
+  noResultsTitleClassName?: string;
+  /** Typography class applied to "no results" description. Defaults to `'dial-small-text'`. */
+  noResultsDescriptionClassName?: string;
+  /** Typography class applied to tab result-count numbers. Defaults to `'dial-tiny-text'`. */
+  tabCountClassName?: string;
 }
 
 /**

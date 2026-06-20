@@ -1062,11 +1062,11 @@ export interface DeploymentItemDto {
    */
   isHidden?: boolean;
   /**
-   * ISO timestamp of last update time from DIAL Core (e.g. "2024-05-01T12:34:56Z")
-   * @type {string}
+   * Timestamp of last update time from DIAL Core (e.g. 1714768496000)
+   * @type {number}
    * @memberof DeploymentItemDto
    */
-  updatedAt?: string;
+  updatedAt?: number;
   /**
    * Application type schema id from DIAL Core (present only for application deployments)
    * @type {string}

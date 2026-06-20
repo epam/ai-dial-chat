@@ -1,10 +1,11 @@
-import { copyToClipboard } from '@epam/ai-dial-chat-shared';
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-vi.mock('@epam/ai-dial-chat-shared', () => ({
+import { copyToClipboard } from '../../utils/copy-to-clipboard';
+import { useCodeCopy } from '../useCodeCopy';
+
+vi.mock('../../utils/copy-to-clipboard', () => ({
   copyToClipboard: vi.fn(),
 }));
-import { useCodeCopy } from '../useCodeCopy';
 
 describe('useCodeCopy', () => {
   beforeEach(() => {

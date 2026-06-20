@@ -34,7 +34,7 @@ export const Filter: FC<FilterProps> = ({
       matchReferenceWidth={false}
       renderOverlay={() => (
         <div
-          className="bg-layer-2"
+          className="bg-layer-2 px-2"
           style={{
             border: '1px solid var(--stroke-secondary, #242c42)',
             borderRadius: 6,

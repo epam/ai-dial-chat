@@ -44,6 +44,16 @@ export interface CatalogProps {
   error?: Error | null;
   /** Called when any item's star is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /** Called when the "Use in chat" button is clicked in the details panel. */
+  onUseInChat?: (item: CatalogItem) => void;
+  /** Called when the "Share" button is clicked in the details panel. */
+  onShare?: (item: CatalogItem) => void;
+  /**
+   * Called when the details panel opens for an item. Use this to fetch
+   * enriched About-tab content from an API and pass it back as a string.
+   * Returns `undefined` to let the panel fall back to `item.longDescription`.
+   */
+  onFetchAboutContent?: (item: CatalogItem) => Promise<string | undefined>;
   /** Called when the Create button is clicked. */
   onCreateClick?: () => void;
   /** Optional color and typography overrides. */
