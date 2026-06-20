@@ -1,7 +1,7 @@
 import type { DisplayAttachment, Message } from '@epam/ai-dial-chat-shared';
 import { MessageRole } from '@epam/ai-dial-chat-shared';
 import { useMemo } from 'react';
-import type { QuotationSource } from '../../models/quotation-source';
+import type { QuotationSource } from '@epam/ai-dial-source-panel';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
 
 /**

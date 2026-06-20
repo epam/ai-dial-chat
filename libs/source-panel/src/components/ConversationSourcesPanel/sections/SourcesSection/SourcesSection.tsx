@@ -1,8 +1,8 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialGhostIconButton,
   ElementSize,
-  mergeClasses,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import { memo, type FC } from 'react';
