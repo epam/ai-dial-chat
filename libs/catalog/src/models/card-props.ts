@@ -42,6 +42,8 @@ export interface CardStyles {
 export interface CardProps {
   /** The catalog item to display. */
   item: CatalogItem;
+  /** Optional CSS class applied to the card root element. */
+  className?: string;
   /** Active search query for highlighting matches. */
   query?: string;
   /** Initial starred state. Default: false. */

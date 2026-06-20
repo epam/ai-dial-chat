@@ -23,6 +23,7 @@ export const Card: FC<CardProps> = ({
   onClick,
   styles: cardStyles,
   featuredLabel = 'Featured',
+  className,
 }) => {
   const { colors, typography } = cardStyles ?? {};
   const nameClassName = typography?.nameClassName ?? 'dial-h3-text';
@@ -78,6 +79,7 @@ export const Card: FC<CardProps> = ({
         'relative box-border flex cursor-pointer flex-col gap-2.5 rounded-[6px] border p-[17px] transition-transform duration-150 ease-out hover:-translate-y-[3px]',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
+        className,
       )}
       style={cssVars}
     >

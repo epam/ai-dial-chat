@@ -28,6 +28,11 @@ export type {
 
 export { CardGrid } from './components/CardGrid/CardGrid';
 export type { CardGridProps, CardGridTitles } from './models/grid-props';
+export { CardRowRenderer } from './components/CardGrid/CardRowRenderer';
+export type { CardRowRendererProps } from './components/CardGrid/CardRowRenderer';
+export type { CardRowData } from './models/card-row-data';
+export { useScrollVirtualizer } from './utils/use-scroll-virtualizer';
+export type { ScrollVirtualizerResult } from './utils/use-scroll-virtualizer';
 
 export { Favorites } from './components/Favorites/Favorites';
 export type { FavoritesProps } from './models/favorites';

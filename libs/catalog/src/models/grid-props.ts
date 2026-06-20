@@ -20,4 +20,6 @@ export interface CardGridProps {
   titles?: CardGridTitles;
   /** Called when a card body is clicked. */
   onItemClick?: (item: CatalogItem) => void;
+  /** When true, renders skeleton placeholder cards instead of actual content. */
+  isLoading?: boolean;
 }
