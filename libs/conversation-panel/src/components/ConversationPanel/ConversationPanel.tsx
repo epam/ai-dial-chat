@@ -3,29 +3,27 @@ import {
   PanelEmpty,
   PanelNoResults,
   SearchInput,
-  SidebarPanel,
   SidebarOrientation,
+  SidebarPanel,
 } from '@epam/ai-dial-sidebar';
 import { DialSkeleton } from '@epam/ai-dial-ui-kit';
 import { type FC, memo, useCallback, useMemo, useRef, useState } from 'react';
 import { List } from 'react-window';
 import { ITEM_ROW_HEIGHT } from '../../constants/virtual-list';
-import {
-  ConversationGroupKey,
-  type ConversationPanelProps,
-  ConversationSource,
-  FilterTab,
-} from '../../models/ConversationPanel';
+import { ConversationPanelProps } from '../../models/panel-props';
 import {
   type RowRendererData,
   type VirtualRow,
   VirtualRowKind,
 } from '../../models/virtual-row';
+import { ConversationGroupKey } from '../../types/conversation-group-key';
+import { ConversationSource } from '../../types/conversation-source';
+import { FilterTab } from '../../types/filter-tab';
 import {
   getRowHeight,
   getSkeletonWidth,
   SKELETON_ROW_COUNT,
-} from '../../utils/conversation-row.utils';
+} from '../../utils/conversation-row';
 import {
   computeAllowedDropGroups,
   findGroupKeyForItem,
@@ -69,7 +67,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
   }) => {
     const { colors, typography } = panelStyles ?? {};
     const [searchQuery, setSearchQuery] = useState('');
-    const [activeTab, setActiveTab] = useState<FilterTab>(FilterTab.All);
+    const [activeTab, setActiveTab] = useState(FilterTab.All);
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
       () => ALL_GROUP_KEYS,
     );

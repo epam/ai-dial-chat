@@ -36,9 +36,6 @@
       "path": "../conversation-input/tsconfig.lib.json"
     },
     {
-      "path": "../conversation-messages/tsconfig.lib.json"
-    },
-    {
       "path": "../chat-shared/tsconfig.lib.json"
     }
   ]

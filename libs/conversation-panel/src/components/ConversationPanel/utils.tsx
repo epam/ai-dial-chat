@@ -1,8 +1,6 @@
-import {
-  ConversationSource,
-  type ConversationHistoryItem,
-  FilterTab,
-} from '../../models/ConversationPanel';
+import { ConversationHistoryItem } from '../../models/panel-props';
+import { ConversationSource } from '../../types/conversation-source';
+import { FilterTab } from '../../types/filter-tab';
 
 /** Returns whether a conversation item matches the currently selected filter tab. */
 export const matchesTab = (
