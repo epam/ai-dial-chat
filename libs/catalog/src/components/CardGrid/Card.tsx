@@ -115,7 +115,13 @@ export const Card: FC<CardProps> = ({
         </div>
       </div>
 
-      <p className={mergeClasses(descriptionClassName, styles.description)}>
+      <p
+        className={mergeClasses(
+          'line-clamp-3',
+          descriptionClassName,
+          styles.description,
+        )}
+      >
         <Highlight text={item.description} query={query} />
       </p>
 

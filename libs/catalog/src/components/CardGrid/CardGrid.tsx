@@ -1,10 +1,11 @@
-import { PanelEmptyState } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, PanelEmptyState } from '@epam/ai-dial-chat-shared';
 import { DialSkeleton, DialSkeletonAvatarShape } from '@epam/ai-dial-ui-kit';
 import { type FC, memo, useMemo } from 'react';
 import { CARD_HEIGHT, SKELETON_ROW_COUNT } from '../../constants/virtual-grid';
 import type { CardRowData } from '../../models/card-row-data';
 import type { CardGridProps } from '../../models/grid-props';
 import { useScrollVirtualizer } from '../../utils/use-scroll-virtualizer';
+import styles from './CardGrid.module.scss';
 import { CardRowRenderer } from './CardRowRenderer';
 
 /** Three-column virtualized grid of Card items with loading skeleton and empty state. */
@@ -39,7 +40,10 @@ export const CardGrid: FC<CardGridProps> = memo(
           {Array.from({ length: columnCount * SKELETON_ROW_COUNT }, (_, i) => (
             <div
               key={i}
-              className="rounded-[6px] border p-[17px]"
+              className={mergeClasses(
+                'rounded-[6px] border p-[17px]',
+                styles.skeletonCard,
+              )}
               style={{ height: CARD_HEIGHT }}
             >
               <DialSkeleton
@@ -47,7 +51,7 @@ export const CardGrid: FC<CardGridProps> = memo(
                 showTitle={{ width: `${60 + ((i * 17) % 30)}%` }}
                 paragraph={{ rows: 3 }}
                 active
-                color="var(--bg-layer-4)"
+                color="var(--cat-skeleton-bg)"
               />
             </div>
           ))}
