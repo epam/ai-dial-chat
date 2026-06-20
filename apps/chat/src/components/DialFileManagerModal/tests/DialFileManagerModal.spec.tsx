@@ -129,6 +129,10 @@ const defaultHookResult: UseDialFileManagerResult = {
   isDownloading: false,
   downloadError: null,
   clearDownloadError: vi.fn(),
+  onDeleteFiles: vi.fn(),
+  isDeleting: false,
+  deleteError: null,
+  clearDeleteError: vi.fn(),
   uploadEnabled: true,
   isNewButtonDisabled: false,
   disabledNewButtonTooltip: 'No permission',
@@ -154,6 +158,14 @@ const defaultProps = {
   newFolderLabel: 'New folder',
   downloadLabel: 'Download',
   downloadingLabel: 'Preparing download…',
+  deleteLabel: 'Delete',
+  deletingLabel: 'Deleting…',
+  deleteConfirmTitle: (names: string[]) =>
+    names.length === 1 ? 'Confirm deleting' : 'Confirm deleting items',
+  deleteConfirmBody: (names: string[]) =>
+    `Delete ${names.length} ${names.length === 1 ? 'item' : 'items'}?`,
+  deleteConfirmLabel: 'Delete',
+  deleteCancelLabel: 'Cancel',
   uploadProgressTitle: 'Uploading files',
   cancelLabel: 'Cancel',
 };
