@@ -1,7 +1,7 @@
 import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ConversationGroupKey } from '../types/conversation-group-key';
 import { VirtualRowKind } from '../types/virtual-row';
-import type { ConversationHistoryItem } from './ConversationPanel';
+import type { ConversationHistoryItem } from './panel-props';
 
 export { VirtualRowKind };
 
