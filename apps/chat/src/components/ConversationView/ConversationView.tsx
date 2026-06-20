@@ -350,7 +350,7 @@ const ConversationView: FC<Props> = ({
     () => ({
       features: selectedDeployment?.features,
       systemPrompt: conversation.prompt ?? '',
-      temperature: conversation.temperature ?? 1,
+      temperature: conversation.temperature ?? 0.5,
       onSave: (values: ChatSettingsValues) =>
         onConversationChange({
           ...conversation,
@@ -364,9 +364,15 @@ const ConversationView: FC<Props> = ({
       menuItemLabel: t(ChatI18nKeys.ChatSettings),
       title: t(ChatSettingsI18nKeys.Title),
       systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
+      systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
       temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),
-      saveLabel: t(ButtonsI18nKeys.Save),
-      cancelLabel: t(ButtonsI18nKeys.Cancel),
+      temperatureLabels: [
+        t(ChatSettingsI18nKeys.TemperaturePrecise),
+        t(ChatSettingsI18nKeys.TemperatureNeutral),
+        t(ChatSettingsI18nKeys.TemperatureCreative),
+      ] as [string, string, string],
+      temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
+      saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
     }),
     [selectedDeployment?.features, conversation, onConversationChange, t],
   );

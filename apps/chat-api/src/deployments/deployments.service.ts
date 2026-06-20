@@ -29,6 +29,11 @@ const toAdditionalProperties = (
   return undefined;
 };
 
+type RawDeploymentFeatures = {
+  system_prompt?: boolean;
+  temperature?: boolean;
+};
+
 type RawDeployment = {
   id?: string;
   display_name?: string;
@@ -39,7 +44,7 @@ type RawDeployment = {
   interfaces?: string | string[];
   application_type_schema_id?: string;
   input_attachment_types?: string[];
-  features?: DeploymentFeaturesDto;
+  features?: RawDeploymentFeatures;
 };
 
 const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
@@ -77,7 +82,12 @@ const mapToDeploymentItem = (raw: RawDeployment): DeploymentItemDto | null => {
     inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
       ? raw.input_attachment_types
       : undefined,
-    features: raw.features ?? undefined,
+    features: raw.features
+      ? {
+          systemPrompt: raw.features.system_prompt ?? false,
+          temperature: raw.features.temperature ?? false,
+        }
+      : undefined,
   };
 };
 

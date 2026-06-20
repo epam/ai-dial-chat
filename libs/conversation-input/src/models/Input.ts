@@ -231,10 +231,14 @@ export interface ChatSettingsConfig {
   title?: string;
   /** Label for the system prompt field. Defaults to `'System prompt'`. */
   systemPromptLabel?: string;
+  /** Tooltip shown on the system prompt input. Defaults to `'Enter a prompt'`. */
+  systemPromptTooltip?: string;
   /** Label for the temperature field. Defaults to `'Temperature'`. */
   temperatureLabel?: string;
-  /** Label for the Save button. Defaults to `'Save'`. */
+  /** Labels rendered below the temperature slider: [start, middle, end]. Defaults to `['Precise', 'Neutral', 'Creative']`. */
+  temperatureLabels?: [string, string, string];
+  /** Helper text shown below the temperature field. */
+  temperatureHint?: string;
+  /** Label for the save button. Defaults to `'Apply changes'`. */
   saveLabel?: string;
-  /** Label for the Cancel button. Defaults to `'Cancel'`. */
-  cancelLabel?: string;
 }

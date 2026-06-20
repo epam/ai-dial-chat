@@ -179,4 +179,10 @@ export enum ChatSettingsI18nKeys {
   Title = 'chatSettings.title',
   SystemPromptLabel = 'chatSettings.systemPromptLabel',
   TemperatureLabel = 'chatSettings.temperatureLabel',
+  TemperaturePrecise = 'chatSettings.temperaturePrecise',
+  TemperatureNeutral = 'chatSettings.temperatureNeutral',
+  TemperatureCreative = 'chatSettings.temperatureCreative',
+  SaveLabel = 'chatSettings.saveLabel',
+  TemperatureHint = 'chatSettings.temperatureHint',
+  SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
 }

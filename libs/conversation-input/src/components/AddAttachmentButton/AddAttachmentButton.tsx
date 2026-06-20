@@ -117,9 +117,11 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
           onClose={() => setIsChatSettingsOpen(false)}
           title={chatSettings.title}
           systemPromptLabel={chatSettings.systemPromptLabel}
+          systemPromptTooltip={chatSettings.systemPromptTooltip}
           temperatureLabel={chatSettings.temperatureLabel}
+          temperatureLabels={chatSettings.temperatureLabels}
+          temperatureHint={chatSettings.temperatureHint}
           saveLabel={chatSettings.saveLabel}
-          cancelLabel={chatSettings.cancelLabel}
         />
       )}
     </>

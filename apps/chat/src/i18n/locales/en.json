@@ -187,6 +187,12 @@
   "chatSettings": {
     "title": "Chat settings",
     "systemPromptLabel": "System prompt",
-    "temperatureLabel": "Temperature"
+    "temperatureLabel": "Temperature",
+    "temperaturePrecise": "Precise",
+    "temperatureNeutral": "Neutral",
+    "temperatureCreative": "Creative",
+    "saveLabel": "Apply changes",
+    "temperatureHint": "Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.",
+    "systemPromptTooltip": "Enter a prompt"
   }
 }
