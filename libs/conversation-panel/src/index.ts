@@ -9,5 +9,5 @@ export type {
   FilterLabels,
 } from './models/panel-props';
 export type { ConversationGroupProps } from './components/ConversationGroup/ConversationGroup';
-export type { ConversationGroupKey } from './types/conversation-group-key';
-export type { ConversationSource } from './types/conversation-source';
+export { ConversationGroupKey } from './types/conversation-group-key';
+export { ConversationSource } from './types/conversation-source';
