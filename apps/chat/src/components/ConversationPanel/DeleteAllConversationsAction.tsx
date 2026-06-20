@@ -14,13 +14,13 @@ import { IconDotsVertical, IconTrashX } from '@tabler/icons-react';
 import { memo, useCallback, useMemo, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { normalizeConversationId, ROUTES } from '../../constants/routes';
 import {
   ButtonsI18nKeys,
   ConversationPanelI18nKeys,
 } from '../../constants/translation-keys';
 import { useConversations } from '../../context/ConversationsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { ROUTES } from '../../types/routes';
 
 interface PanelMenuTriggerProps {
   items: DropdownItem[];
@@ -60,7 +60,7 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { conversations, deleteAllConversations } = useConversations();
+  const { deleteAllConversations } = useConversations();
   const { showNotification } = useNotification();
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -110,23 +110,8 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
         });
       }
 
-      if (!activeConversationId) return;
-
-      const activeConversation = conversations.find((conversation) => {
-        const rawId = normalizeConversationId(conversation.id);
-        try {
-          return decodeURIComponent(rawId) === activeConversationId;
-        } catch {
-          return rawId === activeConversationId;
-        }
-      });
-      const isActiveConversationOwned =
-        activeConversation != null &&
-        !activeConversation.sharedWithMe &&
-        !activeConversation.publishedWithMe;
-
-      if (isActiveConversationOwned) {
-        navigate(ROUTES.ROOT);
+      if (activeConversationId) {
+        navigate(ROUTES.Root);
       }
     } catch {
       setDeleteError(t(ConversationPanelI18nKeys.DeleteAllError));
@@ -135,7 +120,6 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
     }
   }, [
     activeConversationId,
-    conversations,
     deleteAllConversations,
     navigate,
     showNotification,

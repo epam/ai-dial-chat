@@ -76,6 +76,7 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 - No unjustified new patterns; justified new ones are called out
 - No sneaky circular deps or leaky module APIs
 - Relative `.ts`/`.tsx` imports and re-exports omit `.js`, `.jsx`, `.ts`, and `.tsx`; Vite projects use bundler resolution rather than Node ESM source specifiers
+- Named finite sets of statuses, modes, variants, or lifecycle states use string enums instead of string-literal unions when exported, reused, or compared
 - Duplication: only consolidate when the rule of three (or team norm) says so
 
 ### 4. Security
@@ -237,6 +238,7 @@ Use as a literal template when writing a review:
 - [ ] Coupling and abstraction level appropriate
 - [ ] API/generated-client/OpenSpec contract rules followed when relevant
 - [ ] Relative TypeScript source imports are extensionless
+- [ ] Named finite TypeScript value sets use string enums where the project convention applies
 
 ### Security
 

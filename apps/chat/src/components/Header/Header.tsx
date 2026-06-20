@@ -8,48 +8,53 @@ import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMatch } from 'react-router-dom';
-import { ROUTES } from '../../constants/routes';
 import {
   ConversationPanelI18nKeys,
   NavigationI18nKeys,
   SidebarI18nKeys,
 } from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
-import SideBarLeft from '../../icons/side-bar-left.svg?react';
-import SideBarRight from '../../icons/side-bar-right.svg?react';
+import { ROUTES } from '../../types/routes';
 import Logo from './Logo';
 
 interface Props {
   onMenuToggle: () => void;
-  isHistoryPanelOpen?: boolean;
-  onHistoryPanelToggle?: () => void;
+  isConversationPanelOpen?: boolean;
+  onConversationPanelToggle?: () => void;
 }
 
 const Header: FC<Props> = ({
   onMenuToggle,
-  isHistoryPanelOpen,
-  onHistoryPanelToggle,
+  isConversationPanelOpen,
+  onConversationPanelToggle,
 }) => {
   const { t } = useTranslation();
-  const isConversationRoute = !!useMatch(`${ROUTES.CONVERSATIONS}/*`);
+  const isConversationRoute = !!useMatch(`${ROUTES.Conversations}/*`);
+  const isRootRoute = !!useMatch(ROUTES.Root);
+  const isConversationPanel = isConversationRoute || isRootRoute;
   const { isOpen: isSourcesSidebarOpen, handleOpen: handleOpenSourcesSidebar } =
     useSourcesSidebar();
-
-  const Icon = !isHistoryPanelOpen ? SideBarLeft : SideBarRight;
 
   return (
     <header className="relative z-30 grid min-h-[49px] w-full grid-cols-[1fr_auto_1fr] items-center border-b border-secondary">
       <div className="flex items-center ps-2">
-        {onHistoryPanelToggle && (
+        {onConversationPanelToggle && isConversationPanel && (
           <DialGhostIconButton
-            icon={<Icon />}
+            icon={
+              <IconLayoutSidebarRight
+                size={DIAL_ICON_SIZE.LG}
+                stroke={1.5}
+                className={
+                  !isConversationPanelOpen ? 'scale-x-[-1]' : undefined
+                }
+              />
+            }
             aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
-            aria-pressed={isHistoryPanelOpen}
+            aria-pressed={isConversationPanelOpen}
             tooltipProps={{
               tooltip: t(ConversationPanelI18nKeys.ToggleAriaLabel),
             }}
-            onClick={onHistoryPanelToggle}
-            className="hidden desktop:flex"
+            onClick={onConversationPanelToggle}
           />
         )}
         <DialGhostIconButton
@@ -58,16 +63,6 @@ const Header: FC<Props> = ({
           onClick={onMenuToggle}
           className="desktop:hidden"
         />
-        {onHistoryPanelToggle && !isHistoryPanelOpen && (
-          <DialGhostIconButton
-            icon={
-              <IconLayoutSidebarRight size={DIAL_ICON_SIZE.LG} stroke={1.5} />
-            }
-            aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
-            onClick={onHistoryPanelToggle}
-            className="desktop:hidden"
-          />
-        )}
       </div>
       <Logo />
       <div className="flex justify-end pe-2">

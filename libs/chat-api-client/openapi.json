@@ -491,6 +491,116 @@
         "tags": ["deployments"]
       }
     },
+    "/api/v1/user-config": {
+      "get": {
+        "operationId": "getUserConfig",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "User configuration",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserConfigDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Get current user configuration",
+        "tags": ["user-config"]
+      }
+    },
+    "/api/v1/user-config/pins": {
+      "patch": {
+        "operationId": "updatePin",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePinsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Pin state updated"
+          },
+          "400": {
+            "description": "Missing or invalid body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Pin or unpin a conversation",
+        "tags": ["user-config"]
+      }
+    },
+    "/api/v1/user-config/toolsets": {
+      "patch": {
+        "operationId": "updateInstalledToolset",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInstalledDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Toolset install state updated"
+          },
+          "400": {
+            "description": "Missing or invalid body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Install or uninstall a toolset",
+        "tags": ["user-config"]
+      }
+    },
+    "/api/v1/user-config/deployments": {
+      "patch": {
+        "operationId": "updateInstalledDeployment",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateInstalledDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Deployment install state updated"
+          },
+          "400": {
+            "description": "Missing or invalid body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Install or uninstall a deployment",
+        "tags": ["user-config"]
+      }
+    },
     "/api/v1/models": {
       "get": {
         "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Results are cached server-side for 30 seconds per user.",
@@ -1163,51 +1273,6 @@
         "tags": ["conversations"]
       }
     },
-    "/api/v1/user-config": {
-      "get": {
-        "operationId": "getConfig",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "User configuration"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "summary": "Get current user configuration",
-        "tags": ["user-config"]
-      }
-    },
-    "/api/v1/user-config/pins": {
-      "patch": {
-        "operationId": "updatePin",
-        "parameters": [],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdatePinsDto"
-              }
-            }
-          }
-        },
-        "responses": {
-          "204": {
-            "description": "Pin state updated"
-          },
-          "400": {
-            "description": "Missing or invalid body"
-          },
-          "401": {
-            "description": "Not authenticated"
-          }
-        },
-        "summary": "Pin or unpin a conversation",
-        "tags": ["user-config"]
-      }
-    },
     "/api/v1/files": {
       "post": {
         "operationId": "uploadFile",
@@ -1268,6 +1333,171 @@
             "description": "DIAL Core unreachable or timed out"
           }
         },
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/list": {
+      "get": {
+        "description": "Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility.",
+        "operationId": "listFiles",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Folder path within bucket (no leading slash, no ..)",
+            "schema": {
+              "example": "reports/",
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "required": false,
+            "in": "query",
+            "description": "Pagination token from previous response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max items to return",
+            "schema": {
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "recursive",
+            "required": false,
+            "in": "query",
+            "description": "Return items recursively",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "permissions",
+            "required": false,
+            "in": "query",
+            "description": "Include item permissions",
+            "schema": {
+              "default": true,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of files and folders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket, path, or query parameter"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden — user does not own the bucket"
+          },
+          "404": {
+            "description": "Bucket or path not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "List files and folders",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/metadata": {
+      "get": {
+        "description": "Returns metadata for a single named file from DIAL Core. Path must not end with /.",
+        "operationId": "getFileMetadata",
+        "parameters": [
+          {
+            "name": "bucket",
+            "required": true,
+            "in": "query",
+            "description": "DIAL Core bucket name",
+            "schema": {
+              "example": "my-bucket",
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "required": true,
+            "in": "query",
+            "description": "File path within the bucket (no leading slash, no .., no trailing /)",
+            "schema": {
+              "example": "reports/q1-2024.pdf",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileMetadataResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket or path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden — user lacks READ permission on the file"
+          },
+          "404": {
+            "description": "File not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Get file metadata",
         "tags": ["files"]
       }
     },
@@ -1473,16 +1703,55 @@
             "type": "string",
             "example": "light"
           },
-          "name": {
+          "displayName": {
             "type": "string",
             "example": "Light Theme"
           },
-          "icon": {
+          "colors": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "primary-color": "#ffffff"
+            }
+          },
+          "app-logo": {
             "type": "string",
-            "example": "icon-light.svg"
+            "example": "https://example.com/logo-light.svg"
           }
         },
-        "required": ["id", "name"]
+        "required": ["id", "displayName", "colors", "app-logo"]
+      },
+      "ThemeImagesDto": {
+        "type": "object",
+        "properties": {
+          "default-addon": {
+            "type": "string",
+            "example": "https://example.com/addon.png"
+          },
+          "default-model": {
+            "type": "string",
+            "example": "https://example.com/model.png"
+          },
+          "favicon": {
+            "type": "string",
+            "example": "https://example.com/favicon.ico"
+          },
+          "chat-logo-light": {
+            "type": "string",
+            "example": "chat-logo-light.svg"
+          },
+          "chat-logo-dark": {
+            "type": "string",
+            "example": "chat-logo-dark.svg"
+          },
+          "chat-favicon": {
+            "type": "string",
+            "example": "https://example.com/chat-favicon.png"
+          }
+        },
+        "required": ["default-addon", "default-model", "favicon"]
       },
       "ThemeConfigResponseDto": {
         "type": "object",
@@ -1492,9 +1761,12 @@
             "items": {
               "$ref": "#/components/schemas/ThemeDto"
             }
+          },
+          "images": {
+            "$ref": "#/components/schemas/ThemeImagesDto"
           }
         },
-        "required": ["themes"]
+        "required": ["themes", "images"]
       },
       "ProviderInfoDto": {
         "type": "object",
@@ -1685,6 +1957,22 @@
               "type": "string"
             }
           },
+          "displayVersion": {
+            "type": "string",
+            "description": "Display version from DIAL Core"
+          },
+          "isFeatured": {
+            "type": "boolean",
+            "description": "Whether this deployment is featured (configured via env)"
+          },
+          "isHidden": {
+            "type": "boolean",
+            "description": "Whether this deployment is hidden (configured via env)"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "ISO timestamp of last update time from DIAL Core (e.g. \"2024-05-01T12:34:56Z\")"
+          },
           "applicationTypeSchemaId": {
             "type": "string",
             "description": "Application type schema id from DIAL Core (present only for application deployments)"
@@ -1703,6 +1991,17 @@
                 "$ref": "#/components/schemas/DeploymentFeaturesDto"
               }
             ]
+          },
+          "topics": {
+            "description": "Topics associated with this deployment from DIAL Core (e.g. ["topic1", "topic2"])",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "isInstalled": {
+            "type": "boolean",
+            "description": "Whether this deployment is installed by the current user (from user config)"
           }
         },
         "required": ["id", "displayName", "type"]
@@ -1744,6 +2043,100 @@
             "description": "When true, the application does not accept free-form text input; users interact only via form/action buttons."
           }
         }
+      },
+      "ConversationsConfigDto": {
+        "type": "object",
+        "properties": {
+          "pinnedIds": {
+            "description": "Pinned conversation identifiers.",
+            "example": ["conversations/default-bucket/gpt-4__My chat__uuid"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["pinnedIds"]
+      },
+      "ToolsetsConfigDto": {
+        "type": "object",
+        "properties": {
+          "installed": {
+            "description": "Installed toolset identifiers.",
+            "example": ["toolset-abc"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["installed"]
+      },
+      "DeploymentsConfigDto": {
+        "type": "object",
+        "properties": {
+          "installed": {
+            "description": "Installed deployment identifiers.",
+            "example": ["deployment-xyz"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["installed"]
+      },
+      "UserConfigDto": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "number",
+            "description": "User configuration schema version.",
+            "example": 2
+          },
+          "conversations": {
+            "$ref": "#/components/schemas/ConversationsConfigDto"
+          },
+          "toolsets": {
+            "$ref": "#/components/schemas/ToolsetsConfigDto"
+          },
+          "deployments": {
+            "$ref": "#/components/schemas/DeploymentsConfigDto"
+          }
+        },
+        "required": ["version", "conversations", "toolsets", "deployments"]
+      },
+      "UpdatePinsDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Full DIAL Core resource URL of the conversation to pin or unpin (matches `id` in `ConversationListItemDto`).",
+            "example": "conversations/default-bucket/gpt-4__My chat__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          },
+          "isPinned": {
+            "type": "boolean",
+            "description": "Pass `true` to pin the conversation, `false` to unpin.",
+            "example": true
+          }
+        },
+        "required": ["path", "isPinned"]
+      },
+      "UpdateInstalledDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Identifier of the resource to install or uninstall.",
+            "example": "toolset-abc"
+          },
+          "isInstalled": {
+            "type": "boolean",
+            "description": "Pass `true` to install the resource, `false` to uninstall.",
+            "example": true
+          }
+        },
+        "required": ["id", "isInstalled"]
       },
       "DialModelFeaturesDto": {
         "type": "object",
@@ -2215,12 +2608,60 @@
         },
         "required": ["id"]
       },
+      "ConversationMessageCustomContentDto": {
+        "type": "object",
+        "properties": {
+          "attachments": {
+            "description": "DIAL API attachments to include with the message",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AttachmentDto"
+            }
+          },
+          "configuration_value": {
+            "type": "object",
+            "description": "Form/button submission value (e.g. `{ button: 1 }`).",
+            "example": {
+              "button": 1
+            }
+          },
+          "form_value": {
+            "type": "object",
+            "description": "Key-value map of form field values submitted via an embedded form widget.",
+            "example": {
+              "field1": "value",
+              "field2": 42
+            }
+          },
+          "event_type": {
+            "type": "string",
+            "enum": ["model_changed"],
+            "description": "Status event discriminator when role is status"
+          },
+          "previous_deployment_id": {
+            "type": "object",
+            "description": "Deployment active before a model_changed event",
+            "example": "gpt-4o",
+            "nullable": true
+          },
+          "new_deployment_id": {
+            "type": "string",
+            "description": "Deployment selected after a model_changed event",
+            "example": "claude-3"
+          }
+        }
+      },
       "ConversationMessageDto": {
         "type": "object",
         "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique message identifier",
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          },
           "role": {
             "type": "string",
-            "enum": ["user", "assistant"],
+            "enum": ["user", "assistant", "status"],
             "example": "user"
           },
           "content": {
@@ -2230,6 +2671,9 @@
           "timestamp": {
             "type": "string",
             "example": "2026-05-19T16:00:00.000Z"
+          },
+          "custom_content": {
+            "$ref": "#/components/schemas/ConversationMessageCustomContentDto"
           }
         },
         "required": ["role", "content", "timestamp"]
@@ -2563,22 +3007,6 @@
         },
         "required": ["confirm"]
       },
-      "UpdatePinsDto": {
-        "type": "object",
-        "properties": {
-          "path": {
-            "type": "string",
-            "description": "Full DIAL Core resource URL of the conversation to pin or unpin (matches `id` in `ConversationListItemDto`).",
-            "example": "conversations/default-bucket/gpt-4__My chat__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
-          },
-          "isPinned": {
-            "type": "boolean",
-            "description": "Pass `true` to pin the conversation, `false` to unpin.",
-            "example": true
-          }
-        },
-        "required": ["path", "isPinned"]
-      },
       "FileUploadResponseDto": {
         "type": "object",
         "properties": {
@@ -2589,6 +3017,132 @@
           }
         },
         "required": ["url"]
+      },
+      "ListFilesItemDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "folderId": {
+            "type": "string"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": ["item", "folder"]
+          },
+          "bucket": {
+            "type": "string"
+          },
+          "parentPath": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "contentLength": {
+            "type": "number"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Unix timestamp ms"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "author": {
+            "type": "string"
+          }
+        },
+        "required": ["name", "path", "folderId", "nodeType", "bucket"]
+      },
+      "ListFilesResponseDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ListFilesItemDto"
+            }
+          },
+          "nextToken": {
+            "type": "string"
+          }
+        },
+        "required": ["bucket", "path", "items"]
+      },
+      "FileMetadataResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "File name without path"
+          },
+          "nodeType": {
+            "type": "string",
+            "description": "Node type, expected \"item\" for files"
+          },
+          "bucket": {
+            "type": "string"
+          },
+          "parentPath": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "description": "DIAL Core resource URL"
+          },
+          "resourceType": {
+            "type": "string"
+          },
+          "etag": {
+            "type": "string",
+            "description": "ETag; not available for folders"
+          },
+          "contentLength": {
+            "type": "number"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "number",
+            "description": "Creation time in Unix milliseconds; not supported by all storage providers"
+          },
+          "updatedAt": {
+            "type": "number",
+            "description": "Last-modified time in Unix milliseconds"
+          },
+          "permissions": {
+            "description": "READ | WRITE | SHARE",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "author": {
+            "type": "string",
+            "description": "Author; not available for folders"
+          }
+        }
       },
       "RateMessageDto": {
         "type": "object",

@@ -26,7 +26,9 @@
       "@epam/ai-dial-chat-shared/*": ["./libs/chat-shared/*"],
       "@epam/ai-dial-sidebar/*": ["./libs/sidebar/*"],
       "@epam/ai-dial-conversation-stages/*": ["./libs/conversation-stages/*"],
-      "@epam/ai-dial-conversation-panel/*": ["./libs/conversation-panel/*"]
+      "@epam/ai-dial-conversation-panel/*": ["./libs/conversation-panel/*"],
+      "@epam/ai-dial-starter-buttons/*": ["./libs/starter-buttons/*"],
+      "@epam/ai-dial-catalog/*": ["./libs/catalog/*"]
     }
   }
 }

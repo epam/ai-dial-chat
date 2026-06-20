@@ -26,6 +26,7 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
         variant={item.variant}
         title={item.title}
         message={item.message}
+        textClassName="flex-col min-w-0"
         closable
         onClose={() => onDismiss(item.id)}
       />

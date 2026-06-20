@@ -3,7 +3,11 @@ import type {
   DeploymentItem,
   StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import { isAudioTranscriptionSupported } from '@epam/ai-dial-chat-shared';
+import {
+  AttachmentErrorReason,
+  isAudioTranscriptionSupported,
+} from '@epam/ai-dial-chat-shared';
+import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import {
   FC,
@@ -22,16 +26,22 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
 import {
+  AttachmentsI18nKeys,
   BasicI18nKeys,
   ChatI18nKeys,
+  ConversationI18nKeys,
   DeploymentsI18nKeys,
+  DialFileManagerI18nKeys,
+  FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
+import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   transcribeAudio,
@@ -39,6 +49,10 @@ import {
 } from '../../server-api/chat.api';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
+import {
+  isMimeTypeAllowed,
+  mimeTypesToExtensionLabels,
+} from '../../utils/attachment-mime';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -52,6 +66,12 @@ const ConversationInput = lazy(async () => {
   return { default: module.ConversationInput };
 });
 
+const DialFileManagerModal = lazy(async () => {
+  const module =
+    await import('../../components/DialFileManagerModal/DialFileManagerModal');
+  return { default: module.default };
+});
+
 // TODO: rename page and component
 // TODO: review component after ConversationPage implementation, maybe move ConversationInput here and remove ConversationInput component
 const ConversationRoute: FC = () => {
@@ -63,6 +83,14 @@ const ConversationRoute: FC = () => {
   const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
+  const {
+    isOpen: isDialFileManagerOpen,
+    openModal: openDialFileManager,
+    closeModal: closeDialFileManager,
+    pendingAttachments: pendingDialAttachments,
+    clearPendingAttachments: clearPendingDialAttachments,
+    handleAttach: handleAttachDialFiles,
+  } = useDialFileManagerState(bucket);
   const inputRef = useRef<HTMLDivElement>(null);
   const {
     items,
@@ -72,6 +100,48 @@ const ConversationRoute: FC = () => {
     isLoading,
     error,
   } = useDeployments();
+
+  const inputAttachmentTypes = useMemo(
+    () =>
+      items.find((item) => item.id === selectedItemId)?.inputAttachmentTypes ??
+      [],
+    [items, selectedItemId],
+  );
+
+  const isAttachmentsAllowed = inputAttachmentTypes.length > 0;
+
+  const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  const pendingNetworkFilesRef = useRef<string[]>([]);
+  const networkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const validateAttachment = useCallback(
+    (attachment: Attachment): AttachmentErrorReason | undefined => {
+      if (!isMimeTypeAllowed(attachment.contentType, inputAttachmentTypes)) {
+        if (unsupportedTypeTimerRef.current != null) {
+          clearTimeout(unsupportedTypeTimerRef.current);
+        }
+        unsupportedTypeTimerRef.current = setTimeout(() => {
+          showNotification({
+            variant: NotificationVariant.Error,
+            title: t(AttachmentsI18nKeys.UnsupportedTypeTitle),
+            message: t(AttachmentsI18nKeys.UnsupportedTypeMessage, {
+              formats: mimeTypesToExtensionLabels(inputAttachmentTypes),
+            }),
+          });
+          unsupportedTypeTimerRef.current = null;
+        }, 100);
+        return AttachmentErrorReason.UnsupportedType;
+      }
+      return undefined;
+    },
+    [inputAttachmentTypes, showNotification, t],
+  );
+
+  const { isDragging, pendingFiles, onFilesConsumed } =
+    usePageFileDrag(isAttachmentsAllowed);
 
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
@@ -153,15 +223,58 @@ const ConversationRoute: FC = () => {
       if (!bucket) {
         throw new Error('User bucket is not available');
       }
-
-      const response = await uploadFile(
-        bucket,
-        buildUploadPath(attachment),
-        attachment.file,
-      );
-      return response.url;
+      try {
+        const response = await uploadFile(
+          bucket,
+          buildUploadPath(attachment),
+          attachment.file,
+        );
+        return response.url;
+      } catch (err) {
+        if (!navigator.onLine) {
+          pendingNetworkFilesRef.current.push(attachment.name);
+          if (networkTimerRef.current != null) {
+            clearTimeout(networkTimerRef.current);
+          }
+          networkTimerRef.current = setTimeout(() => {
+            const filenames = pendingNetworkFilesRef.current.splice(0);
+            showNotification({
+              variant: NotificationVariant.Error,
+              title: t(AttachmentsI18nKeys.NetworkErrorTitle),
+              message: (
+                <div className="min-w-0 overflow-hidden">
+                  <span className="whitespace-pre-line">
+                    {t(AttachmentsI18nKeys.NetworkErrorMessage)}
+                  </span>
+                  <ul className="mt-1 max-w-[508px]">
+                    {filenames.map((name, i) => (
+                      <li
+                        key={i}
+                        className="flex items-center gap-1 overflow-hidden"
+                      >
+                        <span className="shrink-0" aria-hidden>
+                          •
+                        </span>
+                        <span className="min-w-0 flex-1 truncate">{name}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ),
+            });
+            networkTimerRef.current = null;
+          }, 100);
+          const error =
+            err instanceof Error ? err : new Error('Network upload failed');
+          (
+            error as Error & { errorReason: AttachmentErrorReason }
+          ).errorReason = AttachmentErrorReason.Network;
+          throw error;
+        }
+        throw err;
+      }
     },
-    [bucket],
+    [bucket, showNotification, t],
   );
 
   const lastAudioMimeTypeRef = useRef<string>('audio/webm');
@@ -254,6 +367,20 @@ const ConversationRoute: FC = () => {
 
   return (
     <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
+      <FileDndOverlay
+        isVisible={isDragging}
+        isAttachmentsAllowed={isAttachmentsAllowed}
+        title={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlayTitle
+            : FileDndI18nKeys.OverlayDeniedTitle,
+        )}
+        subtitle={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlaySubtitle
+            : FileDndI18nKeys.OverlayDeniedSubtitle,
+        )}
+      />
       <Suspense fallback={<RouteFallback />}>
         <div
           className="flex h-full flex-col items-center justify-center p-4 desktop:p-8"
@@ -278,10 +405,41 @@ const ConversationRoute: FC = () => {
             onUploadAudio={handleUploadAudio}
             onTranscribeAudio={handleTranscribeAudio}
             sendOnEnter={sendOnEnter}
+            pendingDropFiles={pendingFiles}
+            onDropFilesConsumed={onFilesConsumed}
+            pendingAttachments={pendingDialAttachments}
+            onPendingAttachmentsConsumed={clearPendingDialAttachments}
             autoFocus={!isMobile}
+            onDialFileSystemClick={openDialFileManager}
+            dialFileSystemLabel={t(
+              ConversationI18nKeys.AttachMenuDialFileSystem,
+            )}
+            validateAttachment={
+              isAttachmentsAllowed ? validateAttachment : undefined
+            }
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
+        {isDialFileManagerOpen && (
+          <DialFileManagerModal
+            isOpen={isDialFileManagerOpen}
+            onClose={closeDialFileManager}
+            onAttach={handleAttachDialFiles}
+            bucket={bucket}
+            title={t(DialFileManagerI18nKeys.Title)}
+            attachLabel={t(DialFileManagerI18nKeys.Attach)}
+            emptyTitle={t(DialFileManagerI18nKeys.Empty)}
+            emptyDescription=""
+            errorMessage={t(DialFileManagerI18nKeys.Error)}
+            retryLabel={t(DialFileManagerI18nKeys.Retry)}
+            hiddenFilesLabel={t(DialFileManagerI18nKeys.HiddenFiles)}
+            showHiddenFilesLabel={t(DialFileManagerI18nKeys.ShowHiddenFiles)}
+            hideHiddenFilesLabel={t(DialFileManagerI18nKeys.HideHiddenFiles)}
+            getSelectionLabel={(count) =>
+              t(DialFileManagerI18nKeys.ItemsSelected, { count })
+            }
+          />
+        )}
       </Suspense>
     </div>
   );

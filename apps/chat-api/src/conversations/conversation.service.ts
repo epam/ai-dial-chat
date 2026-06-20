@@ -1,10 +1,4 @@
 import {
-  Conversation,
-  ConversationMetadata,
-  Message,
-  MessageRole,
-} from '@epam/ai-dial-chat-shared';
-import {
   BadGatewayException,
   Injectable,
   Logger,
@@ -16,12 +10,20 @@ import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
+import {
+  ConversationMetadataDto,
+  ConversationResponseDto,
+} from '../openapi/openapi-response.dto';
 import { UserConfigService } from '../user-config/user-config.service';
 import { PUBLIC_BUCKET } from './constants/conversation.constants';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
 } from './dto/conversation-list.dto';
+import {
+  ConversationMessageDto,
+  ConversationMessageRole,
+} from './dto/conversation-message.dto';
 import {
   ConversationDeletionFailureDto,
   ConversationDeletionResultDto,
@@ -46,8 +48,11 @@ import {
   safeDecodeURIComponent,
 } from './utils/conversation.utils';
 import { resolveUniqueConversationName } from './utils/resolve-unique-conversation-name';
+import { HIDDEN_FILE } from '../constants/dial.constants';
 
-const getValidAttachments = (customContent?: Message['custom_content']) =>
+const getValidAttachments = (
+  customContent?: ConversationMessageDto['custom_content'],
+) =>
   (customContent?.attachments ?? []).filter((attachment) =>
     Boolean(attachment.data || attachment.url),
   );
@@ -117,7 +122,7 @@ export class ConversationService extends AppService {
     bucket: string,
     deploymentId: string,
     customContent?: MessageCustomContentDto,
-  ): Promise<Conversation> {
+  ): Promise<ConversationResponseDto> {
     const now = Date.now();
     const uuid = crypto.randomUUID();
     const baseName = getConversationName('New chat', firstMessage);
@@ -135,7 +140,7 @@ export class ConversationService extends AppService {
     };
 
     // TODO: add temperature and other conversation settings
-    const conversation: Conversation = {
+    const conversation: ConversationResponseDto = {
       id: `${folderId}/${conversationPath}`,
       folderId,
       name,
@@ -167,7 +172,7 @@ export class ConversationService extends AppService {
         return handleDialError(error);
       }
 
-      return { ...data, ...conversation } as Conversation;
+      return { ...data, ...conversation } as ConversationResponseDto;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
       return handleDialError(error);
@@ -178,7 +183,7 @@ export class ConversationService extends AppService {
     conversationPath: string,
     token: string,
     sessionBucket: string,
-  ): Promise<Conversation> {
+  ): Promise<ConversationResponseDto> {
     const slashIndex = conversationPath.indexOf('/');
     const bucket =
       slashIndex === -1 ? sessionBucket : conversationPath.slice(0, slashIndex);
@@ -197,7 +202,7 @@ export class ConversationService extends AppService {
         this.logger.error('DIAL Core rejected getConversation', error);
         return handleDialError(error);
       }
-      return data as Conversation;
+      return data as ConversationResponseDto;
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversation', error);
       return handleDialError(error);
@@ -527,9 +532,11 @@ export class ConversationService extends AppService {
               })
           : [];
 
-      const items = [...userItems, ...publicItems, ...sharedItems].sort(
-        (a, b) => b.updatedAt - a.updatedAt,
-      );
+      const items = [...userItems, ...publicItems, ...sharedItems]
+        .sort((a, b) => b.updatedAt - a.updatedAt)
+        .filter(
+          (item) => item.id !== HIDDEN_FILE && !item.id.includes(HIDDEN_FILE),
+        );
 
       return {
         items,
@@ -549,7 +556,7 @@ export class ConversationService extends AppService {
     token: string,
     bucket: string,
     permissions?: boolean,
-  ): Promise<ConversationMetadata> {
+  ): Promise<ConversationMetadataDto> {
     try {
       const { data, error } = (await this.client.getConversationMetadata(
         bucket,
@@ -564,7 +571,7 @@ export class ConversationService extends AppService {
         this.logger.error('DIAL Core rejected getConversationMetadata', error);
         return handleDialError(error);
       }
-      return data as ConversationMetadata;
+      return data as ConversationMetadataDto;
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversationMetadata', error);
       return handleDialError(error);
@@ -575,8 +582,8 @@ export class ConversationService extends AppService {
     conversationPath: string,
     token: string,
     bucket: string,
-    conversation: Conversation,
-  ): Promise<Conversation> {
+    conversation: ConversationResponseDto,
+  ): Promise<ConversationResponseDto> {
     try {
       const { data, error } = (await this.client.saveConversation(
         bucket,
@@ -590,7 +597,7 @@ export class ConversationService extends AppService {
         this.logger.error('DIAL Core rejected saveConversation', error);
         return handleDialError(error);
       }
-      return { ...data, ...conversation } as Conversation;
+      return { ...data, ...conversation } as ConversationResponseDto;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
       return handleDialError(error);
@@ -776,9 +783,9 @@ export class ConversationService extends AppService {
       bucket,
     );
 
-    const userMessage: Message = {
+    const userMessage: ConversationMessageDto = {
       id: crypto.randomUUID(),
-      role: MessageRole.User,
+      role: ConversationMessageRole.User,
       content: message,
       timestamp: new Date().toISOString(),
       ...(customContent &&
@@ -794,7 +801,7 @@ export class ConversationService extends AppService {
     // don't append again — the message is already in the persisted history.
     const lastMessage = conversation.messages[conversation.messages.length - 1];
     const messagesForCompletion =
-      lastMessage?.role === MessageRole.User
+      lastMessage?.role === ConversationMessageRole.User
         ? conversation.messages
         : [...conversation.messages, userMessage];
 
@@ -805,10 +812,10 @@ export class ConversationService extends AppService {
         .at(-1)?.custom_content?.configuration_value;
     const shouldHideCurrentConfigurationContent =
       customContent?.configuration_value !== undefined &&
-      lastMessage?.role === MessageRole.User;
+      lastMessage?.role === ConversationMessageRole.User;
 
     const messages = messagesForCompletion
-      .filter((m) => m.role !== MessageRole.Status)
+      .filter((m) => m.role !== ConversationMessageRole.Status)
       .map((m, index, filteredMessages) => {
         const validAttachments = getValidAttachments(m.custom_content);
         const hasConfigurationValue =

@@ -51,7 +51,7 @@ export interface ConversationHistoryTypography {
   /** Line height applied to the panel title. */
   lineHeight?: string;
   /**
-   * A single utility class (e.g. `'dial-body-semi-bold-text'`) applied to the title span.
+   * A single utility class (e.g. `'dial-body-semi-text'`) applied to the title span.
    * When provided, individual font CSS vars are ignored in favour of this class.
    */
   fontClassName?: string;

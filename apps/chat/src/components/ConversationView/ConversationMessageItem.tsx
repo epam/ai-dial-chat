@@ -8,17 +8,27 @@ import {
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
 import {
+  CodeBlockTheme,
   MessageBubble,
   type MessageActionAriaLabels,
   type MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
 import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { FC, lazy, memo, Suspense } from 'react';
+import { FC, lazy, memo, Suspense, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AttachmentsI18nKeys } from '../../constants/translation-keys';
+import {
+  AttachmentsI18nKeys,
+  ButtonsI18nKeys,
+} from '../../constants/translation-keys';
+import { useTheme } from '../../context/ThemeContext';
+import { useAnnotations } from '../../hooks/annotations/useAnnotations';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
+import { useCitationCard } from '../../hooks/citations/useCitationCard';
+import { useCitationMarkdownComponents } from '../../hooks/citations/useCitationMarkdownComponents';
+import { ThemeId } from '../../types/theme-id';
 import { attachmentDtosToDisplayAttachments } from '../../utils/attachment-dto-to-display';
+import { groupAnnotationsBySource } from '../../utils/group-annotations-by-source';
 import { messageHasStages } from '../../utils/message-utils';
 import { buildMessageActions } from './utils/build-message-actions';
 import {
@@ -58,6 +68,8 @@ interface Props {
     newAttachments: Attachment[],
   ) => void;
   onUploadAttachment?: (attachment: Attachment) => Promise<string>;
+  pendingDropFiles?: File[];
+  onDropFilesConsumed?: () => void;
   deploymentLookup: Record<
     string,
     { displayName: string; iconUrl: string | undefined }
@@ -96,6 +108,8 @@ const ConversationMessageItem: FC<Props> = ({
   onCancelEdit,
   onEditMessage,
   onUploadAttachment,
+  pendingDropFiles,
+  onDropFilesConsumed,
   deploymentLookup,
   effectiveDeploymentId,
   tooltips,
@@ -116,6 +130,7 @@ const ConversationMessageItem: FC<Props> = ({
   stepsLabel,
 }) => {
   const { t } = useTranslation();
+  const { currentTheme } = useTheme();
   const { handleAttachmentClick } = useAttachmentAction();
   const isStreaming = isStreamingMessage(
     msg.role,
@@ -125,6 +140,20 @@ const ConversationMessageItem: FC<Props> = ({
   );
   const isEditing =
     msg.role === MessageRole.User && !!editingMessageIndexes?.has(index);
+
+  const annotations = useAnnotations(msg, isStreaming);
+  const citationGroups = useMemo(
+    () => groupAnnotationsBySource(annotations),
+    [annotations],
+  );
+  const citationCard = useCitationCard();
+  const { processedContent, markdownComponents } =
+    useCitationMarkdownComponents(
+      msg.content,
+      citationGroups,
+      citationCard,
+      handleAttachmentClick,
+    );
 
   if (isEditing) {
     return (
@@ -161,6 +190,8 @@ const ConversationMessageItem: FC<Props> = ({
             saveLabel={saveLabel}
             ariaLabel={editMessageAriaLabel}
             className="w-full max-w-[748px]"
+            pendingDropFiles={pendingDropFiles}
+            onDropFilesConsumed={onDropFilesConsumed}
           />
         </Suspense>
       </div>
@@ -190,10 +221,16 @@ const ConversationMessageItem: FC<Props> = ({
       )
     : {};
 
+  const messageText =
+    msg.role === MessageRole.Assistant ? processedContent : msg.content;
+
   return (
     <MessageBubble
       role={msg.role}
-      text={msg.content}
+      text={messageText}
+      markdownComponents={
+        msg.role === MessageRole.Assistant ? markdownComponents : undefined
+      }
       attachments={attachmentDtosToDisplayAttachments(
         msg.custom_content?.attachments,
       )}
@@ -249,6 +286,13 @@ const ConversationMessageItem: FC<Props> = ({
       deploymentIconUrl={deploymentEntry?.iconUrl}
       deploymentDisplayName={deploymentEntry?.displayName}
       thinkingLabel={thinkingLabel}
+      codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
+      codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
+      codeBlockTheme={
+        currentTheme === ThemeId.Light
+          ? CodeBlockTheme.Light
+          : CodeBlockTheme.Dark
+      }
       onAttachmentClick={handleAttachmentClick}
       attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
       {...statusProps}

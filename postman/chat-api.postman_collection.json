@@ -1,0 +1,873 @@
+{
+  "info": {
+    "name": "Chat API (1.0.0)",
+    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 38 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "event": [
+    {
+      "listen": "test",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "const csrfToken = pm.response.headers.get('X-CSRF-Token');",
+          "if (csrfToken) {",
+          "  pm.collectionVariables.set('csrfToken', csrfToken);",
+          "}"
+        ]
+      }
+    }
+  ],
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3005", "type": "string" },
+    { "key": "origin", "value": "http://localhost:4207", "type": "string" },
+    { "key": "csrfToken", "value": "", "type": "string" },
+    { "key": "providerId", "value": "local", "type": "string" },
+    {
+      "key": "callbackUrl",
+      "value": "http://localhost:4207",
+      "type": "string"
+    },
+    { "key": "deployment", "value": "deployment-name", "type": "string" },
+    { "key": "modelName", "value": "model-name", "type": "string" },
+    { "key": "id", "value": "resource-id", "type": "string" },
+    { "key": "bucket", "value": "bucket-name", "type": "string" },
+    { "key": "path", "value": "path/to/file", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "applications",
+      "item": [
+        {
+          "name": "List application type schemas",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/application-schemas",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "application-schemas"]
+            },
+            "description": "Returns DIAL Core application type schemas visible to the authenticated user. Results are cached server-side for 60 seconds per user."
+          }
+        },
+        {
+          "name": "Get application type schema by id",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/application-schemas/{{id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "application-schemas", "{{id}}"]
+            },
+            "description": "Returns one DIAL Core application type schema by its $id. Results are cached server-side for 60 seconds per user per schema."
+          }
+        },
+        {
+          "name": "List available applications",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/applications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "applications"]
+            },
+            "description": "Returns the list of DIAL Core applications visible to the authenticated session user. Proxies GET /openai/applications using the caller's session access token. Results are cached server-side for 30 seconds per user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "auth",
+      "item": [
+        {
+          "name": "List configured identity providers",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/providers",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "providers"]
+            }
+          }
+        },
+        {
+          "name": "Start OIDC login flow",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/login/{{providerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "login", "{{providerId}}"]
+            }
+          }
+        },
+        {
+          "name": "OIDC authorization callback",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/callback/{{providerId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "callback", "{{providerId}}"]
+            }
+          }
+        },
+        {
+          "name": "Log out and clear session cookie",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "logout"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Get current user profile",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "me"]
+            },
+            "description": "Authentication: session cookie (managed automatically by the Postman cookie jar)."
+          }
+        }
+      ]
+    },
+    {
+      "name": "chat",
+      "item": [
+        {
+          "name": "Send a chat completion request to DIAL Core",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"deployment\": \"gpt-4o\",\n  \"messages\": [\n    {\n      \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n      \"role\": \"user\",\n      \"content\": \"Hello, how can you help me today?\",\n      \"timestamp\": \"2024-01-01T00:00:00.000Z\",\n      \"custom_content\": {\n        \"attachments\": [\n          {\n            \"index\": 0,\n            \"type\": \"type\",\n            \"title\": \"title\",\n            \"data\": \"data\",\n            \"url\": \"url\",\n            \"reference_type\": \"reference_type\",\n            \"reference_url\": \"reference_url\"\n          }\n        ],\n        \"configuration_value\": {\n          \"button\": 1\n        },\n        \"form_value\": {\n          \"field1\": \"value\",\n          \"field2\": 42\n        }\n      }\n    }\n  ],\n  \"temperature\": 0.7,\n  \"max_tokens\": 1024\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/chat/completions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "chat", "completions"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "config",
+      "item": [
+        {
+          "name": "Get application feature configuration",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "config"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "conversations",
+      "item": [
+        {
+          "name": "Create a new conversation",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"firstMessage\": \"Hello, how can you help me today?\",\n  \"deploymentId\": \"applications/catalog/Untitled%20app%201__0.0.1\",\n  \"custom_content\": {\n    \"attachments\": [\n      {\n        \"index\": 0,\n        \"type\": \"type\",\n        \"title\": \"title\",\n        \"data\": \"data\",\n        \"url\": \"url\",\n        \"reference_type\": \"reference_type\",\n        \"reference_url\": \"reference_url\"\n      }\n    ],\n    \"configuration_value\": {\n      \"button\": 1\n    },\n    \"form_value\": {\n      \"field1\": \"value\",\n      \"field2\": 42\n    }\n  }\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations"]
+            },
+            "description": "Creates a new conversation with an initial user message and returns it with a server-assigned ID.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Get a conversation by path",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Conversation path (uuid__name). May contain slashes."
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Save (overwrite) a conversation by path",
+          "request": {
+            "method": "PUT",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversation\": {\n    \"id\": \"test-bucket/uuid__Hello\",\n    \"folderId\": \"test-bucket\",\n    \"name\": \"Hello\",\n    \"model\": {\n      \"id\": \"anthropic.claude-v3-sonnet\"\n    },\n    \"prompt\": \"\",\n    \"temperature\": 1,\n    \"messages\": [\n      {\n        \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n        \"role\": \"user\",\n        \"content\": \"Hello!\",\n        \"timestamp\": \"2026-05-19T16:00:00.000Z\",\n        \"custom_content\": {\n          \"attachments\": [\n            {\n              \"index\": 0,\n              \"type\": \"type\",\n              \"title\": \"title\",\n              \"data\": \"data\",\n              \"url\": \"url\",\n              \"reference_type\": \"reference_type\",\n              \"reference_url\": \"reference_url\"\n            }\n          ],\n          \"configuration_value\": {\n            \"button\": 1\n          },\n          \"form_value\": {\n            \"field1\": \"value\",\n            \"field2\": 42\n          },\n          \"event_type\": \"model_changed\",\n          \"previous_deployment_id\": \"gpt-4o\",\n          \"new_deployment_id\": \"claude-3\"\n        }\n      }\n    ],\n    \"lastActivityDate\": 1779206400000,\n    \"updatedAt\": 1779206400000,\n    \"selectedAddons\": [],\n    \"assistantModelId\": \"anthropic.claude-v3-sonnet\"\n  }\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Conversation path (uuid__name). May contain slashes."
+                }
+              ]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Rename a conversation by path",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"newTitle\": \"My renamed chat\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Conversation path (uuid__name). May contain slashes."
+                }
+              ]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Delete a conversation by path",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Conversation path (uuid__name). May contain slashes."
+                }
+              ]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "List conversations",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/list",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations", "list"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "disabled": true,
+                  "description": "Maximum number of conversations to return."
+                },
+                {
+                  "key": "nextToken",
+                  "value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9",
+                  "disabled": true,
+                  "description": "Pagination cursor returned in the previous response as `nextToken`. Omit for the first page."
+                },
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "disabled": true,
+                  "description": "DIAL Core subfolder path to scope the listing. Omit or pass an empty string to list all conversations from the bucket root (\"My Files\")."
+                }
+              ]
+            },
+            "description": "Returns a flat, paginated list of all conversations for the authenticated user by calling the DIAL Core metadata endpoint with `recursive=true` on the root path."
+          }
+        },
+        {
+          "name": "Get metadata for a conversation",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/metadata?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations", "metadata"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Conversation path (uuid__name). May contain slashes."
+                },
+                {
+                  "key": "permissions",
+                  "value": "true",
+                  "disabled": true,
+                  "description": "Include READ/WRITE/SHARE permissions for the requesting user"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Stream a chat completion",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"path\": \"gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n  \"message\": \"What is the capital of France?\",\n  \"model\": \"anthropic.claude-v3-sonnet\",\n  \"custom_content\": {\n    \"attachments\": [\n      {\n        \"index\": 0,\n        \"type\": \"type\",\n        \"title\": \"title\",\n        \"data\": \"data\",\n        \"url\": \"url\",\n        \"reference_type\": \"reference_type\",\n        \"reference_url\": \"reference_url\"\n      }\n    ],\n    \"configuration_value\": {\n      \"button\": 1\n    },\n    \"form_value\": {\n      \"field1\": \"value\",\n      \"field2\": 42\n    }\n  }\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/completions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations", "completions"]
+            },
+            "description": "Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Duplicate a conversation into the user's own bucket",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/duplicate?path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations", "duplicate"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "Conversation path (uuid__name). May contain slashes."
+                }
+              ]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Delete selected conversations",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ids\": [\n    \"ids\"\n  ]\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/deletions",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations", "deletions"]
+            },
+            "description": "Deletes up to 100 owned conversations in one request. Returns a result counting deleted, already-absent, and failed items. Already-absent IDs are treated as success. IDs outside the authenticated bucket are rejected with code FORBIDDEN.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Delete all conversations in the user bucket",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"confirm\": true\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/conversations/deletions/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "conversations", "deletions", "all"]
+            },
+            "description": "Deletes every conversation in the authenticated user's bucket. Requires { confirm: true } in the request body to prevent accidental deletion. Returns a result counting deleted, already-absent, and failed items.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "deployments",
+      "item": [
+        {
+          "name": "List deployments by interface type",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deployments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "deployments"],
+              "query": [
+                {
+                  "key": "interface_type",
+                  "value": "chat",
+                  "disabled": true,
+                  "description": "Filter by interface type (repeatable)"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get JSON Schema configuration for a deployment",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deployments/{{deployment}}/configuration",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "deployments",
+                "{{deployment}}",
+                "configuration"
+              ]
+            },
+            "description": "Returns the JSON Schema of configuration supported by the deployment. Only available for deployments whose `features.configuration` flag is `true`. Results are cached server-side for 60 seconds per user."
+          }
+        }
+      ]
+    },
+    {
+      "name": "files",
+      "item": [
+        {
+          "name": "uploadFile",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "file", "type": "file", "src": [] },
+                { "key": "bucket", "type": "text", "value": "{{bucket}}" },
+                { "key": "path", "type": "text", "value": "{{path}}" }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "List files and folders",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/list?bucket={{bucket}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "list"],
+              "query": [
+                {
+                  "key": "bucket",
+                  "value": "{{bucket}}",
+                  "description": "DIAL Core bucket name"
+                },
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "disabled": true,
+                  "description": "Folder path within bucket (no leading slash, no ..)"
+                },
+                {
+                  "key": "token",
+                  "value": "token",
+                  "disabled": true,
+                  "description": "Pagination token from previous response"
+                },
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "disabled": true,
+                  "description": "Max items to return"
+                },
+                {
+                  "key": "recursive",
+                  "value": "false",
+                  "disabled": true,
+                  "description": "Return items recursively"
+                },
+                {
+                  "key": "permissions",
+                  "value": "true",
+                  "disabled": true,
+                  "description": "Include item permissions"
+                }
+              ]
+            },
+            "description": "Returns a page of file and folder items from DIAL Core storage, normalized for FileManager compatibility."
+          }
+        },
+        {
+          "name": "Get file metadata",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/metadata?bucket={{bucket}}&path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "metadata"],
+              "query": [
+                {
+                  "key": "bucket",
+                  "value": "{{bucket}}",
+                  "description": "DIAL Core bucket name"
+                },
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "File path within the bucket (no leading slash, no .., no trailing /)"
+                }
+              ]
+            },
+            "description": "Returns metadata for a single named file from DIAL Core. Path must not end with /."
+          }
+        },
+        {
+          "name": "downloadFile",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Accept", "value": "application/octet-stream" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/download?bucket={{bucket}}&path={{path}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "download"],
+              "query": [
+                {
+                  "key": "bucket",
+                  "value": "{{bucket}}",
+                  "description": "DIAL Core bucket name"
+                },
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "description": "File path within the bucket (no leading slash, no ..)"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "health",
+      "item": [
+        {
+          "name": "Check application health status",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "health"]
+            },
+            "description": "Returns a simple health check response indicating the application is running. Use this endpoint for load balancer health checks, monitoring, and deployment verification."
+          }
+        }
+      ]
+    },
+    {
+      "name": "models",
+      "item": [
+        {
+          "name": "List available models",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/models",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "models"]
+            },
+            "description": "Returns the list of DIAL Core deployments visible to the authenticated session user. Proxies GET /openai/models using the caller's session access token. Results are cached server-side for 30 seconds per user."
+          }
+        },
+        {
+          "name": "Get model by name",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/models/{{modelName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "models", "{{modelName}}"]
+            },
+            "description": "Returns a single DIAL Core deployment by name for the authenticated session user. Proxies GET /openai/models/{model_name} using the caller's session access token. Results are cached server-side for 60 seconds per user per model."
+          }
+        }
+      ]
+    },
+    {
+      "name": "rate",
+      "item": [
+        {
+          "name": "Rate an assistant message",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"conversationId\": \"bucket/gpt-4o__My Conversation__UUID\",\n  \"responseId\": \"22222222-2222-2222-2222-222222222222\",\n  \"modelId\": \"anthropic.claude-v3-sonnet\",\n  \"rate\": 1,\n  \"comment\": \"The response was too brief\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/rate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "rate"]
+            },
+            "description": "Forwards a like/dislike rating for an assistant message to DIAL Core. Uses the authenticated session's access token as a Bearer credential.\n\nCSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "themes",
+      "item": [
+        {
+          "name": "Get themes configuration",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/themes",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "themes"]
+            },
+            "description": "Fetches the complete theme configuration from the external themes service. Returns a JSON object containing all available themes with their properties, colors, and icon references. Results are cached for 5 minutes."
+          }
+        },
+        {
+          "name": "Get theme icon",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "image/svg+xml" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/themes/icon?iconName=icon-light.svg",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "themes", "icon"],
+              "query": [
+                {
+                  "key": "iconName",
+                  "value": "icon-light.svg",
+                  "description": "Icon filename (alphanumeric, dash, underscore, and dot only)"
+                }
+              ]
+            },
+            "description": "Fetches a theme icon as SVG or PNG content from the external themes service. The icon name is validated to prevent path traversal attacks - only alphanumeric characters, dashes, underscores, and dots are allowed. Results are cached for 5 minutes."
+          }
+        }
+      ]
+    },
+    {
+      "name": "transcription",
+      "item": [
+        {
+          "name": "Transcribe audio using the configured ASR model",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"audioUrl\": \"audioUrl\",\n  \"mimeType\": \"mimeType\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/transcription",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "transcription"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "user-config",
+      "item": [
+        {
+          "name": "Get current user configuration",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user-config",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user-config"]
+            }
+          }
+        },
+        {
+          "name": "Pin or unpin a conversation",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"path\": \"conversations/default-bucket/gpt-4__My chat__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n  \"isPinned\": true\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user-config/pins",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user-config", "pins"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Install or uninstall a toolset",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"toolset-abc\",\n  \"isInstalled\": true\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user-config/toolsets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user-config", "toolsets"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Install or uninstall a deployment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"toolset-abc\",\n  \"isInstalled\": true\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user-config/deployments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user-config", "deployments"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        }
+      ]
+    }
+  ]
+}

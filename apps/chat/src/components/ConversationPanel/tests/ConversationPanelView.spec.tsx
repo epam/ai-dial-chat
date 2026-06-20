@@ -1,10 +1,14 @@
-import type { ConversationDeletionResultDto } from '@epam/chat-api-client';
+import {
+  ConversationDeletionFailureDtoCodeEnum,
+  type ConversationDeletionResultDto,
+} from '@epam/chat-api-client';
 import {
   act,
   fireEvent,
   render,
   screen,
   waitFor,
+  within,
 } from '@testing-library/react';
 import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -19,9 +23,30 @@ vi.mock('@epam/ai-dial-conversation-panel', async (importOriginal) => {
     ...actual,
     ConversationPanel: ({
       headerActions,
+      conversations: panelConversations,
+      getActions,
     }: {
       headerActions?: React.ReactNode;
-    }) => <div data-testid="conversation-panel">{headerActions}</div>,
+      conversations?: Array<{ id: string }>;
+      getActions?: (item: { id: string }) => Array<{
+        key: string;
+        label: React.ReactNode;
+        onClick?: () => void;
+      }>;
+    }) => (
+      <div role="region" aria-label="conversation panel">
+        {headerActions}
+        {panelConversations?.map((item) => (
+          <div key={item.id}>
+            {(getActions?.(item) ?? []).map((action) => (
+              <button key={action.key} onClick={action.onClick}>
+                {action.label}
+              </button>
+            ))}
+          </div>
+        ))}
+      </div>
+    ),
   };
 });
 
@@ -153,7 +178,6 @@ vi.mock('../../../hooks/useLocalStorage', () => ({
   default: () => [325, vi.fn()],
 }));
 vi.mock('../../../constants/routes', () => ({
-  ROUTES: { ROOT: '/' },
   getConversationRoute: (id: string) => `/conversations/${id}`,
   normalizeConversationId: (id: string) => id,
 }));
@@ -182,6 +206,8 @@ const CONFIRM_BUTTON = 'buttons.deleteAll';
 const CANCEL_BUTTON = 'buttons.cancel';
 const DELETE_ALL_ERROR = 'conversationPanel.deleteAllError';
 const PARTIAL_ERROR = 'conversationPanel.deleteAllPartialError';
+
+const DELETE_CONFIRM_BUTTON = 'buttons.delete';
 
 const mockDeleteAllConversations =
   vi.fn<() => Promise<ConversationDeletionResultDto>>();
@@ -277,6 +303,13 @@ describe('ConversationPanelView — delete-all header action', () => {
       failed: [],
     });
 
+    // Use empty conversations list to guard against stale-closure regression:
+    // navigation must not depend on finding the active conversation in the list.
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
     render(<ConversationPanelView {...defaultProps} />);
     openDeleteAllPopup();
     await act(async () => {
@@ -319,7 +352,12 @@ describe('ConversationPanelView — delete-all header action', () => {
       requested: 1,
       deleted: 0,
       alreadyAbsent: 0,
-      failed: [{ id: 'conv1', code: 'UPSTREAM_ERROR' }],
+      failed: [
+        {
+          id: 'conv1',
+          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+        },
+      ],
     });
 
     render(<ConversationPanelView {...defaultProps} />);
@@ -340,7 +378,12 @@ describe('ConversationPanelView — delete-all header action', () => {
       requested: 2,
       deleted: 1,
       alreadyAbsent: 0,
-      failed: [{ id: 'conv1', code: 'UPSTREAM_ERROR' }],
+      failed: [
+        {
+          id: 'conv1',
+          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+        },
+      ],
     });
 
     render(<ConversationPanelView {...defaultProps} />);
@@ -458,6 +501,130 @@ describe('ConversationPanelView — delete-all header action', () => {
         alreadyAbsent: 0,
         failed: [],
       });
+    });
+  });
+
+  it('complete success: navigates to root even when conversations list is empty at callback time', async () => {
+    mockDeleteAllConversations.mockResolvedValueOnce({
+      requested: 0,
+      deleted: 0,
+      alreadyAbsent: 0,
+      failed: [],
+    });
+
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(<ConversationPanelView {...defaultProps} />);
+    openDeleteAllPopup();
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: CONFIRM_BUTTON }));
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+    expect(mockNavigate).toHaveBeenCalledWith('/');
+  });
+});
+
+describe('ConversationPanelView — single-conversation delete navigation', () => {
+  it('navigates to root after deleting the active conversation', async () => {
+    render(<ConversationPanelView {...defaultProps} />);
+
+    fireEvent.click(
+      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
+
+    const dialog = screen.getByRole('dialog');
+    await act(async () => {
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/');
+    });
+  });
+
+  it('does not navigate when deleting a non-active conversation', async () => {
+    const secondConversation = {
+      id: 'conv2',
+      title: 'Chat 2',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: false,
+      publishedWithMe: false,
+    };
+
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [baseContextValue.conversations[0], secondConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView {...defaultProps} activeConversationId="conv1" />,
+    );
+
+    const deleteButtons = screen.getAllByRole('button', {
+      name: DELETE_CONFIRM_BUTTON,
+    });
+    fireEvent.click(deleteButtons[1]);
+
+    const dialog = screen.getByRole('dialog');
+    await act(async () => {
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull();
+    });
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('navigates to root when ID comparison requires decodeURIComponent', async () => {
+    // Simulates a conversation whose title contains a space stored as %20 in the API id.
+    // getConversationRoute double-encodes to %2520; app.tsx decodes once back to %20.
+    // So activeConversationId still contains %20, not a literal space.
+    const encodedConversation = {
+      id: 'conversations/bucket/gpt-4__My%20Chat.json',
+      title: 'My Chat',
+      isPinned: false,
+      updatedAt: 0,
+      sharedWithMe: false,
+      publishedWithMe: false,
+    };
+
+    vi.mocked(useConversations).mockReturnValue({
+      ...baseContextValue,
+      conversations: [encodedConversation],
+    } as any); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+    render(
+      <ConversationPanelView
+        {...defaultProps}
+        activeConversationId="conversations/bucket/gpt-4__My%20Chat.json"
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+    );
+
+    const dialog = screen.getByRole('dialog');
+    await act(async () => {
+      fireEvent.click(
+        within(dialog).getByRole('button', { name: DELETE_CONFIRM_BUTTON }),
+      );
+    });
+
+    await waitFor(() => {
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
   });
 });

@@ -3,6 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "license": "Apache-2.0",
+  "type": "module",
   "main": "./dist/index.js",
   "module": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -11,27 +12,16 @@
     ".": {
       "@epam/source": "./src/index.ts",
       "types": "./dist/index.d.ts",
-      "require": "./dist/index.js",
       "import": "./dist/index.js",
       "default": "./dist/index.js"
     }
   },
-  "nx": {
-    "targets": {
-      "build": {
-        "outputs": [
-          "{projectRoot}/dist/index.js",
-          "{projectRoot}/dist/**/*.{js,cjs,mjs,jsx,d.ts,d.cts,d.mts}{,.map}",
-          "{projectRoot}/dist/tsconfig.lib.tsbuildinfo"
-        ]
-      }
-    }
-  },
   "peerDependencies": {
-    "react": "^19.2.6"
+    "react": "^19.2.6",
+    "@epam/ai-dial-ui-kit": "0.11.0",
+    "vitest": "~4.1.0"
   },
   "dependencies": {
-    "tslib": "^2.3.0",
     "classnames": "2.5.1",
     "tailwind-merge": "^3.6.0"
   }

@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { MarkdownRenderer } from '@epam/ai-dial-conversation-messages';
-import { type FC, memo } from 'react';
-import type { StageTypography } from '../../models/StagesPanel';
+import { type FC, memo, type ReactNode } from 'react';
+import type { StageTypography } from '../../models/stages-props';
 import styles from '../StagesPanel/StagesPanel.module.scss';
 import { StageCodeBlock } from './StageCodeBlock';
 
@@ -31,7 +31,13 @@ export const StageMarkdownContent: FC<Props> = memo(
         tableHeader: styles.tableHeader,
       }}
       components={{
-        code: ({ children, className }) => {
+        code: ({
+          children,
+          className,
+        }: {
+          children?: ReactNode;
+          className?: string;
+        }) => {
           const isBlock = className?.includes('language-');
           if (!isBlock) {
             return (

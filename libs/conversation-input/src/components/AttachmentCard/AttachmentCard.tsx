@@ -1,11 +1,11 @@
 import {
+  AttachmentErrorReason,
   AttachmentType,
   buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
-  DialEllipsisTooltip,
   DialGhostIconButton,
   DialSkeleton,
   DialSkeletonVariant,
@@ -63,7 +63,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     isImage,
     areActionsVisible,
     BottomIcon,
-    bottomLabel,
+    typeLabel,
     cardColorClass,
     removeBtnClass,
   } = useMemo(
@@ -142,35 +142,69 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             )}
           />
         </div>
-      ) : (
+      ) : isError ? (
         <>
-          {/* Top group: file name */}
-          <div className="flex flex-1 items-start overflow-hidden">
-            <span
-              className={mergeClasses(
-                typography?.fontClassName ?? 'dial-tiny-text',
-                'line-clamp-3 max-w-[76px] break-words',
-                styles.name,
-              )}
-            >
-              {displayName}
-            </span>
-          </div>
-
-          {/* Bottom group: icon + label */}
+          {/* Error state: icon + label on top, filename below */}
           <div className="flex flex-row items-center gap-1 overflow-hidden">
             <BottomIcon
               size={DIAL_ICON_SIZE.SM}
               className={mergeClasses('shrink-0', styles.meta)}
               aria-hidden
             />
-            <DialEllipsisTooltip
-              text={bottomLabel}
+            <span
+              title={typeLabel}
               className={mergeClasses(
                 typography?.metaClassName ?? 'dial-tiny-text',
+                'min-w-0 truncate',
                 styles.meta,
               )}
+            >
+              {typeLabel}
+            </span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div
+              title={displayName}
+              className={mergeClasses(
+                typography?.fontClassName ?? 'dial-tiny-text',
+                styles.name,
+              )}
+            >
+              {displayName}
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Normal state: filename on top, icon + label at bottom */}
+          <div className="min-w-0 flex-1">
+            <div
+              title={displayName}
+              className={mergeClasses(
+                typography?.fontClassName ?? 'dial-tiny-text',
+                styles.name,
+              )}
+            >
+              {displayName}
+            </div>
+          </div>
+
+          <div className="flex flex-row items-center gap-1 overflow-hidden">
+            <BottomIcon
+              size={DIAL_ICON_SIZE.SM}
+              className={mergeClasses('shrink-0', styles.meta)}
+              aria-hidden
             />
+            <span
+              title={typeLabel}
+              className={mergeClasses(
+                typography?.metaClassName ?? 'dial-tiny-text',
+                'min-w-0 truncate',
+                styles.meta,
+              )}
+            >
+              {typeLabel}
+            </span>
           </div>
         </>
       )}
@@ -200,18 +234,21 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 mobile:opacity-100',
           )}
         >
-          {isError && onRetry && (
-            <DialGhostIconButton
-              icon={<IconReload size={DIAL_ICON_SIZE.SM} aria-hidden />}
-              size={ElementSize.Small}
-              className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
-              aria-label={retryLabel}
-              onClick={(e: MouseEvent) => {
-                e.stopPropagation();
-                onRetry(id);
-              }}
-            />
-          )}
+          {isError &&
+            onRetry &&
+            attachment.errorReason !==
+              AttachmentErrorReason.UnsupportedType && (
+              <DialGhostIconButton
+                icon={<IconReload size={DIAL_ICON_SIZE.SM} aria-hidden />}
+                size={ElementSize.Small}
+                className={mergeClasses('h-6 w-6 rounded', removeBtnClass)}
+                aria-label={retryLabel}
+                onClick={(e: MouseEvent) => {
+                  e.stopPropagation();
+                  onRetry(id);
+                }}
+              />
+            )}
           {onRemove && (
             <DialGhostIconButton
               icon={<IconX size={DIAL_ICON_SIZE.SM} aria-hidden />}

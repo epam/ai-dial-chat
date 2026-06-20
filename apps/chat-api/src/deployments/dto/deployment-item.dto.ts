@@ -29,10 +29,30 @@ export class DeploymentItemDto {
   description?: string;
 
   @ApiPropertyOptional({
-    type: [String],
     description: 'Interface types supported by this deployment',
   })
   interfaces?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Display version from DIAL Core',
+  })
+  displayVersion?: string;
+
+  @ApiPropertyOptional({
+    description: 'Whether this deployment is featured (configured via env)',
+  })
+  isFeatured?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Whether this deployment is hidden (configured via env)',
+  })
+  isHidden?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Timestamp of last update time from DIAL Core (e.g. 1714768496000)',
+  })
+  updatedAt?: number;
 
   @ApiPropertyOptional({
     description:
@@ -41,7 +61,6 @@ export class DeploymentItemDto {
   applicationTypeSchemaId?: string;
 
   @ApiPropertyOptional({
-    type: [String],
     description:
       'Accepted MIME types for input attachments from DIAL Core (e.g. ["audio/*", "image/*"])',
   })
@@ -53,6 +72,19 @@ export class DeploymentItemDto {
       'Feature flags from DIAL Core controlling which per-conversation settings are available',
   })
   features?: DeploymentFeaturesDto;
+
+  @ApiPropertyOptional({
+    description:
+      'Topics associated with this deployment from DIAL Core (e.g. ["topic1", "topic2"])',
+    type: [String],
+  })
+  topics?: string[];
+
+  @ApiPropertyOptional({
+    description:
+      'Whether this deployment is installed by the current user (from user config)',
+  })
+  isInstalled?: boolean;
 }
 
 export class DeploymentsResponseDto {

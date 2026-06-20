@@ -29,6 +29,12 @@
     },
     {
       "path": "./libs/conversation-panel"
+    },
+    {
+      "path": "./libs/starter-buttons"
+    },
+    {
+      "path": "./libs/catalog"
     }
   ]
 }

@@ -1,3 +1,4 @@
+export * from './models/annotation';
 export * from './models/chat';
 export * from './models/theme';
 export * from './models/auth';
@@ -11,5 +12,11 @@ export * from './utils/merge-class';
 export * from './utils/build-css-vars';
 export * from './utils/message';
 export * from './utils/is-audio-transcription-supported';
+export * from './utils/copy-to-clipboard';
+export * from './utils/format-last-used';
 export * from './constants/mime-types';
 export * from './constants/dial';
+
+export * from './components/DeploymentIcon/DeploymentIcon';
+export * from './components/Highlight/Highlight';
+export * from './components/PanelEmptyState/PanelEmptyState';

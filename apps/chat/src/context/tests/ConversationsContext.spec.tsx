@@ -1,4 +1,7 @@
-import type { ConversationDeletionResultDto } from '@epam/chat-api-client';
+import {
+  ConversationDeletionFailureDtoCodeEnum,
+  type ConversationDeletionResultDto,
+} from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as conversationsApi from '../../server-api/conversations.api';
@@ -12,6 +15,11 @@ vi.mock('../../server-api/conversations.api');
 vi.mock('../../server-api/user-config.api');
 vi.mock('../../utils/conversation-path', () => ({
   getConversationPath: (id: string) => id,
+}));
+vi.mock('../UserConfigContext', () => ({
+  useUserConfig: () => ({
+    setPinnedConversation: vi.fn().mockResolvedValue(undefined),
+  }),
 }));
 
 const mockListConversations = vi.mocked(conversationsApi.listConversations);
@@ -122,7 +130,12 @@ describe('ConversationsContext — deleteAllConversations', () => {
       requested: 3,
       deleted: 2,
       alreadyAbsent: 0,
-      failed: [{ id: 'conv3', code: 'UPSTREAM_ERROR' }],
+      failed: [
+        {
+          id: 'conv3',
+          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+        },
+      ],
     };
     mockDeleteAllConversations.mockResolvedValueOnce(partialResult);
     const refreshedConvs = [
@@ -159,9 +172,18 @@ describe('ConversationsContext — deleteAllConversations', () => {
       deleted: 0,
       alreadyAbsent: 0,
       failed: [
-        { id: 'conv1', code: 'UPSTREAM_ERROR' },
-        { id: 'conv2', code: 'UPSTREAM_ERROR' },
-        { id: 'conv3', code: 'UPSTREAM_ERROR' },
+        {
+          id: 'conv1',
+          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+        },
+        {
+          id: 'conv2',
+          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+        },
+        {
+          id: 'conv3',
+          code: ConversationDeletionFailureDtoCodeEnum.UpstreamError,
+        },
       ],
     });
 

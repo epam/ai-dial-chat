@@ -59,14 +59,33 @@ export const ModelSelectorControl: FC<Props> = ({
     ? 'pointer-events-none opacity-50 cursor-not-allowed'
     : undefined;
 
+  const caretIcon = (
+    <div
+      className={mergeClasses(
+        styles.modelSelectorCaret,
+        'flex size-5 items-center justify-center rounded-full bg-layer-2',
+      )}
+    >
+      <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
+    </div>
+  );
+
   if (isMobile) {
     return (
       <>
         <DialGhostIconButton
-          icon={selectorIcon}
+          icon={
+            <div className="relative flex items-center">
+              {selectorIcon}
+              <div className="absolute right-[-12px]"> {caretIcon}</div>
+            </div>
+          }
           aria-label={selectorAriaLabel}
           onClick={() => setIsModelSheetOpen(true)}
-          className={disabledIconClassName}
+          className={mergeClasses(
+            styles.modelSelectorButton,
+            disabledIconClassName,
+          )}
         />
         <ModelSelectorBottomSheet
           isOpen={isModelSheetOpen}
@@ -97,16 +116,7 @@ export const ModelSelectorControl: FC<Props> = ({
       listClassName="!w-[240px] !max-h-80 shadow-md"
       onOpenChange={handleModelSelectorOpenChange}
       size={ElementSize.Standard}
-      caretIcon={
-        <div
-          className={mergeClasses(
-            styles.modelSelectorCaret,
-            'flex size-5 items-center justify-center rounded-full',
-          )}
-        >
-          <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
-        </div>
-      }
+      caretIcon={caretIcon}
       iconClassName={isInputDisabled ? disabledIconClassName : undefined}
       buttonClassName={mergeClasses(
         'bg-transparent',

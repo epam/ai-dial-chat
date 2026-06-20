@@ -1,4 +1,5 @@
 import {
+  AttachmentErrorReason,
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
@@ -9,16 +10,16 @@ import {
   type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import type { ChatSettingsValues } from '@epam/ai-dial-conversation-input';
+import { FileDndOverlay, type ChatSettingsValues } from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
 import {
+  NotificationVariant,
   DialFabButton,
   DialNeutralButton,
   DialNotification,
-  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -34,23 +35,39 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
-  ButtonsI18nKeys,
+  AttachmentsI18nKeys,
   BasicI18nKeys,
+  ButtonsI18nKeys,
   ChatI18nKeys,
   ChatSettingsI18nKeys,
-  ConversationPanelI18nKeys,
   ConversationI18nKeys,
+  ConversationPanelI18nKeys,
   DeploymentsI18nKeys,
+  DialFileManagerI18nKeys,
+  FileDndI18nKeys,
 } from '../../constants/translation-keys';
+import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import {
+  isMimeTypeAllowed,
+  mimeTypesToExtensionLabels,
+} from '../../utils/attachment-mime';
+import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
   return { default: module.ConversationInput };
+});
+
+const DialFileManagerModal = lazy(async () => {
+  const module = await import('../DialFileManagerModal/DialFileManagerModal');
+  return { default: module.default };
 });
 
 interface Props {
@@ -124,6 +141,14 @@ const ConversationView: FC<Props> = ({
   const { t } = useTranslation();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const { user } = useUser();
+  // bucket is the authenticated user's DIAL Core storage bucket from their profile
+  const bucket = user?.bucket ?? '';
+  const [isDialFileManagerOpen, setIsDialFileManagerOpen] = useState(false);
+  const [pendingDialAttachments, setPendingDialAttachments] = useState<
+    Attachment[]
+  >([]);
+  const isEditActive = !!editingMessageIndexes?.size;
   const {
     items,
     selectedItemId,
@@ -132,6 +157,46 @@ const ConversationView: FC<Props> = ({
     isLoading,
     error,
   } = useDeployments();
+  const { showNotification } = useNotification();
+
+  const inputAttachmentTypes = useMemo(
+    () =>
+      items.find((item) => item.id === selectedItemId)?.inputAttachmentTypes ??
+      [],
+    [items, selectedItemId],
+  );
+
+  const isAttachmentsAllowed = inputAttachmentTypes.length > 0;
+
+  const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+
+  const validateAttachment = useCallback(
+    (attachment: Attachment): AttachmentErrorReason | undefined => {
+      if (!isMimeTypeAllowed(attachment.contentType, inputAttachmentTypes)) {
+        if (unsupportedTypeTimerRef.current != null) {
+          clearTimeout(unsupportedTypeTimerRef.current);
+        }
+        unsupportedTypeTimerRef.current = setTimeout(() => {
+          showNotification({
+            variant: NotificationVariant.Error,
+            title: t(AttachmentsI18nKeys.UnsupportedTypeTitle),
+            message: t(AttachmentsI18nKeys.UnsupportedTypeMessage, {
+              formats: mimeTypesToExtensionLabels(inputAttachmentTypes),
+            }),
+          });
+          unsupportedTypeTimerRef.current = null;
+        }, 100);
+        return AttachmentErrorReason.UnsupportedType;
+      }
+      return undefined;
+    },
+    [inputAttachmentTypes, showNotification, t],
+  );
+
+  const { isDragging, pendingFiles, onFilesConsumed } =
+    usePageFileDrag(isAttachmentsAllowed);
 
   const deploymentItems = useMemo(
     () =>
@@ -375,10 +440,30 @@ const ConversationView: FC<Props> = ({
       saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
     }),
     [selectedDeployment?.features, conversation, onConversationChange, t],
+  const handleAttachDialFiles = useCallback(
+    (files: Parameters<typeof dialFilesToAttachments>[0]) => {
+      setPendingDialAttachments(dialFilesToAttachments(files, bucket));
+      setIsDialFileManagerOpen(false);
+    },
+    [bucket],
   );
 
   return (
     <>
+      <FileDndOverlay
+        isVisible={isDragging}
+        isAttachmentsAllowed={isAttachmentsAllowed}
+        title={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlayTitle
+            : FileDndI18nKeys.OverlayDeniedTitle,
+        )}
+        subtitle={t(
+          isAttachmentsAllowed
+            ? FileDndI18nKeys.OverlaySubtitle
+            : FileDndI18nKeys.OverlayDeniedSubtitle,
+        )}
+      />
       <div className="relative flex w-full flex-1 flex-col overflow-hidden">
         <div
           ref={containerRef}
@@ -390,6 +475,7 @@ const ConversationView: FC<Props> = ({
         >
           <div className="mx-auto flex w-full max-w-[748px] flex-1 flex-col gap-6 px-4 pt-2">
             {messages.map((msg, index) => {
+              const isThisMessageEditing = editingMessageIndexes?.has(index);
               return (
                 <ConversationMessageItem
                   key={index.toString()}
@@ -433,6 +519,16 @@ const ConversationView: FC<Props> = ({
                   stepsLabel={(count) =>
                     t(ConversationI18nKeys.StagesStep, { count })
                   }
+                  pendingDropFiles={
+                    isEditActive && isThisMessageEditing
+                      ? pendingFiles
+                      : undefined
+                  }
+                  onDropFilesConsumed={
+                    isEditActive && isThisMessageEditing
+                      ? onFilesConsumed
+                      : undefined
+                  }
                 />
               );
             })}
@@ -469,30 +565,77 @@ const ConversationView: FC<Props> = ({
             />
           </div>
         ) : (
-          <Suspense fallback={null}>
-            <ConversationInput
-              onSend={onSend}
-              onUploadAttachment={onUploadAttachment}
-              onStop={onStop}
-              isStreaming={isAssistantTyping}
-              onAttachmentsChange={onAttachmentsChange}
-              placeholder={placeholder}
-              deployments={deploymentItems}
-              selectedDeploymentId={selectedItemId}
-              onDeploymentChange={setSelectedItemId}
-              isInputDisabled={isInputDisabled}
-              modelSelectorLabels={modelSelectorLabels}
-              sendLabel={t(ChatI18nKeys.SendMessage)}
-              stopLabel={t(ChatI18nKeys.StopStreaming)}
-              isTranscriptionSupported={isTranscriptionSupported}
-              messageHistory={messageHistory}
-              onUploadAudio={onUploadAudio}
-              onTranscribeAudio={onTranscribeAudio}
-              sendOnEnter={sendOnEnter}
-              chatSettings={chatSettings}
-              autoFocus={!isMobile}
-            />
-          </Suspense>
+          <>
+            <Suspense fallback={null}>
+              <ConversationInput
+                onSend={onSend}
+                onUploadAttachment={onUploadAttachment}
+                onStop={onStop}
+                isStreaming={isAssistantTyping}
+                onAttachmentsChange={onAttachmentsChange}
+                placeholder={placeholder}
+                deployments={deploymentItems}
+                selectedDeploymentId={selectedItemId}
+                onDeploymentChange={setSelectedItemId}
+                isInputDisabled={isInputDisabled}
+                modelSelectorLabels={modelSelectorLabels}
+                sendLabel={t(ChatI18nKeys.SendMessage)}
+                stopLabel={t(ChatI18nKeys.StopStreaming)}
+                isTranscriptionSupported={isTranscriptionSupported}
+                messageHistory={messageHistory}
+                onUploadAudio={onUploadAudio}
+                onTranscribeAudio={onTranscribeAudio}
+                sendOnEnter={sendOnEnter}
+                chatSettings={chatSettings}
+                pendingDropFiles={!isEditActive ? pendingFiles : undefined}
+                pendingAttachments={
+                  !isEditActive ? pendingDialAttachments : undefined
+                }
+                onDropFilesConsumed={
+                  !isEditActive ? onFilesConsumed : undefined
+                }
+                onPendingAttachmentsConsumed={
+                  !isEditActive
+                    ? () => setPendingDialAttachments([])
+                    : undefined
+                }
+                autoFocus={!isMobile}
+                onDialFileSystemClick={() => setIsDialFileManagerOpen(true)}
+                dialFileSystemLabel={t(
+                  ConversationI18nKeys.AttachMenuDialFileSystem,
+                )}
+                validateAttachment={
+                  isAttachmentsAllowed ? validateAttachment : undefined
+                }
+              />
+            </Suspense>
+            <Suspense fallback={null}>
+              {isDialFileManagerOpen && (
+                <DialFileManagerModal
+                  isOpen={isDialFileManagerOpen}
+                  onClose={() => setIsDialFileManagerOpen(false)}
+                  onAttach={handleAttachDialFiles}
+                  bucket={bucket}
+                  title={t(DialFileManagerI18nKeys.Title)}
+                  attachLabel={t(DialFileManagerI18nKeys.Attach)}
+                  emptyTitle={t(DialFileManagerI18nKeys.Empty)}
+                  emptyDescription=""
+                  errorMessage={t(DialFileManagerI18nKeys.Error)}
+                  retryLabel={t(DialFileManagerI18nKeys.Retry)}
+                  hiddenFilesLabel={t(DialFileManagerI18nKeys.HiddenFiles)}
+                  showHiddenFilesLabel={t(
+                    DialFileManagerI18nKeys.ShowHiddenFiles,
+                  )}
+                  hideHiddenFilesLabel={t(
+                    DialFileManagerI18nKeys.HideHiddenFiles,
+                  )}
+                  getSelectionLabel={(count) =>
+                    t(DialFileManagerI18nKeys.ItemsSelected, { count })
+                  }
+                />
+              )}
+            </Suspense>
+          </>
         )}
       </div>
     </>

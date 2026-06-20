@@ -1,0 +1,49 @@
+// CSS custom-property references and their fallbacks.
+// Layout, spacing, and border-radius live in Tailwind classes in the TSX file.
+
+.root {
+  --cat-text-primary: var(--text-primary, #eef1f7);
+  --cat-text-secondary: var(--text-secondary, #9fa6bd);
+  --cat-bg-layer-1: var(--bg-layer-1, #161b2d);
+  background: var(--cat-bg, var(--cat-bg-layer-1));
+}
+
+.heading {
+  border-bottom-color: var(
+    --cat-heading-border,
+    var(--stroke-secondary, #242c42)
+  );
+  background: var(--cat-heading-bg, var(--cat-bg-layer-1));
+  color: var(--cat-heading-text, var(--cat-text-primary));
+}
+
+.headingTitle {
+  color: var(--cat-heading-title-text, var(--cat-text-primary));
+}
+
+.contentContainer {
+  background: var(--cat-content-bg, var(--cat-bg-layer-1));
+}
+
+.gridView {
+  background: var(--cat-content-bg, var(--cat-bg-layer-1));
+  padding-inline-start: 15%;
+  padding-inline-end: 15%;
+}
+
+.listView {
+  background: var(--cat-content-bg, var(--cat-bg-layer-1));
+}
+
+.sectionHeading {
+  color: var(--cat-section-heading-text, var(--cat-text-primary));
+}
+
+.noResultsTitle {
+  color: var(--cat-no-results-title-text, var(--cat-text-primary));
+}
+
+.stickyTabsRow {
+  background: var(--cat-bg, var(--bg-layer-1, #0c101d));
+  border-bottom-color: var(--stroke-secondary, #242c42);
+}

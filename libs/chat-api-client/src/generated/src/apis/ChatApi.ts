@@ -19,7 +19,6 @@ import type {
 } from '../models/index';
 
 export interface SendCompletionRequest {
-  deployment: string;
   chatCompletionDto: ChatCompletionDto;
 }
 
@@ -34,13 +33,6 @@ export class ChatApi extends runtime.BaseAPI {
     requestParameters: SendCompletionRequest,
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<runtime.ApiResponse<ChatCompletionResponseDto>> {
-    if (requestParameters['deployment'] == null) {
-      throw new runtime.RequiredError(
-        'deployment',
-        'Required parameter "deployment" was null or undefined when calling sendCompletion().',
-      );
-    }
-
     if (requestParameters['chatCompletionDto'] == null) {
       throw new runtime.RequiredError(
         'chatCompletionDto',
@@ -54,11 +46,7 @@ export class ChatApi extends runtime.BaseAPI {
 
     headerParameters['Content-Type'] = 'application/json';
 
-    let urlPath = `/api/chat/completions/{deployment}`;
-    urlPath = urlPath.replace(
-      `{${'deployment'}}`,
-      encodeURIComponent(String(requestParameters['deployment'])),
-    );
+    let urlPath = `/api/v1/chat/completions`;
 
     const response = await this.request(
       {

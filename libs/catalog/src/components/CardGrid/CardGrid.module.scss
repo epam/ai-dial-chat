@@ -1,0 +1,48 @@
+.card {
+  background: var(--cat-card-bg, var(--bg-layer-2, #161b2d));
+  border-color: var(--cat-card-border, var(--stroke-secondary, #242c42));
+
+  &:hover {
+    background: var(--cat-card-hover-bg, var(--bg-layer-3, #252c42));
+  }
+}
+
+.featuredCard {
+  box-shadow: 0 0 15px 0 var(--cat-card-featured-glow, rgba(125, 164, 255, 0.5));
+}
+
+.featuredTag {
+  background: var(
+    --cat-featured-tag-bg,
+    var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
+  );
+  border-color: var(
+    --cat-featured-tag-border,
+    var(--stroke-accent-secondary, #37babc)
+  );
+  color: var(--cat-featured-tag-text, var(--text-accent-secondary, #37babc));
+}
+
+.featuredTopBar {
+  background: var(
+    --cat-card-featured-bar,
+    var(--stroke-accent-primary, #7da4ff)
+  );
+}
+
+.description {
+  color: var(--cat-card-text-primary, var(--text-primary, #eef1f7));
+}
+
+.starFilledIcon {
+  color: var(--cat-card-star-filled, var(--text-warning-icon, #eec840));
+}
+
+.cardFooter {
+  border-color: var(--cat-card-footer-border, var(--stroke-tertiary, #363d56));
+}
+
+.skeletonCard {
+  border-color: var(--cat-card-border, var(--stroke-secondary, #242c42));
+  --cat-skeleton-bg: var(--bg-layer-4);
+}

@@ -35,7 +35,8 @@ const TestTableScroll: FC<{ direction?: 'ltr' | 'rtl' }> = ({
   return (
     <div
       ref={scrollContainerRef}
-      data-testid="scroll-container"
+      role="region"
+      aria-label="scroll container"
       data-has-content-beyond-start={hasContentBeyondStart}
       data-has-content-beyond-end={hasContentBeyondEnd}
       style={{ direction }}
@@ -59,7 +60,9 @@ const setHorizontalMeasurements = ({
   direction: 'ltr' | 'rtl';
   position: 'start' | 'middle' | 'end';
 }) => {
-  const scrollContainer = screen.getByTestId('scroll-container');
+  const scrollContainer = screen.getByRole('region', {
+    name: 'scroll container',
+  });
   const table = screen.getByRole('table');
 
   Object.defineProperties(scrollContainer, {

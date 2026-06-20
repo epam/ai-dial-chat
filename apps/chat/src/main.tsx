@@ -12,6 +12,7 @@ import { DeploymentsProvider } from './context/DeploymentsContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { SourcesSidebarProvider } from './context/SourcesSidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { UserConfigProvider } from './context/UserConfigContext';
 import './i18n/config';
 import './styles.scss';
 
@@ -37,11 +38,13 @@ root.render(
                       path="*"
                       element={
                         <RequireAuth>
-                          <AppConfigProvider>
-                            <ConversationsProvider>
-                              <App />
-                            </ConversationsProvider>
-                          </AppConfigProvider>
+                          <UserConfigProvider>
+                            <AppConfigProvider>
+                              <ConversationsProvider>
+                                <App />
+                              </ConversationsProvider>
+                            </AppConfigProvider>
+                          </UserConfigProvider>
                         </RequireAuth>
                       }
                     />

@@ -1,12 +1,17 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
+  AttachmentErrorReason,
   AttachmentType,
   RequestStatus,
   buildCssVars,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconMicrophone } from '@tabler/icons-react';
+import {
+  BASE_ICON_SIZE,
+  DIAL_ICON_SIZE,
+  DialGhostIconButton,
+} from '@epam/ai-dial-ui-kit';
+import { IconFile, IconMicrophone } from '@tabler/icons-react';
 import {
   ChangeEvent,
   type FC,
@@ -18,12 +23,14 @@ import {
   useRef,
   useState,
 } from 'react';
+import { MAX_UPLOADS_PER_MINUTE } from '../../constants/upload';
 import { useClipboardPaste } from '../../hooks/useClipboardPaste';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
+import { runAtRate } from '../../utils/concurrency';
 import { generateAttachmentId } from '../../utils/generateAttachmentId';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { AttachmentTray } from '../AttachmentTray/AttachmentTray';
@@ -57,6 +64,8 @@ export const Input: FC<InputProps> = ({
   className,
   pendingDropFiles = [],
   onDropFilesConsumed,
+  pendingAttachments = [],
+  onPendingAttachmentsConsumed,
   pasteTextThreshold = 4000,
   deployments,
   selectedDeploymentId,
@@ -77,6 +86,9 @@ export const Input: FC<InputProps> = ({
   chatSettings,
   autoFocus = false,
   messageHistory,
+  onDialFileSystemClick,
+  dialFileSystemLabel,
+  validateAttachment,
 }) => {
   const isMobile = useIsMobile();
   const historyNav = useInputHistoryNavigation(messageHistory);
@@ -97,6 +109,21 @@ export const Input: FC<InputProps> = ({
         '--ci-line-height': typography?.lineHeight,
       }),
     [colors, typography],
+  );
+
+  const dialFileSystemMenuItem = useMemo(
+    () =>
+      onDialFileSystemClick
+        ? [
+            {
+              key: 'dial-fs',
+              label: dialFileSystemLabel ?? 'DIAL file system',
+              icon: <IconFile size={BASE_ICON_SIZE} aria-hidden />,
+              onClick: onDialFileSystemClick,
+            },
+          ]
+        : [],
+    [onDialFileSystemClick, dialFileSystemLabel],
   );
 
   const [message, setMessage] = useState(messageProp);
@@ -134,7 +161,6 @@ export const Input: FC<InputProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const singleRowHeightRef = useRef<number>(0);
-  const restoreCursorPosRef = useRef<number | null>(null);
   const [isMultiLine, setIsMultiLine] = useState(false);
 
   useEffect(() => {
@@ -145,8 +171,12 @@ export const Input: FC<InputProps> = ({
 
   useLayoutEffect(() => {
     if (!textareaRef.current || singleRowHeightRef.current === 0) return;
-    setIsMultiLine(
-      textareaRef.current.offsetHeight > singleRowHeightRef.current,
+    const isNowMultiLine =
+      textareaRef.current.offsetHeight > singleRowHeightRef.current;
+    // Only set to false when message is empty: switching from stacked to non-stacked
+    // changes textarea width, which can re-trigger wrapping and cause an infinite toggle.
+    setIsMultiLine((prev) =>
+      isNowMultiLine ? true : message === '' ? false : prev,
     );
   }, [message]);
 
@@ -210,11 +240,24 @@ export const Input: FC<InputProps> = ({
               : item,
           ),
         );
-      } catch {
+      } catch (err) {
+        const errorReason =
+          err != null &&
+          typeof err === 'object' &&
+          'errorReason' in err &&
+          Object.values(AttachmentErrorReason).includes(
+            (err as { errorReason: AttachmentErrorReason }).errorReason,
+          )
+            ? (err as { errorReason: AttachmentErrorReason }).errorReason
+            : undefined;
         updateAttachments((current) =>
           current.map((item) =>
             item.id === attachment.id
-              ? { ...item, status: RequestStatus.Error }
+              ? {
+                  ...item,
+                  status: RequestStatus.Error,
+                  ...(errorReason != null && { errorReason }),
+                }
               : item,
           ),
         );
@@ -224,13 +267,35 @@ export const Input: FC<InputProps> = ({
   );
 
   const addAttachments = useCallback(
-    (newAttachments: Attachment[]) => {
-      updateAttachments((prev) => [...prev, ...newAttachments]);
-      newAttachments.forEach((attachment) => {
-        void uploadAttachment(attachment);
+    (newAttachments: Attachment[], upload = true) => {
+      let toAdd: Attachment[] = [];
+      updateAttachments((prev) => {
+        const existingIds = new Set(prev.map((attachment) => attachment.id));
+        toAdd = newAttachments.filter(
+          (attachment) => !existingIds.has(attachment.id),
+        );
+        return [...prev, ...toAdd];
       });
+      if (upload) {
+        const validToUpload: Attachment[] = [];
+        toAdd.forEach((attachment) => {
+          const errorReason = validateAttachment?.(attachment);
+          if (errorReason != null) {
+            updateAttachments((current) =>
+              current.map((item) =>
+                item.id === attachment.id
+                  ? { ...item, status: RequestStatus.Error, errorReason }
+                  : item,
+              ),
+            );
+          } else {
+            validToUpload.push(attachment);
+          }
+        });
+        void runAtRate(validToUpload, MAX_UPLOADS_PER_MINUTE, uploadAttachment);
+      }
     },
-    [updateAttachments, uploadAttachment],
+    [updateAttachments, uploadAttachment, validateAttachment],
   );
 
   useEffect(() => {
@@ -239,6 +304,12 @@ export const Input: FC<InputProps> = ({
     addAttachments(built);
     onDropFilesConsumed?.();
   }, [addAttachments, buildAttachments, onDropFilesConsumed, pendingDropFiles]);
+
+  useEffect(() => {
+    if (pendingAttachments.length === 0) return;
+    addAttachments(pendingAttachments, false);
+    onPendingAttachmentsConsumed?.();
+  }, [addAttachments, onPendingAttachmentsConsumed, pendingAttachments]);
 
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
@@ -281,15 +352,6 @@ export const Input: FC<InputProps> = ({
     }
   };
 
-  useLayoutEffect(() => {
-    const pos = restoreCursorPosRef.current;
-    if (pos != null && isStackedLayout && textareaRef.current) {
-      restoreCursorPosRef.current = null;
-      textareaRef.current.focus();
-      textareaRef.current.setSelectionRange(pos, pos);
-    }
-  }, [isStackedLayout]);
-
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (!e.nativeEvent.isComposing && !isInputDisabled && !isStreaming) {
       if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
@@ -320,13 +382,6 @@ export const Input: FC<InputProps> = ({
       if (!isStreaming && canSend && hasModelSelected) {
         handleSend();
       }
-    } else if (!isStackedLayout) {
-      // A newline will be inserted and the layout will transition from
-      // non-stacked to stacked, remounting the textarea and losing focus.
-      // Capture the position after the inserted '\n' so the layout-effect
-      // can restore both focus and the cursor to the correct location.
-      const pos = e.currentTarget.selectionStart ?? 0;
-      restoreCursorPosRef.current = pos + 1;
     }
   };
 
@@ -436,24 +491,20 @@ export const Input: FC<InputProps> = ({
           retryLabel={retryLabel}
         />
       )}
-      {isStackedLayout && textarea}
-
-      {!hideActionBar && (
+      {hideActionBar ? (
+        isStackedLayout && textarea
+      ) : (
         <div
           className={mergeClasses(
             'flex items-center gap-2',
-            isStackedLayout
-              ? hideAddButton
-                ? 'justify-end'
-                : 'justify-between'
-              : 'flex-wrap desktop:flex-nowrap',
+            isStackedLayout ? 'flex-wrap' : 'flex-wrap desktop:flex-nowrap',
           )}
         >
           {!hideAddButton && (
             <div
               className={mergeClasses(
-                'flex',
-                !isStackedLayout && 'order-2 desktop:order-1',
+                'order-2 flex',
+                !isStackedLayout && 'desktop:order-1',
               )}
             >
               <input
@@ -474,18 +525,24 @@ export const Input: FC<InputProps> = ({
                 style={cssVars}
                 isDisabled={isInputDisabled}
                 chatSettings={chatSettings}
+                extraMenuItems={dialFileSystemMenuItem}
               />
-            </div>
-          )}
-          {!isStackedLayout && (
-            <div className="order-1 flex w-full min-w-0 items-center self-stretch desktop:order-2 desktop:w-auto desktop:flex-1">
-              {textarea}
             </div>
           )}
           <div
             className={mergeClasses(
+              'order-1 flex w-full min-w-0 items-center self-stretch',
+              !isStackedLayout &&
+                'desktop:order-2 desktop:w-auto desktop:flex-1',
+            )}
+          >
+            {textarea}
+          </div>
+          <div
+            className={mergeClasses(
               'flex flex-shrink-0 items-center gap-2',
-              !isStackedLayout && 'order-3 ms-auto desktop:ms-0',
+              'order-3 ms-auto',
+              !isStackedLayout && 'desktop:ms-0',
             )}
           >
             {renderFooterActions ? (

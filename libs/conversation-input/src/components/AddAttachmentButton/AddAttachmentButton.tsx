@@ -6,11 +6,29 @@ import {
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
 import { IconPaperclip, IconPlus, IconSettings } from '@tabler/icons-react';
-import { CSSProperties, type FC, useMemo, useState } from 'react';
+import {
+  CSSProperties,
+  type FC,
+  type ReactNode,
+  useMemo,
+  useState,
+} from 'react';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import type { ChatSettingsConfig } from '../../models/Input';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { ChatSettingsModal } from '../ChatSettingsModal/ChatSettingsModal';
+
+/** A single item injected into the attachment menu by the host app. */
+export interface ExtraMenuItem {
+  /** Unique key for the item. */
+  key: string;
+  /** Display label. */
+  label: string;
+  /** Icon node rendered to the left of the label. */
+  icon: ReactNode;
+  /** Callback when the item is selected. */
+  onClick: () => void;
+}
 
 /** Props for the AddAttachmentButton component. */
 interface AddAttachmentButtonProps {
@@ -32,6 +50,8 @@ interface AddAttachmentButtonProps {
   isDisabled?: boolean;
   /** When provided, adds a "Chat settings" item that opens the settings modal. */
   chatSettings?: ChatSettingsConfig;
+  /** Additional menu items appended after "Attach file". */
+  extraMenuItems?: ExtraMenuItem[];
 }
 
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
@@ -44,6 +64,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   listClassName = '!w-[240px] shadow-md',
   isDisabled = false,
   chatSettings,
+  extraMenuItems,
 }) => {
   const isMobile = useIsMobile();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -67,8 +88,9 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             },
           ]
         : []),
+      ...(extraMenuItems ?? []),
     ],
-    [attachLabel, onAttachClick, chatSettings],
+    [attachLabel, onAttachClick, chatSettings, extraMenuItems],
   );
 
   return (

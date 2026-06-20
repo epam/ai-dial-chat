@@ -4,7 +4,7 @@ import {
   PanelNoResults,
   SearchInput,
   SidebarPanel,
-  SidebarSide,
+  SidebarOrientation,
 } from '@epam/ai-dial-sidebar';
 import { DialSkeleton } from '@epam/ai-dial-ui-kit';
 import { type FC, memo, useCallback, useMemo, useRef, useState } from 'react';
@@ -321,9 +321,8 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     return (
       <SidebarPanel
         isOpen={isOpen}
-        side={SidebarSide.Left}
+        orientation={SidebarOrientation.Left}
         title={title}
-        titleClassName={typography?.fontClassName}
         ariaLabel={title}
         onClose={onToggle}
         closeLabel={closeAriaLabel}
@@ -335,9 +334,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           },
           typography: {
             fontClassName: typography?.fontClassName,
-            fontFamily: hasTypographyClass ? undefined : typography?.fontFamily,
-            fontSize: hasTypographyClass ? undefined : typography?.fontSize,
           },
+          bodyClassName: 'flex flex-col overflow-hidden p-0',
+          cssVars,
+          titleClassName: typography?.fontClassName,
         }}
         className={mergeClasses(
           isOpen
@@ -347,8 +347,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             : 'w-0',
           className,
         )}
-        bodyClassName="flex flex-col overflow-hidden p-0"
-        cssVars={cssVars}
         resizable={resizable}
         defaultWidth={defaultPanelWidth}
         minWidth={minPanelWidth}

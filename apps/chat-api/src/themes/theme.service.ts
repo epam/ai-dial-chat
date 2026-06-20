@@ -1,4 +1,3 @@
-import { ThemeConfiguration } from '@epam/ai-dial-chat-shared';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import {
   BadGatewayException,
@@ -11,6 +10,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { EnvironmentVariables } from '../config/environment.config';
+import { ThemeConfigResponseDto } from '../openapi/openapi-response.dto';
 
 /**
  * Service for fetching theme configuration and icons from an external theme service.
@@ -79,9 +79,8 @@ export class ThemeService {
    * }
    * ```
    */
-  async getThemes(): Promise<ThemeConfiguration> {
-    // Check cache first
-    const cached = await this.cacheManager.get<ThemeConfiguration>(
+  async getThemes(): Promise<ThemeConfigResponseDto> {
+    const cached = await this.cacheManager.get<ThemeConfigResponseDto>(
       this.THEMES_CACHE_KEY,
     );
     if (cached) {
@@ -120,7 +119,7 @@ export class ThemeService {
       // Cache the result
       await this.cacheManager.set(this.THEMES_CACHE_KEY, data);
 
-      return data as ThemeConfiguration;
+      return data as ThemeConfigResponseDto;
     } catch (er) {
       const error = er as { name: string; message: string; stack?: string };
       clearTimeout(timeoutId);

@@ -10,7 +10,15 @@ import {
 } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from 'vitest';
 import { ApplicationSchemasController } from '../application-schemas.controller';
 import { ApplicationSchemasService } from '../application-schemas.service';
 import type { ApplicationSchemasResponseDto } from '../dto/application-schema.dto';
@@ -66,6 +74,7 @@ async function buildApp(
     }),
   );
   await app.init();
+  await app.listen(0, '127.0.0.1');
   return app;
 }
 
@@ -76,16 +85,20 @@ describe('ApplicationSchemasController (integration)', () => {
     getApplicationSchema: ReturnType<typeof vi.fn>;
   };
 
-  beforeEach(async () => {
+  beforeAll(async () => {
     service = {
-      listApplicationSchemas: vi.fn().mockResolvedValue(mockList),
-      getApplicationSchema: vi.fn().mockResolvedValue(mockSchema),
+      listApplicationSchemas: vi.fn(),
+      getApplicationSchema: vi.fn(),
     };
     app = await buildApp(service);
   });
 
-  afterEach(async () => {
-    vi.clearAllMocks();
+  beforeEach(() => {
+    service.listApplicationSchemas.mockReset().mockResolvedValue(mockList);
+    service.getApplicationSchema.mockReset().mockResolvedValue(mockSchema);
+  });
+
+  afterAll(async () => {
     await app.close();
   });
 

@@ -1,7 +1,15 @@
 const { join } = require('path');
 const { NxAppWebpackPlugin } = require('@nx/webpack/app-plugin');
+const {
+  NESTJS_IGNORED_WARNINGS,
+  NESTJS_RESOLVE_ALIASES,
+} = require('./webpack.shared');
 
 module.exports = {
+  ignoreWarnings: NESTJS_IGNORED_WARNINGS,
+  resolve: {
+    alias: NESTJS_RESOLVE_ALIASES,
+  },
   output: {
     path: join(__dirname, 'dist'),
     clean: true,

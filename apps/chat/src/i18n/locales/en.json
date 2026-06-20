@@ -53,9 +53,14 @@
   },
   "catalog": {
     "ariaLabel": "Catalog",
-    "comingSoon": "Catalog coming soon",
-    "loading": "Loading catalog…",
-    "error": "Failed to load catalog. Please try again."
+    "pageTitle": "Catalog",
+    "favoritesTitle": "Your Favorites",
+    "searchPlaceholder": "Search models, tools, agents…",
+    "noResultsTitle": "No results for \"{{query}}\"",
+    "sortRecentlyUpdated": "Recently Updated",
+    "sortNewest": "Newest",
+    "sortNameAZ": "Name A-Z",
+    "featuredLabel": "Featured"
   },
   "deployments": {
     "empty": "No models or applications available.",
@@ -74,6 +79,8 @@
   "buttons": {
     "showMore": "Show more",
     "showLess": "Show less",
+    "create": "Create",
+    "browse": "Browse",
     "delete": "Delete",
     "deleteAll": "Delete all",
     "confirm": "Confirm",
@@ -126,7 +133,8 @@
       "executed": "Executed",
       "step_one": "step",
       "step_other": "steps"
-    }
+    },
+    "attachMenuDialFileSystem": "DIAL file system"
   },
   "conversationPanel": {
     "title": "Chats",
@@ -182,7 +190,16 @@
     "shortcutMetaEnter": "{{modifier}}+Enter — send message, Enter — new line"
   },
   "attachments": {
-    "downloadFile": "Download file"
+    "downloadFile": "Download file",
+    "unsupportedType": {
+      "title": "File extension not supported",
+      "message": "This model can only process {{formats}}. Please upload a file in a supported format."
+    },
+    "networkError": {
+      "title": "Network unavailable",
+      "message": "Some files were not uploaded because your internet connection was lost.\n Please try again:\n"
+    }
+  },
   },
   "chatSettings": {
     "title": "Chat settings",
@@ -194,5 +211,41 @@
     "saveLabel": "Apply changes",
     "temperatureHint": "Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.",
     "systemPromptTooltip": "Enter a prompt"
+  "citations": {
+    "marker": {
+      "label": "{{source}}",
+      "labelWithOverflow": "{{source}} +{{count}}",
+      "ariaLabel": "Citation from {{source}}"
+    },
+    "popup": {
+      "switcher": "{{current}}/{{total}}",
+      "preview": "Preview",
+      "openInBrowser": "Open in browser",
+      "download": "Download",
+      "previousCitation": "Previous citation",
+      "nextCitation": "Next citation",
+      "ariaLabel": "Citation from {{source}}"
+    }
+  },
+  "fileDnd": {
+    "overlayTitle": "Attach files",
+    "overlaySubtitle": "Drop files here to attach them to message",
+    "overlayDeniedTitle": "No attachments allowed",
+    "overlayDeniedSubtitle": "Attachments can't be added to message"
+  },
+  "dialFileManager": {
+    "title": "DIAL file system",
+    "attach": "Attach",
+    "empty": "This folder is empty",
+    "error": "Failed to load files",
+    "retry": "Retry",
+    "hiddenFiles": "Hidden files",
+    "showHiddenFiles": "Show hidden files",
+    "hideHiddenFiles": "Hide hidden files",
+    "itemsSelected_one": "{{count}} item selected",
+    "itemsSelected_other": "{{count}} items selected"
+  },
+  "userConfig": {
+    "loadError": "Failed to load your settings. Some personalization may be unavailable."
   }
 }

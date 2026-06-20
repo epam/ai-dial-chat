@@ -31,18 +31,18 @@ Every exported symbol (interfaces, enums, types, functions) must have a JSDoc co
 
 ## Typography and color utility classes as props
 
-**Never hardcode typography or color utility classes** (e.g. `dial-body-semi-bold-text`, `dial-small-text`, `text-sm`, `font-bold`, `text-primary`, `text-secondary`, `text-accent`) directly in lib component JSX. The consuming app decides which type scale and color tokens to use. Instead, accept an optional prop and use a sensible default:
+**Never hardcode typography or color utility classes** (e.g. `dial-body-semi-text`, `dial-small-text`, `text-sm`, `font-bold`, `text-primary`, `text-secondary`, `text-accent`) directly in lib component JSX. The consuming app decides which type scale and color tokens to use. Instead, accept an optional prop and use a sensible default:
 
 ```tsx
 // Correct — configurable with a sensible default
 interface MyProps {
-  /** Typography class applied to the title. Defaults to `'dial-body-semi-bold-text'`. */
+  /** CSS class applied to the title. Defaults to `'dial-body-semi-bold-text'`. */
   titleClassName?: string;
   /** Color class applied to the placeholder icon. Defaults to `'text-secondary'`. */
   placeholderIconClassName?: string;
 }
 export const MyComponent: FC<MyProps> = ({
-  titleClassName = 'dial-body-semi-bold-text',
+  titleClassName = 'dial-body-semi-text',
   placeholderIconClassName = 'text-secondary',
 }) => (
   <>
@@ -52,7 +52,7 @@ export const MyComponent: FC<MyProps> = ({
 );
 
 // Wrong — hardcoded in JSX
-<span className={mergeClasses(styles.title, 'dial-body-semi-bold-text')}>…</span>
+<span className={mergeClasses(styles.title, 'dial-body-semi-text')}>…</span>
 <Icon className="text-secondary" />
 ```
 

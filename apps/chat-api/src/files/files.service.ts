@@ -4,7 +4,10 @@ import { AppService } from '../app/app.service';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import type { EnvironmentVariables } from '../config/environment.config';
+import type { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
+import type { ListFilesResponseDto } from './dto/list-files.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
+import { normalizeFileItem } from './normalize-file-item';
 
 export const SAFE_DOWNLOAD_HEADERS = [
   'content-type',
@@ -37,7 +40,7 @@ const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
 
 @Injectable()
 export class FilesService extends AppService {
-  protected readonly logger = new Logger(FilesService.name);
+  protected override readonly logger = new Logger(FilesService.name);
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     super(configService);
@@ -84,6 +87,126 @@ export class FilesService extends AppService {
       return { url };
     } catch (err) {
       this.logger.error(`Upload failed for ${bucket}/${path}`, err);
+      return handleDialError(err);
+    }
+  }
+
+  async listFiles(
+    bucket: string,
+    path: string | undefined,
+    query: {
+      token?: string;
+      limit?: number;
+      recursive?: boolean;
+      permissions?: boolean;
+    },
+    at: string,
+  ): Promise<ListFilesResponseDto> {
+    const normalizedPath =
+      path != null && path !== '' && !path.endsWith('/')
+        ? `${path}/`
+        : (path ?? '');
+    try {
+      const { data, error, response } = await this.client.getFileMetadata(
+        bucket,
+        normalizedPath,
+        {
+          headers: getBearerAuthHeaders(at),
+          query: {
+            token: query.token,
+            limit: query.limit,
+            recursive: query.recursive ?? false,
+            permissions: query.permissions ?? true,
+          },
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        },
+      );
+
+      if (error != null) {
+        this.logger.warn(
+          `DIAL Core listFiles returned error: status=${response.status}, bucket=${bucket}`,
+        );
+        return handleDialError({ status: response.status });
+      }
+
+      const dialData = data as typeof data & { nextToken?: string };
+      const items = (dialData.items ?? []).map((item) =>
+        normalizeFileItem(item, bucket),
+      );
+
+      this.logger.debug(
+        `listFiles succeeded: bucket=${bucket}, path=${normalizedPath}, count=${items.length}`,
+      );
+      return {
+        bucket,
+        path: normalizedPath,
+        items,
+        nextToken: dialData.nextToken,
+      };
+    } catch (err) {
+      this.logger.warn(`listFiles failed for bucket=${bucket}`, err);
+      return handleDialError(err);
+    }
+  }
+
+  async getFileMetadata(
+    bucket: string,
+    path: string,
+    token: string,
+  ): Promise<FileMetadataResponseDto> {
+    try {
+      this.logger.debug(
+        `Getting file metadata from DIAL Core: bucket=${bucket}, path=${path}`,
+      );
+
+      const { data, error, response } = await this.client.getFileMetadata(
+        bucket,
+        path,
+        {
+          headers: getBearerAuthHeaders(token),
+          signal: AbortSignal.timeout(this.getTimeoutMs()),
+        },
+      );
+
+      if (error != null) {
+        this.logger.warn(
+          `DIAL Core getFileMetadata returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
+        );
+        return handleDialError({ status: response.status });
+      }
+
+      if (data == null) {
+        this.logger.warn(
+          `DIAL Core getFileMetadata returned no data: bucket=${bucket}, path=${path}`,
+        );
+        return handleDialError({ status: response.status });
+      }
+
+      this.logger.debug(
+        `getFileMetadata succeeded: bucket=${bucket}, path=${path}`,
+      );
+
+      const fileData = data as typeof data & { etag?: string };
+      return {
+        name: fileData.name,
+        nodeType: fileData.nodeType,
+        bucket: fileData.bucket,
+        parentPath: fileData.parentPath,
+        url: fileData.url,
+        resourceType: fileData.resourceType,
+        etag: fileData.etag,
+        contentLength: fileData.contentLength,
+        contentType: fileData.contentType,
+        createdAt: fileData.createdAt,
+        updatedAt: fileData.updatedAt,
+        permissions: fileData.permissions,
+        author: fileData.author,
+      };
+    } catch (err) {
+      this.logger.error(
+        `getFileMetadata failed for bucket=${bucket}, path=${path}`,
+        err,
+      );
       return handleDialError(err);
     }
   }

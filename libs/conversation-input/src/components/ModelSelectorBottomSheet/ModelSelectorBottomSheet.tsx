@@ -108,9 +108,9 @@ export interface ModelSelectorBottomSheetProps {
   emptyLabel?: string;
   /** Inline CSS custom properties forwarded to the sheet root for theming. */
   style?: CSSProperties;
-  /** Typography class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
+  /** CSS class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
   titleClassName?: string;
-  /** Typography class applied to each item label and the state label. Defaults to `'dial-small-text'`. */
+  /** CSS class applied to each item label and the state label. Defaults to `'dial-small-text'`. */
   labelClassName?: string;
 }
 
@@ -132,7 +132,7 @@ export const ModelSelectorBottomSheet: FC<ModelSelectorBottomSheetProps> = ({
   errorLabel,
   emptyLabel,
   style,
-  titleClassName = 'dial-body-semi-bold-text',
+  titleClassName = 'dial-body-semi-text',
   labelClassName = 'dial-small-text',
 }) => {
   const [query, setQuery] = useState('');
