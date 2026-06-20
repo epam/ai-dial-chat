@@ -61,7 +61,6 @@ export const ConversationInput: FC<ConversationInputProps> = ({
           {...inputProps}
           colors={colors?.input}
           typography={typography?.input}
-
         />
       </div>
     </div>

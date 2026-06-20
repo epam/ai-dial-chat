@@ -13,7 +13,12 @@ export type {
   ConversationInputStyles,
   EditMessageInputProps,
 } from './models/ConversationInput';
-export type { InputProps, InputColors, InputTypography } from './models/Input';
+export type {
+  InputProps,
+  InputColors,
+  InputTypography,
+  ChatSettingsValues,
+} from './models/Input';
 export { SendOnEnter } from './models/Input';
 export type {
   AttachmentCardProps,

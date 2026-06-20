@@ -1,3 +1,4 @@
+import type { NextFunction, Request as ExpressRequest, Response as ExpressResponse } from 'express';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
@@ -33,7 +34,7 @@ describe('UserConfigController (integration)', () => {
     }).compile();
 
     app = module.createNestApplication();
-    app.use((req, _res, next) => {
+    app.use((req: ExpressRequest, _res: ExpressResponse, next: NextFunction) => {
       req.user = TEST_USER;
       next();
     });

@@ -1993,7 +1993,7 @@
             ]
           },
           "topics": {
-            "description": "Topics associated with this deployment from DIAL Core (e.g. ["topic1", "topic2"])",
+            "description": "Topics associated with this deployment from DIAL Core (e.g. [\"topic1\", \"topic2\"])",
             "type": "array",
             "items": {
               "type": "string"

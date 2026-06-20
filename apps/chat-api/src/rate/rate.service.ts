@@ -8,7 +8,7 @@ import type { RateMessageDto } from './dto/rate-message.dto';
 
 @Injectable()
 export class RateService extends AppService {
-  protected logger = new Logger(RateService.name);
+  protected override logger = new Logger(RateService.name);
 
   constructor(configService: ConfigService<EnvironmentVariables>) {
     super(configService);

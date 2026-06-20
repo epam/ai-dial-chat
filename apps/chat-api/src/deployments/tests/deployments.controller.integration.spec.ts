@@ -66,7 +66,10 @@ async function buildApp(service: unknown): Promise<INestApplication> {
 
 describe('DeploymentsController (integration)', () => {
   let app: INestApplication;
-  let service: { listDeployments: ReturnType<typeof vi.fn> };
+  let service: {
+    listDeployments: ReturnType<typeof vi.fn>;
+    getDeploymentConfiguration: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
     service = {

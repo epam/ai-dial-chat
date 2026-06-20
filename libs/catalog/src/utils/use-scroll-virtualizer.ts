@@ -79,7 +79,10 @@ export const useScrollVirtualizer = (
 
       // Pixels of the container that have scrolled above the viewport top.
       const scrolledPast = Math.max(0, scrollElRect.top - containerRect.top);
-      const startRow = Math.max(0, Math.floor(scrolledPast / CARD_ROW_HEIGHT) - overscan);
+      const startRow = Math.max(
+        0,
+        Math.floor(scrolledPast / CARD_ROW_HEIGHT) - overscan,
+      );
       const endRow = Math.min(
         rows,
         startRow + Math.ceil(viewportHeight / CARD_ROW_HEIGHT) + 2 * overscan,

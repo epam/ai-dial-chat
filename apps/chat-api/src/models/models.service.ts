@@ -16,7 +16,7 @@ import type {
 
 @Injectable()
 export class ModelsService extends AppService {
-  protected logger = new Logger(ModelsService.name);
+  protected override logger = new Logger(ModelsService.name);
 
   constructor(
     configService: ConfigService<EnvironmentVariables>,
