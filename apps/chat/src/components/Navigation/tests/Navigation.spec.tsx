@@ -31,6 +31,10 @@ vi.mock('../UserMenu', () => ({
   default: () => <div>User menu</div>,
 }));
 
+vi.mock('../../LogoutConfirmation/LogoutConfirmationModal', () => ({
+  default: () => null,
+}));
+
 const renderNavigation = (initialPath = '/') =>
   render(
     <MemoryRouter initialEntries={[initialPath]}>

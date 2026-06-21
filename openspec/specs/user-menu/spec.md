@@ -6,13 +6,17 @@ The navigation sidebar avatar button opens a dropdown menu giving the user acces
 
 ---
 
-## Requirement: Avatar button opens a dropdown menu
+## Requirement: Avatar button opens a dropdown menu (desktop only)
 
-The avatar button in the navigation sidebar SHALL open a `DialDropdown` (`placement="top-end"`, `matchReferenceWidth={false}`) when clicked. The existing `DialTooltip` showing the user email SHALL be retained as the trigger child and SHALL be hidden on mobile (`hideTooltip={isMobile}` via `useIsMobile()`). The avatar button SHALL carry `aria-label={t('auth.signedInAs', { email })}`.
+The avatar button in the navigation sidebar SHALL open a `DialDropdown` (`placement="top-end"`, `matchReferenceWidth={false}`) when clicked **on desktop only**. On mobile viewports (`useIsMobile()` returns `true`) `UserMenu` SHALL return `null` — the mobile bottom sheet (`MobileNavBottomSheet`) owns the mobile settings surface instead. The existing `DialTooltip` showing the user email SHALL be retained as the trigger child and SHALL be hidden on mobile (moot because the component returns `null` on mobile, but the `hideTooltip={isMobile}` prop remains). The avatar button SHALL carry `aria-label={t('auth.signedInAs', { email })}`.
 
-State ownership: local `isLogoutOpen` boolean inside `UserMenu`. The `isSettingsOpen` state is removed.
+State ownership: `isLogoutOpen` managed by `useLogout()` hook inside `UserMenu`. Identity data (`email`, `displayName`, `shortName`, `image`, `isFallbackIconShown`) supplied by `useUserProfile()`. Theme availability and selection supplied by `useThemeOptions()`. The `isSettingsOpen` state is removed.
 
 i18n keys: `auth.logOut`, `auth.signedInAs`
+
+#### Scenario: UserMenu not rendered on mobile
+- **WHEN** the viewport is mobile
+- **THEN** `UserMenu` renders nothing — settings are accessed through the mobile bottom sheet instead
 
 ### Requirement: User identity header
 
