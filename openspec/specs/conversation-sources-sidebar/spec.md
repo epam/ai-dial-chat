@@ -148,11 +148,11 @@ Theming SHALL follow `openspec/lib-styling-guide.md`: the SCSS module `SidebarPa
 
 ### Requirement: `ConversationSourcesPanel` renders a global empty state or the source sections
 
-`apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` SHALL accept `Props { messages: Message[]; }`, import `SidebarPanel` from `@epam/ai-dial-sidebar`, derive `uploaded` and `generated` through `useConversationSources(messages)`, and render `<SidebarPanel side="right">`.
+`apps/chat/src/components/ConversationSourcesPanel/ConversationSourcesPanel.tsx` accepts no props, imports `SidebarPanel` from `@epam/ai-dial-sidebar`, obtains messages from `useSourcesSidebar()`, derives `uploaded`, `generated`, and `sources` through `useConversationSources(messages)`, and renders `<SidebarPanel side="right">`.
 
 The panel SHALL use `useAttachmentAction()` to obtain `handleAttachmentClick` and SHALL pass it as `onAttachmentClick` to both `FilesSection` instances (Uploaded Files and Generated Files).
 
-The panel SHALL be considered empty when both `uploaded.length === 0` and `generated.length === 0`.
+The panel SHALL be considered empty when `uploaded.length === 0` and `generated.length === 0` and `sources.length === 0`.
 
 When the panel is empty:
 
@@ -166,7 +166,7 @@ When the panel is not empty:
 
 - `leftActions` SHALL contain a disabled `DialGhostIconButton` with `IconSearch` and the i18n `aria-label` `sidebar.sources.search`.
 - `rightActions` SHALL contain a disabled `DialGhostIconButton` with `IconDownload` and the i18n `aria-label` `sidebar.sources.downloadAll`.
-- The body SHALL render, in order: the Uploaded Files `FilesSection`, the Generated Files `FilesSection`, and `SourcesSection`.
+- The body SHALL render, in order: the Uploaded Files `FilesSection`, the Generated Files `FilesSection`, and `SourcesSection` (receiving `sources={filteredSources}`, `title`, and `copyLabel`).
 
 For both states:
 
@@ -181,12 +181,18 @@ For both states:
 - **AND** no section heading is rendered
 - **AND** no search or download-all button is rendered
 
-#### Scenario: Any derived file switches the panel to section content
+#### Scenario: Any derived file or source switches the panel to section content
 
-- **WHEN** at least one attachment is present in either `uploaded` or `generated`
+- **WHEN** at least one attachment is present in `uploaded`, `generated`, or `sources`
 - **THEN** the global empty state is not rendered
 - **AND** the search and download-all buttons are rendered disabled
 - **AND** the Uploaded Files, Generated Files, and Sources sections are rendered
+
+#### Scenario: Search filters sources by title, URL, and quote
+
+- **WHEN** the user types into the search input
+- **THEN** the `filteredSources` list retains only sources where `title`, `url`, or `quote` contains the query (case-insensitive)
+- **AND** `isNoResults` is true only when all three filtered lists are empty
 
 #### Scenario: Close button closes the sidebar via context
 
@@ -211,25 +217,39 @@ For both states:
 
 ---
 
-### Requirement: `useConversationSources` derives Uploaded and Generated lists from messages
+### Requirement: `useConversationSources` derives Uploaded, Generated, and Sources lists from messages
 
-`apps/chat/src/hooks/useConversationSources.ts` SHALL export `useConversationSources(messages: Message[])` returning `{ uploaded: DisplayAttachment[]; generated: DisplayAttachment[] }`. The hook SHALL:
+`apps/chat/src/hooks/conversation-sources/useConversationSources.ts` SHALL export `useConversationSources(messages: Message[])` returning `{ uploaded: DisplayAttachment[]; generated: DisplayAttachment[]; sources: QuotationSource[] }`. The hook SHALL:
 
-- Walk `messages` once and partition by `MessageRole.User` (`uploaded`) vs `MessageRole.Assistant` (`generated`).
-- For each message, flat-map `msg.custom_content?.attachments` (default `[]`) through the existing `attachmentDtosToDisplayAttachments` utility from `apps/chat/src/utils/attachment-dto-to-display.ts`.
-- Return the resulting lists wrapped in `useMemo`, keyed on the `messages` reference.
-- Tolerate messages without `custom_content` or with empty/undefined `attachments` (treat as no attachments).
+- Walk `messages` once in a single loop.
+- Partition attachments by `MessageRole.User` (`uploaded`) vs `MessageRole.Assistant` (`generated`) using `attachmentDtosToDisplayAttachments` from `apps/chat/src/utils/attachment-dto-to-display.ts`.
+- For assistant messages, also walk `msg.custom_content?.annotations ?? []`. For each annotation where `annotation?.body?.source?.attachment?.url` is present, append a `QuotationSource` to `sources`:
+  - `url` — `annotation.body.source.attachment.url`
+  - `title` — `annotation.body.title ?? url`
+  - `quote` — `annotation.body.quote` (optional)
+- Deduplicate `sources` by `url` (first occurrence wins); skip subsequent annotations with the same URL.
+- Tolerate `null`/`undefined` annotation items without throwing.
+- Return the three lists wrapped in `useMemo`, keyed on the `messages` reference.
+
+`QuotationSource` is defined in `apps/chat/src/models/quotation-source.ts` as:
+```ts
+interface QuotationSource {
+  url: string;
+  title: string;
+  quote?: string;
+}
+```
 
 #### Scenario: No messages
 
 - **WHEN** the hook is called with `[]`
-- **THEN** it returns `{ uploaded: [], generated: [] }`
+- **THEN** it returns `{ uploaded: [], generated: [], sources: [] }`
 
 #### Scenario: Only user attachments
 
 - **WHEN** every message in the input has `role: MessageRole.User` and one attachment each
 - **THEN** all derived attachments appear in `uploaded` in message order
-- **AND** `generated` is empty
+- **AND** `generated` and `sources` are empty
 
 #### Scenario: Only assistant attachments
 
@@ -247,10 +267,25 @@ For both states:
 - **WHEN** a message has `custom_content === undefined` or `custom_content.attachments === undefined`
 - **THEN** the hook contributes no entries from that message but still processes the rest
 
+#### Scenario: Annotations with source URLs produce sources entries
+
+- **WHEN** an assistant message has `custom_content.annotations` containing two annotations each with `body.source.attachment.url`
+- **THEN** both appear in `sources` in annotation order
+
+#### Scenario: Duplicate source URLs are deduplicated
+
+- **WHEN** two annotations reference the same `url`
+- **THEN** `sources` contains only the first occurrence
+
+#### Scenario: Annotations without a source URL are skipped
+
+- **WHEN** an annotation has no `body.source.attachment.url`
+- **THEN** it contributes no entry to `sources`
+
 #### Scenario: Memoisation stable on identical messages reference
 
 - **WHEN** the hook is rendered twice with the same `messages` reference
-- **THEN** it returns the same `{ uploaded, generated }` object reference both times
+- **THEN** it returns the same `{ uploaded, generated, sources }` object reference both times
 
 ---
 
@@ -267,7 +302,13 @@ Both `UploadedFilesSection` and `GeneratedFilesSection` SHALL accept an optional
 
 For `SourcesSection`:
 
-- Always render the `emptyMessage` text below the title in this slice (link list is out of scope).
+- Accept `Props { title: string; sources: QuotationSource[]; copyLabel: string }`.
+- When `sources.length === 0`: return `null` (no title or empty message rendered).
+- When `sources.length > 0`: render a `<ul>` where each `<li>` contains two rows:
+  - **Row 1** (flex, `items-center`, `justify-between`): an `<a href={source.url} target="_blank" rel="noopener noreferrer">` showing `source.title` with `truncate`; and a `DialGhostIconButton` with `IconCopy` that calls `navigator.clipboard.writeText(source.url)` on click, `aria-label={copyLabel}`.
+  - **Row 2** (only when `source.quote` is present): a `<p>` with `line-clamp-5` and `max-h-[80px] overflow-hidden` rendering `source.quote`.
+
+`SourcesSection` is located at `apps/chat/src/components/ConversationSourcesPanel/sections/SourcesSection/SourcesSection.tsx`.
 
 #### Scenario: Uploaded Files section with attachments
 
@@ -284,10 +325,30 @@ For `SourcesSection`:
 - **WHEN** `GeneratedFilesSection` receives the same input shapes
 - **THEN** it follows the same rendering rules as `UploadedFilesSection`
 
-#### Scenario: Sources section header-only
+#### Scenario: Sources section renders nothing when empty
 
-- **WHEN** `SourcesSection` is rendered
-- **THEN** it shows the title followed by the empty-message text, regardless of any other state
+- **WHEN** `SourcesSection` receives `sources={[]}`
+- **THEN** it renders `null` — no heading, no list, no empty message
+
+#### Scenario: Sources section renders link and copy button per source
+
+- **WHEN** `SourcesSection` receives two `QuotationSource` items
+- **THEN** it renders two `<li>` elements each containing an `<a>` link and a copy icon button
+
+#### Scenario: Copy button writes the source URL to the clipboard
+
+- **WHEN** the user clicks the copy button for a source
+- **THEN** `navigator.clipboard.writeText` is called with that source's `url`
+
+#### Scenario: Quote row is omitted when source has no quote
+
+- **WHEN** a `QuotationSource` has no `quote` field
+- **THEN** no second row is rendered for that item
+
+#### Scenario: Quote row is clamped to five lines
+
+- **WHEN** a `QuotationSource` has a `quote` value
+- **THEN** the quote paragraph has `line-clamp-5` and `max-h-[80px]` applied
 
 #### Scenario: Read-only attachment cards without handler
 
@@ -331,7 +392,7 @@ All user-visible strings in the right sidebar (toggle aria-labels, panel aria-la
 #### Scenario: New keys added to en.json
 
 - **WHEN** `apps/chat/src/i18n/locales/en.json` is inspected
-- **THEN** it contains keys `sidebar.base.toggleOpen`, `sidebar.base.toggleClose`, `sidebar.base.close`, `sidebar.sources.ariaLabel`, `sidebar.sources.search`, `sidebar.sources.downloadAll`, `sidebar.sources.sections.uploadedFiles`, `sidebar.sources.sections.generatedFiles`, `sidebar.sources.sections.sources`, `sidebar.sources.empty.noData`, `sidebar.sources.empty.uploadedFiles`, `sidebar.sources.empty.generatedFiles`, `sidebar.sources.empty.sources`, `sidebar.sources.attachment.downloadLabel`
+- **THEN** it contains keys `sidebar.base.toggleOpen`, `sidebar.base.toggleClose`, `sidebar.base.close`, `sidebar.sources.ariaLabel`, `sidebar.sources.search`, `sidebar.sources.downloadAll`, `sidebar.sources.copySource`, `sidebar.sources.sections.uploadedFiles`, `sidebar.sources.sections.generatedFiles`, `sidebar.sources.sections.sources`, `sidebar.sources.empty.noData`, `sidebar.sources.empty.uploadedFiles`, `sidebar.sources.empty.generatedFiles`, `sidebar.sources.empty.sources`, `sidebar.sources.attachment.downloadLabel`
 
 #### Scenario: Components consume the typed key map
 

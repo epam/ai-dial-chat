@@ -4,6 +4,11 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 import FilesSection from '../FilesSection';
 
+vi.mock('@epam/ai-dial-ui-kit', () => ({
+  mergeClasses: (...classes: (string | undefined)[]) =>
+    classes.filter(Boolean).join(' '),
+}));
+
 vi.mock('@epam/ai-dial-conversation-input', () => ({
   AttachmentCard: ({
     attachment,
@@ -78,8 +83,7 @@ describe('FilesSection', () => {
         attachmentClickLabel="Download file"
       />,
     );
-    const btn = screen.getByRole('button', { name: 'Download file' });
-    expect(btn).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Download file' })).toBeTruthy();
   });
 
   it('activating a card calls onAttachmentClick with the correct attachment', () => {
