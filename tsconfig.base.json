@@ -28,7 +28,8 @@
       "@epam/ai-dial-conversation-stages/*": ["./libs/conversation-stages/*"],
       "@epam/ai-dial-conversation-panel/*": ["./libs/conversation-panel/*"],
       "@epam/ai-dial-starter-buttons/*": ["./libs/starter-buttons/*"],
-      "@epam/ai-dial-catalog/*": ["./libs/catalog/*"]
+      "@epam/ai-dial-catalog/*": ["./libs/catalog/*"],
+      "@epam/ai-dial-source-panel/*": ["./libs/source-panel/*"]
     }
   }
 }
