@@ -3,6 +3,7 @@ import {
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
+  ResponseFormat,
   StatusEvent,
   type Attachment,
   type Conversation,
@@ -416,14 +417,20 @@ const ConversationView: FC<Props> = ({
   const chatSettings = useMemo(
     () => ({
       features: selectedDeployment?.features ?? {
+        responseFormat: false,
         systemPrompt: false,
         temperature: false,
       },
+      responseFormat:
+        conversation.responseFormat ?? ResponseFormat.Markdown,
       systemPrompt: conversation.prompt ?? '',
       temperature: conversation.temperature ?? 0.5,
       onSave: (values: ChatSettingsValues) =>
         onConversationChange({
           ...conversation,
+          ...(values.responseFormat != null && {
+            responseFormat: values.responseFormat,
+          }),
           ...(values.systemPrompt != null && {
             prompt: values.systemPrompt,
           }),
@@ -433,6 +440,10 @@ const ConversationView: FC<Props> = ({
         }),
       menuItemLabel: t(ChatI18nKeys.ChatSettings),
       title: t(ChatSettingsI18nKeys.Title),
+      responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
+      responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
+      responseFormatMarkdownLabel: t(ChatSettingsI18nKeys.ResponseFormatMarkdown),
+      responseFormatPlainTextLabel: t(ChatSettingsI18nKeys.ResponseFormatPlainText),
       systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
       systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
       temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),

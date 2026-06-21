@@ -228,6 +228,10 @@ export enum UserConfigI18nKeys {
 
 export enum ChatSettingsI18nKeys {
   Title = 'chatSettings.title',
+  ResponseFormatLabel = 'chatSettings.responseFormatLabel',
+  ResponseFormatHint = 'chatSettings.responseFormatHint',
+  ResponseFormatMarkdown = 'chatSettings.responseFormatMarkdown',
+  ResponseFormatPlainText = 'chatSettings.responseFormatPlainText',
   SystemPromptLabel = 'chatSettings.systemPromptLabel',
   TemperatureLabel = 'chatSettings.temperatureLabel',
   TemperaturePrecise = 'chatSettings.temperaturePrecise',

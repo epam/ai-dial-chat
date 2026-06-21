@@ -1,4 +1,4 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
@@ -133,11 +133,16 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
       {chatSettings != null && isChatSettingsOpen && (
         <ChatSettingsModal
           features={chatSettings.features}
+          initialResponseFormat={chatSettings.responseFormat ?? ResponseFormat.Markdown}
           initialSystemPrompt={chatSettings.systemPrompt}
           initialTemperature={chatSettings.temperature}
           onSave={chatSettings.onSave}
           onClose={() => setIsChatSettingsOpen(false)}
           title={chatSettings.title}
+          responseFormatLabel={chatSettings.responseFormatLabel}
+          responseFormatHint={chatSettings.responseFormatHint}
+          responseFormatMarkdownLabel={chatSettings.responseFormatMarkdownLabel}
+          responseFormatPlainTextLabel={chatSettings.responseFormatPlainTextLabel}
           systemPromptLabel={chatSettings.systemPromptLabel}
           systemPromptTooltip={chatSettings.systemPromptTooltip}
           temperatureLabel={chatSettings.temperatureLabel}

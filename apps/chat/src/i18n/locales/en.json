@@ -203,6 +203,10 @@
   },
   "chatSettings": {
     "title": "Chat settings",
+    "responseFormatLabel": "Response format",
+    "responseFormatHint": "Applies to new and existing messages",
+    "responseFormatMarkdown": "Markdown",
+    "responseFormatPlainText": "Plain text",
     "systemPromptLabel": "System prompt",
     "temperatureLabel": "Temperature",
     "temperaturePrecise": "Precise",

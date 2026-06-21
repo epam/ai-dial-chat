@@ -4,6 +4,7 @@ import type {
   DeploymentFeatures,
   DeploymentItem,
   DisplayAttachment,
+  ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 
@@ -226,6 +227,8 @@ export interface InputProps {
 
 /** Values emitted by the chat-settings modal when the user clicks Save. */
 export interface ChatSettingsValues {
+  /** Updated response format, present when the response-format field was shown. */
+  responseFormat?: ResponseFormat;
   /** Updated system prompt, present when the system-prompt field was shown. */
   systemPrompt?: string;
   /** Updated temperature, present when the temperature field was shown. */
@@ -236,6 +239,8 @@ export interface ChatSettingsValues {
 export interface ChatSettingsConfig {
   /** Feature flags controlling which fields appear in the modal. */
   features: DeploymentFeatures;
+  /** Current response format pre-selected in the modal. Defaults to `ResponseFormat.Markdown`. */
+  responseFormat?: ResponseFormat;
   /** Current system prompt pre-populated in the modal textarea. */
   systemPrompt: string;
   /** Current temperature pre-populated in the modal numeric input. */
@@ -246,6 +251,14 @@ export interface ChatSettingsConfig {
   menuItemLabel?: string;
   /** Modal title. Defaults to `'Chat settings'`. */
   title?: string;
+  /** Label for the response format field. Defaults to `'Response format'`. */
+  responseFormatLabel?: string;
+  /** Helper text shown below the response format field. Defaults to `'Applies to new and existing messages'`. */
+  responseFormatHint?: string;
+  /** Label for the Markdown radio option. Defaults to `'Markdown'`. */
+  responseFormatMarkdownLabel?: string;
+  /** Label for the Plain text radio option. Defaults to `'Plain text'`. */
+  responseFormatPlainTextLabel?: string;
   /** Label for the system prompt field. Defaults to `'System prompt'`. */
   systemPromptLabel?: string;
   /** Tooltip shown on the system prompt input. Defaults to `'Enter a prompt'`. */
