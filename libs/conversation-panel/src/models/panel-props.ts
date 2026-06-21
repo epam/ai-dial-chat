@@ -56,8 +56,6 @@ export interface ConversationHistoryTypography {
   groupHeaderClassName?: string;
   /** Typography class applied to conversation title text in each row. Defaults to `'text-sm'`. */
   itemTitleClassName?: string;
-  /** Typography class applied to the empty-state label. Defaults to `'text-sm'`. */
-  emptyLabelClassName?: string;
   /** Typography class applied to the New chat button label. Defaults to `'dial-small-text'`. */
   newChatLabelClassName?: string;
   /** Typography class applied to each filter tab label. Defaults to `'dial-tiny-semi-text'`. */

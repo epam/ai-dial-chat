@@ -10,6 +10,9 @@ export const stripTrailingDots = (name: string): string =>
 export const getUtf8ByteLength = (str: string): number =>
   new TextEncoder().encode(str).byteLength;
 
+export const includesIgnoreCase = (str: string, query: string): boolean =>
+  str.toLowerCase().includes(query.toLowerCase());
+
 export const safeDecodeURI = (path: string): string => {
   try {
     return decodeURIComponent(path);

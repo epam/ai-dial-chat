@@ -116,6 +116,7 @@
     "sources": {
       "ariaLabel": "Conversation sources",
       "downloadAll": "Download all",
+      "copySource": "Copy link",
       "sections": {
         "uploadedFiles": "Uploaded Files",
         "generatedFiles": "Generated Files",

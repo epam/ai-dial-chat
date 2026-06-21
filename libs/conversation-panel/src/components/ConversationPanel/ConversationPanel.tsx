@@ -387,15 +387,9 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
               ))}
             </div>
           ) : isNoConversations ? (
-            <PanelEmpty
-              label={emptyLabel}
-              labelClassName={typography?.emptyLabelClassName}
-            />
+            <PanelEmpty label={emptyLabel} />
           ) : isNoResults ? (
-            <PanelNoResults
-              label={noResultsLabel}
-              labelClassName={typography?.emptyLabelClassName}
-            />
+            <PanelNoResults label={noResultsLabel} />
           ) : (
             <List<RowRendererData>
               role="list"

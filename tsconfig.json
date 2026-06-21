@@ -35,6 +35,9 @@
     },
     {
       "path": "./libs/catalog"
+    },
+    {
+      "path": "./libs/source-panel"
     }
   ]
 }

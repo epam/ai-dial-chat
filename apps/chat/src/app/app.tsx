@@ -64,6 +64,10 @@ const App: FC = () => {
     if (isMobile) closeHistoryPanel();
   }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (pathname === ROUTES.Catalog) closeHistoryPanel();
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const matchRoot = useMatch(ROUTES.Root);
   const matchConversation = useMatch(`${ROUTES.Conversations}/*`);
   const isConversationRoute = !!(matchRoot ?? matchConversation);

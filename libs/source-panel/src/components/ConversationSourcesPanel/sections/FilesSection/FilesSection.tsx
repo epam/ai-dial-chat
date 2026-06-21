@@ -1,17 +1,21 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { AttachmentCard } from '@epam/ai-dial-conversation-input';
 import { memo, type FC } from 'react';
 
-interface Props {
+interface FilesSectionProps {
   attachments: DisplayAttachment[];
   title: string;
+  /** CSS class applied to the section heading. Defaults to `'dial-body-semi-text'`. */
+  titleClassName?: string;
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
   attachmentClickLabel?: string;
 }
 
-const FilesSection: FC<Props> = ({
+const FilesSection: FC<FilesSectionProps> = ({
   attachments,
   title,
+  titleClassName = 'dial-body-semi-text',
   onAttachmentClick,
   attachmentClickLabel,
 }) => {
@@ -21,7 +25,7 @@ const FilesSection: FC<Props> = ({
 
   return (
     <section className="mb-6">
-      <h2 className="dial-body-semi-text mb-3">{title}</h2>
+      <h2 className={mergeClasses(titleClassName, 'mb-3')}>{title}</h2>
       <div role="list" className="grid grid-cols-3 gap-3">
         {attachments.map((att) => (
           <div key={att.id} role="listitem">
