@@ -49,7 +49,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
     return (
       <div
         style={cssVars}
-        className={mergeClasses('flex flex-col gap-1', className)}
+        className={mergeClasses('flex w-full flex-col gap-1', className)}
       >
         <StagesPanel stages={stages} isStreaming={false} />
       </div>
@@ -64,7 +64,7 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses('flex flex-col gap-1', className)}
+      className={mergeClasses('flex w-full flex-col gap-1', className)}
     >
       {completedStages.length > 0 && (
         <div>

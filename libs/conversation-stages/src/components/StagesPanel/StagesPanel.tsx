@@ -44,12 +44,12 @@ export const StagesPanel: FC<StagesPanelProps> = ({
       style={cssVars}
       className={mergeClasses('w-full', styles.panel, className)}
     >
-      <ul role="list" className="flex flex-col gap-4">
+      <ul role="list" className="flex w-full flex-col gap-4">
         {stages.map((stage, index) => (
           <li
             key={stage.index}
             role="listitem"
-            className={typography.fontClassName}
+            className={mergeClasses('w-full', typography.fontClassName)}
           >
             <StageItem
               stage={stage}
