@@ -416,10 +416,9 @@ const ConversationView: FC<Props> = ({
 
   const chatSettings = useMemo(
     () => ({
-      features: selectedDeployment?.features ?? {
-        responseFormat: false,
-        systemPrompt: false,
-        temperature: false,
+      features: {
+        ...(selectedDeployment?.features ?? { systemPrompt: false, temperature: false }),
+        responseFormat: true,
       },
       responseFormat:
         conversation.responseFormat ?? ResponseFormat.Markdown,

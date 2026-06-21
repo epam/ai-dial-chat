@@ -1,4 +1,4 @@
-import { ResponseFormat } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import {
   DialFormItem,
@@ -49,6 +49,8 @@ export interface ChatSettingsModalProps {
   /** Label for the save button. Defaults to `'Apply changes'`. */
   saveLabel?: string;
 }
+
+const LABEL_CLASS_NAME = '!dial-small-text font-semibold !text-primary pb-3';
 
 export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
   features,
@@ -106,7 +108,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
         {features.responseFormat && (
           <DialFormItem
             label={responseFormatLabel}
-            labelClassName="!dial-small-text font-semibold !text-primary mb-3"
+            labelClassName={LABEL_CLASS_NAME}
             description={responseFormatHint}
           >
             <div className="flex flex-col gap-2">
@@ -130,21 +132,17 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
           </DialFormItem>
         )}
         {features.systemPrompt && (
-          <DialFormItem
-            label={systemPromptLabel}
-            labelClassName="!dial-small-text font-semibold !text-primary mb-3"
-          >
-            <DialInput
-              value={systemPrompt}
-              placeholder={systemPromptTooltip}
-              onChange={(value) => setSystemPrompt(value ?? '')}
-            />
-          </DialFormItem>
+          <DialInput
+            value={systemPrompt}
+            placeholder={systemPromptTooltip}
+            labelProps={{ label: systemPromptLabel, className: mergeClasses(LABEL_CLASS_NAME, 'mb-3') }}
+            onChange={(value) => setSystemPrompt(value ?? '')}
+          />
         )}
         {features.temperature && (
           <DialFormItem
             label={temperatureLabel}
-            labelClassName="!dial-small-text font-semibold !text-primary"
+            labelClassName={LABEL_CLASS_NAME}
             description={temperatureHint}
           >
             <DialSlider
