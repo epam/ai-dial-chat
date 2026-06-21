@@ -7,15 +7,24 @@ import {
   CatalogI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
+import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
-  const { items: deployments, isLoading } = useDeployments();
+  const { items: deployments, isLoading: isDeploymentsLoading } =
+    useDeployments();
+  const {
+    favoriteIds,
+    isLoading: isFavoritesLoading,
+    toggleFavorite,
+  } = useFavoriteApplications();
+
+  const isLoading = isDeploymentsLoading || isFavoritesLoading;
 
   const catalogItems = useMemo(
-    () => deployments.map(mapDeploymentToCatalogItem),
-    [deployments],
+    () => deployments.map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
+    [deployments, favoriteIds],
   );
 
   const favorites = useMemo(
@@ -27,6 +36,7 @@ const CatalogView: FC = () => {
     () => catalogItems.filter((item) => !item.isUserFavorite),
     [catalogItems],
   );
+
   // TODO: replace with a real API call, e.g. GET /api/catalog/{id}/about
   const fetchAboutContent = useCallback(
     (item: CatalogItem): Promise<string | undefined> => {
@@ -35,12 +45,21 @@ const CatalogView: FC = () => {
     [],
   );
 
+  const onToggleFavorite = useCallback(
+    (id: string, isFavorite: boolean) => {
+      if (isLoading) return;
+      toggleFavorite(id, isFavorite);
+    },
+    [isLoading, toggleFavorite],
+  );
+
   return (
     <Catalog
       items={filteredItems}
       isLoading={isLoading}
       favorites={favorites}
       onFetchAboutContent={fetchAboutContent}
+      onToggleFavorite={onToggleFavorite}
       titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),
         createLabel: t(ButtonsI18nKeys.Create),

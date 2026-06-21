@@ -8,9 +8,8 @@ export class UpdateInstalledDto {
   })
   @IsString()
   @IsNotEmpty()
-  @Matches(/^[\w\-./@]+$/, {
-    message:
-      'id must contain only word characters, hyphens, dots, slashes, and at signs',
+  @Matches(/^\S+$/, {
+    message: 'id must not contain whitespace',
   })
   id!: string;
 

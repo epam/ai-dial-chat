@@ -8,7 +8,7 @@
 
 ```ts
 class UpdateInstalledDto {
-  id: string;          // Deployment identifier — validated with @Matches allowlist regex
+  id: string;          // Deployment identifier — validated @IsNotEmpty + @Matches(/^\S+$/) (any non-whitespace)
   isInstalled: boolean;
 }
 ```

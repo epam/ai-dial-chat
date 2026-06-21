@@ -11,6 +11,7 @@ const TYPE_MAP: Record<string, CatalogEntityType> = {
 
 export const mapDeploymentToCatalogItem = (
   deployment: DeploymentItemDto,
+  favoriteIds: ReadonlySet<string> = new Set(),
 ): CatalogItem => {
   const name = deployment.displayName ?? deployment.id;
   const normalizedType = (deployment.type ?? '').toLowerCase();
@@ -27,7 +28,8 @@ export const mapDeploymentToCatalogItem = (
     isFeatured: deployment.isFeatured ?? false,
     isHidden: deployment.isHidden ?? false,
     topics: deployment.topics ?? [],
-    isUserFavorite: deployment.isInstalled ?? false,
+    isUserFavorite: favoriteIds.has(deployment.id),
+    isStarred: favoriteIds.has(deployment.id),
     folder: [],
     overview: undefined,
   };
