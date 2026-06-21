@@ -28,12 +28,15 @@ export const MarkdownTable: FC<MarkdownTableProps> = memo(
 
     return (
       <div
-        className={mergeClasses('relative max-w-full', classNames.tableWrapper)}
+        className={mergeClasses(
+          'relative w-full min-w-0 max-w-full overflow-hidden',
+          classNames.tableWrapper,
+        )}
       >
         <div
           ref={scrollContainerRef}
           className={mergeClasses(
-            'max-w-full overflow-x-auto rounded',
+            'w-full min-w-0 max-w-full overflow-x-auto rounded',
             styles.scrollContainer,
             {
               [styles.tableScrollFadeBoth]:
