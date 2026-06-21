@@ -7,7 +7,7 @@ export default defineConfig(() => ({
     name: '@epam/ai-dial-chat-shared',
     watch: false,
     globals: true,
-    environment: 'node',
+    environment: 'jsdom',
     include: ['{src,tests}/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
     coverage: {
