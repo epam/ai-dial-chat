@@ -1,4 +1,6 @@
 export { ConversationInput } from './components/ConversationInput/ConversationInput';
+export { BottomSheetShell } from './components/BottomSheetShell/BottomSheetShell';
+export type { BottomSheetShellProps } from './components/BottomSheetShell/BottomSheetShell';
 export { FileDndOverlay } from './components/FileDndOverlay/FileDndOverlay';
 export type { FileDndOverlayProps } from './models/FileDndOverlay';
 export { EditMessageInput } from './components/EditMessageInput/EditMessageInput';

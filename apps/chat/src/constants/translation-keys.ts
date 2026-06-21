@@ -81,6 +81,11 @@ export enum NavigationI18nKeys {
   Catalog = 'navigation.catalog',
   OpenMenu = 'navigation.openMenu',
   CloseMenu = 'navigation.closeMenu',
+  MobileMenu = 'navigation.mobileMenu',
+  Menu = 'navigation.menu',
+  Profile = 'navigation.profile',
+  Back = 'navigation.back',
+  Close = 'navigation.close',
 }
 
 export enum CatalogI18nKeys {
