@@ -135,6 +135,7 @@
     "helmet": "^8.1.0",
     "jose": "5.10.0",
     "mime-types": "^3.0.2",
+    "multer": "2.2.0",
     "openid-client": "~5.7.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0",
@@ -146,6 +147,7 @@
     "@types/cookie-parser": "^1.4.10"
   },
   "overrides": {
-    "js-yaml": "4.2.0"
+    "js-yaml": "4.2.0",
+    "multer": "2.2.0"
   }
 }
