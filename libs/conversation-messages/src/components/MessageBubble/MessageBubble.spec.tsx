@@ -447,10 +447,12 @@ describe('AssistantMessageBubble — attachments', () => {
       />,
     );
     const inner = container.querySelector(
-      '.flex.w-fit.flex-col',
+      '.flex.w-full.flex-col.gap-4',
     ) as HTMLElement;
     const children = Array.from(inner?.children ?? []);
-    const textIndex = children.findIndex((el) => el.tagName === 'P');
+    const textIndex = children.findIndex((el) =>
+      el.className.includes('min-w-0'),
+    );
     const trayIndex = children.findIndex(
       (el) => el.getAttribute('role') === 'list',
     );

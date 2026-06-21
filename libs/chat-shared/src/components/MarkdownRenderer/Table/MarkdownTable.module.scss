@@ -1,7 +1,6 @@
 .scrollContainer {
   scrollbar-width: thin;
   scrollbar-color: var(--bg-layer-4, #242c42) transparent;
-  scrollbar-gutter: stable;
 
   &::-webkit-scrollbar {
     height: 4px;
