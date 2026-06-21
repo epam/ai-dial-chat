@@ -11,7 +11,7 @@ export type Breakpoint = 'mobile' | 'desktop';
 const BREAKPOINT_QUERIES: ReadonlyArray<{
   query: string;
   breakpoint: Breakpoint;
-}> = [{ query: '(min-width: 1024px)', breakpoint: 'desktop' }];
+}> = [{ query: '(min-width: 769px)', breakpoint: 'desktop' }];
 
 const resolveBreakpoint = (): Breakpoint => {
   if (

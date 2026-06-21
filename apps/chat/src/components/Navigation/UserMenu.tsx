@@ -16,14 +16,13 @@ import {
   IconMoon,
   IconSun,
 } from '@tabler/icons-react';
-import { memo, useMemo, useState } from 'react';
+import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AuthI18nKeys,
   SettingsI18nKeys,
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
-import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import {
   metaKey,
@@ -33,6 +32,9 @@ import {
   SUPPORTED_LANGUAGES,
   useLanguage,
 } from '../../hooks/language/useLanguage';
+import { useLogout } from '../../hooks/logout/useLogout';
+import { useThemeOptions } from '../../hooks/theme/useThemeOptions';
+import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { ThemeId } from '../../types/theme-id';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import AvatarInitials from './AvatarInitials';
@@ -41,30 +43,21 @@ import MenuItemLabel from './MenuItemLabel';
 export const UserMenu = memo(() => {
   const { status, user } = useUser();
   const { t } = useTranslation();
-  const { selectedTheme, setTheme, themes } = useTheme();
+  const { hasDark, hasLight, selectedTheme, setTheme } = useThemeOptions();
   const { preference, setPreference } = useKeyboardShortcutPreference();
   const { language, changeLanguage } = useLanguage();
-
-  const image = user?.claims?.['image'] as string | undefined;
-  const [isFallbackIconShown, setIsFallbackIconShown] = useState(!image);
+  const {
+    email,
+    displayName,
+    shortName,
+    image,
+    isFallbackIconShown,
+    setIsFallbackIconShown,
+  } = useUserProfile();
   const isMobile = useIsMobile();
-  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
+  const { isLogoutOpen, openLogout, closeLogout } = useLogout();
 
-  const email = (user?.claims?.['email'] as string) ?? user?.sub ?? '';
-  const displayName = (user?.claims?.['name'] as string) || email;
-
-  const shortName = useMemo(() => {
-    const nameClaim = (user?.claims?.['name'] as string) || '';
-    const [part1, part2] = nameClaim.includes(' ')
-      ? nameClaim.split(' ')
-      : [nameClaim[0], nameClaim[1]];
-    if (part1 && part2) {
-      return `${part1[0]}${part2[0]}`;
-    }
-    return nameClaim;
-  }, [user?.claims]);
-
-  if (status !== 'authenticated' || !user) {
+  if (status !== 'authenticated' || !user || isMobile) {
     return null;
   }
 
@@ -81,9 +74,6 @@ export const UserMenu = memo(() => {
       onError={() => setIsFallbackIconShown(true)}
     />
   );
-
-  const hasDark = themes?.some((t) => t.id === ThemeId.Dark) ?? false;
-  const hasLight = themes?.some((t) => t.id === ThemeId.Light) ?? false;
 
   const themeChildren = [
     hasDark && {
@@ -205,7 +195,7 @@ export const UserMenu = memo(() => {
       key: 'logout',
       label: <span className="dial-small-text">{t(AuthI18nKeys.LogOut)}</span>,
       icon: <IconLogout size={DIAL_ICON_SIZE.SM} aria-hidden />,
-      onClick: () => setIsLogoutOpen(true),
+      onClick: openLogout,
     },
   ];
 
@@ -228,10 +218,7 @@ export const UserMenu = memo(() => {
           </button>
         </DialDropdown>
       </div>
-      <LogoutConfirmationModal
-        isOpen={isLogoutOpen}
-        onClose={() => setIsLogoutOpen(false)}
-      />
+      <LogoutConfirmationModal isOpen={isLogoutOpen} onClose={closeLogout} />
     </>
   );
 });
