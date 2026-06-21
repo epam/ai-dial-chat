@@ -45,10 +45,15 @@
   },
   "navigation": {
     "ariaLabel": "Main navigation",
-    "home": "Conversations",
+    "home": "Chat",
     "catalog": "Catalog",
     "openMenu": "Open navigation menu",
-    "closeMenu": "Close navigation menu"
+    "closeMenu": "Close navigation menu",
+    "mobileMenu": "Navigation menu",
+    "menu": "Menu",
+    "profile": "Profile",
+    "back": "Back",
+    "close": "Close"
   },
   "catalog": {
     "ariaLabel": "Catalog",

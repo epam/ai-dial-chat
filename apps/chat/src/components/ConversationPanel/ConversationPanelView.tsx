@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ConversationGroupKey,
   ConversationPanel,
@@ -357,7 +358,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         actionsLabel={t(ConversationPanelI18nKeys.ActionsLabel)}
         onToggle={isMobile ? onClose : undefined}
         closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
-        className={isMobile ? 'inset-y-0 start-0 z-50' : undefined}
+        className={
+          isMobile
+            ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
+            : undefined
+        }
         styles={{ typography: { fontClassName: 'dial-body-text' } }}
         resizable={!isMobile}
         defaultPanelWidth={defaultPanelWidth}

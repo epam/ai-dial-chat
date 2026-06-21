@@ -1,9 +1,20 @@
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+
+  to {
+    transform: translateY(0);
+  }
+}
+
 .backdrop {
   background: var(--ci-background-Backdrop, #0c101db2);
 }
 
 .sheet {
   background: var(--ci-sheet-bg, var(--bg-layer-0, #000000));
+  animation: slide-up 300ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .title {
