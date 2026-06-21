@@ -1,7 +1,11 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { useCodeCopy } from '../../../../chat-shared/src/hooks/useCodeCopy';
 import { copyToClipboard } from '../../utils/copy-to-clipboard';
+import { useCodeCopy } from '../useCodeCopy';
+
+vi.mock('../../utils/copy-to-clipboard', () => ({
+  copyToClipboard: vi.fn(),
+}));
 
 vi.mock('../../utils/copy-to-clipboard');
 

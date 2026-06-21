@@ -191,6 +191,7 @@ export enum SidebarI18nKeys {
   SectionUploadedFiles = 'sidebar.sources.sections.uploadedFiles',
   SectionGeneratedFiles = 'sidebar.sources.sections.generatedFiles',
   SectionSources = 'sidebar.sources.sections.sources',
+  CopySource = 'sidebar.sources.copySource',
 }
 
 export enum AttachmentsI18nKeys {

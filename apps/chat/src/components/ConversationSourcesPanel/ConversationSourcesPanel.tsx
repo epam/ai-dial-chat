@@ -1,13 +1,5 @@
-import {
-  PanelEmpty,
-  PanelNoResults,
-  SearchInput,
-  SidebarPanel,
-  SidebarOrientation,
-} from '@epam/ai-dial-sidebar';
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconDownload } from '@tabler/icons-react';
-import { memo, useLayoutEffect, useMemo, useState, type FC } from 'react';
+import { ConversationSourcesPanel } from '@epam/ai-dial-source-panel';
+import { memo, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AttachmentsI18nKeys,
@@ -22,18 +14,15 @@ import { useConversationSources } from '../../hooks/conversation-sources/useConv
 import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { StorageKey } from '../../types/storage-key';
-import FilesSection from './sections/FilesSection/FilesSection';
 
 const MIN_PANEL_WIDTH = 312;
 const DEFAULT_PANEL_WIDTH = 360;
 
-// TODO: need add libs for this panel
-const ConversationSourcesPanel: FC = () => {
+const ConversationSourcesPanelContainer: FC = () => {
   const { t } = useTranslation();
   const { handleClose, isOpen, messages } = useSourcesSidebar();
-  const { uploaded, generated } = useConversationSources(messages);
+  const { uploaded, generated, sources } = useConversationSources(messages);
   const { handleAttachmentClick } = useAttachmentAction();
-  const [searchQuery, setSearchQuery] = useState('');
 
   const isMobile = useIsMobile();
   const viewportWidth = useViewportWidth();
@@ -47,98 +36,39 @@ const ConversationSourcesPanel: FC = () => {
     maxPanelWidth,
   );
 
-  useLayoutEffect(() => {
-    if (!isOpen) {
-      setSearchQuery('');
-    }
-  }, [isOpen]);
-
-  const filteredUploaded = useMemo(
-    () =>
-      searchQuery
-        ? uploaded.filter((att) =>
-            att.name.toLowerCase().includes(searchQuery.toLowerCase()),
-          )
-        : uploaded,
-    [uploaded, searchQuery],
+  const labels = useMemo(
+    () => ({
+      ariaLabel: t(SidebarI18nKeys.AriaLabel),
+      closeLabel: t(ButtonsI18nKeys.Close),
+      searchPlaceholder: t(BasicI18nKeys.SearchPlaceholder),
+      emptyLabel: t(BasicI18nKeys.Empty),
+      noResultsLabel: t(BasicI18nKeys.NoResults),
+      downloadAllLabel: t(SidebarI18nKeys.DownloadAll),
+      uploadedSectionTitle: t(SidebarI18nKeys.SectionUploadedFiles),
+      generatedSectionTitle: t(SidebarI18nKeys.SectionGeneratedFiles),
+      sourcesSectionTitle: t(SidebarI18nKeys.SectionSources),
+      copySourceLabel: t(SidebarI18nKeys.CopySource),
+      attachmentClickLabel: t(AttachmentsI18nKeys.Download),
+    }),
+    [t],
   );
-
-  const filteredGenerated = useMemo(
-    () =>
-      searchQuery
-        ? generated.filter((att) =>
-            att.name.toLowerCase().includes(searchQuery.toLowerCase()),
-          )
-        : generated,
-    [generated, searchQuery],
-  );
-
-  const isEmpty = uploaded.length === 0 && generated.length === 0;
-  const isNoResults =
-    searchQuery !== '' &&
-    filteredUploaded.length === 0 &&
-    filteredGenerated.length === 0;
 
   return (
-    <SidebarPanel
+    <ConversationSourcesPanel
       isOpen={isOpen}
-      orientation={SidebarOrientation.Right}
-      className={isOpen ? 'mobile:w-full' : 'w-0'}
-      styles={{
-        bodyClassName: 'flex flex-col overflow-hidden p-0',
-      }}
-      ariaLabel={t(SidebarI18nKeys.AriaLabel)}
-      closeLabel={t(ButtonsI18nKeys.Close)}
       onClose={handleClose}
-      resizable={!isMobile}
+      uploaded={uploaded}
+      generated={generated}
+      sources={sources}
+      onAttachmentClick={handleAttachmentClick}
+      isMobile={isMobile}
       defaultWidth={defaultPanelWidth}
       minWidth={MIN_PANEL_WIDTH}
       maxWidth={maxPanelWidth}
       onResizeStop={setStoredWidth}
-      rightActions={
-        !isEmpty && (
-          <DialGhostIconButton
-            icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-            aria-label={t(SidebarI18nKeys.DownloadAll)}
-            disabled
-          />
-        )
-      }
-    >
-      {!isEmpty && (
-        <SearchInput
-          placeholder={t(BasicI18nKeys.SearchPlaceholder)}
-          value={searchQuery}
-          onChange={setSearchQuery}
-        />
-      )}
-      <div className="flex-1 overflow-y-auto p-4">
-        {isEmpty ? (
-          <PanelEmpty label={t(BasicI18nKeys.Empty)} />
-        ) : isNoResults ? (
-          <PanelNoResults label={t(BasicI18nKeys.NoResults)} />
-        ) : (
-          <>
-            <FilesSection
-              attachments={filteredUploaded}
-              title={t(SidebarI18nKeys.SectionUploadedFiles)}
-              onAttachmentClick={handleAttachmentClick}
-              attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
-            />
-            <FilesSection
-              attachments={filteredGenerated}
-              title={t(SidebarI18nKeys.SectionGeneratedFiles)}
-              onAttachmentClick={handleAttachmentClick}
-              attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
-            />
-            {/* TODO: restore after implementing sources extraction from assistant
-            messages */}
-            {/* <SourcesSection title={t(SidebarI18nKeys.SectionSources)} /> */}
-          </>
-        )}
-      </div>
-    </SidebarPanel>
+      labels={labels}
+    />
   );
 };
 
-export default memo(ConversationSourcesPanel);
+export default memo(ConversationSourcesPanelContainer);
