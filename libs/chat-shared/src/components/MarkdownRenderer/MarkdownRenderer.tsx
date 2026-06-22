@@ -185,7 +185,7 @@ const buildMarkdownComponents = (
   th: ({ children }) => (
     <th
       className={mergeClasses(
-        'max-w-96 whitespace-normal border border-secondary px-3 py-1.5 text-start [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal break-words border border-secondary px-3 py-1.5 text-start [overflow-wrap:anywhere]',
         cn.tableHeaderFont ?? 'font-semibold',
         cn.tableCell,
         cn.tableHeader,
@@ -197,7 +197,7 @@ const buildMarkdownComponents = (
   td: ({ children }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal border border-secondary px-3 py-1.5 [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal break-words border border-secondary px-3 py-1.5 [overflow-wrap:anywhere]',
         cn.tableCell,
       )}
     >
