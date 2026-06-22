@@ -1,5 +1,4 @@
 import {
-  AttachmentErrorReason,
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
@@ -40,7 +39,6 @@ import {
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
-  AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
@@ -53,14 +51,10 @@ import {
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import { useNotification } from '../../context/NotificationContext';
+import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
-import {
-  isMimeTypeAllowed,
-  mimeTypesToExtensionLabels,
-} from '../../utils/attachment-mime';
 import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
@@ -163,46 +157,13 @@ const ConversationView: FC<Props> = ({
     isLoading,
     error,
   } = useDeployments();
-  const { showNotification } = useNotification();
-
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),
     [items, selectedItemId],
   );
 
-  const inputAttachmentTypes = useMemo(
-    () => selectedDeployment?.inputAttachmentTypes ?? [],
-    [selectedDeployment],
-  );
-
-  const isAttachmentsAllowed = selectedDeployment?.inputAttachmentTypes != null;
-
-  const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-
-  const validateAttachment = useCallback(
-    (attachment: Attachment): AttachmentErrorReason | undefined => {
-      if (!isMimeTypeAllowed(attachment.contentType, inputAttachmentTypes)) {
-        if (unsupportedTypeTimerRef.current != null) {
-          clearTimeout(unsupportedTypeTimerRef.current);
-        }
-        unsupportedTypeTimerRef.current = setTimeout(() => {
-          showNotification({
-            variant: NotificationVariant.Error,
-            title: t(AttachmentsI18nKeys.UnsupportedTypeTitle),
-            message: t(AttachmentsI18nKeys.UnsupportedTypeMessage, {
-              formats: mimeTypesToExtensionLabels(inputAttachmentTypes),
-            }),
-          });
-          unsupportedTypeTimerRef.current = null;
-        }, 100);
-        return AttachmentErrorReason.UnsupportedType;
-      }
-      return undefined;
-    },
-    [inputAttachmentTypes, showNotification, t],
-  );
+  const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
+    useAttachmentValidation(selectedDeployment);
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
@@ -553,6 +514,10 @@ const ConversationView: FC<Props> = ({
                       ? onFilesConsumed
                       : undefined
                   }
+                  validateAttachment={
+                    selectedDeployment != null ? validateAttachment : undefined
+                  }
+                  hideAttachFile={!isAttachmentsAllowed}
                 />
               );
             })}
@@ -624,13 +589,18 @@ const ConversationView: FC<Props> = ({
                     : undefined
                 }
                 autoFocus={!isMobile}
-                onDialFileSystemClick={() => setIsDialFileManagerOpen(true)}
+                onDialFileSystemClick={
+                  isAttachmentsAllowed
+                    ? () => setIsDialFileManagerOpen(true)
+                    : undefined
+                }
                 dialFileSystemLabel={t(
                   ConversationI18nKeys.AttachMenuDialFileSystem,
                 )}
                 validateAttachment={
-                  isAttachmentsAllowed ? validateAttachment : undefined
+                  selectedDeployment != null ? validateAttachment : undefined
                 }
+                hideAttachFile={!isAttachmentsAllowed}
               />
             </Suspense>
             <Suspense fallback={null}>

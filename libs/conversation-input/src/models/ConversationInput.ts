@@ -91,6 +91,18 @@ export interface EditMessageInputProps {
   pendingDropFiles?: File[];
   /** Called after the files have been consumed, signalling the parent to clear its state. */
   onDropFilesConsumed?: () => void;
+  /**
+   * Called synchronously for each attachment after it is added, before upload begins.
+   * Return an `AttachmentErrorReason` to reject the attachment (it enters error state
+   * and `onUploadAttachment` is NOT called). Return `undefined` to allow normal upload.
+   */
+  validateAttachment?: (
+    attachment: Attachment,
+  ) => AttachmentErrorReason | undefined;
+  /**
+   * When `true`, the "Attach file" button is hidden.
+   */
+  hideAttachFile?: boolean;
 }
 
 /** Props accepted by the `ConversationInput` component. */
@@ -197,4 +209,10 @@ export interface ConversationInputProps {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
+  /**
+   * When `true`, the "Attach file" item is removed from the attach menu.
+   * Other menu items (e.g. DIAL file system) remain visible. When no items
+   * remain in the menu the entire attach (+) button is hidden automatically.
+   */
+  hideAttachFile?: boolean;
 }
