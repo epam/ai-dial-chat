@@ -144,8 +144,14 @@ const createApplicationEpic: AppEpic = (action$) =>
           }).pipe(
             switchMap(({ retrievedApplication, dialEntity }) => {
               if (retrievedApplication) {
-                const featuresRecord =
-                  dialEntity?.features ?? retrievedApplication.features ?? {};
+                const featuresRecord = {
+                  ...(dialEntity?.features ??
+                    retrievedApplication.features ??
+                    {}),
+                  ...(!!retrievedApplication.function && {
+                    chat_completion: true,
+                  }),
+                };
 
                 const modelData = {
                   ...retrievedApplication,
