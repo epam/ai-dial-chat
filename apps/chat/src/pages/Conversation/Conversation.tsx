@@ -55,7 +55,9 @@ export const ConversationPage: FC = () => {
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
+  const {
+    config: { asrModelId, transcribeSizeLimitBytes },
+  } = useAppConfig();
   const {
     items: deploymentItems,
     restoreSelectedItemId,

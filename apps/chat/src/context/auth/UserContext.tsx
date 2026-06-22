@@ -10,8 +10,9 @@ import {
 } from 'react';
 import { getMe } from '../../server-api/auth.api';
 import { onUnauthorized, UnauthorizedError } from '../../server-api/base';
+import { AuthStatus } from '../../types/auth-status';
 
-type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
+export { AuthStatus };
 
 interface UserContextType {
   status: AuthStatus;
@@ -23,16 +24,16 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider = ({ children }: { children: ReactNode }) => {
-  const [status, setStatus] = useState<AuthStatus>('loading');
+  const [status, setStatus] = useState<AuthStatus>(AuthStatus.Loading);
   const [user, setUser] = useState<UserProfile | null>(null);
 
   const bootstrap = useCallback(async (signal: { isCancelled: boolean }) => {
-    setStatus('loading');
+    setStatus(AuthStatus.Loading);
     try {
       const profile = await getMe();
       if (!signal.isCancelled) {
         setUser(profile);
-        setStatus('authenticated');
+        setStatus(AuthStatus.Authenticated);
       }
     } catch (err) {
       if (!signal.isCancelled) {
@@ -40,7 +41,7 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
           console.error('UserContext bootstrap failed', err);
         }
         setUser(null);
-        setStatus('unauthenticated');
+        setStatus(AuthStatus.Unauthenticated);
       }
     }
   }, []);
@@ -56,13 +57,13 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     return onUnauthorized(() => {
       setUser(null);
-      setStatus('unauthenticated');
+      setStatus(AuthStatus.Unauthenticated);
     });
   }, []);
 
   const reset = useCallback(() => {
     setUser(null);
-    setStatus('unauthenticated');
+    setStatus(AuthStatus.Unauthenticated);
   }, []);
 
   const refresh = useCallback(async () => {

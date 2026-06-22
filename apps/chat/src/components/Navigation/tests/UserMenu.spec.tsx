@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthStatus } from '../../../context/auth/UserContext';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
 import * as BreakpointModule from '../../../hooks/breakpoint/useBreakpoint';
@@ -57,7 +58,7 @@ describe('UserMenu', () => {
 
   it('returns null when status is loading', () => {
     mockUseUser.mockReturnValue({
-      status: 'loading',
+      status: AuthStatus.Loading,
       user: null,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -73,7 +74,7 @@ describe('UserMenu', () => {
 
   it('renders avatar image when authenticated and image claim exists', () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: {
         ...mockUser,
         claims: {
@@ -98,7 +99,7 @@ describe('UserMenu', () => {
 
   it('renders short name fallback when image is missing', () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: mockUser,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -116,7 +117,7 @@ describe('UserMenu', () => {
 
   it('switches to fallback when image fails to load', () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: {
         ...mockUser,
         claims: {
@@ -142,7 +143,7 @@ describe('UserMenu', () => {
 
   it('avatar button has an aria-label', () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: mockUser,
       refresh: vi.fn(),
       reset: vi.fn(),

@@ -156,7 +156,7 @@ describe('ConversationsContext — deleteAllConversations', () => {
     });
 
     expect(mockListConversations).toHaveBeenCalledTimes(2);
-    expect(returned!.failed).toHaveLength(1);
+    expect(returned?.failed).toHaveLength(1);
   });
 
   it('does not modify state on total failure', async () => {

@@ -22,7 +22,7 @@ import {
   AuthI18nKeys,
   SettingsI18nKeys,
 } from '../../constants/translation-keys';
-import { useUser } from '../../context/auth/UserContext';
+import { AuthStatus, useUser } from '../../context/auth/UserContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import {
   metaKey,
@@ -57,7 +57,7 @@ export const UserMenu = memo(() => {
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
 
-  if (status !== 'authenticated' || !user || isMobile) {
+  if (status !== AuthStatus.Authenticated || !user || isMobile) {
     return null;
   }
 

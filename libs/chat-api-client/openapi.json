@@ -251,24 +251,41 @@
         "tags": ["auth"]
       }
     },
-    "/api/v1/config": {
+    "/api/v1/client-config": {
       "get": {
-        "operationId": "getConfig",
-        "parameters": [],
+        "operationId": "getClientConfig",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "query",
+            "description": "Application identifier. Must be a known app ID.",
+            "schema": {
+              "example": "chat-ui",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AppConfigDto"
+                  "$ref": "#/components/schemas/ClientConfigResponseDto"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Missing or invalid appId"
+          },
+          "429": {
+            "description": "Too Many Requests"
           }
         },
-        "summary": "Get application feature configuration",
-        "tags": ["config"]
+        "summary": "Get client-safe application configuration and feature flags",
+        "tags": ["app-config"]
       }
     },
     "/api/v1/application-schemas": {
@@ -1804,20 +1821,70 @@
         },
         "required": ["sub", "providerId", "claims", "bucket"]
       },
-      "AppConfigDto": {
+      "ClientConfigDto": {
         "type": "object",
         "properties": {
           "asrModelId": {
-            "type": "object",
-            "description": "Deployment ID of the ASR model used for transcription. Null when ASR_MODEL is not configured.",
-            "nullable": true
+            "type": "string",
+            "description": "Deployment ID of the ASR model. Null when ASR is not configured.",
+            "nullable": true,
+            "example": "whisper-1"
           },
           "transcribeSizeLimitBytes": {
             "type": "number",
-            "description": "Maximum audio file size in bytes accepted by the transcription endpoint."
+            "description": "Maximum audio file size in bytes accepted by the transcription endpoint.",
+            "example": 5242880
           }
         },
-        "required": ["transcribeSizeLimitBytes"]
+        "required": ["asrModelId", "transcribeSizeLimitBytes"]
+      },
+      "ClientConfigMetadataDto": {
+        "type": "object",
+        "properties": {
+          "resolvedAt": {
+            "type": "string",
+            "description": "ISO timestamp when the config was resolved."
+          },
+          "cacheTtlSeconds": {
+            "type": "number",
+            "description": "Cache TTL in seconds applied to this response."
+          }
+        },
+        "required": ["resolvedAt", "cacheTtlSeconds"]
+      },
+      "ClientConfigResponseDto": {
+        "type": "object",
+        "properties": {
+          "appId": {
+            "type": "string",
+            "description": "Application identifier.",
+            "example": "chat-ui"
+          },
+          "features": {
+            "type": "object",
+            "description": "Feature flags — boolean per feature key.",
+            "example": {
+              "asrEnabled": false
+            }
+          },
+          "config": {
+            "description": "Non-boolean configuration values.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientConfigDto"
+              }
+            ]
+          },
+          "metadata": {
+            "description": "Resolution metadata.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientConfigMetadataDto"
+              }
+            ]
+          }
+        },
+        "required": ["appId", "features", "config"]
       },
       "ApplicationSchemaSummaryDto": {
         "type": "object",
@@ -1956,8 +2023,8 @@
             "description": "Whether this deployment is hidden (configured via env)"
           },
           "updatedAt": {
-            "type": "string",
-            "description": "ISO timestamp of last update time from DIAL Core (e.g. \"2024-05-01T12:34:56Z\")"
+            "type": "number",
+            "description": "Timestamp of last update time from DIAL Core (e.g. 1714768496000)"
           },
           "applicationTypeSchemaId": {
             "type": "string",

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthStatus } from '../../../context/auth/UserContext';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as useAuthRedirectModule from '../../../hooks/auth/useAuthRedirect';
 import RequireAuth from '../RequireAuth';
@@ -23,7 +24,7 @@ describe('RequireAuth', () => {
 
   it('renders a loading spinner when status is loading', () => {
     mockUseUser.mockReturnValue({
-      status: 'loading',
+      status: AuthStatus.Loading,
       user: null,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -41,7 +42,7 @@ describe('RequireAuth', () => {
 
   it('renders null when status is unauthenticated and invokes useAuthRedirect', () => {
     mockUseUser.mockReturnValue({
-      status: 'unauthenticated',
+      status: AuthStatus.Unauthenticated,
       user: null,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -59,7 +60,7 @@ describe('RequireAuth', () => {
 
   it('renders children when status is authenticated', () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: { sub: 'u1', providerId: 'keycloak', claims: {} },
       refresh: vi.fn(),
       reset: vi.fn(),

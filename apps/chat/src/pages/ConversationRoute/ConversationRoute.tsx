@@ -80,7 +80,9 @@ const ConversationRoute: FC = () => {
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
   const { showNotification } = useNotification();
-  const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
+  const {
+    config: { asrModelId, transcribeSizeLimitBytes },
+  } = useAppConfig();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const {

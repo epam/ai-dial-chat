@@ -4,7 +4,7 @@ import { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as authApi from '../../server-api/auth.api';
 import { onUnauthorized, UnauthorizedError } from '../../server-api/base';
-import { UserProvider, useUser } from './UserContext';
+import { AuthStatus, UserProvider, useUser } from './UserContext';
 
 const mockProfile: UserProfileDto = {
   sub: 'user-1',
@@ -27,7 +27,9 @@ describe('UserContext', () => {
 
     const { result } = renderHook(() => useUser(), { wrapper });
 
-    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+    await waitFor(() =>
+      expect(result.current.status).toBe(AuthStatus.Authenticated),
+    );
     expect(result.current.user).toEqual(mockProfile);
   });
 
@@ -38,7 +40,9 @@ describe('UserContext', () => {
 
     const { result } = renderHook(() => useUser(), { wrapper });
 
-    await waitFor(() => expect(result.current.status).toBe('unauthenticated'));
+    await waitFor(() =>
+      expect(result.current.status).toBe(AuthStatus.Unauthenticated),
+    );
     expect(result.current.user).toBeNull();
   });
 
@@ -50,7 +54,9 @@ describe('UserContext', () => {
 
     const { result } = renderHook(() => useUser(), { wrapper });
 
-    await waitFor(() => expect(result.current.status).toBe('unauthenticated'));
+    await waitFor(() =>
+      expect(result.current.status).toBe(AuthStatus.Unauthenticated),
+    );
     expect(result.current.user).toBeNull();
     expect(consoleSpy).toHaveBeenCalledWith(
       'UserContext bootstrap failed',
@@ -62,13 +68,15 @@ describe('UserContext', () => {
     vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
 
     const { result } = renderHook(() => useUser(), { wrapper });
-    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+    await waitFor(() =>
+      expect(result.current.status).toBe(AuthStatus.Authenticated),
+    );
 
     act(() => {
       result.current.reset();
     });
 
-    expect(result.current.status).toBe('unauthenticated');
+    expect(result.current.status).toBe(AuthStatus.Unauthenticated);
     expect(result.current.user).toBeNull();
   });
 
@@ -79,13 +87,15 @@ describe('UserContext', () => {
       .mockResolvedValueOnce(mockProfile);
 
     const { result } = renderHook(() => useUser(), { wrapper });
-    await waitFor(() => expect(result.current.status).toBe('unauthenticated'));
+    await waitFor(() =>
+      expect(result.current.status).toBe(AuthStatus.Unauthenticated),
+    );
 
     await act(async () => {
       await result.current.refresh();
     });
 
-    expect(result.current.status).toBe('authenticated');
+    expect(result.current.status).toBe(AuthStatus.Authenticated);
     expect(result.current.user).toEqual(mockProfile);
     expect(getMeSpy).toHaveBeenCalledTimes(2);
   });
@@ -100,7 +110,9 @@ describe('UserContext', () => {
     vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
 
     const { result } = renderHook(() => useUser(), { wrapper });
-    await waitFor(() => expect(result.current.status).toBe('authenticated'));
+    await waitFor(() =>
+      expect(result.current.status).toBe(AuthStatus.Authenticated),
+    );
 
     // Simulate a 401 from any API call via the listener mechanism
     act(() => {
@@ -108,7 +120,7 @@ describe('UserContext', () => {
       result.current.reset();
     });
 
-    expect(result.current.status).toBe('unauthenticated');
+    expect(result.current.status).toBe(AuthStatus.Unauthenticated);
     expect(result.current.user).toBeNull();
   });
 });

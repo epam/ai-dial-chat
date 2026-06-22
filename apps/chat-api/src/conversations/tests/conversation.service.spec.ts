@@ -1263,7 +1263,7 @@ describe('ConversationService', () => {
       expect(result.nextToken).toBeDefined();
       const decoded = JSON.parse(
         Buffer.from(
-          result.nextToken!.slice('ct1.'.length),
+          (result.nextToken ?? '').slice('ct1.'.length),
           'base64url',
         ).toString('utf-8'),
       ) as { u?: string; p?: string };
@@ -1379,7 +1379,7 @@ describe('ConversationService', () => {
       expect(result.nextToken).toBeDefined();
       const decoded = JSON.parse(
         Buffer.from(
-          result.nextToken!.slice('ct1.'.length),
+          (result.nextToken ?? '').slice('ct1.'.length),
           'base64url',
         ).toString('utf-8'),
       ) as { u?: string; p?: string };
