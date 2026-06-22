@@ -27,7 +27,7 @@ const view = withRenderWhen(
         <ProfileButton />
       </div>
 
-      <div className="hidden size-full border-r border-secondary md:block">
+      <div className="hidden size-full border-e border-secondary md:block">
         <UserDesktop />
       </div>
     </div>
