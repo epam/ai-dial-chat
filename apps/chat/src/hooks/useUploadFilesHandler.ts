@@ -123,6 +123,7 @@ export const useUploadFilesHandler = (
             bucket,
             showSuccessMessage: true,
             selectFileIds: !skipSelect,
+            isFromDeviceAttachment: true,
           }),
         );
         return Promise.resolve(nonDuplicatedFiles);
@@ -130,6 +131,7 @@ export const useUploadFilesHandler = (
 
       dispatchPreparedFiles(nonDuplicatedFiles, folderPath, {
         showSuccessMessage: true,
+        isFromDeviceAttachment: true,
       });
 
       return Promise.resolve(nonDuplicatedFiles);
