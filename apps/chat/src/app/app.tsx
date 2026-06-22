@@ -17,6 +17,7 @@ import {
 } from 'react-router-dom';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
+import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -124,17 +125,21 @@ const App: FC = () => {
           <Route
             path={ROUTES.Catalog}
             element={
-              <Suspense fallback={<RouteFallback />}>
-                <CatalogView />
-              </Suspense>
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <CatalogView />
+                </Suspense>
+              </RouteErrorBoundary>
             }
           />
           <Route
             path="/conversations/*"
             element={
-              <Suspense fallback={<RouteFallback />}>
-                <ConversationPage />
-              </Suspense>
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ConversationPage />
+                </Suspense>
+              </RouteErrorBoundary>
             }
           />
         </Routes>

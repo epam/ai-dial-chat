@@ -26,7 +26,6 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import { getConversationRoute } from '../../constants/routes';
-import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
@@ -37,6 +36,7 @@ import {
   ButtonsI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
+import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
