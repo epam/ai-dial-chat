@@ -39,6 +39,7 @@ export const Catalog: FC<CatalogProps> = ({
   onCreateClick,
   isLoading,
   styles: catalogStyles,
+  detailsTexts,
 }) => {
   const { typography } = catalogStyles ?? {};
 
@@ -278,6 +279,7 @@ export const Catalog: FC<CatalogProps> = ({
           onToggleFavorite={onToggleFavorite}
           onUseInChat={onUseInChat}
           onShare={onShare}
+          texts={detailsTexts}
         />
       )}
     </section>

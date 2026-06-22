@@ -98,6 +98,21 @@ export enum CatalogI18nKeys {
   SortNewest = 'catalog.sortNewest',
   SortNameAZ = 'catalog.sortNameAZ',
   FeaturedLabel = 'catalog.featuredLabel',
+  // Details panel
+  DetailsTabTools = 'catalog.details.tabTools',
+  DetailsPrimaryActionUseInChat = 'catalog.details.primaryAction.useInChat',
+  DetailsPrimaryActionDeploy = 'catalog.details.primaryAction.deploy',
+  DetailsPrimaryActionConnect = 'catalog.details.primaryAction.connect',
+  DetailsDailyLimit = 'catalog.details.dailyLimit',
+  DetailsApiResourceSection = 'catalog.details.api.resourceSection',
+  DetailsApiSnippetSection = 'catalog.details.api.snippetSection',
+  DetailsApiModelId = 'catalog.details.api.modelId',
+  DetailsApiEndpoint = 'catalog.details.api.endpoint',
+  DetailsApiRequestExample = 'catalog.details.api.requestExample',
+  DetailsApiResponseSchema = 'catalog.details.api.responseSchema',
+  DetailsApiCopy = 'catalog.details.api.copy',
+  DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
+  DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
 }
 
 export enum DeploymentsI18nKeys {

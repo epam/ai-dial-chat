@@ -5,8 +5,6 @@
 }
 
 .specLabel {
-  width: 100px;
-  flex-shrink: 0;
   color: var(--text-secondary, #9fa6bd);
 }
 
@@ -27,6 +25,10 @@
   color: var(--text-accent-secondary, #37babc);
 }
 
+.specRow {
+  border-radius: 4px;
+}
+
 .specRowAlt {
-  background: var(--bg-layer-2, #161b2d);
+  background: var(--bg-layer-1, #0d1425);
 }

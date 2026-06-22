@@ -92,22 +92,29 @@ export const CatalogOverview: FC<CatalogOverviewProps> = ({
               <div
                 key={i}
                 className={mergeClasses(
-                  'flex items-center gap-2 px-1 py-[5px]',
+                  'flex items-center px-3 py-2',
+                  styles.specRow,
                   i % 2 !== 0 ? styles.specRowAlt : undefined,
                 )}
               >
                 <span
-                  className={mergeClasses(labelClassName, styles.specLabel)}
+                  className={mergeClasses(
+                    labelClassName,
+                    styles.specLabel,
+                    'w-2/5 shrink-0',
+                  )}
                 >
                   {spec.label}
                 </span>
-                <SpecValue
-                  value={spec.value}
-                  valueClassName={valueClassName}
-                  valueTrueClassName={valueTrueClassName}
-                  yesLabel={yesLabel}
-                  noLabel={noLabel}
-                />
+                <div className="flex w-3/5 items-center gap-1">
+                  <SpecValue
+                    value={spec.value}
+                    valueClassName={valueClassName}
+                    valueTrueClassName={valueTrueClassName}
+                    yesLabel={yesLabel}
+                    noLabel={noLabel}
+                  />
+                </div>
               </div>
             ))}
           </div>

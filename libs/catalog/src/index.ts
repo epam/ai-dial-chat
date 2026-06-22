@@ -1,11 +1,39 @@
 // Types
 export { CatalogEntityType } from './types/entity-type';
+export { CatalogDetailsTab } from './types/detail-tab';
 export { CatalogSortKey } from './types/sort';
 export { CatalogViewMode } from './types/view-mode';
+export { EntityTag } from './types/entity-tag';
+export { CodeLanguage } from './types/code-language';
 
 // Models
 export type { CatalogItem, FavoriteItem } from './models/catalog-item';
 export type { CatalogProps, CatalogTitles } from './models/catalog-props';
+export type { CatalogItemSummary, DailyLimit } from './models/entity-summary';
+export type {
+  CatalogItemTabData,
+  CatalogItemPricing,
+  CatalogItemApiDetails,
+  CatalogItemTools,
+  CodeSnippet,
+  ApiResource,
+  PricingRow,
+  UsageLimitRow,
+  ToolDefinition,
+  ToolInputParam,
+  ToolAnnotation,
+} from './models/item-details-data';
+export type {
+  CatalogItemOverview,
+  OverviewSection,
+  OverviewSpec,
+} from './models/item-overview';
+export type {
+  ItemDetailsProps,
+  ItemDetailsTexts,
+  ItemDetailsStyles,
+  ItemDetailsTypography,
+} from './models/item-details-props';
 
 // Utils
 export { filterCatalogItems } from './utils/catalog-filter';

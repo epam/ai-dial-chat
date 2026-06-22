@@ -1,9 +1,11 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  ButtonAppearance,
   DIAL_ICON_SIZE,
   DialCloseButton,
-  DialGhostButton,
+  DialNeutralButton,
   DialPrimaryButton,
+  DialTag,
   DialTabs,
 } from '@epam/ai-dial-ui-kit';
 import {
@@ -20,8 +22,12 @@ import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { TopicTag } from '../TopicTag/TopicTag';
+import { CatalogApiDetails } from './CatalogApiDetails';
 import styles from './CatalogItemDetails.module.scss';
 import { CatalogOverview } from './CatalogOverview';
+import { CatalogPricing } from './CatalogPricing';
+import { CatalogSummary } from './CatalogSummary';
+import { CatalogTools } from './CatalogTools';
 
 interface AboutRunViewProps {
   run: AboutRun;
@@ -64,11 +70,11 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
     introCaptionClassName = 'dial-caption-text',
     introTextClassName = 'dial-small-text',
     contentHeadingClassName = 'dial-small-semi-text',
-    contentClassName = 'dial-tiny-text',
+    contentClassName = 'dial-small-text',
     overviewSectionClassName = 'dial-caption-text',
     overviewLabelClassName = 'dial-small-semi-text',
     overviewValueClassName = 'dial-small-text',
-    overviewValueTrueClassName = 'dial-small-semi-text',
+    overviewValueTrueClassName = 'dial-small-text',
   } = detailsStyles?.typography ?? {};
 
   const [isStarred, setIsStarred] = useState(initialIsStarred);
@@ -96,21 +102,43 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
     onShare?.(item);
   }, [item, onShare]);
 
-  const tabs = useMemo(
-    () => [
+  const tabs = useMemo(() => {
+    const result = [
       { id: CatalogDetailsTab.About, label: texts?.tabAboutLabel ?? 'About' },
-      {
+    ];
+    if (item.details?.overview != null) {
+      result.push({
         id: CatalogDetailsTab.Overview,
         label: texts?.tabOverviewLabel ?? 'Overview',
-      },
-      {
+      });
+    }
+    if (item.details?.pricing != null) {
+      result.push({
         id: CatalogDetailsTab.Pricing,
         label: texts?.tabPricingLabel ?? 'Pricing',
-      },
-      { id: CatalogDetailsTab.Api, label: texts?.tabApiLabel ?? 'API' },
-    ],
-    [texts],
-  );
+      });
+    }
+    if (item.details?.api != null) {
+      result.push({
+        id: CatalogDetailsTab.Api,
+        label: texts?.tabApiLabel ?? 'API',
+      });
+    }
+    if (item.details?.tools != null) {
+      result.push({
+        id: CatalogDetailsTab.Tools,
+        label: texts?.tabToolsLabel ?? 'Tools',
+      });
+    }
+    return result;
+  }, [item.details, texts]);
+
+  // Reset to About when the active tab is no longer in the available list.
+  useEffect(() => {
+    if (!tabs.some((t) => t.id === activeTab)) {
+      setActiveTab(CatalogDetailsTab.About);
+    }
+  }, [tabs, activeTab]);
 
   const parsedAboutBlocks = useMemo(
     () => parseAboutContent(aboutContent ?? item.description),
@@ -166,16 +194,18 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
 
         {/* Identity: logo, type, name, folder path, action buttons */}
         <div className="flex shrink-0 gap-3.5 px-[22px] py-4">
-          {/* <ProviderLogo
-            color={item.logoColor}
-            initial={item.logoInitial}
-            size={52}
-          /> */}
+          <DeploymentIcon src={item.iconUrl} size={52} />
           <div className="flex min-w-0 flex-1 flex-col gap-1">
             <div className="flex items-center gap-1">
               <EntityBadge type={item.type} />
               {item.isFeatured && (
-                <div className="ms-auto">{/* <FeaturedTag /> */}</div>
+                <DialTag
+                  label={texts?.featuredLabel ?? 'Featured'}
+                  className={mergeClasses(
+                    'ms-auto px-[6px]',
+                    styles.featuredTag,
+                  )}
+                />
               )}
             </div>
             <div className="flex items-end gap-1">
@@ -186,12 +216,19 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
             </div>
             <FolderPath segments={item.folder} />
             <div className="mt-3 flex flex-wrap gap-2">
-              <DialPrimaryButton
-                label={texts?.useInChatLabel ?? 'Use in chat'}
-                iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
-                onClick={handleUseInChat}
-              />
-              <DialGhostButton
+              {(texts?.hasPrimaryAction ?? true) && (
+                <DialPrimaryButton
+                  label={
+                    texts?.primaryActionLabel ??
+                    texts?.useInChatLabel ??
+                    'Use in chat'
+                  }
+                  iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
+                  onClick={handleUseInChat}
+                />
+              )}
+              <DialNeutralButton
+                appearance={ButtonAppearance.Outlined}
                 label={texts?.shareLabel ?? 'Share'}
                 iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}
                 iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.MD} />}
@@ -203,10 +240,15 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
 
         <div className="shrink-0 border-b border-tertiary" />
 
-        {/* Summary: intro + topics */}
+        {/* Summary: intro + topics + entity summary block */}
         <div className="flex shrink-0 flex-col gap-5 px-[22px] py-4">
           <div className="flex flex-col gap-2.5">
-            <span className={introCaptionClassName}>
+            <span
+              className={mergeClasses(
+                introCaptionClassName,
+                styles.introCaption,
+              )}
+            >
               {texts?.introLabel ?? 'Intro'}
             </span>
             <p className={mergeClasses('m-0', introTextClassName)}>
@@ -219,6 +261,12 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
                 <TopicTag key={p} label={p} />
               ))}
             </div>
+          )}
+          {item.summary != null && (
+            <CatalogSummary
+              summary={item.summary}
+              dailyLimitLabel={texts?.dailyLimitLabel ?? 'Daily limit'}
+            />
           )}
         </div>
 
@@ -234,9 +282,9 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
           className={mergeClasses(
             'min-h-0 flex-1 overflow-y-auto',
             styles.content,
-            activeTab !== CatalogDetailsTab.Overview
-              ? 'px-[22px] py-4'
-              : undefined,
+            activeTab === CatalogDetailsTab.Overview
+              ? undefined
+              : 'px-[22px] py-4',
           )}
         >
           {activeTab === CatalogDetailsTab.About &&
@@ -319,9 +367,9 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
               </div>
             ))}
           {activeTab === CatalogDetailsTab.Overview &&
-            item.overview != null && (
+            item.details?.overview != null && (
               <CatalogOverview
-                sections={item.overview.sections}
+                sections={item.details.overview.sections}
                 sectionClassName={overviewSectionClassName}
                 labelClassName={overviewLabelClassName}
                 valueClassName={overviewValueClassName}
@@ -329,6 +377,30 @@ export const CatalogItemDetails: FC<ItemDetailsProps> = ({
                 yesLabel={overviewYesLabel}
                 noLabel={overviewNoLabel}
               />
+            )}
+          {activeTab === CatalogDetailsTab.Pricing &&
+            item.details?.pricing != null && (
+              <CatalogPricing
+                pricing={item.details.pricing}
+                pricesSectionLabel={texts?.pricingPricesSectionLabel}
+                limitsSectionLabel={texts?.pricingLimitsSectionLabel}
+              />
+            )}
+          {activeTab === CatalogDetailsTab.Api && item.details?.api != null && (
+            <CatalogApiDetails
+              api={item.details.api}
+              resourceSectionLabel={texts?.apiResourceSectionLabel}
+              snippetSectionLabel={texts?.apiSnippetSectionLabel}
+              modelIdLabel={texts?.apiModelIdLabel}
+              endpointLabel={texts?.apiEndpointLabel}
+              requestExampleLabel={texts?.apiRequestExampleLabel}
+              responseSchemaLabel={texts?.apiResponseSchemaLabel}
+              copyAriaLabel={texts?.copyCodeAriaLabel}
+            />
+          )}
+          {activeTab === CatalogDetailsTab.Tools &&
+            item.details?.tools != null && (
+              <CatalogTools tools={item.details.tools} />
             )}
         </div>
       </div>
