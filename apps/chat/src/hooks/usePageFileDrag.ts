@@ -14,15 +14,22 @@ interface PageFileDragState {
 
 export const usePageFileDrag = (
   isAttachmentsAllowed = true,
+  isEnabled = true,
 ): PageFileDragState => {
   const [isDragging, setIsDragging] = useState(false);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const enterCountRef = useRef(0);
   const isAttachmentsAllowedRef = useRef(isAttachmentsAllowed);
+  const isEnabledRef = useRef(isEnabled);
 
   useLayoutEffect(() => {
     isAttachmentsAllowedRef.current = isAttachmentsAllowed;
-  });
+    isEnabledRef.current = isEnabled;
+    if (!isEnabled) {
+      enterCountRef.current = 0;
+      setIsDragging(false);
+    }
+  }, [isAttachmentsAllowed, isEnabled]);
 
   const onFilesConsumed = useCallback(() => {
     setPendingFiles([]);
@@ -33,13 +40,13 @@ export const usePageFileDrag = (
       !!e.dataTransfer?.types.includes('Files');
 
     const handleDragEnter = (e: DragEvent) => {
-      if (!isFileDrag(e)) return;
+      if (!isEnabledRef.current || !isFileDrag(e)) return;
       enterCountRef.current += 1;
       setIsDragging(true);
     };
 
     const handleDragLeave = (e: DragEvent) => {
-      if (!isFileDrag(e)) return;
+      if (!isEnabledRef.current || !isFileDrag(e)) return;
       enterCountRef.current -= 1;
       if (enterCountRef.current <= 0) {
         enterCountRef.current = 0;
@@ -50,9 +57,11 @@ export const usePageFileDrag = (
     const handleDragOver = (e: DragEvent) => {
       if (!isFileDrag(e)) return;
       e.preventDefault();
+      if (!isEnabledRef.current) return;
     };
 
     const handleDrop = (e: DragEvent) => {
+      if (!isFileDrag(e) || !isEnabledRef.current) return;
       e.preventDefault();
       enterCountRef.current = 0;
       setIsDragging(false);

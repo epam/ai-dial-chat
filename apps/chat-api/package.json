@@ -127,6 +127,7 @@
     "@nestjs/serve-static": "^5.0.5",
     "@nestjs/swagger": "^11.4.1",
     "@nestjs/throttler": "^6.5.0",
+    "archiver": "^7.0.1",
     "cache-manager": "^7.2.8",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.15.1",
@@ -134,6 +135,7 @@
     "helmet": "^8.1.0",
     "jose": "5.10.0",
     "mime-types": "^3.0.2",
+    "multer": "2.2.0",
     "openid-client": "~5.7.0",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.0",
@@ -141,9 +143,11 @@
   },
   "devDependencies": {
     "@nestjs/testing": "^11.0.0",
+    "@types/archiver": "^6.0.3",
     "@types/cookie-parser": "^1.4.10"
   },
   "overrides": {
-    "js-yaml": "4.2.0"
+    "js-yaml": "4.2.0",
+    "multer": "2.2.0"
   }
 }
