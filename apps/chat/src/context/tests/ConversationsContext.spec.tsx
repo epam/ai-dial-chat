@@ -35,6 +35,7 @@ const seedConversations = [
     updatedAt: 0,
     sharedWithMe: false,
     publishedWithMe: false,
+    isReadonly: false,
   },
   {
     id: 'conv2',
@@ -43,6 +44,7 @@ const seedConversations = [
     updatedAt: 0,
     sharedWithMe: false,
     publishedWithMe: false,
+    isReadonly: false,
   },
   {
     id: 'conv3',
@@ -51,6 +53,7 @@ const seedConversations = [
     updatedAt: 0,
     sharedWithMe: false,
     publishedWithMe: false,
+    isReadonly: false,
   },
 ];
 
@@ -82,6 +85,7 @@ describe('ConversationsContext — deleteAllConversations', () => {
         updatedAt: 0,
         sharedWithMe: true,
         publishedWithMe: false,
+        isReadonly: true,
       },
     ];
     mockListConversations.mockResolvedValueOnce({ items: afterDelete });
@@ -146,6 +150,7 @@ describe('ConversationsContext — deleteAllConversations', () => {
         updatedAt: 0,
         sharedWithMe: false,
         publishedWithMe: false,
+        isReadonly: false,
       },
     ];
     mockListConversations.mockResolvedValueOnce({ items: refreshedConvs });
