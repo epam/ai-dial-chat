@@ -1093,7 +1093,8 @@ describe('ConversationService', () => {
         'user-cursor',
       );
 
-      expect(getMetadataSpy).toHaveBeenCalledWith(
+      expect(getMetadataSpy).toHaveBeenNthCalledWith(
+        1,
         'test-bucket',
         '',
         expect.objectContaining({
@@ -1102,6 +1103,7 @@ describe('ConversationService', () => {
               recursive: true,
               limit: 50,
               token: 'user-cursor',
+              permissions: true,
             },
           },
         }),
