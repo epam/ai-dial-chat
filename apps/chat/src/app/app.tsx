@@ -1,3 +1,4 @@
+import { FilterTab } from '@epam/ai-dial-conversation-panel';
 import {
   lazy,
   memo,
@@ -5,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FC,
 } from 'react';
@@ -17,6 +19,7 @@ import {
 } from 'react-router-dom';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
+import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
 import Navigation from '../components/Navigation/Navigation';
 import RouteFallback from '../components/RouteFallback/RouteFallback';
@@ -85,6 +88,21 @@ const App: FC = () => {
     }
   }, [pathname]);
 
+  const switchToMyChatsOnNavRef = useRef(false);
+  const [panelRequestedFilter, setPanelRequestedFilter] = useState<
+    FilterTab | undefined
+  >(undefined);
+
+  useEffect(() => {
+    if (!switchToMyChatsOnNavRef.current) return;
+    switchToMyChatsOnNavRef.current = false;
+    setPanelRequestedFilter(FilterTab.MyChats);
+  }, [activeConversationId]);
+
+  const handleDuplicateReadonly = useCallback(() => {
+    switchToMyChatsOnNavRef.current = true;
+  }, []);
+
   const handleSelectConversation = useCallback(
     (id: string) => {
       if (isMobile) {
@@ -107,6 +125,9 @@ const App: FC = () => {
         onClose={closeHistoryPanel}
         onSelectConversation={handleSelectConversation}
         onNewChat={() => navigate(ROUTES.Root)}
+        requestedFilter={panelRequestedFilter}
+        onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
+        onDuplicateReadonly={handleDuplicateReadonly}
       />
 
       <main
@@ -124,17 +145,23 @@ const App: FC = () => {
           <Route
             path={ROUTES.Catalog}
             element={
-              <Suspense fallback={<RouteFallback />}>
-                <CatalogView />
-              </Suspense>
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <CatalogView />
+                </Suspense>
+              </RouteErrorBoundary>
             }
           />
           <Route
             path="/conversations/*"
             element={
-              <Suspense fallback={<RouteFallback />}>
-                <ConversationPage />
-              </Suspense>
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ConversationPage
+                    onDuplicateReadonly={handleDuplicateReadonly}
+                  />
+                </Suspense>
+              </RouteErrorBoundary>
             }
           />
         </Routes>

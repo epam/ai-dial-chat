@@ -62,8 +62,8 @@ describe('isMimeTypeAllowed', () => {
     expect(isMimeTypeAllowed('image/png', ['image/jpeg'])).toBe(false);
   });
 
-  it('returns true (allow all) when allowedTypes is empty', () => {
-    expect(isMimeTypeAllowed('application/pdf', [])).toBe(true);
+  it('returns false (reject all) when allowedTypes is empty', () => {
+    expect(isMimeTypeAllowed('application/pdf', [])).toBe(false);
   });
 
   it('returns true when allowedTypes contains the global wildcard "*"', () => {

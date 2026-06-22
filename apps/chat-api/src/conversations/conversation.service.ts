@@ -40,6 +40,7 @@ import type {
 import {
   buildConversationUrl,
   buildRenamedConversationPath,
+  buildRenamedFilename,
   decodeNextToken,
   encodeCompoundToken,
   encodeDialResourcePath,
@@ -307,14 +308,39 @@ export class ConversationService extends AppService {
     const subPath =
       slashIndex === -1 ? sourcePath : sourcePath.slice(slashIndex + 1);
 
-    const filename = subPath.split('/').at(-1) ?? subPath;
-    const sourceTitle = getConversationTitleFromName(filename);
+    // `subPath` arrives percent-encoded (it comes from a resource URL). Each
+    // `/`-separated segment is one path component; a literal slash inside a
+    // component (e.g. a deployment name "Team/App One") is encoded as %2F.
+    const segments = subPath.split('/');
+    const encodedFilename = segments.at(-1) ?? subPath;
+    const decodedFilename = safeDecodeURIComponent(encodedFilename);
+    const decodedFolderSegments = segments
+      .slice(0, -1)
+      .map(safeDecodeURIComponent);
+
+    const sourceTitle = getConversationTitleFromName(decodedFilename);
+    const baseTitle = prepareEntityName(sourceTitle);
     const existingTitles = await this.fetchAllUserTitles(token, sessionBucket);
+    // A duplicate must never reuse the source's exact name+path
+    const reservedTitles = new Set(existingTitles);
+    reservedTitles.add(baseTitle);
     const uniqueTitle = resolveUniqueConversationName(
-      prepareEntityName(sourceTitle),
-      existingTitles,
+      baseTitle,
+      reservedTitles,
     );
-    const destinationPath = buildRenamedConversationPath(subPath, uniqueTitle);
+
+    const decodedRenamedFilename = buildRenamedFilename(
+      decodedFilename,
+      uniqueTitle,
+    );
+    const decodedDestinationSubPath = [
+      ...decodedFolderSegments,
+      decodedRenamedFilename,
+    ].join('/');
+    const encodedDestinationSubPath = [
+      ...decodedFolderSegments.map(encodeURIComponent),
+      encodeURIComponent(decodedRenamedFilename),
+    ].join('/');
 
     const sourceUrl = buildConversationUrl(
       sourceBucket,
@@ -322,7 +348,7 @@ export class ConversationService extends AppService {
     );
     const destinationUrl = buildConversationUrl(
       sessionBucket,
-      encodeDialResourcePath(destinationPath),
+      encodedDestinationSubPath,
     );
 
     try {
@@ -339,7 +365,69 @@ export class ConversationService extends AppService {
       return handleDialError(error);
     }
 
-    return { newPath: buildConversationUrl(sessionBucket, destinationPath) };
+    const folderId = decodedFolderSegments.length
+      ? `${sessionBucket}/${decodedFolderSegments.join('/')}`
+      : sessionBucket;
+    await this.rewriteDuplicatedConversationMetadata(
+      sessionBucket,
+      encodedDestinationSubPath,
+      {
+        id: `${sessionBucket}/${decodedDestinationSubPath}`,
+        folderId,
+        name: uniqueTitle,
+      },
+      token,
+    );
+
+    return { newPath: destinationUrl };
+  }
+
+  /**
+   * Repoints a freshly-copied conversation's identity fields (id/folderId/name)
+   * at the destination bucket/path. Reads from the user's own bucket and
+   * re-saves; all failures are logged and swallowed so the duplicate still
+   * succeeds.
+   */
+  private async rewriteDuplicatedConversationMetadata(
+    bucket: string,
+    encodedSubPath: string,
+    identity: Pick<ConversationResponseDto, 'id' | 'folderId' | 'name'>,
+    token: string,
+  ): Promise<void> {
+    try {
+      const { data, error } = (await this.client.getConversation(
+        bucket,
+        encodedSubPath,
+        { headers: getBearerAuthHeaders(token) },
+      )) as { data?: ConversationResponseDto; error?: unknown };
+      if (error != null || !data) {
+        this.logger.warn(
+          'Could not read duplicated conversation to fix its metadata',
+          error,
+        );
+        return;
+      }
+
+      const { error: saveError } = (await this.client.saveConversation(
+        bucket,
+        encodedSubPath,
+        {
+          headers: getBearerAuthHeaders(token),
+          body: { ...data, ...identity },
+        },
+      )) as { error?: unknown };
+      if (saveError != null) {
+        this.logger.warn(
+          'Could not re-save duplicated conversation metadata',
+          saveError,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(
+        'Failed to rewrite duplicated conversation metadata',
+        error,
+      );
+    }
   }
 
   async listConversations(
@@ -365,7 +453,9 @@ export class ConversationService extends AppService {
             encodeDialResourcePath(path ?? ''),
             {
               headers: getBearerAuthHeaders(token),
-              params: { query: buildQuery(userNextToken) },
+              params: {
+                query: { ...buildQuery(userNextToken), permissions: true },
+              },
             },
           ) as Promise<MetadataResult>,
           (
@@ -431,7 +521,11 @@ export class ConversationService extends AppService {
 
       const mapItems = (
         items: MetadataItem[],
-        overrides: { sharedWithMe?: boolean; publishedWithMe?: boolean } = {},
+        overrides: {
+          sharedWithMe?: boolean;
+          publishedWithMe?: boolean;
+          isReadonly?: boolean;
+        } = {},
       ): ConversationListItemDto[] =>
         items
           .filter((item) => item.nodeType !== 'FOLDER')
@@ -439,6 +533,9 @@ export class ConversationService extends AppService {
             const id =
               item.url ?? `${item.parentPath ?? ''}/${item.name ?? ''}`;
             const decodedId = safeDecodeURIComponent(id);
+            const isReadonly =
+              overrides.isReadonly ??
+              !(item.permissions?.includes('WRITE') ?? false);
             return {
               id,
               title: getConversationTitleFromName(item.name ?? ''),
@@ -448,6 +545,7 @@ export class ConversationService extends AppService {
               publishedWithMe:
                 overrides.publishedWithMe ?? item.publishedWithMe ?? false,
               isPinned: pinnedSet.has(decodedId),
+              isReadonly,
             };
           });
 
@@ -511,7 +609,7 @@ export class ConversationService extends AppService {
               (publicData.items ?? []).filter(
                 (item) => !userItemPaths.has(getBucketRelativePath(item)),
               ),
-              { publishedWithMe: true },
+              { publishedWithMe: true, isReadonly: true },
             )
           : [];
       const sharedItems =
@@ -528,6 +626,7 @@ export class ConversationService extends AppService {
                   sharedWithMe: true,
                   publishedWithMe: false,
                   isPinned: pinnedSet.has(decodedId),
+                  isReadonly: true,
                 };
               })
           : [];
