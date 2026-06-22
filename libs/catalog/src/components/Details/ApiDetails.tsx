@@ -10,6 +10,7 @@ import { IconChevronDown, IconCopy } from '@tabler/icons-react';
 import { FC, useCallback, useMemo, useState } from 'react';
 import type { CatalogItemApiDetails } from '../../models/item-details-data';
 import { CodeLanguage } from '../../types/code-language';
+import { TableView, type TableViewRow } from '../TableView/TableView';
 import styles from './CatalogApiDetails.module.scss';
 
 const LANGUAGE_LABELS: Record<CodeLanguage, string> = {
@@ -18,8 +19,8 @@ const LANGUAGE_LABELS: Record<CodeLanguage, string> = {
   [CodeLanguage.JavaScript]: 'JavaScript',
 };
 
-/** Props for `CatalogApiDetails`. */
-export interface CatalogApiDetailsProps {
+/** Props for `ApiDetails`. */
+export interface ApiDetailsProps {
   /** API detail data to render. */
   api: CatalogItemApiDetails;
   /** "Resource" section heading. Default: `'Resource'`. */
@@ -47,7 +48,7 @@ export interface CatalogApiDetailsProps {
 }
 
 /** Renders the API tab: resource identity rows and multi-language code snippets. */
-export const CatalogApiDetails: FC<CatalogApiDetailsProps> = ({
+export const ApiDetails: FC<ApiDetailsProps> = ({
   api,
   resourceSectionLabel = 'Resource',
   snippetSectionLabel = 'Code snippet',
@@ -85,12 +86,18 @@ export const CatalogApiDetails: FC<CatalogApiDetailsProps> = ({
     void navigator.clipboard.writeText(activeCode);
   }, [activeCode]);
 
-  const handleCopyEndpoint = useCallback(() => {
-    void navigator.clipboard.writeText(api.resource?.endpointUrl ?? '');
-  }, [api.resource?.endpointUrl]);
+  const resourceValues: TableViewRow[] = [];
+  if (api.resource?.modelId != null) {
+    resourceValues.push({ label: modelIdLabel, value: api.resource.modelId });
+  }
+  if (api.resource?.endpointUrl != null) {
+    resourceValues.push({
+      label: endpointLabel,
+      value: api.resource.endpointUrl,
+    });
+  }
 
-  const hasResource =
-    api.resource?.modelId != null || api.resource?.endpointUrl != null;
+  const hasResource = resourceValues.length > 0;
   const hasSnippets = snippetItems.length > 0;
   const hasRequestExample = api.requestExample != null;
   const hasResponseSchema = api.responseSchema != null;
@@ -98,72 +105,13 @@ export const CatalogApiDetails: FC<CatalogApiDetailsProps> = ({
   return (
     <div className="flex flex-col gap-6">
       {hasResource && (
-        <section>
-          <p
-            className={mergeClasses(
-              'mb-3 mt-0',
-              sectionClassName,
-              styles.sectionHeading,
-            )}
-          >
-            {resourceSectionLabel}
-          </p>
-          <ul className="m-0 list-none p-0">
-            {api.resource?.modelId != null && (
-              <li
-                className={mergeClasses(
-                  'flex items-center px-3 py-2',
-                  styles.row,
-                  styles.rowAlt,
-                )}
-              >
-                <span
-                  className={mergeClasses(
-                    labelClassName,
-                    styles.label,
-                    'w-2/5 shrink-0',
-                  )}
-                >
-                  {modelIdLabel}
-                </span>
-                <span className={mergeClasses(valueClassName, 'w-3/5')}>
-                  {api.resource.modelId}
-                </span>
-              </li>
-            )}
-            {api.resource?.endpointUrl != null && (
-              <li
-                className={mergeClasses(
-                  'flex items-center px-3 py-2',
-                  styles.row,
-                  api.resource?.modelId == null ? styles.rowAlt : undefined,
-                )}
-              >
-                <span
-                  className={mergeClasses(
-                    labelClassName,
-                    styles.label,
-                    'w-2/5 shrink-0',
-                  )}
-                >
-                  {endpointLabel}
-                </span>
-                <div className="flex w-3/5 items-center gap-1">
-                  <span
-                    className={mergeClasses(valueClassName, 'min-w-0 truncate')}
-                  >
-                    {api.resource.endpointUrl}
-                  </span>
-                  <DialGhostIconButton
-                    icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
-                    aria-label={copyAriaLabel}
-                    onClick={handleCopyEndpoint}
-                  />
-                </div>
-              </li>
-            )}
-          </ul>
-        </section>
+        <TableView
+          sectionLabel={resourceSectionLabel}
+          values={resourceValues}
+          labelClassName={labelClassName}
+          valueClassName={valueClassName}
+          sectionClassName={sectionClassName}
+        />
       )}
 
       {hasSnippets && (

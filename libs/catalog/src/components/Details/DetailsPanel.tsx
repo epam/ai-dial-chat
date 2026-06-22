@@ -4,7 +4,7 @@ import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogDetailsTab } from '../../types/detail-tab';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
-import { CatalogApiDetails } from './CatalogApiDetails';
+import { ApiDetails } from './CatalogApiDetails';
 import styles from './DetailsPanel.module.scss';
 import { Header } from './Header/Header';
 import { Summary } from './Summary/Summary';
@@ -186,7 +186,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
             />
           )}
           {activeTab === CatalogDetailsTab.Api && item.details?.api != null && (
-            <CatalogApiDetails
+            <ApiDetails
               api={item.details.api}
               resourceSectionLabel={texts?.apiResourceSectionLabel}
               snippetSectionLabel={texts?.apiSnippetSectionLabel}

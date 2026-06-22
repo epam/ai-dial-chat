@@ -37,8 +37,6 @@ export const Limits: FC<LimitsProps> = ({
 }) => {
   const { tag, badgeImageUrl, dailyLimit } = summary;
 
-  console.log('Summary:', summary);
-  console.log('Tag:', tag);
   return (
     <div className="flex flex-col gap-3">
       {((tag != null && tag !== EntityTag.Featured) ||
