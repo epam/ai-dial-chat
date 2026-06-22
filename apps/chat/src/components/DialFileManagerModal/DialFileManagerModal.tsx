@@ -21,7 +21,10 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  DialFileManagerI18nKeys,
+} from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
 import {
@@ -333,20 +336,20 @@ const DialFileManagerModal: FC<Props> = ({
 
   const conflictResolutionPopupOptions = useMemo(
     () => ({
-      singleFileTitle: t('dialFileManager.conflictSingleTitle'),
-      multipleFilesTitle: t('dialFileManager.conflictMultipleTitle'),
+      singleFileTitle: t(DialFileManagerI18nKeys.ConflictSingleTitle),
+      multipleFilesTitle: t(DialFileManagerI18nKeys.ConflictMultipleTitle),
       actionLabels: {
-        replace: t('dialFileManager.conflictReplace'),
-        duplicate: t('dialFileManager.conflictDuplicate'),
-        cancel: t('buttons.cancel'),
+        replace: t(DialFileManagerI18nKeys.ConflictReplace),
+        duplicate: t(DialFileManagerI18nKeys.ConflictDuplicate),
+        cancel: t(ButtonsI18nKeys.Cancel),
       },
       strategyLabels: {
-        replaceAll: t('dialFileManager.conflictReplaceAll'),
-        duplicateAll: t('dialFileManager.conflictDuplicateAll'),
-        decideForEach: t('dialFileManager.conflictDecideForEach'),
+        replaceAll: t(DialFileManagerI18nKeys.ConflictReplaceAll),
+        duplicateAll: t(DialFileManagerI18nKeys.ConflictDuplicateAll),
+        decideForEach: t(DialFileManagerI18nKeys.ConflictDecideForEach),
       },
-      confirmLabel: t('buttons.confirm'),
-      cancelLabel: t('buttons.cancel'),
+      confirmLabel: t(ButtonsI18nKeys.Confirm),
+      cancelLabel: t(ButtonsI18nKeys.Cancel),
     }),
     [t],
   );
@@ -532,7 +535,7 @@ const DialFileManagerModal: FC<Props> = ({
               conflictResolutionPopupOptions={conflictResolutionPopupOptions}
               forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
               forbiddenSymbolsTooltip={t(
-                'dialFileManager.forbiddenSymbolsTooltip',
+                DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
               )}
               getDisabledTooltip={getDisabledTooltip}
             />

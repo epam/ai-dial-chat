@@ -151,6 +151,14 @@ export enum DialFileManagerI18nKeys {
   DeleteConfirmBodyMultiple = 'dialFileManager.deleteConfirmBodyMultiple',
   DeleteConfirmBodyItems = 'dialFileManager.deleteConfirmBodyItems',
   DeleteConfirmButton = 'dialFileManager.deleteConfirmButton',
+  ConflictSingleTitle = 'dialFileManager.conflictSingleTitle',
+  ConflictMultipleTitle = 'dialFileManager.conflictMultipleTitle',
+  ConflictReplace = 'dialFileManager.conflictReplace',
+  ConflictDuplicate = 'dialFileManager.conflictDuplicate',
+  ConflictReplaceAll = 'dialFileManager.conflictReplaceAll',
+  ConflictDuplicateAll = 'dialFileManager.conflictDuplicateAll',
+  ConflictDecideForEach = 'dialFileManager.conflictDecideForEach',
+  ForbiddenSymbolsTooltip = 'dialFileManager.forbiddenSymbolsTooltip',
 }
 
 export enum AuthI18nKeys {
