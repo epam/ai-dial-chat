@@ -60,6 +60,10 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/catalog/src/index.ts',
       ),
+      '@epam/ai-dial-source-panel': path.resolve(
+        __dirname,
+        '../../libs/source-panel/src/index.ts',
+      ),
     },
   },
   build: {
