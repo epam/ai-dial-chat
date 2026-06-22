@@ -39,7 +39,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
         placement="bottom-end"
         trigger={
           <div
-            className="flex w-full cursor-pointer items-center justify-between gap-2 pr-3"
+            className="flex w-full cursor-pointer items-center justify-between gap-2 pe-3"
             data-qa="account-settings"
           >
             <div className="flex items-center gap-3 overflow-hidden">
@@ -64,7 +64,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
             item={
               <div className="flex">
                 <IconSettings size={18} className="text-secondary" />
-                <span className="ml-3">{t(HeaderI18nKeys.Settings)}</span>
+                <span className="ms-3">{t(HeaderI18nKeys.Settings)}</span>
               </div>
             }
             onClick={() => {

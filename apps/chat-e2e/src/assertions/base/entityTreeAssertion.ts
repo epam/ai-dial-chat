@@ -39,19 +39,10 @@ export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
     entity: TreeEntity,
     expectedState: CheckboxState,
   ) {
-    const message =
-      expectedState === CheckboxState.checked
-        ? ExpectedMessages.entityIsChecked
-        : ExpectedMessages.entityIsNotChecked;
-    expect
-      .soft(
-        await this.treeEntities.getEntityCheckboxState(
-          entity.name,
-          entity.index,
-        ),
-        message,
-      )
-      .toBe(expectedState);
+    await this.assertCheckboxState(
+      this.treeEntities.getEntityCheckbox(entity.name, entity.index),
+      expectedState,
+    );
   }
 
   public async assertEntityBackgroundColor(
@@ -120,12 +111,13 @@ export class EntityTreeAssertion<T extends EntitiesTree> extends BaseAssertion {
     entity: TreeEntity,
     expectedCount: number,
   ) {
-    const arrowIconsCount = await this.treeEntities
-      .getEntityArrowIcon(entity.name, entity.index)
-      .count();
-    expect
+    const arrowIconsCount = this.treeEntities.getEntityArrowIcon(
+      entity.name,
+      entity.index,
+    );
+    await expect
       .soft(arrowIconsCount, ExpectedMessages.entitiesIconsCountIsValid)
-      .toBe(expectedCount);
+      .toHaveCount(expectedCount);
   }
 
   public async assertEntityColor(entity: TreeEntity, expectedColor: string) {

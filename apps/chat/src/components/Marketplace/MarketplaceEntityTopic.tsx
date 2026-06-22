@@ -15,7 +15,7 @@ export const MarketplaceEntityTopic = ({ topic, className }: Props) => {
         className,
       )}
       style={getTopicColors(topic)}
-      data-qa="app-topic"
+      data-qa="entity-topic"
     >
       {topic}
     </span>

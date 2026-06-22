@@ -84,6 +84,7 @@ export enum ImportResolutionOption {
 export enum OAuthOptions {
   WithLogin = 'With login',
   WithLoginAndConfig = 'With login & config',
+  WithoutLogin = 'Without login',
 }
 
 export enum FileManagerToolbarTabs {

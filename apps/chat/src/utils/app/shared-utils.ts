@@ -31,6 +31,8 @@ export const constructPath = (
 // {apikey}/{bucket}/path.../name
 export const splitEntityId = (
   id: string,
+  forceUseNameFromId?: boolean,
+  rootSectionName = ROOT_SECTION_NAME,
 ): {
   bucket: string;
   name: string;
@@ -46,7 +48,8 @@ export const splitEntityId = (
 
   const isRoot = parts.length < 3;
 
-  const name = isRoot ? ROOT_SECTION_NAME : parts[parts.length - 1];
+  const name =
+    isRoot && !forceUseNameFromId ? rootSectionName : parts[parts.length - 1];
 
   return {
     apiKey: parts[0] as ApiKeys,

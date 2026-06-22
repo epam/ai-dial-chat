@@ -2,9 +2,14 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  getEmptyLeafFolderIds,
+  getSelectedEntitiesByFolderId,
   updateMovedEntityId,
   updateMovedFolderId,
 } from '@/src/utils/app/folders';
+
+import { FeatureType } from '@epam/ai-dial-shared';
+import type { FolderInterface, ShareEntity } from '@epam/ai-dial-shared';
 
 describe.skip('Folder utility methods', () => {
   it.each([
@@ -55,4 +60,142 @@ describe.skip('Folder utility methods', () => {
       ).toBe(expectedFolderId);
     },
   );
+});
+
+const testFolder = (
+  id: string,
+  folderId: string,
+  overrides: Partial<FolderInterface> = {},
+): FolderInterface => ({
+  id,
+  name: id.split('/').pop() ?? id,
+  folderId,
+  type: FeatureType.File,
+  ...overrides,
+});
+
+const testFile = (id: string, folderId: string): ShareEntity => ({
+  id,
+  name: id.split('/').pop() ?? id,
+  folderId,
+});
+
+describe('getEmptyLeafFolderIds', () => {
+  it('returns ids of folders that have no child folders and no files', () => {
+    const folders: FolderInterface[] = [
+      testFolder('bucket/files/parent', 'bucket/files'),
+      testFolder('bucket/files/parent/empty-leaf', 'bucket/files/parent'),
+    ];
+    const entities: ShareEntity[] = [];
+
+    expect(getEmptyLeafFolderIds(folders, entities)).toEqual([
+      'bucket/files/parent/empty-leaf',
+    ]);
+  });
+
+  it('excludes folders that contain a child folder', () => {
+    const folders: FolderInterface[] = [
+      testFolder('bucket/files/parent', 'bucket/files'),
+      testFolder('bucket/files/parent/child', 'bucket/files/parent'),
+    ];
+    expect(getEmptyLeafFolderIds(folders, [])).toEqual([
+      'bucket/files/parent/child',
+    ]);
+  });
+
+  it('excludes folders that contain a file', () => {
+    const folders: FolderInterface[] = [
+      testFolder('bucket/files/parent', 'bucket/files'),
+    ];
+    const entities: ShareEntity[] = [
+      testFile('bucket/files/parent/doc.txt', 'bucket/files/parent'),
+    ];
+    expect(getEmptyLeafFolderIds(folders, entities)).toEqual([]);
+  });
+});
+
+describe('getSelectedEntitiesByFolderId', () => {
+  const entities: ShareEntity[] = [
+    testFile('bucket/files/f1/a.txt', 'bucket/files/f1'),
+    testFile('bucket/files/f1/b.txt', 'bucket/files/f1'),
+    testFile('bucket/files/f2/c.txt', 'bucket/files/f2'),
+  ];
+
+  it('delegates to the same selection rules as getChildEntityIdsForChosenFolderUpdate', () => {
+    expect(
+      getSelectedEntitiesByFolderId({
+        entities,
+        folderId: 'bucket/files/f1',
+        partialChosenFolderIds: ['bucket/files/f1'],
+        chosenItemsIds: ['bucket/files/f1/a.txt'],
+      }),
+    ).toEqual(['bucket/files/f1/b.txt']);
+  });
+
+  it('returns every entity under folder when folder is not partially chosen', () => {
+    expect(
+      getSelectedEntitiesByFolderId({
+        entities,
+        folderId: 'bucket/files/f1',
+        partialChosenFolderIds: [],
+        chosenItemsIds: [],
+      }),
+    ).toEqual(['bucket/files/f1/a.txt', 'bucket/files/f1/b.txt']);
+  });
+});
+
+describe('getSelectedEntitiesByFolderId', () => {
+  const files = [
+    { id: 'bucket/files/f1/a.txt' },
+    { id: 'bucket/files/f1/b.txt' },
+    { id: 'bucket/files/f2/c.txt' },
+  ];
+
+  it('returns all ids under folder when folder is not partially chosen', () => {
+    expect(
+      getSelectedEntitiesByFolderId({
+        entities: files as ShareEntity[],
+        folderId: 'bucket/files/f1',
+        partialChosenFolderIds: [],
+        chosenItemsIds: [],
+      }),
+    ).toEqual(['bucket/files/f1/a.txt', 'bucket/files/f1/b.txt']);
+  });
+
+  it('returns only unchosen ids under folder when folder is in partialChosenFolderIds', () => {
+    expect(
+      getSelectedEntitiesByFolderId({
+        entities: files as ShareEntity[],
+        folderId: 'bucket/files/f1',
+        partialChosenFolderIds: ['bucket/files/f1'],
+        chosenItemsIds: ['bucket/files/f1/a.txt'],
+      }),
+    ).toEqual(['bucket/files/f1/b.txt']);
+  });
+
+  it('excludes entities not under folderId path prefix', () => {
+    expect(
+      getSelectedEntitiesByFolderId({
+        entities: files as ShareEntity[],
+        folderId: 'bucket/files/f2',
+        partialChosenFolderIds: [],
+        chosenItemsIds: [],
+      }),
+    ).toEqual(['bucket/files/f2/c.txt']);
+  });
+
+  it('does not match files from folders whose names share a prefix', () => {
+    const filesWithSimilarFolders = [
+      { id: 'bucket/files/folder01/file1.txt' },
+      { id: 'bucket/files/folder0101/file2.txt' },
+    ];
+    expect(
+      getSelectedEntitiesByFolderId({
+        entities: filesWithSimilarFolders as ShareEntity[],
+        folderId: 'bucket/files/folder01',
+        partialChosenFolderIds: [],
+        chosenItemsIds: [],
+      }),
+    ).toEqual(['bucket/files/folder01/file1.txt']);
+  });
 });

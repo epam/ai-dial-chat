@@ -9,6 +9,7 @@ import {
 } from '@/src/testData';
 import { CustomApplicationBuilder } from '@/src/testData/applications/customApplicationBuilder';
 import { ExternalApplicationBuilder } from '@/src/testData/applications/externalApplicationBuilder';
+import { QuickApp2Builder } from '@/src/testData/applications/quickApp2Builder';
 import { MarketplaceUrlBuilder } from '@/src/testData/marketplace/marketplaceUrlBuilder';
 import { Auth0Login } from '@/src/ui/actions/auth0Login';
 import { AzureADLogin } from '@/src/ui/actions/azureADLogin';
@@ -58,11 +59,11 @@ const test = base.extend<
     publishRequestBuilder: PublishRequestBuilder;
     customApplicationBuilder: CustomApplicationBuilder;
     externalApplicationBuilder: ExternalApplicationBuilder;
+    quickApp2Builder: QuickApp2Builder;
     marketplaceUrlBuilder: MarketplaceUrlBuilder;
     toolsetBuilder: ToolsetBuilder;
   }
 >({
-  // eslint-disable-next-line no-empty-pattern
   setTestIds: async ({}, use) => {
     const callback = (...testIds: string[]) => {
       for (const testId of testIds) {
@@ -71,7 +72,7 @@ const test = base.extend<
     };
     await use(callback);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   setIssueIds: async ({}, use) => {
     const callback = (...issueIds: string[]) => {
       for (const issueId of issueIds) {
@@ -81,12 +82,12 @@ const test = base.extend<
     };
     await use(callback);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   baseAssertion: async ({}, use) => {
     const baseAssertion = new BaseAssertion();
     await use(baseAssertion);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   apiAssertion: async ({}, use) => {
     const apiAssertion = new ApiAssertion();
     await use(apiAssertion);
@@ -203,37 +204,42 @@ const test = base.extend<
     }
     await use(incognitoProviderLogin);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   conversationData: async ({}, use) => {
     const conversationData = new ConversationData();
     await use(conversationData);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   promptData: async ({}, use) => {
     const promptData = new PromptData();
     await use(promptData);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   publishRequestBuilder: async ({}, use) => {
     const publishRequestBuilder = new PublishRequestBuilder();
     await use(publishRequestBuilder);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   customApplicationBuilder: async ({}, use) => {
     const customApplicationBuilder = new CustomApplicationBuilder();
     await use(customApplicationBuilder);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   externalApplicationBuilder: async ({}, use) => {
     const externalApplicationBuilder = new ExternalApplicationBuilder();
     await use(externalApplicationBuilder);
   },
-  // eslint-disable-next-line no-empty-pattern
+
+  quickApp2Builder: async ({}, use) => {
+    const quickApp2Builder = new QuickApp2Builder();
+    await use(quickApp2Builder);
+  },
+
   marketplaceUrlBuilder: async ({}, use) => {
     const marketplaceUrlBuilder = new MarketplaceUrlBuilder();
     await use(marketplaceUrlBuilder);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   toolsetBuilder: async ({}, use) => {
     const toolsetBuilder = new ToolsetBuilder();
     await use(toolsetBuilder);

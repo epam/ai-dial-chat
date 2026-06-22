@@ -143,3 +143,19 @@ Tests in `apps/chat-e2e/src/tests/`. The pattern uses:
 | `STORAGE_TYPE` | No | `api` (default) or `browserStorage` |
 
 Full env variable reference: `apps/chat/README.md`.
+
+---
+
+## See Also
+
+For deeper reference on specific topics, use the Claude Code skills below or read the full guides in `.claude/guides/`:
+
+| Topic | Skill | Guide | Use When |
+|-------|-------|-------|----------|
+| **Architecture & Store** | `/dial-architecture` | [`.claude/guides/architecture.md`](.claude/guides/architecture.md) | Adding a new store domain, wiring epics/selectors/actions, or tracing data flow |
+| **API Routes** | `/dial-api-patterns` | [`.claude/guides/api-patterns.md`](.claude/guides/api-patterns.md) | Creating or editing handlers under `apps/chat/src/pages/api/` |
+| **Development** | `/dial-development` | [`.claude/guides/development-practices.md`](.claude/guides/development-practices.md) | Writing components/hooks/store code, naming files, preparing commits/PRs |
+| **Testing** | `/dial-testing` | [`.claude/guides/testing-patterns.md`](.claude/guides/testing-patterns.md) | Writing or fixing unit tests, setting up mocks or fixtures |
+| **E2E Tests** | `/dial-e2e-testing` | [`.claude/guides/e2e-testing-patterns.md`](.claude/guides/e2e-testing-patterns.md) | Writing or fixing Playwright e2e tests, adding fixtures, page objects, assertions, test data builders, or toolset auth mocking |
+
+Each skill auto-triggers when relevant work is detected; you can also invoke explicitly with `/dial-<topic>` or reference the guide directly for the full details, patterns, and quick references.

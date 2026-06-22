@@ -1,5 +1,5 @@
 import { IconLayoutGrid, IconUser } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
 import { useTranslation } from 'next-i18next';
@@ -48,11 +48,15 @@ const credsTabs = [
     key: ToolsetCredentialsLevel.USER,
     label: MarketplaceI18nKeys.MyCredentials,
     Icon: IconUser,
+    triggerQa: 'my-creds-accordion',
+    contentQa: 'my-creds-content',
   },
   {
     key: ToolsetCredentialsLevel.GLOBAL,
     label: MarketplaceI18nKeys.EntireOrganizationCredentials,
     Icon: IconLayoutGrid,
+    triggerQa: 'org-creds-accordion',
+    contentQa: 'org-creds-content',
   },
 ];
 
@@ -60,7 +64,9 @@ interface ToolsetLoginDialogProps {
   toolset: ToolsetModel;
 }
 
-const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
+const view = withRenderWhenEntities<ToolsetLoginDialogProps>({
+  toolset: (state) => MarketplaceSelectors.selectLoginEntity(state)?.toolset,
+})(({ toolset }: ToolsetLoginDialogProps) => {
   const { t } = useTranslation(Translation.Marketplace);
   const dispatch = useAppDispatch();
   const { route } = useRouter();
@@ -80,6 +86,7 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
   const [authLevel, setAuthLevel] = useState<
     ToolsetCredentialsLevel | undefined
   >(undefined);
+  const [versionChanged, setVersionChanged] = useState(false);
 
   const isAppsEditor = route === Routes.AppsEditor;
 
@@ -193,6 +200,7 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
   const handleVersionChange = useCallback(
     (toolset: ToolsetModel) => {
       dispatch(MarketplaceActions.setLoginEntity({ toolset }));
+      setVersionChanged(true);
     },
     [dispatch],
   );
@@ -226,7 +234,7 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
     }
   }, [authType, formMethods]);
 
-  if (!isOrganizationView && isSignedIn)
+  if (!isOrganizationView && isSignedIn && !versionChanged)
     return (
       <ConfirmDialog
         isOpen
@@ -248,7 +256,10 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
       onClose={handleClose}
     >
       <div className="px-6 py-4">
-        <p className="text-base font-semibold text-primary">
+        <p
+          className="text-base font-semibold text-primary"
+          data-qa={isOrganizationView ? 'manage-creds-header' : 'login-header'}
+        >
           {t(
             isOrganizationView
               ? MarketplaceI18nKeys.ManageCredentials
@@ -260,8 +271,13 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
       <div className="flex gap-2 px-6 py-4">
         <ModelIcon size={40} entityId={toolset.id} entity={toolset} />
         <div className="flex flex-col justify-between">
-          <h3 className="text-sm font-semibold text-primary">{toolset.name}</h3>
-          <div className="flex items-center gap-1">
+          <h3
+            className="text-sm font-semibold text-primary"
+            data-qa="toolset-name"
+          >
+            {toolset.name}
+          </h3>
+          <div className="flex items-center gap-1" data-qa="toolset-version">
             <span className="text-xs text-primary">
               {t(MarketplaceI18nKeys.VersionPrefixMarketplace)}
             </span>
@@ -284,7 +300,7 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
       <FormProvider {...formMethods}>
         <div className="flex flex-col gap-2 p-6">
           {isOrganizationView ? (
-            credsTabs.map(({ label, key, Icon }) => (
+            credsTabs.map(({ label, key, Icon, triggerQa, contentQa }) => (
               <AuthAccordion
                 className="!bg-layer-2"
                 key={key}
@@ -300,6 +316,8 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
                   ),
                   type: isToolsetSignedIn(toolset, key) ? 'success' : 'error',
                 }}
+                triggerQa={triggerQa}
+                contentQa={contentQa}
               >
                 <p className="text-sm text-primary">{organizationFormTitle}</p>
 
@@ -336,9 +354,6 @@ const ToolsetLoginDialogView: FC<ToolsetLoginDialogProps> = ({ toolset }) => {
       </FormProvider>
     </Modal>
   );
-};
+});
 
-export const ToolsetLoginDialog =
-  withRenderWhenEntities<ToolsetLoginDialogProps>({
-    toolset: (state) => MarketplaceSelectors.selectLoginEntity(state)?.toolset,
-  })(ToolsetLoginDialogView);
+export const ToolsetLoginDialog = view;

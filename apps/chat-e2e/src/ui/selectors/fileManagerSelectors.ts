@@ -19,7 +19,7 @@ export const FileConflictResolutionSelectors = {
     `${Tags.input}[type="radio"][${Attributes.name}="${FileConflictResolutionSelectors.singleFileRadioName}"][${Attributes.value}="${value}"]`,
   multipleFilesRadio: (value: string) =>
     `${Tags.input}[type="radio"][${Attributes.name}="${FileConflictResolutionSelectors.multipleFilesRadioName}"][${Attributes.value}="${value}"]`,
-  radioLabel: (value: string) => `${Tags.label}[for="${value}"]`,
+  radioLabel: (value: string) => `${Tags.label}[for$="${value}"]`,
 };
 
 export const FileManagerSidebarSelectors = {
@@ -28,4 +28,9 @@ export const FileManagerSidebarSelectors = {
 
 export const FileManagerNavigationPanelSelectors = {
   navigationPanelContainer: '[aria-label="navigation-panel"]',
+};
+
+export const SelectFolderManagerModalSelectors = {
+  selectFolderButtonLabel: 'Select folder',
+  addFolderButtonLabel: 'Add folder',
 };

@@ -26,6 +26,7 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 import { ConfirmDialog } from '@/src/components/Common/ConfirmDialog';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
 import { Checkbox } from '@/src/components/Common/Forms/Checkbox';
+import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
 
 import { ButtonsSchemaModal } from './ButtonsSchemaModal';
 import { SchemaButton } from './SchemaButton';
@@ -229,6 +230,11 @@ const ButtonsProperty = ({
   );
   const [hiddenOptionsModal, setHiddenOptionsModal] = useState(false);
 
+  const optionsWithDescription = useMemo(
+    () => visibleOptions.filter((option) => option.description),
+    [visibleOptions],
+  );
+
   const handleClick = useCallback(
     (option: FormSchemaButtonOption) => {
       if (
@@ -290,6 +296,19 @@ const ButtonsProperty = ({
         )}
       </div>
 
+      {optionsWithDescription.length > 0 && (
+        <div className="flex flex-col gap-3">
+          {optionsWithDescription.map((option) => (
+            <EntityMarkdownDescription
+              key={`${option.const}`}
+              className="text-base text-primary"
+            >
+              {option.description!}
+            </EntityMarkdownDescription>
+          ))}
+        </div>
+      )}
+
       {!selectedConversations[0]?.messages.length && (
         <HiddenButtonsProperty
           options={options}
@@ -317,7 +336,8 @@ const ButtonsProperty = ({
       <ConfirmDialog
         isOpen={!!confirmation}
         showHeadingTooltip
-        heading={t(
+        heading={t(ChatI18nKeys.ConfirmHeader)}
+        description={t(
           confirmation?.[DialSchemaProperties.DialWidgetOptions]
             ?.confirmationMessage ?? '',
         )}
@@ -438,9 +458,11 @@ const PropertyRenderer = ({
     <div
       className={classNames('flex flex-col gap-3 overflow-hidden', className)}
     >
-      <p className="whitespace-pre-line text-base text-primary">
-        {property.description}
-      </p>
+      {property.description && (
+        <EntityMarkdownDescription className="text-base text-primary">
+          {property.description}
+        </EntityMarkdownDescription>
+      )}
 
       {propertyType === FormSchemaPropertyType.Button && (
         <ButtonsProperty
@@ -501,25 +523,23 @@ const FormSchemaMemo = memo(function FormSchema({
   );
 
   return (
-    sortedProperties.some(([_name, property]) => !property.description) && (
-      <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
-        {sortedProperties.map(([name, property]) => (
-          <PropertyRenderer
-            property={property}
-            schema={schema}
-            name={name}
-            onChange={onChange}
-            key={name}
-            disabled={disabled}
-            showSelected={showSelected}
-            formValue={formValue}
-            buttonsWrapperClassName={buttonsWrapperClassName}
-            buttonClassName={buttonClassName}
-            className={propertyWrapperClassName}
-          />
-        ))}
-      </div>
-    )
+    <div className={classNames('flex flex-col gap-6', wrapperClassName)}>
+      {sortedProperties.map(([name, property]) => (
+        <PropertyRenderer
+          property={property}
+          schema={schema}
+          name={name}
+          onChange={onChange}
+          key={name}
+          disabled={disabled}
+          showSelected={showSelected}
+          formValue={formValue}
+          buttonsWrapperClassName={buttonsWrapperClassName}
+          buttonClassName={buttonClassName}
+          className={propertyWrapperClassName}
+        />
+      ))}
+    </div>
   );
 });
 

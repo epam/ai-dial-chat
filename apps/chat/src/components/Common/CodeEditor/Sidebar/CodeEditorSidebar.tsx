@@ -6,10 +6,13 @@ import { getLastPathSegment } from '@/src/utils/app/common';
 import { constructPath } from '@/src/utils/app/file';
 import { getNextDefaultName } from '@/src/utils/app/folders';
 import { getIdWithoutRootPathSegments } from '@/src/utils/app/id';
+import {
+  ResolvedUploadFile,
+  dispatchPreparedFileUploads,
+} from '@/src/utils/app/prepare-files-for-upload';
 import { isHiddenEntity } from '@/src/utils/app/search';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
-import { DialFile } from '@/src/types/files';
 import { Translation } from '@/src/types/translation';
 
 import { CodeEditorActions, FilesActions } from '@/src/store/actions';
@@ -123,20 +126,9 @@ export const CodeEditorSidebar = ({
   }, [dispatch, parentPath, sourcesFolderId]);
 
   const handleUploadFiles = useCallback(
-    (
-      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
-      folderPath: string | undefined,
-    ) => {
-      selectedFiles.forEach((file) => {
-        dispatch(
-          FilesActions.uploadFile({
-            fileContent: file.fileContent,
-            id: file.id,
-            relativePath: folderPath,
-            name: file.name,
-            bucket,
-          }),
-        );
+    (selectedFiles: ResolvedUploadFile[], folderPath: string | undefined) => {
+      dispatchPreparedFileUploads(dispatch, selectedFiles, folderPath, {
+        bucket,
       });
     },
     [bucket, dispatch],

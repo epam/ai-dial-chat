@@ -150,9 +150,9 @@ const initEpic: AppEpic = (action$, state$) =>
                 return EMPTY;
               } else {
                 return of(
-                  UIActions.showErrorToast(
-                    errorsMessages.errorGettingUserBucket,
-                  ),
+                  UIActions.showErrorToast({
+                    message: errorsMessages.errorGettingUserBucket,
+                  }),
                 );
               }
             }),

@@ -180,6 +180,7 @@ export const applicationSlice = createSlice({
       _action: PayloadAction<{
         id: string;
         status: ApplicationStatus;
+        traceId?: string;
       }>,
     ) => state,
     getLogs: (state, _action: PayloadAction<string>) => {
@@ -192,7 +193,10 @@ export const applicationSlice = createSlice({
       state.logsLoadingStatus = UploadStatus.LOADED;
       state.appLogs = payload;
     },
-    getLogsFail: (state) => {
+    getLogsFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.logsLoadingStatus = UploadStatus.FAILED;
       state.appLogs = undefined;
     },

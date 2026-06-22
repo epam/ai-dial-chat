@@ -52,6 +52,7 @@ import { ShareIcon } from '@/src/components/Common/ShareIcon';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
 import { PublishActions } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   item: PromptInfo;
@@ -237,12 +238,12 @@ export const PromptComponent = memo(
       <>
         <button
           className={classNames(
-            'group relative flex size-full shrink-0 select-none items-center rounded border-l-2 pr-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
-            !isSelectMode && '[&:not(:disabled)]:hover:pr-9',
-            isContextMenu && !isMobileOrTablet && 'pr-9',
+            'group relative flex size-full shrink-0 select-none items-center rounded border-s-2 pe-3 hover:bg-accent-primary-alpha disabled:cursor-not-allowed',
+            !isSelectMode && '[&:not(:disabled)]:hover:pe-9',
+            isContextMenu && !isMobileOrTablet && 'pe-9',
             !isSelectMode && isHighlighted
-              ? 'border-l-accent-primary '
-              : 'border-l-transparent',
+              ? 'border-s-accent-primary '
+              : 'border-s-transparent',
             isHighlighted && 'bg-accent-primary-alpha',
             additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
           )}
@@ -256,7 +257,7 @@ export const PromptComponent = memo(
             }
           }}
           style={{
-            paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
+            paddingInlineStart: (level && `${level * 30 + 16}px`) || '0.875rem',
           }}
           ref={promptRef}
           data-qa="prompt"
@@ -264,7 +265,7 @@ export const PromptComponent = memo(
         >
           <div
             className={classNames('flex size-full items-center gap-2', {
-              'pr-6 xl:pr-0': !isSelectMode && !deletingPromptId && isSelected,
+              'pe-6 xl:pe-0': !isSelectMode && !deletingPromptId && isSelected,
             })}
             draggable={!isExternal && !isNameOrPathInvalid && !isSelectMode}
             onDragStart={(e) => handleDragStart(e, prompt)}
@@ -283,7 +284,7 @@ export const PromptComponent = memo(
               <input
                 className={classNames(
                   'checkbox peer size-[18px] bg-layer-3',
-                  additionalItemData?.isSidePanelItem && 'mr-0',
+                  additionalItemData?.isSidePanelItem && 'me-0',
                 )}
                 type="checkbox"
                 checked={isChosen}
@@ -323,14 +324,14 @@ export const PromptComponent = memo(
               />
             </ShareIcon>
 
-            <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
+            <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-start">
               <Tooltip
                 tooltip={t(
                   getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
                 )}
                 hideTooltip={!isNameOrPathInvalid}
                 triggerClassName={classNames(
-                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                  'block max-h-5 min-w-0 flex-1 text-start',
                   (prompt.publicationInfo?.isNotExist || isNameOrPathInvalid) &&
                     'text-secondary',
                   !!additionalItemData?.publicationUrl &&
@@ -339,7 +340,10 @@ export const PromptComponent = memo(
                 )}
                 dataQa="entity-name"
               >
-                {prompt.name}
+                <DialEllipsisTooltip
+                  text={prompt.name}
+                  id="entity-name-value"
+                />
               </Tooltip>
             </div>
           </div>
@@ -348,7 +352,7 @@ export const PromptComponent = memo(
               ref={refs.setFloating}
               {...getFloatingProps()}
               className={classNames(
-                'absolute right-0 z-50 flex justify-end group-hover:visible',
+                'absolute end-0 z-50 flex justify-end group-hover:visible',
                 !isSelected && isContextMenu ? 'visible' : 'invisible',
               )}
               onClick={stopBubbling}

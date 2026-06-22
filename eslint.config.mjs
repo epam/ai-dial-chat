@@ -14,7 +14,6 @@ import tailwindPlugin from 'eslint-plugin-tailwindcss';
 import testingLibraryPlugin from 'eslint-plugin-testing-library';
 import globals from 'globals';
 
-
 export default [
   {
     ignores: [
@@ -32,6 +31,7 @@ export default [
       'apps/chat-e2e/html-report',
       'apps/chat-e2e/chat-html-report',
       'apps/chat-e2e/overlay-html-report',
+      'apps/chat/public/scripts',
       'next-env.d.ts',
       '**/package.json',
       '**/**.config.js',
@@ -98,16 +98,32 @@ export default [
       'testing-library/prefer-presence-queries': 'warn',
       'tailwindcss/classnames-order': 'off',
       'testing-library/render-result-naming-convention': 'warn',
+      '@typescript-eslint/no-empty-function': 'error',
       'react-refresh/only-export-components': [
         'warn',
         {
           allowConstantExport: true,
+          extraHOCs: [
+            'withErrorBoundary',
+            'withErrorMessage',
+            'withLabel',
+            'withRenderForScreen',
+            'withRenderWhen',
+            'withRenderWhenNot',
+            'withRenderWhenFeature',
+            'withRenderWhenEntities',
+          ],
           allowExportNames: [
             'getServerSideProps',
             'getStaticProps',
             'getStaticPaths',
             'config',
             'metadata',
+            'EditorThemes',
+            'withController',
+            'withErrorMessage',
+            'withErrorBoundary',
+            'withLabel',
           ],
         },
       ],

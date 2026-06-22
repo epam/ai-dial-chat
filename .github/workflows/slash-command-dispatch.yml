@@ -7,6 +7,18 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ github.event.issue.pull_request }}
     steps:
+      - name: Find PR Base Branch
+        id: pr
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
+        with:
+          retries: 3
+          script: |
+            const { data: pull } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.issue.number
+            })
+            core.setOutput('base-ref', pull.base.ref)
       - name: Slash Command Dispatch
         id: scd
         uses: peter-evans/slash-command-dispatch@9bdcd7914ec1b75590b790b844aa3b8eee7c683a # v5.0.2
@@ -21,8 +33,9 @@ jobs:
                 "issue_type": "pull-request",
                 "repository": "epam/ai-dial-ci",
                 "static_args": [
-                  "application=${{ github.event.repository.name }}",
-                  "test-applications=chat,overlay"
+                  "application=${{ steps.pr.outputs.base-ref == 'development-1.0' && 'ai-dial-chat-ng' || github.event.repository.name }}",
+                  "test-applications=chat,overlay",
+                  "${{ steps.pr.outputs.base-ref == 'development-1.0' && 'skip-e2e' || '' }}"
                 ]
               }
             ]

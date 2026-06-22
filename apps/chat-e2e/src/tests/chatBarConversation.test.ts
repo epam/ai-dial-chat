@@ -12,9 +12,9 @@ import {
   MenuOptions,
   MockedChatApiResponseBodies,
 } from '@/src/testData';
-import { Overflow, Styles, ThemeColorAttributes } from '@/src/ui/domData';
+import { ThemeColorAttributes } from '@/src/ui/domData';
 import { ChatBarSelectors } from '@/src/ui/selectors';
-import { DateUtil, GeneratorUtil } from '@/src/utils';
+import { DateUtil, GeneratorUtil, ItemUtil } from '@/src/utils';
 import { ModelsUtil } from '@/src/utils/modelsUtil';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { expect } from '@playwright/test';
@@ -106,6 +106,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    conversationAssertion,
     conversationDropdownMenu,
     conversationData,
     dataInjector,
@@ -134,12 +135,10 @@ dialTest(
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         await conversations.selectEntity(conversation.name);
-        const chatNameOverflow = await conversations
-          .getEntityName(conversationName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await conversationAssertion.assertElementTextIsTruncated(
+          conversations.getEntityNameValue(conversationName),
+          ExpectedMessages.chatNameIsTruncated,
+        );
       },
     );
 
@@ -147,12 +146,10 @@ dialTest(
       'Hover over conversation name and verify it is truncated when menu dots appear',
       async () => {
         await conversations.getEntityByName(conversationName).hover();
-        const chatNameOverflow = await conversations
-          .getEntityName(conversationName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await conversationAssertion.assertElementTextIsTruncated(
+          conversations.getEntityNameValue(conversationName),
+          ExpectedMessages.chatNameIsTruncated,
+        );
       },
     );
 
@@ -165,13 +162,11 @@ dialTest(
         await renameConversationModalAssertion.assertModalTitle(
           ExpectedConstants.renameConversationModalTitle,
         );
-        const modalInputValue = await renameConversationModal.getInputValue();
-        expect
-          .soft(
-            modalInputValue,
-            'Modal input should contain the initial conversation name',
-          )
-          .toBe(conversationName);
+        await conversationAssertion.assertInputValue(
+          renameConversationModal.nameInput,
+          conversationName,
+          'Modal input should contain the initial conversation name',
+        );
       },
     );
 
@@ -180,12 +175,10 @@ dialTest(
       async () => {
         await renameConversationModal.nameInput.fillInInput(newName);
         await renameConversationModal.cancelButton.click();
-        await expect
-          .soft(
-            conversations.getEntityByName(newName),
-            ExpectedMessages.conversationNameNotUpdated,
-          )
-          .toBeHidden();
+        await conversationAssertion.assertEntityState(
+          { name: newName },
+          'hidden',
+        );
       },
     );
 
@@ -194,12 +187,10 @@ dialTest(
       async () => {
         await conversations.openEntityDropdownMenu(conversationName);
         await conversationDropdownMenu.selectMenuOption(MenuOptions.delete);
-        const chatNameOverflow = await conversations
-          .getEntityName(conversationName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await conversationAssertion.assertElementTextIsTruncated(
+          conversations.getEntityNameValue(conversationName),
+          ExpectedMessages.chatNameIsTruncated,
+        );
       },
     );
   },
@@ -211,6 +202,7 @@ dialTest(
   async ({
     dialHomePage,
     conversations,
+    conversationAssertion,
     conversationDropdownMenu,
     chat,
     conversationData,
@@ -232,30 +224,17 @@ dialTest(
     await renameConversationModal.editConversationNameWithSaveButton(newName, {
       isHttpMethodTriggered: false,
     });
-    await expect
-      .soft(
-        conversations.getEntityByName(newName),
-        ExpectedMessages.conversationNameUpdated,
-      )
-      .toBeVisible();
-
-    const chatNameOverflow = await conversations
-      .getEntityName(newName)
-      .getComputedStyleProperty(Styles.text_overflow);
-    expect
-      .soft(chatNameOverflow[0], ExpectedMessages.chatNameIsTruncated)
-      .toBe(Overflow.ellipsis);
+    await conversationAssertion.assertEntityState({ name: newName }, 'visible');
+    await conversationAssertion.assertElementTextIsTruncated(
+      conversations.getEntityNameValue(newName),
+      ExpectedMessages.chatNameIsTruncated,
+    );
 
     await dialHomePage.mockChatTextResponse(
       MockedChatApiResponseBodies.simpleTextBody,
     );
     await chat.sendRequestWithButton('one more test message');
-    await expect
-      .soft(
-        conversations.getEntityByName(newName),
-        ExpectedMessages.conversationNameUpdated,
-      )
-      .toBeVisible();
+    await conversationAssertion.assertEntityState({ name: newName }, 'visible');
   },
 );
 
@@ -266,7 +245,7 @@ dialTest(
     'Tooltip shows full long chat name in chat header. Named manually.\n' +
     'Long chat name is cut in chat header. Named automatically by the system.\n' +
     'Tooltip shows full long chat name in chat header. Named automatically by the system.\n' +
-    'Rename chat or chat folder with 161 symbol with dot in the end',
+    'Rename chat or chat folder with 256 bytes (UTF-8) name with dot in the end',
   async ({
     dialHomePage,
     conversations,
@@ -292,13 +271,14 @@ dialTest(
       'EPMRTC-820',
       'EPMRTC-3188',
     );
-    const newLongNameWithMiddleSpacesEndDot = `${GeneratorUtil.randomString(80)}${' '.repeat(3)}${GeneratorUtil.randomString(77)}.`;
-    const expectedName = newLongNameWithMiddleSpacesEndDot.substring(
-      0,
-      ExpectedConstants.maxEntityNameLength,
-    );
     const conversation = conversationData.prepareDefaultConversation();
     await dataInjector.createConversations([conversation]);
+    const midSpaces = ' '.repeat(3);
+    const newLongNameWithMiddleSpacesEndDot =
+      GeneratorUtil.randomString(150) +
+      midSpaces +
+      GeneratorUtil.randomString(150) +
+      '.';
     await localStorageManager.setShowSideBarPanels();
 
     await dialHomePage.openHomePage();
@@ -306,23 +286,35 @@ dialTest(
     await conversations.selectEntity(conversation.name);
     await conversations.openEntityDropdownMenu(conversation.name);
     await conversationDropdownMenu.selectMenuOption(MenuOptions.rename);
-    await renameConversationModal.editConversationNameWithEnter(
-      newLongNameWithMiddleSpacesEndDot,
-    );
+    const responsesMap =
+      await renameConversationModal.editConversationNameWithEnter(
+        newLongNameWithMiddleSpacesEndDot,
+      );
+    const expectedFullName = responsesMap!.get('PUT')!.name;
+    const expectedName = expectedFullName.split(ItemUtil.entityIdSeparator)[1];
     await baseAssertion.assertElementState(toast, 'hidden');
+    // Old name should be gone – the conversation was renamed and truncated
+    await conversationAssertion.assertEntityState(
+      { name: conversation.name },
+      'hidden',
+    );
     await conversationAssertion.assertEntityState(
       { name: expectedName },
       'visible',
     );
+    conversationAssertion.assertNumberIsLessThanOrEqual(
+      ItemUtil.getUtf8ByteLength(expectedFullName),
+      ExpectedConstants.maxEntityNameLength,
+    );
+    await conversationAssertion.assertElementText(
+      chatHeader.chatTitle,
+      expectedName,
+    );
+    await conversationAssertion.assertElementTextIsTruncated(
+      chatHeader.chatTitle,
+      ExpectedMessages.chatHeaderTitleTruncated,
+    );
 
-    const isChatHeaderTitleTruncated =
-      await chatHeader.chatTitle.isElementWidthTruncated();
-    expect
-      .soft(
-        isChatHeaderTitleTruncated,
-        ExpectedMessages.chatHeaderTitleTruncated,
-      )
-      .toBeTruthy();
     await errorPopup.cancelPopup();
     await chatHeader.chatTitle.hoverOver();
     await baseAssertion.assertElementText(
@@ -430,7 +422,7 @@ dialTest(
           createdDate: currentDate,
           lastUpdatedDate: currentDate,
         });
-        await informationModal.cancelButton.click();
+        await informationModal.getCloseButton().click();
       },
     );
 
@@ -766,8 +758,8 @@ dialTest.skip(
     await chatMessages.regenerateResponse();
     let todayConversations = await conversations.getTodayConversations();
     expect
-      .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
-      .toBe(1);
+      .soft(todayConversations, ExpectedMessages.conversationOfToday)
+      .toHaveLength(1);
 
     const messageToEdit = lastWeekConversation.messages[0].content;
     await conversations.selectEntity(lastWeekConversation.name);
@@ -775,8 +767,8 @@ dialTest.skip(
     await chatMessages.editMessage(messageToEdit, 'updated message');
     todayConversations = await conversations.getTodayConversations();
     expect
-      .soft(todayConversations.length, ExpectedMessages.conversationOfToday)
-      .toBe(2);
+      .soft(todayConversations, ExpectedMessages.conversationOfToday)
+      .toHaveLength(2);
 
     await conversations.selectEntity(lastMonthConversation.name);
     await dialHomePage.mockChatTextResponse(
@@ -1232,20 +1224,20 @@ dialTest.skip(
           await conversations.getChronologyConversations(randomChronology);
         expect
           .soft(
-            chronologyConversations.length,
+            chronologyConversations,
             ExpectedMessages.chronologyMessageCountIsCorrect,
           )
-          .toBe(0);
+          .toHaveLength(0);
 
         await conversations.chronologyByTitle(randomChronology).click();
         chronologyConversations =
           await conversations.getChronologyConversations(randomChronology);
         expect
           .soft(
-            chronologyConversations.length,
+            chronologyConversations,
             ExpectedMessages.chronologyMessageCountIsCorrect,
           )
-          .toBe(1);
+          .toHaveLength(1);
       },
     );
   },
@@ -1310,8 +1302,8 @@ dialTest(
         await chatBarSearch.setSearchValue('');
         const results = await conversations.getTodayConversations();
         expect
-          .soft(results.length, ExpectedMessages.searchResultCountIsValid)
-          .toBe(2);
+          .soft(results, ExpectedMessages.searchResultCountIsValid)
+          .toHaveLength(2);
       },
     );
 
@@ -1322,8 +1314,8 @@ dialTest(
           await chatBarSearch.setSearchValue(term);
           const results = await conversations.getTodayConversations();
           expect
-            .soft(results.length, ExpectedMessages.searchResultCountIsValid)
-            .toBe(1);
+            .soft(results, ExpectedMessages.searchResultCountIsValid)
+            .toHaveLength(1);
         }
       },
     );
@@ -1334,8 +1326,8 @@ dialTest(
         await chatBarSearch.setSearchValue(specialSymbolsSearchTerm);
         const results = await conversations.getTodayConversations();
         expect
-          .soft(results.length, ExpectedMessages.searchResultCountIsValid)
-          .toBe(1);
+          .soft(results, ExpectedMessages.searchResultCountIsValid)
+          .toHaveLength(1);
       },
     );
   },
@@ -1523,25 +1515,18 @@ dialTest(
   },
 );
 
-const longRequest =
-  'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task  but with the right planning, strategy, and dedication, it is indeed possible to build a successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
 const testRequestMap = new Map([
   [
     `how${GeneratorUtil.randomArrayElement(ExpectedConstants.controlChars.split(''))}are you`,
     'how_are you',
   ],
   ['first\nsecond\nthird', 'first'],
-  [
-    longRequest,
-    longRequest.substring(0, ExpectedConstants.maxEntityNameLength),
-  ],
 ]);
 for (const [request, expectedConversationName] of testRequestMap.entries()) {
   dialTest(
     'Chat name: tab is changed to space if to use it in chat name.\n' +
       'Chat name: ASCII control characters %00-%1F are changed to space if to use them in chat name.\n' +
       'The first and only row from the first message is used as chat name.\n' +
-      'The first 160 symbols from the first message is used as chat name' +
       ` for ${expectedConversationName}`,
     async ({
       dialHomePage,
@@ -1552,7 +1537,7 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
       baseAssertion,
       conversationAssertion,
     }) => {
-      setTestIds('EPMRTC-3007', 'EPMRTC-3015', 'EPMRTC-2853', 'EPMRTC-2961');
+      setTestIds('EPMRTC-3007', 'EPMRTC-3015', 'EPMRTC-2853');
 
       await dialTest.step(
         'Send request to chat and verify control chars are replaced with spaces',
@@ -1578,6 +1563,53 @@ for (const [request, expectedConversationName] of testRequestMap.entries()) {
     },
   );
 }
+
+dialTest(
+  'The first 255 bytes (UTF-8) from the first message is used as chat name for long messages',
+  async ({
+    dialHomePage,
+    chat,
+    chatMessages,
+    setTestIds,
+    localStorageManager,
+    baseAssertion,
+    conversationAssertion,
+  }) => {
+    setTestIds('EPMRTC-2961');
+
+    const longRequest =
+      'Create a detailed guide on how to start a successful small business from scratch. Starting a small business from scratch can be a daunting task but with the right planning, strategy, and dedication, it is indeed possible to build one successful venture. This comprehensive guide will outline the step-by-step process to help aspiring entrepreneurs kickstart their journey and turn their business ideas into reality';
+
+    await dialTest.step(
+      'Send long request and verify the name is truncated to available bytes',
+      async () => {
+        await localStorageManager.setShowSideBarPanels();
+        await dialHomePage.openHomePage();
+        await dialHomePage.waitForPageLoaded();
+        await dialHomePage.mockChatTextResponse(
+          MockedChatApiResponseBodies.simpleTextBody,
+        );
+        const request = await chat.sendRequestWithButton(longRequest);
+        const expectedFullName = request.id.split(ItemUtil.urlSeparator)[2];
+        const expectedName = expectedFullName.split(
+          ItemUtil.entityIdSeparator,
+        )[1];
+        await conversationAssertion.assertEntityState(
+          { name: expectedName },
+          'visible',
+        );
+        conversationAssertion.assertNumberIsLessThanOrEqual(
+          ItemUtil.getUtf8ByteLength(expectedFullName),
+          ExpectedConstants.maxEntityNameLength,
+        );
+        await baseAssertion.assertElementText(
+          chatMessages.getChatMessage(1),
+          longRequest,
+        );
+      },
+    );
+  },
+);
 
 dialTest(
   'Chat name: restricted special characters are removed from chat name if to name automatically via updating the 1st message',

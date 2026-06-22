@@ -67,6 +67,7 @@ vi.mock('@/src/hooks/useTranslation', () => ({
 // Mock Attachments Utils
 vi.mock('@/src/utils/app/attachments', () => ({
   getMappedAttachmentUrl: (url: string) => url,
+  hasPdfExtension: () => false,
 }));
 
 // Mock Plotly Components

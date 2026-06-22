@@ -26,6 +26,7 @@ declare global {
       ALLOW_VISUALIZER_SEND_MESSAGES?: boolean;
       ALLOW_TOKEN_IN_SESSION?: boolean;
       ENABLED_FEATURES?: string;
+      AVAILABLE_LOCALES?: string;
       PUBLICATION_FILTERS?: string;
       ADMIN_ROLE_NAMES?: string;
       DIAL_ROLES_FIELD?: string;
@@ -33,6 +34,7 @@ declare global {
       NEXT_PUBLIC_APP_NAME?: string;
       NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT?: string;
       NEXT_PUBLIC_DEFAULT_TEMPERATURE?: string;
+      NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES?: string;
       DEFAULT_MODEL?: string;
       RECENT_MODELS_IDS?: string;
       E2E_HOST?: string;
@@ -66,6 +68,7 @@ declare global {
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;
+      AUTH_ADDITIONAL_PARAMS?: string;
       AUTH_TEST_TOKEN?: string;
       AUTH_AUTH0_AUDIENCE?: string;
       AUTH_AUTH0_CLIENT_ID?: string;

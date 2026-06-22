@@ -14,3 +14,6 @@ export * from './marketplace/baseUrlBuilder';
 export * from './marketplace/marketplaceUrlBuilder';
 export * from './marketplace/entityEditorUrlBuilder';
 export * from './toolsets/toolsetBuilder';
+export * from './toolsets/authMockConfig';
+export * from './toolsets/apiKeyMockHelper';
+export * from './toolsets/oauthMockHelper';

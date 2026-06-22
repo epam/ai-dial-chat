@@ -1,10 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FormProvider, useForm } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { isQuickApp2 } from '@/src/utils/app/application';
 import {
   extractNameFromEmail,
   formatDate,
@@ -22,7 +25,6 @@ import {
 import { EnumMapper } from '@/src/utils/app/mappers';
 import {
   getDefaultAllEditEntities,
-  getPublicationDefaultName,
   getPublicationId,
   isEntityIdPublic,
 } from '@/src/utils/app/publications';
@@ -34,18 +36,25 @@ import {
   PublicationResource,
   PublicationRule,
 } from '@/src/types/publication';
+import { QuickApp2Config } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
-import { PublicationActions } from '@/src/store/actions';
+import { ApplicationActions, PublicationActions } from '@/src/store/actions';
 import { FoldersSelectors } from '@/src/store/folders/folders.selectors';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
+  ApplicationSelectors,
   AuthSelectors,
   ConversationsSelectors,
+  ModelsSelectors,
   PublicationSelectors,
 } from '@/src/store/selectors';
 
-import { ChatI18nKeys } from '@/src/constants/i18n';
+import {
+  ChatI18nKeys,
+  PromptBarI18nKeys,
+  SideBarI18nKeys,
+} from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
 import { CollapsibleSection } from '@/src/components/Common/CollapsibleSection';
@@ -61,6 +70,11 @@ import {
   PublicationRequestFormSchema,
   PublishRequestFieldsNames,
 } from '../form';
+import {
+  getPublicationDefaultName,
+  translatePublicationDisplayName,
+} from '../translatePublicationName';
+import { translatePublicationSectionName } from '../translatePublicationSectionName';
 import { BasePublicationResources } from './BasePublicationResources';
 import { CompareRulesModal } from './CompareRulesModal';
 import { PublicationFilters } from './PublicationFilters';
@@ -96,31 +110,31 @@ const LEADING_SLASH_REGEX = /^\/+/;
 const sections = [
   {
     featureType: FeatureType.Chat,
-    sectionName: 'Conversations',
+    sectionName: PromptBarI18nKeys.Conversations,
     dataQa: 'conversations-tree',
     ItemComponent: PublicationConversationRow,
   },
   {
     featureType: FeatureType.Prompt,
-    sectionName: 'Prompts',
+    sectionName: PromptBarI18nKeys.Prompts,
     dataQa: 'prompts-tree',
     ItemComponent: PublicationPromptRow,
   },
   {
     featureType: FeatureType.Application,
-    sectionName: 'Applications',
+    sectionName: SideBarI18nKeys.Applications,
     dataQa: 'applications-tree',
     ItemComponent: PublicationApplicationRow,
   },
   {
     featureType: FeatureType.Toolset,
-    sectionName: 'Toolsets',
+    sectionName: ChatI18nKeys.Toolsets,
     dataQa: 'toolsets-tree',
     ItemComponent: PublicationToolsetRow,
   },
   {
     featureType: FeatureType.File,
-    sectionName: 'Files',
+    sectionName: ChatI18nKeys.Files,
     dataQa: 'files-tree',
     ItemComponent: PublicationFileRow,
   },
@@ -128,6 +142,7 @@ const sections = [
 
 export function PublicationHandler({ publication, onSubmit }: Props) {
   const dispatch = useAppDispatch();
+  const router = useRouter();
 
   const { t } = useTranslation(Translation.Chat);
 
@@ -153,6 +168,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
   );
   const foldersEditState = useAppSelector(
     PublicationSelectors.selectFoldersEditState,
+  );
+  const publishEntityModel = useAppSelector((state) =>
+    publicationModel
+      ? ModelsSelectors.selectModelById(state, publicationModel.entity.id)
+      : undefined,
+  );
+  const applicationDetail = useAppSelector(
+    ApplicationSelectors.selectApplicationDetail,
   );
   const isEditMode = useAppSelector(PublicationSelectors.selectIsEditMode);
   const userName = useAppSelector(AuthSelectors.selectUserName);
@@ -205,12 +228,14 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     () => ({
       publishRequestName: getPublicationDefaultName(
         replaceSpacesFromString(userName),
+        router.locale,
+        t,
       ),
       rules: initialState.rules,
       publicationAuthor: initialState.displayAuthor,
       publishToUrl: initialState.publishToUrl,
     }),
-    [initialState, userName],
+    [initialState, router.locale, t, userName],
   );
 
   const formMethods = useForm<PublicationRequestFormData>({
@@ -231,20 +256,30 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     PublishRequestFieldsNames.PUBLISH_TO_URL,
   );
 
-  const rulesPath = !isReview ? editedPublishToUrl : publication.targetFolder;
+  const rulesPath =
+    !isReview || isEditMode ? editedPublishToUrl : publication.targetFolder;
 
   const rules = useAppSelector((state) =>
     PublicationSelectors.selectRulesByPath(state, rulesPath),
   );
 
   useEffect(() => {
-    if (rules && !isReview) {
+    if (rules && (!isReview || !isEditMode)) {
       formMethods.setValue(
         PublishRequestFieldsNames.RULES,
         rules[rulesPath] ?? [],
       );
     }
-  }, [formMethods, rulesPath, rules, isReview]);
+  }, [formMethods, rulesPath, rules, isReview, isEditMode]);
+
+  useEffect(() => {
+    if (isEditMode) {
+      formMethods.setValue(
+        PublishRequestFieldsNames.RULES,
+        publication.rules ?? [],
+      );
+    }
+  }, [formMethods, isEditMode, publication.rules]);
 
   useEffect(() => {
     if (!isEditMode) {
@@ -267,7 +302,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     return !publication.rules && isReview
       ? rulesEntries
       : rulesEntries.filter(([path]) =>
-          isReview
+          isReview && !isEditMode
             ? path !== publication.targetFolder
             : path !== editedPublishToUrl,
         );
@@ -276,19 +311,19 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     publication.rules,
     publication.targetFolder,
     isReview,
+    isEditMode,
     editedPublishToUrl,
   ]);
-
   const newRules: PublicationRule[] = useMemo(
     () =>
-      (!isReview
+      (!isReview || isEditMode
         ? rulesOnEdit
         : publication.rules?.map((rule) => ({
             source: rule.source,
             function: rule.function,
             targets: rule.targets,
           }))) ?? [],
-    [isReview, publication.rules, rulesOnEdit],
+    [isReview, isEditMode, publication.rules, rulesOnEdit],
   );
 
   const isPublicationHasOnlyUnpublishEntities = useMemo(
@@ -316,10 +351,19 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     setIsCompareModalOpened(false);
   }, []);
 
+  const organizationLabel = t(ChatI18nKeys.Organization);
   const displayPublishToUrl = editedPublishToUrl
-    ? editedPublishToUrl.replace(/^[^/]+/, 'Organization')
+    ? editedPublishToUrl.replace(/^[^/]+/, organizationLabel)
     : '';
-  const publicationName = publication.name || getPublicationId(publication.url);
+  const publicationName = translatePublicationDisplayName(
+    publication.name || getPublicationId(publication.url) || '',
+    router.locale,
+    t,
+  );
+
+  const comparePath = isEditMode
+    ? editedPublishToUrl
+    : publication.targetFolder;
 
   useEffect(() => {
     const handler = setTimeout(() => {
@@ -362,21 +406,20 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
         getIdWithoutTemporaryBucket(folder.id) ===
         getIdWithoutFeatureType(editedPublishToUrl),
     );
+    const baselinePath =
+      isReview && !isEditMode ? publication.targetFolder : editedPublishToUrl;
     return (
       (initialState.publishToUrl !== editedPublishToUrl && isTemporaryFolder) ||
-      !isEqual(
-        rules[isReview ? publication.targetFolder : editedPublishToUrl] ?? [],
-        (isReview ? newRules : rulesOnEdit) ?? [],
-      )
+      !isEqual(rules[baselinePath] ?? [], newRules ?? [])
     );
   }, [
     editedPublishToUrl,
     initialState.publishToUrl,
     isReview,
+    isEditMode,
     newRules,
     publication.targetFolder,
     rules,
-    rulesOnEdit,
     temporaryFolders,
   ]);
 
@@ -438,6 +481,31 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
     doesIncludeMarketplaceEntity &&
     isFileId(publicationModel.entity.iconUrl) &&
     !isMyEntity({ id: publicationModel.entity.iconUrl ?? '' });
+
+  useEffect(() => {
+    if (!isReview && publishEntityModel && isQuickApp2(publishEntityModel)) {
+      dispatch(
+        ApplicationActions.get({ applicationId: publishEntityModel.id }),
+      );
+    }
+  }, [isReview, publishEntityModel, dispatch]);
+
+  const hasPrivateSkillsInPublish = useMemo(() => {
+    if (
+      !publicationModel ||
+      !publishEntityModel ||
+      publicationModel.action === PublishActions.DELETE ||
+      !isQuickApp2(publishEntityModel)
+    ) {
+      return false;
+    }
+
+    const config = applicationDetail?.applicationProperties as
+      | QuickApp2Config
+      | undefined;
+
+    return (config?.skills ?? []).some((s) => !isEntityIdPublic({ id: s.url }));
+  }, [publicationModel, publishEntityModel, applicationDetail]);
 
   return (
     <FormProvider {...formMethods}>
@@ -667,7 +735,11 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                           return (
                             <CollapsibleSection
                               key={featureType}
-                              name={t(sectionName)}
+                              name={translatePublicationSectionName(
+                                sectionName,
+                                router.locale,
+                                t,
+                              )}
                               openByDefault
                               dataQa={dataQa}
                               togglerClassName="!text-sm !text-primary"
@@ -692,7 +764,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                               )}
                               {isConversationSectionAndNoFiles && (
                                 <p
-                                  className="pl-3.5 text-secondary"
+                                  className="ps-3.5 text-secondary"
                                   data-qa="no-publishing-files"
                                 >
                                   {t(
@@ -726,6 +798,15 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
                                     )}
                                   />
                                 )}
+                              {hasPrivateSkillsInPublish &&
+                                featureType === FeatureType.Application && (
+                                  <ErrorMessage
+                                    type="warning"
+                                    error={t(
+                                      ChatI18nKeys.QuickApp2ContainsPrivateSkillsPublish,
+                                    )}
+                                  />
+                                )}
                             </CollapsibleSection>
                           );
                         },
@@ -748,13 +829,13 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
             isDraftRuleFilterOpen={isRulesSetterVisible}
           />
         </div>
-        {isCompareModalOpened && publication.targetFolder && (
+        {isCompareModalOpened && comparePath && (
           <CompareRulesModal
             allRuleEntries={filteredRuleEntries}
             newRulesToCompare={newRules}
-            oldRulesToCompare={rules[publication.targetFolder]}
+            oldRulesToCompare={rules[comparePath]}
             onClose={handleCloseCompareModal}
-            newRulesPath={publication.targetFolder}
+            newRulesPath={comparePath}
           />
         )}
         {isApplicationReview && <ReviewApplicationDialog />}

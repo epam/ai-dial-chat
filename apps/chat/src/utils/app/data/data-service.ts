@@ -265,4 +265,14 @@ export class DataService {
       lastConversationSettings,
     );
   }
+
+  public static getFileSizeCache(): Observable<Record<string, number>> {
+    return BrowserStorage.getData(UIStorageKeys.FileSizeCache, {});
+  }
+
+  public static setFileSizeCache(
+    cache: Record<string, number>,
+  ): Observable<void> {
+    return BrowserStorage.setData(UIStorageKeys.FileSizeCache, cache);
+  }
 }

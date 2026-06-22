@@ -1,4 +1,6 @@
-import { DragEvent, memo, useCallback, useRef, useState } from 'react';
+import { DragEvent, memo, useCallback, useMemo, useRef, useState } from 'react';
+
+import { useRouter } from 'next/router';
 
 import classNames from 'classnames';
 
@@ -20,6 +22,7 @@ import { getEntityNameError } from '@/src/utils/app/errors';
 import { isEntityIdExternal } from '@/src/utils/app/id';
 import { hasParentWithFloatingOverlay } from '@/src/utils/app/modals';
 import { MoveType, getDragImage } from '@/src/utils/app/move';
+import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
 
 import {
   AdditionalItemData,
@@ -51,6 +54,7 @@ import {
   PublishActions,
   UploadStatus,
 } from '@epam/ai-dial-shared';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 interface ViewProps {
   conversation: ConversationInfo;
@@ -73,6 +77,7 @@ function ConversationView({
   isContextMenu,
   isDraggingOver,
 }: ViewProps) {
+  const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
 
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
@@ -105,6 +110,10 @@ function ConversationView({
   const isExternal = isEntityIdExternal(conversation);
   const isReplay = isReplayConversation(conversation);
   const isPlayback = isPlaybackConversation(conversation);
+  const displayName = useMemo(
+    () => translateConversationDisplayName(conversation.name, router.locale, t),
+    [conversation.name, router.locale, t],
+  );
 
   return (
     <>
@@ -164,14 +173,14 @@ function ConversationView({
           />
         )}
       </ShareIcon>
-      <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-left">
+      <div className="relative max-h-5 flex-1 select-none truncate whitespace-pre break-all text-start">
         <Tooltip
           tooltip={t(
             getEntityNameError(isNameInvalid, isInvalidPath, isExternal),
           )}
           hideTooltip={!isNameOrPathInvalid}
           triggerClassName={classNames(
-            'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+            'block max-h-5 min-w-0 flex-1 text-start',
             conversation.publicationInfo?.isNotExist && 'text-secondary',
             !!additionalItemData?.publicationUrl &&
               conversation.publicationInfo?.action === PublishActions.DELETE &&
@@ -179,7 +188,7 @@ function ConversationView({
           )}
           dataQa="entity-name"
         >
-          {conversation.name}
+          <DialEllipsisTooltip text={displayName} id="entity-name-value" />
         </Tooltip>
       </div>
     </>
@@ -280,10 +289,10 @@ export const ConversationComponent = memo(
     return (
       <div
         className={classNames(
-          'group relative flex items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          'group relative flex items-center rounded border-s-2 hover:bg-accent-primary-alpha',
           !isSelectMode && isHighlighted
-            ? 'border-l-accent-primary'
-            : 'border-l-transparent',
+            ? 'border-s-accent-primary'
+            : 'border-s-transparent',
           (isHighlighted || isContextMenu) && 'bg-accent-primary-alpha',
           isNameOrPathInvalid && 'text-secondary',
           additionalItemData?.isSidePanelItem ? 'h-[34px]' : 'h-[30px]',
@@ -293,12 +302,12 @@ export const ConversationComponent = memo(
       >
         <button
           className={classNames(
-            'group flex size-full items-center gap-2 pr-3 disabled:cursor-not-allowed',
-            !isSelectMode && '[&:not(:disabled)]:group-hover:pr-9',
-            shouldShowPadding && 'pr-9',
+            'group flex size-full items-center gap-2 pe-3 disabled:cursor-not-allowed',
+            !isSelectMode && '[&:not(:disabled)]:group-hover:pe-9',
+            shouldShowPadding && 'pe-9',
           )}
           style={{
-            paddingLeft: (level && `${level * 30 + 16}px`) || '0.875rem',
+            paddingInlineStart: (level && `${level * 30 + 16}px`) || '0.875rem',
           }}
           disabled={isConversationsStreaming || (isSelectMode && isExternal)}
           draggable={
@@ -348,10 +357,11 @@ export const ConversationComponent = memo(
         {!isSelectMode && !isConversationsStreaming && (
           <div
             className={classNames(
-              'absolute right-0 z-50 flex cursor-pointer justify-end group-hover:visible',
-              (conversation.status === UploadStatus.LOADED || !isContextMenu) &&
-                'invisible',
-              isContextMenu && 'md:visible',
+              'invisible absolute end-0 z-50 flex cursor-pointer justify-end group-hover:visible',
+              isContextMenu &&
+                (isMobileOrTablet
+                  ? conversation.status !== UploadStatus.LOADED && 'visible'
+                  : 'visible'),
             )}
           >
             <ConversationContextMenu

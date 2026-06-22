@@ -1,6 +1,7 @@
 import { EMPTY, catchError, concat, iif, of, switchMap } from 'rxjs';
 
 import { ToolsetService } from '@/src/utils/app/data/toolset-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { translate } from '@/src/utils/app/translation';
 
 import { RootState } from '@/src/types/store';
@@ -19,9 +20,11 @@ export const refreshToolset$ = (toolsetId: string, state: RootState) =>
 
       if (!toolset) {
         return of(
-          UIActions.showErrorToast(
-            translate(errorsMessages.toolsetGetFailed, { name: toolsetId }),
-          ),
+          UIActions.showErrorToast({
+            message: translate(errorsMessages.toolsetGetFailed, {
+              name: toolsetId,
+            }),
+          }),
         );
       }
 
@@ -34,11 +37,15 @@ export const refreshToolset$ = (toolsetId: string, state: RootState) =>
         ),
       );
     }),
-    catchError(() => {
+    catchError((err) => {
+      const { traceId } = parseApiError(err);
       return of(
-        UIActions.showErrorToast(
-          translate(errorsMessages.toolsetGetFailed, { name: toolsetId }),
-        ),
+        UIActions.showErrorToast({
+          traceId,
+          message: translate(errorsMessages.toolsetGetFailed, {
+            name: toolsetId,
+          }),
+        }),
       );
     }),
   );

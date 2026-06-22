@@ -15,6 +15,7 @@ import { Migration } from '@/src/components/Chat/Migration/Migration';
 import { MigrationFailedWindow } from '@/src/components/Chat/Migration/MigrationFailedModal';
 import { ImportExportLoader } from '@/src/components/Chatbar/ImportExportLoader';
 import { AnnouncementsBanner } from '@/src/components/Common/AnnouncementBanner';
+import { FloatingPanelToggles } from '@/src/components/Header/FloatingPanelToggles';
 import { Header } from '@/src/components/Header/Header';
 
 import { useCustomizations } from '@/src/customizations';
@@ -78,8 +79,9 @@ function Home() {
           failedMigratedPrompts={failedMigratedPrompts}
         />
       ) : (
-        <div className="flex size-full flex-col sm:pt-0">
+        <div className="relative flex size-full flex-col sm:pt-0">
           {enabledFeatures.has(Feature.Header) && <Header />}
+          <FloatingPanelToggles />
           <div className="flex min-h-0 w-full flex-1 overflow-auto">
             <div className="flex size-full flex-col">
               <AnnouncementsBanner />

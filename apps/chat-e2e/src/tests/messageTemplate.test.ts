@@ -155,7 +155,7 @@ dialTest(
     await dialTest.step(
       'Close the modal, reopen it again and verify changes are not saved',
       async () => {
-        await messageTemplateModal.cancelButton.click();
+        await messageTemplateModal.getCloseButton().click();
         await chatMessages.openMessageTemplateModal(1);
         await messageTemplateModalAssertion.assertElementsCount(
           messageTemplateModal.templateRows,
@@ -883,7 +883,7 @@ dialTest(
           messageTemplateModal.getTemplateRowValue(2),
           secondPromptContent(cVarPlaceholder, dVarPlaceholder),
         );
-        await messageTemplateModal.cancelButton.click();
+        await messageTemplateModal.getCloseButton().click();
       },
     );
 

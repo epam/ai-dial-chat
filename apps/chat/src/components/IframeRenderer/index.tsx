@@ -11,6 +11,12 @@ import React, {
 
 import { useRouter } from 'next/router';
 
+import { useVisualizerAuthLayoutFields } from '@/src/hooks/useVisualizerAuthLayoutFields';
+import { useVisualizerLocaleLayoutFields } from '@/src/hooks/useVisualizerLocaleLayoutFields';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { UISelectors } from '@/src/store/selectors';
+
 import { Routes } from '@/src/constants/routes';
 
 import { Spinner } from '@/src/components/Common/Spinner';
@@ -18,6 +24,7 @@ import { Spinner } from '@/src/components/Common/Spinner';
 import {
   AttachmentData,
   CustomVisualizerData,
+  CustomVisualizerDataLayout,
   VisualizerConnectorEvents,
   VisualizerConnectorRequest,
   VisualizerConnectorRequests,
@@ -33,6 +40,8 @@ interface IframeRendererProps {
   containerStyle?: React.CSSProperties;
   containerClassName?: string;
   conversationId?: string;
+  passAuthInfo?: boolean;
+  passExplicitToken?: boolean;
 }
 
 export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
@@ -46,11 +55,19 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
       containerStyle = {},
       containerClassName = '',
       conversationId,
+      passAuthInfo,
+      passExplicitToken,
     },
     ref: Ref<HTMLDivElement>,
   ) => {
     const containerRef = useRef<HTMLDivElement>(null);
     const visualizer = useRef<VisualizerConnector | null>(null);
+    const localeLayoutFields = useVisualizerLocaleLayoutFields();
+    const authLayoutFields = useVisualizerAuthLayoutFields({
+      passAuthInfo,
+      passExplicitToken,
+    });
+    const themeId = useAppSelector(UISelectors.selectThemeState);
 
     const router = useRouter();
 
@@ -59,6 +76,17 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
     }, [router.pathname]);
 
     const [loading, setLoading] = useState<boolean>(true);
+
+    const visualizerLayout = useMemo(
+      (): CustomVisualizerDataLayout => ({
+        width: 0,
+        height: 0,
+        themeId,
+        ...authLayoutFields,
+        ...localeLayoutFields,
+      }),
+      [themeId, authLayoutFields, localeLayoutFields],
+    );
 
     useImperativeHandle(ref, () => containerRef.current as HTMLDivElement);
 
@@ -72,6 +100,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           domain: iframeUrl,
           hostDomain: window.location.origin,
           visualizerName: title,
+          loaderClass: 'bg-layer-1',
         });
 
         return () => {
@@ -106,7 +135,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           visualizerData: {
             isPreview: isPreviewConversation,
             conversationId: conversationId,
-            layout: { width: 0, height: 0 },
+            layout: visualizerLayout,
             // TODO: fix typing here
           } as CustomVisualizerData,
         };
@@ -117,7 +146,7 @@ export const IframeRenderer = forwardRef<HTMLDivElement, IframeRendererProps>(
           messagePayload,
         );
       },
-      [isPreviewConversation, conversationId],
+      [isPreviewConversation, conversationId, visualizerLayout],
     );
 
     useEffect(() => {

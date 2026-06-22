@@ -6,7 +6,6 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { getFilterLabel } from '@/src/utils/app/rules';
 
 import { ModalState } from '@/src/types/modal';
 import {
@@ -27,6 +26,7 @@ import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 
 import { RegexParamInput } from './RegexParamInput';
 import { RulesSelect } from './RulesSelect';
+import { usePublicationFilterTranslation } from './usePublicationFilterTranslation';
 
 import {
   DialPrimaryButton,
@@ -73,14 +73,18 @@ export function TargetAudienceFilterComponent({
 }: Props) {
   const { t } = useTranslation(Translation.SideBar);
   const { t: tChat } = useTranslation(Translation.Chat);
+  const { translateSource, translateFunction } =
+    usePublicationFilterTranslation();
 
   const [filterFunction, setFilterFunction] = useState<PublicationFunctions>(
     PublicationFunctions.Contain,
   );
   const [filterParams, setFilterParams] = useState<string[]>([]);
   const [filterRegexParam, setFilterRegexParam] = useState<string>('');
+  const [isRegexValid, setIsRegexValid] = useState(true);
   const [selectedTarget, setSelectedTarget] = useState(t(emptySelector));
   const [targetMenuOpen, setTargetMenuOpen] = useState(true);
+  const [filterFnsMenuOpen, setFilterFnsMenuOpen] = useState(false);
 
   const filterRowRef = useRef<HTMLDivElement>(null);
   const valuesInputRef = useRef<HTMLInputElement>(null);
@@ -90,6 +94,24 @@ export function TargetAudienceFilterComponent({
 
   const publicationFilters = useAppSelector(
     SettingsSelectors.selectPublicationFilters,
+  );
+
+  const emptyTargetLabel = t(emptySelector);
+
+  const formatSourceLabel = useCallback(
+    (source: string) => {
+      if (source === emptySelector || source === emptyTargetLabel) {
+        return emptyTargetLabel;
+      }
+
+      return translateSource(source);
+    },
+    [emptyTargetLabel, translateSource],
+  );
+
+  const formatFunctionLabel = useCallback(
+    (filterType: string) => translateFunction(filterType),
+    [translateFunction],
   );
 
   const handleSaveFilter = useCallback(() => {
@@ -121,6 +143,9 @@ export function TargetAudienceFilterComponent({
   const handleChangeFilterFunction = useCallback(
     (next: PublicationFunctions) => {
       setFilterFunction(next);
+      if (next !== PublicationFunctions.Regex) {
+        setIsRegexValid(true);
+      }
     },
     [],
   );
@@ -136,7 +161,9 @@ export function TargetAudienceFilterComponent({
     [],
   );
 
-  const isTargetSelected = selectedTarget !== emptySelector;
+  const isTargetUnselected =
+    selectedTarget === emptySelector || selectedTarget === emptyTargetLabel;
+  const isTargetSelected = !isTargetUnselected;
   const areSomeFilterParamSelected = filterParams.length || filterRegexParam;
   const isRegexFilledInButNotSelected = !!(
     filterRegexParam &&
@@ -152,17 +179,31 @@ export function TargetAudienceFilterComponent({
     !isTargetSelected ||
     !areSomeFilterParamSelected ||
     isRegexFilledInButNotSelected ||
-    isParamsFilledInButRegexIsSelected;
+    isParamsFilledInButRegexIsSelected ||
+    (filterFunction === PublicationFunctions.Regex && !isRegexValid);
 
   isSaveBtnDisabledRef.current = isSaveBtnDisabled;
 
-  const targetMenuControlProps =
-    selectedTarget === emptySelector
-      ? {
-          isMenuOpen: targetMenuOpen,
-          onMenuOpenChange: setTargetMenuOpen,
-        }
-      : {};
+  const handleTargetMenuOpenChange = useCallback((open: boolean) => {
+    setTargetMenuOpen(open);
+    if (open) {
+      setFilterFnsMenuOpen(false);
+    }
+  }, []);
+
+  const handleFilterFnsMenuOpenChange = useCallback((open: boolean) => {
+    setFilterFnsMenuOpen(open);
+    if (open) {
+      setTargetMenuOpen(false);
+    }
+  }, []);
+
+  const targetMenuControlProps = isTargetUnselected
+    ? {
+        isMenuOpen: targetMenuOpen,
+        onMenuOpenChange: handleTargetMenuOpenChange,
+      }
+    : {};
 
   useEffect(() => {
     const wasEmpty = prevSelectedTargetRef.current === emptySelector;
@@ -222,13 +263,14 @@ export function TargetAudienceFilterComponent({
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
                 {t(SideBarI18nKeys.Category)}
-                <span className="ml-1 inline text-accent-primary">*</span>
+                <span className="ms-1 inline text-accent-primary">*</span>
               </label>
               <RulesSelect
                 triggerClassName="h-[38px] items-center rounded border border-primary font-semibold"
                 filters={publicationFilters}
                 selectedFilter={selectedTarget}
                 onChangeFilter={handleChangeTarget}
+                formattingFunction={formatSourceLabel}
                 id="targets"
                 {...targetMenuControlProps}
               />
@@ -236,27 +278,31 @@ export function TargetAudienceFilterComponent({
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
                 {t(SideBarI18nKeys.Condition)}
-                <span className="ml-1 inline text-accent-primary">*</span>
+                <span className="ms-1 inline text-accent-primary">*</span>
               </label>
               <RulesSelect
                 triggerClassName="h-[38px] items-center rounded border border-primary italic"
                 filters={filterFunctionValues}
                 selectedFilter={filterFunction}
                 onChangeFilter={handleChangeFilterFunction}
-                formattingFunction={(fn) => getFilterLabel(fn)}
+                formattingFunction={formatFunctionLabel}
                 id="filterFns"
+                isMenuOpen={filterFnsMenuOpen}
+                onMenuOpenChange={handleFilterFnsMenuOpenChange}
               />
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs text-secondary">
                 {t(SideBarI18nKeys.Options)}
-                <span className="ml-1 inline text-accent-primary">*</span>
+                <span className="ms-1 inline text-accent-primary">*</span>
               </label>
               {filterFunction === PublicationFunctions.Regex ? (
                 <RegexParamInput
                   regEx={filterRegexParam}
                   onRegExChange={handleChangeFilterRegexParam}
-                  className="h-[38px] rounded border border-primary"
+                  onValidityChange={setIsRegexValid}
+                  isInvalid={!isRegexValid}
+                  className="rounded border border-primary"
                   inputRef={regexInputRef}
                 />
               ) : (
@@ -269,7 +315,7 @@ export function TargetAudienceFilterComponent({
                   placeholder={t(SideBarI18nKeys.EnterOneOrMoreOptions)}
                   inputRef={valuesInputRef}
                   hasDeleteAll
-                  closeButtonClassName="pt-1 pr-1"
+                  closeButtonClassName="pt-1 pe-1"
                   showConnectorBetweenSelectedItems
                   connectorLabel={tChat(ChatI18nKeys.Or)}
                 />
@@ -299,6 +345,7 @@ export function TargetAudienceFilterComponent({
         filters={publicationFilters}
         selectedFilter={selectedTarget}
         onChangeFilter={handleChangeTarget}
+        formattingFunction={formatSourceLabel}
         id="targets"
         {...targetMenuControlProps}
       />
@@ -306,14 +353,18 @@ export function TargetAudienceFilterComponent({
         menuClassName="max-w-full italic md:max-w-[100px]"
         filters={filterFunctionValues}
         selectedFilter={filterFunction}
-        formattingFunction={(filterType) => getFilterLabel(filterType)}
+        formattingFunction={formatFunctionLabel}
         onChangeFilter={handleChangeFilterFunction}
         id="filterFns"
+        isMenuOpen={filterFnsMenuOpen}
+        onMenuOpenChange={handleFilterFnsMenuOpenChange}
       />
       {filterFunction === PublicationFunctions.Regex ? (
         <RegexParamInput
           regEx={filterRegexParam}
           onRegExChange={handleChangeFilterRegexParam}
+          onValidityChange={setIsRegexValid}
+          isInvalid={!isRegexValid}
           inputRef={regexInputRef}
         />
       ) : (

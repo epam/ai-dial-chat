@@ -9,18 +9,18 @@ import {
   waitForStream,
 } from '@/src/utils/server/file-download-utils';
 import { logger } from '@/src/utils/server/logger';
-import { getToken } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { DialAIError } from '@/src/types/error';
-
-import { errorsMessages } from '@/src/constants/errors';
 
 import { DialFile } from '@epam/ai-dial-ui-kit';
 import archiver from 'archiver';
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
+  setTraceparentHeader(res);
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    throw new DialAIError('Method not allowed', 405, req);
   }
 
   const session = await getServerSession(req, res, authOptions);
@@ -122,17 +122,13 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
         }
 
         if (!res.headersSent) {
-          res.status(500).json({ error: 'Failed to create archive' });
+          throw new DialAIError('Failed to create archive', 500, req);
         }
       }
     })();
   } catch (error) {
     logger.error(error);
-    if (error instanceof DialAIError) {
-      const statusCode = parseInt(error.code, 10) || 500;
-      return res.status(statusCode).json({ error: error.message });
-    }
-    return res.status(500).json(errorsMessages.generalServer);
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 

@@ -2,6 +2,7 @@ import { Observable, forkJoin, of, switchMap } from 'rxjs';
 
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
+  ApiUtils,
   getIdWithoutVersionFromApiKey,
   getPublicItemIdWithoutVersion,
   getVersionFromId,
@@ -44,6 +45,8 @@ import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import {
   getEntityBucket,
+  getFileRootId,
+  getIdWithoutRootPathSegments,
   getRootId,
   isApplicationId,
   isConversationId,
@@ -51,10 +54,20 @@ import {
   isPromptId,
   isRootId,
   isToolsetId,
+  transformIdToRootEntityId,
 } from './id';
 
-import { ConversationInfo, PublishActions } from '@epam/ai-dial-shared';
+import {
+  Conversation,
+  ConversationInfo,
+  FolderInterface,
+  PublishActions,
+} from '@epam/ai-dial-shared';
+import compact from 'lodash-es/compact';
+import escapeRegExp from 'lodash-es/escapeRegExp';
+import flatMapDeep from 'lodash-es/flatMapDeep';
 import sortBy from 'lodash-es/sortBy';
+import uniq from 'lodash-es/uniq';
 import { nanoid } from 'nanoid';
 
 export const isEntityIdPublic = (
@@ -70,6 +83,61 @@ export const isEntityIdPublic = (
   );
 };
 
+export const publishToUrlToOrganizationFolderId = (
+  publishToUrl: string | undefined,
+): string => {
+  const root = getRootId({
+    featureType: FeatureType.File,
+    bucket: PUBLIC_URL_PREFIX,
+  });
+  if (!publishToUrl || publishToUrl === PUBLIC_URL_PREFIX) {
+    return root;
+  }
+  const prefix = `${PUBLIC_URL_PREFIX}/`;
+  if (!publishToUrl.startsWith(prefix)) {
+    return root;
+  }
+  const relativePath = publishToUrl.slice(prefix.length).replace(/\/+$/, '');
+  return relativePath ? constructPath(root, relativePath) : root;
+};
+
+export const organizationFolderIdToPublishPathSuffix = (
+  folderId: string | undefined,
+): string | undefined => {
+  if (!folderId) return undefined;
+  const root = getRootId({
+    featureType: FeatureType.File,
+    bucket: PUBLIC_URL_PREFIX,
+  });
+  if (folderId === root) return undefined;
+  return getIdWithoutRootPathSegments(folderId) || undefined;
+};
+
+export const getOrganizationPublishPathDepth = (
+  folderId: string | undefined,
+): number => {
+  const relative = folderId ? getIdWithoutRootPathSegments(folderId) : '';
+  const segments = relative.split('/').filter(Boolean);
+  return segments.length === 0 ? 0 : segments.length - 1;
+};
+
+export const remapPublicFolderToFilesNamespace = (
+  folder: FolderInterface,
+): FolderInterface => {
+  const bucket = getEntityBucket(folder);
+  const filesRoot = getFileRootId(bucket);
+  const relative = getIdWithoutRootPathSegments(folder.id);
+  const id = relative ? constructPath(filesRoot, relative) : filesRoot;
+  const folderId = getFolderIdFromEntityId(id);
+
+  return {
+    ...folder,
+    id,
+    folderId,
+    publishedWithMe: true,
+  };
+};
+
 export const createFoldersFilesTargetUrl = (id: string) => {
   const baseElements = id.split('/').slice(2, -1);
   const lastElement = id.split('/').slice(-1);
@@ -80,6 +148,60 @@ export const createFoldersFilesTargetUrl = (id: string) => {
     ...baseElements,
     ...lastElement,
   );
+};
+
+/**
+ * Target paths for file attachments when publishing conversations. De-duplicates
+ * by decoded storage URL; when the same file appears in multiple chats, the
+ * shortest target path is used.
+ */
+export const buildDedupedPublicationFileTargetsFromConversations = (
+  conversations: Conversation[],
+  entityFolderId: string,
+  isFolder = false,
+): { oldUrl: string; newUrl: string }[] => {
+  const bySourceUrl = new Map<string, { oldUrl: string; newUrl: string }>();
+
+  const folderOldPathPartsRegExp = new RegExp(
+    escapeRegExp(getIdWithoutRootPathSegments(entityFolderId)),
+  );
+
+  for (const conversation of conversations) {
+    const urls = compact(
+      flatMapDeep(
+        conversation.playback?.messagesStack || conversation.messages,
+        (message) =>
+          message.custom_content?.attachments?.map(
+            (attachment) => attachment.url,
+          ),
+      ),
+    );
+    for (const oldUrl of urls) {
+      if (!oldUrl) {
+        continue;
+      }
+      const decodedOldUrl = ApiUtils.decodeApiUrl(oldUrl);
+      const newUrl = isFolder
+        ? createFoldersFilesTargetUrl(
+            constructPath(
+              getFolderIdFromEntityId(conversation.id),
+              ...decodedOldUrl.split('/').slice(-1),
+            ).replace(folderOldPathPartsRegExp, ''),
+          )
+        : transformIdToRootEntityId(decodedOldUrl);
+      const existing = bySourceUrl.get(decodedOldUrl);
+
+      if (
+        !existing ||
+        !existing.newUrl?.length ||
+        newUrl.length < existing.newUrl.length
+      ) {
+        bySourceUrl.set(decodedOldUrl, { oldUrl: decodedOldUrl, newUrl });
+      }
+    }
+  }
+
+  return [...bySourceUrl.values()];
 };
 
 export const findLatestVersion = (versions: string[]) => {
@@ -244,9 +366,11 @@ export const processPublicationResources = (
     payload: of(payload),
     publicFiles: payload.resources.find((r) => isFileId(r.sourceUrl))
       ? FileService.getMultipleFoldersFiles(
-          payload.resources
-            .filter((r) => isFileId(r.sourceUrl))
-            .map((r) => getFolderIdFromEntityId(r.targetUrl)),
+          uniq(
+            payload.resources
+              .filter((r) => isFileId(r.sourceUrl))
+              .map((r) => getFolderIdFromEntityId(r.targetUrl)),
+          ),
         )
       : of([]),
   }).pipe(
@@ -443,9 +567,6 @@ export const regenerateApiKeyNameAndVersionParts = (
 
   return [preparedName, version].join(pathKeySeparator);
 };
-
-export const getPublicationDefaultName = (userName?: string) =>
-  `New request by ${userName ?? 'Unknown Author'}`;
 
 export const allEditedFoldersAreValid = (obj: unknown) => {
   for (const key in obj as Record<string, string>) {

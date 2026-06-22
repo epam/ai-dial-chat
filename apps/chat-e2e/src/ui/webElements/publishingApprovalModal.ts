@@ -12,6 +12,7 @@ import {
   PublishFolderFiles,
   PublishFolderPrompts,
   PublishPromptsTree,
+  PublishToolsetsTree,
 } from '@/src/ui/webElements/entityTree';
 import { PublishFilesTree } from '@/src/ui/webElements/entityTree/publication/publishFilesTree';
 import { PublishingRules } from '@/src/ui/webElements/publishingRules';
@@ -33,6 +34,8 @@ export class PublishingApprovalModal extends BaseElement {
   private folderPromptsToApprove!: PublishFolderPrompts;
   //applications to approve tree
   private applicationsToPublishTree!: PublishApplicationsTree;
+  //toolsets to approve tree
+  private toolsetsToPublishTree!: PublishToolsetsTree;
   private publishingRules!: PublishingRules;
 
   getConversationsToApproveTree(): PublishConversationsTree {
@@ -103,6 +106,16 @@ export class PublishingApprovalModal extends BaseElement {
       );
     }
     return this.applicationsToPublishTree;
+  }
+
+  getToolsetToApproveTree(): PublishToolsetsTree {
+    if (!this.toolsetsToPublishTree) {
+      this.toolsetsToPublishTree = new PublishToolsetsTree(
+        this.page,
+        this.rootLocator,
+      );
+    }
+    return this.toolsetsToPublishTree;
   }
 
   getPublishingRules(): PublishingRules {

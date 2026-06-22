@@ -52,11 +52,11 @@ const reportIssueFailEpic: AppEpic = (action$) =>
     ofType(ServiceActions.reportIssueFail.type),
     switchMap(() =>
       of(
-        UIActions.showErrorToast(
-          translate(CommonI18nKeys.GeneralServerError, {
+        UIActions.showErrorToast({
+          message: translate(CommonI18nKeys.GeneralServerError, {
             ns: Translation.Common,
           }),
-        ),
+        }),
       ),
     ),
   );
@@ -100,11 +100,11 @@ const requestApiKeyFailEpic: AppEpic = (action$) =>
     ofType(ServiceActions.requestApiKeyFail.type),
     switchMap(() =>
       of(
-        UIActions.showErrorToast(
-          translate(CommonI18nKeys.GeneralServerError, {
+        UIActions.showErrorToast({
+          message: translate(CommonI18nKeys.GeneralServerError, {
             ns: Translation.Common,
           }),
-        ),
+        }),
       ),
     ),
   );

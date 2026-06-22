@@ -3,9 +3,13 @@ import { useFormContext, useWatch } from 'react-hook-form';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { publishToUrlToOrganizationFolderId } from '@/src/utils/app/publications';
 import { constructPath } from '@/src/utils/app/shared-utils';
 
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { FilesSelectors } from '@/src/store/selectors';
 
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
@@ -36,6 +40,8 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
     name: PublishRequestFieldsNames.PUBLISH_TO_URL,
   });
 
+  const folders = useAppSelector(FilesSelectors.selectFolders);
+
   const handleFolderChange = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
@@ -46,17 +52,38 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
   );
 
   const handleSelect = useCallback(
-    (folderId?: string) => {
+    (folderId: string | false) => {
+      setIsChangeFolderModalOpened(false);
+
+      if (folderId === false) {
+        if (path && path !== PUBLIC_URL_PREFIX) {
+          const folderIdToCheck = publishToUrlToOrganizationFolderId(path);
+          const exists = folders.some((f) => f.id === folderIdToCheck);
+          if (!exists) {
+            setValue(
+              PublishRequestFieldsNames.PUBLISH_TO_URL,
+              PUBLIC_URL_PREFIX,
+              { shouldDirty: true },
+            );
+            setValue(PublishRequestFieldsNames.RULES, []);
+          }
+        }
+        return;
+      }
+
+      const targetId = folderId || undefined;
+
       setValue(
         PublishRequestFieldsNames.PUBLISH_TO_URL,
-        constructPath(PUBLIC_URL_PREFIX, folderId),
+        constructPath(PUBLIC_URL_PREFIX, targetId),
+        { shouldDirty: true },
       );
-      setIsChangeFolderModalOpened(false);
-      if (!folderId) {
+
+      if (!targetId) {
         setValue(PublishRequestFieldsNames.RULES, []);
       }
     },
-    [setValue],
+    [setValue, path, folders],
   );
 
   return (
@@ -68,10 +95,10 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
         className="input-form button mx-0 flex grow cursor-default items-center border-primary px-3 py-2"
         data-qa="change-path-container"
       >
-        <div className="flex w-full justify-between truncate whitespace-pre break-all">
+        <div className="flex w-full min-w-0 items-center justify-between">
           <Tooltip
             tooltip={displayPublishToUrl}
-            triggerClassName="truncate whitespace-pre"
+            triggerClassName="truncate whitespace-pre block min-w-0 text-start"
             contentClassName="break-all"
             dataQa="path"
           >
@@ -79,6 +106,7 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
           </Tooltip>
 
           <DialLinkButton
+            className="shrink-0"
             data-qa="change-button"
             onClick={handleFolderChange}
             label={t(ChatI18nKeys.Change)}
@@ -91,6 +119,13 @@ export const PublishToSection = ({ maxDepth, displayPublishToUrl }: Props) => {
           isOpen
           onClose={handleSelect}
           depth={maxDepth}
+          onRenamePath={(newPath) => {
+            setValue(
+              PublishRequestFieldsNames.PUBLISH_TO_URL,
+              constructPath(PUBLIC_URL_PREFIX, newPath),
+              { shouldDirty: true },
+            );
+          }}
         />
       )}
     </section>

@@ -100,6 +100,26 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
   public withoutAuthIcon = this.authContainer.getChildElementBySelector(
     IconSelectors.lockOffIcon,
   );
+  public apiKeyParameterNameFieldContainer =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.apiKeyParameterNameFieldContainer,
+    );
+  public apiKeyParameterNameFieldInput =
+    this.apiKeyParameterNameFieldContainer.getChildElementBySelector(
+      Tags.input,
+    );
+  public apiKeyParameterNameFieldError =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.apiKeyParameterNameFieldErrorMessage(),
+    );
+  public apiKeyParameterValueFieldContainer =
+    this.oAuthLoginForm.getChildElementBySelector(
+      AddToolsetSettingsFormSelector.apiKeyParameterValueFieldContainer,
+    );
+  public apiKeyParameterValueFieldInput =
+    this.apiKeyParameterValueFieldContainer.getChildElementBySelector(
+      Tags.input,
+    );
   public allowedToolsLabel = this.getChildElementBySelector(
     AddToolsetSettingsFormSelector.allowedToolsLabel,
   );
@@ -107,6 +127,16 @@ export class ToolsetEditorViewForm extends EntityEditorViewForm {
     AddToolsetSettingsFormSelector.allowedToolsLabelSubtitle,
   );
   public allowedTools = new Combobox(this.page, this.rootLocator);
+  public connectToolsetLabel = this.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.connectToolsetLabel,
+  );
+  public connectToolsetHint = this.getChildElementBySelector(
+    AddToolsetSettingsFormSelector.connectToolsetHint,
+  );
+  public copyUrlButton = new Button(
+    this.page,
+    AddToolsetSettingsFormSelector.copyUrlButton,
+  );
 
   public async clickLoginButton(
     triggeredHttpHost?: string,

@@ -41,10 +41,10 @@ export const FormCollapsibleSection = ({
         }
       />
       {description && (
-        <p className="ml-7 mt-2 text-sm text-secondary">{description}</p>
+        <p className="ms-7 mt-2 text-sm text-secondary">{description}</p>
       )}
       {isOpen && (
-        <div className="ml-7 mt-4 flex flex-col gap-4">{children}</div>
+        <div className="ms-7 mt-4 flex flex-col gap-4">{children}</div>
       )}
     </div>
   );

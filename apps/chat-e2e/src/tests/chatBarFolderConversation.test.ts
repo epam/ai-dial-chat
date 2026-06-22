@@ -9,7 +9,7 @@ import {
   FolderConversation,
   MenuOptions,
 } from '@/src/testData';
-import { Overflow, Styles } from '@/src/ui/domData';
+import { AttributeValues } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { EditInput } from '@/src/ui/webElements';
 import { GeneratorUtil, ModelsUtil } from '@/src/utils';
@@ -339,20 +339,21 @@ dialTest(
 dialTest(
   'Rename chat folder when chats are inside using check button\n' +
     'Long Folder name is cut.\n' +
-    'Rename chat folder with 161 symbols with dot in the end',
+    'Rename chat folder with 256 bytes (UTF-8) name with dot in the end',
   async ({
     dialHomePage,
     conversationData,
     folderConversations,
+    chatBarFolderAssertion,
+    toastAssertion,
     dataInjector,
     folderDropdownMenu,
-    toast,
     setTestIds,
     localStorageManager,
   }) => {
     setTestIds('EPMRTC-573', 'EPMRTC-574', 'EPMRTC-3190');
     const folderName = GeneratorUtil.randomString(70);
-    const newFolderNameToSet = `${GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength)}.`;
+    const newFolderNameToSet = `${GeneratorUtil.randomString(300)}.`;
     const expectedNewFolderName = newFolderNameToSet.substring(
       0,
       ExpectedConstants.maxEntityNameLength,
@@ -376,12 +377,10 @@ dialTest(
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
-        const folderNameOverflow = await folderConversations
-          .getFolderName(folderName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(folderNameOverflow[0], ExpectedMessages.folderNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await chatBarFolderAssertion.assertElementTextIsTruncated(
+          folderConversations.getFolderName(folderName),
+          ExpectedMessages.folderNameIsTruncated,
+        );
       },
     );
 
@@ -389,12 +388,10 @@ dialTest(
       'Hover over folder name and verify it is truncated when menu dots appear',
       async () => {
         await folderConversations.getFolderByName(folderName).hover();
-        const folderNameOverflow = await folderConversations
-          .getFolderName(folderName)
-          .getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(folderNameOverflow[0], ExpectedMessages.folderNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await chatBarFolderAssertion.assertElementTextIsTruncated(
+          folderConversations.getFolderName(folderName),
+          ExpectedMessages.folderNameIsTruncated,
+        );
       },
     );
 
@@ -403,12 +400,11 @@ dialTest(
       async () => {
         await folderConversations.openFolderDropdownMenu(folderName);
         await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-        const folderInputOverflow = await folderConversations
-          .getEditFolderInput()
-          .editInput.getComputedStyleProperty(Styles.text_overflow);
-        expect
-          .soft(folderInputOverflow[0], ExpectedMessages.folderNameIsTruncated)
-          .toBe(Overflow.ellipsis);
+        await chatBarFolderAssertion.assertElementClass(
+          folderConversations.getEditFolderInput().editInput,
+          new RegExp(AttributeValues.textEllipsis),
+          ExpectedMessages.folderNameIsTruncated,
+        );
       },
     );
 
@@ -418,17 +414,11 @@ dialTest(
         await folderConversations.renameFolderWithContentWithTick(
           newFolderNameToSet,
         );
-        await expect
-          .soft(toast.getElementLocator(), ExpectedMessages.noErrorToastIsShown)
-          .toBeHidden();
-        expect
-          .soft(
-            await folderConversations
-              .getFolderName(expectedNewFolderName)
-              .getElementInnerContent(),
-            ExpectedMessages.folderNameUpdated,
-          )
-          .toBe(expectedNewFolderName);
+        await toastAssertion.assertToastIsHidden();
+        await chatBarFolderAssertion.assertFolderState(
+          { name: expectedNewFolderName },
+          'visible',
+        );
       },
     );
   },

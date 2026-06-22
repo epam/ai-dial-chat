@@ -32,6 +32,17 @@ export const is4XLScreen = createCheck(ScreenState.XL4);
 export const isTabletScreenOrMobile = () => isTabletScreen() || isMobile();
 export const isSmallScreenOrTouchable = () => isSmallScreen() || isTouchable();
 
+export const shouldAutoHideChatbarOnConversationChange = (
+  isOverlay: boolean,
+  isMdSidebarOverlayBreakpoint: boolean,
+) =>
+  isOverlay && isMdSidebarOverlayBreakpoint ? isMobile() : isTabletScreen();
+
+export const shouldShowConversationsSectionByDefault = (
+  isOverlay: boolean,
+  isMdSidebarOverlayBreakpoint: boolean,
+) => !isTabletScreenOrMobile() || (isOverlay && isMdSidebarOverlayBreakpoint);
+
 export const getScreenState = () => {
   const screenMappings = [
     ScreenState.SM,

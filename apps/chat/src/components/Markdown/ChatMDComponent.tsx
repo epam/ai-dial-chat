@@ -34,6 +34,7 @@ import rehypeExternalLinks from 'rehype-external-links';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
 import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
+import remarkBreaks from 'remark-breaks';
 import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 
@@ -97,14 +98,14 @@ const getMDComponents = (
     },
     th({ children }) {
       return (
-        <th className="break-words border border-tertiary bg-layer-4 px-3 py-1 text-sm text-secondary">
+        <th className="break-words border-b border-r border-tertiary bg-layer-4 px-3 py-1 text-sm text-secondary">
           {children}
         </th>
       );
     },
     td({ children }) {
       return (
-        <td className="break-words border border-tertiary bg-layer-3 px-3 py-1 text-sm">
+        <td className="break-words border-b border-r border-tertiary bg-layer-3 px-3 py-1 text-sm">
           {children}
         </td>
       );
@@ -197,6 +198,7 @@ const getMDComponents = (
 
 const remarkPlugins: Options['remarkPlugins'] = [
   remarkGfm,
+  remarkBreaks,
   [remarkMath, { singleDollarTextMath: false }],
 ];
 const rehypePlugins: Options['rehypePlugins'] = [

@@ -51,7 +51,6 @@ apps/chat/public/pdf.worker.min.mjs
 .windsurf
 
 # AI tools
-.claude
 CLAUDE.local.md
 .agent
 .codemie

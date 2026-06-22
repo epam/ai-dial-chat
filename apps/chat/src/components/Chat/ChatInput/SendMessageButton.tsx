@@ -31,15 +31,26 @@ interface Props {
   isLastMessageError: boolean;
   tooltip?: string;
   isLoading?: boolean;
+  microphoneButtonHidden?: boolean;
 }
 
 export const SendMessageButton = Inversify.register(
   'SendMessageButton',
-  ({ isLastMessageError, onSend, isDisabled, tooltip, isLoading }: Props) => {
+  ({
+    isLastMessageError,
+    onSend,
+    isDisabled,
+    tooltip,
+    isLoading,
+    microphoneButtonHidden,
+  }: Props) => {
     const { t } = useTranslation(Translation.Chat);
 
     const areModelsLoading = useAppSelector(
       ModelsSelectors.selectAreModelsLoading,
+    );
+    const isOptimisticDefaultModelLoad = useAppSelector(
+      SettingsSelectors.selectIsOptimisticDefaultModelLoad,
     );
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
 
@@ -55,13 +66,14 @@ export const SendMessageButton = Inversify.register(
       ConversationsSelectors.selectCanRecordAudio,
     );
 
-    const rightClass = canRecordAudio
-      ? isOverlay
-        ? 'right-10'
-        : 'right-11'
-      : isOverlay
-        ? 'right-3'
-        : 'right-4';
+    const rightClass =
+      canRecordAudio && !isLastMessageError && !microphoneButtonHidden
+        ? isOverlay
+          ? 'end-10'
+          : 'end-11'
+        : isOverlay
+          ? 'end-3'
+          : 'end-4';
 
     if (
       isLastMessageError ||
@@ -92,7 +104,10 @@ export const SendMessageButton = Inversify.register(
       );
     }
 
-    const isSpinner = isLoading || areModelsLoading;
+    // On the optimistic fast path the default model is already usable, so the
+    // models listing still loading must not turn the send button into a spinner.
+    const isSpinner =
+      isLoading || (areModelsLoading && !isOptimisticDefaultModelLoad);
     const [Icon, dataQa, disabled] = messageIsStreaming
       ? [IconPlaystationSquare, 'stop-generating', false]
       : [IconSend, 'send', isDisabled];

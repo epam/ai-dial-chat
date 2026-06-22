@@ -1,6 +1,7 @@
 import config from '../../config/chat.playwright.config';
 import { DebugAuth } from '../core/debugAuth';
 import { stateFilePath } from '../core/dialFixtures';
+import { writeModelsFile } from '../core/testPaths';
 
 import test from '@/src/core/baseFixtures';
 
@@ -44,14 +45,13 @@ test('Debug authenticate all users in parallel', async () => {
 
       // Store additional data for first worker only
       if (index < numWorkers) {
-        process.env.MODELS = authTokens.models ?? '[]';
+        writeModelsFile(authTokens.models ?? '[]');
         process.env.THEMES = authTokens.themes ?? '[]';
         process.env.APP_SCHEMAS = authTokens.appSchemas ?? '[]';
         process.env.RECENT_MODELS = authTokens.recentModels ?? '[]';
       }
     });
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error('Parallel authentication failed:', error);
     throw error;
   }

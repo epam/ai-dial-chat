@@ -6,6 +6,7 @@ import { validateServerSession } from '@/src/utils/auth/session';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
 import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { DialAIError } from '@/src/types/error';
 import { HTTPMethod } from '@/src/types/http';
@@ -17,11 +18,7 @@ const host = process.env.DIAL_API_HOST;
 const URL = `${host}/v1/ops/client-channel/subscribe`;
 
 const handler = async (req: NextApiRequest, res: NextApiResponse) => {
-  if (req.method !== HTTPMethod.POST) {
-    res.setHeader('Allow', HTTPMethod.POST);
-    return res.status(400).send(errorsMessages[400]);
-  }
-
+  setTraceparentHeader(res);
   const session = await getServerSession(req, res, authOptions);
   const isSessionValid = validateServerSession(session, req, res);
   if (!isSessionValid) {
@@ -114,12 +111,7 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     }
   } catch (error) {
     logger.error(error);
-    if (error instanceof DialAIError) {
-      return res
-        .status(parseInt(error.code, 10) || 500)
-        .send(error.message || errorsMessages.generalServer);
-    }
-    return res.status(500).send(errorsMessages.generalServer);
+    return ServerUtils.sendAPIError(res, error);
   } finally {
     req.off('close', cleanup);
     req.off('aborted', cleanup);

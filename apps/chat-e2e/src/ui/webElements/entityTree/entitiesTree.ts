@@ -1,4 +1,4 @@
-import { Attributes, Styles, Tags } from '@/src/ui/domData';
+import { AttributeValues, Attributes, Styles, Tags } from '@/src/ui/domData';
 import {
   EntitySelectors,
   IconSelectors,
@@ -103,12 +103,16 @@ export class EntitiesTree extends BaseElement {
     );
   }
 
-  getEntityCheckbox(name: string, index?: number) {
-    return this.getEntityByName(name, index).getByRole('checkbox');
+  getEntityNameValue(name: string, index?: number) {
+    return this.getEntityName(name, index).getChildElementBySelector(
+      EntitySelectors.entityNameValue,
+    );
   }
 
-  async getEntityCheckboxState(name: string, index?: number) {
-    return this.getEntityCheckbox(name, index).getAttribute(Attributes.dataQA);
+  getEntityCheckbox(name: string, index?: number) {
+    return this.getEntityByName(name, index).locator(
+      `[${Attributes.type}="${AttributeValues.checkbox}"]`,
+    );
   }
 
   getEntityIcon(name: string, index?: number) {

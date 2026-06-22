@@ -1,3 +1,5 @@
+import { AttributeValues, Attributes, Tags } from '@/src/ui/domData';
+
 export const marketplaceContainer = '[data-qa="marketplace"]';
 
 export const MarketplaceSelectors = {
@@ -25,7 +27,7 @@ export const MarketplaceEntitySelectors = {
   addBookmarkIcon: '[data-qa="add-bookmark"]',
   removeBookmarkIcon: '[data-qa="remove-bookmark"]',
   topicsContainer: '[data-qa="entity-topics"]',
-  topic: '[data-qa="app-topic"]',
+  topic: '[data-qa="entity-topic"]',
   hiddenTopics: '[data-qa="hidden-topics"]',
   copyLink: '[data-qa="copy-link"]',
   copyLinkText: '[data-qa="copy-link-text"]',
@@ -36,6 +38,7 @@ export const MarketplaceEntitySelectors = {
   pencilIcon: '[data-qa="pencil-icon"]',
   arrowIcon: '[data-qa="arrow-icon"]',
   openInNewTab: '[data-qa="external-link"]',
+  credsLabel: '[data-qa="creds-label"]',
 };
 
 export const MarketplaceDetailsModal = {
@@ -51,15 +54,17 @@ export const MarketplaceDetailsModal = {
   useButton: '[data-qa="use-button"]',
   icon: '[data-qa="entity-icon"]',
   credsLabel: '[data-qa="creds-label"]',
-  // editButton: '[data-qa="application-edit"]',
-  // deleteButton: '[data-qa="application-delete"]',
   editButton: '[data-qa="edit"]',
   deleteButton: '[data-qa="delete"]',
   publishButton: '[data-qa="publish"]',
   unpublishButton: '[data-qa="unpublish"]',
   shareButton: '[data-qa="share"]',
   unshareButton: '[data-qa="unshare"]',
-  loginButton: '[data-qa="login-button"]',
+  loginButton: 'Log in',
+  logoutButton: 'Log out',
+  manageCredsButton: 'Manage creds',
+  viewButton: 'View',
+  connectButton: 'Connect',
 };
 
 export const MarketplaceSideBarSelectors = {
@@ -71,4 +76,24 @@ export const MarketplaceSideBarSelectors = {
   filterPropertyOptions: '[data-qa="filter-property-options"]',
   filterPropertyOption: '[data-qa="filter-option"]',
   optionLabel: '#option-label',
+};
+
+export const ToolsetLoginModalSelectors = {
+  modalContainer: '[data-qa="marketplace-toolset-signin"]',
+  header: '[data-qa="login-header"]',
+  manageCredsHeader: '[data-qa="manage-creds-header"]',
+  toolsetName: '[data-qa="toolset-name"]',
+  toolsetVersion: '[data-qa="toolset-version"]',
+  apiKeyFieldContainer: '[data-qa="apiKey"]',
+  apiKeyMaskedFieldInput: `${Tags.input}[${Attributes.type} = "${AttributeValues.password}"]`,
+  apiKeyUnmaskedFieldInput: `${Tags.input}[${Attributes.type} = "${AttributeValues.text}"]`,
+  loginButton: 'Log in',
+  orgCredsAccordion: '[data-qa="org-creds-accordion"]',
+  orgCredsContent: '[data-qa="org-creds-content"]',
+  myCredsAccordion: '[data-qa="my-creds-accordion"]',
+  myCredsContent: '[data-qa="my-creds-content"]',
+};
+
+export const ConnectToolsetModalSelectors = {
+  copyUrlButton: 'Copy URL',
 };

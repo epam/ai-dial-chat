@@ -1,7 +1,13 @@
 import {
+  EntityStorageLimits,
+  buildByteAwareFitBaseName,
+  getAvailableEntityNameBytes,
   getLastPathSegment,
+  getResourceStorageLimits,
+  getStorageSafeUniqueName,
   isEntityNameOrPathInvalid,
   prepareEntityName,
+  truncateToUtf8Bytes,
 } from '@/src/utils/app/common';
 import {
   getChosenFormButtons,
@@ -20,6 +26,7 @@ import { ApiKeys, PartialBy } from '@/src/types/common';
 import { DialAIEntityModel, ModelsMap } from '@/src/types/models';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 
 import { constructPath } from './file';
 import {
@@ -40,6 +47,109 @@ import {
   UploadStatus,
 } from '@epam/ai-dial-shared';
 import orderBy from 'lodash-es/orderBy';
+
+export const getAvailableConversationNameBytes = (
+  conversation: PartialBy<ConversationInfo, 'id'>,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): number | undefined =>
+  getAvailableEntityNameBytes(
+    (name) => getGeneratedConversationId({ ...conversation, name }),
+    (name) => getConversationApiKey({ ...conversation, name }),
+    limits,
+  );
+
+export const fitConversationNameToStorageLimits = <
+  T extends PartialBy<ConversationInfo, 'id'>,
+>(
+  conversation: T,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): T => {
+  const availableNameBytes = getAvailableConversationNameBytes(
+    conversation,
+    limits,
+  );
+
+  if (availableNameBytes === undefined || availableNameBytes <= 0) {
+    return conversation;
+  }
+
+  const fittedName = prepareEntityName(
+    truncateToUtf8Bytes(
+      prepareEntityName(conversation.name),
+      availableNameBytes,
+    ),
+  );
+
+  return fittedName === conversation.name
+    ? conversation
+    : ({
+        ...conversation,
+        name: fittedName,
+      } as T);
+};
+
+export const getStorageSafeUniqueConversationName = (params: {
+  conversation: PartialBy<ConversationInfo, 'id'>;
+  desiredName?: string;
+  defaultName?: string;
+  existingNames: string[];
+  limits?: EntityStorageLimits;
+}): string => {
+  const { conversation, desiredName, existingNames } = params;
+  const limits = params.limits ?? getResourceStorageLimits();
+  const defaultName = params.defaultName ?? DEFAULT_CONVERSATION_NAME;
+
+  const availableNameBytes = getAvailableConversationNameBytes(
+    conversation,
+    limits,
+  );
+
+  const uniqueName = getStorageSafeUniqueName({
+    desiredName,
+    defaultName,
+    existingNames,
+    fitBaseName: buildByteAwareFitBaseName(availableNameBytes),
+  });
+
+  if (uniqueName) {
+    return uniqueName;
+  }
+
+  return fitConversationNameToStorageLimits({
+    ...conversation,
+    name:
+      prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName),
+  }).name;
+};
+
+export type ExistingConversationNamesForNamingOptions = {
+  isOverlay: boolean;
+  overlayNewConversationsFolder?: string | null;
+  conversationRootFolderId: string;
+};
+
+export const getExistingConversationNamesForNaming = (
+  conversations: ConversationInfo[],
+  targetConversation: Pick<ConversationInfo, 'id' | 'folderId'>,
+  options: ExistingConversationNamesForNamingOptions,
+): string[] => {
+  const { isOverlay, overlayNewConversationsFolder, conversationRootFolderId } =
+    options;
+
+  const sharedFolderId =
+    isOverlay && overlayNewConversationsFolder
+      ? overlayNewConversationsFolder
+      : conversationRootFolderId;
+
+  return conversations
+    .filter(
+      (conversation) =>
+        conversation.id !== targetConversation.id &&
+        (conversation.folderId === targetConversation.folderId ||
+          conversation.folderId === sharedFolderId),
+    )
+    .map((conversation) => conversation.name);
+};
 
 export const isSettingsChanged = (
   conversation: Conversation,

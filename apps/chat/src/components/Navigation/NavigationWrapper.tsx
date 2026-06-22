@@ -30,6 +30,9 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
   const enabledFeatures = useAppSelector(
     SettingsSelectors.selectEnabledFeatures,
   );
+  const isMdSidebarOverlayBreakpoint = useAppSelector(
+    SettingsSelectors.selectIsMdSidebarOverlayBreakpoint,
+  );
   const isIsolatedView = useAppSelector(SettingsSelectors.selectIsIsolatedView);
 
   const shouldShowNavigation =
@@ -46,7 +49,9 @@ export const NavigationWrapper = ({ children }: NavigationWrapperProps) => {
         className={classNames(
           'flex size-full flex-col md:flex-row',
           enabledFeatures.has(Feature.ShowLayoutDividers) &&
-            'sidebar-overlay:divide-x-[15px] sidebar-overlay:divide-tertiary',
+            (isMdSidebarOverlayBreakpoint
+              ? 'sidebar-overlay-md:[&>*+*]:border-s-[15px] sidebar-overlay-md:[&>*+*]:border-s-tertiary'
+              : 'sidebar-overlay:[&>*+*]:border-s-[15px] sidebar-overlay:[&>*+*]:border-s-tertiary'),
         )}
       >
         {shouldShowNavigation && <Navigation />}

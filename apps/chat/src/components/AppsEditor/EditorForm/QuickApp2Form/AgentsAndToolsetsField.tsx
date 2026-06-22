@@ -14,11 +14,12 @@ import {
   getEntityDisplayName,
   isDialAiEntityModel,
 } from '@/src/utils/app/application';
+import { isApplicationId } from '@/src/utils/app/id';
 import { isEntityIdPublic } from '@/src/utils/app/publications';
 import { isToolsetEntityModel } from '@/src/utils/app/toolsets';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
-import { AnyToolset } from '@/src/types/quick-apps';
+import { AnyToolset, DialAppToolset } from '@/src/types/quick-apps';
 import { Translation } from '@/src/types/translation';
 
 import { ApplicationActions } from '@/src/store/actions';
@@ -32,9 +33,11 @@ import { PUBLIC_APP_TOOLTIP } from '@/src/constants/applications';
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ToolsetTypes } from '@/src/constants/quick-apps';
 
+import { DialAppConfigurationModal } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/DialAppConfigurationModal';
 import {
+  AgentOrToolsetSchemaKeys,
   QuickApp2Form as QuickApp2FormType,
-  getAgentOrToolsetOption,
+  getAgentOrToolsetItem,
   getAgentsAndToolsetsFormValue,
   getQuickApp2Toolsets,
 } from '@/src/components/AppsEditor/form';
@@ -91,6 +94,9 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
   const [selectedEntityId, setSelectedEntityId] = useState<string | null>(null);
   const [isDiscardingJson, setIsDiscardingJson] = useState(false);
+  const [configuredToolset, setConfiguredToolset] = useState<
+    DialAppToolset | undefined
+  >(undefined);
 
   const { control, setValue, getValues, resetField } =
     useFormContext<QuickApp2FormType>();
@@ -127,7 +133,11 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
   );
 
   const sortedAgentsAndToolsets = useMemo(() => {
-    const ids = [...(agentsAndToolsetsOptions.map(({ id }) => id) || [])];
+    const ids = [
+      ...(agentsAndToolsetsOptions.map(
+        ({ [AgentOrToolsetSchemaKeys.id]: id }) => id,
+      ) || []),
+    ];
 
     const itemsWithName = ids.map((id) => ({
       id: id,
@@ -194,12 +204,17 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
   const handleAgentsAndToolsetsChange = useCallback(
     (value: string[]) => {
-      const processedValue = value.map((id) => ({
-        id,
-        tool:
-          agentsAndToolsetsOptions.find((option) => option.id === id)?.tool ??
-          getAgentOrToolsetOption(id),
-      }));
+      const processedValue = value.map(
+        (id) =>
+          agentsAndToolsetsOptions.find(
+            (option) => option[AgentOrToolsetSchemaKeys.id] === id,
+          ) || {
+            [AgentOrToolsetSchemaKeys.id]: id,
+            [AgentOrToolsetSchemaKeys.tool]: getAgentOrToolsetItem(id),
+            [AgentOrToolsetSchemaKeys.isDialDeploymentTool]:
+              isApplicationId(id),
+          },
+      );
       setValue('agentsAndToolsets', processedValue, {
         shouldTouch: true,
         shouldDirty: true,
@@ -237,13 +252,9 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     [allEntitiesMap, dispatch, getValues, resetField, setValue],
   );
 
-  const handleOpenDetails = useCallback(
-    (entity: MarketplaceEntity) => {
-      setSelectedEntityId(entity.id);
-      onAutoSave();
-    },
-    [onAutoSave],
-  );
+  const handleOpenDetails = useCallback((entity: MarketplaceEntity) => {
+    setSelectedEntityId(entity.id);
+  }, []);
 
   const handleCloseDetails = useCallback(() => {
     setSelectedEntityId(null);
@@ -281,7 +292,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
 
   const EditorButtons = useCallback(
     () => (
-      <div className="flex h-full grow items-center justify-end gap-2 pr-3">
+      <div className="flex h-full grow items-center justify-end gap-2 pe-3">
         <DialNeutralButton
           label={t(MarketplaceI18nKeys.DiscardMarketplace)}
           size={ElementSize.Small}
@@ -289,6 +300,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
           disabled={!dirtyFields.agentsAndToolsetsJson && !editorError}
         />
         <DialPrimaryButton
+          type="button"
           label={t(MarketplaceI18nKeys.SaveJSON)}
           size={ElementSize.Small}
           onClick={handleSaveJson}
@@ -310,6 +322,57 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
     ],
   );
 
+  const handleConfigureClick = useCallback(
+    (entity: MarketplaceEntity) => {
+      const option = agentsAndToolsetsOptions.find(
+        (option) => option[AgentOrToolsetSchemaKeys.id] === entity.id,
+      );
+      const dialAppToolset = option?.[
+        AgentOrToolsetSchemaKeys.tool
+      ] as DialAppToolset;
+
+      if (dialAppToolset) {
+        setConfiguredToolset(dialAppToolset);
+      }
+    },
+    [agentsAndToolsetsOptions],
+  );
+
+  const handleApplyAppToolsetConfig = useCallback(
+    (toolset: DialAppToolset) => {
+      const newAgentsAndToolsetsOptions = agentsAndToolsetsOptions.map(
+        (option) =>
+          option[AgentOrToolsetSchemaKeys.tool]?.deployment_id ===
+          toolset.deployment_id
+            ? {
+                ...option,
+                [AgentOrToolsetSchemaKeys.tool]: toolset,
+              }
+            : option,
+      );
+      setValue('agentsAndToolsets', newAgentsAndToolsetsOptions, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+      setValue(
+        'agentsAndToolsetsJson',
+        JSON.stringify(
+          getQuickApp2Toolsets({
+            data: {
+              ...getValues(),
+              agentsAndToolsets: newAgentsAndToolsetsOptions,
+            },
+            allEntitiesMap: allEntitiesMap as Record<string, MarketplaceEntity>,
+          }),
+          null,
+          2,
+        ),
+      );
+      dispatch(ApplicationActions.setShouldTriggerEditorAutoUpdate(true));
+    },
+    [agentsAndToolsetsOptions, setValue, getValues, allEntitiesMap, dispatch],
+  );
+
   return (
     <>
       <Controller
@@ -317,11 +380,12 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
         control={control}
         render={({ field }) => (
           <div
+            data-qa="agents-and-toolsets-json-view"
             className={classNames('relative', {
               hidden: !isJsonView,
             })}
           >
-            <div className="absolute right-0 top-[-9px]">
+            <div className="absolute end-0 top-[-9px]">
               <ToggleSwitch
                 disabled={
                   !!errors.agentsAndToolsetsJson ||
@@ -361,6 +425,7 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
           return (
             <>
               <div
+                data-qa="agents-and-toolsets-marketplace-view"
                 className={classNames({
                   'invisible h-0 overflow-hidden': isJsonView,
                 })}
@@ -374,31 +439,34 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
                   tooltip={isAppPublic ? PUBLIC_APP_TOOLTIP : ''}
                   onItemClick={handleItemClick}
                   onJsonSwitchClick={handleJsonViewChange}
+                  onConfigureClick={handleConfigureClick}
                 />
               </div>
-              {detailedViewEntity &&
-                isDialAiEntityModel(detailedViewEntity) && (
-                  <ApplicationDetails
-                    entity={detailedViewEntity}
-                    allEntities={allModels}
-                    FooterComponent={SimpleApplicationDetailsFooter}
-                    {...commonDetailsProps}
-                  />
-                )}
-
-              {detailedViewEntity &&
-                isToolsetEntityModel(detailedViewEntity) && (
-                  <ToolsetDetails
-                    entity={detailedViewEntity}
-                    allEntities={allToolsets}
-                    FooterComponent={SimpleToolsetDetailsFooter}
-                    {...commonDetailsProps}
-                  />
-                )}
             </>
           );
         }}
       />
+
+      {detailedViewEntity && (
+        <div data-qa="entity-details-panel">
+          {isDialAiEntityModel(detailedViewEntity) && (
+            <ApplicationDetails
+              entity={detailedViewEntity}
+              allEntities={allModels}
+              FooterComponent={SimpleApplicationDetailsFooter}
+              {...commonDetailsProps}
+            />
+          )}
+          {isToolsetEntityModel(detailedViewEntity) && (
+            <ToolsetDetails
+              entity={detailedViewEntity}
+              allEntities={allToolsets}
+              FooterComponent={SimpleToolsetDetailsFooter}
+              {...commonDetailsProps}
+            />
+          )}
+        </div>
+      )}
 
       <DialConfirmationPopup
         variant={ConfirmationPopupVariant.Danger}
@@ -411,6 +479,14 @@ export const AgentsAndToolsetsField: FC<AgentsAndToolsetsFieldProps> = ({
         onCancel={() => handleCloseDiscard(false)}
         onClose={() => handleCloseDiscard(false)}
       />
+
+      {configuredToolset && (
+        <DialAppConfigurationModal
+          onClose={() => setConfiguredToolset(undefined)}
+          toolset={configuredToolset}
+          onApply={handleApplyAppToolsetConfig}
+        />
+      )}
     </>
   );
 };

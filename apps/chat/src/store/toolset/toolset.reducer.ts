@@ -88,7 +88,7 @@ export const toolsetSlice = createSlice({
     },
     getToolsetDetailsFailed: (
       state,
-      _action: PayloadAction<{ id?: string } | undefined>,
+      _action: PayloadAction<{ id?: string; traceId?: string } | undefined>,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.FAILED;
       state.toolsetDetails = undefined;
@@ -237,7 +237,9 @@ export const toolsetSlice = createSlice({
     },
     logInToolsetFail: (
       state,
-      _action: PayloadAction<{ skipToastMessage?: boolean } | undefined>,
+      _action: PayloadAction<
+        { skipToastMessage?: boolean; traceId?: string } | undefined
+      >,
     ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
@@ -254,7 +256,10 @@ export const toolsetSlice = createSlice({
     logOutToolsetSuccess: (state) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
-    logOutToolsetFail: (state) => {
+    logOutToolsetFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.toolsetDetailsStatus = UploadStatus.LOADED;
     },
     setEditorStep: (state, { payload }: PayloadAction<ToolsetEditorSteps>) => {

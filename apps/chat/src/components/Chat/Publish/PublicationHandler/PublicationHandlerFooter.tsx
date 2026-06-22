@@ -2,6 +2,8 @@ import { IconExclamationCircle, IconPencil } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo } from 'react';
 import { useFormContext, useFormState } from 'react-hook-form';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useScreenState } from '@/src/hooks/useScreenState';
@@ -67,6 +69,7 @@ import {
   PublicationRequestFormData,
   PublishRequestFieldsNames,
 } from '@/src/components/Chat/Publish/form';
+import { translatePublicationChatLabel } from '@/src/components/Chat/Publish/translatePublicationName';
 import { IconButton } from '@/src/components/Common/IconButton';
 
 import {
@@ -104,6 +107,7 @@ export const PublicationHandlerFooter = ({
   areRulesChanged,
   isDraftRuleFilterOpen,
 }: Props) => {
+  const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
 
   const screenState = useScreenState();
@@ -460,21 +464,21 @@ export const PublicationHandlerFooter = ({
         return formError;
       }
       if (areNoChanges) {
-        return 'Nothing is selected and rules have not changed';
+        return ChatI18nKeys.NothingIsSelectedAndRulesHaveNotChanged;
       }
 
-      return "Request can't be published as some items are invalid";
+      return ChatI18nKeys.RequestCantBePublishedAsSomeItemsAreInvalid;
     }
 
     return selectedInvalidEntities.length
-      ? "Request can't be approved as some items are unpublished"
+      ? ChatI18nKeys.RequestCantBeApprovedAsSomeItemsAreUnpublished
       : someReviewedConversationHasNoMessages
-        ? "Request can't be approved as some conversations have no messages"
+        ? ChatI18nKeys.RequestCantBeApprovedAsSomeConversationsHaveNoMessages
         : isPublicationUpdating
-          ? 'Request is updating'
+          ? ChatI18nKeys.RequestIsUpdating
           : areNoChanges
-            ? 'There are no changes to approve'
-            : "It's required to review all resources";
+            ? ChatI18nKeys.ThereAreNoChangesToApprove
+            : ChatI18nKeys.ItsRequiredToReviewAllResources;
   }, [
     publishModel,
     selectedInvalidEntities.length,
@@ -491,15 +495,20 @@ export const PublicationHandlerFooter = ({
     (publishModel &&
       (isEditInvalid || !isValid || areNoChanges || isDraftRuleFilterOpen));
 
-  const getSubmitBtnText = useCallback(() => {
+  const submitButtonKey = useMemo(() => {
     if (publishModel) {
-      return 'Send request';
+      return ChatI18nKeys.SendRequest;
     }
 
     return !publication.resources.length || isSmallScreen
-      ? 'Approve'
-      : 'Approve selected';
+      ? ChatI18nKeys.Approve
+      : ChatI18nKeys.ApproveSelected;
   }, [publishModel, publication.resources.length, isSmallScreen]);
+
+  const submitButtonLabel = useMemo(
+    () => translatePublicationChatLabel(submitButtonKey, router.locale, t),
+    [router.locale, submitButtonKey, t],
+  );
 
   return (
     <div
@@ -585,7 +594,7 @@ export const PublicationHandlerFooter = ({
                 hideTooltip: !isApproveOrSendDisabled,
                 tooltip: t(getSubmitTooltipText()),
               }}
-              label={t(getSubmitBtnText())}
+              label={submitButtonLabel}
               textClassName="whitespace-nowrap"
               onClick={publishModel ? undefined : handleApprovePublication}
               type={publishModel ? 'submit' : 'button'}

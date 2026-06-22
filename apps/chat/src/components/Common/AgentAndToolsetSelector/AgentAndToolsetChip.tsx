@@ -1,16 +1,21 @@
+import { IconSettings } from '@tabler/icons-react';
 import React, { useMemo } from 'react';
 
 import classNames from 'classnames';
 
+import { isDialAiEntityModel } from '@/src/utils/app/application';
 import {
   getEntityNameFromId,
   isApplicationId,
   isToolsetId,
 } from '@/src/utils/app/id';
+import { doesAgentSupportMcp } from '@/src/utils/app/models';
 import { getEntityStatus } from '@/src/utils/marketplace';
 import { getVersionFromId } from '@/src/utils/server/api';
 
 import { MarketplaceEntity } from '@/src/types/marketplace';
+
+import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { CloseButtonSmall } from '@/src/components/Common/CloseButtons';
@@ -19,7 +24,11 @@ import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChipTitle } from './ChipTitle';
 import { ChipTooltipContent } from './ChipTooltipContent';
 
-import { ButtonVariant } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonVariant,
+  DialGhostIconButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
 
 interface ChipWrapperProps {
   isError: boolean;
@@ -33,8 +42,9 @@ const ChipWrapper: React.FC<ChipWrapperProps> = ({
   children,
 }) => (
   <div
+    data-qa="agent-chip"
     className={classNames(
-      'flex h-[34px] items-center rounded',
+      'group relative flex h-[34px] items-center rounded',
       isCustomTool
         ? 'bg-layer-4'
         : isError
@@ -67,7 +77,31 @@ const ChipRemoveButton: React.FC<ChipRemoveButtonProps> = ({
       )}
       onClick={() => onRemove?.(id)}
       aria-label="Remove item"
-      variant={isError ? ButtonVariant.Error : ButtonVariant.Primary}
+      variant={isError ? ButtonVariant.Danger : ButtonVariant.Primary}
+    />
+  );
+};
+
+interface ChipConfigureButtonProps {
+  item?: MarketplaceEntity;
+  onConfigure?: (item: MarketplaceEntity) => void;
+}
+
+const ChipConfigureButton: React.FC<ChipConfigureButtonProps> = ({
+  item,
+  onConfigure,
+}) => {
+  const handleClick = () => {
+    if (item) onConfigure?.(item);
+  };
+
+  return (
+    <DialGhostIconButton
+      name="Configure"
+      icon={<IconSettings size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />}
+      size={ElementSize.Small}
+      className="invisible absolute right-[30px] top-1/2 -translate-y-1/2 group-hover:visible"
+      onClick={handleClick}
     />
   );
 };
@@ -81,6 +115,7 @@ interface ChipBodyProps {
   isInvalid: boolean;
   readonly?: boolean;
   onClick?: (id: string) => void;
+  isConfigurable?: boolean;
 }
 
 const ChipBody: React.FC<ChipBodyProps> = ({
@@ -92,6 +127,7 @@ const ChipBody: React.FC<ChipBodyProps> = ({
   isInvalid,
   readonly,
   onClick,
+  isConfigurable,
 }) => {
   const handleClick = () => {
     if (readonly || isInvalid) return;
@@ -115,7 +151,10 @@ const ChipBody: React.FC<ChipBodyProps> = ({
         name={name}
         version={version}
         isError={isError}
-        className="max-w-[220px]"
+        className={classNames(
+          'max-w-[220px]',
+          isConfigurable && 'group-hover:pr-[30px]',
+        )}
         isCustomTool={isCustomTool}
       />
     </div>
@@ -128,6 +167,7 @@ interface AgentAndToolsetChipProps {
   onRemove?: (id: string) => void;
   readonly?: boolean;
   onItemClick?: (id: string) => void;
+  onConfigure?: (item: MarketplaceEntity) => void;
   isInSelectionList?: boolean;
 }
 
@@ -137,6 +177,7 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
   onRemove,
   readonly,
   onItemClick,
+  onConfigure,
   isInSelectionList,
 }) => {
   const { isInvalid, isError } = getEntityStatus(item);
@@ -151,6 +192,13 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
     : !item
       ? getVersionFromId(id)
       : item.version;
+
+  const isConfigurableApp =
+    !readonly &&
+    typeof onConfigure === 'function' &&
+    !!item &&
+    isDialAiEntityModel(item) &&
+    doesAgentSupportMcp(item);
 
   const tooltipContent = useMemo(() => {
     return (
@@ -178,8 +226,13 @@ export const AgentAndToolsetChip: React.FC<AgentAndToolsetChipProps> = ({
           isInvalid={isInvalid}
           readonly={readonly}
           onClick={onItemClick}
+          isConfigurable={isConfigurableApp}
         />
       </Tooltip>
+
+      {isConfigurableApp && (
+        <ChipConfigureButton item={item} onConfigure={onConfigure} />
+      )}
 
       {!readonly && (
         <ChipRemoveButton id={id} isError={isError} onRemove={onRemove} />

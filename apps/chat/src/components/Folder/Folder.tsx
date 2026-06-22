@@ -15,6 +15,8 @@ import React, {
   useState,
 } from 'react';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useContextMenuTrigger } from '@/src/hooks/useContextMenuTrigger';
@@ -54,6 +56,10 @@ import {
   isHiddenEntity,
 } from '@/src/utils/app/search';
 import { isReplayConversation } from '@/src/utils/app/shared-utils';
+import {
+  folderDisplayNameToStorage,
+  translateFolderDisplayName,
+} from '@/src/utils/app/translateFolderDisplayName';
 
 import {
   AdditionalItemData,
@@ -186,7 +192,9 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
   onShowError,
   showTechnicalFolders = false,
 }: FolderProps<T>) => {
+  const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
+  const { t: tSidebar } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
 
@@ -205,7 +213,19 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       newAddedFolderId === currentFolder.id &&
       !currentFolder.serverSynced,
   );
-  const [renameValue, setRenameValue] = useState(currentFolder.name);
+  const displayFolderName = useMemo(
+    () =>
+      translateFolderDisplayName(currentFolder.name, router.locale, tSidebar),
+    [currentFolder.name, router.locale, tSidebar],
+  );
+  const [renameValue, setRenameValue] = useState(displayFolderName);
+
+  useEffect(() => {
+    if (isRenaming) {
+      setRenameValue(displayFolderName);
+    }
+  }, [displayFolderName, isRenaming]);
+
   const [isDraggingOver, setIsDraggingOver] = useState(false);
   const [isContextMenu, setIsContextMenu] = useState(false);
   const [isConfirmRenaming, setIsConfirmRenaming] = useState(false);
@@ -430,8 +450,16 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       return;
     }
 
-    const newName = prepareEntityName(renameValue, { forRenaming: true });
-    setRenameValue(newName);
+    const preparedDisplayName = prepareEntityName(renameValue, {
+      forRenaming: true,
+    });
+    const newName = folderDisplayNameToStorage(
+      preparedDisplayName,
+      currentFolder.name,
+      router.locale,
+      tSidebar,
+    );
+    setRenameValue(preparedDisplayName);
 
     if (!skipFolderRenameValidation) {
       if (
@@ -442,26 +470,30 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.FolderNameExistsInFolder, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsInFolder, {
               ns: Translation.Chat,
               folderName: newName,
             }),
-          ),
+          }),
         );
         return;
       }
 
       if (doesHaveDotsInTheEnd(newName)) {
         dispatch(
-          UIActions.showErrorToast(t(ChatI18nKeys.DotAtEndNotPermitted)),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.DotAtEndNotPermitted),
+          }),
         );
         return;
       }
 
       if (newName.startsWith('.')) {
         dispatch(
-          UIActions.showErrorToast(t(ChatI18nKeys.DotAtStartNotPermitted)),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.DotAtStartNotPermitted),
+          }),
         );
         return;
       }
@@ -496,7 +528,9 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     handleNewFolderRename,
     allFoldersWithoutFilters,
     dispatch,
+    router.locale,
     t,
+    tSidebar,
     scrollIntoView,
   ]);
 
@@ -523,7 +557,9 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       if (childIds.has(currentFolder.id)) {
         dispatch(
-          UIActions.showErrorToast(t(ChatI18nKeys.NotAllowedMoveParentToChild)),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.NotAllowedMoveParentToChild),
+          }),
         );
         return;
       }
@@ -532,7 +568,9 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       if (maxDepth && level + foldersDepth > maxDepth) {
         dispatch(
-          UIActions.showErrorToast(t(ChatI18nKeys.NotAllowedMoreNestedFolders)),
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.NotAllowedMoreNestedFolders),
+          }),
         );
         return;
       }
@@ -545,12 +583,12 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.FolderNameExistsInFolder, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsInFolder, {
               ns: Translation.Chat,
               folderName: droppedFolder.name,
             }),
-          ),
+          }),
         );
         return;
       }
@@ -613,8 +651,8 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )
           ) {
             dispatch(
-              UIActions.showErrorToast(
-                t(CommonI18nKeys.EntityNameExistsInFolder, {
+              UIActions.showErrorToast({
+                message: t(CommonI18nKeys.EntityNameExistsInFolder, {
                   ns: Translation.Common,
                   entityType:
                     featureType === FeatureType.Chat
@@ -622,7 +660,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       : 'Prompt',
                   entityName: droppedEntity.name,
                 }),
-              ),
+              }),
             );
             return;
           }
@@ -727,11 +765,11 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
       e.stopPropagation();
       setIsRenaming(true);
-      setRenameValue(currentFolder.name);
+      setRenameValue(displayFolderName);
       // `setTimeout` because isRenaming should be applied to render input and only after that it can be focused
       setTimeout(() => renameInputRef.current?.focus());
     },
-    [currentFolder.name, onRenameFolder],
+    [displayFolderName, onRenameFolder],
   );
 
   const onDelete: MouseEventHandler = useCallback(
@@ -782,7 +820,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         if (onShowError) {
           onShowError(nestedErrorMessage);
         } else {
-          dispatch(UIActions.showErrorToast(nestedErrorMessage));
+          dispatch(UIActions.showErrorToast({ message: nestedErrorMessage }));
         }
         return;
       }
@@ -899,7 +937,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
     >
       <div
         className={classNames(
-          'group/button group/folder-item group relative flex cursor-pointer items-center rounded border-l-2 hover:bg-accent-primary-alpha',
+          'group/button group/folder-item group relative flex cursor-pointer items-center rounded border-s-2 hover:bg-accent-primary-alpha',
           (canSelectFolders || !withBorderHighlight) && 'border-transparent',
           isHighlighted ? 'bg-accent-primary-alpha' : 'border-transparent',
           !canSelectFolders &&
@@ -938,11 +976,12 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
       >
         {isRenaming ? (
           <div
-            className="flex w-full items-center gap-1 py-2 pr-3"
+            className="flex w-full items-center gap-1 py-2 pe-3"
             style={{
-              paddingLeft: `${level * 1.5}rem`,
+              paddingInlineStart: `${level * 1.5}rem`,
             }}
             data-qa="edit-container"
+            onClick={(e) => e.stopPropagation()}
           >
             <CaretIconComponent
               isOpen={isFolderOpened}
@@ -976,7 +1015,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       strokeWidth={folderIconStrokeWidth}
                       size={iconSize}
                       className={classNames(
-                        'mr-1 text-secondary',
+                        'me-1 text-secondary',
                         (!isExternal || !additionalItemData?.isSidePanelItem) &&
                           canSelectFolders &&
                           'group-hover:hidden',
@@ -991,7 +1030,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     !additionalItemData?.isSidePanelItem) && (
                     <div
                       className={classNames(
-                        'relative mr-1 group-hover/folder-item:flex',
+                        'relative me-1 group-hover/folder-item:flex',
                         additionalItemData?.isSidePanelItem
                           ? 'size-[24px] items-center justify-center'
                           : 'size-[18px]',
@@ -1019,7 +1058,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
 
             <input
-              className="mr-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-left outline-none"
+              className="me-12 w-full flex-1 overflow-hidden text-ellipsis bg-transparent text-start outline-none"
               type="text"
               value={renameValue}
               onChange={(e) =>
@@ -1035,9 +1074,9 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           </div>
         ) : (
           <div
-            className="group/folder-item flex max-w-full items-center gap-1 py-2 pr-3"
+            className="group/folder-item flex max-w-full items-center gap-1 py-2 pe-3"
             style={{
-              paddingLeft: `${level * (isSidePanelItem ? 30 : 24)}px`,
+              paddingInlineStart: `${level * (isSidePanelItem ? 30 : 24)}px`,
             }}
           >
             <CaretIconComponent
@@ -1052,7 +1091,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
 
             {loadingFolderIds.includes(currentFolder.id) &&
             !hasChildElements ? (
-              <Spinner className="mr-1" />
+              <Spinner className="me-1" />
             ) : (
               <>
                 {canSelectFolders &&
@@ -1062,7 +1101,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                     isSelectAlwaysVisible) && (
                     <div
                       className={classNames(
-                        'relative mr-1 group-hover/folder-item:flex',
+                        'relative me-1 group-hover/folder-item:flex',
                         additionalItemData?.isSidePanelItem
                           ? 'size-[24px] items-center justify-center'
                           : 'size-[18px]',
@@ -1127,7 +1166,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       }}
                       strokeWidth={folderIconStrokeWidth}
                       size={iconSize}
-                      className="mr-1 text-secondary"
+                      className="me-1 text-secondary"
                     />
                   </ShareIcon>
                 )}
@@ -1135,10 +1174,10 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
             )}
             <div
               className={classNames(
-                'relative max-h-5 flex-1 select-none truncate text-left',
+                'relative max-h-5 flex-1 select-none truncate text-start',
                 isNameOrPathInvalid && 'text-secondary',
-                !hideContextMenu && 'group-hover/button:pr-5',
-                isContextMenu && !isMobileOrTablet && 'pr-5',
+                !hideContextMenu && 'group-hover/button:pe-5',
+                isContextMenu && !isMobileOrTablet && 'pe-5',
               )}
               data-qa="folder-name"
             >
@@ -1146,7 +1185,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 hideTooltip={isContextMenu}
                 tooltip={
                   showTooltip && !isNameOrPathInvalid
-                    ? currentFolder.name
+                    ? displayFolderName
                     : t(
                         getEntityNameError(
                           isNameInvalid,
@@ -1158,7 +1197,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                 isTriggerClickable
                 contentClassName="break-all"
                 triggerClassName={classNames(
-                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-left',
+                  'block max-h-5 flex-1 truncate whitespace-pre break-all text-start',
                   highlightTemporaryFolders &&
                     (isTemporaryFolder ? 'text-primary' : 'text-secondary'),
                   isNameOrPathInvalid
@@ -1172,7 +1211,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                       : 'text-primary',
                 )}
               >
-                {currentFolder.name}
+                {displayFolderName}
               </Tooltip>
             </div>
             {(onDeleteFolder ||
@@ -1185,7 +1224,7 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
                   ref={refs.setFloating}
                   {...getFloatingProps()}
                   className={classNames(
-                    'invisible absolute right-0 z-50 flex justify-end group-hover/button:visible',
+                    'invisible absolute end-0 z-50 flex justify-end group-hover/button:visible',
                     isContextMenu && 'md:visible',
                   )}
                 >
@@ -1235,7 +1274,11 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
           </div>
         )}
         {isRenaming && (
-          <div className="absolute right-1 z-10 flex" data-qa="actions">
+          <div
+            className="absolute z-10 flex"
+            style={{ insetInlineEnd: '0.25rem' }}
+            data-qa="actions"
+          >
             <DialGhostIconButton
               data-qa="confirm-edit"
               onClick={(e) => {
@@ -1361,7 +1404,13 @@ export const Folder = <T extends ConversationInfo | PromptInfo | DialFile>({
         onClose={(result) => {
           setIsConfirmRenaming(false);
           if (result) {
-            const newName = prepareEntityName(renameValue);
+            const preparedDisplayName = prepareEntityName(renameValue);
+            const newName = folderDisplayNameToStorage(
+              preparedDisplayName,
+              currentFolder.name,
+              router.locale,
+              tSidebar,
+            );
 
             if (newName) {
               onRenameFolder!(newName, currentFolder.id);

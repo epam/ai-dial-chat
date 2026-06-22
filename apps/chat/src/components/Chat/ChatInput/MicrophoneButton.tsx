@@ -57,7 +57,7 @@ export const MicrophoneButton = forwardRef<HTMLButtonElement, Props>(
         ref={ref}
         className={classNames(
           'absolute max-h-[24px] !px-0 text-secondary hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable',
-          isOverlay ? 'bottom-2 right-3' : 'bottom-2.5 right-4 md:bottom-3',
+          isOverlay ? 'bottom-2 end-3' : 'bottom-2.5 end-4 md:bottom-3',
           isRecording && 'z-20',
         )}
         onClick={handleClick}
@@ -66,11 +66,7 @@ export const MicrophoneButton = forwardRef<HTMLButtonElement, Props>(
         data-qa="voice-record"
         aria-label={tooltipText}
         iconBefore={
-          <Tooltip
-            hideTooltip={isRecording && !error}
-            tooltip={tooltipText}
-            isTriggerClickable
-          >
+          <Tooltip tooltip={tooltipText} isTriggerClickable>
             <IconMicrophone
               size={DEFAULT_ICON_SIZES.STANDARD}
               stroke="1.5"

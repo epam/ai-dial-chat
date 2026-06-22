@@ -11,11 +11,10 @@ import {
 } from '@/src/utils/server/file-manager-utils';
 import { getApiHeaders } from '@/src/utils/server/get-headers';
 import { logger } from '@/src/utils/server/logger';
-import { getToken } from '@/src/utils/server/server';
+import { ServerUtils, getToken } from '@/src/utils/server/server';
+import { setTraceparentHeader } from '@/src/utils/server/traceparent';
 
 import { DialAIError } from '@/src/types/error';
-
-import { errorsMessages } from '@/src/constants/errors';
 
 import FormData from 'form-data';
 import JSZip from 'jszip';
@@ -80,8 +79,9 @@ const handler = async (
   req: NextApiRequest,
   res: NextApiResponse<UploadArchiveResponse | { error: string }>,
 ) => {
+  setTraceparentHeader(res);
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    throw new DialAIError('Method not allowed', 405, req);
   }
 
   const session = await getServerSession(req, res, authOptions);
@@ -93,14 +93,14 @@ const handler = async (
   try {
     const destinationParam = req.query.destination;
     if (!destinationParam || typeof destinationParam !== 'string') {
-      return res.status(400).json({ error: 'Missing destination parameter' });
+      throw new DialAIError('Missing destination parameter', 400, req);
     }
 
     const destinationUrl = decodeURIComponent(destinationParam);
 
     const archiveBuffer = await readRequestBody(req);
     if (!archiveBuffer.length) {
-      return res.status(400).json({ error: 'Empty archive body' });
+      throw new DialAIError('Empty archive body', 400, req);
     }
 
     const zip = await JSZip.loadAsync(archiveBuffer);
@@ -130,7 +130,7 @@ const handler = async (
     );
 
     if (!filesToUpload.length) {
-      return res.status(400).json({ error: 'Archive does not contain files' });
+      throw new DialAIError('Archive does not contain files', 400, req);
     }
 
     const jwt = await getToken({ req });
@@ -211,13 +211,7 @@ const handler = async (
     return res.status(200).json({ succeeded, errors });
   } catch (error) {
     logger.error(error);
-
-    if (error instanceof DialAIError) {
-      const statusCode = parseInt(error.code, 10) || 500;
-      return res.status(statusCode).json({ error: error.message });
-    }
-
-    return res.status(500).json({ error: errorsMessages.generalServer });
+    return ServerUtils.sendAPIError(res, error);
   }
 };
 

@@ -12,15 +12,6 @@ import {
 } from '@epam/ai-dial-overlay';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 
-export const commonOverlayProps = {
-  domain: process.env.NEXT_PUBLIC_OVERLAY_HOST ?? '',
-  requestTimeout: 20000,
-  loaderStyles: {
-    background: 'white',
-    fontSize: '24px',
-  },
-};
-
 interface ChatOverlayWrapperProps {
   overlayOptions: Omit<ChatOverlayOptions, 'hostDomain'>;
 }

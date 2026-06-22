@@ -30,7 +30,7 @@ export const DislikeCommentModal = ({
   return (
     <Modal
       dismissProps={OUTSIDE_PRESS_AND_MOUSE_EVENT}
-      heading="Send feedback"
+      heading={t(ChatI18nKeys.SendFeedback)}
       state={ModalState.OPENED}
       onClose={onClose}
       dataQa="dislike-comment-modal"
@@ -42,7 +42,7 @@ export const DislikeCommentModal = ({
         data-qa="dislike-comment-input"
         className="size-full"
         containerClassName="flex-1 mt-3"
-        placeholder="Type an optional comment to your feedback"
+        placeholder={t(ChatI18nKeys.OptionalFeedbackComment)}
         value={comment}
         onChange={(value) => setComment(value ?? '')}
       />

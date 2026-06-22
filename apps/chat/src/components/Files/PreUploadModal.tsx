@@ -21,11 +21,17 @@ import {
   notAllowedSymbolsRegex,
   prepareFileName,
   validatePreUploadFiles,
-  validateUploadFiles,
 } from '@/src/utils/app/file';
 import { getFileRootId, isMyBucket } from '@/src/utils/app/id';
+import {
+  PreparedUploadFile,
+  ResolvedUploadFile,
+  applyUploadReplaceActions,
+  detectUploadFileConflicts,
+} from '@/src/utils/app/prepare-files-for-upload';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
+import { MappedReplaceActions } from '@/src/types/common';
 import { DialFile } from '@/src/types/files';
 import { ModalState } from '@/src/types/modal';
 import { Translation } from '@/src/types/translation';
@@ -41,6 +47,7 @@ import { SHARED_WITH_ME_SECTION_NAME } from '@/src/constants/sections';
 
 import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Modal } from '@/src/components/Common/Modal';
+import { ReplaceConfirmationModal } from '@/src/components/Common/ReplaceConfirmationModal/ReplaceConfirmationModal';
 
 import { SelectFolderModal } from './SelectFolderModal';
 
@@ -60,7 +67,7 @@ interface Props {
   allowedTypesLabel?: string;
   onClose: (result: boolean) => void;
   onUploadFiles: (
-    selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
+    selectedFiles: ResolvedUploadFile[],
     folderPath: string | undefined,
   ) => void;
   uploadFolderId?: string;
@@ -86,13 +93,16 @@ export const PreUploadDialog = ({
   const { t } = useTranslation(Translation.Chat);
   const files = useAppSelector(FilesSelectors.selectFiles);
   const attachments = useAppSelector(FilesSelectors.selectSelectedFiles);
+  const folders = useAppSelector(FilesSelectors.selectFolders);
 
   const uploadInputRef = useRef<HTMLInputElement>(null);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const [selectedFiles, setSelectedFiles] = useState<
-    Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[]
-  >([]);
+  const [selectedFiles, setSelectedFiles] = useState<PreparedUploadFile[]>([]);
+  const [pendingUploadConflict, setPendingUploadConflict] = useState<{
+    duplicatedFiles: DialFile[];
+    nonDuplicatedFiles: PreparedUploadFile[];
+  } | null>(null);
   const [isChangeFolderModalOpened, setIsChangeFolderModalOpened] =
     useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState(
@@ -111,6 +121,10 @@ export const PreUploadDialog = ({
   );
 
   const folderPath = getRelativePath(selectedFolderId);
+  const uploadBucket = useMemo(
+    () => bucket ?? splitEntityId(selectedFolderId).bucket,
+    [bucket, selectedFolderId],
+  );
   const allowedExtensions = useMemo(() => {
     if (allowedTypes.includes('*/*')) {
       return [t(ChatI18nKeys.all)];
@@ -142,7 +156,7 @@ export const PreUploadDialog = ({
             return {
               fileContent: getFileWithType(file),
               id: constructPath(
-                getFileRootId(bucket),
+                getFileRootId(uploadBucket),
                 folderPath,
                 prepareFileName(file.name),
               ),
@@ -155,11 +169,11 @@ export const PreUploadDialog = ({
         uploadInputRef.current.value = '';
       }
     },
-    [allowedTypes, bucket, folderPath],
+    [allowedTypes, folderPath, uploadBucket],
   );
 
   const handleUpload = useCallback(() => {
-    const errors = [];
+    const errors: string[] = [];
 
     if (attachments.length + selectedFiles.length > maximumAttachmentsAmount) {
       errors.push(
@@ -170,36 +184,20 @@ export const PreUploadDialog = ({
       );
     }
 
-    const { validFiles: filesToUpload } = validateUploadFiles(selectedFiles);
+    const { duplicatedFiles, nonDuplicatedFiles, errorMsg } =
+      detectUploadFileConflicts({
+        files: selectedFiles.map((file) => ({
+          fileContent: file.fileContent,
+          name: file.name,
+        })),
+        folderId: selectedFolderId,
+        existingFiles: files,
+        bucket: uploadBucket,
+        allowedTypes,
+      });
 
-    const attachmentsSameLevelNames = files
-      .filter((file) => file.folderId === selectedFolderId)
-      .map((file) => prepareFileName(file.name));
-
-    const localIncorrectSameNameFiles = filesToUpload
-      .filter((file) =>
-        attachmentsSameLevelNames.includes(prepareFileName(file.name)),
-      )
-      .map((file) => prepareFileName(file.name));
-
-    if (localIncorrectSameNameFiles.length > 0) {
-      errors.push(
-        t(ChatI18nKeys.FilesAlreadyExistInSelectedFolder, {
-          fileNames: localIncorrectSameNameFiles.join(', '),
-        }),
-      );
-    }
-
-    const duplicateNames = filesToUpload
-      .map((file) => file.name)
-      .filter((value, index, self) => self.indexOf(value) !== index);
-
-    if (duplicateNames.length) {
-      errors.push(
-        t(ChatI18nKeys.FilesHaveSameNamesInUploadList, {
-          fileNames: duplicateNames.join(', '),
-        }),
-      );
+    if (errorMsg) {
+      errors.push(errorMsg);
     }
 
     if (errors.length) {
@@ -207,9 +205,19 @@ export const PreUploadDialog = ({
       return;
     }
 
-    onUploadFiles(filesToUpload, folderPath);
+    if (!duplicatedFiles.length && !nonDuplicatedFiles.length) {
+      return;
+    }
+
+    if (duplicatedFiles.length) {
+      setPendingUploadConflict({ duplicatedFiles, nonDuplicatedFiles });
+      return;
+    }
+
+    onUploadFiles(nonDuplicatedFiles, folderPath);
     onClose(true);
   }, [
+    allowedTypes,
     attachments.length,
     files,
     folderPath,
@@ -219,7 +227,46 @@ export const PreUploadDialog = ({
     selectedFiles,
     selectedFolderId,
     t,
+    uploadBucket,
   ]);
+
+  const handleReplaceConfirm = useCallback(
+    (mappedActions: MappedReplaceActions) => {
+      if (!pendingUploadConflict) {
+        return;
+      }
+
+      const resolvedFiles = applyUploadReplaceActions({
+        duplicatedFiles: pendingUploadConflict.duplicatedFiles,
+        nonDuplicatedFiles: pendingUploadConflict.nonDuplicatedFiles,
+        mappedActions,
+        existingFiles: files,
+        folderId: selectedFolderId,
+        bucket: uploadBucket,
+      });
+
+      setPendingUploadConflict(null);
+
+      if (resolvedFiles.length) {
+        onUploadFiles(resolvedFiles, folderPath);
+      }
+
+      onClose(true);
+    },
+    [
+      pendingUploadConflict,
+      files,
+      selectedFolderId,
+      uploadBucket,
+      folderPath,
+      onUploadFiles,
+      onClose,
+    ],
+  );
+
+  const handleReplaceCancel = useCallback(() => {
+    setPendingUploadConflict(null);
+  }, []);
 
   const handleRenameFile = useCallback(
     (changedFileIndex: number) => {
@@ -238,14 +285,18 @@ export const PreUploadDialog = ({
               ? {
                   ...file,
                   name: newName,
-                  id: constructPath(getFileRootId(), folderPath, newName),
+                  id: constructPath(
+                    getFileRootId(uploadBucket),
+                    folderPath,
+                    newName,
+                  ),
                 }
               : file,
           ),
         );
       };
     },
-    [folderPath, selectedFiles],
+    [folderPath, selectedFiles, uploadBucket],
   );
 
   const handleFolderChange = useCallback(() => {
@@ -266,11 +317,11 @@ export const PreUploadDialog = ({
     if (isOpen) {
       dispatch(
         FilesActions.getFiles({
-          id: constructPath(getFileRootId(), folderPath),
+          id: constructPath(getFileRootId(uploadBucket), folderPath),
         }),
       );
     }
-  }, [dispatch, folderPath, isOpen]);
+  }, [dispatch, folderPath, isOpen, uploadBucket]);
 
   useEffect(() => {
     if (initialFilesSelect && isOpen) {
@@ -282,26 +333,23 @@ export const PreUploadDialog = ({
   useEffect(() => {
     setSelectedFiles((oldFiles) =>
       oldFiles.map((file) => {
+        const name = prepareFileName(file.name);
+
         return {
           ...file,
-          name: prepareFileName(file.name),
-          id: constructPath(
-            getFileRootId(),
-            folderPath,
-            prepareFileName(file.name),
-          ),
-          folderPath,
+          name,
+          id: constructPath(getFileRootId(uploadBucket), folderPath, name),
         };
       }),
     );
-  }, [folderPath]);
+  }, [folderPath, uploadBucket]);
 
   const visiblePath = useMemo(() => {
     const isReview = !!reviewBucket && bucket === reviewBucket;
-    let root = SHARED_WITH_ME_SECTION_NAME;
+    let root: string = t(SHARED_WITH_ME_SECTION_NAME);
 
     if (!bucket || isMyBucket(bucket)) root = t(ChatI18nKeys.MyFiles);
-    else if (isReview) root = REVIEW_FILES_SECTION;
+    else if (isReview) root = t(REVIEW_FILES_SECTION);
 
     return constructPath(
       root,
@@ -349,14 +397,14 @@ export const PreUploadDialog = ({
               <span className="text-xs text-accent-primary">&nbsp;*</span>
             </div>
             <div
-              className="flex grow cursor-default items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
+              className="flex min-w-0 grow cursor-default items-center justify-between rounded border border-primary bg-transparent px-3 py-2 placeholder:text-secondary hover:border-accent-primary focus:border-accent-primary focus:outline-none"
               data-qa="change-path-container"
             >
-              <span className="truncate" data-qa="path">
+              <span className="min-w-0 truncate" data-qa="path">
                 {visiblePath}
               </span>
               <DialLinkButton
-                className="px-0"
+                className="shrink-0 px-0"
                 onClick={handleFolderChange}
                 data-qa="change-button"
                 label={t(ChatI18nKeys.Change)}
@@ -440,14 +488,35 @@ export const PreUploadDialog = ({
         reviewBucket={reviewBucket}
         isOpen={isChangeFolderModalOpened}
         initialSelectedFolderId={selectedFolderId}
-        rootFolderId={rootFolderId ?? getFileRootId(bucket)}
+        rootFolderId={rootFolderId ?? getFileRootId(uploadBucket)}
         onClose={(folderId) => {
           if (folderId) {
             setSelectedFolderId(folderId);
+          } else {
+            const root = rootFolderId ?? getFileRootId(uploadBucket);
+            if (selectedFolderId && selectedFolderId !== root) {
+              const exists = folders.some((f) => f.id === selectedFolderId);
+              if (!exists) {
+                setSelectedFolderId(root);
+              }
+            }
           }
           setIsChangeFolderModalOpened(false);
         }}
       />
+      {pendingUploadConflict && (
+        <ReplaceConfirmationModal
+          title={t(ChatI18nKeys.SomeFilesFailedToUploadDuplicateNames)}
+          description={t(ChatI18nKeys.AddPostfixIgnoreOrReplaceUpload)}
+          cancelLabel={t(ChatI18nKeys.Cancel)}
+          confirmLabel={t(ChatI18nKeys.ContinueUpload)}
+          onCancel={handleReplaceCancel}
+          onConfirm={handleReplaceConfirm}
+          duplicatedFiles={pendingUploadConflict.duplicatedFiles}
+          cancelDataQa="cancel-upload"
+          confirmDataQa="continue-upload"
+        />
+      )}
     </Modal>
   );
 };

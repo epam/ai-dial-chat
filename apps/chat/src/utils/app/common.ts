@@ -5,6 +5,10 @@ import {
   notAllowedSpacesRegex,
   notAllowedSymbolsRegex,
 } from '@/src/utils/app/file';
+import {
+  getResourceMaxIdBytes,
+  getResourceMaxSegmentBytes,
+} from '@/src/utils/app/resource-limits';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import {
   getPublicItemIdWithoutVersion,
@@ -20,7 +24,7 @@ import {
 import { EntityFilters } from '@/src/types/search';
 
 import {
-  MAX_ENTITY_LENGTH,
+  MAX_ENTITY_NAME_NUMERATION,
   MIN_ENTITY_LENGTH,
 } from '@/src/constants/default-ui-settings';
 import { NA_VERSION, PUBLIC_URL_PREFIX } from '@/src/constants/publication';
@@ -39,7 +43,6 @@ import merge from 'lodash-es/merge';
 import trimEnd from 'lodash-es/trimEnd';
 import values from 'lodash-es/values';
 import { nanoid } from 'nanoid';
-import { substring } from 'stringz';
 
 /**
  * Combine entities. If there are the same ids then will be used entity from entities1 i.e. first in array
@@ -102,18 +105,22 @@ export const isEntityNameValid = (
     checkDotsInTheEnd?: boolean;
     minLength?: number;
     maxLength?: number;
+    maxBytes?: number;
   },
 ) => {
   const {
     checkDotsInTheEnd = true,
     minLength = MIN_ENTITY_LENGTH,
-    maxLength = MAX_ENTITY_LENGTH,
+    maxLength,
+    maxBytes,
   } = options ?? {};
   const trimmedName = name.trim();
+  const resolvedMaxBytes =
+    maxBytes ?? maxLength ?? getResourceMaxSegmentBytes();
 
   return (
     !isEntityNameInvalid(trimmedName, checkDotsInTheEnd) &&
-    trimmedName.length <= maxLength &&
+    getUtf8BytesLength(trimmedName) <= resolvedMaxBytes &&
     trimmedName.length >= minLength
   );
 };
@@ -124,6 +131,7 @@ export const isEntityNameValidWithDecode = (
     checkDotsInTheEnd?: boolean;
     minLength?: number;
     maxLength?: number;
+    maxBytes?: number;
   },
 ) => {
   const decoded = decodeURIComponent(name);
@@ -175,16 +183,12 @@ export const prepareEntityName = (
         .map((s) => s.replace(notAllowedSymbolsRegex, '_').trim())
         .filter(Boolean)[0] ?? '');
 
-  const maxEntityLength = options?.maxNameLength ?? MAX_ENTITY_LENGTH;
-  const result =
-    clearName.length > maxEntityLength
-      ? substring(clearName, 0, maxEntityLength)
-      : clearName;
-
-  const additionalCuttedResult =
-    result.length > maxEntityLength
-      ? result.substring(0, maxEntityLength)
-      : result;
+  const maxEntityNameBytes =
+    options?.maxNameLength ?? getResourceMaxSegmentBytes();
+  const additionalCuttedResult = truncateToUtf8Bytes(
+    clearName,
+    maxEntityNameBytes,
+  );
 
   return !options?.forRenaming || options?.trimEndDotsRequired
     ? trimEndDots(additionalCuttedResult)
@@ -403,6 +407,38 @@ export const replaceStringRange = (
   return currentString.slice(0, start) + value + currentString.slice(end);
 };
 
+export const getTranscriptTextToInsert = (
+  beforeCursor: string,
+  transcript: string,
+) => {
+  const trimmedTranscript = transcript.trim();
+
+  if (!trimmedTranscript) {
+    return '';
+  }
+
+  const needsLeadingSpace =
+    beforeCursor.trim().length > 0 && !beforeCursor.endsWith(' ');
+
+  return needsLeadingSpace ? ` ${trimmedTranscript}` : trimmedTranscript;
+};
+
+export const buildContentWithTranscriptAtSelection = (
+  input: string,
+  transcript: string,
+  selection: { start: number; end: number },
+) => {
+  const clampedStart = Math.max(0, Math.min(selection.start, input.length));
+  const clampedEnd = Math.max(
+    clampedStart,
+    Math.min(selection.end, input.length),
+  );
+  const beforeCursor = input.substring(0, clampedStart);
+  const textToInsert = getTranscriptTextToInsert(beforeCursor, transcript);
+
+  return replaceStringRange(input, textToInsert, clampedStart, clampedEnd);
+};
+
 export const getLastPathSegment = (path: string) => path.split('/').pop() ?? '';
 
 export const addTrailingSlashIfAbsent = (id: string) =>
@@ -430,5 +466,137 @@ export const getSafeRedirectUrl = (url: string) => {
   } catch {
     console.error('Invalid url');
   }
+  return undefined;
+};
+
+export type EntityStorageLimits = {
+  maxIdBytes?: number;
+  maxSegmentBytes?: number;
+};
+
+export const getResourceStorageLimits = (): EntityStorageLimits => ({
+  maxIdBytes: getResourceMaxIdBytes(),
+  maxSegmentBytes: getResourceMaxSegmentBytes(),
+});
+
+const _textEncoder = new TextEncoder();
+
+export const getUtf8BytesLength = (value: string): number =>
+  _textEncoder.encode(value).length;
+
+export const truncateToUtf8Bytes = (
+  value: string,
+  maxBytes: number,
+): string => {
+  if (maxBytes <= 0) return '';
+
+  let currentBytes = 0;
+  let result = '';
+
+  for (const char of value) {
+    const charBytes = getUtf8BytesLength(char);
+    if (currentBytes + charBytes > maxBytes) break;
+    result += char;
+    currentBytes += charBytes;
+  }
+
+  return result;
+};
+
+export const getAvailableEntityNameBytes = (
+  buildFullId: (placeholderName: string) => string,
+  buildLastSegment: (placeholderName: string) => string,
+  limits: EntityStorageLimits,
+): number | undefined => {
+  const placeholder = 'a';
+  const placeholderBytes = getUtf8BytesLength(placeholder);
+
+  const byIdLimit = limits.maxIdBytes
+    ? Math.max(
+        limits.maxIdBytes -
+          getUtf8BytesLength(buildFullId(placeholder)) +
+          placeholderBytes,
+        0,
+      )
+    : undefined;
+
+  const bySegmentLimit = limits.maxSegmentBytes
+    ? Math.max(
+        limits.maxSegmentBytes -
+          getUtf8BytesLength(buildLastSegment(placeholder)) +
+          placeholderBytes,
+        0,
+      )
+    : undefined;
+
+  if (byIdLimit === undefined && bySegmentLimit === undefined) return undefined;
+  if (byIdLimit === undefined) return bySegmentLimit;
+  if (bySegmentLimit === undefined) return byIdLimit;
+  return Math.min(byIdLimit, bySegmentLimit);
+};
+
+export const buildByteAwareFitBaseName =
+  (availableNameBytes: number | undefined) =>
+  (baseName: string, suffix: string): string => {
+    if (availableNameBytes === undefined) {
+      return baseName;
+    }
+
+    const allowedNameBytes = Math.max(
+      availableNameBytes - getUtf8BytesLength(suffix),
+      0,
+    );
+
+    return prepareEntityName(truncateToUtf8Bytes(baseName, allowedNameBytes));
+  };
+
+export const getStorageSafeUniqueName = (params: {
+  desiredName?: string;
+  defaultName: string;
+  existingNames: string[];
+  fitBaseName: (baseName: string, suffix: string) => string;
+  maxNumeration?: number;
+}): string | undefined => {
+  const {
+    desiredName,
+    defaultName,
+    existingNames,
+    fitBaseName,
+    maxNumeration = MAX_ENTITY_NAME_NUMERATION,
+  } = params;
+
+  const existingNamesSet = new Set(existingNames);
+  const resolvedBaseName =
+    prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName);
+
+  // Rename/copy tries the base name first; new entities continue from max "{baseName} N".
+  let startIndex: number;
+  if (desiredName !== undefined) {
+    startIndex = 0;
+  } else {
+    const prefix = `${resolvedBaseName} `;
+    let maxSuffix = 0;
+    for (const name of existingNames) {
+      if (name.startsWith(prefix)) {
+        const rest = name.slice(prefix.length);
+        if (/^\d+$/.test(rest)) {
+          const n = parseInt(rest, 10);
+          if (n > maxSuffix) maxSuffix = n;
+        }
+      }
+    }
+    startIndex = maxSuffix + 1;
+  }
+
+  for (let index = startIndex; index <= maxNumeration; index++) {
+    const suffix = index === 0 ? '' : ` ${index}`;
+    const fittedBaseName = fitBaseName(resolvedBaseName, suffix);
+    const candidate = `${fittedBaseName}${suffix}`.trim();
+
+    if (candidate && !existingNamesSet.has(candidate)) {
+      return candidate;
+    }
+  }
+
   return undefined;
 };

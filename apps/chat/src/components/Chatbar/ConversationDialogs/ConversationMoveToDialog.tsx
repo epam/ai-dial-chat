@@ -26,9 +26,9 @@ interface ConversationMoveToDialogProps {
   moveToConversationId: string;
 }
 
-function ConversationMoveToDialogComponent({
-  moveToConversationId,
-}: ConversationMoveToDialogProps) {
+const view = withRenderWhenEntities<ConversationMoveToDialogProps>({
+  moveToConversationId: ConversationsSelectors.selectMoveToConversationId,
+})(({ moveToConversationId }: ConversationMoveToDialogProps) => {
   const { t } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
@@ -55,12 +55,12 @@ function ConversationMoveToDialogComponent({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.ConversationNameExistsInThisFolder, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.ConversationNameExistsInThisFolder, {
               ns: Translation.Chat,
               name: moveToConversation.name,
             }),
-          ),
+          }),
         );
 
         return;
@@ -111,9 +111,6 @@ function ConversationMoveToDialogComponent({
       onSelect={handleMoveToFolder}
     />
   );
-}
+});
 
-export const ConversationMoveToDialog =
-  withRenderWhenEntities<ConversationMoveToDialogProps>({
-    moveToConversationId: ConversationsSelectors.selectMoveToConversationId,
-  })(ConversationMoveToDialogComponent);
+export const ConversationMoveToDialog = view;

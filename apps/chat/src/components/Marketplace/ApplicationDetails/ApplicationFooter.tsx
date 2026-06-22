@@ -13,7 +13,7 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 import { isExternalApp } from '@/src/utils/app/application';
 
 import { ApplicationStatus, ExternalAppConfig } from '@/src/types/applications';
-import { ScreenState } from '@/src/types/common';
+import { EntityType, ScreenState } from '@/src/types/common';
 import { DialAIEntityModel } from '@/src/types/models';
 import { Translation } from '@/src/types/translation';
 
@@ -31,6 +31,39 @@ import { MarketplaceEntityContextMenu } from '@/src/components/Marketplace/Entit
 import { MarketplaceEntityBookmark } from '@/src/components/Marketplace/MarketplaceEntityBookmark';
 
 import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+
+const getEntityTypeLabel = (
+  entityType: EntityType,
+  isMobile: boolean,
+  t: (key: string) => string,
+): string => {
+  switch (entityType) {
+    case EntityType.Application: {
+      return isMobile
+        ? t(MarketplaceI18nKeys.AppEntity)
+        : t(MarketplaceI18nKeys.ApplicationEntity);
+    }
+    case EntityType.Model: {
+      const model = t(MarketplaceI18nKeys.ModelEntity);
+
+      if (model !== MarketplaceI18nKeys.ModelEntity) {
+        return model;
+      }
+
+      return t(MarketplaceI18nKeys.ModelEntity);
+    }
+    case EntityType.Toolset: {
+      const toolset = t(MarketplaceI18nKeys.ToolsetEntity);
+      if (toolset !== MarketplaceI18nKeys.ToolsetEntity) {
+        return toolset;
+      }
+
+      return entityType;
+    }
+    default:
+      return entityType;
+  }
+};
 
 const getDisabledTooltip = (entity: DialAIEntityModel, normal: string) => {
   switch (entity.functionStatus) {
@@ -93,12 +126,17 @@ export const ApplicationDetailsFooter = ({
     [menuItems],
   );
 
+  const translatedEntityTypeLabel = useMemo(
+    () => getEntityTypeLabel(entity.type, isScreenSmall, t),
+    [entity.type, isScreenSmall, t],
+  );
+
   const buttonLabel = showAsUseButton
     ? isScreenSmall
       ? t(MarketplaceI18nKeys.UseMarketplace)
       : t(MarketplaceI18nKeys.UseModelType, {
           ns: Translation.Marketplace,
-          modelType: entity.type,
+          modelType: translatedEntityTypeLabel,
         })
     : t(MarketplaceI18nKeys.DeployMarketplace);
 

@@ -19,17 +19,19 @@ import { GroupedVisualizerRenderer } from '@/src/components/VisualalizerRenderer
 import { MessageAttachment } from './MessageAttachment';
 
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
-import { Attachment } from '@epam/ai-dial-shared';
+import { Attachment, MessageAnnotation } from '@epam/ai-dial-shared';
 import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface Props {
   attachments: Attachment[] | undefined;
+  annotations?: MessageAnnotation[];
   isInner?: boolean;
   applicationId?: string;
 }
 
 export const MessageAttachments = ({
   attachments,
+  annotations,
   isInner,
   applicationId,
 }: Props) => {
@@ -112,6 +114,30 @@ export const MessageAttachments = ({
     return { groupedAttachments: null, regularAttachments: attachments };
   }, [attachments, applicationVisualizerConfig]);
 
+  const indexedAnnotations = useMemo(() => {
+    const annotationsMap = new Map<number, MessageAnnotation[]>();
+
+    annotations?.forEach((annotation) => {
+      if (typeof annotation.target?.source?.attachment_index === 'number') {
+        annotationsMap.set(
+          annotation.target.source.attachment_index,
+          (
+            annotationsMap.get(annotation.target?.source?.attachment_index) ??
+            []
+          ).concat(annotation),
+        );
+      }
+    });
+
+    return annotationsMap;
+  }, [annotations]);
+
+  const getAttachmentAnnotations = (attachment: Attachment) => {
+    if (typeof attachment.index !== 'number') return undefined;
+
+    return indexedAnnotations.get(attachment.index);
+  };
+
   const isUnderSection = useMemo(() => {
     return regularAttachments.length > 3 && !hasBorderlessAttachments;
   }, [regularAttachments, hasBorderlessAttachments]);
@@ -173,6 +199,7 @@ export const MessageAttachments = ({
                 <MessageAttachment
                   key={attachment.url || attachment.title}
                   attachment={attachment}
+                  annotations={getAttachmentAnnotations(attachment)}
                   isInner
                 />
               ))}
@@ -190,6 +217,7 @@ export const MessageAttachments = ({
             attachment={attachment}
             isInner={isInner}
             forceDefaultView={isInner}
+            annotations={getAttachmentAnnotations(attachment)}
           />
         ))}
       </div>

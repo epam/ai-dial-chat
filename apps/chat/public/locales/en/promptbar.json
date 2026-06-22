@@ -42,5 +42,18 @@
   "Are you sure that you want to delete all prompts?": "Are you sure that you want to delete all prompts?",
   "v.": "v.",
   "Use": "Use",
-  "Use prompt": "Use prompt"
+  "Use prompt": "Use prompt",
+  "Add Agent Skill": "Add Agent Skill",
+  "Valid Agent Skill": "Valid Agent Skill",
+  "Agent Skills": "Agent Skills",
+  "allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption.": "allow to turn prompts into instructions, that can be loaded by agents on demand. That allows to support complex scenarios without inflating agent context and token consumption.",
+  "See examples": "See examples",
+  "here": "here",
+  "Save to re-validate against the latest content.": "Save to re-validate against the latest content.",
+  "Validation pending": "Validation pending",
+  "Open inside an agent editor to validate this prompt as a skill.": "Open inside an agent editor to validate this prompt as a skill.",
+  "Unsaved changes contain empty mandatory fields. Please fill in mandatory fields or do not save changes.": "Unsaved changes contain empty mandatory fields. Please fill in mandatory fields or do not save changes.",
+  "Back to editing": "Back to editing",
+  "conversation": "conversation",
+  "prompt": "prompt"
 }

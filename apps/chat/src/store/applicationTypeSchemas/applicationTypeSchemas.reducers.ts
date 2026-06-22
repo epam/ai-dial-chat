@@ -31,7 +31,10 @@ export const applicationTypesSchemasSlice = createSlice({
       state.schemasLoading = UploadStatus.LOADED;
       state.schemas = action.payload.schemas;
     },
-    fetchSchemasFail: (state) => {
+    fetchSchemasFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.schemasLoading = UploadStatus.FAILED;
     },
     fetchDetailedApplicationTypeSchema: (
@@ -48,7 +51,10 @@ export const applicationTypesSchemasSlice = createSlice({
       state.detailedApplicationTypeSchemaLoading = UploadStatus.LOADED;
       state.detailedApplicationTypeSchema = action.payload.schema;
     },
-    fetchDetailedApplicationTypeSchemaFail: (state) => {
+    fetchDetailedApplicationTypeSchemaFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.detailedApplicationTypeSchemaLoading = UploadStatus.FAILED;
       state.detailedApplicationTypeSchema = null;
     },

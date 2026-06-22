@@ -6,6 +6,7 @@ import {
   MarketplacePage,
 } from '../ui/pages';
 import {
+  AgentAndToolsetSelectModal,
   AgentInfo,
   Breadcrumb,
   Chat,
@@ -14,6 +15,7 @@ import {
   ChatMessages,
   ChatNotFound,
   ConfirmationPopup,
+  ConnectToolsetModal,
   ConversationSettingsModal,
   ConversationToCompare,
   CustomAppEditorAppSettingsPreview,
@@ -48,12 +50,15 @@ import {
   PromptBar,
   PublishingFilter,
   PublishingRules,
+  QuickApp2EditorContainer,
+  QuickApp2EditorViewForm,
   SelectFolderManagerModal,
   SelectFolderModal,
   SendMessage,
   ShareAppModal,
   ToolsetEditorContainer,
   ToolsetEditorViewForm,
+  ToolsetLoginModal,
   TooltipPortal,
   TopicsTooltip,
   UploadProgressDialog,
@@ -87,6 +92,7 @@ import {
   PublishEntityAssertion,
   PublishFileAssertion,
   PublishFolderAssertion,
+  PublishToolsetAssertion,
   PublishingRequestDialogAssertion,
   ReplaceConfirmationModalAssertion,
   SendMessageAssertion,
@@ -98,6 +104,7 @@ import {
   ToastAssertion,
   ToolsetApiAuthenticationAssertion,
   ToolsetAuthAssertion,
+  ToolsetLoginModalAssertion,
   TooltipAssertion,
   TooltipPortalAssertion,
   VariableModalAssertion,
@@ -156,6 +163,7 @@ import {
   PublishFolder,
   PublishFolderConversations,
   PublishPromptsTree,
+  PublishToolsetsTree,
   SharedFolderConversations,
   SharedWithMeConversationsTree,
 } from '@/src/ui/webElements/entityTree';
@@ -223,6 +231,9 @@ const dialTest = test.extend<{
   externalAppEditorContainer: ExternalAppEditorContainer;
   externalAppEditorViewForm: ExternalAppEditorViewForm;
   externalAppEditorAppSettingsPreview: EntityEditorEntitySettingsCardPreview;
+  quickApp2EditorContainer: QuickApp2EditorContainer;
+  quickApp2EditorViewForm: QuickApp2EditorViewForm;
+  agentAndToolsetSelectModal: AgentAndToolsetSelectModal;
   externalAppEditorAppSettingsPreviewBody: EntityEditorEntitySettingsCardPreviewBody;
   externalAppEditorAppSettingsPreviewCard: EntityEditorPreviewCard;
   toolsetEditorContainer: ToolsetEditorContainer;
@@ -319,6 +330,7 @@ const dialTest = test.extend<{
   additionalSecondShareUserRequestContext: APIRequestContext;
   adminUserRequestContext: APIRequestContext;
   adminUserItemApiHelper: ItemApiHelper;
+  adminToolsetApiHelper: ToolsetApiHelper;
   adminShareApiHelper: ShareApiHelper;
   adminApplicationApiHelper: ApplicationApiHelper;
   mainUserShareApiHelper: ShareApiHelper;
@@ -345,6 +357,7 @@ const dialTest = test.extend<{
   filesToPublishTree: PublishFilesTree;
   promptsToPublishTree: PublishPromptsTree;
   appsToPublishTree: PublishApplicationsTree;
+  toolsetsToPublishTree: PublishToolsetsTree;
   folderConversationsToPublish: PublishFolderConversations;
   publicationApiHelper: PublicationApiHelper;
   adminPublicationApiHelper: PublicationApiHelper;
@@ -403,6 +416,7 @@ const dialTest = test.extend<{
   publishFileTreeAssertion: PublishFileAssertion<PublishFilesTree>;
   publishPromptsTreeAssertion: PublishEntityAssertion<PublishPromptsTree>;
   appToPublishAssertion: PublishEntityAssertion<PublishApplicationsTree>;
+  toolsetToPublishAssertion: PublishToolsetAssertion<PublishToolsetsTree>;
   folderToPublishAssertion: PublishFolderAssertion<PublishFolderConversations>;
   organizationFolderConversationAssertions: FolderAssertion<Folders>;
   messageTemplateModalAssertion: MessageTemplateModalAssertion;
@@ -454,6 +468,9 @@ const dialTest = test.extend<{
   selectFolderManagerModalFoldersTree: FoldersTree;
   selectFolderManagerModalGrid: FileManagerGrid;
   selectFolderManagerModalGridAssertion: FileManagerGridAssertion;
+  selectFolderManagerModalFoldersTreeAssertion: FoldersTreeAssertion;
+  selectFolderManagerModalNavigationPanel: FileManagerNavigationPanel;
+  selectFolderManagerModalBreadcrumb: Breadcrumb;
   fileManagerDeleteItemConfirmationPopupAssertion: ConfirmationPopupAssertion;
   fileManagerGridAssertion: FileManagerGridAssertion;
   fileManagerFoldersTreeAssertion: FoldersTreeAssertion;
@@ -464,6 +481,9 @@ const dialTest = test.extend<{
   tooltipPortal: TooltipPortal;
   tooltipPortalAssertion: TooltipPortalAssertion;
   toolsetApiAuthenticationAssertion: ToolsetApiAuthenticationAssertion;
+  toolsetLoginModal: ToolsetLoginModal;
+  toolsetLoginModalAssertion: ToolsetLoginModalAssertion;
+  connectToolsetModal: ConnectToolsetModal;
 }>({
   beforeTestCleanup: [
     async ({ dataInjector, fileApiHelper, toolsetApiHelper }, use) => {
@@ -543,7 +563,7 @@ const dialTest = test.extend<{
       sharedWithMeConversations.getDropdownMenu();
     await use(sharedWithMeConversationDropdownMenu);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   storageState: async ({}, use) => {
     await use(stateFilePath(+process.env.TEST_PARALLEL_INDEX!));
   },
@@ -664,6 +684,19 @@ const dialTest = test.extend<{
     const externalAppEditorAppSettingsPreviewCard =
       externalAppEditorAppSettingsPreviewBody.getEntityEditorPreviewCard();
     await use(externalAppEditorAppSettingsPreviewCard);
+  },
+  quickApp2EditorContainer: async ({ entityEditorPage }, use) => {
+    const quickApp2EditorContainer =
+      entityEditorPage.getQuickApp2EditorContainer();
+    await use(quickApp2EditorContainer);
+  },
+  quickApp2EditorViewForm: async ({ quickApp2EditorContainer }, use) => {
+    const quickApp2EditorViewForm =
+      quickApp2EditorContainer.getEntityEditorViewForm();
+    await use(quickApp2EditorViewForm);
+  },
+  agentAndToolsetSelectModal: async ({ page }, use) => {
+    await use(new AgentAndToolsetSelectModal(page));
   },
   toolsetEditorContainer: async ({ entityEditorPage }, use) => {
     const toolsetEditorContainer = entityEditorPage.getToolsetEditorContainer();
@@ -1219,6 +1252,30 @@ const dialTest = test.extend<{
     );
     await use(selectFolderManagerModalGridAssertion);
   },
+  selectFolderManagerModalFoldersTreeAssertion: async (
+    { selectFolderManagerModalFoldersTree },
+    use,
+  ) => {
+    const selectFolderManagerModalFoldersTreeAssertion =
+      new FoldersTreeAssertion(selectFolderManagerModalFoldersTree);
+    await use(selectFolderManagerModalFoldersTreeAssertion);
+  },
+  selectFolderManagerModalNavigationPanel: async (
+    { selectFolderManagerModalManager },
+    use,
+  ) => {
+    const selectFolderManagerModalNavigationPanel =
+      selectFolderManagerModalManager.getFileManagerNavigationPanel();
+    await use(selectFolderManagerModalNavigationPanel);
+  },
+  selectFolderManagerModalBreadcrumb: async (
+    { selectFolderManagerModalNavigationPanel },
+    use,
+  ) => {
+    const selectFolderManagerModalBreadcrumb =
+      selectFolderManagerModalNavigationPanel.getBreadcrumb();
+    await use(selectFolderManagerModalBreadcrumb);
+  },
   selectFolders: async ({ selectFolderModal }, use) => {
     const selectUploadFolder = selectFolderModal.getSelectFolders();
     await use(selectUploadFolder);
@@ -1253,6 +1310,11 @@ const dialTest = test.extend<{
     const appsToPublishTree =
       publishingRequestDialog.getApplicationsToPublishTree();
     await use(appsToPublishTree);
+  },
+  toolsetsToPublishTree: async ({ publishingRequestDialog }, use) => {
+    const toolsetsToPublishTree =
+      publishingRequestDialog.getPublishToolsetsTree();
+    await use(toolsetsToPublishTree);
   },
   folderConversationsToPublish: async ({ publishingRequestDialog }, use) => {
     const folderConversationsToPublish =
@@ -1342,7 +1404,7 @@ const dialTest = test.extend<{
     const toastAssertion = new ToastAssertion(toast);
     await use(toastAssertion);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   downloadAssertion: async ({}, use) => {
     const downloadAssertion = new DownloadAssertion();
     await use(downloadAssertion);
@@ -1560,6 +1622,11 @@ const dialTest = test.extend<{
       new PublishEntityAssertion<PublishApplicationsTree>(appsToPublishTree);
     await use(appToPublishAssertion);
   },
+  toolsetToPublishAssertion: async ({ toolsetsToPublishTree }, use) => {
+    const toolsetToPublishAssertion =
+      new PublishToolsetAssertion<PublishToolsetsTree>(toolsetsToPublishTree);
+    await use(toolsetToPublishAssertion);
+  },
   folderToPublishAssertion: async ({ publishingRequestDialog }, use) => {
     const folderToPublishAssertion = new PublishFolderAssertion(
       publishingRequestDialog.getFolderConversationsToPublish(),
@@ -1575,7 +1642,7 @@ const dialTest = test.extend<{
     );
     await use(organizationFolderConversationAssertions);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   shareApiAssertion: async ({}, use) => {
     const shareApiAssertion = new ShareApiAssertion();
     await use(shareApiAssertion);
@@ -1915,11 +1982,25 @@ const dialTest = test.extend<{
     const tooltipPortalAssertion = new TooltipPortalAssertion(tooltipPortal);
     await use(tooltipPortalAssertion);
   },
-  // eslint-disable-next-line no-empty-pattern
+
   toolsetApiAuthenticationAssertion: async ({}, use) => {
     const toolsetApiAuthenticationAssertion =
       new ToolsetApiAuthenticationAssertion();
     await use(toolsetApiAuthenticationAssertion);
+  },
+  toolsetLoginModal: async ({ page }, use) => {
+    const toolsetLoginModal = new ToolsetLoginModal(page);
+    await use(toolsetLoginModal);
+  },
+  toolsetLoginModalAssertion: async ({ toolsetLoginModal }, use) => {
+    const toolsetLoginModalAssertion = new ToolsetLoginModalAssertion(
+      toolsetLoginModal,
+    );
+    await use(toolsetLoginModalAssertion);
+  },
+  connectToolsetModal: async ({ page }, use) => {
+    const connectToolsetModal = new ConnectToolsetModal(page);
+    await use(connectToolsetModal);
   },
 });
 

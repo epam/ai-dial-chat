@@ -20,12 +20,21 @@ import { AppAction } from '@/src/types/store';
 
 import { ConversationsActions, UIActions } from '@/src/store/actions';
 
-import { DEFAULT_FOLDER_NAME } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_FOLDER_NAME,
+  MAX_ENTITY_NAME_NUMERATION,
+} from '@/src/constants/default-ui-settings';
 
 import {
+  EntityStorageLimits,
   addTrailingSlashIfAbsent,
+  buildByteAwareFitBaseName,
   doesHaveDotsInTheEnd,
+  getAvailableEntityNameBytes,
+  getResourceStorageLimits,
+  getStorageSafeUniqueName,
   prepareEntityName,
+  truncateToUtf8Bytes,
 } from './common';
 import { isRootEntity } from './id';
 import { hasWritePermission } from './share';
@@ -157,7 +166,7 @@ export const getNextDefaultName = (
       startWithEmptyPostfix ? -1 : 0,
     ) + index; // max number
 
-  if (maxNumber >= 9999999) {
+  if (maxNumber >= MAX_ENTITY_NAME_NUMERATION) {
     return getNextDefaultName(
       `${prefix}${maxNumber}`,
       entities,
@@ -390,6 +399,71 @@ export const addGeneratedFolderId = (
   return folder as FolderInterface;
 };
 
+export const getAvailableFolderNameBytes = (
+  folderId: string,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): number | undefined =>
+  getAvailableEntityNameBytes(
+    (name) => constructPath(folderId, name),
+    (name) => name,
+    limits,
+  );
+
+export const fitFolderNameToStorageLimits = <
+  T extends PartialBy<FolderInterface, 'id'>,
+>(
+  folder: T,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): T => {
+  const availableNameBytes = getAvailableFolderNameBytes(
+    folder.folderId ?? '',
+    limits,
+  );
+
+  if (availableNameBytes === undefined || availableNameBytes <= 0) {
+    return folder;
+  }
+
+  const fittedName = prepareEntityName(
+    truncateToUtf8Bytes(prepareEntityName(folder.name), availableNameBytes),
+  );
+
+  return fittedName === folder.name ? folder : { ...folder, name: fittedName };
+};
+
+export const getStorageSafeUniqueFolderName = (params: {
+  folderId: string;
+  desiredName?: string;
+  defaultName?: string;
+  existingNames: string[];
+  limits?: EntityStorageLimits;
+  type?: FolderInterface['type'];
+}): string => {
+  const { folderId, desiredName, existingNames } = params;
+  const limits = params.limits ?? getResourceStorageLimits();
+  const defaultName = params.defaultName ?? DEFAULT_FOLDER_NAME;
+
+  const availableNameBytes = getAvailableFolderNameBytes(folderId, limits);
+
+  const uniqueName = getStorageSafeUniqueName({
+    desiredName,
+    defaultName,
+    existingNames,
+    fitBaseName: buildByteAwareFitBaseName(availableNameBytes),
+  });
+
+  if (uniqueName) {
+    return uniqueName;
+  }
+
+  return fitFolderNameToStorageLimits({
+    folderId,
+    name:
+      prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName),
+    type: params.type ?? FeatureType.Chat,
+  }).name;
+};
+
 export const getParentFolderIdsFromFolderId = (path?: string): string[] => {
   if (!path) {
     return [];
@@ -501,6 +575,14 @@ export const isFolderEmpty = ({
     !entities.some((entity) => entity.folderId === id)
   );
 };
+
+export const getEmptyLeafFolderIds = (
+  folders: FolderInterface[],
+  entities: ShareEntity[],
+): string[] =>
+  folders
+    .filter(({ id }) => isFolderEmpty({ id, folders, entities }))
+    .map(({ id }) => id);
 
 export const canEditSharedFolderOrParent = (
   folders: FolderInterface[],
@@ -672,15 +754,17 @@ export const getSelectedEntitiesByFolderId = <
   folderId: string;
   partialChosenFolderIds: string[];
   chosenItemsIds: string[];
-}) =>
-  entities
+}) => {
+  const prefix = addTrailingSlashIfAbsent(folderId);
+  return entities
     .filter(
       (entity) =>
-        entity.id.startsWith(folderId) &&
+        entity.id.startsWith(prefix) &&
         (!partialChosenFolderIds.includes(folderId) ||
           !chosenItemsIds.includes(entity.id)),
     )
     .map((entity) => entity.id);
+};
 
 export const getPartialAndFullyChosenFolders = (
   folders: FolderInterface[],

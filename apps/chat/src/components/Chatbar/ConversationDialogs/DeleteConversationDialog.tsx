@@ -1,4 +1,4 @@
-import { FC, useCallback } from 'react';
+import { useCallback } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -17,9 +17,9 @@ interface DeleteConversationDialogProps {
   conversationId: string;
 }
 
-const DeleteConversationDialogView: FC<DeleteConversationDialogProps> = ({
-  conversationId,
-}) => {
+const view = withRenderWhenEntities<DeleteConversationDialogProps>({
+  conversationId: ConversationsSelectors.selectDeletingConversationId,
+})(({ conversationId }: DeleteConversationDialogProps) => {
   const { t } = useTranslation(Translation.Chat);
   const dispatch = useAppDispatch();
 
@@ -57,9 +57,6 @@ const DeleteConversationDialogView: FC<DeleteConversationDialogProps> = ({
       onClose={handleClose}
     />
   );
-};
+});
 
-export const DeleteConversationDialog =
-  withRenderWhenEntities<DeleteConversationDialogProps>({
-    conversationId: ConversationsSelectors.selectDeletingConversationId,
-  })(DeleteConversationDialogView);
+export const DeleteConversationDialog = view;

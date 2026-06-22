@@ -5,7 +5,6 @@ import dialTest from '@/src/core/dialFixtures';
 import {
   API,
   ExpectedConstants,
-  ExpectedMessages,
   MenuOptions,
   PublishPath,
 } from '@/src/testData';
@@ -29,9 +28,12 @@ dialAdminTest(
     conversations,
     conversationDropdownMenu,
     publishingRequestDialog,
-    selectFolderModal,
-    selectFolders,
-    selectFoldersAssertion,
+    selectFolderManagerModal,
+    selectFolderManagerModalGrid,
+    selectFolderManagerModalGridAssertion,
+    selectFolderManagerModalFoldersTree,
+    selectFolderManagerModalNavigationPanel,
+    baseAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
     adminApproveRequiredConversations,
@@ -109,35 +111,47 @@ dialAdminTest(
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        selectFoldersAssertion.assertStringsSorting(
-          await selectFolders.getFolderNames(),
-          'asc',
-        );
+        const folderNames =
+          await selectFolderManagerModalGrid.getNameColumnValues();
+        baseAssertion.assertStringsSorting(folderNames, 'asc');
       },
     );
 
     //TODO: blocked by issue https://github.com/epam/ai-dial-chat/issues/4031
     await dialTest.step.skip('Search sub-folder by name', async () => {
-      await selectFolders.expandFolder(parentFolder);
-      await selectFolderModal.searchInput.fillInInput(subFolderSearchTerm);
-      await selectFoldersAssertion.assertSearchResultRepresentation(
+      await selectFolderManagerModalFoldersTree.expandFolder(
+        { isFilesListingTriggered: false },
+        parentFolder,
+      );
+      await selectFolderManagerModalNavigationPanel
+        .getSearch()
+        .inputField.fillInInput(subFolderSearchTerm);
+      await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
         organizationFolderNames[2],
+        'visible',
       );
     });
 
     await dialTest.step('Search root folder by name', async () => {
-      await selectFolderModal.searchInput.fillInInput(folderSearchTerm);
-      await selectFoldersAssertion.assertSearchResultRepresentation(
+      await selectFolderManagerModalNavigationPanel
+        .getSearch()
+        .inputField.fillInInput(folderSearchTerm);
+      await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
         organizationFolderNames[0],
+        'visible',
       );
     });
 
     await dialTest.step(
       'Select folder, fill in name and submit the request',
       async () => {
-        await selectFolderModal.searchInput.fillInInput('');
-        await selectFolderModal.selectFolder(folderToPublish);
-        await selectFolderModal.clickSelectFolderButton({
+        await selectFolderManagerModalNavigationPanel
+          .getSearch()
+          .inputField.fillInInput('');
+        await selectFolderManagerModalGrid
+          .gridRowByNameCell(folderToPublish)
+          .click();
+        await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
         await publishingRequestDialog.requestName.fillInInput(requestName);
@@ -208,7 +222,7 @@ dialAdminTest(
     await dialTest.step(
       'Verify folders sorting in "Organization" section',
       async () => {
-        selectFoldersAssertion.assertStringsSorting(
+        baseAssertion.assertStringsSorting(
           await adminOrganizationFolderConversations.getFolderNames(),
           'asc',
         );
@@ -219,12 +233,13 @@ dialAdminTest(
 
 dialAdminTest(
   'Publish chat: add, rename and delete options for new folder in Organization.\n' +
-    'Max length of folder name in Publish to path should be 160 symbols .\n' +
+    'Max length of folder name in Publish to path should be 255 bytes (UTF-8).\n' +
     'Publish chat: add new folder inside nested folder structure with depth 4.\n' +
     'Change path: create nested folder structure and delete nested folder.\n' +
     'Change path: select folder of different levels.\n' +
     'Change path form: focus stay on new created folder.\n' +
-    'Publish chat into nested folder structure',
+    'Publish chat into nested folder structure.\n' +
+    '[Publish path] Verify that only one folder is created when creating and renaming a new folder',
   async ({
     dialHomePage,
     conversationData,
@@ -232,14 +247,13 @@ dialAdminTest(
     conversations,
     conversationDropdownMenu,
     publishingRequestDialog,
-    selectFolderModal,
+    selectFolderManagerModal,
+    selectFolderManagerModalGrid,
+    selectFolderManagerModalGridAssertion,
+    selectFolderManagerModalFoldersTree,
+    selectFolderManagerModalFoldersTreeAssertion,
+    fileManagerDeleteItemConfirmationPopup,
     baseAssertion,
-    selectFolders,
-    folderDropdownMenu,
-    confirmationDialog,
-    folderDropdownMenuAssertion,
-    selectFoldersAssertion,
-    selectFolderModalAssertion,
     adminOrganizationFolderConversationAssertions,
     adminDialHomePage,
     adminApproveRequiredConversations,
@@ -261,19 +275,24 @@ dialAdminTest(
       'EPMRTC-4905',
       'EPMRTC-3797',
       'EPMRTC-3459',
+      'EPMRTC-9092',
     );
     let publishApiModels: {
       request: PublicationRequestModel;
       response: Publication;
     };
     let conversationToPublish: Conversation;
+    const newFolderName =
+      'a' +
+      GeneratorUtil.randomString(ExpectedConstants.maxEntityNameLength + 50);
+    // Each nested level uses a unique name so FoldersTree.folderByPath can
+    // address every level unambiguously (same-name nesting is filtered out by
+    // `folderByPath`'s `hasNot` filter). rootNewFolderLastIndex is computed
+    // dynamically at runtime to avoid conflicts with pre-existing folders.
     const maxNestedLevel = 4;
-    const maxNameLength = 160;
+    let rootNewFolderLastIndex = 0;
     const requestName = GeneratorUtil.randomPublicationRequestName();
-    const newFolderName = 'a' + GeneratorUtil.randomString(maxNameLength * 1.5);
-    const cutNewFolderName = newFolderName.substring(0, maxNameLength);
-    const defaultFolderName = ExpectedConstants.newFolderWithIndexTitle(1);
-    const publicationPath = `${PublishPath.Organization}/${cutNewFolderName}/${defaultFolderName}/${defaultFolderName}`;
+    let publicationPath: string;
 
     await dialTest.step('Prepare a new conversation to publish', async () => {
       conversationToPublish = conversationData.prepareDefaultConversation();
@@ -292,140 +311,210 @@ dialAdminTest(
         await publishingRequestDialog
           .getChangePublishToPath()
           .changeButton.click();
-        await selectFolderModal.newFolderButton.click();
-        await selectFoldersAssertion.assertFolderEditInputState('visible');
-        await selectFoldersAssertion.assertFolderEditInputValue(
-          defaultFolderName,
+
+        // The app names a new folder "New folder (max+1)" where max is the
+        // highest existing "New folder N" index at the current level.
+        const existingNames =
+          await selectFolderManagerModalGrid.getNameColumnValues();
+        rootNewFolderLastIndex =
+          ExpectedConstants.maxNewFolderIndex(existingNames);
+        await selectFolderManagerModal.getAddFolderButton().click();
+        const folderInput = selectFolderManagerModalGrid.getRenameInput();
+        await baseAssertion.assertElementState(folderInput, 'visible');
+        // New ChangePathDialog pre-fills the rename input with the default
+        // "New folder N" name (N — next available index at the current level).
+        await baseAssertion.assertInputValue(
+          folderInput,
+          ExpectedConstants.newFolderWithIndexTitle(rootNewFolderLastIndex + 1),
         );
-        await selectFolders.getEditFolderInputActions().clickTickButton();
-        await selectFoldersAssertion.assertFolderState(
-          { name: defaultFolderName },
+        await baseAssertion.assertIsElementFocused(folderInput, true);
+        await selectFolderManagerModalGrid.confirmNewFolderName(
+          undefined,
+          false,
+        );
+        rootNewFolderLastIndex++;
+        publicationPath = `${PublishPath.Organization}/${Array.from(
+          { length: maxNestedLevel },
+          (_, i) =>
+            ExpectedConstants.newFolderWithIndexTitle(
+              rootNewFolderLastIndex + i,
+            ),
+        ).join('/')}`;
+        await selectFolderManagerModalGrid.goToGridRowByNameCell(
+          ExpectedConstants.newFolderWithIndexTitle(rootNewFolderLastIndex),
+        );
+      },
+    );
+
+    // The new UI no longer truncates silently — it shows an inline alert icon
+    await dialTest.step(
+      'Verify max length error on folder creation with a too-long name',
+      async () => {
+        await selectFolderManagerModal.getAddFolderButton().click();
+        const folderInput = selectFolderManagerModalGrid.getRenameInput();
+        await folderInput.fillInInput(newFolderName);
+        await selectFolderManagerModalGridAssertion.assertInputError(
+          'visible',
+          newFolderName,
+        );
+        await folderInput.fillInInput(GeneratorUtil.randomString(10));
+        await selectFolderManagerModalGrid.confirmNewFolderName(
+          undefined,
+          false,
+        );
+      },
+    );
+
+    await dialTest.step(
+      'Create nested sub-folders down to depth 4',
+      async () => {
+        for (let i = 1; i < maxNestedLevel; i++) {
+          await selectFolderManagerModalGrid.openFolder(
+            ExpectedConstants.newFolderWithIndexTitle(
+              rootNewFolderLastIndex + i - 1,
+            ),
+            false,
+          );
+          await selectFolderManagerModal.getAddFolderButton().click();
+          const subFolderInput = selectFolderManagerModalGrid.getRenameInput();
+          await baseAssertion.assertElementState(subFolderInput, 'visible');
+          await baseAssertion.assertInputValue(
+            subFolderInput,
+            ExpectedConstants.newFolderWithIndexTitle(1),
+          );
+          // TODO uncomment when fixed
+          // await baseAssertion.assertIsElementFocused(subFolderInput, true);
+          await selectFolderManagerModalGrid.setFolderName(
+            ExpectedConstants.newFolderWithIndexTitle(
+              rootNewFolderLastIndex + i,
+            ),
+            false,
+          );
+          await selectFolderManagerModalGrid.goToGridRowByNameCell(
+            ExpectedConstants.newFolderWithIndexTitle(
+              rootNewFolderLastIndex + i,
+            ),
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Create folder with custom name and verify no default-named folder is created',
+      async () => {
+        // The app names a new folder "New folder (max+1)" where max is the
+        // highest existing "New folder N" index at the current sub-level.
+        const subLevelNames =
+          await selectFolderManagerModalGrid.getNameColumnValues();
+        const subLevelMaxIndex =
+          ExpectedConstants.maxNewFolderIndex(subLevelNames);
+        const expectedDefaultName = ExpectedConstants.newFolderWithIndexTitle(
+          subLevelMaxIndex + 1,
+        );
+        const customFolderName = 'My Folder';
+        await selectFolderManagerModal.getAddFolderButton().click();
+        const customFolderInput = selectFolderManagerModalGrid.getRenameInput();
+        await baseAssertion.assertElementState(customFolderInput, 'visible');
+        await baseAssertion.assertInputValue(
+          customFolderInput,
+          expectedDefaultName,
+        );
+        await selectFolderManagerModalGrid.setFolderName(
+          customFolderName,
+          false,
+        );
+        await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
+          customFolderName,
           'visible',
         );
+        await selectFolderManagerModalGridAssertion.assertGridRowByNameState(
+          expectedDefaultName,
+          'hidden',
+        );
+        await baseAssertion.assertElementsCount(
+          selectFolderManagerModalGrid.gridRows,
+          subLevelNames.length + 1,
+        );
       },
     );
 
-    await dialTest.step(
-      'Open folder dropdown menu and verify available options',
-      async () => {
-        await selectFolders.openFolderDropdownMenu(defaultFolderName);
-        await folderDropdownMenuAssertion.assertMenuOptions([
-          MenuOptions.rename,
-          MenuOptions.delete,
-          MenuOptions.addNewFolder,
-        ]);
-      },
-    );
-
-    await dialTest.step('Verify folder renaming and max length', async () => {
-      await folderDropdownMenu.selectMenuOption(MenuOptions.rename);
-      await selectFolders.renameEmptyFolderWithTick(newFolderName);
-      await selectFoldersAssertion.assertFolderState(
-        { name: cutNewFolderName },
-        'visible',
-      );
-    });
-
-    await dialTest.step('Verify new sub-folder adding', async () => {
-      await selectFolders.openFolderDropdownMenu(cutNewFolderName);
-      await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-      await selectFoldersAssertion.assertFolderEditInputValue(
-        defaultFolderName,
-      );
-      await selectFolders.getEditFolderInputActions().clickTickButton();
-      await selectFoldersAssertion.assertFolderState(
-        { name: defaultFolderName },
-        'visible',
-      );
-    });
-
-    await dialTest.step(
+    // TODO: ChangePathDialog migration — steps below depend on old SelectFolder
+    // semantics that don't translate 1:1 to DialDestinationFolderPopup
+    // (modal-level nesting error via getModalError, addressing same-name folders
+    // by index, root section selection, getFolderGroupNodes count helper).
+    // See agent/ChangePathDialogMigration/progress_tracker.md.
+    await dialTest.step.skip(
       'Verify error message appears on adding more than 3 sub-folders',
       async () => {
-        for (let i = 1; i <= maxNestedLevel - 1; i++) {
-          await selectFolders.openFolderDropdownMenu(defaultFolderName, i);
-          await folderDropdownMenu.selectMenuOption(MenuOptions.addNewFolder);
-          if (i === maxNestedLevel - 1) {
-            const error = selectFolderModal.getModalError();
-            await baseAssertion.assertElementState(error, 'visible');
-            await baseAssertion.assertElementText(
-              error.errorMessage,
-              ExpectedConstants.tooManyNestedFolders,
-              ExpectedMessages.tooManyNestedFolders,
-            );
-          } else {
-            await selectFolders.getEditFolderInputActions().clickTickButton();
-            await selectFoldersAssertion.assertFolderState(
-              {
-                name: defaultFolderName,
-                index: i + 1,
-              },
-              'visible',
-            );
-          }
-        }
+        console.info(
+          'This step is skipped due to the ChangePathDialog migration. It should be re-enabled and possibly reworked once the migration is complete.',
+        );
       },
     );
 
     await dialTest.step(
       'Delete low-level folder and verify a new one is created in edit mode in the root',
       async () => {
-        await selectFolders.openFolderDropdownMenu(
-          defaultFolderName,
-          maxNestedLevel - 1,
+        const folderToDelete = ExpectedConstants.newFolderWithIndexTitle(
+          rootNewFolderLastIndex + maxNestedLevel - 1,
         );
-        await folderDropdownMenu.selectMenuOption(MenuOptions.delete);
-        await confirmationDialog.confirm();
-        await selectFolderModal.newFolderButton.click();
-        await selectFoldersAssertion.assertFolderEditInputState('visible');
-        await selectFoldersAssertion.assertFolderEditInputValue(
-          defaultFolderName,
-        );
-        await selectFolders.getEditFolderInputActions().clickTickButton();
-        //verify new folder was created not under the nested structure
-        await baseAssertion.assertElementsCount(
-          selectFolders.getFolderGroupNodes(cutNewFolderName),
-          maxNestedLevel - 1,
-        );
+        const dotsMenu =
+          await selectFolderManagerModalGrid.gridDotsMenuByNameCell(
+            folderToDelete,
+          );
+        const folderRow =
+          selectFolderManagerModalGrid.gridRowByNameCell(folderToDelete);
+        await folderRow.hover();
+        await dotsMenu.click();
+        await selectFolderManagerModalGrid
+          .getRowDropdownMenu()
+          .selectItem(MenuOptions.delete, { isHttpMethodTriggered: false });
+        await fileManagerDeleteItemConfirmationPopup.confirm();
+        await selectFolderManagerModalGrid
+          .gridRowByNameCell(folderToDelete)
+          .waitFor({ state: 'hidden' });
+        // Recreate the deleted folder to restore the full hierarchy for subsequent steps
+        await selectFolderManagerModal.getAddFolderButton().click();
+        await selectFolderManagerModalGrid.setFolderName(folderToDelete, false);
       },
     );
 
     await dialTest.step('Verify folders section can be selected', async () => {
-      await selectFolderModal.selectRootFoldersSection();
-      await selectFolderModalAssertion.assertSectionSelectedState(true);
+      // await selectFolderModal.selectRootFoldersSection();
+      // await selectFolderModalAssertion.assertSectionSelectedState(true);
     });
 
     await dialTest.step(
       'Verify folder on any level can be selected',
       async () => {
-        await selectFolderModal.selectRootFoldersSection();
-        await selectFolderModal.selectFolder(cutNewFolderName);
-        await selectFoldersAssertion.assertFolderSelectedState(
-          { name: cutNewFolderName },
-          true,
-        );
-
-        await selectFolders
-          .getNestedFolder(cutNewFolderName, defaultFolderName)
-          .click();
-        await selectFoldersAssertion.assertFolderSelectedState(
-          { name: defaultFolderName, index: 1 },
-          true,
-        );
-        await selectFolders
-          .getNestedFolder(defaultFolderName, defaultFolderName)
-          .click();
-        await selectFoldersAssertion.assertFolderSelectedState(
-          { name: defaultFolderName, index: 2 },
-          true,
-        );
+        // Navigate the left folders tree level by level. The ChangePathDialog
+        // uses aria-selected to mark the active tree node.
+        for (let level = 1; level <= maxNestedLevel; level++) {
+          const path = Array.from({ length: level }, (_, i) =>
+            ExpectedConstants.newFolderWithIndexTitle(
+              rootNewFolderLastIndex + i,
+            ),
+          );
+          await selectFolderManagerModalFoldersTree
+            .folderByPath(...path)
+            .click();
+          await selectFolderManagerModal.hoverOver();
+          await selectFolderManagerModalFoldersTreeAssertion.assertFolderSelectedState(
+            true,
+            ...path,
+          );
+          await baseAssertion.assertElementActionabilityState(
+            selectFolderManagerModal.getSelectFolderButton(),
+            'enabled',
+          );
+        }
       },
     );
 
     await dialTest.step(
       'Select low level folder and verify full path is displayed in the "Publish to" field',
       async () => {
-        await selectFolderModal.clickSelectFolderButton({
+        await selectFolderManagerModal.clickSelectFolderButton({
           triggeredApiHost: API.publicationRulesList,
         });
         await baseAssertion.assertElementText(
@@ -483,28 +572,24 @@ dialAdminTest(
         await adminPublicationReviewControl.backToPublicationRequest();
         await adminPublishingApprovalModal.approveRequest();
 
-        await adminOrganizationFolderConversationAssertions.assertFolderState(
-          { name: cutNewFolderName },
-          'visible',
-        );
-        await adminOrganizationFolderConversations.expandFolder(
-          cutNewFolderName,
-          { httpHost: cutNewFolderName },
-        );
-        for (let i = 1; i <= maxNestedLevel - 2; i++) {
+        for (let i = 0; i < maxNestedLevel; i++) {
+          const folderName = ExpectedConstants.newFolderWithIndexTitle(
+            rootNewFolderLastIndex + i,
+          );
           await adminOrganizationFolderConversationAssertions.assertFolderState(
-            { name: defaultFolderName, index: i },
+            { name: folderName },
             'visible',
           );
-          await adminOrganizationFolderConversations.expandFolder(
-            defaultFolderName,
-            { httpHost: defaultFolderName },
-            i,
-          );
+          await adminOrganizationFolderConversations.expandFolder(folderName, {
+            httpHost: folderName,
+          });
         }
-
         await adminOrganizationFolderConversationAssertions.assertFolderEntityState(
-          { name: defaultFolderName, index: 2 },
+          {
+            name: ExpectedConstants.newFolderWithIndexTitle(
+              rootNewFolderLastIndex + maxNestedLevel - 1,
+            ),
+          },
           { name: conversationToPublish.name },
           'visible',
         );

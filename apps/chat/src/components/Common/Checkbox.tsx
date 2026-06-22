@@ -13,10 +13,11 @@ interface CheckboxProps {
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   ({ className, checked, isPartialChecked, onChange }, ref) => {
     return (
-      <>
+      <span className="relative inline-flex size-[18px] shrink-0">
         <input
           className={classNames(
             'checkbox peer size-[18px] bg-layer-3',
+            isPartialChecked && 'border-accent-primary',
             className,
           )}
           type="checkbox"
@@ -32,19 +33,17 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
           }
         />
         {checked && (
-          <IconCheck
-            size={18}
-            className="pointer-events-none absolute text-accent-primary "
-          />
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <IconCheck size={14} className="text-accent-primary" />
+          </span>
         )}
 
         {isPartialChecked && (
-          <IconMinus
-            size={18}
-            className="pointer-events-none absolute text-accent-primary"
-          />
+          <span className="pointer-events-none absolute inset-0 flex items-center justify-center">
+            <IconMinus size={14} className="text-accent-primary" />
+          </span>
         )}
-      </>
+      </span>
     );
   },
 );

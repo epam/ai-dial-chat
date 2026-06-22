@@ -21,7 +21,7 @@ import { NavigationButton } from './NavigationButton';
 
 import { Feature } from '@epam/ai-dial-shared';
 
-const MarketplaceNavigationView = () => {
+const view = withRenderWhenFeature(Feature.Marketplace)(() => {
   const { t } = useTranslation(Translation.SideBar);
 
   const dispatch = useAppDispatch();
@@ -82,8 +82,6 @@ const MarketplaceNavigationView = () => {
       />
     </>
   );
-};
+});
 
-export const MarketplaceNavigation = withRenderWhenFeature(Feature.Marketplace)(
-  MarketplaceNavigationView,
-);
+export const MarketplaceNavigation = view;

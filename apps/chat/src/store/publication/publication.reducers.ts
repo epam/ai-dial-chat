@@ -6,6 +6,7 @@ import { ApiUtils } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
 import { FeatureType } from '@/src/types/common';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import {
   PublicVersionGroups,
   PublicVersionOption,
@@ -75,7 +76,12 @@ export const publicationSlice = createSlice({
       state.initialized = true;
     },
     publish: (state, _action: PayloadAction<PublicationRequestModel>) => state,
-    publishFail: (state, _action: PayloadAction<string | undefined>) => {
+    publishFail: (
+      state,
+      _action: PayloadAction<
+        { message?: string; traceId?: string } | undefined
+      >,
+    ) => {
       state.isPublicationUpdating = false;
     },
     uploadPublications: (state) => state,
@@ -85,7 +91,10 @@ export const publicationSlice = createSlice({
     ) => {
       state.publications = payload.publications;
     },
-    uploadPublicationsFail: (state) => state,
+    uploadPublicationsFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
     uploadPublication: (state, _action: PayloadAction<{ url: string }>) =>
       state,
     uploadPublicationSuccess: (
@@ -103,7 +112,10 @@ export const publicationSlice = createSlice({
       );
       state.isPublicationUpdating = false;
     },
-    uploadPublicationFail: (state) => {
+    uploadPublicationFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.isPublicationUpdating = false;
     },
     uploadPublishedWithMeItems: (
@@ -140,7 +152,12 @@ export const publicationSlice = createSlice({
         (p) => p.url !== payload.url,
       );
     },
-    approvePublicationFail: (state) => {
+    approvePublicationFail: (
+      state,
+      _action: PayloadAction<
+        { message?: string; traceId?: string } | undefined
+      >,
+    ) => {
       state.isPublicationUpdating = false;
     },
     rejectPublication: (state, _actions: PayloadAction<{ url: string }>) => {
@@ -155,7 +172,10 @@ export const publicationSlice = createSlice({
         (p) => p.url !== payload.url,
       );
     },
-    rejectPublicationFail: (state) => {
+    rejectPublicationFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => {
       state.isPublicationUpdating = false;
     },
     selectPublication: (state, { payload }: PayloadAction<string | null>) => {
@@ -226,7 +246,12 @@ export const publicationSlice = createSlice({
 
       state.isRulesLoading = false;
     },
-    uploadRulesFail: (state) => {
+    uploadRulesFail: (
+      state,
+      _action: PayloadAction<
+        { message?: string; traceId?: string } | undefined
+      >,
+    ) => {
       state.isRulesLoading = false;
     },
     setPublicationItems: (
@@ -426,6 +451,7 @@ export const publicationSlice = createSlice({
         publicationUrl: string;
         oldApplication: CustomApplicationModel;
         newApplication: CustomApplicationModel;
+        tabToOpen?: MarketplaceEditorSteps;
       }>,
     ) => state,
     updatePublicationRequestAndApplicationIcon: (
@@ -435,6 +461,7 @@ export const publicationSlice = createSlice({
         publicationUrl: string;
         oldApplication: CustomApplicationModel;
         newApplication: CustomApplicationModel;
+        tabToOpen?: MarketplaceEditorSteps;
       }>,
     ) => {
       state.isPublicationUpdating = true;

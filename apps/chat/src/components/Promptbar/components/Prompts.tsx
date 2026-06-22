@@ -1,9 +1,11 @@
 import { FC, memo, useMemo } from 'react';
 
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { FeatureType } from '@/src/types/common';
 import { PromptInfo } from '@/src/types/prompt';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { UISelectors } from '@/src/store/selectors';
@@ -19,6 +21,7 @@ interface Props {
 }
 
 const PromptsView: FC<Props> = ({ prompts }) => {
+  const { t } = useTranslation(Translation.Chat);
   const visibleSidebarItemsCount = useAppSelector((state) =>
     UISelectors.selectVisibleSidebarItems(state, FeatureType.Prompt),
   );
@@ -45,14 +48,14 @@ const PromptsView: FC<Props> = ({ prompts }) => {
 
   return (
     <CollapsibleSection
-      name={RECENT_PROMPTS_SECTION_NAME}
+      name={t(RECENT_PROMPTS_SECTION_NAME)}
       onToggle={handleToggle}
       openByDefault={isExpanded}
       isExpanded={isExpanded}
       dataQa="prompts-section"
     >
       <div
-        className="flex size-full flex-col gap-1 py-1 pr-0.5"
+        className="flex size-full flex-col gap-1 py-1 pe-0.5"
         data-qa="prompts"
       >
         {promptsToDisplay.map((prompt) => (

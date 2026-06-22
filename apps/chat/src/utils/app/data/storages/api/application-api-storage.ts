@@ -23,6 +23,7 @@ import {
 } from '@/src/types/applications';
 import { ApiKeys, CoreApiKeys } from '@/src/types/common';
 import { HTTPMethod } from '@/src/types/http';
+import { AgentUsageStats } from '@/src/types/models';
 import { ServerSlugs } from '@/src/types/slugs-types';
 
 import { DEFAULT_VERSION } from '@/src/constants/publication';
@@ -105,6 +106,21 @@ export class ApplicationApiStorage extends ApiEntityStorage<
           CoreApiKeys.Deployments,
           ApiUtils.encodeApiUrl(applicationId),
           'configuration',
+        ),
+      );
+    } catch (error) {
+      return throwError(() => error);
+    }
+  }
+
+  getAgentLimits(id: string): Observable<AgentUsageStats> {
+    try {
+      return ApiUtils.request(
+        constructPath(
+          '/api',
+          CoreApiKeys.Deployments,
+          ApiUtils.encodeApiUrl(id),
+          'limits',
         ),
       );
     } catch (error) {

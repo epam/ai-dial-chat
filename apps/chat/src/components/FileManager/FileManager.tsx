@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import { useFileManager } from '@/src/components/FileManager/hooks/useFileManager';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -17,6 +17,7 @@ import { OperationLoaderModal } from './OperationLoaderModal';
 import { UploadStatus } from '@epam/ai-dial-shared';
 import {
   DialFileManager,
+  DialFileManagerActions,
   DialFileManagerTabs,
   DialLoader,
 } from '@epam/ai-dial-ui-kit';
@@ -60,6 +61,7 @@ export const FileManager: React.FC = () => {
     toolbarOptions,
     destinationFolderPopupOptions,
     deleteConfirmationOptions,
+    conflictResolutionPopupOptions,
 
     handleSearchFiles,
     handleClearSearch,
@@ -86,6 +88,34 @@ export const FileManager: React.FC = () => {
     availableTabs,
   });
 
+  const [selectedPaths, setSelectedPaths] = useState<Set<string>>(new Set());
+
+  const allSelectedItemsShared = useMemo(() => {
+    if (selectedPaths.size === 0) return false;
+    for (const path of selectedPaths) {
+      if (!sharedByMePaths?.has(path)) {
+        return false;
+      }
+    }
+    return true;
+  }, [selectedPaths, sharedByMePaths]);
+
+  const customBulkActionsToolbarOptions = useMemo(() => {
+    if (!bulkActionsToolbarOptions) return bulkActionsToolbarOptions;
+
+    if (allSelectedItemsShared) {
+      return bulkActionsToolbarOptions;
+    }
+
+    const { [DialFileManagerActions.RemoveAccess]: __, ...restLabels } =
+      bulkActionsToolbarOptions.actionLabels || {};
+
+    return {
+      ...bulkActionsToolbarOptions,
+      actionLabels: restLabels,
+    };
+  }, [bulkActionsToolbarOptions, allSelectedItemsShared]);
+
   useEffect(() => {
     if (initialDataStatus === UploadStatus.LOADED) {
       dispatch(FilesActions.getFilesWithFolders({}));
@@ -107,7 +137,8 @@ export const FileManager: React.FC = () => {
           onSearchFiles={handleSearchFiles}
           searchInProgress={isLoadingSearchListing}
           searchResults={searchResultsUIKit}
-          bulkActionsToolbarOptions={bulkActionsToolbarOptions}
+          onSelectedPathsChange={setSelectedPaths}
+          bulkActionsToolbarOptions={customBulkActionsToolbarOptions}
           treeOptions={treeOptions}
           fileMetadataPopupOptions={fileMetadataPopupOptions}
           navigationPanelOptions={navigationPanelOptions}
@@ -121,6 +152,7 @@ export const FileManager: React.FC = () => {
           onTableFileClick={handleTableFileClick}
           destinationFolderPopupOptions={destinationFolderPopupOptions}
           deleteConfirmationOptions={deleteConfirmationOptions}
+          conflictResolutionPopupOptions={conflictResolutionPopupOptions}
           onUploadFiles={handleUploadFiles}
           onCreateFolder={handleCreateFolder}
           onUploadArchive={handleUploadArchive}
@@ -134,7 +166,6 @@ export const FileManager: React.FC = () => {
           emptyStateTitle={emptyStateTitle}
           emptyStateDescription={emptyStateDescription}
           hideSearchPathItemName
-          autoSelectUploadedItems
         />
       )}
       {isAnyOperationInProgress && (

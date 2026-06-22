@@ -67,7 +67,7 @@ export function EntityHeader<T extends MarketplaceEntity>({
 
   return (
     <header
-      className="flex items-start justify-between px-3 py-4 pl-6 md:p-6"
+      className="flex items-start justify-between px-3 py-4 ps-6 md:p-6"
       data-qa={dataQa}
     >
       <div className="flex w-full items-center gap-2 overflow-hidden md:gap-4">

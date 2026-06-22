@@ -51,7 +51,9 @@ export class FoldersTree extends BaseElement {
   };
 
   public folderGroupByPath = (...path: string[]): Locator => {
-    return this.folderByPath(...path).locator(FolderTreeSelectors.folderGroup);
+    return this.folderByPath(...path)
+      .locator(FolderTreeSelectors.folderGroup)
+      .first();
   };
 
   public async expandFolder(

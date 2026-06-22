@@ -33,7 +33,9 @@ dialTest(
           .getNewButtonDropdownMenu()
           .selectItem(MenuOptions.newFolder);
         await fileManagerGridAssertion.assertGridNameCellInputState('visible');
-        await fileManagerGridAssertion.assertGridNameCellInputValue('');
+        await fileManagerGridAssertion.assertGridNameCellInputValue(
+          'New folder 1',
+        );
       },
     );
 

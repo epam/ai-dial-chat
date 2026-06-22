@@ -2,18 +2,14 @@ import { useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { prepareEntityName } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { getRelativePath } from '@/src/utils/app/file';
+import { isRootId } from '@/src/utils/app/id';
 import {
-  constructPath,
-  getFileMimeType,
-  getNextFileName,
-  getRelativePath,
-  prepareFileName,
-  validatePreUploadFiles,
-  validateUploadFiles,
-} from '@/src/utils/app/file';
-import { getFileRootId, isRootId } from '@/src/utils/app/id';
+  ResolvedUploadFile,
+  detectUploadFileConflicts,
+  dispatchPreparedFileUploads,
+} from '@/src/utils/app/prepare-files-for-upload';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { Translation } from '@/src/types/translation';
@@ -26,20 +22,11 @@ import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 
-const validateFiles = (
-  files: File[],
-  allowedTypes: string[] = [],
-): { validFiles: File[]; errorMsg: string } => {
-  const { validFiles: preUploadValidFiles, errorMsg: preUploadErrorMsg } =
-    validatePreUploadFiles(files, allowedTypes);
-
-  const { validFiles } = validateUploadFiles(preUploadValidFiles);
-
-  return {
-    validFiles,
-    errorMsg: preUploadErrorMsg.trim(),
-  };
-};
+export interface DispatchPreparedFilesOptions {
+  bucket?: string;
+  showSuccessMessage?: boolean;
+  isFromDeviceAttachment?: boolean;
+}
 
 export const useUploadFilesHandler = (
   folderId: string,
@@ -78,80 +65,74 @@ export const useUploadFilesHandler = (
     }
   }, [dispatch, folderId, folderStatus, preUploadFiles]);
 
-  const handleUpload = useCallback(
+  const dispatchPreparedFiles = useCallback(
+    (
+      preparedFiles: ResolvedUploadFile[],
+      targetFolderPath: string | undefined = folderPath,
+      options: DispatchPreparedFilesOptions = {},
+    ) => {
+      return dispatchPreparedFileUploads(
+        dispatch,
+        preparedFiles,
+        targetFolderPath,
+        {
+          bucket: options.bucket ?? bucket,
+          showSuccessMessage: options.showSuccessMessage ?? false,
+          selectFileIds: !skipSelect,
+          isFromDeviceAttachment: options.isFromDeviceAttachment ?? false,
+        },
+      );
+    },
+    [bucket, dispatch, folderPath, skipSelect],
+  );
+
+  const uploadFiles = useCallback(
     (files: File[]) => {
       const attachmentsAmount = selectedAttachmentsAmount + files.length;
       if (attachmentsAmount > maximumAttachmentsAmount) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.MaxAllowedAttachmentsNumber, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.MaxAllowedAttachmentsNumber, {
               maxAttachmentsAmount: maximumAttachmentsAmount,
               attachmentsAmount,
             }),
-          ),
+          }),
         );
         return;
       }
 
-      const sanitizedFiles = files.map((file) => {
-        const cleanName = prepareEntityName(file.name);
-        return file.name === cleanName
-          ? file
-          : new File([file], cleanName, {
-              type: getFileMimeType(file),
-              lastModified: file.lastModified,
-            });
-      });
+      const { duplicatedFiles, nonDuplicatedFiles, errorMsg } =
+        detectUploadFileConflicts({
+          files,
+          folderId,
+          existingFiles: allFiles,
+          bucket,
+          allowedTypes,
+        });
 
-      const { validFiles, errorMsg } = validateFiles(
-        sanitizedFiles,
-        allowedTypes,
-      );
+      if (errorMsg) dispatch(UIActions.showErrorToast({ message: errorMsg }));
+      if (!duplicatedFiles.length && !nonDuplicatedFiles.length) return;
 
-      if (errorMsg) dispatch(UIActions.showErrorToast(errorMsg));
-      if (!validFiles?.length) return;
-
-      const sameLevelFiles = allFiles.filter(
-        (file) => file.folderId === folderId,
-      );
-      const sameLevelFileNames = new Set(
-        sameLevelFiles.map((file) => prepareFileName(file.name)),
-      );
-
-      const preparedFiles = validFiles.map((file) => {
-        let name = prepareFileName(file.name);
-
-        if (sameLevelFileNames.has(name)) {
-          name = getNextFileName(name, sameLevelFiles, 0, true);
-          sameLevelFileNames.add(name);
-        }
-
-        return {
-          name,
-          fileContent: file,
-          id: constructPath(getFileRootId(bucket), folderPath, name),
-        };
-      });
-
-      preparedFiles.forEach((file) => {
+      if (duplicatedFiles.length) {
         dispatch(
-          FilesActions.uploadFile({
-            fileContent: file.fileContent,
-            id: file.id,
-            relativePath: folderPath,
-            name: file.name,
-
+          FilesActions.showUploadReplaceDialog({
+            duplicatedFiles,
+            nonDuplicatedFiles,
+            folderId,
+            folderPath,
+            bucket,
             showSuccessMessage: true,
+            selectFileIds: !skipSelect,
           }),
         );
-      });
-      if (!skipSelect) {
-        dispatch(
-          FilesActions.selectFiles({ ids: preparedFiles.map(({ id }) => id) }),
-        );
+        return Promise.resolve(nonDuplicatedFiles);
       }
 
-      return Promise.resolve(preparedFiles);
+      dispatchPreparedFiles(nonDuplicatedFiles, folderPath, {
+        showSuccessMessage: true,
+      });
+
+      return Promise.resolve(nonDuplicatedFiles);
     },
     [
       selectedAttachmentsAmount,
@@ -159,13 +140,14 @@ export const useUploadFilesHandler = (
       allowedTypes,
       dispatch,
       allFiles,
-      skipSelect,
+      dispatchPreparedFiles,
       t,
       folderId,
       bucket,
       folderPath,
+      skipSelect,
     ],
   );
 
-  return handleUpload;
+  return { uploadFiles, dispatchPreparedFiles };
 };

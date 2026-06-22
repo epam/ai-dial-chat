@@ -11,8 +11,18 @@ const selectHostDomain = (state: RootState) => rootSelector(state).hostDomain;
 const selectOverlaySystemPrompt = (state: RootState) =>
   rootSelector(state).systemPrompt;
 
+const selectOverlayTemperature = (state: RootState) =>
+  rootSelector(state).temperature;
+
 const selectOptionsReceived = (state: RootState) =>
   rootSelector(state).optionsReceived;
+
+const selectRequestedOverlayTheme = (state: RootState) =>
+  rootSelector(state).requestedOverlayTheme;
+
+const selectOverlayTheme = (state: RootState) =>
+  selectRequestedOverlayTheme(state) ??
+  rootSelector(state)._savedOverlayOptions?.theme;
 
 const selectReadyToInteractSent = (state: RootState) =>
   rootSelector(state).readyToInteractSent;
@@ -59,6 +69,9 @@ const selectPrependedDefaultButtonsForMessage = createSelector(
 export const OverlaySelectors = {
   selectHostDomain,
   selectOverlaySystemPrompt,
+  selectOverlayTemperature,
+  selectOverlayTheme,
+  selectRequestedOverlayTheme,
   selectOptionsReceived,
   selectReadyToInteractSent,
   selectCustomButtons,

@@ -10,7 +10,9 @@ import React, {
 
 import classNames from 'classnames';
 
+import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
+import { useTextareaInsertInPosition } from '@/src/hooks/useTextareaInsertInPosition';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useVoiceRecorder } from '@/src/hooks/useVoiceRecorder';
@@ -22,8 +24,11 @@ import {
   isFormValueValid,
 } from '@/src/utils/app/form-schema';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
+import { doesAgentHaveChatCompletion } from '@/src/utils/app/models';
+import type { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
-import { DialFile, DialLink } from '@/src/types/files';
+import { DialLink } from '@/src/types/files';
 import { Prompt } from '@/src/types/prompt';
 import { Translation } from '@/src/types/translation';
 
@@ -117,6 +122,9 @@ export const ChatInputMessage = Inversify.register(
     const isReplay = useAppSelector(
       ConversationsSelectors.selectIsReplaySelectedConversations,
     );
+    const isPlayback = useAppSelector(
+      ConversationsSelectors.selectIsPlaybackSelectedConversations,
+    );
     const canAttachFiles = useAppSelector(
       ConversationsSelectors.selectCanAttachFile,
     );
@@ -188,6 +196,9 @@ export const ChatInputMessage = Inversify.register(
     const supportedAudioTypes = useAppSelector(
       ConversationsSelectors.selectSupportedAudioRecordingTypes,
     );
+    const isOptimisticDefaultModelLoad = useAppSelector(
+      SettingsSelectors.selectIsOptimisticDefaultModelLoad,
+    );
 
     const {
       isRecording,
@@ -201,21 +212,13 @@ export const ChatInputMessage = Inversify.register(
       clearAudioBlob,
     } = useVoiceRecorder(supportedAudioTypes);
 
-    useEffect(() => {
-      if (!audioBlob) return;
-
-      dispatch(
-        ChatActions.handleVoiceRecording({
-          audioBlob,
-          fileExtension: voiceFileExtension,
-        }),
-      );
-      clearAudioBlob();
-    }, [audioBlob, voiceFileExtension, dispatch, clearAudioBlob]);
-
     const shouldRegenerate =
       isLastMessageError ||
       (isLastAssistantMessageEmpty && !messageIsStreaming);
+
+    const doesSupportChatCompletion = selectedModels.every(
+      doesAgentHaveChatCompletion,
+    );
 
     useEffect(() => {
       if (shouldFocusAndScroll && textareaRef.current) {
@@ -279,6 +282,34 @@ export const ChatInputMessage = Inversify.register(
       selectedPrompt,
     } = usePromptSelection(maxTokensLength, modelTokenizer, '');
 
+    const { getCursorPosition } = useTextareaInsertInPosition(
+      textareaRef,
+      content,
+      setContent,
+    );
+
+    useEffect(() => {
+      if (!audioBlob) return;
+
+      const selection = isAsrMode ? getCursorPosition() : undefined;
+
+      dispatch(
+        ChatActions.handleVoiceRecording({
+          audioBlob,
+          fileExtension: voiceFileExtension,
+          selection,
+        }),
+      );
+      clearAudioBlob();
+    }, [
+      audioBlob,
+      voiceFileExtension,
+      dispatch,
+      clearAudioBlob,
+      isAsrMode,
+      getCursorPosition,
+    ]);
+
     const isSchemaValueValid = useMemo(() => {
       const schema =
         selectedConversations.map(getConversationSchema)?.[0] ??
@@ -317,7 +348,7 @@ export const ChatInputMessage = Inversify.register(
       isReplay ||
       isMessageError ||
       isInputEmpty ||
-      !areModelsLoaded ||
+      (!areModelsLoaded && !isOptimisticDefaultModelLoad) ||
       isUploadingFilePresent ||
       isConversationNameInvalid ||
       isConversationPathInvalid ||
@@ -508,30 +539,16 @@ export const ChatInputMessage = Inversify.register(
       [dispatch],
     );
 
+    const { dispatchPreparedFiles } = useChatUploadFiles();
+
     const handleUploadFromDevice = useCallback(
-      (
-        selectedFiles: Required<
-          Pick<DialFile, 'fileContent' | 'id' | 'name'>
-        >[],
-        folderPath: string | undefined,
-      ) => {
-        selectedFiles.forEach((file) => {
-          dispatch(
-            FilesActions.uploadFile({
-              fileContent: file.fileContent,
-              id: file.id,
-              relativePath: folderPath,
-              name: file.name,
-            }),
-          );
+      (selectedFiles: ResolvedUploadFile[], folderPath: string | undefined) => {
+        dispatchPreparedFiles(selectedFiles, folderPath, {
+          showSuccessMessage: true,
+          isFromDeviceAttachment: true,
         });
-        dispatch(
-          FilesActions.selectFiles({
-            ids: selectedFiles.map(({ id }) => id),
-          }),
-        );
       },
-      [dispatch],
+      [dispatchPreparedFiles],
     );
 
     const handleAddLinkToMessage = useCallback((link: DialLink) => {
@@ -543,9 +560,19 @@ export const ChatInputMessage = Inversify.register(
       );
     }, []);
 
+    const handleStopRecording = useCallback(() => {
+      if (isAsrMode) {
+        dispatch(ChatActions.setIsTranscribing(true));
+      }
+      stopRecording();
+    }, [isAsrMode, stopRecording, dispatch]);
+
     const tooltipContent = (): string => {
       if (isDisabledInputFeature && disabledInputFeatureData?.description) {
         return disabledInputFeatureData.description;
+      }
+      if (!doesSupportChatCompletion) {
+        return t(ChatI18nKeys.AbsentChatCompletionDisabledMessage);
       }
       if (messageIsStreaming) {
         return t(ChatI18nKeys.StopGenerating);
@@ -563,10 +590,10 @@ export const ChatInputMessage = Inversify.register(
         return t(ChatI18nKeys.WaitForAttachmentToLoad);
       }
       if (isConversationNameInvalid) {
-        return t(errorsMessages.entityNameInvalid);
+        return translateErrorMessage(errorsMessages.entityNameInvalid);
       }
       if (isConversationPathInvalid) {
-        return t(errorsMessages.entityPathInvalid);
+        return translateErrorMessage(errorsMessages.entityPathInvalid);
       }
       if (!isSchemaValueValid) {
         return t(ChatI18nKeys.SelectOneOfOptions);
@@ -580,13 +607,27 @@ export const ChatInputMessage = Inversify.register(
     }, [isChatInputDisabled, t]);
 
     const isDisabled = useMemo(
-      () => isLoading || isChatInputDisabled || isTranscribing,
-      [isLoading, isChatInputDisabled, isTranscribing],
+      () =>
+        isLoading ||
+        isChatInputDisabled ||
+        isTranscribing ||
+        !doesSupportChatCompletion,
+      [
+        isLoading,
+        isChatInputDisabled,
+        isTranscribing,
+        doesSupportChatCompletion,
+      ],
     );
 
     const isMicDisabled = useMemo(
       () => isDisabled || (isAsrMode && messageIsStreaming),
       [isDisabled, isAsrMode, messageIsStreaming],
+    );
+
+    const isMicHidden = useMemo(
+      () => isPlayback || isReplay || !canRecordAudio || isMessageError,
+      [isPlayback, isReplay, canRecordAudio, isMessageError],
     );
 
     useEffect(() => {
@@ -603,19 +644,19 @@ export const ChatInputMessage = Inversify.register(
 
     const paddingLeftClass = canAttach
       ? isOverlay
-        ? 'pl-11'
-        : 'pl-12'
+        ? 'ps-11'
+        : 'ps-12'
       : isOverlay
-        ? 'pl-3'
-        : 'pl-4';
+        ? 'ps-3'
+        : 'ps-4';
 
     const paddingRightClass = canRecordAudio
       ? isOverlay
-        ? 'pr-[60px]'
-        : 'pr-[72px]'
+        ? 'pe-[60px]'
+        : 'pe-[72px]'
       : isOverlay
-        ? 'pr-9'
-        : 'pr-10';
+        ? 'pe-9'
+        : 'pe-10';
 
     return (
       <div
@@ -664,12 +705,12 @@ export const ChatInputMessage = Inversify.register(
               dataQa="transcribing-overlay"
             />
           )}
-          {canRecordAudio && (
+          {!isMicHidden && (
             <MicrophoneButton
               ref={micButtonRef}
               isRecording={isRecording}
               onStartRecording={startRecording}
-              onStopRecording={stopRecording}
+              onStopRecording={handleStopRecording}
               error={voiceError}
               disabled={isMicDisabled}
             />
@@ -682,6 +723,7 @@ export const ChatInputMessage = Inversify.register(
               isLastMessageError={isLastMessageError}
               isLoading={isLoading}
               isSendDisabled={isSendDisabled}
+              microphoneButtonHidden={isMicHidden}
             />
           )}
           {canAttach && (
@@ -690,8 +732,8 @@ export const ChatInputMessage = Inversify.register(
                 className={classNames(
                   'absolute cursor-pointer rounded disabled:cursor-not-allowed',
                   isOverlay
-                    ? 'bottom-2 left-3'
-                    : 'bottom-2.5 left-4 md:bottom-3',
+                    ? 'bottom-2 start-3'
+                    : 'bottom-2.5 start-4 md:bottom-3',
                 )}
               >
                 <AttachButton
@@ -706,7 +748,7 @@ export const ChatInputMessage = Inversify.register(
                 selectedFolders.length > 0) && (
                 <div
                   className={classNames(
-                    'mb-2.5 flex max-h-[100px] min-h-0 min-w-0 flex-col gap-1 overflow-y-auto pl-12 md:grid md:auto-rows-min md:[grid-template-columns:repeat(3,minmax(0,1fr))]',
+                    'mb-2.5 flex max-h-[100px] min-h-0 min-w-0 flex-col gap-1 overflow-y-auto ps-12 md:grid md:auto-rows-min md:[grid-template-columns:repeat(3,minmax(0,1fr))]',
                     canRecordAudio ? paddingRightClass : 'pr-12',
                   )}
                   data-qa="attachment-container"
@@ -726,7 +768,7 @@ export const ChatInputMessage = Inversify.register(
 
           {showScrollDownButton && (
             <ScrollDownButton
-              className="-top-16 right-0 md:-top-20"
+              className="-top-16 end-0 md:-top-20"
               onScrollDownClick={onScrollDownClick}
             />
           )}

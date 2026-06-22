@@ -1,4 +1,4 @@
-import { BackendEntity } from '@/chat/types/common';
+import { ApiKeys, BackendEntity } from '@/chat/types/common';
 import { API, ExpectedConstants } from '@/src/testData';
 import { BaseApiHelper } from '@/src/testData/api/baseApiHelper';
 import { BucketUtil, ItemUtil, toolsetNamePrefix } from '@/src/utils';
@@ -44,10 +44,11 @@ export class ToolsetApiHelper extends BaseApiHelper {
     const allToolsets = await this.listToolsets();
     const e2eToolsets = Object.values(allToolsets).filter(
       (toolset) =>
-        toolset.display_name
+        (toolset.display_name
           .toLowerCase()
           .includes(toolsetNamePrefix.toLowerCase()) ||
-        toolset.display_name === ExpectedConstants.defaultToolsetName,
+          toolset.display_name === ExpectedConstants.defaultToolsetName) &&
+        !toolset.id?.startsWith(`${ApiKeys.Toolsets}/${API.public}`),
     );
     for (const toolset of e2eToolsets) {
       await this.deleteToolset(toolset);

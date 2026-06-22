@@ -23,6 +23,7 @@ import { fromFetch } from 'rxjs/fetch';
 
 import { combineEpics, ofType } from 'redux-observable';
 
+import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ClientDataService } from '@/src/utils/app/data/client-data-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
@@ -75,8 +76,8 @@ const initRecentModelsEpic: AppEpic = (action$, state$) =>
     switchMap((recentModelsIds) => {
       return state$.pipe(
         startWith(state$.value),
+        filter((state) => ModelsSelectors.selectAreModelsLoaded(state)),
         map((state) => ModelsSelectors.selectModels(state)),
-        filter((models) => models && models.length > 0),
         take(1),
         switchMap((models) => {
           const state = state$.value;
@@ -486,8 +487,8 @@ const addInstalledModelsFailEpic: AppEpic = (action$, state$) =>
         .map((reference) => modelsMap[reference]?.name)
         .join(', ');
       return of(
-        UIActions.showErrorToast(
-          translate(
+        UIActions.showErrorToast({
+          message: translate(
             payload.references.length > 1
               ? CommonI18nKeys.AgentsWasNotAddedToMyWorkspace
               : CommonI18nKeys.AgentWasNotAddedToMyWorkspace,
@@ -496,7 +497,7 @@ const addInstalledModelsFailEpic: AppEpic = (action$, state$) =>
               failedNames,
             },
           ),
-        ),
+        }),
       );
     }),
   );
@@ -568,8 +569,51 @@ const setDefaultModelReferenceEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const getUsageStatsEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(ModelsActions.getUsageStats.type),
+    switchMap(({ payload }) => {
+      return ApplicationService.getAgentLimits(payload.id).pipe(
+        switchMap((stats) => {
+          if (stats) {
+            return of(
+              ModelsActions.getUsageStatsSuccess({ ...payload, stats }),
+            );
+          }
+          return of(ModelsActions.getUsageStatsFailure(payload));
+        }),
+        catchError((err) => {
+          console.error(err);
+          return of(ModelsActions.getUsageStatsFailure(payload));
+        }),
+      );
+    }),
+  );
+
+const getDefaultModelEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ModelsActions.init.type),
+    filter(() =>
+      SettingsSelectors.selectIsOptimisticDefaultModelLoad(state$.value),
+    ),
+    switchMap(() =>
+      fromFetch('/api/default-model', {
+        headers: { 'Content-Type': 'application/json' },
+      }).pipe(
+        switchMap((resp) =>
+          resp.ok ? from(resp.json()) : throwError(() => resp),
+        ),
+        map((model: DialAIEntityModel) =>
+          ModelsActions.getDefaultModelSuccess({ model }),
+        ),
+        catchError(() => EMPTY), // ignore errors, as this is an optimistic load getModelsEpic will handle the actual load and error handling
+      ),
+    ),
+  );
+
 export const ModelsEpics = combineEpics(
   initEpic,
+  getDefaultModelEpic,
   getModelsEpic,
   getModelsSuccessEpic,
   getModelsFailEpic,
@@ -582,4 +626,5 @@ export const ModelsEpics = combineEpics(
   initRecentModelsEpic,
   initDefaultModelReferenceEpic,
   setDefaultModelReferenceEpic,
+  getUsageStatsEpic,
 );

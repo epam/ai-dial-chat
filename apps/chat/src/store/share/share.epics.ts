@@ -26,6 +26,7 @@ import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { ShareService } from '@/src/utils/app/data/share-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import { getCurrentReviewBucket } from '@/src/utils/app/epics-helpers/publications.epic-helpers';
 import {
   constructPath,
@@ -37,7 +38,9 @@ import {
   isApplicationId,
   isConversationId,
   isEntityIdExternal,
+  isFileId,
   isFolderId,
+  isMyEntity,
   isPromptId,
 } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
@@ -87,12 +90,14 @@ import {
   ShareSelectors,
 } from '@/src/store/selectors';
 
+import { DEFAULT_CONVERSATION_NAME } from '@/src/constants/default-ui-settings';
 import { ChatI18nKeys, CommonI18nKeys } from '@/src/constants/i18n';
 import {
   DeleteType,
   MarketplaceEntitiesTabs,
 } from '@/src/constants/marketplace';
 import { NA_VERSION } from '@/src/constants/publication';
+import { shareApiErrorsRegex } from '@/src/constants/share';
 
 import { ConversationInfo, Message, UploadStatus } from '@epam/ai-dial-shared';
 import sortBy from 'lodash-es/sortBy';
@@ -170,9 +175,9 @@ const shareConversationEpic: AppEpic = (action$) =>
 
           if (res && isConversationHasExternalAttachments(res)) {
             return of(
-              ShareActions.shareFail(
-                CommonI18nKeys.ShareWithExternalFilesFailed,
-              ),
+              ShareActions.shareFail({
+                message: CommonI18nKeys.ShareWithExternalFilesFailed,
+              }),
             );
           }
 
@@ -194,13 +199,15 @@ const shareConversationEpic: AppEpic = (action$) =>
             }),
             catchError((err) => {
               console.error(err);
-              return of(ShareActions.shareFail());
+              const { traceId } = parseApiError(err);
+              return of(ShareActions.shareFail({ traceId }));
             }),
           );
         }),
         catchError((err) => {
           console.error(err);
-          return of(ShareActions.shareFail());
+          const { traceId } = parseApiError(err);
+          return of(ShareActions.shareFail({ traceId }));
         }),
       );
     }),
@@ -235,9 +242,9 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
 
           if (conversations.some(isConversationHasExternalAttachments)) {
             return of(
-              ShareActions.shareFail(
-                CommonI18nKeys.ShareWithExternalFilesFailed,
-              ),
+              ShareActions.shareFail({
+                message: CommonI18nKeys.ShareWithExternalFilesFailed,
+              }),
             );
           }
 
@@ -257,13 +264,15 @@ const shareConversationFolderEpic: AppEpic = (action$) =>
             }),
             catchError((err) => {
               console.error(err);
-              return of(ShareActions.shareFail());
+              const { traceId } = parseApiError(err);
+              return of(ShareActions.shareFail({ traceId }));
             }),
           );
         }),
         catchError((err) => {
           console.error(err);
-          return of(ShareActions.shareFail());
+          const { traceId } = parseApiError(err);
+          return of(ShareActions.shareFail({ traceId }));
         }),
       );
     }),
@@ -287,7 +296,8 @@ const sharePromptEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(ShareActions.shareFail());
+          const { traceId } = parseApiError(err);
+          return of(ShareActions.shareFail({ traceId }));
         }),
       );
     }),
@@ -312,7 +322,8 @@ const sharePromptFolderEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(ShareActions.shareFail());
+          const { traceId } = parseApiError(err);
+          return of(ShareActions.shareFail({ traceId }));
         }),
       );
     }),
@@ -422,7 +433,20 @@ const shareApplicationEpic: AppEpic = (action$, state$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(ShareActions.shareFail());
+          const { traceId, message } = parseApiError(err);
+          const errorMessage = message?.toLowerCase()?.trim() ?? '';
+          let failedPayload = undefined;
+
+          if (
+            shareApiErrorsRegex.applicationWithPublicFiles.test(errorMessage)
+          ) {
+            failedPayload =
+              CommonI18nKeys.ShareApplicationWithPublicResourcesFailed;
+          }
+
+          return of(
+            ShareActions.shareFail({ message: failedPayload, traceId }),
+          );
         }),
       );
     }),
@@ -432,15 +456,16 @@ const shareFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.shareFail.type),
     map(({ payload }) => {
-      return UIActions.showErrorToast(
-        translate(payload ?? CommonI18nKeys.ShareFailed, {
+      return UIActions.showErrorToast({
+        message: translate(payload?.message ?? CommonI18nKeys.ShareFailed, {
           ns: Translation.Common,
         }),
-      );
+        traceId: payload?.traceId,
+      });
     }),
   );
 
-const acceptInvitationEpic: AppEpic = (action$) =>
+const acceptInvitationEpic: AppEpic = (action$, state$, { router }) =>
   action$.pipe(
     ofType(ShareActions.acceptShareInvitation.type),
     switchMap(({ payload }) =>
@@ -448,37 +473,92 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         invitationId: payload.invitationId,
       }).pipe(
         switchMap((data) => {
+          const acceptedIds = data.resources.filter(
+            (resource) =>
+              isPromptId(resource.url) ||
+              isConversationId(resource.url) ||
+              isApplicationId(resource.url),
+          );
+
+          const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
+          const permissions = acceptedIds[0].permissions;
+          const isFolder = isFolderId(acceptedIds[0].url);
+          const isConversation = isConversationId(acceptedId);
+          const isPrompt = isPromptId(acceptedId);
+          const isApplication = isApplicationId(acceptedId);
+
+          if (isMyEntity({ id: acceptedId })) {
+            if (isApplication) {
+              return of(
+                ApplicationActions.get({
+                  applicationId: acceptedId,
+                  showCard: true,
+                }),
+              );
+            }
+
+            void router.push('/', undefined, { shallow: true });
+
+            if (isConversation) {
+              return isFolder
+                ? of(
+                    ConversationsActions.uploadConversationsFromMultipleFolders(
+                      {
+                        paths: [acceptedId],
+                        pathToSelectFrom: acceptedId,
+                      },
+                    ),
+                  )
+                : of(
+                    ConversationsActions.selectConversations({
+                      conversationIds: [acceptedId],
+                    }),
+                  );
+            }
+
+            if (isPrompt) {
+              return concat(
+                isFolder
+                  ? of(
+                      PromptsActions.uploadPromptsFromMultipleFolders({
+                        paths: [acceptedId],
+                        pathToSelectFrom: acceptedId,
+                      }),
+                    )
+                  : of(PromptsActions.selectPrompt({ promptId: acceptedId })),
+                of(
+                  ConversationsActions.createNewConversations({
+                    names: [DEFAULT_CONVERSATION_NAME],
+                    headerCreateNew: false,
+                  }),
+                ),
+              );
+            }
+            return EMPTY;
+          }
           return ShareService.shareAccept({
             invitationId: payload.invitationId,
           }).pipe(
             switchMap(() => {
-              const acceptedIds = data.resources.filter(
-                (resource) =>
-                  isPromptId(resource.url) ||
-                  isConversationId(resource.url) ||
-                  isApplicationId(resource.url),
-              );
-
-              const acceptedId = ApiUtils.decodeApiUrl(acceptedIds[0].url);
-              const permissions = acceptedIds[0].permissions;
-
               return of(
                 ShareActions.acceptShareInvitationSuccess({
                   acceptedId,
                   permissions,
-                  isFolder: isFolderId(acceptedIds[0].url),
-                  isConversation: isConversationId(acceptedIds[0].url),
-                  isPrompt: isPromptId(acceptedIds[0].url),
-                  isApplication: isApplicationId(acceptedId),
+                  isFolder,
+                  isConversation,
+                  isPrompt,
+                  isApplication,
                 }),
               );
             }),
             catchError((err) => {
               console.error(err);
+              const { message, traceId } = parseApiError(err);
               return of(
                 ShareActions.acceptShareInvitationFail({
-                  message: err.message.trim().toLowerCase(),
+                  message: message?.trim()?.toLowerCase(),
                   details: data,
+                  traceId,
                 }),
               );
             }),
@@ -486,9 +566,11 @@ const acceptInvitationEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error(err);
+          const { message, traceId } = parseApiError(err);
           return of(
             ShareActions.acceptShareInvitationFail({
-              message: err.message?.trim()?.toLowerCase(),
+              message: message?.trim()?.toLowerCase(),
+              traceId,
             }),
           );
         }),
@@ -557,8 +639,8 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
     switchMap(({ payload }) => {
       history.replaceState({}, '', window.location.origin);
 
-      const { message: errorMessage, details } = payload;
-      const resourceUrl = sortBy(
+      const { message: errorMessage, details, traceId } = payload;
+      let resourceUrl = sortBy(
         details?.resources ?? [],
         getResourceSoringWeight,
       )?.[0]?.url;
@@ -573,11 +655,12 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
       ) {
         resultActions$.push(
           of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.AcceptShareNotExists, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.AcceptShareNotExists, {
                 ns: Translation.Common,
               }),
-            ),
+              traceId,
+            }),
           ),
         );
       } else if (
@@ -586,6 +669,9 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
         ) &&
         resourceUrl
       ) {
+        const parsedUrl = errorMessage?.split(':')?.[1]?.trim();
+        resourceUrl =
+          parsedUrl && isFileId(parsedUrl) ? parsedUrl : resourceUrl;
         const isFolderResource = isFolderId(resourceUrl);
         const { name, version } = parseEntityApiKey(
           splitEntityId(resourceUrl).name,
@@ -616,17 +702,19 @@ const acceptInvitationFailEpic: AppEpic = (action$) =>
               title: translate(CommonI18nKeys.LimitExceeded, {
                 ns: Translation.Common,
               }),
+              traceId,
             }),
           ),
         );
       } else {
         resultActions$.push(
           of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.AcceptShareFailed, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.AcceptShareFailed, {
                 ns: Translation.Common,
               }),
-            ),
+              traceId,
+            }),
           ),
         );
       }
@@ -791,7 +879,8 @@ const getSharedListingEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error(err);
-          return of(ShareActions.getSharedListingFail());
+          const { traceId } = parseApiError(err);
+          return of(ShareActions.getSharedListingFail({ traceId }));
         }),
       );
     }),
@@ -800,13 +889,14 @@ const getSharedListingEpic: AppEpic = (action$) =>
 const getSharedListingFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.getSharedListingFail.type),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       return of(
-        UIActions.showErrorToast(
-          translate(CommonI18nKeys.ShareByMeListingFailed, {
+        UIActions.showErrorToast({
+          message: translate(CommonI18nKeys.ShareByMeListingFailed, {
             ns: Translation.Common,
           }),
-        ),
+          traceId: payload?.traceId,
+        }),
       );
     }),
   );
@@ -870,12 +960,16 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
               .filter(Boolean) as AppAction[]),
           );
         } else {
+          const sharedFolderIds = payload.resources.folders.map(
+            (folder) => folder.id,
+          );
           actions.push(
             ConversationsActions.uploadConversationsFromMultipleFolders({
-              paths: payload.resources.folders.map((folder) => folder.id),
+              paths: sharedFolderIds,
               recursive: true,
               pathToSelectFrom:
                 isFolderAccepted && isConversation ? acceptedId : undefined,
+              cleanUpEmptySharedFolderPaths: sharedFolderIds,
             }),
           );
 
@@ -965,12 +1059,16 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
                 .filter(Boolean) as AppAction[]),
             );
         } else {
+          const sharedPromptFolderIds = payload.resources.folders.map(
+            (folder) => folder.id,
+          );
           actions.push(
             PromptsActions.uploadPromptsFromMultipleFolders({
-              paths: payload.resources.folders.map((folder) => folder.id),
+              paths: sharedPromptFolderIds,
               recursive: true,
               pathToSelectFrom:
                 isFolderAccepted && isPrompt ? acceptedId : undefined,
+              cleanUpEmptySharedFolderPaths: sharedPromptFolderIds,
             }),
           );
 
@@ -1086,6 +1184,8 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
 
           const sharedWithMeFileIds = files.map((f) => f.id);
           const sharedWithMeFolderIds = folders.map((f) => f.id);
+          // Keep this action before addSharedFiles: files reducer uses the fresh
+          // sharedWithMe ids to preserve valid nested descendants and clean stale ones.
           actions.push(
             FilesActions.setSharedWithMeFilesAndFoldersIds({
               ids: [...sharedWithMeFileIds, ...sharedWithMeFolderIds],
@@ -1217,7 +1317,10 @@ const revokeAccessEpic: AppEpic = (action$) =>
 
       return ShareService.shareRevoke(resourceUrls).pipe(
         concatMap(() => concat(of(ShareActions.revokeAccessSuccess(payload)))),
-        catchError(() => of(ShareActions.revokeAccessFail())),
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+          return of(ShareActions.revokeAccessFail({ traceId }));
+        }),
       );
     }),
   );
@@ -1326,13 +1429,14 @@ const revokeAccessSuccessEpic: AppEpic = (action$, state$) =>
 const revokeAccessFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.revokeAccessFail.type),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       return of(
-        UIActions.showErrorToast(
-          translate(CommonI18nKeys.RevokeAccessFailed, {
+        UIActions.showErrorToast({
+          message: translate(CommonI18nKeys.RevokeAccessFailed, {
             ns: Translation.Common,
           }),
-        ),
+          traceId: payload?.traceId,
+        }),
       );
     }),
   );
@@ -1387,13 +1491,14 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
 
           return concat(...actions);
         }),
-        catchError(() => {
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
           const errorActions: Observable<AppAction>[] = payload.resourceIds.map(
             (resourceId) => {
               const { name } = splitEntityId(resourceId);
               return of(
-                UIActions.showErrorToast(
-                  translate(
+                UIActions.showErrorToast({
+                  message: translate(
                     payload.isFolder
                       ? CommonI18nKeys.FailedToUnshareFolder
                       : CommonI18nKeys.FailedToUnshareItem,
@@ -1402,13 +1507,13 @@ const discardSharedWithMeEpic: AppEpic = (action$) =>
                       itemName: name,
                     },
                   ),
-                ),
+                }),
               );
             },
           );
           return concat(
             ...errorActions,
-            of(ShareActions.discardSharedWithMeFail()),
+            of(ShareActions.discardSharedWithMeFail({ traceId })),
           );
         }),
       );
@@ -1560,13 +1665,14 @@ const discardSharedWithMeSuccessEpic: AppEpic = (action$, state$) =>
 const discardSharedWithMeFailEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(ShareActions.discardSharedWithMeFail.type),
-    switchMap(() => {
+    switchMap(({ payload }) => {
       return of(
-        UIActions.showErrorToast(
-          translate(CommonI18nKeys.DiscardSharedWithMeFailed, {
+        UIActions.showErrorToast({
+          message: translate(CommonI18nKeys.DiscardSharedWithMeFailed, {
             ns: Translation.Common,
           }),
-        ),
+          traceId: payload?.traceId,
+        }),
       );
     }),
   );

@@ -3,6 +3,8 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import classNames from 'classnames';
 
+import { useTranslation } from '@/src/hooks/useTranslation';
+
 import { replaceSpacesFromString } from '@/src/utils/app/common';
 import {
   getSelectedEntitiesByFolderId,
@@ -15,9 +17,13 @@ import { isFileId } from '@/src/utils/app/id';
 import { EnumMapper } from '@/src/utils/app/mappers';
 import { isFolderNameNotUniq } from '@/src/utils/app/publications';
 
+import { Translation } from '@/src/types/translation';
+
 import { PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { PublicationSelectors } from '@/src/store/publication/publication.selectors';
+
+import { SideBarI18nKeys } from '@/src/constants/i18n';
 
 import { Checkbox } from '@/src/components/Common/Checkbox';
 import { EditableField } from '@/src/components/Common/EditableField';
@@ -55,6 +61,7 @@ export const PublicationFolderRow = ({
   ItemComponent,
   publicationUrl,
 }: Props) => {
+  const { t } = useTranslation(Translation.SideBar);
   const dispatch = useAppDispatch();
 
   const [inputName, setInputName] = useState(currentFolder.name);
@@ -102,12 +109,12 @@ export const PublicationFolderRow = ({
 
     const nameErrors = getStringValidationErrors({
       value: inputName,
-      label: 'Folder name',
+      label: t(SideBarI18nKeys.FolderNameLabel),
       checkDotsInTheEnd: true,
       isNotUniqName,
     });
     setErrors(nameErrors);
-  }, [currentFolder, folderEditState, inputName]);
+  }, [currentFolder, folderEditState, inputName, t]);
 
   const handleChangeName = useCallback(
     (name: string) => {
@@ -186,26 +193,26 @@ export const PublicationFolderRow = ({
     <>
       <div
         className={classNames(
-          'relative flex min-h-[34px] w-full flex-1 cursor-pointer items-center rounded pl-4 hover:bg-accent-primary-alpha',
+          'relative flex min-h-[34px] w-full flex-1 cursor-pointer items-center rounded ps-4 hover:bg-accent-primary-alpha',
           isFocused && 'bg-accent-primary-alpha',
         )}
         data-qa="folder"
       >
         <div
-          className="flex h-[34px] w-full items-center gap-2 py-[5px] pr-3"
+          className="flex h-[34px] w-full items-center gap-2 py-[5px] pe-3"
           style={{
-            paddingLeft: `${level * 24}px`,
+            paddingInlineStart: `${level * 24}px`,
           }}
         >
           <Checkbox
             checked={isSelected}
             isPartialChecked={isPartialSelected}
             onChange={handleSelectFolder}
-            className="mr-0"
+            className="me-0"
           />
-          <IconFolder size={18} className="mr-1 text-secondary" />
+          <IconFolder size={18} className="me-1 text-secondary" />
           <div
-            className="relative flex-1 select-none truncate text-left"
+            className="relative flex-1 select-none truncate text-start"
             data-qa="folder-name"
             onFocus={() => setIsFocused(true)}
             onBlur={() => setIsFocused(false)}
@@ -216,9 +223,9 @@ export const PublicationFolderRow = ({
               onChange={handleChangeName}
               inputClassName={classNames(
                 'w-full',
-                errors.length && '!border-b-error pr-5',
+                errors.length && '!border-b-error pe-5',
               )}
-              tooltipIconClassName="right-1"
+              tooltipIconClassName="end-1"
               errors={errors}
               dataQA="folder-input"
             />

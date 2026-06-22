@@ -122,7 +122,12 @@ export const shareSlice = createSlice({
       state.shareModalState = ModalState.OPENED;
       state.sharePermissions = undefined;
     },
-    shareFail: (state, _action: PayloadAction<string | undefined>) => {
+    shareFail: (
+      state,
+      _action: PayloadAction<
+        { message?: string; traceId?: string } | undefined
+      >,
+    ) => {
       state.invitationId = undefined;
       state.shareModalState = ModalState.CLOSED;
       state.sharePermissions = undefined;
@@ -143,7 +148,10 @@ export const shareSlice = createSlice({
         isFolder?: boolean;
       }>,
     ) => state,
-    revokeAccessFail: (state) => state,
+    revokeAccessFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
 
     discardSharedWithMe: (
       state,
@@ -161,7 +169,10 @@ export const shareSlice = createSlice({
         isFolder?: boolean;
       }>,
     ) => state,
-    discardSharedWithMeFail: (state) => state,
+    discardSharedWithMeFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
     setModalState: (
       state,
       {
@@ -233,6 +244,7 @@ export const shareSlice = createSlice({
       _action: PayloadAction<{
         message?: string;
         details?: InvitationDetails;
+        traceId?: string;
       }>,
     ) => state,
     resetAcceptedEntityInfo: (state) => {
@@ -265,7 +277,10 @@ export const shareSlice = createSlice({
         };
       }>,
     ) => state,
-    getSharedListingFail: (state) => state,
+    getSharedListingFail: (
+      state,
+      _action: PayloadAction<{ traceId?: string } | undefined>,
+    ) => state,
   },
 });
 

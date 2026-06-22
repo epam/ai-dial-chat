@@ -180,7 +180,7 @@ const ModelIconTemplate = memo(
         data-qa="entity-icon"
       >
         <div
-          className="absolute z-0 size-full rounded-full border border-secondary bg-model-icon"
+          className="absolute z-0 size-full rounded-full border border-secondary bg-model-icon [-webkit-background-clip:padding-box]"
           style={{ height: `${size}px`, width: `${size}px` }}
         ></div>
         {showFallback ? (
@@ -194,7 +194,7 @@ const ModelIconTemplate = memo(
             onError={handleError}
             data-image-name={description}
             ref={ref}
-            className="absolute left-0 top-0 z-10 size-full"
+            className="absolute start-0 top-0 z-10 size-full"
             style={{ height: `${size}px`, width: `${size}px` }}
             id={entityId}
           />

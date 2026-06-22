@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 
 import { useSectionToggle } from '@/src/hooks/useSectionToggle';
+import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Conversation } from '@/src/types/chat';
 import { FeatureType } from '@/src/types/common';
+import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
 import { ConversationsSelectors } from '@/src/store/selectors';
@@ -27,6 +29,7 @@ export const ConversationsRenderer = ({
   label,
   isDraggingOver = false,
 }: ConversationsRendererProps) => {
+  const { t } = useTranslation(Translation.Chat);
   const selectedConversationsIds = useAppSelector(
     ConversationsSelectors.selectSelectedConversationsIds,
   );
@@ -50,7 +53,7 @@ export const ConversationsRenderer = ({
 
   return (
     <CollapsibleSection
-      name={label}
+      name={t(label)}
       onToggle={handleToggle}
       dataQa="chronology"
       isHighlighted={isSectionHighlighted}

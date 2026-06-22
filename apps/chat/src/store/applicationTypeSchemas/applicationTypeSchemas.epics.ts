@@ -7,6 +7,7 @@ import { combineEpics, ofType } from 'redux-observable';
 
 import { cleanSchemaId } from '@/src/utils/app/application-type-schema';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 
 import { AppEpic } from '@/src/types/store';
 
@@ -31,7 +32,12 @@ const fetchSchemasEpic: AppEpic = (action$, state$) =>
             ApplicationTypesSchemasActions.initFinish(),
           ),
         ),
-        catchError(() => of(ApplicationTypesSchemasActions.fetchSchemasFail())),
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+          return of(
+            ApplicationTypesSchemasActions.fetchSchemasFail({ traceId }),
+          );
+        }),
       );
     }),
   );
@@ -71,11 +77,14 @@ const fetchDetailedApplicationTypeSchemaEpic: AppEpic = (action$, state$) =>
             ),
           ),
         ),
-        catchError(() =>
-          of(
-            ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchemaFail(),
-          ),
-        ),
+        catchError((err) => {
+          const { traceId } = parseApiError(err);
+          return of(
+            ApplicationTypesSchemasActions.fetchDetailedApplicationTypeSchemaFail(
+              { traceId },
+            ),
+          );
+        }),
       );
     }),
   );

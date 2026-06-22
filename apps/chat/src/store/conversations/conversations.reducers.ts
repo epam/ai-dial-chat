@@ -130,6 +130,7 @@ export const conversationsSlice = createSlice({
       }: PayloadAction<{
         oldConversation: Conversation;
         newConversation: Conversation;
+        traceId?: string;
       }>,
     ) => {
       state.conversations = state.conversations.map((conv) => {
@@ -534,6 +535,7 @@ export const conversationsSlice = createSlice({
         conversation: Conversation;
         message: string;
         response?: Response;
+        traceId?: string;
       }>,
     ) => state,
     streamMessageSuccess: (state) => state,
@@ -633,6 +635,7 @@ export const conversationsSlice = createSlice({
         paths: string[];
         recursive?: boolean;
         pathToSelectFrom?: string;
+        cleanUpEmptySharedFolderPaths?: string[];
       }>,
     ) => state,
     uploadConversationsWithFoldersRecursive: (

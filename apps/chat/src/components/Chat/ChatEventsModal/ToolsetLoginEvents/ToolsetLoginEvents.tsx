@@ -216,15 +216,13 @@ export const ToolsetLoginEvents: FC<ToolsetLoginEventsProps> = ({ events }) => {
                     className="md:hidden"
                     placement="bottom-start"
                     allowedPlacements={['top-start', 'top-end']}
-                    menu={{
-                      onClick: handleMenuDeclineClick,
-                      items: [
-                        {
-                          key: event.id,
-                          label: t(ChatI18nKeys.Decline),
-                        },
-                      ],
-                    }}
+                    items={[
+                      {
+                        key: event.id,
+                        label: t(ChatI18nKeys.Decline),
+                      },
+                    ]}
+                    onItemClick={handleMenuDeclineClick}
                   >
                     <IconDotsVertical size={20} className="text-secondary" />
                   </DialDropdown>

@@ -25,7 +25,10 @@ import {
   filterOnlyMyEntities,
   isImportEntityNameOnSameLevelUnique,
 } from '@/src/utils/app/common';
-import { regenerateConversationId } from '@/src/utils/app/conversation';
+import {
+  getStorageSafeUniqueConversationName,
+  regenerateConversationId,
+} from '@/src/utils/app/conversation';
 import { BucketService } from '@/src/utils/app/data/bucket-service';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { FileService } from '@/src/utils/app/data/file-service';
@@ -41,7 +44,6 @@ import { getOrUploadPrompt } from '@/src/utils/app/data/storages/api/prompt-api-
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { constructPath, getFileWithType } from '@/src/utils/app/file';
 import {
-  generateNextName,
   getConversationAttachmentWithPath,
   getFoldersFromIds,
   getParentFolderIdsFromFolderId,
@@ -60,7 +62,10 @@ import {
   triggerExportConversation,
   updateMessageAttachments,
 } from '@/src/utils/app/import-export';
-import { regeneratePromptId } from '@/src/utils/app/prompts';
+import {
+  getStorageSafeUniquePromptName,
+  regeneratePromptId,
+} from '@/src/utils/app/prompts';
 import { translate } from '@/src/utils/app/translation';
 import {
   compressConversationInZip,
@@ -94,10 +99,6 @@ import {
   UISelectors,
 } from '@/src/store/selectors';
 
-import {
-  DEFAULT_CONVERSATION_NAME,
-  DEFAULT_PROMPT_NAME,
-} from '@/src/constants/default-ui-settings';
 import { CommonI18nKeys } from '@/src/constants/i18n';
 
 import {
@@ -167,11 +168,11 @@ const exportConversationEpic: AppEpic = (action$, state$) =>
         catchError(() =>
           concat(
             of(
-              UIActions.showErrorToast(
-                translate(CommonI18nKeys.UploadingConversationsError, {
+              UIActions.showErrorToast({
+                message: translate(CommonI18nKeys.UploadingConversationsError, {
                   ns: Translation.Common,
                 }),
-              ),
+              }),
             ),
             of(ImportExportActions.exportFail()),
           ),
@@ -215,11 +216,11 @@ const exportConversationsEpic: AppEpic = (action$, state$) =>
     catchError(() =>
       concat(
         of(
-          UIActions.showErrorToast(
-            translate(CommonI18nKeys.UploadingConversationsError, {
+          UIActions.showErrorToast({
+            message: translate(CommonI18nKeys.UploadingConversationsError, {
               ns: Translation.Common,
             }),
-          ),
+          }),
         ),
         of(ImportExportActions.exportFail()),
       ),
@@ -235,11 +236,11 @@ const exportPromptEpic: AppEpic = (action$, state$) =>
       if (!prompt) {
         return concat(
           of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.UploadingPromptsError, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.UploadingPromptsError, {
                 ns: Translation.Common,
               }),
-            ),
+            }),
           ),
           of(ImportExportActions.exportFail()),
         );
@@ -286,11 +287,11 @@ const exportPromptsEpic: AppEpic = (action$, state$) =>
     catchError(() =>
       concat(
         of(
-          UIActions.showErrorToast(
-            translate(CommonI18nKeys.UploadingPromptsError, {
+          UIActions.showErrorToast({
+            message: translate(CommonI18nKeys.UploadingPromptsError, {
               ns: Translation.Common,
             }),
-          ),
+          }),
         ),
         of(ImportExportActions.exportFail()),
       ),
@@ -349,11 +350,14 @@ const importConversationsEpic: AppEpic = (action$) =>
       if (isError) {
         return concat(
           of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.UnsupportedConversationsDataFormat, {
-                ns: Translation.Common,
-              }),
-            ),
+            UIActions.showErrorToast({
+              message: translate(
+                CommonI18nKeys.UnsupportedConversationsDataFormat,
+                {
+                  ns: Translation.Common,
+                },
+              ),
+            }),
           ),
           of(ImportExportActions.resetState()),
         );
@@ -407,11 +411,11 @@ const importPromptsEpic: AppEpic = (action$) =>
         return concat(
           of(ImportExportActions.importPromptsFail()),
           of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.UnsupportedPromptsDataFormat, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.UnsupportedPromptsDataFormat, {
                 ns: Translation.Common,
               }),
-            ),
+            }),
           ),
         );
       }
@@ -560,11 +564,14 @@ const uploadImportedConversationsEpic: AppEpic = (action$, state$) =>
             catchError(() => {
               return concat(
                 of(
-                  UIActions.showErrorToast(
-                    translate(CommonI18nKeys.UploadingConversationsError, {
-                      ns: Translation.Common,
-                    }),
-                  ),
+                  UIActions.showErrorToast({
+                    message: translate(
+                      CommonI18nKeys.UploadingConversationsError,
+                      {
+                        ns: Translation.Common,
+                      },
+                    ),
+                  }),
                 ),
                 of(ImportExportActions.importFail(FeatureType.Chat)),
               );
@@ -658,11 +665,11 @@ const uploadImportedPromptsEpic: AppEpic = (action$, state$) =>
             catchError(() => {
               return concat(
                 of(
-                  UIActions.showErrorToast(
-                    translate(CommonI18nKeys.UploadingPromptsError, {
+                  UIActions.showErrorToast({
+                    message: translate(CommonI18nKeys.UploadingPromptsError, {
                       ns: Translation.Common,
                     }),
-                  ),
+                  }),
                 ),
                 of(ImportExportActions.importPromptsFail()),
               );
@@ -715,11 +722,11 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
             const siblingConversations = conversations
               .concat(conversationsToPostfix)
               .filter((sibling) => sibling.folderId === conversation.folderId);
-            const newName = generateNextName(
-              DEFAULT_CONVERSATION_NAME,
-              conversation.name,
-              siblingConversations,
-            );
+            const newName = getStorageSafeUniqueConversationName({
+              conversation,
+              desiredName: conversation.name,
+              existingNames: siblingConversations.map((s) => s.name),
+            });
 
             conversationsToPostfix.push(
               regenerateConversationId({
@@ -779,11 +786,11 @@ const continueDuplicatedImportEpic: AppEpic = (action$, state$) =>
             const siblingPrompts = prompts
               .concat(promptsToPostfix)
               .filter((sibling) => prompt.folderId === sibling.folderId);
-            const newName = generateNextName(
-              DEFAULT_PROMPT_NAME,
-              prompt.name,
-              siblingPrompts,
-            );
+            const newName = getStorageSafeUniquePromptName({
+              prompt,
+              desiredName: prompt.name,
+              existingNames: siblingPrompts.map((s) => s.name),
+            });
 
             promptsToPostfix.push(
               regeneratePromptId({
@@ -1000,11 +1007,14 @@ const importZipEpic: AppEpic = (action$) =>
           if (!preUnzippedHistory.history || !preUnzippedHistory.history.name) {
             return concat(
               of(
-                UIActions.showErrorToast(
-                  translate(CommonI18nKeys.UnsupportedConversationsDataFormat, {
-                    ns: Translation.Common,
-                  }),
-                ),
+                UIActions.showErrorToast({
+                  message: translate(
+                    CommonI18nKeys.UnsupportedConversationsDataFormat,
+                    {
+                      ns: Translation.Common,
+                    },
+                  ),
+                }),
               ),
               of(ImportExportActions.importFail(FeatureType.Chat)),
             );
@@ -1014,11 +1024,14 @@ const importZipEpic: AppEpic = (action$) =>
           if (!file) {
             return concat(
               of(
-                UIActions.showErrorToast(
-                  translate(CommonI18nKeys.UnsupportedConversationsDataFormat, {
-                    ns: Translation.Common,
-                  }),
-                ),
+                UIActions.showErrorToast({
+                  message: translate(
+                    CommonI18nKeys.UnsupportedConversationsDataFormat,
+                    {
+                      ns: Translation.Common,
+                    },
+                  ),
+                }),
               ),
               of(ImportExportActions.importFail(FeatureType.Chat)),
             );
@@ -1030,12 +1043,12 @@ const importZipEpic: AppEpic = (action$) =>
               if (!completeHistoryParsed) {
                 return concat(
                   of(
-                    UIActions.showErrorToast(
-                      translate(
+                    UIActions.showErrorToast({
+                      message: translate(
                         CommonI18nKeys.UnsupportedConversationsDataFormat,
                         { ns: Translation.Common },
                       ),
-                    ),
+                    }),
                   ),
                   of(ImportExportActions.importFail(FeatureType.Chat)),
                 );
@@ -1059,12 +1072,12 @@ const importZipEpic: AppEpic = (action$) =>
               if (isError) {
                 return concat(
                   of(
-                    UIActions.showErrorToast(
-                      translate(
+                    UIActions.showErrorToast({
+                      message: translate(
                         CommonI18nKeys.UnsupportedConversationsDataFormat,
                         { ns: Translation.Common },
                       ),
-                    ),
+                    }),
                   ),
                   of(ImportExportActions.importFail(FeatureType.Chat)),
                 );
@@ -1433,11 +1446,11 @@ const updateConversationWithUploadedAttachmentsEpic: AppEpic = (
           const siblingConversations = conversations.filter(
             (sibling) => sibling.folderId === conversationToUpload.folderId,
           );
-          const newName = generateNextName(
-            DEFAULT_CONVERSATION_NAME,
-            conversationToUpload.name,
-            siblingConversations,
-          );
+          const newName = getStorageSafeUniqueConversationName({
+            conversation: conversationToUpload,
+            desiredName: conversationToUpload.name,
+            existingNames: siblingConversations.map((s) => s.name),
+          });
 
           conversationToUpload = regenerateConversationId({
             ...conversationToUpload,
@@ -1516,14 +1529,14 @@ const importFailEpic: AppEpic = (action$) =>
     ofType(ImportExportActions.importFail.type),
     switchMap(({ payload }) => {
       return of(
-        UIActions.showErrorToast(
-          translate(
+        UIActions.showErrorToast({
+          message: translate(
             payload === FeatureType.Chat
               ? CommonI18nKeys.ImportConversationsFailed
               : CommonI18nKeys.ImportPromptsFailed,
             { ns: Translation.Common },
           ),
-        ),
+        }),
       );
     }),
   );
@@ -1533,9 +1546,11 @@ const exportFailEpic: AppEpic = (action$) =>
     ofType(ImportExportActions.exportFail.type),
     switchMap(() => {
       return of(
-        UIActions.showErrorToast(
-          translate(CommonI18nKeys.ExportFailed, { ns: Translation.Common }),
-        ),
+        UIActions.showErrorToast({
+          message: translate(CommonI18nKeys.ExportFailed, {
+            ns: Translation.Common,
+          }),
+        }),
       );
     }),
   );
@@ -1585,11 +1600,14 @@ const handleImportStopEpic: AppEpic = (action$) =>
                   }),
                 ),
                 of(
-                  UIActions.showErrorToast(
-                    translate(CommonI18nKeys.SomeConversationsWereNotImported, {
-                      ns: Translation.Common,
-                    }),
-                  ),
+                  UIActions.showErrorToast({
+                    message: translate(
+                      CommonI18nKeys.SomeConversationsWereNotImported,
+                      {
+                        ns: Translation.Common,
+                      },
+                    ),
+                  }),
                 ),
               );
             }
@@ -1623,11 +1641,14 @@ const handleImportStopEpic: AppEpic = (action$) =>
                   }),
                 ),
                 of(
-                  UIActions.showErrorToast(
-                    translate(CommonI18nKeys.SomePromptsWereNotImported, {
-                      ns: Translation.Common,
-                    }),
-                  ),
+                  UIActions.showErrorToast({
+                    message: translate(
+                      CommonI18nKeys.SomePromptsWereNotImported,
+                      {
+                        ns: Translation.Common,
+                      },
+                    ),
+                  }),
                 ),
               );
             }

@@ -60,7 +60,7 @@ dialTest(
           newValue,
           ExpectedMessages.promptValueUpdated,
         );
-        await promptPreviewModal.closeButton.click();
+        await promptPreviewModal.getCloseButton().click();
         await promptAssertion.assertEntityState({ name: newName }, 'visible');
       },
     );

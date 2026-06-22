@@ -7,8 +7,9 @@ import { BaseAssertion } from '@/src/assertions';
 import { MarketplaceExpectedMessages, OAuthQueryParams } from '@/src/testData';
 import {
   OAuthMockConfig,
-  ToolsetSignInRequest,
-} from '@/src/testData/toolsets/oauthMockConfig';
+  ToolsetApiKeySignInRequest,
+  ToolsetOAuthSignInRequest,
+} from '@/src/testData/toolsets/authMockConfig';
 import { OAuthState } from '@/src/testData/toolsets/oauthMockHelper';
 import { ToolsetAuthTypes } from '@epam/ai-dial-shared';
 
@@ -51,12 +52,13 @@ export class ToolsetApiAuthenticationAssertion extends BaseAssertion {
   }
 
   public assertSignInRequest(
-    request: ToolsetSignInRequest,
+    request: ToolsetOAuthSignInRequest | ToolsetApiKeySignInRequest,
     expectedValues: {
       url: string;
       authType: ToolsetAuthTypes;
       credentialsLevel: ToolsetCredentialsLevel;
-      authorizationCode: string;
+      authorizationCode?: string;
+      apiKey?: string;
     },
   ) {
     this.assertValue(
@@ -74,11 +76,20 @@ export class ToolsetApiAuthenticationAssertion extends BaseAssertion {
       expectedValues.credentialsLevel,
       MarketplaceExpectedMessages.toolsetSignInCredentialsLevelIsValid,
     );
-    this.assertValue(
-      request.code,
-      expectedValues.authorizationCode,
-      MarketplaceExpectedMessages.toolsetSignInCodeIsValid,
-    );
+    if (expectedValues.authorizationCode !== undefined) {
+      this.assertValue(
+        (request as ToolsetOAuthSignInRequest).code,
+        expectedValues.authorizationCode,
+        MarketplaceExpectedMessages.toolsetSignInCodeIsValid,
+      );
+    }
+    if (expectedValues.apiKey !== undefined) {
+      this.assertValue(
+        (request as ToolsetApiKeySignInRequest).apiKey,
+        expectedValues.apiKey,
+        MarketplaceExpectedMessages.toolsetSignInApiKeyIsValid,
+      );
+    }
   }
 
   public assertSignOutRequest(

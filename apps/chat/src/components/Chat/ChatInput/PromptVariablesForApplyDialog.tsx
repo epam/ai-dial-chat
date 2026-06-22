@@ -15,9 +15,9 @@ interface PromptVariablesForApplyDialogProps {
   prompt: Prompt;
 }
 
-function PromptVariablesForApplyDialogView({
-  prompt,
-}: PromptVariablesForApplyDialogProps) {
+const view = withRenderWhenEntities<PromptVariablesForApplyDialogProps>({
+  prompt: PromptsSelectors.selectPromptWithVariablesForApply,
+})(({ prompt }: PromptVariablesForApplyDialogProps) => {
   const dispatch = useAppDispatch();
 
   const handleClose = useCallback(() => {
@@ -43,9 +43,6 @@ function PromptVariablesForApplyDialogView({
       onSubmit={handleSubmit}
     />
   );
-}
+});
 
-export const PromptVariablesForApplyDialog =
-  withRenderWhenEntities<PromptVariablesForApplyDialogProps>({
-    prompt: PromptsSelectors.selectPromptWithVariablesForApply,
-  })(PromptVariablesForApplyDialogView);
+export const PromptVariablesForApplyDialog = view;

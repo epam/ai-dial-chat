@@ -80,6 +80,8 @@ export interface DialAIEntityFeatures {
   tools: boolean;
   assistantAttachmentsInRequest: boolean;
   mcp: boolean;
+  chat_completion: boolean;
+  responses_api: boolean;
 }
 
 export interface DialAIEntity {
@@ -143,4 +145,22 @@ export interface InstalledModel {
 export interface PublishRequestDialAIEntityModel extends DialAIEntityModel {
   folderId: string;
   publicationInfo: EntityPublicationInfo;
+}
+
+export interface LimitUsage {
+  total: number;
+  used: number;
+}
+
+export interface AgentUsageStats {
+  hourRequestStats: LimitUsage;
+  dayRequestStats: LimitUsage;
+  minuteTokenStats: LimitUsage;
+  dayTokenStats: LimitUsage;
+  weekTokenStats: LimitUsage;
+  monthTokenStats: LimitUsage;
+  minuteCostStats: LimitUsage;
+  dayCostStats: LimitUsage;
+  weekCostStats: LimitUsage;
+  monthCostStats: LimitUsage;
 }

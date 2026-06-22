@@ -19,13 +19,16 @@ import {
   isSmallScreen,
   isTabletScreen,
   isTabletScreenOrMobile,
+  shouldShowConversationsSectionByDefault,
 } from '@/src/utils/app/mobile';
+import { isRtlLocale } from '@/src/utils/app/rtl';
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
 import { FeatureType } from '@/src/types/common';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { ToastType } from '@/src/types/toasts';
 
-import { UIActions } from '@/src/store/actions';
+import { SettingsActions, UIActions } from '@/src/store/actions';
 import { SettingsSelectors, UISelectors } from '@/src/store/selectors';
 
 import { errorsMessages } from '@/src/constants/errors';
@@ -44,11 +47,15 @@ const initEpic: AppEpic = (action$, state$) =>
     switchMap(() => {
       const state = state$.value;
       const enabledFeatures = SettingsSelectors.selectEnabledFeatures(state);
+      const isOverlay = SettingsSelectors.selectIsOverlay(state);
 
       return forkJoin({
         showChatbar: DataService.getShowChatbar(
           enabledFeatures.has(Feature.ShowConversationsSectionByDefault) &&
-            !isTabletScreenOrMobile(),
+            shouldShowConversationsSectionByDefault(
+              isOverlay,
+              enabledFeatures.has(Feature.MdSidebarOverlayBreakpoint),
+            ),
         ),
         showPromptbar: DataService.getShowPromptbar(
           enabledFeatures.has(Feature.ShowPromptsSectionByDefault) &&
@@ -154,6 +161,32 @@ const initEpic: AppEpic = (action$, state$) =>
     ),
   );
 
+/** Overlay sends enabledFeatures after UI init; apply sidebar default when the feature arrives. */
+const applyShowConversationsSectionByDefaultEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(SettingsActions.setEnabledFeatures.type),
+    filter(
+      ({ payload }) =>
+        SettingsSelectors.selectIsOverlay(state$.value) &&
+        (payload.includes(Feature.ShowConversationsSectionByDefault) ||
+          payload.includes(Feature.MdSidebarOverlayBreakpoint)),
+    ),
+    filter(() => {
+      const state = state$.value;
+
+      return (
+        SettingsSelectors.selectEnabledFeatures(state).has(
+          Feature.ShowConversationsSectionByDefault,
+        ) &&
+        shouldShowConversationsSectionByDefault(
+          SettingsSelectors.selectIsOverlay(state),
+          SettingsSelectors.selectIsMdSidebarOverlayBreakpoint(state),
+        )
+      );
+    }),
+    switchMap(() => of(UIActions.setShowChatbar(true))),
+  );
+
 const initThemeEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(UIActions.initTheme.type),
@@ -175,6 +208,27 @@ const initThemeEpic: AppEpic = (action$, state$) =>
           : of(FALLBACK_THEME_CONFIG),
       }).pipe(
         switchMap(({ savedTheme, themesConfig }) => {
+          const isOverlay = SettingsSelectors.selectIsOverlay(state);
+
+          // In overlay, host theme is applied after listing loads (applyOverlayThemeEpic).
+          // Only restore a theme already saved in local storage (repeat visits).
+          if (isOverlay) {
+            const actions: Observable<AppAction>[] = [
+              of(UIActions.setAvailableThemes(themesConfig)),
+            ];
+
+            if (
+              savedTheme &&
+              themesConfig.themes.some(
+                (availableTheme) => availableTheme.id === savedTheme,
+              )
+            ) {
+              actions.unshift(of(UIActions.setTheme(savedTheme)));
+            }
+
+            return concat(...actions);
+          }
+
           const actions: Observable<AppAction>[] = [];
           // if no saved theme, take the first available theme (dark) - new users
           const theme = savedTheme || themesConfig.themes[0]?.id;
@@ -215,6 +269,18 @@ const saveThemeEpic: AppEpic = (action$) =>
     ignoreElements(),
   );
 
+const setLocaleEpic: AppEpic = (action$) =>
+  action$.pipe(
+    ofType(UIActions.setLocale.type),
+    tap(({ payload }) => {
+      const dir = isRtlLocale(payload) ? 'rtl' : 'ltr';
+
+      document.documentElement.lang = payload;
+      document.documentElement.dir = dir;
+    }),
+    ignoreElements(),
+  );
+
 const saveEnterTypeEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(UIActions.setEnterType.type),
@@ -249,7 +315,7 @@ const showErrorToastEpic: AppEpic = (action$) =>
   action$.pipe(
     ofType(UIActions.showErrorToast.type),
     switchMap(({ payload }) =>
-      of(UIActions.showToast({ message: payload, type: ToastType.Error })),
+      of(UIActions.showToast({ ...payload, type: ToastType.Error })),
     ),
   );
 
@@ -304,7 +370,9 @@ const showToastEpic: AppEpic = (action$) =>
       });
     }),
     tap(({ payload, responseMessage }) => {
-      let message = payload.message ?? errorsMessages.generalServer;
+      let message = translateErrorMessage(
+        payload.message ?? errorsMessages.generalServer,
+      );
       if (
         payload.response &&
         responseMessage &&
@@ -313,10 +381,11 @@ const showToastEpic: AppEpic = (action$) =>
         message = responseMessage;
       }
 
-      const toastConfig: ToastOptions = {
+      const toastConfig: ToastOptions & { traceId?: string } = {
         id: 'toast',
         className: 'chat-toast',
         icon: payload.icon,
+        traceId: payload.traceId,
       };
 
       let content: Renderable = message;
@@ -481,8 +550,10 @@ const setCollapsedSectionsEpic: AppEpic = (action$) =>
 
 export const UIEpics = combineEpics(
   initEpic,
+  applyShowConversationsSectionByDefaultEpic,
   initThemeEpic,
   saveThemeEpic,
+  setLocaleEpic,
   saveEnterTypeEpic,
   saveShowChatbarEpic,
   saveShowPromptbarEpic,

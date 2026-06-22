@@ -34,4 +34,6 @@ export const IconSelectors = {
   alertIcon: '.tabler-icon-alert-circle-filled.text-error',
   warningIcon: '.tabler-icon-alert-triangle-filled.text-warning-icon',
   sharedEntityIcon: '.tabler-icon-arrow-up-right',
+  eyeIcon: '.tabler-icon.tabler-icon-eye',
+  eyeOffIcon: '.tabler-icon.tabler-icon-eye-off',
 };

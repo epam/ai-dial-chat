@@ -117,19 +117,19 @@ export function ReviewApplicationDialogView({
     <>
       <div className="flex flex-col gap-2 overflow-auto px-3 py-4 text-sm md:p-6">
         <h2 className="text-base font-semibold">
-          {t(ChatI18nKeys.Application)}
+          {`${isResourceUnpublishing ? t(ChatI18nKeys.Unpublish) : t(ChatI18nKeys.Publish)} ${t(ChatI18nKeys.Application)}`}
         </h2>
 
         <div className="grid grid-cols-[max-content_1fr] gap-x-4 gap-y-2">
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Name)}
             value={application.name}
-            dataQa="app-name"
+            dataQa="entity-name"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Version)}
             value={application.version ?? NA_VERSION}
-            dataQa="app-version"
+            dataQa="entity-version"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Icon)}
@@ -138,6 +138,7 @@ export function ReviewApplicationDialogView({
                 entity={application}
                 entityId={application.id}
                 size={60}
+                isTooltipDisabled
               />
             }
             valueClassName=""
@@ -145,7 +146,7 @@ export function ReviewApplicationDialogView({
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Description)}
             value={description}
-            dataQa="app-description"
+            dataQa="entity-description"
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.Topics)}

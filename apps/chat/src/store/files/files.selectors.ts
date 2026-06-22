@@ -241,6 +241,11 @@ const selectIsMovingFiles = createSelector(
   (state) => state.isMovingFiles,
 );
 
+const selectIsDeletingFiles = createSelector(
+  [rootSelector],
+  (state) => state.isDeletingFiles,
+);
+
 const selectLoadingFileMetadata = (state: RootState) =>
   rootSelector(state).loadingFileMetadata;
 
@@ -275,8 +280,28 @@ const selectSearchResultsForFolder = createSelector(
     let filteredFolders = folders;
 
     if (isSharedFilter && !folderPath) {
-      filteredFiles = filteredFiles.filter((file) => file.sharedWithMe);
-      filteredFolders = filteredFolders.filter((folder) => folder.sharedWithMe);
+      const sharedRootFolderIds = folders
+        .filter((f) => f.sharedWithMe)
+        .map((f) => f.id);
+
+      filteredFiles = filteredFiles.filter(
+        (file) =>
+          file.sharedWithMe ||
+          sharedRootFolderIds.some(
+            (rootId) =>
+              file.folderId === rootId ||
+              file.folderId?.startsWith(`${rootId}/`),
+          ),
+      );
+      filteredFolders = filteredFolders.filter(
+        (folder) =>
+          folder.sharedWithMe ||
+          sharedRootFolderIds.some(
+            (rootId) =>
+              folder.folderId === rootId ||
+              folder.folderId?.startsWith(`${rootId}/`),
+          ),
+      );
     } else if (folderPath) {
       filteredFiles = filteredFiles.filter(
         (file) =>
@@ -296,6 +321,15 @@ const selectSearchResultsForFolder = createSelector(
 
 const selectSharedWithMeFilesAndFoldersIds = (state: RootState) =>
   rootSelector(state).sharedWithMeFilesAndFoldersIds;
+
+const selectUploadReplaceDialog = (state: RootState) =>
+  rootSelector(state).uploadReplaceDialog;
+
+const selectIsShowUploadReplaceDialog = (state: RootState) =>
+  !!rootSelector(state).uploadReplaceDialog?.isOpen;
+
+const selectDuplicatedUploadFiles = (state: RootState) =>
+  rootSelector(state).uploadReplaceDialog?.duplicatedFiles ?? [];
 
 export const FilesSelectors = {
   selectFiles,
@@ -334,5 +368,9 @@ export const FilesSelectors = {
   selectIsMovingFiles,
   selectIsCopyingFiles,
   selectIsUploadingFiles,
+  selectIsDeletingFiles,
   selectSharedWithMeFilesAndFoldersIds,
+  selectUploadReplaceDialog,
+  selectIsShowUploadReplaceDialog,
+  selectDuplicatedUploadFiles,
 };

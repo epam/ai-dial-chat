@@ -1,13 +1,13 @@
 import { Tags } from '@/src/ui/domData';
 import {
   ErrorLabelSelectors,
-  IconSelectors,
   MessageTemplateModalSelectors,
 } from '@/src/ui/selectors';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
+import { Popup } from '@/src/ui/webElements/common/popup';
 import { Locator, Page } from '@playwright/test';
 
-export class MessageTemplateModal extends BaseElement {
+export class MessageTemplateModal extends Popup {
   constructor(page: Page) {
     super(page, MessageTemplateModalSelectors.messageTemplateModal);
   }
@@ -49,7 +49,6 @@ export class MessageTemplateModal extends BaseElement {
   public showLessButton = this.getChildElementBySelector(
     MessageTemplateModalSelectors.showLessButton,
   );
-  cancelButton = this.getChildElementBySelector(IconSelectors.cancelIcon);
   public getFieldBottomMessage = (field: Locator) =>
     field.locator(`~${ErrorLabelSelectors.fieldError}`);
 

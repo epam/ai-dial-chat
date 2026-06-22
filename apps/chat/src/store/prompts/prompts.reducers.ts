@@ -14,7 +14,7 @@ import { RootState } from '@/src/types/store';
 
 import { PromptsSelectors } from '@/src/store/selectors';
 
-import { PromptsState } from './prompts.types';
+import { PromptsState, SkillValidationStatus } from './prompts.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
 import xor from 'lodash-es/xor';
@@ -30,6 +30,7 @@ const initialState: PromptsState = {
   isSelectedPromptApproveRequiredResource: false,
   isPromptModalOpen: false,
   isPromptModalInitModeEdit: false,
+  isQuickAppEditPrompt: false,
   newAddedFolderId: undefined,
   promptsLoaded: false,
   isPromptLoading: false,
@@ -40,6 +41,8 @@ const initialState: PromptsState = {
 
   deletingPromptId: undefined,
   moveToPromptId: undefined,
+  quickAppUpdatedPrompt: null,
+  skillValidationByPromptId: {},
 };
 
 export const promptsSlice = createSlice({
@@ -59,6 +62,7 @@ export const promptsSlice = createSlice({
         paths: string[];
         recursive?: boolean;
         pathToSelectFrom?: string;
+        cleanUpEmptySharedFolderPaths?: string[];
       }>,
     ) => state,
     uploadPromptsWithFoldersRecursive: (
@@ -95,6 +99,9 @@ export const promptsSlice = createSlice({
         (prompt) => !payload.promptIds.has(prompt.id),
       );
       state.promptsLoaded = true;
+      payload.promptIds.forEach((id) => {
+        delete state.skillValidationByPromptId[id];
+      });
     },
     deletePrompt: (
       state,
@@ -122,6 +129,7 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         newPrompt: Prompt;
         oldPrompt: Prompt;
+        traceId?: string;
       }>,
     ) => {
       state.prompts = state.prompts.map((prompt) => {
@@ -175,6 +183,13 @@ export const promptsSlice = createSlice({
             ? payload.prompt.id
             : payload.id;
       }
+
+      state.quickAppUpdatedPrompt =
+        state.isQuickAppEditPrompt &&
+        payload.prompt.id &&
+        payload.id !== payload.prompt.id
+          ? { oldId: payload.id, newId: payload.prompt.id }
+          : null;
     },
     duplicatePrompt: (state, _action: PayloadAction<PromptInfo>) => state,
     applyPrompt: (state, _action: PayloadAction<PromptInfo>) => state,
@@ -292,10 +307,17 @@ export const promptsSlice = createSlice({
     },
     setIsPromptModalOpen: (
       state,
-      { payload }: PayloadAction<{ isOpen: boolean; isInitModeEdit?: boolean }>,
+      {
+        payload,
+      }: PayloadAction<{
+        isOpen: boolean;
+        isInitModeEdit?: boolean;
+        isQuickAppEditPrompt?: boolean;
+      }>,
     ) => {
       state.isPromptModalOpen = payload.isOpen;
       state.isPromptModalInitModeEdit = !!payload.isInitModeEdit;
+      state.isQuickAppEditPrompt = !!payload.isQuickAppEditPrompt;
 
       if (!payload.isOpen) {
         state.isNewPromptCreating = false;
@@ -308,12 +330,14 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         promptId: string | undefined;
         isApproveRequiredResource?: boolean;
+        isQuickAppEditPrompt?: boolean;
       }>,
     ) => {
       state.selectedPromptId = payload.promptId;
       state.isSelectedPromptApproveRequiredResource =
         !!payload.isApproveRequiredResource;
       state.isPromptLoading = !!payload.promptId;
+      state.isQuickAppEditPrompt = !!payload.isQuickAppEditPrompt;
     },
     uploadPrompt: (state, _action: PayloadAction<{ promptId: string }>) => {
       state.isPromptLoading = true;
@@ -441,6 +465,7 @@ export const promptsSlice = createSlice({
       }: PayloadAction<{
         promptId: string | undefined;
         selectInEditMode?: boolean;
+        isQuickAppEditPrompt?: boolean;
         isApproveRequiredResource?: boolean;
       }>,
     ) => {
@@ -459,6 +484,54 @@ export const promptsSlice = createSlice({
       { payload }: PayloadAction<string | undefined>,
     ) => {
       state.moveToPromptId = payload;
+    },
+    validateSkill: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        promptId: string;
+        deploymentId: string;
+        content: string;
+      }>,
+    ) => {
+      state.skillValidationByPromptId[payload.promptId] = {
+        ...state.skillValidationByPromptId[payload.promptId],
+        status: SkillValidationStatus.Validating,
+        deploymentId: payload.deploymentId,
+      };
+    },
+    validateSkillSuccess: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{
+        promptId: string;
+        isValid: boolean;
+        validatedContent: string;
+        deploymentId: string;
+        message?: string;
+      }>,
+    ) => {
+      state.skillValidationByPromptId[payload.promptId] = {
+        status: payload.isValid
+          ? SkillValidationStatus.Valid
+          : SkillValidationStatus.Invalid,
+        validatedContent: payload.validatedContent,
+        deploymentId: payload.deploymentId,
+        message: payload.message,
+      };
+    },
+    validateSkillFail: (
+      state,
+      { payload }: PayloadAction<{ promptId: string }>,
+    ) => {
+      state.skillValidationByPromptId[payload.promptId] = {
+        status: SkillValidationStatus.Unknown,
+      };
+    },
+    clearSkillValidations: (state) => {
+      state.skillValidationByPromptId = {};
     },
   },
 });

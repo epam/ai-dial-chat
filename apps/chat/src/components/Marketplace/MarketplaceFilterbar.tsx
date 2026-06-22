@@ -1,6 +1,8 @@
 import { IconCheck, IconChevronUp, IconClipboardX } from '@tabler/icons-react';
 import { memo, useCallback, useMemo } from 'react';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -30,8 +32,9 @@ import {
 import { Loader } from '@/src/components/Common/Loader';
 import { ResizableSidebarWrapper } from '@/src/components/Sidebar/ResizableSidebarWrapper';
 
+import { translateEntityTypeFilterLabel } from './translateEntityTypeFilterLabel';
+
 import { DialButton, DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
-import { capitalize } from 'lodash';
 
 interface FilterItemProps {
   type: FilterTypes;
@@ -102,7 +105,7 @@ const FilterSection = ({
       {sectionName}
       {selectedFilters[filterType].length > 0 && (
         <div className="flex h-[14px] min-w-[14px] items-center justify-center rounded bg-icon-accent-primary px-1 text-xxs font-semibold text-layer-3">
-          {selectedFilters[filterType].length}
+          <div> {selectedFilters[filterType].length}</div>
         </div>
       )}
     </div>
@@ -168,6 +171,12 @@ function FiltersRenderer({
   handleApplyFilter,
 }: FiltersRendererProps) {
   const { t } = useTranslation(Translation.SideBar);
+  const router = useRouter();
+
+  const getEntityTypeLabel = useCallback(
+    (value: string) => translateEntityTypeFilterLabel(value, router.locale, t),
+    [router.locale, t],
+  );
 
   if (showLoader) {
     return <Loader />;
@@ -184,7 +193,7 @@ function FiltersRenderer({
           filterType={FilterTypes.ENTITY_TYPE}
           onToggleFilterSection={handleToggleFilterSection}
           onApplyFilter={handleApplyFilter}
-          getDisplayLabel={getTypeLabel}
+          getDisplayLabel={getEntityTypeLabel}
         />
       )}
       <FilterSection
@@ -210,8 +219,6 @@ function FiltersRenderer({
     </div>
   );
 }
-
-const getTypeLabel = (value: string) => `${capitalize(value)}s`;
 
 export const MarketplaceFilterbar = memo(() => {
   const { t } = useTranslation(Translation.SideBar);
@@ -323,7 +330,7 @@ export const MarketplaceFilterbar = memo(() => {
               strokeWidth={0.5}
               className="text-secondary"
             />
-            <p className="text-center text-sm leading-[24px] text-primary">
+            <p className="mx-auto max-w-[11.5rem] px-4 text-center text-sm leading-relaxed text-primary">
               {t(
                 isAgentsTab
                   ? SideBarI18nKeys.NoFiltersAgents

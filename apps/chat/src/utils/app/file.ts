@@ -1,4 +1,5 @@
 import { BucketService } from '@/src/utils/app/data/bucket-service';
+import { getResourceMaxSegmentBytes } from '@/src/utils/app/resource-limits';
 import {
   isFolderId,
   isMyEntity,
@@ -18,8 +19,8 @@ import {
 import { FolderInterface } from '@/src/types/folder';
 import { Translation } from '@/src/types/translation';
 
-import { MAX_ENTITY_LENGTH } from '@/src/constants/default-ui-settings';
 import {
+  ALL_FILE_EXTENSIONS,
   BYTES_IN_KB,
   BYTES_IN_MB,
   FALLBACK_CONTENT_TYPE,
@@ -33,7 +34,12 @@ import {
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { PUBLIC_URL_PREFIX } from '@/src/constants/publication';
 
-import { doesHaveDotsInTheEnd, prepareEntityName } from './common';
+import {
+  addTrailingSlashIfAbsent,
+  doesHaveDotsInTheEnd,
+  getUtf8BytesLength,
+  prepareEntityName,
+} from './common';
 
 import { Attachment, UploadStatus } from '@epam/ai-dial-shared';
 import {
@@ -45,7 +51,7 @@ import {
 import escapeRegExp from 'lodash-es/escapeRegExp';
 import uniq from 'lodash-es/uniq';
 import uniqBy from 'lodash-es/uniqBy';
-import { extensions, lookup } from 'mime-types';
+import { lookup } from 'mime-types';
 
 export function triggerDownload(url: string, name: string): void {
   const link = document.createElement('a');
@@ -65,6 +71,23 @@ export const constructPath = (
   return path.startsWith('api/') ? path.replace('api/', '/api/') : path;
 };
 
+export function removeTrailingSlash(path: string): string {
+  return path.replace(/\/+$/, '');
+}
+
+/** True if `path` equals `prefix` or is a strict descendant (`prefix/…`). Trailing slashes ignored. */
+export function isPathUnderPrefix(path: string, prefix: string): boolean {
+  const normalizedPath = removeTrailingSlash(path);
+  const normalizedPrefix = removeTrailingSlash(prefix);
+  if (!normalizedPath || !normalizedPrefix) {
+    return false;
+  }
+  if (normalizedPath === normalizedPrefix) {
+    return true;
+  }
+  return normalizedPath.startsWith(`${normalizedPrefix}/`);
+}
+
 export const getRelativePath = (
   absolutePath: string | undefined,
 ): string | undefined => {
@@ -74,6 +97,16 @@ export const getRelativePath = (
 
 export const getFileName = (path: string | undefined): string | undefined => {
   return path?.split('/').slice(-1)?.[0] || undefined;
+};
+
+export const getNestedEmptyFolderIdsForChosenParent = (
+  emptyFolderIds: string[],
+  parentFolderId: string,
+): string[] => {
+  const prefix = addTrailingSlashIfAbsent(parentFolderId);
+  return emptyFolderIds
+    .filter((id) => addTrailingSlashIfAbsent(id).startsWith(prefix))
+    .map((id) => addTrailingSlashIfAbsent(id));
 };
 
 export const getUserCustomContent = (
@@ -341,7 +374,7 @@ export const getExtensionsListForMimeType = (mimeType: string) => {
   if (subset === '*') {
     return ['all'];
   } else if (name === '*') {
-    return Object.entries(extensions).reduce((acc, [key, value]) => {
+    return Object.entries(ALL_FILE_EXTENSIONS).reduce((acc, [key, value]) => {
       const [keySubset] = key.split('/');
       if (keySubset === subset) {
         acc.push(...value);
@@ -350,7 +383,7 @@ export const getExtensionsListForMimeType = (mimeType: string) => {
       return acc;
     }, [] as string[]);
   } else {
-    return extensions[mimeType] || [];
+    return ALL_FILE_EXTENSIONS[mimeType] || [];
   }
 };
 
@@ -463,7 +496,10 @@ export const prepareFileName = (filename: string) => {
     return prepareEntityName(trimmedFilename);
   }
 
-  const maxBaseNameLength = Math.max(MAX_ENTITY_LENGTH - extension.length, 0);
+  const maxBaseNameLength = Math.max(
+    getResourceMaxSegmentBytes() - getUtf8BytesLength(extension),
+    0,
+  );
   const preparedBaseName = prepareEntityName(
     getFileNameWithoutExtension(trimmedFilename),
     {

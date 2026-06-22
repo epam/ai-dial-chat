@@ -34,7 +34,9 @@ export const chatEventsSlice = createSlice({
     },
     subscribeFailure: (
       state,
-      _action: PayloadAction<{ retryAttempt?: number } | undefined>,
+      _action: PayloadAction<
+        { retryAttempt?: number; traceId?: string } | undefined
+      >,
     ) => {
       state.isSubscribed = false;
       state.isSubscribing = false;
@@ -68,7 +70,11 @@ export const chatEventsSlice = createSlice({
     },
     reportEventFailure: (
       state,
-      _action: PayloadAction<{ event: ChatEvent; result: ChatEventResult }>,
+      _action: PayloadAction<{
+        event: ChatEvent;
+        result: ChatEventResult;
+        traceId?: string;
+      }>,
     ) => {
       state.isReporting = false;
     },
@@ -91,7 +97,7 @@ export const chatEventsSlice = createSlice({
     },
     declineAllEventsFailure: (
       state,
-      _action: PayloadAction<{ method: ChatEventOperations }>,
+      _action: PayloadAction<{ method: ChatEventOperations; traceId?: string }>,
     ) => {
       state.isReporting = false;
     },

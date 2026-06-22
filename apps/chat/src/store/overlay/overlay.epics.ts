@@ -106,6 +106,7 @@ import {
   SendMessageRequest,
   SetInputContentRequest,
   SetSystemPromptRequest,
+  SetTemperatureRequest,
   StopSelectedPlaybackConversationResponse,
   UpdateMessageRequest,
   overlayAppName,
@@ -294,6 +295,31 @@ const postMessageMapperEpic: AppEpic = (_, state$) =>
                 of(
                   OverlayActions.setSystemPrompt({
                     systemPrompt,
+                    requestId,
+                  }),
+                ),
+              );
+            }
+            case OverlayRequests.setTemperature: {
+              const { temperature } = payload as SetTemperatureRequest;
+
+              const hostDomain = OverlaySelectors.selectHostDomain(
+                state$.value,
+              );
+
+              return concat(
+                of(
+                  OverlayActions.sendPMResponse({
+                    type: OverlayRequests.setTemperature,
+                    requestParams: {
+                      requestId,
+                      hostDomain,
+                    },
+                  }),
+                ),
+                of(
+                  OverlayActions.setTemperature({
+                    temperature,
                     requestId,
                   }),
                 ),
@@ -1205,11 +1231,14 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       if (theme && isOptionChanged('theme')) {
         if (availableThemes.some(({ id }) => id === theme)) {
           actions.push(of(UIActions.setTheme(theme)));
-        } else {
+        } else if (availableThemes.length) {
           console.warn(
             `[Overlay](Theme) No such theme: ${theme}.\nTheme isn't set.`,
           );
         }
+        // When listing is still empty (cold start), theme is stored in
+        // requestedOverlayTheme and applied in applyOverlayThemeEpic on
+        // setAvailableThemes — no polling or timeout.
       }
 
       if (signInInSameWindow && isOptionChanged('signInInSameWindow')) {
@@ -1368,6 +1397,46 @@ const setOverlayOptionsEpic: AppEpic = (action$, state$) =>
       );
 
       return merge(...actions);
+    }),
+  );
+
+/** Applies host theme after theme listing is loaded (fixes cold-start race with initTheme). */
+const applyOverlayThemeEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(UIActions.setAvailableThemes.type),
+    filter(() => SettingsSelectors.selectIsOverlay(state$.value)),
+    switchMap(() => {
+      const state = state$.value;
+      const overlayThemeId = OverlaySelectors.selectOverlayTheme(state);
+      const availableThemes = UISelectors.selectAvailableThemes(state);
+      const currentTheme = UISelectors.selectThemeState(state);
+
+      if (!availableThemes.length) {
+        return EMPTY;
+      }
+
+      const optionsReceived = OverlaySelectors.selectOptionsReceived(state);
+
+      const themeToApply =
+        overlayThemeId &&
+        availableThemes.some(({ id }) => id === overlayThemeId)
+          ? overlayThemeId
+          : !overlayThemeId && !currentTheme && optionsReceived
+            ? availableThemes[0]?.id
+            : undefined;
+
+      if (overlayThemeId && !themeToApply) {
+        console.warn(
+          `[Overlay](Theme) No such theme: ${overlayThemeId}.\nTheme isn't set.`,
+        );
+        return EMPTY;
+      }
+
+      if (!themeToApply || themeToApply === currentTheme) {
+        return EMPTY;
+      }
+
+      return of(UIActions.setTheme(themeToApply));
     }),
   );
 
@@ -1783,6 +1852,7 @@ export const OverlayEpics = combineEpics(
   sendStopGeneratingEvent,
   notifyHostAboutReadyEpic,
   setOverlayOptionsEpic,
+  applyOverlayThemeEpic,
   sendMessageEpic,
   deleteMessageEpic,
   deleteMessageEffectEpic,

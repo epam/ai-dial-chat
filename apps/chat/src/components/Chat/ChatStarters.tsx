@@ -4,9 +4,12 @@ import classNames from 'classnames';
 
 import { removeDescriptionsFromSchema } from '@/src/utils/app/form-schema';
 
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
+
 import { ChatActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
+  ApplicationSelectors,
   ChatSelectors,
   ConversationsSelectors,
   ModelsSelectors,
@@ -96,11 +99,18 @@ export const ChatStarters = memo(function ChatStarters() {
       modelsMap,
     ),
   );
+  const editorStep = useAppSelector(ApplicationSelectors.selectEditorStep);
+  const isApplicationLoading = useAppSelector(
+    ApplicationSelectors.selectIsApplicationLoading,
+  );
+  const isEditorSettingsUpdating =
+    editorStep === MarketplaceEditorSteps.Settings && isApplicationLoading;
 
   if (
     selectedConversations.length > 1 ||
     selectedConversations[0]?.messages?.length > 0 ||
     isSchemaLoading ||
+    isEditorSettingsUpdating ||
     !schema ||
     isReplay
   ) {

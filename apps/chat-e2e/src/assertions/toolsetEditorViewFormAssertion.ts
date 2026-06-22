@@ -1,6 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
-import { ExpectedConstants } from '@/src/testData';
-import { Attributes, ThemeColorAttributes } from '@/src/ui/domData';
+import { ExpectedConstants, OAuthOptions } from '@/src/testData';
+import { Attributes, Cursors, ThemeColorAttributes } from '@/src/ui/domData';
 import { ToolsetEditorViewForm } from '@/src/ui/webElements';
 import { ThemesUtil } from '@/src/utils/themesUtil';
 import { ToolsetAuthTypes, ToolsetTransportType } from '@epam/ai-dial-shared';
@@ -11,6 +11,46 @@ export class ToolsetEditorViewFormAssertion extends BaseAssertion {
   constructor(toolsetEditorViewForm: ToolsetEditorViewForm) {
     super();
     this.toolsetEditorViewForm = toolsetEditorViewForm;
+  }
+
+  public async assertFormIsReadOnly(authTypes: ToolsetAuthTypes) {
+    const controls = [
+      this.toolsetEditorViewForm.endpoint,
+      this.toolsetEditorViewForm.transportProtocol,
+      this.toolsetEditorViewForm.oauthContainer,
+      this.toolsetEditorViewForm.apiKeyContainer,
+      this.toolsetEditorViewForm.withoutAuthContainer,
+      this.toolsetEditorViewForm.loginButton,
+      this.toolsetEditorViewForm.allowedTools.comboboxInput,
+    ];
+    for (const control of controls) {
+      await this.assertElementCursor(control, Cursors.notAllowed);
+    }
+    switch (authTypes) {
+      case ToolsetAuthTypes.OAUTH:
+        for (const option of [
+          OAuthOptions.WithLogin,
+          OAuthOptions.WithLoginAndConfig,
+        ]) {
+          await this.assertElementCursor(
+            this.toolsetEditorViewForm.oAuthOptionRadioButton(option),
+            Cursors.notAllowed,
+          );
+        }
+        break;
+      case ToolsetAuthTypes.API_KEY:
+        for (const control of [
+          this.toolsetEditorViewForm.apiKeyParameterNameFieldInput,
+          this.toolsetEditorViewForm.apiKeyParameterValueFieldInput,
+        ]) {
+          await this.assertElementCursor(control, Cursors.notAllowed);
+        }
+        break;
+    }
+    await this.assertElementState(
+      this.toolsetEditorViewForm.copyUrlButton,
+      'visible',
+    );
   }
 
   public async assertToolsetEditorViewFormAttributes(attributesToVerify: {

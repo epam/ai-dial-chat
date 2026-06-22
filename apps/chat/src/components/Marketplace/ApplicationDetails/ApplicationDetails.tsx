@@ -1,4 +1,4 @@
-import { FC, useCallback, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo } from 'react';
 
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/router';
@@ -7,6 +7,7 @@ import { sortItemsVersions } from '@/src/utils/app/common';
 import { isMyApplication } from '@/src/utils/app/id';
 import { getGroupMarketplaceEntityKey } from '@/src/utils/app/marketplace';
 
+import { EntityType } from '@/src/types/common';
 import { ModalState } from '@/src/types/modal';
 import { DialAIEntityModel } from '@/src/types/models';
 
@@ -115,6 +116,12 @@ export function ApplicationDetails({
     widgetsSchemaIds,
   ]);
 
+  useEffect(() => {
+    if (entity.type === EntityType.Model) {
+      dispatch(ModelsActions.getUsageStats({ id: entity.id }));
+    }
+  }, [dispatch, entity.id, entity.type]);
+
   return (
     <Modal
       portalId="chat"
@@ -124,7 +131,7 @@ export function ApplicationDetails({
       containerClassName="flex w-full flex-col divide-y divide-tertiary xl:max-w-[720px] max-w-[700px]"
       onClose={onClose}
     >
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col divide-y divide-tertiary">
         <ApplicationDetailsHeader entity={entity} isPreview={isPreview} />
         <div className="min-h-0 flex-1 overflow-auto">
           <ApplicationDetailsContent entity={entity} />

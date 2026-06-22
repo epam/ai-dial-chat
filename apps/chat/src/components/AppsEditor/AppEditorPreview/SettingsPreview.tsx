@@ -264,7 +264,7 @@ export const SettingsPreview = ({ onSave }: SettingsPreviewProps) => {
         )}
         data-qa="preview-header"
       >
-        <div className="mr-2 hidden min-w-0 shrink gap-2 text-primary md:flex">
+        <div className="me-2 hidden min-w-0 shrink gap-2 text-primary md:flex">
           <span>{t(ChatI18nKeys.Preview)}:</span>
           <span data-qa="preview-app-name" className="min-w-0 shrink truncate">
             {appDetails?.name}

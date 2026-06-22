@@ -1,11 +1,12 @@
 import pkg from '@/../../package.json';
-import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPLogExporter as OTLPLogExporterHTTP } from '@opentelemetry/exporter-logs-otlp-http';
 import { OTLPMetricExporter as OTLPMetricExporterHTTP } from '@opentelemetry/exporter-metrics-otlp-http';
 import { PrometheusExporter } from '@opentelemetry/exporter-prometheus';
-import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-proto';
+import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
+import { FetchInstrumentation } from '@opentelemetry/instrumentation-fetch';
 import { HttpInstrumentation } from '@opentelemetry/instrumentation-http';
 import { PinoInstrumentation } from '@opentelemetry/instrumentation-pino';
+import { UndiciInstrumentation } from '@opentelemetry/instrumentation-undici';
 import { resourceFromAttributes } from '@opentelemetry/resources';
 import { PeriodicExportingMetricReader } from '@opentelemetry/sdk-metrics';
 import { NodeSDK, logs } from '@opentelemetry/sdk-node';
@@ -15,7 +16,7 @@ import {
   ATTR_SERVICE_VERSION,
 } from '@opentelemetry/semantic-conventions';
 
-//For the opentelemetry debugging uncomment line 15
+//For the opentelemetry debugging uncomment line below
 // For troubleshooting, set the log level to DiagLogLevel.DEBUG
 // diag.setLogger(new DiagConsoleLogger(), DiagLogLevel.DEBUG);
 
@@ -34,34 +35,36 @@ const logExporter = new OTLPLogExporterHTTP();
 const logRecordProcessor = new logs.BatchLogRecordProcessor(logExporter);
 
 const sdk = new NodeSDK({
-  metricReader: metricReader,
+  metricReaders: [metricReader],
   resource: resourceFromAttributes({
     [ATTR_SERVICE_NAME]:
       process.env.OTEL_SERVICE_NAME || pkg.name || 'dial-chat',
     [ATTR_SERVICE_VERSION]: pkg.version,
   }),
   instrumentations: [
-    getNodeAutoInstrumentations(),
     httpInstrumentation,
+    new FetchInstrumentation(),
+    new UndiciInstrumentation({
+      requestHook: (span, request) => {
+        span.updateName(`${request.method} ${request.origin}${request.path}`);
+      },
+    }),
     pinoInstrumentation,
   ],
   spanProcessors: [defaultSpanProcessor],
-  logRecordProcessor: logRecordProcessor,
+  logRecordProcessors: [logRecordProcessor],
 });
 sdk.start();
 
 function getMetricExporter(metricsExporterType: string | undefined) {
   if (!metricsExporterType || metricsExporterType !== 'otlp') {
-    const defaultMetricExporter = new PrometheusExporter({
+    return new PrometheusExporter({
       port: 9464,
       endpoint: '/metrics',
     });
-    return defaultMetricExporter;
   }
   const metricExporterHTTP = new OTLPMetricExporterHTTP();
-  const metricReaderHTTP = new PeriodicExportingMetricReader({
+  return new PeriodicExportingMetricReader({
     exporter: metricExporterHTTP,
   });
-
-  return metricReaderHTTP;
 }

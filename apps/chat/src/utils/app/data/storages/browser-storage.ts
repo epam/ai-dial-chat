@@ -11,6 +11,7 @@ import {
 } from 'rxjs';
 
 import { cleanConversationHistory } from '@/src/utils/app/clean';
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
 import {
   ApplicationInfo,
@@ -21,6 +22,7 @@ import { Conversation } from '@/src/types/chat';
 import { BackendChatEntity, FeatureType, MoveModel } from '@/src/types/common';
 import { FileOperationsResult } from '@/src/types/files';
 import { FolderInterface, FoldersAndEntities } from '@/src/types/folder';
+import { AgentUsageStats } from '@/src/types/models';
 import { Prompt, PromptInfo } from '@/src/types/prompt';
 import {
   DialStorage,
@@ -47,7 +49,9 @@ const isLocalStorageEnabled = () => {
     return true;
   } catch (e) {
     if (e instanceof DOMException && e.name === 'QuotaExceededError') {
-      toast.error(errorsMessages.localStorageQuotaExceeded);
+      toast.error(
+        translateErrorMessage(errorsMessages.localStorageQuotaExceeded),
+      );
       return true;
     } else {
       console.info(
@@ -368,7 +372,9 @@ export class BrowserStorage implements DialStorage {
     } catch (e: unknown) {
       console.error(e);
       if ((e as Error).name === 'QuotaExceededError') {
-        toast.error(errorsMessages.localStorageQuotaExceeded);
+        toast.error(
+          translateErrorMessage(errorsMessages.localStorageQuotaExceeded),
+        );
       }
       return of(defaultValue);
     }
@@ -384,7 +390,9 @@ export class BrowserStorage implements DialStorage {
     } catch (e: unknown) {
       console.error(e);
       if ((e as Error).name === 'QuotaExceededError') {
-        toast.error(errorsMessages.localStorageQuotaExceeded);
+        toast.error(
+          translateErrorMessage(errorsMessages.localStorageQuotaExceeded),
+        );
         return of(undefined);
       } else {
         return throwError(() => e);
@@ -492,6 +500,9 @@ export class BrowserStorage implements DialStorage {
     throw new Error('Method not implemented.');
   }
   deleteToolset(_id: string): Observable<void> {
+    throw new Error('Method not implemented.');
+  }
+  getAgentLimits(_id: string): Observable<AgentUsageStats> {
     throw new Error('Method not implemented.');
   }
 }

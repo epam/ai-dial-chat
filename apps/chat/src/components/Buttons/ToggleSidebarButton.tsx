@@ -10,7 +10,11 @@ import { Translation } from '@/src/types/translation';
 
 import MoveLeftIcon from '@/public/images/icons/move-left.svg';
 import MoveRightIcon from '@/public/images/icons/move-right.svg';
-import { DialButton } from '@epam/ai-dial-ui-kit';
+import {
+  ButtonAppearance,
+  ButtonVariant,
+  DialButton,
+} from '@epam/ai-dial-ui-kit';
 
 interface Props {
   iconSize: number;
@@ -21,6 +25,7 @@ interface Props {
   rightSide?: boolean;
   isOverlay?: boolean;
   filterIndicator?: boolean;
+  isFloatingToggle?: boolean;
 }
 
 export const ToggleSidebarButton: React.FC<Props> = ({
@@ -32,6 +37,7 @@ export const ToggleSidebarButton: React.FC<Props> = ({
   rightSide = false,
   isOverlay = false,
   filterIndicator = false,
+  isFloatingToggle = false,
 }) => {
   const { t } = useTranslation(Translation.Header);
 
@@ -49,27 +55,38 @@ export const ToggleSidebarButton: React.FC<Props> = ({
     <div className="relative">
       <Icon
         className={classNames(
-          'text-secondary hover:text-accent-primary',
-          rightSide && 'rotate-180',
+          isFloatingToggle
+            ? 'text-secondary'
+            : 'text-secondary hover:text-accent-primary',
+          rightSide ? 'rotate-180 rtl:rotate-0' : 'rtl:rotate-180',
         )}
         width={iconSize}
         height={iconSize}
       />
       {!isOpened && filterIndicator && (
-        <div className="absolute right-0 top-0 size-[12px] rounded-full bg-accent-primary"></div>
+        <div className="absolute end-0 top-0 size-[12px] rounded-full bg-accent-primary"></div>
       )}
     </div>
   );
+
   return (
     <DialButton
       className={classNames(
-        'flex h-full shrink-0 items-center justify-center px-3',
-        isOverlay ? 'md:px-3' : 'md:px-5',
+        isFloatingToggle
+          ? 'size-10 shrink-0 p-0'
+          : [
+              'flex h-full shrink-0 items-center justify-center px-3',
+              isOverlay ? 'md:px-3' : 'md:px-5',
+            ],
       )}
       tooltipProps={{ isTriggerClickable: true, tooltip: t(tooltip) }}
       data-qa={dataQa}
       onClick={handleToggle}
       iconBefore={IconContent}
+      {...(isFloatingToggle && {
+        appearance: ButtonAppearance.Outlined,
+        variant: ButtonVariant.Neutral,
+      })}
     />
   );
 };

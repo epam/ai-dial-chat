@@ -337,11 +337,11 @@ export class BaseAssertion {
       .toHaveCSS(Styles.cursor, cursor);
   }
 
-  public async assertStringTruncatedTo160(
+  public async assertStringTruncatedTo255(
     originalString: string | null | undefined,
     truncatedString: string | null | undefined,
   ) {
-    const maxLength = 160;
+    const maxLength = 255;
 
     // Handle null or undefined input
     if (originalString == null || truncatedString == null) {
@@ -367,11 +367,8 @@ export class BaseAssertion {
 
     // Assert that the truncated string has the correct length
     expect
-      .soft(
-        truncatedString.length,
-        'Truncated string should have a length of 160',
-      )
-      .toBe(maxLength);
+      .soft(truncatedString, 'Truncated string should have a length of 255')
+      .toHaveLength(maxLength);
     // Assert that the truncated string is a substring of the original
     expect
       .soft(
@@ -418,6 +415,19 @@ export class BaseAssertion {
         expectedMessage ?? ExpectedMessages.elementsCountIsValid,
       )
       .toBeGreaterThanOrEqual(expectedNumber);
+  }
+
+  public assertNumberIsLessThanOrEqual(
+    actualNumber: number,
+    expectedNumber: number,
+    expectedMessage?: string,
+  ) {
+    expect
+      .soft(
+        actualNumber,
+        expectedMessage ?? ExpectedMessages.elementsCountIsValid,
+      )
+      .toBeLessThanOrEqual(expectedNumber);
   }
 
   public assertValue(

@@ -26,6 +26,7 @@ import { EntityType, PartialBy } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { DialAIEntityFeatures, DialAIEntityModel } from '@/src/types/models';
 import {
+  DialAppToolset,
   DialDeploymentSimpleTool,
   MCPToolset,
   QuickApp2Config,
@@ -34,8 +35,12 @@ import {
 import { ToolsetModel } from '@/src/types/toolsets';
 import { Translation } from '@/src/types/translation';
 
+import { ApplicationPropertiesLocalFields } from '@/src/constants/applications';
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
-import { DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_APPLICATION_NAME,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { MarketplaceI18nKeys } from '@/src/constants/i18n';
 import { ApplicationTypeToSourceType } from '@/src/constants/marketplace';
@@ -45,8 +50,20 @@ import {
   DEFAULT_QUICK_APPS_SCHEMA_ID,
 } from '@/src/constants/quick-apps';
 
-import { AppsEditorSchemaTypes } from '@/src/components/AppsEditor/form';
+import {
+  AppsEditorSchemaTypes,
+  MANDATORY_FIELD_PLACEHOLDER,
+} from '@/src/components/AppsEditor/form';
 
+import {
+  EntityStorageLimits,
+  buildByteAwareFitBaseName,
+  getAvailableEntityNameBytes,
+  getResourceStorageLimits,
+  getStorageSafeUniqueName,
+  prepareEntityName,
+  truncateToUtf8Bytes,
+} from './common';
 import { constructPath } from './file';
 import { getFolderIdFromEntityId } from './folders';
 import { getApplicationRootId, getEntityBucket, isApplicationId } from './id';
@@ -71,7 +88,7 @@ export const safeStringifyApplicationFeatures = (
 };
 
 export const getGeneratedApplicationId = (
-  application: PartialBy<ApplicationInfo, 'id'>,
+  application: PartialBy<ApplicationInfo, 'id' | 'folderId'>,
 ): string => {
   if (application.folderId) {
     return constructPath(
@@ -101,6 +118,77 @@ export const regenerateApplicationId = <T extends ApplicationInfo>(
   return application as T;
 };
 
+export const getAvailableApplicationNameBytes = (
+  application: PartialBy<ApplicationInfo, 'id' | 'folderId'>,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): number | undefined =>
+  getAvailableEntityNameBytes(
+    (name) => getGeneratedApplicationId({ ...application, name }),
+    (name) => getMarketplaceEntityApiKey({ ...application, name }),
+    limits,
+  );
+
+export const fitApplicationNameToStorageLimits = <
+  T extends PartialBy<ApplicationInfo, 'id' | 'folderId'>,
+>(
+  application: T,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): T => {
+  const availableNameBytes = getAvailableApplicationNameBytes(
+    application,
+    limits,
+  );
+
+  if (availableNameBytes === undefined || availableNameBytes <= 0) {
+    return application;
+  }
+
+  const fittedName = prepareEntityName(
+    truncateToUtf8Bytes(
+      prepareEntityName(application.name),
+      availableNameBytes,
+    ),
+  );
+
+  return fittedName === application.name
+    ? application
+    : ({ ...application, name: fittedName } as T);
+};
+
+export const getStorageSafeUniqueApplicationName = (params: {
+  application: PartialBy<ApplicationInfo, 'id' | 'folderId'>;
+  desiredName?: string;
+  defaultName?: string;
+  existingNames: string[];
+  limits?: EntityStorageLimits;
+}): string => {
+  const { application, desiredName, existingNames } = params;
+  const limits = params.limits ?? getResourceStorageLimits();
+  const defaultName = params.defaultName ?? DEFAULT_APPLICATION_NAME;
+
+  const availableNameBytes = getAvailableApplicationNameBytes(
+    application,
+    limits,
+  );
+
+  const uniqueName = getStorageSafeUniqueName({
+    desiredName,
+    defaultName,
+    existingNames,
+    fitBaseName: buildByteAwareFitBaseName(availableNameBytes),
+  });
+
+  if (uniqueName) {
+    return uniqueName;
+  }
+
+  return fitApplicationNameToStorageLimits({
+    ...application,
+    name:
+      prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName),
+  }).name;
+};
+
 export const mapApplicationPropertiesToApi = (
   properties: CustomApplicationModel['applicationProperties'],
 ) => {
@@ -113,6 +201,7 @@ export const mapApplicationPropertiesToApi = (
     | QuickAppConfig['document_relative_url'];
   const propertiesQA = properties as QuickAppConfig;
   const propertiesQA2 = properties as QuickApp2Config;
+  const unknownProperties = properties as Record<string, unknown>;
   const result = {
     ...properties,
   };
@@ -123,7 +212,10 @@ export const mapApplicationPropertiesToApi = (
       url: ApiUtils.encodeApiUrl(context.url),
     }));
     (result as QuickApp2Config).contexts = documentsRelativeUrls;
-  } else {
+  } else if (
+    !unknownProperties[ApplicationPropertiesLocalFields.isSchemaDrivenApp] &&
+    !unknownProperties[ApplicationPropertiesLocalFields.isExternalApp]
+  ) {
     if (!propertiesQA.document_relative_url) {
       (result as QuickAppConfig).document_relative_url = [];
     } else {
@@ -134,7 +226,7 @@ export const mapApplicationPropertiesToApi = (
     }
   }
 
-  return result;
+  return omit(result, Object.keys(ApplicationPropertiesLocalFields));
 };
 
 export const convertApplicationToApi = (
@@ -152,16 +244,21 @@ export const convertApplicationToApi = (
     reference: applicationData.reference || undefined,
     description_keywords: applicationData.topics,
   };
-
+  const unknownProperties = applicationData.applicationProperties as
+    | Record<string, unknown>
+    | undefined;
   if (schema) {
     return {
       ...commonData,
       application_properties:
-        (applicationData.applicationProperties &&
-          mapApplicationPropertiesToApi(
-            applicationData.applicationProperties,
-          )) ||
-        null,
+        unknownProperties?.[ApplicationPropertiesLocalFields.isExternalApp] &&
+        unknownProperties?.external_url === MANDATORY_FIELD_PLACEHOLDER
+          ? null
+          : (applicationData.applicationProperties &&
+              mapApplicationPropertiesToApi(
+                applicationData.applicationProperties,
+              )) ||
+            {},
       application_type_schema_id:
         applicationData.applicationTypeSchemaId ?? schema['$id'],
     };
@@ -228,6 +325,24 @@ export const mapApplicationPropertiesFromApi = (
       );
       (result as QuickAppConfig).document_relative_url = documentsRelativeUrls;
     }
+  }
+
+  // TODO: Remove after migrating old apps from 'name' to 'deployment_id'
+  type DeploymentField = keyof QuickApp2Config['orchestrator']['deployment'];
+  if (
+    typeof propertiesQA2?.orchestrator?.deployment?.[
+      'name' as DeploymentField
+    ] === 'string'
+  ) {
+    (result as QuickApp2Config).orchestrator.deployment.deployment_id =
+      propertiesQA2.orchestrator.deployment.deployment_id
+        ? propertiesQA2.orchestrator.deployment.deployment_id
+        : (propertiesQA2.orchestrator.deployment[
+            'name' as DeploymentField
+          ] as string);
+    delete (result as QuickApp2Config).orchestrator.deployment[
+      'name' as DeploymentField
+    ];
   }
 
   return result;
@@ -466,7 +581,10 @@ export const isExternalAppEditor = checkAppEditorType(
   DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
 );
 
-export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
+export const getEditorSchemaType = (
+  type: string,
+  schema?: ApiDetailedApplicationTypeSchema,
+): AppsEditorSchemaTypes => {
   if (type === ApplicationType.CODE_APP) return AppsEditorSchemaTypes.CodeApp;
 
   if (isQuickAppEditor(type)) return AppsEditorSchemaTypes.QuickApp;
@@ -474,6 +592,10 @@ export const getEditorSchemaType = (type: string): AppsEditorSchemaTypes => {
   if (isQuickApp2Editor(type)) return AppsEditorSchemaTypes.QuickApp2;
 
   if (isExternalAppEditor(type)) return AppsEditorSchemaTypes.ExternalApp;
+
+  if (schema?.properties) {
+    return AppsEditorSchemaTypes.SchemaDriven;
+  }
 
   return AppsEditorSchemaTypes.CustomApp;
 };
@@ -494,14 +616,27 @@ export const getEntityDisplayName = (
   );
 };
 
+// TODO: Remove after migrating all old toolsets with 'dial_id' to 'deployment_id'
+export const migrateMCPToolsetIdName = (
+  item: MCPToolset & { dial_id?: string },
+) => {
+  if (typeof item.dial_id === 'string') {
+    return {
+      ...omit(item, ['dial_id']),
+      deployment_id: item.deployment_id ? item.deployment_id : item.dial_id,
+    } as MCPToolset;
+  }
+  return item as MCPToolset;
+};
+
 export const getQuickAppItemNameFromConfig = (
-  item: MCPToolset | DialDeploymentSimpleTool,
+  item: MCPToolset | DialAppToolset | DialDeploymentSimpleTool,
 ): string => {
-  if ('dial_id' in item) {
+  if ('deployment_id' in item && 'name' in item) {
     return (
       item.name ||
       ApiUtils.decodeApiUrl(
-        parseEntityApiKey(splitEntityId(item.dial_id).name, {
+        parseEntityApiKey(splitEntityId(item.deployment_id).name, {
           parseVersion: true,
         }).name,
       )
@@ -528,6 +663,7 @@ export const getQuickAppItemNameFromConfig = (
   }
 
   if (!item.deployment_id) {
+    if ('template_name' in item) return item.template_name as string;
     console.error('Dial Tool is missing deployment_id:', item);
     return 'unknown';
   }

@@ -9,6 +9,8 @@ import { ImportExportActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import { ImportExportSelectors } from '@/src/store/selectors';
 
+import { ChatI18nKeys } from '@/src/constants/i18n';
+
 import { FullPageLoader } from '@/src/components/Common/FullPageLoader';
 import { withRenderWhen } from '@/src/components/Common/RenderWhen';
 
@@ -17,7 +19,14 @@ function ImportExportLoaderView() {
   const dispatch = useAppDispatch();
   const operationName =
     useAppSelector(ImportExportSelectors.selectOperationName) ?? '';
-  const stopLabel = operationName === Operation.Importing ? 'Stop' : 'Cancel';
+  const stopLabel =
+    operationName === Operation.Importing
+      ? ChatI18nKeys.Stop
+      : ChatI18nKeys.Cancel;
+  const loaderLabel =
+    operationName === Operation.Importing
+      ? ChatI18nKeys.Importing
+      : ChatI18nKeys.Exporting;
 
   const handleCancelExport = useCallback(() => {
     dispatch(ImportExportActions.exportCancel());
@@ -33,7 +42,7 @@ function ImportExportLoaderView() {
       : handleCancelExport;
   return (
     <FullPageLoader
-      loaderLabel={t(operationName)}
+      loaderLabel={t(loaderLabel)}
       isOpen
       onClose={() => {
         return;

@@ -5,9 +5,14 @@ import classNames from 'classnames';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isCreatedMarketplaceEntity } from '@/src/utils/app/marketplace';
+import { isEntityIdPublic } from '@/src/utils/app/publications';
 
+import { FeatureType } from '@/src/types/common';
 import { MarketplaceEntity } from '@/src/types/marketplace';
 import { Translation } from '@/src/types/translation';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { AuthSelectors } from '@/src/store/selectors';
 
 import { stopBubbling } from '@/src/constants/chat';
 import { ChatI18nKeys, MarketplaceI18nKeys } from '@/src/constants/i18n';
@@ -16,9 +21,10 @@ import { NA_VERSION } from '@/src/constants/publication';
 
 import { ModelIcon } from '@/src/components/Chatbar/ModelIcon';
 import { Menu, MenuItem } from '@/src/components/Common/DropdownMenu';
-import { Tooltip } from '@/src/components/Common/Tooltip';
+import { ShareIcon } from '@/src/components/Common/ShareIcon';
 
 import ChevronDownIcon from '@/public/images/icons/chevron-down.svg';
+import { DialEllipsisTooltip } from '@epam/ai-dial-ui-kit';
 
 const VersionPrefix = () => {
   const { t } = useTranslation(Translation.Chat);
@@ -59,6 +65,7 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
   selectedBaseIdsSet,
 }: EntityVersionSelectProps<T>) => {
   const { t } = useTranslation(Translation.Marketplace);
+  const userName = useAppSelector(AuthSelectors.selectUserName);
   const [isOpen, setIsOpen] = useState(false);
 
   const handleChange = (entity: T) => {
@@ -80,7 +87,9 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
             className="max-w-full overflow-hidden truncate whitespace-nowrap"
             data-qa="version"
           >
-            {entities[0].version ?? t(MarketplaceI18nKeys.NA)}
+            <DialEllipsisTooltip
+              text={entities[0].version ?? t(MarketplaceI18nKeys.NA)}
+            />
           </span>
         </div>
       );
@@ -129,24 +138,34 @@ export const ModelVersionSelect = <T extends MarketplaceEntity>({
         <MenuItem
           key={entity.id}
           className={classNames(
-            'max-w-[350px] overflow-hidden text-nowrap border-l border-transparent hover:bg-accent-primary-alpha',
-            (currentEntity.id === entity.id ||
-              selectedBaseIdsSet?.has(entity.id)) &&
-              '!border-accent-primary bg-accent-primary-alpha',
+            'max-w-[350px] overflow-hidden text-nowrap border-l hover:bg-accent-primary-alpha',
+            currentEntity.id === entity.id || selectedBaseIdsSet?.has(entity.id)
+              ? '!border-accent-primary bg-accent-primary-alpha'
+              : '!border-transparent',
           )}
           item={
             <div className="flex w-full items-center gap-2">
-              <ModelIcon
-                entityId={entity.id}
-                entity={entity}
-                size={DEFAULT_ICON_SIZES.SMALL}
-              />
-              <Tooltip
-                tooltip={getDisplayValue(entity)}
-                triggerClassName="truncate"
+              <ShareIcon
+                {...entity}
+                isPublished={
+                  (userName === entity.author || userName === entity.owner) &&
+                  isEntityIdPublic(entity)
+                }
+                isHighlighted={false}
+                size={10}
+                featureType={FeatureType.Application}
+                containerClassName="flex"
               >
-                {getDisplayValue(entity)}
-              </Tooltip>
+                <ModelIcon
+                  entityId={entity.id}
+                  entity={entity}
+                  size={DEFAULT_ICON_SIZES.SMALL}
+                />
+              </ShareIcon>
+              <DialEllipsisTooltip
+                text={getDisplayValue(entity)}
+                contentClassName="!z-[10000]"
+              />
             </div>
           }
           disabled={readonly}

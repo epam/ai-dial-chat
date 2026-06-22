@@ -308,7 +308,7 @@ const initQueryParamsEpic: AppEpic = (action$, state$) =>
       return concat(
         of(MarketplaceActions.setState(updatedMarketplaceState)),
         linkErrorMessage
-          ? of(UIActions.showErrorToast(linkErrorMessage))
+          ? of(UIActions.showErrorToast({ message: linkErrorMessage }))
           : EMPTY,
       );
     }),

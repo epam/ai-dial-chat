@@ -20,7 +20,11 @@ import classNames from 'classnames';
 import { useResizeObserver } from '@/src/hooks/useResizeObserver';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
-import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
+import {
+  getMappedAttachmentUrl,
+  hasPdfExtension,
+  isDialApiFileUrl,
+} from '@/src/utils/app/attachments';
 
 import { Translation } from '@/src/types/translation';
 
@@ -40,11 +44,12 @@ import {
   stopBubbling,
 } from '@/src/constants/chat';
 import { FOLDER_ATTACHMENT_CONTENT_TYPE } from '@/src/constants/folders';
-import { ChatI18nKeys } from '@/src/constants/i18n';
+import { ChatI18nKeys, ErrorsI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { PdfPreviewModal } from '@/src/components/Chat/PdfAttachment/PdfPreviewModal';
 import { withErrorBoundary } from '@/src/components/Common/ErrorBoundary';
+import { ErrorMessage } from '@/src/components/Common/ErrorMessage';
 import { Spinner } from '@/src/components/Common/Spinner';
 import { Tooltip } from '@/src/components/Common/Tooltip';
 import { ChatMDComponent } from '@/src/components/Markdown/ChatMDComponent';
@@ -54,7 +59,7 @@ import { VisualizerRenderer } from '@/src/components/VisualalizerRenderer/Visual
 
 import LinkIcon from '@/public/images/icons/arrow-up-right-from-square.svg';
 import ChevronDown from '@/public/images/icons/chevron-down.svg';
-import { Attachment, MIMEType } from '@epam/ai-dial-shared';
+import { Attachment, MIMEType, MessageAnnotation } from '@epam/ai-dial-shared';
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 import { sanitize } from 'isomorphic-dompurify';
 
@@ -70,7 +75,7 @@ const getSourceDataUrl = (attachment: Attachment): string | undefined => {
   if (attachment.url) {
     return getMappedAttachmentUrl(attachment.url);
   }
-  if (attachment.data) {
+  if (attachment.data?.trim()) {
     return `data:${attachment.type};base64,${attachment.data}`;
   }
 };
@@ -79,6 +84,44 @@ const AttachmentSourceRenderer = ({
   attachment,
 }: AttachmentDataRendererProps) => {
   return <source src={getSourceDataUrl(attachment)} type={attachment.type} />;
+};
+
+const ImageAttachmentRenderer = ({
+  attachment,
+  isFullScreen,
+}: {
+  attachment: Attachment;
+  isFullScreen?: boolean;
+}) => {
+  const { t } = useTranslation(Translation.Chat);
+  const [isImageValid, setIsImageValid] = useState(true);
+  const imageUrl = getSourceDataUrl(attachment);
+  if (!imageUrl) {
+    return (
+      <ErrorMessage error={t(ErrorsI18nKeys.ImageIsDeletedDoesNotExist)} />
+    );
+  }
+  const onImageError = () => {
+    setIsImageValid(false);
+  };
+  if (!isImageValid) {
+    return (
+      <ErrorMessage error={t(ErrorsI18nKeys.ImageIsDeletedDoesNotExist)} />
+    );
+  }
+  return (
+    <img
+      src={imageUrl}
+      className={classNames(
+        'm-0',
+        isFullScreen
+          ? 'size-auto max-h-full max-w-full object-contain'
+          : 'aspect-auto w-full',
+      )}
+      alt={t(ChatI18nKeys.AttachmentImage)}
+      onError={onImageError}
+    />
+  );
 };
 
 const AttachmentDataRenderer = ({
@@ -103,15 +146,9 @@ const AttachmentDataRenderer = ({
 
   if (IMAGE_TYPES_SET.has(attachment.type)) {
     return (
-      <img
-        src={getSourceDataUrl(attachment)}
-        className={classNames(
-          'm-0',
-          isFullScreen
-            ? 'size-auto max-h-full max-w-full object-contain'
-            : 'aspect-auto w-full',
-        )}
-        alt="Attachment image"
+      <ImageAttachmentRenderer
+        attachment={attachment}
+        isFullScreen={isFullScreen}
       />
     );
   }
@@ -213,6 +250,7 @@ const ChartAttachmentUrlRenderer = ({
 
 interface Props {
   attachment: Attachment;
+  annotations?: MessageAnnotation[];
   isInner?: boolean;
   forceDefaultView?: boolean;
 }
@@ -277,8 +315,16 @@ const AttachmentRendererComponent = withErrorBoundary(
   },
 );
 
+const LinkIconComponent = () => (
+  <LinkIcon
+    height={DEFAULT_ICON_SIZES.SMALL}
+    width={DEFAULT_ICON_SIZES.SMALL}
+  />
+);
+
 export const MessageAttachment = ({
   attachment,
+  annotations,
   isInner,
   forceDefaultView,
 }: Props) => {
@@ -308,7 +354,7 @@ export const MessageAttachment = ({
   const [wasOpened, setWasOpened] = useState(isExpandedByDefault);
   const [isExpanded, setIsExpanded] = useState(isExpandedByDefault);
   const [isFullScreen, setIsFullScreen] = useState(false);
-  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [openPdfUrl, setOpenPdfUrl] = useState<string | null>(null);
 
   const handleResize = useCallback(() => {
     if (wasOpened && anchorRef.current) {
@@ -327,7 +373,9 @@ export const MessageAttachment = ({
   useResizeObserver(anchorRef.current, handleResize);
 
   const isFolder = attachment.type === FOLDER_ATTACHMENT_CONTENT_TYPE;
-  const isPdf = attachment.type === PDF_CONTENT_TYPE && !!attachment.url;
+  const isPdfAttachment =
+    !!attachment.url &&
+    (attachment.type === PDF_CONTENT_TYPE || hasPdfExtension(attachment.url));
   const Icon = isFolder ? IconFolder : IconFile;
 
   const isOpenable =
@@ -345,6 +393,12 @@ export const MessageAttachment = ({
     () => getMappedAttachmentUrl(attachment.reference_url),
     [attachment.reference_url],
   );
+
+  const isPdfReference =
+    !!mappedAttachmentReferenceUrl &&
+    isDialApiFileUrl(mappedAttachmentReferenceUrl) &&
+    (attachment.reference_type === PDF_CONTENT_TYPE ||
+      hasPdfExtension(attachment.reference_url ?? ''));
 
   const isDownloadable =
     IMAGE_TYPES_SET.has(attachment.type) ||
@@ -376,8 +430,8 @@ export const MessageAttachment = ({
 
   const handleDropdownClick = () => {
     if (isBorderless || isFullScreen) return;
-    if (isPdf && mappedAttachmentUrl) {
-      setIsPdfModalOpen(true);
+    if (isPdfAttachment && mappedAttachmentUrl) {
+      setOpenPdfUrl(mappedAttachmentUrl);
       return;
     }
     setIsExpanded((isExpanded) => !isExpanded);
@@ -390,6 +444,10 @@ export const MessageAttachment = ({
       });
     }
   };
+
+  const handleClosePdfPreview = useCallback(() => {
+    setOpenPdfUrl(null);
+  }, []);
 
   useEffect(() => {
     if (!isFullScreen) return;
@@ -405,9 +463,6 @@ export const MessageAttachment = ({
 
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [isFullScreen]);
-
-  // const linkClassName =
-  //   'flex size-[24px] shrink-0 items-center justify-center rounded-[4px] text-secondary outline-offset-0 hover:bg-accent-primary-alpha hover:text-accent-primary focus-visible:outline';
 
   return (
     <div
@@ -452,18 +507,35 @@ export const MessageAttachment = ({
         <div className="flex items-center gap-3 px-2">
           <div className="flex items-center">
             {mappedAttachmentReferenceUrl ? (
-              <Tooltip tooltip="Open link">
-                <a
-                  href={mappedAttachmentReferenceUrl}
-                  target="_blank"
-                  className="link-icon-button-small"
-                  rel="noopener noreferrer"
-                >
-                  <LinkIcon
-                    height={DEFAULT_ICON_SIZES.SMALL}
-                    width={DEFAULT_ICON_SIZES.SMALL}
-                  />
-                </a>
+              <Tooltip
+                tooltip={
+                  isPdfReference
+                    ? t(ChatI18nKeys.OpenPdf)
+                    : t(ChatI18nKeys.OpenLink)
+                }
+              >
+                {isPdfReference ? (
+                  <button
+                    type="button"
+                    aria-label={t(ChatI18nKeys.OpenPdf)}
+                    className="link-icon-button-small"
+                    onClick={(e) => {
+                      stopBubbling(e);
+                      setOpenPdfUrl(mappedAttachmentReferenceUrl);
+                    }}
+                  >
+                    <LinkIconComponent />
+                  </button>
+                ) : (
+                  <a
+                    href={mappedAttachmentReferenceUrl}
+                    target="_blank"
+                    className="link-icon-button-small"
+                    rel="noopener noreferrer"
+                  >
+                    <LinkIconComponent />
+                  </a>
+                )}
               </Tooltip>
             ) : (
               <Icon
@@ -481,7 +553,7 @@ export const MessageAttachment = ({
           >
             <span
               className={classNames(
-                'shrink truncate whitespace-pre pr-2 text-left text-sm',
+                'shrink truncate whitespace-pre pe-2 text-start text-sm',
                 isExpanded || isFolder || mappedAttachmentReferenceUrl
                   ? 'max-w-full'
                   : 'max-w-[calc(100%-30px)]',
@@ -510,7 +582,11 @@ export const MessageAttachment = ({
                     size={ElementSize.Small}
                     icon={<FullScreenIcon size={DEFAULT_ICON_SIZES.SMALL} />}
                     onClick={handleToggleFullScreen}
-                    aria-label={isFullScreen ? 'Minimize' : 'Maximize'}
+                    aria-label={
+                      isFullScreen
+                        ? t(ChatI18nKeys.Minimize)
+                        : t(ChatI18nKeys.Maximize)
+                    }
                   />
                 )}
                 {!isFullScreen && (
@@ -565,24 +641,36 @@ export const MessageAttachment = ({
             onFullScreenClick={handleToggleFullScreen}
             forceDefaultView={forceDefaultView}
           />
-          {mappedAttachmentReferenceUrl && (
-            <a
-              href={mappedAttachmentReferenceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 block text-accent-primary"
-            >
-              {t(ChatI18nKeys.Reference)}
-            </a>
-          )}
+          {mappedAttachmentReferenceUrl &&
+            (isPdfReference ? (
+              <button
+                type="button"
+                onClick={(e) => {
+                  stopBubbling(e);
+                  setOpenPdfUrl(mappedAttachmentReferenceUrl);
+                }}
+                className="mt-3 block text-start text-accent-primary"
+              >
+                {t(ChatI18nKeys.Reference)}
+              </button>
+            ) : (
+              <a
+                href={mappedAttachmentReferenceUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 block text-accent-primary"
+              >
+                {t(ChatI18nKeys.Reference)}
+              </a>
+            ))}
         </div>
       )}
-      {isPdf && mappedAttachmentUrl && (
+      {openPdfUrl && (
         <PdfPreviewModal
-          url={mappedAttachmentUrl}
+          url={openPdfUrl}
           title={attachment.title}
-          isOpen={isPdfModalOpen}
-          onClose={() => setIsPdfModalOpen(false)}
+          onClose={handleClosePdfPreview}
+          annotations={annotations}
         />
       )}
     </div>

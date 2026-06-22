@@ -178,12 +178,12 @@ const ChatFolderTemplate = ({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.FolderNameExistsAtRoot, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsAtRoot, {
               ns: Translation.Chat,
               name: folder.name,
             }),
-          ),
+          }),
         );
 
         return;
@@ -335,6 +335,7 @@ const ChatSection = ({
   dataQa,
 }: FolderSectionProps) => {
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+  const { t } = useTranslation(Translation.Chat);
 
   const searchTerm = useAppSelector(ConversationsSelectors.selectSearchTerm);
   const selectedPublication = useAppSelector(
@@ -419,7 +420,7 @@ const ChatSection = ({
   return (
     <CollapsibleSection
       onToggle={handleToggle}
-      name={name}
+      name={t(name)}
       openByDefault={openByDefault ?? isExpanded}
       isExpanded={isExpanded}
       dataQa={dataQa}

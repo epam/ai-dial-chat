@@ -5,8 +5,11 @@ import {
 } from '@tabler/icons-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 
+import { useRouter } from 'next/router';
+
 import classNames from 'classnames';
 
+import { useFloatingPanelTogglePadding } from '@/src/hooks/useFloatingPanelTogglePadding';
 import { usePublicVersionGroupId } from '@/src/hooks/usePublicVersionGroupIdFromPublicEntity';
 import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
@@ -18,6 +21,7 @@ import {
   doesModelAllowTemperature,
   doesModelHaveSettings,
 } from '@/src/utils/app/models';
+import { translateConversationDisplayName } from '@/src/utils/app/translateConversationDisplayName';
 
 import { Conversation } from '@/src/types/chat';
 import { EntityType, ScreenState } from '@/src/types/common';
@@ -88,6 +92,7 @@ export const ChatHeader = Inversify.register(
     setShowSettings,
     onModelClick,
   }: Props) => {
+    const router = useRouter();
     const { t } = useTranslation(Translation.Chat);
 
     const dispatch = useAppDispatch();
@@ -108,6 +113,10 @@ export const ChatHeader = Inversify.register(
     const enabledFeatures = useAppSelector(
       SettingsSelectors.selectEnabledFeatures,
     );
+    const {
+      hasFloatingPanelToggles,
+      headerClassNames: headerClassNamesWithFloatingPanelToggles,
+    } = useFloatingPanelTogglePadding();
     const selectedConversations = useAppSelector(
       ConversationsSelectors.selectSelectedConversations,
     );
@@ -188,22 +197,32 @@ export const ChatHeader = Inversify.register(
       conversation.publicationInfo?.action === PublishActions.DELETE &&
       isApproveRequiredEntitySelected;
 
+    const displayName = useMemo(
+      () =>
+        translateConversationDisplayName(conversation.name, router.locale, t),
+      [conversation.name, router.locale, t],
+    );
+
     return (
       <>
         <div
           className={classNames(
-            'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 px-3 py-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
+            'sticky top-0 z-10 flex w-full min-w-0 items-center justify-center gap-2 bg-layer-2 text-sm md:flex-wrap md:px-0 lg:flex-row',
             isChatHeaderBorderEnabled && 'border-b border-secondary',
-            isChatFullWidth && 'px-3 md:px-5 lg:flex-nowrap',
+            isChatFullWidth && !hasFloatingPanelToggles && 'px-3 md:px-5',
+            isChatFullWidth && 'lg:flex-nowrap',
+            hasFloatingPanelToggles && headerClassNamesWithFloatingPanelToggles
+              ? headerClassNamesWithFloatingPanelToggles
+              : 'px-3 py-2',
           )}
           data-qa="chat-header"
         >
           {isShowChatInfo && (
             <>
               <Tooltip
-                tooltip={conversation.name}
+                tooltip={displayName}
                 triggerClassName={classNames(
-                  'flex-1 truncate text-center sm:flex-none',
+                  'truncate text-center',
                   isChatFullWidth &&
                     'flex h-full max-w-full items-center justify-center lg:max-w-[90%]',
                   isUnpublishing && 'text-error',
@@ -218,11 +237,11 @@ export const ChatHeader = Inversify.register(
                   )}
                   data-qa="chat-title"
                 >
-                  {conversation.name}
+                  {displayName}
                 </span>
               </Tooltip>
               {publicVersionGroupId && (
-                <span className="h-[18px] border-l border-l-primary pl-2">
+                <span className="h-[18px] min-w-fit border-s border-s-primary ps-2">
                   {!isApproveRequiredEntitySelected ? (
                     <PublicVersionSelector
                       publicVersionGroupId={publicVersionGroupId}
@@ -243,7 +262,7 @@ export const ChatHeader = Inversify.register(
               )}
             </>
           )}
-          <div className="flex lg:[&>*:first-child]:border-l lg:[&>*:not(:first-child)]:pl-2 [&>*:not(:last-child)]:border-r [&>*:not(:last-child)]:pr-2 [&>*]:border-x-primary [&>*]:pl-2">
+          <div className="flex lg:[&>*:first-child]:border-s lg:[&>*:not(:first-child)]:ps-2 [&>*:not(:last-child)]:border-e [&>*:not(:last-child)]:pe-2 [&>*]:border-x-primary [&>*]:ps-2">
             {isShowChatInfo && (
               <>
                 <span className="flex items-center" data-qa="chat-model">

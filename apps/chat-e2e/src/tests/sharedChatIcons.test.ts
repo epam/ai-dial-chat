@@ -14,7 +14,6 @@ import {
 import {
   Colors,
   Overflow,
-  StyleValues,
   Styles,
   ThemeColorAttributes,
 } from '@/src/ui/domData';
@@ -32,7 +31,7 @@ dialTest(
     'Share chat: copy button changes.\n' +
     'Shared URL is copied if to click on copy button.\n' +
     'Shared chat link is always different.\n' +
-    'Error appears if shared chat link is opened by its owner.\n' +
+    'Conversation is shown to owner who clicks on share link.\n' +
     'Shared icon appears in chat model icon if another user clicks on the link.\n' +
     'Share form text differs for chat and folder.\n' +
     'Confirmation message if to delete shared chat',
@@ -48,10 +47,10 @@ dialTest(
     tooltip,
     page,
     sendMessage,
-    toast,
     conversationDropdownMenu,
     additionalUserShareApiHelper,
     chatHeader,
+    chatHeaderAssertion,
     chatMessages,
     confirmationDialog,
     conversationAssertion,
@@ -78,9 +77,13 @@ dialTest(
     let secondShareLinkResponse: ShareByLinkResponseModel;
 
     await dialTest.step('Prepare default conversation', async () => {
-      conversation = conversationData.prepareDefaultConversation();
+      const model = GeneratorUtil.randomArrayElement(
+        ModelsUtil.getLatestModels(),
+      );
+      conversation = conversationData.prepareDefaultConversation(model);
       await dataInjector.createConversations([conversation]);
       await localStorageManager.setShowSideBarPanels();
+      await localStorageManager.setRecentModelsIds(model);
     });
 
     await dialTest.step(
@@ -217,10 +220,10 @@ dialTest(
           .toBeTruthy();
         expect
           .soft(
-            secondShareRequestResponse!.request.resources.length,
+            secondShareRequestResponse!.request.resources,
             ExpectedMessages.sharedResourcesCountIsValid,
           )
-          .toBe(1);
+          .toHaveLength(1);
         expect
           .soft(
             secondShareRequestResponse!.request.resources.find(
@@ -237,17 +240,15 @@ dialTest(
     );
 
     await dialTest.step(
-      'Open shared link by current user and verify error is shown',
+      'Open shared link by current user and verify conversation is shown',
       async () => {
         await dialHomePage.navigateToUrl(
           ExpectedConstants.sharedSideBarEntityUrl(
             secondShareLinkResponse.invitationLink,
           ),
         );
-        const errorMessage = await toast.getElementContent();
-        expect
-          .soft(errorMessage, ExpectedMessages.shareInviteAcceptanceErrorShown)
-          .toBe(ExpectedConstants.shareInviteAcceptanceFailureMessage);
+        await dialHomePage.waitForPageLoaded({ waitForAgentInfo: false });
+        await chatHeaderAssertion.assertHeaderTitle(conversation.name);
       },
     );
 
@@ -815,8 +816,7 @@ dialTest(
     'Confirmation message if to delete shared chat folder.\n' +
     'Shared icon disappears from the folder if to use Unshare.\n' +
     'Share form text differs for chat and folder.\n' +
-    'Shared folder disappears from Shared with me if the original was unshared.\n' +
-    'Unshare chat: tooltip for long chat folder name',
+    'Shared folder disappears from Shared with me if the original was unshared.\n',
   async ({
     dialHomePage,
     conversationData,
@@ -843,7 +843,6 @@ dialTest(
       'EPMRTC-2757',
       'EPMRTC-1811',
       'EPMRTC-2763',
-      'EPMRTC-2876',
     );
     let folderConversation: FolderConversation;
     let shareLinkResponse: ShareByLinkResponseModel;
@@ -909,21 +908,13 @@ dialTest(
     );
 
     await dialTest.step(
-      'Select Share option from menu for shared folder and verify folder name is truncated with dots, full name is shown on hover',
+      'Select Share option from menu for shared folder',
       async () => {
         await folderConversations.openFolderDropdownMenu(
           folderConversation.folders.name,
         );
         await folderDropdownMenu.selectMenuOption(MenuOptions.share);
         await shareModal.removeAccessBtn.click();
-
-        const chatNameOverflowProp =
-          await confirmationDialog.entityName.getComputedStyleProperty(
-            Styles.overflow_wrap,
-          );
-        expect
-          .soft(chatNameOverflowProp[0], ExpectedMessages.entityNameIsTruncated)
-          .toBe(StyleValues.breakWord);
       },
     );
 

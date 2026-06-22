@@ -1,15 +1,57 @@
 import { describe, expect, it } from 'vitest';
 
+import { getUtf8BytesLength } from '@/src/utils/app/common';
+
+import { DEFAULT_RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-settings';
 import { TEMP_FILE_NAME_IN_FILE_MANAGER } from '@/src/constants/file';
 
 import {
   formatFileSize,
+  getNestedEmptyFolderIdsForChosenParent,
   isAbsoluteUrl,
+  isPathUnderPrefix,
   prepareFileName,
   withoutFileManagerPlaceholderByName,
 } from '../file';
 
 describe('File utility methods', () => {
+  describe('isPathUnderPrefix', () => {
+    it('returns true for exact match ignoring trailing slashes', () => {
+      expect(isPathUnderPrefix('files/bucket/a', 'files/bucket/a')).toBe(true);
+      expect(isPathUnderPrefix('files/bucket/a/', 'files/bucket/a')).toBe(true);
+      expect(isPathUnderPrefix('files/bucket/a', 'files/bucket/a/')).toBe(true);
+    });
+
+    it('returns true only for strict path descendants', () => {
+      expect(
+        isPathUnderPrefix(
+          'files/bucket/parent/zip/nested/file.txt',
+          'files/bucket/parent/zip',
+        ),
+      ).toBe(true);
+      expect(
+        isPathUnderPrefix(
+          'files/bucket/parent/zip/nested',
+          'files/bucket/parent/zip',
+        ),
+      ).toBe(true);
+    });
+
+    it('does not match sibling path segments (foo vs foobar)', () => {
+      expect(
+        isPathUnderPrefix(
+          'files/bucket/parent/foobar',
+          'files/bucket/parent/foo',
+        ),
+      ).toBe(false);
+    });
+
+    it('returns false for empty path or prefix', () => {
+      expect(isPathUnderPrefix('', 'files/a')).toBe(false);
+      expect(isPathUnderPrefix('files/a', '')).toBe(false);
+    });
+  });
+
   describe('withoutFileManagerPlaceholderByName', () => {
     it('removes placeholder by exact name', () => {
       const items = [
@@ -104,12 +146,14 @@ describe('File utility methods', () => {
       expect(prepareFileName('  ab,c.txt  ')).toBe('ab_c.txt');
     });
 
-    it('truncates the stem before the extension for long filenames', () => {
+    it('truncates the stem before the extension to fit the configured segment bytes', () => {
       const result = prepareFileName(
         'test.test.testtest.testtest.testtesttesttesttesttesttesttest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtest.testtesttesttest.json',
       );
 
-      expect(result).toHaveLength(160);
+      expect(getUtf8BytesLength(result)).toBeLessThanOrEqual(
+        DEFAULT_RESOURCE_MAX_SEGMENT_BYTES,
+      );
       expect(result.endsWith('.json')).toBe(true);
     });
 
@@ -123,6 +167,44 @@ describe('File utility methods', () => {
 
     it('keeps file names with dot after sanitization', () => {
       expect(prepareFileName('test..json')).toBe('test..json');
+    });
+  });
+
+  describe('getNestedEmptyFolderIdsForChosenParent', () => {
+    it('maps matching empty folder ids to trailing-slash markers under parent', () => {
+      expect(
+        getNestedEmptyFolderIdsForChosenParent(
+          ['bucket/files/f1', 'bucket/files/f1/sub'],
+          'bucket/files/f1',
+        ),
+      ).toEqual(['bucket/files/f1/', 'bucket/files/f1/sub/']);
+    });
+
+    it('returns empty array when no empty folder is under parent', () => {
+      expect(
+        getNestedEmptyFolderIdsForChosenParent(
+          ['bucket/files/other'],
+          'bucket/files/f1',
+        ),
+      ).toEqual([]);
+    });
+
+    it('includes descendants when parent matches path prefix', () => {
+      expect(
+        getNestedEmptyFolderIdsForChosenParent(
+          ['root/a', 'root/a/nested'],
+          'root',
+        ),
+      ).toEqual(['root/a/', 'root/a/nested/']);
+    });
+
+    it('does not match folders whose names share a prefix but are distinct', () => {
+      expect(
+        getNestedEmptyFolderIdsForChosenParent(
+          ['bucket/files/folder01', 'bucket/files/folder0101'],
+          'bucket/files/folder01',
+        ),
+      ).toEqual(['bucket/files/folder01/']);
     });
   });
 });

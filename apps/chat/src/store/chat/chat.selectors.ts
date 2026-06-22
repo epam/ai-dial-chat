@@ -101,6 +101,9 @@ const selectIsUserMessageTranscribing = (state: RootState) =>
 const selectIsAsrFlowActive = (state: RootState) =>
   rootSelector(state).isAsrFlowActive;
 
+const selectAsrInsertionContext = (state: RootState) =>
+  rootSelector(state).asrInsertionContext;
+
 export const ChatSelectors = {
   selectInputContent,
   selectInputContentTemplateMapping,
@@ -109,6 +112,7 @@ export const ChatSelectors = {
   selectIsTranscribing,
   selectIsUserMessageTranscribing,
   selectIsAsrFlowActive,
+  selectAsrInsertionContext,
   selectChatFormValue,
   selectUploadedConfigurationSchemas,
   selectConfigurationSchemaByModelId,

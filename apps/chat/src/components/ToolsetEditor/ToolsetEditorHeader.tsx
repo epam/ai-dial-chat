@@ -3,6 +3,7 @@ import { useFormContext, useFormState } from 'react-hook-form';
 
 import { useRouter } from 'next/router';
 
+import { useEditorSaveLabel } from '@/src/hooks/useEditorSaveLabel';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isEntityIdPublic } from '@/src/utils/app/publications';
@@ -165,8 +166,7 @@ export const ToolsetEditorHeader = ({
     [dispatch, errorSteps, onSave, redirectToChat],
   );
 
-  const saveLabel =
-    isExistingToolset && !isPublicToolset ? 'Save and exit' : 'Exit';
+  const saveLabel = useEditorSaveLabel(isExistingToolset && !isPublicToolset);
 
   return (
     <>

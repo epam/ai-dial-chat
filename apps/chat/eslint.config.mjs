@@ -1,6 +1,9 @@
 import baseConfig from '../../eslint.config.mjs';
 
 export default [
+  {
+    ignores: ['./apps/chat/public/pdf.worker.min.mjs'],
+  },
   ...baseConfig,
   {
     files: ['**/*.{ts,tsx,js,jsx}'],

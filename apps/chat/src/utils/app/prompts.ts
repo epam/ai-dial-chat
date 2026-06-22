@@ -4,8 +4,18 @@ import { getPromptApiKey, parseEntityApiKey } from '@/src/utils/server/api';
 import { PartialBy } from '@/src/types/common';
 import { Prompt, PromptInfo, TemplateParameter } from '@/src/types/prompt';
 
+import { DEFAULT_PROMPT_NAME } from '@/src/constants/default-ui-settings';
 import { PROMPT_VARIABLE_REGEX_GLOBAL } from '@/src/constants/folders';
 
+import {
+  EntityStorageLimits,
+  buildByteAwareFitBaseName,
+  getAvailableEntityNameBytes,
+  getResourceStorageLimits,
+  getStorageSafeUniqueName,
+  prepareEntityName,
+  truncateToUtf8Bytes,
+} from './common';
 import { constructPath } from './file';
 
 import { TemplateMapping } from '@epam/ai-dial-shared';
@@ -23,6 +33,47 @@ export const regeneratePromptId = (prompt: PartialBy<Prompt, 'id'>): Prompt => {
     };
   }
   return prompt as Prompt;
+};
+
+export const getAvailablePromptNameBytes = (
+  prompt: PartialBy<PromptInfo, 'id'>,
+  limits: EntityStorageLimits = getResourceStorageLimits(),
+): number | undefined =>
+  getAvailableEntityNameBytes(
+    (name) => getGeneratedPromptId({ ...(prompt as Prompt), name }),
+    (name) => getPromptApiKey({ ...prompt, name }),
+    limits,
+  );
+
+export const getStorageSafeUniquePromptName = (params: {
+  prompt: PartialBy<PromptInfo, 'id'>;
+  desiredName?: string;
+  defaultName?: string;
+  existingNames: string[];
+  limits?: EntityStorageLimits;
+}): string => {
+  const { prompt, desiredName, existingNames } = params;
+  const limits = params.limits ?? getResourceStorageLimits();
+  const defaultName = params.defaultName ?? DEFAULT_PROMPT_NAME;
+
+  const availableNameBytes = getAvailablePromptNameBytes(prompt, limits);
+
+  const uniqueName = getStorageSafeUniqueName({
+    desiredName,
+    defaultName,
+    existingNames,
+    fitBaseName: buildByteAwareFitBaseName(availableNameBytes),
+  });
+
+  if (uniqueName) {
+    return uniqueName;
+  }
+
+  const baseName =
+    prepareEntityName(desiredName ?? '') || prepareEntityName(defaultName);
+
+  if (availableNameBytes === undefined) return baseName;
+  return prepareEntityName(truncateToUtf8Bytes(baseName, availableNameBytes));
 };
 
 export const getPromptInfoFromId = (
@@ -139,6 +190,12 @@ export const replaceTemplates = (
     .split(key.trim())
     .map((part) => replaceTemplates(rest, part))
     .join(value.trim());
+};
+
+export const generateSkillContent = (): string => {
+  const slugName = 'skill-name';
+  const desc = 'A description of what this skill does and when to use it.';
+  return `---\nname: ${slugName}\ndescription: ${desc}\n---`;
 };
 
 export const areSomePromptsFieldsChanged = (

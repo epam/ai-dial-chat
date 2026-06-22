@@ -5,6 +5,7 @@ import { EntityType } from '@/chat/types/common';
 import { ServerSlugs } from '@/chat/types/slugs-types';
 import { ItemUtil } from '@/src/utils';
 import { ThemesUtil } from '@/src/utils/themesUtil';
+import { Toolset } from '@epam/ai-dial-shared';
 import path from 'path';
 
 export const ExpectedConstants = {
@@ -25,6 +26,14 @@ export const ExpectedConstants = {
   newFolderTitle: 'New folder',
   newFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
+  maxNewFolderIndex: (names: string[]): number =>
+    Math.max(
+      0,
+      ...names
+        .map((n) => n.match(/New folder (\d+)/)?.[1])
+        .filter((n): n is string => Boolean(n))
+        .map(Number),
+    ),
   newPromptFolderWithIndexTitle: (index: number) =>
     `${ExpectedConstants.newFolderTitle} ${index}`,
   renameConversationModalTitle: 'Rename conversation',
@@ -199,7 +208,7 @@ export const ExpectedConstants = {
   copyTableTooltip: (copyType: CopyTableType) =>
     `Copy as ${copyType.toUpperCase()}`,
   charsToEscape: ['\\', '"'],
-  maxEntityNameLength: 160,
+  maxEntityNameLength: 255,
   selectAllTooltip: 'Select all',
   unselectAllTooltip: 'Unselect all',
   deleteSelectedConversationsTooltip: 'Delete selected conversations',
@@ -214,6 +223,7 @@ export const ExpectedConstants = {
     `Prompt limit is ${maxPromptTokens} tokens. You have entered ${enteredTokens} tokens and are trying to insert a prompt with more than ${remainedTokes} tokens. 1 token approximately equals to 4 characters.`,
   replayVariableModalTitle: 'Please, enter variables for the template:',
   exportedFileExtension: '.json',
+  successfulPublishingMessage: 'Publication request created successfully',
   publishToLabel: 'Publish to',
   authorLabel: 'Author',
   publicAuthorLabel: `Author's public name`,
@@ -310,7 +320,7 @@ export const ExpectedConstants = {
   goToMyWorkspaceButtonLabel: 'Go to My workspace',
   goToDialMarketplaceButtonLabel: 'Go to DIAL Marketplace',
   publishRequestNameMaxLengthErrorMessage:
-    'Request name should be at most 160 characters long',
+    'The Request name is too long. Please shorten it and try again.',
   publishRequestNameIsRequired: 'This field is required',
   defaultAgentLabel: 'Default agent',
   lastUsedAgentLabel: 'Last used agent',
@@ -368,11 +378,20 @@ export const ExpectedConstants = {
   logOutDialogTitle: 'Logging out',
   logOutDialogMessage: 'Are you sure you want to log out?',
   logOutDialogButtonLabel: 'Log out',
+  apiKeyParameterNameLabel: 'API Key parameter name',
+  apiKeyFieldLabel: 'API Key',
+  apiKeyFieldRequiredError: 'Key name is required',
+  credentials: 'Credentials',
   fileManagerPath: '/file-manager',
   deleteItemToastMessage: (filename: string, path: string) =>
     `Item deleted successfully.\n“${filename}” deleted from ${path}`,
   replaceAttachmentConfirmationTitle: 'Replace Or Duplicate Item',
   replaceGroupAttachmentConfirmationTitle: 'Replace Or Duplicate Items',
+  uploadDuplicateNamesModalTitle:
+    'Some files failed to upload due to duplicate names',
+  uploadDuplicateNamesModalDescription:
+    'Add a postfix, ignore or replace existing files with uploading ones.',
+  continueUploadButtonLabel: 'Continue upload',
   replaceAttachmentConfirmationMessage: (filename: string) =>
     `Item with the name "${filename}" already exists in this destination.ReplaceDuplicate`,
   duplicatedFileName: (name: string, index = 1) => {
@@ -388,6 +407,24 @@ export const ExpectedConstants = {
   itemCopiedSuccessTitle: 'Item copied successfully',
   itemCopiedToMyFilesMessage: (name: string) =>
     `Item copied successfully\u201C${name}\u201D copied to My Files`,
+  readOnlyToolsetMessage: 'This toolset is public and cannot be edited',
+  readOnlyApplicationMessage: 'This application is public and cannot be edited',
+  notAvailableChipTooltip: (
+    entityType: string,
+    name: string,
+    version: string,
+  ) => `Not available ${entityType}.${name}v. ${version}`,
+  loginToOrgSuccessfulMessage: (name: string, version: string) =>
+    `Successful login\nYou have successfully logged into the "${name}" version ${version} with credentials to entire organization.`,
+  personalLoginSuccessfulMessage: (name: string, version: string) =>
+    `Successful login\nYou have successfully logged into the "${name}" version ${version} with personal credentials.`,
+  copyToolsetUrlPattern: (toolset: Toolset) =>
+    new RegExp(`/v1/toolset/${toolset.id ?? toolset.name}/mcp$`),
+};
+
+export const withTraceId = (message: string): RegExp => {
+  const escaped = message.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`^${escaped}Trace ID: [0-9a-f]+$`);
 };
 
 export enum Types {
@@ -428,6 +465,8 @@ export enum MenuOptions {
   copyLink = 'Copy link',
   removeAccess = 'Remove access',
   loginWithMyCreds = 'Login with my creds',
+  login = 'Log in',
+  connect = 'Connect',
 }
 
 export enum FilterMenuOptions {
@@ -454,6 +493,7 @@ export enum AddAppMenuOptions {
   codeApp = 'Code app',
   customApp = 'Custom app',
   externalApp = 'External app',
+  quickApp2 = 'Quick app 2.0',
 }
 
 export enum EntityEditorGeneralFormFields {
@@ -743,8 +783,23 @@ export enum EntityEditorAppTypes {
   CodeApp = 'Code App',
 }
 
+export const QuickApp2SchemaId =
+  'mydial.epam.com/custom_application_schemas/quickapps2';
+
 export enum MarketplaceTabs {
   WORKSPACE = 'workspace',
+}
+
+// Test-side copies of chat's editor step enums — can't import them, the chat
+// module pulls in an SVG that the test runtime can't parse.
+export enum MarketplaceEditorSteps {
+  General = 'General',
+  Settings = 'Settings',
+}
+
+export enum ToolsetEditorSteps {
+  General = 'General info',
+  Settings = 'Toolset settings',
 }
 
 export enum MarketplaceEntitiesTabs {
@@ -773,6 +828,12 @@ export enum SignInButtonTitles {
   logOut = 'Log out',
 }
 
+export enum ManageCredsModalText {
+  title = 'Manage credentials',
+  personalCredsText = 'Log in with personal credentials.',
+  orgCredsText = 'Log in with credentials that will be available to other users in the organization.',
+}
+
 export const ExpectedConfirmationPopupData = {
   deleteItemHeader: 'Confirm Deleting Item',
   deleteItemsHeader: 'Confirm Deleting Items',
@@ -780,4 +841,8 @@ export const ExpectedConfirmationPopupData = {
     `Are you sure you want to delete “${item}”?`,
   deleteItemsContent: (count: number) =>
     `Do you want to delete the following ${count} items?`,
+};
+
+export const ExpectedConnectToolsetModalData = {
+  header: 'Connect toolset',
 };

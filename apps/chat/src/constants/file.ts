@@ -1,3 +1,5 @@
+import { extensions } from 'mime-types';
+
 export const MIME_FORMAT_REGEX =
   /^([a-zA-Z0-9!*\-.+]+|\*)\/([a-zA-Z0-9!*\-.+]+|\*)$/;
 
@@ -20,3 +22,14 @@ export enum FileItemEventIds {
   Delete = 'delete',
   Unshare = 'unshare',
 }
+
+// Extend the list of allowed file extensions for specific MIME types from 'mime-types' package
+export const ADDITIONAL_FILE_EXTENSIONS: Record<string, string[]> = {
+  'text/javascript': ['js'],
+};
+
+// Combine the extensions from 'mime-types' with the additional allowed file extensions
+export const ALL_FILE_EXTENSIONS = {
+  ...extensions,
+  ...ADDITIONAL_FILE_EXTENSIONS,
+};

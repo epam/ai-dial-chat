@@ -9,7 +9,7 @@ export class FieldLabel extends BaseElement {
   }
 
   public getFieldLabel(labelText: string): BaseElement {
-    const allLabels = this.getChildElementBySelector(Tags.label);
+    const allLabels = this.getChildElementBySelector(`${Tags.label}:visible`);
     const labelLocator = allLabels.getElementLocatorByText(
       new RegExp(`^${RegexUtil.escapeRegexChars(labelText)}\\b`),
     );

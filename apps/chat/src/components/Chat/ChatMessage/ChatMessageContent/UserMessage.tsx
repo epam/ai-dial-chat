@@ -12,10 +12,12 @@ import classNames from 'classnames';
 
 import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { useFilePaste } from '@/src/hooks/useFilePaste';
+import { useTextareaInsertInPosition } from '@/src/hooks/useTextareaInsertInPosition';
 import { useTranslation } from '@/src/hooks/useTranslation';
 import { useVoiceRecorder } from '@/src/hooks/useVoiceRecorder';
 
 import {
+  getTranscriptTextToInsert,
   isEntityNameOrPathInvalid,
   replaceStringRange,
 } from '@/src/utils/app/common';
@@ -33,6 +35,7 @@ import {
 } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
+import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -67,6 +70,10 @@ import { MessageAttachments } from '@/src/components/Chat/MessageAttachments';
 import { AttachButton } from '@/src/components/Files/AttachButton';
 
 import { OverlayMessageCustomButtons } from './OverlayMessageCustomButtons';
+import {
+  getSaveSubmitTooltipText,
+  isSaveSubmitTooltipHidden,
+} from './saveSubmitTooltip';
 
 import {
   Feature,
@@ -87,6 +94,7 @@ interface UserMessageProps {
   allMessages: Message[];
   isEditing: boolean;
   isEditingTemplates: boolean;
+  isAlignedToEnd?: boolean;
   withButtons?: boolean;
   editDisabled?: boolean;
   onToggleEditing: (value: boolean) => void;
@@ -107,6 +115,7 @@ export const UserMessage = memo(function UserMessage({
   allMessages,
   isEditing,
   isEditingTemplates,
+  isAlignedToEnd,
   withButtons,
   editDisabled,
   onToggleEditing,
@@ -182,6 +191,11 @@ export const UserMessage = memo(function UserMessage({
   );
 
   const [messageContent, setMessageContent] = useState(message.content);
+  const { insertTextAtCursor } = useTextareaInsertInPosition(
+    textareaRef,
+    messageContent,
+    setMessageContent,
+  );
   const [formValue, setFormValue] = useState(currentFormValue);
   const [isTyping, setIsTyping] = useState<boolean>(false);
   const [shouldScroll, setShouldScroll] = useState(false);
@@ -443,11 +457,16 @@ export const UserMessage = memo(function UserMessage({
 
   const handleUnselectFile = useCallback(
     (fileId: string) => {
-      dispatch(FilesActions.uploadFileCancel({ id: fileId }));
       const fid = isFolderId(fileId) ? fileId.slice(0, -1) : fileId;
+      const file = files.find((f) => f.id === fid);
+      if (file?.isFromDeviceAttachment) {
+        dispatch(FilesActions.deleteFile({ fileId: fid }));
+      } else {
+        dispatch(FilesActions.uploadFileCancel({ id: fileId }));
+      }
       setNewEditableAttachmentsIds((ids) => ids.filter((id) => id !== fid));
     },
-    [dispatch],
+    [dispatch, files],
   );
 
   const handleRetry = useCallback(
@@ -464,27 +483,21 @@ export const UserMessage = memo(function UserMessage({
     );
   }, []);
 
+  const { uploadFiles: uploadPastedFiles, dispatchPreparedFiles } =
+    useChatUploadFiles({
+      selectedAttachmentsAmount: newEditableAttachments.length,
+      skipSelect: true,
+    });
+
   const handleUploadFromDevice = useCallback(
-    (
-      selectedFiles: Required<Pick<DialFile, 'fileContent' | 'id' | 'name'>>[],
-      folderPath: string | undefined,
-    ) => {
-      selectedFiles.forEach((file) => {
-        dispatch(
-          FilesActions.uploadFile({
-            fileContent: file.fileContent,
-            id: file.id,
-            relativePath: folderPath,
-            name: file.name,
-          }),
-        );
+    (selectedFiles: ResolvedUploadFile[], folderPath: string | undefined) => {
+      const ids = dispatchPreparedFiles(selectedFiles, folderPath, {
+        isFromDeviceAttachment: true,
       });
 
-      setNewEditableAttachmentsIds((ids) =>
-        uniq(ids.concat(selectedFiles.map(({ id }) => id))),
-      );
+      setNewEditableAttachmentsIds((prevIds) => uniq(prevIds.concat(ids)));
     },
-    [dispatch],
+    [dispatchPreparedFiles],
   );
 
   const handleToggleEditingTemplates = useCallback(
@@ -509,6 +522,14 @@ export const UserMessage = memo(function UserMessage({
 
     return onDelete;
   }, [allMessages, isExternalChat, isApproveRequiredEntitySelected, onDelete]);
+
+  const handleStopRecording = useCallback(() => {
+    // To show the transcribing overlay when the user stops recording
+    if (isAsrMode) {
+      dispatch(ChatActions.startUserMessageTranscription());
+    }
+    stopRecording();
+  }, [isAsrMode, stopRecording, dispatch]);
 
   useEffect(() => {
     setMessageContent(message.content);
@@ -571,13 +592,29 @@ export const UserMessage = memo(function UserMessage({
       return;
     }
 
-    setMessageContent((prev) =>
-      prev.trim()
-        ? `${prev.trim()} ${userMessageTranscript.trim()}`
-        : userMessageTranscript.trim(),
-    );
+    const textarea = textareaRef.current;
+
+    if (textarea) {
+      const beforeCursor = messageContent.substring(0, textarea.selectionStart);
+      const textToInsert = getTranscriptTextToInsert(
+        beforeCursor,
+        userMessageTranscript,
+      );
+
+      if (textToInsert) {
+        insertTextAtCursor(textToInsert);
+      }
+    } else {
+      const trimmedTranscript = userMessageTranscript.trim();
+      if (trimmedTranscript) {
+        setMessageContent((prev) =>
+          prev.trim() ? `${prev} ${trimmedTranscript}` : trimmedTranscript,
+        );
+      }
+    }
+
     dispatch(ChatActions.clearUserMessageTranscript());
-  }, [dispatch, userMessageTranscript]);
+  }, [dispatch, insertTextAtCursor, messageContent, userMessageTranscript]);
 
   useEffect(() => {
     if (!userMessageVoiceAttachmentId) {
@@ -596,11 +633,6 @@ export const UserMessage = memo(function UserMessage({
       dispatch(ChatActions.clearUserMessageVoiceAttachmentId());
     }
   }, [dispatch, isEditing]);
-
-  const uploadPastedFiles = useChatUploadFiles({
-    selectedAttachmentsAmount: newEditableAttachments.length,
-    skipSelect: true,
-  });
 
   const handleUploadPastedFiles = useCallback(
     (
@@ -689,7 +721,7 @@ export const UserMessage = memo(function UserMessage({
                 ref={micButtonRef}
                 isRecording={isRecording}
                 onStartRecording={startRecording}
-                onStopRecording={stopRecording}
+                onStopRecording={handleStopRecording}
                 error={voiceError}
                 disabled={isMicDisabled}
               />
@@ -764,6 +796,22 @@ export const UserMessage = memo(function UserMessage({
                   isContentEmptyAndNoAttachments ||
                   isUserMessageTranscribing
                 }
+                tooltipProps={{
+                  hideTooltip: isSaveSubmitTooltipHidden({
+                    isUploadingAttachmentPresent,
+                    isContentEmptyAndNoAttachments,
+                    isTranscribing: isUserMessageTranscribing,
+                  }),
+                  tooltip: getSaveSubmitTooltipText(
+                    {
+                      isUploadingAttachmentPresent,
+                      isContentEmptyAndNoAttachments,
+                      isTranscribing: isUserMessageTranscribing,
+                    },
+                    t,
+                  ),
+                  isTriggerClickable: true,
+                }}
                 data-qa="save-and-submit"
               />
             )}
@@ -775,7 +823,12 @@ export const UserMessage = memo(function UserMessage({
 
   return (
     <>
-      <div className="relative mr-2 flex w-full flex-col gap-5">
+      <div
+        className={classNames('relative flex w-full flex-col gap-5', {
+          'me-2': isAlignedToEnd,
+          'mr-2': !isAlignedToEnd,
+        })}
+      >
         <UserSchema
           formValue={currentFormValue}
           messageIndex={messageIndex}

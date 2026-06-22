@@ -8,6 +8,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useWindowResizeEvent } from '@/src/hooks/useWindowResizeEvent';
 
 import { isSmallScreen, isTabletScreen } from '@/src/utils/app/mobile';
+import { isRtlLocale } from '@/src/utils/app/rtl';
 import { centralChatWidth, getNewSidebarWidth } from '@/src/utils/app/sidebar';
 
 import { ScreenState } from '@/src/types/common';
@@ -58,12 +59,18 @@ export function ResizableSidebarWrapper({
   const isChatbarOpen = useAppSelector(UISelectors.selectShowChatbar);
   const isPromptbarOpen = useAppSelector(UISelectors.selectShowPromptbar);
   const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+  const isMdSidebarOverlayBreakpoint = useAppSelector(
+    SettingsSelectors.selectIsMdSidebarOverlayBreakpoint,
+  );
   const isNavigationVisible = useAppSelector(
     UISelectors.selectIsNavigationVisible,
   );
 
   const isMarketplaceFilterbar =
     isLeftSidebar && router.route === Routes.Marketplace;
+
+  const isRtl = isRtlLocale(router.locale ?? 'en');
+  const isPhysicallyLeftSidebar = isRtl ? !isLeftSidebar : isLeftSidebar;
 
   const [windowWidth, setWindowWidth] = useState<number | undefined>(() => {
     if (typeof window !== 'undefined') {
@@ -81,10 +88,22 @@ export function ResizableSidebarWrapper({
 
   const resizeTriggerClassName = classNames(
     'invisible h-full w-0.5 group-hover:visible md:visible',
-    'sidebar-overlay:bg-accent-primary sidebar-overlay:text-accent-primary',
+    isMdSidebarOverlayBreakpoint
+      ? 'sidebar-overlay-md:bg-accent-primary sidebar-overlay-md:text-accent-primary'
+      : 'sidebar-overlay:bg-accent-primary sidebar-overlay:text-accent-primary',
     isResizing
-      ? 'bg-accent-primary text-accent-primary sidebar-overlay:visible'
-      : 'bg-layer-3 text-secondary sidebar-overlay:invisible',
+      ? classNames(
+          'bg-accent-primary text-accent-primary',
+          isMdSidebarOverlayBreakpoint
+            ? 'sidebar-overlay-md:visible'
+            : 'sidebar-overlay:visible',
+        )
+      : classNames(
+          'bg-layer-3 text-secondary',
+          isMdSidebarOverlayBreakpoint
+            ? 'sidebar-overlay-md:invisible'
+            : 'sidebar-overlay:invisible',
+        ),
   );
 
   const sidebarWidth = useMemo(() => {
@@ -221,14 +240,21 @@ export function ResizableSidebarWrapper({
 
   const resizableWrapperClassName = classNames(
     '!fixed z-40 flex !h-full max-w-[95%] border-tertiary md:max-w-[45%]',
-    'sidebar-overlay:!relative sidebar-overlay:top-0',
+    isMdSidebarOverlayBreakpoint
+      ? 'sidebar-overlay-md:!relative sidebar-overlay-md:top-0'
+      : 'sidebar-overlay:!relative sidebar-overlay:top-0',
     isLeftSidebar
-      ? 'left-0 border-r sidebar-overlay:left-0'
-      : 'right-0 border-l',
+      ? classNames(
+          'start-0 border-r',
+          isMdSidebarOverlayBreakpoint
+            ? 'sidebar-overlay-md:start-0'
+            : 'sidebar-overlay:start-0',
+        )
+      : 'end-0 border-l',
     sidebarThemeClassname,
     isLeftSidebar &&
       isNavigationVisible &&
-      (isOverlay ? 'md:left-[44px]' : 'md:left-[60px]'),
+      (isOverlay ? 'md:start-[44px]' : 'md:start-[60px]'),
   );
 
   const resizeSettings: ResizableProps = useMemo(() => {
@@ -246,9 +272,9 @@ export function ResizableSidebarWrapper({
       },
       enable: {
         top: false,
-        right: isLeftSidebar,
+        right: isPhysicallyLeftSidebar,
         bottom: false,
-        left: !isLeftSidebar,
+        left: !isPhysicallyLeftSidebar,
         topRight: false,
         bottomRight: false,
         bottomLeft: false,
@@ -258,10 +284,20 @@ export function ResizableSidebarWrapper({
         right: 'group invisible md:visible',
         left: 'group invisible md:visible',
       },
-      handleStyles: { right: { right: '-11px' }, left: { left: '-3px' } },
+      handleStyles: {
+        right: { right: isRtl ? '-3px' : '-11px' },
+        left: { left: isRtl ? '-11px' : '-3px' },
+      },
       handleComponent: {
         left: <LeftSideResizeIcon className={resizeTriggerClassName} />,
-        right: <RightSideResizeIcon className={resizeTriggerClassName} />,
+        right: (
+          <RightSideResizeIcon
+            className={classNames(
+              resizeTriggerClassName,
+              isRtl && '[&>svg]:-mr-6',
+            )}
+          />
+        ),
       },
       onResizeStart: onResizeStart,
       onResizeStop: onResizeStop,
@@ -271,7 +307,8 @@ export function ResizableSidebarWrapper({
     sidebarWidth,
     sidebarMinWidth,
     maxWidth,
-    isLeftSidebar,
+    isRtl,
+    isPhysicallyLeftSidebar,
     resizeTriggerClassName,
     onResizeStart,
     onResizeStop,

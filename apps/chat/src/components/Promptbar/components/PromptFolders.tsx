@@ -85,7 +85,6 @@ const PromptFolderTemplate = ({
   const isFolderEmpty = useAppSelector((state) =>
     PromptsSelectors.selectIsFolderEmpty(state, folder.id),
   );
-
   const filteredPromptsSelector = useMemo(
     () => PromptsSelectors.selectFilteredPrompts(filters, searchTerm),
     [filters, searchTerm],
@@ -161,12 +160,12 @@ const PromptFolderTemplate = ({
         )
       ) {
         dispatch(
-          UIActions.showErrorToast(
-            t(ChatI18nKeys.FolderNameExistsAtRoot, {
+          UIActions.showErrorToast({
+            message: t(ChatI18nKeys.FolderNameExistsAtRoot, {
               ns: Translation.Chat,
               name: folder.name,
             }),
-          ),
+          }),
         );
 
         return;
@@ -319,6 +318,7 @@ const PromptSectionView = ({
   dataQa,
 }: FolderSectionProps) => {
   const [isSectionHighlighted, setIsSectionHighlighted] = useState(false);
+  const { t } = useTranslation(Translation.Chat);
 
   const searchTerm = useAppSelector(PromptsSelectors.selectSearchTerm);
   const selectedPublication = useAppSelector(
@@ -402,7 +402,7 @@ const PromptSectionView = ({
   return (
     <CollapsibleSection
       onToggle={handleToggle}
-      name={name}
+      name={t(name)}
       openByDefault={openByDefault ?? isExpanded}
       isExpanded={isExpanded}
       dataQa={dataQa}

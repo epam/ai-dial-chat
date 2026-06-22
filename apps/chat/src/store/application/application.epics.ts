@@ -27,6 +27,7 @@ import {
 import { combineEpics, ofType } from 'redux-observable';
 
 import {
+  fitApplicationNameToStorageLimits,
   isApplicationType,
   regenerateApplicationId,
 } from '@/src/utils/app/application';
@@ -36,6 +37,7 @@ import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { BrowserStorage } from '@/src/utils/app/data/storages/browser-storage';
 import { navigateAndThen } from '@/src/utils/app/epics-helpers/application.epic-helpers';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
   isEntityIdExternal,
   isEntityIdLocal,
@@ -43,6 +45,7 @@ import {
 } from '@/src/utils/app/id';
 import { isMarketplaceEditorStep } from '@/src/utils/app/marketplace';
 import { mergeFeatures } from '@/src/utils/app/models';
+import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
 
@@ -52,6 +55,7 @@ import {
   CustomApplicationModel,
 } from '@/src/types/applications';
 import { MarketplaceEditorSteps } from '@/src/types/marketplace';
+import { DialAIEntityFeatures } from '@/src/types/models';
 import { AppAction, AppEpic } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
 
@@ -62,6 +66,7 @@ import {
   ConversationsActions,
   MarketplaceActions,
   ModelsActions,
+  PromptsActions,
   PublicationActions,
   ShareActions,
   UIActions,
@@ -124,16 +129,23 @@ const createApplicationEpic: AppEpic = (action$) =>
       }
 
       return ApplicationService.create(
-        regenerateApplicationId({ ...applicationData, reference: '' }),
+        regenerateApplicationId(
+          fitApplicationNameToStorageLimits({
+            ...applicationData,
+            reference: '',
+          }),
+        ),
         schema,
       ).pipe(
         switchMap((application) =>
-          ApplicationService.get(application.id).pipe(
-            switchMap((retrievedApplication) => {
+          forkJoin({
+            retrievedApplication: ApplicationService.get(application.id),
+            dialEntity: ApplicationService.getDialEntity(application.id),
+          }).pipe(
+            switchMap(({ retrievedApplication, dialEntity }) => {
               if (retrievedApplication) {
-                const featuresRecord: Record<string, boolean | undefined> = {
-                  ...(retrievedApplication.features || {}),
-                };
+                const featuresRecord =
+                  dialEntity?.features ?? retrievedApplication.features ?? {};
 
                 const modelData = {
                   ...retrievedApplication,
@@ -179,14 +191,14 @@ const createApplicationEpic: AppEpic = (action$) =>
             iif(
               () => err.status === 412,
               of(
-                UIActions.showErrorToast(
-                  translate(
+                UIActions.showErrorToast({
+                  message: translate(
                     CommonI18nKeys.ApplicationNameVersionAlreadyExists,
                     {
                       ns: Translation.Common,
                     },
                   ),
-                ),
+                }),
               ),
               EMPTY,
             ),
@@ -201,11 +213,11 @@ const createFailEpic: AppEpic = (action$) =>
     ofType(ApplicationActions.createFail.type),
     switchMap(() =>
       of(
-        UIActions.showErrorToast(
-          translate(errorsMessages.createFailed, {
+        UIActions.showErrorToast({
+          message: translateErrorMessage(errorsMessages.createFailed, {
             entity: 'application',
           }),
-        ),
+        }),
       ),
     ),
   );
@@ -234,7 +246,7 @@ const deleteApplicationEpic: AppEpic = (action$) =>
     ),
   );
 
-const updateApplicationEpic: AppEpic = (action$) =>
+const updateApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ApplicationActions.update.type),
     switchMap(({ payload }) => {
@@ -255,7 +267,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
       }
 
       const updatedCustomApplication = regenerateApplicationId(
-        payload.applicationData,
+        fitApplicationNameToStorageLimits(payload.applicationData),
       ) as CustomApplicationModel;
 
       const isMoved = payload.oldApplication.id !== updatedCustomApplication.id;
@@ -266,6 +278,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
           publicationUrl: payload.publicationUrl,
           oldApplication: payload.oldApplication,
           newApplication: updatedCustomApplication,
+          tabToOpen: payload.tabToOpen,
         };
 
         if (isMoved) {
@@ -308,19 +321,21 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   }),
                   UIActions.setEditorLoader(false),
                 ];
+                const { traceId } = parseApiError(err);
                 if (err.status === 412) {
                   return of({
                     success: false as const,
                     actions: [
                       ...failActions,
-                      UIActions.showErrorToast(
-                        translate(
+                      UIActions.showErrorToast({
+                        traceId,
+                        message: translate(
                           CommonI18nKeys.ApplicationNameVersionAlreadyExists,
                           {
                             ns: Translation.Common,
                           },
                         ),
-                      ),
+                      }),
                     ],
                   });
                 }
@@ -329,11 +344,15 @@ const updateApplicationEpic: AppEpic = (action$) =>
                   success: false as const,
                   actions: [
                     ...failActions,
-                    UIActions.showErrorToast(
-                      translate(CommonI18nKeys.FailedToMoveApplication, {
-                        ns: Translation.Common,
-                      }),
-                    ),
+                    UIActions.showErrorToast({
+                      traceId,
+                      message: translate(
+                        CommonI18nKeys.FailedToMoveApplication,
+                        {
+                          ns: Translation.Common,
+                        },
+                      ),
+                    }),
                   ],
                 });
               }),
@@ -353,9 +372,10 @@ const updateApplicationEpic: AppEpic = (action$) =>
               payload.schema,
             ).pipe(
               switchMap(() => {
-                const featuresRecord: Record<string, boolean | undefined> = {
-                  ...(updatedCustomApplication.features || {}),
-                };
+                const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+                const model = modelsMap[updatedCustomApplication.id];
+                const featuresRecord =
+                  model?.features ?? updatedCustomApplication.features ?? {};
 
                 const modelData = {
                   ...updatedCustomApplication,
@@ -420,11 +440,14 @@ const updateApplicationEpic: AppEpic = (action$) =>
                     }),
                   ),
                   of(
-                    UIActions.showErrorToast(
-                      translate(CommonI18nKeys.FailedToUpdateApplication, {
-                        ns: Translation.Common,
-                      }),
-                    ),
+                    UIActions.showErrorToast({
+                      message: translate(
+                        CommonI18nKeys.FailedToUpdateApplication,
+                        {
+                          ns: Translation.Common,
+                        },
+                      ),
+                    }),
                   ),
                   iif(
                     () => !!payload.shouldSetEditorError,
@@ -452,7 +475,7 @@ const updateApplicationEpic: AppEpic = (action$) =>
     }),
   );
 
-const editApplicationEpic: AppEpic = (action$) =>
+const editApplicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ApplicationActions.edit.type),
     switchMap(({ payload }) => {
@@ -465,9 +488,10 @@ const editApplicationEpic: AppEpic = (action$) =>
         payload.schema,
       ).pipe(
         switchMap(() => {
-          const featuresRecord: Record<string, boolean | undefined> = {
-            ...(payload.updatedApplication.features || {}),
-          };
+          const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+          const model = modelsMap[payload.updatedApplication.id];
+          const featuresRecord =
+            model?.features ?? payload.updatedApplication.features ?? {};
 
           const modelData = {
             ...payload.updatedApplication,
@@ -496,11 +520,11 @@ const editApplicationEpic: AppEpic = (action$) =>
             ApplicationActions.editFail({
               oldApplication: payload.oldApplication,
             }),
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.FailedToUpdateApplication, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.FailedToUpdateApplication, {
                 ns: Translation.Common,
               }),
-            ),
+            }),
           );
         }),
       );
@@ -538,12 +562,21 @@ const getApplicationEpic: AppEpic = (action$, state$) =>
           actions.push(of(successAction));
 
           if (!modelFromState) {
+            const isQuickApp2 =
+              application.applicationTypeSchemaId ===
+              DEFAULT_QUICK_APPS_SCHEMA_2_ID;
             actions.push(
               of(
                 ModelsActions.addModels({
                   models: [
                     {
                       ...application,
+                      ...(isQuickApp2 && {
+                        features: {
+                          ...application.features,
+                          configuration: true,
+                        } as DialAIEntityFeatures,
+                      }),
                       sharedWithMe: acceptSharedWithMe,
                       permissions: payload.acceptSharePermissions,
                     },
@@ -642,11 +675,12 @@ const updateApplicationStatusEpic: AppEpic = (action$) =>
             ),
           ),
         ),
-        catchError(() =>
+        catchError((err) =>
           of(
             ApplicationActions.updateFunctionStatusFail({
               id: payload.id,
               status: payload.status,
+              ...parseApiError(err),
             }),
           ),
         ),
@@ -776,9 +810,10 @@ const updateApplicationStatusFailEpic: AppEpic = (action$) =>
           }),
         ),
         of(
-          UIActions.showErrorToast(
-            `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase().replace(/ing$/, '')} failed`,
-          ),
+          UIActions.showErrorToast({
+            traceId: payload?.traceId,
+            message: `Application: ${getLastPathSegment(name)} ${payload.status.toLowerCase().replace(/ing$/, '')} failed`,
+          }),
         ),
       );
     }),
@@ -794,7 +829,7 @@ const getApplicationLogsEpic: AppEpic = (action$) =>
         }),
         catchError((err) => {
           console.error('Failed to get application:', err);
-          return of(ApplicationActions.getLogsFail());
+          return of(ApplicationActions.getLogsFail(parseApiError(err)));
         }),
       ),
     ),
@@ -873,11 +908,11 @@ const enterEditModeEpic: AppEpic = (action$, state$, { router }) =>
         catchError((err) => {
           console.error('Failed to enter edit mode:', err);
           return of(
-            UIActions.showErrorToast(
-              translate(CommonI18nKeys.FailedToEnterEditMode, {
+            UIActions.showErrorToast({
+              message: translate(CommonI18nKeys.FailedToEnterEditMode, {
                 ns: Translation.Common,
               }),
-            ),
+            }),
           );
         }),
       );
@@ -922,7 +957,9 @@ const exitEditModeEpic: AppEpic = (action$, state$, { router }) =>
               },
             });
 
-      const actions: Observable<AppAction>[] = [];
+      const actions: Observable<AppAction>[] = [
+        of(PromptsActions.clearSkillValidations()),
+      ];
 
       if (hasCustomEditor) {
         actions.push(

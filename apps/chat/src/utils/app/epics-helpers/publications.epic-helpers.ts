@@ -5,6 +5,7 @@ import { EMPTY, catchError, map, of, switchMap } from 'rxjs';
 import { ApplicationService } from '@/src/utils/app/data/application-service';
 import { ApplicationTypesSchemasService } from '@/src/utils/app/data/application-type-schemas-service';
 import { PublicationService } from '@/src/utils/app/data/publication-service';
+import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
 import {
   getEntityBucket,
   getIdWithoutRootPathSegments,
@@ -20,6 +21,7 @@ import { translate } from '@/src/utils/app/translation';
 import { ApiUtils, parseEntityApiKey } from '@/src/utils/server/api';
 
 import { CustomApplicationModel } from '@/src/types/applications';
+import { MarketplaceEditorSteps } from '@/src/types/marketplace';
 import { PublicationResource } from '@/src/types/publication';
 import { RootState } from '@/src/types/store';
 import { Translation } from '@/src/types/translation';
@@ -167,6 +169,7 @@ export const getUpdateApplicationGeneralInfoAction$ = (
   oldApplication: CustomApplicationModel,
   newApplication: CustomApplicationModel,
   isSaveAndExit?: boolean,
+  tabToOpen?: MarketplaceEditorSteps,
 ) => {
   return ApplicationService.get(newApplication.id).pipe(
     switchMap((application) => {
@@ -184,6 +187,7 @@ export const getUpdateApplicationGeneralInfoAction$ = (
         oldApplication,
         applicationData,
         isSaveAndExit,
+        tabToOpen,
       };
 
       if (newApplication.applicationTypeSchemaId) {
@@ -200,12 +204,17 @@ export const getUpdateApplicationGeneralInfoAction$ = (
           }),
           catchError((err) => {
             console.error(err);
+            const { traceId } = parseApiError(err);
             return of(
-              UIActions.showErrorToast(
-                translate(CommonI18nKeys.CannotFetchApplicationSchema, {
-                  ns: Translation.Common,
-                }),
-              ),
+              UIActions.showErrorToast({
+                message: translate(
+                  CommonI18nKeys.CannotFetchApplicationSchema,
+                  {
+                    ns: Translation.Common,
+                  },
+                ),
+                traceId,
+              }),
             );
           }),
         );

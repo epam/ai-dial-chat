@@ -1,5 +1,6 @@
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import {
+  ElementState,
   ExpectedConstants,
   ExpectedMessages,
   PublishingExpectedMessages,
@@ -23,7 +24,8 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
     expectedAuthor?: string;
     expectedTopics?: string[];
     expectedIcon?: string | BaseElement;
-    expectedCredsLabel?: string;
+    expectedCredsLabel?: string | string[];
+    expectedManageCredsButtonState?: ElementState;
   }) {
     if (attributesToVerify.expectedName !== undefined) {
       await this.assertElementText(
@@ -73,6 +75,12 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
       await this.assertElementText(
         this.entityDetailsModal.credsLabel,
         attributesToVerify.expectedCredsLabel,
+      );
+    }
+    if (attributesToVerify.expectedManageCredsButtonState !== undefined) {
+      await this.assertElementState(
+        this.entityDetailsModal.manageCredsButton,
+        attributesToVerify.expectedManageCredsButtonState,
       );
     }
   }

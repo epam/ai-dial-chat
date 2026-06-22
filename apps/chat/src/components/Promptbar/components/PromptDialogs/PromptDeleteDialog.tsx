@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 
 import { useTranslation } from 'next-i18next';
 
@@ -19,9 +19,9 @@ interface PromptDeleteDialogProps {
   deletingPromptId: string;
 }
 
-const PromptDeleteDialogComponent: FC<PromptDeleteDialogProps> = ({
-  deletingPromptId,
-}) => {
+const view = withRenderWhenEntities<PromptDeleteDialogProps>({
+  deletingPromptId: PromptsSelectors.selectDeletingPromptId,
+})(({ deletingPromptId }: PromptDeleteDialogProps) => {
   const { t } = useTranslation(Translation.PromptBar);
   const dispatch = useAppDispatch();
 
@@ -76,9 +76,6 @@ const PromptDeleteDialogComponent: FC<PromptDeleteDialogProps> = ({
       onClose={handleConfirmDelete}
     />
   );
-};
+});
 
-export const PromptDeleteDialog =
-  withRenderWhenEntities<PromptDeleteDialogProps>({
-    deletingPromptId: PromptsSelectors.selectDeletingPromptId,
-  })(PromptDeleteDialogComponent);
+export const PromptDeleteDialog = view;

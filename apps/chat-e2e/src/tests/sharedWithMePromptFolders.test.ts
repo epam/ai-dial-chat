@@ -99,7 +99,7 @@ dialSharedWithMeTest(
         await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserPromptPreviewModal.closeButton.click();
+        await additionalShareUserPromptPreviewModal.getCloseButton().click();
         await additionalShareUserSharedFolderPromptsAssertions.assertFolderEntityState(
           { name: folderName },
           { name: promptName },
@@ -123,7 +123,7 @@ dialSharedWithMeTest(
         await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalState(
           'visible',
         );
-        await additionalShareUserPromptPreviewModal.closeButton.click();
+        await additionalShareUserPromptPreviewModal.getCloseButton().click();
         await additionalShareUserSharedWithMePromptAssertion.assertEntityState(
           { name: promptName },
           'visible',
@@ -146,7 +146,7 @@ dialSharedWithMeTest(
           lastUpdatedDate: currentDate,
           author: author,
         });
-        await additionalShareUserInformationModal.cancelButton.click();
+        await additionalShareUserInformationModal.getCloseButton().click();
       },
     );
 
@@ -236,7 +236,7 @@ dialSharedWithMeTest(
         await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
           ExpectedPromptModalConst.promptViewModalTitle,
         );
-        await additionalShareUserPromptPreviewModal.closeButton.click();
+        await additionalShareUserPromptPreviewModal.getCloseButton().click();
       },
     );
 
@@ -326,7 +326,7 @@ dialSharedWithMeTest(
         await additionalShareUserPromptPreviewModalAssertion.assertPromptPreviewModalTitle(
           ExpectedPromptModalConst.promptViewModalTitle,
         );
-        await additionalShareUserPromptPreviewModal.closeButton.click();
+        await additionalShareUserPromptPreviewModal.getCloseButton().click();
         for (let i = sharedFolderIndex; i <= sharedFolderIndex + 1; i++) {
           await additionalShareUserSharedFolderPromptsAssertions.assertFolderEntityState(
             { name: nestedFolders[i].name },
@@ -414,7 +414,7 @@ dialSharedWithMeTest(
         await additionalShareUserPromptPreviewModalAssertion.assertPromptContent(
           nestedPrompts[sharedFolderIndex].content!,
         );
-        await additionalShareUserPromptPreviewModal.closeButton.click();
+        await additionalShareUserPromptPreviewModal.getCloseButton().click();
       },
     );
 

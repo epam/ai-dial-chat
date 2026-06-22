@@ -1422,7 +1422,7 @@ dialTest(
         await promptDropdownMenu.selectMenuOption(MenuOptions.select);
         await promptBar.createNewEntity();
         await promptBarAssertion.assertUnselectAllButtonState('hidden');
-        await promptModalDialog.closeButton.click();
+        await promptModalDialog.getCloseButton().click();
       },
     );
 

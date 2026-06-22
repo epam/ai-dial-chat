@@ -3,6 +3,16 @@ import { ModalState } from '@/src/types/modal';
 
 import { MessageFormSchema, MessageFormValue } from '@epam/ai-dial-shared';
 
+export interface TextSelection {
+  start: number;
+  end: number;
+}
+
+export interface AsrInsertionContext {
+  inputSnapshot: string;
+  selection: TextSelection;
+}
+
 export interface ChatState {
   inputContent: string;
   inputContentTemplateMapping?: { substituted: string; original: string };
@@ -18,4 +28,5 @@ export interface ChatState {
   isTranscribing: boolean;
   isUserMessageTranscribing: boolean;
   isAsrFlowActive: boolean;
+  asrInsertionContext?: AsrInsertionContext;
 }

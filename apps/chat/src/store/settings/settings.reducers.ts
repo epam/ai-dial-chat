@@ -3,6 +3,8 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import { PageType } from '@/src/types/common';
 import { StorageType } from '@/src/types/storage';
 
+import { DEFAULT_RESOURCE_MAX_SEGMENT_BYTES } from '@/src/constants/default-ui-settings';
+
 import { SettingsState } from './settings.types';
 
 import { UploadStatus } from '@epam/ai-dial-shared';
@@ -18,6 +20,7 @@ const initialState: SettingsState = {
   codeWarning: '',
   announcement: '',
   defaultModelReference: undefined,
+  isOptimisticLoadEnabled: false,
   defaultRecentModelsIds: [],
   storageType: StorageType.BrowserStorage,
   themesHostDefined: false,
@@ -34,6 +37,7 @@ const initialState: SettingsState = {
     withoutTitleTypes: [],
   },
   stageContentLimit: 40,
+  resourceMaxSegmentBytes: DEFAULT_RESOURCE_MAX_SEGMENT_BYTES,
 };
 
 export const settingsSlice = createSlice({

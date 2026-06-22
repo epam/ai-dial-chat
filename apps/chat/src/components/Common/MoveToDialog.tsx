@@ -55,6 +55,7 @@ export const MoveToDialog: React.FC<Props> = ({
   onSelect,
 }) => {
   const { t } = useTranslation(Translation.Common);
+  const { t: tChat } = useTranslation(Translation.Chat);
 
   const dispatch = useAppDispatch();
 
@@ -231,6 +232,11 @@ export const MoveToDialog: React.FC<Props> = ({
     onClose();
   }, [clearState, onClose]);
 
+  const rootFolderName =
+    featureType === FeatureType.Chat
+      ? tChat(CONVERSATIONS_DATE_SECTIONS.today)
+      : tChat(RECENT_PROMPTS_SECTION_NAME);
+
   return (
     <SelectFolder
       isOpen
@@ -258,11 +264,7 @@ export const MoveToDialog: React.FC<Props> = ({
           isAllEntitiesOpened
           initiallySelectedFolderId={entity.folderId}
           selectedFolderId={selectedFolderId}
-          rootFolderName={
-            featureType === FeatureType.Chat
-              ? CONVERSATIONS_DATE_SECTIONS.today
-              : RECENT_PROMPTS_SECTION_NAME
-          }
+          rootFolderName={rootFolderName}
           rootFolderId={rootFolderId}
           showAllRootFolders
           onShowError={setErrorMessage}

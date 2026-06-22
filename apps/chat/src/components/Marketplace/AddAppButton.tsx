@@ -58,6 +58,8 @@ export function AddAppButton() {
     [router, dispatch],
   );
 
+  const appEntityLabel = t(MarketplaceI18nKeys.AppEntity);
+
   const menuItems: AddMarketplaceEntityMenuItem[] = useMemo(
     () =>
       [
@@ -88,7 +90,7 @@ export function AddAppButton() {
           },
         },
         ...(applicationTypeSchemas?.map((schema: ApplicationTypeSchema) => ({
-          name: t(schema.displayName),
+          name: schema.displayName,
           type: schema.displayName,
           dataQa: `add-${schema.displayName}`,
           display: true,
@@ -116,7 +118,7 @@ export function AddAppButton() {
   return (
     <AddMarketplaceEntityButton
       dataQa="add-app"
-      label="app"
+      label={appEntityLabel}
       menuItems={menuItems}
     />
   );

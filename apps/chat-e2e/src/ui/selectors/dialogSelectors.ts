@@ -1,3 +1,4 @@
+import { ErrorLabelSelectors } from '@/src/ui/selectors/chatSelectors';
 import { InputSelectors } from '@/src/ui/selectors/commonSelectors';
 
 export const ConfirmationDialogSelectors = {
@@ -65,12 +66,12 @@ export const ModelDialog = {
   applicationsTab: '[data-qa="applications-tab"]',
 };
 
-export const ReviewApplicationDialog = {
-  reviewDialog: '[data-qa="review-application-dialog"]',
-  name: '[data-qa="app-name"]',
-  version: '[data-qa="app-version"]',
-  description: '[data-qa="app-description"]',
-  topics: '[data-qa="app-topic"]',
+export const ReviewEntityDialog = {
+  reviewDialog: '[data-qa="review-entity-dialog"]',
+  name: '[data-qa="entity-name"]',
+  version: '[data-qa="entity-version"]',
+  description: '[data-qa="entity-description"]',
+  topics: '[data-qa="entity-topic"]',
   featuresData: '[data-qa="app-feature"]',
   attachmentTypes: '[data-qa="app-attach-type"]',
   maxAttachmentsNumber: '[data-qa="app-max-attach"]',
@@ -78,6 +79,10 @@ export const ReviewApplicationDialog = {
   completionUrl: '[data-qa="app-completion-url"]',
   externalUrlLabel: '[data-qa="app-external-url-label"]',
   externalUrl: '[data-qa="app-external-url"]',
+  endpoint: '[data-qa="toolset-endpoint"]',
+  transport: '[data-qa="toolset-transport"]',
+  authType: '[data-qa="toolset-authentication-type"]',
+  allowedTools: '[data-qa="toolset-allowed-tools"]',
 };
 
 export const ModelTooltip = {
@@ -104,7 +109,7 @@ export const ShareModalSelectors = {
   shareLink: '[data-qa="share-link"]',
   copyLink: '[data-qa="copy-link"]',
   entityName: '[data-qa="modal-entity-name"]',
-  leftEntityName: '.text-left',
+  leftEntityName: '.text-start',
   shareText: '[data-qa="share-message"]',
   removeAccessBtn: '[data-qa="remove-access-button"]',
   notSharedEntityLabel: '[data-qa="not-shared-entity-label"]',
@@ -199,6 +204,8 @@ export const PublishingTreeSelectors = {
   filesTree: '[data-qa="files-tree-container"]',
   promptsTree: '[data-qa="prompts-tree-container"]',
   appsTree: '[data-qa="applications-tree-container"]',
+  toolsetsTree: '[data-qa="toolsets-tree-container"]',
+  credentials: '[data-qa="credentials"]',
 };
 
 export const ChatSettingsModalSelectors = {
@@ -249,8 +256,8 @@ export const ReportAnIssueModalSelectors = {
 
 export const EntityEditorHeaderSelectors = {
   header: '[data-qa="entity-editor-header"]',
-  saveAndExitButton: '[data-qa="save-and-exit"]',
-  exitLink: '[data-qa="save-and-exit"]',
+  saveAndExitButton: 'Save and exit',
+  exitButton: 'Exit',
   actionAndEntityTypeTitle: '[data-qa="action-entity-type-title"]',
   stepsContainer: '[data-qa="steps-container"]',
   singleStepLink: '[data-qa="single-step-link"]',
@@ -327,6 +334,51 @@ export const AddExternalAppSettingsFormSelector = {
   externalUrl: '#externalUrl',
 };
 
+export const AddQuickApp2SettingsFormSelector = {
+  orchestratorSection: '[data-qa="orchestrator-section"]',
+  contextToolsSection: '[data-qa="context-tools-section"]',
+  attachmentsSection: '[data-qa="attachments-section"]',
+  conversationStartersSection: '[data-qa="conversation-starters-section"]',
+
+  // Context & Tools subsections
+  agentsAndToolsetsField: '[data-qa="agents-and-toolsets-field"]',
+  documentUrlsField: '[data-qa="document-urls-field"]',
+  codeInterpreterField: '[data-qa="code-interpreter-field"]',
+
+  // Agents & Toolsets — view modes
+  agentsAndToolsetsMarketplaceView:
+    '[data-qa="agents-and-toolsets-marketplace-view"]',
+  agentsAndToolsetsJsonView: '[data-qa="agents-and-toolsets-json-view"]',
+
+  // Agents & Toolsets — controls inside marketplace view
+  noAgentsAndToolsetsPlaceholder: '[data-qa="no-agents-and-toolsets"]',
+  agentsAndToolsetsList: '[data-qa="agents-and-toolsets-list"]',
+  addAgentsButtonContainer: '[data-qa="add-agents-button"]',
+  addAgentsButtonLabel: 'Add', // aria-label of the "+ Add" button
+  agentsAndToolsetsJsonToggle: '[data-qa="agents-and-toolsets-json-toggle"]',
+
+  // Chips inside agents-and-toolsets-list
+  agentChip: '[data-qa="agent-chip"]',
+  chipName: '[data-qa="chip-name"]',
+  chipVersion: '[data-qa="chip-version"]',
+  chipRemoveButtonLabel: 'Remove item', // aria-label of the chip remove button
+
+  // Code Interpreter toggle
+  codeInterpreterToggle: '[data-qa="toggle-switch"]',
+};
+
+// Shared by both agents browser modals (Talk to / Select agents and toolsets).
+export const AgentsBrowserModalSelectors = {
+  searchInput: '[data-qa="search-agents"]',
+  myWorkspaceTab: '[data-qa="workspace"]',
+  marketplaceTab: '[data-qa="marketplace"]',
+};
+
+export const AgentAndToolsetModalSelector = {
+  container:
+    '[role="dialog"][aria-modal="true"]:has([data-qa="search-agents"])',
+};
+
 export const AddToolsetSettingsFormSelector = {
   definitionLabel: '[data-qa="definition-label"]',
   endpointLabel: '[for="endpoint"]',
@@ -343,12 +395,19 @@ export const AddToolsetSettingsFormSelector = {
   authLoginForm: '[data-qa="login-form"]',
   clientIdFieldContainer: '[data-qa="clientId"]',
   clientSecretFieldContainer: '[data-qa="clientSecret"]',
+  apiKeyParameterNameFieldContainer: '[data-qa="keyHeader"]',
+  apiKeyParameterNameFieldErrorMessage: () =>
+    `${AddToolsetSettingsFormSelector.apiKeyParameterNameFieldContainer} + ${ErrorLabelSelectors.fieldError}`,
+  apiKeyParameterValueFieldContainer: '[data-qa="apiKey"]',
   apiKeyContainer: '[data-qa="api_key"]',
   apiKeyLabel: '[data-qa="api_key-label"]',
   withoutAuthContainer: '[data-qa="none"]',
   withoutAuthLabel: '[data-qa="none-label"]',
   allowedToolsLabel: '[data-qa="allowed-tools-label"]',
   allowedToolsLabelSubtitle: '[data-qa="allowed-tools-subtitle"]',
+  copyUrlButton: 'Copy URL',
+  connectToolsetLabel: '[data-qa="connect-toolset-label"]',
+  connectToolsetHint: '[data-qa="copy-section"] > label',
 };
 
 export const InformationModalSelectors = {
@@ -369,8 +428,10 @@ export const ReplaceConfirmationModalSelectors = {
   modalContainer: '[data-qa="replace-confirmation-modal"]',
   mainFolderTree: '[data-qa="main-folder-tree"]',
   allItemsSelector: '[data-qa="all-items-selector"]',
-  cancelButton: '[data-qa="cancel-import"]',
-  continueButton: '[data-qa="continue-import"]',
+  cancelButton: '[data-qa="cancel-import"], [data-qa="cancel-upload"]',
+  continueButton: '[data-qa="continue-import"], [data-qa="continue-upload"]',
+  title: 'h2',
+  description: 'p.text-secondary',
   dropdownTrigger: '[data-qa="dropdown-trigger"]',
   dropdownMenu: '[data-qa="dropdown-menu"]',
   menuItem: '[data-qa="menu-item"]',

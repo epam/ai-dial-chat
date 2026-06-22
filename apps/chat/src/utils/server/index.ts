@@ -124,8 +124,18 @@ export const OpenAIStream = async ({
       }
 
       if (!result.error) {
-        throw new Error(
-          `Core API returned an error: ${JSON.stringify(result, null, 2)}`,
+        if (!res.statusText || !('detail' in result)) {
+          throw new Error(
+            `Core API returned an error: ${JSON.stringify(result, null, 2)}`,
+          );
+        }
+        throw new DialAIError(
+          res.statusText || (result.detail as string),
+          res.status,
+          url,
+          {
+            displayMessage: res.statusText || (result.detail as string),
+          },
         );
       }
 

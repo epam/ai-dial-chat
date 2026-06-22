@@ -19,6 +19,7 @@ import {
   ISOLATED_MODEL_QUERY_PARAM,
 } from '@/src/constants/chat';
 import { DEFAULT_MODEL_ID } from '@/src/constants/default-server-settings';
+import { resolveResourceMaxSegmentBytes } from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
@@ -125,6 +126,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.RECENT_MODELS_IDS,
     ),
     defaultModelReference: DEFAULT_MODEL_ID,
+    isOptimisticLoadEnabled: process.env.ENABLE_OPTIMISTIC_LOAD === 'true',
     codeEditorPythonVersions: parseCommaSeparatedList(
       process.env.CODE_EDITOR_PYTHON_VERSIONS,
       ['python3.9', 'python3.10', 'python3.11', 'python3.12'],
@@ -197,6 +199,9 @@ export const getCommonPageProps: GetServerSideProps = async ({
     },
     stageContentLimit: parseFloat(
       process.env.NEXT_PUBLIC_STAGE_CONTENT_LIMIT || '40',
+    ),
+    resourceMaxSegmentBytes: resolveResourceMaxSegmentBytes(
+      process.env.NEXT_PUBLIC_RESOURCE_MAX_SEGMENT_BYTES,
     ),
   };
 

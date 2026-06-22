@@ -16,19 +16,33 @@ interface EnterTypeSelectProps {
   onValueChange: (value: string) => void;
 }
 
-const EnterTypeSelect = ({ value, onValueChange }: EnterTypeSelectProps) => {
+const view = withLabel(({ value, onValueChange }: EnterTypeSelectProps) => {
   const { t } = useTranslation(Translation.Settings);
+  const enterLabel = t(SettingsI18nKeys.Enter);
+  const shiftLabel = t(SettingsI18nKeys.Shift);
+  const shiftEnterShortcutLabel = (
+    <>
+      {shiftLabel} + {enterLabel}
+    </>
+  );
+  const ctrlEnterShortcutLabel = isMacOs() ? (
+    <>⌘ + {enterLabel}</>
+  ) : (
+    <>
+      {t(SettingsI18nKeys.Ctrl)} + {enterLabel}
+    </>
+  );
+
   return (
-    <div className="mt-1 flex flex-col gap-3">
+    <div className="mt-1 flex w-full flex-col gap-3">
       <DialRadioButton
         inputId={EnterType.Enter}
         name="enter-type-select"
+        className="me-3 shrink-0"
         label={
           <>
-            <b>{t(SettingsI18nKeys.Enter)}</b> -{' '}
-            {t(SettingsI18nKeys.SendMessages)},{' '}
-            <b>{t(SettingsI18nKeys.ShiftEnter)}</b> -{' '}
-            {t(SettingsI18nKeys.NewLine)}
+            <b>{enterLabel}</b> - {t(SettingsI18nKeys.SendMessages)},{' '}
+            <b>{shiftEnterShortcutLabel}</b> - {t(SettingsI18nKeys.NewLine)}
           </>
         }
         onChange={onValueChange}
@@ -39,15 +53,11 @@ const EnterTypeSelect = ({ value, onValueChange }: EnterTypeSelectProps) => {
       <DialRadioButton
         inputId={EnterType.CtrlEnter}
         name="enter-type-select"
+        className="me-3 shrink-0"
         label={
           <>
-            <b>
-              {t(
-                `${isMacOs() ? '⌘' : SettingsI18nKeys.Ctrl} + ${SettingsI18nKeys.Enter}`,
-              )}
-            </b>{' '}
-            - {t(SettingsI18nKeys.SendMessages)},{' '}
-            <b>{t(SettingsI18nKeys.Enter)}</b> - {t(SettingsI18nKeys.NewLine)}
+            <b>{ctrlEnterShortcutLabel}</b> - {t(SettingsI18nKeys.SendMessages)}
+            , <b>{enterLabel}</b> - {t(SettingsI18nKeys.NewLine)}
           </>
         }
         onChange={onValueChange}
@@ -56,6 +66,6 @@ const EnterTypeSelect = ({ value, onValueChange }: EnterTypeSelectProps) => {
       />
     </div>
   );
-};
+});
 
-export const EnterTypeSelectLabeled = withLabel(EnterTypeSelect);
+export const EnterTypeSelectLabeled = view;

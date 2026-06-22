@@ -1,4 +1,4 @@
-import { FC, useCallback, useEffect, useMemo } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   Controller,
   useFormContext,
@@ -46,9 +46,11 @@ import {
 } from '@/src/constants/i18n';
 
 import { FormCollapsibleSection } from '@/src/components/AppsEditor/EditorForm/FormCollapsibleSection';
+import { AgentSkillsField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/AgentSkillsField';
 import { AgentsAndToolsetsField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/AgentsAndToolsetsField';
 import { CodeInterpreterField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/CodeInterpreterField';
 import { ConversationStartersList } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/ConversationStartersField';
+import { ModelField } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/ModelField';
 import { StartersBehaviourRadioGroup } from '@/src/components/AppsEditor/EditorForm/QuickApp2Form/StartersBehaviourRadioGroup';
 import {
   QuickApp2Form as QuickApp2FormType,
@@ -60,9 +62,8 @@ import { withController } from '@/src/components/Common/Forms/ControlledFormFiel
 import { Field } from '@/src/components/Common/Forms/Field';
 import { withErrorMessage } from '@/src/components/Common/Forms/FieldErrorMessage';
 import { withLabel } from '@/src/components/Common/Forms/Label';
-import { EditorThemes } from '@/src/components/Common/MarkdownEditor/MarkdownEditor';
+import { EditorTheme } from '@/src/components/Common/MarkdownEditor/MarkdownEditor';
 import { DialMarkdownEditorContainer } from '@/src/components/Common/MarkdownEditor/MarkdownEditorContainer';
-import { ModelsSelector } from '@/src/components/Common/ModelsSelector';
 import { MultipleComboBox } from '@/src/components/Common/MultipleComboBox';
 import { ToggleSwitch } from '@/src/components/Common/ToggleSwitch/ToggleSwitch';
 import { ToolsetLinkButton } from '@/src/components/Marketplace/ToolsetLinkButton';
@@ -73,7 +74,7 @@ import uniq from 'lodash-es/uniq';
 
 const FilesSelectorField = withErrorMessage(withLabel(FilesSelector));
 const Slider = withLabel(TemperatureSlider, true);
-const ModelsSelectorField = withErrorMessage(withLabel(ModelsSelector));
+const ModelsSelectorField = withErrorMessage(withLabel(ModelField));
 const ComboBoxField = withErrorMessage(withLabel(MultipleComboBox));
 const ControlledField = withController(Field);
 const StartersBehaviourField = withLabel(StartersBehaviourRadioGroup);
@@ -90,7 +91,7 @@ const adminFilesFilter = new Set([
 const getItemLabel = (item: unknown): string => item as string;
 
 interface AppsEditorProps {
-  onAutoSave: () => void;
+  onAutoSave: (isSimpleViewSwitch?: boolean, ignoreDirty?: boolean) => void;
 }
 
 export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
@@ -103,15 +104,12 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   );
   const theme = useAppSelector(UISelectors.selectThemeState);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
-  const toolSupportingModels = useAppSelector(
-    ModelsSelectors.selectToolSupportingModels,
-  );
   const { dialCoreExternalUrl } = useAppSelector(
     SettingsSelectors.selectDefaults,
   );
   const files = useAppSelector(FilesSelectors.selectFiles);
 
-  const { control, setError, clearErrors, setValue } =
+  const { control, setError, clearErrors, setValue, getValues } =
     useFormContext<QuickApp2FormType>();
   const { errors } = useFormState<QuickApp2FormType>({ control });
 
@@ -148,6 +146,30 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
   const filesFilter = isPublicationReview ? adminFilesFilter : undefined;
 
   const reviewBucket = useReviewBucket();
+
+  const getStartersSettingsSnapshot = useCallback(() => {
+    const { starters, introText, autoSubmit, chatMessageInputDisabled } =
+      getValues();
+    return JSON.stringify({
+      starters,
+      introText,
+      autoSubmit,
+      chatMessageInputDisabled,
+    });
+  }, [getValues]);
+
+  const lastSavedStartersSettings = useRef<string | null>(null);
+  if (lastSavedStartersSettings.current === null) {
+    lastSavedStartersSettings.current = getStartersSettingsSnapshot();
+  }
+
+  const handleStartersSettingsAutoSave = useCallback(() => {
+    if (isAppPublic) return;
+    const snapshot = getStartersSettingsSnapshot();
+    if (snapshot === lastSavedStartersSettings.current) return;
+    lastSavedStartersSettings.current = snapshot;
+    onAutoSave(false, true);
+  }, [getStartersSettingsSnapshot, isAppPublic, onAutoSave]);
 
   const handleSelectFiles = useCallback(
     (fileIds: string[]) => {
@@ -225,21 +247,10 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         openByDefault
         dataQa="orchestrator-section"
       >
-        <Controller
-          name="model"
-          control={control}
-          render={({ field }) => (
-            <ModelsSelectorField
-              label={t(MarketplaceI18nKeys.ModelMarketplace)}
-              value={field.value}
-              onChange={field.onChange}
-              mandatory
-              error={errors.model?.message}
-              disabled={isAppPublic}
-              tooltip={isAppPublicTooltip}
-              models={toolSupportingModels}
-            />
-          )}
+        <ModelsSelectorField
+          label={t(MarketplaceI18nKeys.ModelMarketplace)}
+          error={errors.model?.message}
+          mandatory
         />
 
         {showTemperatureSlider && (
@@ -270,7 +281,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               value={field.value}
               onChangeValue={field.onChange}
               height={200}
-              theme={theme as EditorThemes}
+              theme={theme as EditorTheme}
             />
           )}
         />
@@ -282,40 +293,56 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         openByDefault
         dataQa="context-tools-section"
       >
-        <AgentsAndToolsetsField onAutoSave={onAutoSave} />
+        <div data-qa="agents-and-toolsets-field">
+          <AgentsAndToolsetsField onAutoSave={onAutoSave} />
+        </div>
 
-        <Controller
-          name="documentRelativeUrl"
-          control={control}
-          render={({ field }) => (
-            <FilesSelectorField
-              label={t(MarketplaceI18nKeys.ContextFiles)}
-              info={t(MarketplaceI18nKeys.ContextFilesInfo)}
-              onAddFiles={handleSelectFiles}
-              onRemoveFile={(document) =>
-                field.onChange(
-                  field.value?.filter((field) => field !== document),
-                )
-              }
-              readonly={isSharedWithMe || isAppPublic}
-              error={errors.documentRelativeUrl?.message}
-              fileManagerTitle={t(MarketplaceI18nKeys.SelectDocuments)}
-              files={field.value ?? []}
-              addBtnTooltip={
-                isSharedWithMe
-                  ? getSharedTooltip(t(MarketplaceI18nKeys.DocumentsLowercase))
-                  : undefined
-              }
-              confirmDialogValues={
-                appDetails?.isShared ? CONFIRM_DOCUMENT_VALUES : undefined
-              }
-              tooltip={isAppPublicTooltip}
-              filesFilter={filesFilter}
-            />
-          )}
-        />
+        <div data-qa="document-urls-field">
+          <Controller
+            name="documentRelativeUrl"
+            control={control}
+            render={({ field }) => (
+              <FilesSelectorField
+                label={t(MarketplaceI18nKeys.ContextFiles)}
+                info={t(MarketplaceI18nKeys.ContextFilesInfo)}
+                onAddFiles={handleSelectFiles}
+                onRemoveFile={(document) =>
+                  field.onChange(
+                    field.value?.filter((field) => field !== document),
+                  )
+                }
+                readonly={isSharedWithMe || isAppPublic}
+                error={errors.documentRelativeUrl?.message}
+                fileManagerTitle={t(MarketplaceI18nKeys.SelectDocuments)}
+                files={field.value ?? []}
+                addBtnTooltip={
+                  isSharedWithMe
+                    ? getSharedTooltip(
+                        t(MarketplaceI18nKeys.DocumentsLowercase),
+                      )
+                    : undefined
+                }
+                confirmDialogValues={
+                  appDetails?.isShared ? CONFIRM_DOCUMENT_VALUES : undefined
+                }
+                tooltip={isAppPublicTooltip}
+                filesFilter={filesFilter}
+              />
+            )}
+          />
+        </div>
 
-        <CodeInterpreterField />
+        <div data-qa="code-interpreter-field">
+          <CodeInterpreterField />
+        </div>
+      </FormCollapsibleSection>
+
+      <FormCollapsibleSection
+        name={t(MarketplaceI18nKeys.AgentSkills)}
+        description={t(MarketplaceI18nKeys.AgentSkillsDescription)}
+        dataQa="agent-skills-section"
+      >
+        <AgentSkillsField />
       </FormCollapsibleSection>
 
       <FormCollapsibleSection
@@ -337,7 +364,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               placeholder={t(MarketplaceI18nKeys.EnterAttachmentTypes)}
               id="attachmentTypes"
               className={classNames(
-                'input-form input-invalid peer mx-0 flex items-start py-1 pl-0 md:max-w-full',
+                'input-form input-invalid peer mx-0 flex items-start py-1 ps-0 md:max-w-full',
                 isAppPublic && 'hover:border-primary',
               )}
               hasDeleteAll
@@ -377,6 +404,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             <ConversationStartersList
               value={field.value}
               onChange={field.onChange}
+              onBlur={handleStartersSettingsAutoSave}
               disabled={isAppPublic}
             />
           )}
@@ -409,6 +437,7 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 name="introText"
                 value={field.value}
                 onChange={field.onChange}
+                onBlur={handleStartersSettingsAutoSave}
                 disabled={isAppPublic || !hasStarters}
                 error={errors.introText?.message}
                 tooltipText={startersSettingsTooltip}
@@ -424,7 +453,10 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
                 label={t(MarketplaceI18nKeys.StartersBehavior)}
                 value={field.value}
                 isSubgroup
-                onChange={field.onChange}
+                onChange={(value) => {
+                  field.onChange(value);
+                  handleStartersSettingsAutoSave();
+                }}
                 disabled={isAppPublic || !hasStarters}
                 tooltip={startersSettingsTooltip}
               />
@@ -438,7 +470,10 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
               <ToggleSwitchField
                 label={t(MarketplaceI18nKeys.DisableChatInput)}
                 isOn={field.value}
-                handleSwitch={() => field.onChange(!field.value)}
+                handleSwitch={() => {
+                  field.onChange(!field.value);
+                  handleStartersSettingsAutoSave();
+                }}
                 isSubgroup
                 className="mt-1 flex w-fit items-center gap-2"
                 switchOnText={t(SettingsI18nKeys.ON)}
@@ -457,6 +492,27 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             )}
           />
         </div>
+      </FormCollapsibleSection>
+
+      <FormCollapsibleSection
+        name={t(MarketplaceI18nKeys.AgentSettings)}
+        description={t(MarketplaceI18nKeys.AgentSettingsDescription)}
+        dataQa="agent-settings-section"
+      >
+        <Controller
+          name="timestamp"
+          control={control}
+          render={({ field }) => (
+            <ToggleSwitch
+              isOn={field.value}
+              handleSwitch={() => field.onChange(!field.value)}
+              switchOnText="ON"
+              switchOFFText="OFF"
+              additionalText={t(MarketplaceI18nKeys.TimeAwareness)}
+              className="flex items-center gap-2"
+            />
+          )}
+        />
       </FormCollapsibleSection>
 
       {doesAgentSupportMcp(appDetails) && !!dialCoreExternalUrl && (

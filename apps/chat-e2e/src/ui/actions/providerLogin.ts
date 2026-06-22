@@ -1,4 +1,5 @@
 import { LocalStorageManager } from '@/src/core/localStorageManager';
+import { writeModelsFile } from '@/src/core/testPaths';
 import { API } from '@/src/testData';
 import { LoginInterface } from '@/src/ui/actions/loginInterface';
 import { BasePage } from '@/src/ui/pages/basePage';
@@ -72,7 +73,7 @@ export abstract class ProviderLogin<T extends BasePage & LoginInterface> {
       options,
     );
     if (options?.setEntitiesEnvVars) {
-      process.env.MODELS = retrievedResponses.get(API.modelsHost);
+      writeModelsFile(retrievedResponses.get(API.modelsHost) ?? '[]');
       process.env.THEMES = retrievedResponses.get(API.themesListingHost);
       process.env.APP_SCHEMAS = retrievedResponses.get(API.appSchemasHost);
       process.env.RECENT_MODELS =

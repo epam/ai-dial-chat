@@ -8,5 +8,12 @@
   "{{name}} \"{{newName}}\" already exists in this folder.": "{{name}} \"{{newName}}\" already exists in this folder.",
   "URL is not correct": "URL is not correct",
   "URL must start with a valid protocol": "URL must start with a valid protocol",
-  "Endpoint cannot end with . or //": "Endpoint cannot end with . or //"
+  "Endpoint cannot end with . or //": "Endpoint cannot end with . or //",
+  "The image has been deleted, does not exist, or you do not have access to it.": "The image has been deleted, does not exist, or you do not have access to it.",
+  "The {{name}} is too long. Please shorten it and try again.": "The {{name}} is too long. Please shorten it and try again.",
+  "Using a dot at the start of a {{name}} is not permitted.": "Using a dot at the start of a {{name}} is not permitted.",
+  "Version is required": "Version is required",
+  "Version format is invalid (example: 0.0.1)": "Version format is invalid (example: 0.0.1)",
+  "This version already exists": "This version already exists",
+  "Each part of the version should contain no more than five numbers.": "Each part of the version should contain no more than five numbers."
 }

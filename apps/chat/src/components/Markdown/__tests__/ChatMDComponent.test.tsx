@@ -19,11 +19,23 @@ vi.mock('@/public/images/icons/chevron-down.svg', () => ({
 }));
 
 global.ResizeObserver = class ResizeObserver {
-  observe() {}
+  observe() {
+    console.info(
+      'ResizeObserver.observe() is not implemented in this test environment.',
+    );
+  }
 
-  unobserve() {}
+  unobserve() {
+    console.info(
+      'ResizeObserver.unobserve() is not implemented in this test environment.',
+    );
+  }
 
-  disconnect() {}
+  disconnect() {
+    console.info(
+      'ResizeObserver.disconnect() is not implemented in this test environment.',
+    );
+  }
 };
 
 // Mock store setup

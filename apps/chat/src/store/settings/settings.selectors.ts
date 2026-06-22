@@ -10,6 +10,7 @@ import { RootState } from '@/src/types/store';
 
 import { AuthSelectors } from '@/src/store/auth/auth.selectors';
 
+import { DEFAULT_AGENT } from '@/src/constants/chat';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import {
   DEFAULT_QUICK_APPS_HOST,
@@ -59,6 +60,12 @@ const selectEnabledFeatures = createSelector(
 
     return enabledFeatures;
   },
+);
+
+const selectIsMdSidebarOverlayBreakpoint = createSelector(
+  [selectIsOverlay, selectEnabledFeatures],
+  (isOverlay, enabledFeatures) =>
+    isOverlay && enabledFeatures.has(Feature.MdSidebarOverlayBreakpoint),
 );
 
 const selectIsIsolatedView = (state: RootState) =>
@@ -252,6 +259,18 @@ const selectDefaults = createSelector(
 const selectInitialDataStatus = (state: RootState) =>
   rootSelector(state).initialDataStatus;
 
+const selectIsOptimisticLoadEnabled = (state: RootState) =>
+  rootSelector(state).isOptimisticLoadEnabled;
+
+// True only when optimistic load is enabled via env, a default model is
+// known from server-side settings, and the user's model selection is
+// DEFAULT_AGENT (meaning "use system default"). When the user has chosen a
+// specific model we don't know if it'll be available until models fully load.
+const selectIsOptimisticDefaultModelLoad = (state: RootState) =>
+  rootSelector(state).isOptimisticLoadEnabled &&
+  !!rootSelector(state).defaultModelReference &&
+  state.models.defaultModelReference === DEFAULT_AGENT;
+
 const selectProviderId = (state: RootState) => rootSelector(state).providerId;
 
 const selectWidgetsSchemaIds = (state: RootState) =>
@@ -269,14 +288,23 @@ const selectHiddenEntityTag = (state: RootState) =>
 const selectStageContentLimit = (state: RootState) =>
   rootSelector(state).stageContentLimit;
 
+const selectResourceMaxSegmentBytes = (state: RootState) =>
+  rootSelector(state).resourceMaxSegmentBytes;
+
 const selectAsrModelId = (state: RootState) => rootSelector(state).asrModelId;
 
 const selectAudioTypesDefaultOrder = (state: RootState) =>
   rootSelector(state).audioTypesDefaultOrder;
 
+const selectIsCompareModeDisabled = createSelector(
+  [selectEnabledFeatures],
+  (enabledFeatures) => enabledFeatures.has(Feature.CompareModeDisabled),
+);
+
 export const SettingsSelectors = {
   selectAppName,
   selectIsOverlay,
+  selectIsMdSidebarOverlayBreakpoint,
   selectFooterHtmlMessage,
   selectEnabledFeatures,
   isFeatureEnabled,
@@ -306,12 +334,16 @@ export const SettingsSelectors = {
   selectOverlayDefaultModelReference,
   selectDefaults,
   selectInitialDataStatus,
+  selectIsOptimisticLoadEnabled,
+  selectIsOptimisticDefaultModelLoad,
   selectProviderId,
   selectWidgetsSchemaIds,
   selectIsAuthDisabled,
   selectAttachmentsSettings,
   selectHiddenEntityTag,
   selectStageContentLimit,
+  selectResourceMaxSegmentBytes,
   selectAsrModelId,
   selectAudioTypesDefaultOrder,
+  selectIsCompareModeDisabled,
 };

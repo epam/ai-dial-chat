@@ -5,6 +5,12 @@ import classNames from 'classnames';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
 
+import {
+  DIAL_ICON_SIZE,
+  DialGhostIconButton,
+  ElementSize,
+} from '@epam/ai-dial-ui-kit';
+
 interface Props {
   document: string;
   readonly?: boolean;
@@ -40,10 +46,10 @@ export const SelectedFile: FC<Props> = ({ document, readonly, onRemove }) => {
           </span>
         </div>
         {!readonly && onRemove && (
-          <IconTrashX
-            className="text-secondary hover:text-accent-primary"
+          <DialGhostIconButton
+            size={ElementSize.Small}
+            icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}
             onClick={() => onRemove(document)}
-            size={18}
           />
         )}
       </div>
