@@ -26,3 +26,10 @@
   color: transparent;
   animation: cm-shimmer 2s linear infinite;
 }
+
+.secondaryBorder {
+  border-color: var(
+    --cm-markdown-border,
+    var(--stroke-secondary, #242c42)
+  );
+}

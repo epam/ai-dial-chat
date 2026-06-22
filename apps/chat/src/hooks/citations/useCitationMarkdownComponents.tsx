@@ -70,12 +70,15 @@ export const useCitationMarkdownComponents = (
 
     return {
       p: ({ children, ...rest }) => (
-        <p {...rest} className="mb-2 break-words last:mb-0">
+        <p
+          {...rest}
+          className="mb-3 max-w-[70ch] break-words leading-[1.625] [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0"
+        >
           {replaceSentinelsInChildren(children, renderMarker)}
         </p>
       ),
       li: ({ children, ...rest }) => (
-        <li {...rest} className="mb-2">
+        <li {...rest} className="mb-1.5 last:mb-0">
           {replaceSentinelsInChildren(children, renderMarker)}
         </li>
       ),

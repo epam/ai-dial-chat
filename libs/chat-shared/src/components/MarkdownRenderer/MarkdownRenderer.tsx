@@ -19,6 +19,12 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   h2?: string;
   /** Class on `<h3>`. */
   h3?: string;
+  /** Class on `<h4>`. */
+  h4?: string;
+  /** Class on `<h5>`. */
+  h5?: string;
+  /** Class on `<h6>`. */
+  h6?: string;
   /** Classes on `<p>` elements. */
   p?: string;
   /** Extra classes on `<ul>` (base: `list-disc pl-5`). */
@@ -49,10 +55,14 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   codeInline?: string;
   /** Typography class for inline `<code>`. Defaults to `'font-mono text-sm'`. */
   codeInlineFont?: string;
-  /** Extra classes on `<blockquote>` (base: `border-l-4 pl-3 opacity-80`). */
+  /** Extra classes on `<blockquote>` (base uses a logical start border and padding). */
   blockquote?: string;
-  /** Extra classes on `<a>` (base: `underline opacity-80 hover:opacity-100`). */
+  /** Extra classes on `<a>` (base uses the accent text color and an offset underline). */
   link?: string;
+  /** Extra classes on `<hr>` separators. */
+  hr?: string;
+  /** Extra classes on deleted text rendered by GFM. */
+  del?: string;
   /** Extra classes on `<th>` and `<td>` (base includes borders, spacing, and text wrapping). */
   tableCell?: string;
   /** Extra classes on `<th>` only (applied alongside `tableCell`). */
@@ -101,7 +111,7 @@ const EMPTY_CLASS_NAMES: MarkdownRendererClassNames = {};
  * explicit `components` overrides, so consumers can still override them.
  */
 export const defaultMarkdownComponents: Components = {
-  li: ({ children }) => <li className="mb-2">{children}</li>,
+  li: ({ children }) => <li className="mb-1.5 last:mb-0">{children}</li>,
 };
 
 const buildMarkdownComponents = (
@@ -114,6 +124,9 @@ const buildMarkdownComponents = (
   h1: ({ children }) => <h1 className={cn.h1}>{children}</h1>,
   h2: ({ children }) => <h2 className={cn.h2}>{children}</h2>,
   h3: ({ children }) => <h3 className={cn.h3}>{children}</h3>,
+  h4: ({ children }) => <h4 className={cn.h4}>{children}</h4>,
+  h5: ({ children }) => <h5 className={cn.h5}>{children}</h5>,
+  h6: ({ children }) => <h6 className={cn.h6}>{children}</h6>,
   p: ({ children }) => <p className={cn.p}>{children}</p>,
   ul: ({ children }) => (
     <ul className={mergeClasses('list-disc ps-5', cn.ul)}>{children}</ul>
@@ -161,7 +174,11 @@ const buildMarkdownComponents = (
   },
   blockquote: ({ children }) => (
     <blockquote
-      className={mergeClasses('border-s-4 ps-3 opacity-80', cn.blockquote)}
+      className={mergeClasses(
+        'border-s-2 py-1 ps-4 text-secondary',
+        styles.secondaryBorder,
+        cn.blockquote,
+      )}
     >
       {children}
     </blockquote>
@@ -172,20 +189,39 @@ const buildMarkdownComponents = (
       target="_blank"
       rel="noopener noreferrer"
       className={mergeClasses(
-        'underline opacity-80 hover:opacity-100',
+        'decoration-current/60 text-accent-primary underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
         cn.link,
       )}
     >
       {children}
     </a>
   ),
+  hr: () => (
+    <hr
+      className={mergeClasses('my-5 border-t', styles.secondaryBorder, cn.hr)}
+    />
+  ),
+  del: ({ children }) => (
+    <del className={mergeClasses('opacity-75', cn.del)}>{children}</del>
+  ),
+  input: ({ type, checked, disabled }) => (
+    <input
+      type={type}
+      checked={checked}
+      disabled={disabled}
+      readOnly
+      className="me-2 size-4 appearance-auto align-middle"
+    />
+  ),
   table: ({ children }) => (
     <MarkdownTable classNames={cn}>{children}</MarkdownTable>
   ),
+  tr: ({ children }) => <tr className="even:bg-white/[0.025]">{children}</tr>,
   th: ({ children }) => (
     <th
       className={mergeClasses(
-        'max-w-96 whitespace-normal break-words border border-secondary px-3 py-1.5 text-start [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 text-start text-secondary [overflow-wrap:anywhere]',
+        styles.secondaryBorder,
         cn.tableHeaderFont ?? 'font-semibold',
         cn.tableCell,
         cn.tableHeader,
@@ -197,7 +233,8 @@ const buildMarkdownComponents = (
   td: ({ children }) => (
     <td
       className={mergeClasses(
-        'max-w-96 whitespace-normal break-words border border-secondary px-3 py-1.5 [overflow-wrap:anywhere]',
+        'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 align-top [overflow-wrap:anywhere]',
+        styles.secondaryBorder,
         cn.tableCell,
       )}
     >

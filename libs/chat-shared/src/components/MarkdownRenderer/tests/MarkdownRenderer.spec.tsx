@@ -26,6 +26,14 @@ const FENCED_NO_LANG_MARKDOWN = `\`\`\`
 plain code
 \`\`\``;
 
+const EXTENDED_MARKDOWN = `#### Smaller heading
+
+---
+
+- [x] Completed
+
+~~Removed~~`;
+
 describe('MarkdownRenderer', () => {
   it('renders GFM tables in a horizontally scrollable container', () => {
     render(<MarkdownRenderer content={TABLE_MARKDOWN} />);
@@ -41,6 +49,7 @@ describe('MarkdownRenderer', () => {
     expect(tableWrapper?.className).toContain('overflow-hidden');
     expect(scrollContainer?.className).toContain('overflow-x-auto');
     expect(scrollContainer?.className).toContain('rounded');
+    expect(scrollContainer?.className).toContain('border');
   });
 
   it('merges table class overrides with the scrolling defaults', () => {
@@ -67,9 +76,11 @@ describe('MarkdownRenderer', () => {
     expect(cell.className).toContain('custom-cell');
     expect(columnHeader.className).toContain('max-w-96');
     expect(columnHeader.className).toContain('whitespace-normal');
-    expect(columnHeader.className).toContain('border-secondary');
+    expect(columnHeader.className).toContain('border-b');
+    expect(columnHeader.className).toContain('text-secondary');
     expect(cell.className).toContain('max-w-96');
-    expect(cell.className).toContain('border-secondary');
+    expect(cell.className).toContain('border-b');
+    expect(cell.className).toContain('align-top');
     expect(cell.className).toContain('[overflow-wrap:anywhere]');
   });
 
@@ -140,5 +151,28 @@ describe('MarkdownRenderer', () => {
     );
 
     expect(container.querySelector('.custom-container')).toBeTruthy();
+  });
+
+  it('styles extended GFM prose elements', () => {
+    render(
+      <MarkdownRenderer
+        content={EXTENDED_MARKDOWN}
+        classNames={{
+          h4: 'custom-h4',
+          hr: 'custom-hr',
+          del: 'custom-del',
+        }}
+      />,
+    );
+
+    expect(
+      screen.getByRole('heading', { level: 4, name: 'Smaller heading' })
+        .className,
+    ).toContain('custom-h4');
+    expect(document.querySelector('hr')?.className).toContain('custom-hr');
+    expect(screen.getByText('Removed').className).toContain('custom-del');
+    const checkboxClassName = screen.getByRole('checkbox').className;
+    expect(checkboxClassName).toContain('appearance-auto');
+    expect(checkboxClassName).toContain('size-4');
   });
 });

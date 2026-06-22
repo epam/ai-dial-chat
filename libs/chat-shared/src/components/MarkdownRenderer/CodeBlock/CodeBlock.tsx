@@ -63,14 +63,14 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     return (
       <div
         className={mergeClasses(
-          'my-2 overflow-hidden rounded border',
+          'my-4 max-w-full overflow-hidden rounded border',
           styles.container,
           containerClassName,
         )}
       >
         <div
           className={mergeClasses(
-            'sticky top-0 flex items-center justify-between border-b px-3 py-2',
+            'flex min-h-10 items-center justify-between border-b px-3 py-2',
             styles.header,
             headerClassName,
           )}
@@ -105,7 +105,9 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
               customStyle={{
                 margin: 0,
                 borderRadius: 0,
+                background: 'transparent',
                 fontSize: 14,
+                lineHeight: 1.5,
                 padding: 12,
                 letterSpacing: 0,
               }}

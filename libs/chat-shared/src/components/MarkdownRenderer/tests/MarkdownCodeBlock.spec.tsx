@@ -104,6 +104,20 @@ describe('MarkdownCodeBlock', () => {
     );
   });
 
+  it('uses comfortable block spacing and a compact header', () => {
+    const { container } = render(
+      <MarkdownCodeBlock language="typescript" value="const x = 1;" />,
+    );
+
+    const block = container.firstChild as HTMLElement;
+    const header = block.firstChild as HTMLElement;
+
+    expect(block.className).toContain('my-4');
+    expect(block.className).toContain('max-w-full');
+    expect(header.className).toContain('min-h-10');
+    expect(header.className).not.toContain('sticky');
+  });
+
   it('renders the code value', () => {
     const { container } = render(
       <MarkdownCodeBlock language="typescript" value="const x = 1;" />,
