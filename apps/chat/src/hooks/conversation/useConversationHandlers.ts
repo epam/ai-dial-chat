@@ -18,6 +18,7 @@ import {
   useState,
 } from 'react';
 import { type NavigateFunction } from 'react-router-dom';
+import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useDeployments } from '../../context/DeploymentsContext';
 import {
   deleteConversation as apiDeleteConversation,
@@ -103,7 +104,7 @@ export const useConversationHandlers = ({
             const filenames = pendingNetworkFilesRef.current.splice(0);
             showNetworkError?.(filenames);
             networkTimerRef.current = null;
-          }, 100);
+          }, NETWORK_ERROR_DEBOUNCE_MS);
 
           const error =
             err instanceof Error ? err : new Error('Network upload failed');

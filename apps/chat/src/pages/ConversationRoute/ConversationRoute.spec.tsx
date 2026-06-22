@@ -114,11 +114,15 @@ vi.mock('@epam/ai-dial-conversation-input', async (importOriginal) => {
         <button
           type="button"
           onClick={() => {
-            void onUploadAttachment?.({
-              name: 'file.pdf',
-              file: new File(['content'], 'file.pdf', {
-                type: 'application/pdf',
+            Promise.resolve(
+              onUploadAttachment?.({
+                name: 'file.pdf',
+                file: new File(['content'], 'file.pdf', {
+                  type: 'application/pdf',
+                }),
               }),
+            ).catch((_err: unknown) => {
+              // intentional: test mock swallows rejection to avoid unhandled promise
             });
           }}
         >
@@ -493,6 +497,35 @@ describe('ConversationRoute', () => {
         SendOnEnter.MetaEnter,
       );
     });
+  });
+
+  it('shows exactly one network-error notification when three uploads fail offline simultaneously', async () => {
+    renderRoute();
+    const uploadButton = await screen.findByRole('button', { name: 'Upload' });
+
+    vi.useFakeTimers();
+    mockUploadFile.mockRejectedValue(new Error('Failed to fetch'));
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+
+    await act(async () => {
+      uploadButton.click();
+      uploadButton.click();
+      uploadButton.click();
+    });
+
+    expect(mockShowNotification).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(700);
+    });
+
+    expect(mockShowNotification).toHaveBeenCalledOnce();
+    expect(mockShowNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ variant: NotificationVariant.Error }),
+    );
+
+    vi.useRealTimers();
+    vi.restoreAllMocks();
   });
 
   it('creates a text-only conversation when bucket is empty', async () => {

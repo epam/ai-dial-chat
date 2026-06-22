@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { getConversationRoute } from '../../constants/routes';
+import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
@@ -263,7 +264,7 @@ const ConversationRoute: FC = () => {
               ),
             });
             networkTimerRef.current = null;
-          }, 100);
+          }, NETWORK_ERROR_DEBOUNCE_MS);
           const error =
             err instanceof Error ? err : new Error('Network upload failed');
           (

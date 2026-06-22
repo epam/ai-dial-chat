@@ -205,6 +205,54 @@ describe('useConversationHandlers — handleSend', () => {
   });
 });
 
+describe('useConversationHandlers — handleUploadAttachment (network error batching)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('batches three simultaneous offline failures into a single showNetworkError call listing all filenames', async () => {
+    vi.useFakeTimers();
+    mockUploadFile.mockRejectedValue(new Error('Failed to fetch'));
+    vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(false);
+
+    const showNetworkError = vi.fn();
+    const params = makeParams({ showNetworkError });
+    const { result } = renderHook(() => useConversationHandlers(params));
+
+    await act(async () => {
+      await Promise.allSettled([
+        result.current.handleUploadAttachment({
+          ...makeAttachment(),
+          name: 'a.pdf',
+          id: 'a',
+        }),
+        result.current.handleUploadAttachment({
+          ...makeAttachment(),
+          name: 'b.pdf',
+          id: 'b',
+        }),
+        result.current.handleUploadAttachment({
+          ...makeAttachment(),
+          name: 'c.pdf',
+          id: 'c',
+        }),
+      ]);
+    });
+
+    expect(showNetworkError).not.toHaveBeenCalled();
+
+    act(() => {
+      vi.advanceTimersByTime(700);
+    });
+
+    expect(showNetworkError).toHaveBeenCalledOnce();
+    expect(showNetworkError).toHaveBeenCalledWith(['a.pdf', 'b.pdf', 'c.pdf']);
+
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+});
+
 describe('useConversationHandlers — handleRegenerateMessage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
