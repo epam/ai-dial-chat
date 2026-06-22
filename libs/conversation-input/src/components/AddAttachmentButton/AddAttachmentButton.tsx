@@ -30,8 +30,8 @@ export interface ExtraMenuItem {
 
 /** Props accepted by the `AddAttachmentButton` component. */
 interface AddAttachmentButtonProps {
-  /** Callback invoked when the user picks "Attach file". */
-  onAttachClick: () => void;
+  /** Callback invoked when the user picks "Attach file". When absent, the "Attach file" item is not rendered. */
+  onAttachClick?: () => void;
   /** Label for the "Attach file" menu item. */
   attachLabel: string;
   /** Aria-label for the + trigger button. */
@@ -66,16 +66,22 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
 
   const menuItems = useMemo(
     () => [
-      {
-        key: 'attach',
-        label: attachLabel,
-        icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
-        onClick: onAttachClick,
-      },
+      ...(onAttachClick != null
+        ? [
+            {
+              key: 'attach',
+              label: attachLabel,
+              icon: <IconPaperclip size={BASE_ICON_SIZE} aria-hidden />,
+              onClick: onAttachClick,
+            },
+          ]
+        : []),
       ...(extraMenuItems ?? []),
     ],
     [attachLabel, onAttachClick, extraMenuItems],
   );
+
+  if (menuItems.length === 0) return null;
 
   if (isMobile) {
     return (

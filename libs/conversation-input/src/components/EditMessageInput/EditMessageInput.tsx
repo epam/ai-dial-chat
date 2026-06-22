@@ -31,6 +31,8 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   className,
   pendingDropFiles: externalPendingFiles,
   onDropFilesConsumed,
+  validateAttachment,
+  hideAttachFile = false,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [pendingDropFiles, setPendingDropFiles] = useState<File[]>([]);
@@ -107,27 +109,32 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         className="max-w-full"
         prefixAttachments={keptAttachments}
         onRemovePrefixAttachment={handleRemovePreExisting}
+        validateAttachment={validateAttachment}
       />
 
       {/* Action row — outside the bordered box */}
       <div className="flex items-center justify-between">
         <div className="flex">
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className="sr-only"
-            aria-hidden
-            tabIndex={-1}
-            onChange={handleFileChange}
-          />
-          <AddAttachmentButton
-            onAttachClick={() => fileInputRef.current?.click()}
-            attachLabel={attachLabel}
-            addMenuLabel={addMenuLabel}
-            menuTitle={menuTitle}
-            menuCloseLabel={menuCloseLabel}
-          />
+          {!hideAttachFile && (
+            <>
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                className="sr-only"
+                aria-hidden
+                tabIndex={-1}
+                onChange={handleFileChange}
+              />
+              <AddAttachmentButton
+                onAttachClick={() => fileInputRef.current?.click()}
+                attachLabel={attachLabel}
+                addMenuLabel={addMenuLabel}
+                menuTitle={menuTitle}
+                menuCloseLabel={menuCloseLabel}
+              />
+            </>
+          )}
         </div>
 
         <div className="flex gap-2">

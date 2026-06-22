@@ -32,13 +32,13 @@ export const mimeTypesToExtensionLabels = (types: string[]): string => {
  * - Exact match: `'application/pdf'` allows `'application/pdf'`.
  * - Wildcard prefix: `'image/*'` allows any `'image/...'` MIME type.
  *
- * Returns `true` when `allowedTypes` is empty (no restriction applied).
+ * Returns `false` when `allowedTypes` is empty (no attachment types allowed).
  */
 export const isMimeTypeAllowed = (
   mimeType: string,
   allowedTypes: string[],
 ): boolean => {
-  if (allowedTypes.length === 0) return true;
+  if (allowedTypes.length === 0) return false;
   return allowedTypes.some((allowed) => {
     if (allowed === '*' || allowed === '*/*') return true;
     if (allowed.endsWith('/*')) {
