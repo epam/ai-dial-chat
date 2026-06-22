@@ -41,6 +41,13 @@ export class ConversationListItemDto {
     example: false,
   })
   isPinned!: boolean;
+
+  @ApiProperty({
+    description:
+      'True when the current user does not have WRITE permission on this conversation.',
+    example: false,
+  })
+  isReadonly!: boolean;
 }
 
 export class ConversationListResponseDto {

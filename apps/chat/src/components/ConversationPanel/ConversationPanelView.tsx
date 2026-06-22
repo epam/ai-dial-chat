@@ -2,6 +2,7 @@ import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ConversationGroupKey,
   ConversationPanel,
+  FilterTab,
   type ConversationHistoryItem,
   type ConversationMove,
 } from '@epam/ai-dial-conversation-panel';
@@ -59,6 +60,9 @@ interface ConversationPanelViewProps {
   onClose: () => void;
   onSelectConversation: (id: string) => void;
   onNewChat: () => void;
+  requestedFilter?: FilterTab;
+  onRequestedFilterChange?: () => void;
+  onDuplicateReadonly?: () => void;
 }
 
 const ConversationPanelView: FC<ConversationPanelViewProps> = ({
@@ -67,6 +71,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onClose,
   onSelectConversation,
   onNewChat,
+  requestedFilter,
+  onRequestedFilterChange,
+  onDuplicateReadonly,
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -196,22 +203,54 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       const contextId = panelToContextId.get(panelItem.id);
       if (!contextId) return [];
 
-      return [
-        {
-          key: 'pin',
-          label: panelItem.isPinned
-            ? t(ConversationPanelI18nKeys.UnpinLabel)
-            : t(ConversationPanelI18nKeys.PinLabel),
-          icon: panelItem.isPinned ? (
-            <IconPinnedFilled
-              size={DIAL_ICON_SIZE.SM}
-              className="text-secondary"
-            />
-          ) : (
-            <IconPin size={DIAL_ICON_SIZE.SM} className="text-secondary" />
-          ),
-          onClick: () => pinConversation(contextId, !panelItem.isPinned),
+      const rawItem = items.find((c) => c.id === contextId);
+      const isReadonlyItem =
+        rawItem?.isReadonly ||
+        rawItem?.sharedWithMe ||
+        rawItem?.publishedWithMe;
+
+      const pinAction: DropdownItem = {
+        key: 'pin',
+        label: panelItem.isPinned
+          ? t(ConversationPanelI18nKeys.UnpinLabel)
+          : t(ConversationPanelI18nKeys.PinLabel),
+        icon: panelItem.isPinned ? (
+          <IconPinnedFilled
+            size={DIAL_ICON_SIZE.SM}
+            className="text-secondary"
+          />
+        ) : (
+          <IconPin size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+        ),
+        onClick: () => pinConversation(contextId, !panelItem.isPinned),
+      };
+
+      const duplicateAction: DropdownItem = {
+        key: 'duplicate',
+        label: t(ButtonsI18nKeys.Duplicate),
+        icon: <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />,
+        onClick: async () => {
+          try {
+            const newPath = await duplicateConversation(contextId);
+            if (isReadonlyItem && panelItem.id === activeConversationId) {
+              onDuplicateReadonly?.();
+            }
+            navigate(getConversationRoute(newPath));
+          } catch {
+            showNotification({
+              variant: NotificationVariant.Error,
+              message: t(ConversationPanelI18nKeys.DuplicateError),
+            });
+          }
         },
+      };
+
+      if (isReadonlyItem) {
+        return [pinAction, duplicateAction];
+      }
+
+      return [
+        pinAction,
         {
           key: 'rename',
           label: t(ButtonsI18nKeys.Rename),
@@ -224,24 +263,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           onClick: () =>
             setPendingRenameItem({ id: contextId, title: panelItem.title }),
         },
-        {
-          key: 'duplicate',
-          label: t(ButtonsI18nKeys.Duplicate),
-          icon: (
-            <IconCopy size={DIAL_ICON_SIZE.SM} className="text-secondary" />
-          ),
-          onClick: async () => {
-            try {
-              const newPath = await duplicateConversation(contextId);
-              navigate(getConversationRoute(newPath));
-            } catch {
-              showNotification({
-                variant: NotificationVariant.Error,
-                message: t(ConversationPanelI18nKeys.DuplicateError),
-              });
-            }
-          },
-        },
+        duplicateAction,
         {
           key: 'delete',
           label: t(ButtonsI18nKeys.Delete),
@@ -254,11 +276,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     },
     [
       panelToContextId,
+      items,
+      t,
       pinConversation,
       duplicateConversation,
+      activeConversationId,
       navigate,
+      onDuplicateReadonly,
       showNotification,
-      t,
     ],
   );
 
@@ -346,6 +371,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isOpen={isOpen}
         onSelectConversation={onSelectConversation}
         activeConversationId={activeConversationId}
+        activeFilter={requestedFilter}
+        onActiveFilterChange={onRequestedFilterChange}
         title={t(ConversationPanelI18nKeys.Title)}
         emptyLabel={t(ConversationPanelI18nKeys.Empty)}
         noResultsLabel={t(BasicI18nKeys.NoResults)}

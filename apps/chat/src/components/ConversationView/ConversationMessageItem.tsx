@@ -3,6 +3,7 @@ import {
   isStatusMessage,
   MessageRole,
   type Attachment,
+  type AttachmentErrorReason,
   type DisplayAttachment,
   type MessageRating,
   type Message as MessageType,
@@ -91,6 +92,10 @@ interface Props {
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
+  validateAttachment?: (
+    attachment: Attachment,
+  ) => AttachmentErrorReason | undefined;
+  hideAttachFile?: boolean;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -128,6 +133,8 @@ const ConversationMessageItem: FC<Props> = ({
   thinkingLabel,
   executedLabel,
   stepsLabel,
+  validateAttachment,
+  hideAttachFile,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
@@ -192,6 +199,8 @@ const ConversationMessageItem: FC<Props> = ({
             className="w-full max-w-[748px]"
             pendingDropFiles={pendingDropFiles}
             onDropFilesConsumed={onDropFilesConsumed}
+            validateAttachment={validateAttachment}
+            hideAttachFile={hideAttachFile}
           />
         </Suspense>
       </div>

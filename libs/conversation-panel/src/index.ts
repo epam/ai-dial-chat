@@ -11,3 +11,4 @@ export type {
 export type { ConversationGroupProps } from './components/ConversationGroup/ConversationGroup';
 export { ConversationGroupKey } from './types/conversation-group-key';
 export { ConversationSource } from './types/conversation-source';
+export { FilterTab } from './types/filter-tab';

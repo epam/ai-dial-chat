@@ -492,6 +492,12 @@ describe('ConversationService', () => {
       const copySpy = vi
         .spyOn(service['client'], 'copyResource')
         .mockResolvedValue({ data: {} } as never);
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: { ...TEST_CONVERSATION },
+      } as never);
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        data: {},
+      } as never);
 
       const result = await service.duplicateConversation(
         `source-bucket/${conversationPath}`,
@@ -504,13 +510,13 @@ describe('ConversationService', () => {
           body: {
             sourceUrl: `conversations/source-bucket/${conversationPath}`,
             destinationUrl:
-              'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
+              'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello%201',
             overwrite: false,
           },
         }),
       );
       expect(result.newPath).toBe(
-        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
+        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello%201',
       );
     });
 
@@ -546,6 +552,146 @@ describe('ConversationService', () => {
         'test-bucket',
         conversationPath,
         expect.any(Object),
+      );
+    });
+  });
+
+  describe('duplicateConversation', () => {
+    const SHARED_CONVERSATION = {
+      ...TEST_CONVERSATION,
+      id: 'shared-bucket/gpt-4o__New chat',
+      folderId: 'shared-bucket',
+      name: 'New chat',
+    };
+
+    // The copy is performed by copyResource; the metadata fix then reads the
+    // copy back (getConversation) and re-saves it (saveConversation).
+    const mockGetConversation = (
+      conversation: typeof TEST_CONVERSATION = SHARED_CONVERSATION,
+    ) => {
+      vi.spyOn(service['client'], 'copyResource').mockResolvedValue({
+        data: {},
+      } as never);
+      return vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: { ...conversation },
+      } as never);
+    };
+
+    it('decodes the encoded filename so the title is not mangled (no "New20 chat")', async () => {
+      mockGetConversation();
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      // The space stays a real space (encoded %20), never collapsed to "New20".
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__New%20chat%201',
+        expect.objectContaining({
+          body: expect.objectContaining({ name: 'New chat 1' }),
+        }),
+      );
+    });
+
+    it('gives the copy a distinct name so it does not collide with the source path', async () => {
+      // Source is in another (shared/org) bucket and has no namesake in the user
+      // bucket, yet the copy must still be renamed so its relative path differs.
+      mockGetConversation();
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        expect.not.stringMatching(/__New%20chat$/),
+        expect.objectContaining({
+          body: expect.objectContaining({ name: 'New chat 1' }),
+        }),
+      );
+    });
+
+    it('rewrites the duplicate id/folderId to the session bucket', async () => {
+      mockGetConversation();
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__New%20chat%201',
+        expect.objectContaining({
+          body: expect.objectContaining({
+            id: 'test-bucket/gpt-4o__New chat 1',
+            folderId: 'test-bucket',
+          }),
+        }),
+      );
+    });
+
+    it('increments the suffix past existing copies in the bucket', async () => {
+      vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
+        data: {
+          items: [
+            { name: 'gpt-4o__New chat', nodeType: 'CONVERSATION' },
+            { name: 'gpt-4o__New chat 1', nodeType: 'CONVERSATION' },
+          ],
+        },
+      } as never);
+      mockGetConversation();
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__New%20chat%202',
+        expect.objectContaining({
+          body: expect.objectContaining({
+            name: 'New chat 2',
+            id: 'test-bucket/gpt-4o__New chat 2',
+          }),
+        }),
+      );
+    });
+
+    it('returns the encoded path of the new conversation', async () => {
+      mockGetConversation();
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        data: {},
+      } as never);
+
+      const result = await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.newPath).toBe(
+        'conversations/test-bucket/gpt-4o__New%20chat%201',
       );
     });
   });
@@ -947,7 +1093,8 @@ describe('ConversationService', () => {
         'user-cursor',
       );
 
-      expect(getMetadataSpy).toHaveBeenCalledWith(
+      expect(getMetadataSpy).toHaveBeenNthCalledWith(
+        1,
         'test-bucket',
         '',
         expect.objectContaining({
@@ -956,6 +1103,7 @@ describe('ConversationService', () => {
               recursive: true,
               limit: 50,
               token: 'user-cursor',
+              permissions: true,
             },
           },
         }),

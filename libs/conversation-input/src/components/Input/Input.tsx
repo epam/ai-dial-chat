@@ -74,6 +74,7 @@ export const Input: FC<InputProps> = ({
   initialAttachments = [],
   isStacked = false,
   hideAddButton = false,
+  hideAttachFile = false,
   hideActionBar = false,
   renderFooterActions,
   isInputDisabled = false,
@@ -516,7 +517,11 @@ export const Input: FC<InputProps> = ({
                 onChange={handleFileChange}
               />
               <AddAttachmentButton
-                onAttachClick={() => fileInputRef.current?.click()}
+                onAttachClick={
+                  hideAttachFile
+                    ? undefined
+                    : () => fileInputRef.current?.click()
+                }
                 attachLabel={attachLabel}
                 addMenuLabel={addMenuLabel}
                 menuTitle={menuTitle}
