@@ -29,7 +29,7 @@ export type {
   OverviewSpec,
 } from './models/item-overview';
 export type {
-  ItemDetailsProps,
+  DetailsPanelProps,
   ItemDetailsTexts,
   ItemDetailsStyles,
   ItemDetailsTypography,

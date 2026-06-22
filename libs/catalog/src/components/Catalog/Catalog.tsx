@@ -16,7 +16,7 @@ import { filterCatalogItems } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { getStyles } from '../../utils/styles';
 import { CardGrid } from '../CardGrid/CardGrid';
-import { CatalogItemDetails } from '../CatalogItemDetails/CatalogItemDetails';
+import { DetailsPanel } from '../Details/DetailsPanel';
 import { Favorites } from '../Favorites/Favorites';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { ListView } from '../ListView/ListView';
@@ -270,7 +270,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* Details panel */}
       {selectedItem != null && (
-        <CatalogItemDetails
+        <DetailsPanel
           item={selectedItem}
           isOpen={isDetailsOpen}
           aboutContent={aboutContent}
