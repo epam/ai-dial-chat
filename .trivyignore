@@ -1,3 +1,6 @@
 # node:24-alpine vulnerabilities in https://hub.docker.com/layers/library/node/24-alpine
+
 # picomatch
+
 CVE-2026-33671 exp:2026-08-20
+CVE-2026-12151 exp:2026-08-20
