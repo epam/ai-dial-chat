@@ -200,6 +200,10 @@
       "title": "File extension not supported",
       "message": "This model can only process {{formats}}. Please upload a file in a supported format."
     },
+    "noAttachmentsAllowed": {
+      "title": "Attachments not supported",
+      "message": "This model does not support file attachments."
+    },
     "networkError": {
       "title": "Network unavailable",
       "message": "Some files were not uploaded because your internet connection was lost.\n Please try again:\n"
