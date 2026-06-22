@@ -33,6 +33,7 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
+import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
@@ -56,6 +57,7 @@ import {
 } from '../../utils/attachment-mime';
 import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -153,14 +155,17 @@ const ConversationView: FC<Props> = ({
   } = useDeployments();
   const { showNotification } = useNotification();
 
-  const inputAttachmentTypes = useMemo(
-    () =>
-      items.find((item) => item.id === selectedItemId)?.inputAttachmentTypes ??
-      [],
+  const selectedDeployment = useMemo(
+    () => items.find((item) => item.id === selectedItemId),
     [items, selectedItemId],
   );
 
-  const isAttachmentsAllowed = inputAttachmentTypes.length > 0;
+  const inputAttachmentTypes = useMemo(
+    () => selectedDeployment?.inputAttachmentTypes ?? [],
+    [selectedDeployment],
+  );
+
+  const isAttachmentsAllowed = selectedDeployment?.inputAttachmentTypes != null;
 
   const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -189,8 +194,10 @@ const ConversationView: FC<Props> = ({
     [inputAttachmentTypes, showNotification, t],
   );
 
-  const { isDragging, pendingFiles, onFilesConsumed } =
-    usePageFileDrag(isAttachmentsAllowed);
+  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
+    isAttachmentsAllowed,
+    !isDialFileManagerOpen,
+  );
 
   const isInputDisabled = useMemo(
     () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
@@ -390,8 +397,8 @@ const ConversationView: FC<Props> = ({
   }, [scrollToBottom]);
 
   const handleAttachDialFiles = useCallback(
-    (files: Parameters<typeof dialFilesToAttachments>[0]) => {
-      setPendingDialAttachments(dialFilesToAttachments(files, bucket));
+    (result: AttachResult) => {
+      setPendingDialAttachments(dialFilesToAttachments(result.files, bucket));
       setIsDialFileManagerOpen(false);
     },
     [bucket],
@@ -564,6 +571,11 @@ const ConversationView: FC<Props> = ({
                   onClose={() => setIsDialFileManagerOpen(false)}
                   onAttach={handleAttachDialFiles}
                   bucket={bucket}
+                  allowedTypes={inputAttachmentTypes}
+                  maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
+                  maximumAttachmentsAmount={
+                    selectedDeployment?.maxInputAttachments
+                  }
                   title={t(DialFileManagerI18nKeys.Title)}
                   attachLabel={t(DialFileManagerI18nKeys.Attach)}
                   emptyTitle={t(DialFileManagerI18nKeys.Empty)}
@@ -580,6 +592,51 @@ const ConversationView: FC<Props> = ({
                   getSelectionLabel={(count) =>
                     t(DialFileManagerI18nKeys.ItemsSelected, { count })
                   }
+                  uploadFilesLabel={t(DialFileManagerI18nKeys.Upload)}
+                  newFolderLabel={t(DialFileManagerI18nKeys.NewFolder)}
+                  downloadLabel={t(DialFileManagerI18nKeys.Download)}
+                  downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
+                  deleteLabel={t(DialFileManagerI18nKeys.DeleteAction)}
+                  deletingLabel={t(DialFileManagerI18nKeys.DeletingLabel)}
+                  deleteConfirmTitle={(names) =>
+                    names.length === 1
+                      ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)
+                      : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
+                  }
+                  deleteConfirmBody={(names) => (
+                    <div className="px-6 py-3 text-sm">
+                      <p className="mb-3 text-secondary">
+                        {names.length === 1 ? (
+                          <>
+                            {t(DialFileManagerI18nKeys.DeleteConfirmBodySingle)}{' '}
+                            <span className="break-all text-primary">
+                              &quot;{names[0].split('/').pop()}&quot;?
+                            </span>
+                          </>
+                        ) : (
+                          <>
+                            {t(
+                              DialFileManagerI18nKeys.DeleteConfirmBodyMultiple,
+                            )}{' '}
+                            <span className="text-primary">
+                              {names.length}{' '}
+                              {t(
+                                DialFileManagerI18nKeys.DeleteConfirmBodyItems,
+                              )}
+                            </span>
+                          </>
+                        )}
+                      </p>
+                    </div>
+                  )}
+                  deleteConfirmLabel={t(
+                    DialFileManagerI18nKeys.DeleteConfirmButton,
+                  )}
+                  deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}
+                  uploadProgressTitle={t(
+                    DialFileManagerI18nKeys.UploadProgressTitle,
+                  )}
+                  cancelLabel={t(ButtonsI18nKeys.Cancel)}
                 />
               )}
             </Suspense>

@@ -1,7 +1,7 @@
 import { FileNodeType } from './dto/list-files.dto';
 import type { ListFilesItemDto } from './dto/list-files.dto';
 
-interface DialFileItem {
+export interface DialFileItem {
   name?: string;
   url?: string;
   nodeType?: string;

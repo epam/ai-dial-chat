@@ -1518,6 +1518,160 @@
         "tags": ["files"]
       }
     },
+    "/api/v1/files/folders": {
+      "post": {
+        "operationId": "createFolder",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateFolderDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateFolderResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid bucket, path, or name"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Bucket or parent path not found"
+          },
+          "409": {
+            "description": "Folder already exists"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Create a folder",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/download-archive": {
+      "post": {
+        "operationId": "downloadArchive",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DownloadArchiveDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Streamed ZIP archive",
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "File or folder not found"
+          },
+          "413": {
+            "description": "Too many items or archive too large"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Download files and folders as a ZIP archive",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/delete": {
+      "post": {
+        "operationId": "deleteFiles",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteFilesDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeleteFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "Delete files and folders",
+        "tags": ["files"]
+      }
+    },
     "/api/v1/files/download": {
       "get": {
         "operationId": "downloadFile",
@@ -2043,6 +2197,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "maxInputAttachments": {
+            "type": "number",
+            "description": "Maximum number of attachments allowed per message; undefined when not specified by DIAL Core"
           },
           "isInstalled": {
             "type": "boolean",
@@ -3130,6 +3288,13 @@
           },
           "nextToken": {
             "type": "string"
+          },
+          "permissions": {
+            "description": "READ/WRITE/SHARE permissions on the listed folder",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["bucket", "path", "items"]
@@ -3188,6 +3353,168 @@
             "description": "Author; not available for folders"
           }
         }
+      },
+      "CreateFolderDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "parentPath": {
+            "type": "string",
+            "description": "Parent folder path within bucket (no leading slash, no ..)",
+            "example": "reports/"
+          },
+          "name": {
+            "type": "string",
+            "description": "Folder name",
+            "example": "reports"
+          }
+        },
+        "required": ["bucket", "name"]
+      },
+      "CreateFolderResponseDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "reports"
+          },
+          "path": {
+            "type": "string",
+            "example": "reports/"
+          },
+          "parentPath": {
+            "type": "string",
+            "example": ""
+          },
+          "bucket": {
+            "type": "string",
+            "example": "my-bucket"
+          },
+          "nodeType": {
+            "type": "string",
+            "example": "folder"
+          },
+          "folderId": {
+            "type": "string",
+            "example": "my-bucket:reports/"
+          }
+        },
+        "required": [
+          "name",
+          "path",
+          "parentPath",
+          "bucket",
+          "nodeType",
+          "folderId"
+        ]
+      },
+      "ArchiveItemDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "path": {
+            "type": "string",
+            "description": "File or folder path within the bucket",
+            "example": "reports/"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name for archive entry",
+            "example": "reports"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": ["item", "folder"]
+          }
+        },
+        "required": ["bucket", "path", "name", "nodeType"]
+      },
+      "DownloadArchiveDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ArchiveItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "DeleteItemDto": {
+        "type": "object",
+        "properties": {
+          "bucket": {
+            "type": "string",
+            "description": "DIAL Core bucket name",
+            "example": "my-bucket"
+          },
+          "path": {
+            "type": "string",
+            "description": "File or folder path within the bucket",
+            "example": "reports/"
+          },
+          "name": {
+            "type": "string",
+            "description": "Display name (used in error messages)",
+            "example": "reports"
+          },
+          "nodeType": {
+            "type": "string",
+            "enum": ["item", "folder"]
+          }
+        },
+        "required": ["bucket", "path", "name", "nodeType"]
+      },
+      "DeleteFilesDto": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeleteItemDto"
+            }
+          }
+        },
+        "required": ["items"]
+      },
+      "DeleteItemResultDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Same path from the request"
+          },
+          "success": {
+            "type": "boolean",
+            "description": "true when DIAL Core returned 2xx or 404"
+          },
+          "error": {
+            "type": "string",
+            "description": "Human-readable error reason when success is false"
+          }
+        },
+        "required": ["path", "success"]
+      },
+      "DeleteFilesResponseDto": {
+        "type": "object",
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DeleteItemResultDto"
+            }
+          }
+        },
+        "required": ["results"]
       },
       "RateMessageDto": {
         "type": "object",

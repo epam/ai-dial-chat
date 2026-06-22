@@ -8,6 +8,7 @@ import {
   IsString,
   IsUrl,
   Matches,
+  Max,
   Min,
 } from 'class-validator';
 
@@ -98,6 +99,37 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1000)
   FILE_TRANSFER_TIMEOUT_MS?: number = 30_000;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_MAX_ITEMS?: number = 100;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_MAX_FILES?: number = 1000;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_MAX_UNCOMPRESSED_BYTES?: number = 5_368_709_120;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  ARCHIVE_TIMEOUT_MS?: number = 300_000;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1)
+  @Max(32)
+  ARCHIVE_DOWNLOAD_CONCURRENCY?: number = 32;
 
   @IsOptional()
   @IsString()

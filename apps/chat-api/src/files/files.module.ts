@@ -1,11 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MulterModule } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { FilesController } from './files.controller';
 import { FilesService } from './files.service';
-
-const { memoryStorage } = require('multer') as { memoryStorage: () => unknown };
 
 @Module({
   imports: [
