@@ -6,6 +6,7 @@ import {
   DialPrimaryButton,
   DialLoader,
   GridSelectionMode,
+  NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
   PopupSize,
   type DialFile,
@@ -330,6 +331,26 @@ const DialFileManagerModal: FC<Props> = ({
   const isOperationInProgress =
     isDownloading || isDeleting || isCreatingFolder || uploadBatchState != null;
 
+  const conflictResolutionPopupOptions = useMemo(
+    () => ({
+      singleFileTitle: t('dialFileManager.conflictSingleTitle'),
+      multipleFilesTitle: t('dialFileManager.conflictMultipleTitle'),
+      actionLabels: {
+        replace: t('dialFileManager.conflictReplace'),
+        duplicate: t('dialFileManager.conflictDuplicate'),
+        cancel: t('buttons.cancel'),
+      },
+      strategyLabels: {
+        replaceAll: t('dialFileManager.conflictReplaceAll'),
+        duplicateAll: t('dialFileManager.conflictDuplicateAll'),
+        decideForEach: t('dialFileManager.conflictDecideForEach'),
+      },
+      confirmLabel: t('buttons.confirm'),
+      cancelLabel: t('buttons.cancel'),
+    }),
+    [t],
+  );
+
   const deleteConfirmationOptions = useMemo(
     () => ({
       cancelLabel: deleteCancelLabel,
@@ -508,6 +529,11 @@ const DialFileManagerModal: FC<Props> = ({
               onDownloadFiles={onDownloadFiles}
               onDeleteFiles={onDeleteFiles}
               deleteConfirmationOptions={deleteConfirmationOptions}
+              conflictResolutionPopupOptions={conflictResolutionPopupOptions}
+              forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
+              forbiddenSymbolsTooltip={t(
+                'dialFileManager.forbiddenSymbolsTooltip',
+              )}
               getDisabledTooltip={getDisabledTooltip}
             />
             {isDownloading && (

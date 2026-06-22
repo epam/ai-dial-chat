@@ -35,6 +35,7 @@ import {
   prepareDownloadDestination,
   triggerBrowserDownload,
 } from '../../utils/file-download';
+import { sanitizeFileName } from '../../utils/file-name';
 import {
   resolveDialFileApiPath,
   virtualPathToApiPath,
@@ -454,6 +455,14 @@ export const useDialFileManager = ({
         rootLabel,
       );
 
+      // Snapshot the cached listing names for the destination folder at the
+      // time the batch starts so each file can pick overwrite vs create-only.
+      const cachedNames = new Set(
+        (cache.get(destinationApiPath) ?? []).map((item) =>
+          item.name.toLowerCase(),
+        ),
+      );
+
       const processBatch = async () => {
         let nextIndex = 0;
 
@@ -476,6 +485,10 @@ export const useDialFileManager = ({
               }),
             );
 
+            const uploadMode = cachedNames.has(file.name.toLowerCase())
+              ? 'overwrite'
+              : 'create-only';
+
             try {
               await uploadFile(
                 bucket,
@@ -483,6 +496,7 @@ export const useDialFileManager = ({
                 file.fileContent,
                 {
                   signal: controller.signal,
+                  uploadMode,
                   onProgress: (percent) => {
                     setUploadBatchState((prev) =>
                       updateEntry(prev, i, {
@@ -523,30 +537,23 @@ export const useDialFileManager = ({
 
       void processBatch();
     },
-    [bucket, rootLabel],
+    [bucket, cache, rootLabel],
   );
 
   const onValidateUpload = useCallback(
     async (
       files: DialUploadFileItem[],
-      existingFiles: DialFile[],
+      _existingFiles: DialFile[],
       _destinationFolder: string,
     ): Promise<FileUploadValidationResult> => {
-      const existingNames = new Set(
-        existingFiles.map((f) => f.name.toLowerCase()),
-      );
-      const conflict = files.some((f) =>
-        existingNames.has(f.name.toLowerCase()),
-      );
-      if (conflict) {
-        return {
-          valid: false,
-          message: t('dialFileManager.uploadConflict'),
-        };
+      // Sanitize names in-place so the ui-kit's subsequent conflict detection
+      // sees the sanitized names before opening its ConflictResolutionPopup.
+      for (const file of files) {
+        file.name = sanitizeFileName(file.name);
       }
       return { valid: true };
     },
-    [t],
+    [],
   );
 
   const cancelUpload = useCallback(() => {
