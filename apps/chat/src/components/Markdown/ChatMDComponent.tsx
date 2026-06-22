@@ -188,7 +188,9 @@ const getMDComponents = (
         const mime = getMimeFromDataUrl(href);
         const ext = (mime && extension(mime)) || 'png';
         const base =
-          typeof children === 'string' && children.trim() ? children.trim() : 'image';
+          typeof children === 'string' && children.trim()
+            ? children.trim()
+            : 'image';
         const downloadName = base.includes('.') ? base : `${base}.${ext}`;
         return (
           <a href={blobUrl ?? href} download={downloadName}>
