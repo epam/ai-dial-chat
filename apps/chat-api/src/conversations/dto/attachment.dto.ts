@@ -8,8 +8,7 @@ import {
   registerDecorator,
 } from 'class-validator';
 
-const DIAL_FILE_URL_PATTERN =
-  /^files\/[A-Za-z0-9_-]+\/uploads\/\d{4}-\d{2}\/[^/\s:;,={}&\\"]+$/;
+const DIAL_FILE_URL_PATTERN = /^files\/[A-Za-z0-9_-]+\/.+$/;
 const INVALID_PERCENT_ENCODING = /%(?![0-9a-fA-F]{2})/;
 const ENCODED_PATH_SEPARATOR_OR_DOT = /%(?:2e|2f|5c)/i;
 

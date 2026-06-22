@@ -14,10 +14,27 @@
 
 import * as runtime from '../runtime';
 import type {
+  CreateFolderDto,
+  CreateFolderResponseDto,
+  DeleteFilesDto,
+  DeleteFilesResponseDto,
+  DownloadArchiveDto,
   FileMetadataResponseDto,
   FileUploadResponseDto,
   ListFilesResponseDto,
 } from '../models/index';
+
+export interface CreateFolderRequest {
+  createFolderDto: CreateFolderDto;
+}
+
+export interface DeleteFilesRequest {
+  deleteFilesDto: DeleteFilesDto;
+}
+
+export interface DownloadArchiveRequest {
+  downloadArchiveDto: DownloadArchiveDto;
+}
 
 export interface DownloadFileRequest {
   bucket: string;
@@ -48,6 +65,156 @@ export interface UploadFileRequest {
  *
  */
 export class FilesApi extends runtime.BaseAPI {
+  /**
+   * Create a folder
+   */
+  async createFolderRaw(
+    requestParameters: CreateFolderRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<CreateFolderResponseDto>> {
+    if (requestParameters['createFolderDto'] == null) {
+      throw new runtime.RequiredError(
+        'createFolderDto',
+        'Required parameter "createFolderDto" was null or undefined when calling createFolder().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/folders`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['createFolderDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<CreateFolderResponseDto>(response);
+  }
+
+  /**
+   * Create a folder
+   */
+  async createFolder(
+    requestParameters: CreateFolderRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<CreateFolderResponseDto> {
+    const response = await this.createFolderRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Delete files and folders
+   */
+  async deleteFilesRaw(
+    requestParameters: DeleteFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<DeleteFilesResponseDto>> {
+    if (requestParameters['deleteFilesDto'] == null) {
+      throw new runtime.RequiredError(
+        'deleteFilesDto',
+        'Required parameter "deleteFilesDto" was null or undefined when calling deleteFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/delete`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['deleteFilesDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<DeleteFilesResponseDto>(response);
+  }
+
+  /**
+   * Delete files and folders
+   */
+  async deleteFiles(
+    requestParameters: DeleteFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<DeleteFilesResponseDto> {
+    const response = await this.deleteFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Download files and folders as a ZIP archive
+   */
+  async downloadArchiveRaw(
+    requestParameters: DownloadArchiveRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<Blob>> {
+    if (requestParameters['downloadArchiveDto'] == null) {
+      throw new runtime.RequiredError(
+        'downloadArchiveDto',
+        'Required parameter "downloadArchiveDto" was null or undefined when calling downloadArchive().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/download-archive`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['downloadArchiveDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.BlobApiResponse(response);
+  }
+
+  /**
+   * Download files and folders as a ZIP archive
+   */
+  async downloadArchive(
+    requestParameters: DownloadArchiveRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<Blob> {
+    const response = await this.downloadArchiveRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    */
   async downloadFileRaw(

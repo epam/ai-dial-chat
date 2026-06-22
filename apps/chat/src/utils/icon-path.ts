@@ -1,4 +1,5 @@
 import { ApiEndpoints } from '../server-api/base';
+import { safeDecodeURI } from './string-utils';
 
 export const getIconPath = (iconName?: string): string => {
   return `${ApiEndpoints.THEME_ICON}?iconName=${encodeURIComponent(iconName || '')}`;
@@ -15,6 +16,34 @@ const isAbsoluteUrl = (url: string): boolean => {
 };
 
 const isDialFileId = (url: string): boolean => url.startsWith('files/');
+
+/**
+ * Converts a DIAL file ID or full resource path to the relative bucket path
+ * expected by the files download API.
+ */
+export const resolveRelativeDialFilePath = (
+  pathOrFileId: string,
+  bucket: string,
+): string => {
+  const resourcePrefix = `files/${bucket}/`;
+  if (pathOrFileId.startsWith(resourcePrefix)) {
+    return safeDecodeURI(pathOrFileId.slice(resourcePrefix.length));
+  }
+
+  if (pathOrFileId.startsWith('files/')) {
+    const withoutPrefix = pathOrFileId.slice('files/'.length);
+    const slashIdx = withoutPrefix.indexOf('/');
+    if (slashIdx >= 0) {
+      const pathBucket = withoutPrefix.slice(0, slashIdx);
+      const rawPath = withoutPrefix.slice(slashIdx + 1);
+      if (pathBucket === bucket) {
+        return safeDecodeURI(rawPath);
+      }
+    }
+  }
+
+  return pathOrFileId;
+};
 
 /**
  * Converts a DIAL file ID (`files/{bucket}/{path}`) to the BFF download URL.
