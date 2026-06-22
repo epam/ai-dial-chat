@@ -85,6 +85,10 @@ const mapToDeploymentItem = (
           temperature: raw.features.temperature ?? false,
         }
       : undefined,
+    maxInputAttachments:
+      typeof raw.max_input_attachments === 'number'
+        ? raw.max_input_attachments
+        : undefined,
     topics,
   };
 };
@@ -159,6 +163,7 @@ export class DeploymentsService extends AppService {
             mapToDeploymentItem(item, this.featuredIds, this.hiddenTags),
           )
           .filter((item): item is DeploymentItemDto => item !== null);
+
         await this.cacheManager.set(cacheKey, allItems, 30_000);
       } catch (err) {
         return handleDialFetchError(err, 'list deployments', this.logger, 0);
@@ -219,6 +224,7 @@ export class DeploymentsService extends AppService {
         );
       }
       const raw = result.data ?? {};
+
       const data: DeploymentConfigurationDto = {
         type: typeof raw['type'] === 'string' ? raw['type'] : undefined,
         title: typeof raw['title'] === 'string' ? raw['title'] : undefined,

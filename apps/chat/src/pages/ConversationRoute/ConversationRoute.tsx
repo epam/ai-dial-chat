@@ -24,6 +24,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
+import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
@@ -32,8 +33,10 @@ import {
   ConversationI18nKeys,
   DeploymentsI18nKeys,
   DialFileManagerI18nKeys,
+  ButtonsI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
+import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
@@ -101,14 +104,17 @@ const ConversationRoute: FC = () => {
     error,
   } = useDeployments();
 
-  const inputAttachmentTypes = useMemo(
-    () =>
-      items.find((item) => item.id === selectedItemId)?.inputAttachmentTypes ??
-      [],
+  const selectedDeployment = useMemo(
+    () => items.find((item) => item.id === selectedItemId),
     [items, selectedItemId],
   );
 
-  const isAttachmentsAllowed = inputAttachmentTypes.length > 0;
+  const inputAttachmentTypes = useMemo(
+    () => selectedDeployment?.inputAttachmentTypes ?? [],
+    [selectedDeployment],
+  );
+
+  const isAttachmentsAllowed = selectedDeployment?.inputAttachmentTypes != null;
 
   const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -140,8 +146,10 @@ const ConversationRoute: FC = () => {
     [inputAttachmentTypes, showNotification, t],
   );
 
-  const { isDragging, pendingFiles, onFilesConsumed } =
-    usePageFileDrag(isAttachmentsAllowed);
+  const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
+    isAttachmentsAllowed,
+    !isDialFileManagerOpen,
+  );
 
   const deploymentItems: DeploymentItem[] = useMemo(
     () =>
@@ -263,7 +271,7 @@ const ConversationRoute: FC = () => {
               ),
             });
             networkTimerRef.current = null;
-          }, 100);
+          }, NETWORK_ERROR_DEBOUNCE_MS);
           const error =
             err instanceof Error ? err : new Error('Network upload failed');
           (
@@ -426,6 +434,9 @@ const ConversationRoute: FC = () => {
             onClose={closeDialFileManager}
             onAttach={handleAttachDialFiles}
             bucket={bucket}
+            allowedTypes={inputAttachmentTypes}
+            maxSelectableFileSize={MAX_SELECTABLE_FILE_SIZE_BYTES}
+            maximumAttachmentsAmount={selectedDeployment?.maxInputAttachments}
             title={t(DialFileManagerI18nKeys.Title)}
             attachLabel={t(DialFileManagerI18nKeys.Attach)}
             emptyTitle={t(DialFileManagerI18nKeys.Empty)}
@@ -438,6 +449,43 @@ const ConversationRoute: FC = () => {
             getSelectionLabel={(count) =>
               t(DialFileManagerI18nKeys.ItemsSelected, { count })
             }
+            uploadFilesLabel={t(DialFileManagerI18nKeys.Upload)}
+            newFolderLabel={t(DialFileManagerI18nKeys.NewFolder)}
+            downloadLabel={t(DialFileManagerI18nKeys.Download)}
+            downloadingLabel={t(DialFileManagerI18nKeys.Downloading)}
+            deleteLabel={t(DialFileManagerI18nKeys.DeleteAction)}
+            deletingLabel={t(DialFileManagerI18nKeys.DeletingLabel)}
+            deleteConfirmTitle={(names) =>
+              names.length === 1
+                ? t(DialFileManagerI18nKeys.DeleteConfirmTitleSingle)
+                : t(DialFileManagerI18nKeys.DeleteConfirmTitleMultiple)
+            }
+            deleteConfirmBody={(names) => (
+              <div className="px-6 py-3 text-sm">
+                <p className="mb-3 text-secondary">
+                  {names.length === 1 ? (
+                    <>
+                      {t(DialFileManagerI18nKeys.DeleteConfirmBodySingle)}{' '}
+                      <span className="break-all text-primary">
+                        &quot;{names[0].split('/').pop()}&quot;?
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      {t(DialFileManagerI18nKeys.DeleteConfirmBodyMultiple)}{' '}
+                      <span className="text-primary">
+                        {names.length}{' '}
+                        {t(DialFileManagerI18nKeys.DeleteConfirmBodyItems)}
+                      </span>
+                    </>
+                  )}
+                </p>
+              </div>
+            )}
+            deleteConfirmLabel={t(DialFileManagerI18nKeys.DeleteConfirmButton)}
+            deleteCancelLabel={t(ButtonsI18nKeys.Cancel)}
+            uploadProgressTitle={t(DialFileManagerI18nKeys.UploadProgressTitle)}
+            cancelLabel={t(ButtonsI18nKeys.Cancel)}
           />
         )}
       </Suspense>

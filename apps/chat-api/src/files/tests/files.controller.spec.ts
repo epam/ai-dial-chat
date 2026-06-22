@@ -1,5 +1,6 @@
 import {
   BadGatewayException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   INestApplication,
@@ -11,12 +12,11 @@ import {
 } from '@nestjs/common';
 import { MulterModule } from '@nestjs/platform-express';
 import { Test, TestingModule } from '@nestjs/testing';
+import { memoryStorage } from 'multer';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FilesController } from '../files.controller';
 import { FilesService } from '../files.service';
-
-const { memoryStorage } = require('multer') as { memoryStorage: () => unknown };
 
 const TEST_USER = {
   sub: 'user-123',
@@ -339,6 +339,125 @@ describe('FilesController — download', () => {
   });
 });
 
+describe('FilesController — createFolder', () => {
+  let app: INestApplication;
+  let service: {
+    uploadFile: ReturnType<typeof vi.fn>;
+    downloadFile: ReturnType<typeof vi.fn>;
+    listFiles: ReturnType<typeof vi.fn>;
+    createFolder: ReturnType<typeof vi.fn>;
+  };
+
+  const MOCK_FOLDER_RESPONSE = {
+    name: 'reports',
+    path: 'reports/',
+    parentPath: '',
+    bucket: 'my-bucket',
+    nodeType: 'folder',
+    folderId: 'my-bucket:reports/',
+  };
+
+  beforeEach(async () => {
+    service = {
+      uploadFile: vi.fn(),
+      downloadFile: vi.fn(),
+      listFiles: vi.fn(),
+      createFolder: vi.fn().mockResolvedValue(MOCK_FOLDER_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 201 with CreateFolderResponseDto on success', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: 'reports' })
+      .expect(201);
+
+    expect(res.body).toEqual(MOCK_FOLDER_RESPONSE);
+    expect(service.createFolder).toHaveBeenCalledWith(
+      'my-bucket',
+      '',
+      'reports',
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 201 with parentPath when provided', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', parentPath: 'parent/', name: 'child' })
+      .expect(201);
+
+    expect(service.createFolder).toHaveBeenCalledWith(
+      'my-bucket',
+      'parent/',
+      'child',
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 for missing name', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket' })
+      .expect(400);
+    expect(service.createFolder).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for name starting with dot', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: '.hidden' })
+      .expect(400);
+    expect(service.createFolder).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for name containing slash', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: 'a/b' })
+      .expect(400);
+    expect(service.createFolder).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for reserved marker name', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: '.dial_folder' })
+      .expect(400);
+    expect(service.createFolder).not.toHaveBeenCalled();
+  });
+
+  it('returns 409 when service throws ConflictException', async () => {
+    service.createFolder.mockRejectedValue(new ConflictException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: 'reports' })
+      .expect(409);
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.createFolder.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: 'reports' })
+      .expect(401);
+  });
+
+  it('returns 503 when service throws ServiceUnavailableException', async () => {
+    service.createFolder.mockRejectedValue(new ServiceUnavailableException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/folders')
+      .send({ bucket: 'my-bucket', name: 'reports' })
+      .expect(503);
+  });
+});
+
 describe('FilesController — listFiles', () => {
   let app: INestApplication;
   let service: {
@@ -614,5 +733,93 @@ describe('FilesController — getFileMetadata', () => {
       .get('/api/v1/files/metadata')
       .query({ bucket: 'my-bucket', path: 'file.pdf' })
       .expect(503);
+  });
+});
+
+describe('FilesController — deleteFiles', () => {
+  const MOCK_DELETE_RESPONSE = {
+    results: [
+      { path: 'reports/q1.pdf', success: true },
+      { path: 'old-data/', success: true },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: { deleteFiles: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      deleteFiles: vi.fn().mockResolvedValue(MOCK_DELETE_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with results array on success', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/delete')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            path: 'reports/q1.pdf',
+            name: 'q1.pdf',
+            nodeType: 'item',
+          },
+          {
+            bucket: 'user-files',
+            path: 'old-data/',
+            name: 'old-data',
+            nodeType: 'folder',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.body).toEqual(MOCK_DELETE_RESPONSE);
+    expect(service.deleteFiles).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ path: 'reports/q1.pdf', nodeType: 'item' }),
+        expect.objectContaining({ path: 'old-data/', nodeType: 'folder' }),
+      ]),
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 400 when items array is missing', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/delete')
+      .send({})
+      .expect(400);
+    expect(service.deleteFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/delete')
+      .send({ items: [] })
+      .expect(400);
+    expect(service.deleteFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.deleteFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/delete')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            path: 'file.pdf',
+            name: 'file.pdf',
+            nodeType: 'item',
+          },
+        ],
+      })
+      .expect(401);
   });
 });

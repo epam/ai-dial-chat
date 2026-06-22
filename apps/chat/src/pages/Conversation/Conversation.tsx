@@ -48,7 +48,11 @@ import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
-export const ConversationPage: FC = () => {
+interface Props {
+  onDuplicateReadonly?: () => void;
+}
+
+export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const { '*': conversationId } = useParams<{ '*': string }>();
   const [conversation, setConversation] = useState<Conversation | null>(null);
   const [isFetching, setIsFetching] = useState(!!conversationId);
@@ -66,7 +70,7 @@ export const ConversationPage: FC = () => {
     useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
-  const { duplicateConversation } = useConversations();
+  const { conversations, duplicateConversation } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   const isTranscriptionSupported = useMemo(() => {
@@ -152,21 +156,37 @@ export const ConversationPage: FC = () => {
   >(null);
 
   const isReadOnly = useMemo(() => {
-    if (!conversationId || !bucket) return false;
+    if (!conversationId) return false;
+    const listItem = conversations.find((c) => c.id.includes(conversationId));
+    if (listItem) {
+      return (
+        listItem.isReadonly || listItem.sharedWithMe || listItem.publishedWithMe
+      );
+    }
+    // Fallback: bucket-prefix check when the conversation isn't in the list yet.
+    if (!bucket) return false;
     const slashIndex = conversationId.indexOf('/');
     return slashIndex !== -1 && conversationId.slice(0, slashIndex) !== bucket;
-  }, [conversationId, bucket]);
+  }, [conversationId, bucket, conversations]);
 
   const handleDuplicateConversation = useCallback(async () => {
     if (!conversationId) return;
     setDuplicateError(null);
     try {
       const newPath = await duplicateConversation(conversationId);
+      if (isReadOnly) onDuplicateReadonly?.();
       navigate(getConversationRoute(newPath));
     } catch {
       setDuplicateError(t(ConversationPanelI18nKeys.DuplicateError));
     }
-  }, [conversationId, duplicateConversation, navigate, t]);
+  }, [
+    conversationId,
+    isReadOnly,
+    onDuplicateReadonly,
+    duplicateConversation,
+    navigate,
+    t,
+  ]);
 
   useEffect(() => {
     setMessages(conversation?.messages ?? []);

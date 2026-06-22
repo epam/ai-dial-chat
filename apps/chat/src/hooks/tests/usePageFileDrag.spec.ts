@@ -112,6 +112,35 @@ describe('usePageFileDrag', () => {
     expect(result.current.isDragging).toBe(false);
   });
 
+  it('does not intercept drag events when isEnabled is false', () => {
+    const { result } = renderHook(() => usePageFileDrag(true, false));
+    const file = new File(['x'], 'test.txt', { type: 'text/plain' });
+    const dropPreventDefault = vi.fn();
+    const dragOverPreventDefault = vi.fn();
+
+    act(() => {
+      const dragEnter = makeDragEvent('dragenter', ['Files']);
+      document.dispatchEvent(dragEnter);
+    });
+    expect(result.current.isDragging).toBe(false);
+
+    act(() => {
+      const dragOver = makeDragEvent('dragover', ['Files']);
+      dragOver.preventDefault = dragOverPreventDefault;
+      document.dispatchEvent(dragOver);
+    });
+    expect(dragOverPreventDefault).toHaveBeenCalledOnce();
+
+    act(() => {
+      const drop = makeDragEvent('drop', ['Files'], [file]);
+      drop.preventDefault = dropPreventDefault;
+      document.dispatchEvent(drop);
+    });
+
+    expect(result.current.pendingFiles).toHaveLength(0);
+    expect(dropPreventDefault).not.toHaveBeenCalled();
+  });
+
   it('removes all four event listeners on unmount', () => {
     const removeSpy = vi.spyOn(document, 'removeEventListener');
     const { unmount } = renderHook(() => usePageFileDrag());

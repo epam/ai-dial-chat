@@ -14,6 +14,8 @@ export interface DeploymentItem {
   inputAttachmentTypes?: string[];
   /** Feature flags for this deployment, controlling which per-conversation settings are available. */
   features?: DeploymentFeatures;
+  /** Maximum number of attachments allowed per message. Undefined when not specified by DIAL Core. */
+  maxInputAttachments?: number;
   /** Human-readable description of the deployment. */
   description?: string;
   /** Timestamp of last update time from DIAL Core (e.g. 1714768496000). */

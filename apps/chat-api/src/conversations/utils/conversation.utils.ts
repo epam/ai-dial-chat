@@ -79,6 +79,33 @@ export const getConversationTitleFromName = (name: string): string => {
 };
 
 /**
+ * Replaces the title segment inside a single conversation filename, preserving
+ * a versioned application deployment ID prefix and a legacy UUID suffix.
+ * Operates on a bare filename (no `/` path separators), so it is safe to use
+ * on a decoded filename whose deployment name contains a literal slash.
+ */
+export const buildRenamedFilename = (
+  filename: string,
+  sanitisedTitle: string,
+): string => {
+  const parts = filename.split(CONVERSATION_NAME_SEPARATOR);
+  if (parts.length < 2) return sanitisedTitle;
+
+  const deploymentNameParts = getDeploymentNameParts(parts);
+  const hasVersionedDeployment = deploymentNameParts.length > 1;
+  const hasLegacySuffix = hasVersionedDeployment
+    ? isUuid(parts[parts.length - 1])
+    : parts.length >= 3;
+  const legacySuffix = hasLegacySuffix ? parts[parts.length - 1] : undefined;
+
+  return [
+    ...deploymentNameParts,
+    sanitisedTitle,
+    ...(legacySuffix ? [legacySuffix] : []),
+  ].join(CONVERSATION_NAME_SEPARATOR);
+};
+
+/**
  * Builds the new conversation path by replacing the title segment in the filename.
  * Preserves versioned application deployment IDs and legacy UUID suffixes.
  */
@@ -88,24 +115,7 @@ export const buildRenamedConversationPath = (
 ): string => {
   const segments = conversationPath.split('/');
   const filename = segments[segments.length - 1];
-  const parts = filename.split(CONVERSATION_NAME_SEPARATOR);
-  if (parts.length < 2) {
-    return segments.length > 1
-      ? [...segments.slice(0, -1), sanitisedTitle].join('/')
-      : sanitisedTitle;
-  }
-
-  const deploymentNameParts = getDeploymentNameParts(parts);
-  const hasVersionedDeployment = deploymentNameParts.length > 1;
-  const hasLegacySuffix = hasVersionedDeployment
-    ? isUuid(parts[parts.length - 1])
-    : parts.length >= 3;
-  const legacySuffix = hasLegacySuffix ? parts[parts.length - 1] : undefined;
-  const renamedFilename = [
-    ...deploymentNameParts,
-    sanitisedTitle,
-    ...(legacySuffix ? [legacySuffix] : []),
-  ].join(CONVERSATION_NAME_SEPARATOR);
+  const renamedFilename = buildRenamedFilename(filename, sanitisedTitle);
 
   return segments.length > 1
     ? [...segments.slice(0, -1), renamedFilename].join('/')
