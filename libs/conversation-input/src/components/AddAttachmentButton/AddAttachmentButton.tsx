@@ -142,7 +142,9 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               title={chatSettings.title}
               responseFormatLabel={chatSettings.responseFormatLabel}
               responseFormatHint={chatSettings.responseFormatHint}
-              responseFormatMarkdownLabel={chatSettings.responseFormatMarkdownLabel}
+              responseFormatMarkdownLabel={
+                chatSettings.responseFormatMarkdownLabel
+              }
               responseFormatPlainTextLabel={
                 chatSettings.responseFormatPlainTextLabel
               }
@@ -184,7 +186,9 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               title={chatSettings.title}
               responseFormatLabel={chatSettings.responseFormatLabel}
               responseFormatHint={chatSettings.responseFormatHint}
-              responseFormatMarkdownLabel={chatSettings.responseFormatMarkdownLabel}
+              responseFormatMarkdownLabel={
+                chatSettings.responseFormatMarkdownLabel
+              }
               responseFormatPlainTextLabel={
                 chatSettings.responseFormatPlainTextLabel
               }

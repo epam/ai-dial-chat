@@ -128,8 +128,8 @@ export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
         temperatureLabels={temperatureLabels}
         temperatureHint={temperatureHint}
       />
-      <div className="flex justify-end px-6 py-4">
-        <DialPrimaryButton label={saveLabel} onClick={handleSubmit} />
+      <div className="px-6 py-4">
+        <DialPrimaryButton label={saveLabel} onClick={handleSubmit} className="w-full" />
       </div>
     </BottomSheetShell>
   );

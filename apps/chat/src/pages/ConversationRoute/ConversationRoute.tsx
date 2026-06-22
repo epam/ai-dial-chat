@@ -6,9 +6,14 @@ import type {
 import {
   AttachmentErrorReason,
   isAudioTranscriptionSupported,
+  ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
-import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
+import {
+  FileDndOverlay,
+  type ChatSettingsValues,
+} from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import type { ConversationResponseDto } from '@epam/chat-api-client';
 import {
   FC,
   lazy,
@@ -29,11 +34,12 @@ import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
+  ButtonsI18nKeys,
   ChatI18nKeys,
+  ChatSettingsI18nKeys,
   ConversationI18nKeys,
   DeploymentsI18nKeys,
   DialFileManagerI18nKeys,
-  ButtonsI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
@@ -51,10 +57,14 @@ import {
   transcribeAudio,
   transcribeAudioWithAsrModel,
 } from '../../server-api/chat.api';
-import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
+import {
+  createConversation as apiCreateConversation,
+  saveConversation,
+} from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
+import { getConversationPath } from '../../utils/conversation-path';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import {
   getStarterPopulateText,
@@ -79,6 +89,11 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
+  const [chatSettingsValues, setChatSettingsValues] = useState({
+    responseFormat: ResponseFormat.Markdown,
+    systemPrompt: '',
+    temperature: 0.5,
+  });
   const { showNotification } = useNotification();
   const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
   const { user } = useUser();
@@ -139,6 +154,48 @@ const ConversationRoute: FC = () => {
     [selectedDeploymentConfiguration],
   );
 
+  const chatSettings = useMemo(
+    () => ({
+      features: {
+        ...(selectedDeployment?.features ?? {
+          systemPrompt: false,
+          temperature: false,
+        }),
+        responseFormat: true,
+      },
+      responseFormat: chatSettingsValues.responseFormat,
+      systemPrompt: chatSettingsValues.systemPrompt,
+      temperature: chatSettingsValues.temperature,
+      onSave: (values: ChatSettingsValues) =>
+        setChatSettingsValues((prev) => ({
+          responseFormat: values.responseFormat ?? prev.responseFormat,
+          systemPrompt: values.systemPrompt ?? prev.systemPrompt,
+          temperature: values.temperature ?? prev.temperature,
+        })),
+      menuItemLabel: t(ChatI18nKeys.ChatSettings),
+      title: t(ChatSettingsI18nKeys.Title),
+      responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
+      responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
+      responseFormatMarkdownLabel: t(
+        ChatSettingsI18nKeys.ResponseFormatMarkdown,
+      ),
+      responseFormatPlainTextLabel: t(
+        ChatSettingsI18nKeys.ResponseFormatPlainText,
+      ),
+      systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
+      systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
+      temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),
+      temperatureLabels: [
+        t(ChatSettingsI18nKeys.TemperaturePrecise),
+        t(ChatSettingsI18nKeys.TemperatureNeutral),
+        t(ChatSettingsI18nKeys.TemperatureCreative),
+      ] as [string, string, string],
+      temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
+      saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
+    }),
+    [selectedDeployment?.features, chatSettingsValues, t],
+  );
+
   const modelSelectorLabels = useMemo(
     () => ({
       ariaLabel: t(DeploymentsI18nKeys.SelectorAriaLabel),
@@ -178,6 +235,12 @@ const ConversationRoute: FC = () => {
           selectedItemId,
           attachmentDtos,
         );
+        await saveConversation(getConversationPath(conversation.id), {
+          ...conversation,
+          prompt: chatSettingsValues.systemPrompt,
+          temperature: chatSettingsValues.temperature,
+          responseFormat: chatSettingsValues.responseFormat,
+        } as ConversationResponseDto);
         navigate(getConversationRoute(conversation.id));
       } catch (err) {
         const errorMessage = await getApiErrorMessage(err);
@@ -189,7 +252,14 @@ const ConversationRoute: FC = () => {
         setIsSending(false);
       }
     },
-    [navigate, isSending, selectedItemId, showNotification, t],
+    [
+      navigate,
+      isSending,
+      selectedItemId,
+      showNotification,
+      t,
+      chatSettingsValues,
+    ],
   );
 
   const handleUploadAttachment = useCallback(
@@ -379,6 +449,7 @@ const ConversationRoute: FC = () => {
             onUploadAudio={handleUploadAudio}
             onTranscribeAudio={handleTranscribeAudio}
             sendOnEnter={sendOnEnter}
+            chatSettings={chatSettings}
             pendingDropFiles={pendingFiles}
             onDropFilesConsumed={onFilesConsumed}
             pendingAttachments={pendingDialAttachments}
