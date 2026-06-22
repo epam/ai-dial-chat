@@ -458,6 +458,12 @@ export interface ConversationListItemDto {
    * @memberof ConversationListItemDto
    */
   isPinned: boolean;
+  /**
+   * True when the current user does not have WRITE permission on this conversation.
+   * @type {boolean}
+   * @memberof ConversationListItemDto
+   */
+  isReadonly: boolean;
 }
 /**
  *
