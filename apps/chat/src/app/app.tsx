@@ -1,3 +1,4 @@
+import { FilterTab } from '@epam/ai-dial-conversation-panel';
 import {
   lazy,
   memo,
@@ -5,6 +6,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type FC,
 } from 'react';
@@ -85,6 +87,21 @@ const App: FC = () => {
     }
   }, [pathname]);
 
+  const switchToMyChatsOnNavRef = useRef(false);
+  const [panelRequestedFilter, setPanelRequestedFilter] = useState<
+    FilterTab | undefined
+  >(undefined);
+
+  useEffect(() => {
+    if (!switchToMyChatsOnNavRef.current) return;
+    switchToMyChatsOnNavRef.current = false;
+    setPanelRequestedFilter(FilterTab.MyChats);
+  }, [activeConversationId]);
+
+  const handleDuplicateReadonly = useCallback(() => {
+    switchToMyChatsOnNavRef.current = true;
+  }, []);
+
   const handleSelectConversation = useCallback(
     (id: string) => {
       if (isMobile) {
@@ -107,6 +124,9 @@ const App: FC = () => {
         onClose={closeHistoryPanel}
         onSelectConversation={handleSelectConversation}
         onNewChat={() => navigate(ROUTES.Root)}
+        requestedFilter={panelRequestedFilter}
+        onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
+        onDuplicateReadonly={handleDuplicateReadonly}
       />
 
       <main
@@ -133,7 +153,9 @@ const App: FC = () => {
             path="/conversations/*"
             element={
               <Suspense fallback={<RouteFallback />}>
-                <ConversationPage />
+                <ConversationPage
+                  onDuplicateReadonly={handleDuplicateReadonly}
+                />
               </Suspense>
             }
           />
