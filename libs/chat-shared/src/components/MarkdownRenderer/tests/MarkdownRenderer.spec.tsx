@@ -37,6 +37,8 @@ describe('MarkdownRenderer', () => {
     expect(table.className).toContain('w-max');
     expect(table.className).toContain('min-w-full');
     expect(tableWrapper?.className).toContain('max-w-full');
+    expect(tableWrapper?.className).toContain('min-w-0');
+    expect(tableWrapper?.className).toContain('overflow-hidden');
     expect(scrollContainer?.className).toContain('overflow-x-auto');
     expect(scrollContainer?.className).toContain('rounded');
   });
