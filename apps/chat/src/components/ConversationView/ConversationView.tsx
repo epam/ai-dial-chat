@@ -192,11 +192,6 @@ const ConversationView: FC<Props> = ({
     [items],
   );
 
-  const selectedDeployment = useMemo(
-    () => deploymentItems.find((d) => d.id === selectedItemId),
-    [deploymentItems, selectedItemId],
-  );
-
   const isInputDisabled = useMemo(
     () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
     [selectedDeploymentConfiguration],
@@ -385,11 +380,13 @@ const ConversationView: FC<Props> = ({
   const chatSettings = useMemo(
     () => ({
       features: {
-        ...(selectedDeployment?.features ?? { systemPrompt: false, temperature: false }),
+        ...(selectedDeployment?.features ?? {
+          systemPrompt: false,
+          temperature: false,
+        }),
         responseFormat: true,
       },
-      responseFormat:
-        conversation.responseFormat ?? ResponseFormat.Markdown,
+      responseFormat: conversation.responseFormat ?? ResponseFormat.Markdown,
       systemPrompt: conversation.prompt ?? '',
       temperature: conversation.temperature ?? 0.5,
       onSave: (values: ChatSettingsValues) =>
@@ -409,8 +406,12 @@ const ConversationView: FC<Props> = ({
       title: t(ChatSettingsI18nKeys.Title),
       responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
       responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
-      responseFormatMarkdownLabel: t(ChatSettingsI18nKeys.ResponseFormatMarkdown),
-      responseFormatPlainTextLabel: t(ChatSettingsI18nKeys.ResponseFormatPlainText),
+      responseFormatMarkdownLabel: t(
+        ChatSettingsI18nKeys.ResponseFormatMarkdown,
+      ),
+      responseFormatPlainTextLabel: t(
+        ChatSettingsI18nKeys.ResponseFormatPlainText,
+      ),
       systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
       systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
       temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),

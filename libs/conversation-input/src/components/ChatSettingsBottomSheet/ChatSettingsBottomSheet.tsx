@@ -1,13 +1,26 @@
 import { ResponseFormat } from '@epam/ai-dial-chat-shared';
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
-import { DialPopup, DialPrimaryButton, PopupSize } from '@epam/ai-dial-ui-kit';
-import { memo, type FC } from 'react';
+import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import type { CSSProperties, FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
 import { ChatSettingsFields } from '../ChatSettingsFields/ChatSettingsFields';
+import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
 
-/** Props for the ChatSettingsModal component. */
-export interface ChatSettingsModalProps {
+/** Props for the ChatSettingsBottomSheet component. */
+export interface ChatSettingsBottomSheetProps {
+  /** Controls sheet visibility. */
+  isOpen: boolean;
+  /** Called when the back arrow is tapped — returns to the previous sheet. */
+  onBack: () => void;
+  /** Accessible label for the back arrow button. */
+  backLabel: string;
+  /** Called when the close (×) button is tapped — dismisses the sheet entirely. */
+  onClose: () => void;
+  /** Accessible label for the close (×) button. */
+  closeLabel: string;
+  /** Inline CSS custom properties forwarded to the sheet root for theming. */
+  style?: CSSProperties;
   /** Feature flags for the active deployment — controls which fields are shown. */
   features: DeploymentFeatures;
   /** Current response format value pre-selected in the radio group. */
@@ -16,11 +29,9 @@ export interface ChatSettingsModalProps {
   initialSystemPrompt: string;
   /** Current temperature value pre-populated in the slider. */
   initialTemperature: number;
-  /** Called with the updated values when the modal closes. */
+  /** Called with the updated values when the user saves. */
   onSave: (values: ChatSettingsValues) => void;
-  /** Called when the modal should close. */
-  onClose: () => void;
-  /** Modal title. Defaults to `'Chat settings'`. */
+  /** Sheet title. Defaults to `'Chat settings'`. */
   title?: string;
   /** Label for the response format field. Defaults to `'Response format'`. */
   responseFormatLabel?: string;
@@ -32,7 +43,7 @@ export interface ChatSettingsModalProps {
   responseFormatPlainTextLabel?: string;
   /** Label for the system prompt field. Defaults to `'System prompt'`. */
   systemPromptLabel?: string;
-  /** Tooltip shown on the system prompt input. Defaults to `'Enter a prompt'`. */
+  /** Placeholder shown in the system prompt textarea. Defaults to `'Enter a prompt'`. */
   systemPromptTooltip?: string;
   /** Label for the temperature field. Defaults to `'Temperature'`. */
   temperatureLabel?: string;
@@ -44,13 +55,22 @@ export interface ChatSettingsModalProps {
   saveLabel?: string;
 }
 
-export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
+/**
+ * Mobile bottom sheet that renders the chat-settings form inline with a back
+ * arrow to return to the preceding sheet.
+ */
+export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
+  isOpen,
+  onBack,
+  backLabel,
+  onClose,
+  closeLabel,
+  style,
   features,
   initialResponseFormat,
   initialSystemPrompt,
   initialTemperature,
   onSave,
-  onClose,
   title = 'Chat settings',
   responseFormatLabel,
   responseFormatHint,
@@ -81,17 +101,14 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
   });
 
   return (
-    <DialPopup
-      open
-      header={title}
-      size={PopupSize.Sm}
+    <BottomSheetShell
+      isOpen={isOpen}
+      title={title}
+      closeLabel={closeLabel}
       onClose={onClose}
-      className="!bg-layer-2"
-      footer={
-        <div className="flex justify-end px-6 py-4">
-          <DialPrimaryButton label={saveLabel} onClick={handleSubmit} />
-        </div>
-      }
+      onBack={onBack}
+      backLabel={backLabel}
+      style={style}
     >
       <ChatSettingsFields
         features={features}
@@ -111,8 +128,9 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
         temperatureLabels={temperatureLabels}
         temperatureHint={temperatureHint}
       />
-    </DialPopup>
+      <div className="flex justify-end px-6 py-4">
+        <DialPrimaryButton label={saveLabel} onClick={handleSubmit} />
+      </div>
+    </BottomSheetShell>
   );
 };
-
-export default memo(ChatSettingsModal);
