@@ -85,6 +85,8 @@ export const mergeFeatures = (
     tools = true,
     assistant_attachments_in_request: assistantAttachmentsInRequest = false,
     mcp = false,
+    chat_completion = true,
+    responses_api = false,
     ...otherFeatures
   } = features || {};
   return {
@@ -98,6 +100,8 @@ export const mergeFeatures = (
     tools,
     assistantAttachmentsInRequest,
     mcp,
+    chat_completion,
+    responses_api,
     ...otherFeatures,
   };
 };
@@ -121,3 +125,7 @@ export const shouldShowHiddenEntities = (
 export const doesAgentSupportMcp = (
   entity?: DialAIEntityModel,
 ): entity is DialAIEntityModel => !!entity?.mcp || !!entity?.features?.mcp;
+
+export const doesAgentHaveChatCompletion = (
+  entity?: DialAIEntityModel,
+): entity is DialAIEntityModel => !!entity?.features?.chat_completion;

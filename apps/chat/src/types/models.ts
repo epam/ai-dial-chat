@@ -80,6 +80,8 @@ export interface DialAIEntityFeatures {
   tools: boolean;
   assistantAttachmentsInRequest: boolean;
   mcp: boolean;
+  chat_completion: boolean;
+  responses_api: boolean;
 }
 
 export interface DialAIEntity {
