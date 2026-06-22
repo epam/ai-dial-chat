@@ -34,7 +34,7 @@
     "unused-exports": "nx run-many -t unused-exports"
   },
   "dependencies": {
-    "@epam/ai-dial-ui-kit": "0.11.0-dev.32",
+    "@epam/ai-dial-ui-kit": "0.11.0",
     "@epam/pdf-highlighter-kit": "^0.0.17",
     "@floating-ui/react": "^0.27.19",
     "@hookform/resolvers": "^5.2.1",
@@ -194,20 +194,20 @@
   },
   "overrides": {
     "koa": "3.1.2",
-    "axios": "1.16.0",
     "glob": "13.0.6",
     "prismjs": "1.30.0",
     "protobufjs": "8.6.3",
-    "dompurify": "3.4.10",
+    "dompurify": "3.4.11",
     "minimatch": "10.2.4",
     "js-yaml": "4.2.0",
     "serialize-javascript": "7.0.5",
     "picomatch": "4.0.4",
-    "lodash": "4.18.0",
     "tmp": "0.2.7",
     "ws": "8.21.0",
     "form-data": "4.0.6",
-    "shell-quote": "1.8.4"
+    "uuid": "14.0.0",
+    "shell-quote": "1.8.4",
+    "http-proxy-middleware": "3.0.7"
   },
   "engines": {
     "node": ">=24.11.1",
