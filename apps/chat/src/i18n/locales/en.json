@@ -86,6 +86,10 @@
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
       }
+    },
+    "create": {
+      "quickApp": "QuickApp",
+      "toolset": "Toolset"
     }
   },
   "deployments": {

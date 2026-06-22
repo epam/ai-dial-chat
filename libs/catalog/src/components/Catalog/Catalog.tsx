@@ -1,12 +1,13 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DialDropdown,
   DialPrimaryButton,
   DialSpinner,
   DialTabs,
   TabModel,
 } from '@epam/ai-dial-ui-kit';
-import { IconPlus } from '@tabler/icons-react';
+import { IconChevronDown, IconPlus } from '@tabler/icons-react';
 import { FC, useCallback, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
@@ -37,6 +38,7 @@ export const Catalog: FC<CatalogProps> = ({
   onShare,
   onFetchAboutContent,
   onCreateClick,
+  createOptions,
   isLoading,
   styles: catalogStyles,
   detailsTexts,
@@ -190,11 +192,27 @@ export const Catalog: FC<CatalogProps> = ({
         >
           {pageTitle}
         </h1>
-        <DialPrimaryButton
-          label={createLabel}
-          iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
-          onClick={onCreateClick}
-        />
+        {createOptions?.length ? (
+          <DialDropdown
+            items={createOptions.map((opt, i) => ({
+              key: String(i),
+              label: opt.label,
+              onClick: () => opt.onClick(),
+            }))}
+          >
+            <DialPrimaryButton
+              label={createLabel}
+              iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
+              iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
+            />
+          </DialDropdown>
+        ) : (
+          <DialPrimaryButton
+            label={createLabel}
+            iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
+            onClick={onCreateClick}
+          />
+        )}
       </div>
 
       {/* Favorites strip */}

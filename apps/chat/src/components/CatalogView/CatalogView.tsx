@@ -1,4 +1,4 @@
-import { Catalog, CatalogItem } from '@epam/ai-dial-catalog';
+import { Catalog, CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import type { FC } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -53,11 +53,20 @@ const CatalogView: FC = () => {
     [isLoading, toggleFavorite],
   );
 
+  const createOptions = useMemo<CreateOption[]>(
+    () => [
+      { label: t(CatalogI18nKeys.CreateQuickApp), onClick: () => {} },
+      { label: t(CatalogI18nKeys.CreateToolset), onClick: () => {} },
+    ],
+    [t],
+  );
+
   return (
     <Catalog
       items={filteredItems}
       isLoading={isLoading}
       favorites={favorites}
+      createOptions={createOptions}
       onFetchAboutContent={fetchAboutContent}
       onToggleFavorite={onToggleFavorite}
       titles={{
