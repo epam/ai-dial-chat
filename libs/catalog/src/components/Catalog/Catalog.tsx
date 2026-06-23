@@ -1,13 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DialPrimaryButton,
-  DialSpinner,
-  DialTabs,
-  TabModel,
-} from '@epam/ai-dial-ui-kit';
-import { IconPlus } from '@tabler/icons-react';
-import { FC, useCallback, useRef, useState } from 'react';
+import { DialSpinner, DialTabs, TabModel } from '@epam/ai-dial-ui-kit';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import { CatalogSortKey } from '../../types/sort';
@@ -22,6 +15,7 @@ import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
+import { CreateButton } from './CreateButton';
 
 /**
  * Root catalog component. Owns all filter/sort/pagination state and wires
@@ -37,6 +31,7 @@ export const Catalog: FC<CatalogProps> = ({
   onShare,
   onFetchAboutContent,
   onCreateClick,
+  createOptions,
   isLoading,
   styles: catalogStyles,
   detailsTexts,
@@ -84,6 +79,23 @@ export const Catalog: FC<CatalogProps> = ({
   );
   const tabs = [] as TabModel[]; // TODO: implement tabs and remove this placeholder
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
+
+  const [isFavoritesRendered, setIsFavoritesRendered] = useState(
+    favorites.length > 0,
+  );
+
+  // When favorites reappear after being fully removed, remount the section.
+  useEffect(() => {
+    if (favorites.length > 0 && !isFavoritesRendered) {
+      setIsFavoritesRendered(true);
+    }
+  }, [favorites.length, isFavoritesRendered]);
+
+  const handleFavoritesExitComplete = useCallback(() => {
+    setIsFavoritesRendered(false);
+  }, []);
+
+  const isFavoritesLeaving = isFavoritesRendered && favorites.length === 0;
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -190,20 +202,23 @@ export const Catalog: FC<CatalogProps> = ({
         >
           {pageTitle}
         </h1>
-        <DialPrimaryButton
+        <CreateButton
           label={createLabel}
-          iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
+          options={createOptions}
           onClick={onCreateClick}
         />
       </div>
 
-      {/* Favorites strip */}
-      {favorites.length > 0 && (
+      {/* Favorites strip — kept in DOM during exit animation then unmounted */}
+      {isFavoritesRendered && (
         <Favorites
           items={favorites}
           totalCount={favorites.length}
           title={favoritesTitle}
           onToggleFavorite={onToggleFavorite}
+          onItemClick={handleOpenDetails}
+          isLeaving={isFavoritesLeaving}
+          onExitComplete={handleFavoritesExitComplete}
         />
       )}
 

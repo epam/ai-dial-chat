@@ -114,6 +114,12 @@ export enum CatalogI18nKeys {
   DetailsApiCopy = 'catalog.details.api.copy',
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
+  CreateQuickApp = 'catalog.create.quickApp',
+  CreateToolset = 'catalog.create.toolset',
+  FavoriteAddedTitle = 'catalog.favoriteAddedTitle',
+  FavoriteAdded = 'catalog.favoriteAdded',
+  FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
+  FavoriteRemoved = 'catalog.favoriteRemoved',
 }
 
 export enum DeploymentsI18nKeys {
@@ -292,4 +298,11 @@ export enum ChatSettingsI18nKeys {
   SaveLabel = 'chatSettings.saveLabel',
   TemperatureHint = 'chatSettings.temperatureHint',
   SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
+}
+
+export enum AttachmentCanvasI18nKeys {
+  AriaLabel = 'attachmentCanvas.ariaLabel',
+  CloseLabel = 'attachmentCanvas.closeLabel',
+  DownloadLabel = 'attachmentCanvas.downloadLabel',
+  UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
 }

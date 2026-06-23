@@ -48,6 +48,7 @@ import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
+import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
@@ -379,6 +380,14 @@ const ConversationRoute: FC = () => {
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+
+  const handleAttachmentClick = useCallback(
+    (attachment: Attachment) => {
+      void openAttachmentCanvas(attachment);
+    },
+    [openAttachmentCanvas],
+  );
 
   const isTranscriptionSupported = useMemo(() => {
     if (asrModelId != null) return true;
@@ -442,7 +451,7 @@ const ConversationRoute: FC = () => {
       />
       <Suspense fallback={<RouteFallback />}>
         <div
-          className="flex h-full flex-col items-center justify-center p-4 desktop:p-8"
+          className="flex flex-1 flex-col items-center justify-center p-4 desktop:p-8"
           role="region"
           aria-label={t(ChatI18nKeys.WelcomeScreen)}
         >
@@ -480,6 +489,7 @@ const ConversationRoute: FC = () => {
               selectedDeployment != null ? validateAttachment : undefined
             }
             hideAttachFile={!isAttachmentsAllowed}
+            onAttachmentClick={handleAttachmentClick}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>

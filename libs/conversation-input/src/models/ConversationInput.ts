@@ -215,4 +215,10 @@ export interface ConversationInputProps {
    * remain in the menu the entire attach (+) button is hidden automatically.
    */
   hideAttachFile?: boolean;
+  /**
+   * Called when the user clicks or keyboard-activates an attachment card.
+   * Receives the full `Attachment` object (including the local `File`).
+   * When absent the card is not rendered as interactive.
+   */
+  onAttachmentClick?: (attachment: Attachment) => void;
 }

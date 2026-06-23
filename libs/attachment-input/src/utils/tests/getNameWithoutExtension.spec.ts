@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getNameWithoutExtension } from './getNameWithoutExtension';
+import { getNameWithoutExtension } from '../getNameWithoutExtension';
 
 describe('getNameWithoutExtension', () => {
   it('removes extension from a file name', () => {
