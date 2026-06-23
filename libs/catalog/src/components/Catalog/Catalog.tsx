@@ -71,6 +71,10 @@ export const Catalog: FC<CatalogProps> = ({
     },
   ];
 
+  console.log(
+    'CatalogVыыыiew',
+    items?.filter((item) => item.isFeatured).map((item) => item.id),
+  );
   const filteredItems = items.filter((item) => !item.isHidden);
 
   const [query, setQuery] = useState('');

@@ -1,4 +1,4 @@
-import { FavoriteItem } from './catalog-item';
+import { CatalogItem } from './catalog-item';
 
 /** Typography class overrides for `CatalogFavorites`. */
 export interface FavoritesTypography {
@@ -35,7 +35,7 @@ export interface FavoritesStyles {
 /** Props for `CatalogFavorites`. */
 export interface FavoritesProps {
   /** Favorite items to paginate and display. */
-  items: FavoriteItem[];
+  items: CatalogItem[];
   /** Total favorites count shown in the heading (may exceed items.length). Default: items.length. */
   totalCount?: number;
   /** Section heading text. Default: 'Your Favorites'. */

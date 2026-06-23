@@ -1,4 +1,4 @@
-import type { CatalogItem, FavoriteItem } from './catalog-item';
+import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type { ItemDetailsTexts } from './item-details-props';
 
@@ -36,7 +36,7 @@ export interface CatalogProps {
   /** Items to display in the Browse section. */
   items: CatalogItem[];
   /** Items to display in the Favorites section. */
-  favorites: FavoriteItem[];
+  favorites: CatalogItem[];
   /** Grouped text labels for headings and actions. */
   titles?: CatalogTitles;
   /** Whether catalog data is loading (reserved for future loading state). */
