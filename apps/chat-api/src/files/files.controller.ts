@@ -56,6 +56,12 @@ export class FilesController {
         file: { type: 'string', format: 'binary' },
         bucket: { type: 'string' },
         path: { type: 'string' },
+        uploadMode: {
+          type: 'string',
+          enum: ['overwrite', 'create-only'],
+          description:
+            "Optional upload mode. 'overwrite' (default) overwrites; 'create-only' fails with 409 if file exists.",
+        },
       },
     },
   })
@@ -63,6 +69,10 @@ export class FilesController {
   @ApiResponse({ status: 400, description: 'Invalid bucket or path' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({
+    status: 409,
+    description: 'File already exists (create-only mode)',
+  })
   @ApiResponse({ status: 413, description: 'Payload too large' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
@@ -76,7 +86,13 @@ export class FilesController {
     @Req() req: Request,
   ): Promise<FileUploadResponseDto> {
     const { at } = req.user as SessionUser;
-    return this.filesService.uploadFile(body.bucket, body.path, file, at);
+    return this.filesService.uploadFile(
+      body.bucket,
+      body.path,
+      file,
+      at,
+      body.uploadMode,
+    );
   }
 
   @Get('list')
