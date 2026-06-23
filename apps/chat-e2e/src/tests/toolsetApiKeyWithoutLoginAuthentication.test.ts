@@ -120,8 +120,9 @@ dialTest(
           toolsetEntity.name,
           toolsetEntity.version,
         ))!;
-        await toolsetEditorViewForm.copyUrlButton.click();
-        const copiedUrl = await marketplacePage.readTextFromClipboard();
+        const copiedUrl = await marketplacePage.captureNextClipboardWrite(() =>
+          toolsetEditorViewForm.copyUrlButton.click(),
+        );
         toolsetEditorViewFormAssertion.assertValueMatchPattern(
           copiedUrl,
           ExpectedConstants.copyToolsetUrlPattern(savedToolset),
@@ -214,8 +215,9 @@ dialTest(
     await dialTest.step(
       'Click Copy URL button and verify URL is copied to clipboard',
       async () => {
-        await connectToolsetModal.copyUrlButton.click();
-        const copiedUrl = await marketplacePage.readTextFromClipboard();
+        const copiedUrl = await marketplacePage.captureNextClipboardWrite(() =>
+          connectToolsetModal.copyUrlButton.click(),
+        );
         baseAssertion.assertValueMatchPattern(
           copiedUrl,
           ExpectedConstants.copyToolsetUrlPattern(savedToolset),
