@@ -1,13 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DialDropdown,
-  DialPrimaryButton,
-  DialSpinner,
-  DialTabs,
-  TabModel,
-} from '@epam/ai-dial-ui-kit';
-import { IconChevronDown, IconPlus } from '@tabler/icons-react';
+import { DialSpinner, DialTabs, TabModel } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
@@ -23,6 +15,7 @@ import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
+import { CreateButton } from './CreateButton';
 
 /**
  * Root catalog component. Owns all filter/sort/pagination state and wires
@@ -87,12 +80,6 @@ export const Catalog: FC<CatalogProps> = ({
   const tabs = [] as TabModel[]; // TODO: implement tabs and remove this placeholder
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
 
-  // Delayed unmount for the Favorites section so the exit animation plays
-  // before the section is removed from the DOM.
-  // isFavoritesRendered tracks whether the section node exists in the DOM.
-  // isFavoritesLeaving is DERIVED (not state) so it is true in the same render
-  // where favorites becomes empty — avoiding the one painted frame where the
-  // section is visible without an exit animation (the blink).
   const [isFavoritesRendered, setIsFavoritesRendered] = useState(
     favorites.length > 0,
   );
@@ -215,27 +202,11 @@ export const Catalog: FC<CatalogProps> = ({
         >
           {pageTitle}
         </h1>
-        {createOptions?.length ? (
-          <DialDropdown
-            items={createOptions.map((opt, i) => ({
-              key: String(i),
-              label: opt.label,
-              onClick: () => opt.onClick(),
-            }))}
-          >
-            <DialPrimaryButton
-              label={createLabel}
-              iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
-              iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
-            />
-          </DialDropdown>
-        ) : (
-          <DialPrimaryButton
-            label={createLabel}
-            iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
-            onClick={onCreateClick}
-          />
-        )}
+        <CreateButton
+          label={createLabel}
+          options={createOptions}
+          onClick={onCreateClick}
+        />
       </div>
 
       {/* Favorites strip — kept in DOM during exit animation then unmounted */}
