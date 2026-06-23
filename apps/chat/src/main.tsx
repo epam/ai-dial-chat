@@ -31,29 +31,29 @@ root.render(
           <NotificationContainer />
           <UserProvider>
             <ThemeProvider>
-              <DeploymentsProvider>
-                <SourcesSidebarProvider>
-                  <Suspense fallback={null}>
-                    <Routes>
-                      <Route path="/login" element={<LoginPage />} />
-                      <Route
-                        path="*"
-                        element={
-                          <RequireAuth>
-                            <UserConfigProvider>
-                              <AppConfigProvider>
+              <AppConfigProvider>
+                <DeploymentsProvider>
+                  <SourcesSidebarProvider>
+                    <Suspense fallback={null}>
+                      <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route
+                          path="*"
+                          element={
+                            <RequireAuth>
+                              <UserConfigProvider>
                                 <ConversationsProvider>
                                   <App />
                                 </ConversationsProvider>
-                              </AppConfigProvider>
-                            </UserConfigProvider>
-                          </RequireAuth>
-                        }
-                      />
-                    </Routes>
-                  </Suspense>
-                </SourcesSidebarProvider>
-              </DeploymentsProvider>
+                              </UserConfigProvider>
+                            </RequireAuth>
+                          }
+                        />
+                      </Routes>
+                    </Suspense>
+                  </SourcesSidebarProvider>
+                </DeploymentsProvider>
+              </AppConfigProvider>
             </ThemeProvider>
           </UserProvider>
         </NotificationProvider>

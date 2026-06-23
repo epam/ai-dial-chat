@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useUser } from '../../context/auth/UserContext';
 import { getProviders } from '../../server-api/auth.api';
+import { AuthStatus } from '../../types/auth-status';
 
 export const AUTH_REDIRECT_ATTEMPT_STORAGE_KEY = 'chat.auth.redirectAttempt';
 
@@ -56,9 +57,9 @@ export const useAuthRedirect = () => {
   const { pathname, search, hash } = useLocation();
 
   useEffect(() => {
-    if (status === 'loading') return;
+    if (status === AuthStatus.Loading) return;
 
-    if (status === 'authenticated') {
+    if (status === AuthStatus.Authenticated) {
       clearAuthRedirectAttempt();
     }
 
@@ -83,7 +84,7 @@ export const useAuthRedirect = () => {
       return;
     }
 
-    if (status === 'unauthenticated' && pathname !== '/login') {
+    if (status === AuthStatus.Unauthenticated && pathname !== '/login') {
       let cancelled = false;
       const rawCallbackUrl = `${window.location.origin}${pathname}${search}${hash}`;
       const callbackUrl = encodeURIComponent(rawCallbackUrl);

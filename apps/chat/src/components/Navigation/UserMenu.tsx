@@ -35,6 +35,7 @@ import {
 import { useLogout } from '../../hooks/logout/useLogout';
 import { useThemeOptions } from '../../hooks/theme/useThemeOptions';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
+import { AuthStatus } from '../../types/auth-status';
 import { ThemeId } from '../../types/theme-id';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import AvatarInitials from './AvatarInitials';
@@ -57,7 +58,7 @@ export const UserMenu = memo(() => {
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
 
-  if (status !== 'authenticated' || !user || isMobile) {
+  if (status !== AuthStatus.Authenticated || !user || isMobile) {
     return null;
   }
 
