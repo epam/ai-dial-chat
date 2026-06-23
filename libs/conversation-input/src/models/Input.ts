@@ -150,6 +150,12 @@ export interface InputProps {
    */
   hideAddButton?: boolean;
   /**
+   * When `true`, the "Attach file" item is removed from the attach menu.
+   * Other menu items (e.g. DIAL file system) remain visible. When no items
+   * remain in the menu the entire attach (+) button is hidden automatically.
+   */
+  hideAttachFile?: boolean;
+  /**
    * When `true`, the entire action bar row (attach button, send/stop button,
    * model selector, and any `renderFooterActions` content) is not rendered.
    * The bordered box contains only the attachment tray and textarea. Use in

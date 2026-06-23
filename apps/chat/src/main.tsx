@@ -3,6 +3,7 @@ import { lazy, StrictMode, Suspense } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import App from './app/app';
+import { RootErrorBoundary } from './components/ErrorBoundary/ErrorBoundary';
 import NotificationContainer from './components/Notification/NotificationContainer';
 import RequireAuth from './components/RequireAuth/RequireAuth';
 import AppConfigProvider from './context/AppConfigContext';
@@ -24,37 +25,39 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <BrowserRouter>
-      <NotificationProvider>
-        <NotificationContainer />
-        <UserProvider>
-          <ThemeProvider>
-            <AppConfigProvider>
-              <DeploymentsProvider>
-                <SourcesSidebarProvider>
-                  <Suspense fallback={null}>
-                    <Routes>
-                      <Route path="/login" element={<LoginPage />} />
-                      <Route
-                        path="*"
-                        element={
-                          <RequireAuth>
-                            <UserConfigProvider>
-                              <ConversationsProvider>
-                                <App />
-                              </ConversationsProvider>
-                            </UserConfigProvider>
-                          </RequireAuth>
-                        }
-                      />
-                    </Routes>
-                  </Suspense>
-                </SourcesSidebarProvider>
-              </DeploymentsProvider>
-            </AppConfigProvider>
-          </ThemeProvider>
-        </UserProvider>
-      </NotificationProvider>
-    </BrowserRouter>
+    <RootErrorBoundary>
+      <BrowserRouter>
+        <NotificationProvider>
+          <NotificationContainer />
+          <UserProvider>
+            <ThemeProvider>
+              <AppConfigProvider>
+                <DeploymentsProvider>
+                  <SourcesSidebarProvider>
+                    <Suspense fallback={null}>
+                      <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route
+                          path="*"
+                          element={
+                            <RequireAuth>
+                              <UserConfigProvider>
+                                <ConversationsProvider>
+                                  <App />
+                                </ConversationsProvider>
+                              </UserConfigProvider>
+                            </RequireAuth>
+                          }
+                        />
+                      </Routes>
+                    </Suspense>
+                  </SourcesSidebarProvider>
+                </DeploymentsProvider>
+              </AppConfigProvider>
+            </ThemeProvider>
+          </UserProvider>
+        </NotificationProvider>
+      </BrowserRouter>
+    </RootErrorBoundary>
   </StrictMode>,
 );

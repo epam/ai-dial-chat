@@ -26,7 +26,6 @@ import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import { getConversationRoute } from '../../constants/routes';
-import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
@@ -37,10 +36,12 @@ import {
   ButtonsI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
+import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
@@ -52,10 +53,6 @@ import {
 } from '../../server-api/chat.api';
 import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
 import { uploadFile } from '../../server-api/files.api';
-import {
-  isMimeTypeAllowed,
-  mimeTypesToExtensionLabels,
-} from '../../utils/attachment-mime';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
@@ -111,42 +108,11 @@ const ConversationRoute: FC = () => {
     [items, selectedItemId],
   );
 
-  const inputAttachmentTypes = useMemo(
-    () => selectedDeployment?.inputAttachmentTypes ?? [],
-    [selectedDeployment],
-  );
-
-  const isAttachmentsAllowed = selectedDeployment?.inputAttachmentTypes != null;
-
-  const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
+    useAttachmentValidation(selectedDeployment);
 
   const pendingNetworkFilesRef = useRef<string[]>([]);
   const networkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const validateAttachment = useCallback(
-    (attachment: Attachment): AttachmentErrorReason | undefined => {
-      if (!isMimeTypeAllowed(attachment.contentType, inputAttachmentTypes)) {
-        if (unsupportedTypeTimerRef.current != null) {
-          clearTimeout(unsupportedTypeTimerRef.current);
-        }
-        unsupportedTypeTimerRef.current = setTimeout(() => {
-          showNotification({
-            variant: NotificationVariant.Error,
-            title: t(AttachmentsI18nKeys.UnsupportedTypeTitle),
-            message: t(AttachmentsI18nKeys.UnsupportedTypeMessage, {
-              formats: mimeTypesToExtensionLabels(inputAttachmentTypes),
-            }),
-          });
-          unsupportedTypeTimerRef.current = null;
-        }, 100);
-        return AttachmentErrorReason.UnsupportedType;
-      }
-      return undefined;
-    },
-    [inputAttachmentTypes, showNotification, t],
-  );
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
@@ -420,13 +386,16 @@ const ConversationRoute: FC = () => {
             pendingAttachments={pendingDialAttachments}
             onPendingAttachmentsConsumed={clearPendingDialAttachments}
             autoFocus={!isMobile}
-            onDialFileSystemClick={openDialFileManager}
+            onDialFileSystemClick={
+              isAttachmentsAllowed ? openDialFileManager : undefined
+            }
             dialFileSystemLabel={t(
               ConversationI18nKeys.AttachMenuDialFileSystem,
             )}
             validateAttachment={
-              isAttachmentsAllowed ? validateAttachment : undefined
+              selectedDeployment != null ? validateAttachment : undefined
             }
+            hideAttachFile={!isAttachmentsAllowed}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
