@@ -54,28 +54,28 @@ jobs:
       - name: Maximize build space
         uses: nepalevov/maximize-build-space@046c48361370e2f3fa758bd2f10c6ce29109ef62 # v1.1.0
         with:
-          remove-dotnet: "true"
-          remove-android: "true"
-          remove-haskell: "true"
-          remove-codeql: "true"
-          remove-large-packages: "true"
-          remove-cached-tools: "true"
-          remove-swapfile: "true"
-          remove-java: "true"
-          remove-swift: "true"
-          remove-julia: "true"
-          remove-browsers: "true"
-          remove-cloud-tools: "true"
-          remove-kubernetes-tools: "true"
-          remove-powershell: "true"
-          remove-container-tools: "true"
-          remove-rust: "true"
-          remove-python: "true"
-          remove-node: "true"
-          remove-go: "true"
-          remove-ruby: "true"
-          docker-cleanup: "true"
-          set-tmpdir: "true"
+          remove-dotnet: 'true'
+          remove-android: 'true'
+          remove-haskell: 'true'
+          remove-codeql: 'true'
+          remove-large-packages: 'true'
+          remove-cached-tools: 'true'
+          remove-swapfile: 'true'
+          remove-java: 'true'
+          remove-swift: 'true'
+          remove-julia: 'true'
+          remove-browsers: 'true'
+          remove-cloud-tools: 'true'
+          remove-kubernetes-tools: 'true'
+          remove-powershell: 'true'
+          remove-container-tools: 'true'
+          remove-rust: 'true'
+          remove-python: 'true'
+          remove-node: 'true'
+          remove-go: 'true'
+          remove-ruby: 'true'
+          docker-cleanup: 'true'
+          set-tmpdir: 'true'
       - uses: epam/ai-dial-ci/actions/generate_release_notes@4.4.1
         with:
           latest-tag: ${{ needs.calculate_version.outputs.latest-stable-tag }}
@@ -87,8 +87,9 @@ jobs:
       - uses: epam/ai-dial-ci/actions/node_prepare@4.4.1
         with:
           node-version: '24'
+          ort-enabled: false
           clean-install: true
-          registry-url: "https://registry.npmjs.org"
+          registry-url: 'https://registry.npmjs.org'
       - name: Set version
         shell: bash
         run: |
