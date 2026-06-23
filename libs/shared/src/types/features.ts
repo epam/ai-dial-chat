@@ -90,6 +90,7 @@ export enum Feature {
   // Marketplace
   Marketplace = 'marketplace', // Enable Marketplace
   MarketplaceTableView = 'marketplace-table-view', // Enable table view in Marketplace
+  MarketplaceHideMyApps = 'marketplace-hide-my-apps', // Hide user-created and shared-with-me entities in Marketplace
 
   //Toolsets
   Toolsets = 'toolsets', //Enable toolsets
