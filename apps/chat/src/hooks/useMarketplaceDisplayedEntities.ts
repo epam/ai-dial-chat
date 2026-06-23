@@ -25,12 +25,14 @@ import { MARKETPLACE_ENTITIES_SEARCH_OPTIONS } from '@/src/constants/search';
 
 import { useFuseSearch } from './useFuseSearch';
 
+import { Feature } from '@epam/ai-dial-shared';
 import uniqBy from 'lodash-es/uniqBy';
 
 export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
   allEntities: T[],
   installedEntitiesIds: Set<string>,
   selectedFilters: MarketplaceFilters,
+  isPersonalEntity?: (entity: T) => boolean,
 ) => {
   const searchTerm = useAppSelector(
     MarketplaceSelectors.selectTrimmedSearchTerm,
@@ -47,6 +49,9 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
   );
   const selectedEntitiesTab = useAppSelector(
     MarketplaceSelectors.selectSelectedEntitiesTab,
+  );
+  const isHideMyAppsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.MarketplaceHideMyApps),
   );
 
   const [suggestedResults, setSuggestedResults] = useState<T[]>([]);
@@ -72,8 +77,12 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
       return [];
     }
 
-    return allEntities.filter((e) =>
-      defaultRecentModelsIds.includes(e.reference),
+    const shouldHidePersonal = isHideMyAppsEnabled && !!isPersonalEntity;
+
+    return allEntities.filter(
+      (e) =>
+        defaultRecentModelsIds.includes(e.reference) &&
+        (!shouldHidePersonal || (!isPersonalEntity!(e) && !e.sharedWithMe)),
     );
   }, [
     selectedTab,
@@ -81,6 +90,8 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     isSomeFilterNotEmpty,
     allEntities,
     defaultRecentModelsIds,
+    isHideMyAppsEnabled,
+    isPersonalEntity,
   ]);
 
   const displayedEntities = useMemo(() => {
@@ -95,11 +106,18 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     );
 
     const isMyWorkspace = selectedTab === MarketplaceTabs.MY_WORKSPACE;
+    const shouldHidePersonal =
+      !isMyWorkspace && isHideMyAppsEnabled && !!isPersonalEntity;
+
     const entitiesForTab = isMyWorkspace
       ? filteredEntities.filter((entity) =>
           isInstalledEntity(entity, installedEntitiesIds),
         )
-      : filteredEntities;
+      : shouldHidePersonal
+        ? filteredEntities.filter(
+            (entity) => !isPersonalEntity!(entity) && !entity.sharedWithMe,
+          )
+        : filteredEntities;
 
     const shouldSuggest = isMyWorkspace && isSomeFilterNotEmpty;
 
@@ -148,6 +166,8 @@ export const useMarketplaceDisplayedEntities = <T extends MarketplaceEntity>(
     selectedFilters,
     applicationTypeSchemas,
     installedEntitiesIds,
+    isHideMyAppsEnabled,
+    isPersonalEntity,
   ]);
 
   return {
