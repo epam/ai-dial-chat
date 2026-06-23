@@ -1,7 +1,5 @@
-import {
-  AttachmentContentType,
-  type AttachmentCanvasContent,
-} from '../models/attachment-canvas';
+import type { AttachmentCanvasContent } from '../models/attachment-canvas';
+import { AttachmentContentType } from '../types/attachment-canvas';
 
 /** Triggers a browser download for the given canvas content. */
 export const downloadAttachmentContent = (

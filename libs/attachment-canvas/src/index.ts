@@ -11,7 +11,7 @@ export {
   isTextPreviewable,
   createUnsupportedCanvasContent,
 } from './utils/content';
-export { AttachmentContentType } from './models/attachment-canvas';
+export { AttachmentContentType } from './types/attachment-canvas';
 export type {
   AttachmentCanvasContent,
   PlainTextCanvasContent,

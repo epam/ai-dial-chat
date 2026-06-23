@@ -1,12 +1,6 @@
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { CSSProperties } from 'react';
-
-/** The type of content the canvas can display. */
-export enum AttachmentContentType {
-  PlainText = 'plain_text',
-  Image = 'image',
-  Unsupported = 'unsupported',
-}
+import { AttachmentContentType } from '../types/attachment-canvas';
 
 /** Content payload for plain-text attachments. */
 export interface PlainTextCanvasContent {

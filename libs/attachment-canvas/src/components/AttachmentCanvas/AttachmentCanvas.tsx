@@ -3,10 +3,8 @@ import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconDownload } from '@tabler/icons-react';
 import { type FC } from 'react';
-import {
-  AttachmentContentType,
-  type AttachmentCanvasProps,
-} from '../../models/attachment-canvas';
+import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
+import { AttachmentContentType } from '../../types/attachment-canvas';
 import styles from './AttachmentCanvas.module.scss';
 
 export const AttachmentCanvas: FC<AttachmentCanvasProps> = ({

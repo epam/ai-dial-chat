@@ -1,9 +1,7 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import {
-  AttachmentContentType,
-  type AttachmentCanvasContent,
-} from '../../../models/attachment-canvas';
+import type { AttachmentCanvasContent } from '../../../models/attachment-canvas';
+import { AttachmentContentType } from '../../../types/attachment-canvas';
 import { AttachmentCanvas } from '../AttachmentCanvas';
 
 const plainTextContent: AttachmentCanvasContent = {

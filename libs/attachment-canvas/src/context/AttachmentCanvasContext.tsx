@@ -6,10 +6,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
-import {
-  AttachmentContentType,
-  type AttachmentCanvasContent,
-} from '../models/attachment-canvas';
+import type { AttachmentCanvasContent } from '../models/attachment-canvas';
+import { AttachmentContentType } from '../types/attachment-canvas';
 
 const EMPTY_CONTENT: AttachmentCanvasContent = {
   type: AttachmentContentType.PlainText,

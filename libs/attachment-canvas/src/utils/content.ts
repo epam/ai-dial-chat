@@ -1,6 +1,6 @@
 import { TEXT_EXTENSIONS } from '../constants/file';
-import { AttachmentContentType } from '../models/attachment-canvas';
 import type { UnsupportedCanvasContent } from '../models/attachment-canvas';
+import { AttachmentContentType } from '../types/attachment-canvas';
 
 /** Returns true if the file name has an extension known to be text-previewable. */
 export const isTextPreviewable = (name: string): boolean => {
