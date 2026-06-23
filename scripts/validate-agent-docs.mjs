@@ -166,7 +166,7 @@ const readTailwindBreakpoints = () => {
 
 const checkSourceBreakpoints = () => {
   const allowedBreakpoints = readTailwindBreakpoints();
-  if (allowedBreakpoints.size === 0) return;
+  if (allowedBreakpoints.size === 0) return 0;
 
   const sourceFiles = ['apps', 'libs']
     .flatMap(listFiles)
@@ -187,6 +187,8 @@ const checkSourceBreakpoints = () => {
       }
     }
   }
+
+  return sourceFiles.length;
 };
 
 const checkUniqueClaudeSkillNames = (skillNames) => {
@@ -206,6 +208,7 @@ const checkUniqueClaudeSkillNames = (skillNames) => {
 const files =
   process.argv.length > 2 ? process.argv.slice(2) : allAgentConfigFiles();
 const skillNames = [];
+let checkedConfigFiles = 0;
 
 for (const file of files) {
   let src;
@@ -214,6 +217,7 @@ for (const file of files) {
   } catch {
     continue; // deleted/missing path — nothing to validate
   }
+  checkedConfigFiles += 1;
 
   await checkFormatting(src, file);
 
@@ -275,12 +279,18 @@ for (const file of files) {
 }
 
 checkUniqueClaudeSkillNames(skillNames);
-checkSourceBreakpoints();
+const checkedSourceFiles = checkSourceBreakpoints();
+const summary = `${checkedConfigFiles} config files, ${checkedSourceFiles} source files`;
 
 if (errors.length) {
   console.error(
-    'Agent-config validation failed:\n' +
+    `Agent-config validation failed (${summary}):\n` +
       errors.map((e) => `  ${e}`).join('\n'),
   );
   process.exit(1);
 }
+
+console.log(`Agent-config validation passed (${summary}).`);
+console.log(
+  'Checks: formatting, JSON/YAML/frontmatter, file references, Nx commands, skill names, MCP versions, Tailwind breakpoints.',
+);
