@@ -35,7 +35,12 @@ const getLayoutRect = (el: HTMLElement): DOMRect => {
   }
   try {
     const { m41: tx, m42: ty } = new DOMMatrix(transform);
-    return new DOMRect(rect.x - tx + sx, rect.y - ty + sy, rect.width, rect.height);
+    return new DOMRect(
+      rect.x - tx + sx,
+      rect.y - ty + sy,
+      rect.width,
+      rect.height,
+    );
   } catch {
     return new DOMRect(rect.x + sx, rect.y + sy, rect.width, rect.height);
   }
@@ -125,7 +130,10 @@ export const Favorites: FC<FavoritesProps> = ({
   // Release the height lock once items reduce to a single page so the
   // section can shrink (the FLIP effect will animate the height change).
   useEffect(() => {
-    if (favTotalPages <= 1 && (lockedGridHeight !== undefined || lockedSectionHeight !== undefined)) {
+    if (
+      favTotalPages <= 1 &&
+      (lockedGridHeight !== undefined || lockedSectionHeight !== undefined)
+    ) {
       setLockedGridHeight(undefined);
       setLockedSectionHeight(undefined);
     }
@@ -154,17 +162,18 @@ export const Favorites: FC<FavoritesProps> = ({
   const prevFavPageForFlipRef = useRef(favPage);
   const prevFavColumnsForFlipRef = useRef(favColumns);
   const prevSectionHeightRef = useRef<number>(0);
+  // Guards the mount height animation from being cancelled by FLIP while it's in progress.
+  const isMountAnimatingRef = useRef(false);
 
   useLayoutEffect(() => {
     if (!gridRef.current || isLeaving) return;
 
     // Clear any inline styles the mount-enter animation set on the wrapper
-    // (height + overflow). If FLIP fires before the 400ms clearStyles fallback
-    // runs, the wrapper's explicit height would clip the section's growth.
-    if (sectionWrapperRef.current) {
+    // only after the mount animation has completed; clearing mid-animation
+    // would cause the wrapper to jump to its natural height instantly.
+    if (sectionWrapperRef.current && !isMountAnimatingRef.current) {
       const w = sectionWrapperRef.current;
       w.style.height = '';
-      w.style.overflow = '';
       w.style.transition = '';
     }
 
@@ -197,7 +206,9 @@ export const Favorites: FC<FavoritesProps> = ({
         if (savedH) section.style.height = savedH;
       }
       const heightChanged =
-        section != null && prevHeight > 0 && Math.abs(targetHeight - prevHeight) > 2;
+        section != null &&
+        prevHeight > 0 &&
+        Math.abs(targetHeight - prevHeight) > 2;
 
       // When growing, match flip duration to the section transition so cards
       // entering the new row stay in sync with the expanding boundary.
@@ -272,33 +283,40 @@ export const Favorites: FC<FavoritesProps> = ({
       // height transition, so read the inline style.height instead when it is set — that
       // value IS the targetHeight we just applied.
       const inlineH = el.style.height ? parseFloat(el.style.height) : NaN;
-      prevSectionHeightRef.current = Number.isNaN(inlineH) ? el.offsetHeight : inlineH;
+      prevSectionHeightRef.current = Number.isNaN(inlineH)
+        ? el.offsetHeight
+        : inlineH;
     }
   }, [favSlice, favPage, favColumns, isLeaving]);
 
   // On mount: grow from 0 → natural height so the Browse section slides down smoothly.
+  // No overflow:clip — section starts at opacity:0 (sectionEnter), so clipping is unnecessary
+  // and would cause the translateY(-8px) shift to clip at the wrapper's top edge.
   useLayoutEffect(() => {
     const el = sectionWrapperRef.current;
     if (!el) return;
     const naturalH = el.offsetHeight;
     if (naturalH === 0) return;
+
+    isMountAnimatingRef.current = true;
     el.style.height = '0px';
-    el.style.overflow = 'clip';
     void el.offsetHeight;
     el.style.transition = 'height 300ms cubic-bezier(0, 0, 0.2, 1)';
     el.style.height = `${naturalH}px`;
-    const clearStyles = () => {
-      // Only clear when enter completed (not if a concurrent exit already set height to 0).
-      if (parseFloat(el.style.height || '0') > 0) {
-        el.style.height = '';
-        el.style.overflow = '';
-        el.style.transition = '';
-      }
-      el.removeEventListener('transitionend', onEnd);
-    };
+
     const onEnd = (e: TransitionEvent) => {
       if (e.target !== el || e.propertyName !== 'height') return;
       clearStyles();
+    };
+    const clearStyles = () => {
+      isMountAnimatingRef.current = false;
+      // Only clear when enter completed (not if a concurrent exit already set height to 0).
+      if (parseFloat(el.style.height || '0') > 0) {
+        el.style.height = '';
+        el.style.transition = '';
+      }
+      clearTimeout(fallback);
+      el.removeEventListener('transitionend', onEnd);
     };
     // Fallback: clear in case transitionend is delayed (e.g. background tab).
     const fallback = setTimeout(clearStyles, 400);
@@ -307,16 +325,16 @@ export const Favorites: FC<FavoritesProps> = ({
       clearTimeout(fallback);
       el.removeEventListener('transitionend', onEnd);
     };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
-  // On exit: collapse 0 height in sync with the sectionExit CSS animation so Browse slides up smoothly.
+  // On exit: collapse to 0 in sync with sectionExit CSS animation so Browse slides up smoothly.
+  // No overflow:clip — section fades out via sectionExit, so clipping is unnecessary.
   useLayoutEffect(() => {
     if (!isLeaving || !sectionWrapperRef.current) return;
     const el = sectionWrapperRef.current;
     const currentH = el.offsetHeight;
     if (currentH === 0) return;
     el.style.height = `${currentH}px`;
-    el.style.overflow = 'clip';
     void el.offsetHeight;
     el.style.transition = 'height 260ms ease-in';
     el.style.height = '0px';

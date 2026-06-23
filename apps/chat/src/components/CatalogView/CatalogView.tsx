@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { Catalog, CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
@@ -35,6 +36,11 @@ const CatalogView: FC = () => {
     [catalogItems],
   );
 
+  const filteredItems = useMemo(
+    () => catalogItems.filter((item) => !item.isUserFavorite),
+    [catalogItems],
+  );
+
   // TODO: replace with a real API call, e.g. GET /api/catalog/{id}/about
   const fetchAboutContent = useCallback(
     (item: CatalogItem): Promise<string | undefined> => {
@@ -48,10 +54,20 @@ const CatalogView: FC = () => {
       if (isLoading) return;
       toggleFavorite(id, isFavorite);
       const name = catalogItems.find((item) => item.id === id)?.name ?? id;
+
       showNotification({
-        variant: isFavorite ? NotificationVariant.Success : NotificationVariant.Info,
+        variant: isFavorite
+          ? NotificationVariant.Success
+          : NotificationVariant.Info,
+        title: t(
+          isFavorite
+            ? CatalogI18nKeys.FavoriteAddedTitle
+            : CatalogI18nKeys.FavoriteRemovedTitle,
+        ),
         message: t(
-          isFavorite ? CatalogI18nKeys.FavoriteAdded : CatalogI18nKeys.FavoriteRemoved,
+          isFavorite
+            ? CatalogI18nKeys.FavoriteAdded
+            : CatalogI18nKeys.FavoriteRemoved,
           { name },
         ),
       });
@@ -69,7 +85,7 @@ const CatalogView: FC = () => {
 
   return (
     <Catalog
-      items={catalogItems}
+      items={filteredItems}
       isLoading={isLoading}
       favorites={favorites}
       createOptions={createOptions}

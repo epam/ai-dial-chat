@@ -1,6 +1,6 @@
 .section {
   overflow-anchor: none;
-  animation: sectionEnter 300ms ease-out;
+  animation: sectionEnter 300ms cubic-bezier(0, 0, 0.2, 1);
   transition: min-height 280ms cubic-bezier(0, 0, 0.2, 1);
   background:
     linear-gradient(

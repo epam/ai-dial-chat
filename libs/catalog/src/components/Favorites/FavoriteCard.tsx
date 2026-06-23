@@ -1,7 +1,7 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialIcon, ElementSize } from '@epam/ai-dial-ui-kit';
 import { IconHistory } from '@tabler/icons-react';
-import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
+import { FC, MouseEvent, useCallback, useState } from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
 import { EntityBadge } from '../EntityBadge/EntityBadge';
 import { ItemHeader } from '../ItemHeader/ItemHeader';
@@ -52,31 +52,21 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
     }
   };
 
-  const handleClick = onClick && !isLeaving ? () => onClick(item) : undefined;
-
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLElement>) => {
-      if (!onClick || isLeaving) return;
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        onClick(item);
-      }
-    },
-    [onClick, item, isLeaving],
-  );
+  const handleClick = useCallback(() => {
+    if (!isLeaving) onClick?.(item);
+  }, [isLeaving, item, onClick]);
 
   return (
-    <div
+    <button
+      type="button"
       data-card-id={item.id}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
       className={mergeClasses(
         'box-border flex min-w-0 cursor-pointer flex-col gap-1 rounded-[6px] p-[13px] pb-[9px]',
+        'w-full border-0 bg-transparent text-start',
         styles.card,
         isLeaving && styles.cardLeaving,
       )}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
+      onClick={onClick ? handleClick : undefined}
       onAnimationEnd={
         isLeaving
           ? (e) => {
@@ -114,6 +104,6 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </button>
   );
 };
