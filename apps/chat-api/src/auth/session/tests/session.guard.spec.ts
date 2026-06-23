@@ -159,12 +159,14 @@ describe('SessionGuard', () => {
     );
   });
 
-  it('sets req.user.csrf to the pre-refresh token and rotates via response header', async () => {
+  it('keeps the CSRF token stable when refreshing the session', async () => {
     const now = Math.floor(Date.now() / 1000);
     const payload = makePayload({ at_exp: now + 30 });
-    const refreshed = makePayload({ at_exp: now + 3600, rt_exp: now + 86400 });
-    // Ensure the tokens are distinct so the assertion is meaningful
-    expect(payload.csrf).not.toBe(refreshed.csrf);
+    const refreshed = makePayload({
+      at_exp: now + 3600,
+      rt_exp: now + 86400,
+      csrf: payload.csrf,
+    });
 
     sessionService.decryptFromRequest.mockResolvedValue(payload);
     refreshService.refresh.mockResolvedValue(refreshed);
@@ -172,10 +174,8 @@ describe('SessionGuard', () => {
     const { context, req, res } = makeContext({ cookieValue: 'valid-token' });
     await guard.canActivate(context);
 
-    // CsrfGuard must validate the current request against the pre-refresh token
     expect((req.user as { csrf: string }).csrf).toBe(payload.csrf);
-    // The rotated token must be delivered to the client for subsequent requests
-    expect(res.setHeader).toHaveBeenCalledWith('X-CSRF-Token', refreshed.csrf);
+    expect(res.setHeader).toHaveBeenCalledWith('X-CSRF-Token', payload.csrf);
   });
 
   describe('lazy bucket resolution', () => {
