@@ -1,7 +1,8 @@
 import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, type ReactNode } from 'react';
-import { AuthStatus, useUser } from '../../context/auth/UserContext';
+import { useUser } from '../../context/auth/UserContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
+import { AuthStatus } from '../../types/auth-status';
 
 interface Props {
   children: ReactNode;

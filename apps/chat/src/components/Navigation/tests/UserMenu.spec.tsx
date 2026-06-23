@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthStatus } from '../../../context/auth/UserContext';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
 import * as BreakpointModule from '../../../hooks/breakpoint/useBreakpoint';
+import { AuthStatus } from '../../../types/auth-status';
 import { UserMenu } from '../UserMenu';
 
 vi.mock('../../../context/auth/UserContext');

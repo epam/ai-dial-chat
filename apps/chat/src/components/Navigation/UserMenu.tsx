@@ -22,7 +22,7 @@ import {
   AuthI18nKeys,
   SettingsI18nKeys,
 } from '../../constants/translation-keys';
-import { AuthStatus, useUser } from '../../context/auth/UserContext';
+import { useUser } from '../../context/auth/UserContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import {
   metaKey,
@@ -35,6 +35,7 @@ import {
 import { useLogout } from '../../hooks/logout/useLogout';
 import { useThemeOptions } from '../../hooks/theme/useThemeOptions';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
+import { AuthStatus } from '../../types/auth-status';
 import { ThemeId } from '../../types/theme-id';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import AvatarInitials from './AvatarInitials';

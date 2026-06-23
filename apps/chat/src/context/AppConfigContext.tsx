@@ -10,8 +10,9 @@ import {
   useState,
 } from 'react';
 import { getClientConfig } from '../server-api/app-config.api';
+import { AuthStatus } from '../types/auth-status';
 import { UserConfigStatus } from '../types/user-config-status';
-import { AuthStatus, useUser } from './auth/UserContext';
+import { useUser } from './auth/UserContext';
 
 const DEFAULT_TRANSCRIBE_SIZE_LIMIT = 5 * 1024 * 1024;
 

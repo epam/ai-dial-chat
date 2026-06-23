@@ -4,7 +4,8 @@ import { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as authApi from '../../server-api/auth.api';
 import { onUnauthorized, UnauthorizedError } from '../../server-api/base';
-import { AuthStatus, UserProvider, useUser } from './UserContext';
+import { AuthStatus } from '../../types/auth-status';
+import { UserProvider, useUser } from './UserContext';
 
 const mockProfile: UserProfileDto = {
   sub: 'user-1',

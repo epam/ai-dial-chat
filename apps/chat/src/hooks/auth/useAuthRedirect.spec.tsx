@@ -2,9 +2,9 @@ import { renderHook } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthStatus } from '../../context/auth/UserContext';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as authApi from '../../server-api/auth.api';
+import { AuthStatus } from '../../types/auth-status';
 import {
   AUTH_REDIRECT_ATTEMPT_STORAGE_KEY,
   useAuthRedirect,

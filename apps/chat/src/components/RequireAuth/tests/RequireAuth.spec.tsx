@@ -2,9 +2,9 @@ import { render, screen } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthStatus } from '../../../context/auth/UserContext';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as useAuthRedirectModule from '../../../hooks/auth/useAuthRedirect';
+import { AuthStatus } from '../../../types/auth-status';
 import RequireAuth from '../RequireAuth';
 
 vi.mock('../../../context/auth/UserContext');

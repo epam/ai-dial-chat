@@ -13,7 +13,7 @@ vi.mock('../../server-api/app-config.api');
 vi.mock('../auth/UserContext', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../auth/UserContext')>();
   return {
-    ...actual, // preserves AuthStatus re-export
+    ...actual,
     useUser: () => ({
       user: null,
       status: 'authenticated',

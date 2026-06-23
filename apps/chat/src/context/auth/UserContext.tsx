@@ -12,8 +12,6 @@ import { getMe } from '../../server-api/auth.api';
 import { onUnauthorized, UnauthorizedError } from '../../server-api/base';
 import { AuthStatus } from '../../types/auth-status';
 
-export { AuthStatus };
-
 interface UserContextType {
   status: AuthStatus;
   user: UserProfile | null;

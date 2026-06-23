@@ -1,7 +1,8 @@
 import { useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { AuthStatus, useUser } from '../../context/auth/UserContext';
+import { useUser } from '../../context/auth/UserContext';
 import { getProviders } from '../../server-api/auth.api';
+import { AuthStatus } from '../../types/auth-status';
 
 export const AUTH_REDIRECT_ATTEMPT_STORAGE_KEY = 'chat.auth.redirectAttempt';
 
