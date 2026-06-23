@@ -120,6 +120,7 @@ describe('FilesController — upload', () => {
         mimetype: expect.any(String),
       }),
       TEST_USER.at,
+      undefined,
     );
   });
 
@@ -142,6 +143,7 @@ describe('FilesController — upload', () => {
         mimetype: expect.any(String),
       }),
       TEST_USER.at,
+      undefined,
     );
   });
 
@@ -246,6 +248,48 @@ describe('FilesController — upload', () => {
       .field('path', 'folder/file.pdf')
       .attach('file', Buffer.from('hello'), 'file.pdf')
       .expect(503);
+  });
+
+  it('passes uploadMode to service when provided', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files')
+      .field('bucket', 'my-bucket')
+      .field('path', 'folder/file.pdf')
+      .field('uploadMode', 'create-only')
+      .attach('file', Buffer.from('hello'), 'file.pdf')
+      .expect(201);
+
+    expect(service.uploadFile).toHaveBeenCalledWith(
+      'my-bucket',
+      'folder/file.pdf',
+      expect.any(Object),
+      TEST_USER.at,
+      'create-only',
+    );
+  });
+
+  it('returns 400 for invalid uploadMode value', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files')
+      .field('bucket', 'my-bucket')
+      .field('path', 'folder/file.pdf')
+      .field('uploadMode', 'invalid-mode')
+      .attach('file', Buffer.from('hello'), 'file.pdf')
+      .expect(400);
+    expect(service.uploadFile).not.toHaveBeenCalled();
+  });
+
+  it('returns 409 when service throws ConflictException (race in create-only mode)', async () => {
+    service.uploadFile.mockRejectedValue(
+      new ConflictException('File already exists at this path'),
+    );
+    await request(app.getHttpServer())
+      .post('/api/v1/files')
+      .field('bucket', 'my-bucket')
+      .field('path', 'folder/file.pdf')
+      .field('uploadMode', 'create-only')
+      .attach('file', Buffer.from('hello'), 'file.pdf')
+      .expect(409);
   });
 });
 

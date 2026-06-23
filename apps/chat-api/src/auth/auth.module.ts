@@ -6,6 +6,7 @@ import { CsrfGuard } from './csrf/csrf.guard';
 import { KeysService } from './keys/keys.service';
 import { ProviderRegistryService } from './providers/provider-registry.service';
 import { RefreshService } from './refresh/refresh.service';
+import { OptionalSessionGuard } from './session/optional-session.guard';
 import { SessionGuard } from './session/session.guard';
 import { SessionService } from './session/session.service';
 
@@ -13,6 +14,7 @@ import { SessionService } from './session/session.service';
   controllers: [AuthController],
   providers: [
     KeysService,
+    OptionalSessionGuard,
     SessionService,
     RefreshService,
     ProviderRegistryService,
@@ -26,6 +28,6 @@ import { SessionService } from './session/session.service';
       useClass: CsrfGuard,
     },
   ],
-  exports: [SessionService, KeysService],
+  exports: [OptionalSessionGuard, SessionService, KeysService],
 })
 export class AuthModule {}

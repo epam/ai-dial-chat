@@ -14,7 +14,7 @@
     },
     "playwright": {
       "command": "npx",
-      "args": ["@playwright/mcp@latest", "--browser", "chrome"]
+      "args": ["@playwright/mcp@0.0.76", "--browser", "chrome"]
     }
   }
 }

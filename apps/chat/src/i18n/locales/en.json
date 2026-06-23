@@ -65,7 +65,24 @@
     "sortRecentlyUpdated": "Recently Updated",
     "sortNewest": "Newest",
     "sortNameAZ": "Name A-Z",
-    "featuredLabel": "Featured"
+    "featuredLabel": "Featured",
+    "details": {
+      "tabTools": "Tools",
+      "dailyLimit": "Daily limit",
+      "api": {
+        "resourceSection": "Resource",
+        "snippetSection": "Code snippet",
+        "modelId": "Model ID",
+        "endpoint": "Endpoint",
+        "requestExample": "Request example",
+        "responseSchema": "Response schema",
+        "copy": "Copy"
+      },
+      "pricing": {
+        "pricesSection": "Token pricing",
+        "limitsSection": "Usage limits"
+      }
+    }
   },
   "deployments": {
     "empty": "No models or applications available.",
@@ -112,7 +129,10 @@
     "copyAsMarkdown": "Copy markdown",
     "copyText": "Copy text",
     "likeResponse": "Like response",
-    "dislikeResponse": "Dislike response"
+    "dislikeResponse": "Dislike response",
+    "useInChat": "Use in chat",
+    "deploy": "Deploy",
+    "connect": "Connect"
   },
   "sidebar": {
     "base": {
@@ -265,6 +285,14 @@
     "uploadProgressTitle": "Uploading files",
     "uploadProgressSummary": "{{done}} of {{total}} complete",
     "uploadConflict": "A file with this name already exists",
+    "forbiddenSymbolsTooltip": "File names cannot contain: : ; , = / { } % & \"",
+    "conflictSingleTitle": "Replace or Duplicate Item",
+    "conflictMultipleTitle": "Replace or Duplicate Items",
+    "conflictReplace": "Replace",
+    "conflictDuplicate": "Duplicate",
+    "conflictDecideForEach": "Decide for each",
+    "conflictReplaceAll": "Replace all",
+    "conflictDuplicateAll": "Duplicate all",
     "downloadError": "Download failed",
     "folderCreateError": "Failed to create folder",
     "folderConflict": "A folder with this name already exists",

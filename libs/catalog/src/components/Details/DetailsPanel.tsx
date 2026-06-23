@@ -1,0 +1,207 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DialCloseButton, DialTabs } from '@epam/ai-dial-ui-kit';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import type { DetailsPanelProps } from '../../models/item-details-props';
+import { CatalogDetailsTab } from '../../types/detail-tab';
+import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
+import { ApiDetails } from './ApiDetails';
+import styles from './DetailsPanel.module.scss';
+import { Header } from './Header/Header';
+import { Summary } from './Summary/Summary';
+import { AboutTab } from './TabsContent/About';
+import { Overview } from './TabsContent/Overview';
+import { Pricing } from './TabsContent/Pricing';
+import { Tools } from './TabsContent/Tools/Tools';
+
+/** Right-side slide-in panel displaying full details for a catalog item. */
+export const DetailsPanel: FC<DetailsPanelProps> = ({
+  item,
+  isOpen,
+  isStarred: initialIsStarred = false,
+  aboutContent,
+  isAboutLoading = false,
+  onClose,
+  onToggleFavorite,
+  onUseInChat,
+  onShare,
+  texts,
+  styles: detailsStyles,
+}) => {
+  const {
+    overviewSectionClassName = 'dial-caption-text',
+    overviewLabelClassName = 'dial-small-semi-text',
+    overviewValueClassName = 'dial-small-text',
+    overviewValueTrueClassName = 'dial-small-text',
+  } = detailsStyles?.typography ?? {};
+
+  const [isStarred, setIsStarred] = useState(initialIsStarred);
+  const [activeTab, setActiveTab] = useState<string>(CatalogDetailsTab.About);
+
+  useEffect(() => {
+    setIsStarred(initialIsStarred);
+  }, [item.id, initialIsStarred]);
+
+  useEffect(() => {
+    setActiveTab(CatalogDetailsTab.About);
+  }, [item.id]);
+
+  const handleToggleFavorite = useCallback(() => {
+    const next = !isStarred;
+    setIsStarred(next);
+    onToggleFavorite?.(item.id, next);
+  }, [isStarred, item.id, onToggleFavorite]);
+
+  const tabs = useMemo(() => {
+    const result = [
+      { id: CatalogDetailsTab.About, label: texts?.tabAboutLabel ?? 'About' },
+    ];
+    if (item.details?.overview != null) {
+      result.push({
+        id: CatalogDetailsTab.Overview,
+        label: texts?.tabOverviewLabel ?? 'Overview',
+      });
+    }
+    if (item.details?.pricing != null) {
+      result.push({
+        id: CatalogDetailsTab.Pricing,
+        label: texts?.tabPricingLabel ?? 'Pricing',
+      });
+    }
+    if (item.details?.api != null) {
+      result.push({
+        id: CatalogDetailsTab.Api,
+        label: texts?.tabApiLabel ?? 'API',
+      });
+    }
+    if (item.details?.tools != null) {
+      result.push({
+        id: CatalogDetailsTab.Tools,
+        label: texts?.tabToolsLabel ?? 'Tools',
+      });
+    }
+    return result;
+  }, [item.details, texts]);
+
+  // Reset to About when the active tab is no longer in the available list.
+  useEffect(() => {
+    if (!tabs.some((t) => t.id === activeTab)) {
+      setActiveTab(CatalogDetailsTab.About);
+    }
+  }, [tabs, activeTab]);
+
+  const overviewYesLabel = texts?.overviewYesLabel ?? 'Yes';
+  const overviewNoLabel = texts?.overviewNoLabel ?? 'No';
+
+  const panelAriaLabel = texts?.ariaLabel ?? 'Item details';
+  const closeAriaLabel = texts?.closeAriaLabel ?? 'Close';
+  const starAriaLabel = isStarred
+    ? (texts?.removeFromFavoritesAriaLabel ?? 'Remove from favorites')
+    : (texts?.addToFavoritesAriaLabel ?? 'Add to favorites');
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className={mergeClasses(
+          'fixed inset-0 z-40 transition-opacity duration-300',
+          styles.backdrop,
+          isOpen ? 'opacity-100' : 'pointer-events-none opacity-0',
+        )}
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Slide-in panel */}
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={panelAriaLabel}
+        className={mergeClasses(
+          'fixed inset-y-0 end-0 z-50 flex w-[540px] flex-col overflow-hidden',
+          'rounded-ts-xl rounded-bs-xl border-s',
+          'transition-transform duration-300',
+          styles.panel,
+          isOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full',
+        )}
+      >
+        {/* Header: favorite + close */}
+        <div className="flex shrink-0 items-center justify-end gap-1.5 px-[22px] py-3">
+          <StarToggleButton
+            isStarred={isStarred}
+            ariaLabel={starAriaLabel}
+            onClick={handleToggleFavorite}
+          />
+          <DialCloseButton onClose={onClose} ariaLabel={closeAriaLabel} />
+        </div>
+
+        <div className={mergeClasses('shrink-0', styles.divider)} />
+
+        <Header
+          item={item}
+          onUseInChat={onUseInChat}
+          onShare={onShare}
+          texts={texts}
+        />
+
+        <div className={mergeClasses('shrink-0', styles.divider)} />
+
+        <Summary item={item} texts={texts} detailsStyles={detailsStyles} />
+
+        <div className={mergeClasses('shrink-0', styles.divider, 'px-[22px]')}>
+          <DialTabs tabs={tabs} activeTab={activeTab} onClick={setActiveTab} />
+        </div>
+
+        {/* Tab content — scrollable */}
+        <div
+          className={mergeClasses(
+            'min-h-0 flex-1 overflow-y-auto',
+            styles.content,
+            activeTab !== CatalogDetailsTab.Overview && 'px-[22px] py-4',
+          )}
+        >
+          {activeTab === CatalogDetailsTab.About && (
+            <AboutTab
+              item={item}
+              aboutContent={aboutContent}
+              isAboutLoading={isAboutLoading}
+              detailsStyles={detailsStyles}
+            />
+          )}
+          {activeTab === CatalogDetailsTab.Overview && (
+            <Overview
+              sections={item.details?.overview?.sections}
+              sectionClassName={overviewSectionClassName}
+              labelClassName={overviewLabelClassName}
+              valueClassName={overviewValueClassName}
+              valueTrueClassName={overviewValueTrueClassName}
+              yesLabel={overviewYesLabel}
+              noLabel={overviewNoLabel}
+            />
+          )}
+          {activeTab === CatalogDetailsTab.Pricing && (
+            <Pricing
+              pricing={item.details?.pricing}
+              pricesSectionLabel={texts?.pricingPricesSectionLabel}
+              limitsSectionLabel={texts?.pricingLimitsSectionLabel}
+            />
+          )}
+          {activeTab === CatalogDetailsTab.Api && item.details?.api != null && (
+            <ApiDetails
+              api={item.details.api}
+              resourceSectionLabel={texts?.apiResourceSectionLabel}
+              snippetSectionLabel={texts?.apiSnippetSectionLabel}
+              modelIdLabel={texts?.apiModelIdLabel}
+              endpointLabel={texts?.apiEndpointLabel}
+              requestExampleLabel={texts?.apiRequestExampleLabel}
+              responseSchemaLabel={texts?.apiResponseSchemaLabel}
+              copyAriaLabel={texts?.copyCodeAriaLabel}
+            />
+          )}
+          {activeTab === CatalogDetailsTab.Tools && (
+            <Tools tools={item.details?.tools} />
+          )}
+        </div>
+      </div>
+    </>
+  );
+};

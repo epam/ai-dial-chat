@@ -104,7 +104,9 @@ const ConversationRoute: FC = () => {
     };
   });
   const { showNotification } = useNotification();
-  const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
+  const {
+    config: { asrModelId, transcribeSizeLimitBytes },
+  } = useAppConfig();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const {

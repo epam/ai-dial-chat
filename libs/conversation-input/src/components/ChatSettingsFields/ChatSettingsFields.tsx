@@ -98,7 +98,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
         placeholder={systemPromptTooltip}
         labelProps={{
           label: systemPromptLabel,
-          className: mergeClasses(LABEL_CLASS_NAME, 'mb-3'),
+          className: LABEL_CLASS_NAME,
         }}
         onChange={(value) => onSystemPromptChange(value ?? '')}
       />

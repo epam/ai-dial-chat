@@ -8,16 +8,19 @@ import {
 
 const UPLOAD_URL = '/api/v1/files';
 
+export type UploadMode = 'overwrite' | 'create-only';
+
 export type UploadFileWithProgressOptions = {
   signal?: AbortSignal;
   onProgress?: (percent: number) => void;
+  uploadMode?: UploadMode;
 };
 
 export const uploadFileWithProgress = (
   bucket: string,
   path: string,
   file: File,
-  { signal, onProgress }: UploadFileWithProgressOptions,
+  { signal, onProgress, uploadMode }: UploadFileWithProgressOptions,
 ): Promise<FileUploadResponseDto> =>
   new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
@@ -33,6 +36,9 @@ export const uploadFileWithProgress = (
     formData.append('file', file);
     formData.append('bucket', bucket);
     formData.append('path', path);
+    if (uploadMode != null) {
+      formData.append('uploadMode', uploadMode);
+    }
 
     xhr.upload.addEventListener('progress', (event) => {
       if (!onProgress || !event.lengthComputable || event.total <= 0) {

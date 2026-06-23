@@ -20,10 +20,16 @@ describe('ChatController (integration)', () => {
     }).compile();
 
     app = module.createNestApplication();
-    app.use((req: any, _res: any, next: any) => {
-      req.user = TEST_USER;
-      next();
-    });
+    app.use(
+      (
+        req: import('express').Request,
+        _res: import('express').Response,
+        next: import('express').NextFunction,
+      ) => {
+        req.user = TEST_USER as any;
+        next();
+      },
+    );
     app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,

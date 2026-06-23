@@ -177,6 +177,58 @@ describe('FilesService', () => {
         ServiceUnavailableException,
       );
     });
+
+    it('does not send If-None-Match when uploadMode is overwrite', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadFile.mockResolvedValue(okUpload('bucket/path/file.pdf'));
+
+      await service.uploadFile(
+        'bucket',
+        'path/file.pdf',
+        mockFile,
+        'token',
+        'overwrite',
+      );
+
+      expect(sdkClient.uploadFile.mock.calls[0][2].headers).not.toHaveProperty(
+        'If-None-Match',
+      );
+    });
+
+    it('sends If-None-Match: * when uploadMode is create-only', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadFile.mockResolvedValue(okUpload('bucket/path/file.pdf'));
+
+      await service.uploadFile(
+        'bucket',
+        'path/file.pdf',
+        mockFile,
+        'token',
+        'create-only',
+      );
+
+      expect(sdkClient.uploadFile.mock.calls[0][2].headers).toMatchObject({
+        'If-None-Match': '*',
+      });
+    });
+
+    it('maps 412 from DIAL Core to ConflictException (409)', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadFile.mockResolvedValue(errResponse(412));
+
+      await expect(
+        service.uploadFile('b', 'p', mockFile, 't', 'create-only'),
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await service.uploadFile('b', 'p', mockFile, 't', 'create-only');
+      } catch (err) {
+        expect((err as HttpException).getStatus()).toBe(409);
+        expect((err as HttpException).message).toBe(
+          'File already exists at this path',
+        );
+      }
+    });
   });
 
   describe('downloadFile', () => {

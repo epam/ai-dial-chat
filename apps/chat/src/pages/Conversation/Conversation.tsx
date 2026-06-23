@@ -60,7 +60,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
+  const {
+    config: { asrModelId, transcribeSizeLimitBytes },
+  } = useAppConfig();
   const {
     items: deploymentItems,
     restoreSelectedItemId,

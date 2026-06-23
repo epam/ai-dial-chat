@@ -1,5 +1,6 @@
 import type { CatalogItem, FavoriteItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
+import type { ItemDetailsTexts } from './item-details-props';
 
 /** Text labels used by the `Catalog` surface. */
 export interface CatalogTitles {
@@ -58,4 +59,6 @@ export interface CatalogProps {
   onCreateClick?: () => void;
   /** Optional color and typography overrides. */
   styles?: CatalogStyles;
+  /** Text overrides forwarded to the item details panel. */
+  detailsTexts?: ItemDetailsTexts;
 }

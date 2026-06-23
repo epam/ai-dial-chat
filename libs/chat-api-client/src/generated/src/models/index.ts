@@ -3,25 +3,6 @@
 /**
  *
  * @export
- * @interface AppConfigDto
- */
-export interface AppConfigDto {
-  /**
-   * Deployment ID of the ASR model used for transcription. Null when ASR_MODEL is not configured.
-   * @type {object}
-   * @memberof AppConfigDto
-   */
-  asrModelId?: object | null;
-  /**
-   * Maximum audio file size in bytes accepted by the transcription endpoint.
-   * @type {number}
-   * @memberof AppConfigDto
-   */
-  transcribeSizeLimitBytes: number;
-}
-/**
- *
- * @export
  * @interface ApplicationDto
  */
 export interface ApplicationDto {
@@ -352,6 +333,75 @@ export interface Check200Response {
    * @memberof Check200Response
    */
   version?: string;
+}
+/**
+ *
+ * @export
+ * @interface ClientConfigDto
+ */
+export interface ClientConfigDto {
+  /**
+   * Deployment ID of the ASR model. Null when ASR is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  asrModelId: string | null;
+  /**
+   * Maximum audio file size in bytes accepted by the transcription endpoint.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  transcribeSizeLimitBytes: number;
+}
+/**
+ *
+ * @export
+ * @interface ClientConfigMetadataDto
+ */
+export interface ClientConfigMetadataDto {
+  /**
+   * ISO timestamp when the config was resolved.
+   * @type {string}
+   * @memberof ClientConfigMetadataDto
+   */
+  resolvedAt: string;
+  /**
+   * Cache TTL in seconds applied to this response.
+   * @type {number}
+   * @memberof ClientConfigMetadataDto
+   */
+  cacheTtlSeconds: number;
+}
+/**
+ *
+ * @export
+ * @interface ClientConfigResponseDto
+ */
+export interface ClientConfigResponseDto {
+  /**
+   * Application identifier.
+   * @type {string}
+   * @memberof ClientConfigResponseDto
+   */
+  appId: string;
+  /**
+   * Feature flags — boolean per feature key.
+   * @type {object}
+   * @memberof ClientConfigResponseDto
+   */
+  features: object;
+  /**
+   * Non-boolean configuration values.
+   * @type {ClientConfigDto}
+   * @memberof ClientConfigResponseDto
+   */
+  config: ClientConfigDto;
+  /**
+   * Resolution metadata.
+   * @type {ClientConfigMetadataDto}
+   * @memberof ClientConfigResponseDto
+   */
+  metadata?: ClientConfigMetadataDto;
 }
 /**
  *

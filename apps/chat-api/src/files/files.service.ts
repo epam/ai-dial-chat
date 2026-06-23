@@ -7,6 +7,7 @@ import { finished, pipeline } from 'node:stream/promises';
 import {
   ConflictException,
   HttpException,
+  HttpStatus,
   Injectable,
   Logger,
   PayloadTooLargeException,
@@ -30,6 +31,7 @@ import { ArchiveItemNodeType } from './dto/download-archive.dto';
 import type { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
 import type { ListFilesResponseDto } from './dto/list-files.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
+import type { UploadMode } from './dto/upload-file.dto';
 import { FOLDER_NODE_TYPE, MARKER_NAME } from './files.constants';
 import {
   summarizeDialRawItems,
@@ -109,11 +111,15 @@ export class FilesService extends AppService {
     path: string,
     file: UploadedFile,
     token: string,
+    uploadMode?: UploadMode,
   ): Promise<FileUploadResponseDto> {
     try {
       this.logger.debug(
-        `Uploading file to DIAL Core: bucket=${bucket}, path=${path}, mimetype=${file.mimetype}, size=${file.buffer.length}`,
+        `Uploading file to DIAL Core: bucket=${bucket}, path=${path}, mimetype=${file.mimetype}, size=${file.buffer.length}, uploadMode=${uploadMode ?? 'overwrite'}`,
       );
+
+      const conditionalHeaders =
+        uploadMode === 'create-only' ? { 'If-None-Match': '*' } : {};
 
       const { data, error, response } = (await this.client.uploadFile(
         bucket,
@@ -121,6 +127,7 @@ export class FilesService extends AppService {
         {
           headers: {
             ...getBearerAuthHeaders(token),
+            ...conditionalHeaders,
           },
           body: buildUploadFormData(file, path) as unknown as string,
           signal: AbortSignal.timeout(this.getTimeoutMs()),
@@ -128,6 +135,15 @@ export class FilesService extends AppService {
       )) as { data?: { url?: string }; error?: unknown; response: Response };
 
       if (error != null) {
+        if (response.status === 412) {
+          this.logger.warn(
+            `DIAL Core upload precondition failed (412): bucket=${bucket}, path=${path} — mapping to 409 Conflict`,
+          );
+          throw new HttpException(
+            'File already exists at this path',
+            HttpStatus.CONFLICT,
+          );
+        }
         this.logger.warn(
           `DIAL Core upload returned error: status=${response.status}, bucket=${bucket}, path=${path}`,
         );
@@ -140,6 +156,9 @@ export class FilesService extends AppService {
       );
       return { url };
     } catch (err) {
+      if (err instanceof HttpException) {
+        throw err;
+      }
       this.logger.error(`Upload failed for ${bucket}/${path}`, err);
       return handleDialError(err);
     }

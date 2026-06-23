@@ -1,0 +1,28 @@
+.sectionHeading {
+  color: var(--text-secondary, #9fa6bd);
+}
+
+.rowAlt {
+  background: var(--bg-layer-1, #0d1425);
+}
+
+.label {
+  color: var(--text-secondary, #9fa6bd);
+}
+
+.checkIcon {
+  flex-shrink: 0;
+  color: var(--text-accent-secondary, #37babc);
+}
+
+.valueTrue {
+  color: var(--text-primary, #eef1f7);
+}
+
+.valueFalse {
+  color: var(--text-secondary, #9fa6bd);
+}
+
+.valueText {
+  color: var(--text-primary, #eef1f7);
+}
