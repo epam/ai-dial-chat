@@ -18,6 +18,7 @@
     }
   },
   "peerDependencies": {
+    "@epam/ai-dial-attachment-input": "*",
     "@epam/ai-dial-chat-shared": "*",
     "@epam/ai-dial-ui-kit": "0.11.0",
     "@tabler/icons-react": "^3.44.0",

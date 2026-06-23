@@ -38,6 +38,12 @@
     },
     {
       "path": "./libs/source-panel"
+    },
+    {
+      "path": "./libs/attachment-canvas"
+    },
+    {
+      "path": "./libs/attachment-input"
     }
   ]
 }

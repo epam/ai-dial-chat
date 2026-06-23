@@ -7,6 +7,14 @@ import * as path from 'path';
 export default defineConfig(() => ({
   root: import.meta.dirname,
   cacheDir: '../../node_modules/.vite/libs/conversation-input',
+  resolve: {
+    alias: {
+      '@epam/ai-dial-attachment-input': path.resolve(
+        import.meta.dirname,
+        '../attachment-input/src/index.ts',
+      ),
+    },
+  },
   plugins: [
     react(),
     dts({
@@ -42,6 +50,7 @@ export default defineConfig(() => ({
         'react',
         'react-dom',
         'react/jsx-runtime',
+        '@epam/ai-dial-attachment-input',
         '@epam/ai-dial-chat-shared',
         '@epam/ai-dial-ui-kit',
         '@tabler/icons-react',

@@ -316,6 +316,12 @@
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."
   },
+  "attachmentCanvas": {
+    "ariaLabel": "Attachment preview",
+    "closeLabel": "Close attachment preview",
+    "downloadLabel": "Download attachment",
+    "unsupportedLabel": "Preview is not supported for this file"
+  },
   "errorBoundary": {
     "heading": "Something went wrong",
     "description": "An unexpected error occurred. You can try again or reload the page.",
