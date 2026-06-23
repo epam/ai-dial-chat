@@ -511,8 +511,8 @@ dialAdminTest(
     await dialAdminTest.step(
       'Click Copy URL button in editor and verify URL is copied to clipboard',
       async () => {
-        const copiedUrl = await marketplacePage.captureNextClipboardWrite(() =>
-          adminToolsetEditorViewForm.copyUrlButton.click(),
+        const copiedUrl = await adminMarketplacePage.captureNextClipboardWrite(
+          () => adminToolsetEditorViewForm.copyUrlButton.click(),
         );
         adminToolsetEditorViewFormAssertion.assertValueMatchPattern(
           copiedUrl,
