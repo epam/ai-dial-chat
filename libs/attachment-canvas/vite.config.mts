@@ -36,6 +36,7 @@ export default defineConfig(() => ({
         '@epam/ai-dial-sidebar',
         '@epam/ai-dial-ui-kit',
         '@tabler/icons-react',
+        'react-json-view-lite',
       ],
     },
   },

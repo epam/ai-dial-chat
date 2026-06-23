@@ -288,4 +288,6 @@ export enum AttachmentCanvasI18nKeys {
   CloseLabel = 'attachmentCanvas.closeLabel',
   DownloadLabel = 'attachmentCanvas.downloadLabel',
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
+  CopyAsMarkdown = 'attachmentCanvas.copyAsMarkdown',
+  Copied = 'attachmentCanvas.copied',
 }

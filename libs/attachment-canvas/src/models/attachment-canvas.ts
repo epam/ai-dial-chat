@@ -1,3 +1,4 @@
+import type { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
 import type { CSSProperties } from 'react';
 import { AttachmentContentType } from '../types/attachment-canvas';
@@ -18,6 +19,22 @@ export interface ImageCanvasContent {
   url: string;
 }
 
+/** Content payload for Markdown file attachments. */
+export interface MarkdownCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Markdown;
+  /** Raw Markdown string to render. */
+  text: string;
+}
+
+/** Content payload for JSON file attachments. */
+export interface JsonCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Json;
+  /** Already-parsed JSON value. The lib never calls JSON.parse. */
+  value: unknown;
+}
+
 /** Content payload for attachments whose format cannot be previewed. */
 export interface UnsupportedCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -28,6 +45,8 @@ export interface UnsupportedCanvasContent {
 export type AttachmentCanvasContent =
   | PlainTextCanvasContent
   | ImageCanvasContent
+  | MarkdownCanvasContent
+  | JsonCanvasContent
   | UnsupportedCanvasContent;
 
 /** Themeable color overrides for the AttachmentCanvas content body. */
@@ -89,10 +108,16 @@ export interface AttachmentCanvasProps {
   closeLabel?: string;
   /** Called when the user activates the download button. When omitted the download button is hidden. Hidden automatically when content type is `Unsupported`. */
   onDownload?: () => void;
+  /** Called when the user activates the copy-as-markdown button. When omitted the button is hidden. Only relevant when content type is `Markdown`. */
+  onCopyMarkdown?: () => void;
   /** Message shown in the canvas body when the content type is `Unsupported`. Defaults to `'Preview is not supported for this file'`. */
   unsupportedLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download'`. */
   downloadLabel?: string;
+  /** Tooltip and accessible label for the copy-as-markdown button in its default state. Defaults to `'Copy as Markdown'`. */
+  copyMarkdownLabel?: string;
+  /** Tooltip and accessible label for the copy-as-markdown button after a successful copy. Defaults to `'Copied!'`. */
+  copiedMarkdownLabel?: string;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. */
   isMobile?: boolean;
   /** Initial panel width in pixels (when resizable). Defaults to `560`. */
@@ -107,4 +132,6 @@ export interface AttachmentCanvasProps {
   styles?: AttachmentCanvasStyles;
   /** Extra class name(s) merged onto the panel width wrapper. */
   className?: string;
+  /** Syntax highlight color theme forwarded to MarkdownRenderer code blocks. */
+  codeBlockTheme?: CodeBlockTheme;
 }

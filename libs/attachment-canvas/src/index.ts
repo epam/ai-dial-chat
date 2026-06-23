@@ -16,6 +16,8 @@ export type {
   AttachmentCanvasContent,
   PlainTextCanvasContent,
   ImageCanvasContent,
+  MarkdownCanvasContent,
+  JsonCanvasContent,
   UnsupportedCanvasContent,
   AttachmentCanvasColors,
   AttachmentCanvasTypography,

@@ -1,23 +1,36 @@
 import type {
   ImageCanvasContent,
+  JsonCanvasContent,
+  MarkdownCanvasContent,
   PlainTextCanvasContent,
 } from '@epam/ai-dial-attachment-canvas';
 import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
 import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { resolveDialFileDownloadUrl } from './icon-path';
 
+/**
+ * Returns the best downloadable DIAL-file URL from an attachment's `url` or
+ * `referenceUrl`, or `undefined` when neither is a valid DIAL `files/` path.
+ */
+const resolveDialUrl = (attachment: DisplayAttachment): string | undefined => {
+  const candidate = attachment.url?.startsWith('files/')
+    ? attachment.url
+    : attachment.referenceUrl?.startsWith('files/')
+      ? attachment.referenceUrl
+      : undefined;
+  return candidate != null ? resolveDialFileDownloadUrl(candidate) : undefined;
+};
+
 /** Resolves an image canvas content payload from a DisplayAttachment, or `null` if unavailable. */
 export const resolveImageCanvasContent = async (
   attachment: DisplayAttachment,
 ): Promise<ImageCanvasContent | null> => {
-  if (attachment.url?.startsWith('files/')) {
-    const url = resolveDialFileDownloadUrl(attachment.url);
-    return url != null ? { type: AttachmentContentType.Image, url } : null;
-  }
+  const url = resolveDialUrl(attachment);
+  if (url != null) return { type: AttachmentContentType.Image, url };
   if ('file' in attachment) {
     const a = attachment as Attachment;
-    const url = a.previewUrl ?? URL.createObjectURL(a.file);
-    return { type: AttachmentContentType.Image, url };
+    const fileUrl = a.previewUrl ?? URL.createObjectURL(a.file);
+    return { type: AttachmentContentType.Image, url: fileUrl };
   }
   return null;
 };
@@ -26,9 +39,8 @@ export const resolveImageCanvasContent = async (
 export const resolveTextCanvasContent = async (
   attachment: DisplayAttachment,
 ): Promise<PlainTextCanvasContent | null> => {
-  if (attachment.url?.startsWith('files/')) {
-    const downloadUrl = resolveDialFileDownloadUrl(attachment.url);
-    if (downloadUrl == null) return null;
+  const downloadUrl = resolveDialUrl(attachment);
+  if (downloadUrl != null) {
     const response = await fetch(downloadUrl);
     if (!response.ok) return null;
     const text = await response.text();
@@ -39,4 +51,60 @@ export const resolveTextCanvasContent = async (
     return { type: AttachmentContentType.PlainText, text };
   }
   return null;
+};
+
+/** Resolves a Markdown canvas content payload from a DisplayAttachment, or `null` if unavailable. */
+export const resolveMarkdownCanvasContent = async (
+  attachment: DisplayAttachment,
+): Promise<MarkdownCanvasContent | null> => {
+  if (attachment.data != null) {
+    return { type: AttachmentContentType.Markdown, text: attachment.data };
+  }
+  const downloadUrl = resolveDialUrl(attachment);
+  if (downloadUrl != null) {
+    const response = await fetch(downloadUrl);
+    if (!response.ok) return null;
+    const text = await response.text();
+    return { type: AttachmentContentType.Markdown, text };
+  }
+  if ('file' in attachment && (attachment as Attachment).file.size > 0) {
+    const text = await (attachment as Attachment).file.text();
+    return { type: AttachmentContentType.Markdown, text };
+  }
+  return null;
+};
+
+/**
+ * Resolves a JSON canvas content payload from a DisplayAttachment, or `null` if unavailable.
+ * Falls back to `PlainTextCanvasContent` when the fetched text is not valid JSON.
+ */
+export const resolveJsonCanvasContent = async (
+  attachment: DisplayAttachment,
+): Promise<JsonCanvasContent | PlainTextCanvasContent | null> => {
+  let text: string;
+
+  if (attachment.data != null) {
+    text = attachment.data;
+  } else {
+    const downloadUrl = resolveDialUrl(attachment);
+    if (downloadUrl != null) {
+      const response = await fetch(downloadUrl);
+      if (!response.ok) return null;
+      text = await response.text();
+    } else if (
+      'file' in attachment &&
+      (attachment as Attachment).file.size > 0
+    ) {
+      text = await (attachment as Attachment).file.text();
+    } else {
+      return null;
+    }
+  }
+
+  try {
+    const value = JSON.parse(text);
+    return { type: AttachmentContentType.Json, value };
+  } catch {
+    return { type: AttachmentContentType.PlainText, text };
+  }
 };

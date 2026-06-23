@@ -10,3 +10,81 @@
   letter-spacing: var(--ac-letter-spacing);
   font-family: var(--ac-font-family);
 }
+
+// react-json-view-lite: structural base without the hardcoded grey background
+.jsonContainer {
+  line-height: 1.2;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+// Themed token styles – map app CSS variables so the tree respects dark/light
+.jsonLabel {
+  color: var(--text-primary, #eef1f7);
+  font-weight: 600;
+  margin-right: 5px;
+}
+
+.jsonClickableLabel {
+  color: var(--text-primary, #eef1f7);
+  font-weight: 600;
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.jsonPunctuation {
+  color: var(--text-secondary, #9fa6bd);
+  font-weight: bold;
+  margin-right: 5px;
+}
+
+.jsonStringValue {
+  color: var(--text-accent-secondary, #37babc);
+}
+
+.jsonNumberValue {
+  color: var(--text-accent-primary, #7da4ff);
+}
+
+.jsonBooleanValue {
+  color: var(--text-warning, #eec840);
+}
+
+.jsonNullValue {
+  color: var(--text-secondary, #9fa6bd);
+}
+
+.jsonExpandIcon {
+  cursor: pointer;
+  font-size: 1.2em;
+  margin-right: 5px;
+  user-select: none;
+  color: var(--text-secondary, #9fa6bd);
+
+  &::after {
+    content: '\25B8';
+  }
+}
+
+.jsonCollapseIcon {
+  cursor: pointer;
+  font-size: 1.2em;
+  margin-right: 5px;
+  user-select: none;
+  color: var(--text-secondary, #9fa6bd);
+
+  &::after {
+    content: '\25BE';
+  }
+}
+
+.jsonCollapsedContent {
+  cursor: pointer;
+  margin-right: 5px;
+  color: var(--text-secondary, #9fa6bd);
+
+  &::after {
+    content: '...';
+    font-size: 0.8em;
+  }
+}

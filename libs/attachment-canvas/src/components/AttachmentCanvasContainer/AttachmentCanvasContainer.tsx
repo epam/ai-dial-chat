@@ -1,5 +1,11 @@
+import {
+  copyToClipboard,
+  type CodeBlockTheme,
+} from '@epam/ai-dial-chat-shared';
 import { memo, useCallback, type FC } from 'react';
 import { useAttachmentCanvas } from '../../context/AttachmentCanvasContext';
+import type { MarkdownCanvasContent } from '../../models/attachment-canvas';
+import { AttachmentContentType } from '../../types/attachment-canvas';
 import { downloadAttachmentContent } from '../../utils/download';
 import { AttachmentCanvas } from '../AttachmentCanvas/AttachmentCanvas';
 
@@ -13,8 +19,14 @@ export interface AttachmentCanvasContainerProps {
   downloadLabel?: string;
   /** Message shown when the content type is `Unsupported`. Defaults to `'Preview is not supported for this file'`. */
   unsupportedLabel?: string;
+  /** Tooltip and aria-label for the copy-as-markdown button in its default state. Defaults to `'Copy as Markdown'`. */
+  copyMarkdownLabel?: string;
+  /** Tooltip and aria-label for the copy-as-markdown button after a successful copy. Defaults to `'Copied!'`. */
+  copiedMarkdownLabel?: string;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. Defaults to `false`. */
   isMobile?: boolean;
+  /** Syntax highlight color theme forwarded to MarkdownRenderer code blocks. */
+  codeBlockTheme?: CodeBlockTheme;
 }
 
 /** Context-connected container that renders `AttachmentCanvas` with download support. */
@@ -25,13 +37,22 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       closeLabel = 'Close',
       downloadLabel = 'Download',
       unsupportedLabel = 'Preview is not supported for this file',
+      copyMarkdownLabel,
+      copiedMarkdownLabel,
       isMobile = false,
+      codeBlockTheme,
     }) => {
       const { isOpen, content, fileName, closeCanvas } = useAttachmentCanvas();
 
       const handleDownload = useCallback(() => {
         downloadAttachmentContent(content, fileName);
       }, [content, fileName]);
+
+      const handleCopyMarkdown = useCallback(() => {
+        if (content.type === AttachmentContentType.Markdown) {
+          void copyToClipboard((content as MarkdownCanvasContent).text);
+        }
+      }, [content]);
 
       return (
         <AttachmentCanvas
@@ -43,8 +64,16 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           closeLabel={closeLabel}
           onDownload={handleDownload}
           downloadLabel={downloadLabel}
+          onCopyMarkdown={
+            content.type === AttachmentContentType.Markdown
+              ? handleCopyMarkdown
+              : undefined
+          }
+          copyMarkdownLabel={copyMarkdownLabel}
+          copiedMarkdownLabel={copiedMarkdownLabel}
           unsupportedLabel={unsupportedLabel}
           isMobile={isMobile}
+          codeBlockTheme={codeBlockTheme}
         />
       );
     },
