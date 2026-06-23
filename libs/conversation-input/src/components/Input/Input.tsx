@@ -1,3 +1,9 @@
+import {
+  AttachmentTray,
+  MAX_UPLOADS_PER_MINUTE,
+  generateAttachmentId,
+  useClipboardPaste,
+} from '@epam/ai-dial-attachment-input';
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentErrorReason,
@@ -23,17 +29,13 @@ import {
   useRef,
   useState,
 } from 'react';
-import { MAX_UPLOADS_PER_MINUTE } from '../../constants/upload';
-import { useClipboardPaste } from '../../hooks/useClipboardPaste';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useIsMobile } from '../../hooks/useIsMobile';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
 import { runAtRate } from '../../utils/concurrency';
-import { generateAttachmentId } from '../../utils/generateAttachmentId';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
-import { AttachmentTray } from '../AttachmentTray/AttachmentTray';
 import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
 import { StopButton } from './Buttons/StopButton';

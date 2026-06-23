@@ -6,15 +6,7 @@ import * as path from 'path';
 
 export default defineConfig(() => ({
   root: import.meta.dirname,
-  cacheDir: '../../node_modules/.vite/libs/conversation-input',
-  resolve: {
-    alias: {
-      '@epam/ai-dial-attachment-input': path.resolve(
-        import.meta.dirname,
-        '../attachment-input/src/index.ts',
-      ),
-    },
-  },
+  cacheDir: '../../node_modules/.vite/libs/attachment-input',
   plugins: [
     react(),
     dts({
@@ -22,12 +14,6 @@ export default defineConfig(() => ({
       tsconfigPath: path.join(import.meta.dirname, 'tsconfig.lib.json'),
     }),
   ],
-  // Uncomment this if you are using workers.
-  // worker: {
-  //  plugins: [],
-  // },
-  // Configuration for building your library.
-  // See: https://vite.dev/guide/build.html#library-mode
   build: {
     outDir: './dist',
     emptyOutDir: true,
@@ -36,21 +22,16 @@ export default defineConfig(() => ({
       transformMixedEsModules: true,
     },
     lib: {
-      // Could also be a dictionary or array of multiple entry points.
       entry: 'src/index.ts',
-      name: '@epam/ai-dial-conversation-input',
+      name: '@epam/ai-dial-attachment-input',
       fileName: 'index',
-      // Change this to the formats you want to support.
-      // Don't forget to update your package.json as well.
       formats: ['es' as const],
     },
     rollupOptions: {
-      // External packages that should not be bundled into your library.
       external: [
         'react',
         'react-dom',
         'react/jsx-runtime',
-        '@epam/ai-dial-attachment-input',
         '@epam/ai-dial-chat-shared',
         '@epam/ai-dial-ui-kit',
         '@tabler/icons-react',
@@ -58,7 +39,7 @@ export default defineConfig(() => ({
     },
   },
   test: {
-    name: '@epam/ai-dial-conversation-input',
+    name: '@epam/ai-dial-attachment-input',
     watch: false,
     globals: true,
     environment: 'jsdom',
