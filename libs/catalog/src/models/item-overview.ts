@@ -20,7 +20,7 @@ export interface OverviewSection {
 }
 
 /**
- * Structured data powering the Overview tab of `CatalogItemDetails`.
+ * Structured data powering the Overview tab of `DetailsPanel`.
  *
  * Recommended source format: a TypeScript file per entity type (or per provider)
  * exporting a `Record<string, CatalogItemOverview>` keyed by item id.

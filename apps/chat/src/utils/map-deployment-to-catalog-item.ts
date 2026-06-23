@@ -1,7 +1,9 @@
 import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
 import { formatLastUsed } from '@epam/ai-dial-chat-shared';
 import type { DeploymentItemDto } from '@epam/chat-api-client';
+import type { EntitySpecificDetails } from '../types/entity-details';
 import { resolveCatalogIconUrl } from './icon-path';
+import { mapEntityDetailsToCatalogDetails } from './map-entity-details-to-catalog';
 
 const TYPE_MAP: Record<string, CatalogEntityType> = {
   model: CatalogEntityType.Model,
@@ -12,6 +14,7 @@ const TYPE_MAP: Record<string, CatalogEntityType> = {
 export const mapDeploymentToCatalogItem = (
   deployment: DeploymentItemDto,
   favoriteIds: ReadonlySet<string> = new Set(),
+  entityDetails?: EntitySpecificDetails,
 ): CatalogItem => {
   const name = deployment.displayName ?? deployment.id;
   const normalizedType = (deployment.type ?? '').toLowerCase();
@@ -31,6 +34,10 @@ export const mapDeploymentToCatalogItem = (
     isUserFavorite: favoriteIds.has(deployment.id),
     isStarred: favoriteIds.has(deployment.id),
     folder: [],
-    overview: undefined,
+    summary: undefined,
+    details:
+      entityDetails != null
+        ? mapEntityDetailsToCatalogDetails(entityDetails)
+        : undefined,
   };
 };
