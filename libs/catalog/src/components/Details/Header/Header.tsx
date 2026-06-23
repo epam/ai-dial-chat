@@ -1,10 +1,8 @@
-import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialNeutralButton,
   DialPrimaryButton,
-  DialTag,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconChevronDown,
@@ -17,11 +15,8 @@ import type {
   ItemDetailsStyles,
   ItemDetailsTexts,
 } from '../../../models/item-details-props';
-import { EntityBadge } from '../../EntityBadge/EntityBadge';
-import { FolderPath } from '../../FolderPath/FolderPath';
-import { ItemHeader } from '../../ItemHeader/ItemHeader';
-import styles from '../DetailsPanel.module.scss';
 import { EntityHeader } from '../../EntityHeader/EntityHeader';
+import { FolderPath } from '../../FolderPath/FolderPath';
 
 interface HeaderProps {
   item: CatalogItem;
