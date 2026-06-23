@@ -1,6 +1,6 @@
 #!/bin/sh
-# Hard gate: never let a broken agent-config file land.
-# Validates staged rules/skills/config.yaml/AGENTS.md/CLAUDE.md before the commit.
+# Hard gate: never let broken agent configuration or an unknown project
+# breakpoint land. Relevant staged files trigger a full semantic validation.
 # Bypass in emergencies with `git commit --no-verify`.
 
 if ! command -v node >/dev/null 2>&1; then
@@ -19,9 +19,8 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 
 files=$(git diff --cached --name-only --diff-filter=ACM | grep -E \
-  '^(\.claude/rules/.*\.md|\.claude/skills/.*\.md|AGENTS\.md|CLAUDE\.md|openspec/config\.yaml)$')
+  '^(\.agents/skills/.*\.md|\.claude/commands/.*\.md|\.claude/rules/.*\.md|\.claude/skills/.*\.md|\.claude/settings\.json|\.cursor/rules/.*\.mdc|\.mcp\.json|AGENTS\.md|CLAUDE\.md|openspec/config\.yaml|(apps|libs)/.*\.(css|js|jsx|scss|ts|tsx))$')
 
 [ -z "$files" ] && exit 0
 
-# shellcheck disable=SC2086
-node scripts/validate-agent-docs.mjs $files
+node scripts/validate-agent-docs.mjs
