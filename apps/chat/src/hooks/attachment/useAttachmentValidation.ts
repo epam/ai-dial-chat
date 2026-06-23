@@ -1,4 +1,8 @@
 import {
+  isMimeTypeAllowed,
+  mimeTypesToExtensionLabels,
+} from '@epam/ai-dial-attachment-input';
+import {
   AttachmentErrorReason,
   type Attachment,
   type DeploymentItem,
@@ -8,10 +12,6 @@ import { useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { AttachmentsI18nKeys } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
-import {
-  isMimeTypeAllowed,
-  mimeTypesToExtensionLabels,
-} from '../../utils/attachment-mime';
 
 export const useAttachmentValidation = (
   selectedDeployment: DeploymentItem | undefined,

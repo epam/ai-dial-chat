@@ -2,8 +2,8 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "rootDir": "src",
-    "outDir": "../../dist/libs/conversation-input",
-    "tsBuildInfoFile": "../../dist/libs/conversation-input/tsconfig.lib.tsbuildinfo",
+    "outDir": "../../dist/libs/attachment-input",
+    "tsBuildInfoFile": "../../dist/libs/attachment-input/tsconfig.lib.tsbuildinfo",
 
     "jsx": "react-jsx",
 
@@ -33,12 +33,6 @@
     "src/**/*.spec.jsx"
   ],
   "references": [
-    {
-      "path": "../attachment-input/tsconfig.lib.json"
-    },
-    {
-      "path": "../chat-api-client/tsconfig.lib.json"
-    },
     {
       "path": "../chat-shared/tsconfig.lib.json"
     }

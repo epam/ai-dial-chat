@@ -48,7 +48,7 @@
       "path": "../../libs/starter-buttons/tsconfig.lib.json"
     },
     {
-      "path": "../../libs/attachment-canvas/tsconfig.lib.json"
+      "path": "../../libs/attachment-input/tsconfig.lib.json"
     },
     {
       "path": "../../libs/conversation-input/tsconfig.lib.json"
@@ -73,6 +73,9 @@
     },
     {
       "path": "../../libs/conversation-panel/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/attachment-canvas/tsconfig.lib.json"
     }
   ]
 }

@@ -68,6 +68,10 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/attachment-canvas/src/index.ts',
       ),
+      '@epam/ai-dial-attachment-input': path.resolve(
+        __dirname,
+        '../../libs/attachment-input/src/index.ts',
+      ),
     },
   },
   build: {
