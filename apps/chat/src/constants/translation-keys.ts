@@ -73,6 +73,9 @@ export enum ButtonsI18nKeys {
   Save = 'buttons.save',
   Close = 'buttons.close',
   Send = 'buttons.send',
+  UseInChat = 'buttons.useInChat',
+  Deploy = 'buttons.deploy',
+  Connect = 'buttons.connect',
 }
 
 export enum NavigationI18nKeys {
@@ -98,6 +101,18 @@ export enum CatalogI18nKeys {
   SortNewest = 'catalog.sortNewest',
   SortNameAZ = 'catalog.sortNameAZ',
   FeaturedLabel = 'catalog.featuredLabel',
+  // Details panel
+  DetailsTabTools = 'catalog.details.tabTools',
+  DetailsDailyLimit = 'catalog.details.dailyLimit',
+  DetailsApiResourceSection = 'catalog.details.api.resourceSection',
+  DetailsApiSnippetSection = 'catalog.details.api.snippetSection',
+  DetailsApiModelId = 'catalog.details.api.modelId',
+  DetailsApiEndpoint = 'catalog.details.api.endpoint',
+  DetailsApiRequestExample = 'catalog.details.api.requestExample',
+  DetailsApiResponseSchema = 'catalog.details.api.responseSchema',
+  DetailsApiCopy = 'catalog.details.api.copy',
+  DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
+  DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
 }
 
 export enum DeploymentsI18nKeys {

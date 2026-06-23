@@ -1,0 +1,19 @@
+.container {
+  border: 1px solid var(--stroke-secondary, #242c42);
+}
+
+.header {
+  color: var(--text-secondary, #9fa6bd);
+  background: var(--bg-layer-1, #0d1425);
+  letter-spacing: 0.06em;
+  font-weight: 500;
+}
+
+.cell {
+  color: var(--text-primary, #e4e6f0);
+  border-top: 1px solid var(--stroke-secondary, #242c42);
+}
+
+.evenRow {
+  background: var(--bg-layer-1, #0d1425);
+}

@@ -89,8 +89,8 @@ Use a prefix so authors know what is mandatory:
 
 When checking “tests / build / lint”:
 
-- Prefer `npx nx test <project>`, `npx nx lint <project>`, `npx nx build <project>` for touched projects (see `AGENTS.md`).
-- For broad checks: `npm run lint`, or `npm run lint:affected` / `npx nx affected` when a git baseline exists.
+- Prefer `npm exec nx test <project>`, `npm exec nx lint <project>`, `npm exec nx build <project>` for touched projects (see `AGENTS.md`).
+- For broad checks: `npm run lint`, or `npm run lint:affected` / `npm exec nx affected` when a git baseline exists.
 
 ## Commit / PR description
 

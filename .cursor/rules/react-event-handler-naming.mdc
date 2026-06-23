@@ -1,6 +1,6 @@
 ---
 description: React event callback and handler naming convention
-globs: **/*.tsx
+globs: '**/*.tsx'
 alwaysApply: false
 ---
 
