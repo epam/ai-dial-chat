@@ -161,7 +161,6 @@ describe('ConversationsContext — deleteAllConversations', () => {
     });
 
     expect(mockListConversations).toHaveBeenCalledTimes(2);
-    expect(returned).toBeDefined();
     expect(returned?.failed).toHaveLength(1);
   });
 

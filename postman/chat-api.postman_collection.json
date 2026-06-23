@@ -36,6 +36,30 @@
   ],
   "item": [
     {
+      "name": "app-config",
+      "item": [
+        {
+          "name": "Get client-safe application configuration and feature flags",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/client-config?appId=chat-ui",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "client-config"],
+              "query": [
+                {
+                  "key": "appId",
+                  "value": "chat-ui",
+                  "description": "Application identifier. Must be a known app ID."
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
       "name": "applications",
       "item": [
         {
@@ -173,23 +197,6 @@
               "path": ["api", "v1", "chat", "completions"]
             },
             "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
-          }
-        }
-      ]
-    },
-    {
-      "name": "config",
-      "item": [
-        {
-          "name": "Get application feature configuration",
-          "request": {
-            "method": "GET",
-            "header": [{ "key": "Accept", "value": "application/json" }],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/config",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "config"]
-            }
           }
         }
       ]

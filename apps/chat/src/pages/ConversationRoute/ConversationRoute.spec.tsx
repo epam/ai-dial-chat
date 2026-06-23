@@ -2,6 +2,7 @@ import type { DeploymentConfigurationSchema } from '@epam/ai-dial-chat-shared';
 import { SendOnEnter } from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { act, render, screen, waitFor } from '@testing-library/react';
+import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
@@ -10,9 +11,19 @@ import * as NotificationContextModule from '../../context/NotificationContext';
 import * as KeyboardShortcutModule from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import * as conversationsApi from '../../server-api/conversations.api';
 import * as filesApi from '../../server-api/files.api';
+import { AuthStatus } from '../../types/auth-status';
 import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
 import ConversationRoute from './ConversationRoute';
 
+vi.mock('../../context/AppConfigContext', () => ({
+  default: ({ children }: { children: React.ReactNode }) => children,
+  useAppConfig: () => ({
+    status: 'ready',
+    features: {},
+    config: { asrModelId: null, transcribeSizeLimitBytes: 5 * 1024 * 1024 },
+  }),
+  useFeatureFlag: () => false,
+}));
 vi.mock('../../context/DeploymentsContext');
 vi.mock('../../context/auth/UserContext');
 vi.mock('../../context/NotificationContext');
@@ -173,7 +184,7 @@ describe('ConversationRoute', () => {
     });
     mockUseUser.mockReturnValue({
       user: { sub: 'u1', providerId: 'p1', claims: {}, bucket: 'user-bucket' },
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       refresh: vi.fn(),
       reset: vi.fn(),
     });
@@ -531,7 +542,7 @@ describe('ConversationRoute', () => {
   it('creates a text-only conversation when bucket is empty', async () => {
     mockUseUser.mockReturnValue({
       user: { sub: 'u1', providerId: 'p1', claims: {}, bucket: '' },
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       refresh: vi.fn(),
       reset: vi.fn(),
     });
