@@ -322,9 +322,7 @@
     "ariaLabel": "Attachment preview",
     "closeLabel": "Close attachment preview",
     "downloadLabel": "Download attachment",
-    "unsupportedLabel": "Preview is not supported for this file",
-    "copyAsMarkdown": "Copy as Markdown",
-    "copied": "Copied!"
+    "unsupportedLabel": "Preview is not supported for this file"
   },
   "errorBoundary": {
     "heading": "Something went wrong",

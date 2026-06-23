@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import {
   AttachmentType,
+  MIMEType,
   type DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
@@ -36,7 +37,7 @@ export const useOpenAttachmentCanvas = () => {
         case AttachmentType.File: {
           const contentType = attachment.contentType.toLowerCase();
 
-          if (contentType === 'text/markdown') {
+          if (contentType === MIMEType.Markdown) {
             const content = await resolveMarkdownCanvasContent(attachment);
             openCanvas(
               content ?? createUnsupportedCanvasContent(),
@@ -44,7 +45,7 @@ export const useOpenAttachmentCanvas = () => {
             );
             return true;
           }
-          if (contentType === 'application/json') {
+          if (contentType === MIMEType.JSON) {
             const content = await resolveJsonCanvasContent(attachment);
             openCanvas(
               content ?? createUnsupportedCanvasContent(),

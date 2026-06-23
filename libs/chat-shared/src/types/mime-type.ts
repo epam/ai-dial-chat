@@ -15,4 +15,6 @@ export enum MIMEType {
   JPEG = 'image/jpeg',
   /** PNG raster image. */
   PNG = 'image/png',
+  /** JSON data. */
+  JSON = 'application/json',
 }

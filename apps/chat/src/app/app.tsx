@@ -33,7 +33,10 @@ import {
   getConversationRoute,
   normalizeConversationId,
 } from '../constants/routes';
-import { AttachmentCanvasI18nKeys } from '../constants/translation-keys';
+import {
+  AttachmentCanvasI18nKeys,
+  ButtonsI18nKeys,
+} from '../constants/translation-keys';
 import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import useLocalStorage from '../hooks/useLocalStorage';
@@ -191,8 +194,8 @@ const App: FC = () => {
           closeLabel={t(AttachmentCanvasI18nKeys.CloseLabel)}
           downloadLabel={t(AttachmentCanvasI18nKeys.DownloadLabel)}
           unsupportedLabel={t(AttachmentCanvasI18nKeys.UnsupportedLabel)}
-          copyMarkdownLabel={t(AttachmentCanvasI18nKeys.CopyAsMarkdown)}
-          copiedMarkdownLabel={t(AttachmentCanvasI18nKeys.Copied)}
+          copyMarkdownLabel={t(ButtonsI18nKeys.CopyAsMarkdown)}
+          copiedMarkdownLabel={t(ButtonsI18nKeys.Copied)}
           isMobile={isMobile}
           codeBlockTheme={codeBlockTheme}
         />
