@@ -255,9 +255,6 @@ dialTest(
           pasteToElement: sendMessage.messageInput,
           isHttpMethodTriggered: false,
         });
-        if (await replaceConfirmationModal.isVisible({ timeout: 5000 })) {
-          await replaceConfirmationModal.confirmUploadDuplicates();
-        }
         for (const fileToPaste of filesToPaste) {
           await sendMessageInputAttachmentsAssertions.assertFileIsAttached(
             fileToPaste,

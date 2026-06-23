@@ -122,7 +122,9 @@ dialTest(
           entityDetailsModal.copyLinkText,
           entityDetailsModal.copyLinkIcon,
         ]) {
-          await linkElement.click();
+          cardCopiedLink = await marketplacePage.captureNextClipboardWrite(() =>
+            linkElement.click(),
+          );
           await baseAssertion.assertElementText(
             entityDetailsModal.copiedLink,
             ExpectedConstants.copiedLinkText,
@@ -142,7 +144,6 @@ dialTest(
           );
         }
         await entityDetailsModal.closeButton.click();
-        cardCopiedLink = await marketplacePage.readTextFromClipboard();
       },
     );
 
@@ -153,16 +154,18 @@ dialTest(
         await marketplaceEntities
           .getEntityElementDotsMenu(agentElement)
           .click();
-        await marketplaceEntities
-          .getEntityDropdownMenu()
-          .selectMenuOption(MenuOptions.copyLink);
+        dotsMenuCopiedLink = await marketplacePage.captureNextClipboardWrite(
+          () =>
+            marketplaceEntities
+              .getEntityDropdownMenu()
+              .selectMenuOption(MenuOptions.copyLink),
+        );
         await baseAssertion.assertElementState(toast, 'visible');
         await baseAssertion.assertElementText(
           toast,
           ExpectedConstants.copiedToastMessage,
         );
         await toast.closeToast();
-        dotsMenuCopiedLink = await marketplacePage.readTextFromClipboard();
       },
     );
 
