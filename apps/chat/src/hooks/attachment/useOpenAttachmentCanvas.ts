@@ -1,12 +1,14 @@
-import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  createUnsupportedCanvasContent,
+  isTextPreviewable,
+  useAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import {
   AttachmentType,
   type DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import {
-  createUnsupportedCanvasContent,
-  isTextPreviewable,
   resolveImageCanvasContent,
   resolveTextCanvasContent,
 } from '../../utils/attachment-canvas';

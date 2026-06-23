@@ -7,6 +7,10 @@ export {
 } from './context/AttachmentCanvasContext';
 export type { AttachmentCanvasContextValue } from './context/AttachmentCanvasContext';
 export { downloadAttachmentContent } from './utils/download';
+export {
+  isTextPreviewable,
+  createUnsupportedCanvasContent,
+} from './utils/content';
 export { AttachmentContentType } from './models/attachment-canvas';
 export type {
   AttachmentCanvasContent,
