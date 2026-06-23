@@ -1,6 +1,6 @@
 import type { CatalogItem } from './catalog-item';
 
-/** Text overrides for all user-visible strings in `CatalogItemDetails`. */
+/** Text overrides for all user-visible strings in `DetailsPanel`. */
 export interface ItemDetailsTexts {
   /** "Use in chat" action button label. Default: `'Use in chat'`. */
   useInChatLabel?: string;
@@ -58,7 +58,7 @@ export interface ItemDetailsTexts {
   pricingLimitsSectionLabel?: string;
 }
 
-/** Typography class overrides for `CatalogItemDetails` text elements. */
+/** Typography class overrides for `DetailsPanel` text elements. */
 export interface ItemDetailsTypography {
   /** Typography class for the entity name. Default: `'dial-display-2-text'`. */
   nameClassName?: string;
@@ -82,14 +82,14 @@ export interface ItemDetailsTypography {
   overviewValueTrueClassName?: string;
 }
 
-/** Grouped style overrides for `CatalogItemDetails`. */
+/** Grouped style overrides for `DetailsPanel`. */
 export interface ItemDetailsStyles {
   /** Typography class overrides for text elements. */
   typography?: ItemDetailsTypography;
 }
 
-/** Props for `CatalogItemDetails`. */
-export interface ItemDetailsProps {
+/** Props for `DetailsPanel`. */
+export interface DetailsPanelProps {
   /** The catalog item to display in the panel. */
   item: CatalogItem;
   /** Controls whether the panel is visible. */

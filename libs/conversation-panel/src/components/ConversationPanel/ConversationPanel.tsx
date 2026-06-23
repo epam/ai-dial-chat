@@ -7,7 +7,15 @@ import {
   SidebarPanel,
 } from '@epam/ai-dial-sidebar';
 import { DialSkeleton } from '@epam/ai-dial-ui-kit';
-import { type FC, memo, useCallback, useMemo, useRef, useState } from 'react';
+import {
+  type FC,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { List } from 'react-window';
 import { ITEM_ROW_HEIGHT } from '../../constants/virtual-list';
 import { ConversationPanelProps } from '../../models/panel-props';
@@ -64,10 +72,18 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onPanelResizeStop,
     headerActions,
     onMoveConversation,
+    activeFilter,
+    onActiveFilterChange,
   }) => {
     const { colors, typography } = panelStyles ?? {};
     const [searchQuery, setSearchQuery] = useState('');
     const [activeTab, setActiveTab] = useState(FilterTab.All);
+
+    useEffect(() => {
+      if (activeFilter == null) return;
+      setActiveTab(activeFilter);
+      onActiveFilterChange?.(activeFilter);
+    }, [activeFilter]); // eslint-disable-line react-hooks/exhaustive-deps
     const [expandedGroups, setExpandedGroups] = useState<Set<string>>(
       () => ALL_GROUP_KEYS,
     );
@@ -367,7 +383,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         <FilterTabs
           activeTab={activeTab}
           labels={filterLabels}
-          onChange={setActiveTab}
+          onChange={(tab) => {
+            setActiveTab(tab);
+            onActiveFilterChange?.(tab);
+          }}
           tabClassName={typography?.tabClassName}
           tabColorClassName={typography?.tabColorClassName}
         />

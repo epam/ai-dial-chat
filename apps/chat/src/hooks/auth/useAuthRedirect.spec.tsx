@@ -4,6 +4,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as authApi from '../../server-api/auth.api';
+import { AuthStatus } from '../../types/auth-status';
 import {
   AUTH_REDIRECT_ATTEMPT_STORAGE_KEY,
   useAuthRedirect,
@@ -48,7 +49,7 @@ describe('useAuthRedirect', () => {
 
   it('single provider: window.location.assign is called once with the correct URL', async () => {
     mockUseUser.mockReturnValue({
-      status: 'unauthenticated',
+      status: AuthStatus.Unauthenticated,
       user: null,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -74,7 +75,7 @@ describe('useAuthRedirect', () => {
 
   it('recent failed automatic attempt: falls back to /login without fetching providers again', async () => {
     mockUseUser.mockReturnValue({
-      status: 'unauthenticated',
+      status: AuthStatus.Unauthenticated,
       user: null,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -104,7 +105,7 @@ describe('useAuthRedirect', () => {
 
   it('multiple providers: navigate to /login when unauthenticated', async () => {
     mockUseUser.mockReturnValue({
-      status: 'unauthenticated',
+      status: AuthStatus.Unauthenticated,
       user: null,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -128,7 +129,7 @@ describe('useAuthRedirect', () => {
 
   it('no navigation when status is loading', async () => {
     mockUseUser.mockReturnValue({
-      status: 'loading',
+      status: AuthStatus.Loading,
       user: null,
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -147,7 +148,7 @@ describe('useAuthRedirect', () => {
 
   it('authenticated on /login: navigate to same-origin callbackUrl', async () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: { sub: 'u1', providerId: 'keycloak', claims: {} },
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -178,7 +179,7 @@ describe('useAuthRedirect', () => {
 
   it('authenticated on /login: navigate to / when callbackUrl is missing', async () => {
     mockUseUser.mockReturnValue({
-      status: 'authenticated',
+      status: AuthStatus.Authenticated,
       user: { sub: 'u1', providerId: 'keycloak', claims: {} },
       refresh: vi.fn(),
       reset: vi.fn(),
@@ -193,7 +194,7 @@ describe('useAuthRedirect', () => {
 
   it('no provider fetch on /login route when unauthenticated', async () => {
     mockUseUser.mockReturnValue({
-      status: 'unauthenticated',
+      status: AuthStatus.Unauthenticated,
       user: null,
       refresh: vi.fn(),
       reset: vi.fn(),

@@ -67,11 +67,6 @@
     "featuredLabel": "Featured",
     "details": {
       "tabTools": "Tools",
-      "primaryAction": {
-        "useInChat": "Use in chat",
-        "deploy": "Deploy",
-        "connect": "Connect"
-      },
       "dailyLimit": "Daily limit",
       "api": {
         "resourceSection": "Resource",
@@ -139,7 +134,10 @@
     "copyAsMarkdown": "Copy markdown",
     "copyText": "Copy text",
     "likeResponse": "Like response",
-    "dislikeResponse": "Dislike response"
+    "dislikeResponse": "Dislike response",
+    "useInChat": "Use in chat",
+    "deploy": "Deploy",
+    "connect": "Connect"
   },
   "sidebar": {
     "base": {
@@ -228,6 +226,10 @@
       "title": "File extension not supported",
       "message": "This model can only process {{formats}}. Please upload a file in a supported format."
     },
+    "noAttachmentsAllowed": {
+      "title": "Attachments not supported",
+      "message": "This model does not support file attachments."
+    },
     "networkError": {
       "title": "Network unavailable",
       "message": "Some files were not uploaded because your internet connection was lost.\n Please try again:\n"
@@ -273,6 +275,14 @@
     "uploadProgressTitle": "Uploading files",
     "uploadProgressSummary": "{{done}} of {{total}} complete",
     "uploadConflict": "A file with this name already exists",
+    "forbiddenSymbolsTooltip": "File names cannot contain: : ; , = / { } % & \"",
+    "conflictSingleTitle": "Replace or Duplicate Item",
+    "conflictMultipleTitle": "Replace or Duplicate Items",
+    "conflictReplace": "Replace",
+    "conflictDuplicate": "Duplicate",
+    "conflictDecideForEach": "Decide for each",
+    "conflictReplaceAll": "Replace all",
+    "conflictDuplicateAll": "Duplicate all",
     "downloadError": "Download failed",
     "folderCreateError": "Failed to create folder",
     "folderConflict": "A folder with this name already exists",
@@ -305,5 +315,11 @@
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."
+  },
+  "errorBoundary": {
+    "heading": "Something went wrong",
+    "description": "An unexpected error occurred. You can try again or reload the page.",
+    "retryLabel": "Try again",
+    "reloadLabel": "Reload the page"
   }
 }

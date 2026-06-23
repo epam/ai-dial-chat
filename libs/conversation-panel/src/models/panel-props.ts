@@ -2,6 +2,7 @@ import type { DropdownItem } from '@epam/ai-dial-ui-kit';
 import type { ReactNode } from 'react';
 import { ConversationGroupKey } from '../types/conversation-group-key';
 import { ConversationSource } from '../types/conversation-source';
+import { FilterTab } from '../types/filter-tab';
 
 /** Labels for each filter tab — provided as props so the app supplies i18n strings. */
 export interface FilterLabels {
@@ -195,6 +196,17 @@ export interface ConversationPanelProps {
    * - same-group drop → reorder
    */
   onMoveConversation?: (move: ConversationMove) => void;
+  /**
+   * Imperatively sets the active filter tab. When provided the panel switches
+   * to this tab; the user can still change it afterwards. Pass `undefined` to
+   * leave the current tab unchanged.
+   */
+  activeFilter?: FilterTab;
+  /**
+   * Called whenever the active filter tab changes — either because the user
+   * clicked a tab or because `activeFilter` drove a programmatic switch.
+   */
+  onActiveFilterChange?: (tab: FilterTab) => void;
 }
 
 /** Describes a completed drag-and-drop move in the conversation panel. */

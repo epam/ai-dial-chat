@@ -6,6 +6,7 @@ import {
   DialPrimaryButton,
   DialLoader,
   GridSelectionMode,
+  NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
   PopupSize,
   type DialFile,
@@ -20,7 +21,10 @@ import {
   useState,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  DialFileManagerI18nKeys,
+} from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
 import {
@@ -330,6 +334,26 @@ const DialFileManagerModal: FC<Props> = ({
   const isOperationInProgress =
     isDownloading || isDeleting || isCreatingFolder || uploadBatchState != null;
 
+  const conflictResolutionPopupOptions = useMemo(
+    () => ({
+      singleFileTitle: t(DialFileManagerI18nKeys.ConflictSingleTitle),
+      multipleFilesTitle: t(DialFileManagerI18nKeys.ConflictMultipleTitle),
+      actionLabels: {
+        replace: t(DialFileManagerI18nKeys.ConflictReplace),
+        duplicate: t(DialFileManagerI18nKeys.ConflictDuplicate),
+        cancel: t(ButtonsI18nKeys.Cancel),
+      },
+      strategyLabels: {
+        replaceAll: t(DialFileManagerI18nKeys.ConflictReplaceAll),
+        duplicateAll: t(DialFileManagerI18nKeys.ConflictDuplicateAll),
+        decideForEach: t(DialFileManagerI18nKeys.ConflictDecideForEach),
+      },
+      confirmLabel: t(ButtonsI18nKeys.Confirm),
+      cancelLabel: t(ButtonsI18nKeys.Cancel),
+    }),
+    [t],
+  );
+
   const deleteConfirmationOptions = useMemo(
     () => ({
       cancelLabel: deleteCancelLabel,
@@ -508,6 +532,11 @@ const DialFileManagerModal: FC<Props> = ({
               onDownloadFiles={onDownloadFiles}
               onDeleteFiles={onDeleteFiles}
               deleteConfirmationOptions={deleteConfirmationOptions}
+              conflictResolutionPopupOptions={conflictResolutionPopupOptions}
+              forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
+              forbiddenSymbolsTooltip={t(
+                DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
+              )}
               getDisabledTooltip={getDisabledTooltip}
             />
             {isDownloading && (

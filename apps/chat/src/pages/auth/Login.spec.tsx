@@ -5,6 +5,7 @@ import { AuthI18nKeys } from '../../constants/translation-keys';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as useAuthRedirectModule from '../../hooks/auth/useAuthRedirect';
 import * as authApi from '../../server-api/auth.api';
+import { AuthStatus } from '../../types/auth-status';
 import LoginPage from './Login';
 
 vi.mock('../../context/auth/UserContext');
@@ -26,7 +27,7 @@ describe('LoginPage', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseUser.mockReturnValue({
-      status: 'unauthenticated',
+      status: AuthStatus.Unauthenticated,
       user: null,
       refresh: vi.fn(),
       reset: vi.fn(),

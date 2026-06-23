@@ -73,6 +73,9 @@ export enum ButtonsI18nKeys {
   Save = 'buttons.save',
   Close = 'buttons.close',
   Send = 'buttons.send',
+  UseInChat = 'buttons.useInChat',
+  Deploy = 'buttons.deploy',
+  Connect = 'buttons.connect',
 }
 
 export enum NavigationI18nKeys {
@@ -100,9 +103,6 @@ export enum CatalogI18nKeys {
   FeaturedLabel = 'catalog.featuredLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
-  DetailsPrimaryActionUseInChat = 'catalog.details.primaryAction.useInChat',
-  DetailsPrimaryActionDeploy = 'catalog.details.primaryAction.deploy',
-  DetailsPrimaryActionConnect = 'catalog.details.primaryAction.connect',
   DetailsDailyLimit = 'catalog.details.dailyLimit',
   DetailsApiResourceSection = 'catalog.details.api.resourceSection',
   DetailsApiSnippetSection = 'catalog.details.api.snippetSection',
@@ -170,6 +170,14 @@ export enum DialFileManagerI18nKeys {
   DeleteConfirmBodyMultiple = 'dialFileManager.deleteConfirmBodyMultiple',
   DeleteConfirmBodyItems = 'dialFileManager.deleteConfirmBodyItems',
   DeleteConfirmButton = 'dialFileManager.deleteConfirmButton',
+  ConflictSingleTitle = 'dialFileManager.conflictSingleTitle',
+  ConflictMultipleTitle = 'dialFileManager.conflictMultipleTitle',
+  ConflictReplace = 'dialFileManager.conflictReplace',
+  ConflictDuplicate = 'dialFileManager.conflictDuplicate',
+  ConflictReplaceAll = 'dialFileManager.conflictReplaceAll',
+  ConflictDuplicateAll = 'dialFileManager.conflictDuplicateAll',
+  ConflictDecideForEach = 'dialFileManager.conflictDecideForEach',
+  ForbiddenSymbolsTooltip = 'dialFileManager.forbiddenSymbolsTooltip',
 }
 
 export enum AuthI18nKeys {
@@ -243,6 +251,8 @@ export enum AttachmentsI18nKeys {
   Download = 'attachments.downloadFile',
   UnsupportedTypeTitle = 'attachments.unsupportedType.title',
   UnsupportedTypeMessage = 'attachments.unsupportedType.message',
+  NoAttachmentsAllowedTitle = 'attachments.noAttachmentsAllowed.title',
+  NoAttachmentsAllowedMessage = 'attachments.noAttachmentsAllowed.message',
   NetworkErrorTitle = 'attachments.networkError.title',
   NetworkErrorMessage = 'attachments.networkError.message',
 }

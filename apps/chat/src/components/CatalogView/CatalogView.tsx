@@ -90,7 +90,7 @@ const CatalogView: FC = () => {
       }}
       detailsTexts={{
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
-        primaryActionLabel: t(CatalogI18nKeys.DetailsPrimaryActionUseInChat),
+        primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
         dailyLimitLabel: t(CatalogI18nKeys.DetailsDailyLimit),
         apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
         apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),

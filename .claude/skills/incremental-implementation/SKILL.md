@@ -9,11 +9,11 @@ description: Build in thin vertical slices. Use for any multi-file change, refac
 
 Prefer Nx over raw tooling (see `AGENTS.md`). After each slice, run checks **for the project(s) you touched**, for example:
 
-- Tests: `npx nx test <project>`
-- Lint: `npx nx lint <project>` or `npm run lint:affected` when you have a git baseline
-- Build (when the slice affects bundling or Nest): `npx nx build <project>`
+- Tests: `npm exec nx test <project>`
+- Lint: `npm exec nx lint <project>` or `npm run lint:affected` when you have a git baseline
+- Build (when the slice affects bundling or Nest): `npm exec nx build <project>`
 
-Use `npx nx show projects` / `npx nx show project <name> --json` if you are unsure which project owns a path.
+Use `npm exec nx show projects` / `npm exec nx show project <name> --json` if you are unsure which project owns a path.
 
 ## Overview
 
@@ -69,9 +69,9 @@ After each increment:
 - [ ] If `libs/chat-api-client` changed, it was regenerated from OpenAPI sources rather than manually edited
 - [ ] Relative TypeScript source imports are extensionless; resource and explicit package-subpath extensions are preserved
 - [ ] Named finite TypeScript value sets use string enums instead of string-literal unions when exported, reused, or compared
-- [ ] Tests pass for the Nx project(s) you changed (`npx nx test <project>`)
-- [ ] Lint passes for touched projects (`npx nx lint <project>` or affected lint)
-- [ ] Build passes when your slice affects build output (`npx nx build <project>`)
+- [ ] Tests pass for the Nx project(s) you changed (`npm exec nx test <project>`)
+- [ ] Lint passes for touched projects (`npm exec nx lint <project>` or affected lint)
+- [ ] Build passes when your slice affects build output (`npm exec nx build <project>`)
 - [ ] New behavior matches the slice you intended
 - [ ] Commit message describes the slice; no large mixed bag in one commit
 

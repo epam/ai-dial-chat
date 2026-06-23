@@ -150,6 +150,17 @@ export class EnvironmentVariables {
       .filter((s: string) => s.length > 0);
   })
   @IsString({ each: true })
+  ASR_ENABLED_ROLES?: string[] = [];
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
   FEATURED_MODEL_IDS?: string[] = [];
 
   @IsOptional()
