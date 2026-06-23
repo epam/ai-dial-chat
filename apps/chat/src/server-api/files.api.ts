@@ -36,14 +36,18 @@ export const uploadFile = (
   file: File,
   options?: AbortSignal | UploadFileOptions,
 ): Promise<FileUploadResponseDto> => {
-  const { signal, onProgress } = resolveUploadOptions(options);
+  const { signal, onProgress, uploadMode } = resolveUploadOptions(options);
 
   if (onProgress != null) {
-    return uploadFileWithProgress(bucket, path, file, { signal, onProgress });
+    return uploadFileWithProgress(bucket, path, file, {
+      signal,
+      onProgress,
+      uploadMode,
+    });
   }
 
   return filesApi.uploadFile(
-    { bucket, path, file },
+    { bucket, path, file, uploadMode },
     signal ? { signal } : undefined,
   );
 };

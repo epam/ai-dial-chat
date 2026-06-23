@@ -1,11 +1,19 @@
 ---
 name: address-current-branch-review
-description: Read unresolved GitHub code review threads for the pull request associated with the current branch, classify each comment, implement and verify required code fixes, and post an accurate inline reply. Use when the user asks to handle, address, process, fix, or answer code review comments on the current branch or current PR. For comments that need no code change, reply with a concise technical explanation instead of modifying code.
+description: Read unresolved GitHub code review threads for the pull request associated with the current branch, classify each comment, and implement and verify required code fixes. Post inline replies only when the user explicitly asks to reply after the changes have been pushed and are visible in the PR.
 ---
 
 # Address Current Branch Review
 
-Process current-branch review feedback end to end: inspect thread state, decide whether code must change, verify any fix, and reply in the original review thread.
+Process current-branch review feedback: inspect thread state, decide whether code must change, and verify any fix. Treat posting review replies as a separate, explicitly authorized action after push.
+
+## Reply Authorization Gate
+
+- A request to fix, handle, address, or process review comments authorizes code changes only. It does not authorize posting GitHub comments.
+- Post replies only when the user separately and explicitly asks to reply or answer the review comments.
+- Before posting a fix reply, verify that the relevant commit is pushed and included in the PR head. Local working-tree changes or unpushed commits are never sufficient.
+- If the fix is not visible in the PR, do not post. Tell the user to push first.
+- Replies must describe the current PR state as already updated or fixed. Never post wording such as “prepared locally,” “will appear after push,” or any other future-tense visibility disclaimer.
 
 ## Workflow
 
@@ -22,23 +30,23 @@ Process current-branch review feedback end to end: inspect thread state, decide 
 
 3. Load thread-aware review data.
    - Use the GitHub app review-thread action to get `is_resolved`, `is_outdated`, path, line, and replies.
-   - Also fetch flat PR comments when numeric comment IDs are needed for inline replies.
+   - Fetch flat PR comments for numeric comment IDs only when the user explicitly asked to post replies.
    - Ignore resolved, outdated, approval-only, informational, bot-only, and duplicate threads.
    - Do not assume flat comments represent thread resolution state.
 
 4. Prevent duplicate work.
    - Read every reply already present in the thread.
    - Skip a thread if the requested change is already present in the current code and an adequate answer was already posted.
-   - If code is fixed but unanswered, post only the missing reply.
+   - If code is fixed but unanswered, report that status. Post the missing reply only after explicit reply authorization and the push check.
 
 5. Classify each active thread.
 
-   | Classification | Action                                                               |
-   | -------------- | -------------------------------------------------------------------- |
-   | `fix-required` | Change code, add or update tests, verify, then reply                 |
-   | `reply-only`   | Do not change code; reply with the technical reason or clarification |
-   | `ambiguous`    | Do not guess or post; ask the user for the missing decision          |
-   | `conflicting`  | Explain the conflict and ask before changing behavior                |
+   | Classification | Action                                                                        |
+   | -------------- | ----------------------------------------------------------------------------- |
+   | `fix-required` | Change code, add or update tests, and verify. Do not reply unless authorized. |
+   | `reply-only`   | Draft a technical explanation. Post it only when explicitly authorized.       |
+   | `ambiguous`    | Do not guess or post; ask the user for the missing decision.                  |
+   | `conflicting`  | Explain the conflict and ask before changing behavior.                        |
 
 6. Implement `fix-required` threads.
    - Inspect the full affected file and related tests, not only the diff hunk.
@@ -47,28 +55,28 @@ Process current-branch review feedback end to end: inspect thread state, decide 
    - Preserve unrelated user changes and staged files.
    - Do not commit, push, or force-update branches unless explicitly requested.
 
-7. Verify each fix before replying.
+7. Verify each fix.
    - Use Nx through the workspace package manager.
    - Choose the smallest relevant tests first, then run project lint and build when appropriate.
    - Never claim a fix passed if the required command failed or was not run.
-   - If verification fails, continue fixing; do not post a success reply.
+   - If verification fails, continue fixing and do not post a success reply.
 
-8. Draft the reply.
+8. Draft a reply without posting it.
    - Match the reviewer's language when practical.
    - Keep it concise and technical.
    - For a verified fix, state what changed and the relevant check.
    - For `reply-only`, explain why no code change is needed and reference the existing behavior or contract.
    - Do not be defensive, over-apologetic, or vague.
+   - Do not use local-only or future-tense wording.
 
-9. Check whether the fix is visible in the PR.
-   - Compare local status and local `HEAD` with the PR head SHA.
-   - If the change is already visible in the PR, state that it is fixed.
-   - If the change exists only in the working tree or an unpushed commit, say so explicitly, for example:
-     `Prepared the fix locally: ... It will appear in the PR after push. Verification: ...`
-   - Never imply that unpushed code is visible to the reviewer.
+9. Stop after implementation unless replies were explicitly requested.
+   - Summarize local changes and verification to the user.
+   - Do not call any GitHub reply/comment mutation.
 
-10. Post the inline reply.
-    - Invocation of this skill authorizes replies for clearly classified processed threads.
+10. If and only if replies were explicitly requested, check PR visibility and post.
+    - Fetch the current PR head SHA immediately before posting.
+    - Verify that the pushed PR head contains the relevant fix commit and that the fix appears in the PR diff.
+    - If the local fix is uncommitted, unpushed, or absent from the PR diff, stop without posting.
     - Prefer the GitHub app inline reply action using the thread's top-level numeric review comment ID.
     - Map GraphQL thread comments to numeric IDs through the flat PR comment list when necessary.
     - Use `gh api graphql` only as a fallback.
@@ -76,7 +84,8 @@ Process current-branch review feedback end to end: inspect thread state, decide 
     - Do not resolve threads, submit a review, approve, request changes, commit, or push unless explicitly requested.
 
 11. Summarize.
-    - List fixed-and-replied threads.
+    - List fixed threads and whether each fix is visible in the PR.
+    - List replies posted only when posting was explicitly requested.
     - List reply-only threads.
     - List skipped or ambiguous threads.
     - Report verification commands and any remaining warnings.
@@ -86,13 +95,7 @@ Process current-branch review feedback end to end: inspect thread state, decide 
 Verified and visible:
 
 ```text
-Fixed: moved error handling to the global NotificationContext. Verified with `npm exec nx test chat` and `npm exec nx lint chat`.
-```
-
-Verified but not pushed:
-
-```text
-Prepared the fix locally: replaced the arbitrary value with a Tailwind token. It will appear in the PR after push. Verified with `npm exec nx test chat`.
+Updated: moved error handling to the global NotificationContext. Verified with `npm exec nx test chat` and `npm exec nx lint chat`.
 ```
 
 No code change needed:
@@ -103,6 +106,10 @@ No code change is needed here: the value is provided through an app-level adapte
 
 ## Safety Rules
 
+- Never treat a request to fix review feedback as permission to post a GitHub reply.
+- Never post a fix reply until the user explicitly asks for it after pushing.
+- Never post a fix reply when the change is only local or unpushed.
+- Never use “prepared locally,” “will appear after push,” or equivalent wording in a review reply.
 - Never reply before understanding the full thread and current code.
 - Never post a success reply for an unverified fix.
 - Never fabricate test results, commit SHAs, or PR visibility.

@@ -59,6 +59,7 @@ export interface UploadFileRequest {
   file: Blob;
   bucket: string;
   path: string;
+  uploadMode?: UploadFileUploadModeEnum;
 }
 
 /**
@@ -468,6 +469,10 @@ export class FilesApi extends runtime.BaseAPI {
       formParams.append('path', requestParameters['path']);
     }
 
+    if (requestParameters['uploadMode'] != null) {
+      formParams.append('uploadMode', requestParameters['uploadMode']);
+    }
+
     let urlPath = `/api/v1/files`;
 
     const response = await this.request(
@@ -494,3 +499,13 @@ export class FilesApi extends runtime.BaseAPI {
     return await response.value();
   }
 }
+
+/**
+ * @export
+ */
+export const UploadFileUploadModeEnum = {
+  Overwrite: 'overwrite',
+  CreateOnly: 'create-only',
+} as const;
+export type UploadFileUploadModeEnum =
+  (typeof UploadFileUploadModeEnum)[keyof typeof UploadFileUploadModeEnum];

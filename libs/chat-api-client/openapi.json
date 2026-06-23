@@ -1311,6 +1311,11 @@
                   },
                   "path": {
                     "type": "string"
+                  },
+                  "uploadMode": {
+                    "type": "string",
+                    "enum": ["overwrite", "create-only"],
+                    "description": "Optional upload mode. 'overwrite' (default) overwrites; 'create-only' fails with 409 if file exists."
                   }
                 }
               }
@@ -1336,6 +1341,9 @@
           },
           "403": {
             "description": "Forbidden"
+          },
+          "409": {
+            "description": "File already exists (create-only mode)"
           },
           "413": {
             "description": "Payload too large"

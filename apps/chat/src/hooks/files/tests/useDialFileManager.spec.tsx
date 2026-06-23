@@ -5,9 +5,13 @@ import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as filesApi from '../../../server-api/files.api';
+import * as fileNameUtils from '../../../utils/file-name';
 import { useDialFileManager } from '../useDialFileManager';
 
 vi.mock('../../../server-api/files.api');
+vi.mock('../../../utils/file-name', () => ({
+  sanitizeFileName: vi.fn((name: string) => name),
+}));
 vi.mock('../../../utils/file-download', () => ({
   DownloadDestinationType: {
     Blob: 'blob',
@@ -426,6 +430,80 @@ describe('useDialFileManager', () => {
     ]);
   });
 
+  it('uploads with overwrite mode when file name exists in cached listing', async () => {
+    const mockUploadFile = vi.mocked(filesApi.uploadFile);
+    mockUploadFile.mockResolvedValue({ url: `files/${BUCKET}/report.pdf` });
+
+    const existingFile: ListFilesItemDto = {
+      name: 'report.pdf',
+      path: 'report.pdf',
+      folderId: `${BUCKET}:`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+      bucket: BUCKET,
+    };
+    mockListFiles.mockResolvedValue({
+      bucket: BUCKET,
+      path: '',
+      items: [existingFile],
+      permissions: ['READ', 'WRITE'],
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onUploadFiles(
+        [{ name: 'REPORT.PDF', fileContent: new File(['data'], 'REPORT.PDF') }],
+        '/All files',
+      );
+    });
+
+    await waitFor(() =>
+      expect(mockUploadFile).toHaveBeenCalledWith(
+        BUCKET,
+        'REPORT.PDF',
+        expect.any(File),
+        expect.objectContaining({ uploadMode: 'overwrite' }),
+      ),
+    );
+  });
+
+  it('uploads with create-only mode when file name is absent from cached listing', async () => {
+    const mockUploadFile = vi.mocked(filesApi.uploadFile);
+    mockUploadFile.mockResolvedValue({ url: `files/${BUCKET}/new-file.pdf` });
+
+    mockListFiles.mockResolvedValue({
+      bucket: BUCKET,
+      path: '',
+      items: [],
+      permissions: ['READ', 'WRITE'],
+    });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onUploadFiles(
+        [
+          {
+            name: 'new-file.pdf',
+            fileContent: new File(['data'], 'new-file.pdf'),
+          },
+        ],
+        '/All files',
+      );
+    });
+
+    await waitFor(() =>
+      expect(mockUploadFile).toHaveBeenCalledWith(
+        BUCKET,
+        'new-file.pdf',
+        expect.any(File),
+        expect.objectContaining({ uploadMode: 'create-only' }),
+      ),
+    );
+  });
+
   it('does not call setState after unmount during an in-flight fetch', async () => {
     let resolvePromise!: () => void;
     mockListFiles.mockReturnValue(
@@ -442,5 +520,126 @@ describe('useDialFileManager', () => {
     unmount();
     // Resolve after unmount — no warnings should be thrown
     await act(async () => resolvePromise());
+  });
+
+  describe('integration: sanitize → conflict resolution → upload mode', () => {
+    it('sanitizes file names via onValidateUpload before upload', async () => {
+      const mockSanitize = vi.mocked(fileNameUtils.sanitizeFileName);
+      mockSanitize.mockImplementation((name) => name.replace(/[/:]/g, '_'));
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      const files = [
+        {
+          name: 'report:final.pdf',
+          fileContent: new File([], 'report:final.pdf'),
+        },
+        {
+          name: 'data/export.csv',
+          fileContent: new File([], 'data/export.csv'),
+        },
+      ];
+
+      await act(async () => {
+        await result.current.onValidateUpload(files, [], '/All files');
+      });
+
+      expect(files[0].name).toBe('report_final.pdf');
+      expect(files[1].name).toBe('data_export.csv');
+      expect(mockSanitize).toHaveBeenCalledTimes(2);
+    });
+
+    it('selects overwrite for a file whose sanitized name matches the cache, create-only otherwise', async () => {
+      const mockUploadFile = vi.mocked(filesApi.uploadFile);
+      mockUploadFile.mockResolvedValue({ url: `files/${BUCKET}/file.pdf` });
+
+      const mockSanitize = vi.mocked(fileNameUtils.sanitizeFileName);
+      mockSanitize.mockImplementation((name) => name);
+
+      const cachedFile: ListFilesItemDto = {
+        name: 'existing.pdf',
+        path: 'existing.pdf',
+        folderId: `${BUCKET}:`,
+        nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+        bucket: BUCKET,
+      };
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [cachedFile],
+        permissions: ['READ', 'WRITE'],
+      });
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => {
+        result.current.onUploadFiles(
+          [
+            {
+              name: 'existing.pdf',
+              fileContent: new File(['data'], 'existing.pdf'),
+            },
+            {
+              name: 'new-file.pdf',
+              fileContent: new File(['data'], 'new-file.pdf'),
+            },
+          ],
+          '/All files',
+        );
+      });
+
+      await waitFor(() => expect(mockUploadFile).toHaveBeenCalledTimes(2));
+
+      const calls = mockUploadFile.mock.calls;
+      const existingCall = calls.find((c) => c[1] === 'existing.pdf');
+      const newCall = calls.find((c) => c[1] === 'new-file.pdf');
+
+      expect(existingCall?.[3]).toEqual(
+        expect.objectContaining({ uploadMode: 'overwrite' }),
+      );
+      expect(newCall?.[3]).toEqual(
+        expect.objectContaining({ uploadMode: 'create-only' }),
+      );
+    });
+
+    it('onValidateUpload always returns valid:true regardless of name collisions', async () => {
+      const existingFile: ListFilesItemDto = {
+        name: 'report.pdf',
+        path: 'report.pdf',
+        folderId: `${BUCKET}:`,
+        nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+        bucket: BUCKET,
+      };
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [existingFile],
+        permissions: ['READ', 'WRITE'],
+      });
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      let validation: Awaited<
+        ReturnType<typeof result.current.onValidateUpload>
+      >;
+      await act(async () => {
+        validation = await result.current.onValidateUpload(
+          [{ name: 'report.pdf', fileContent: new File([], 'report.pdf') }],
+          [existingFile as never],
+          '/All files',
+        );
+      });
+
+      expect(validation!.valid).toBe(true);
+    });
   });
 });
