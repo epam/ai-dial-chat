@@ -73,6 +73,9 @@ export enum ButtonsI18nKeys {
   Save = 'buttons.save',
   Close = 'buttons.close',
   Send = 'buttons.send',
+  UseInChat = 'buttons.useInChat',
+  Deploy = 'buttons.deploy',
+  Connect = 'buttons.connect',
 }
 
 export enum NavigationI18nKeys {
@@ -100,9 +103,6 @@ export enum CatalogI18nKeys {
   FeaturedLabel = 'catalog.featuredLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
-  DetailsPrimaryActionUseInChat = 'catalog.details.primaryAction.useInChat',
-  DetailsPrimaryActionDeploy = 'catalog.details.primaryAction.deploy',
-  DetailsPrimaryActionConnect = 'catalog.details.primaryAction.connect',
   DetailsDailyLimit = 'catalog.details.dailyLimit',
   DetailsApiResourceSection = 'catalog.details.api.resourceSection',
   DetailsApiSnippetSection = 'catalog.details.api.snippetSection',

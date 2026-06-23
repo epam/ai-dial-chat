@@ -35,31 +35,20 @@ export const Limits: FC<LimitsProps> = ({
   limitLabelClassName = 'dial-caption-text',
   limitResetClassName = 'dial-tiny-text',
 }) => {
-  const { tag, badgeImageUrl, dailyLimit } = summary;
+  const { tag, dailyLimit } = summary;
 
   return (
     <div className="flex flex-col gap-3">
-      {((tag != null && tag !== EntityTag.Featured) ||
-        badgeImageUrl != null) && (
+      {tag != null && tag !== EntityTag.Featured && (
         <div className="flex flex-wrap items-center gap-2">
-          {tag != null && tag !== EntityTag.Featured && (
-            <DialTag
-              label={TAG_LABELS[tag]}
-              className={mergeClasses(
-                styles.tag,
-                styles[`tag--${tag}`],
-                tagClassName,
-              )}
-            />
-          )}
-          {badgeImageUrl != null && (
-            <img
-              src={badgeImageUrl}
-              alt=""
-              aria-hidden="true"
-              className="h-5 w-auto object-contain"
-            />
-          )}
+          <DialTag
+            label={TAG_LABELS[tag]}
+            className={mergeClasses(
+              styles.tag,
+              styles[`tag--${tag}`],
+              tagClassName,
+            )}
+          />
         </div>
       )}
 

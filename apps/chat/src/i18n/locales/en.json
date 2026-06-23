@@ -67,11 +67,6 @@
     "featuredLabel": "Featured",
     "details": {
       "tabTools": "Tools",
-      "primaryAction": {
-        "useInChat": "Use in chat",
-        "deploy": "Deploy",
-        "connect": "Connect"
-      },
       "dailyLimit": "Daily limit",
       "api": {
         "resourceSection": "Resource",
@@ -133,7 +128,10 @@
     "copyAsMarkdown": "Copy markdown",
     "copyText": "Copy text",
     "likeResponse": "Like response",
-    "dislikeResponse": "Dislike response"
+    "dislikeResponse": "Dislike response",
+    "useInChat": "Use in chat",
+    "deploy": "Deploy",
+    "connect": "Connect"
   },
   "sidebar": {
     "base": {
