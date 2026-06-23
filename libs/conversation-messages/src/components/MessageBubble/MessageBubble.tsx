@@ -37,6 +37,7 @@ export const MessageBubble: FC<MessageBubbleProps> = ({
       {...props}
       markdownComponents={markdownComponents}
       onAttachmentClick={onAttachmentClick}
+      attachmentClickLabel={attachmentClickLabel}
     />
   );
 };

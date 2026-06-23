@@ -276,3 +276,10 @@ export enum FileDndI18nKeys {
 export enum UserConfigI18nKeys {
   LoadError = 'userConfig.loadError',
 }
+
+export enum AttachmentCanvasI18nKeys {
+  AriaLabel = 'attachmentCanvas.ariaLabel',
+  CloseLabel = 'attachmentCanvas.closeLabel',
+  DownloadLabel = 'attachmentCanvas.downloadLabel',
+  UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
+}

@@ -89,6 +89,7 @@ export const Input: FC<InputProps> = ({
   onDialFileSystemClick,
   dialFileSystemLabel,
   validateAttachment,
+  onAttachmentClick,
 }) => {
   const isMobile = useIsMobile();
   const historyNav = useInputHistoryNavigation(messageHistory);
@@ -489,6 +490,14 @@ export const Input: FC<InputProps> = ({
           onExpand={handleExpand}
           removeLabel={removeLabel}
           retryLabel={retryLabel}
+          onAttachmentClick={
+            onAttachmentClick != null
+              ? (att) => {
+                  const found = attachments.find((a) => a.id === att.id);
+                  if (found != null) onAttachmentClick(found);
+                }
+              : undefined
+          }
         />
       )}
       {hideActionBar ? (

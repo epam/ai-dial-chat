@@ -64,6 +64,10 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/source-panel/src/index.ts',
       ),
+      '@epam/ai-dial-attachment-canvas': path.resolve(
+        __dirname,
+        '../../libs/attachment-canvas/src/index.ts',
+      ),
     },
   },
   build: {
