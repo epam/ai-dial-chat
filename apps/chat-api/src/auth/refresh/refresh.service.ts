@@ -1,4 +1,3 @@
-import { randomUUID } from 'crypto';
 import { Injectable, Logger, UnauthorizedException } from '@nestjs/common';
 import { ProviderRegistryService } from '../providers/provider-registry.service';
 import type { SessionPayload } from '../session/session.types';
@@ -52,7 +51,6 @@ export class RefreshService {
       at_exp: tokenSet.expires_at ?? now + 3600,
       rt: newRt ?? payload.rt,
       iat: now,
-      csrf: randomUUID(),
     };
   }
 }
