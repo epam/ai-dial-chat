@@ -473,6 +473,49 @@ export class BasePage {
     return this.page.evaluate(() => navigator.clipboard.readText());
   }
 
+  public async captureNextClipboardWrite(
+    action: () => Promise<void>,
+  ): Promise<string> {
+    await this.page.evaluate(() => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).__capturedClipboardText = undefined;
+
+      const origWriteText = Clipboard.prototype.writeText;
+      Clipboard.prototype.writeText = function (this: Clipboard, text: string) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).__capturedClipboardText = text;
+        Clipboard.prototype.writeText = origWriteText;
+        return origWriteText.call(this, text);
+      };
+
+      const origWrite = Clipboard.prototype.write;
+      Clipboard.prototype.write = async function (
+        this: Clipboard,
+        items: ClipboardItem[],
+      ) {
+        Clipboard.prototype.write = origWrite;
+        try {
+          const blob = await items[0].getType('text/plain');
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (window as any).__capturedClipboardText = await blob.text();
+        } catch {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          (window as any).__capturedClipboardText = '';
+        }
+        return origWrite.call(this, items);
+      };
+    });
+    await action();
+    await this.page.waitForFunction(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      () => (window as any).__capturedClipboardText !== undefined,
+    );
+    return this.page.evaluate(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      () => (window as any).__capturedClipboardText as string,
+    );
+  }
+
   /**
    * Executes a component's 'onDrop' prop by passing a highly realistic mock event object
    *
