@@ -940,9 +940,16 @@ export class ConversationService extends AppService {
         };
       });
 
+    const systemMessages = conversation.prompt
+      ? [{ role: 'system', content: conversation.prompt }]
+      : [];
+
     const requestBody = {
-      messages,
+      messages: [...systemMessages, ...messages],
       stream: true,
+      ...(conversation.temperature != null && {
+        temperature: conversation.temperature,
+      }),
       ...(configuration ? { custom_fields: { configuration } } : {}),
     };
 
