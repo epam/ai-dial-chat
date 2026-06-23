@@ -1,5 +1,7 @@
 .section {
   overflow-anchor: none;
+  animation: sectionEnter 300ms cubic-bezier(0, 0, 0.2, 1);
+  transition: min-height 280ms cubic-bezier(0, 0, 0.2, 1);
   background:
     linear-gradient(
       180deg,
@@ -38,14 +40,64 @@
   color: var(--cat-fav-star-filled, var(--text-warning-icon, #eec840));
 }
 
+.sectionLeaving {
+  animation: sectionExit 260ms ease-in forwards;
+  pointer-events: none;
+}
+
+.gridPage {
+  transition: min-height 280ms cubic-bezier(0, 0, 0.2, 1);
+}
+
 .gridPage > * {
-  animation: favFadeIn 400ms ease-out;
+  animation: favFadeIn 280ms ease-out;
+}
+
+.cardLeaving {
+  animation: cardFadeOut 180ms ease-out forwards;
+  pointer-events: none;
+}
+
+@keyframes sectionEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes sectionExit {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes cardFadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(0.96);
+  }
 }
 
 @keyframes favFadeIn {
   from {
     opacity: 0;
-    transform: translateY(4px);
+    transform: translateY(6px);
   }
 
   to {

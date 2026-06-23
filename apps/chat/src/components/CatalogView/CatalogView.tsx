@@ -1,4 +1,6 @@
-import { Catalog, CatalogItem } from '@epam/ai-dial-catalog';
+/* eslint-disable @typescript-eslint/no-empty-function */
+import { Catalog, CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,11 +9,13 @@ import {
   CatalogI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const { items: deployments, isLoading: isDeploymentsLoading } =
     useDeployments();
   const {
@@ -49,8 +53,34 @@ const CatalogView: FC = () => {
     (id: string, isFavorite: boolean) => {
       if (isLoading) return;
       toggleFavorite(id, isFavorite);
+      const name = catalogItems.find((item) => item.id === id)?.name ?? id;
+
+      showNotification({
+        variant: isFavorite
+          ? NotificationVariant.Success
+          : NotificationVariant.Info,
+        title: t(
+          isFavorite
+            ? CatalogI18nKeys.FavoriteAddedTitle
+            : CatalogI18nKeys.FavoriteRemovedTitle,
+        ),
+        message: t(
+          isFavorite
+            ? CatalogI18nKeys.FavoriteAdded
+            : CatalogI18nKeys.FavoriteRemoved,
+          { name },
+        ),
+      });
     },
-    [isLoading, toggleFavorite],
+    [isLoading, toggleFavorite, catalogItems, showNotification, t],
+  );
+
+  const createOptions = useMemo<CreateOption[]>(
+    () => [
+      { label: t(CatalogI18nKeys.CreateQuickApp), onClick: () => {} },
+      { label: t(CatalogI18nKeys.CreateToolset), onClick: () => {} },
+    ],
+    [t],
   );
 
   return (
@@ -58,6 +88,7 @@ const CatalogView: FC = () => {
       items={filteredItems}
       isLoading={isLoading}
       favorites={favorites}
+      createOptions={createOptions}
       onFetchAboutContent={fetchAboutContent}
       onToggleFavorite={onToggleFavorite}
       titles={{

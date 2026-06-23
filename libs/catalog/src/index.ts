@@ -8,7 +8,11 @@ export { CodeLanguage } from './types/code-language';
 
 // Models
 export type { CatalogItem, FavoriteItem } from './models/catalog-item';
-export type { CatalogProps, CatalogTitles } from './models/catalog-props';
+export type {
+  CatalogProps,
+  CatalogTitles,
+  CreateOption,
+} from './models/catalog-props';
 export type { CatalogItemSummary, DailyLimit } from './models/entity-summary';
 export type {
   CatalogItemTabData,

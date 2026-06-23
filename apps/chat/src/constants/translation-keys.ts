@@ -113,6 +113,12 @@ export enum CatalogI18nKeys {
   DetailsApiCopy = 'catalog.details.api.copy',
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
+  CreateQuickApp = 'catalog.create.quickApp',
+  CreateToolset = 'catalog.create.toolset',
+  FavoriteAddedTitle = 'catalog.favoriteAddedTitle',
+  FavoriteAdded = 'catalog.favoriteAdded',
+  FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
+  FavoriteRemoved = 'catalog.favoriteRemoved',
 }
 
 export enum DeploymentsI18nKeys {

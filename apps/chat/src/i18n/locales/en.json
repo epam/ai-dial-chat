@@ -81,7 +81,15 @@
         "pricesSection": "Token pricing",
         "limitsSection": "Usage limits"
       }
-    }
+    },
+    "create": {
+      "quickApp": "QuickApp",
+      "toolset": "Toolset"
+    },
+    "favoriteAddedTitle": "Added to Favorites",
+    "favoriteRemovedTitle": "Removed from Favorites",
+    "favoriteAdded": "\"{{name}}\" added to Favorites",
+    "favoriteRemoved": "\"{{name}}\" removed from Favorites"
   },
   "deployments": {
     "empty": "No models or applications available.",
