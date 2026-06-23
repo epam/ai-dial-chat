@@ -1,4 +1,6 @@
 import type { CatalogEntityType } from '../types/entity-type';
+import type { CatalogItemSummary } from './entity-summary';
+import type { CatalogItemTabData } from './item-details-data';
 
 /** Minimal data for rendering a card in the Favorites section. */
 export interface FavoriteItem {
@@ -34,5 +36,8 @@ export interface CatalogItem extends FavoriteItem {
   folder: string[];
   /** Topics associated with the item. */
   topics: string[];
-  overview: any; // TODO: type this properly when we implement the overview section
+  /** Header-level summary metadata (tag, badge image, daily limit). When absent the summary block is hidden. */
+  summary?: CatalogItemSummary;
+  /** Tab-specific detail data. A tab is shown only when its field is non-null. */
+  details?: CatalogItemTabData;
 }

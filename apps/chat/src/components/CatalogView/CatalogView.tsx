@@ -73,6 +73,24 @@ const CatalogView: FC = () => {
         featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
         ariaLabel: t(CatalogI18nKeys.AriaLabel),
       }}
+      detailsTexts={{
+        tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),
+        primaryActionLabel: t(ButtonsI18nKeys.UseInChat),
+        dailyLimitLabel: t(CatalogI18nKeys.DetailsDailyLimit),
+        apiResourceSectionLabel: t(CatalogI18nKeys.DetailsApiResourceSection),
+        apiSnippetSectionLabel: t(CatalogI18nKeys.DetailsApiSnippetSection),
+        apiModelIdLabel: t(CatalogI18nKeys.DetailsApiModelId),
+        apiEndpointLabel: t(CatalogI18nKeys.DetailsApiEndpoint),
+        apiRequestExampleLabel: t(CatalogI18nKeys.DetailsApiRequestExample),
+        apiResponseSchemaLabel: t(CatalogI18nKeys.DetailsApiResponseSchema),
+        copyCodeAriaLabel: t(CatalogI18nKeys.DetailsApiCopy),
+        pricingPricesSectionLabel: t(
+          CatalogI18nKeys.DetailsPricingPricesSection,
+        ),
+        pricingLimitsSectionLabel: t(
+          CatalogI18nKeys.DetailsPricingLimitsSection,
+        ),
+      }}
     />
   );
 };

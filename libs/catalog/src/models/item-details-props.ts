@@ -1,6 +1,6 @@
 import type { CatalogItem } from './catalog-item';
 
-/** Text overrides for all user-visible strings in `CatalogItemDetails`. */
+/** Text overrides for all user-visible strings in `DetailsPanel`. */
 export interface ItemDetailsTexts {
   /** "Use in chat" action button label. Default: `'Use in chat'`. */
   useInChatLabel?: string;
@@ -28,9 +28,37 @@ export interface ItemDetailsTexts {
   overviewYesLabel?: string;
   /** "No" label for boolean-false spec values. Default: `'No'`. */
   overviewNoLabel?: string;
+  /** "Tools" tab label. Default: `'Tools'`. */
+  tabToolsLabel?: string;
+  /** Label on the "Featured" tag chip shown when the entity is featured. Default: `'Featured'`. */
+  featuredLabel?: string;
+  /** Primary action button label. Default: `'Use in chat'`. */
+  primaryActionLabel?: string;
+  /** When `false`, the primary action button is hidden. Default: `true`. */
+  hasPrimaryAction?: boolean;
+  /** Label above the daily-limit progress bar. Default: `'Daily limit'`. */
+  dailyLimitLabel?: string;
+  /** "Resource" section heading in the API tab. Default: `'Resource'`. */
+  apiResourceSectionLabel?: string;
+  /** "Code snippet" section heading in the API tab. Default: `'Code snippet'`. */
+  apiSnippetSectionLabel?: string;
+  /** "Model ID" row label in the API tab. Default: `'Model ID'`. */
+  apiModelIdLabel?: string;
+  /** "Endpoint" row label in the API tab. Default: `'Endpoint'`. */
+  apiEndpointLabel?: string;
+  /** "Request example" row label in the API tab. Default: `'Request example'`. */
+  apiRequestExampleLabel?: string;
+  /** "Response schema" row label in the API tab. Default: `'Response schema'`. */
+  apiResponseSchemaLabel?: string;
+  /** Accessible label for the copy-to-clipboard button. Default: `'Copy'`. */
+  copyCodeAriaLabel?: string;
+  /** "Token pricing" section heading in the Pricing tab. Default: `'Token pricing'`. */
+  pricingPricesSectionLabel?: string;
+  /** "Usage limits" section heading in the Pricing tab. Default: `'Usage limits'`. */
+  pricingLimitsSectionLabel?: string;
 }
 
-/** Typography class overrides for `CatalogItemDetails` text elements. */
+/** Typography class overrides for `DetailsPanel` text elements. */
 export interface ItemDetailsTypography {
   /** Typography class for the entity name. Default: `'dial-display-2-text'`. */
   nameClassName?: string;
@@ -42,7 +70,7 @@ export interface ItemDetailsTypography {
   introTextClassName?: string;
   /** Typography class for section headings inside the About tab. Default: `'dial-small-semi-text'`. */
   contentHeadingClassName?: string;
-  /** Typography class for the About tab body text. Default: `'dial-tiny-text'`. */
+  /** Typography class for the About tab body text. Default: `'dial-small-text'`. */
   contentClassName?: string;
   /** Typography class for Overview section headings. Default: `'dial-caption-text'`. */
   overviewSectionClassName?: string;
@@ -50,18 +78,18 @@ export interface ItemDetailsTypography {
   overviewLabelClassName?: string;
   /** Typography class for string and "No" spec values. Default: `'dial-small-text'`. */
   overviewValueClassName?: string;
-  /** Typography class for "Yes" spec values. Default: `'dial-small-semi-text'`. */
+  /** Typography class for "Yes" spec values. Default: `'dial-small-text'`. */
   overviewValueTrueClassName?: string;
 }
 
-/** Grouped style overrides for `CatalogItemDetails`. */
+/** Grouped style overrides for `DetailsPanel`. */
 export interface ItemDetailsStyles {
   /** Typography class overrides for text elements. */
   typography?: ItemDetailsTypography;
 }
 
-/** Props for `CatalogItemDetails`. */
-export interface ItemDetailsProps {
+/** Props for `DetailsPanel`. */
+export interface DetailsPanelProps {
   /** The catalog item to display in the panel. */
   item: CatalogItem;
   /** Controls whether the panel is visible. */
