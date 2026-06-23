@@ -1,4 +1,7 @@
-import { AttachmentCanvasContainer, useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
+import {
+  AttachmentCanvasContainer,
+  useAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
 import {
   lazy,

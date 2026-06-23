@@ -14,8 +14,10 @@ export const downloadAttachmentContent = (
       new Blob([content.text], { type: 'text/plain' }),
     );
     revokeAfter = true;
-  } else {
+  } else if (content.type === AttachmentContentType.Image) {
     href = content.url;
+  } else {
+    return;
   }
   const anchor = document.createElement('a');
   anchor.href = href;
