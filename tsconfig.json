@@ -38,6 +38,9 @@
     },
     {
       "path": "./libs/source-panel"
+    },
+    {
+      "path": "./libs/attachment-canvas"
     }
   ]
 }
