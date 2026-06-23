@@ -48,6 +48,7 @@ export const Header: FC<HeaderProps> = ({
       <EntityHeader
         item={item}
         iconSize={52}
+        nameClassName={nameClassName}
         featuredLabel={texts?.featuredLabel ?? 'Featured'}
       />
       <div className="flex flex-col gap-1 pl-[56px]">
