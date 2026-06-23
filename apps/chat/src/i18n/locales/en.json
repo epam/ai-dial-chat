@@ -90,7 +90,9 @@
     "create": {
       "quickApp": "QuickApp",
       "toolset": "Toolset"
-    }
+    },
+    "favoriteAdded": "\"{{name}}\" added to Favorites",
+    "favoriteRemoved": "\"{{name}}\" removed from Favorites"
   },
   "deployments": {
     "empty": "No models or applications available.",

@@ -1,4 +1,5 @@
 import { Catalog, CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -7,11 +8,13 @@ import {
   CatalogI18nKeys,
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const { items: deployments, isLoading: isDeploymentsLoading } =
     useDeployments();
   const {
@@ -32,11 +35,6 @@ const CatalogView: FC = () => {
     [catalogItems],
   );
 
-  const filteredItems = useMemo(
-    () => catalogItems.filter((item) => !item.isUserFavorite),
-    [catalogItems],
-  );
-
   // TODO: replace with a real API call, e.g. GET /api/catalog/{id}/about
   const fetchAboutContent = useCallback(
     (item: CatalogItem): Promise<string | undefined> => {
@@ -49,8 +47,16 @@ const CatalogView: FC = () => {
     (id: string, isFavorite: boolean) => {
       if (isLoading) return;
       toggleFavorite(id, isFavorite);
+      const name = catalogItems.find((item) => item.id === id)?.name ?? id;
+      showNotification({
+        variant: isFavorite ? NotificationVariant.Success : NotificationVariant.Info,
+        message: t(
+          isFavorite ? CatalogI18nKeys.FavoriteAdded : CatalogI18nKeys.FavoriteRemoved,
+          { name },
+        ),
+      });
     },
-    [isLoading, toggleFavorite],
+    [isLoading, toggleFavorite, catalogItems, showNotification, t],
   );
 
   const createOptions = useMemo<CreateOption[]>(
@@ -63,7 +69,7 @@ const CatalogView: FC = () => {
 
   return (
     <Catalog
-      items={filteredItems}
+      items={catalogItems}
       isLoading={isLoading}
       favorites={favorites}
       createOptions={createOptions}

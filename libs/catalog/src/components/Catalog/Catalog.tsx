@@ -8,7 +8,7 @@ import {
   TabModel,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
-import { FC, useCallback, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import { CatalogSortKey } from '../../types/sort';
@@ -86,6 +86,29 @@ export const Catalog: FC<CatalogProps> = ({
   );
   const tabs = [] as TabModel[]; // TODO: implement tabs and remove this placeholder
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
+
+  // Delayed unmount for the Favorites section so the exit animation plays
+  // before the section is removed from the DOM.
+  // isFavoritesRendered tracks whether the section node exists in the DOM.
+  // isFavoritesLeaving is DERIVED (not state) so it is true in the same render
+  // where favorites becomes empty — avoiding the one painted frame where the
+  // section is visible without an exit animation (the blink).
+  const [isFavoritesRendered, setIsFavoritesRendered] = useState(
+    favorites.length > 0,
+  );
+
+  // When favorites reappear after being fully removed, remount the section.
+  useEffect(() => {
+    if (favorites.length > 0 && !isFavoritesRendered) {
+      setIsFavoritesRendered(true);
+    }
+  }, [favorites.length, isFavoritesRendered]);
+
+  const handleFavoritesExitComplete = useCallback(() => {
+    setIsFavoritesRendered(false);
+  }, []);
+
+  const isFavoritesLeaving = isFavoritesRendered && favorites.length === 0;
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
@@ -215,13 +238,16 @@ export const Catalog: FC<CatalogProps> = ({
         )}
       </div>
 
-      {/* Favorites strip */}
-      {favorites.length > 0 && (
+      {/* Favorites strip — kept in DOM during exit animation then unmounted */}
+      {isFavoritesRendered && (
         <Favorites
           items={favorites}
           totalCount={favorites.length}
           title={favoritesTitle}
           onToggleFavorite={onToggleFavorite}
+          onItemClick={handleOpenDetails}
+          isLeaving={isFavoritesLeaving}
+          onExitComplete={handleFavoritesExitComplete}
         />
       )}
 

@@ -115,6 +115,8 @@ export enum CatalogI18nKeys {
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
   CreateQuickApp = 'catalog.create.quickApp',
   CreateToolset = 'catalog.create.toolset',
+  FavoriteAdded = 'catalog.favoriteAdded',
+  FavoriteRemoved = 'catalog.favoriteRemoved',
 }
 
 export enum DeploymentsI18nKeys {
