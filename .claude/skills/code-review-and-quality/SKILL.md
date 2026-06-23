@@ -169,23 +169,23 @@ Use a prefix so authors know what is mandatory:
 
 When checking "tests / build / lint":
 
-- Prefer `npx nx test <project>`, `npx nx lint <project>`, `npx nx build <project>` for touched projects (see `openspec/config.yaml` and `AGENTS.md`).
-- For broad checks, use affected targets with the repository base branch: `npx nx affected --target=<target> --base=origin/development-1.0`.
+- Prefer `npm exec nx test <project>`, `npm exec nx lint <project>`, `npm exec nx build <project>` for touched projects (see `openspec/config.yaml` and `AGENTS.md`).
+- For broad checks, use affected targets with the repository base branch: `npm exec nx affected --target=<target> --base=origin/development-1.0`.
 - Do not use `origin/main` as the affected base in this workspace.
-- When unsure which project owns a path, use `npx nx show projects` or `npx nx show project <name> --json`.
+- When unsure which project owns a path, use `npm exec nx show projects` or `npm exec nx show project <name> --json`.
 
 ## Validation matrix
 
 Select the smallest validation set that proves the change:
 
-| Change type                | Expected validation                                                                                                           |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Frontend component / hook  | `npx nx test chat`, `npx nx lint chat`; build if route/bundling/shared imports changed                                        |
-| Backend `apps/chat-api/**` | `npx nx test chat-api`, `npx nx lint chat-api`, `npx nx build chat-api` when startup/module/config wiring changed             |
-| HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npx nx build chat-api-client`, `npx nx lint chat-api-client` |
-| Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                   |
-| Broad cross-project change | `npx nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                  |
-| CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context                                                        |
+| Change type                | Expected validation                                                                                                                     |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend component / hook  | `npm exec nx test chat`, `npm exec nx lint chat`; build if route/bundling/shared imports changed                                        |
+| Backend `apps/chat-api/**` | `npm exec nx test chat-api`, `npm exec nx lint chat-api`, `npm exec nx build chat-api` when startup/module/config wiring changed        |
+| HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npm exec nx build chat-api-client`, `npm exec nx lint chat-api-client` |
+| Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                             |
+| Broad cross-project change | `npm exec nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                       |
+| CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context                                                                  |
 
 Record skipped checks with a reason. A review without a verification story is incomplete.
 
