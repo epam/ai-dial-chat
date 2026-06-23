@@ -141,6 +141,7 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
       <DialConfirmationPopup
         open={isPopupOpen}
         header={t(ConversationPanelI18nKeys.DeleteAllConfirmTitle)}
+        className="mobile:mx-4"
         confirmLabel={t(ButtonsI18nKeys.DeleteAll)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}

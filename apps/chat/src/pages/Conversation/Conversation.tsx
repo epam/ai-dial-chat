@@ -412,6 +412,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         open={pendingDeleteIndex != null}
         header={t(ChatI18nKeys.DeleteMessageTitle)}
         description={t(ChatI18nKeys.DeleteMessageDescription)}
+        className="mobile:mx-4"
         confirmLabel={t(ButtonsI18nKeys.Delete)}
         cancelLabel={t(ButtonsI18nKeys.Cancel)}
         variant={ConfirmationPopupVariant.Danger}
