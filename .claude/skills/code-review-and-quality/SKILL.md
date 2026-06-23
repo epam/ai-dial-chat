@@ -94,7 +94,7 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 
 ### 6. Responsive parity
 
-- UI changes use the project's named breakpoint prefixes (`mobile:` / `small_tablet:` / `large_tablet:` / `desktop:` / `large_desktop:`), not `sm:`/`md:`/`lg:` defaults or arbitrary `min-[…]:` queries
+- UI changes use the project's named breakpoint prefixes (`mobile:` / `desktop:`), not nonexistent `small_tablet:`/`large_tablet:`/`large_desktop:`, Tailwind defaults such as `sm:`/`md:`/`lg:`, or arbitrary `min-[…]:` queries
 - Authoring style is mobile-first — base classes describe the smallest supported viewport, larger bands are added via the named prefixes
 - Components that branch in JS use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts`, not direct `window.innerWidth` reads
 - Touch targets meet ~44×44 CSS px on mobile; no `:hover`-only affordances; no horizontal scroll at 360px
