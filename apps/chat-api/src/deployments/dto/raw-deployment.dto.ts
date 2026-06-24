@@ -13,4 +13,5 @@ export interface RawDeploymentDto {
   input_attachment_types?: string[];
   max_input_attachments?: number;
   description_keywords?: string[];
+  owner?: string;
 }

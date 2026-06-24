@@ -1153,6 +1153,24 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   isInstalled?: boolean;
+  /**
+   * Owner of the deployment as reported by DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  owner?: string;
+  /**
+   * True when the deployment owner matches the current session user (computed post-cache)
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  isMy?: boolean;
+  /**
+   * Parent folder path for application-type deployments (absent for root-level or non-application items)
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  applicationFolder?: string;
 }
 
 /**

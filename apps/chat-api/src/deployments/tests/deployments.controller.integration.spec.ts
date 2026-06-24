@@ -96,6 +96,48 @@ describe('DeploymentsController (integration)', () => {
       );
     });
 
+    it('includes new owner and isMy fields when service returns them', async () => {
+      const enrichedResponse: DeploymentsResponseDto = {
+        deployments: [
+          {
+            id: 'my-app',
+            displayName: 'My App',
+            type: 'application',
+            owner: 'users/alice@example.com',
+            isMy: true,
+          },
+        ],
+      };
+      service.listDeployments.mockResolvedValue(enrichedResponse);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/deployments')
+        .expect(200);
+
+      expect(res.body.deployments[0].owner).toBe('users/alice@example.com');
+      expect(res.body.deployments[0].isMy).toBe(true);
+    });
+
+    it('includes applicationFolder when service returns it for a nested application', async () => {
+      const enrichedResponse: DeploymentsResponseDto = {
+        deployments: [
+          {
+            id: 'folder1/my-app',
+            displayName: 'My App',
+            type: 'application',
+            applicationFolder: 'folder1',
+          },
+        ],
+      };
+      service.listDeployments.mockResolvedValue(enrichedResponse);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/deployments')
+        .expect(200);
+
+      expect(res.body.deployments[0].applicationFolder).toBe('folder1');
+    });
+
     it('returns 200 with ?interface_type=chat', async () => {
       const chatResponse: DeploymentsResponseDto = {
         deployments: [
