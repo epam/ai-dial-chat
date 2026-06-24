@@ -5,7 +5,7 @@ import path from 'path';
 
 const DEFAULT_LOCALE = 'en';
 
-const scanLocaleDirs = (): string[] | null => {
+const getLocaleCodesFromPublicDir = (): string[] | null => {
   const localesPath = path.resolve(process.cwd(), 'public/locales');
 
   if (!fs.existsSync(localesPath)) {
@@ -33,8 +33,8 @@ export const resolveAvailableLocales = (): string[] => {
         process.env.AVAILABLE_LOCALES.replace(/[\]['"]/g, ''),
       )
     : null;
-  const scanned = scanLocaleDirs();
-  const result = fromEnv ?? (scanned?.length ? scanned : [DEFAULT_LOCALE]);
+  const fromPublicDir = getLocaleCodesFromPublicDir();
+  const result = fromEnv ?? (fromPublicDir?.length ? fromPublicDir : [DEFAULT_LOCALE]);
 
   return normalizeLocales(result);
 };
