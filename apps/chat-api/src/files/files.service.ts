@@ -33,10 +33,7 @@ import type { ListFilesResponseDto } from './dto/list-files.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import type { UploadMode } from './dto/upload-file.dto';
 import { FOLDER_NODE_TYPE, MARKER_NAME } from './files.constants';
-import {
-  summarizeDialRawItems,
-  summarizeListFilesItems,
-} from './list-items-debug';
+import { summarizeDialRawItems } from './list-items-debug';
 import { markerMetadataMatches } from './marker-metadata';
 import type { DialFileItem } from './normalize-file-item';
 import { normalizeFileItem } from './normalize-file-item';
@@ -179,6 +176,7 @@ export class FilesService extends AppService {
       path != null && path !== '' && !path.endsWith('/')
         ? `${path}/`
         : (path ?? '');
+
     try {
       const { data, error, response } = await this.client.getFileMetadata(
         bucket,
@@ -220,15 +218,7 @@ export class FilesService extends AppService {
         normalizedPath,
       );
       const permissions = dialData.permissions ?? resolvedPermissions;
-      const permissionsSource = dialData.permissions
-        ? 'dial'
-        : resolvedPermissions
-          ? 'marker'
-          : 'none';
 
-      this.logger.debug(
-        `listFiles normalized: bucket=${bucket}, path=${normalizedPath}, count=${items.length}, items=[${summarizeListFilesItems(items)}], permissionsSource=${permissionsSource}, permissions=${JSON.stringify(permissions ?? [])}`,
-      );
       return {
         bucket,
         path: normalizedPath,
@@ -238,6 +228,65 @@ export class FilesService extends AppService {
       };
     } catch (err) {
       this.logger.warn(`listFiles failed for bucket=${bucket}`, err);
+      return handleDialError(err);
+    }
+  }
+
+  async listPublicFiles(
+    query: {
+      path?: string;
+      token?: string;
+      limit?: number;
+      recursive?: boolean;
+    },
+    at: string,
+  ): Promise<ListFilesResponseDto> {
+    return this.listFiles(
+      'public',
+      query.path,
+      { ...query, permissions: false },
+      at,
+    );
+  }
+
+  async listSharedFiles(
+    query: { path?: string; token?: string; limit?: number },
+    at: string,
+  ): Promise<ListFilesResponseDto> {
+    try {
+      const { data, error, response } = await this.client.getSharedResources({
+        headers: getBearerAuthHeaders(at),
+        body: { resourceTypes: ['FILE'], with: 'me' },
+        signal: AbortSignal.timeout(this.getTimeoutMs()),
+      });
+
+      if (error != null) {
+        this.logger.warn(
+          `DIAL Core getSharedResources returned error: status=${response.status}`,
+        );
+        return handleDialError({ status: response.status });
+      }
+
+      const sharedData = (data ?? {}) as typeof data & {
+        resources?: DialFileItem[];
+      };
+      const rawItems = sharedData.resources ?? [];
+
+      const allItems = rawItems
+        .map((item) => normalizeFileItem(item, item.bucket ?? ''))
+        .filter((item) => {
+          if (!query.path) return true;
+          return item.path === query.path || item.path.startsWith(query.path);
+        });
+
+      const limit = query.limit;
+      const items = limit != null ? allItems.slice(0, limit) : allItems;
+
+      this.logger.debug(`listSharedFiles: count=${items.length}`);
+
+      return { bucket: '', path: query.path ?? '', items };
+    } catch (err) {
+      this.logger.warn('listSharedFiles failed', err);
       return handleDialError(err);
     }
   }

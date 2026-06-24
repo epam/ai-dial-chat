@@ -17,6 +17,7 @@ type SdkClient = {
   uploadFile: ReturnType<typeof vi.fn>;
   downloadFile: ReturnType<typeof vi.fn>;
   getFileMetadata: ReturnType<typeof vi.fn>;
+  getSharedResources: ReturnType<typeof vi.fn>;
   deleteFile: ReturnType<typeof vi.fn>;
 };
 
@@ -35,6 +36,7 @@ function makeService() {
     uploadFile: vi.fn(),
     downloadFile: vi.fn(),
     getFileMetadata: vi.fn(),
+    getSharedResources: vi.fn(),
     deleteFile: vi.fn(),
   };
 
@@ -661,13 +663,75 @@ describe('FilesService', () => {
     });
   });
 
-  describe('createFolder', () => {
-    const okMeta = () => ({
-      error: undefined,
-      response: { status: 200, headers: { get: () => null } },
-      data: { nodeType: 'ITEM', name: '.dial_folder' },
-    });
+  describe('listPublicFiles', () => {
+    it('lists from the public bucket without requesting permissions', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue({
+        error: undefined,
+        response: { status: 200 },
+        data: { items: [] },
+      });
 
+      const result = await service.listPublicFiles(
+        { path: 'reports/', recursive: true },
+        'token',
+      );
+
+      expect(result.bucket).toBe('public');
+      expect(sdkClient.getFileMetadata).toHaveBeenCalledWith(
+        'public',
+        'reports/',
+        expect.objectContaining({
+          params: {
+            query: expect.objectContaining({
+              recursive: true,
+              permissions: false,
+            }),
+          },
+        }),
+      );
+    });
+  });
+
+  describe('listSharedFiles', () => {
+    it('maps shared file resources to file-list items', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getSharedResources.mockResolvedValue({
+        error: undefined,
+        response: { status: 200 },
+        data: {
+          resources: [
+            {
+              nodeType: 'ITEM',
+              name: 'shared.pdf',
+              url: 'files/owner-bucket/shared.pdf',
+              bucket: 'owner-bucket',
+              author: 'Owner',
+            },
+          ],
+        },
+      });
+
+      const result = await service.listSharedFiles({}, 'token');
+
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          name: 'shared.pdf',
+          path: 'files/owner-bucket/shared.pdf',
+          bucket: 'owner-bucket',
+          author: 'Owner',
+        }),
+      ]);
+      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+          body: { resourceTypes: ['FILE'], with: 'me' },
+        }),
+      );
+    });
+  });
+
+  describe('createFolder', () => {
     const notFound = () => ({
       error: new Error('Not found'),
       response: { status: 404, headers: { get: () => null } },

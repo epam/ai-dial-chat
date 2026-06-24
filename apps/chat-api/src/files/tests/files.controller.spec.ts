@@ -780,6 +780,158 @@ describe('FilesController — getFileMetadata', () => {
   });
 });
 
+describe('FilesController — listPublicFiles', () => {
+  const MOCK_PUBLIC_RESPONSE = {
+    bucket: 'public',
+    path: '',
+    items: [
+      {
+        name: 'readme.md',
+        path: 'readme.md',
+        folderId: 'public:',
+        nodeType: 'item',
+        bucket: 'public',
+      },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: {
+    listPublicFiles: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    service = {
+      listPublicFiles: vi.fn().mockResolvedValue(MOCK_PUBLIC_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with ListFilesResponseDto shape on success', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/public')
+      .expect(200);
+
+    expect(res.body).toMatchObject({
+      bucket: 'public',
+      items: expect.any(Array),
+    });
+    expect(service.listPublicFiles).toHaveBeenCalledWith(
+      {
+        path: undefined,
+        token: undefined,
+        limit: undefined,
+        recursive: undefined,
+      },
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 200 with empty items array when public bucket is empty', async () => {
+    service.listPublicFiles.mockResolvedValue({
+      bucket: 'public',
+      path: '',
+      items: [],
+    });
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/public')
+      .expect(200);
+
+    expect(res.body.items).toEqual([]);
+  });
+
+  it('returns 400 for path with ..', async () => {
+    await request(app.getHttpServer())
+      .get('/api/v1/files/public')
+      .query({ path: '../../etc' })
+      .expect(400);
+    expect(service.listPublicFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.listPublicFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer()).get('/api/v1/files/public').expect(401);
+  });
+
+  it('returns 502 when service throws BadGatewayException', async () => {
+    service.listPublicFiles.mockRejectedValue(new BadGatewayException());
+    await request(app.getHttpServer()).get('/api/v1/files/public').expect(502);
+  });
+});
+
+describe('FilesController — listSharedFiles', () => {
+  const MOCK_SHARED_RESPONSE = {
+    bucket: '',
+    path: '',
+    items: [
+      {
+        name: 'shared-doc.pdf',
+        path: 'shared-doc.pdf',
+        folderId: 'user-bucket:',
+        nodeType: 'item',
+        bucket: 'user-bucket',
+      },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: {
+    listSharedFiles: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    service = {
+      listSharedFiles: vi.fn().mockResolvedValue(MOCK_SHARED_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with shared items on success', async () => {
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/shared')
+      .expect(200);
+
+    expect(res.body).toMatchObject({ items: expect.any(Array) });
+    expect(service.listSharedFiles).toHaveBeenCalledWith(
+      { path: undefined, token: undefined, limit: undefined },
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 200 with empty items array when no files are shared', async () => {
+    service.listSharedFiles.mockResolvedValue({
+      bucket: '',
+      path: '',
+      items: [],
+    });
+    const res = await request(app.getHttpServer())
+      .get('/api/v1/files/shared')
+      .expect(200);
+
+    expect(res.body.items).toEqual([]);
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.listSharedFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer()).get('/api/v1/files/shared').expect(401);
+  });
+
+  it('returns 502 when service throws BadGatewayException', async () => {
+    service.listSharedFiles.mockRejectedValue(new BadGatewayException());
+    await request(app.getHttpServer()).get('/api/v1/files/shared').expect(502);
+  });
+});
+
 describe('FilesController — deleteFiles', () => {
   const MOCK_DELETE_RESPONSE = {
     results: [

@@ -1,5 +1,9 @@
 import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
-import { DialFileNodeType, DialFilePermission } from '@epam/ai-dial-ui-kit';
+import {
+  DialFileNodeType,
+  DialFilePermission,
+  NotificationVariant,
+} from '@epam/ai-dial-ui-kit';
 import type { ListFilesItemDto } from '@epam/chat-api-client';
 import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
@@ -24,6 +28,7 @@ vi.mock('../../../utils/file-download', () => ({
 
 const mockListFiles = vi.mocked(filesApi.listFiles);
 const mockDownloadArchive = vi.mocked(filesApi.downloadArchive);
+const mockDeleteFiles = vi.mocked(filesApi.deleteFiles);
 
 const BUCKET = 'test-bucket';
 
@@ -241,30 +246,36 @@ describe('useDialFileManager', () => {
     expect(result.current.isNewButtonDisabled).toBe(false);
   });
 
-  it('propagates createFolder rejection to the caller (e.g. 409 conflict)', async () => {
+  it('shows a notification when folder creation fails', async () => {
     const mockCreateFolder = vi.mocked(filesApi.createFolder);
+    const onNotification = vi.fn();
     const conflict = new Error('Conflict');
     mockCreateFolder.mockRejectedValue(conflict);
 
-    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    const { result } = renderHook(() =>
+      useDialFileManager({ bucket: BUCKET, onNotification }),
+    );
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    await expect(
-      act(async () => {
-        await result.current.onCreateFolder(
-          {
-            name: HIDDEN_FILE,
-            fileContent: new File([], HIDDEN_FILE),
-          },
-          '/All files/2026',
-          `/All files/2026/${HIDDEN_FILE}`,
-        );
-      }),
-    ).rejects.toThrow('Conflict');
+    await act(async () => {
+      await result.current.onCreateFolder(
+        {
+          name: HIDDEN_FILE,
+          fileContent: new File([], HIDDEN_FILE),
+        },
+        '/All files/2026',
+        `/All files/2026/${HIDDEN_FILE}`,
+      );
+    });
+
     expect(result.current.isCreatingFolder).toBe(false);
+    expect(onNotification).toHaveBeenCalledWith({
+      variant: NotificationVariant.Error,
+      message: 'dialFileManager.folderCreateError',
+    });
   });
 
-  it('updates upload percent while a file is uploading', async () => {
+  it('updates upload percent and closes the upload modal after completion', async () => {
     const mockUploadFile = vi.mocked(filesApi.uploadFile);
     let finishUpload: (() => void) | undefined;
 
@@ -312,11 +323,7 @@ describe('useDialFileManager', () => {
       finishUpload?.();
     });
 
-    await waitFor(() =>
-      expect(result.current.uploadBatchState?.files[0]?.status).toBe(
-        'completed',
-      ),
-    );
+    await waitFor(() => expect(result.current.uploadBatchState).toBeNull());
   });
 
   it('creates a folder using the name from the virtual path, not the marker file', async () => {
@@ -351,7 +358,59 @@ describe('useDialFileManager', () => {
     });
   });
 
-  it('merges created folder into parent cache immediately', async () => {
+  it('shows the created folder from the refreshed parent listing', async () => {
+    const mockCreateFolder = vi.mocked(filesApi.createFolder);
+    const createdFolder: ListFilesItemDto = {
+      name: '2026',
+      path: `files/${BUCKET}/2026/`,
+      folderId: `${BUCKET}:files/${BUCKET}/2026/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      bucket: BUCKET,
+    };
+    mockCreateFolder.mockResolvedValue({
+      name: '2026',
+      path: `files/${BUCKET}/2026/`,
+      parentPath: '',
+      bucket: BUCKET,
+      nodeType: 'folder',
+      folderId: `${BUCKET}:files/${BUCKET}/2026/`,
+    });
+    mockListFiles
+      .mockResolvedValueOnce({
+        bucket: BUCKET,
+        path: '',
+        items: [],
+        nextToken: undefined,
+      })
+      .mockResolvedValueOnce({
+        bucket: BUCKET,
+        path: '',
+        items: [createdFolder],
+        nextToken: undefined,
+      });
+
+    const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    await act(async () => {
+      await result.current.onCreateFolder(
+        {
+          name: HIDDEN_FILE,
+          fileContent: new File([], HIDDEN_FILE),
+        },
+        '/All files/2026',
+        `/All files/2026/${HIDDEN_FILE}`,
+      );
+    });
+
+    await waitFor(() =>
+      expect(
+        result.current.items[0].items?.some((item) => item.name === '2026'),
+      ).toBe(true),
+    );
+  });
+
+  it('re-fetches the current listing after creating a folder', async () => {
     const mockCreateFolder = vi.mocked(filesApi.createFolder);
     mockCreateFolder.mockResolvedValue({
       name: '2026',
@@ -376,11 +435,12 @@ describe('useDialFileManager', () => {
       );
     });
 
-    await waitFor(() =>
-      expect(
-        result.current.items[0].items?.some((item) => item.name === '2026'),
-      ).toBe(true),
-    );
+    await waitFor(() => expect(mockListFiles).toHaveBeenCalledTimes(2));
+    expect(mockListFiles).toHaveBeenLastCalledWith({
+      bucket: BUCKET,
+      path: '',
+      permissions: true,
+    });
   });
 
   it('downloads multiple files using API paths derived from virtual paths', async () => {
@@ -428,6 +488,92 @@ describe('useDialFileManager', () => {
         nodeType: 'item',
       },
     ]);
+  });
+
+  it('shows a notification when file download fails', async () => {
+    const onNotification = vi.fn();
+    mockDownloadArchive.mockResolvedValue(
+      new Response('fail', { status: 500 }),
+    );
+
+    const { result } = renderHook(() =>
+      useDialFileManager({ bucket: BUCKET, onNotification }),
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onDownloadFiles([
+        {
+          id: '/All files/report-a.pdf',
+          name: 'report-a.pdf',
+          path: '/All files/report-a.pdf',
+          parentPath: '/All files',
+          nodeType: DialFileNodeType.ITEM,
+          folderId: BUCKET,
+          bucket: BUCKET,
+        },
+        {
+          id: '/All files/report-b.pdf',
+          name: 'report-b.pdf',
+          path: '/All files/report-b.pdf',
+          parentPath: '/All files',
+          nodeType: DialFileNodeType.ITEM,
+          folderId: BUCKET,
+          bucket: BUCKET,
+        },
+      ]);
+    });
+
+    await waitFor(() =>
+      expect(onNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message: 'dialFileManager.downloadFilesError',
+      }),
+    );
+  });
+
+  it('shows notifications for successful and failed deletes', async () => {
+    const onNotification = vi.fn();
+    mockDeleteFiles.mockResolvedValue({
+      results: [
+        { path: 'reports/old.pdf', success: true },
+        { path: 'reports/locked.pdf', success: false, error: 'Forbidden' },
+      ],
+    });
+
+    const { result } = renderHook(() =>
+      useDialFileManager({ bucket: BUCKET, onNotification }),
+    );
+    await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+    act(() => {
+      result.current.onDeleteFiles(
+        [
+          {
+            sourceUrl: '/All files/reports/old.pdf',
+            nodeType: DialFileNodeType.ITEM,
+          },
+          {
+            sourceUrl: '/All files/reports/locked.pdf',
+            nodeType: DialFileNodeType.ITEM,
+          },
+        ],
+        '/All files/reports',
+      );
+    });
+
+    await waitFor(() =>
+      expect(onNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Success,
+        title: 'dialFileManager.itemDeletedSuccessfully',
+        message: 'dialFileManager.itemDeletedFromFolder',
+      }),
+    );
+    expect(onNotification).toHaveBeenCalledWith({
+      variant: NotificationVariant.Error,
+      title: 'dialFileManager.itemsDeletingFailed',
+      message: 'dialFileManager.someItemsNotDeleted',
+    });
   });
 
   it('uploads with overwrite mode when file name exists in cached listing', async () => {
@@ -628,9 +774,9 @@ describe('useDialFileManager', () => {
       );
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-      let validation: Awaited<
-        ReturnType<typeof result.current.onValidateUpload>
-      >;
+      let validation:
+        | Awaited<ReturnType<typeof result.current.onValidateUpload>>
+        | undefined;
       await act(async () => {
         validation = await result.current.onValidateUpload(
           [{ name: 'report.pdf', fileContent: new File([], 'report.pdf') }],
@@ -639,7 +785,7 @@ describe('useDialFileManager', () => {
         );
       });
 
-      expect(validation!.valid).toBe(true);
+      expect(validation).toEqual({ valid: true });
     });
   });
 });

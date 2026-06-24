@@ -268,6 +268,9 @@
     "downloading": "Preparing download…",
     "uploadProgressTitle": "Uploading files",
     "uploadProgressSummary": "{{done}} of {{total}} complete",
+    "checkInternetConnection": "Please check your internet connection and try again.",
+    "uploadFailed": "Upload failed",
+    "uploadSuccess": "The file has been uploaded successfully to “{{parentPath}}”",
     "uploadConflict": "A file with this name already exists",
     "forbiddenSymbolsTooltip": "File names cannot contain: : ; , = / { } % & \"",
     "conflictSingleTitle": "Replace or Duplicate Item",
@@ -278,6 +281,8 @@
     "conflictReplaceAll": "Replace all",
     "conflictDuplicateAll": "Duplicate all",
     "downloadError": "Download failed",
+    "downloadFileError": "Failed to download file. Please try again later.",
+    "downloadFilesError": "Failed to download files. Please try again later.",
     "folderCreateError": "Failed to create folder",
     "folderConflict": "A folder with this name already exists",
     "folderNameEmpty": "Folder name cannot be empty",
@@ -305,7 +310,26 @@
     "deleteConfirmBodyItems": "items?",
     "deleteConfirmButton": "Delete",
     "deleteError": "Delete failed. Please try again.",
-    "deletePartialError": "{{count}} item(s) could not be deleted."
+    "deleteFilesError": "Failed to delete files. Please try again later.",
+    "createFolderError": "Failed to create folder. Please try again.",
+    "deletePartialError": "{{count}} item(s) could not be deleted.",
+    "itemDeletedSuccessfully": "Item deleted successfully",
+    "itemsDeletedSuccessfully": "Items deleted successfully",
+    "itemsDeletingFailed": "Items deleting failed",
+    "itemDeletedFromFolder": "“{{fileName}}” deleted from {{folder}}",
+    "itemsDeletedFromFolder": "{{count}} items deleted from {{folder}}",
+    "andOtherItems": " and {{count}} other items",
+    "someItemsNotDeleted": "{{files}}{{rest}} were not deleted. Please try again.",
+    "tab": {
+      "myFiles": "My files",
+      "shared": "Shared with me",
+      "organization": "Organization"
+    },
+    "column": {
+      "modifiedDate": "Modified date",
+      "size": "Size",
+      "author": "Author"
+    }
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."
