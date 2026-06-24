@@ -5,13 +5,17 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import {
   AttachmentType,
+  MIMEType,
   type DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import { useCallback } from 'react';
 import {
   resolveImageCanvasContent,
+  resolveJsonCanvasContent,
+  resolveMarkdownCanvasContent,
   resolveTextCanvasContent,
 } from '../../utils/attachment-canvas';
+import { resolveDialUrl } from '../../utils/dial-file';
 
 /**
  * Returns `openAttachmentCanvas`, an async function that opens the attachment
@@ -32,8 +36,49 @@ export const useOpenAttachmentCanvas = () => {
           return true;
         }
         case AttachmentType.File: {
+          const contentType = attachment.contentType.toLowerCase();
+
+          if (contentType === MIMEType.Markdown) {
+            const content = await resolveMarkdownCanvasContent(attachment);
+            openCanvas(
+              content ??
+                createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+              attachment.name,
+            );
+            return true;
+          }
+          if (contentType === MIMEType.JSON) {
+            const content = await resolveJsonCanvasContent(attachment);
+            openCanvas(
+              content ??
+                createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+              attachment.name,
+            );
+            return true;
+          }
+
+          const fileName = attachment.name ?? '';
+          const dotIdx = fileName.lastIndexOf('.');
+          const ext =
+            dotIdx !== -1 ? fileName.slice(dotIdx + 1).toLowerCase() : '';
+
+          if (ext === 'md' || ext === 'markdown') {
+            const content = await resolveMarkdownCanvasContent(attachment);
+            if (content == null) return false;
+            openCanvas(content, attachment.name);
+            return true;
+          }
+          if (ext === 'json') {
+            const content = await resolveJsonCanvasContent(attachment);
+            if (content == null) return false;
+            openCanvas(content, attachment.name);
+            return true;
+          }
           if (attachment.name != null && !isTextPreviewable(attachment.name)) {
-            openCanvas(createUnsupportedCanvasContent(), attachment.name);
+            openCanvas(
+              createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+              attachment.name,
+            );
             return true;
           }
           const content = await resolveTextCanvasContent(attachment);

@@ -135,6 +135,7 @@
     "regenerateResponse": "Regenerate response",
     "copyResponse": "Copy response",
     "copyAsMarkdown": "Copy markdown",
+    "copyAsJson": "Copy JSON",
     "copyText": "Copy text",
     "likeResponse": "Like response",
     "dislikeResponse": "Dislike response",

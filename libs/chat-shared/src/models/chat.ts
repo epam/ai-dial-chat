@@ -244,6 +244,10 @@ export interface DisplayAttachment {
   previewUrl?: string;
   /** Remote URL for an attachment that has already been uploaded. */
   url?: string;
+  /** Alternate reference URL (e.g. from the DIAL API `reference_url` field); used when `url` is absent. */
+  referenceUrl?: string;
+  /** Inline base-64 encoded content; present when the attachment carries data directly rather than via a URL. */
+  data?: string;
 }
 
 /** Attachment selected locally by the user before it is sent to the backend. */

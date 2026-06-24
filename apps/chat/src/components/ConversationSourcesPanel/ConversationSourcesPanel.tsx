@@ -30,10 +30,14 @@ const ConversationSourcesPanelContainer: FC = () => {
   const handleAttachmentClick = useCallback(
     (attachment: DisplayAttachment) => {
       void openAttachmentCanvas(attachment).then((opened) => {
-        if (!opened) downloadAttachment(attachment);
+        if (opened) {
+          handleClose();
+        } else {
+          downloadAttachment(attachment);
+        }
       });
     },
-    [openAttachmentCanvas, downloadAttachment],
+    [openAttachmentCanvas, downloadAttachment, handleClose],
   );
 
   const isMobile = useIsMobile();
