@@ -111,6 +111,12 @@ export const convertToUIKitFolder = (
 
   const parentPath = folder.folderId || null;
 
+  const permissions = folder.isRootSharedItem
+    ? folder.permissions
+        ?.filter((p) => p !== SharePermission.WRITE)
+        .map((p) => PermissionMap[p])
+    : folder.permissions?.map((p) => PermissionMap[p]);
+
   return {
     id: folder.id,
     name: folder.name,
@@ -121,7 +127,7 @@ export const convertToUIKitFolder = (
     items: childItems,
     parentPath,
     updatedAt: folder.updatedAt ? String(folder.updatedAt) : undefined,
-    permissions: folder.permissions?.map((p) => PermissionMap[p]),
+    permissions,
   };
 };
 
