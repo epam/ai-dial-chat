@@ -75,6 +75,11 @@ export const Catalog: FC<CatalogProps> = ({
   const [sortKey, setSortKey] = useState<string>(
     CatalogSortKey.RecentlyUpdated,
   );
+  const filteredItems = useMemo(
+    () => items.filter((item) => !item.isHidden),
+    [items],
+  );
+
   const tabs = buildCatalogTabs(filteredItems, titles?.tabLabels);
   const firstTabId = tabs[0]?.id ?? '';
   const [activeTab, setActiveTab] = useState(firstTabId);
@@ -147,13 +152,6 @@ export const Catalog: FC<CatalogProps> = ({
     }, 300);
   }, []);
 
-  // Memoized derivations — prevent re-sorting/filtering on unrelated state
-  // changes such as opening/closing the details panel.
-  const filteredItems = useMemo(
-    () => items.filter((item) => !item.isHidden),
-    [items],
-  );
-
   const sorted = useMemo(
     () => sortCatalogItems(filteredItems, sortKey),
     [filteredItems, sortKey],
@@ -165,7 +163,8 @@ export const Catalog: FC<CatalogProps> = ({
   );
 
   const tabFiltered = useMemo(
-    () => (activeTab ? filtered.filter((item) => item.type === activeTab) : filtered),
+    () =>
+      activeTab ? filtered.filter((item) => item.type === activeTab) : filtered,
     [filtered, activeTab],
   );
 
@@ -180,7 +179,7 @@ export const Catalog: FC<CatalogProps> = ({
     if (selectedItem == null) return;
     const rafId = requestAnimationFrame(() => setIsDetailsOpen(true));
     return () => cancelAnimationFrame(rafId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedItem]);
 
   if (isLoading) {

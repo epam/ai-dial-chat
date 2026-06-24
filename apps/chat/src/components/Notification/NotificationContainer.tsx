@@ -22,7 +22,7 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
 
     return (
       <DialNotification
-        className="w-[min(calc(100vw-2rem),40rem)] pe-10 rtl:pe-3 rtl:ps-10 [&>div:first-child]:items-center [&>div:last-child>button]:top-1/2 [&>div:last-child>button]:-translate-y-1/2"
+        className="w-[min(calc(100vw-2rem),40rem)] pe-10 rtl:pe-3 rtl:ps-10"
         variant={item.variant}
         title={item.title}
         message={item.message}
