@@ -4,7 +4,7 @@ import {
   Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DialTag } from '@epam/ai-dial-ui-kit';
+import { DialTag, DialTooltip } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   KeyboardEvent,
@@ -74,7 +74,7 @@ export const Card: FC<CardProps> = ({
 
     const firstTop = children[0].offsetTop;
     const rowHeight = children[0].offsetHeight;
-    const limitTop = firstTop + rowHeight * 2;
+    const limitTop = firstTop + rowHeight * 1;
 
     let cutoff = children.length;
     for (let i = 0; i < children.length; i++) {
@@ -89,7 +89,7 @@ export const Card: FC<CardProps> = ({
       cutoff < children.length ? Math.max(0, cutoff - 1) : children.length,
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [topicsKey, 2]);
+  }, [topicsKey]);
 
   const handleToggle = (e: MouseEvent<HTMLElement>) => {
     e.stopPropagation();
@@ -125,7 +125,7 @@ export const Card: FC<CardProps> = ({
           }
         : {})}
       className={mergeClasses(
-        'relative box-border flex cursor-pointer flex-col gap-2.5 rounded-[6px] border p-[17px] transition-transform duration-150 ease-out hover:-translate-y-[3px]',
+        'relative box-border flex cursor-pointer flex-col gap-2.5 rounded-[6px] border px-[17px] pb-[56px] pt-[17px] transition-transform duration-150 ease-out hover:-translate-y-[3px]',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
         className,
@@ -166,7 +166,7 @@ export const Card: FC<CardProps> = ({
 
       <p
         className={mergeClasses(
-          'line-clamp-3',
+          'line-clamp-2',
           descriptionClassName,
           styles.description,
         )}
@@ -174,15 +174,20 @@ export const Card: FC<CardProps> = ({
         <Highlight text={item.description} query={query} />
       </p>
 
-      <div className="mt-auto">
-        <div ref={topicsRef} className="flex flex-wrap gap-1.5">
-          {item.topics.slice(0, visibleCount).map((p) => (
-            <TopicTag key={p} label={p} />
-          ))}
-          {overflow > 0 && <TopicTag label={`+${overflow}`} />}
-        </div>
+      <div ref={topicsRef} className="mt-auto flex flex-wrap gap-1.5">
+        {item.topics.slice(0, visibleCount).map((p) => (
+          <TopicTag key={p} label={p} />
+        ))}
+        {overflow > 0 && (
+          <DialTooltip tooltip={item.topics.slice(visibleCount).join(', ')}>
+            <TopicTag label={`+${overflow}`} />
+          </DialTooltip>
+        )}
+      </div>
 
-        <div className="mt-4 flex items-center justify-between border-t border-secondary pt-2">
+      <div className="absolute bottom-[2px] end-[17px] start-[17px]">
+        <div className="border-t border-secondary" />
+        <div className="-me-[10px] flex items-center justify-between pt-[2px]">
           <FolderPath segments={item.folder} />
           <StarToggleButton isStarred={isStarred} onClick={handleToggle} />
         </div>

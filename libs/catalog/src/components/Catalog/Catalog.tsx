@@ -8,7 +8,7 @@ import {
   TabModel,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import { CatalogSortKey } from '../../types/sort';
@@ -73,8 +73,6 @@ export const Catalog: FC<CatalogProps> = ({
     },
   ];
 
-  const filteredItems = items.filter((item) => !item.isHidden);
-
   const [query, setQuery] = useState('');
 
   const [viewMode, setViewMode] = useState<CatalogViewMode>(
@@ -121,7 +119,8 @@ export const Catalog: FC<CatalogProps> = ({
   const handleOpenDetails = useCallback(
     async (item: CatalogItem) => {
       setSelectedItem(item);
-      setIsDetailsOpen(true);
+      // isDetailsOpen is set via a useEffect after the panel mounts so the
+      // CSS slide-in transition always plays (see below).
       setAboutContent(undefined);
 
       if (onFetchAboutContent) {
@@ -152,6 +151,42 @@ export const Catalog: FC<CatalogProps> = ({
     }, 300);
   }, []);
 
+  // Memoized derivations — prevent re-sorting/filtering on unrelated state
+  // changes such as opening/closing the details panel.
+  const filteredItems = useMemo(
+    () => items.filter((item) => !item.isHidden),
+    [items],
+  );
+
+  const sorted = useMemo(
+    () => sortCatalogItems(filteredItems, sortKey),
+    [filteredItems, sortKey],
+  );
+
+  const filtered = useMemo(
+    () => filterCatalogItems(sorted, query),
+    [sorted, query],
+  );
+
+  const tabFiltered = useMemo(
+    () => (activeTab ? filtered.filter((item) => item.type === activeTab) : filtered),
+    [filtered, activeTab],
+  );
+
+  const isSelectedItemStarred =
+    selectedItem != null && favorites.some((f) => f.id === selectedItem.id);
+
+  // Two-step open: mount the panel first (off-screen, isOpen=false), then
+  // trigger the CSS slide-in on the next animation frame so the transition plays.
+  // Only depends on selectedItem — isDetailsOpen must NOT be in deps or the effect
+  // re-fires when the panel closes (still non-null selectedItem) and blinks back open.
+  useEffect(() => {
+    if (selectedItem == null) return;
+    const rafId = requestAnimationFrame(() => setIsDetailsOpen(true));
+    return () => cancelAnimationFrame(rafId);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedItem]);
+
   if (isLoading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -168,13 +203,6 @@ export const Catalog: FC<CatalogProps> = ({
   const clearAllFilters = () => {
     // TODO: implement when filters are added
   };
-
-  const sorted = sortCatalogItems(filteredItems, sortKey);
-  const filtered = filterCatalogItems(sorted, query);
-
-  const tabFiltered = activeTab
-    ? filtered.filter((item) => item.type === activeTab)
-    : filtered;
 
   const tabsWithCounts: TabModel[] = tabs.map((tab) => ({
     ...tab,
@@ -203,7 +231,7 @@ export const Catalog: FC<CatalogProps> = ({
       {/* Page heading */}
       <div
         className={mergeClasses(
-          'flex h-16 shrink-0 items-center justify-between border-b px-6',
+          'sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b px-6',
           styles.heading,
         )}
       >
@@ -285,7 +313,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* Grid view */}
       {viewMode === CatalogViewMode.Grid && (
-        <div className={mergeClasses('min-h-0 flex-1 pb-5', styles.gridView)}>
+        <div className={mergeClasses('shrink-0 pb-5', styles.gridView)}>
           <CardGrid
             items={tabFiltered}
             query={query}
@@ -301,13 +329,15 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* List view — mounted only after first shown to avoid initializing ag-grid eagerly */}
       {listEverShown && viewMode === CatalogViewMode.List && (
-        <div className={mergeClasses('min-h-0 flex-1 pb-5', styles.listView)}>
+        <div className={mergeClasses('shrink-0 pb-5', styles.listView)}>
           <ListView
             items={tabFiltered}
             query={query}
             ariaLabel={resolvedAriaLabel}
             emptyStateTitle={emptyTitle}
             onToggleFavorite={onToggleFavorite}
+            onItemClick={handleOpenDetails}
+            stickyHeaderTop={64}
           />
         </div>
       )}
@@ -317,6 +347,7 @@ export const Catalog: FC<CatalogProps> = ({
         <DetailsPanel
           item={selectedItem}
           isOpen={isDetailsOpen}
+          isStarred={isSelectedItemStarred}
           aboutContent={aboutContent}
           isAboutLoading={isAboutLoading}
           onClose={handleCloseDetails}
