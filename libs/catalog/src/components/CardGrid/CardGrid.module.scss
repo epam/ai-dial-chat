@@ -11,23 +11,12 @@
   box-shadow: 0 0 15px 0 var(--cat-card-featured-glow, rgba(125, 164, 255, 0.5));
 }
 
-.featuredTopBar {
-  background: var(
-    --cat-card-featured-bar,
-    var(--stroke-accent-primary, #7da4ff)
-  );
-}
-
 .description {
   color: var(--cat-card-text-primary, var(--text-primary, #eef1f7));
 }
 
-.starFilledIcon {
-  color: var(--cat-card-star-filled, var(--text-warning-icon, #eec840));
-}
-
 .cardFooter {
-  border-color: var(--cat-card-footer-border, var(--stroke-tertiary, #363d56));
+  border-color: var(--cat-card-footer-border, var(--stroke-secondary, #242c42));
 }
 
 .skeletonCard {

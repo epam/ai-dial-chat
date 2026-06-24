@@ -36,10 +36,6 @@
   }
 }
 
-.starFilledIcon {
-  color: var(--cat-fav-star-filled, var(--text-warning-icon, #eec840));
-}
-
 .sectionLeaving {
   animation: sectionExit 260ms ease-in forwards;
   pointer-events: none;
