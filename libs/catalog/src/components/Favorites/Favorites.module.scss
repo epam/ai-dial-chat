@@ -1,16 +1,8 @@
 .section {
   overflow-anchor: none;
-  animation: sectionEnter 300ms cubic-bezier(0, 0, 0.2, 1);
+  animation: sectionEnter 300ms ease-out;
   transition: min-height 280ms cubic-bezier(0, 0, 0.2, 1);
-  background:
-    linear-gradient(
-      180deg,
-      var(--cat-favorites-bg-start, var(--bg-accent-tertiary-alpha, #a972ff2e))
-        0%,
-      var(--cat-favorites-bg-end, var(--bg-accent-primary-alpha, #7da4ff26))
-        100%
-    ),
-    var(--cat-favorites-bg-base, var(--bg-layer-1, #0c101d));
+  background: var(--cat-favorites-bg-base, var(--bg-layer-2, #161b2d));
   border-bottom-color: var(
     --cat-favorites-border,
     var(--stroke-secondary, #242c42)
@@ -43,6 +35,15 @@
 
 .cardLeaving {
   animation: cardFadeOut 180ms ease-out forwards;
+  pointer-events: none;
+}
+
+.gridPage {
+  transition: min-height 280ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.sectionLeaving {
+  animation: sectionExit 260ms ease-in forwards;
   pointer-events: none;
 }
 

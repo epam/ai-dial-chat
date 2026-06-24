@@ -76,15 +76,11 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 
 **Memoisation:** No memoisation requirements for the frontend wrapper function.
 
----
-
 #### Scenario: Root listing
 
 - **GIVEN** an authenticated user
 - **WHEN** `GET /api/v1/files/list?bucket=my-bucket` is called (no `path` param)
 - **THEN** the system calls DIAL Core `GET /v1/metadata/files/my-bucket/` with an empty path, returns `200 OK`, and `items` contains the root-level files and folders
-
----
 
 #### Scenario: Nested folder listing
 
@@ -92,15 +88,11 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 - **WHEN** `GET /api/v1/files/list?bucket=my-bucket&path=reports/` is called
 - **THEN** the system calls DIAL Core with `path = "reports/"`, returns `200 OK`, and `items` contains only the direct children of `reports/`
 
----
-
 #### Scenario: Folder path without trailing slash
 
 - **GIVEN** the caller sends `path=reports` (no trailing slash)
 - **WHEN** `GET /api/v1/files/list?bucket=my-bucket&path=reports` is handled
 - **THEN** the service normalizes the path to `reports/` before calling DIAL Core, and the response `path` field reflects the normalized value `"reports/"`
-
----
 
 #### Scenario: Normalize DIAL uppercase nodeType
 
@@ -108,15 +100,11 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 - **WHEN** the service normalizes the item
 - **THEN** the response item contains `nodeType: "folder"` (lowercase), compatible with `DialFileNodeType.FOLDER`
 
----
-
 #### Scenario: Bucket without physical folder objects (virtual folders)
 
 - **GIVEN** a bucket whose storage has only object keys such as `reports/q1.pdf` and `reports/q2.pdf` but no physical object at `reports/`
 - **WHEN** DIAL Core returns an item with `nodeType: "FOLDER"` for the `reports/` prefix
 - **THEN** the response includes a folder item with `path: "reports/"`, `folderId: "my-bucket:reports/"`, `nodeType: "folder"`, and no `contentLength` or `contentType`
-
----
 
 #### Scenario: Pagination token round-trip
 
@@ -126,23 +114,17 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 - **AND WHEN** `GET /api/v1/files/list?bucket=my-bucket&path=large-folder/&limit=20&token=<nextToken>` is called
 - **THEN** the response contains the next page of items
 
----
-
 #### Scenario: Invalid traversal path
 
 - **GIVEN** a caller sends `path=../../etc/passwd`
 - **WHEN** `GET /api/v1/files/list?bucket=my-bucket&path=../../etc/passwd` is handled by `ValidationPipe`
 - **THEN** the system returns `400 Bad Request` with a validation error identifying the `path` field, and the request does not reach DIAL Core
 
----
-
 #### Scenario: Path with leading slash rejected
 
-- **GIVEN** a caller sends `path=/folder`
+- **GIVEN** the caller sends `path=/folder`
 - **WHEN** `GET /api/v1/files/list?bucket=my-bucket&path=/folder` is validated
 - **THEN** the system returns `400 Bad Request` and does not call DIAL Core
-
----
 
 #### Scenario: Invalid bucket format
 
@@ -150,15 +132,11 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 - **WHEN** `GET /api/v1/files/list?bucket=my/bucket` is validated by `ListFilesQueryDto`
 - **THEN** the system returns `400 Bad Request` identifying the `bucket` field
 
----
-
 #### Scenario: Unauthenticated request
 
 - **GIVEN** a request carries no valid session cookie
 - **WHEN** `GET /api/v1/files/list?bucket=my-bucket` is received
 - **THEN** the session guard returns `401 Unauthorized` before the handler or DIAL Core is called
-
----
 
 #### Scenario: DIAL Core returns 403
 
@@ -166,15 +144,11 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 - **WHEN** DIAL Core returns `403 Forbidden`
 - **THEN** `handleDialError` maps it to `ForbiddenException` and the BFF returns `403 Forbidden`
 
----
-
 #### Scenario: DIAL Core returns 404
 
 - **GIVEN** the requested `bucket` or `path` does not exist in DIAL Core
 - **WHEN** DIAL Core returns `404 Not Found`
 - **THEN** `handleDialError` maps it to `NotFoundException` and the BFF returns `404 Not Found`
-
----
 
 #### Scenario: DIAL Core returns 429
 
@@ -182,15 +156,11 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 - **WHEN** DIAL Core returns `429 Too Many Requests`
 - **THEN** `handleDialError` maps it to `TooManyRequestsException` and the BFF returns `429 Too Many Requests`
 
----
-
 #### Scenario: DIAL Core returns 5xx
 
 - **GIVEN** DIAL Core encounters an internal error
 - **WHEN** DIAL Core returns a `5xx` status
 - **THEN** the service logs the error and `handleDialError` maps it to `BadGatewayException`; the BFF returns `502 Bad Gateway`
-
----
 
 #### Scenario: DIAL Core request times out
 
@@ -198,88 +168,13 @@ The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket 
 - **WHEN** the `AbortSignal.timeout(FILE_TRANSFER_TIMEOUT_MS)` fires
 - **THEN** `handleDialError` maps the abort error to `ServiceUnavailableException`; the BFF returns `503 Service Unavailable`
 
----
-
 #### Scenario: limit out of range
 
 - **GIVEN** a caller sends `limit=0` or `limit=9999`
 - **WHEN** `ValidationPipe` processes `ListFilesQueryDto`
 - **THEN** the system returns `400 Bad Request` identifying the `limit` field; DIAL Core is not called
 
----
-
 #### Scenario: Endpoint is NOT used for shared or organization listing
 
 - **WHEN** the frontend needs to list files shared with the user
 - **THEN** it calls `GET /api/v1/files/shared` (not `GET /api/v1/files/list` with any special parameter)
-
----
-
-### Requirement: Normalize DIAL metadata to FileManager-compatible nodes
-
-The system SHALL map each item in the DIAL Core folder response to a `ListFilesItemDto` whose JSON shape is structurally compatible with the `DialFile` interface from `@epam/ai-dial-ui-kit`. The backend SHALL NOT import `@epam/ai-dial-ui-kit`; compatibility is achieved through matching the JSON field names and types.
-
-**Normalization rules:**
-- `nodeType` → lowercase (`"ITEM"` → `"item"`, `"FOLDER"` → `"folder"`).
-- `path` for folders → ensure trailing `/`.
-- `folderId` for folders → `${bucket}:${normalizedPath}`.
-- `folderId` for files → `${bucket}:${parentPath ?? ""}`.
-- `contentLength` and `contentType` → omitted (undefined) for folder items.
-- `updatedAt` → forwarded as `number` (Unix ms) from DIAL; note that `DialModifiedEntity.updatedAt` is typed as `string` in the ui-kit — callers must cast if using the TypeScript type directly.
-- `bucket` → propagated from the request query parameter (DIAL items may not include it).
-
----
-
-### Requirement: Support virtual folders without physical folder objects
-
-The system SHALL correctly list folder items returned by DIAL Core even when the underlying storage has no physical object at the folder path. A DIAL item with `nodeType` resolving to `"folder"` SHALL be treated as a valid virtual folder entry and normalized accordingly. No additional existence check SHALL be made.
-
----
-
-### Requirement: Pagination via nextToken
-
-The system SHALL forward the `token` query parameter to DIAL Core as the continuation token and SHALL include the `nextToken` field from the DIAL Core response in `ListFilesResponseDto.nextToken`. When no further pages are available, `nextToken` SHALL be absent (undefined / omitted) from the response.
-
-The `nextToken` field is not declared in the SDK TypeScript interface but is returned by the DIAL endpoint per its documented API contract. The service accesses it via a type cast.
-
----
-
-### Requirement: DTO validation for list-files endpoint
-
-The system SHALL parse and validate all query parameters through `ListFilesQueryDto` decorated with `class-validator` and `@ApiProperty` / `@ApiQuery`. The global `ValidationPipe` (whitelist + forbidNonWhitelisted) MUST reject undeclared parameters.
-
-`ListFilesQueryDto` SHALL be defined at `apps/chat-api/src/files/dto/list-files.dto.ts`.
-
-Field specifications:
-
-- `bucket`: `@IsString()`, `@IsNotEmpty()`, `@Matches(/^[\w.-]+$/)`, `@MaxLength(256)`, `@ApiProperty(...)`
-- `path`: `@IsOptional()`, `@IsString()`, `@Matches(/^[\w.\-/]*$/)`, custom `@IsValidFilePath()` validator (no leading `/`, no `..`), `@MaxLength(1024)`, `@ApiPropertyOptional(...)`
-- `token`: `@IsOptional()`, `@IsString()`, `@MaxLength(1024)`, `@ApiPropertyOptional(...)`
-- `limit`: `@IsOptional()`, `@Transform(({ value }) => parseInt(value, 10))`, `@IsInt()`, `@Min(1)`, `@Max(1000)`, `@ApiPropertyOptional(...)`
-- `recursive`: `@IsOptional()`, `@Transform(({ value }) => value === 'true' || value === true)`, `@IsBoolean()`, `@ApiPropertyOptional(...)`
-- `permissions`: `@IsOptional()`, `@Transform(({ value }) => value !== 'false' && value !== false)`, `@IsBoolean()`, `@ApiPropertyOptional(...)`
-
-Response DTOs for Swagger (`ListFilesItemDto`, `ListFilesResponseDto`) SHALL be defined in the same file and carry full `@ApiProperty` annotations so the generated client has strong types.
-
----
-
-### Requirement: Generated client and frontend wrapper
-
-The system SHALL provide a typed frontend wrapper `listFiles(params)` in `apps/chat/src/server-api/files.api.ts` that delegates to the generated `filesApi.listFiles(...)` from `@epam/chat-api-client`.
-
-The `filesApi` singleton is already exported from `apps/chat/src/server-api/api-client.ts`; no new singleton is needed.
-
-- **operationId**: `listFiles`
-- **SDK method**: `filesApi.listFiles({ bucket, path?, token?, limit?, recursive?, permissions? }): Promise<ListFilesResponseDto>`
-- **Generator gap**: None expected; `application/json` response with typed DTO generates a strong return type.
-- **Cache TTL**: No cache at the frontend layer.
-
-#### Scenario: Frontend wrapper delegates to generated client
-
-- **WHEN** `listFiles({ bucket: 'my-bucket', path: 'folder/' })` is called in `files.api.ts`
-- **THEN** the function calls `filesApi.listFiles(...)` and resolves to a `ListFilesResponseDto` with the correct items
-
-#### Scenario: Frontend wrapper propagates 401 error
-
-- **WHEN** the session has expired and the server returns `401`
-- **THEN** the `filesApi.listFiles(...)` call rejects with a response error, and the caller can catch and redirect to login

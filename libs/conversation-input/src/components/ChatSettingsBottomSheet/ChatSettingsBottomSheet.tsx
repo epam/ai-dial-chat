@@ -4,8 +4,8 @@ import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
-import { ChatSettingsFields } from '../ChatSettingsFields/ChatSettingsFields';
 import { BottomSheetShell } from '../BottomSheetShell/BottomSheetShell';
+import { ChatSettingsFields } from '../ChatSettingsFields/ChatSettingsFields';
 
 /** Props for the ChatSettingsBottomSheet component. */
 export interface ChatSettingsBottomSheetProps {
