@@ -17,6 +17,11 @@
   );
 }
 
+.sectionLeaving {
+  animation: sectionExit 260ms ease-in forwards;
+  pointer-events: none;
+}
+
 .card {
   background: var(
     --cat-fav-card-bg,
@@ -36,8 +41,8 @@
   }
 }
 
-.sectionLeaving {
-  animation: sectionExit 260ms ease-in forwards;
+.cardLeaving {
+  animation: cardFadeOut 180ms ease-out forwards;
   pointer-events: none;
 }
 
@@ -47,11 +52,6 @@
 
 .gridPage > * {
   animation: favFadeIn 280ms ease-out;
-}
-
-.cardLeaving {
-  animation: cardFadeOut 180ms ease-out forwards;
-  pointer-events: none;
 }
 
 @keyframes sectionEnter {

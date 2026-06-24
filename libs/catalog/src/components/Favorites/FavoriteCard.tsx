@@ -74,7 +74,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       tabIndex={0}
       data-card-id={item.id}
       className={mergeClasses(
-        'box-border flex min-w-0 cursor-pointer flex-col gap-1 rounded-[6px] p-[13px] pb-[9px]',
+        'box-border flex min-w-0 cursor-pointer flex-col gap-1 rounded-[6px] p-3 pb-2',
         'w-full text-start',
         styles.card,
         isLeaving && styles.cardLeaving,
@@ -93,6 +93,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         item={item}
         featuredLabel={featuredLabel}
         nameClassName={nameClassName}
+        isFeaturedAvailable={false}
         versionClassName={versionClassName}
       />
       <div className="flex items-center justify-between">

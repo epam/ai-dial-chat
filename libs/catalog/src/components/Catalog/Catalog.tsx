@@ -249,7 +249,7 @@ export const Catalog: FC<CatalogProps> = ({
       {tabs.length > 0 && (
         <div
           className={mergeClasses(
-            'sticky top-0 z-10 flex shrink-0 justify-center border-b pt-2',
+            'sticky top-0 z-10 mb-2 flex shrink-0 justify-center border-b pt-2',
             styles.stickyTabsRow,
           )}
         >

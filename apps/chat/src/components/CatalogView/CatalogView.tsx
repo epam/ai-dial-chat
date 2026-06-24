@@ -27,8 +27,11 @@ const CatalogView: FC = () => {
   const isLoading = isDeploymentsLoading || isFavoritesLoading;
 
   const catalogItems = useMemo(
-    () => deployments.map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
-    [deployments, favoriteIds],
+    () =>
+      deployments.map((d) =>
+        mapDeploymentToCatalogItem(d, favoriteIds, undefined, t),
+      ),
+    [deployments, favoriteIds, t],
   );
 
   const favorites = useMemo(
