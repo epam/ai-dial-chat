@@ -1,5 +1,40 @@
 import { describe, expect, it } from 'vitest';
-import { mimeTypesToAttachmentExtensionLabels } from '../attachment-types';
+import {
+  isDialFileAcceptType,
+  mimeTypesToAttachmentExtensionLabels,
+  mimeTypesToDialFileAcceptTypes,
+} from '../attachment-types';
+
+describe('isDialFileAcceptType', () => {
+  it('accepts MIME types and dotted extensions', () => {
+    expect(isDialFileAcceptType('application/pdf')).toBe(true);
+    expect(isDialFileAcceptType('image/*')).toBe(true);
+    expect(isDialFileAcceptType('.pdf')).toBe(true);
+  });
+
+  it('rejects non accept-type strings', () => {
+    expect(isDialFileAcceptType('*')).toBe(false);
+    expect(isDialFileAcceptType('pdf')).toBe(false);
+  });
+});
+
+describe('mimeTypesToDialFileAcceptTypes', () => {
+  it('normalizes all-files wildcard and keeps valid accept types', () => {
+    expect(
+      mimeTypesToDialFileAcceptTypes(['*', 'application/pdf', '.csv']),
+    ).toEqual(['*/*', 'application/pdf', '.csv']);
+  });
+
+  it('filters out values that cannot be passed to DialFileManager', () => {
+    expect(mimeTypesToDialFileAcceptTypes(['pdf', 'application/pdf'])).toEqual([
+      'application/pdf',
+    ]);
+  });
+
+  it('returns undefined when no types are provided', () => {
+    expect(mimeTypesToDialFileAcceptTypes()).toBeUndefined();
+  });
+});
 
 describe('mimeTypesToAttachmentExtensionLabels', () => {
   it('formats known MIME types as dotted extensions', () => {

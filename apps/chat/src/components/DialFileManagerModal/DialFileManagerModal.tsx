@@ -33,7 +33,10 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
-import { mimeTypesToAttachmentExtensionLabels } from '../../utils/attachment-types';
+import {
+  mimeTypesToAttachmentExtensionLabels,
+  mimeTypesToDialFileAcceptTypes,
+} from '../../utils/attachment-types';
 import { isHiddenPath } from '../../utils/file-path';
 import { formatFileSize } from '../../utils/string-utils';
 import type { AttachResult } from './types/attach-result';
@@ -359,6 +362,11 @@ const DialFileManagerModal: FC<Props> = ({
     });
   }, [allowedTypes, allowedTypesLabel, t]);
 
+  const allowedFileTypes = useMemo(
+    () => mimeTypesToDialFileAcceptTypes(allowedTypes),
+    [allowedTypes],
+  );
+
   const uploadProgressText = useMemo(() => {
     if (uploadBatchState == null) {
       return '';
@@ -584,7 +592,7 @@ const DialFileManagerModal: FC<Props> = ({
               path={path}
               onPathChange={onPathChange}
               filesLoading={isLoading}
-              allowedFileTypes={allowedTypes}
+              allowedFileTypes={allowedFileTypes}
               maxSelectableFileSize={maxSelectableFileSize}
               selectedPaths={selectedPaths}
               onSelectedPathsChange={setSelectedPaths}
