@@ -7,7 +7,7 @@ export { EntityTag } from './types/entity-tag';
 export { CodeLanguage } from './types/code-language';
 
 // Models
-export type { CatalogItem, FavoriteItem } from './models/catalog-item';
+export type { CatalogItem } from './models/catalog-item';
 export type {
   CatalogProps,
   CatalogTitles,

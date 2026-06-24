@@ -2,13 +2,18 @@ import {
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
+  ResponseFormat,
   StatusEvent,
   type Attachment,
+  type Conversation,
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
+import {
+  FileDndOverlay,
+  type ChatSettingsValues,
+} from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
@@ -37,6 +42,7 @@ import {
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
+  ChatSettingsI18nKeys,
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
   DeploymentsI18nKeys,
@@ -99,6 +105,8 @@ interface Props {
   isTranscriptionSupported?: boolean;
   onUploadAudio?: (file: File, contentType: string) => Promise<string>;
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
+  conversation: Conversation;
+  onConversationChange: (conv: Conversation) => void;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -128,6 +136,8 @@ const ConversationView: FC<Props> = ({
   isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
+  conversation,
+  onConversationChange,
 }) => {
   const { t } = useTranslation();
   const isMobile = useIsMobile();
@@ -160,6 +170,28 @@ const ConversationView: FC<Props> = ({
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
     !isDialFileManagerOpen,
+  );
+
+  const deploymentItems = useMemo(
+    () =>
+      items.map(
+        ({
+          id,
+          displayName,
+          iconUrl,
+          type,
+          inputAttachmentTypes,
+          features,
+        }) => ({
+          id,
+          displayName,
+          iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
+          type,
+          inputAttachmentTypes,
+          features,
+        }),
+      ),
+    [items],
   );
 
   const isInputDisabled = useMemo(
@@ -211,18 +243,6 @@ const ConversationView: FC<Props> = ({
     () =>
       messages.filter((m) => m.role === MessageRole.User).map((m) => m.content),
     [messages],
-  );
-
-  const deploymentItems = useMemo(
-    () =>
-      items.map(({ id, displayName, iconUrl, type, inputAttachmentTypes }) => ({
-        id,
-        displayName,
-        iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
-        type,
-        inputAttachmentTypes,
-      })),
-    [items],
   );
 
   const tooltips = useMemo<MessageActionTooltips>(
@@ -358,6 +378,55 @@ const ConversationView: FC<Props> = ({
     userScrolledRef.current = false;
     scrollToBottom(false);
   }, [scrollToBottom]);
+
+  const chatSettings = useMemo(
+    () => ({
+      features: {
+        ...(selectedDeployment?.features ?? {
+          systemPrompt: false,
+          temperature: false,
+        }),
+        responseFormat: true,
+      },
+      responseFormat: conversation.responseFormat ?? ResponseFormat.Markdown,
+      systemPrompt: conversation.prompt ?? '',
+      temperature: conversation.temperature ?? 0.5,
+      onSave: (values: ChatSettingsValues) =>
+        onConversationChange({
+          ...conversation,
+          ...(values.responseFormat != null && {
+            responseFormat: values.responseFormat,
+          }),
+          ...(values.systemPrompt != null && {
+            prompt: values.systemPrompt,
+          }),
+          ...(values.temperature != null && {
+            temperature: values.temperature,
+          }),
+        }),
+      menuItemLabel: t(ChatI18nKeys.ChatSettings),
+      title: t(ChatSettingsI18nKeys.Title),
+      responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
+      responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
+      responseFormatMarkdownLabel: t(
+        ChatSettingsI18nKeys.ResponseFormatMarkdown,
+      ),
+      responseFormatPlainTextLabel: t(
+        ChatSettingsI18nKeys.ResponseFormatPlainText,
+      ),
+      systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
+      systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
+      temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),
+      temperatureLabels: [
+        t(ChatSettingsI18nKeys.TemperaturePrecise),
+        t(ChatSettingsI18nKeys.TemperatureNeutral),
+        t(ChatSettingsI18nKeys.TemperatureCreative),
+      ] as [string, string, string],
+      temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
+      saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
+    }),
+    [selectedDeployment?.features, conversation, onConversationChange, t],
+  );
 
   const handleAttachDialFiles = useCallback(
     (result: AttachResult) => {
@@ -524,6 +593,7 @@ const ConversationView: FC<Props> = ({
                 onUploadAudio={onUploadAudio}
                 onTranscribeAudio={onTranscribeAudio}
                 sendOnEnter={sendOnEnter}
+                chatSettings={chatSettings}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}
                 pendingAttachments={
                   !isEditActive ? pendingDialAttachments : undefined

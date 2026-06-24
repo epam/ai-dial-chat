@@ -1,8 +1,10 @@
 import type {
   Attachment,
   AttachmentErrorReason,
+  DeploymentFeatures,
   DeploymentItem,
   DisplayAttachment,
+  ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
 import type { ReactNode } from 'react';
 
@@ -201,6 +203,12 @@ export interface InputProps {
   prefixAttachments?: DisplayAttachment[];
   /** Called when the user removes an attachment from `prefixAttachments`. */
   onRemovePrefixAttachment?: (id: string) => void;
+  /**
+   * When provided, a "Chat settings" item is added to the `+` menu.
+   * Clicking it opens a modal with fields gated by `features`.
+   * Modal state is managed internally by the component.
+   */
+  chatSettings?: ChatSettingsConfig;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */
   autoFocus?: boolean;
   /**
@@ -227,4 +235,54 @@ export interface InputProps {
    * When absent the card is not rendered as interactive.
    */
   onAttachmentClick?: (attachment: Attachment) => void;
+}
+
+/** Values emitted by the chat-settings modal when the user clicks Save. */
+export interface ChatSettingsValues {
+  /** Updated response format, present when the response-format field was shown. */
+  responseFormat?: ResponseFormat;
+  /** Updated system prompt, present when the system-prompt field was shown. */
+  systemPrompt?: string;
+  /** Updated temperature, present when the temperature field was shown. */
+  temperature?: number;
+}
+
+/** Configuration for the built-in chat-settings menu entry and modal. */
+export interface ChatSettingsConfig {
+  /** Feature flags controlling which fields appear in the modal. */
+  features: DeploymentFeatures;
+  /** Current response format pre-selected in the modal. Defaults to `ResponseFormat.Markdown`. */
+  responseFormat?: ResponseFormat;
+  /** Current system prompt pre-populated in the modal textarea. */
+  systemPrompt: string;
+  /** Current temperature pre-populated in the modal numeric input. */
+  temperature: number;
+  /** Called with updated values when the user clicks Save. */
+  onSave: (values: ChatSettingsValues) => void;
+  /** Label for the "Chat settings" dropdown item. Defaults to `'Chat settings'`. */
+  menuItemLabel?: string;
+  /** Modal title. Defaults to `'Chat settings'`. */
+  title?: string;
+  /** Label for the response format field. Defaults to `'Response format'`. */
+  responseFormatLabel?: string;
+  /** Helper text shown below the response format field. Defaults to `'Applies to new and existing messages'`. */
+  responseFormatHint?: string;
+  /** Label for the Markdown radio option. Defaults to `'Markdown'`. */
+  responseFormatMarkdownLabel?: string;
+  /** Label for the Plain text radio option. Defaults to `'Plain text'`. */
+  responseFormatPlainTextLabel?: string;
+  /** Label for the system prompt field. Defaults to `'System prompt'`. */
+  systemPromptLabel?: string;
+  /** Tooltip shown on the system prompt input. Defaults to `'Enter a prompt'`. */
+  systemPromptTooltip?: string;
+  /** Label for the temperature field. Defaults to `'Temperature'`. */
+  temperatureLabel?: string;
+  /** Labels rendered below the temperature slider: [start, middle, end]. Defaults to `['Precise', 'Neutral', 'Creative']`. */
+  temperatureLabels?: [string, string, string];
+  /** Helper text shown below the temperature field. */
+  temperatureHint?: string;
+  /** Label for the save button. Defaults to `'Apply changes'`. */
+  saveLabel?: string;
+  /** Accessible label for the back arrow in the mobile bottom-sheet stack. Defaults to `'Back'`. */
+  backLabel?: string;
 }

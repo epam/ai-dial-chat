@@ -2,6 +2,7 @@ import { AttachmentErrorReason, AttachmentType } from '../types/attachment';
 import { MIMEType } from '../types/mime-type';
 import type { Annotation } from './annotation';
 import type { DeploymentConfigurationSchema } from './deployment-configuration';
+import type { ResponseFormat } from './deployment-features';
 
 /** Metadata returned by the DIAL file/conversation listing API for a single resource node. */
 export interface ConversationMetadata {
@@ -301,4 +302,6 @@ export interface Conversation {
   selectedAddons: string[];
   /** Override model ID used when an assistant model is selected. */
   assistantModelId: string;
+  /** Response format used when rendering messages. */
+  responseFormat?: ResponseFormat;
 }

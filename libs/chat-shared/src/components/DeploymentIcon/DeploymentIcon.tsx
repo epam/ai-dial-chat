@@ -48,9 +48,6 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
     return () => el.removeEventListener('error', handler);
   }, [src]);
 
-  // ~11 % inset matches the Figma "inset-[11.11%]" applied to the icon inside its badge
-  const padding = Math.round(size * 0.111);
-
   const badge = (
     <div
       style={{ width: size, height: size }}
@@ -65,7 +62,7 @@ export const DeploymentIcon: FC<DeploymentIconProps> = ({
           {fallback}
         </div>
       ) : (
-        <div style={{ padding }} className="size-full">
+        <div className="size-full">
           <img
             ref={ref}
             src={src}
