@@ -2276,6 +2276,20 @@
           "data"
         ]
       },
+      "DeploymentFeaturesDto": {
+        "type": "object",
+        "properties": {
+          "systemPrompt": {
+            "type": "boolean",
+            "description": "Whether the deployment supports a custom system prompt"
+          },
+          "temperature": {
+            "type": "boolean",
+            "description": "Whether the deployment supports temperature control"
+          }
+        },
+        "required": ["systemPrompt", "temperature"]
+      },
       "DeploymentItemDto": {
         "type": "object",
         "properties": {
@@ -2336,6 +2350,14 @@
             "items": {
               "type": "string"
             }
+          },
+          "features": {
+            "description": "Feature flags from DIAL Core controlling which per-conversation settings are available",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeploymentFeaturesDto"
+              }
+            ]
           },
           "topics": {
             "description": "Topics associated with this deployment from DIAL Core (e.g. [\"topic1\", \"topic2\"])",

@@ -30,8 +30,12 @@ const toAdditionalProperties = (
   return undefined;
 };
 
+type RawDeploymentWithFeatures = RawDeploymentDto & {
+  features?: { system_prompt?: boolean; temperature?: boolean };
+};
+
 const mapToDeploymentItem = (
-  raw: RawDeploymentDto,
+  raw: RawDeploymentWithFeatures,
   featuredIds: Set<string>,
   hiddenTags: Set<string>,
 ): DeploymentItemDto | null => {
@@ -74,6 +78,12 @@ const mapToDeploymentItem = (
         : undefined,
     inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
       ? raw.input_attachment_types
+      : undefined,
+    features: raw.features
+      ? {
+          systemPrompt: raw.features.system_prompt ?? false,
+          temperature: raw.features.temperature ?? false,
+        }
       : undefined,
     maxInputAttachments:
       typeof raw.max_input_attachments === 'number'

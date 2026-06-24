@@ -1,10 +1,8 @@
-import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialNeutralButton,
   DialPrimaryButton,
-  DialTag,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconChevronDown,
@@ -17,10 +15,8 @@ import type {
   ItemDetailsStyles,
   ItemDetailsTexts,
 } from '../../../models/item-details-props';
-import { EntityBadge } from '../../EntityBadge/EntityBadge';
+import { EntityHeader } from '../../EntityHeader/EntityHeader';
 import { FolderPath } from '../../FolderPath/FolderPath';
-import { ItemHeader } from '../../ItemHeader/ItemHeader';
-import styles from '../DetailsPanel.module.scss';
 
 interface HeaderProps {
   item: CatalogItem;
@@ -48,24 +44,14 @@ export const Header: FC<HeaderProps> = ({
   }, [item, onShare]);
 
   return (
-    <div className="flex shrink-0 gap-3.5 px-[22px] py-4">
-      <DeploymentIcon src={item.iconUrl} size={52} />
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex items-center gap-1">
-          <EntityBadge type={item.type} />
-          {item.isFeatured && (
-            <DialTag
-              label={texts?.featuredLabel ?? 'Featured'}
-              className={mergeClasses('ms-auto px-[6px]', styles.featuredTag)}
-            />
-          )}
-        </div>
-        <ItemHeader
-          titleClassName={nameClassName}
-          title={item.name}
-          postfix={item.version}
-        />
-
+    <div className="flex flex-col gap-3 px-6 py-4">
+      <EntityHeader
+        item={item}
+        iconSize={52}
+        nameClassName={nameClassName}
+        featuredLabel={texts?.featuredLabel ?? 'Featured'}
+      />
+      <div className="flex flex-col gap-1 pl-[56px]">
         <FolderPath segments={item.folder} />
         <div className="mt-3 flex flex-wrap gap-2">
           <DialPrimaryButton

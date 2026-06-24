@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialError } from '../../common/utils/dial-error';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import { ConversationService } from '../conversation.service';
 import {
   ConversationMessageRole,
@@ -86,7 +87,7 @@ describe('ConversationService', () => {
       migratePin: vi.fn().mockResolvedValue(undefined),
     };
     service = new ConversationService(
-      mockConfigService as ConfigService,
+      mockConfigService as unknown as ConfigService<EnvironmentVariables>,
       mockUserConfigService as never,
     );
     vi.mocked(handleDialError).mockReset();
@@ -820,8 +821,10 @@ describe('ConversationService', () => {
         'gpt-4o',
       );
 
-      const sentMessages: { role: string; content: string }[] =
-        sendSpy.mock.calls[0][1].body.messages;
+      const sentMessages = sendSpy.mock.calls[0][1].body.messages as {
+        role: string;
+        content: string;
+      }[];
       expect(sentMessages).toHaveLength(3); // user + assistant + new user
       expect(sentMessages[0]).toMatchObject({
         role: ConversationMessageRole.User,
@@ -886,7 +889,8 @@ describe('ConversationService', () => {
         },
       });
       expect(
-        sendSpy.mock.calls[0][1].body.messages[0].custom_content,
+        (sendSpy.mock.calls[0][1].body.messages[0] as Record<string, unknown>)
+          .custom_content,
       ).toBeUndefined();
     });
 

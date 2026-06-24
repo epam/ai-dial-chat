@@ -3,7 +3,10 @@ import type { Request } from 'express';
 import { describe, expect, it, vi } from 'vitest';
 import { DeploymentsController } from '../deployments.controller';
 import type { DeploymentsService } from '../deployments.service';
-import type { DeploymentsQueryDto } from '../dto/deployments-query.dto';
+import {
+  DeploymentInterfaceType,
+  type DeploymentsQueryDto,
+} from '../dto/deployments-query.dto';
 
 const TEST_USER = {
   sub: 'user-123',
@@ -25,7 +28,9 @@ function makeController() {
 describe('DeploymentsController', () => {
   it('delegates to service with parsed query and extracts sub and at from request', async () => {
     const { controller, service } = makeController();
-    const query: DeploymentsQueryDto = { interface_type: ['chat'] };
+    const query: DeploymentsQueryDto = {
+      interface_type: [DeploymentInterfaceType.Chat],
+    };
 
     await controller.listDeployments(query, mockReq);
 
@@ -33,7 +38,7 @@ describe('DeploymentsController', () => {
       TEST_USER.sub,
       TEST_USER.at,
       TEST_USER.bucket,
-      ['chat'],
+      [DeploymentInterfaceType.Chat],
     );
   });
 
