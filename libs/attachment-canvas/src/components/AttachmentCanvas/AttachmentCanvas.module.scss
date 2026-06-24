@@ -13,29 +13,43 @@
 
 // react-json-view-lite: structural base without the hardcoded grey background
 .jsonContainer {
-  line-height: 1.2;
+  font-family:
+    ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas,
+    'DejaVu Sans Mono', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
   white-space: pre-wrap;
   word-wrap: break-word;
+  padding: 0.5rem;
+}
+
+// Indented child fields with a subtle guide line
+.jsonChildContainer {
+  margin: 0;
+  padding-inline-start: 0.75rem;
 }
 
 // Themed token styles – map app CSS variables so the tree respects dark/light
 .jsonLabel {
   color: var(--text-primary, #eef1f7);
   font-weight: 600;
-  margin-right: 5px;
+  margin-inline-end: 0.25rem;
 }
 
 .jsonClickableLabel {
   color: var(--text-primary, #eef1f7);
   font-weight: 600;
-  margin-right: 5px;
+  margin-inline-end: 0.25rem;
   cursor: pointer;
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .jsonPunctuation {
   color: var(--text-secondary, #9fa6bd);
-  font-weight: bold;
-  margin-right: 5px;
+  margin-inline-end: 0.25rem;
 }
 
 .jsonStringValue {
@@ -52,39 +66,55 @@
 
 .jsonNullValue {
   color: var(--text-secondary, #9fa6bd);
+  font-style: italic;
 }
 
 .jsonExpandIcon {
   cursor: pointer;
-  font-size: 1.2em;
-  margin-right: 5px;
+  margin-inline-end: 0.25rem;
   user-select: none;
   color: var(--text-secondary, #9fa6bd);
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--text-primary, #eef1f7);
+  }
 
   &::after {
-    content: '\25B8';
+    content: '▶';
+    font-size: 0.6em;
+    vertical-align: middle;
   }
 }
 
 .jsonCollapseIcon {
   cursor: pointer;
-  font-size: 1.2em;
-  margin-right: 5px;
+  margin-inline-end: 0.25rem;
   user-select: none;
   color: var(--text-secondary, #9fa6bd);
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: var(--text-primary, #eef1f7);
+  }
 
   &::after {
-    content: '\25BE';
+    content: '▼';
+    font-size: 0.6em;
+    vertical-align: middle;
   }
 }
 
 .jsonCollapsedContent {
   cursor: pointer;
-  margin-right: 5px;
   color: var(--text-secondary, #9fa6bd);
+  background-color: var(--bg-layer-tertiary, rgba(255, 255, 255, 0.05));
+  border-radius: 3px;
+  padding: 0 0.25rem;
+  margin-inline-end: 0.25rem;
+  font-size: 0.75em;
 
   &::after {
-    content: '...';
-    font-size: 0.8em;
+    content: '\2026';
   }
 }

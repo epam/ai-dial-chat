@@ -137,7 +137,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
               style={{
                 container: styles.jsonContainer,
                 basicChildStyle: defaultStyles.basicChildStyle,
-                childFieldsContainer: defaultStyles.childFieldsContainer,
+                childFieldsContainer: styles.jsonChildContainer,
                 label: styles.jsonLabel,
                 clickableLabel: styles.jsonClickableLabel,
                 nullValue: styles.jsonNullValue,
