@@ -62,6 +62,8 @@ const isFailedArchiveStage = (
   result: ArchiveStageResult,
 ): result is FailedArchiveFile => 'error' in result;
 
+const FULL_FILE_LIST_PAGE_LIMIT = 1000;
+
 export const SAFE_DOWNLOAD_HEADERS = [
   'content-type',
   'content-disposition',
@@ -101,6 +103,58 @@ export class FilesService extends AppService {
 
   private getTimeoutMs(): number {
     return this.configService.get<number>('FILE_TRANSFER_TIMEOUT_MS') ?? 30_000;
+  }
+
+  private async fetchFileMetadataPage(
+    bucket: string,
+    normalizedPath: string,
+    query: {
+      token?: string;
+      limit?: number;
+      recursive?: boolean;
+      permissions?: boolean;
+    },
+    at: string,
+  ): Promise<{
+    items: DialFileItem[];
+    nextToken?: string;
+    permissions?: string[];
+  }> {
+    const { data, error, response } = await this.client.getFileMetadata(
+      bucket,
+      normalizedPath,
+      {
+        headers: getBearerAuthHeaders(at),
+        params: {
+          query: {
+            token: query.token,
+            limit: query.limit,
+            recursive: query.recursive ?? false,
+            permissions: query.permissions ?? true,
+          },
+        },
+        signal: AbortSignal.timeout(this.getTimeoutMs()),
+      },
+    );
+
+    if (error != null) {
+      this.logger.warn(
+        `DIAL Core listFiles returned error: status=${response.status}, bucket=${bucket}`,
+      );
+      return handleDialError({ status: response.status });
+    }
+
+    const dialData = (data ?? {}) as typeof data & {
+      nextToken?: string;
+      permissions?: string[];
+      items?: DialFileItem[];
+    };
+
+    return {
+      items: dialData.items ?? [],
+      nextToken: dialData.nextToken,
+      permissions: dialData.permissions,
+    };
   }
 
   async uploadFile(
@@ -178,36 +232,39 @@ export class FilesService extends AppService {
         : (path ?? '');
 
     try {
-      const { data, error, response } = await this.client.getFileMetadata(
-        bucket,
-        normalizedPath,
-        {
-          headers: getBearerAuthHeaders(at),
-          params: {
-            query: {
-              token: query.token,
-              limit: query.limit,
-              recursive: query.recursive ?? false,
-              permissions: query.permissions ?? true,
-            },
+      const shouldAggregateAllPages =
+        query.token == null && query.limit == null;
+      const rawItems: DialFileItem[] = [];
+      let token = query.token;
+      let nextToken: string | undefined;
+      let page = 0;
+      let permissions: string[] | undefined;
+
+      do {
+        page += 1;
+        const pageData = await this.fetchFileMetadataPage(
+          bucket,
+          normalizedPath,
+          {
+            ...query,
+            token,
+            limit: shouldAggregateAllPages
+              ? FULL_FILE_LIST_PAGE_LIMIT
+              : query.limit,
           },
-          signal: AbortSignal.timeout(this.getTimeoutMs()),
-        },
-      );
-
-      if (error != null) {
-        this.logger.warn(
-          `DIAL Core listFiles returned error: status=${response.status}, bucket=${bucket}`,
+          at,
         );
-        return handleDialError({ status: response.status });
-      }
 
-      const dialData = (data ?? {}) as typeof data & {
-        nextToken?: string;
-        permissions?: string[];
-        items?: DialFileItem[];
-      };
-      const rawItems = dialData.items ?? [];
+        rawItems.push(...pageData.items);
+        permissions ??= pageData.permissions;
+        nextToken = pageData.nextToken;
+        token = nextToken;
+
+        this.logger.debug(
+          `listFiles DIAL page: bucket=${bucket}, path=${normalizedPath}, page=${page}, count=${pageData.items.length}, hasNextPage=${nextToken != null}`,
+        );
+      } while (shouldAggregateAllPages && token != null);
+
       this.logger.debug(
         `listFiles DIAL raw: bucket=${bucket}, path=${normalizedPath}, count=${rawItems.length}, items=[${summarizeDialRawItems(rawItems)}]`,
       );
@@ -217,14 +274,13 @@ export class FilesService extends AppService {
         rawItems,
         normalizedPath,
       );
-      const permissions = dialData.permissions ?? resolvedPermissions;
 
       return {
         bucket,
         path: normalizedPath,
         items,
-        nextToken: dialData.nextToken,
-        permissions,
+        nextToken: shouldAggregateAllPages ? undefined : nextToken,
+        permissions: permissions ?? resolvedPermissions,
       };
     } catch (err) {
       this.logger.warn(`listFiles failed for bucket=${bucket}`, err);

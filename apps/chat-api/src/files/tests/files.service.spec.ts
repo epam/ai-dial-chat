@@ -465,9 +465,46 @@ describe('FilesService', () => {
       expect(result.items[1].nodeType).toBe('item');
     });
 
-    it('includes nextToken when DIAL returns one', async () => {
+    it('includes nextToken for an explicit paginated request when DIAL returns one', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getFileMetadata.mockResolvedValue(okList([], 'cursor-abc'));
+
+      const result = await service.listFiles(
+        'my-bucket',
+        undefined,
+        { limit: 100 },
+        'token',
+      );
+      expect(result.nextToken).toBe('cursor-abc');
+    });
+
+    it('aggregates DIAL Core pages when no pagination query is provided', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata
+        .mockResolvedValueOnce(
+          okList(
+            [
+              {
+                nodeType: 'ITEM',
+                url: 'first.pdf',
+                name: 'first.pdf',
+                parentPath: '',
+              },
+            ],
+            'cursor-abc',
+          ),
+        )
+        .mockResolvedValueOnce(
+          okList([
+            {
+              nodeType: 'ITEM',
+              url: 'second.pdf',
+              name: 'second.pdf',
+              parentPath: '',
+            },
+          ]),
+        );
+      sdkClient.getFileMetadata.mockClear();
 
       const result = await service.listFiles(
         'my-bucket',
@@ -475,7 +512,38 @@ describe('FilesService', () => {
         {},
         'token',
       );
-      expect(result.nextToken).toBe('cursor-abc');
+
+      expect(result.items.map((item) => item.name)).toEqual([
+        'first.pdf',
+        'second.pdf',
+      ]);
+      expect(result.nextToken).toBeUndefined();
+      expect(sdkClient.getFileMetadata).toHaveBeenNthCalledWith(
+        1,
+        'my-bucket',
+        '',
+        expect.objectContaining({
+          params: {
+            query: expect.objectContaining({
+              limit: 1000,
+              token: undefined,
+            }),
+          },
+        }),
+      );
+      expect(sdkClient.getFileMetadata).toHaveBeenNthCalledWith(
+        2,
+        'my-bucket',
+        '',
+        expect.objectContaining({
+          params: {
+            query: expect.objectContaining({
+              limit: 1000,
+              token: 'cursor-abc',
+            }),
+          },
+        }),
+      );
     });
 
     it('passes folder permissions from DIAL Core metadata', async () => {
@@ -686,6 +754,61 @@ describe('FilesService', () => {
             query: expect.objectContaining({
               recursive: true,
               permissions: false,
+            }),
+          },
+        }),
+      );
+    });
+
+    it('aggregates public bucket pages when no pagination query is provided', async () => {
+      const { service, sdkClient } = makeService();
+      const okPublicList = (items: object[], nextToken?: string) => ({
+        error: undefined,
+        response: { status: 200 },
+        data: { items, ...(nextToken != null ? { nextToken } : {}) },
+      });
+
+      sdkClient.getFileMetadata
+        .mockResolvedValueOnce(
+          okPublicList(
+            [
+              {
+                nodeType: 'ITEM',
+                url: 'first.md',
+                name: 'first.md',
+              },
+            ],
+            'public-cursor',
+          ),
+        )
+        .mockResolvedValueOnce(
+          okPublicList([
+            {
+              nodeType: 'ITEM',
+              url: 'second.md',
+              name: 'second.md',
+            },
+          ]),
+        );
+      sdkClient.getFileMetadata.mockClear();
+
+      const result = await service.listPublicFiles({}, 'token');
+
+      expect(result.bucket).toBe('public');
+      expect(result.items.map((item) => item.name)).toEqual([
+        'first.md',
+        'second.md',
+      ]);
+      expect(result.nextToken).toBeUndefined();
+      expect(sdkClient.getFileMetadata).toHaveBeenNthCalledWith(
+        2,
+        'public',
+        '',
+        expect.objectContaining({
+          params: {
+            query: expect.objectContaining({
+              permissions: false,
+              token: 'public-cursor',
             }),
           },
         }),
