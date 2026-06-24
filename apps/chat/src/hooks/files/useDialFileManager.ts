@@ -4,7 +4,14 @@ import type {
   DialFile,
   DialUploadFileItem,
 } from '@epam/ai-dial-ui-kit';
-import { DialFileNodeType, DialFilePermission } from '@epam/ai-dial-ui-kit';
+import {
+  DialFileManagerActions,
+  DialFileManagerTabs,
+  DialFileNodeType,
+  DialFilePermission,
+  FileManagerColumnKey,
+  NotificationVariant,
+} from '@epam/ai-dial-ui-kit';
 import type {
   CreateFolderResponseDto,
   DeleteItemDto,
@@ -22,12 +29,15 @@ import type {
   FileUploadEntry,
 } from '../../components/DialFileManagerModal/types/upload';
 import { FileUploadStatus } from '../../components/DialFileManagerModal/types/upload';
+import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
 import {
   createFolder,
   deleteFiles,
   downloadArchive,
   downloadFile,
   listFiles,
+  listPublicFiles,
+  listSharedFiles,
   uploadFile,
 } from '../../server-api/files.api';
 import {
@@ -43,10 +53,14 @@ import {
 import { safeDecodeURI } from '../../utils/string-utils';
 
 export interface UseDialFileManagerOptions {
-  /** DIAL Core bucket to browse. */
+  /** DIAL Core bucket to browse (used only for my_files tab). */
   bucket: string;
   /** Display name for the root folder node. Defaults to `'All files'`. */
   rootLabel?: string;
+  /** Active tab — drives listing source and per-tab options. Defaults to MyFiles. */
+  activeTab?: DialFileManagerTabs;
+  /** Called when a file-manager action should surface a toast notification. */
+  onNotification?: (notification: FileManagerNotification) => void;
 }
 
 export interface UseDialFileManagerResult {
@@ -99,26 +113,29 @@ export interface UseDialFileManagerResult {
   onDownloadFiles: (dialFiles: DialFile[]) => void;
   /** True while a download is in progress. */
   isDownloading: boolean;
-  /** Non-null when the last download failed. Cleared by `clearDownloadError`. */
-  downloadError: string | null;
-  /** Clears `downloadError`. */
-  clearDownloadError: () => void;
 
   /** Delete: called when user confirms deletion of one or more items. */
   onDeleteFiles: (items: DialDeletedItem[], sourceFolder: string) => void;
   /** True while a delete request is in flight. */
   isDeleting: boolean;
-  /** Non-null when the last delete had at least one failure. Cleared by `clearDeleteError`. */
-  deleteError: string | null;
-  /** Clears `deleteError`. */
-  clearDeleteError: () => void;
 
   /** True when the current folder grants WRITE (upload + new folder). */
   uploadEnabled: boolean;
-  /** True when Upload/New must be disabled (no WRITE on current folder). */
+  /** True when Upload/New must be disabled. */
   isNewButtonDisabled: boolean;
   /** Tooltip for disabled New/Upload when `isNewButtonDisabled` is true. */
   disabledNewButtonTooltip: string;
+
+  /** Columns to show in the grid — tab-dependent. */
+  visibleColumns: FileManagerColumnKey[];
+  /** BCP-47 locale string for date formatting, sourced from i18n.language. */
+  dateLocale: string;
+  /** Fixed date format options for the UpdatedAt column. */
+  dateOptions: Intl.DateTimeFormatOptions;
+  /** Action labels for grid/tree/bulk — Delete present only on my_files tab. */
+  actionLabels: Partial<Record<DialFileManagerActions, string>>;
+  /** Root-level shared item paths, populated only on the Shared tab. */
+  sharedWithMeIds: string[] | undefined;
 }
 
 interface FileUploadValidationResult {
@@ -126,8 +143,35 @@ interface FileUploadValidationResult {
   message?: string;
 }
 
+interface FileManagerNotification {
+  variant: NotificationVariant;
+  title?: string;
+  message: string;
+}
+
 const UPLOAD_CONCURRENCY = 3;
 const RESERVED_MARKER_NAME = HIDDEN_FILE;
+
+const DATE_OPTIONS: Intl.DateTimeFormatOptions = {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+};
+
+const COLUMNS_WITHOUT_AUTHOR: FileManagerColumnKey[] = [
+  FileManagerColumnKey.Name,
+  FileManagerColumnKey.UpdatedAt,
+  FileManagerColumnKey.Size,
+  FileManagerColumnKey.Actions,
+];
+
+const COLUMNS_WITH_AUTHOR: FileManagerColumnKey[] = [
+  FileManagerColumnKey.Name,
+  FileManagerColumnKey.UpdatedAt,
+  FileManagerColumnKey.Size,
+  FileManagerColumnKey.Author,
+  FileManagerColumnKey.Actions,
+];
 
 const CORE_PERMISSION_MAP: Record<string, DialFilePermission> = {
   READ: DialFilePermission.READ,
@@ -169,10 +213,6 @@ const findFolderByVirtualPath = (
 const hasDialFileWritePermission = (folder?: DialFile): boolean =>
   folder?.permissions?.includes(DialFilePermission.WRITE) ?? false;
 
-/**
- * DialFileManager passes the new folder's full virtual path (including the name),
- * e.g. "/All files/reports" or "/All files/reports/Q1".
- */
 const parseNewFolderVirtualPath = (
   newFolderVirtualPath: string,
   rootLabel: string,
@@ -191,12 +231,6 @@ const parseNewFolderVirtualPath = (
   };
 };
 
-/**
- * Recursively builds a DialFile[] for a folder from the cache.
- * virtualBasePath is the navigation path of the parent folder (no trailing
- * slash), e.g. "/All files" or "/All files/appdata".
- * apiPath is the folder's API listing key, e.g. "" (root) or "appdata/".
- */
 const buildFromCache = (
   cache: Map<string, ListFilesItemDto[]>,
   listingPermissionsCache: Map<string, string[] | undefined>,
@@ -296,27 +330,110 @@ const updateEntry = (
   return { ...prev, files };
 };
 
+interface SharedRootMeta {
+  bucket: string;
+  /** DIAL Core URL of the shared root item, e.g. "files/owner-bucket/some-folder/" */
+  dialCorePath: string;
+}
+
+/** Strip the "files/{bucket}/" prefix from a DIAL Core URL to get the path within the bucket. */
+const dialCorePathToRelative = (
+  dialCorePath: string,
+  bucket: string,
+): string => {
+  const prefix = `files/${bucket}/`;
+  return dialCorePath.startsWith(prefix)
+    ? dialCorePath.slice(prefix.length)
+    : dialCorePath;
+};
+
+/**
+ * Resolves the effective bucket and path for a write operation on the Shared tab.
+ * For Shared tab items, the first segment of apiPath is the shared root folder name
+ * whose owner bucket is stored in sharedRootMeta.
+ */
+const resolveOwnerCoords = (
+  apiPath: string,
+  sharedRootMeta: Map<string, SharedRootMeta>,
+  fallbackBucket: string,
+): { bucket: string; path: string } => {
+  if (!apiPath) return { bucket: fallbackBucket, path: apiPath };
+  const firstSlash = apiPath.indexOf('/');
+  const sharedRootName =
+    firstSlash === -1 ? apiPath : apiPath.slice(0, firstSlash);
+  const meta = sharedRootMeta.get(sharedRootName);
+  if (!meta) return { bucket: fallbackBucket, path: apiPath };
+  const rootPathInBucket = dialCorePathToRelative(
+    meta.dialCorePath,
+    meta.bucket,
+  );
+  const subPath = firstSlash === -1 ? '' : apiPath.slice(firstSlash + 1);
+  return { bucket: meta.bucket, path: rootPathInBucket + subPath };
+};
+
+const fetchByTab = (
+  tab: DialFileManagerTabs,
+  bucket: string,
+  folderPath: string,
+  sharedRootMeta: Map<string, SharedRootMeta>,
+): Promise<{ items: ListFilesItemDto[]; permissions?: string[] }> => {
+  if (tab === DialFileManagerTabs.Shared) {
+    if (folderPath === '') {
+      return listSharedFiles({ path: undefined }).then((res) => ({
+        items: res.items,
+      }));
+    }
+    // Navigating inside a shared folder — find the owner bucket from the root meta
+    // and call listFiles against their bucket with the correct relative path.
+    const firstSlash = folderPath.indexOf('/');
+    const sharedRootName =
+      firstSlash === -1 ? folderPath : folderPath.slice(0, firstSlash);
+    const meta = sharedRootMeta.get(sharedRootName);
+    if (meta) {
+      const rootPathInBucket = dialCorePathToRelative(
+        meta.dialCorePath,
+        meta.bucket,
+      );
+      const subPath = firstSlash === -1 ? '' : folderPath.slice(firstSlash + 1);
+      const actualPath = rootPathInBucket + subPath;
+      return listFiles({
+        bucket: meta.bucket,
+        path: actualPath,
+        permissions: true,
+      }).then((res) => ({ items: res.items, permissions: res.permissions }));
+    }
+    return Promise.resolve({ items: [] });
+  }
+  if (tab === DialFileManagerTabs.Organization) {
+    return listPublicFiles({ path: folderPath || undefined }).then((res) => ({
+      items: res.items,
+    }));
+  }
+  return listFiles({
+    bucket,
+    path: folderPath,
+    permissions: true,
+  }).then((res) => ({ items: res.items, permissions: res.permissions }));
+};
+
 /**
  * Manages DIAL file-storage browsing state for DialFileManager.
  *
- * Uses a per-folder cache so that navigating into a subfolder does not
- * discard already-loaded sibling folders from the tree. Each time a folder
- * is visited, its items are fetched and stored in the cache; the full
- * DialFile hierarchy is recomputed from the accumulated cache on every
- * cache update.
+ * Supports three listing sources via `activeTab`:
+ * - my_files: user's own bucket via GET /api/v1/files/list
+ * - shared: files shared with the user via GET /api/v1/files/shared
+ * - organization: public bucket via GET /api/v1/files/public
  *
- * wrapInRootFolder from the ui-kit is intentionally avoided: it requires
- * a root item with parentPath="" and uppercase nodeType="FOLDER" in the
- * flat list, which the files API does not produce.
- *
- * The cancelled flag prevents setState after unmount when a fetch is in
- * flight at cleanup time.
+ * Uses a per-folder cache so navigating into a subfolder does not discard
+ * already-loaded sibling folders. The cache is cleared on tab switch.
  */
 export const useDialFileManager = ({
   bucket,
   rootLabel = 'All files',
+  activeTab = DialFileManagerTabs.MyFiles,
+  onNotification,
 }: UseDialFileManagerOptions): UseDialFileManagerResult => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [folderPath, setFolderPath] = useState('');
   const [cache, setCache] = useState<Map<string, ListFilesItemDto[]>>(
     () => new Map(),
@@ -327,6 +444,12 @@ export const useDialFileManager = ({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCounter, setRetryCounter] = useState(0);
+  const [sharedRootIds, setSharedRootIds] = useState<string[] | undefined>(
+    undefined,
+  );
+
+  // Maps shared root folder name → { bucket, dialCorePath } for subfolder navigation.
+  const sharedRootMetaRef = useRef<Map<string, SharedRootMeta>>(new Map());
 
   const [uploadBatchState, setUploadBatchState] =
     useState<FileUploadBatchState | null>(null);
@@ -334,16 +457,26 @@ export const useDialFileManager = ({
 
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
-  const [downloadError, setDownloadError] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  // Clear cache and reset path on tab switch
+  const prevTabRef = useRef(activeTab);
+  useEffect(() => {
+    if (prevTabRef.current === activeTab) return;
+    prevTabRef.current = activeTab;
+    setCache(new Map());
+    setListingPermissionsCache(new Map());
+    setFolderPath('');
+    setSharedRootIds(undefined);
+    sharedRootMetaRef.current = new Map();
+  }, [activeTab]);
 
   useEffect(() => {
     let cancelled = false;
     setIsLoading(true);
     setError(null);
 
-    listFiles({ bucket, path: folderPath, permissions: true })
+    fetchByTab(activeTab, bucket, folderPath, sharedRootMetaRef.current)
       .then(({ items: flat, permissions }) => {
         if (cancelled) return;
         setCache((prev) => {
@@ -354,6 +487,16 @@ export const useDialFileManager = ({
         setListingPermissionsCache((prev) =>
           new Map(prev).set(folderPath, permissions),
         );
+        // Capture root-level shared item paths for sharedWithMeIds and subfolder navigation
+        if (activeTab === DialFileManagerTabs.Shared && folderPath === '') {
+          setSharedRootIds(flat.map((item) => item.path));
+          sharedRootMetaRef.current = new Map(
+            flat.map((item) => [
+              safeDecodeURI(item.name),
+              { bucket: item.bucket ?? '', dialCorePath: item.path },
+            ]),
+          );
+        }
       })
       .catch(() => {
         if (cancelled) return;
@@ -366,7 +509,7 @@ export const useDialFileManager = ({
     return () => {
       cancelled = true;
     };
-  }, [bucket, folderPath, retryCounter]);
+  }, [activeTab, bucket, folderPath, retryCounter]);
 
   const items = useMemo(
     (): DialFile[] => [
@@ -396,11 +539,8 @@ export const useDialFileManager = ({
         setFolderPath('');
         return;
       }
-      // DialFileManager may omit the leading "/" from the virtual path it
-      // passes back (e.g. "All files/appdata" instead of "/All files/appdata/").
-      // Normalise both forms so we always get a clean API folder path.
-      const rootWithSlash = `/${rootLabel}/`; // "/All files/"
-      const labelWithSlash = `${rootLabel}/`; // "All files/"
+      const rootWithSlash = `/${rootLabel}/`;
+      const labelWithSlash = `${rootLabel}/`;
 
       if (
         nextPath === `/${rootLabel}` ||
@@ -418,14 +558,12 @@ export const useDialFileManager = ({
       } else if (nextPath.startsWith(labelWithSlash)) {
         stripped = nextPath.slice(labelWithSlash.length);
       } else {
-        // Unexpected format: strip leading slash then the root label if still present.
         const withoutLeadingSlash = nextPath.replace(/^\//, '');
         stripped = withoutLeadingSlash.startsWith(labelWithSlash)
           ? withoutLeadingSlash.slice(labelWithSlash.length)
           : withoutLeadingSlash;
       }
 
-      // Ensure a trailing slash for cache key consistency with buildFromCache.
       setFolderPath(
         stripped && !stripped.endsWith('/') ? `${stripped}/` : stripped,
       );
@@ -439,6 +577,8 @@ export const useDialFileManager = ({
 
   const onUploadFiles = useCallback(
     (files: DialUploadFileItem[], destinationFolder: string) => {
+      if (files.length === 0) return;
+
       const controller = new AbortController();
       uploadAbortControllerRef.current = controller;
 
@@ -454,9 +594,15 @@ export const useDialFileManager = ({
         destinationFolder,
         rootLabel,
       );
+      const { bucket: uploadBucket, path: uploadBasePath } =
+        activeTab === DialFileManagerTabs.Shared
+          ? resolveOwnerCoords(
+              destinationApiPath,
+              sharedRootMetaRef.current,
+              bucket,
+            )
+          : { bucket, path: destinationApiPath };
 
-      // Snapshot the cached listing names for the destination folder at the
-      // time the batch starts so each file can pick overwrite vs create-only.
       const cachedNames = new Set(
         (cache.get(destinationApiPath) ?? []).map((item) =>
           item.name.toLowerCase(),
@@ -465,6 +611,8 @@ export const useDialFileManager = ({
 
       const processBatch = async () => {
         let nextIndex = 0;
+        let successCount = 0;
+        let failedCount = 0;
 
         const worker = async () => {
           while (nextIndex < files.length) {
@@ -491,8 +639,8 @@ export const useDialFileManager = ({
 
             try {
               await uploadFile(
-                bucket,
-                `${destinationApiPath}${file.name}`,
+                uploadBucket,
+                `${uploadBasePath}${file.name}`,
                 file.fileContent,
                 {
                   signal: controller.signal,
@@ -513,10 +661,14 @@ export const useDialFileManager = ({
                   percent: 100,
                 }),
               );
+              successCount += 1;
             } catch {
               const status = controller.signal.aborted
                 ? FileUploadStatus.Cancelled
                 : FileUploadStatus.Failed;
+              if (status === FileUploadStatus.Failed) {
+                failedCount += 1;
+              }
               setUploadBatchState((prev) => updateEntry(prev, i, status));
             }
           }
@@ -526,6 +678,23 @@ export const useDialFileManager = ({
           Array.from({ length: UPLOAD_CONCURRENCY }, () => worker()),
         );
 
+        if (!controller.signal.aborted) {
+          if (successCount === 0 && failedCount > 0) {
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              title: t(DialFileManagerI18nKeys.UploadFailed),
+              message: t(DialFileManagerI18nKeys.CheckInternetConnection),
+            });
+          } else {
+            onNotification?.({
+              variant: NotificationVariant.Success,
+              message: t(DialFileManagerI18nKeys.UploadSuccess, {
+                parentPath: uploadBasePath || rootLabel,
+              }),
+            });
+          }
+        }
+
         setCache((prev) => {
           const next = new Map(prev);
           next.delete(destinationApiPath);
@@ -533,11 +702,12 @@ export const useDialFileManager = ({
         });
         setRetryCounter((c) => c + 1);
         uploadAbortControllerRef.current = null;
+        setUploadBatchState(null);
       };
 
       void processBatch();
     },
-    [bucket, cache, rootLabel],
+    [activeTab, bucket, cache, rootLabel, onNotification, t],
   );
 
   const onValidateUpload = useCallback(
@@ -546,8 +716,6 @@ export const useDialFileManager = ({
       _existingFiles: DialFile[],
       _destinationFolder: string,
     ): Promise<FileUploadValidationResult> => {
-      // Sanitize names in-place so the ui-kit's subsequent conflict detection
-      // sees the sanitized names before opening its ConflictResolutionPopup.
       for (const file of files) {
         file.name = sanitizeFileName(file.name);
       }
@@ -572,10 +740,14 @@ export const useDialFileManager = ({
         rootLabel,
       );
       const parentApiPath = virtualPathToApiPath(parentVirtualPath, rootLabel);
+      const { bucket: targetBucket, path: targetParentPath } =
+        activeTab === DialFileManagerTabs.Shared
+          ? resolveOwnerCoords(parentApiPath, sharedRootMetaRef.current, bucket)
+          : { bucket, path: parentApiPath };
       try {
         const created = await createFolder({
-          bucket,
-          parentPath: parentApiPath || undefined,
+          bucket: targetBucket,
+          parentPath: targetParentPath || undefined,
           name,
         });
         setCache((prev) =>
@@ -586,11 +758,17 @@ export const useDialFileManager = ({
             listingPermissionsCache.get(parentApiPath),
           ),
         );
+        setRetryCounter((c) => c + 1);
+      } catch {
+        onNotification?.({
+          variant: NotificationVariant.Error,
+          message: t(DialFileManagerI18nKeys.FolderCreateError),
+        });
       } finally {
         setIsCreatingFolder(false);
       }
     },
-    [bucket, rootLabel, listingPermissionsCache],
+    [activeTab, bucket, rootLabel, listingPermissionsCache, onNotification, t],
   );
 
   const onCreateFolderValidate = useCallback(
@@ -624,7 +802,6 @@ export const useDialFileManager = ({
     (dialFiles: DialFile[]) => {
       const run = async () => {
         setIsDownloading(true);
-        setDownloadError(null);
         try {
           const filename =
             dialFiles.length === 1
@@ -676,41 +853,43 @@ export const useDialFileManager = ({
             await triggerBrowserDownload(response, filename, destination);
           }
         } catch {
-          setDownloadError(t('dialFileManager.downloadError'));
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(
+              dialFiles.length === 1
+                ? DialFileManagerI18nKeys.DownloadFileError
+                : DialFileManagerI18nKeys.DownloadFilesError,
+            ),
+          });
         } finally {
           setIsDownloading(false);
         }
       };
       void run();
     },
-    [bucket, rootLabel, t],
+    [bucket, rootLabel, onNotification, t],
   );
 
-  const clearDownloadError = useCallback(() => {
-    setDownloadError(null);
-  }, []);
-
   const onDeleteFiles = useCallback(
-    (deletedItems: DialDeletedItem[], _sourceFolder: string) => {
+    (deletedItems: DialDeletedItem[], sourceFolder: string) => {
+      if (deletedItems.length === 0) return;
+
       const run = async () => {
         setIsDeleting(true);
-        setDeleteError(null);
 
         const dtos: DeleteItemDto[] = deletedItems.map((item) => {
           const isFolder = item.nodeType === DialFileNodeType.FOLDER;
-          // virtualPathToApiPath always appends "/", which is correct for folders
-          // but wrong for files — strip it for item nodes
-          const relPath = isFolder
-            ? virtualPathToApiPath(item.sourceUrl, rootLabel)
-            : virtualPathToApiPath(item.sourceUrl, rootLabel).replace(
-                /\/$/,
-                '',
-              );
+          const apiPath = virtualPathToApiPath(item.sourceUrl, rootLabel);
+          const relPath = isFolder ? apiPath : apiPath.replace(/\/$/, '');
           const segments = item.sourceUrl.split('/').filter(Boolean);
           const name = segments[segments.length - 1] ?? relPath;
+          const { bucket: itemBucket, path: itemPath } =
+            activeTab === DialFileManagerTabs.Shared
+              ? resolveOwnerCoords(relPath, sharedRootMetaRef.current, bucket)
+              : { bucket, path: relPath };
           return {
-            bucket,
-            path: relPath,
+            bucket: itemBucket,
+            path: itemPath,
             name,
             nodeType: isFolder
               ? DeleteItemDtoNodeTypeEnum.Folder
@@ -720,17 +899,63 @@ export const useDialFileManager = ({
 
         try {
           const { results } = await deleteFiles(dtos);
-          const failedCount = results.filter((r) => !r.success).length;
+          const failedResults = results.filter((r) => !r.success);
+          const failedCount = failedResults.length;
+          const successCount = results.length - failedCount;
+          const firstSuccessfulResult = results.find(
+            (result) => result.success,
+          );
+          const firstSuccessfulDto =
+            dtos.find((item) => item.path === firstSuccessfulResult?.path) ??
+            dtos[0];
 
-          if (failedCount === results.length) {
-            setDeleteError(t('dialFileManager.deleteError'));
-          } else if (failedCount > 0) {
-            setDeleteError(
-              t('dialFileManager.deletePartialError', { count: failedCount }),
-            );
+          if (successCount > 0) {
+            onNotification?.({
+              variant: NotificationVariant.Success,
+              title: t(
+                successCount === 1
+                  ? DialFileManagerI18nKeys.ItemDeletedSuccessfully
+                  : DialFileManagerI18nKeys.ItemsDeletedSuccessfully,
+              ),
+              message: t(
+                successCount === 1
+                  ? DialFileManagerI18nKeys.ItemDeletedFromFolder
+                  : DialFileManagerI18nKeys.ItemsDeletedFromFolder,
+                {
+                  count: successCount,
+                  fileName: firstSuccessfulDto?.name,
+                  folder: sourceFolder || rootLabel,
+                },
+              ),
+            });
+          }
+
+          if (failedCount > 0) {
+            const failedNames = failedResults.slice(0, 3).map((result) => {
+              const failedDto = dtos.find((item) => item.path === result.path);
+              return failedDto?.name ?? result.path;
+            });
+            const restCount = failedCount - failedNames.length;
+
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              title: t(DialFileManagerI18nKeys.ItemsDeletingFailed),
+              message: t(DialFileManagerI18nKeys.SomeItemsNotDeleted, {
+                files: failedNames.join(', '),
+                rest:
+                  restCount > 0
+                    ? t(DialFileManagerI18nKeys.AndOtherItems, {
+                        count: restCount,
+                      })
+                    : '',
+              }),
+            });
           }
         } catch {
-          setDeleteError(t('dialFileManager.deleteError'));
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.DeleteFilesError),
+          });
         }
 
         const deletedFolderPaths = dtos
@@ -770,12 +995,8 @@ export const useDialFileManager = ({
       };
       void run();
     },
-    [bucket, rootLabel, t, folderPath],
+    [activeTab, bucket, rootLabel, t, folderPath, onNotification],
   );
-
-  const clearDeleteError = useCallback(() => {
-    setDeleteError(null);
-  }, []);
 
   const clearUploadBatch = useCallback(() => {
     setUploadBatchState(null);
@@ -793,6 +1014,42 @@ export const useDialFileManager = ({
   }, [items, path, rootLabel]);
 
   const canWriteCurrentFolder = hasDialFileWritePermission(currentFolder);
+
+  const uploadEnabled = useMemo((): boolean => {
+    if (activeTab === DialFileManagerTabs.Organization) return false;
+    if (activeTab === DialFileManagerTabs.Shared && folderPath === '') {
+      return false;
+    }
+    return canWriteCurrentFolder;
+  }, [activeTab, folderPath, canWriteCurrentFolder]);
+
+  const visibleColumns = useMemo(
+    (): FileManagerColumnKey[] =>
+      activeTab === DialFileManagerTabs.Shared
+        ? COLUMNS_WITH_AUTHOR
+        : COLUMNS_WITHOUT_AUTHOR,
+    [activeTab],
+  );
+
+  const actionLabels = useMemo(
+    (): Partial<Record<DialFileManagerActions, string>> =>
+      activeTab === DialFileManagerTabs.MyFiles
+        ? {
+            [DialFileManagerActions.Download]: t('dialFileManager.download'),
+            [DialFileManagerActions.Delete]: t('dialFileManager.deleteAction'),
+          }
+        : {
+            [DialFileManagerActions.Download]: t('dialFileManager.download'),
+          },
+    [activeTab, t],
+  );
+
+  const sharedWithMeIds = useMemo(
+    (): string[] | undefined =>
+      activeTab === DialFileManagerTabs.Shared ? sharedRootIds : undefined,
+    [activeTab, sharedRootIds],
+  );
+
   const disabledNewButtonTooltip = t('dialFileManager.noPermissionToCreate');
 
   return {
@@ -812,14 +1069,15 @@ export const useDialFileManager = ({
     isCreatingFolder,
     onDownloadFiles,
     isDownloading,
-    downloadError,
-    clearDownloadError,
     onDeleteFiles,
     isDeleting,
-    deleteError,
-    clearDeleteError,
-    uploadEnabled: canWriteCurrentFolder,
-    isNewButtonDisabled: !canWriteCurrentFolder,
+    uploadEnabled,
+    isNewButtonDisabled: !uploadEnabled,
     disabledNewButtonTooltip,
+    visibleColumns,
+    dateLocale: i18n.language,
+    dateOptions: DATE_OPTIONS,
+    actionLabels,
+    sharedWithMeIds,
   };
 };
