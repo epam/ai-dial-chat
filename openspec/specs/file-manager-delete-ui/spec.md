@@ -2,11 +2,11 @@
 
 ## Requirement: useDialFileManager — delete capability
 
-`useDialFileManager` in `apps/chat/src/hooks/files/useDialFileManager.ts` SHALL add `onDeleteFiles`, `isDeleting`, `deleteError`, and `clearDeleteError` to its returned interface.
+`useDialFileManager` in `apps/chat/src/hooks/files/useDialFileManager.ts` SHALL expose `onDeleteFiles` and `isDeleting`, and SHALL surface delete results through the `onNotification` option passed by `DialFileManagerModal`.
 
 ### State ownership
 
-All delete state is owned by `useDialFileManager`. The modal consumes it via props. No new React Context is introduced.
+Delete loading state is owned by `useDialFileManager`. Toast rendering is owned by `DialFileManagerModal` through the app-level `useNotification` context. No new React Context is introduced.
 
 ### Interface additions
 
@@ -18,11 +18,17 @@ export interface UseDialFileManagerResult {
   onDeleteFiles: (items: DialDeletedItem[], sourceFolder: string) => void;
   /** True while a delete request is in flight. */
   isDeleting: boolean;
-  /** Non-null when the last delete had at least one failure. Cleared by clearDeleteError. */
-  deleteError: string | null;
-  /** Clears deleteError. */
-  clearDeleteError: () => void;
 }
+```
+
+`UseDialFileManagerOptions` includes:
+
+```typescript
+onNotification?: (notification: {
+  variant: NotificationVariant;
+  title?: string;
+  message: string;
+}) => void;
 ```
 
 ### `onDeleteFiles` implementation
@@ -30,7 +36,7 @@ export interface UseDialFileManagerResult {
 `DialDeletedItem.sourceUrl` is the **virtual path** set on `DialFile.path` (e.g. `/All files/reports/q1.pdf`), NOT a DIAL resource URL. Convert it to an API-relative path using the existing `virtualPathToApiPath(sourceUrl, rootLabel)` helper already defined in the hook.
 
 ```
-1. setIsDeleting(true), setDeleteError(null)
+1. setIsDeleting(true)
 2. Map each DialDeletedItem to DeleteItemDto:
    - relPath = virtualPathToApiPath(item.sourceUrl, rootLabel)
      e.g. "/All files/Screenshot.png" → "Screenshot.png"
@@ -39,12 +45,14 @@ export interface UseDialFileManagerResult {
    - name: last non-empty segment of item.sourceUrl split by '/'
 3. Call deleteFiles(dtos)  [from apps/chat/src/server-api/files.api.ts]
 4. Count failures (results.filter(r => !r.success))
-5. If ALL failed → setDeleteError(t('dialFileManager.deleteError'))
-   If SOME failed → setDeleteError(t('dialFileManager.deletePartialError', { count: failedCount }))
-6. Invalidate cache: remove from cache Map all entries whose key is a parent of any deleted path
-7. Navigate: if currentFolderPath is, or is a descendant of, any deleted folder → setFolderPath(parentApiPath)
-8. setRetryCounter(c => c + 1)  ← triggers re-fetch of current folder
-9. setIsDeleting(false)
+5. Show a success toast for successful deletions using legacy copy:
+   - one item → `dialFileManager.itemDeletedSuccessfully` + `dialFileManager.itemDeletedFromFolder`
+   - multiple items → `dialFileManager.itemsDeletedSuccessfully` + `dialFileManager.itemsDeletedFromFolder`
+6. Show an error toast for failed deletions using `dialFileManager.itemsDeletingFailed` + `dialFileManager.someItemsNotDeleted`; use `dialFileManager.deleteFilesError` when the whole request throws
+7. Invalidate cache: remove from cache Map all entries whose key is a parent of any deleted path
+8. Navigate: if currentFolderPath is, or is a descendant of, any deleted folder → setFolderPath(parentApiPath)
+9. setRetryCounter(c => c + 1)  ← triggers re-fetch of current folder
+10. setIsDeleting(false)
 ```
 
 ### Cache invalidation detail
@@ -76,8 +84,14 @@ Bulk mixed-selection: the delete action visibility is governed by the current br
 
 | Key | Usage |
 |-----|-------|
-| `dialFileManager.deleteError` | Total failure message |
-| `dialFileManager.deletePartialError` | Partial failure (interpolated `{{count}}`) |
+| `dialFileManager.deleteFilesError` | Request failure toast message |
+| `dialFileManager.itemDeletedSuccessfully` | Single-item success toast title |
+| `dialFileManager.itemsDeletedSuccessfully` | Multi-item success toast title |
+| `dialFileManager.itemsDeletingFailed` | Failure toast title |
+| `dialFileManager.itemDeletedFromFolder` | Single-item success toast message |
+| `dialFileManager.itemsDeletedFromFolder` | Multi-item success toast message |
+| `dialFileManager.someItemsNotDeleted` | Failure toast message |
+| `dialFileManager.andOtherItems` | Hidden failed-items suffix |
 
 ---
 
@@ -108,9 +122,7 @@ const {
   // ... existing ...
   onDeleteFiles,
   isDeleting,
-  deleteError,
-  clearDeleteError,
-} = useDialFileManager({ bucket });
+} = useDialFileManager({ bucket, onNotification: showNotification });
 ```
 
 ### isOperationInProgress update
@@ -188,22 +200,9 @@ Inside the `<div className="relative ...">` that wraps `DialFileManager`:
 )}
 ```
 
-### Error banner (delete)
+### Toast feedback (delete)
 
-```tsx
-{deleteError != null && !isDeleting && (
-  <button
-    type="button"
-    role="alert"
-    className="absolute inset-x-4 bottom-4 z-10 rounded bg-error px-4 py-3 text-start text-sm text-primary shadow"
-    onClick={clearDeleteError}
-  >
-    {deleteError}
-  </button>
-)}
-```
-
-Note: both download and delete error banners use `inset-x-4 bottom-4`. They are mutually exclusive states in practice (a download and delete cannot be in error simultaneously), but the `z-10` stacking order is the same and the last non-null one renders. If simultaneous errors are possible in future, a message queue can be introduced — this is out of scope here.
+`DialFileManagerModal` calls `useNotification()` and passes `showNotification` into `useDialFileManager({ bucket, onNotification: showNotification })`. Delete success and failure feedback is rendered by the global `NotificationContainer`, not as an inline banner inside the modal.
 
 ### Call sites: new prop values
 
@@ -263,8 +262,14 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 | `dialFileManager.deleteConfirmBodyMultiple` | `"Do you want to delete following"` | Precedes count span in body |
 | `dialFileManager.deleteConfirmBodyItems` | `"items?"` | Appended after count in multi-item body |
 | `dialFileManager.deleteConfirmButton` | `"Delete"` | Confirm button |
-| `dialFileManager.deleteError` | `"Delete failed. Please try again."` | Total failure banner |
-| `dialFileManager.deletePartialError` | `"{{count}} item(s) could not be deleted."` | Partial failure banner |
+| `dialFileManager.deleteFilesError` | `"Failed to delete files. Please try again later."` | Request failure toast message |
+| `dialFileManager.itemDeletedSuccessfully` | `"Item deleted successfully"` | Single-item success toast title |
+| `dialFileManager.itemsDeletedSuccessfully` | `"Items deleted successfully"` | Multi-item success toast title |
+| `dialFileManager.itemsDeletingFailed` | `"Items deleting failed"` | Failure toast title |
+| `dialFileManager.itemDeletedFromFolder` | `"“{{fileName}}” deleted from {{folder}}"` | Single-item success toast message |
+| `dialFileManager.itemsDeletedFromFolder` | `"{{count}} items deleted from {{folder}}"` | Multi-item success toast message |
+| `dialFileManager.someItemsNotDeleted` | `"{{files}}{{rest}} were not deleted. Please try again."` | Failed-items toast message |
+| `dialFileManager.andOtherItems` | `" and {{count}} other items"` | Failed-items overflow suffix |
 
 `buttons.cancel` already exists and is reused.
 
@@ -273,8 +278,7 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 ## Requirement: RTL
 
 - No new physical-direction Tailwind classes. All classes follow the logical pattern or are symmetric.
-- `inset-x-4` (symmetric, no flip needed) — already used by download error banner.
-- `text-start` (logical) — already used by download error banner.
+- Toast placement is handled by `NotificationContainer`, which uses logical positioning (`start-1/2`).
 - `aria-live`, `role="alert"`, `z-*`, `bg-*` — direction-agnostic.
 - No new directional icons.
 
@@ -283,7 +287,7 @@ New keys added to `apps/chat/src/i18n/locales/en.json` under `dialFileManager`:
 ## Requirement: Accessibility
 
 - Delete loading overlay: `aria-live="polite"` — announces to screen readers that an operation is in progress.
-- Delete error banner: `role="alert"` — announced immediately to screen readers.
+- Delete result toasts are rendered through `NotificationContainer` / `DialNotification`.
 - Confirmation popup: handled by `DialFileManager` / ui-kit (focus trap, keyboard Escape = cancel, Enter = confirm).
 - Delete action items in grid/tree context menus: rendered by ui-kit; keyboard-accessible via existing grid/tree keyboard navigation.
 
@@ -342,7 +346,7 @@ No requirement-level behavior in `dial-file-system-picker` changes.
 
 - **GIVEN** a bulk selection of 4 items where 1 is in a read-only sub-folder
 - **WHEN** delete is confirmed
-- **THEN** 3 items are deleted successfully; `deleteError` shows `"1 item(s) could not be deleted."`; error banner is visible; clicking the banner dismisses it
+- **THEN** 3 items are deleted successfully; a success toast is shown for the deleted items; an error toast lists the failed item names
 
 ### Scenario: Read-only folder — delete action hidden
 
@@ -354,13 +358,13 @@ No requirement-level behavior in `dial-file-system-picker` changes.
 
 - **GIVEN** user attempts a batch delete of 101 items
 - **WHEN** `onDeleteFiles` builds the DTO and calls the BFF
-- **THEN** BFF returns 400; `deleteError` shows total-failure message
+- **THEN** BFF returns 400; an error toast shows `dialFileManager.deleteFilesError`
 
 ### Scenario: DIAL Core 403 on all items
 
 - **GIVEN** all items in the batch return 403 from DIAL Core
 - **WHEN** delete completes
-- **THEN** `deleteError = t('dialFileManager.deleteError')`; cache unchanged; listing not refreshed
+- **THEN** an error toast lists the failed item names; cache refresh still runs for the current folder
 
 ### Scenario: Upload/Download/Attach unchanged
 
@@ -380,13 +384,12 @@ Not gated. Delete is available to all authenticated users with WRITE permission 
 
 **`useDialFileManager.spec.tsx`** (`apps/chat/src/hooks/files/tests/useDialFileManager.spec.tsx`):
 - `onDeleteFiles` success: cache invalidated, retryCounter incremented, `isDeleting` transitions
-- `onDeleteFiles` partial failure: `deleteError` set with partial message
-- `onDeleteFiles` total failure: `deleteError` set with total-failure message
+- `onDeleteFiles` partial failure: success and error notifications emitted
+- `onDeleteFiles` total failure: error notification emitted
 - `onDeleteFiles` — current folder deleted: `folderPath` navigates to parent
-- `clearDeleteError`: sets `deleteError` to null
 
 **`DialFileManagerModal.spec.tsx`** (`apps/chat/src/components/DialFileManagerModal/tests/DialFileManagerModal.spec.tsx`):
 - Delete action label appears in grid options when `deleteLabel` prop is provided
 - Loading overlay visible when `isDeleting` is true (mock hook)
-- Error banner visible when `deleteError` is non-null (mock hook); click dismisses it
+- `showNotification` from `useNotification` is passed to `useDialFileManager`
 - `isOperationInProgress` disables Attach button when `isDeleting` is true
