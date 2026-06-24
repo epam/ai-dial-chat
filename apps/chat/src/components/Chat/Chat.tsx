@@ -197,6 +197,14 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const isNotAllowed = useAppSelector(
     ConversationsSelectors.selectIsNotAllowed,
   );
+  const isChatEventsEnabled = useAppSelector((state) =>
+    SettingsSelectors.isFeatureEnabled(state, Feature.LiveChatInteraction),
+  );
+  const _isSubscribing = useAppSelector(
+    ChatEventsSelectors.selectIsSubscribing,
+  );
+
+  const isSubscribing = isChatEventsEnabled && _isSubscribing;
 
   const autoScrollEnabledRef = useRef(true);
 
@@ -613,7 +621,8 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
     isOptimisticDefaultModelLoad ||
     isIsolatedView ||
     isAdminPreview ||
-    isApproveRequiredEntity;
+    isApproveRequiredEntity ||
+    !isSubscribing;
 
   const isInputVisible =
     ((!isReplay || isNotEmptyConversations) &&
@@ -1143,12 +1152,6 @@ export function Chat({ isPreview }: ChatProps) {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
-  const isChatEventsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.LiveChatInteraction),
-  );
-  const isSubscribing = useAppSelector(ChatEventsSelectors.selectIsSubscribing);
-
-  const showIsSubscribingLoader = isChatEventsEnabled && isSubscribing;
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
@@ -1236,8 +1239,7 @@ export function Chat({ isPreview }: ChatProps) {
     // listing when the default model is already known from settings.
     (!isInstalledModelsInitialized && !isOptimisticDefaultModelLoad) ||
     loadingConfigurationSchemas.length ||
-    isPublicationUpdating ||
-    showIsSubscribingLoader
+    isPublicationUpdating
   ) {
     return <Loader />;
   }

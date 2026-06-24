@@ -107,6 +107,7 @@ import { Translation } from '@/src/types/translation';
 
 import {
   ChatActions,
+  ChatEventsActions,
   ConversationsActions,
   FilesActions,
   MarketplaceActions,
@@ -1433,6 +1434,16 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.sendMessages.type),
     switchMap(({ payload }) => {
+      const isChatEventsEnabled = SettingsSelectors.isFeatureEnabled(
+        state$.value,
+        Feature.LiveChatInteraction,
+      );
+      const isSubscribed = ChatEventsSelectors.selectIsSubscribed(state$.value);
+
+      if (isChatEventsEnabled && !isSubscribed) {
+        return of(ChatEventsActions.subscribe({ resumeChat: payload }));
+      }
+
       const isCompareMode = payload.conversations.length > 1;
 
       let precomputedNames: (string | undefined)[] = payload.conversations.map(
@@ -1830,6 +1841,11 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
               !!message.custom_content?.attachments?.some((attachment) =>
                 isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
               );
+            const selectedConversations =
+              ConversationsSelectors.selectSelectedConversations(state$.value);
+            const areOtherConversationsStreaming = selectedConversations
+              .filter((c) => c.id !== payload.conversation.id)
+              .some((c) => c.isMessageStreaming);
 
             return concat(
               iif(
@@ -1853,6 +1869,11 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
                 ),
               ),
               of(ConversationsActions.streamMessageSuccess()),
+              iif(
+                () => !areOtherConversationsStreaming,
+                of(ChatEventsActions.unsubscribe()),
+                EMPTY,
+              ),
             );
           }
 
@@ -1883,14 +1904,27 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           );
         }),
         catchError((error: Error) => {
+          const selectedConversations =
+            ConversationsSelectors.selectSelectedConversations(state$.value);
+          const areOtherConversationsStreaming = selectedConversations
+            .filter((c) => c.id !== payload.conversation.id)
+            .some((c) => c.isMessageStreaming);
+
           if (error.name === 'AbortError') {
-            return of(
-              ConversationsActions.updateConversation({
-                id: payload.conversation.id,
-                values: {
-                  isMessageStreaming: false,
-                },
-              }),
+            return concat(
+              of(
+                ConversationsActions.updateConversation({
+                  id: payload.conversation.id,
+                  values: {
+                    isMessageStreaming: false,
+                  },
+                }),
+              ),
+              iif(
+                () => !areOtherConversationsStreaming,
+                of(ChatEventsActions.unsubscribe()),
+                EMPTY,
+              ),
             );
           }
 
@@ -1977,6 +2011,11 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         );
       const errorMessage = responseJSON?.message || payload.message;
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const selectedConversations =
+        ConversationsSelectors.selectSelectedConversations(state$.value);
+      const areOtherConversationsStreaming = selectedConversations
+        .filter((c) => c.id !== payload.conversation.id)
+        .some((c) => c.isMessageStreaming);
 
       const messages = [...payload.conversation.messages];
       const modelId = messages[messages.length - 1].model?.id;
@@ -2040,6 +2079,11 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
               errorMessage,
             },
           }),
+        ),
+        iif(
+          () => !areOtherConversationsStreaming,
+          of(ChatEventsActions.unsubscribe()),
+          EMPTY,
         ),
       );
     }),

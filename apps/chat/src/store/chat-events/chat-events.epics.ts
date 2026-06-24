@@ -2,7 +2,6 @@ import {
   EMPTY,
   catchError,
   concat,
-  exhaustMap,
   filter,
   forkJoin,
   map,
@@ -30,6 +29,7 @@ import { Translation } from '@/src/types/translation';
 
 import {
   ChatEventsActions,
+  ConversationsActions,
   ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
@@ -57,12 +57,7 @@ const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ChatEventsActions.init.type),
     filter(() => !ChatEventsSelectors.selectIsInitialized(state$.value)),
-    switchMap(() =>
-      concat(
-        of(ChatEventsActions.subscribe()),
-        of(ChatEventsActions.initFinish()),
-      ),
-    ),
+    switchMap(() => concat(of(ChatEventsActions.initFinish()))),
   );
 
 const subscribeEpic: AppEpic = (action$, state$) =>
@@ -76,7 +71,7 @@ const subscribeEpic: AppEpic = (action$, state$) =>
           Feature.LiveChatInteraction,
         ),
     ),
-    exhaustMap(({ payload }) => {
+    switchMap(({ payload }) => {
       const channelId = ChatEventsSelectors.selectChannelId(state$.value);
       const decoder = new TextDecoder();
       let retryAttempt = payload?.retryAttempt ?? 0;
@@ -85,9 +80,13 @@ const subscribeEpic: AppEpic = (action$, state$) =>
         mergeMap((resp) => {
           if (resp.channelId) {
             retryAttempt = 0;
+            const resumeChatAction = payload?.resumeChat
+              ? of(ConversationsActions.sendMessages(payload.resumeChat))
+              : EMPTY;
             return concat(
               of(ChatEventsActions.setIsSubscribed(true)),
               of(ChatEventsActions.setChannelId(resp.channelId)),
+              resumeChatAction,
             );
           }
           if (resp.done) {
@@ -116,7 +115,11 @@ const subscribeEpic: AppEpic = (action$, state$) =>
           console.error(err);
           const { traceId } = parseApiError(err);
           return of(
-            ChatEventsActions.subscribeFailure({ retryAttempt, traceId }),
+            ChatEventsActions.subscribeFailure({
+              retryAttempt,
+              traceId,
+              resumeChat: payload?.resumeChat,
+            }),
           );
         }),
       );
@@ -136,6 +139,7 @@ const reconnectEpic: AppEpic = (action$, state$) =>
         map(() =>
           ChatEventsActions.subscribe({
             retryAttempt: (payload?.retryAttempt ?? 0) + 1,
+            resumeChat: payload?.resumeChat,
           }),
         ),
       ),
@@ -153,7 +157,10 @@ const unsubscribeEpic: AppEpic = (action$, state$) =>
 
       return ChatEventsService.unsubscribe(channelId).pipe(
         switchMap(() => {
-          return of(ChatEventsActions.setIsSubscribed(false));
+          return concat(
+            of(ChatEventsActions.setIsSubscribed(false)),
+            of(ChatEventsActions.setChannelId()),
+          );
         }),
       );
     }),
