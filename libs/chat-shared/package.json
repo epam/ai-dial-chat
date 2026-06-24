@@ -28,5 +28,13 @@
   "dependencies": {
     "classnames": "2.5.1",
     "tailwind-merge": "^3.6.0"
+  },
+  "nx": {
+    "tags": ["publishable"],
+    "targets": {
+      "publish": {
+        "command": "node tools/publish-lib.mjs {projectName} --version={args.ver} --dry={args.dry} --tag={args.tag}"
+      }
+    }
   }
 }
