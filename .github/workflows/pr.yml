@@ -30,7 +30,7 @@ jobs:
         run: npm run validate:agent-docs
 
   run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.4.1
+    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.6.1
     secrets: inherit
     with:
       node-version: 24

@@ -75,6 +75,7 @@ export const Input: FC<InputProps> = ({
   sendOnEnter = SendOnEnter.Enter,
   prefixAttachments = [],
   onRemovePrefixAttachment,
+  chatSettings,
   autoFocus = false,
   messageHistory,
   onDialFileSystemClick,
@@ -359,6 +360,7 @@ export const Input: FC<InputProps> = ({
                 menuCloseLabel={menuCloseLabel}
                 style={cssVars}
                 isDisabled={isInputDisabled}
+                chatSettings={chatSettings}
                 extraMenuItems={dialFileSystemMenuItem}
               />
             </div>
