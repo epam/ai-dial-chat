@@ -6,7 +6,6 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
-import { ChatMessageRole, MessageDto } from '../chat/dto/chat-completion.dto';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
 import { EnvironmentVariables } from '../config/environment.config';
@@ -132,9 +131,9 @@ export class ConversationService extends AppService {
     const conversationPath = `${deploymentId}__${name}`;
     const folderId = `${bucket}`; // TODO: check
 
-    const userMessage: MessageDto = {
+    const userMessage: ConversationMessageDto = {
       id: uuid,
-      role: ChatMessageRole.User,
+      role: ConversationMessageRole.User,
       content: firstMessage,
       timestamp: new Date(now).toISOString(),
       custom_content: customContent,
@@ -165,7 +164,7 @@ export class ConversationService extends AppService {
         encodedConversationPath,
         {
           headers: getBearerAuthHeaders(token),
-          body: conversation,
+          body: conversation as never,
         },
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {
@@ -689,7 +688,7 @@ export class ConversationService extends AppService {
         encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
-          body: conversation,
+          body: conversation as never,
         },
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {
@@ -941,9 +940,16 @@ export class ConversationService extends AppService {
         };
       });
 
+    const systemMessages = conversation.prompt
+      ? [{ role: 'system', content: conversation.prompt }]
+      : [];
+
     const requestBody = {
-      messages,
+      messages: [...systemMessages, ...messages],
       stream: true,
+      ...(conversation.temperature != null && {
+        temperature: conversation.temperature,
+      }),
       ...(configuration ? { custom_fields: { configuration } } : {}),
     };
 
@@ -953,7 +959,7 @@ export class ConversationService extends AppService {
 
     try {
       const result = (await this.client.sendChatCompletionRequest(model, {
-        body: requestBody,
+        body: requestBody as never,
         headers: {
           ...getBearerAuthHeaders(token),
           Accept: 'text/event-stream',

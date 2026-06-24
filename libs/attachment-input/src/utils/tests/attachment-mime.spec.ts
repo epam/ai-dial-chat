@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   isMimeTypeAllowed,
   mimeTypesToExtensionLabels,
-} from './attachment-mime';
+} from '../attachment-mime';
 
 describe('mimeTypesToExtensionLabels', () => {
   it('converts exact MIME types to uppercase subtype labels', () => {

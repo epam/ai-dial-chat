@@ -7,11 +7,11 @@ import { ConfigService } from '@nestjs/config';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { EnvironmentVariables } from '../../config/environment.config';
 import { ChatService } from '../chat.service';
-import { ChatCompletionDto } from '../dto/chat-completion.dto';
+import { ChatCompletionDto, ChatMessageRole } from '../dto/chat-completion.dto';
 
 const dto: ChatCompletionDto = {
   deployment: 'gpt-4',
-  messages: [{ role: 'user', content: 'Hello' }],
+  messages: [{ role: ChatMessageRole.User, content: 'Hello' }],
 };
 
 const TOKEN = 'test-token';

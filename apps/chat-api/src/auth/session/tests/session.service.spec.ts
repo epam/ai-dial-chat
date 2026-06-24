@@ -24,6 +24,7 @@ const samplePayload: SessionPayload = {
   iat: 1715596400,
   csrf: 'csrf-token',
   claims: { email: 'u@example.com' },
+  bucket: '',
 };
 
 async function buildService(
