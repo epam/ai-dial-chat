@@ -31,6 +31,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   thinkingLabel,
   markdownComponents,
   onAttachmentClick,
+  attachmentClickLabel,
   codeBlockCopyLabel,
   codeBlockCopiedLabel,
   codeBlockTheme,
@@ -97,6 +98,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           <AttachmentTray
             attachments={attachments ?? []}
             onAttachmentClick={onAttachmentClick}
+            clickLabel={attachmentClickLabel}
           />
           {afterContent}
           <MessageActions

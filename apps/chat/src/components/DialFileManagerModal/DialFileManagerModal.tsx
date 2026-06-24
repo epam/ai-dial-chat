@@ -1,4 +1,8 @@
 import {
+  isMimeTypeAllowed,
+  mimeTypesToExtensionLabels,
+} from '@epam/ai-dial-attachment-input';
+import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
@@ -16,11 +20,11 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
-  type FC,
-  type ReactNode,
   useCallback,
   useMemo,
   useState,
+  type FC,
+  type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -29,10 +33,6 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
-import {
-  isMimeTypeAllowed,
-  mimeTypesToExtensionLabels,
-} from '../../utils/attachment-mime';
 import { isHiddenPath } from '../../utils/file-path';
 import { formatFileSize } from '../../utils/string-utils';
 import type { AttachResult } from './types/attach-result';

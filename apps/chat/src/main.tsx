@@ -1,3 +1,4 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import '@epam/ai-dial-ui-kit/styles.css';
 import { lazy, StrictMode, Suspense } from 'react';
 import * as ReactDOM from 'react-dom/client';
@@ -34,23 +35,25 @@ root.render(
               <AppConfigProvider>
                 <DeploymentsProvider>
                   <SourcesSidebarProvider>
-                    <Suspense fallback={null}>
-                      <Routes>
-                        <Route path="/login" element={<LoginPage />} />
-                        <Route
-                          path="*"
-                          element={
-                            <RequireAuth>
-                              <UserConfigProvider>
-                                <ConversationsProvider>
-                                  <App />
-                                </ConversationsProvider>
-                              </UserConfigProvider>
-                            </RequireAuth>
-                          }
-                        />
-                      </Routes>
-                    </Suspense>
+                    <AttachmentCanvasProvider>
+                      <Suspense fallback={null}>
+                        <Routes>
+                          <Route path="/login" element={<LoginPage />} />
+                          <Route
+                            path="*"
+                            element={
+                              <RequireAuth>
+                                <UserConfigProvider>
+                                  <ConversationsProvider>
+                                    <App />
+                                  </ConversationsProvider>
+                                </UserConfigProvider>
+                              </RequireAuth>
+                            }
+                          />
+                        </Routes>
+                      </Suspense>
+                    </AttachmentCanvasProvider>
                   </SourcesSidebarProvider>
                 </DeploymentsProvider>
               </AppConfigProvider>

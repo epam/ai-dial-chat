@@ -1,3 +1,7 @@
+import {
+  AttachmentCanvasContainer,
+  useAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
 import {
   lazy,
@@ -10,6 +14,7 @@ import {
   useState,
   type FC,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Route,
   Routes,
@@ -27,6 +32,7 @@ import {
   getConversationRoute,
   normalizeConversationId,
 } from '../constants/routes';
+import { AttachmentCanvasI18nKeys } from '../constants/translation-keys';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import useLocalStorage from '../hooks/useLocalStorage';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
@@ -41,6 +47,7 @@ const ConversationPage = lazy(async () => {
 });
 
 const App: FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
@@ -69,6 +76,11 @@ const App: FC = () => {
 
   useEffect(() => {
     if (pathname === ROUTES.Catalog) closeHistoryPanel();
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { closeCanvas } = useAttachmentCanvas();
+  useEffect(() => {
+    closeCanvas();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchRoot = useMatch(ROUTES.Root);
@@ -167,6 +179,15 @@ const App: FC = () => {
         </Routes>
       </main>
       {isConversationRoute && <ConversationSourcesPanel />}
+      {isConversationRoute && (
+        <AttachmentCanvasContainer
+          ariaLabel={t(AttachmentCanvasI18nKeys.AriaLabel)}
+          closeLabel={t(AttachmentCanvasI18nKeys.CloseLabel)}
+          downloadLabel={t(AttachmentCanvasI18nKeys.DownloadLabel)}
+          unsupportedLabel={t(AttachmentCanvasI18nKeys.UnsupportedLabel)}
+          isMobile={isMobile}
+        />
+      )}
     </div>
   );
 };

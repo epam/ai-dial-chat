@@ -1,0 +1,27 @@
+{
+  "name": "@epam/ai-dial-attachment-canvas",
+  "version": "0.0.1",
+  "private": true,
+  "license": "Apache-2.0",
+  "type": "module",
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    "./package.json": "./package.json",
+    "./styles.css": "./dist/style.css",
+    ".": {
+      "@epam/source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "peerDependencies": {
+    "@epam/ai-dial-chat-shared": "0.0.1",
+    "@epam/ai-dial-sidebar": "0.0.1",
+    "@epam/ai-dial-ui-kit": "0.11.0",
+    "@tabler/icons-react": "^3.44.0",
+    "react": "^19.0.0"
+  }
+}

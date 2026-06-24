@@ -113,6 +113,9 @@ describe('Catalog', () => {
       name: 'Claude',
       version: '1',
       lastUsed: 'now',
+      description: '',
+      folder: [],
+      topics: [],
     };
     render(<Catalog items={[]} favorites={[fav]} />);
     expect(screen.getByText('Your Favorites')).toBeTruthy();
