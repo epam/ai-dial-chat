@@ -65,7 +65,6 @@ export const Catalog: FC<CatalogProps> = ({
       label: titles?.sortNameAZLabel ?? 'Name A-Z',
     },
   ];
-
   const filteredItems = items.filter((item) => !item.isHidden);
 
   const [query, setQuery] = useState('');

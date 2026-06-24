@@ -1,17 +1,8 @@
 import {
   AttachmentTray,
-  MAX_UPLOADS_PER_MINUTE,
-  generateAttachmentId,
   useClipboardPaste,
 } from '@epam/ai-dial-attachment-input';
-import type { Attachment } from '@epam/ai-dial-chat-shared';
-import {
-  AttachmentErrorReason,
-  AttachmentType,
-  RequestStatus,
-  buildCssVars,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
+import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
@@ -23,18 +14,16 @@ import {
   type FC,
   KeyboardEvent,
   useCallback,
-  useEffect,
-  useLayoutEffect,
   useMemo,
   useRef,
-  useState,
 } from 'react';
+import { useAttachments } from '../../hooks/useAttachments';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
 import { useIsMobile } from '../../hooks/useIsMobile';
+import { useMessageState } from '../../hooks/useMessageState';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
-import { runAtRate } from '../../utils/concurrency';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
@@ -96,6 +85,7 @@ export const Input: FC<InputProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const historyNav = useInputHistoryNavigation(messageHistory);
+
   const cssVars = useMemo(
     () =>
       buildCssVars({
@@ -130,17 +120,44 @@ export const Input: FC<InputProps> = ({
     [onDialFileSystemClick, dialFileSystemLabel],
   );
 
-  const [message, setMessage] = useState(messageProp);
-  const [attachments, setAttachments] =
-    useState<Attachment[]>(initialAttachments);
-  const attachmentsRef = useRef(attachments);
+  const { message, setMessage, textareaRef, isMultiLine } = useMessageState({
+    messageProp,
+  });
+
+  const handleExpandPastedText = useCallback(
+    (text: string) => {
+      setMessage((prev) => (prev ? `${prev}\n${text}` : text));
+    },
+    [setMessage],
+  );
+
+  const {
+    attachments,
+    buildAttachments,
+    addAttachments,
+    resetAttachments,
+    handleRemove,
+    handleRetry,
+    handleExpand,
+    hasBlockedAttachments,
+  } = useAttachments({
+    initialAttachments,
+    onUploadAttachment,
+    onAttachmentsChange,
+    validateAttachment,
+    pendingDropFiles,
+    onDropFilesConsumed,
+    pendingAttachments,
+    onPendingAttachmentsConsumed,
+    onExpandPastedText: handleExpandPastedText,
+  });
 
   const handleTranscript = useCallback(
     (transcript: string) => {
       setMessage(transcript);
       onChange?.(transcript);
     },
-    [onChange],
+    [onChange, setMessage],
   );
 
   const {
@@ -157,171 +174,9 @@ export const Input: FC<InputProps> = ({
     onTranscript: handleTranscript,
   });
 
-  useEffect(() => {
-    if (messageProp) {
-      setMessage(messageProp);
-    }
-  }, [messageProp]);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const singleRowHeightRef = useRef<number>(0);
-  const [isMultiLine, setIsMultiLine] = useState(false);
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      singleRowHeightRef.current = textareaRef.current.offsetHeight;
-    }
-  }, []);
-
-  useLayoutEffect(() => {
-    if (!textareaRef.current || singleRowHeightRef.current === 0) return;
-    const isNowMultiLine =
-      textareaRef.current.offsetHeight > singleRowHeightRef.current;
-    // Only set to false when message is empty: switching from stacked to non-stacked
-    // changes textarea width, which can re-trigger wrapping and cause an infinite toggle.
-    setIsMultiLine((prev) =>
-      isNowMultiLine ? true : message === '' ? false : prev,
-    );
-  }, [message]);
-
-  useEffect(() => {
-    attachmentsRef.current = attachments;
-  }, [attachments]);
-
-  useEffect(() => {
-    return () => {
-      attachmentsRef.current.forEach((a) => {
-        if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
-      });
-    };
-  }, []);
-
-  const buildAttachments = useCallback((files: File[]): Attachment[] => {
-    return files.map((file) => {
-      const isImage = file.type.startsWith('image/');
-      const previewUrl = isImage ? URL.createObjectURL(file) : undefined;
-      return {
-        id: generateAttachmentId(),
-        name: file.name,
-        contentType: file.type,
-        file,
-        type: isImage ? AttachmentType.Image : AttachmentType.File,
-        status: RequestStatus.Idle,
-        previewUrl,
-      };
-    });
-  }, []);
-
-  const updateAttachments = useCallback(
-    (updater: (current: Attachment[]) => Attachment[]) => {
-      setAttachments((prev) => {
-        const updated = updater(prev);
-        onAttachmentsChange?.(updated);
-        return updated;
-      });
-    },
-    [onAttachmentsChange],
-  );
-
-  const uploadAttachment = useCallback(
-    async (attachment: Attachment) => {
-      if (!onUploadAttachment) return;
-
-      updateAttachments((current) =>
-        current.map((item) =>
-          item.id === attachment.id
-            ? { ...item, status: RequestStatus.Loading }
-            : item,
-        ),
-      );
-
-      try {
-        const url = await onUploadAttachment(attachment);
-        updateAttachments((current) =>
-          current.map((item) =>
-            item.id === attachment.id
-              ? { ...item, status: RequestStatus.Idle, url }
-              : item,
-          ),
-        );
-      } catch (err) {
-        const errorReason =
-          err != null &&
-          typeof err === 'object' &&
-          'errorReason' in err &&
-          Object.values(AttachmentErrorReason).includes(
-            (err as { errorReason: AttachmentErrorReason }).errorReason,
-          )
-            ? (err as { errorReason: AttachmentErrorReason }).errorReason
-            : undefined;
-        updateAttachments((current) =>
-          current.map((item) =>
-            item.id === attachment.id
-              ? {
-                  ...item,
-                  status: RequestStatus.Error,
-                  ...(errorReason != null && { errorReason }),
-                }
-              : item,
-          ),
-        );
-      }
-    },
-    [onUploadAttachment, updateAttachments],
-  );
-
-  const addAttachments = useCallback(
-    (newAttachments: Attachment[], upload = true) => {
-      let toAdd: Attachment[] = [];
-      updateAttachments((prev) => {
-        const existingIds = new Set(prev.map((attachment) => attachment.id));
-        toAdd = newAttachments.filter(
-          (attachment) => !existingIds.has(attachment.id),
-        );
-        return [...prev, ...toAdd];
-      });
-      if (upload) {
-        const validToUpload: Attachment[] = [];
-        toAdd.forEach((attachment) => {
-          const errorReason = validateAttachment?.(attachment);
-          if (errorReason != null) {
-            updateAttachments((current) =>
-              current.map((item) =>
-                item.id === attachment.id
-                  ? { ...item, status: RequestStatus.Error, errorReason }
-                  : item,
-              ),
-            );
-          } else {
-            validToUpload.push(attachment);
-          }
-        });
-        void runAtRate(validToUpload, MAX_UPLOADS_PER_MINUTE, uploadAttachment);
-      }
-    },
-    [updateAttachments, uploadAttachment, validateAttachment],
-  );
-
-  useEffect(() => {
-    if (pendingDropFiles.length === 0) return;
-    const built = buildAttachments(pendingDropFiles);
-    addAttachments(built);
-    onDropFilesConsumed?.();
-  }, [addAttachments, buildAttachments, onDropFilesConsumed, pendingDropFiles]);
-
-  useEffect(() => {
-    if (pendingAttachments.length === 0) return;
-    addAttachments(pendingAttachments, false);
-    onPendingAttachmentsConsumed?.();
-  }, [addAttachments, onPendingAttachmentsConsumed, pendingAttachments]);
-
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
-  const hasBlockedAttachments = attachments.some(
-    (attachment) =>
-      attachment.status === RequestStatus.Loading ||
-      attachment.status === RequestStatus.Error,
-  );
   const hasSendableContent =
     message.trim().length > 0 || attachments.length > 0;
   const canSend = hasSendableContent && !hasBlockedAttachments;
@@ -347,12 +202,10 @@ export const Input: FC<InputProps> = ({
       currentAttachments.forEach((a) => {
         if (a.previewUrl) URL.revokeObjectURL(a.previewUrl);
       });
-      setAttachments([]);
-      onAttachmentsChange?.([]);
+      resetAttachments([]);
     } catch {
       setMessage(currentMessage);
-      setAttachments(currentAttachments);
-      onAttachmentsChange?.(currentAttachments);
+      resetAttachments(currentAttachments);
     }
   };
 
@@ -392,45 +245,11 @@ export const Input: FC<InputProps> = ({
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
     if (files.length === 0) return;
-
     const newAttachments = buildAttachments(files);
-
     // Reset so the same file can be picked again
     e.target.value = '';
-
     addAttachments(newAttachments);
   };
-
-  const handleRemove = useCallback(
-    (id: string) => {
-      updateAttachments((prev) => {
-        const target = prev.find((a) => a.id === id);
-        if (target?.previewUrl) URL.revokeObjectURL(target.previewUrl);
-        return prev.filter((a) => a.id !== id);
-      });
-    },
-    [updateAttachments],
-  );
-
-  const handleRetry = useCallback(
-    (id: string) => {
-      const target = attachments.find((a) => a.id === id);
-      if (!target) return;
-      void uploadAttachment(target);
-    },
-    [attachments, uploadAttachment],
-  );
-
-  const handleExpand = useCallback(
-    async (id: string) => {
-      const target = attachments.find((a) => a.id === id);
-      if (!target || target.type !== AttachmentType.Pasted) return;
-      const text = await target.file.text();
-      setMessage((prev) => (prev ? `${prev}\n${text}` : text));
-      handleRemove(id);
-    },
-    [attachments, handleRemove],
-  );
 
   if (voiceState !== 'idle') {
     return (
@@ -469,6 +288,7 @@ export const Input: FC<InputProps> = ({
       rows={1}
     />
   );
+
   return (
     <div
       style={cssVars}
