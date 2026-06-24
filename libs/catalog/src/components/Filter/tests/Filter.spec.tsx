@@ -108,10 +108,10 @@ describe('Filter', () => {
   it('shows topic count label when only topics are active', () => {
     renderFilter({
       checked: new Set(['Vision']),
-      values: new Set(['Vision', 'Code']),
+      values: new Set(['Vision', 'Code', 'Images']),
       defaultLabel: 'From',
     });
-    expect(screen.getByRole('button', { name: 'From: 1 of 2' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'From: 1 of 3' })).toBeTruthy();
   });
 
   it('shows combined label when both My Apps and topics are active', () => {
