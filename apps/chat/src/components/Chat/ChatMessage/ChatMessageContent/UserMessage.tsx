@@ -634,6 +634,20 @@ export const UserMessage = memo(function UserMessage({
     }
   }, [dispatch, isEditing]);
 
+  const resolvedUploadIds = useAppSelector(
+    FilesSelectors.selectResolvedUploadIds,
+  );
+
+  useEffect(() => {
+    if (!resolvedUploadIds?.length) return;
+    if (isEditing) {
+      setNewEditableAttachmentsIds((ids) =>
+        uniq(ids.concat(resolvedUploadIds)),
+      );
+    }
+    dispatch(FilesActions.clearResolvedUploadIds());
+  }, [resolvedUploadIds, isEditing, dispatch]);
+
   const handleUploadPastedFiles = useCallback(
     (
       files: File[],
