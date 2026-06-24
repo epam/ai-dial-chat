@@ -65,6 +65,7 @@ export const MarketplaceDetailsModal = {
   manageCredsButton: 'Manage creds',
   viewButton: 'View',
   connectButton: 'Connect',
+  loginWithMyCredsButton: 'Login with my creds',
 };
 
 export const MarketplaceSideBarSelectors = {

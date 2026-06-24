@@ -233,20 +233,21 @@ dialTest(
     await dialTest.step(
       `Click on 'Copy text' btn and verify the response is copied without markdown`,
       async () => {
-        await chatMessages.messageCopyTextButton(2).click();
-        chatMessagesAssertion.assertCopiedMessage(
-          await dialHomePage.readTextFromClipboard(),
-          rowResponse,
+        const copiedText = await dialHomePage.captureNextClipboardWrite(() =>
+          chatMessages.messageCopyTextButton(2).click(),
         );
+        chatMessagesAssertion.assertCopiedMessage(copiedText, rowResponse);
       },
     );
 
     await dialTest.step(
       `Click on 'Copy markdown' btn and verify the response is copied with markdown`,
       async () => {
-        await chatMessages.messageCopyMarkdownButton(2).click();
+        const copiedMarkdown = await dialHomePage.captureNextClipboardWrite(
+          () => chatMessages.messageCopyMarkdownButton(2).click(),
+        );
         chatMessagesAssertion.assertCopiedMessage(
-          await dialHomePage.readTextFromClipboard(),
+          copiedMarkdown,
           markdownResponse,
         );
       },

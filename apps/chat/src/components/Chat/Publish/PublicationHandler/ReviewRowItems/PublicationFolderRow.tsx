@@ -42,6 +42,7 @@ interface Props {
   allFolders: FolderInterface[];
   allItems: ShareEntity[];
   displayItems: ShareEntity[];
+  directContainerFolderIds: string[];
   level: number;
   ItemComponent: React.FC<PublicationItemProps>;
   publicationUrl: string;
@@ -57,6 +58,7 @@ export const PublicationFolderRow = ({
   allFolders,
   allItems,
   displayItems,
+  directContainerFolderIds,
   level,
   ItemComponent,
   publicationUrl,
@@ -81,8 +83,9 @@ export const PublicationFolderRow = ({
         publicationUrl,
         allFolders,
         displayItems,
+        directContainerFolderIds,
       ),
-    [allFolders, displayItems, publicationUrl],
+    [allFolders, directContainerFolderIds, displayItems, publicationUrl],
   );
   const {
     fullyChosenFolderIds: selectedFolderIds,
@@ -244,6 +247,7 @@ export const PublicationFolderRow = ({
               allItems={allItems}
               displayItems={displayItems}
               allFolders={allFolders}
+              directContainerFolderIds={directContainerFolderIds}
             />
           ))}
         </div>

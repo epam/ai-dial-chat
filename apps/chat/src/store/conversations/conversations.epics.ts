@@ -1208,9 +1208,14 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const model = ModelsSelectors.selectModelById(
+        state,
+        conversation.model.id,
+      );
+
       const rateBody: RateBody = {
         responseId: message.responseId,
-        modelId: conversation.model.id,
+        modelId: model?.id ?? conversation.model.id,
         id: conversation.id,
         reference: conversation.reference,
         value: payload.rate > 0,
