@@ -34,7 +34,8 @@ export const resolveAvailableLocales = (): string[] => {
       )
     : null;
   const fromPublicDir = getLocaleCodesFromPublicDir();
-  const result = fromEnv ?? (fromPublicDir?.length ? fromPublicDir : [DEFAULT_LOCALE]);
+  const result =
+    fromEnv ?? (fromPublicDir?.length ? fromPublicDir : [DEFAULT_LOCALE]);
 
   return normalizeLocales(result);
 };
