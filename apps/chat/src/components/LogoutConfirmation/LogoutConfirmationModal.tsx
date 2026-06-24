@@ -31,7 +31,6 @@ const LogoutConfirmationModal: FC<Props> = ({ isOpen, onClose }) => {
     <DialConfirmationPopup
       open={isOpen}
       header={t(AuthI18nKeys.LogOutConfirmTitle)}
-      className="mobile:mx-4"
       description={t(AuthI18nKeys.LogOutConfirmDescription)}
       confirmLabel={t(AuthI18nKeys.LogOut)}
       onConfirm={handleConfirm}
