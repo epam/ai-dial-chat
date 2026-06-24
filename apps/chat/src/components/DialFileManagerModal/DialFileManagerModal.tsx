@@ -5,6 +5,7 @@ import {
 import {
   DialFileManager,
   DialFileManagerActions,
+  DialFileManagerTabs,
   DialFileNodeType,
   DialLoader,
   DialPopup,
@@ -15,6 +16,7 @@ import {
   PopupSize,
   type DialFile,
   type FileManagerGridRow,
+  useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
@@ -106,6 +108,27 @@ const DialFileManagerModal: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
+
+  const {
+    activeTab,
+    handleTabChange,
+    tabs: allTabs,
+  } = useDialFileManagerTabs(
+    {
+      [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
+      [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
+      [DialFileManagerTabs.Organization]: t(
+        DialFileManagerI18nKeys.TabOrganization,
+      ),
+      [DialFileManagerTabs.Review]: '',
+    },
+    DialFileManagerTabs.MyFiles,
+  );
+  const tabs = useMemo(
+    () => allTabs?.filter((tab) => tab.id !== DialFileManagerTabs.Review),
+    [allTabs],
+  );
+
   const {
     items,
     isLoading,
@@ -123,19 +146,32 @@ const DialFileManagerModal: FC<Props> = ({
     isCreatingFolder,
     onDownloadFiles,
     isDownloading,
-    downloadError,
-    clearDownloadError,
     onDeleteFiles,
     isDeleting,
-    deleteError,
-    clearDeleteError,
     uploadEnabled,
     isNewButtonDisabled,
     disabledNewButtonTooltip,
-  } = useDialFileManager({ bucket });
+    visibleColumns,
+    dateLocale,
+    dateOptions,
+    actionLabels: tabActionLabels,
+    sharedWithMeIds,
+  } = useDialFileManager({
+    bucket,
+    activeTab,
+    onNotification: showNotification,
+  });
 
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
     () => new Set(),
+  );
+
+  const handleTabChangeWithReset = useCallback(
+    (tab: DialFileManagerTabs) => {
+      setSelectedPaths(new Set());
+      handleTabChange(tab);
+    },
+    [handleTabChange],
   );
 
   const filesByPath = useMemo(() => {
@@ -369,9 +405,23 @@ const DialFileManagerModal: FC<Props> = ({
     ],
   );
 
+  const actionLabels = useMemo(() => {
+    const labels: Partial<Record<DialFileManagerActions, string>> = {};
+    if (DialFileManagerActions.Download in tabActionLabels) {
+      labels[DialFileManagerActions.Download] = downloadLabel;
+    }
+    if (DialFileManagerActions.Delete in tabActionLabels) {
+      labels[DialFileManagerActions.Delete] = deleteLabel;
+    }
+    return labels;
+  }, [tabActionLabels, downloadLabel, deleteLabel]);
+
   const gridOptions = useMemo(
     () => ({
       selectionMode: GridSelectionMode.MULTIPLE,
+      visibleColumns,
+      dateLocale,
+      dateOptions,
       additionalGridOptions: {
         domLayout: 'normal' as const,
         rowSelection: {
@@ -411,14 +461,13 @@ const DialFileManagerModal: FC<Props> = ({
           },
         },
       },
-      actionLabels: {
-        [DialFileManagerActions.Download]: downloadLabel,
-        [DialFileManagerActions.Delete]: deleteLabel,
-      },
+      actionLabels,
     }),
     [
-      downloadLabel,
-      deleteLabel,
+      visibleColumns,
+      dateLocale,
+      dateOptions,
+      actionLabels,
       allowedTypes,
       maxSelectableFileSize,
       canAttachFolders,
@@ -427,16 +476,16 @@ const DialFileManagerModal: FC<Props> = ({
 
   const treeOptions = useMemo(
     () => ({
-      actionLabels: {
-        [DialFileManagerActions.Download]: downloadLabel,
-        [DialFileManagerActions.Delete]: deleteLabel,
-      },
+      actionLabels,
     }),
-    [downloadLabel, deleteLabel],
+    [actionLabels],
   );
 
   const toolbarOptions = useMemo(
     () => ({
+      tabs,
+      activeTab,
+      onTabChange: handleTabChangeWithReset,
       showHiddenFilesToggle: true,
       hiddenFilesSwitcherLabel: hiddenFilesLabel,
       showHiddenFilesLabel,
@@ -449,6 +498,9 @@ const DialFileManagerModal: FC<Props> = ({
       },
     }),
     [
+      tabs,
+      activeTab,
+      handleTabChangeWithReset,
       hiddenFilesLabel,
       showHiddenFilesLabel,
       hideHiddenFilesLabel,
@@ -462,12 +514,9 @@ const DialFileManagerModal: FC<Props> = ({
   const bulkActionsToolbarOptions = useMemo(
     () => ({
       getSelectionLabel,
-      actionLabels: {
-        [DialFileManagerActions.Download]: downloadLabel,
-        [DialFileManagerActions.Delete]: deleteLabel,
-      },
+      actionLabels,
     }),
-    [getSelectionLabel, downloadLabel, deleteLabel],
+    [getSelectionLabel, actionLabels],
   );
 
   return (
@@ -525,6 +574,7 @@ const DialFileManagerModal: FC<Props> = ({
               emptyStateTitle={emptyTitle}
               emptyStateDescription={emptyDescription}
               uploadEnabled={uploadEnabled}
+              sharedWithMeIds={sharedWithMeIds}
               onUploadFiles={onUploadFiles}
               onValidateUpload={onValidateUpload}
               onCreateFolder={onCreateFolder}
@@ -551,16 +601,6 @@ const DialFileManagerModal: FC<Props> = ({
                 />
               </div>
             )}
-            {downloadError != null && !isDownloading && (
-              <button
-                type="button"
-                role="alert"
-                className="absolute inset-x-4 bottom-4 z-10 rounded bg-error px-4 py-3 text-start text-sm text-primary shadow"
-                onClick={clearDownloadError}
-              >
-                {downloadError}
-              </button>
-            )}
             {isDeleting && (
               <div
                 aria-live="polite"
@@ -572,16 +612,6 @@ const DialFileManagerModal: FC<Props> = ({
                   ariaLabel={deletingLabel}
                 />
               </div>
-            )}
-            {deleteError != null && !isDeleting && (
-              <button
-                type="button"
-                role="alert"
-                className="absolute inset-x-4 bottom-4 z-10 rounded bg-error px-4 py-3 text-start text-sm text-primary shadow"
-                onClick={clearDeleteError}
-              >
-                {deleteError}
-              </button>
             )}
           </div>
         )}

@@ -137,6 +137,7 @@ interface Props {
 - Footer: single **Cancel** button. Calls `cancelUpload()` then clears `uploadBatchState`.
 - When the batch settles (`Completed`, `Failed`, or `Cancelled` for all files), `useDialFileManager` auto-clears `uploadBatchState` (legacy auto-dismiss).
 - Internal state still uses `FileUploadStatus` for orchestration; only the progress bar is surfaced in the modal UI.
+- When a non-cancelled batch settles, `useDialFileManager` emits a toast through `onNotification`: success uses `dialFileManager.uploadSuccess`, total failure uses `dialFileManager.uploadFailed` + `dialFileManager.checkInternetConnection`.
 - QA hooks: `data-qa="uploading-indicator"` on the bar, `data-qa="uploading-items-count"` on the summary.
 
 **Parent wiring (`DialFileManagerModal`):**
@@ -152,6 +153,9 @@ interface Props {
 | `dialFileManager.upload` | `"Upload files"` |
 | `dialFileManager.uploadProgressTitle` | `"Uploading files"` |
 | `dialFileManager.uploadProgressSummary` | `"{{done}} of {{total}} complete"` |
+| `dialFileManager.uploadSuccess` | `"The file has been uploaded successfully to “{{parentPath}}”"` |
+| `dialFileManager.uploadFailed` | `"Upload failed"` |
+| `dialFileManager.checkInternetConnection` | `"Please check your internet connection and try again."` |
 | `dialFileManager.uploadConflict` | `"A file with this name already exists"` |
 | `buttons.cancel` | `"Cancel"` (reused common key for modal footer) |
 
@@ -261,7 +265,15 @@ Reuses `POST /api/v1/files` limit: `@Throttle({ default: { limit: 20, ttl: 60000
 - **WHEN** the batch completes
 - **THEN** files 1 and 3 reach `Completed` internally; file 2 reaches `Failed`
 - **AND** the folder cache is still invalidated and re-fetched (successfully uploaded files appear)
+- **AND** a success toast is shown for the completed upload batch
 - **AND** the modal auto-closes when the batch settles
+
+### Scenario: Upload total failure
+
+- **GIVEN** the user uploads 3 files and every request fails
+- **WHEN** the batch completes
+- **THEN** every file reaches `Failed` internally
+- **AND** an error toast is shown with `dialFileManager.uploadFailed` and `dialFileManager.checkInternetConnection`
 
 ---
 

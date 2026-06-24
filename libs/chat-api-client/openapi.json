@@ -1463,6 +1463,151 @@
         "tags": ["files"]
       }
     },
+    "/api/v1/files/public": {
+      "get": {
+        "description": "Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket.",
+        "operationId": "listPublicFiles",
+        "parameters": [
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Folder path within public bucket (no leading slash, no ..)",
+            "schema": {
+              "example": "reports/",
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "required": false,
+            "in": "query",
+            "description": "Pagination token from previous response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max items to return",
+            "schema": {
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "recursive",
+            "required": false,
+            "in": "query",
+            "description": "Return items recursively",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of files from the public bucket",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path or query parameter"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Path not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "List files from the organization (public) bucket",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/shared": {
+      "get": {
+        "description": "Proxies the DIAL Core sharing API to return files shared with the authenticated user.",
+        "operationId": "listSharedFiles",
+        "parameters": [
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Folder path filter (no leading slash, no ..)",
+            "schema": {
+              "example": "reports/",
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "required": false,
+            "in": "query",
+            "description": "Pagination token from previous response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max items to return",
+            "schema": {
+              "example": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Files shared with the current user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameter"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "List files shared with the current user",
+        "tags": ["files"]
+      }
+    },
     "/api/v1/files/metadata": {
       "get": {
         "description": "Returns metadata for a single named file from DIAL Core. Path must not end with /.",
