@@ -5,7 +5,12 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconDownload, IconMarkdown } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconCopy,
+  IconDownload,
+  IconMarkdown,
+} from '@tabler/icons-react';
 import { type FC, memo, useCallback, useMemo, useRef, useState } from 'react';
 import { defaultStyles, JsonView } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
@@ -25,9 +30,12 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   closeLabel = 'Close',
   onDownload,
   onCopyMarkdown,
+  onCopyJson,
   downloadLabel = 'Download',
   copyMarkdownLabel = 'Copy as Markdown',
   copiedMarkdownLabel = 'Copied!',
+  copyJsonLabel = 'Copy as JSON',
+  copiedJsonLabel = 'Copied!',
   unsupportedLabel = 'Preview is not supported for this file',
   isMobile = false,
   defaultWidth = 560,
@@ -39,7 +47,9 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   codeBlockTheme,
 }) => {
   const [isCopiedMarkdown, setIsCopiedMarkdown] = useState(false);
+  const [isCopiedJson, setIsCopiedJson] = useState(false);
   const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyJsonResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleCopyMarkdown = useCallback(() => {
     onCopyMarkdown?.();
@@ -52,6 +62,18 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       COPY_RESET_MS,
     );
   }, [onCopyMarkdown]);
+
+  const handleCopyJson = useCallback(() => {
+    onCopyJson?.();
+    if (copyJsonResetRef.current != null) {
+      clearTimeout(copyJsonResetRef.current);
+    }
+    setIsCopiedJson(true);
+    copyJsonResetRef.current = setTimeout(
+      () => setIsCopiedJson(false),
+      COPY_RESET_MS,
+    );
+  }, [onCopyJson]);
   const {
     colors,
     typography,
@@ -85,6 +107,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
 
   const showCopyMarkdown =
     onCopyMarkdown != null && content.type === AttachmentContentType.Markdown;
+  const showCopyJson =
+    onCopyJson != null && content.type === AttachmentContentType.Json;
   const showDownload = onDownload != null && isDownloadable(content);
 
   const bodyContainerClassName = useMemo(() => {
@@ -132,26 +156,28 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       case AttachmentContentType.Json:
         return (
           <div dir="ltr" className="h-full overflow-auto">
-            <JsonView
-              data={content.value as object}
-              style={{
-                container: styles.jsonContainer,
-                basicChildStyle: defaultStyles.basicChildStyle,
-                childFieldsContainer: styles.jsonChildContainer,
-                label: styles.jsonLabel,
-                clickableLabel: styles.jsonClickableLabel,
-                nullValue: styles.jsonNullValue,
-                undefinedValue: styles.jsonNullValue,
-                stringValue: styles.jsonStringValue,
-                booleanValue: styles.jsonBooleanValue,
-                numberValue: styles.jsonNumberValue,
-                otherValue: styles.jsonNullValue,
-                punctuation: styles.jsonPunctuation,
-                collapseIcon: styles.jsonCollapseIcon,
-                expandIcon: styles.jsonExpandIcon,
-                collapsedContent: styles.jsonCollapsedContent,
-              }}
-            />
+            <div className={styles.jsonWrapper}>
+              <JsonView
+                data={content.value as object}
+                style={{
+                  container: styles.jsonContainer,
+                  basicChildStyle: defaultStyles.basicChildStyle,
+                  childFieldsContainer: styles.jsonChildContainer,
+                  label: styles.jsonLabel,
+                  clickableLabel: styles.jsonClickableLabel,
+                  nullValue: styles.jsonNullValue,
+                  undefinedValue: styles.jsonNullValue,
+                  stringValue: styles.jsonStringValue,
+                  booleanValue: styles.jsonBooleanValue,
+                  numberValue: styles.jsonNumberValue,
+                  otherValue: styles.jsonNullValue,
+                  punctuation: styles.jsonPunctuation,
+                  collapseIcon: styles.jsonCollapseIcon,
+                  expandIcon: styles.jsonExpandIcon,
+                  collapsedContent: styles.jsonCollapsedContent,
+                }}
+              />
+            </div>
           </div>
         );
       case AttachmentContentType.Unsupported:
@@ -181,7 +207,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       className={mergeClasses(isOpen ? 'mobile:w-full' : 'w-0', className)}
       styles={panelStyles}
       rightActions={
-        showCopyMarkdown || showDownload ? (
+        showCopyMarkdown || showCopyJson || showDownload ? (
           <>
             {showCopyMarkdown && (
               <DialGhostIconButton
@@ -195,13 +221,35 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
                 aria-label={
                   isCopiedMarkdown ? copiedMarkdownLabel : copyMarkdownLabel
                 }
+                tooltipProps={{
+                  tooltip: isCopiedMarkdown
+                    ? copiedMarkdownLabel
+                    : copyMarkdownLabel,
+                }}
                 onClick={handleCopyMarkdown}
+              />
+            )}
+            {showCopyJson && (
+              <DialGhostIconButton
+                icon={
+                  isCopiedJson ? (
+                    <IconCheck size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                  ) : (
+                    <IconCopy size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                  )
+                }
+                aria-label={isCopiedJson ? copiedJsonLabel : copyJsonLabel}
+                tooltipProps={{
+                  tooltip: isCopiedJson ? copiedJsonLabel : copyJsonLabel,
+                }}
+                onClick={handleCopyJson}
               />
             )}
             {showDownload && (
               <DialGhostIconButton
                 icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
                 aria-label={downloadLabel}
+                tooltipProps={{ tooltip: downloadLabel }}
                 onClick={onDownload}
               />
             )}

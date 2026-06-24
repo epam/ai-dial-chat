@@ -112,6 +112,8 @@ export interface AttachmentCanvasProps {
   onDownload?: () => void;
   /** Called when the user activates the copy-as-markdown button. When omitted the button is hidden. Only relevant when content type is `Markdown`. */
   onCopyMarkdown?: () => void;
+  /** Called when the user activates the copy-JSON button. When omitted the button is hidden. Only relevant when content type is `Json`. */
+  onCopyJson?: () => void;
   /** Message shown in the canvas body when the content type is `Unsupported`. Defaults to `'Preview is not supported for this file'`. */
   unsupportedLabel?: string;
   /** Accessible label for the download button. Defaults to `'Download'`. */
@@ -120,6 +122,10 @@ export interface AttachmentCanvasProps {
   copyMarkdownLabel?: string;
   /** Tooltip and accessible label for the copy-as-markdown button after a successful copy. Defaults to `'Copied!'`. */
   copiedMarkdownLabel?: string;
+  /** Tooltip and accessible label for the copy-JSON button in its default state. Defaults to `'Copy as JSON'`. */
+  copyJsonLabel?: string;
+  /** Tooltip and accessible label for the copy-JSON button after a successful copy. Defaults to `'Copied!'`. */
+  copiedJsonLabel?: string;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. */
   isMobile?: boolean;
   /** Initial panel width in pixels (when resizable). Defaults to `560`. */

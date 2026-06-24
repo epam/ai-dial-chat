@@ -196,6 +196,8 @@ const App: FC = () => {
           unsupportedLabel={t(AttachmentCanvasI18nKeys.UnsupportedLabel)}
           copyMarkdownLabel={t(ButtonsI18nKeys.CopyAsMarkdown)}
           copiedMarkdownLabel={t(ButtonsI18nKeys.Copied)}
+          copyJsonLabel={t(ButtonsI18nKeys.CopyAsJson)}
+          copiedJsonLabel={t(ButtonsI18nKeys.Copied)}
           isMobile={isMobile}
           codeBlockTheme={codeBlockTheme}
         />

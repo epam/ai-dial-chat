@@ -4,7 +4,10 @@ import {
 } from '@epam/ai-dial-chat-shared';
 import { memo, useCallback, type FC } from 'react';
 import { useAttachmentCanvas } from '../../context/AttachmentCanvasContext';
-import type { MarkdownCanvasContent } from '../../models/attachment-canvas';
+import type {
+  JsonCanvasContent,
+  MarkdownCanvasContent,
+} from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
 import { downloadAttachmentContent } from '../../utils/download';
 import { AttachmentCanvas } from '../AttachmentCanvas/AttachmentCanvas';
@@ -23,6 +26,10 @@ export interface AttachmentCanvasContainerProps {
   copyMarkdownLabel?: string;
   /** Tooltip and aria-label for the copy-as-markdown button after a successful copy. Defaults to `'Copied!'`. */
   copiedMarkdownLabel?: string;
+  /** Tooltip and aria-label for the copy-JSON button in its default state. Defaults to `'Copy as JSON'`. */
+  copyJsonLabel?: string;
+  /** Tooltip and aria-label for the copy-JSON button after a successful copy. Defaults to `'Copied!'`. */
+  copiedJsonLabel?: string;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. Defaults to `false`. */
   isMobile?: boolean;
   /** Syntax highlight color theme forwarded to MarkdownRenderer code blocks. */
@@ -39,6 +46,8 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       unsupportedLabel = 'Preview is not supported for this file',
       copyMarkdownLabel,
       copiedMarkdownLabel,
+      copyJsonLabel,
+      copiedJsonLabel,
       isMobile = false,
       codeBlockTheme,
     }) => {
@@ -51,6 +60,14 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       const handleCopyMarkdown = useCallback(() => {
         if (content.type === AttachmentContentType.Markdown) {
           void copyToClipboard((content as MarkdownCanvasContent).text);
+        }
+      }, [content]);
+
+      const handleCopyJson = useCallback(() => {
+        if (content.type === AttachmentContentType.Json) {
+          void copyToClipboard(
+            JSON.stringify((content as JsonCanvasContent).value, null, 2),
+          );
         }
       }, [content]);
 
@@ -71,6 +88,13 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           }
           copyMarkdownLabel={copyMarkdownLabel}
           copiedMarkdownLabel={copiedMarkdownLabel}
+          onCopyJson={
+            content.type === AttachmentContentType.Json
+              ? handleCopyJson
+              : undefined
+          }
+          copyJsonLabel={copyJsonLabel}
+          copiedJsonLabel={copiedJsonLabel}
           unsupportedLabel={unsupportedLabel}
           isMobile={isMobile}
           codeBlockTheme={codeBlockTheme}
