@@ -6,6 +6,7 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { isTouchable } from '@/src/utils/app/mobile';
+import { navigateToLocale } from '@/src/utils/app/navigateToLocale';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 
 import { ScreenState } from '@/src/types/common';
@@ -72,6 +73,9 @@ const view = withRenderWhen((state) => {
   );
   const savedEnterType = useAppSelector(UISelectors.selectEnterType);
   const savedLocale = useAppSelector(UISelectors.selectLocale);
+  const availableLocales = useAppSelector(
+    SettingsSelectors.selectAvailableLocales,
+  );
 
   const [defaultModelReference, setDefaultModelReference] = useState<string>(
     savedDefaultModelReference,
@@ -191,11 +195,7 @@ const view = withRenderWhen((state) => {
 
     if (localLocale !== savedLocale) {
       dispatch(UIActions.setLocale(localLocale));
-      void router.push(
-        { pathname: router.pathname, query: router.query },
-        router.asPath,
-        { locale: localLocale },
-      );
+      navigateToLocale(router, localLocale, availableLocales);
     }
   }, [
     dispatch,
@@ -209,6 +209,7 @@ const view = withRenderWhen((state) => {
     localLocale,
     savedLocale,
     router,
+    availableLocales,
   ]);
 
   return (
