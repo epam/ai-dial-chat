@@ -8,6 +8,9 @@ import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { Translation } from '@/src/types/translation';
 
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/selectors';
+
 import { SettingsI18nKeys } from '@/src/constants/i18n';
 import { getLocaleDisplayName } from '@/src/constants/locale';
 
@@ -29,7 +32,16 @@ export const LanguageSelect = ({
 
   const router = useRouter();
   const { t } = useTranslation(Translation.Settings);
-  const availableLocales = router.locales ?? ['en'];
+  const runtimeLocales = useAppSelector(
+    SettingsSelectors.selectAvailableLocales,
+  );
+  const routerLocales = router.locales ?? [];
+  const availableLocales =
+    runtimeLocales.length >= 2
+      ? runtimeLocales
+      : routerLocales.length >= 2
+        ? routerLocales
+        : runtimeLocales;
 
   const localeName = getLocaleDisplayName(currentLocale);
 
