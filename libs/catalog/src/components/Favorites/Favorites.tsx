@@ -66,8 +66,6 @@ export const Favorites: FC<FavoritesProps> = ({
     favoritesStyles?.typography?.countClassName ?? 'dial-tiny-text';
   const cssVars = {
     '--cat-favorites-bg-base': favoritesStyles?.colors?.backgroundBase,
-    '--cat-favorites-bg-start': favoritesStyles?.colors?.backgroundStart,
-    '--cat-favorites-bg-end': favoritesStyles?.colors?.backgroundEnd,
     '--cat-favorites-border': favoritesStyles?.colors?.border,
     '--cat-favorites-title-text': favoritesStyles?.colors?.titleText,
     '--cat-favorites-count-text': favoritesStyles?.colors?.countText,

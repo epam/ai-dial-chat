@@ -1,5 +1,5 @@
 import type { ICellRendererParams } from 'ag-grid-community';
-import { FC, useState } from 'react';
+import { FC, MouseEvent, useState } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
 import { StarToggleButton } from '../../StarToggleButton/StarToggleButton';
@@ -11,7 +11,8 @@ export const StarCellRenderer: FC<
 
   if (!data) return null;
 
-  const handleToggle = () => {
+  const handleToggle = (e: MouseEvent<HTMLElement>) => {
+    e.stopPropagation();
     const next = !isStarred;
     setIsStarred(next);
     context?.onToggleFavorite?.(data.id, next);
