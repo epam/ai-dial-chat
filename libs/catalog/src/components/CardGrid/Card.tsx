@@ -1,10 +1,8 @@
 import {
   buildCssVars,
-  DeploymentIcon,
   Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { DialTag } from '@epam/ai-dial-ui-kit';
 import {
   FC,
   KeyboardEvent,
@@ -16,9 +14,8 @@ import {
   useState,
 } from 'react';
 import type { CardProps } from '../../models/card-props';
-import { EntityBadge } from '../EntityBadge/EntityBadge';
+import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { FolderPath } from '../FolderPath/FolderPath';
-import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { TopicTag } from '../TopicTag/TopicTag';
 import styles from './CardGrid.module.scss';
@@ -132,37 +129,12 @@ export const Card: FC<CardProps> = ({
       )}
       style={cssVars}
     >
-      {item.isFeatured && (
-        <>
-          <div
-            className={mergeClasses(
-              'absolute end-[2px] start-[2px] top-0 h-0.5 rounded-t-[6px]',
-              styles.featuredTopBar,
-            )}
-          />
-          <div className="absolute end-[17px] top-[17px]">
-            <DialTag
-              label={featuredLabel}
-              className={mergeClasses('px-[6px]', styles.featuredTag)}
-            />
-          </div>
-        </>
-      )}
-
-      <div className="flex items-center gap-3">
-        <DeploymentIcon src={item.iconUrl} size={48} />
-        <div className="min-w-0 flex-1">
-          <EntityBadge type={item.type} />
-          <ItemHeader
-            title={item.name}
-            query={query}
-            postfix={item.version}
-            postfixClassName={versionClassName}
-            titleClassName={nameClassName}
-            className="mt-0.5 flex items-start gap-1"
-          />
-        </div>
-      </div>
+      <EntityHeader
+        item={item}
+        featuredLabel={featuredLabel}
+        versionClassName={versionClassName}
+        nameClassName={nameClassName}
+      />
 
       <p
         className={mergeClasses(
