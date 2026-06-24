@@ -32,7 +32,7 @@
 - [x] 4.7 Compute `visibleColumns` per tab: `shared` adds `FileManagerColumnKey.Author`; others omit it (all include `Name`, `UpdatedAt`, `Size`, `Actions`)
 - [x] 4.8 Compute `actionLabels` per tab: `my_files` includes `Delete`; `shared` and `organization` omit `Delete`
 - [x] 4.9 Source `dateLocale` from `i18n.language` (via `useTranslation`) and return fixed `dateOptions = { year: 'numeric', month: 'short', day: '2-digit' }`
-- [ ] 4.10 Write unit tests for the hook covering: tab switch clears cache + path; uploadEnabled matrix (5 scenarios from spec); visibleColumns per tab; actionLabels per tab; sharedWithMeIds present only on Shared tab
+- [x] 4.10 Write unit tests for the hook covering: tab switch clears cache + path; uploadEnabled matrix (5 scenarios from spec); visibleColumns per tab; actionLabels per tab; sharedWithMeIds present only on Shared tab
 
 ## 5. Frontend: DialFileManagerModal tab wiring
 

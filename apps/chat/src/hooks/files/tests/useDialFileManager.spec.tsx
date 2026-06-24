@@ -1,7 +1,10 @@
 import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
 import {
+  DialFileManagerActions,
+  DialFileManagerTabs,
   DialFileNodeType,
   DialFilePermission,
+  FileManagerColumnKey,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import type { ListFilesItemDto } from '@epam/chat-api-client';
@@ -27,10 +30,17 @@ vi.mock('../../../utils/file-download', () => ({
 }));
 
 const mockListFiles = vi.mocked(filesApi.listFiles);
+const mockListSharedFiles = vi.mocked(filesApi.listSharedFiles);
+const mockListPublicFiles = vi.mocked(filesApi.listPublicFiles);
 const mockDownloadArchive = vi.mocked(filesApi.downloadArchive);
 const mockDeleteFiles = vi.mocked(filesApi.deleteFiles);
 
 const BUCKET = 'test-bucket';
+
+const OWNER_BUCKET = 'owner-bucket';
+
+const emptySharedListResponse = { bucket: '', path: '', items: [] };
+const emptyPublicListResponse = { bucket: 'public', path: '', items: [] };
 
 beforeEach(() => {
   mockListFiles.mockResolvedValue({
@@ -39,6 +49,8 @@ beforeEach(() => {
     items: [],
     nextToken: undefined,
   });
+  mockListSharedFiles.mockResolvedValue(emptySharedListResponse);
+  mockListPublicFiles.mockResolvedValue(emptyPublicListResponse);
 });
 
 afterEach(() => {
@@ -786,6 +798,275 @@ describe('useDialFileManager', () => {
       });
 
       expect(validation).toEqual({ valid: true });
+    });
+  });
+
+  describe('tab-aware behavior', () => {
+    const sharedRootItem: ListFilesItemDto = {
+      name: 'team-docs',
+      path: `files/${OWNER_BUCKET}/team-docs/`,
+      folderId: `${OWNER_BUCKET}:files/${OWNER_BUCKET}/team-docs/`,
+      nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+      bucket: OWNER_BUCKET,
+      permissions: ['READ', 'WRITE'],
+    };
+
+    it('switching tabs resets folderPath to root and clears the listing cache', async () => {
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: 'reports/',
+        items: [],
+        permissions: ['READ', 'WRITE'],
+      });
+
+      const { result, rerender } = renderHook(
+        ({ tab }: { tab: DialFileManagerTabs }) =>
+          useDialFileManager({ bucket: BUCKET, activeTab: tab }),
+        { initialProps: { tab: DialFileManagerTabs.MyFiles } },
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      act(() => result.current.onPathChange('/All files/reports/'));
+      await waitFor(() =>
+        expect(result.current.path).toBe('/All files/reports/'),
+      );
+
+      mockListPublicFiles.mockClear();
+
+      rerender({ tab: DialFileManagerTabs.Organization });
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      expect(result.current.path).toBe('/All files');
+      expect(mockListPublicFiles).toHaveBeenCalled();
+    });
+
+    describe('uploadEnabled matrix', () => {
+      it('is always false on Organization tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Organization,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.uploadEnabled).toBe(false);
+      });
+
+      it('is false on Shared tab at root (folderPath = "")', async () => {
+        mockListSharedFiles.mockResolvedValue({
+          bucket: '',
+          path: '',
+          items: [sharedRootItem],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.uploadEnabled).toBe(false);
+      });
+
+      it('is false on Shared tab in a nested folder without WRITE permission', async () => {
+        mockListSharedFiles.mockResolvedValue({
+          bucket: '',
+          path: '',
+          items: [{ ...sharedRootItem, permissions: ['READ'] }],
+        });
+        mockListFiles.mockResolvedValue({
+          bucket: OWNER_BUCKET,
+          path: 'team-docs/',
+          items: [],
+          permissions: ['READ'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        act(() => result.current.onPathChange('/All files/team-docs/'));
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.uploadEnabled).toBe(false);
+      });
+
+      it('is true on Shared tab in a nested folder with WRITE permission', async () => {
+        mockListSharedFiles.mockResolvedValue({
+          bucket: '',
+          path: '',
+          items: [sharedRootItem],
+        });
+        mockListFiles.mockResolvedValue({
+          bucket: OWNER_BUCKET,
+          path: 'team-docs/',
+          items: [],
+          permissions: ['READ', 'WRITE'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        act(() => result.current.onPathChange('/All files/team-docs/'));
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.uploadEnabled).toBe(true);
+      });
+
+      it('is true on MyFiles tab when the current folder has WRITE permission', async () => {
+        mockListFiles.mockResolvedValue({
+          bucket: BUCKET,
+          path: '',
+          items: [],
+          permissions: ['READ', 'WRITE'],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.uploadEnabled).toBe(true);
+      });
+    });
+
+    describe('visibleColumns', () => {
+      it('includes Author column on Shared tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.visibleColumns).toContain(
+          FileManagerColumnKey.Author,
+        );
+      });
+
+      it('omits Author column on MyFiles tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.visibleColumns).not.toContain(
+          FileManagerColumnKey.Author,
+        );
+      });
+
+      it('omits Author column on Organization tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Organization,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.visibleColumns).not.toContain(
+          FileManagerColumnKey.Author,
+        );
+      });
+    });
+
+    describe('actionLabels', () => {
+      it('includes Delete on MyFiles tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Delete],
+        ).toBeDefined();
+      });
+
+      it('omits Delete on Shared tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Delete],
+        ).toBeUndefined();
+      });
+
+      it('omits Delete on Organization tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Organization,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(
+          result.current.actionLabels[DialFileManagerActions.Delete],
+        ).toBeUndefined();
+      });
+    });
+
+    describe('sharedWithMeIds', () => {
+      it('is populated from root Shared listing items', async () => {
+        mockListSharedFiles.mockResolvedValue({
+          bucket: '',
+          path: '',
+          items: [sharedRootItem],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.sharedWithMeIds).toEqual([
+          `files/${OWNER_BUCKET}/team-docs/`,
+        ]);
+      });
+
+      it('is undefined on MyFiles tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.MyFiles,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.sharedWithMeIds).toBeUndefined();
+      });
+
+      it('is undefined on Organization tab', async () => {
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Organization,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+        expect(result.current.sharedWithMeIds).toBeUndefined();
+      });
     });
   });
 });

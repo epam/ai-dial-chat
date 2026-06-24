@@ -1,8 +1,10 @@
-## ADDED Requirements
+## MODIFIED Requirements
 
 ### Requirement: List files for FileManager
 
 The system SHALL expose `GET /api/v1/files/list` accepting `bucket` (required), `path` (optional, default `""`), `token` (optional), `limit` (optional), `recursive` (optional, default `false`), and `permissions` (optional, default `true`) query parameters, validate all inputs, and proxy the request to DIAL Core `GET /v1/metadata/files/{Bucket}/{Path}` under the authenticated user's session. The endpoint SHALL return `200 OK` with a `ListFilesResponseDto` on success.
+
+The `GET /api/v1/files/list` endpoint scope is limited to the user's own bucket (or any explicitly specified bucket the user has access to via DIAL Core permissions). It is NOT used for shared-with-me or public/organization listings — those are served by the new `GET /api/v1/files/shared` and `GET /api/v1/files/public` endpoints defined in the `file-manager-shared-list` spec. No `source`, `tab`, or `sharedWithMe`/`publishedWithMe` query parameters are added to this endpoint.
 
 - **Rate limit**: `@Throttle({ default: { limit: 60, ttl: 60000 } })` (same as download; listing is read-only metadata).
 - **HTTP method / route**: `GET /api/v1/files/list`
@@ -66,13 +68,13 @@ The system SHALL expose `GET /api/v1/files/list` accepting `bucket` (required), 
 
 **Feature flag:** Not gated behind `ENABLED_FEATURES` / `ENABLED_FEATURES_ROLES`. The endpoint is available to all authenticated users.
 
-**Cache:** No cache at BFF or frontend layer. Cache key not applicable.
+**Cache:** No cache at BFF or frontend layer.
 
 **Observability / telemetry:** No new metrics or analytics events required for the endpoint itself. The existing `MetricsInterceptor` tracks request duration and error rate for all controllers.
 
 **Accessibility / RTL impact:** Backend-only endpoint and frontend wrapper. No UI surface, no RTL concerns, no ARIA requirements.
 
-**Memoisation:** No memoisation requirements for the frontend wrapper function. If a hook is later built on top of `listFiles`, `useCallback` on the wrapper and `useMemo` on the result set will be required (future change).
+**Memoisation:** No memoisation requirements for the frontend wrapper function.
 
 ---
 
@@ -203,6 +205,13 @@ The system SHALL expose `GET /api/v1/files/list` accepting `bucket` (required), 
 - **GIVEN** a caller sends `limit=0` or `limit=9999`
 - **WHEN** `ValidationPipe` processes `ListFilesQueryDto`
 - **THEN** the system returns `400 Bad Request` identifying the `limit` field; DIAL Core is not called
+
+---
+
+#### Scenario: Endpoint is NOT used for shared or organization listing
+
+- **WHEN** the frontend needs to list files shared with the user
+- **THEN** it calls `GET /api/v1/files/shared` (not `GET /api/v1/files/list` with any special parameter)
 
 ---
 
