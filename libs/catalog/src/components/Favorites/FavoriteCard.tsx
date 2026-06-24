@@ -95,7 +95,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         versionClassName={versionClassName}
       />
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 pl-[50px]">
+        <div className="flex items-center gap-1 ps-[50px]">
           <DialIcon
             icon={<IconHistory size={DIAL_ICON_SIZE.SM} />}
             className={styles.historyIcon}

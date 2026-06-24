@@ -80,7 +80,10 @@ export const Catalog: FC<CatalogProps> = ({
     [items],
   );
 
-  const tabs = buildCatalogTabs(filteredItems, titles?.tabLabels);
+  const tabs = useMemo(
+    () => buildCatalogTabs(filteredItems, titles?.tabLabels),
+    [filteredItems, titles?.tabLabels],
+  );
   const firstTabId = tabs[0]?.id ?? '';
   const [activeTab, setActiveTab] = useState(firstTabId);
 
@@ -177,7 +180,6 @@ export const Catalog: FC<CatalogProps> = ({
     if (selectedItem == null) return;
     const rafId = requestAnimationFrame(() => setIsDetailsOpen(true));
     return () => cancelAnimationFrame(rafId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedItem]);
 
   if (isLoading) {
