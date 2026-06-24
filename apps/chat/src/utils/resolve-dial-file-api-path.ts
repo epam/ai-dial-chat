@@ -1,6 +1,6 @@
 import type { DialFile } from '@epam/ai-dial-ui-kit';
 import { DialFileNodeType } from '@epam/ai-dial-ui-kit';
-import { resolveRelativeDialFilePath } from './icon-path';
+import { resolveRelativeDialFilePath } from './dial-file';
 
 /**
  * Converts a DialFileManager virtual path to an API folder path.

@@ -4,13 +4,14 @@ import {
   type Attachment,
 } from '@epam/ai-dial-chat-shared';
 import { DialFileNodeType, type DialFile } from '@epam/ai-dial-ui-kit';
+import { isDialFileId } from './dial-file';
 import { resolveCatalogIconUrl } from './icon-path';
 
 const getDialFileUrl = (file: DialFile, bucket: string): string | undefined => {
   const source = file.url ?? file.id;
   if (!source) return undefined;
   if (
-    source.startsWith('files/') ||
+    isDialFileId(source) ||
     source.startsWith('http://') ||
     source.startsWith('https://')
   ) {

@@ -18,6 +18,8 @@ export const toDisplayAttachment = (
     type: isImage ? AttachmentType.Image : AttachmentType.File,
     status: RequestStatus.Idle,
     url: attachment.url,
+    referenceUrl: attachment.reference_url,
     previewUrl: isImage ? attachment.url : undefined,
+    data: attachment.data,
   };
 };
