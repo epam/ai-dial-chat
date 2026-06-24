@@ -201,6 +201,15 @@ export enum DialFileManagerI18nKeys {
   ColumnModifiedDate = 'dialFileManager.column.modifiedDate',
   ColumnSize = 'dialFileManager.column.size',
   ColumnAuthor = 'dialFileManager.column.author',
+  RenameAction = 'dialFileManager.renameAction',
+  RenamingLabel = 'dialFileManager.renamingLabel',
+  RenameError = 'dialFileManager.renameError',
+  RenamePartialError = 'dialFileManager.renamePartialError',
+  RenameNameEmpty = 'dialFileManager.renameNameEmpty',
+  RenameDuplicateName = 'dialFileManager.renameDuplicateName',
+  RenameReservedName = 'dialFileManager.renameReservedName',
+  RenameInvalidChars = 'dialFileManager.renameInvalidChars',
+  RenameNameTooLong = 'dialFileManager.renameNameTooLong',
 }
 
 export enum AuthI18nKeys {

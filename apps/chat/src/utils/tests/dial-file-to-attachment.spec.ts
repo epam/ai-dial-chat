@@ -9,7 +9,7 @@ import {
 const makeFile = (overrides: Partial<DialFile> = {}): DialFile => ({
   id: 'reports/q1.pdf',
   name: 'q1.pdf',
-  path: '/All files/reports/q1.pdf',
+  path: '/My files/reports/q1.pdf',
   folderId: 'bucket',
   nodeType: DialFileNodeType.ITEM,
   contentType: 'application/pdf',

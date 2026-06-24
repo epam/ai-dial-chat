@@ -4,7 +4,7 @@ import { resolveRelativeDialFilePath } from './icon-path';
 
 /**
  * Converts a DialFileManager virtual path to an API folder path.
- * e.g. "/All files" → "", "/All files/reports/" → "reports/"
+ * e.g. "/My files" → "", "/My files/reports/" → "reports/"
  */
 export const virtualPathToApiPath = (
   virtualPath: string,

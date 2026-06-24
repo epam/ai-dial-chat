@@ -1019,3 +1019,138 @@ describe('FilesController — deleteFiles', () => {
       .expect(401);
   });
 });
+
+describe('FilesController — renameFiles', () => {
+  const MOCK_RENAME_RESPONSE = {
+    results: [
+      {
+        sourcePath: 'reports/q1.pdf',
+        destinationPath: 'reports/q1-renamed.pdf',
+        success: true,
+      },
+    ],
+  };
+
+  let app: INestApplication;
+  let service: { renameFiles: ReturnType<typeof vi.fn> };
+
+  beforeEach(async () => {
+    service = {
+      renameFiles: vi.fn().mockResolvedValue(MOCK_RENAME_RESPONSE),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  it('returns 200 with results array for a valid single-file rename', async () => {
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'reports/q1.pdf',
+            destinationPath: 'reports/q1-renamed.pdf',
+            nodeType: 'item',
+            name: 'q1-renamed.pdf',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.body).toEqual(MOCK_RENAME_RESPONSE);
+    expect(service.renameFiles).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourcePath: 'reports/q1.pdf',
+          destinationPath: 'reports/q1-renamed.pdf',
+          nodeType: 'item',
+        }),
+      ]),
+      TEST_USER.at,
+    );
+  });
+
+  it('returns 200 with results array for a valid folder rename', async () => {
+    service.renameFiles.mockResolvedValue({
+      results: [
+        {
+          sourcePath: 'reports/',
+          destinationPath: 'archived/',
+          success: true,
+        },
+      ],
+    });
+
+    const res = await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'reports/',
+            destinationPath: 'archived/',
+            nodeType: 'folder',
+            name: 'archived',
+          },
+        ],
+      })
+      .expect(200);
+
+    expect(res.body.results[0]).toMatchObject({ success: true });
+  });
+
+  it('returns 400 when items array is missing', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({})
+      .expect(400);
+    expect(service.renameFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when items array is empty', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({ items: [] })
+      .expect(400);
+    expect(service.renameFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when items array exceeds 100 entries', async () => {
+    const items = Array.from({ length: 101 }, (_, i) => ({
+      bucket: 'user-files',
+      sourcePath: `file${i}.pdf`,
+      destinationPath: `file${i}-renamed.pdf`,
+      nodeType: 'item',
+      name: `file${i}-renamed.pdf`,
+    }));
+
+    await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({ items })
+      .expect(400);
+    expect(service.renameFiles).not.toHaveBeenCalled();
+  });
+
+  it('returns 401 when service throws UnauthorizedException', async () => {
+    service.renameFiles.mockRejectedValue(new UnauthorizedException());
+    await request(app.getHttpServer())
+      .post('/api/v1/files/rename')
+      .send({
+        items: [
+          {
+            bucket: 'user-files',
+            sourcePath: 'file.pdf',
+            destinationPath: 'file-renamed.pdf',
+            nodeType: 'item',
+            name: 'file-renamed.pdf',
+          },
+        ],
+      })
+      .expect(401);
+  });
+});

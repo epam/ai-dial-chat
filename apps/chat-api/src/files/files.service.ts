@@ -30,6 +30,12 @@ import type { ArchiveItemDto } from './dto/download-archive.dto';
 import { ArchiveItemNodeType } from './dto/download-archive.dto';
 import type { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
 import type { ListFilesResponseDto } from './dto/list-files.dto';
+import type { RenameItemDto } from './dto/rename-files.dto';
+import {
+  RenameFilesResponseDto,
+  RenameItemNodeType,
+  RenameItemResultDto,
+} from './dto/rename-files.dto';
 import type { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import type { UploadMode } from './dto/upload-file.dto';
 import { FOLDER_NODE_TYPE, MARKER_NAME } from './files.constants';
@@ -81,6 +87,27 @@ const buildDialFileUrl = (bucket: string, path: string): string =>
 
 const getFileNameFromPath = (path: string): string =>
   path.split('/').filter(Boolean).pop() ?? 'file';
+
+const safeDecodePathForCompare = (path: string): string =>
+  path
+    .split('/')
+    .map((segment) => {
+      try {
+        return decodeURIComponent(segment);
+      } catch {
+        return segment;
+      }
+    })
+    .join('/');
+
+const encodeDialFileResourcePath = (path: string): string =>
+  path
+    .split('/')
+    .map((segment) => encodeURIComponent(safeDecodePathForCompare(segment)))
+    .join('/');
+
+const buildDialFileResourceUrl = (bucket: string, path: string): string =>
+  buildDialFileUrl(bucket, encodeDialFileResourcePath(path));
 
 const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
   const formData = new FormData();
@@ -312,7 +339,7 @@ export class FilesService extends AppService {
     try {
       const { data, error, response } = await this.client.getSharedResources({
         headers: getBearerAuthHeaders(at),
-        body: { resourceTypes: ['FILE'], with: 'me' },
+        body: { resourceTypes: ['FILE'], with: 'me', includeUserInfo: true },
         signal: AbortSignal.timeout(this.getTimeoutMs()),
       });
 
@@ -619,9 +646,11 @@ export class FilesService extends AppService {
         const rawUrl = item.url ?? item.name ?? '';
         const relItemPath = this.toRelativePath(rawUrl, bucket);
 
-        const relative = relItemPath.startsWith(relFolderPath)
-          ? relItemPath.slice(relFolderPath.length)
-          : (item.name ?? relItemPath);
+        const relative = this.getRelativeChildPath(
+          relItemPath,
+          relFolderPath,
+          item.name ?? relItemPath,
+        );
 
         const archivePath = this.buildArchivePath(archiveRoot, relative);
         if (archivePath == null) {
@@ -661,6 +690,27 @@ export class FilesService extends AppService {
     }
     const joined = root ? `${root}/${relative}` : relative;
     return joined;
+  }
+
+  private getRelativeChildPath(
+    childPath: string,
+    folderPath: string,
+    fallback: string,
+  ): string {
+    const folderPrefix = folderPath.endsWith('/')
+      ? folderPath
+      : `${folderPath}/`;
+    if (childPath.startsWith(folderPrefix)) {
+      return childPath.slice(folderPrefix.length);
+    }
+
+    const comparableChildPath = safeDecodePathForCompare(childPath);
+    const comparableFolderPrefix = safeDecodePathForCompare(folderPrefix);
+    if (comparableChildPath.startsWith(comparableFolderPrefix)) {
+      return comparableChildPath.slice(comparableFolderPrefix.length);
+    }
+
+    return fallback;
   }
 
   async downloadArchive(
@@ -1006,6 +1056,167 @@ export class FilesService extends AppService {
     }
 
     return { path: item.path, success: true };
+  }
+
+  async renameFiles(
+    items: RenameItemDto[],
+    at: string,
+  ): Promise<RenameFilesResponseDto> {
+    this.logger.log(`Rename files started: batchSize=${items.length}`);
+
+    const results: RenameItemResultDto[] = await Promise.all(
+      items.map((item) => this.renameItem(item, at)),
+    );
+
+    const successCount = results.filter((r) => r.success).length;
+    this.logger.log(
+      `Rename files completed: batchSize=${items.length}, successCount=${successCount}, failedCount=${items.length - successCount}`,
+    );
+
+    return { results };
+  }
+
+  private async renameItem(
+    item: RenameItemDto,
+    at: string,
+  ): Promise<RenameItemResultDto> {
+    if (item.nodeType === RenameItemNodeType.Folder) {
+      return this.renameFolderItem(
+        item.bucket,
+        item.sourcePath,
+        item.destinationPath,
+        at,
+      );
+    }
+    return this.renameFileItem(
+      item.bucket,
+      item.sourcePath,
+      item.destinationPath,
+      at,
+    );
+  }
+
+  private async renameFileItem(
+    bucket: string,
+    sourcePath: string,
+    destPath: string,
+    at: string,
+  ): Promise<RenameItemResultDto> {
+    const sourceUrl = buildDialFileResourceUrl(bucket, sourcePath);
+    const destinationUrl = buildDialFileResourceUrl(bucket, destPath);
+
+    try {
+      const { error, response } = (await this.client.moveResource({
+        headers: getBearerAuthHeaders(at),
+        body: { sourceUrl, destinationUrl, overwrite: false },
+        signal: AbortSignal.timeout(this.getTimeoutMs()),
+      })) as { error?: unknown; response: { status: number } };
+
+      if (error == null) {
+        return { sourcePath, destinationPath: destPath, success: true };
+      }
+
+      const status = response.status;
+      this.logger.warn(
+        `renameFileItem failed: bucket=${bucket}, sourcePath=${sourcePath}, destPath=${destPath}, status=${status}`,
+      );
+
+      if (status === 409) {
+        return {
+          sourcePath,
+          destinationPath: destPath,
+          success: false,
+          error: 'Conflict',
+        };
+      }
+      if (status === 403) {
+        return {
+          sourcePath,
+          destinationPath: destPath,
+          success: false,
+          error: 'Forbidden',
+        };
+      }
+      if (status === 404) {
+        return {
+          sourcePath,
+          destinationPath: destPath,
+          success: false,
+          error: 'Not found',
+        };
+      }
+      return {
+        sourcePath,
+        destinationPath: destPath,
+        success: false,
+        error: 'Rename failed',
+      };
+    } catch (err) {
+      this.logger.error(
+        `renameFileItem exception: bucket=${bucket}, sourcePath=${sourcePath}, err=${err instanceof Error ? err.message : String(err)}`,
+      );
+      return {
+        sourcePath,
+        destinationPath: destPath,
+        success: false,
+        error: 'Rename failed',
+      };
+    }
+  }
+
+  private async renameFolderItem(
+    bucket: string,
+    sourceFolderPath: string,
+    destFolderPath: string,
+    at: string,
+  ): Promise<RenameItemResultDto> {
+    const srcPrefix = sourceFolderPath.endsWith('/')
+      ? sourceFolderPath
+      : `${sourceFolderPath}/`;
+    const destPrefix = destFolderPath.endsWith('/')
+      ? destFolderPath
+      : `${destFolderPath}/`;
+
+    let children: ExpandedFile[];
+    try {
+      children = await this.expandFolderContents(bucket, srcPrefix, '', at);
+    } catch {
+      return {
+        sourcePath: sourceFolderPath,
+        destinationPath: destFolderPath,
+        success: false,
+        error: 'Rename failed',
+      };
+    }
+
+    let anyFailed = false;
+    for (const child of children) {
+      const relative = child.archivePath;
+      const destChildPath = `${destPrefix}${relative}`;
+      const result = await this.renameFileItem(
+        bucket,
+        child.path,
+        destChildPath,
+        at,
+      );
+      if (!result.success) {
+        anyFailed = true;
+      }
+    }
+
+    if (anyFailed) {
+      return {
+        sourcePath: sourceFolderPath,
+        destinationPath: destFolderPath,
+        success: false,
+        error: 'Partial rename',
+      };
+    }
+    return {
+      sourcePath: sourceFolderPath,
+      destinationPath: destFolderPath,
+      success: true,
+    };
   }
 
   private fillArchiveDownloadPool(

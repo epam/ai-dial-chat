@@ -5,7 +5,7 @@ import {
   FileManagerColumnKey,
 } from '@epam/ai-dial-ui-kit';
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as useDialFileManagerModule from '../../../hooks/files/useDialFileManager';
 import type { UseDialFileManagerResult } from '../../../hooks/files/useDialFileManager';
 import DialFileManagerModal from '../DialFileManagerModal';
@@ -14,7 +14,8 @@ vi.mock('../../../hooks/files/useDialFileManager');
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => ({ showNotification: mockShowNotification }),
 }));
-const { mockHandleTabChange } = vi.hoisted(() => ({
+const { mockActiveTab, mockHandleTabChange } = vi.hoisted(() => ({
+  mockActiveTab: { value: undefined as string | undefined },
   mockHandleTabChange: vi.fn(),
 }));
 const { mockShowNotification } = vi.hoisted(() => ({
@@ -26,15 +27,15 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
   const { DialFileManagerTabs: Tabs, DialFileManagerActions: Actions } = actual;
   return {
     ...actual,
-    useDialFileManagerTabs: vi.fn().mockReturnValue({
-      activeTab: Tabs.MyFiles,
+    useDialFileManagerTabs: vi.fn().mockImplementation(() => ({
+      activeTab: mockActiveTab.value ?? Tabs.MyFiles,
       handleTabChange: mockHandleTabChange,
       tabs: [
         { id: Tabs.MyFiles, name: 'My files' },
         { id: Tabs.Shared, name: 'Shared with me' },
         { id: Tabs.Organization, name: 'Organization' },
       ],
-    }),
+    })),
     DialFileManager: ({
       className,
       gridClassName,
@@ -129,7 +130,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         <button
           type="button"
           onClick={() =>
-            onSelectedPathsChange?.(new Set(['/All files/report.pdf']))
+            onSelectedPathsChange?.(new Set(['/My files/report.pdf']))
           }
         >
           Select report
@@ -147,8 +148,8 @@ const defaultHookResult: UseDialFileManagerResult = {
   items: [
     {
       id: 'bucket-root',
-      name: 'All files',
-      path: '/All files',
+      name: 'My files',
+      path: '/My files',
       parentPath: '',
       nodeType: DialFileNodeType.FOLDER,
       folderId: 'test-bucket',
@@ -156,8 +157,8 @@ const defaultHookResult: UseDialFileManagerResult = {
         {
           id: 'report.pdf',
           name: 'report.pdf',
-          path: '/All files/report.pdf',
-          parentPath: '/All files',
+          path: '/My files/report.pdf',
+          parentPath: '/My files',
           nodeType: DialFileNodeType.ITEM,
           folderId: 'test-bucket',
           contentType: 'application/pdf',
@@ -167,7 +168,7 @@ const defaultHookResult: UseDialFileManagerResult = {
   ],
   isLoading: false,
   error: null,
-  path: '/All files',
+  path: '/My files',
   onPathChange: vi.fn(),
   retry: vi.fn(),
   onUploadFiles: vi.fn(),
@@ -182,6 +183,9 @@ const defaultHookResult: UseDialFileManagerResult = {
   isDownloading: false,
   onDeleteFiles: vi.fn(),
   isDeleting: false,
+  onRenameValidate: vi.fn(),
+  onMoveToFiles: vi.fn(),
+  isRenaming: false,
   uploadEnabled: true,
   isNewButtonDisabled: false,
   disabledNewButtonTooltip: 'No permission',
@@ -231,6 +235,14 @@ const defaultProps = {
   uploadProgressTitle: 'Uploading files',
   cancelLabel: 'Cancel',
 };
+
+beforeEach(() => {
+  mockActiveTab.value = undefined;
+  mockHandleTabChange.mockClear();
+  mockShowNotification.mockClear();
+  mockUseDialFileManager.mockClear();
+  mockUseDialFileManager.mockReturnValue(defaultHookResult);
+});
 
 describe('DialFileManagerModal', () => {
   it('renders with the given title when isOpen is true', () => {
@@ -405,6 +417,48 @@ describe('DialFileManagerModal — tab navigation', () => {
     const manager = screen.getByRole('region', { name: 'file manager' });
     expect(manager.getAttribute('data-active-tab')).toBe(
       DialFileManagerTabs.MyFiles,
+    );
+  });
+
+  it('passes My files as rootLabel for the My files tab', () => {
+    mockActiveTab.value = DialFileManagerTabs.MyFiles;
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    expect(mockUseDialFileManager).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activeTab: DialFileManagerTabs.MyFiles,
+        rootLabel: 'dialFileManager.tab.myFiles',
+      }),
+    );
+  });
+
+  it('passes Shared with me as rootLabel for the Shared tab', () => {
+    mockActiveTab.value = DialFileManagerTabs.Shared;
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    expect(mockUseDialFileManager).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activeTab: DialFileManagerTabs.Shared,
+        rootLabel: 'dialFileManager.tab.shared',
+      }),
+    );
+  });
+
+  it('passes Organization as rootLabel for the Organization tab', () => {
+    mockActiveTab.value = DialFileManagerTabs.Organization;
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    expect(mockUseDialFileManager).toHaveBeenCalledWith(
+      expect.objectContaining({
+        activeTab: DialFileManagerTabs.Organization,
+        rootLabel: 'dialFileManager.tab.organization',
+      }),
     );
   });
 
