@@ -28,6 +28,7 @@ export const StarToggleButton: FC<StarToggleButtonProps> = ({
 }) => (
   <DialGhostIconButton
     size={size}
+    className="!h-auto !py-1"
     icon={
       isStarred ? (
         <IconStarFilled
