@@ -169,9 +169,11 @@ dialTest(
             expectedCopyIconTooltips[i],
           );
 
-          await copyIcons[i].click();
+          const copied = await dialHomePage.captureNextClipboardWrite(() =>
+            copyIcons[i].click(),
+          );
           chatMessagesAssertion.assertCopiedMessage(
-            await dialHomePage.readTextFromClipboard(),
+            copied,
             expectedCopiedTableContent[i],
           );
         }
@@ -182,11 +184,11 @@ dialTest(
     await dialTest.step.skip(
       `Click on 'Copy text' btn and verify the response is copied without markdown`,
       async () => {
-        await chatMessages
-          .messageCopyTextButton(expectedChatMessageIndex)
-          .click();
+        const copied = await dialHomePage.captureNextClipboardWrite(() =>
+          chatMessages.messageCopyTextButton(expectedChatMessageIndex).click(),
+        );
         chatMessagesAssertion.assertCopiedMessage(
-          await dialHomePage.readTextFromClipboard(),
+          copied,
           markdownToTxt(expectedResponseMdContent),
         );
       },
@@ -195,11 +197,13 @@ dialTest(
     await dialTest.step(
       `Click on 'Copy markdown' btn and verify the response is copied with markdown`,
       async () => {
-        await chatMessages
-          .messageCopyMarkdownButton(expectedChatMessageIndex)
-          .click();
+        const copied = await dialHomePage.captureNextClipboardWrite(() =>
+          chatMessages
+            .messageCopyMarkdownButton(expectedChatMessageIndex)
+            .click(),
+        );
         chatMessagesAssertion.assertCopiedMessage(
-          await dialHomePage.readTextFromClipboard(),
+          copied,
           expectedResponseMdContent,
         );
       },

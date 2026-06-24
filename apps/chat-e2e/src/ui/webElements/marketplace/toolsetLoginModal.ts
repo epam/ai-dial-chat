@@ -93,10 +93,18 @@ export class ToolsetLoginModal extends Popup {
     return this.clickLoginButtonForOAuth(() => this.myCredsLoginButton.click());
   }
 
+  async clickPublicToolsetLoginForOAuth(): Promise<Page> {
+    return this.clickLoginButtonForOAuth(() => this.loginButton.click());
+  }
+
   async clickOrgCredsLoginButtonForApiKey() {
     return this.clickLoginButtonForApiKey(() =>
       this.orgCredsLoginButton.click(),
     );
+  }
+
+  async clickPublicToolsetLoginForApiKey() {
+    return this.clickLoginButtonForApiKey(() => this.loginButton.click());
   }
 
   async clickMyCredsLoginButtonForApiKey() {

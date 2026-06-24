@@ -331,6 +331,9 @@ const selectIsShowUploadReplaceDialog = (state: RootState) =>
 const selectDuplicatedUploadFiles = (state: RootState) =>
   rootSelector(state).uploadReplaceDialog?.duplicatedFiles ?? [];
 
+const selectResolvedUploadIds = (state: RootState) =>
+  rootSelector(state).resolvedUploadIds;
+
 export const FilesSelectors = {
   selectFiles,
   selectReviewBucketFiles,
@@ -373,4 +376,5 @@ export const FilesSelectors = {
   selectUploadReplaceDialog,
   selectIsShowUploadReplaceDialog,
   selectDuplicatedUploadFiles,
+  selectResolvedUploadIds,
 };
