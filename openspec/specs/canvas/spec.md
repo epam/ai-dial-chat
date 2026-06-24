@@ -17,7 +17,7 @@ The `AttachmentCanvas` side panel opens to the right of the main conversation ar
 | `CollapsedGroup` stage attachments | `ConversationMessageItem.tsx` via `onAttachmentClick` | Open canvas |
 | `ConversationInput` tray (new message) | `ConversationRoute.tsx` → `handleAttachmentClick` | Open canvas |
 | `EditMessageInput` tray | `ConversationView.tsx` → `handleInputAttachmentClick` | Open canvas |
-| `ConversationSourcesPanel` | `ConversationSourcesPanel.tsx` → `handleAttachmentClick` | Open canvas if previewable, fall back to download if `openAttachmentCanvas` returns `false` |
+| `ConversationSourcesPanel` | `ConversationSourcesPanel.tsx` → `handleAttachmentClick` | Open canvas if previewable (closes source panel), fall back to download if `openAttachmentCanvas` returns `false` |
 
 #### Open behavior
 
@@ -39,7 +39,7 @@ The canvas closes when the URL `pathname` changes (conversation switch, catalog 
 - **Close button**: calls `onClose` (`closeCanvas`).
 - **Resizability**: enabled on desktop, disabled on mobile (`isMobile` prop from `useIsMobile()`).
 - **Width defaults**: 560 px default, 320 px min, 960 px max. Width is not persisted between sessions.
-- **Both panels**: `ConversationSourcesPanel` and `AttachmentCanvas` may be open simultaneously.
+- **Both panels**: `ConversationSourcesPanel` and `AttachmentCanvas` cannot be open simultaneously. Opening the canvas from the source panel closes the source panel first (calls `closeSourcesPanel()` before `openCanvas()`). Opening the canvas from any other surface does not affect the source panel state.
 
 #### i18n
 

@@ -13,13 +13,18 @@
 
 // Outer wrapper: dark background + border, like a code block
 .jsonWrapper {
-  @apply m-3 overflow-auto rounded-md border border-secondary;
+  margin: 0.75rem;
+  overflow: auto;
+  border-radius: 0.375rem;
+  border: 1px solid var(--stroke-secondary, #242c42);
   background-color: var(--bg-layer-1, #0c101d);
 }
 
 // react-json-view-lite: structural base without the hardcoded grey background
 .jsonContainer {
-  @apply whitespace-pre-wrap break-words p-2;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  padding: 0.5rem;
   font-family:
     ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas,
     'DejaVu Sans Mono', monospace;
@@ -29,22 +34,30 @@
 
 // Indented child fields
 .jsonChildContainer {
-  @apply m-0 ps-3;
+  margin: 0;
+  padding-inline-start: 0.75rem;
 }
 
 // Themed token styles – map app CSS variables so the tree respects dark/light
 .jsonLabel {
-  @apply me-1 font-semibold;
+  margin-inline-end: 0.25rem;
+  font-weight: 600;
   color: var(--text-primary, #eef1f7);
 }
 
 .jsonClickableLabel {
-  @apply me-1 cursor-pointer font-semibold hover:underline;
+  margin-inline-end: 0.25rem;
+  cursor: pointer;
+  font-weight: 600;
   color: var(--text-primary, #eef1f7);
+
+  &:hover {
+    text-decoration: underline;
+  }
 }
 
 .jsonPunctuation {
-  @apply me-1;
+  margin-inline-end: 0.25rem;
   color: var(--text-secondary, #9fa6bd);
 }
 
@@ -61,12 +74,15 @@
 }
 
 .jsonNullValue {
-  @apply italic;
+  font-style: italic;
   color: var(--text-secondary, #9fa6bd);
 }
 
 .jsonExpandIcon {
-  @apply me-1 cursor-pointer select-none transition-colors;
+  margin-inline-end: 0.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: color 150ms;
   color: var(--text-secondary, #9fa6bd);
 
   &:hover {
@@ -81,7 +97,10 @@
 }
 
 .jsonCollapseIcon {
-  @apply me-1 cursor-pointer select-none transition-colors;
+  margin-inline-end: 0.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: color 150ms;
   color: var(--text-secondary, #9fa6bd);
 
   &:hover {
@@ -96,7 +115,10 @@
 }
 
 .jsonCollapsedContent {
-  @apply me-1 cursor-pointer rounded px-1;
+  margin-inline-end: 0.25rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  padding-inline: 0.25rem;
   color: var(--text-secondary, #9fa6bd);
   background-color: var(--bg-layer-3, #1d2439);
   font-size: 0.75em;
