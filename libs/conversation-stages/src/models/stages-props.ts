@@ -1,4 +1,4 @@
-import type { Stage } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
 
 /**
  * Typography configuration for stage content text.
@@ -57,4 +57,6 @@ export interface StagesPanelProps {
   styles?: StagesPanelStyles;
   /** Accessible label for the copy button on each stage's content. Defaults to `'Copy'`. */
   copyAriaLabel?: string;
+  /** Called when the user clicks an attachment card inside a stage. */
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }

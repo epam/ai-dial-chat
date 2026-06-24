@@ -117,6 +117,7 @@
     "react-dom": "^19.2.6",
     "react-error-boundary": "^6.1.2",
     "react-i18next": "^17.0.8",
+    "react-json-view-lite": "^2.5.0",
     "react-markdown": "^10.1.0",
     "react-router-dom": "^7.15.1",
     "react-syntax-highlighter": "^16.1.1",

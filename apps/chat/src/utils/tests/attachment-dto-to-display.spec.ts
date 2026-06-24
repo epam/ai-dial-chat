@@ -44,6 +44,22 @@ describe('attachmentDtoToDisplayAttachment', () => {
     expect(attachment.previewUrl).toBe('data:image/png;base64,iVBORw0KGgo=');
   });
 
+  it('preserves inline data for non-image attachments', () => {
+    const dto: AttachmentDto = {
+      type: 'text/markdown',
+      title: '[1] RAG search result',
+      data: 'The **main idea** is to support life sciences research.',
+    };
+
+    const attachment = attachmentDtoToDisplayAttachment(dto);
+
+    expect(attachment.type).toBe(AttachmentType.File);
+    expect(attachment.data).toBe(
+      'The **main idea** is to support life sciences research.',
+    );
+    expect(attachment.previewUrl).toBeUndefined();
+  });
+
   it('resolves a DIAL file ID url to a download URL for image previewUrl', () => {
     const dto: AttachmentDto = {
       type: 'image/jpeg',

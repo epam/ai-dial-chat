@@ -14,6 +14,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
   className,
   styles: panelStyles,
   copyAriaLabel,
+  onAttachmentClick,
 }) => {
   const { colors, typography = { fontClassName: 'dial-small-text' } } =
     panelStyles ?? {};
@@ -56,6 +57,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
               isLive={lastRunningStageIndex === index}
               typography={typography}
               copyAriaLabel={copyAriaLabel}
+              onAttachmentClick={onAttachmentClick}
             />
           </li>
         ))}
