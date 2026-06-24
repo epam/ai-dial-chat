@@ -4,6 +4,24 @@ import type { AttachmentCanvasContent } from '../../../models/attachment-canvas'
 import { AttachmentContentType } from '../../../types/attachment-canvas';
 import { AttachmentCanvas } from '../AttachmentCanvas';
 
+vi.mock('@epam/ai-dial-chat-shared', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@epam/ai-dial-chat-shared')>();
+  return {
+    ...actual,
+    MarkdownRenderer: ({ content }: { content: string }) => (
+      <section aria-label="markdown-renderer">{content}</section>
+    ),
+  };
+});
+
+vi.mock('react-json-view-lite', () => ({
+  JsonView: ({ data }: { data: object }) => (
+    <section aria-label="json-viewer">{JSON.stringify(data)}</section>
+  ),
+  defaultStyles: {},
+}));
+
 const plainTextContent: AttachmentCanvasContent = {
   type: AttachmentContentType.PlainText,
   text: 'Hello, world!\nSecond line.',
@@ -83,5 +101,36 @@ describe('AttachmentCanvas', () => {
   it('uses a custom closeLabel for the close button aria-label', () => {
     render(<AttachmentCanvas {...defaultProps} closeLabel="Dismiss" />);
     expect(screen.getByRole('button', { name: 'Dismiss' })).toBeDefined();
+  });
+
+  it('renders MarkdownRenderer for Markdown content', () => {
+    const markdownContent: AttachmentCanvasContent = {
+      type: AttachmentContentType.Markdown,
+      text: '# Hello\n\nThis is **markdown**.',
+    };
+    render(<AttachmentCanvas {...defaultProps} content={markdownContent} />);
+    expect(
+      screen.getByRole('region', { name: 'markdown-renderer' }),
+    ).toBeDefined();
+  });
+
+  it('renders JsonView for Json content', () => {
+    const jsonContent: AttachmentCanvasContent = {
+      type: AttachmentContentType.Json,
+      value: { key: 'value', count: 42 },
+    };
+    render(<AttachmentCanvas {...defaultProps} content={jsonContent} />);
+    expect(screen.getByRole('region', { name: 'json-viewer' })).toBeDefined();
+  });
+
+  it('renders the Json container with dir="ltr"', () => {
+    const jsonContent: AttachmentCanvasContent = {
+      type: AttachmentContentType.Json,
+      value: { nested: true },
+    };
+    const { container } = render(
+      <AttachmentCanvas {...defaultProps} content={jsonContent} />,
+    );
+    expect(container.querySelector('[dir="ltr"]')).toBeTruthy();
   });
 });

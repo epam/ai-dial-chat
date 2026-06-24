@@ -68,6 +68,7 @@ export enum ButtonsI18nKeys {
   RegenerateResponse = 'buttons.regenerateResponse',
   CopyResponse = 'buttons.copyResponse',
   CopyAsMarkdown = 'buttons.copyAsMarkdown',
+  CopyAsJson = 'buttons.copyAsJson',
   CopyText = 'buttons.copyText',
   LikeResponse = 'buttons.likeResponse',
   DislikeResponse = 'buttons.dislikeResponse',

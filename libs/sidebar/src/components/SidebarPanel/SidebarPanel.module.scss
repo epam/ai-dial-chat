@@ -26,6 +26,19 @@
   line-height: var(--sb-title-line-height, 1.25rem);
 }
 
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.appear {
+  animation: fadeIn 200ms ease-out forwards;
+}
+
 .resizeHandler {
   width: 4px !important;
   color: var(--sb-resize-handler, var(--text-success, #37babc)) !important;
