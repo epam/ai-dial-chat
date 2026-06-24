@@ -8,6 +8,7 @@ import {
   KeyboardEvent,
   MouseEvent,
   useCallback,
+  useEffect,
   useLayoutEffect,
   useRef,
   useState,
@@ -47,7 +48,13 @@ export const Card: FC<CardProps> = ({
     '--cat-card-star-filled': colors?.starFilled,
   });
 
-  const [isStarred, setIsStarred] = useState(initialIsStarred);
+  const [isStarred, setIsStarred] = useState(initialIsStarred ?? false);
+
+  // Sync when the parent updates the starred state externally (e.g. un-starring
+  // from the Favorites strip should reflect back on the Browse card).
+  useEffect(() => {
+    setIsStarred(initialIsStarred ?? false);
+  }, [initialIsStarred]);
   const [visibleCount, setVisibleCount] = useState(item.topics.length);
   const topicsRef = useRef<HTMLDivElement>(null);
 

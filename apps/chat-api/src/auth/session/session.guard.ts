@@ -52,10 +52,9 @@ export class SessionGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    // Capture the CSRF token the frontend sent with this request before any
-    // refresh rotates it. CsrfGuard must validate the current request against
-    // this pre-refresh token; the rotated token is returned via the response
-    // header so the frontend uses it for subsequent requests.
+    // Keep the CSRF token stable across access-token refreshes. Rotating it
+    // together with the session cookie creates a race where another in-flight
+    // request or browser tab sends the previous header with the new cookie.
     const csrfForCurrentRequest = payload.csrf;
 
     const now = Math.floor(Date.now() / 1000);

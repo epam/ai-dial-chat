@@ -2,6 +2,14 @@ import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type { ItemDetailsTexts } from './item-details-props';
 
+/** A single option in the Create dropdown. */
+export interface CreateOption {
+  /** Display label shown in the dropdown menu. */
+  label: string;
+  /** Called when this option is selected. */
+  onClick: () => void;
+}
+
 /** Text labels used by the `Catalog` surface. */
 export interface CatalogTitles {
   /** Page heading. Default: 'Catalog'. */
@@ -55,7 +63,12 @@ export interface CatalogProps {
    * Returns `undefined` to let the panel fall back to `item.longDescription`.
    */
   onFetchAboutContent?: (item: CatalogItem) => Promise<string | undefined>;
-  /** Called when the Create button is clicked. */
+  /**
+   * Dropdown options for the Create button. When provided, the button opens a
+   * menu instead of calling `onCreateClick` directly.
+   */
+  createOptions?: CreateOption[];
+  /** Called when the Create button is clicked (used when `createOptions` is absent). */
   onCreateClick?: () => void;
   /** Optional color and typography overrides. */
   styles?: CatalogStyles;

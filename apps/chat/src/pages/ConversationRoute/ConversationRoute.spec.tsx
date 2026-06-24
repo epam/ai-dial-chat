@@ -15,6 +15,9 @@ import { AuthStatus } from '../../types/auth-status';
 import * as attachmentToDtoModule from '../../utils/attachment-to-dto';
 import ConversationRoute from './ConversationRoute';
 
+vi.mock('../../hooks/attachment/useOpenAttachmentCanvas', () => ({
+  useOpenAttachmentCanvas: () => ({ openAttachmentCanvas: vi.fn() }),
+}));
 vi.mock('../../context/AppConfigContext', () => ({
   default: ({ children }: { children: React.ReactNode }) => children,
   useAppConfig: () => ({

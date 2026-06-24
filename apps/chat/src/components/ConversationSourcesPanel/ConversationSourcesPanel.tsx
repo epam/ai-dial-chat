@@ -1,5 +1,6 @@
+import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { ConversationSourcesPanel } from '@epam/ai-dial-source-panel';
-import { memo, useMemo, type FC } from 'react';
+import { memo, useCallback, useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   AttachmentsI18nKeys,
@@ -9,6 +10,7 @@ import {
 } from '../../constants/translation-keys';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
+import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useConversationSources } from '../../hooks/conversation-sources/useConversationSources';
 import useViewportWidth from '../../hooks/use-viewport-width';
@@ -22,7 +24,17 @@ const ConversationSourcesPanelContainer: FC = () => {
   const { t } = useTranslation();
   const { handleClose, isOpen, messages } = useSourcesSidebar();
   const { uploaded, generated, sources } = useConversationSources(messages);
-  const { handleAttachmentClick } = useAttachmentAction();
+  const { handleAttachmentClick: downloadAttachment } = useAttachmentAction();
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+
+  const handleAttachmentClick = useCallback(
+    (attachment: DisplayAttachment) => {
+      void openAttachmentCanvas(attachment).then((opened) => {
+        if (!opened) downloadAttachment(attachment);
+      });
+    },
+    [openAttachmentCanvas, downloadAttachment],
+  );
 
   const isMobile = useIsMobile();
   const viewportWidth = useViewportWidth();

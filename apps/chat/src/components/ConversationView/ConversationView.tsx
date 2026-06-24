@@ -14,10 +14,10 @@ import type {
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
 import {
-  NotificationVariant,
   DialFabButton,
   DialNeutralButton,
   DialNotification,
+  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -46,6 +46,7 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
+import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
@@ -138,6 +139,7 @@ const ConversationView: FC<Props> = ({
   const [pendingDialAttachments, setPendingDialAttachments] = useState<
     Attachment[]
   >([]);
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
   const isEditActive = !!editingMessageIndexes?.size;
   const {
     items,
@@ -365,6 +367,20 @@ const ConversationView: FC<Props> = ({
     [bucket],
   );
 
+  const handleInputAttachmentClick = useCallback(
+    (attachment: Attachment) => {
+      void openAttachmentCanvas(attachment);
+    },
+    [openAttachmentCanvas],
+  );
+
+  const handleMessageAttachmentClick = useCallback(
+    (attachment: DisplayAttachment) => {
+      void openAttachmentCanvas(attachment);
+    },
+    [openAttachmentCanvas],
+  );
+
   return (
     <>
       <FileDndOverlay
@@ -450,6 +466,7 @@ const ConversationView: FC<Props> = ({
                     selectedDeployment != null ? validateAttachment : undefined
                   }
                   hideAttachFile={!isAttachmentsAllowed}
+                  onAttachmentClick={handleMessageAttachmentClick}
                 />
               );
             })}
@@ -532,6 +549,7 @@ const ConversationView: FC<Props> = ({
                   selectedDeployment != null ? validateAttachment : undefined
                 }
                 hideAttachFile={!isAttachmentsAllowed}
+                onAttachmentClick={handleInputAttachmentClick}
               />
             </Suspense>
             <Suspense fallback={null}>

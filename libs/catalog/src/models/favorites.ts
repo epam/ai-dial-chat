@@ -42,6 +42,12 @@ export interface FavoritesProps {
   title?: string;
   /** Called when a favorite card's star is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /** Called when a favorite card body is clicked. Opens the details panel. */
+  onItemClick?: (item: CatalogItem) => void;
   /** Grouped typography and color overrides for the section. */
   styles?: FavoritesStyles;
+  /** When true the section plays its exit animation. The parent should unmount the section once `onExitComplete` fires. */
+  isLeaving?: boolean;
+  /** Called when the section exit animation finishes so the parent can safely unmount. */
+  onExitComplete?: () => void;
 }
