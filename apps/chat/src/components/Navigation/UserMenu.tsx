@@ -207,6 +207,7 @@ export const UserMenu = memo(() => {
           matchReferenceWidth={false}
           items={menuItems}
           listClassName="shadow-md"
+          // separatorClassName="m-0"
           // overlayContentClassName="p-0"
         >
           <button
