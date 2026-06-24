@@ -161,6 +161,7 @@ export enum DialFileManagerI18nKeys {
   AllTypes = 'dialFileManager.allTypes',
   UpToFiles = 'dialFileManager.upToFiles',
   AttachingHiddenFilesNotAllowed = 'dialFileManager.attachingHiddenFilesNotAllowed',
+  UnsupportedFileTypeTooltip = 'dialFileManager.unsupportedFileTypeTooltip',
   UnsupportedFilesSkipped = 'dialFileManager.unsupportedFilesSkipped',
   UnsupportedFilesDescription = 'dialFileManager.unsupportedFilesDescription',
   TooManyFilesSelected = 'dialFileManager.tooManyFilesSelected',
