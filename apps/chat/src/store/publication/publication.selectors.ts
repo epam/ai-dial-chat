@@ -180,20 +180,41 @@ const _selectChosenPublicationFolderIds = createSelector(
       _folders: FolderInterface[],
       itemsShouldBeChosen: ShareEntity[],
     ) => itemsShouldBeChosen,
+    (
+      _state,
+      _publicationUrl: string,
+      _folders: FolderInterface[],
+      _itemsShouldBeChosen: ShareEntity[],
+      directContainerFolderIds: string[],
+    ) => directContainerFolderIds,
   ],
-  (selectedItems, folders, itemsShouldBeChosen) => {
+  (selectedItems, folders, itemsShouldBeChosen, directContainerFolderIds) => {
     return getPartialAndFullyChosenFolders(
       folders,
       itemsShouldBeChosen,
       selectedItems,
+      undefined,
+      undefined,
+      directContainerFolderIds,
     );
   },
 );
 
 const selectChosenPublicationFolderIds =
-  (publicationUrl: string, folders: FolderInterface[], items: ShareEntity[]) =>
+  (
+    publicationUrl: string,
+    folders: FolderInterface[],
+    items: ShareEntity[],
+    directContainerFolderIds: string[],
+  ) =>
   (state: RootState) =>
-    _selectChosenPublicationFolderIds(state, publicationUrl, folders, items);
+    _selectChosenPublicationFolderIds(
+      state,
+      publicationUrl,
+      folders,
+      items,
+      directContainerFolderIds,
+    );
 
 const selectPublicationsToReviewCount = createSelector(
   [
