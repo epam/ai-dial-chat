@@ -90,6 +90,11 @@ const mapToDeploymentItem = (
         ? raw.max_input_attachments
         : undefined,
     topics,
+    owner: raw.owner,
+    applicationFolder:
+      type === 'application' && raw.id.includes('/')
+        ? raw.id.substring(0, raw.id.lastIndexOf('/'))
+        : undefined,
   };
 };
 
@@ -181,6 +186,7 @@ export class DeploymentsService extends AppService {
         item.type === 'toolset'
           ? toolsetsSet.has(item.id)
           : deploymentsSet.has(item.id),
+      isMy: item.id.split('/').includes(bucket),
     }));
 
     if (!interfaceFilter) {

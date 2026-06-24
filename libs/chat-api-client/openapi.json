@@ -2235,6 +2235,18 @@
           "isInstalled": {
             "type": "boolean",
             "description": "Whether this deployment is installed by the current user (from user config)"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Owner of the deployment as reported by DIAL Core"
+          },
+          "isMy": {
+            "type": "boolean",
+            "description": "True when the deployment owner matches the current session user (computed post-cache)"
+          },
+          "applicationFolder": {
+            "type": "string",
+            "description": "Parent folder path for application-type deployments (absent for root-level or non-application items)"
           }
         },
         "required": ["id", "displayName", "type"]
@@ -3009,6 +3021,11 @@
             "type": "boolean",
             "description": "True when the user has pinned this conversation.",
             "example": false
+          },
+          "isReadonly": {
+            "type": "boolean",
+            "description": "True when the current user does not have WRITE permission on this conversation.",
+            "example": false
           }
         },
         "required": [
@@ -3017,7 +3034,8 @@
           "updatedAt",
           "sharedWithMe",
           "publishedWithMe",
-          "isPinned"
+          "isPinned",
+          "isReadonly"
         ]
       },
       "ConversationListResponseDto": {
