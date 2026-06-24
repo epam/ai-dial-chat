@@ -846,3 +846,11 @@ export const ExpectedConfirmationPopupData = {
 export const ExpectedConnectToolsetModalData = {
   header: 'Connect toolset',
 };
+
+export const ExpectedDeleteToolsetModalData = {
+  title: 'Confirm deleting toolset',
+  message: (name: string, version: string) =>
+    `Are you sure you want to delete the ${name} (version ${version})?`,
+  cancelButton: 'Cancel',
+  confirmButton: 'Delete',
+};
