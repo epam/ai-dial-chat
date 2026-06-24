@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 import { CatalogEntityType } from '../../../types/entity-type';
 import { Catalog } from '../Catalog';
@@ -21,6 +22,34 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     label: string;
     onClick: () => void;
   }) => <button onClick={onClick}>{label}</button>,
+  DialTabs: ({
+    tabs,
+    activeTab,
+    onClick,
+  }: {
+    tabs: { id: string; label: React.ReactNode }[];
+    activeTab: string;
+    onClick: (id: string) => void;
+  }) => (
+    <div role="tablist">
+      {tabs.map((tab) => (
+        <button
+          key={tab.id}
+          role="tab"
+          aria-selected={tab.id === activeTab}
+          onClick={() => onClick(tab.id)}
+        >
+          {tab.label}
+        </button>
+      ))}
+    </div>
+  ),
+  DialDropdown: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  DialCloseButton: ({ onClick }: { onClick: () => void }) => (
+    <button aria-label="Close" onClick={onClick} />
+  ),
 }));
 vi.mock('@tabler/icons-react', () => ({
   IconPlus: () => <svg />,
