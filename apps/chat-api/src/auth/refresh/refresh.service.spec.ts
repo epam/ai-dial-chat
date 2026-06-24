@@ -20,6 +20,7 @@ function makePayload(overrides?: Partial<SessionPayload>): SessionPayload {
     iat: now - 3600,
     csrf: 'old-csrf',
     claims: { email: 'u@example.com' },
+    bucket: '',
     ...overrides,
   };
 }
