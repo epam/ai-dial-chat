@@ -7,11 +7,11 @@ The chat input area is rendered by the `ConversationInput` lib component (`libs/
 ## Goals / Non-Goals
 
 **Goals:**
-- Add a "Chat settings" dropdown entry to the `+` menu; entry is only shown when the active deployment has at least one feature enabled.
-- Open a modal that renders only the settings gated by `DeploymentFeatures` (`systemPrompt`, `temperature`).
+- Add a "Chat settings" dropdown entry to the `+` menu; entry is always shown when a conversation is active.
+- Open a modal that renders settings gated by `DeploymentFeatures` (`responseFormat`, `systemPrompt`, `temperature`).
 - Extend `DeploymentItemDto` (backend DTO) with optional `features?: DeploymentFeatures`.
-- Add `DeploymentFeatures` interface to `libs/chat-shared`.
-- Persist system prompt and temperature overrides in conversation state.
+- Add `DeploymentFeatures` interface and `ResponseFormat` enum to `libs/chat-shared`.
+- Persist system prompt, temperature, and response format overrides in conversation state.
 
 **Non-Goals:**
 - Adding the other dropdown items visible in the design (Dial file system, Prompt library, Add files from cloud, Tools) — those are separate features.
@@ -28,11 +28,11 @@ The chat input area is rendered by the `ConversationInput` lib component (`libs/
 
 **Alternatives considered:** Hard-code "Chat settings" inside the lib with a boolean guard — rejected because the lib must not know about deployment features or app-specific navigation.
 
-### D2: `ChatSettingsModal` lives in `apps/chat`, not a lib
+### D2: `ChatSettingsModal` lives in `libs/conversation-input`, not `apps/chat`
 
-**Decision:** The modal component is in `apps/chat/src/components/ChatSettingsModal/`. It reads `DeploymentFeatures` from the active deployment context and writes `systemPrompt` / `temperature` to conversation state.
+**Decision:** The `ChatSettingsModal` and `ChatSettingsBottomSheet` components live in `libs/conversation-input/src/components/`. The modal is rendered and controlled inside `AddAttachmentButton`, which already owns the dropdown state. The `ChatSettingsConfig` prop carries all values and callbacks from the app layer.
 
-**Why:** The modal needs deployment context, conversation context, and i18n — all app-owned concerns. Per the AGENTS.md library isolation rule, libs must not know about these.
+**Why:** Co-locating the modal with `AddAttachmentButton` keeps the dropdown open/close state in one place. The lib remains isolated from app concerns (no import of i18n, deployment context, or state management) — all app-level strings and values flow in as props through `ChatSettingsConfig`.
 
 ### D3: `DeploymentFeatures` defined in `libs/chat-shared`
 
