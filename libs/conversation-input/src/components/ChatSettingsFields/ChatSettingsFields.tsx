@@ -1,5 +1,5 @@
-import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
+import { ResponseFormat } from '@epam/ai-dial-chat-shared';
 import {
   DialFormItem,
   DialInput,
