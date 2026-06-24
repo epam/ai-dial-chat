@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 import { Catalog, CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
@@ -46,7 +45,7 @@ const CatalogView: FC = () => {
 
   // TODO: replace with a real API call, e.g. GET /api/catalog/{id}/about
   const fetchAboutContent = useCallback(
-    (item: CatalogItem): Promise<string | undefined> => {
+    (_item: CatalogItem): Promise<string | undefined> => {
       return Promise.resolve(undefined);
     },
     [],

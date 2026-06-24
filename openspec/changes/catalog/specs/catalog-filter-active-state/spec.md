@@ -102,7 +102,9 @@ Tab badge counts SHALL use `myAppsFiltered` (reflects active filters, not raw `f
 
 Filter state is entirely internal to `Catalog`; none of it is added to `CatalogProps`.
 
-`CatalogItem` SHALL have an optional `isMyApp?: boolean` field. The host app populates it (e.g. from a deployment `isMy` flag). The lib does not interpret its meaning.
+`CatalogItem` SHALL have an optional `isMyApp?: boolean` field. The lib does not interpret its origin — it tests `item.isMyApp === true` only.
+
+`apps/chat/src/utils/map-deployment-to-catalog-item.ts` SHALL set `isMyApp: deployment.isMy ?? false` when building a `CatalogItem` from a `DeploymentItemDto`. This is the single source of truth for the personal-app flag; the lib does not inspect `item.folder`.
 
 New fields on `CatalogTitles`: `clearAllLabel?`, `filterFromLabel?`, `filterMyAppsLabel?`, `filterTopicsLabel?` — all optional strings forwarded to `Toolbar`.
 

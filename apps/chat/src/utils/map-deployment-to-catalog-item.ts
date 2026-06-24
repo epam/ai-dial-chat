@@ -62,6 +62,7 @@ export const mapDeploymentToCatalogItem = (
     topics: deployment.topics ?? [],
     isUserFavorite: favoriteIds.has(deployment.id),
     isStarred: favoriteIds.has(deployment.id),
+    isMyApp: deployment.isMy ?? false,
     folder:
       t != null
         ? resolveDeploymentFolder(deployment, t)
