@@ -46,9 +46,13 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     </>
   ),
   DialCheckbox: ({ label }: { label: string }) => <span>{label}</span>,
-  DialLinkButton: ({ label }: { label: string; className?: string; iconAfter?: React.ReactNode }) => (
-    <button>{label}</button>
-  ),
+  DialLinkButton: ({
+    label,
+  }: {
+    label: string;
+    className?: string;
+    iconAfter?: React.ReactNode;
+  }) => <button>{label}</button>,
   DialDangerButton: ({
     label,
     onClick,
@@ -88,7 +92,8 @@ vi.mock('@tabler/icons-react', () => ({
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', () => ({
-  mergeClasses: (...args: (string | undefined)[]) => args.filter(Boolean).join(' '),
+  mergeClasses: (...args: (string | undefined)[]) =>
+    args.filter(Boolean).join(' '),
 }));
 
 const renderToolbar = (props?: Partial<React.ComponentProps<typeof Toolbar>>) =>
@@ -128,7 +133,11 @@ describe('Toolbar', () => {
 
   it('calls onClearFilters when Clear all is clicked', async () => {
     const onClearFilters = vi.fn();
-    renderToolbar({ isAnyFilterActive: true, clearAllLabel: 'Clear all', onClearFilters });
+    renderToolbar({
+      isAnyFilterActive: true,
+      clearAllLabel: 'Clear all',
+      onClearFilters,
+    });
     await userEvent.click(screen.getByRole('button', { name: 'Clear all' }));
     expect(onClearFilters).toHaveBeenCalledOnce();
   });

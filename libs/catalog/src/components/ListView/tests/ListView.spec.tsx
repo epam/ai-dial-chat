@@ -7,7 +7,8 @@ import { CatalogEntityType } from '../../../types/entity-type';
 import { ListView } from '../ListView';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  mergeClasses: (...args: (string | undefined)[]) => args.filter(Boolean).join(' '),
+  mergeClasses: (...args: (string | undefined)[]) =>
+    args.filter(Boolean).join(' '),
   DialGrid: ({
     rowData,
     emptyStateTitle,
@@ -30,7 +31,9 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
           <div key={item.id}>
             <button
               aria-label={`star ${item.id}`}
-              onClick={() => ctx?.onToggleFavorite?.(item.id, !(item.isStarred ?? false))}
+              onClick={() =>
+                ctx?.onToggleFavorite?.(item.id, !(item.isStarred ?? false))
+              }
             />
           </div>
         ))}
@@ -59,14 +62,24 @@ describe('ListView', () => {
   it('renders without crashing', () => {
     expect(() =>
       render(
-        <ListView items={[]} query="" ariaLabel="Catalog" emptyStateTitle="No items" />,
+        <ListView
+          items={[]}
+          query=""
+          ariaLabel="Catalog"
+          emptyStateTitle="No items"
+        />,
       ),
     ).not.toThrow();
   });
 
   it('shows empty state title when items array is empty', () => {
     render(
-      <ListView items={[]} query="" ariaLabel="Catalog" emptyStateTitle="No items" />,
+      <ListView
+        items={[]}
+        query=""
+        ariaLabel="Catalog"
+        emptyStateTitle="No items"
+      />,
     );
     expect(screen.getByText('No items')).toBeTruthy();
   });
