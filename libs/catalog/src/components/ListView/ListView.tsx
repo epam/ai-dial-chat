@@ -1,6 +1,13 @@
 import { mergeClasses, DialGrid } from '@epam/ai-dial-ui-kit';
 import type { GridApi } from 'ag-grid-community';
-import { type CSSProperties, FC, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  FC,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import type { CatalogItem } from '../../models/catalog-item';
 import { GridContext } from '../../models/grid-context';
 import { ListViewProps } from '../../models/list-props';
@@ -13,7 +20,12 @@ const PAGE_SIZE = 50;
 const findScrollParent = (el: Element | null): Element | null => {
   if (!el || el === document.body) return null;
   const { overflow, overflowY } = getComputedStyle(el);
-  if (overflow === 'auto' || overflow === 'scroll' || overflowY === 'auto' || overflowY === 'scroll') {
+  if (
+    overflow === 'auto' ||
+    overflow === 'scroll' ||
+    overflowY === 'auto' ||
+    overflowY === 'scroll'
+  ) {
     return el;
   }
   return findScrollParent(el.parentElement);
@@ -39,7 +51,9 @@ export const ListView: FC<ListViewProps> = ({
   const cssVars = {
     '--cat-list-name-text': colors?.nameText,
     '--cat-list-secondary-text': colors?.secondaryText,
-    ...(stickyHeaderTop != null ? { '--list-header-sticky-top': `${stickyHeaderTop}px` } : {}),
+    ...(stickyHeaderTop != null
+      ? { '--list-header-sticky-top': `${stickyHeaderTop}px` }
+      : {}),
   } as CSSProperties;
 
   const gridApiRef = useRef<GridApi<CatalogItem> | null>(null);
@@ -71,7 +85,10 @@ export const ListView: FC<ListViewProps> = ({
     const checkVisibility = () => {
       const rootRect = scrollRoot.getBoundingClientRect();
       const sentinelRect = sentinel.getBoundingClientRect();
-      if (sentinelRect.top < rootRect.bottom && sentinelRect.bottom > rootRect.top) {
+      if (
+        sentinelRect.top < rootRect.bottom &&
+        sentinelRect.bottom > rootRect.top
+      ) {
         setVisibleCount((c) => Math.min(items.length, c + PAGE_SIZE));
       }
     };
@@ -93,7 +110,10 @@ export const ListView: FC<ListViewProps> = ({
   }, [windowedItems, query]);
 
   return (
-    <div style={cssVars} className={mergeClasses('w-full px-4', styles.listContainer)}>
+    <div
+      style={cssVars}
+      className={mergeClasses('w-full px-4', styles.listContainer)}
+    >
       <DialGrid<CatalogItem>
         columnDefs={CATALOG_COLUMNS()}
         rowData={windowedItems}
@@ -112,14 +132,14 @@ export const ListView: FC<ListViewProps> = ({
             typography,
             onToggleFavorite,
           } satisfies GridContext,
-          onRowClicked: onItemClick
+          onCellClicked: onItemClick
             ? (event) => {
-                const target = event.event?.target as HTMLElement | null;
-                if (target?.closest('[data-no-row-click]')) return;
-                if (event.data) onItemClick(event.data);
+                const col = event.column.getColDef();
+                if (col.field === 'isStarred') return; // ignore clicks on the star column
+                onItemClick(event.data as CatalogItem);
               }
             : undefined,
-          rowStyle: onItemClick ? { cursor: 'pointer' } : undefined,
+          rowClass: onItemClick ? 'cursor-pointer' : undefined,
         }}
         ariaLabel={ariaLabel}
       />

@@ -120,8 +120,6 @@ export const Catalog: FC<CatalogProps> = ({
   const handleOpenDetails = useCallback(
     async (item: CatalogItem) => {
       setSelectedItem(item);
-      // isDetailsOpen is set via a useEffect after the panel mounts so the
-      // CSS slide-in transition always plays (see below).
       setAboutContent(undefined);
 
       if (onFetchAboutContent) {

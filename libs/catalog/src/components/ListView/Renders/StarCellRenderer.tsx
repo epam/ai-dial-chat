@@ -19,7 +19,7 @@ export const StarCellRenderer: FC<
   };
 
   return (
-    <div className="flex h-full items-center justify-center pe-4" data-no-row-click>
+    <div className="flex h-full items-center justify-center pe-4">
       <StarToggleButton isStarred={isStarred} onClick={handleToggle} />
     </div>
   );
