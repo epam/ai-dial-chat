@@ -8,7 +8,8 @@ import {
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 
-const LABEL_CLASS_NAME = '!dial-small-text font-semibold !text-primary pb-3';
+const LABEL_CLASS_NAME =
+  '!text-[14px] !leading-[20px] font-semibold !text-primary gap-1';
 
 /** Props for the shared chat-settings form fields. */
 export interface ChatSettingsFieldsProps {
@@ -65,12 +66,13 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
   temperatureLabels = ['Precise', 'Neutral', 'Creative'],
   temperatureHint,
 }) => (
-  <div className="flex flex-col gap-4 px-6 py-4">
+  <div className="flex flex-col px-6">
     {features.responseFormat && (
       <DialFormItem
         label={responseFormatLabel}
         labelClassName={LABEL_CLASS_NAME}
         description={responseFormatHint}
+        className="gap-3 py-4"
       >
         <div className="flex flex-col gap-2">
           <DialRadioButton
@@ -100,6 +102,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
           label: systemPromptLabel,
           className: LABEL_CLASS_NAME,
         }}
+        containerClassName="py-4 gap-3"
         onChange={(value) => onSystemPromptChange(value ?? '')}
       />
     )}
@@ -108,6 +111,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
         label={temperatureLabel}
         labelClassName={LABEL_CLASS_NAME}
         description={temperatureHint}
+        className="gap-3 py-4"
       >
         <DialSlider
           value={temperature}

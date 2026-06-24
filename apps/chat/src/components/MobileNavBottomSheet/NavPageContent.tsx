@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { BASE_ICON_SIZE } from '@epam/ai-dial-ui-kit';
-import { IconChevronRight, IconUser } from '@tabler/icons-react';
+import { IconUser } from '@tabler/icons-react';
 import { type FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
@@ -32,7 +32,7 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
   };
 
   return (
-    <ul className="flex flex-col py-2">
+    <ul className="flex flex-col pb-4">
       {NAVIGATION_CONFIG.map(({ path, icon: Icon, labelKey }) => (
         <li key={path}>
           <button
@@ -59,21 +59,12 @@ const NavPageContent: FC<Props> = ({ onLogoutRequest }) => {
           )}
           onClick={handleProfile}
         >
-          <IconUser
-            size={BASE_ICON_SIZE}
-            stroke={1.5}
-            aria-hidden
-            className={styles.itemIcon}
-          />
-          <span className="dial-small-text flex-1">
+          <span className={styles.itemIcon}>
+            <IconUser size={BASE_ICON_SIZE} stroke={1.5} aria-hidden />
+          </span>
+          <span className="dial-small-text">
             {t(NavigationI18nKeys.Profile)}
           </span>
-          <IconChevronRight
-            size={BASE_ICON_SIZE}
-            stroke={1.5}
-            aria-hidden
-            className={mergeClasses(styles.itemIcon, 'rtl:scale-x-[-1]')}
-          />
         </button>
       </li>
     </ul>

@@ -32,7 +32,7 @@ const KeyboardPageContent: FC = () => {
   };
 
   return (
-    <ul className="flex flex-col py-2 pb-4">
+    <ul className="flex flex-col pb-4">
       {options.map(({ value, label }) => {
         const isActive = preference === value;
         return (
