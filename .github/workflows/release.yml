@@ -8,7 +8,7 @@ on:
       promote:
         type: boolean
         default: false
-        description: Promote release to stable (for release-0.* branches only)
+        description: Promote release to stable (for release-1.* branches only)
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
