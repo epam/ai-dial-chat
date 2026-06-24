@@ -7,6 +7,7 @@ import { CatalogSortKey } from '../../types/sort';
 import { CatalogViewMode } from '../../types/view-mode';
 import { filterCatalogItems } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
+import { buildCatalogTabs } from '../../utils/catalog-tabs';
 import { getStyles } from '../../utils/styles';
 import { CardGrid } from '../CardGrid/CardGrid';
 import { DetailsPanel } from '../Details/DetailsPanel';
@@ -76,7 +77,7 @@ export const Catalog: FC<CatalogProps> = ({
   const [sortKey, setSortKey] = useState<string>(
     CatalogSortKey.RecentlyUpdated,
   );
-  const tabs = [] as TabModel[]; // TODO: implement tabs and remove this placeholder
+  const tabs = buildCatalogTabs(filteredItems, titles?.tabLabels);
   const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
 
   const [isFavoritesRendered, setIsFavoritesRendered] = useState(
@@ -104,6 +105,7 @@ export const Catalog: FC<CatalogProps> = ({
   const [isAboutLoading, setIsAboutLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
+  // TODO: check details
   const handleOpenDetails = useCallback(
     async (item: CatalogItem) => {
       setSelectedItem(item);
@@ -167,6 +169,7 @@ export const Catalog: FC<CatalogProps> = ({
     label: (
       <ItemHeader
         title={typeof tab.label === 'string' ? tab.label : String(tab.label)}
+        titleClassName={typography?.tabClassName ?? 'dial-body-text'}
         postfix={filtered.filter((item) => item.type === tab.id).length}
       />
     ),
@@ -241,11 +244,12 @@ export const Catalog: FC<CatalogProps> = ({
       {tabs.length > 0 && (
         <div
           className={mergeClasses(
-            'sticky top-0 z-10 shrink-0 border-b [&>div]:justify-center',
+            'sticky top-0 z-10 flex shrink-0 justify-center border-b pt-2',
             styles.stickyTabsRow,
           )}
         >
           <DialTabs
+            className="justify-center"
             tabs={tabsWithCounts}
             activeTab={activeTab}
             onClick={setActiveTab}
