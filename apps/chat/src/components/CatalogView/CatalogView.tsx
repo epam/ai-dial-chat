@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-empty-function */
 import { Catalog, CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
