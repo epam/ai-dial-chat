@@ -7,7 +7,7 @@ import {
   resolveMarkdownCanvasContent,
 } from '../attachment-canvas';
 
-vi.mock('../icon-path', () => ({
+vi.mock('../dial-file', () => ({
   resolveDialFileDownloadUrl: (url: string) =>
     url.startsWith('files/bucket/')
       ? `/download?path=${url.slice('files/bucket/'.length)}`

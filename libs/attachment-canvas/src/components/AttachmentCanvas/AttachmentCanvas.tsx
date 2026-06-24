@@ -85,10 +85,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
 
   const showCopyMarkdown =
     onCopyMarkdown != null && content.type === AttachmentContentType.Markdown;
-  const showDownload =
-    onDownload != null &&
-    isDownloadable(content.type) &&
-    content.type !== AttachmentContentType.Unsupported;
+  const showDownload = onDownload != null && isDownloadable(content);
 
   const bodyContainerClassName = useMemo(() => {
     switch (content.type) {

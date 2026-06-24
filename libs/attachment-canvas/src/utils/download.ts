@@ -2,16 +2,18 @@ import { MIMEType } from '@epam/ai-dial-chat-shared';
 import type { AttachmentCanvasContent } from '../models/attachment-canvas';
 import { AttachmentContentType } from '../types/attachment-canvas';
 
-const supportedDownloadTypes = [
-  AttachmentContentType.PlainText,
-  AttachmentContentType.Markdown,
-  AttachmentContentType.Json,
-  AttachmentContentType.Image,
-];
-
 /** Returns true if the given canvas content can be downloaded. */
-export const isDownloadable = (contentType: AttachmentContentType): boolean =>
-  supportedDownloadTypes.includes(contentType);
+export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
+  switch (content.type) {
+    case AttachmentContentType.PlainText:
+    case AttachmentContentType.Markdown:
+    case AttachmentContentType.Json:
+    case AttachmentContentType.Image:
+      return true;
+    case AttachmentContentType.Unsupported:
+      return content.url != null;
+  }
+};
 
 /** Triggers a browser download for the given canvas content. */
 export const downloadAttachmentContent = (
@@ -47,7 +49,9 @@ export const downloadAttachmentContent = (
       href = content.url;
       break;
     case AttachmentContentType.Unsupported:
-      return;
+      if (content.url == null) return;
+      href = content.url;
+      break;
   }
   const anchor = document.createElement('a');
   anchor.href = href;

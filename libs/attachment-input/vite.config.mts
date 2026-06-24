@@ -38,6 +38,9 @@ export default defineConfig(() => ({
       ],
     },
   },
+  resolve: {
+    conditions: ['@epam/source'],
+  },
   test: {
     name: '@epam/ai-dial-attachment-input',
     watch: false,

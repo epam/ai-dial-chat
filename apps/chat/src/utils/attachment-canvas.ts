@@ -6,21 +6,7 @@ import type {
 } from '@epam/ai-dial-attachment-canvas';
 import { AttachmentContentType } from '@epam/ai-dial-attachment-canvas';
 import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
-import { resolveDialFileDownloadUrl } from './icon-path';
-
-/**
- * Returns the best downloadable DIAL-file URL from an attachment's `url` or
- * `referenceUrl`, or `undefined` when neither is a valid DIAL `files/` path.
- */
-const resolveDialUrl = (attachment: DisplayAttachment): string | undefined => {
-  if (attachment.url?.startsWith('files/')) {
-    return resolveDialFileDownloadUrl(attachment.url);
-  }
-  if (attachment.referenceUrl?.startsWith('files/')) {
-    return resolveDialFileDownloadUrl(attachment.referenceUrl);
-  }
-  return undefined;
-};
+import { resolveDialUrl } from './dial-file';
 
 /** Resolves an image canvas content payload from a DisplayAttachment, or `null` if unavailable. */
 export const resolveImageCanvasContent = async (

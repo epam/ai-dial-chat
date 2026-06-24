@@ -1,6 +1,7 @@
 import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import {
   AttachmentType,
+  MIME_TYPE_EXT_MAP,
   RequestStatus,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
@@ -28,17 +29,37 @@ const getBottomIcon = (attachment: DisplayAttachment): Icon => {
   return getAttachmentIcon(contentType ?? '');
 };
 
+const getExtFromContentType = (contentType: string): string | undefined => {
+  const mime = contentType.toLowerCase().split(';')[0].trim();
+  const override = MIME_TYPE_EXT_MAP[mime];
+  if (override) return override;
+  const subtype = mime.split('/')[1];
+  // Skip complex vendor/structured subtypes (e.g. vnd.openxmlformats-..., svg+xml)
+  if (subtype && !subtype.startsWith('vnd.') && !subtype.includes('+')) {
+    return subtype;
+  }
+  return undefined;
+};
+
 const getBottomLabel = (attachment: DisplayAttachment): string => {
   const { type, name, contentType } = attachment;
   if (type === AttachmentType.Prompt) return 'Prompt';
   if (type === AttachmentType.Pasted) return 'Pasted';
   if (type === AttachmentType.Image) return 'Image';
 
-  if (name.includes('.')) {
-    return `.${name.slice(name.lastIndexOf('.') + 1).toLowerCase()}`;
+  // Prioritize contentType over name-derived extension
+  if (contentType) {
+    const ext = getExtFromContentType(contentType);
+    if (ext) return `.${ext}`;
   }
-  const subtype = contentType?.split('/')[1];
-  return subtype ? `.${subtype.toLowerCase()}` : name;
+
+  // Fall back to name extension; guard against trailing dots (e.g. sentence endings)
+  const lastDot = name.lastIndexOf('.');
+  if (lastDot > 0 && lastDot < name.length - 1) {
+    return `.${name.slice(lastDot + 1).toLowerCase()}`;
+  }
+
+  return name;
 };
 
 export const getAttachmentCardState = (

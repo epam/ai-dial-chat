@@ -15,6 +15,7 @@ import {
   resolveMarkdownCanvasContent,
   resolveTextCanvasContent,
 } from '../../utils/attachment-canvas';
+import { resolveDialUrl } from '../../utils/dial-file';
 
 /**
  * Returns `openAttachmentCanvas`, an async function that opens the attachment
@@ -40,7 +41,8 @@ export const useOpenAttachmentCanvas = () => {
           if (contentType === MIMEType.Markdown) {
             const content = await resolveMarkdownCanvasContent(attachment);
             openCanvas(
-              content ?? createUnsupportedCanvasContent(),
+              content ??
+                createUnsupportedCanvasContent(resolveDialUrl(attachment)),
               attachment.name,
             );
             return true;
@@ -48,7 +50,8 @@ export const useOpenAttachmentCanvas = () => {
           if (contentType === MIMEType.JSON) {
             const content = await resolveJsonCanvasContent(attachment);
             openCanvas(
-              content ?? createUnsupportedCanvasContent(),
+              content ??
+                createUnsupportedCanvasContent(resolveDialUrl(attachment)),
               attachment.name,
             );
             return true;
@@ -72,7 +75,10 @@ export const useOpenAttachmentCanvas = () => {
             return true;
           }
           if (attachment.name != null && !isTextPreviewable(attachment.name)) {
-            openCanvas(createUnsupportedCanvasContent(), attachment.name);
+            openCanvas(
+              createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+              attachment.name,
+            );
             return true;
           }
           const content = await resolveTextCanvasContent(attachment);

@@ -39,6 +39,8 @@ export interface JsonCanvasContent {
 export interface UnsupportedCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
   type: AttachmentContentType.Unsupported;
+  /** Remote URL used to download the file even though it cannot be previewed. */
+  url?: string;
 }
 
 /** The content payload passed to AttachmentCanvas. */
