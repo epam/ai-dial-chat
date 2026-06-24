@@ -54,33 +54,32 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
     }
   };
 
-  const handleClick = useCallback(() => {
-    if (!isLeaving) onClick?.(item);
-  }, [isLeaving, item, onClick]);
+  const handleClick = onClick && !isLeaving ? () => onClick(item) : undefined;
 
   const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLDivElement>) => {
+    (e: KeyboardEvent<HTMLElement>) => {
+      if (!onClick || isLeaving) return;
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        handleClick();
+        onClick(item);
       }
     },
-    [handleClick],
+    [onClick, item, isLeaving],
   );
 
   return (
     <div
-      role="button"
-      tabIndex={0}
       data-card-id={item.id}
+      role={onClick ? 'button' : undefined}
+      tabIndex={onClick ? 0 : undefined}
       className={mergeClasses(
         'box-border flex min-w-0 cursor-pointer flex-col gap-1 rounded-[6px] p-[13px] pb-[9px]',
         'w-full text-start',
         styles.card,
         isLeaving && styles.cardLeaving,
       )}
-      onClick={onClick ? handleClick : undefined}
-      onKeyDown={onClick ? handleKeyDown : undefined}
+      onClick={handleClick}
+      onKeyDown={handleKeyDown}
       onAnimationEnd={
         isLeaving
           ? (e) => {

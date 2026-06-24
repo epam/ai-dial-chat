@@ -193,7 +193,7 @@ setRetryCounter((c) => c + 1);
 | Key | English |
 |-----|---------|
 | `dialFileManager.newFolder` | `"New folder"` |
-| `dialFileManager.folderCreateError` | `"Failed to create folder"` |
+| `dialFileManager.folderCreateError` | `"Failed to create folder"` — shown as an error toast through `useNotification` |
 | `dialFileManager.folderConflict` | `"A folder with this name already exists"` |
 | `dialFileManager.folderNameEmpty` | `"Folder name cannot be empty"` |
 | `dialFileManager.folderNameInvalidChars` | `"Folder name cannot contain / or \\"` |

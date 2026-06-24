@@ -10,12 +10,8 @@ export interface FavoritesTypography {
 
 /** Color overrides for `CatalogFavorites`, applied via CSS custom properties. */
 export interface FavoritesColors {
-  /** Base section background color. Fallback: `--bg-layer-1`. */
+  /** Base section background color. Fallback: `--bg-layer-2`. */
   backgroundBase?: string;
-  /** Favorites gradient start color. Fallback: `--bg-accent-tertiary-alpha`. */
-  backgroundStart?: string;
-  /** Favorites gradient end color. Fallback: `--bg-accent-primary-alpha`. */
-  backgroundEnd?: string;
   /** Section bottom border color. Fallback: `--stroke-secondary`. */
   border?: string;
   /** Section title color. Fallback: `--text-primary`. */
