@@ -353,6 +353,9 @@ export class ConversationResponseDto {
   @ApiProperty({ example: 'anthropic.claude-v3-sonnet' })
   assistantModelId!: string;
 
-  @ApiPropertyOptional({ example: 'markdown', enum: ['markdown', 'plain_text'] })
+  @ApiPropertyOptional({
+    example: 'markdown',
+    enum: ['markdown', 'plain_text'],
+  })
   responseFormat?: string;
 }

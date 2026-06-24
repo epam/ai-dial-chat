@@ -23,8 +23,9 @@ export const useChatSettingsForm = ({
   onSave,
   onClose,
 }: UseChatSettingsFormParams) => {
-  const [responseFormat, setResponseFormat] =
-    useState<ResponseFormat>(initialResponseFormat);
+  const [responseFormat, setResponseFormat] = useState<ResponseFormat>(
+    initialResponseFormat,
+  );
   const [systemPrompt, setSystemPrompt] = useState(initialSystemPrompt);
   const [temperature, setTemperature] = useState<number>(initialTemperature);
 
