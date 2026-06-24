@@ -102,7 +102,7 @@ export const Card: FC<CardProps> = ({
 
       <p
         className={mergeClasses(
-          'line-clamp-3',
+          'line-clamp-2',
           descriptionClassName,
           styles.description,
         )}
@@ -115,7 +115,7 @@ export const Card: FC<CardProps> = ({
 
         <div
           className={mergeClasses(
-            'flex items-center justify-between border-t pt-2',
+            '-me-[10px] flex items-center justify-between border-t pt-2',
             styles.cardFooter,
           )}
         >

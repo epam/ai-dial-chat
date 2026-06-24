@@ -10,6 +10,7 @@ export const CATALOG_COLUMNS = (): ColDef<CatalogItem>[] => [
   {
     headerName: 'Name',
     flex: 4,
+    field: 'name',
     filter: false,
     cellRenderer: NameCellRenderer,
     valueGetter: (p) => p.data?.name,
@@ -17,6 +18,7 @@ export const CATALOG_COLUMNS = (): ColDef<CatalogItem>[] => [
   {
     headerName: 'Type',
     flex: 2,
+    field: 'type',
     filter: false,
     sortable: false,
     cellRenderer: EntityTypeCellRenderer,
@@ -24,6 +26,7 @@ export const CATALOG_COLUMNS = (): ColDef<CatalogItem>[] => [
   },
   {
     headerName: 'Folder',
+    field: 'folder',
     flex: 3,
     filter: false,
     cellRenderer: FolderCellRenderer,
@@ -31,6 +34,7 @@ export const CATALOG_COLUMNS = (): ColDef<CatalogItem>[] => [
   },
   {
     headerName: 'Tags',
+    field: 'topics',
     flex: 2,
     filter: false,
     sortable: false,
@@ -39,6 +43,7 @@ export const CATALOG_COLUMNS = (): ColDef<CatalogItem>[] => [
   },
   {
     headerName: '',
+    field: 'isStarred',
     width: 72,
     flex: undefined,
     filter: false,
