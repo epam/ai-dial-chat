@@ -5,7 +5,7 @@
 `apps/chat/src/server-api/catalog.api.ts` SHALL export a function `fetchEntityAboutContent(id: string): Promise<string | undefined>`.
 
 The function SHALL:
-- Call `GET /api/v1/catalog/{id}/about` through the generated `@epam/chat-api-client` (operationId: `catalogControllerGetAboutContent`; SDK method: `CatalogApi.catalogControllerGetAboutContent({ id })`).
+- Call `GET /api/v1/catalog/{id}/about` through the generated `@epam/chat-api-client` once the operationId `catalogControllerGetAboutContent` is available; until then, fall back to a direct `fetch` call via `apiClient` from `apps/chat/src/server-api/api-client.ts`.
 - Return the `content` string from the response body on success.
 - Return `undefined` when the endpoint responds 404 (item has no about content) without throwing.
 - Propagate any other HTTP error as a thrown error.
@@ -45,7 +45,7 @@ Cache: none on the frontend; backend caching is out of scope for this change.
 
 The `// TODO: replace with a real API call` comment SHALL be removed.
 
-The `/* eslint-disable @typescript-eslint/no-empty-function */` directive at the top of `CatalogView.tsx` SHALL be removed if `fetchAboutContent` was the only empty function.
+The `/* eslint-disable @typescript-eslint/no-empty-function */` directive at the top of `CatalogView.tsx` SHALL be removed once no empty functions remain in the file.
 
 i18n keys: none.
 RTL impact: none.
@@ -59,4 +59,4 @@ Memoisation: the `fetchAboutContent` callback SHALL remain wrapped in `useCallba
 #### Scenario: Undefined returned when no content — panel shows fallback
 
 - **WHEN** `fetchEntityAboutContent` resolves `undefined`
-- **THEN** `DetailsPanel` displays the item's `longDescription` as the About-tab fallback (existing behaviour unchanged)
+- **THEN** `DetailsPanel` displays the item's `description` as the About-tab fallback (existing behaviour unchanged — `aboutContent` is `undefined`, so the panel uses `item.description`)

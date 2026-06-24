@@ -4,7 +4,7 @@
 
 `libs/catalog/src/utils/catalog-filter.ts` SHALL have a Vitest test file at `libs/catalog/src/utils/catalog-filter.spec.ts` covering `filterCatalogItems`.
 
-Test file SHALL use `describe` / `it` blocks and import only from the library's own source files — no `@epam/chat-api-client`, no app imports.
+`filterCatalogItems` filters by `item.name`, `item.description`, and `item.type` — all lowercased, trimmed query match. Test file SHALL use `describe` / `it` blocks and import only from the library's own source files.
 
 i18n: none. RTL: none. Feature gate: none.
 
@@ -20,7 +20,12 @@ i18n: none. RTL: none. Feature gate: none.
 
 #### Scenario: Query matches by description
 
-- **WHEN** `filterCatalogItems(items, 'vision')` is called and one item's description contains 'Vision'
+- **WHEN** `filterCatalogItems(items, 'vision')` is called and one item's `description` contains `'Vision'`
+- **THEN** that item is included in the result
+
+#### Scenario: Query matches by type
+
+- **WHEN** `filterCatalogItems(items, 'agent')` is called and one item has `type: CatalogEntityType.Agent`
 - **THEN** that item is included in the result
 
 #### Scenario: Query with no match returns empty array
@@ -32,27 +37,44 @@ i18n: none. RTL: none. Feature gate: none.
 
 ### Requirement: catalog-sort utility tests
 
-`libs/catalog/src/utils/catalog-sort.ts` SHALL have a Vitest test file at `libs/catalog/src/utils/catalog-sort.spec.ts` covering `sortCatalogItems` for each `CatalogSortKey`.
+`libs/catalog/src/utils/catalog-sort.ts` SHALL have a Vitest test file at `libs/catalog/src/utils/catalog-sort.spec.ts` covering `sortCatalogItems`.
+
+Key behaviour to cover:
+- Featured items (`isFeatured: true`) always appear before non-featured items in every sort mode.
+- `CatalogSortKey.NameAZ` — sort within each group by `name` locale-ascending.
+- `CatalogSortKey.Newest` — sort within each group by `updatedAt` descending; items without `updatedAt` sort last.
+- `CatalogSortKey.RecentlyUpdated` — preserves original (API) order within each group.
+- Unknown sort key — preserves original order without throwing.
 
 #### Scenario: NameAZ sorts items alphabetically ascending
 
-- **WHEN** `sortCatalogItems(items, CatalogSortKey.NameAZ)` is called with items having names `['Zebra', 'Alpha', 'Beta']`
+- **WHEN** `sortCatalogItems(items, CatalogSortKey.NameAZ)` is called with non-featured items named `['Zebra', 'Alpha', 'Beta']`
 - **THEN** the returned order is `['Alpha', 'Beta', 'Zebra']`
 
-#### Scenario: Newest sorts by createdAt descending
+#### Scenario: Featured items appear before non-featured in NameAZ
 
-- **WHEN** `sortCatalogItems(items, CatalogSortKey.Newest)` is called with items having different `createdAt` values
-- **THEN** the most-recently-created item appears first
+- **WHEN** `sortCatalogItems(items, CatalogSortKey.NameAZ)` is called with a mix of featured and non-featured items
+- **THEN** all featured items appear first, sorted alphabetically among themselves, followed by non-featured items sorted alphabetically
 
-#### Scenario: RecentlyUpdated sorts by updatedAt descending
+#### Scenario: Newest sorts by updatedAt descending
+
+- **WHEN** `sortCatalogItems(items, CatalogSortKey.Newest)` is called with items having different `updatedAt` values
+- **THEN** the item with the largest `updatedAt` appears first
+
+#### Scenario: Newest — items without updatedAt sort last
+
+- **WHEN** `sortCatalogItems(items, CatalogSortKey.Newest)` is called and some items have no `updatedAt`
+- **THEN** items without `updatedAt` appear after all items that have it
+
+#### Scenario: RecentlyUpdated preserves original order
 
 - **WHEN** `sortCatalogItems(items, CatalogSortKey.RecentlyUpdated)` is called
-- **THEN** the most-recently-updated item appears first
+- **THEN** the items are returned in their original array order (featured group first, then non-featured, both in original order)
 
-#### Scenario: Unknown sort key returns items in original order
+#### Scenario: Unknown sort key preserves original order without throwing
 
 - **WHEN** `sortCatalogItems(items, 'unknown-key')` is called
-- **THEN** the items array is returned in its original order without throwing
+- **THEN** the items are returned in their original order and no exception is thrown
 
 ---
 
@@ -66,11 +88,6 @@ Tests SHALL mock `@epam/ai-dial-ui-kit` sub-components minimally (render their `
 
 - **WHEN** `<Toolbar title="Browse" ... />` is rendered
 - **THEN** the text "Browse" is present in the output
-
-#### Scenario: onSortChange fires when sort is changed
-
-- **WHEN** the sort dropdown emits a change
-- **THEN** `onSortChange` is called with the new sort key
 
 #### Scenario: Clear all button is hidden when no filter is active
 
