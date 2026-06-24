@@ -42,7 +42,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationTypesSchemasSelectors,
   AuthSelectors,
-  ChatEventsSelectors,
   ChatSelectors,
   ConversationsSelectors,
   ModelsSelectors,
@@ -197,14 +196,6 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
   const isNotAllowed = useAppSelector(
     ConversationsSelectors.selectIsNotAllowed,
   );
-  const isChatEventsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.LiveChatInteraction),
-  );
-  const _isSubscribing = useAppSelector(
-    ChatEventsSelectors.selectIsSubscribing,
-  );
-
-  const isSubscribing = isChatEventsEnabled && _isSubscribing;
 
   const autoScrollEnabledRef = useRef(true);
 
@@ -621,9 +612,7 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
     isOptimisticDefaultModelLoad ||
     isIsolatedView ||
     isAdminPreview ||
-    isApproveRequiredEntity ||
-    !isSubscribing;
-
+    isApproveRequiredEntity;
   const isInputVisible =
     ((!isReplay || isNotEmptyConversations) &&
       !isReadOnly &&
