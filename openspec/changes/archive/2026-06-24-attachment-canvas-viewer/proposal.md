@@ -7,7 +7,7 @@ Attachments in the AI DIAL Chat conversation (user messages, assistant responses
 A new `libs/attachment-canvas` library provides the host-agnostic preview panel. The app layer wires content resolution, URL fetching, and open/close triggers. The foundation (image + plain-text + unsupported fallback) was introduced together with this change; the next planned formats are:
 
 - **Markdown** — `.md` / `.markdown` files rendered with `MarkdownRenderer` (from `@epam/ai-dial-chat-shared`) instead of a raw `<pre>` block.
-- **JSON** — `.json` / `.jsonl` / `.ndjson` files rendered with an interactive `react-json-view-lite` collapsible tree.
+- **JSON** — `.json` files rendered with an interactive `react-json-view-lite` collapsible tree.
 
 ## Capabilities
 
@@ -33,7 +33,7 @@ A new `libs/attachment-canvas` library provides the host-agnostic preview panel.
 
 1. Clicking an image attachment opens the canvas with the image centered and a download button in the header.
 2. Clicking a `.md` / `.markdown` file opens the canvas with styled GFM Markdown (headings, lists, code blocks, tables, blockquotes).
-3. Clicking a `.json` or `.jsonl` file opens the canvas with an interactive, collapsible JSON tree.
+3. Clicking a `.json` file opens the canvas with an interactive, collapsible JSON tree.
 4. Clicking a `.txt`, `.py`, `.ts`, or other text-previewable file opens the canvas with raw plain text.
 5. Clicking an unsupported file type (e.g., `.pdf`) opens the canvas with a "Preview not supported" message and a download button.
 6. Navigating to a different conversation (or any other route) closes the canvas automatically.

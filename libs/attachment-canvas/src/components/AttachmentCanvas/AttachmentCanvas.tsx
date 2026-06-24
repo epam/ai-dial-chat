@@ -6,16 +6,17 @@ import {
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import { IconCheck, IconDownload, IconMarkdown } from '@tabler/icons-react';
-import { type FC, useCallback, useRef, useState } from 'react';
-import { JsonView, defaultStyles } from 'react-json-view-lite';
+import { type FC, memo, useCallback, useMemo, useRef, useState } from 'react';
+import { defaultStyles, JsonView } from 'react-json-view-lite';
 import 'react-json-view-lite/dist/index.css';
 import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
+import { isDownloadable } from '../../utils/download';
 import styles from './AttachmentCanvas.module.scss';
 
 const COPY_RESET_MS = 2000;
 
-export const AttachmentCanvas: FC<AttachmentCanvasProps> = ({
+const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   isOpen,
   onClose,
   content,
@@ -60,86 +61,49 @@ export const AttachmentCanvas: FC<AttachmentCanvasProps> = ({
   } = stylesProp ?? {};
 
   const noCustomClass = !typography?.fontClassName;
-  const cssVars = {
-    ...buildCssVars({
-      '--ac-text': colors?.text,
-      '--ac-font-size': noCustomClass ? typography?.fontSize : undefined,
-      '--ac-font-weight': noCustomClass
-        ? typography?.fontWeight?.toString()
-        : undefined,
-      '--ac-line-height': noCustomClass
-        ? typography?.lineHeight?.toString()
-        : undefined,
-      '--ac-letter-spacing': noCustomClass
-        ? typography?.letterSpacing
-        : undefined,
-      '--ac-font-family': noCustomClass ? typography?.fontFamily : undefined,
+  const cssVars = useMemo(
+    () => ({
+      ...buildCssVars({
+        '--ac-text': colors?.text,
+        '--ac-font-size': noCustomClass ? typography?.fontSize : undefined,
+        '--ac-font-weight': noCustomClass
+          ? typography?.fontWeight?.toString()
+          : undefined,
+        '--ac-line-height': noCustomClass
+          ? typography?.lineHeight?.toString()
+          : undefined,
+        '--ac-letter-spacing': noCustomClass
+          ? typography?.letterSpacing
+          : undefined,
+        '--ac-font-family': noCustomClass ? typography?.fontFamily : undefined,
+      }),
+      ...extraCssVars,
     }),
-    ...extraCssVars,
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stylesProp],
+  );
 
-  return (
-    <SidebarPanel
-      isOpen={isOpen}
-      orientation={SidebarOrientation.Right}
-      title={fileName}
-      ariaLabel={ariaLabel}
-      closeLabel={closeLabel}
-      onClose={onClose}
-      resizable={!isMobile}
-      defaultWidth={defaultWidth}
-      minWidth={minWidth}
-      maxWidth={maxWidth}
-      onResizeStop={onResizeStop}
-      className={mergeClasses(isOpen ? 'mobile:w-full' : 'w-0', className)}
-      styles={panelStyles}
-      rightActions={
-        (onDownload != null &&
-          content.type !== AttachmentContentType.Unsupported) ||
-        (onCopyMarkdown != null &&
-          content.type === AttachmentContentType.Markdown) ? (
-          <>
-            {onCopyMarkdown != null &&
-              content.type === AttachmentContentType.Markdown && (
-                <DialGhostIconButton
-                  icon={
-                    isCopiedMarkdown ? (
-                      <IconCheck size={DIAL_ICON_SIZE.LG} stroke={1.5} />
-                    ) : (
-                      <IconMarkdown size={DIAL_ICON_SIZE.LG} stroke={1.5} />
-                    )
-                  }
-                  aria-label={
-                    isCopiedMarkdown ? copiedMarkdownLabel : copyMarkdownLabel
-                  }
-                  onClick={handleCopyMarkdown}
-                />
-              )}
-            {onDownload != null && (
-              <DialGhostIconButton
-                icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-                aria-label={downloadLabel}
-                onClick={onDownload}
-              />
-            )}
-          </>
-        ) : null
-      }
-    >
-      <div
-        style={
-          content.type === AttachmentContentType.PlainText ? cssVars : undefined
-        }
-        className={mergeClasses(
-          'h-full overflow-auto p-4',
-          content.type === AttachmentContentType.Image &&
-            'flex items-center justify-center',
-          content.type === AttachmentContentType.Unsupported &&
-            'flex items-center justify-center',
-          bodyClassName,
-        )}
-      >
-        {content.type === AttachmentContentType.PlainText && (
+  const showCopyMarkdown =
+    onCopyMarkdown != null && content.type === AttachmentContentType.Markdown;
+  const showDownload =
+    onDownload != null &&
+    isDownloadable(content.type) &&
+    content.type !== AttachmentContentType.Unsupported;
+
+  const bodyContainerClassName = useMemo(() => {
+    switch (content.type) {
+      case AttachmentContentType.Image:
+      case AttachmentContentType.Unsupported:
+        return 'h-full overflow-auto p-4 flex items-center justify-center';
+      default:
+        return 'h-full overflow-auto p-4';
+    }
+  }, [content.type]);
+
+  const renderedContent = useMemo(() => {
+    switch (content.type) {
+      case AttachmentContentType.PlainText:
+        return (
           <pre
             className={mergeClasses(
               'whitespace-pre-wrap break-words',
@@ -149,22 +113,25 @@ export const AttachmentCanvas: FC<AttachmentCanvasProps> = ({
           >
             {content.text}
           </pre>
-        )}
-        {content.type === AttachmentContentType.Image && (
+        );
+      case AttachmentContentType.Image:
+        return (
           <img
             src={content.url}
             alt={fileName ?? ''}
             className="max-h-full max-w-full object-contain"
           />
-        )}
-        {content.type === AttachmentContentType.Markdown && (
+        );
+      case AttachmentContentType.Markdown:
+        return (
           <MarkdownRenderer
             content={content.text}
             isStreaming={false}
             codeBlockTheme={codeBlockTheme}
           />
-        )}
-        {content.type === AttachmentContentType.Json && (
+        );
+      case AttachmentContentType.Json:
+        return (
           <div dir="ltr" className="h-full overflow-auto p-4">
             <JsonView
               data={content.value as object}
@@ -187,11 +154,72 @@ export const AttachmentCanvas: FC<AttachmentCanvasProps> = ({
               }}
             />
           </div>
-        )}
-        {content.type === AttachmentContentType.Unsupported && (
-          <p className="text-center text-secondary">{unsupportedLabel}</p>
-        )}
+        );
+      case AttachmentContentType.Unsupported:
+        return <p className="text-center text-secondary">{unsupportedLabel}</p>;
+    }
+  }, [
+    content,
+    typography?.fontClassName,
+    fileName,
+    codeBlockTheme,
+    unsupportedLabel,
+  ]);
+
+  return (
+    <SidebarPanel
+      isOpen={isOpen}
+      orientation={SidebarOrientation.Right}
+      title={fileName}
+      ariaLabel={ariaLabel}
+      closeLabel={closeLabel}
+      onClose={onClose}
+      resizable={!isMobile}
+      defaultWidth={defaultWidth}
+      minWidth={minWidth}
+      maxWidth={maxWidth}
+      onResizeStop={onResizeStop}
+      className={mergeClasses(isOpen ? 'mobile:w-full' : 'w-0', className)}
+      styles={panelStyles}
+      rightActions={
+        showCopyMarkdown || showDownload ? (
+          <>
+            {showCopyMarkdown && (
+              <DialGhostIconButton
+                icon={
+                  isCopiedMarkdown ? (
+                    <IconCheck size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                  ) : (
+                    <IconMarkdown size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                  )
+                }
+                aria-label={
+                  isCopiedMarkdown ? copiedMarkdownLabel : copyMarkdownLabel
+                }
+                onClick={handleCopyMarkdown}
+              />
+            )}
+            {showDownload && (
+              <DialGhostIconButton
+                icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+                aria-label={downloadLabel}
+                onClick={onDownload}
+              />
+            )}
+          </>
+        ) : null
+      }
+    >
+      <div
+        style={
+          content.type === AttachmentContentType.PlainText ? cssVars : undefined
+        }
+        className={mergeClasses(bodyContainerClassName, bodyClassName)}
+      >
+        {renderedContent}
       </div>
     </SidebarPanel>
   );
 };
+
+export const AttachmentCanvas = memo(AttachmentCanvasBase);

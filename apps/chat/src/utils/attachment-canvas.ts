@@ -13,12 +13,13 @@ import { resolveDialFileDownloadUrl } from './icon-path';
  * `referenceUrl`, or `undefined` when neither is a valid DIAL `files/` path.
  */
 const resolveDialUrl = (attachment: DisplayAttachment): string | undefined => {
-  const candidate = attachment.url?.startsWith('files/')
-    ? attachment.url
-    : attachment.referenceUrl?.startsWith('files/')
-      ? attachment.referenceUrl
-      : undefined;
-  return candidate != null ? resolveDialFileDownloadUrl(candidate) : undefined;
+  if (attachment.url?.startsWith('files/')) {
+    return resolveDialFileDownloadUrl(attachment.url);
+  }
+  if (attachment.referenceUrl?.startsWith('files/')) {
+    return resolveDialFileDownloadUrl(attachment.referenceUrl);
+  }
+  return undefined;
 };
 
 /** Resolves an image canvas content payload from a DisplayAttachment, or `null` if unavailable. */
