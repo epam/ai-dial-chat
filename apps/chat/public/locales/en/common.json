@@ -138,6 +138,7 @@
   "You do not have permission to sign in.": "You do not have permission to sign in.",
   "Sign in": "Sign in",
   "Sign in with:": "Sign in with:",
+  "No providers to sign in. Contact your administrator for more information.": "No providers to sign in. Contact your administrator for more information.",
   "Should be an array": "Should be an array",
   "Should be a valid JSON": "Should be a valid JSON",
   "Selected model does not support tools": "Selected model does not support tools",
