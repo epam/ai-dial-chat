@@ -33,6 +33,10 @@ import {
 } from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
+import {
+  mimeTypesToAttachmentExtensionLabels,
+  mimeTypesToDialFileAcceptTypes,
+} from '../../utils/attachment-types';
 import { isHiddenPath } from '../../utils/file-path';
 import { formatFileSize } from '../../utils/string-utils';
 import type { AttachResult } from './types/attach-result';
@@ -337,6 +341,32 @@ const DialFileManagerModal: FC<Props> = ({
     t,
   ]);
 
+  const unsupportedFileTypeTooltip = useMemo(() => {
+    if (allowedTypes == null || allowedTypes.length === 0) {
+      return undefined;
+    }
+
+    const areAllTypesAllowed = allowedTypes.some(
+      (type) => type === '*' || type === '*/*',
+    );
+
+    if (areAllTypesAllowed) {
+      return undefined;
+    }
+
+    const allowedExtensions =
+      allowedTypesLabel ?? mimeTypesToAttachmentExtensionLabels(allowedTypes);
+
+    return t(DialFileManagerI18nKeys.UnsupportedFileTypeTooltip, {
+      allowedExtensions,
+    });
+  }, [allowedTypes, allowedTypesLabel, t]);
+
+  const allowedFileTypes = useMemo(
+    () => mimeTypesToDialFileAcceptTypes(allowedTypes),
+    [allowedTypes],
+  );
+
   const uploadProgressText = useMemo(() => {
     if (uploadBatchState == null) {
       return '';
@@ -562,6 +592,8 @@ const DialFileManagerModal: FC<Props> = ({
               path={path}
               onPathChange={onPathChange}
               filesLoading={isLoading}
+              allowedFileTypes={allowedFileTypes}
+              maxSelectableFileSize={maxSelectableFileSize}
               selectedPaths={selectedPaths}
               onSelectedPathsChange={setSelectedPaths}
               navigationPanelOptions={{
@@ -588,6 +620,7 @@ const DialFileManagerModal: FC<Props> = ({
                 DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
               )}
               getDisabledTooltip={getDisabledTooltip}
+              unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
             />
             {isDownloading && (
               <div

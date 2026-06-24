@@ -14,6 +14,24 @@ vi.mock('../../../hooks/files/useDialFileManager');
 vi.mock('../../../context/NotificationContext', () => ({
   useNotification: () => ({ showNotification: mockShowNotification }),
 }));
+vi.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (key: string, params?: Record<string, string>) => {
+      if (
+        key === 'dialFileManager.unsupportedFileTypeTooltip' &&
+        params?.allowedExtensions != null
+      ) {
+        return `Unsupported file type. Supported types: ${params.allowedExtensions}.`;
+      }
+
+      return key;
+    },
+    i18n: {
+      language: 'en',
+      changeLanguage: vi.fn(),
+    },
+  }),
+}));
 const { mockHandleTabChange } = vi.hoisted(() => ({
   mockHandleTabChange: vi.fn(),
 }));
@@ -43,6 +61,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       toolbarOptions,
       bulkActionsToolbarOptions,
       filesLoading,
+      allowedFileTypes,
+      maxSelectableFileSize,
+      unsupportedFileTypeTooltip,
       selectedPaths,
       onSelectedPathsChange,
       sharedWithMeIds,
@@ -71,6 +92,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
       };
       filesLoading?: boolean;
+      allowedFileTypes?: string[];
+      maxSelectableFileSize?: number;
+      unsupportedFileTypeTooltip?: string;
       selectedPaths?: Set<string>;
       onSelectedPathsChange?: (paths: Set<string>) => void;
       sharedWithMeIds?: string[];
@@ -82,6 +106,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         data-grid-class={gridClassName}
         data-grid-layout={gridOptions?.additionalGridOptions?.domLayout}
         data-loading={filesLoading}
+        data-allowed-file-types={allowedFileTypes?.join(',')}
+        data-max-selectable-file-size={maxSelectableFileSize}
+        data-unsupported-file-type-tooltip={unsupportedFileTypeTooltip}
         data-upload-enabled={uploadEnabled}
         data-new-button-disabled={toolbarOptions?.isNewButtonDisabled}
         data-new-button-tooltip={toolbarOptions?.disabledNewButtonTooltip}
@@ -384,6 +411,27 @@ describe('DialFileManagerModal', () => {
     expect(manager.getAttribute('data-new-button-disabled')).toBe('true');
     expect(manager.getAttribute('data-new-button-tooltip')).toBe(
       "You don't have permission to create items in this folder",
+    );
+  });
+
+  it('passes unsupported attachment constraints to the file manager', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+
+    render(
+      <DialFileManagerModal
+        {...defaultProps}
+        allowedTypes={['application/pdf']}
+        maxSelectableFileSize={1024}
+      />,
+    );
+
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-allowed-file-types')).toBe(
+      'application/pdf',
+    );
+    expect(manager.getAttribute('data-max-selectable-file-size')).toBe('1024');
+    expect(manager.getAttribute('data-unsupported-file-type-tooltip')).toBe(
+      'Unsupported file type. Supported types: .pdf.',
     );
   });
 });
