@@ -49,19 +49,19 @@ export const useApplicationDeployment = (entity: DialAIEntityModel) => {
     !isUndeploying &&
     (isDeployed || isUpdating || wasDeployClicked || !hasDeployAccess);
 
-  const isButtonDisabled =
-    (isExecutable &&
-      ((!isDeployed && isPublicApp && !isAdmin) ||
-        (!isDeployed && !hasDeployAccess) ||
-        isUpdating ||
-        isUndeploying ||
-        (wasDeployClicked && !isDeployed))) ||
-    !doesSupportChatCompletion;
+  const isButtonDisabled = isExecutable
+    ? (!isDeployed && isPublicApp && !isAdmin) ||
+      (isDeployed && !doesSupportChatCompletion) ||
+      (!isDeployed && !hasDeployAccess) ||
+      isUpdating ||
+      isUndeploying ||
+      (wasDeployClicked && !isDeployed)
+    : !doesSupportChatCompletion;
 
   const DeployIcon = showAsUseButton ? IconPlayerPlay : IconCloudUpload;
 
   const buttonTooltip = useMemo(() => {
-    if (!doesSupportChatCompletion) {
+    if ((isDeployed || !isExecutable) && !doesSupportChatCompletion) {
       return t(MarketplaceI18nKeys.AbsentChatCompletionDisabledMessage);
     }
     if (!isExecutable) {

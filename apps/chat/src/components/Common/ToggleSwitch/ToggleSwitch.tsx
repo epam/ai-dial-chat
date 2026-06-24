@@ -19,7 +19,7 @@ const SwitchStateText = ({
 }: SwitchStateTextProps) => (
   <span
     className={classNames(
-      'h-4 text-xs',
+      'h-4 min-w-0 shrink text-xs leading-4',
       isOn && 'px-1',
       isOn && !disabled ? 'text-controls-permanent' : 'text-primary',
       disabled && '!text-controls-accent-disable',
@@ -43,7 +43,7 @@ export function ToggleSwitch({
   const id = useId();
   const switchText = isOn ? switchOnText : switchOFFText;
   const switchClassName = classNames(
-    'flex h-[22px] w-[50px] min-w-[50px] shrink-0 items-center justify-between rounded-full px-[5px] py-1 transition-all duration-200',
+    'flex h-[22px] w-[56px] min-w-[56px] shrink-0 items-center justify-between overflow-hidden rounded-full px-[5px] py-1 transition-all duration-200',
     isOn ? 'flex-row bg-accent-primary' : 'flex-row-reverse bg-layer-4',
     disabled ? 'cursor-not-allowed' : 'cursor-pointer',
     disabled && '!bg-controls-disable-accent',
@@ -70,7 +70,7 @@ export function ToggleSwitch({
           )}
           <span
             className={classNames(
-              'size-3 rounded-full',
+              'size-3 shrink-0 rounded-full',
               disabled ? 'bg-layer-4' : 'bg-controls-enable-primary',
             )}
           ></span>

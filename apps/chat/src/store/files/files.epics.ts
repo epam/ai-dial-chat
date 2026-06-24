@@ -1291,6 +1291,14 @@ const continueUploadReplaceDialogEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      if (resolvedFiles.length) {
+        actions.push(
+          FilesActions.setResolvedUploadIds({
+            ids: resolvedFiles.map(({ id }) => id),
+          }),
+        );
+      }
+
       return from(actions);
     }),
   );

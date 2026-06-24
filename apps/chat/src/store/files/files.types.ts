@@ -67,4 +67,5 @@ export interface FilesState {
   localFileSizeCache: Record<string, number>;
 
   uploadReplaceDialog: UploadReplaceDialogState | null;
+  resolvedUploadIds: string[] | null;
 }

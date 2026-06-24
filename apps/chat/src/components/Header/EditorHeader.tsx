@@ -135,7 +135,7 @@ export const EditorHeader = <T extends string>({
         </div>
       }
       RightItems={
-        <div className="flex h-full items-center xl:mr-2 xl:border-r xl:border-secondary">
+        <div className="flex h-full items-center xl:me-2 xl:border-e xl:border-secondary">
           <DialLinkButton
             onClick={onSave}
             data-qa="save-and-exit"

@@ -1,6 +1,7 @@
 import { Publication } from '@/chat/types/publication';
 import { ToolsetCredentialsLevel } from '@/chat/types/toolsets';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
+import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import { API, Attachment, Creds } from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { ThemeColorAttributes } from '@/src/ui/domData';
@@ -15,6 +16,7 @@ import { Page } from '@playwright/test';
 
 dialAdminTest(
   '[Toolsets] Login with org and personal creds to public toolset with OAuth authentication type.\n' +
+    'Org creds label is displayed if admin login to public toolset.\n' +
     'Manage credentials form view.\n' +
     'Manage credentials form: icon is displayed.\n' +
     'Admin logged in with personal creds to public toolset - normal user see logged out toolset',
@@ -44,7 +46,13 @@ dialAdminTest(
     entityDetailsModal,
     entityDetailsModalAssertion,
   }) => {
-    setTestIds('EPMRTC-7990', 'EPMRTC-7991', 'EPMRTC-7992', 'EPMRTC-8001');
+    setTestIds(
+      'EPMRTC-7990',
+      'EPMRTC-7866',
+      'EPMRTC-7991',
+      'EPMRTC-7992',
+      'EPMRTC-8001',
+    );
 
     const toolsetEntity = {
       name: GeneratorUtil.randomToolsetName(),
@@ -55,6 +63,9 @@ dialAdminTest(
     const iconUrl = await fileApiHelper.putFileWithCustomName(
       filename,
       Attachment.appIconSvg,
+    );
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textSuccess,
     );
 
     let initialToolset: Toolset;
@@ -214,11 +225,11 @@ dialAdminTest(
         });
         await adminEntityDetailsModalAssertion.assertElementColor(
           adminEntityDetailsModal.credsLabel,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
+          expectedColor,
         );
         await adminEntityDetailsModalAssertion.assertElementBorderColors(
           adminEntityDetailsModal.credsLabel,
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
+          expectedColor,
         );
       },
     );
@@ -317,11 +328,11 @@ dialAdminTest(
         });
         await adminEntityDetailsModalAssertion.assertElementColor(
           adminEntityDetailsModal.credsLabel.getNthElement(1),
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
+          expectedColor,
         );
         await adminEntityDetailsModalAssertion.assertElementBorderColors(
           adminEntityDetailsModal.credsLabel.getNthElement(1),
-          ThemesUtil.getRgbColorByKey(ThemeColorAttributes.textSuccess),
+          expectedColor,
         );
         await adminEntityDetailsModalAssertion.assertElementColor(
           adminEntityDetailsModal.credsLabel.getNthElement(2),
@@ -350,6 +361,348 @@ dialAdminTest(
             credentialsLevel: ToolsetCredentialsLevel.USER,
             authorizationCode: adminOauthMockHelper.getAuthorizationCode(),
           },
+        );
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  `[Toolsets] Login to public toolset with global creds with user's own creds (OAuth)`,
+  async ({
+    toolsetBuilder,
+    toolsetApiHelper,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    adminUserItemApiHelper,
+    publishRequestBuilder,
+    baseAssertion,
+    setTestIds,
+    additionalShareUserPage,
+    additionalShareUserMarketplacePage,
+    additionalShareUserMarketplaceHeader,
+    additionalShareUserMarketplaceEntitiesSection,
+    additionalShareUserEntityDetailsModal,
+    additionalShareUserEntityDetailsModalAssertion,
+    additionalShareUserToolsetLoginModal,
+    additionalShareUserToolsetLoginModalAssertion,
+  }) => {
+    setTestIds('EPMRTC-7173');
+
+    const toolsetEntity = {
+      name: GeneratorUtil.randomToolsetName(),
+      version: GeneratorUtil.randomEntityVersion(),
+      endpoint: GeneratorUtil.randomUrl(),
+    };
+
+    let initialToolset: Toolset;
+    let publishedToolset: Toolset;
+    let user2OAuthMockHelper: OAuthMockHelper;
+    let user2LoginPopup: Page;
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textSuccess,
+    );
+
+    await dialSharedWithMeTest.step(
+      'Precondition: Create toolset via API',
+      async () => {
+        const toolsetModel = toolsetBuilder
+          .withDisplayName(toolsetEntity.name)
+          .withDisplayVersion(toolsetEntity.version)
+          .withEndpoint(toolsetEntity.endpoint)
+          .build();
+        await toolsetApiHelper.createToolset(toolsetModel);
+        initialToolset = (await toolsetApiHelper.getToolset(
+          toolsetEntity.name,
+          toolsetEntity.version,
+        ))!;
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Precondition: Publish toolset and approve publication',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withToolsetResource(initialToolset, PublishActions.ADD)
+          .build();
+        const publication: Publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+
+        const toolsetResource = publication.resources.find(
+          (r) => r.sourceUrl === initialToolset.id,
+        )!;
+        publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
+          toolsetResource.targetUrl,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Setup OAuth mocks for user2 page with org creds signed in',
+      async () => {
+        user2OAuthMockHelper = new OAuthMockHelper(
+          additionalShareUserPage,
+          publishedToolset,
+          toolsetEntity.endpoint,
+        );
+        await user2OAuthMockHelper.setupMocks();
+        user2OAuthMockHelper.setIsSignedInGlobal(true);
+        user2OAuthMockHelper.enableMocking();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User2 opens marketplace, navigates to toolsets and finds public toolset',
+      async () => {
+        await additionalShareUserMarketplacePage.openMarketplacePage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: false,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: false,
+          getStyles: true,
+        });
+        await additionalShareUserMarketplacePage.waitForPageLoaded();
+        await additionalShareUserMarketplaceHeader.toolsetsTab.click();
+        await additionalShareUserMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(toolsetEntity.name);
+        const toolsetElement =
+          await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
+            toolsetEntity.name,
+            { isEditable: false, isWorkspaceEntity: false },
+          );
+        await baseAssertion.assertElementState(toolsetElement, 'visible');
+        await toolsetElement.click();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify entity details modal shows ORG CREDS green indicator for user2',
+      async () => {
+        await additionalShareUserEntityDetailsModalAssertion.assertElementState(
+          additionalShareUserEntityDetailsModal,
+          'visible',
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertEntityCommonAttributes(
+          { expectedCredsLabel: Creds.orgCreds },
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertElementColor(
+          additionalShareUserEntityDetailsModal.credsLabel,
+          expectedColor,
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertElementBorderColors(
+          additionalShareUserEntityDetailsModal.credsLabel,
+          expectedColor,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User2 clicks "Login with my creds" btn and logs in',
+      async () => {
+        await additionalShareUserEntityDetailsModal.loginWithMyCredsButton.click();
+        await additionalShareUserToolsetLoginModalAssertion.assertElementState(
+          additionalShareUserToolsetLoginModal,
+          'visible',
+        );
+        user2LoginPopup =
+          await additionalShareUserToolsetLoginModal.clickPublicToolsetLoginForOAuth();
+        await user2OAuthMockHelper.navigateToCallback(user2LoginPopup);
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify login modal is closed and entity details shows MY CREDS green indicator for user2',
+      async () => {
+        await additionalShareUserToolsetLoginModalAssertion.assertElementState(
+          additionalShareUserToolsetLoginModal,
+          'hidden',
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertEntityCommonAttributes(
+          { expectedCredsLabel: [Creds.myCreds, Creds.orgCreds] },
+        );
+        const credsLabel =
+          additionalShareUserEntityDetailsModal.credsLabel.getNthElement(1);
+        await additionalShareUserEntityDetailsModalAssertion.assertElementColor(
+          credsLabel,
+          expectedColor,
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertElementBorderColors(
+          credsLabel,
+          expectedColor,
+        );
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  `[Toolsets] Login to public toolset without global creds with user's own creds (OAuth)`,
+  async ({
+    toolsetBuilder,
+    toolsetApiHelper,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    adminUserItemApiHelper,
+    publishRequestBuilder,
+    baseAssertion,
+    setTestIds,
+    additionalShareUserPage,
+    additionalShareUserMarketplacePage,
+    additionalShareUserMarketplaceHeader,
+    additionalShareUserMarketplaceEntitiesSection,
+    additionalShareUserEntityDetailsModal,
+    additionalShareUserEntityDetailsModalAssertion,
+    additionalShareUserToolsetLoginModal,
+    additionalShareUserToolsetLoginModalAssertion,
+  }) => {
+    setTestIds('EPMRTC-7184');
+
+    const toolsetEntity = {
+      name: GeneratorUtil.randomToolsetName(),
+      version: GeneratorUtil.randomEntityVersion(),
+      endpoint: GeneratorUtil.randomUrl(),
+    };
+
+    let initialToolset: Toolset;
+    let publishedToolset: Toolset;
+    let user2OAuthMockHelper: OAuthMockHelper;
+    let user2LoginPopup: Page;
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textSuccess,
+    );
+    let expectedErrorColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textError,
+    );
+
+    await dialSharedWithMeTest.step(
+      'Precondition: Create toolset via API',
+      async () => {
+        const toolsetModel = toolsetBuilder
+          .withDisplayName(toolsetEntity.name)
+          .withDisplayVersion(toolsetEntity.version)
+          .withEndpoint(toolsetEntity.endpoint)
+          .build();
+        await toolsetApiHelper.createToolset(toolsetModel);
+        initialToolset = (await toolsetApiHelper.getToolset(
+          toolsetEntity.name,
+          toolsetEntity.version,
+        ))!;
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Precondition: Publish toolset without credentials and approve publication',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withToolsetResource(initialToolset, PublishActions.ADD)
+          .build();
+        const publication: Publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+
+        const toolsetResource = publication.resources.find(
+          (r) => r.sourceUrl === initialToolset.id,
+        )!;
+        publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
+          toolsetResource.targetUrl,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Setup OAuth mocks for user2 page',
+      async () => {
+        user2OAuthMockHelper = new OAuthMockHelper(
+          additionalShareUserPage,
+          publishedToolset,
+          toolsetEntity.endpoint,
+        );
+        await user2OAuthMockHelper.setupMocks();
+        user2OAuthMockHelper.enableMocking();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User2 opens marketplace, navigates to toolsets and finds public toolset',
+      async () => {
+        await additionalShareUserMarketplacePage.openMarketplacePage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: false,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: false,
+          getStyles: true,
+        });
+        await additionalShareUserMarketplacePage.waitForPageLoaded();
+        await additionalShareUserMarketplaceHeader.toolsetsTab.click();
+        await additionalShareUserMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(toolsetEntity.name);
+        const toolsetElement =
+          await additionalShareUserMarketplaceEntitiesSection.findEntityElement(
+            toolsetEntity.name,
+            { isEditable: false, isWorkspaceEntity: false },
+          );
+        await baseAssertion.assertElementState(toolsetElement, 'visible');
+        await toolsetElement.click();
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify entity details modal shows LOGGED OUT red indicator for user2',
+      async () => {
+        await additionalShareUserEntityDetailsModalAssertion.assertElementState(
+          additionalShareUserEntityDetailsModal,
+          'visible',
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertEntityCommonAttributes(
+          { expectedCredsLabel: Creds.loggedOut },
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertElementColor(
+          additionalShareUserEntityDetailsModal.credsLabel,
+          expectedErrorColor,
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertElementBorderColors(
+          additionalShareUserEntityDetailsModal.credsLabel,
+          expectedErrorColor,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'User2 clicks Login with user creds button and completes OAuth login',
+      async () => {
+        await additionalShareUserEntityDetailsModal.loginWithMyCredsButton.click();
+        await additionalShareUserToolsetLoginModalAssertion.assertElementState(
+          additionalShareUserToolsetLoginModal,
+          'visible',
+        );
+        user2LoginPopup =
+          await additionalShareUserToolsetLoginModal.clickPublicToolsetLoginForOAuth();
+        await user2OAuthMockHelper.navigateToCallback(user2LoginPopup);
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Verify login modal is closed and entity details shows MY CREDS green indicator for user2',
+      async () => {
+        await additionalShareUserToolsetLoginModalAssertion.assertElementState(
+          additionalShareUserToolsetLoginModal,
+          'hidden',
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertEntityCommonAttributes(
+          { expectedCredsLabel: Creds.myCreds },
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertElementColor(
+          additionalShareUserEntityDetailsModal.credsLabel,
+          expectedColor,
+        );
+        await additionalShareUserEntityDetailsModalAssertion.assertElementBorderColors(
+          additionalShareUserEntityDetailsModal.credsLabel,
+          expectedColor,
         );
       },
     );

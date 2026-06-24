@@ -39,7 +39,7 @@ export const UserDesktop = Inversify.register('UserDesktop', () => {
         placement="bottom-end"
         trigger={
           <div
-            className="flex w-full cursor-pointer items-center justify-between gap-2 pe-3"
+            className="flex w-full cursor-pointer items-center justify-start gap-2 pe-3 rtl:justify-end"
             data-qa="account-settings"
           >
             <div className="flex items-center gap-3 overflow-hidden">

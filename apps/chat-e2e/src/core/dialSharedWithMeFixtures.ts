@@ -36,6 +36,7 @@ import {
   SendMessage,
   TalkToAgentDialog,
   Toast,
+  ToolsetLoginModal,
   VariableModalDialog,
 } from '../ui/webElements';
 
@@ -65,6 +66,7 @@ import { PromptPreviewModalAssertion } from '@/src/assertions/promptPreviewModal
 import { SendMessageAssertion } from '@/src/assertions/sendMessageAssertion';
 import { SharedWithMePromptsAssertion } from '@/src/assertions/sharedWithMePromptsAssertion';
 import { SideBarConversationAssertion } from '@/src/assertions/sideBarConversationAssertion';
+import { ToolsetLoginModalAssertion } from '@/src/assertions/toolset/toolsetLoginModalAssertion';
 import { VariableModalAssertion } from '@/src/assertions/variableModalAssertion';
 import dialTest, { stateFilePath } from '@/src/core/dialFixtures';
 import { LocalStorageManager } from '@/src/core/localStorageManager';
@@ -198,6 +200,8 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserFileManagerModalFoldersTree: FoldersTree;
   additionalShareUserFileManagerUnshareItemConfirmationPopup: ConfirmationDialog;
   additionalShareUserFileManagerModalFoldersTreeAssertion: FoldersTreeAssertion;
+  additionalShareUserToolsetLoginModal: ToolsetLoginModal;
+  additionalShareUserToolsetLoginModalAssertion: ToolsetLoginModalAssertion;
 }>({
   beforeAdditionalShareUserTestCleanup: [
     async (
@@ -1069,6 +1073,23 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserFileManagerModalFoldersTreeAssertion =
       new FoldersTreeAssertion(additionalShareUserFileManagerModalFoldersTree);
     await use(additionalShareUserFileManagerModalFoldersTreeAssertion);
+  },
+  additionalShareUserToolsetLoginModal: async (
+    { additionalShareUserPage },
+    use,
+  ) => {
+    const additionalShareUserToolsetLoginModal = new ToolsetLoginModal(
+      additionalShareUserPage,
+    );
+    await use(additionalShareUserToolsetLoginModal);
+  },
+  additionalShareUserToolsetLoginModalAssertion: async (
+    { additionalShareUserToolsetLoginModal },
+    use,
+  ) => {
+    const additionalShareUserToolsetLoginModalAssertion =
+      new ToolsetLoginModalAssertion(additionalShareUserToolsetLoginModal);
+    await use(additionalShareUserToolsetLoginModalAssertion);
   },
 });
 
