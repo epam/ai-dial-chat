@@ -41,13 +41,11 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
     const model = entities.find(
       (entity) => entity.id === modelId || entity.reference === modelId,
     );
-    if (!model) {
-      throw new Error(`Rated model not exists - ${modelId}`);
-    }
+    const deploymentId = model?.id ?? modelId;
 
-    const url = `${DIAL_API_HOST}/v1/${ApiUtils.encodeApiUrl(model.id)}/rate`;
+    const url = `${DIAL_API_HOST}/v1/${ApiUtils.encodeApiUrl(deploymentId)}/rate`;
 
-    await fetch(url, {
+    const proxyRes = await fetch(url, {
       headers: getApiHeaders({
         chatReference: reference ?? id,
         jwt: token?.token as string,
@@ -56,13 +54,21 @@ const handler = async (req: NextApiRequest, res: NextApiResponse) => {
       method: HTTPMethod.POST,
       body: JSON.stringify({
         rate: value,
-        modelId: model.id,
+        modelId: deploymentId,
         conversationId: id,
         conversationReference: reference,
         responseId,
         ...(comment && { comment }),
       }),
-    }).then((r) => r.status);
+    });
+
+    if (!proxyRes.ok) {
+      const errorText = await proxyRes.text();
+      logger.error(
+        `Failed to rate message: DIAL Core responded with ${proxyRes.status} - ${errorText}`,
+      );
+      return res.status(proxyRes.status).send(errorText || proxyRes.statusText);
+    }
   } catch (error) {
     logger.error('Failed to rate message:' + error);
     return res.status(500).send(errorsMessages.generalServer);

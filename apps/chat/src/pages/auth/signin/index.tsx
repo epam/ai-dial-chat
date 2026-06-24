@@ -178,30 +178,36 @@ export default function Signin({
           error={errorMessage}
           className="my-4 items-center text-sm"
         />
-        <div className="my-4 text-center">{t(CommonI18nKeys.SignInWith)}</div>
-        <div className="flex flex-col gap-4">
-          {Object.values(providers ?? []).map((provider: Provider) => (
-            <DialNeutralButton
-              className="gap-4"
-              onClick={() => {
-                void handleSignIn(provider);
-              }}
-              key={provider.id + provider.name}
-              iconBefore={
-                <Image
-                  className="h-6"
-                  src={`https://authjs.dev/img/providers/${cleanProviderId(provider.id)}.svg`}
-                  alt="Provider icon"
-                  width={20}
-                  height={20}
-                />
-              }
-              label={provider.name}
-              textClassName="font-semibold"
-              data-qa={provider.id}
-            />
-          ))}
+        <div className="my-4 text-center">
+          {providers.length
+            ? t(CommonI18nKeys.SignInWith)
+            : t(CommonI18nKeys.NoProvidersToSignIn)}
         </div>
+        {!!providers.length && (
+          <div className="flex flex-col gap-4">
+            {providers.map((provider: Provider) => (
+              <DialNeutralButton
+                className="gap-4"
+                onClick={() => {
+                  void handleSignIn(provider);
+                }}
+                key={provider.id + provider.name}
+                iconBefore={
+                  <Image
+                    className="h-6"
+                    src={`https://authjs.dev/img/providers/${cleanProviderId(provider.id)}.svg`}
+                    alt="Provider icon"
+                    width={20}
+                    height={20}
+                  />
+                }
+                label={provider.name}
+                textClassName="font-semibold"
+                data-qa={provider.id}
+              />
+            ))}
+          </div>
+        )}
       </div>
       <div className="shrink grow"></div>
     </div>
