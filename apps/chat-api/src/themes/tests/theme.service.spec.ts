@@ -18,7 +18,7 @@ describe('ThemeService', () => {
         THEMES_CONFIG_URL: 'https://themes.example.com',
         THEMES_SERVICE_TIMEOUT_MS: 5000,
       };
-      return config[key];
+      return config[key as keyof typeof config];
     }),
   };
 
@@ -76,7 +76,7 @@ describe('ThemeService', () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockResolvedValue(mockThemeConfig),
-      } as Response);
+      } as unknown as Response);
 
       const result = await service.getThemes();
 
@@ -92,7 +92,7 @@ describe('ThemeService', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-      } as Response);
+      } as unknown as Response);
 
       await expect(service.getThemes()).rejects.toThrow(NotFoundException);
       await expect(service.getThemes()).rejects.toThrow(
@@ -105,7 +105,7 @@ describe('ThemeService', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
-      } as Response);
+      } as unknown as Response);
 
       await expect(service.getThemes()).rejects.toThrow(BadGatewayException);
       await expect(service.getThemes()).rejects.toThrow(
@@ -127,7 +127,7 @@ describe('ThemeService', () => {
     it('should throw ServiceUnavailableException on timeout', async () => {
       vi.useFakeTimers();
 
-      global.fetch = mockFetchThatRejectsOnAbort();
+      global.fetch = mockFetchThatRejectsOnAbort() as unknown as typeof fetch;
 
       const promise = service.getThemes();
       const exceptionExpectation = expect(promise).rejects.toThrow(
@@ -147,7 +147,7 @@ describe('ThemeService', () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         json: vi.fn().mockRejectedValue(new Error('Invalid JSON')),
-      } as Response);
+      } as unknown as Response);
 
       await expect(service.getThemes()).rejects.toThrow(
         ServiceUnavailableException,
@@ -162,7 +162,7 @@ describe('ThemeService', () => {
       global.fetch = vi.fn().mockResolvedValue({
         ok: true,
         text: vi.fn().mockResolvedValue(mockSvgContent),
-      } as Response);
+      } as unknown as Response);
 
       const result = await service.getThemeIcon('icon-light.svg');
 
@@ -178,7 +178,7 @@ describe('ThemeService', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
-      } as Response);
+      } as unknown as Response);
 
       await expect(service.getThemeIcon('missing-icon.svg')).rejects.toThrow(
         NotFoundException,
@@ -193,7 +193,7 @@ describe('ThemeService', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
-      } as Response);
+      } as unknown as Response);
 
       await expect(service.getThemeIcon('icon.svg')).rejects.toThrow(
         BadGatewayException,
@@ -211,7 +211,7 @@ describe('ThemeService', () => {
     it('should throw ServiceUnavailableException on timeout', async () => {
       vi.useFakeTimers();
 
-      global.fetch = mockFetchThatRejectsOnAbort();
+      global.fetch = mockFetchThatRejectsOnAbort() as unknown as typeof fetch;
 
       const promise = service.getThemeIcon('icon.svg');
       const exceptionExpectation = expect(promise).rejects.toThrow(

@@ -20,6 +20,7 @@ export enum ChatI18nKeys {
   Thinking = 'chat.thinking',
   ShowMoreUserMessage = 'chat.showMoreUserMessage',
   ShowLessUserMessage = 'chat.showLessUserMessage',
+  ChatSettings = 'chat.chatSettings',
 }
 
 export enum RateI18nKeys {
@@ -301,6 +302,22 @@ export enum FileDndI18nKeys {
 
 export enum UserConfigI18nKeys {
   LoadError = 'userConfig.loadError',
+}
+
+export enum ChatSettingsI18nKeys {
+  Title = 'chatSettings.title',
+  ResponseFormatLabel = 'chatSettings.responseFormatLabel',
+  ResponseFormatHint = 'chatSettings.responseFormatHint',
+  ResponseFormatMarkdown = 'chatSettings.responseFormatMarkdown',
+  ResponseFormatPlainText = 'chatSettings.responseFormatPlainText',
+  SystemPromptLabel = 'chatSettings.systemPromptLabel',
+  TemperatureLabel = 'chatSettings.temperatureLabel',
+  TemperaturePrecise = 'chatSettings.temperaturePrecise',
+  TemperatureNeutral = 'chatSettings.temperatureNeutral',
+  TemperatureCreative = 'chatSettings.temperatureCreative',
+  SaveLabel = 'chatSettings.saveLabel',
+  TemperatureHint = 'chatSettings.temperatureHint',
+  SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
 }
 
 export enum AttachmentCanvasI18nKeys {

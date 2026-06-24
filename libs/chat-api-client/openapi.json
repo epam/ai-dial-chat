@@ -2287,6 +2287,20 @@
         },
         "required": ["data"]
       },
+      "DeploymentFeaturesDto": {
+        "type": "object",
+        "properties": {
+          "systemPrompt": {
+            "type": "boolean",
+            "description": "Whether the deployment supports a custom system prompt"
+          },
+          "temperature": {
+            "type": "boolean",
+            "description": "Whether the deployment supports temperature control"
+          }
+        },
+        "required": ["systemPrompt", "temperature"]
+      },
       "DeploymentItemDto": {
         "type": "object",
         "properties": {
@@ -2344,6 +2358,14 @@
               "type": "string"
             }
           },
+          "features": {
+            "description": "Feature flags from DIAL Core controlling which per-conversation settings are available",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeploymentFeaturesDto"
+              }
+            ]
+          },
           "topics": {
             "description": "Topics associated with this deployment from DIAL Core (e.g. [\"topic1\", \"topic2\"])",
             "type": "array",
@@ -2358,6 +2380,18 @@
           "isInstalled": {
             "type": "boolean",
             "description": "Whether this deployment is installed by the current user (from user config)"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Owner of the deployment as reported by DIAL Core"
+          },
+          "isMy": {
+            "type": "boolean",
+            "description": "True when the deployment owner matches the current session user (computed post-cache)"
+          },
+          "applicationFolder": {
+            "type": "string",
+            "description": "Parent folder path for application-type deployments (absent for root-level or non-application items)"
           }
         },
         "required": ["id", "displayName", "type"]

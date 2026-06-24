@@ -1,17 +1,22 @@
-export { ConversationInput } from './components/ConversationInput/ConversationInput';
 export { BottomSheetShell } from './components/BottomSheetShell/BottomSheetShell';
 export type { BottomSheetShellProps } from './components/BottomSheetShell/BottomSheetShell';
+export { ConversationInput } from './components/ConversationInput/ConversationInput';
 export { EditMessageInput } from './components/EditMessageInput/EditMessageInput';
 export { Input } from './components/Input/Input';
 export type {
-  ConversationInputProps,
   ConversationInputColors,
-  ConversationInputTypography,
+  ConversationInputProps,
   ConversationInputStyles,
+  ConversationInputTypography,
   EditMessageInputProps,
 } from './models/ConversationInput';
-export type { InputProps, InputColors, InputTypography } from './models/Input';
 export { SendOnEnter } from './models/Input';
+export type {
+  ChatSettingsValues,
+  InputColors,
+  InputProps,
+  InputTypography,
+} from './models/Input';
 
 // Re-exports from @epam/ai-dial-attachment-input for backwards compatibility
 export {
@@ -20,10 +25,8 @@ export {
   FileDndOverlay,
   getAttachmentIcon,
 } from '@epam/ai-dial-attachment-input';
-export type {
-  AttachmentCardProps,
-  AttachmentCardColors,
-  AttachmentCardTypography,
-  AttachmentTrayProps,
-  FileDndOverlayProps,
-} from '@epam/ai-dial-attachment-input';
+export type { BottomSheetItem } from './components/BottomSheet/BottomSheet';
+export {
+  ChatSettingsModal,
+  type ChatSettingsModalProps,
+} from './components/ChatSettingsModal/ChatSettingsModal';

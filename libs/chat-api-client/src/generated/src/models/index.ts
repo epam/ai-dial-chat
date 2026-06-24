@@ -1136,6 +1136,12 @@ export interface DeploymentItemDto {
    */
   inputAttachmentTypes?: Array<string>;
   /**
+   * Feature flags from DIAL Core controlling which per-conversation settings are available
+   * @type {DeploymentFeaturesDto}
+   * @memberof DeploymentItemDto
+   */
+  features?: DeploymentFeaturesDto;
+  /**
    * Topics associated with this deployment from DIAL Core (e.g. ["topic1", "topic2"])
    * @type {Array<string>}
    * @memberof DeploymentItemDto
@@ -1153,6 +1159,43 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   isInstalled?: boolean;
+  /**
+   * Owner of the deployment as reported by DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  owner?: string;
+  /**
+   * True when the deployment owner matches the current session user (computed post-cache)
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  isMy?: boolean;
+  /**
+   * Parent folder path for application-type deployments (absent for root-level or non-application items)
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  applicationFolder?: string;
+}
+
+/**
+ * Feature flags for a deployment controlling which per-conversation settings are available.
+ * @interface DeploymentFeaturesDto
+ */
+export interface DeploymentFeaturesDto {
+  /**
+   * Whether the deployment supports a custom system prompt
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  systemPrompt: boolean;
+  /**
+   * Whether the deployment supports temperature control
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  temperature: boolean;
 }
 
 /**
