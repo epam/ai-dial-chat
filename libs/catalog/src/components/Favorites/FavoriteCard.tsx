@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialIcon, ElementSize } from '@epam/ai-dial-ui-kit';
 import { IconHistory } from '@tabler/icons-react';
-import { FC, MouseEvent, useCallback, useState } from 'react';
+import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import { EntityHeader } from '../EntityHeader/EntityHeader';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
@@ -58,17 +58,29 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
     if (!isLeaving) onClick?.(item);
   }, [isLeaving, item, onClick]);
 
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        handleClick();
+      }
+    },
+    [handleClick],
+  );
+
   return (
-    <button
-      type="button"
+    <div
+      role="button"
+      tabIndex={0}
       data-card-id={item.id}
       className={mergeClasses(
         'box-border flex min-w-0 cursor-pointer flex-col gap-1 rounded-[6px] p-[13px] pb-[9px]',
-        'w-full border-0 bg-transparent text-start',
+        'w-full text-start',
         styles.card,
         isLeaving && styles.cardLeaving,
       )}
       onClick={onClick ? handleClick : undefined}
+      onKeyDown={onClick ? handleKeyDown : undefined}
       onAnimationEnd={
         isLeaving
           ? (e) => {
@@ -98,6 +110,6 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
           onClick={handleToggle}
         />
       </div>
-    </button>
+    </div>
   );
 };
