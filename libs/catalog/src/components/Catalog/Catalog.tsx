@@ -78,7 +78,12 @@ export const Catalog: FC<CatalogProps> = ({
     CatalogSortKey.RecentlyUpdated,
   );
   const tabs = buildCatalogTabs(filteredItems, titles?.tabLabels);
-  const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
+  const firstTabId = tabs[0]?.id ?? '';
+  const [activeTab, setActiveTab] = useState(firstTabId);
+
+  useEffect(() => {
+    setActiveTab((prev) => prev || firstTabId);
+  }, [firstTabId]);
 
   const [isFavoritesRendered, setIsFavoritesRendered] = useState(
     favorites.length > 0,

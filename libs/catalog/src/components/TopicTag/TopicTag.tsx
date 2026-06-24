@@ -17,12 +17,23 @@ export const TopicTag: FC<TopicTagProps> = ({
   className = 'dial-tiny-text',
 }) => <DialTag label={label} className={mergeClasses(className, styles.tag)} />;
 
+const MAX_ROWS = 2;
+
 /** Props for TopicsLine. */
 export interface TopicsLineProps {
+  /** Topics to display as tags. */
   topics: string[];
+  /**
+   * Returns the aria-label for the overflow "+N" badge.
+   * Receives the overflow count. Defaults to `"and N more topics"`.
+   */
+  overflowAriaLabel?: (count: number) => string;
 }
 
-export const TopicsLine: FC<TopicsLineProps> = ({ topics }) => {
+export const TopicsLine: FC<TopicsLineProps> = ({
+  topics,
+  overflowAriaLabel,
+}) => {
   const [visibleCount, setVisibleCount] = useState(topics.length);
   const topicsRef = useRef<HTMLDivElement>(null);
 
@@ -40,7 +51,7 @@ export const TopicsLine: FC<TopicsLineProps> = ({ topics }) => {
 
     const firstTop = children[0].offsetTop;
     const rowHeight = children[0].offsetHeight;
-    const limitTop = firstTop + rowHeight * 2;
+    const limitTop = firstTop + rowHeight * MAX_ROWS;
 
     let cutoff = children.length;
     for (let i = 0; i < children.length; i++) {
@@ -54,8 +65,7 @@ export const TopicsLine: FC<TopicsLineProps> = ({ topics }) => {
     setVisibleCount(
       cutoff < children.length ? Math.max(0, cutoff - 1) : children.length,
     );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [topicsKey, 2]);
+  }, [topicsKey, topics.length]);
 
   const overflow = topics.length - visibleCount;
 
@@ -64,7 +74,14 @@ export const TopicsLine: FC<TopicsLineProps> = ({ topics }) => {
       {topics.slice(0, visibleCount).map((p) => (
         <TopicTag key={p} label={p} />
       ))}
-      {overflow > 0 && <TopicTag label={`+${overflow}`} />}
+      {overflow > 0 && (
+        <>
+          <TopicTag label={`+${overflow}`} />
+          <span className="sr-only">
+            {overflowAriaLabel?.(overflow) ?? `and ${overflow} more topics`}
+          </span>
+        </>
+      )}
     </div>
   );
 };

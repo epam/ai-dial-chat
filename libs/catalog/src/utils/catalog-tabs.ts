@@ -3,6 +3,10 @@ import type { CatalogItem } from '../models/catalog-item';
 import type { CatalogTitles } from '../models/catalog-props';
 import { CatalogEntityType } from '../types/entity-type';
 
+/**
+ * English-language fallback labels for each known entity type.
+ * Consuming apps should pass `tabLabels` via `CatalogTitles` for i18n.
+ */
 const DEFAULT_TAB_LABELS: Record<CatalogEntityType, string> = {
   [CatalogEntityType.Model]: 'Models',
   [CatalogEntityType.Agent]: 'Agents',
@@ -21,5 +25,8 @@ export const buildCatalogTabs = (
   const presentTypes = [
     ...new Set(items.map((item) => item.type)),
   ] as CatalogEntityType[];
-  return presentTypes.map((type) => ({ id: type, label: labels[type] }));
+  return presentTypes.map((type) => ({
+    id: type,
+    label: labels[type] ?? type,
+  }));
 };
