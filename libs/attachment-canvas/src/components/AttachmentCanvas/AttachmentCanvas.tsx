@@ -95,6 +95,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       case AttachmentContentType.Image:
       case AttachmentContentType.Unsupported:
         return 'h-full overflow-auto p-4 flex items-center justify-center';
+      case AttachmentContentType.Json:
+        return 'h-full overflow-auto';
       default:
         return 'h-full overflow-auto p-4';
     }
@@ -132,7 +134,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         );
       case AttachmentContentType.Json:
         return (
-          <div dir="ltr" className="h-full overflow-auto p-4">
+          <div dir="ltr" className="h-full overflow-auto">
             <JsonView
               data={content.value as object}
               style={{
