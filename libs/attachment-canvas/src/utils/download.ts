@@ -9,10 +9,18 @@ export const isDownloadable = (content: AttachmentCanvasContent): boolean => {
     case AttachmentContentType.Markdown:
     case AttachmentContentType.Json:
     case AttachmentContentType.Image:
+    case AttachmentContentType.Pdf:
       return true;
     case AttachmentContentType.Unsupported:
       return content.url != null;
   }
+};
+
+/** Fetches a URL and returns its response body as a `Blob`. */
+export const fetchBlobFromUrl = async (url: string): Promise<Blob> => {
+  const r = await fetch(url);
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  return r.blob();
 };
 
 /** Triggers a browser download for the given canvas content. */
@@ -46,6 +54,7 @@ export const downloadAttachmentContent = (
       revokeAfter = true;
       break;
     case AttachmentContentType.Image:
+    case AttachmentContentType.Pdf:
       href = content.url;
       break;
     case AttachmentContentType.Unsupported:

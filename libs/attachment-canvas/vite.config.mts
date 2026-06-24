@@ -52,5 +52,13 @@ export default defineConfig(() => ({
       reportsDirectory: './test-output/vitest/coverage',
       provider: 'v8' as const,
     },
+    server: {
+      deps: {
+        inline: [
+          '@epam/pdf-highlighter-kit',
+          '@epam/ai-dial-react-pdf-highlighter',
+        ],
+      },
+    },
   },
 }));

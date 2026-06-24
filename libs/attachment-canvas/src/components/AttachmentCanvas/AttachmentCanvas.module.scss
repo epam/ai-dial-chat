@@ -114,6 +114,13 @@
   }
 }
 
+// Remove padding from the first .pdf-container when directly followed by another
+:global {
+  .pdf-container:has(+ .pdf-container) {
+    padding: 0;
+  }
+}
+
 .jsonCollapsedContent {
   margin-inline-end: 0.25rem;
   cursor: pointer;

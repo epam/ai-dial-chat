@@ -87,10 +87,14 @@ const App: FC = () => {
     if (pathname === ROUTES.Catalog) closeHistoryPanel();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { closeCanvas } = useAttachmentCanvas();
+  const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   useEffect(() => {
     closeCanvas();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isCanvasOpen) closeHistoryPanel();
+  }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchRoot = useMatch(ROUTES.Root);
   const matchConversation = useMatch(`${ROUTES.Conversations}/*`);

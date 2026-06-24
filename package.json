@@ -96,6 +96,7 @@
   "dependencies": {
     "@epam/ai-dial-typescript-sdk": "^0.1.0-dev.24",
     "@epam/ai-dial-ui-kit": "0.12.0-dev.4",
+    "@epam/pdf-highlighter-kit": "^0.0.18",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.0.0",
     "@nestjs/core": "^11.0.0",
@@ -111,6 +112,7 @@
     "i18next": "^26.2.0",
     "i18next-browser-languagedetector": "^8.2.1",
     "mime-types": "^3.0.2",
+    "pdfjs-dist": "5.4.149",
     "polished": "^4.3.1",
     "randomcolor": "^0.6.2",
     "react": "^19.2.6",
