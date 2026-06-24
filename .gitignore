@@ -19,7 +19,6 @@ node_modules
 
 # IDE - VSCode
 .vscode/*
-!.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
@@ -57,7 +56,3 @@ vitest.config.*.timestamp*
 .env*.local
 
 .nx/self-healing
-
-# local dev mock data — do not commit
-apps/chat/src/components/CatalogView/mock-catalog-items.ts
-catalog-mock.patch

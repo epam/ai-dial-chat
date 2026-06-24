@@ -1,13 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DialDropdown,
-  DialPrimaryButton,
-  DialSpinner,
-  DialTabs,
-  TabModel,
-} from '@epam/ai-dial-ui-kit';
-import { IconChevronDown, IconPlus } from '@tabler/icons-react';
+import { DialSpinner, DialTabs, TabModel } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
@@ -15,6 +7,7 @@ import { CatalogSortKey } from '../../types/sort';
 import { CatalogViewMode } from '../../types/view-mode';
 import { filterCatalogItems } from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
+import { buildCatalogTabs } from '../../utils/catalog-tabs';
 import { getStyles } from '../../utils/styles';
 import { CardGrid } from '../CardGrid/CardGrid';
 import { DetailsPanel } from '../Details/DetailsPanel';
@@ -23,6 +16,7 @@ import { ItemHeader } from '../ItemHeader/ItemHeader';
 import { ListView } from '../ListView/ListView';
 import { Toolbar } from '../Toolbar/Toolbar';
 import styles from './Catalog.module.scss';
+import { CreateButton } from './CreateButton';
 
 /**
  * Root catalog component. Owns all filter/sort/pagination state and wires
@@ -72,7 +66,6 @@ export const Catalog: FC<CatalogProps> = ({
       label: titles?.sortNameAZLabel ?? 'Name A-Z',
     },
   ];
-
   const [query, setQuery] = useState('');
 
   const [viewMode, setViewMode] = useState<CatalogViewMode>(
@@ -82,15 +75,14 @@ export const Catalog: FC<CatalogProps> = ({
   const [sortKey, setSortKey] = useState<string>(
     CatalogSortKey.RecentlyUpdated,
   );
-  const tabs = [] as TabModel[]; // TODO: implement tabs and remove this placeholder
-  const [activeTab, setActiveTab] = useState(tabs[0]?.id ?? '');
+  const tabs = buildCatalogTabs(filteredItems, titles?.tabLabels);
+  const firstTabId = tabs[0]?.id ?? '';
+  const [activeTab, setActiveTab] = useState(firstTabId);
 
-  // Delayed unmount for the Favorites section so the exit animation plays
-  // before the section is removed from the DOM.
-  // isFavoritesRendered tracks whether the section node exists in the DOM.
-  // isFavoritesLeaving is DERIVED (not state) so it is true in the same render
-  // where favorites becomes empty — avoiding the one painted frame where the
-  // section is visible without an exit animation (the blink).
+  useEffect(() => {
+    setActiveTab((prev) => prev || firstTabId);
+  }, [firstTabId]);
+
   const [isFavoritesRendered, setIsFavoritesRendered] = useState(
     favorites.length > 0,
   );
@@ -106,6 +98,9 @@ export const Catalog: FC<CatalogProps> = ({
     setIsFavoritesRendered(false);
   }, []);
 
+  // isFavoritesLeaving is DERIVED (not state) so it is true in the same render
+  // where favorites becomes empty — avoiding the one painted frame where the
+  // section is visible without an exit animation (the blink).
   const isFavoritesLeaving = isFavoritesRendered && favorites.length === 0;
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
@@ -116,6 +111,7 @@ export const Catalog: FC<CatalogProps> = ({
   const [isAboutLoading, setIsAboutLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
+  // TODO: check details
   const handleOpenDetails = useCallback(
     async (item: CatalogItem) => {
       setSelectedItem(item);
@@ -209,6 +205,7 @@ export const Catalog: FC<CatalogProps> = ({
     label: (
       <ItemHeader
         title={typeof tab.label === 'string' ? tab.label : String(tab.label)}
+        titleClassName={typography?.tabClassName ?? 'dial-body-text'}
         postfix={filtered.filter((item) => item.type === tab.id).length}
       />
     ),
@@ -243,27 +240,11 @@ export const Catalog: FC<CatalogProps> = ({
         >
           {pageTitle}
         </h1>
-        {createOptions?.length ? (
-          <DialDropdown
-            items={createOptions.map((opt, i) => ({
-              key: String(i),
-              label: opt.label,
-              onClick: () => opt.onClick(),
-            }))}
-          >
-            <DialPrimaryButton
-              label={createLabel}
-              iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
-              iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
-            />
-          </DialDropdown>
-        ) : (
-          <DialPrimaryButton
-            label={createLabel}
-            iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
-            onClick={onCreateClick}
-          />
-        )}
+        <CreateButton
+          label={createLabel}
+          options={createOptions}
+          onClick={onCreateClick}
+        />
       </div>
 
       {/* Favorites strip — kept in DOM during exit animation then unmounted */}
@@ -299,11 +280,12 @@ export const Catalog: FC<CatalogProps> = ({
       {tabs.length > 0 && (
         <div
           className={mergeClasses(
-            'sticky top-0 z-10 shrink-0 border-b [&>div]:justify-center',
+            'sticky top-0 z-10 flex shrink-0 justify-center border-b pt-2',
             styles.stickyTabsRow,
           )}
         >
           <DialTabs
+            className="justify-center"
             tabs={tabsWithCounts}
             activeTab={activeTab}
             onClick={setActiveTab}

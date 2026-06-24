@@ -1,3 +1,4 @@
+import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
 import type { ItemDetailsTexts } from './item-details-props';
@@ -37,6 +38,12 @@ export interface CatalogTitles {
   featuredLabel?: string;
   /** ARIA label for the page/grid. Default: 'Catalog'. */
   ariaLabel?: string;
+  /**
+   * Display labels for entity-type filter tabs. Only types present in `items`
+   * are shown. Defaults: Model → 'Model', Agent → 'Agent', Toolset → 'Toolset',
+   * Guardrail → 'Guardrail', Skill → 'Skill', Mcp → 'MCP'.
+   */
+  tabLabels?: Partial<Record<CatalogEntityType, string>>;
 }
 
 /** Props for Catalog. */

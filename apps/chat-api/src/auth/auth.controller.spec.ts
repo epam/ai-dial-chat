@@ -157,6 +157,7 @@ async function makeTxCookie(txData: object): Promise<string> {
     iat: Math.floor(Date.now() / 1000),
     csrf: randomUUID(),
     claims: {},
+    bucket: '',
   };
   return makeSessionCookie(inner);
 }
@@ -173,10 +174,11 @@ const sampleSession: SessionPayload = {
   iat: Math.floor(Date.now() / 1000),
   csrf: randomUUID(),
   claims: { email: 'u@example.com' },
+  bucket: '',
 };
 
 describe('AuthController (integration)', () => {
-  let app: INestApplication | undefined;
+  let app!: INestApplication;
 
   beforeEach(async () => {
     providerConfigOverride = {};
@@ -187,7 +189,6 @@ describe('AuthController (integration)', () => {
     vi.clearAllMocks();
     MOCK_REFRESH_SERVICE.refresh.mockReset();
     await app?.close();
-    app = undefined;
   });
 
   describe('GET /api/v1/auth/providers', () => {
@@ -475,6 +476,7 @@ describe('AuthController (integration)', () => {
           iat: Math.floor(Date.now() / 1000) - 700,
           csrf: randomUUID(),
           claims: {},
+          bucket: '',
         };
         return makeSessionCookie(inner);
       })();

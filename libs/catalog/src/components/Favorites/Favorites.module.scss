@@ -25,8 +25,13 @@
   }
 }
 
-.starFilledIcon {
-  color: var(--cat-fav-star-filled, var(--text-warning-icon, #eec840));
+.sectionLeaving {
+  animation: sectionExit 260ms ease-in forwards;
+  pointer-events: none;
+}
+
+.gridPage {
+  transition: min-height 280ms cubic-bezier(0, 0, 0.2, 1);
 }
 
 .sectionLeaving {

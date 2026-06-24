@@ -19,7 +19,6 @@ import { ModelsService } from '../models.service';
 const mockModel: DialModelDto = {
   id: 'gpt-4o',
   object: 'model',
-  owned_by: 'openai',
 };
 const mockList: DialModelListResponseDto = { data: [mockModel] };
 

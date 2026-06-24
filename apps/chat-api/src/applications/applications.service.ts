@@ -13,7 +13,7 @@ import type { ApplicationsResponseDto } from './dto/application.dto';
 
 @Injectable()
 export class ApplicationsService extends AppService {
-  protected logger = new Logger(ApplicationsService.name);
+  protected override logger = new Logger(ApplicationsService.name);
 
   constructor(
     configService: ConfigService<EnvironmentVariables>,

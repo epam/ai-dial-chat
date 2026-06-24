@@ -30,8 +30,12 @@ const toAdditionalProperties = (
   return undefined;
 };
 
+type RawDeploymentWithFeatures = RawDeploymentDto & {
+  features?: { system_prompt?: boolean; temperature?: boolean };
+};
+
 const mapToDeploymentItem = (
-  raw: RawDeploymentDto,
+  raw: RawDeploymentWithFeatures,
   featuredIds: Set<string>,
   hiddenTags: Set<string>,
 ): DeploymentItemDto | null => {
@@ -75,11 +79,22 @@ const mapToDeploymentItem = (
     inputAttachmentTypes: Array.isArray(raw.input_attachment_types)
       ? raw.input_attachment_types
       : undefined,
+    features: raw.features
+      ? {
+          systemPrompt: raw.features.system_prompt ?? false,
+          temperature: raw.features.temperature ?? false,
+        }
+      : undefined,
     maxInputAttachments:
       typeof raw.max_input_attachments === 'number'
         ? raw.max_input_attachments
         : undefined,
     topics,
+    owner: raw.owner,
+    applicationFolder:
+      type === 'application' && raw.id.includes('/')
+        ? raw.id.substring(0, raw.id.lastIndexOf('/'))
+        : undefined,
   };
 };
 
@@ -171,6 +186,7 @@ export class DeploymentsService extends AppService {
         item.type === 'toolset'
           ? toolsetsSet.has(item.id)
           : deploymentsSet.has(item.id),
+      isMy: item.id.split('/').includes(bucket),
     }));
 
     if (!interfaceFilter) {
