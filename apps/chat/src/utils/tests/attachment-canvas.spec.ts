@@ -7,12 +7,22 @@ import {
   resolveMarkdownCanvasContent,
 } from '../attachment-canvas';
 
-vi.mock('../dial-file', () => ({
-  resolveDialFileDownloadUrl: (url: string) =>
+vi.mock('../dial-file', () => {
+  const resolveDialFileDownloadUrl = (url: string) =>
     url.startsWith('files/bucket/')
       ? `/download?path=${url.slice('files/bucket/'.length)}`
-      : undefined,
-}));
+      : undefined;
+  return {
+    resolveDialFileDownloadUrl,
+    resolveDialUrl: (attachment: { url?: string; referenceUrl?: string }) => {
+      if (attachment.url != null)
+        return resolveDialFileDownloadUrl(attachment.url);
+      if (attachment.referenceUrl != null)
+        return resolveDialFileDownloadUrl(attachment.referenceUrl);
+      return undefined;
+    },
+  };
+});
 
 const makeRemoteAttachment = (name: string, url: string): DisplayAttachment =>
   ({
