@@ -67,6 +67,7 @@ declare global {
 
       NEXTAUTH_URL?: string;
       NEXTAUTH_SECRET?: string;
+      AUTH_FORCE_STRICT?: string;
       AUTH_TEST_TOKEN?: string;
       AUTH_AUTH0_AUDIENCE?: string;
       AUTH_AUTH0_CLIENT_ID?: string;
