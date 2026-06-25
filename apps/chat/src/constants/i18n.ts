@@ -239,6 +239,7 @@ export enum CommonI18nKeys {
   NoPermissionToSignIn = 'You do not have permission to sign in.',
   SignIn = 'Sign in',
   SignInWith = 'Sign in with:',
+  NoProvidersToSignIn = 'No providers to sign in. Contact your administrator for more information.',
   ShouldBeAnArray = 'Should be an array',
   ShouldBeAValidJSON = 'Should be a valid JSON',
   SelectedModelDoesNotSupportTools = 'Selected model does not support tools',

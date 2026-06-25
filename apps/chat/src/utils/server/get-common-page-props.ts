@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { serverSideTranslations } from 'next-i18next/serverSideTranslations';
 
 import { parseCommaSeparatedList } from '@/src/utils/app/common';
+import { resolveAvailableLocales } from '@/src/utils/app/resolveAvailableLocales';
 import { authOptions } from '@/src/utils/auth/auth-options';
 import { pages } from '@/src/utils/auth/auth-pages';
 import { isAuthDisabled } from '@/src/utils/auth/auth-providers';
@@ -160,6 +161,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       : StorageType.API,
     announcement: process.env.ANNOUNCEMENT_HTML_MESSAGE || '',
     themesHostDefined: !!process.env.THEMES_CONFIG_HOST,
+    availableLocales: resolveAvailableLocales(),
     customRenderers: customRenderers || [],
     applicationVisualizers: applicationVisualizers || {},
     allowVisualizerSendMessages: !!process.env.ALLOW_VISUALIZER_SEND_MESSAGES,
