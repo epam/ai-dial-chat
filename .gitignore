@@ -57,3 +57,5 @@ vitest.config.*.timestamp*
 .env*.local
 
 .nx/self-healing
+# Runtime fixtures for validate-agent-docs.spec.mjs
+scripts/.agent-docs-fixtures*
