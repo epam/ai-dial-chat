@@ -1790,6 +1790,7 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
                 state: message.custom_content?.state,
                 attachments: message.custom_content?.attachments?.filter(
                   (attachment) =>
+                    !attachment.type ||
                     isAllowedMimeType(
                       model?.inputAttachmentTypes ?? [],
                       attachment.type,
