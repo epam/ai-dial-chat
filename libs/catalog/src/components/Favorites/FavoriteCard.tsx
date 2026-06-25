@@ -35,7 +35,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   onClick,
   nameClassName,
   versionClassName,
-  lastUsedClassName = 'dial-caption-text',
+  lastUsedClassName = 'dial-caption-text text-secondary',
   featuredLabel = 'Featured',
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
@@ -70,16 +70,20 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   return (
     <div
       data-card-id={item.id}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
+      {...(onClick
+        ? {
+            role: 'button' as const,
+            tabIndex: 0,
+            onClick: handleClick,
+            onKeyDown: handleKeyDown,
+          }
+        : {})}
       className={mergeClasses(
-        'box-border flex min-w-0 cursor-pointer flex-col gap-1 rounded-[6px] p-3 pb-2',
+        'box-border flex min-w-0 cursor-pointer flex-col rounded-[6px] p-3 pb-2',
         'w-full text-start',
         styles.card,
         isLeaving && styles.cardLeaving,
       )}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
       onAnimationEnd={
         isLeaving
           ? (e) => {
@@ -95,8 +99,8 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         isFeaturedAvailable={false}
         versionClassName={versionClassName}
       />
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 ps-[50px]">
+      <div className="-mt-2 flex items-center justify-between">
+        <div className="flex items-center gap-1 ps-[56px]">
           <DialIcon
             icon={<IconHistory size={DIAL_ICON_SIZE.SM} />}
             className={styles.historyIcon}

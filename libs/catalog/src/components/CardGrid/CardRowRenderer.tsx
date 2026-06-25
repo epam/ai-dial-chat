@@ -40,7 +40,7 @@ export const CardRowRenderer = ({
         return (
           <div
             key={item?.id ?? `spacer-${colIndex}`}
-            className="flex min-w-0 flex-1 flex-col"
+            className="h-full min-w-0 flex-1"
           >
             {item && (
               <Card
@@ -50,7 +50,7 @@ export const CardRowRenderer = ({
                 onToggle={onToggleFavorite}
                 onClick={onItemClick}
                 featuredLabel={featuredLabel}
-                className="flex-1"
+                className="h-full"
               />
             )}
           </div>
