@@ -1,10 +1,10 @@
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import { ResponseFormat } from '@epam/ai-dial-chat-shared';
 import {
-  DialFormItem,
   DialInput,
-  DialRadioButton,
+  DialRadioGroup,
   DialSlider,
+  RadioGroupOrientation,
 } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 
@@ -68,31 +68,25 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
 }) => (
   <div className="flex flex-col px-6">
     {features.responseFormat && (
-      <DialFormItem
-        label={responseFormatLabel}
+      <DialRadioGroup
+        fieldTitle={responseFormatLabel}
+        elementId="response-format"
+        orientation={RadioGroupOrientation.Column}
+        activeRadioButton={responseFormat}
+        labelDescription={responseFormatHint}
         labelClassName={LABEL_CLASS_NAME}
-        description={responseFormatHint}
-        className="gap-3 py-4"
-      >
-        <div className="flex flex-col gap-2">
-          <DialRadioButton
-            name="responseFormat"
-            value={ResponseFormat.Markdown}
-            inputId="responseFormat-markdown"
-            label={responseFormatMarkdownLabel}
-            checked={responseFormat === ResponseFormat.Markdown}
-            onChange={(v) => onResponseFormatChange(v as ResponseFormat)}
-          />
-          <DialRadioButton
-            name="responseFormat"
-            value={ResponseFormat.PlainText}
-            inputId="responseFormat-plain-text"
-            label={responseFormatPlainTextLabel}
-            checked={responseFormat === ResponseFormat.PlainText}
-            onChange={(v) => onResponseFormatChange(v as ResponseFormat)}
-          />
-        </div>
-      </DialFormItem>
+        radioButtons={[
+          {
+            id: ResponseFormat.Markdown,
+            name: responseFormatMarkdownLabel,
+          },
+          {
+            id: ResponseFormat.PlainText,
+            name: responseFormatPlainTextLabel,
+          },
+        ]}
+        onChange={(v) => onResponseFormatChange(v as ResponseFormat)}
+      />
     )}
     {features.systemPrompt && (
       <DialInput
@@ -107,21 +101,20 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
       />
     )}
     {features.temperature && (
-      <DialFormItem
-        label={temperatureLabel}
-        labelClassName={LABEL_CLASS_NAME}
-        description={temperatureHint}
+      <DialSlider
+        labelProps={{
+          label: temperatureLabel,
+          className: LABEL_CLASS_NAME,
+          caption: temperatureHint,
+        }}
         className="gap-3 py-4"
-      >
-        <DialSlider
-          value={temperature}
-          min={0}
-          max={1}
-          step={0.1}
-          labels={temperatureLabels}
-          onChange={onTemperatureChange}
-        />
-      </DialFormItem>
+        value={temperature}
+        min={0}
+        max={1}
+        step={0.1}
+        labels={temperatureLabels}
+        onChange={onTemperatureChange}
+      />
     )}
   </div>
 );
