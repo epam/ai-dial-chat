@@ -72,6 +72,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       selectedPaths,
       onSelectedPathsChange,
       sharedWithMeIds,
+      conflictResolutionPopupOptions,
     }: {
       className?: string;
       gridClassName?: string;
@@ -103,6 +104,22 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       selectedPaths?: Set<string>;
       onSelectedPathsChange?: (paths: Set<string>) => void;
       sharedWithMeIds?: string[];
+      conflictResolutionPopupOptions?: {
+        singleFileTitle?: string;
+        multipleFilesTitle?: string;
+        actionLabels?: {
+          replace?: string;
+          duplicate?: string;
+          cancel?: string;
+        };
+        strategyLabels?: {
+          replaceAll?: string;
+          duplicateAll?: string;
+          decideForEach?: string;
+        };
+        confirmLabel?: string;
+        cancelLabel?: string;
+      };
     }) => (
       <div
         className={className}
@@ -132,6 +149,24 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         data-visible-columns={gridOptions?.visibleColumns?.join(',')}
         data-shared-with-me-ids={
           sharedWithMeIds != null ? sharedWithMeIds.join(',') : 'none'
+        }
+        data-conflict-single-title={
+          conflictResolutionPopupOptions?.singleFileTitle
+        }
+        data-conflict-multiple-title={
+          conflictResolutionPopupOptions?.multipleFilesTitle
+        }
+        data-conflict-replace={
+          conflictResolutionPopupOptions?.actionLabels?.replace
+        }
+        data-conflict-duplicate={
+          conflictResolutionPopupOptions?.actionLabels?.duplicate
+        }
+        data-conflict-replace-all={
+          conflictResolutionPopupOptions?.strategyLabels?.replaceAll
+        }
+        data-conflict-confirm-label={
+          conflictResolutionPopupOptions?.confirmLabel
         }
       >
         {toolbarOptions?.tabs?.map((tab) => (
@@ -326,6 +361,31 @@ describe('DialFileManagerModal', () => {
       'Hide hidden files',
     );
     expect(screen.queryByRole('alert')).toBeNull();
+  });
+
+  it('passes conflictResolutionPopupOptions to DialFileManager', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-conflict-single-title')).toBe(
+      'dialFileManager.conflictSingleTitle',
+    );
+    expect(manager.getAttribute('data-conflict-multiple-title')).toBe(
+      'dialFileManager.conflictMultipleTitle',
+    );
+    expect(manager.getAttribute('data-conflict-replace')).toBe(
+      'dialFileManager.conflictReplace',
+    );
+    expect(manager.getAttribute('data-conflict-duplicate')).toBe(
+      'dialFileManager.conflictDuplicate',
+    );
+    expect(manager.getAttribute('data-conflict-replace-all')).toBe(
+      'dialFileManager.conflictReplaceAll',
+    );
+    expect(manager.getAttribute('data-conflict-confirm-label')).toBe(
+      'buttons.confirm',
+    );
   });
 
   it('keeps a fixed modal height and pads the footer', () => {
