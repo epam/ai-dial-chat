@@ -1,39 +1,94 @@
 import { PlotParams } from 'react-plotly.js';
 
-
-
-import { EMPTY, Observable, Subject, TimeoutError, catchError, concat, concatMap, delay, filter, forkJoin, from, groupBy, ignoreElements, iif, map, mergeMap, of, race, startWith, switchMap, take, takeWhile, tap, throwError, zip } from 'rxjs';
+import {
+  EMPTY,
+  Observable,
+  Subject,
+  TimeoutError,
+  catchError,
+  concat,
+  concatMap,
+  delay,
+  filter,
+  forkJoin,
+  from,
+  groupBy,
+  ignoreElements,
+  iif,
+  map,
+  mergeMap,
+  of,
+  race,
+  startWith,
+  switchMap,
+  take,
+  takeWhile,
+  tap,
+  throwError,
+  zip,
+} from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
-
-
 
 import { StateObservable, combineEpics, ofType } from 'redux-observable';
 
-
-
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { getDefaultConversationProps } from '@/src/utils/app/common';
-import { addPausedError, excludeSystemMessages, getConversationInfoFromId, getConversationModelParams, getDefaultModelReference, getNewConversationName, isChosenConversationValidForCompare, isReplayAsIsConversation, isReplayConversation, isSettingsChanged, regenerateConversationId } from '@/src/utils/app/conversation';
+import {
+  addPausedError,
+  excludeSystemMessages,
+  getConversationInfoFromId,
+  getConversationModelParams,
+  getDefaultModelReference,
+  getNewConversationName,
+  isChosenConversationValidForCompare,
+  isReplayAsIsConversation,
+  isReplayConversation,
+  isSettingsChanged,
+  regenerateConversationId,
+} from '@/src/utils/app/conversation';
 import { ConversationService } from '@/src/utils/app/data/conversation-service';
 import { DataService } from '@/src/utils/app/data/data-service';
 import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
-import { addGeneratedFolderId, generateNextName, getFolderFromId, getNextDefaultName, getParentFolderIdsFromEntityId, getParentFolderIdsFromFolderId, updateChildAndCurrentFoldersIds, updateChildFoldersIds } from '@/src/utils/app/folders';
+import {
+  addGeneratedFolderId,
+  generateNextName,
+  getFolderFromId,
+  getNextDefaultName,
+  getParentFolderIdsFromEntityId,
+  getParentFolderIdsFromFolderId,
+  updateChildAndCurrentFoldersIds,
+  updateChildFoldersIds,
+} from '@/src/utils/app/folders';
 import { isConversationWithFormSchema } from '@/src/utils/app/form-schema';
-import { getConversationRootId, getEntityBucket, isEntityIdExternal, isEntityIdLocal, isMyBucket } from '@/src/utils/app/id';
-import { mergeMessages, parseStreamMessages } from '@/src/utils/app/merge-streams';
+import {
+  getConversationRootId,
+  getEntityBucket,
+  isEntityIdExternal,
+  isEntityIdLocal,
+  isMyBucket,
+} from '@/src/utils/app/id';
+import {
+  mergeMessages,
+  parseStreamMessages,
+} from '@/src/utils/app/merge-streams';
 import { isTabletScreen } from '@/src/utils/app/mobile';
-import { doesModelAllowSystemPrompt, doesModelAllowTemperature } from '@/src/utils/app/models';
+import {
+  doesModelAllowSystemPrompt,
+  doesModelAllowTemperature,
+} from '@/src/utils/app/models';
 import { updateSystemPromptInMessages } from '@/src/utils/app/overlay';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
-import { getVersionGroupFromId, isEntityIdPublic, mapPublishedItems } from '@/src/utils/app/publications';
+import {
+  getVersionGroupFromId,
+  isEntityIdPublic,
+  mapPublishedItems,
+} from '@/src/utils/app/publications';
 import { splitEntityId } from '@/src/utils/app/shared-utils';
 import { filterUnfinishedStages } from '@/src/utils/app/stages';
 import { translate } from '@/src/utils/app/translation';
 import { parseEntityApiKey } from '@/src/utils/server/api';
-
-
 
 import { ChatBody, Conversation, RateBody } from '@/src/types/chat';
 import { EntityType, FeatureType } from '@/src/types/common';
@@ -53,13 +108,24 @@ import {
   ShareActions,
   UIActions,
 } from '@/src/store/actions';
-import { ChatEventsSelectors, ConversationsSelectors, MarketplaceSelectors, ModelsSelectors, OverlaySelectors, PublicationSelectors, SettingsSelectors, UISelectors, WidgetsSelectors } from '@/src/store/selectors';
-
-
+import {
+  ChatEventsSelectors,
+  ConversationsSelectors,
+  MarketplaceSelectors,
+  ModelsSelectors,
+  OverlaySelectors,
+  PublicationSelectors,
+  SettingsSelectors,
+  UISelectors,
+  WidgetsSelectors,
+} from '@/src/store/selectors';
 
 import { LOCAL_BUCKET } from '@/src/constants/chat';
 import { RECONNECT_RETRY_COUNT } from '@/src/constants/chat-events';
-import { DEFAULT_CONVERSATION_NAME, DEFAULT_TEMPERATURE } from '@/src/constants/default-ui-settings';
+import {
+  DEFAULT_CONVERSATION_NAME,
+  DEFAULT_TEMPERATURE,
+} from '@/src/constants/default-ui-settings';
 import { DEFAULT_EXTERNAL_APPS_SCHEMA_ID } from '@/src/constants/external-apps';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 import { MarketplaceQueryParams } from '@/src/constants/marketplace';
@@ -68,12 +134,18 @@ import { CONVERSATIONS_DATE_SECTIONS } from '@/src/constants/sections';
 import { HeadersNames } from '@/src/constants/server';
 import { SHARE_QUERY_PARAM } from '@/src/constants/share';
 
-
-
-import { ConversationInfo, CustomVisualizerData, Feature, LikeState, Message, MessageSettings, Role, UploadStatus } from '@epam/ai-dial-shared';
+import {
+  ConversationInfo,
+  CustomVisualizerData,
+  Feature,
+  LikeState,
+  Message,
+  MessageSettings,
+  Role,
+  UploadStatus,
+} from '@epam/ai-dial-shared';
 import omit from 'lodash-es/omit';
 import uniq from 'lodash-es/uniq';
-
 
 const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
