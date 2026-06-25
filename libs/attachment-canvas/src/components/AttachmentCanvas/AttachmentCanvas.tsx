@@ -17,6 +17,7 @@ import 'react-json-view-lite/dist/index.css';
 import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
 import { isDownloadable } from '../../utils/download';
+import { PdfContent } from '../PdfContent/PdfContent';
 import styles from './AttachmentCanvas.module.scss';
 
 const COPY_RESET_MS = 2000;
@@ -38,13 +39,14 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   copiedJsonLabel = 'Copied!',
   unsupportedLabel = 'Preview is not supported for this file',
   isMobile = false,
-  defaultWidth = 560,
+  defaultWidth,
   minWidth = 320,
-  maxWidth = 960,
+  maxWidth = 1500,
   onResizeStop,
   styles: stylesProp,
   className,
   codeBlockTheme,
+  loadPdf,
 }) => {
   const [isCopiedMarkdown, setIsCopiedMarkdown] = useState(false);
   const [isCopiedJson, setIsCopiedJson] = useState(false);
@@ -118,6 +120,8 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
         return 'h-full overflow-auto p-4 flex items-center justify-center';
       case AttachmentContentType.Json:
         return 'h-full overflow-auto';
+      case AttachmentContentType.Pdf:
+        return 'h-full overflow-hidden';
       default:
         return 'h-full overflow-auto p-4';
     }
@@ -180,6 +184,17 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
             </div>
           </div>
         );
+      case AttachmentContentType.Pdf:
+        return (
+          <PdfContent
+            key={content.url}
+            fileName={fileName}
+            url={content.url}
+            highlights={content.highlights ?? []}
+            selectedHighlightId={content.selectedHighlightId}
+            loadPdf={loadPdf}
+          />
+        );
       case AttachmentContentType.Unsupported:
         return <p className="text-center text-secondary">{unsupportedLabel}</p>;
     }
@@ -189,6 +204,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     fileName,
     codeBlockTheme,
     unsupportedLabel,
+    loadPdf,
   ]);
 
   return (

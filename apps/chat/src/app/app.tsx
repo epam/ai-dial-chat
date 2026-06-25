@@ -57,6 +57,9 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
+  const canvasDefaultWidth = isMobile
+    ? undefined
+    : Math.min(1500, Math.round(window.innerWidth * (2 / 3)));
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
@@ -87,10 +90,14 @@ const App: FC = () => {
     if (pathname === ROUTES.Catalog) closeHistoryPanel();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { closeCanvas } = useAttachmentCanvas();
+  const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   useEffect(() => {
     closeCanvas();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isCanvasOpen) closeHistoryPanel();
+  }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchRoot = useMatch(ROUTES.Root);
   const matchConversation = useMatch(`${ROUTES.Conversations}/*`);
@@ -199,6 +206,7 @@ const App: FC = () => {
           copyJsonLabel={t(ButtonsI18nKeys.CopyAsJson)}
           copiedJsonLabel={t(ButtonsI18nKeys.Copied)}
           isMobile={isMobile}
+          defaultWidth={canvasDefaultWidth}
           codeBlockTheme={codeBlockTheme}
         />
       )}

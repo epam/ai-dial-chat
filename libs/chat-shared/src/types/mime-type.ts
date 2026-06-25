@@ -47,3 +47,14 @@ export enum MIMEType {
   /** SVG vector image. */
   SVG = 'image/svg+xml',
 }
+
+/**
+ * Well-known file extension constants used as fallback when a MIME type is
+ * unavailable or unreliable.
+ */
+export enum FileExtension {
+  PDF = 'pdf',
+  Markdown = 'md',
+  MarkdownAlt = 'markdown',
+  JSON = 'json',
+}
