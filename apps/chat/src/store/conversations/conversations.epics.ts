@@ -1466,7 +1466,8 @@ const waitForChatChannel =
         const subscriptionGaveUp$ = action$.pipe(
           ofType(ChatEventsActions.subscribeFailure.type),
           filter(
-            ({ payload }) => (payload?.retryAttempt ?? 0) > RECONNECT_RETRY_COUNT,
+            ({ payload }) =>
+              (payload?.retryAttempt ?? 0) > RECONNECT_RETRY_COUNT,
           ),
           take(1),
         );
@@ -1542,11 +1543,7 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
       }
 
       return concat(
-        iif(
-          () => shouldSubscribe,
-          of(ChatEventsActions.subscribe()),
-          EMPTY,
-        ),
+        iif(() => shouldSubscribe, of(ChatEventsActions.subscribe()), EMPTY),
         of(ConversationsActions.createAbortController()),
         ...payload.conversations.map((conv, index) => {
           return of(
