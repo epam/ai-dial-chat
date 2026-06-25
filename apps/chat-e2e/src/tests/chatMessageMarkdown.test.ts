@@ -12,6 +12,7 @@ const resolvedImagePath = path.resolve(
 );
 const base64ImageUrl = `data:image/png;base64,${FileUtil.getBase64FileContent(resolvedImagePath)}`;
 const externalImageUrl = `https://example.com/images/${crypto.randomUUID()}.png`;
+const imageLinkText = 'image';
 
 dialTest(
   'Displaying base64 images (inline md)',
@@ -112,7 +113,7 @@ dialTest(
         ]) {
           const conversation =
             conversationData.prepareConversationWithTextContent(
-              `[image](${imageUrl})`,
+              `[${imageLinkText}](${imageUrl})`,
             );
           conversationData.resetData();
           imageConversationsMap.set(imageUrl, conversation);
@@ -155,14 +156,18 @@ dialTest(
             const popup = await popupPromise;
             await popup.waitForLoadState('domcontentloaded');
             baseAssertion.assertValue(popup.url(), expectedUrl as string);
+          } else if (imgUrl === base64ImageUrl) {
+            // Base64 image links are downloaded with the link text as a name, not navigated to
+            await chatMessagesAssertion.assertMessageImageDownloadName(
+              2,
+              `${imageLinkText}.png`,
+            );
           } else {
             await chatMessages.getAttachmentLink(2).click();
-            imgUrl === relativeImageUrl
-              ? baseAssertion.assertValue(
-                  page.url(),
-                  config.use?.baseURL?.concat(expectedUrl as string),
-                )
-              : baseAssertion.assertValueMatchPattern(page.url(), expectedUrl);
+            baseAssertion.assertValue(
+              page.url(),
+              config.use?.baseURL?.concat(expectedUrl as string),
+            );
             await dialHomePage.navigateBack();
           }
         },
