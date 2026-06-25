@@ -26,7 +26,5 @@
     "react": "^19.0.0",
     "react-json-view-lite": "^2.5.0"
   },
-  "dependencies": {
-    "@epam/ai-dial-react-pdf-highlighter": "0.2.0-dev.17"
-  }
+  "dependencies": {}
 }
