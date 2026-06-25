@@ -4,8 +4,27 @@ import * as applicationSchemasApi from '../../server-api/application-schemas';
 import * as deploymentsApi from '../../server-api/deployments.api';
 import { DeploymentsProvider, useDeployments } from '../DeploymentsContext';
 
+const contextMocks = vi.hoisted(() => ({
+  defaultDeploymentId: null as string | null,
+  selectedDeploymentId: null as string | null,
+  setSelectedDeployment: vi.fn(),
+}));
+
 vi.mock('../../server-api/deployments.api');
 vi.mock('../../server-api/application-schemas');
+vi.mock('../AppConfigContext', () => ({
+  useAppConfig: () => ({
+    config: {
+      defaultDeploymentId: contextMocks.defaultDeploymentId,
+    },
+  }),
+}));
+vi.mock('../UserConfigContext', () => ({
+  useUserConfig: () => ({
+    selectedDeploymentId: contextMocks.selectedDeploymentId,
+    setSelectedDeployment: contextMocks.setSelectedDeployment,
+  }),
+}));
 
 const mockItem1 = {
   id: 'gpt-4o',
@@ -28,6 +47,9 @@ describe('DeploymentsContext', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    contextMocks.defaultDeploymentId = null;
+    contextMocks.selectedDeploymentId = null;
+    contextMocks.setSelectedDeployment.mockResolvedValue(undefined);
     mockGetDeployments.mockResolvedValue(mockResponse);
     mockGetApplicationSchemas.mockResolvedValue(emptySchemas);
   });
@@ -95,25 +117,61 @@ describe('DeploymentsContext', () => {
     });
 
     expect(result.current.selectedItemId).toBe(mockItem2.id);
+    expect(contextMocks.setSelectedDeployment).toHaveBeenCalledWith(
+      mockItem2.id,
+    );
   });
 
-  it('restoreSelectedItemId updates selectedItemId without writing to localStorage', async () => {
+  it('restoreSelectedItemId updates selectedItemId without persisting user config', async () => {
     const { result } = renderHook(() => useDeployments(), {
       wrapper: DeploymentsProvider,
     });
 
     await waitFor(() => expect(result.current.items.length).toBe(2));
 
-    const storedBefore = localStorage.getItem('dial:selectedDeploymentId');
-
     act(() => {
       result.current.restoreSelectedItemId(mockItem2.id);
     });
 
     expect(result.current.selectedItemId).toBe(mockItem2.id);
-    expect(localStorage.getItem('dial:selectedDeploymentId')).toBe(
-      storedBefore,
-    );
+    expect(contextMocks.setSelectedDeployment).not.toHaveBeenCalled();
+  });
+
+  it('uses selected deployment from user config when it exists in the list', async () => {
+    contextMocks.selectedDeploymentId = mockItem2.id;
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+  });
+
+  it('uses operator default when user config selected deployment is absent', async () => {
+    contextMocks.defaultDeploymentId = mockItem2.id;
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedItemId).toBe(mockItem2.id);
+    });
+  });
+
+  it('falls back to first sorted deployment when configured ids are stale', async () => {
+    contextMocks.selectedDeploymentId = 'missing-user-selection';
+    contextMocks.defaultDeploymentId = 'missing-default';
+
+    const { result } = renderHook(() => useDeployments(), {
+      wrapper: DeploymentsProvider,
+    });
+
+    await waitFor(() => {
+      expect(result.current.selectedItemId).toBe(mockItem1.id);
+    });
   });
 
   it('throws when useDeployments is called outside DeploymentsProvider', () => {

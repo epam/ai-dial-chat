@@ -33,29 +33,29 @@ root.render(
           <UserProvider>
             <ThemeProvider>
               <AppConfigProvider>
-                <DeploymentsProvider>
-                  <SourcesSidebarProvider>
-                    <AttachmentCanvasProvider>
-                      <Suspense fallback={null}>
-                        <Routes>
-                          <Route path="/login" element={<LoginPage />} />
-                          <Route
-                            path="*"
-                            element={
-                              <RequireAuth>
-                                <UserConfigProvider>
+                <SourcesSidebarProvider>
+                  <AttachmentCanvasProvider>
+                    <Suspense fallback={null}>
+                      <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route
+                          path="*"
+                          element={
+                            <RequireAuth>
+                              <UserConfigProvider>
+                                <DeploymentsProvider>
                                   <ConversationsProvider>
                                     <App />
                                   </ConversationsProvider>
-                                </UserConfigProvider>
-                              </RequireAuth>
-                            }
-                          />
-                        </Routes>
-                      </Suspense>
-                    </AttachmentCanvasProvider>
-                  </SourcesSidebarProvider>
-                </DeploymentsProvider>
+                                </DeploymentsProvider>
+                              </UserConfigProvider>
+                            </RequireAuth>
+                          }
+                        />
+                      </Routes>
+                    </Suspense>
+                  </AttachmentCanvasProvider>
+                </SourcesSidebarProvider>
               </AppConfigProvider>
             </ThemeProvider>
           </UserProvider>
