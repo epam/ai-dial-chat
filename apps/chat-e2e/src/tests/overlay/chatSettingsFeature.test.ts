@@ -269,11 +269,15 @@ dialOverlayTest(
           { isOverlay: true },
         );
         const requestContent = 'test';
-        const request = await overlayChat.sendRequestWithButton(requestContent);
+        const request = await overlayChat.sendRequestWithButton(
+          requestContent,
+          false,
+        );
         overlayBaseAssertion.assertValue(
           request.messages[0].content,
           requestContent,
         );
+        await overlayChatMessages.getChatMessage(2).waitFor();
         await overlayChatMessagesAssertion.assertMessageDeleteIconState(
           1,
           'visible',

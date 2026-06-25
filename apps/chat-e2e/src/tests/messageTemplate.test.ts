@@ -853,7 +853,7 @@ dialTest(
         await dialHomePage.mockChatTextResponse(
           MockedChatApiResponseBodies.simpleTextBody,
         );
-        await sendMessage.sendMessageButton.click();
+        await sendMessage.sendRequest();
       },
     );
 
