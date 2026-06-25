@@ -57,6 +57,9 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
+  const canvasDefaultWidth = isMobile
+    ? undefined
+    : Math.min(1500, Math.round(window.innerWidth * (2 / 3)));
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
@@ -203,6 +206,7 @@ const App: FC = () => {
           copyJsonLabel={t(ButtonsI18nKeys.CopyAsJson)}
           copiedJsonLabel={t(ButtonsI18nKeys.Copied)}
           isMobile={isMobile}
+          defaultWidth={canvasDefaultWidth}
           codeBlockTheme={codeBlockTheme}
         />
       )}

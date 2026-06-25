@@ -1,7 +1,8 @@
+import type { Annotation, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { AttachmentType } from '@epam/ai-dial-chat-shared';
-import type { DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { annotationsToPdfHighlights } from '../../../utils/annotation';
 import { useOpenAttachmentCanvas } from '../useOpenAttachmentCanvas';
 
 const mockOpenCanvas = vi.fn();
@@ -18,6 +19,7 @@ vi.mock('@epam/ai-dial-attachment-canvas', async (importOriginal) => {
 const mockResolveMarkdown = vi.fn();
 const mockResolveJson = vi.fn();
 const mockResolveText = vi.fn();
+const mockResolvePdf = vi.fn();
 
 vi.mock('../../../utils/attachment-canvas', () => ({
   resolveImageCanvasContent: vi.fn(),
@@ -25,6 +27,7 @@ vi.mock('../../../utils/attachment-canvas', () => ({
     mockResolveMarkdown(...args),
   resolveJsonCanvasContent: (...args: unknown[]) => mockResolveJson(...args),
   resolveTextCanvasContent: (...args: unknown[]) => mockResolveText(...args),
+  resolvePdfCanvasContent: (...args: unknown[]) => mockResolvePdf(...args),
 }));
 
 const makeAttachment = (
@@ -157,5 +160,208 @@ describe('useOpenAttachmentCanvas routing', () => {
     expect(opened).toBe(true);
     expect(mockOpenCanvas).toHaveBeenCalledOnce();
     expect(mockResolveMarkdown).toHaveBeenCalledOnce();
+  });
+
+  it('routes application/pdf MIME type to the PDF resolver', async () => {
+    const pdfContent = {
+      type: 'pdf' as const,
+      url: 'https://example.com/doc.pdf',
+    };
+    mockResolvePdf.mockReturnValue(pdfContent);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('doc.pdf', 'application/pdf'),
+    );
+
+    expect(opened).toBe(true);
+    expect(mockResolvePdf).toHaveBeenCalledOnce();
+    expect(mockResolveMarkdown).not.toHaveBeenCalled();
+    expect(mockResolveJson).not.toHaveBeenCalled();
+    expect(mockResolveText).not.toHaveBeenCalled();
+    expect(mockOpenCanvas).toHaveBeenCalledWith(pdfContent, 'doc.pdf');
+  });
+
+  it('routes .pdf extension to the PDF resolver', async () => {
+    const pdfContent = {
+      type: 'pdf' as const,
+      url: 'https://example.com/report.pdf',
+    };
+    mockResolvePdf.mockReturnValue(pdfContent);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('report.pdf'),
+    );
+
+    expect(opened).toBe(true);
+    expect(mockResolvePdf).toHaveBeenCalledOnce();
+    expect(mockResolveMarkdown).not.toHaveBeenCalled();
+    expect(mockResolveJson).not.toHaveBeenCalled();
+    expect(mockResolveText).not.toHaveBeenCalled();
+  });
+
+  it('opens unsupported canvas when application/pdf MIME resolver returns null', async () => {
+    mockResolvePdf.mockReturnValue(null);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('doc.pdf', 'application/pdf'),
+    );
+
+    expect(opened).toBe(true);
+    expect(mockResolvePdf).toHaveBeenCalledOnce();
+    expect(mockOpenCanvas).toHaveBeenCalledOnce();
+  });
+
+  it('returns false when .pdf extension resolver returns null', async () => {
+    mockResolvePdf.mockReturnValue(null);
+
+    const { result } = renderHook(() => useOpenAttachmentCanvas());
+    const opened = await result.current.openAttachmentCanvas(
+      makeAttachment('report.pdf'),
+    );
+
+    expect(opened).toBe(false);
+    expect(mockOpenCanvas).not.toHaveBeenCalled();
+  });
+});
+
+describe('annotationsToPdfHighlights', () => {
+  it('maps a single annotation with one pdf_bbox selector to a highlight', () => {
+    const annotations: Annotation[] = [
+      {
+        index: 0,
+        body: {
+          selector: {
+            type: 'pdf_bbox',
+            page: 1,
+            x1: 10,
+            y1: 20,
+            x2: 100,
+            y2: 50,
+          },
+        },
+      },
+    ];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights).toHaveLength(1);
+    expect(highlights[0].id).toBe('0');
+    expect(highlights[0].bboxes).toEqual([
+      { page: 1, x1: 10, y1: 20, x2: 100, y2: 50 },
+    ]);
+  });
+
+  it('maps a single annotation with multiple pdf_bbox selectors to one highlight with multiple bboxes', () => {
+    const annotations: Annotation[] = [
+      {
+        index: 3,
+        body: {
+          selector: [
+            { type: 'pdf_bbox', page: 1, x1: 0, y1: 0, x2: 10, y2: 10 },
+            { type: 'pdf_bbox', page: 2, x1: 5, y1: 5, x2: 15, y2: 15 },
+          ],
+        },
+      },
+    ];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights).toHaveLength(1);
+    expect(highlights[0].id).toBe('3');
+    expect(highlights[0].bboxes).toHaveLength(2);
+  });
+
+  it('maps multiple annotations to multiple highlights', () => {
+    const annotations: Annotation[] = [
+      {
+        index: 0,
+        body: {
+          selector: { type: 'pdf_bbox', page: 1, x1: 0, y1: 0, x2: 10, y2: 10 },
+        },
+      },
+      {
+        index: 1,
+        body: {
+          selector: { type: 'pdf_bbox', page: 2, x1: 5, y1: 5, x2: 20, y2: 20 },
+        },
+      },
+    ];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights).toHaveLength(2);
+    expect(highlights[0].id).toBe('0');
+    expect(highlights[1].id).toBe('1');
+  });
+
+  it('uses array position as id when annotation.index is absent', () => {
+    const annotations: Annotation[] = [
+      {
+        body: {
+          selector: { type: 'pdf_bbox', page: 1, x1: 0, y1: 0, x2: 10, y2: 10 },
+        },
+      },
+      {
+        body: {
+          selector: {
+            type: 'pdf_bbox',
+            page: 1,
+            x1: 20,
+            y1: 0,
+            x2: 30,
+            y2: 10,
+          },
+        },
+      },
+    ];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights).toHaveLength(2);
+    expect(highlights[0].id).toBe('0');
+    expect(highlights[1].id).toBe('1');
+  });
+
+  it('skips annotations with no pdf_bbox selectors', () => {
+    const annotations: Annotation[] = [
+      {
+        index: 0,
+        body: { selector: { type: 'text_character_range', start: 0, end: 5 } },
+      },
+      {
+        index: 1,
+        body: {
+          selector: { type: 'pdf_bbox', page: 1, x1: 0, y1: 0, x2: 10, y2: 10 },
+        },
+      },
+    ];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights).toHaveLength(1);
+    expect(highlights[0].id).toBe('1');
+  });
+
+  it('skips annotations with missing selector', () => {
+    const annotations: Annotation[] = [
+      { index: 0, body: {} },
+      {
+        index: 1,
+        body: {
+          selector: { type: 'pdf_bbox', page: 1, x1: 0, y1: 0, x2: 10, y2: 10 },
+        },
+      },
+    ];
+
+    const highlights = annotationsToPdfHighlights(annotations);
+
+    expect(highlights).toHaveLength(1);
+  });
+
+  it('returns an empty array when given an empty list', () => {
+    expect(annotationsToPdfHighlights([])).toEqual([]);
   });
 });

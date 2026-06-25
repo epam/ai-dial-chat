@@ -107,9 +107,6 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     [stylesProp],
   );
 
-  const resolvedDefaultWidth =
-    defaultWidth ?? Math.min(maxWidth, Math.round(window.innerWidth * (2 / 3)));
-
   const showCopyMarkdown =
     onCopyMarkdown != null && content.type === AttachmentContentType.Markdown;
   const showCopyJson =
@@ -219,7 +216,7 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       closeLabel={closeLabel}
       onClose={onClose}
       resizable={!isMobile}
-      defaultWidth={resolvedDefaultWidth}
+      defaultWidth={defaultWidth}
       minWidth={minWidth}
       maxWidth={maxWidth}
       onResizeStop={onResizeStop}

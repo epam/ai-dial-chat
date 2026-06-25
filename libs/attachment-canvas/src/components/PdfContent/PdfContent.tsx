@@ -1,3 +1,4 @@
+import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import type { PdfViewerApi } from '@epam/ai-dial-react-pdf-highlighter';
 import {
   DocumentPreview,
@@ -21,14 +22,15 @@ export const PdfContent: FC<PdfContentProps> = ({
   selectedHighlightId,
   loadPdf,
 }) => {
+  const isMobile = useIsMobile();
   const [totalPages, setTotalPages] = useState(0);
   const [thumbnails, setThumbnails] = useState<Map<number, string>>(new Map());
   const [selectedPage, setSelectedPage] = useState(1);
   const viewerApiRef = useRef<PdfViewerApi | null>(null);
 
   const thumbnailPageNumbers = useMemo(
-    () => Array.from({ length: totalPages }, (_, i) => i + 1),
-    [totalPages],
+    () => (isMobile ? [] : Array.from({ length: totalPages }, (_, i) => i + 1)),
+    [isMobile, totalPages],
   );
 
   const handleThumbnailsLoaded = useCallback((map: Map<number, string>) => {
@@ -47,7 +49,7 @@ export const PdfContent: FC<PdfContentProps> = ({
   return (
     <div className="flex h-full overflow-hidden">
       {totalPages > 0 && (
-        <div className="w-30 mr-1 shrink-0 overflow-auto pr-0.5">
+        <div className="w-30 me-1 shrink-0 overflow-auto pe-0.5 mobile:hidden">
           {thumbnailPageNumbers.map((pageNum) => (
             <PageThumbnail
               key={pageNum}
