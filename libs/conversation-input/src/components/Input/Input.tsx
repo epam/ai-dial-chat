@@ -48,6 +48,7 @@ export const Input: FC<InputProps> = ({
   removeLabel,
   retryLabel,
   sendLabel,
+  sendTitle,
   stopLabel,
   micLabel = 'Record voice message',
   colors,
@@ -407,6 +408,7 @@ export const Input: FC<InputProps> = ({
                         hasBlockedAttachments
                       }
                       ariaLabel={sendLabel}
+                      title={sendTitle}
                     />
                   )
                 )}
