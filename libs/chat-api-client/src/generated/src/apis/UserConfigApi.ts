@@ -16,6 +16,7 @@ import * as runtime from '../runtime';
 import type {
   UpdateInstalledDto,
   UpdatePinsDto,
+  UpdateSelectedDeploymentDto,
   UserConfigDto,
 } from '../models/index';
 
@@ -29,6 +30,10 @@ export interface UpdateInstalledToolsetRequest {
 
 export interface UpdatePinRequest {
   updatePinsDto: UpdatePinsDto;
+}
+
+export interface UpdateSelectedDeploymentRequest {
+  updateSelectedDeploymentDto: UpdateSelectedDeploymentDto;
 }
 
 /**
@@ -206,5 +211,51 @@ export class UserConfigApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.updatePinRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Set the selected deployment
+   */
+  async updateSelectedDeploymentRaw(
+    requestParameters: UpdateSelectedDeploymentRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['updateSelectedDeploymentDto'] == null) {
+      throw new runtime.RequiredError(
+        'updateSelectedDeploymentDto',
+        'Required parameter "updateSelectedDeploymentDto" was null or undefined when calling updateSelectedDeployment().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/user-config/deployments/selected`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['updateSelectedDeploymentDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Set the selected deployment
+   */
+  async updateSelectedDeployment(
+    requestParameters: UpdateSelectedDeploymentRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.updateSelectedDeploymentRaw(requestParameters, initOverrides);
   }
 }

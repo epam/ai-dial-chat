@@ -352,6 +352,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   transcribeSizeLimitBytes: number;
+  /**
+   * Operator-configured default deployment ID. Null when not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  defaultDeploymentId?: string | null;
 }
 /**
  *
@@ -1238,6 +1244,12 @@ export interface DeploymentsConfigDto {
    * @memberof DeploymentsConfigDto
    */
   installed: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof DeploymentsConfigDto
+   */
+  selectedId?: string | null;
 }
 /**
  *
@@ -2372,6 +2384,19 @@ export interface UpdatePinsDto {
    * @memberof UpdatePinsDto
    */
   isPinned: boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdateSelectedDeploymentDto
+ */
+export interface UpdateSelectedDeploymentDto {
+  /**
+   * Deployment ID to set as selected, or null to clear.
+   * @type {string}
+   * @memberof UpdateSelectedDeploymentDto
+   */
+  id?: string | null;
 }
 /**
  *

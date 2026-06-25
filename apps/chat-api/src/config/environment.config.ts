@@ -133,6 +133,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  DEFAULT_DEPLOYMENT?: string;
+
+  @IsOptional()
+  @IsString()
   ASR_MODEL?: string;
 
   @IsOptional()

@@ -12,7 +12,12 @@ import {
   DialSpinner,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { IconDownload, IconPhoto, IconReload, IconX } from '@tabler/icons-react';
+import {
+  IconDownload,
+  IconPhoto,
+  IconReload,
+  IconX,
+} from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, type MouseEvent, useMemo } from 'react';
 import {
   LazyImageLoadStatus,
@@ -123,7 +128,10 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
             <DialGhostIconButton
               icon={<IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />}
               size={ElementSize.Small}
-              className={mergeClasses('h-6 w-6 shrink-0 rounded', styles.actionBtn)}
+              className={mergeClasses(
+                'h-6 w-6 shrink-0 rounded',
+                styles.actionBtn,
+              )}
               aria-label={clickLabel}
               onClick={(e: MouseEvent) => {
                 e.stopPropagation();

@@ -1,9 +1,10 @@
 import { Body, Controller, Get, HttpCode, Patch, Req } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { UpdateInstalledDto } from './dto/update-installed.dto';
 import { UpdatePinsDto } from './dto/update-pins.dto';
+import { UpdateSelectedDeploymentDto } from './dto/update-selected-deployment.dto';
 import { UserConfigDto } from './dto/user-config.dto';
 import { UserConfigService } from './user-config.service';
 
@@ -69,5 +70,19 @@ export class UserConfigController {
       at,
       bucket,
     );
+  }
+
+  @Patch('deployments/selected')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Set the selected deployment' })
+  @ApiBody({ type: UpdateSelectedDeploymentDto })
+  @ApiResponse({ status: 204, description: 'Selected deployment updated' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  updateSelectedDeployment(
+    @Req() req: Request,
+    @Body() dto: UpdateSelectedDeploymentDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    return this.userConfigService.updateSelectedDeployment(dto.id, at, bucket);
   }
 }
