@@ -35,23 +35,23 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+    - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       with:
         repository: ${{ inputs.test-repository }}
         ref: ${{ inputs.test-branch }}
         path: ${{ inputs.working-directory }}
         lfs: true
         persist-credentials: false
-    - uses: falti/dotenv-action@a33be0b8cf6a6e6f1b82cc9f3782061ab1022be5 # v1.1.4
+    - uses: falti/dotenv-action@fff81fa3263fb96221c521b5e526e57c0c56d760 # v1.2.1
       with:
         path: "${{ inputs.working-directory }}/${{ inputs.dotenv-file }}"
         log-variables: true
         export-variables: true
         keys-case: bypass
-    - uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+    - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
       with:
         node-version: ${{ inputs.node-version }}
-    - uses: actions/setup-java@7a6d8a8234af8eb26422e24e3006232cccaa061b # v4.6.0
+    - uses: actions/setup-java@ad2b38190b15e4d6bdf0c97fb4fca8412226d287 # v5.3.0
       with:
         distribution: ${{ inputs.java-distribution }}
         java-version: ${{ inputs.java-version }}
@@ -94,7 +94,7 @@ runs:
       shell: bash
       working-directory: ${{ inputs.working-directory }}
     - name: Upload Allure Report
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       if: ${{ !cancelled() }}
       with:
         name: "${{ inputs.report-prefix }}-chat"

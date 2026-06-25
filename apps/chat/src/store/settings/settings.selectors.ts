@@ -135,6 +135,9 @@ const selectAnnouncement = (state: RootState) =>
 const selectThemeHostDefined = (state: RootState) =>
   rootSelector(state).themesHostDefined;
 
+const selectAvailableLocales = (state: RootState) =>
+  rootSelector(state).availableLocales;
+
 const selectCustomVisualizers = (state: RootState) =>
   rootSelector(state).customRenderers;
 
@@ -317,6 +320,7 @@ export const SettingsSelectors = {
   selectStorageType,
   selectAnnouncement,
   selectThemeHostDefined,
+  selectAvailableLocales,
   selectIsIsolatedView,
   selectIsolatedModelId,
   selectPreselectedConversationId,

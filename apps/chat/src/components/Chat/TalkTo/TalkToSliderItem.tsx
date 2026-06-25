@@ -14,7 +14,7 @@ import { CardType } from '@/src/types/talkTo';
 import { Translation } from '@/src/types/translation';
 
 import { useAppSelector } from '@/src/store/hooks';
-import { ModelsSelectors } from '@/src/store/selectors';
+import { AuthSelectors, ModelsSelectors } from '@/src/store/selectors';
 
 import { REPLAY_AS_IS_MODEL } from '@/src/constants/chat';
 import { ChatI18nKeys } from '@/src/constants/i18n';
@@ -40,6 +40,7 @@ export const TalkToSliderItem = ({
 }: TalkToSliderItemProps) => {
   const { t } = useTranslation(Translation.Chat);
   const modelsMap = useAppSelector(ModelsSelectors.selectModelsMap);
+  const isAdmin = useAppSelector(AuthSelectors.selectIsAdmin);
 
   const isNotPseudoModelSelected =
     groupItem.reference === conversation.model.id &&
@@ -89,6 +90,7 @@ export const TalkToSliderItem = ({
       key={groupItem.id}
       entity={groupItem as DialAIEntityModel}
       onClick={onSelectModel}
+      overrideDisabledActions={{ unpublish: !isAdmin }}
     />
   );
 };
