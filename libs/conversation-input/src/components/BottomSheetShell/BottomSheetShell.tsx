@@ -115,7 +115,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
                 />
               </div>
             </div>
-            <div className={'h-px flex-shrink-0'} />
+            <div className="h-px flex-shrink-0" />
           </>
         )}
         <div className="overflow-y-auto">{children}</div>
