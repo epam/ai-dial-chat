@@ -93,14 +93,25 @@ dialTest(
     sendMessage,
     localStorageManager,
     page,
+    fileApiHelper,
     baseAssertion,
   }) => {
     setTestIds('EPMRTC-477', 'EPMRTC-1463');
-    await dialTest.step('Set random application theme', async () => {
-      const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
-      await localStorageManager.setSettings(theme);
-      await localStorageManager.setShowSideBarPanels();
-    });
+    await dialTest.step(
+      'Set random application theme and installed model',
+      async () => {
+        const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
+        await localStorageManager.setSettings(theme);
+        await localStorageManager.setShowSideBarPanels();
+        const randomModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModels(),
+        );
+        await fileApiHelper.updateInstalledDeployments([randomModel]);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          randomModel,
+        );
+      },
+    );
 
     await dialTest.step(
       'Send a request in chat and emulate error until response received',
