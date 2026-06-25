@@ -27,8 +27,7 @@ export class AgentAndToolsetSelectModal extends AgentsBrowserModal {
     }
   }
 
-  // Only the "Selected" section renders chips inside the modal,
-  // so the field's chip selector is safe to reuse here.
+  // Only the "Selected" section renders chips inside the modal.
   public selectedChips = this.getChildElementBySelector(
     AddQuickApp2SettingsFormSelector.agentChip,
   );
@@ -38,8 +37,13 @@ export class AgentAndToolsetSelectModal extends AgentsBrowserModal {
       AddQuickApp2SettingsFormSelector.chipName,
       { hasText: new RegExp(`^\\s*${RegexUtil.escapeRegexChars(name)}\\s*$`) },
     );
+    // The overflow container renders a hidden copy of each chip to measure
+    // width; the visible one comes first in the DOM, so take it.
     return this.createElementFromLocator(
-      this.selectedChips.getElementLocator().filter({ has: chipNameWithText }),
+      this.selectedChips
+        .getElementLocator()
+        .filter({ has: chipNameWithText })
+        .first(),
     );
   }
 }
