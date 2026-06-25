@@ -587,6 +587,7 @@ const ConversationView: FC<Props> = ({
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 sendLabel={t(ChatI18nKeys.SendMessage)}
+                sendTitle={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
                 isTranscriptionSupported={isTranscriptionSupported}
                 messageHistory={messageHistory}

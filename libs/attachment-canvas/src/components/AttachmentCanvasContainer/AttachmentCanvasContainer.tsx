@@ -32,6 +32,8 @@ export interface AttachmentCanvasContainerProps {
   copiedJsonLabel?: string;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. Defaults to `false`. */
   isMobile?: boolean;
+  /** Initial panel width in pixels. When omitted, SidebarPanel uses its own default. */
+  defaultWidth?: number;
   /** Syntax highlight color theme forwarded to MarkdownRenderer code blocks. */
   codeBlockTheme?: CodeBlockTheme;
 }
@@ -49,6 +51,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
       copyJsonLabel,
       copiedJsonLabel,
       isMobile = false,
+      defaultWidth,
       codeBlockTheme,
     }) => {
       const { isOpen, content, fileName, closeCanvas } = useAttachmentCanvas();
@@ -97,6 +100,7 @@ export const AttachmentCanvasContainer: FC<AttachmentCanvasContainerProps> =
           copiedJsonLabel={copiedJsonLabel}
           unsupportedLabel={unsupportedLabel}
           isMobile={isMobile}
+          defaultWidth={defaultWidth}
           codeBlockTheme={codeBlockTheme}
         />
       );

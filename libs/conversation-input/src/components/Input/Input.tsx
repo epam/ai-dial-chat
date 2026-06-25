@@ -2,7 +2,11 @@ import {
   AttachmentTray,
   useClipboardPaste,
 } from '@epam/ai-dial-attachment-input';
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
@@ -19,11 +23,10 @@ import {
 } from 'react';
 import { useAttachments } from '../../hooks/useAttachments';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
-import { useIsMobile } from '../../hooks/useIsMobile';
 import { useMessageState } from '../../hooks/useMessageState';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
-import { SendOnEnter } from '../../models/Input';
 import type { InputProps } from '../../models/Input';
+import { SendOnEnter } from '../../models/Input';
 import { AddAttachmentButton } from '../AddAttachmentButton/AddAttachmentButton';
 import { VoiceBar } from '../VoiceBar/VoiceBar';
 import { SendButton } from './Buttons/SendButton';
@@ -48,6 +51,7 @@ export const Input: FC<InputProps> = ({
   removeLabel,
   retryLabel,
   sendLabel,
+  sendTitle,
   stopLabel,
   micLabel = 'Record voice message',
   colors,
@@ -407,6 +411,7 @@ export const Input: FC<InputProps> = ({
                         hasBlockedAttachments
                       }
                       ariaLabel={sendLabel}
+                      title={sendTitle}
                     />
                   )
                 )}
