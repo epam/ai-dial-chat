@@ -35,7 +35,6 @@ import {
 } from '@/src/utils/app/form-schema';
 import { isFolderId } from '@/src/utils/app/id';
 import { isSmallScreen } from '@/src/utils/app/mobile';
-import { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 import { getEntitiesFromTemplateMapping } from '@/src/utils/app/prompts';
 import { ApiUtils } from '@/src/utils/server/api';
 
@@ -483,22 +482,10 @@ export const UserMessage = memo(function UserMessage({
     );
   }, []);
 
-  const { uploadFiles: uploadPastedFiles, dispatchPreparedFiles } =
-    useChatUploadFiles({
-      selectedAttachmentsAmount: newEditableAttachments.length,
-      skipSelect: true,
-    });
-
-  const handleUploadFromDevice = useCallback(
-    (selectedFiles: ResolvedUploadFile[], folderPath: string | undefined) => {
-      const ids = dispatchPreparedFiles(selectedFiles, folderPath, {
-        isFromDeviceAttachment: true,
-      });
-
-      setNewEditableAttachmentsIds((prevIds) => uniq(prevIds.concat(ids)));
-    },
-    [dispatchPreparedFiles],
-  );
+  const { uploadFiles: uploadPastedFiles } = useChatUploadFiles({
+    selectedAttachmentsAmount: newEditableAttachments.length,
+    skipSelect: true,
+  });
 
   const handleToggleEditingTemplates = useCallback(
     (value?: boolean) => {
@@ -783,7 +770,6 @@ export const UserMessage = memo(function UserMessage({
               }
               selectedFilesIds={selectedFileIds}
               onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-              onUploadFromDevice={handleUploadFromDevice}
               onAddLinkToMessage={handleAddLinkToMessage}
             />
           </div>

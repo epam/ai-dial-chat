@@ -64,6 +64,7 @@ interface Props {
     files: DialFile[];
     folders?: FolderInterface[];
   };
+  isPreUploadOpen?: boolean;
 }
 
 export const FileManagerModal = memo(
@@ -82,6 +83,7 @@ export const FileManagerModal = memo(
     warningMessage,
     maxSelectableFileSize,
     additionalFilesAndFolders,
+    isPreUploadOpen,
   }: Props) => {
     const dispatch = useAppDispatch();
     const { t } = useTranslation(Translation.Chat);
@@ -500,6 +502,12 @@ export const FileManagerModal = memo(
               emptyStateDescription={emptyStateDescription}
               hideSearchPathItemName
               autoSelectUploadedItems
+              initialUploadFilesOpen={
+                isPreUploadOpen &&
+                !areFilesLoading &&
+                !areFoldersLoading &&
+                !isAnyOperationInProgress
+              }
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">
