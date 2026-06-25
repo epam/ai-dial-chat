@@ -22,13 +22,14 @@ permissions:
 
 jobs:
   release:
-    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@4.6.1
+    uses: epam/ai-dial-ci/.github/workflows/node_release.yml@4.7.0
     with:
       promote: ${{ github.event_name == 'workflow_dispatch' && inputs.promote }}
       node-version: 24
       filter-version: '1\.[0-9]+'
       primary-branch-pattern: '^development-1\.0$'
       release-branch-pattern: '^release-1\.[0-9]+$'
+      docker-development-tag: 'development-1.0'
       maximize-build-space: true
       draft-stable-releases: true
     secrets: inherit
