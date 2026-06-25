@@ -32,7 +32,8 @@ async function bootstrap() {
             'https://fonts.googleapis.com',
           ],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
-          scriptSrc: ["'self'"],
+          // unpkg.com required for PDF.js worker (pdfjs-dist/build/pdf.worker.min.mjs)
+          scriptSrc: ["'self'", 'https://unpkg.com'],
           imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
         },
       },
