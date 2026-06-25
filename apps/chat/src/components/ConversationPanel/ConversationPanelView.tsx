@@ -303,6 +303,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       showNotification({
         variant: NotificationVariant.Success,
         message: t(ConversationPanelI18nKeys.DeleteSuccess),
+        title: t(ConversationPanelI18nKeys.DeleteSuccessTitle),
       });
     } catch {
       setDeleteError(t(ConversationPanelI18nKeys.DeleteError));
