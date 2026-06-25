@@ -410,4 +410,5 @@ export const DEFAULT_PROVIDER: OAuthProviderType | null =
  *
  * @type {boolean}
  */
-export const isAuthDisabled: boolean = authProviders.length === 0;
+export const isAuthDisabled: boolean =
+  process.env.AUTH_FORCE_STRICT !== 'true' && authProviders.length === 0;

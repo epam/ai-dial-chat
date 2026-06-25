@@ -1,23 +1,33 @@
 # node:24-alpine vulnerabilities in https://hub.docker.com/layers/library/node/24-alpine
 
 # zlib
+
 CVE-2026-22184 exp:2026-05-20
 
 # tar
+
 CVE-2026-31802 exp:2026-05-20
 CVE-2026-29786 exp:2026-05-20
 CVE-2026-26960 exp:2026-05-20
 
 # minimatch
+
 CVE-2026-26996 exp:2026-05-20
 CVE-2026-27903 exp:2026-05-20
 CVE-2026-27904 exp:2026-05-20
 
 # picomatch
+
 CVE-2026-33671 exp:2026-05-20
 
 # libcrypto3 libssl3
-CVE-2026-28390  exp:2026-05-20
 
-# musl  musl-utils
-CVE-2026-40200  exp:2026-05-20
+CVE-2026-28390 exp:2026-05-20
+
+# musl musl-utils
+
+CVE-2026-40200 exp:2026-05-20
+
+# undici
+
+CVE-2026-12151 exp:2026-09-20
