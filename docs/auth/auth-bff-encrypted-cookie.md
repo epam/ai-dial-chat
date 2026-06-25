@@ -258,7 +258,7 @@ The proposed pattern is the only column that scores well on **all four** of your
 
 ## 10. Suggested Thin Vertical Slice
 
-Following `incremental-implementation`:
+Building in thin vertical slices (see the task rules in `openspec/config.yaml`):
 
 1. **Slice 1 — single provider (Keycloak), happy path**
    `auth.module`, `provider-registry` with one entry, `/auth/login`, `/auth/callback`, `session.service` (encrypt/decrypt), `/auth/me`. Cookie holds full payload. No refresh yet.
