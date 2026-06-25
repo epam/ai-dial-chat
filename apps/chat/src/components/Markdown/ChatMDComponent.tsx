@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { Children, ReactNode, memo, useMemo } from 'react';
 import { Components, Options } from 'react-markdown';
 
@@ -7,6 +8,10 @@ import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
 import { dataToBlobUrl } from '@/src/utils/app/dataUrl';
+import {
+  isAllowedImageUrl,
+  parseAllowedImageHosts,
+} from '@/src/utils/app/image-security';
 import { preprocessLaTeX } from '@/src/utils/app/latex';
 
 import { ScreenState } from '@/src/types/common';
@@ -55,6 +60,7 @@ const transformUri = (src: string): string => {
 const getMDComponents = (
   isShowResponseLoader: boolean,
   isInner: boolean,
+  allowedImageHosts: string[],
 ): Components => {
   return {
     code({ className, children, node, ...props }) {
@@ -193,6 +199,21 @@ const getMDComponents = (
         </a>
       );
     },
+    img({ src, ...props }) {
+      // Strip external images entirely to prevent silent data exfiltration
+      // via auto-loaded image URLs. Only same-origin, `data:` and explicitly
+      // allowlisted hosts are rendered.
+      if (
+        !isAllowedImageUrl(
+          typeof src === 'string' ? src : undefined,
+          allowedImageHosts,
+        )
+      ) {
+        return null;
+      }
+
+      return <img src={src} {...props} />;
+    },
   };
 };
 
@@ -234,6 +255,9 @@ export const ChatMDComponent = memo(
   }: ChatMDComponentProps) => {
     const isChatFullWidth = useAppSelector(UISelectors.selectIsChatFullWidth);
     const isOverlay = useAppSelector(SettingsSelectors.selectIsOverlay);
+    const allowedImageSources = useAppSelector(
+      SettingsSelectors.selectAllowedImageSources,
+    );
 
     const screenState = useScreenState();
 
@@ -244,9 +268,14 @@ export const ChatMDComponent = memo(
       (screenState === ScreenState.SM || isOverlay) && 'leading-[150%]',
     );
 
+    const allowedImageHosts = useMemo(
+      () => parseAllowedImageHosts(allowedImageSources),
+      [allowedImageSources],
+    );
+
     const components = useMemo(
-      () => getMDComponents(isShowResponseLoader, isInner),
-      [isShowResponseLoader, isInner],
+      () => getMDComponents(isShowResponseLoader, isInner, allowedImageHosts),
+      [isShowResponseLoader, isInner, allowedImageHosts],
     );
 
     const processedContent = preprocessLaTeX(content);
