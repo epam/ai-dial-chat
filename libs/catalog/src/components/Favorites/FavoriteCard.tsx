@@ -70,16 +70,20 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   return (
     <div
       data-card-id={item.id}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
+      {...(onClick
+        ? {
+            role: 'button' as const,
+            tabIndex: 0,
+            onClick: handleClick,
+            onKeyDown: handleKeyDown,
+          }
+        : {})}
       className={mergeClasses(
         'box-border flex min-w-0 cursor-pointer flex-col rounded-[6px] p-3 pb-2',
         'w-full text-start',
         styles.card,
         isLeaving && styles.cardLeaving,
       )}
-      onClick={handleClick}
-      onKeyDown={handleKeyDown}
       onAnimationEnd={
         isLeaving
           ? (e) => {
