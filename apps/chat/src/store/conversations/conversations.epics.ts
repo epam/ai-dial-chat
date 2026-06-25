@@ -1483,18 +1483,6 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.sendMessages.type),
     switchMap(({ payload }) => {
-      const isChatEventsEnabled = SettingsSelectors.isFeatureEnabled(
-        state$.value,
-        Feature.LiveChatInteraction,
-      );
-      const isSubscribed = ChatEventsSelectors.selectIsSubscribed(state$.value);
-      const isSubscribing = ChatEventsSelectors.selectIsSubscribing(
-        state$.value,
-      );
-
-      const shouldSubscribe =
-        isChatEventsEnabled && !isSubscribed && !isSubscribing;
-
       const isCompareMode = payload.conversations.length > 1;
 
       let precomputedNames: (string | undefined)[] = payload.conversations.map(
@@ -1543,7 +1531,6 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
       }
 
       return concat(
-        iif(() => shouldSubscribe, of(ChatEventsActions.subscribe()), EMPTY),
         of(ConversationsActions.createAbortController()),
         ...payload.conversations.map((conv, index) => {
           return of(
@@ -1687,6 +1674,15 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           state$.value,
           Feature.Marketplace,
         );
+        const isChatEventsEnabled = SettingsSelectors.isFeatureEnabled(
+          state$.value,
+          Feature.LiveChatInteraction,
+        );
+        const shouldSubscribe =
+          isChatEventsEnabled &&
+          !ChatEventsSelectors.selectIsSubscribed(state$.value) &&
+          !ChatEventsSelectors.selectIsSubscribing(state$.value);
+
         const model = modelsMap[updatedConversation.model.id];
 
         if (!payload.skipRecentModelsUpdate) {
@@ -1714,6 +1710,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         }
 
         return concat(
+          iif(() => shouldSubscribe, of(ChatEventsActions.subscribe()), EMPTY),
           ...actions,
           of(
             ConversationsActions.updateConversation({
