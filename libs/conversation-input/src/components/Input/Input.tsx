@@ -299,7 +299,7 @@ export const Input: FC<InputProps> = ({
       className={mergeClasses(
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
-        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded border px-3 py-2',
+        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded border p-3',
         className,
       )}
     >
@@ -332,7 +332,7 @@ export const Input: FC<InputProps> = ({
       ) : (
         <div
           className={mergeClasses(
-            'flex items-center gap-2',
+            'flex items-center gap-2 mobile:gap-y-3',
             isStackedLayout ? 'flex-wrap' : 'flex-wrap desktop:flex-nowrap',
           )}
         >
@@ -380,7 +380,7 @@ export const Input: FC<InputProps> = ({
           </div>
           <div
             className={mergeClasses(
-              'flex flex-shrink-0 items-center gap-2',
+              'flex flex-shrink-0 items-center gap-1',
               'order-3 ms-auto',
               !isStackedLayout && 'desktop:ms-0',
             )}
