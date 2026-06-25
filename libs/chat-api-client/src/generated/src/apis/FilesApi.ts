@@ -55,10 +55,24 @@ export interface ListFilesRequest {
   permissions?: boolean;
 }
 
+export interface ListPublicFilesRequest {
+  path?: string;
+  token?: string;
+  limit?: number;
+  recursive?: boolean;
+}
+
+export interface ListSharedFilesRequest {
+  path?: string;
+  token?: string;
+  limit?: number;
+}
+
 export interface UploadFileRequest {
   file: Blob;
   bucket: string;
   path: string;
+  uploadMode?: UploadFileUploadModeEnum;
 }
 
 /**
@@ -410,6 +424,118 @@ export class FilesApi extends runtime.BaseAPI {
   }
 
   /**
+   * Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket.
+   * List files from the organization (public) bucket
+   */
+  async listPublicFilesRaw(
+    requestParameters: ListPublicFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListFilesResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['token'] != null) {
+      queryParameters['token'] = requestParameters['token'];
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    if (requestParameters['recursive'] != null) {
+      queryParameters['recursive'] = requestParameters['recursive'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/public`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListFilesResponseDto>(response);
+  }
+
+  /**
+   * Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket.
+   * List files from the organization (public) bucket
+   */
+  async listPublicFiles(
+    requestParameters: ListPublicFilesRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListFilesResponseDto> {
+    const response = await this.listPublicFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Proxies the DIAL Core sharing API to return files shared with the authenticated user.
+   * List files shared with the current user
+   */
+  async listSharedFilesRaw(
+    requestParameters: ListSharedFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ListFilesResponseDto>> {
+    const queryParameters: runtime.HTTPQuery = {};
+
+    if (requestParameters['path'] != null) {
+      queryParameters['path'] = requestParameters['path'];
+    }
+
+    if (requestParameters['token'] != null) {
+      queryParameters['token'] = requestParameters['token'];
+    }
+
+    if (requestParameters['limit'] != null) {
+      queryParameters['limit'] = requestParameters['limit'];
+    }
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/files/shared`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ListFilesResponseDto>(response);
+  }
+
+  /**
+   * Proxies the DIAL Core sharing API to return files shared with the authenticated user.
+   * List files shared with the current user
+   */
+  async listSharedFiles(
+    requestParameters: ListSharedFilesRequest = {},
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ListFilesResponseDto> {
+    const response = await this.listSharedFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
    */
   async uploadFileRaw(
     requestParameters: UploadFileRequest,
@@ -468,6 +594,10 @@ export class FilesApi extends runtime.BaseAPI {
       formParams.append('path', requestParameters['path']);
     }
 
+    if (requestParameters['uploadMode'] != null) {
+      formParams.append('uploadMode', requestParameters['uploadMode']);
+    }
+
     let urlPath = `/api/v1/files`;
 
     const response = await this.request(
@@ -494,3 +624,13 @@ export class FilesApi extends runtime.BaseAPI {
     return await response.value();
   }
 }
+
+/**
+ * @export
+ */
+export const UploadFileUploadModeEnum = {
+  Overwrite: 'overwrite',
+  CreateOnly: 'create-only',
+} as const;
+export type UploadFileUploadModeEnum =
+  (typeof UploadFileUploadModeEnum)[keyof typeof UploadFileUploadModeEnum];

@@ -17,6 +17,7 @@ type SdkClient = {
   uploadFile: ReturnType<typeof vi.fn>;
   downloadFile: ReturnType<typeof vi.fn>;
   getFileMetadata: ReturnType<typeof vi.fn>;
+  getSharedResources: ReturnType<typeof vi.fn>;
   deleteFile: ReturnType<typeof vi.fn>;
 };
 
@@ -35,6 +36,7 @@ function makeService() {
     uploadFile: vi.fn(),
     downloadFile: vi.fn(),
     getFileMetadata: vi.fn(),
+    getSharedResources: vi.fn(),
     deleteFile: vi.fn(),
   };
 
@@ -176,6 +178,58 @@ describe('FilesService', () => {
       await expect(service.uploadFile('b', 'p', mockFile, 't')).rejects.toThrow(
         ServiceUnavailableException,
       );
+    });
+
+    it('does not send If-None-Match when uploadMode is overwrite', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadFile.mockResolvedValue(okUpload('bucket/path/file.pdf'));
+
+      await service.uploadFile(
+        'bucket',
+        'path/file.pdf',
+        mockFile,
+        'token',
+        'overwrite',
+      );
+
+      expect(sdkClient.uploadFile.mock.calls[0][2].headers).not.toHaveProperty(
+        'If-None-Match',
+      );
+    });
+
+    it('sends If-None-Match: * when uploadMode is create-only', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadFile.mockResolvedValue(okUpload('bucket/path/file.pdf'));
+
+      await service.uploadFile(
+        'bucket',
+        'path/file.pdf',
+        mockFile,
+        'token',
+        'create-only',
+      );
+
+      expect(sdkClient.uploadFile.mock.calls[0][2].headers).toMatchObject({
+        'If-None-Match': '*',
+      });
+    });
+
+    it('maps 412 from DIAL Core to ConflictException (409)', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.uploadFile.mockResolvedValue(errResponse(412));
+
+      await expect(
+        service.uploadFile('b', 'p', mockFile, 't', 'create-only'),
+      ).rejects.toThrow(HttpException);
+
+      try {
+        await service.uploadFile('b', 'p', mockFile, 't', 'create-only');
+      } catch (err) {
+        expect((err as HttpException).getStatus()).toBe(409);
+        expect((err as HttpException).message).toBe(
+          'File already exists at this path',
+        );
+      }
     });
   });
 
@@ -411,9 +465,46 @@ describe('FilesService', () => {
       expect(result.items[1].nodeType).toBe('item');
     });
 
-    it('includes nextToken when DIAL returns one', async () => {
+    it('includes nextToken for an explicit paginated request when DIAL returns one', async () => {
       const { service, sdkClient } = makeService();
       sdkClient.getFileMetadata.mockResolvedValue(okList([], 'cursor-abc'));
+
+      const result = await service.listFiles(
+        'my-bucket',
+        undefined,
+        { limit: 100 },
+        'token',
+      );
+      expect(result.nextToken).toBe('cursor-abc');
+    });
+
+    it('aggregates DIAL Core pages when no pagination query is provided', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata
+        .mockResolvedValueOnce(
+          okList(
+            [
+              {
+                nodeType: 'ITEM',
+                url: 'first.pdf',
+                name: 'first.pdf',
+                parentPath: '',
+              },
+            ],
+            'cursor-abc',
+          ),
+        )
+        .mockResolvedValueOnce(
+          okList([
+            {
+              nodeType: 'ITEM',
+              url: 'second.pdf',
+              name: 'second.pdf',
+              parentPath: '',
+            },
+          ]),
+        );
+      sdkClient.getFileMetadata.mockClear();
 
       const result = await service.listFiles(
         'my-bucket',
@@ -421,7 +512,38 @@ describe('FilesService', () => {
         {},
         'token',
       );
-      expect(result.nextToken).toBe('cursor-abc');
+
+      expect(result.items.map((item) => item.name)).toEqual([
+        'first.pdf',
+        'second.pdf',
+      ]);
+      expect(result.nextToken).toBeUndefined();
+      expect(sdkClient.getFileMetadata).toHaveBeenNthCalledWith(
+        1,
+        'my-bucket',
+        '',
+        expect.objectContaining({
+          params: {
+            query: expect.objectContaining({
+              limit: 1000,
+              token: undefined,
+            }),
+          },
+        }),
+      );
+      expect(sdkClient.getFileMetadata).toHaveBeenNthCalledWith(
+        2,
+        'my-bucket',
+        '',
+        expect.objectContaining({
+          params: {
+            query: expect.objectContaining({
+              limit: 1000,
+              token: 'cursor-abc',
+            }),
+          },
+        }),
+      );
     });
 
     it('passes folder permissions from DIAL Core metadata', async () => {
@@ -609,13 +731,130 @@ describe('FilesService', () => {
     });
   });
 
-  describe('createFolder', () => {
-    const okMeta = () => ({
-      error: undefined,
-      response: { status: 200, headers: { get: () => null } },
-      data: { nodeType: 'ITEM', name: '.dial_folder' },
+  describe('listPublicFiles', () => {
+    it('lists from the public bucket without requesting permissions', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getFileMetadata.mockResolvedValue({
+        error: undefined,
+        response: { status: 200 },
+        data: { items: [] },
+      });
+
+      const result = await service.listPublicFiles(
+        { path: 'reports/', recursive: true },
+        'token',
+      );
+
+      expect(result.bucket).toBe('public');
+      expect(sdkClient.getFileMetadata).toHaveBeenCalledWith(
+        'public',
+        'reports/',
+        expect.objectContaining({
+          params: {
+            query: expect.objectContaining({
+              recursive: true,
+              permissions: false,
+            }),
+          },
+        }),
+      );
     });
 
+    it('aggregates public bucket pages when no pagination query is provided', async () => {
+      const { service, sdkClient } = makeService();
+      const okPublicList = (items: object[], nextToken?: string) => ({
+        error: undefined,
+        response: { status: 200 },
+        data: { items, ...(nextToken != null ? { nextToken } : {}) },
+      });
+
+      sdkClient.getFileMetadata
+        .mockResolvedValueOnce(
+          okPublicList(
+            [
+              {
+                nodeType: 'ITEM',
+                url: 'first.md',
+                name: 'first.md',
+              },
+            ],
+            'public-cursor',
+          ),
+        )
+        .mockResolvedValueOnce(
+          okPublicList([
+            {
+              nodeType: 'ITEM',
+              url: 'second.md',
+              name: 'second.md',
+            },
+          ]),
+        );
+      sdkClient.getFileMetadata.mockClear();
+
+      const result = await service.listPublicFiles({}, 'token');
+
+      expect(result.bucket).toBe('public');
+      expect(result.items.map((item) => item.name)).toEqual([
+        'first.md',
+        'second.md',
+      ]);
+      expect(result.nextToken).toBeUndefined();
+      expect(sdkClient.getFileMetadata).toHaveBeenNthCalledWith(
+        2,
+        'public',
+        '',
+        expect.objectContaining({
+          params: {
+            query: expect.objectContaining({
+              permissions: false,
+              token: 'public-cursor',
+            }),
+          },
+        }),
+      );
+    });
+  });
+
+  describe('listSharedFiles', () => {
+    it('maps shared file resources to file-list items', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getSharedResources.mockResolvedValue({
+        error: undefined,
+        response: { status: 200 },
+        data: {
+          resources: [
+            {
+              nodeType: 'ITEM',
+              name: 'shared.pdf',
+              url: 'files/owner-bucket/shared.pdf',
+              bucket: 'owner-bucket',
+              author: 'Owner',
+            },
+          ],
+        },
+      });
+
+      const result = await service.listSharedFiles({}, 'token');
+
+      expect(result.items).toEqual([
+        expect.objectContaining({
+          name: 'shared.pdf',
+          path: 'files/owner-bucket/shared.pdf',
+          bucket: 'owner-bucket',
+          author: 'Owner',
+        }),
+      ]);
+      expect(sdkClient.getSharedResources).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: 'Bearer token' }),
+          body: { resourceTypes: ['FILE'], with: 'me' },
+        }),
+      );
+    });
+  });
+
+  describe('createFolder', () => {
     const notFound = () => ({
       error: new Error('Not found'),
       response: { status: 404, headers: { get: () => null } },

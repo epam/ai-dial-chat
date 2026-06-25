@@ -85,3 +85,11 @@ isOpen, isLoading, hasError, canSend, shouldRedirect
 // Wrong
 open, loading, error as boolean, send, redirect
 ```
+
+## i18n translation keys
+
+In app TypeScript code, never pass a raw string literal translation key to
+`t()`. Every translation key must be declared in the appropriate string enum
+in `apps/chat/src/constants/translation-keys.ts` and referenced through that
+enum (for example, `t(DialFileManagerI18nKeys.ConflictReplace)`). When adding a
+key to a locale JSON file, add the matching enum member in the same change.

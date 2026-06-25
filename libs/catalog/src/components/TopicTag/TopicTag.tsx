@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialTag } from '@epam/ai-dial-ui-kit';
-import { FC } from 'react';
+import { DialTag, DialTooltip } from '@epam/ai-dial-ui-kit';
+import { FC, useLayoutEffect, useRef, useState } from 'react';
 import styles from './TopicTag.module.scss';
 
 /** Props for TopicTag. */
@@ -16,3 +16,71 @@ export const TopicTag: FC<TopicTagProps> = ({
   label,
   className = 'dial-tiny-text',
 }) => <DialTag label={label} className={mergeClasses(className, styles.tag)} />;
+
+const MAX_ROWS = 1;
+
+/** Props for TopicsLine. */
+export interface TopicsLineProps {
+  /** Topics to display as tags. */
+  topics: string[];
+  /**
+   * Returns the aria-label for the overflow "+N" badge.
+   * Receives the overflow count. Defaults to `"and N more topics"`.
+   */
+  overflowAriaLabel?: (count: number) => string;
+}
+
+export const TopicsLine: FC<TopicsLineProps> = ({
+  topics,
+  overflowAriaLabel,
+}) => {
+  const [visibleCount, setVisibleCount] = useState(topics.length);
+  const topicsRef = useRef<HTMLDivElement>(null);
+
+  const topicsKey = topics.join('\0');
+
+  useLayoutEffect(() => {
+    const container = topicsRef.current;
+    if (!container || topics.length === 0) {
+      setVisibleCount(topics.length);
+      return;
+    }
+
+    const children = Array.from(container.children) as HTMLElement[];
+    if (children.length === 0) return;
+
+    const firstTop = children[0].offsetTop;
+    const rowHeight = children[0].offsetHeight;
+    const limitTop = firstTop + rowHeight * MAX_ROWS;
+
+    let cutoff = children.length;
+    for (let i = 0; i < children.length; i++) {
+      if (children[i].offsetTop >= limitTop) {
+        cutoff = i;
+        break;
+      }
+    }
+
+    // If there is overflow, reduce by one to leave room for the "+N" badge
+    setVisibleCount(
+      cutoff < children.length ? Math.max(0, cutoff - 1) : children.length,
+    );
+  }, [topicsKey, topics.length]);
+
+  const overflow = topics.length - visibleCount;
+
+  return (
+    <div ref={topicsRef} className="flex flex-wrap gap-2">
+      {topics.slice(0, visibleCount).map((p) => (
+        <TopicTag key={p} label={p} />
+      ))}
+      {overflow > 0 && (
+        <DialTooltip tooltip={topics.slice(visibleCount).join(', ')}>
+          <span aria-label={overflowAriaLabel?.(overflow) ?? `and ${overflow} more topics`}>
+            <TopicTag label={`+${overflow}`} />
+          </span>
+        </DialTooltip>
+      )}
+    </div>
+  );
+};

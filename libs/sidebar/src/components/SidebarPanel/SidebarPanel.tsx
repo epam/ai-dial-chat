@@ -75,6 +75,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
         className={mergeClasses(
           'h-full flex-shrink-0 overflow-hidden transition-[width] duration-200 ease-in-out',
           isOpen && 'relative z-50',
+          isOpen && styles.appear,
           className,
           styles.panel,
         )}

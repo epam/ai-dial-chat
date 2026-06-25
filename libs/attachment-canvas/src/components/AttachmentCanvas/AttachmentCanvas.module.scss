@@ -1,0 +1,136 @@
+// 1. User override via prop  → --ac-* (set inline by component)
+// 2. App theme variable      → --text-*
+// 3. Hard fallback hex
+
+.body {
+  color: var(--ac-text, var(--text-primary, #eef1f7));
+  font-size: var(--ac-font-size);
+  font-weight: var(--ac-font-weight);
+  line-height: var(--ac-line-height);
+  letter-spacing: var(--ac-letter-spacing);
+  font-family: var(--ac-font-family);
+}
+
+// Outer wrapper: dark background + border, like a code block
+.jsonWrapper {
+  margin: 0.75rem;
+  overflow: auto;
+  border-radius: 0.375rem;
+  border: 1px solid var(--stroke-secondary, #242c42);
+  background-color: var(--bg-layer-1, #0c101d);
+}
+
+// react-json-view-lite: structural base without the hardcoded grey background
+.jsonContainer {
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
+  padding: 0.5rem;
+  font-family:
+    ui-monospace, 'Cascadia Code', 'Source Code Pro', Menlo, Consolas,
+    'DejaVu Sans Mono', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+
+// Indented child fields
+.jsonChildContainer {
+  margin: 0;
+  padding-inline-start: 0.75rem;
+}
+
+// Themed token styles – map app CSS variables so the tree respects dark/light
+.jsonLabel {
+  margin-inline-end: 0.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #eef1f7);
+}
+
+.jsonClickableLabel {
+  margin-inline-end: 0.25rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--text-primary, #eef1f7);
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.jsonPunctuation {
+  margin-inline-end: 0.25rem;
+  color: var(--text-secondary, #9fa6bd);
+}
+
+.jsonStringValue {
+  color: var(--text-accent-secondary, #37babc);
+}
+
+.jsonNumberValue {
+  color: var(--text-accent-primary, #7da4ff);
+}
+
+.jsonBooleanValue {
+  color: var(--text-warning, #eec840);
+}
+
+.jsonNullValue {
+  font-style: italic;
+  color: var(--text-secondary, #9fa6bd);
+}
+
+.jsonExpandIcon {
+  margin-inline-end: 0.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: color 150ms;
+  color: var(--text-secondary, #9fa6bd);
+
+  &:hover {
+    color: var(--text-primary, #eef1f7);
+  }
+
+  &::after {
+    content: '▶';
+    font-size: 0.6em;
+    vertical-align: middle;
+  }
+}
+
+.jsonCollapseIcon {
+  margin-inline-end: 0.25rem;
+  cursor: pointer;
+  user-select: none;
+  transition: color 150ms;
+  color: var(--text-secondary, #9fa6bd);
+
+  &:hover {
+    color: var(--text-primary, #eef1f7);
+  }
+
+  &::after {
+    content: '▼';
+    font-size: 0.6em;
+    vertical-align: middle;
+  }
+}
+
+// Remove padding from the first .pdf-container when directly followed by another
+:global {
+  .pdf-container:has(+ .pdf-container) {
+    padding: 0;
+  }
+}
+
+.jsonCollapsedContent {
+  margin-inline-end: 0.25rem;
+  cursor: pointer;
+  border-radius: 0.25rem;
+  padding-inline: 0.25rem;
+  color: var(--text-secondary, #9fa6bd);
+  background-color: var(--bg-layer-3, #1d2439);
+  font-size: 0.75em;
+
+  &::after {
+    content: '\2026';
+  }
+}

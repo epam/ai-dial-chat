@@ -19,7 +19,6 @@ node_modules
 
 # IDE - VSCode
 .vscode/*
-!.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
@@ -57,5 +56,3 @@ vitest.config.*.timestamp*
 .env*.local
 
 .nx/self-healing
-# Runtime fixtures for validate-agent-docs.spec.mjs
-scripts/.agent-docs-fixtures*

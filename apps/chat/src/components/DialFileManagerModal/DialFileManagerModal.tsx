@@ -1,32 +1,42 @@
 import {
+  isMimeTypeAllowed,
+  mimeTypesToExtensionLabels,
+} from '@epam/ai-dial-attachment-input';
+import {
   DialFileManager,
   DialFileManagerActions,
+  DialFileManagerTabs,
   DialFileNodeType,
+  DialLoader,
   DialPopup,
   DialPrimaryButton,
-  DialLoader,
   GridSelectionMode,
+  NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
   PopupSize,
   type DialFile,
   type FileManagerGridRow,
+  useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
-  type FC,
-  type ReactNode,
   useCallback,
   useMemo,
   useState,
+  type FC,
+  type ReactNode,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { DialFileManagerI18nKeys } from '../../constants/translation-keys';
+import {
+  ButtonsI18nKeys,
+  DialFileManagerI18nKeys,
+} from '../../constants/translation-keys';
 import { useNotification } from '../../context/NotificationContext';
 import { useDialFileManager } from '../../hooks/files/useDialFileManager';
 import {
-  isMimeTypeAllowed,
-  mimeTypesToExtensionLabels,
-} from '../../utils/attachment-mime';
+  mimeTypesToAttachmentExtensionLabels,
+  mimeTypesToDialFileAcceptTypes,
+} from '../../utils/attachment-types';
 import { isHiddenPath } from '../../utils/file-path';
 import { formatFileSize } from '../../utils/string-utils';
 import type { AttachResult } from './types/attach-result';
@@ -102,6 +112,27 @@ const DialFileManagerModal: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
+
+  const {
+    activeTab,
+    handleTabChange,
+    tabs: allTabs,
+  } = useDialFileManagerTabs(
+    {
+      [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
+      [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
+      [DialFileManagerTabs.Organization]: t(
+        DialFileManagerI18nKeys.TabOrganization,
+      ),
+      [DialFileManagerTabs.Review]: '',
+    },
+    DialFileManagerTabs.MyFiles,
+  );
+  const tabs = useMemo(
+    () => allTabs?.filter((tab) => tab.id !== DialFileManagerTabs.Review),
+    [allTabs],
+  );
+
   const {
     items,
     isLoading,
@@ -119,19 +150,32 @@ const DialFileManagerModal: FC<Props> = ({
     isCreatingFolder,
     onDownloadFiles,
     isDownloading,
-    downloadError,
-    clearDownloadError,
     onDeleteFiles,
     isDeleting,
-    deleteError,
-    clearDeleteError,
     uploadEnabled,
     isNewButtonDisabled,
     disabledNewButtonTooltip,
-  } = useDialFileManager({ bucket });
+    visibleColumns,
+    dateLocale,
+    dateOptions,
+    actionLabels: tabActionLabels,
+    sharedWithMeIds,
+  } = useDialFileManager({
+    bucket,
+    activeTab,
+    onNotification: showNotification,
+  });
 
   const [selectedPaths, setSelectedPaths] = useState<Set<string>>(
     () => new Set(),
+  );
+
+  const handleTabChangeWithReset = useCallback(
+    (tab: DialFileManagerTabs) => {
+      setSelectedPaths(new Set());
+      handleTabChange(tab);
+    },
+    [handleTabChange],
   );
 
   const filesByPath = useMemo(() => {
@@ -297,6 +341,32 @@ const DialFileManagerModal: FC<Props> = ({
     t,
   ]);
 
+  const unsupportedFileTypeTooltip = useMemo(() => {
+    if (allowedTypes == null || allowedTypes.length === 0) {
+      return undefined;
+    }
+
+    const areAllTypesAllowed = allowedTypes.some(
+      (type) => type === '*' || type === '*/*',
+    );
+
+    if (areAllTypesAllowed) {
+      return undefined;
+    }
+
+    const allowedExtensions =
+      allowedTypesLabel ?? mimeTypesToAttachmentExtensionLabels(allowedTypes);
+
+    return t(DialFileManagerI18nKeys.UnsupportedFileTypeTooltip, {
+      allowedExtensions,
+    });
+  }, [allowedTypes, allowedTypesLabel, t]);
+
+  const allowedFileTypes = useMemo(
+    () => mimeTypesToDialFileAcceptTypes(allowedTypes),
+    [allowedTypes],
+  );
+
   const uploadProgressText = useMemo(() => {
     if (uploadBatchState == null) {
       return '';
@@ -330,6 +400,26 @@ const DialFileManagerModal: FC<Props> = ({
   const isOperationInProgress =
     isDownloading || isDeleting || isCreatingFolder || uploadBatchState != null;
 
+  const conflictResolutionPopupOptions = useMemo(
+    () => ({
+      singleFileTitle: t(DialFileManagerI18nKeys.ConflictSingleTitle),
+      multipleFilesTitle: t(DialFileManagerI18nKeys.ConflictMultipleTitle),
+      actionLabels: {
+        replace: t(DialFileManagerI18nKeys.ConflictReplace),
+        duplicate: t(DialFileManagerI18nKeys.ConflictDuplicate),
+        cancel: t(ButtonsI18nKeys.Cancel),
+      },
+      strategyLabels: {
+        replaceAll: t(DialFileManagerI18nKeys.ConflictReplaceAll),
+        duplicateAll: t(DialFileManagerI18nKeys.ConflictDuplicateAll),
+        decideForEach: t(DialFileManagerI18nKeys.ConflictDecideForEach),
+      },
+      confirmLabel: t(ButtonsI18nKeys.Confirm),
+      cancelLabel: t(ButtonsI18nKeys.Cancel),
+    }),
+    [t],
+  );
+
   const deleteConfirmationOptions = useMemo(
     () => ({
       cancelLabel: deleteCancelLabel,
@@ -345,9 +435,23 @@ const DialFileManagerModal: FC<Props> = ({
     ],
   );
 
+  const actionLabels = useMemo(() => {
+    const labels: Partial<Record<DialFileManagerActions, string>> = {};
+    if (DialFileManagerActions.Download in tabActionLabels) {
+      labels[DialFileManagerActions.Download] = downloadLabel;
+    }
+    if (DialFileManagerActions.Delete in tabActionLabels) {
+      labels[DialFileManagerActions.Delete] = deleteLabel;
+    }
+    return labels;
+  }, [tabActionLabels, downloadLabel, deleteLabel]);
+
   const gridOptions = useMemo(
     () => ({
       selectionMode: GridSelectionMode.MULTIPLE,
+      visibleColumns,
+      dateLocale,
+      dateOptions,
       additionalGridOptions: {
         domLayout: 'normal' as const,
         rowSelection: {
@@ -387,14 +491,13 @@ const DialFileManagerModal: FC<Props> = ({
           },
         },
       },
-      actionLabels: {
-        [DialFileManagerActions.Download]: downloadLabel,
-        [DialFileManagerActions.Delete]: deleteLabel,
-      },
+      actionLabels,
     }),
     [
-      downloadLabel,
-      deleteLabel,
+      visibleColumns,
+      dateLocale,
+      dateOptions,
+      actionLabels,
       allowedTypes,
       maxSelectableFileSize,
       canAttachFolders,
@@ -403,16 +506,16 @@ const DialFileManagerModal: FC<Props> = ({
 
   const treeOptions = useMemo(
     () => ({
-      actionLabels: {
-        [DialFileManagerActions.Download]: downloadLabel,
-        [DialFileManagerActions.Delete]: deleteLabel,
-      },
+      actionLabels,
     }),
-    [downloadLabel, deleteLabel],
+    [actionLabels],
   );
 
   const toolbarOptions = useMemo(
     () => ({
+      tabs,
+      activeTab,
+      onTabChange: handleTabChangeWithReset,
       showHiddenFilesToggle: true,
       hiddenFilesSwitcherLabel: hiddenFilesLabel,
       showHiddenFilesLabel,
@@ -425,6 +528,9 @@ const DialFileManagerModal: FC<Props> = ({
       },
     }),
     [
+      tabs,
+      activeTab,
+      handleTabChangeWithReset,
       hiddenFilesLabel,
       showHiddenFilesLabel,
       hideHiddenFilesLabel,
@@ -438,12 +544,9 @@ const DialFileManagerModal: FC<Props> = ({
   const bulkActionsToolbarOptions = useMemo(
     () => ({
       getSelectionLabel,
-      actionLabels: {
-        [DialFileManagerActions.Download]: downloadLabel,
-        [DialFileManagerActions.Delete]: deleteLabel,
-      },
+      actionLabels,
     }),
-    [getSelectionLabel, downloadLabel, deleteLabel],
+    [getSelectionLabel, actionLabels],
   );
 
   return (
@@ -489,6 +592,8 @@ const DialFileManagerModal: FC<Props> = ({
               path={path}
               onPathChange={onPathChange}
               filesLoading={isLoading}
+              allowedFileTypes={allowedFileTypes}
+              maxSelectableFileSize={maxSelectableFileSize}
               selectedPaths={selectedPaths}
               onSelectedPathsChange={setSelectedPaths}
               navigationPanelOptions={{
@@ -501,6 +606,7 @@ const DialFileManagerModal: FC<Props> = ({
               emptyStateTitle={emptyTitle}
               emptyStateDescription={emptyDescription}
               uploadEnabled={uploadEnabled}
+              sharedWithMeIds={sharedWithMeIds}
               onUploadFiles={onUploadFiles}
               onValidateUpload={onValidateUpload}
               onCreateFolder={onCreateFolder}
@@ -508,7 +614,13 @@ const DialFileManagerModal: FC<Props> = ({
               onDownloadFiles={onDownloadFiles}
               onDeleteFiles={onDeleteFiles}
               deleteConfirmationOptions={deleteConfirmationOptions}
+              conflictResolutionPopupOptions={conflictResolutionPopupOptions}
+              forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
+              forbiddenSymbolsTooltip={t(
+                DialFileManagerI18nKeys.ForbiddenSymbolsTooltip,
+              )}
               getDisabledTooltip={getDisabledTooltip}
+              unsupportedFileTypeTooltip={unsupportedFileTypeTooltip}
             />
             {isDownloading && (
               <div
@@ -522,16 +634,6 @@ const DialFileManagerModal: FC<Props> = ({
                 />
               </div>
             )}
-            {downloadError != null && !isDownloading && (
-              <button
-                type="button"
-                role="alert"
-                className="absolute inset-x-4 bottom-4 z-10 rounded bg-error px-4 py-3 text-start text-sm text-primary shadow"
-                onClick={clearDownloadError}
-              >
-                {downloadError}
-              </button>
-            )}
             {isDeleting && (
               <div
                 aria-live="polite"
@@ -543,16 +645,6 @@ const DialFileManagerModal: FC<Props> = ({
                   ariaLabel={deletingLabel}
                 />
               </div>
-            )}
-            {deleteError != null && !isDeleting && (
-              <button
-                type="button"
-                role="alert"
-                className="absolute inset-x-4 bottom-4 z-10 rounded bg-error px-4 py-3 text-start text-sm text-primary shadow"
-                onClick={clearDeleteError}
-              >
-                {deleteError}
-              </button>
             )}
           </div>
         )}

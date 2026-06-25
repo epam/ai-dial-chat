@@ -1,3 +1,8 @@
+import {
+  AttachmentCanvasContainer,
+  useAttachmentCanvas,
+} from '@epam/ai-dial-attachment-canvas';
+import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
 import {
   lazy,
@@ -10,6 +15,7 @@ import {
   useState,
   type FC,
 } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Route,
   Routes,
@@ -27,11 +33,17 @@ import {
   getConversationRoute,
   normalizeConversationId,
 } from '../constants/routes';
+import {
+  AttachmentCanvasI18nKeys,
+  ButtonsI18nKeys,
+} from '../constants/translation-keys';
+import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
 import useLocalStorage from '../hooks/useLocalStorage';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
 import { StorageKey } from '../types/storage-key';
+import { ThemeId } from '../types/theme-id';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 
@@ -41,9 +53,16 @@ const ConversationPage = lazy(async () => {
 });
 
 const App: FC = () => {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
+  const canvasDefaultWidth = isMobile
+    ? undefined
+    : Math.min(1500, Math.round(window.innerWidth * (2 / 3)));
+  const { currentTheme } = useTheme();
+  const codeBlockTheme =
+    currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
 
   const [isNavOpen, setIsNavOpen] = useState(false);
   const closeNav = useCallback(() => setIsNavOpen(false), []);
@@ -70,6 +89,15 @@ const App: FC = () => {
   useEffect(() => {
     if (pathname === ROUTES.Catalog) closeHistoryPanel();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
+  useEffect(() => {
+    closeCanvas();
+  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isCanvasOpen) closeHistoryPanel();
+  }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchRoot = useMatch(ROUTES.Root);
   const matchConversation = useMatch(`${ROUTES.Conversations}/*`);
@@ -167,6 +195,21 @@ const App: FC = () => {
         </Routes>
       </main>
       {isConversationRoute && <ConversationSourcesPanel />}
+      {isConversationRoute && (
+        <AttachmentCanvasContainer
+          ariaLabel={t(AttachmentCanvasI18nKeys.AriaLabel)}
+          closeLabel={t(AttachmentCanvasI18nKeys.CloseLabel)}
+          downloadLabel={t(AttachmentCanvasI18nKeys.DownloadLabel)}
+          unsupportedLabel={t(AttachmentCanvasI18nKeys.UnsupportedLabel)}
+          copyMarkdownLabel={t(ButtonsI18nKeys.CopyAsMarkdown)}
+          copiedMarkdownLabel={t(ButtonsI18nKeys.Copied)}
+          copyJsonLabel={t(ButtonsI18nKeys.CopyAsJson)}
+          copiedJsonLabel={t(ButtonsI18nKeys.Copied)}
+          isMobile={isMobile}
+          defaultWidth={canvasDefaultWidth}
+          codeBlockTheme={codeBlockTheme}
+        />
+      )}
     </div>
   );
 };

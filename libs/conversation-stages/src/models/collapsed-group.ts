@@ -1,4 +1,4 @@
-import type { Stage } from '@epam/ai-dial-chat-shared';
+import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
 
 /** Color overrides for the `CollapsedGroup` component applied as CSS custom properties. */
 export interface CollapsedGroupColors {
@@ -44,4 +44,6 @@ export interface CollapsedGroupProps {
   styles?: CollapsedGroupStyles;
   /** Minimum number of stages required to activate the collapse behaviour. Defaults to `7`. */
   collapseThreshold?: number;
+  /** Called when the user clicks an attachment card inside a stage. */
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }

@@ -44,4 +44,13 @@ export interface ListViewProps {
   styles?: ListViewStyles;
   /** Called when the star icon is toggled on a row. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /** Called when a table row is clicked (excluding the star column). */
+  onItemClick?: (item: CatalogItem) => void;
+  /**
+   * When set, the ag-grid column header becomes `position: sticky` at this
+   * pixel offset from the scroll container's top edge. Pass the height of any
+   * sticky UI above the list (e.g. the catalog page heading) so the header
+   * sits flush below it while the page scrolls.
+   */
+  stickyHeaderTop?: number;
 }

@@ -20,10 +20,6 @@
   padding-bottom: 6px;
 }
 
-.starFilledIcon {
-  color: var(--text-warning-icon, #eec840);
-}
-
 .content {
   scrollbar-width: thin;
   scrollbar-color: var(--stroke-secondary, #242c42) transparent;
@@ -31,16 +27,4 @@
 
 .introCaption {
   color: var(--text-secondary, #9fa6bd);
-}
-
-.featuredTag {
-  background: var(
-    --cat-featured-tag-bg,
-    var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
-  );
-  border-color: var(
-    --cat-featured-tag-border,
-    var(--stroke-accent-secondary, #37babc)
-  );
-  color: var(--cat-featured-tag-text, var(--text-accent-secondary, #37babc));
 }

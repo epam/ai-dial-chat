@@ -1,3 +1,17 @@
 .activeLabel {
   color: var(--cat-filter-active-label, var(--text-accent-primary, #7da4ff));
 }
+
+.overlay {
+  background: var(--bg-layer-2);
+  border-color: var(--stroke-secondary, #242c42);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.separator {
+  border-top: 1px solid var(--stroke-secondary, #242c42);
+}
+
+.sectionLabel {
+  color: var(--cat-filter-section-label, var(--text-secondary));
+}

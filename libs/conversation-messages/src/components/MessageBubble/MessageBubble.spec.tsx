@@ -147,7 +147,7 @@ describe('MessageBubble', () => {
     expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
   });
 
-  it('does not pass onAttachmentClick to assistant bubble', () => {
+  it('forwards onAttachmentClick and attachmentClickLabel to assistant bubble', () => {
     const onAttachmentClick = vi.fn();
     render(
       <MessageBubble
@@ -158,8 +158,8 @@ describe('MessageBubble', () => {
         attachmentClickLabel="Download file"
       />,
     );
-    // assistant tray has no clickable cards
-    expect(screen.queryByLabelText('Download file')).toBeNull();
+    fireEvent.click(screen.getByLabelText('Download file'));
+    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
   });
 });
 

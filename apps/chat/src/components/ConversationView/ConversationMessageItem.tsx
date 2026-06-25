@@ -96,6 +96,8 @@ interface Props {
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
   hideAttachFile?: boolean;
+  /** When provided, called instead of the default download action when an attachment card is activated. */
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -135,10 +137,12 @@ const ConversationMessageItem: FC<Props> = ({
   stepsLabel,
   validateAttachment,
   hideAttachFile,
+  onAttachmentClick: onAttachmentClickProp,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
-  const { handleAttachmentClick } = useAttachmentAction();
+  const { handleAttachmentClick: handleDownload } = useAttachmentAction();
+  const handleAttachmentClick = onAttachmentClickProp ?? handleDownload;
   const isStreaming = isStreamingMessage(
     msg.role,
     index,
@@ -272,6 +276,7 @@ const ConversationMessageItem: FC<Props> = ({
                 isStreaming={isStreaming}
                 executedLabel={executedLabel}
                 stepsLabel={stepsLabel}
+                onAttachmentClick={handleAttachmentClick}
               />
             )}
             {msg.hasStreamError && (

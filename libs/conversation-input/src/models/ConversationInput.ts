@@ -5,6 +5,7 @@ import type {
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import type {
+  ChatSettingsConfig,
   InputColors,
   InputTypography,
   ModelSelectorLabels,
@@ -152,6 +153,8 @@ export interface ConversationInputProps {
   modelSelectorLabels?: ModelSelectorLabels;
   /** Accessible label for the send button. */
   sendLabel?: string;
+  /** Tooltip shown on hover over the send button. */
+  sendTitle?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
@@ -181,6 +184,11 @@ export interface ConversationInputProps {
    * - `SendOnEnter.MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
    */
   sendOnEnter?: SendOnEnter;
+  /**
+   * When provided, a "Chat settings" item is added to the `+` menu.
+   * Clicking it opens a modal with fields gated by `features`.
+   */
+  chatSettings?: ChatSettingsConfig;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */
   autoFocus?: boolean;
   /**
@@ -209,4 +217,10 @@ export interface ConversationInputProps {
    * remain in the menu the entire attach (+) button is hidden automatically.
    */
   hideAttachFile?: boolean;
+  /**
+   * Called when the user clicks or keyboard-activates an attachment card.
+   * Receives the full `Attachment` object (including the local `File`).
+   * When absent the card is not rendered as interactive.
+   */
+  onAttachmentClick?: (attachment: Attachment) => void;
 }

@@ -85,6 +85,8 @@ export interface UserMessageBubbleProps extends BaseMessageBubbleProps {
 export interface AssistantMessageBubbleProps extends BaseMessageBubbleProps {
   /** Called when the user clicks an attachment card in the assistant bubble's tray. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Accessible label forwarded to each attachment card's root when it is interactive. */
+  attachmentClickLabel?: string;
   /**
    * react-markdown component overrides merged on top of the built-in map.
    * Pass a custom `p` (or other element) renderer here to inject React nodes
@@ -183,8 +185,8 @@ export interface MessageBubbleProps extends BaseMessageBubbleProps {
   codeBlockCopiedLabel?: string;
   /** Syntax highlight color theme for code blocks. Forwarded to `AssistantMessageBubble`. Defaults to `'dark'`. */
   codeBlockTheme?: CodeBlockTheme;
-  /** Called when the user clicks an attachment card. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  /** Called when the user clicks an attachment card. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
-  /** Accessible label forwarded to each attachment card's root when it is interactive. Forwarded to `UserMessageBubble`; ignored for assistant messages. */
+  /** Accessible label forwarded to each attachment card's root when it is interactive. Forwarded to both `UserMessageBubble` and `AssistantMessageBubble`. */
   attachmentClickLabel?: string;
 }

@@ -2,6 +2,7 @@ import { AttachmentErrorReason, AttachmentType } from '../types/attachment';
 import { MIMEType } from '../types/mime-type';
 import type { Annotation } from './annotation';
 import type { DeploymentConfigurationSchema } from './deployment-configuration';
+import type { ResponseFormat } from './deployment-features';
 
 /** Metadata returned by the DIAL file/conversation listing API for a single resource node. */
 export interface ConversationMetadata {
@@ -243,6 +244,10 @@ export interface DisplayAttachment {
   previewUrl?: string;
   /** Remote URL for an attachment that has already been uploaded. */
   url?: string;
+  /** Alternate reference URL (e.g. from the DIAL API `reference_url` field); used when `url` is absent. */
+  referenceUrl?: string;
+  /** Inline base-64 encoded content; present when the attachment carries data directly rather than via a URL. */
+  data?: string;
 }
 
 /** Attachment selected locally by the user before it is sent to the backend. */
@@ -297,4 +302,6 @@ export interface Conversation {
   selectedAddons: string[];
   /** Override model ID used when an assistant model is selected. */
   assistantModelId: string;
+  /** Response format used when rendering messages. */
+  responseFormat?: ResponseFormat;
 }

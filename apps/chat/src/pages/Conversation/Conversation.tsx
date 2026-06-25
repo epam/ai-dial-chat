@@ -46,6 +46,7 @@ import { uploadFile } from '../../server-api/files.api';
 import { ROUTES } from '../../types/routes';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
+import { setLastConversationSettings } from '../../utils/local-storage';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 interface Props {
@@ -170,6 +171,26 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     const slashIndex = conversationId.indexOf('/');
     return slashIndex !== -1 && conversationId.slice(0, slashIndex) !== bucket;
   }, [conversationId, bucket, conversations]);
+
+  const handleConversationChange = useCallback(
+    (updated: Conversation) => {
+      setConversation(updated);
+      conversationRef.current = updated;
+      setLastConversationSettings({
+        temperature: updated.temperature,
+        responseFormat: updated.responseFormat,
+      });
+      if (conversationId) {
+        void saveConversation(
+          getConversationPath(conversationId),
+          updated as ConversationResponseDto,
+        );
+      }
+    },
+    // conversationRef is a stable ref — intentionally omitted from deps
+
+    [conversationId],
+  );
 
   const handleDuplicateConversation = useCallback(async () => {
     if (!conversationId) return;
@@ -398,6 +419,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           isTranscriptionSupported={isTranscriptionSupported}
           onUploadAudio={handleUploadAudio}
           onTranscribeAudio={handleTranscribeAudio}
+          conversation={conversation}
+          onConversationChange={handleConversationChange}
         />
       </div>
 

@@ -2,13 +2,18 @@
 export { CatalogEntityType } from './types/entity-type';
 export { CatalogDetailsTab } from './types/detail-tab';
 export { CatalogSortKey } from './types/sort';
+export type { CatalogSortOption } from './models/sort';
 export { CatalogViewMode } from './types/view-mode';
 export { EntityTag } from './types/entity-tag';
 export { CodeLanguage } from './types/code-language';
 
 // Models
-export type { CatalogItem, FavoriteItem } from './models/catalog-item';
-export type { CatalogProps, CatalogTitles } from './models/catalog-props';
+export type { CatalogItem } from './models/catalog-item';
+export type {
+  CatalogProps,
+  CatalogTitles,
+  CreateOption,
+} from './models/catalog-props';
 export type { CatalogItemSummary, DailyLimit } from './models/entity-summary';
 export type {
   CatalogItemTabData,

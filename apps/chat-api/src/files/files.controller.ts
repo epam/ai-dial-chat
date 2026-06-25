@@ -33,7 +33,12 @@ import { DownloadArchiveDto } from './dto/download-archive.dto';
 import { DownloadFileDto } from './dto/download-file.dto';
 import { FileMetadataResponseDto } from './dto/file-metadata-response.dto';
 import { GetFileMetadataQueryDto } from './dto/get-file-metadata.dto';
-import { ListFilesQueryDto, ListFilesResponseDto } from './dto/list-files.dto';
+import {
+  ListFilesQueryDto,
+  ListFilesResponseDto,
+  ListPublicFilesQueryDto,
+  ListSharedFilesQueryDto,
+} from './dto/list-files.dto';
 import { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { FilesService } from './files.service';
@@ -56,6 +61,12 @@ export class FilesController {
         file: { type: 'string', format: 'binary' },
         bucket: { type: 'string' },
         path: { type: 'string' },
+        uploadMode: {
+          type: 'string',
+          enum: ['overwrite', 'create-only'],
+          description:
+            "Optional upload mode. 'overwrite' (default) overwrites; 'create-only' fails with 409 if file exists.",
+        },
       },
     },
   })
@@ -63,6 +74,10 @@ export class FilesController {
   @ApiResponse({ status: 400, description: 'Invalid bucket or path' })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
+  @ApiResponse({
+    status: 409,
+    description: 'File already exists (create-only mode)',
+  })
   @ApiResponse({ status: 413, description: 'Payload too large' })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
@@ -76,7 +91,13 @@ export class FilesController {
     @Req() req: Request,
   ): Promise<FileUploadResponseDto> {
     const { at } = req.user as SessionUser;
-    return this.filesService.uploadFile(body.bucket, body.path, file, at);
+    return this.filesService.uploadFile(
+      body.bucket,
+      body.path,
+      file,
+      at,
+      body.uploadMode,
+    );
   }
 
   @Get('list')
@@ -120,6 +141,80 @@ export class FilesController {
         limit: query.limit,
         recursive: query.recursive,
         permissions: query.permissions,
+      },
+      at,
+    );
+  }
+
+  @Get('public')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'List files from the organization (public) bucket',
+    description:
+      'Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket.',
+    operationId: 'listPublicFiles',
+  })
+  @ApiResponse({
+    status: 200,
+    type: ListFilesResponseDto,
+    description: 'Paginated list of files from the public bucket',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid path or query parameter' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 404, description: 'Path not found' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async listPublicFiles(
+    @Query() query: ListPublicFilesQueryDto,
+    @Req() req: Request,
+  ): Promise<ListFilesResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.listPublicFiles(
+      {
+        path: query.path,
+        token: query.token,
+        limit: query.limit,
+        recursive: query.recursive,
+      },
+      at,
+    );
+  }
+
+  @Get('shared')
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({
+    summary: 'List files shared with the current user',
+    description:
+      'Proxies the DIAL Core sharing API to return files shared with the authenticated user.',
+    operationId: 'listSharedFiles',
+  })
+  @ApiResponse({
+    status: 200,
+    type: ListFilesResponseDto,
+    description: 'Files shared with the current user',
+  })
+  @ApiResponse({ status: 400, description: 'Invalid query parameter' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async listSharedFiles(
+    @Query() query: ListSharedFilesQueryDto,
+    @Req() req: Request,
+  ): Promise<ListFilesResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.listSharedFiles(
+      {
+        path: query.path,
+        token: query.token,
+        limit: query.limit,
       },
       at,
     );
