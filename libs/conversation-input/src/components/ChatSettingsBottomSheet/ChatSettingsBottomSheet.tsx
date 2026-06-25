@@ -92,6 +92,7 @@ export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
     setTemperature,
     handleSubmit,
   } = useChatSettingsForm({
+    isOpen,
     features,
     initialResponseFormat,
     initialSystemPrompt,

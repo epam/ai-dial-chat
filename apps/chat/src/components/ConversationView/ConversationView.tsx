@@ -51,6 +51,7 @@ import {
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -140,6 +141,7 @@ const ConversationView: FC<Props> = ({
   onConversationChange,
 }) => {
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -391,7 +393,7 @@ const ConversationView: FC<Props> = ({
       responseFormat: conversation.responseFormat ?? ResponseFormat.Markdown,
       systemPrompt: conversation.prompt ?? '',
       temperature: conversation.temperature ?? 0.5,
-      onSave: (values: ChatSettingsValues) =>
+      onSave: (values: ChatSettingsValues) => {
         onConversationChange({
           ...conversation,
           ...(values.responseFormat != null && {
@@ -403,7 +405,12 @@ const ConversationView: FC<Props> = ({
           ...(values.temperature != null && {
             temperature: values.temperature,
           }),
-        }),
+        });
+        showNotification({
+          variant: NotificationVariant.Success,
+          message: t(ChatSettingsI18nKeys.SavedNotification),
+        });
+      },
       menuItemLabel: t(ChatI18nKeys.ChatSettings),
       title: t(ChatSettingsI18nKeys.Title),
       responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
