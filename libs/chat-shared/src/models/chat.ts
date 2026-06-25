@@ -187,6 +187,15 @@ export interface StreamChunkDelta {
     /** Partial annotation updates; merge by `index` into the accumulating annotation list. */
     annotations?: Annotation[];
   };
+  /**
+   * Raw custom fields in the DIAL wire format.
+   * Annotations here use `pdf_region` selectors and `attachment_index` references
+   * and must be normalized to the internal model before use.
+   */
+  custom_fields?: {
+    /** Raw annotations in the DIAL wire format; must be normalized before use. */
+    annotations?: unknown[];
+  };
 }
 
 /** A single server-sent event chunk from the streaming completions endpoint. */

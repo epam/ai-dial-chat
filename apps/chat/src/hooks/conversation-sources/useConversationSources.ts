@@ -31,12 +31,14 @@ export const useConversationSources = (
         generated.push(...attachments);
 
         for (const annotation of msg.custom_content?.annotations ?? []) {
-          const url = annotation?.body?.source?.attachment?.url;
+          const att = annotation?.body?.source?.attachment;
+          const url = att?.url;
           if (!url || seenUrls.has(url)) continue;
           seenUrls.add(url);
           sources.push({
             url,
-            title: annotation.body?.title ?? url,
+            title: att?.title ?? url.split('/').pop() ?? url,
+            contentType: att?.type ?? '',
             quote: annotation.body?.quote,
           });
         }

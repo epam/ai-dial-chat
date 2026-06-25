@@ -22,6 +22,7 @@ import {
   AttachmentsI18nKeys,
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
+import { CitationCardProvider } from '../../context/CitationCardContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAnnotations } from '../../hooks/annotations/useAnnotations';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
@@ -158,13 +159,11 @@ const ConversationMessageItem: FC<Props> = ({
     [annotations],
   );
   const citationCard = useCitationCard();
-  const { processedContent, markdownComponents } =
-    useCitationMarkdownComponents(
-      msg.content,
-      citationGroups,
-      citationCard,
-      handleAttachmentClick,
-    );
+  const { processedContent, markdownComponents } = useCitationMarkdownComponents(
+    msg.content,
+    citationGroups,
+    handleAttachmentClick,
+  );
 
   if (isEditing) {
     return (
@@ -238,6 +237,7 @@ const ConversationMessageItem: FC<Props> = ({
     msg.role === MessageRole.Assistant ? processedContent : msg.content;
 
   return (
+    <CitationCardProvider value={citationCard}>
     <MessageBubble
       role={msg.role}
       text={messageText}
@@ -311,6 +311,7 @@ const ConversationMessageItem: FC<Props> = ({
       attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
       {...statusProps}
     />
+    </CitationCardProvider>
   );
 };
 

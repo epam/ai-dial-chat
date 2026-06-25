@@ -9,15 +9,22 @@ import {
   injectCitationSentinels,
   replaceSentinelsInChildren,
 } from '../../utils/citation-injection';
+import {
+  isDialFileId,
+  resolveDialFileDownloadUrl,
+} from '../../utils/dial-file';
 import type { AnnotationGroup } from '../../utils/group-annotations-by-source';
-import type { useCitationCard } from './useCitationCard';
-
-type CitationCardHook = ReturnType<typeof useCitationCard>;
 
 /**
  * Builds react-markdown component overrides that inject citation markers into
  * rendered paragraph text at the character offsets stored in each annotation
  * group's primary selector.
+ *
+ * The `p` and `li` component overrides are stable references — they only
+ * change when `groups` transitions between empty and non-empty. Citation card
+ * open/close state is provided via `CitationCardContext` so that state changes
+ * do not recreate the component functions, preventing ReactMarkdown from
+ * unmounting and remounting the paragraph subtree on every interaction.
  *
  * Returns both the pre-processed content string (with sentinel placeholders
  * injected at the right offsets) and the `Components` map to pass to the
@@ -26,22 +33,35 @@ type CitationCardHook = ReturnType<typeof useCitationCard>;
 export const useCitationMarkdownComponents = (
   content: string,
   groups: AnnotationGroup[],
-  citationCard: CitationCardHook,
   onAttachmentPreview: (attachment: DisplayAttachment) => void,
 ): { processedContent: string; markdownComponents: Components } => {
   const { openCanvas } = useAttachmentCanvas();
 
   const onOpenInBrowser = useCallback((annotation: Annotation) => {
-    const url = annotation.body?.source?.attachment?.url;
-    if (url) window.open(url, '_blank', 'noopener,noreferrer');
+    const attachment = annotation.body?.source?.attachment;
+    const url = attachment?.url;
+    if (url == null) return;
+
+    if (isDialFileId(url)) {
+      const downloadUrl = resolveDialFileDownloadUrl(url);
+      if (downloadUrl == null) return;
+      const anchor = document.createElement('a');
+      anchor.href = downloadUrl;
+      anchor.download = attachment?.title ?? url.split('/').pop() ?? '';
+      anchor.click();
+    } else {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
   }, []);
 
   const onPreview = useCallback(
     (annotation: Annotation) => {
       const pdfContent = annotationToPdfCanvasContent(annotation, groups);
       if (pdfContent != null) {
+        const attachment = annotation.body?.source?.attachment;
+        const rawSegment = attachment?.url?.split('/').pop() ?? '';
         const fileName =
-          annotation.body?.source?.attachment?.url?.split('/').pop() ?? '';
+          attachment?.title ?? decodeURIComponent(rawSegment);
         openCanvas(pdfContent, fileName);
         return;
       }
@@ -68,11 +88,6 @@ export const useCitationMarkdownComponents = (
         <CitationDropdown
           key={`citation-${group.sourceUrl}`}
           group={group}
-          isOpen={citationCard.isOpen(group.sourceUrl)}
-          activeIndex={citationCard.getActiveIndex(group.sourceUrl)}
-          onOpen={() => citationCard.openPopup(group.sourceUrl)}
-          onClose={citationCard.closePopup}
-          onIndexChange={(i) => citationCard.setActiveIndex(group.sourceUrl, i)}
           onPreview={onPreview}
           onOpenInBrowser={onOpenInBrowser}
         />
@@ -91,7 +106,7 @@ export const useCitationMarkdownComponents = (
         </li>
       ),
     };
-  }, [groups, citationCard, onPreview, onOpenInBrowser]);
+  }, [groups, onPreview, onOpenInBrowser]);
 
   return { processedContent, markdownComponents };
 };
