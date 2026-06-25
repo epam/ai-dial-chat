@@ -812,13 +812,19 @@ export const filesSlice = createSlice({
       state,
       {
         payload,
-      }: PayloadAction<{ files: DialFile[]; reviewBuckets?: string[] }>,
+      }: PayloadAction<{
+        files: DialFile[];
+        reviewBuckets?: string[];
+        keepFileIds?: string[];
+      }>,
     ) => {
       const sharedWithMeRootIds = new Set(state.sharedWithMeFilesAndFoldersIds);
       const belongsToActiveSharedRoot = (file: DialFile) =>
         Array.from(sharedWithMeRootIds).some((rootId) =>
           file.id.startsWith(`${rootId}/`),
         );
+
+      const keepFileIds = new Set(payload.keepFileIds);
 
       // Keep nested shared descendants under active roots, but always replace root shared items
       // with latest API payload to avoid stale root-level data after tab switches.
@@ -832,6 +838,12 @@ export const filesSlice = createSlice({
             (reviewBucket) => getEntityBucket(file) === reviewBucket,
           )
         ) {
+          return true;
+        }
+
+        // Preserve shared files that are excluded from the payload on purpose
+        // (e.g. currently selected attachments) so they are not dropped here.
+        if (keepFileIds.has(file.id)) {
           return true;
         }
 

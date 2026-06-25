@@ -164,6 +164,33 @@ describe('files.reducers addSharedFiles', () => {
     expect(rootItems[0].name).toBe('fresh-name.txt');
     expect(rootItems[0].contentLength).toBe(10);
   });
+
+  it('keeps selected root shared files that are excluded from the payload', () => {
+    const sharedRootFileId = 'files/sharer-bucket/shared.jpg';
+    const state = {
+      ...filesSlice.getInitialState(),
+      sharedWithMeFilesAndFoldersIds: [sharedRootFileId],
+      files: [
+        makeFile({
+          id: sharedRootFileId,
+          name: 'shared.jpg',
+          folderId: 'files/sharer-bucket',
+          sharedWithMe: true,
+          isRootSharedItem: true,
+        }),
+      ],
+    };
+
+    const nextState = filesSlice.reducer(
+      state,
+      FilesActions.addSharedFiles({
+        files: [],
+        keepFileIds: [sharedRootFileId],
+      }),
+    );
+
+    expect(nextState.files.map((f) => f.id)).toContain(sharedRootFileId);
+  });
 });
 
 describe('files.reducers deleteFilesSuccess', () => {
