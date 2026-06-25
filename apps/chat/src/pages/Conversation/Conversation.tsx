@@ -46,7 +46,6 @@ import { uploadFile } from '../../server-api/files.api';
 import { ROUTES } from '../../types/routes';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
-import { setLastConversationSettings } from '../../utils/local-storage';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 interface Props {
@@ -176,10 +175,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     (updated: Conversation) => {
       setConversation(updated);
       conversationRef.current = updated;
-      setLastConversationSettings({
-        temperature: updated.temperature,
-        responseFormat: updated.responseFormat,
-      });
       if (conversationId) {
         void saveConversation(
           getConversationPath(conversationId),

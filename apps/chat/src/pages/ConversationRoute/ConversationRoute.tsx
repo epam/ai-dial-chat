@@ -70,10 +70,6 @@ import { getConversationPath } from '../../utils/conversation-path';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import {
-  getLastConversationSettings,
-  setLastConversationSettings,
-} from '../../utils/local-storage';
-import {
   getStarterPopulateText,
   getStartersFromSchema,
 } from '../../utils/starter-option';
@@ -96,15 +92,10 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
-  const [chatSettingsValues, setChatSettingsValues] = useState(() => {
-    const saved = getLastConversationSettings();
-    return {
-      responseFormat:
-        (saved?.responseFormat as ResponseFormat | undefined) ??
-        ResponseFormat.Markdown,
-      systemPrompt: '',
-      temperature: saved?.temperature ?? 0.5,
-    };
+  const [chatSettingsValues, setChatSettingsValues] = useState({
+    responseFormat: ResponseFormat.Markdown,
+    systemPrompt: '',
+    temperature: 0.5,
   });
   const { showNotification } = useNotification();
   const {
@@ -180,12 +171,17 @@ const ConversationRoute: FC = () => {
       responseFormat: chatSettingsValues.responseFormat,
       systemPrompt: chatSettingsValues.systemPrompt,
       temperature: chatSettingsValues.temperature,
-      onSave: (values: ChatSettingsValues) =>
+      onSave: (values: ChatSettingsValues) => {
         setChatSettingsValues((prev) => ({
           responseFormat: values.responseFormat ?? prev.responseFormat,
           systemPrompt: values.systemPrompt ?? prev.systemPrompt,
           temperature: values.temperature ?? prev.temperature,
-        })),
+        }));
+        showNotification({
+          variant: NotificationVariant.Success,
+          message: t(ChatSettingsI18nKeys.SavedNotification),
+        });
+      },
       menuItemLabel: t(ChatI18nKeys.ChatSettings),
       title: t(ChatSettingsI18nKeys.Title),
       responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
@@ -207,7 +203,14 @@ const ConversationRoute: FC = () => {
       temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
       saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
     }),
-    [selectedDeployment?.features, chatSettingsValues, t],
+    [
+      selectedDeployment?.features,
+      chatSettingsValues.responseFormat,
+      chatSettingsValues.systemPrompt,
+      chatSettingsValues.temperature,
+      t,
+      showNotification,
+    ],
   );
 
   const modelSelectorLabels = useMemo(
@@ -255,10 +258,6 @@ const ConversationRoute: FC = () => {
           temperature: chatSettingsValues.temperature,
           responseFormat: chatSettingsValues.responseFormat,
         } as ConversationResponseDto);
-        setLastConversationSettings({
-          temperature: chatSettingsValues.temperature,
-          responseFormat: chatSettingsValues.responseFormat,
-        });
         navigate(getConversationRoute(conversation.id));
       } catch (err) {
         const errorMessage = await getApiErrorMessage(err);

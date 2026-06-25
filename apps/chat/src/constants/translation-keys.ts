@@ -331,6 +331,7 @@ export enum ChatSettingsI18nKeys {
   SaveLabel = 'chatSettings.saveLabel',
   TemperatureHint = 'chatSettings.temperatureHint',
   SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
+  SavedNotification = 'chatSettings.savedNotification',
 }
 
 export enum AttachmentCanvasI18nKeys {
