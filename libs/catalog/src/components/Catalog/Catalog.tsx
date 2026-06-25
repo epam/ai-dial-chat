@@ -317,7 +317,6 @@ export const Catalog: FC<CatalogProps> = ({
           )}
         >
           <DialTabs
-            className="justify-center"
             tabs={tabsWithCounts}
             activeTab={activeTab}
             onClick={setActiveTab}

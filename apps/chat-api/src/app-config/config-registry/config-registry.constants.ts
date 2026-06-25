@@ -26,6 +26,18 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     envVar: 'TRANSCRIBE_SIZE_LIMIT_BYTES',
   },
   {
+    key: 'deployments.defaultDeploymentId',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'client',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Operator-configured default deployment ID shown to users without a persisted selection. Null when DEFAULT_DEPLOYMENT is not set.',
+    owner: 'chat-team',
+    envVar: 'DEFAULT_DEPLOYMENT',
+  },
+  {
     key: 'features.asrEnabled',
     type: 'feature',
     valueType: 'boolean',

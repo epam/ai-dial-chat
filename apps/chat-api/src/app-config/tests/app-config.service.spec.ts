@@ -53,6 +53,7 @@ describe('AppConfigService', () => {
       expect(result.features['asrEnabled']).toBe(false);
       expect(result.config.asrModelId).toBeNull();
       expect(result.config.transcribeSizeLimitBytes).toBe(5 * 1024 * 1024);
+      expect(result.config.defaultDeploymentId).toBeNull();
     });
 
     it('returns resolved values when providers succeed', async () => {
@@ -60,6 +61,7 @@ describe('AppConfigService', () => {
         if (key === 'asr.modelId') return 'whisper-1';
         if (key === 'features.asrEnabled') return true;
         if (key === 'asr.transcribeSizeLimitBytes') return 10_485_760;
+        if (key === 'deployments.defaultDeploymentId') return 'gpt-4o';
         return undefined;
       });
       const result = await service.getClientConfig(ctx);
@@ -67,6 +69,13 @@ describe('AppConfigService', () => {
       expect(result.features['asrEnabled']).toBe(true);
       expect(result.config.asrModelId).toBe('whisper-1');
       expect(result.config.transcribeSizeLimitBytes).toBe(10_485_760);
+      expect(result.config.defaultDeploymentId).toBe('gpt-4o');
+    });
+
+    it('returns null defaultDeploymentId when DEFAULT_DEPLOYMENT is not set', async () => {
+      const { service } = makeService(async () => undefined);
+      const result = await service.getClientConfig(ctx);
+      expect(result.config.defaultDeploymentId).toBeNull();
     });
 
     it('includes metadata with resolvedAt and cacheTtlSeconds', async () => {
@@ -100,7 +109,7 @@ describe('AppConfigService', () => {
         first,
         60_000,
       );
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(3);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(4);
     });
 
     it('does not share cached config across role sets', async () => {
@@ -117,7 +126,7 @@ describe('AppConfigService', () => {
         roles: ['viewer'],
       });
 
-      expect(compositeProvider.resolve).toHaveBeenCalledTimes(6);
+      expect(compositeProvider.resolve).toHaveBeenCalledTimes(8);
     });
   });
 
