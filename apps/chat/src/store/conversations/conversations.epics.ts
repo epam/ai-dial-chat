@@ -22,9 +22,11 @@ import {
   startWith,
   switchMap,
   take,
+  takeUntil,
   takeWhile,
   tap,
   throwError,
+  timer,
   zip,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
@@ -1883,12 +1885,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
               !!message.custom_content?.attachments?.some((attachment) =>
                 isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
               );
-            const selectedConversations =
-              ConversationsSelectors.selectSelectedConversations(state$.value);
-            const areOtherConversationsStreaming = selectedConversations
-              .filter((c) => c.id !== payload.conversation.id)
-              .some((c) => c.isMessageStreaming);
-
             return concat(
               iif(
                 () => needToMapReviewAttachments,
@@ -1911,11 +1907,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
                 ),
               ),
               of(ConversationsActions.streamMessageSuccess()),
-              iif(
-                () => !areOtherConversationsStreaming,
-                of(ChatEventsActions.unsubscribe()),
-                EMPTY,
-              ),
             );
           }
 
@@ -2024,6 +2015,28 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
         }),
       );
     }),
+  );
+
+const UNSUBSCRIBE_IDLE_DELAY_MS = 1_000;
+
+const unsubscribeWhenIdleEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ConversationsActions.streamMessageSuccess.type),
+    filter(() => ChatEventsSelectors.selectIsSubscribed(state$.value)),
+    switchMap(() =>
+      timer(UNSUBSCRIBE_IDLE_DELAY_MS).pipe(
+        takeUntil(
+          action$.pipe(ofType(ConversationsActions.streamMessage.type)),
+        ),
+        filter(
+          () =>
+            !ConversationsSelectors.selectIsConversationsStreaming(
+              state$.value,
+            ) && ChatEventsSelectors.selectIsSubscribed(state$.value),
+        ),
+        map(() => ChatEventsActions.unsubscribe()),
+      ),
+    ),
   );
 
 const streamMessageFailEpic: AppEpic = (action$, state$) =>
@@ -4047,6 +4060,7 @@ export const ConversationsEpics = combineEpics(
   sendMessagesEpic,
   stopStreamMessageEpic,
   streamMessageEpic,
+  unsubscribeWhenIdleEpic,
   streamMessageFailEpic,
   cleanMessagesEpic,
   replayConversationEpic,
