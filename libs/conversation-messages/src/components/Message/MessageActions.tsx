@@ -64,21 +64,25 @@ export const MessageActions: FC<MessageActionsProps> = ({
     >
       {role === MessageRole.User ? (
         <>
-          <DialGhostIconButton
-            icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} />}
-            size={ElementSize.Small}
-            aria-label={ariaLabels?.editMessage ?? 'Edit message'}
-            tooltipProps={{ tooltip: tooltips?.edit ?? 'Edit' }}
-            onClick={onEdit}
-            onMouseEnter={onEditHover}
-          />
-          <DialGhostIconButton
-            icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}
-            size={ElementSize.Small}
-            aria-label={ariaLabels?.deleteMessage ?? 'Delete message'}
-            tooltipProps={{ tooltip: tooltips?.delete ?? 'Delete' }}
-            onClick={onDelete}
-          />
+          {onEdit && (
+            <DialGhostIconButton
+              icon={<IconPencilMinus size={DIAL_ICON_SIZE.SM} />}
+              size={ElementSize.Small}
+              aria-label={ariaLabels?.editMessage ?? 'Edit message'}
+              tooltipProps={{ tooltip: tooltips?.edit ?? 'Edit' }}
+              onClick={onEdit}
+              onMouseEnter={onEditHover}
+            />
+          )}
+          {onDelete && (
+            <DialGhostIconButton
+              icon={<IconTrashX size={DIAL_ICON_SIZE.SM} />}
+              size={ElementSize.Small}
+              aria-label={ariaLabels?.deleteMessage ?? 'Delete message'}
+              tooltipProps={{ tooltip: tooltips?.delete ?? 'Delete' }}
+              onClick={onDelete}
+            />
+          )}
         </>
       ) : (
         <>

@@ -14,6 +14,7 @@ export interface AttachmentCardState {
   isLoading: boolean;
   isError: boolean;
   isImage: boolean;
+  isAudio: boolean;
   areActionsVisible: boolean;
   BottomIcon: Icon;
   typeLabel: string;
@@ -73,6 +74,7 @@ export const getAttachmentCardState = (
   const isError = status === RequestStatus.Error;
   const isImage =
     type === AttachmentType.Image && !!(previewUrl ?? url) && !isError;
+  const isAudio = type === AttachmentType.Audio && !isError;
 
   const cardColorClass = mergeClasses(
     styles.card,
@@ -92,6 +94,7 @@ export const getAttachmentCardState = (
     isLoading,
     isError,
     isImage,
+    isAudio,
     areActionsVisible: isError || shouldAlwaysShowActions,
     BottomIcon: getBottomIcon(attachment),
     typeLabel: getBottomLabel(attachment),

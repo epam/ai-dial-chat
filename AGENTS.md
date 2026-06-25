@@ -53,7 +53,6 @@ Expected output:
 Use these local skills directly:
 
 - `./.agents/skills/address-current-branch-review/SKILL.md` for processing unresolved GitHub review threads on the current branch. Fix requests do not authorize inline replies; reply only after the user explicitly asks and the pushed fix is visible in the PR.
-- `./.claude/skills/incremental-implementation/SKILL.md` for multi-file implementation and refactors
 - `./.claude/skills/code-review-and-quality/SKILL.md` for review before merge or any quality pass
 - `./.claude/skills/feature-research/SKILL.md` for broad feature research and trade-off analysis
 - `./.claude/skills/figma/SKILL.md` for translating Figma designs into React components

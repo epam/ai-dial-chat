@@ -494,11 +494,13 @@ const ConversationView: FC<Props> = ({
                   isAssistantTyping={isAssistantTyping}
                   editingMessageIndexes={editingMessageIndexes}
                   onSelectStarter={onSelectStarter}
-                  onStartEdit={onStartEdit}
-                  onDeleteMessage={onDeleteMessage}
-                  onRegenerateMessage={onRegenerateMessage}
-                  onRateMessage={onRateMessage}
-                  onDislikeMessage={onDislikeMessage}
+                  onStartEdit={isReadOnly ? undefined : onStartEdit}
+                  onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}
+                  onRegenerateMessage={
+                    isReadOnly ? undefined : onRegenerateMessage
+                  }
+                  onRateMessage={isReadOnly ? undefined : onRateMessage}
+                  onDislikeMessage={isReadOnly ? undefined : onDislikeMessage}
                   onCancelEdit={onCancelEdit}
                   onEditMessage={onEditMessage}
                   onUploadAttachment={onUploadAttachment}

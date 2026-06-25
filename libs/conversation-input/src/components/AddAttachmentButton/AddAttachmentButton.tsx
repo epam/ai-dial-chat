@@ -1,4 +1,8 @@
-import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  ResponseFormat,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
@@ -13,7 +17,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import type { ChatSettingsConfig } from '../../models/Input';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { ChatSettingsBottomSheet } from '../ChatSettingsBottomSheet/ChatSettingsBottomSheet';
