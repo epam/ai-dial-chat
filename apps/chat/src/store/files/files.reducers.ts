@@ -841,8 +841,6 @@ export const filesSlice = createSlice({
           return true;
         }
 
-        // Preserve shared files that are excluded from the payload on purpose
-        // (e.g. currently selected attachments) so they are not dropped here.
         if (keepFileIds.has(file.id)) {
           return true;
         }
