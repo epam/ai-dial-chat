@@ -10,13 +10,7 @@ import {
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
 import { IconDotsVertical } from '@tabler/icons-react';
-import {
-  useCallback,
-  useState,
-  type DragEvent,
-  type FC,
-  type MouseEvent,
-} from 'react';
+import { useCallback, useState, type DragEvent, type FC } from 'react';
 import { ConversationHistoryItem } from '../../models/panel-props';
 import type { VirtualRow } from '../../models/virtual-row';
 import { ConversationGroupKey } from '../../types/conversation-group-key';
@@ -103,25 +97,6 @@ export const ConversationRow: FC<ConversationRowProps> = ({
 
   const buttonPaddingRight = getButtonPaddingEnd(hasActions, isMenuOpen);
 
-  const handleAuxClick = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      if (e.button === 1 && item.href) {
-        e.preventDefault();
-        window.open(item.href, '_blank', 'noreferrer');
-      }
-    },
-    [item.href],
-  );
-
-  const handleMouseDown = useCallback(
-    (e: MouseEvent<HTMLButtonElement>) => {
-      if (e.button === 1 && item.href) {
-        e.preventDefault();
-      }
-    },
-    [item.href],
-  );
-
   const isDragEnabled = rowGroupKey != null;
 
   const handleDragLeave = useCallback(
@@ -175,27 +150,32 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       onDragLeave={isDragEnabled ? handleDragLeave : undefined}
       onDrop={isDragEnabled ? handleDrop : undefined}
     >
-      <DialGhostButton
-        iconBefore={avatar}
-        label={
-          <DialEllipsisTooltip
-            text={item.title}
-            className={itemTitleClassName}
-          />
-        }
-        textClassName="min-w-0"
-        aria-current={isActive ? 'page' : undefined}
-        onClick={() => onSelectConversation(item.id)}
-        onMouseDown={item.href ? handleMouseDown : undefined}
-        onAuxClick={item.href ? handleAuxClick : undefined}
-        className={mergeClasses(
-          'h-8 w-full justify-start gap-2 rounded-b rounded-t border-l-2 border-transparent ps-3',
-          buttonPaddingRight,
-          styles.item,
-          isActive && styles.itemActive,
-          isMenuOpen && styles.itemActive,
-        )}
-      />
+      <a
+        href={item.href}
+        className="contents"
+        onClick={(e) => e.preventDefault()}
+      >
+        <DialGhostButton
+          iconBefore={avatar}
+          label={
+            <DialEllipsisTooltip
+              text={item.title}
+              className={itemTitleClassName}
+            />
+          }
+          textClassName="min-w-0"
+          aria-current={isActive ? 'page' : undefined}
+          onClick={() => onSelectConversation(item.id)}
+          tabIndex={item.href ? -1 : undefined}
+          className={mergeClasses(
+            'h-8 w-full justify-start gap-2 rounded-b rounded-t border-l-2 border-transparent ps-3',
+            buttonPaddingRight,
+            styles.item,
+            isActive && styles.itemActive,
+            isMenuOpen && styles.itemActive,
+          )}
+        />
+      </a>
 
       {hasActions && (
         <div

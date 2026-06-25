@@ -74,7 +74,7 @@ export default defineConfig(() => ({
       ),
       '@epam/ai-dial-react-pdf-highlighter/styles.css': path.resolve(
         __dirname,
-        '../../libs/attachment-canvas/node_modules/@epam/ai-dial-react-pdf-highlighter/dist/index.css',
+        '../../node_modules/@epam/ai-dial-react-pdf-highlighter/dist/index.css',
       ),
       '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css': path.resolve(
         __dirname,
