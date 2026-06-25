@@ -19,3 +19,4 @@ vitest.config.*.timestamp*
 .nx/self-healing
 .github/workflows/*.md
 openspec
+scripts/.agent-docs-fixtures*

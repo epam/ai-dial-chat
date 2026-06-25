@@ -98,6 +98,34 @@ All `apps/chat` files that previously imported from `apps/chat/src/utils/attachm
 - **WHEN** `npm exec nx typecheck chat` is executed after the migration
 - **THEN** typecheck completes with zero errors related to attachment-mime imports
 
+### Requirement: AttachmentCard renders an inline audio player for audio attachments
+
+When `attachment.type === AttachmentType.Audio`, `AttachmentCard` SHALL render a wide card (full tray width, minimum `280px`) instead of the standard `100×100` square. The card SHALL contain:
+- The attachment filename truncated to one line at the top.
+- A download icon button (`IconDownload`) on the same row as the filename when an `onClick` prop is provided. Clicking it SHALL call `onClick(id)` and NOT bubble to any outer click handler.
+- A native `<audio controls>` element using `attachment.playUrl` as `src` and `preload="metadata"`. The element SHALL span the full card width.
+
+The audio card variant SHALL use the same border and background CSS custom properties as the standard card.
+
+#### Scenario: Audio attachment renders audio player
+
+- **WHEN** `AttachmentCard` is rendered with `attachment.type === AttachmentType.Audio` and a valid `playUrl`
+- **THEN** an `<audio>` element with `controls` is present in the DOM
+- **AND** the `<audio>` element's `src` equals `attachment.playUrl`
+
+#### Scenario: Audio card shows download button when onClick provided
+
+- **WHEN** `AttachmentCard` is rendered with `type === AttachmentType.Audio` and an `onClick` prop
+- **THEN** a download icon button is rendered
+- **AND** clicking it calls `onClick` without triggering audio playback or outer click handlers
+
+#### Scenario: Audio card is wider than standard card
+
+- **WHEN** `AttachmentCard` is rendered with `type === AttachmentType.Audio`
+- **THEN** the card does NOT have the `h-[100px] w-[100px]` classes of a standard card
+
+---
+
 ### Requirement: All existing tests pass
 All existing tests in `libs/conversation-input` and `apps/chat` that cover the moved code SHALL continue to pass without modification (other than updating import paths as needed).
 

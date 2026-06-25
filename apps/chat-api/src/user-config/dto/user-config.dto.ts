@@ -1,4 +1,5 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 
 export interface ConversationsConfig {
   pinnedIds: string[];
@@ -10,6 +11,7 @@ export interface ToolsetsConfig {
 
 export interface DeploymentsConfig {
   installed: string[];
+  selectedId: string | null;
 }
 
 export interface UserConfig {
@@ -44,6 +46,11 @@ export class DeploymentsConfigDto implements DeploymentsConfig {
     type: [String],
   })
   installed!: string[];
+
+  @ApiPropertyOptional({ nullable: true, type: String })
+  @IsOptional()
+  @IsString()
+  selectedId!: string | null;
 }
 
 export class UserConfigDto implements UserConfig {
@@ -63,13 +70,13 @@ export class UserConfigDto implements UserConfig {
   deployments!: DeploymentsConfigDto;
 }
 
-export const CURRENT_CONFIG_VERSION = 2;
+export const CURRENT_CONFIG_VERSION = 3;
 
 export const DEFAULT_USER_CONFIG: UserConfig = {
   version: CURRENT_CONFIG_VERSION,
   conversations: { pinnedIds: [] },
   toolsets: { installed: [] },
-  deployments: { installed: [] },
+  deployments: { installed: [], selectedId: null },
 };
 
 export const migrateConfig = (raw: unknown): UserConfig => {
@@ -78,7 +85,7 @@ export const migrateConfig = (raw: unknown): UserConfig => {
       ...DEFAULT_USER_CONFIG,
       conversations: { pinnedIds: [] },
       toolsets: { installed: [] },
-      deployments: { installed: [] },
+      deployments: { installed: [], selectedId: null },
     };
   }
   const obj = raw as Record<string, unknown>;
@@ -94,7 +101,7 @@ export const migrateConfig = (raw: unknown): UserConfig => {
       version: CURRENT_CONFIG_VERSION,
       conversations: { pinnedIds },
       toolsets: { installed: [] },
-      deployments: { installed: [] },
+      deployments: { installed: [], selectedId: null },
     };
   }
 
@@ -125,10 +132,20 @@ export const migrateConfig = (raw: unknown): UserConfig => {
       )
     : [];
 
+  // v2→v3: extract selectedId if present, default to null
+  const deploymentsSelectedIdRaw = deploymentsObj?.['selectedId'];
+  const deploymentsSelectedId =
+    typeof deploymentsSelectedIdRaw === 'string'
+      ? deploymentsSelectedIdRaw
+      : null;
+
   return {
     version: CURRENT_CONFIG_VERSION,
     conversations: { pinnedIds },
     toolsets: { installed: toolsetsInstalled },
-    deployments: { installed: deploymentsInstalled },
+    deployments: {
+      installed: deploymentsInstalled,
+      selectedId: deploymentsSelectedId,
+    },
   };
 };

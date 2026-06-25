@@ -16,16 +16,18 @@ import {
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
+import { useAppConfig } from './AppConfigContext';
+import { useUserConfig } from './UserConfigContext';
 
 export interface DeploymentsContextType {
   /** Full list of deployment items from the API, enriched with schema icon fallback. */
   items: DeploymentItemDto[];
   /** ID of the currently selected deployment, or null if none. */
   selectedItemId: string | null;
-  /** Updates the selected deployment and persists the choice to localStorage. Use for user-initiated selections. */
-  setSelectedItemId: (id: string) => void;
+  /** Updates the selected deployment and persists the choice to user config. Use for user-initiated selections. */
+  setSelectedItemId: (id: string | null) => void;
   /**
-   * Restores the selected deployment without persisting to localStorage.
+   * Restores the selected deployment without persisting to user config.
    * Use when loading a conversation to reflect its last-used model without
    * overwriting the user's own model preference for new chats.
    */
@@ -58,29 +60,37 @@ const sortDeployments = (
   });
 };
 
-// TODO: move to user config
-const SELECTED_DEPLOYMENT_KEY = 'dial:selectedDeploymentId';
-
-const readStoredDeploymentId = (): string | null => {
-  try {
-    return localStorage.getItem(SELECTED_DEPLOYMENT_KEY);
-  } catch {
-    return null;
+const resolveInitialSelection = (
+  deployments: DeploymentItemDto[],
+  inMemoryId: string | null,
+  userConfigId: string | null,
+  operatorDefaultId: string | null,
+): string | null => {
+  if (inMemoryId != null && deployments.some((d) => d.id === inMemoryId)) {
+    return inMemoryId;
   }
-};
-
-const writeStoredDeploymentId = (id: string): void => {
-  try {
-    localStorage.setItem(SELECTED_DEPLOYMENT_KEY, id);
-  } catch {
-    // storage quota exceeded or private browsing — ignore
+  if (userConfigId != null && deployments.some((d) => d.id === userConfigId)) {
+    return userConfigId;
   }
+  if (
+    operatorDefaultId != null &&
+    deployments.some((d) => d.id === operatorDefaultId)
+  ) {
+    return operatorDefaultId;
+  }
+  return deployments[0]?.id ?? null;
 };
 
 export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
+  const { selectedDeploymentId: userConfigSelectedId, setSelectedDeployment } =
+    useUserConfig();
+  const { config: appConfig } = useAppConfig();
+
   const [rawDeployments, setRawDeployments] = useState<DeploymentItemDto[]>([]);
   const [schemas, setSchemas] = useState<ApplicationSchemaSummaryDto[]>([]);
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemIdState] = useState<string | null>(
+    null,
+  );
   const [selectedDeploymentConfiguration, setSelectedDeploymentConfiguration] =
     useState<DeploymentConfigurationSchema | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -119,19 +129,17 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         deploymentsResult.value.deployments ?? [],
       );
       setRawDeployments(deployments);
-      setSelectedItemId((prev) => {
-        if (prev !== null && deployments.some((d) => d.id === prev)) {
-          return prev;
-        }
-        const stored = readStoredDeploymentId();
-        if (stored != null && deployments.some((d) => d.id === stored)) {
-          return stored;
-        }
-        return deployments[0]?.id ?? null;
-      });
+      setSelectedItemIdState((prev) =>
+        resolveInitialSelection(
+          deployments,
+          prev,
+          userConfigSelectedId,
+          appConfig.defaultDeploymentId,
+        ),
+      );
       setIsLoading(false);
     },
-    [],
+    [userConfigSelectedId, appConfig.defaultDeploymentId],
   );
 
   useEffect(() => {
@@ -188,38 +196,46 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
     };
   }, [selectedItemId]);
 
-  const selectDeployment = useCallback((id: string) => {
-    writeStoredDeploymentId(id);
-    setSelectedItemId(id);
+  const setSelectedItemId = useCallback(
+    (id: string | null) => {
+      setSelectedItemIdState(id);
+      void setSelectedDeployment(id).catch((err) => {
+        console.warn(
+          '[DeploymentsContext] Failed to persist selected deployment',
+          err,
+        );
+      });
+    },
+    [setSelectedDeployment],
+  );
+
+  const restoreSelectedItemId = useCallback((id: string) => {
+    setSelectedItemIdState(id);
   }, []);
 
-  const restoreDeployment = useCallback((id: string) => {
-    setSelectedItemId(id);
-  }, []);
+  const contextValue = useMemo(
+    () => ({
+      items,
+      selectedItemId,
+      setSelectedItemId,
+      restoreSelectedItemId,
+      selectedDeploymentConfiguration,
+      isLoading,
+      error,
+    }),
+    [
+      items,
+      selectedItemId,
+      setSelectedItemId,
+      restoreSelectedItemId,
+      selectedDeploymentConfiguration,
+      isLoading,
+      error,
+    ],
+  );
 
   return (
-    <DeploymentsContext.Provider
-      value={useMemo(
-        () => ({
-          items,
-          selectedItemId,
-          setSelectedItemId: selectDeployment,
-          restoreSelectedItemId: restoreDeployment,
-          selectedDeploymentConfiguration,
-          isLoading,
-          error,
-        }),
-        [
-          items,
-          selectedItemId,
-          selectDeployment,
-          restoreDeployment,
-          selectedDeploymentConfiguration,
-          isLoading,
-          error,
-        ],
-      )}
-    >
+    <DeploymentsContext.Provider value={contextValue}>
       {children}
     </DeploymentsContext.Provider>
   );
