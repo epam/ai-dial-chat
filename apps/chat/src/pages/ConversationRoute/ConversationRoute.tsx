@@ -53,6 +53,7 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   transcribeAudio,
@@ -66,6 +67,7 @@ import { uploadFile } from '../../server-api/files.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
+import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import {
   getLastConversationSettings,
@@ -380,6 +382,8 @@ const ConversationRoute: FC = () => {
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const { displayName } = useUserProfile();
+  const firstName = displayName.split(' ')[0];
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
 
   const handleAttachmentClick = useCallback(
@@ -459,7 +463,28 @@ const ConversationRoute: FC = () => {
             onSend={handleSend}
             onUploadAttachment={handleUploadAttachment}
             message={inputMessage}
-            welcomeText={t(ChatI18nKeys.WelcomeText)}
+            welcomeText={getTimeOfDayGreeting(
+              new Date().getHours(),
+              {
+                morningWithName: t(ChatI18nKeys.GreetingMorning, {
+                  name: firstName,
+                }),
+                morningNoName: t(ChatI18nKeys.GreetingMorningNoName),
+                afternoonWithName: t(ChatI18nKeys.GreetingAfternoon, {
+                  name: firstName,
+                }),
+                afternoonNoName: t(ChatI18nKeys.GreetingAfternoonNoName),
+                eveningWithName: t(ChatI18nKeys.GreetingEvening, {
+                  name: firstName,
+                }),
+                eveningNoName: t(ChatI18nKeys.GreetingEveningNoName),
+                nightWithName: t(ChatI18nKeys.GreetingNight, {
+                  name: firstName,
+                }),
+                nightNoName: t(ChatI18nKeys.GreetingNightNoName),
+              },
+              firstName || undefined,
+            )}
             placeholder={t(ChatI18nKeys.Placeholder)}
             styles={{ typography: { welcomeClassName: 'dial-display2-text' } }}
             deployments={deploymentItems}
