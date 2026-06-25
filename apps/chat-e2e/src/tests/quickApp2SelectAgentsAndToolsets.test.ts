@@ -1,6 +1,5 @@
-import { EntityType } from '@/chat/types/common';
 import dialTest from '@/src/core/dialFixtures';
-import { EntityEditorAppTypes } from '@/src/testData';
+import { AddAppMenuOptions, EntityEditorAppTypes } from '@/src/testData';
 import { GeneratorUtil } from '@/src/utils';
 
 dialTest(
@@ -8,15 +7,16 @@ dialTest(
     '[Select agents and toolsets] No changes are applied if user closes the modal on X', // EPMRTC-7320 + EPMRTC-7321
   async ({
     marketplacePage,
+    marketplaceHeader,
+    addAppDropdownMenu,
     entityEditorPage,
+    entityEditorGeneralForm,
     quickApp2EditorViewForm,
     agentAndToolsetSelectModal,
     customApplicationBuilder,
-    quickApp2Builder,
     toolsetBuilder,
     applicationApiHelper,
     toolsetApiHelper,
-    modelApiHelper,
     baseAssertion,
     setTestIds,
   }) => {
@@ -26,7 +26,7 @@ dialTest(
     const quickAppName = GeneratorUtil.randomApplicationName();
 
     await dialTest.step(
-      'Precondition: create an agent, a toolset and an empty Quick app 2.0 via API',
+      'Precondition: create an agent and a toolset to select via API',
       async () => {
         await applicationApiHelper.createApplication(
           customApplicationBuilder.withDisplayName(agentName).build(),
@@ -34,26 +34,30 @@ dialTest(
         await toolsetApiHelper.createToolset(
           toolsetBuilder.withDisplayName(toolsetName).build(),
         );
-        const models = await modelApiHelper.getModels();
-        const orchestrator = models.find(
-          (entity) => entity.type === EntityType.Model,
-        )!;
-        await applicationApiHelper.createApplication(
-          quickApp2Builder
-            .withDisplayName(quickAppName)
-            .withOrchestratorModel(orchestrator.id)
-            .build(),
-        );
       },
     );
 
+    await dialTest.step('Open My workspace', async () => {
+      await marketplacePage.openMyWorkspacePage({
+        updateInstalledDeployments: false,
+        getStyles: true,
+      });
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialTest.step('Start Quick app 2.0 creation', async () => {
+      await marketplaceHeader.addAppButton.click();
+      await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.quickApp2);
+      await entityEditorPage.waitForPageLoaded(EntityEditorAppTypes.QuickApp2);
+    });
+
     await dialTest.step(
-      'Open the created Quick app 2.0 directly in edit mode',
+      'Fill in the name and proceed to the App settings step',
       async () => {
-        const quickApp = await modelApiHelper.getAgentByNameAndVersion({
+        await entityEditorGeneralForm.fillInEntityFields({
           name: quickAppName,
         });
-        await marketplacePage.openEditQuickApp2Page(quickApp.reference);
+        await entityEditorGeneralForm.goNext();
         await entityEditorPage.waitForPageLoadedForEdit(
           EntityEditorAppTypes.QuickApp2,
         );
