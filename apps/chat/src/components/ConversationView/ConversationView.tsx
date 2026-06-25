@@ -307,19 +307,43 @@ const ConversationView: FC<Props> = ({
 
   // Prevents the scroll handler from misreading programmatic scrolls as user input.
   const isProgrammaticRef = useRef(false);
+  // Fallback timer that clears isProgrammaticRef when scrollend is unsupported.
+  const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const scrollToBottom = useCallback((instant = false) => {
     const container = containerRef.current;
     if (!container) return;
+
+    if (smoothScrollTimerRef.current != null) {
+      clearTimeout(smoothScrollTimerRef.current);
+      smoothScrollTimerRef.current = null;
+    }
+
     isProgrammaticRef.current = true;
     container.scrollTo({
       top: container.scrollHeight,
       behavior: instant ? 'instant' : 'smooth',
     });
-    // Reset flag after the scroll event has fired
-    requestAnimationFrame(() => {
-      isProgrammaticRef.current = false;
-    });
+
+    if (instant) {
+      // A single frame is enough — instant scroll fires one synchronous event.
+      requestAnimationFrame(() => {
+        isProgrammaticRef.current = false;
+      });
+    } else {
+      // Smooth scroll fires scroll events for its entire ~300 ms animation.
+      // Keep the flag set until the browser signals the scroll is complete;
+      // fall back to a timeout for Safari < 17.4 which lacks scrollend.
+      const reset = () => {
+        if (smoothScrollTimerRef.current != null) {
+          clearTimeout(smoothScrollTimerRef.current);
+          smoothScrollTimerRef.current = null;
+        }
+        isProgrammaticRef.current = false;
+      };
+      container.addEventListener('scrollend', reset, { once: true });
+      smoothScrollTimerRef.current = setTimeout(reset, 400);
+    }
   }, []);
 
   // When streaming ends, release user override so the next send auto-scrolls.
