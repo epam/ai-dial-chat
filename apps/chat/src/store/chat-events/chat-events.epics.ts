@@ -2,12 +2,14 @@ import {
   EMPTY,
   catchError,
   concat,
+  exhaustMap,
   filter,
   forkJoin,
   map,
   mergeMap,
   of,
   switchMap,
+  takeUntil,
   timer,
 } from 'rxjs';
 
@@ -72,7 +74,7 @@ const subscribeEpic: AppEpic = (action$, state$) =>
           Feature.LiveChatInteraction,
         ),
     ),
-    switchMap(({ payload }) => {
+    exhaustMap(({ payload }) => {
       const channelId = ChatEventsSelectors.selectChannelId(state$.value);
       const decoder = new TextDecoder();
       let retryAttempt = payload?.retryAttempt ?? 0;
@@ -118,6 +120,7 @@ const subscribeEpic: AppEpic = (action$, state$) =>
             }),
           );
         }),
+        takeUntil(action$.pipe(ofType(ChatEventsActions.unsubscribe.type))),
       );
     }),
   );
