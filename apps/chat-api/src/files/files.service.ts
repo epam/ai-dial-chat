@@ -18,6 +18,7 @@ import type { Response as ExpressResponse } from 'express';
 import { AppService } from '../app/app.service';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
+import { safeDecodeURIComponent } from '../common/utils/uri';
 import type { EnvironmentVariables } from '../config/environment.config';
 import type { CreateFolderResponseDto } from './dto/create-folder.dto';
 import type { DeleteItemDto } from './dto/delete-files.dto';
@@ -89,16 +90,7 @@ const getFileNameFromPath = (path: string): string =>
   path.split('/').filter(Boolean).pop() ?? 'file';
 
 const safeDecodePathForCompare = (path: string): string =>
-  path
-    .split('/')
-    .map((segment) => {
-      try {
-        return decodeURIComponent(segment);
-      } catch {
-        return segment;
-      }
-    })
-    .join('/');
+  path.split('/').map(safeDecodeURIComponent).join('/');
 
 const encodeDialFileResourcePath = (path: string): string =>
   path
@@ -118,6 +110,20 @@ const buildUploadFormData = (file: UploadedFile, path: string): FormData => {
     fileName,
   );
   return formData;
+};
+
+const getRenameErrorMessage = (error: unknown): string => {
+  try {
+    handleDialError(error);
+  } catch (err) {
+    if (err instanceof HttpException) {
+      if (err.getStatus() === HttpStatus.CONFLICT) return 'Conflict';
+      if (err.getStatus() === HttpStatus.FORBIDDEN) return 'Forbidden';
+      if (err.getStatus() === HttpStatus.NOT_FOUND) return 'Not found';
+    }
+  }
+
+  return 'Rename failed';
 };
 
 @Injectable()
@@ -1121,35 +1127,11 @@ export class FilesService extends AppService {
         `renameFileItem failed: bucket=${bucket}, sourcePath=${sourcePath}, destPath=${destPath}, status=${status}`,
       );
 
-      if (status === 409) {
-        return {
-          sourcePath,
-          destinationPath: destPath,
-          success: false,
-          error: 'Conflict',
-        };
-      }
-      if (status === 403) {
-        return {
-          sourcePath,
-          destinationPath: destPath,
-          success: false,
-          error: 'Forbidden',
-        };
-      }
-      if (status === 404) {
-        return {
-          sourcePath,
-          destinationPath: destPath,
-          success: false,
-          error: 'Not found',
-        };
-      }
       return {
         sourcePath,
         destinationPath: destPath,
         success: false,
-        error: 'Rename failed',
+        error: getRenameErrorMessage({ status }),
       };
     } catch (err) {
       this.logger.error(
@@ -1159,7 +1141,7 @@ export class FilesService extends AppService {
         sourcePath,
         destinationPath: destPath,
         success: false,
-        error: 'Rename failed',
+        error: getRenameErrorMessage(err),
       };
     }
   }
