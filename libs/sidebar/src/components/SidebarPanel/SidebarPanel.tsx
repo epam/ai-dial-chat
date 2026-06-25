@@ -61,7 +61,7 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
   );
 
   const dividerClass =
-    orientation === SidebarOrientation.Right ? 'border-l' : 'border-r';
+    orientation === SidebarOrientation.Right ? 'border-s' : 'border-e';
   const resizableSide =
     orientation === SidebarOrientation.Right
       ? ResizableContainerSide.Left
