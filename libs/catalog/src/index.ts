@@ -2,6 +2,7 @@
 export { CatalogEntityType } from './types/entity-type';
 export { CatalogDetailsTab } from './types/detail-tab';
 export { CatalogSortKey } from './types/sort';
+export type { CatalogSortOption } from './models/sort';
 export { CatalogViewMode } from './types/view-mode';
 export { EntityTag } from './types/entity-tag';
 export { CodeLanguage } from './types/code-language';

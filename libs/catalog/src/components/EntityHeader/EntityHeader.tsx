@@ -16,6 +16,8 @@ export interface EntityHeaderProps {
   versionClassName?: string;
   /** Label for the featured tag shown when item.isFeatured is true. Default: 'Featured'. */
   featuredLabel?: string;
+  /** Whether the isFeatured property is available on the item. Default: true. */
+  isFeaturedAvailable?: boolean;
   /** Size of the deployment icon. Default: 48. */
   iconSize?: number;
 }
@@ -25,6 +27,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   item,
   nameClassName,
   versionClassName,
+  isFeaturedAvailable = true,
   featuredLabel = 'Featured',
   iconSize = 48,
 }) => {
@@ -35,7 +38,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="relative flex flex-row items-center justify-between">
           <EntityBadge type={item.type} />
-          {item.isFeatured && (
+          {isFeaturedAvailable && item.isFeatured && (
             <div className="absolute right-0 top-[-6px]">
               <DialTag label={featuredLabel} className={styles.featuredTag} />
             </div>

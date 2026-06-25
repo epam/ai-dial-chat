@@ -1,7 +1,8 @@
 /**
- * Card height: 2border + 17pt + 52header + 10gap + 40desc(2ln) + 10gap + 25tags(1row) + 56footer = 212.
+ * Card height: 2border + 32padding(p-4) + 48header + 8gap + 40desc(2ln) + 8gap + 24tags(1row) + 16inner-gap + 35footer + 1buffer = 214.
+ * Footer: 1border-t + 8pt-2 + 26star-btn(py-1 !h-auto).
  */
-export const CARD_HEIGHT = 212;
+export const CARD_HEIGHT = 214;
 
 /** Vertical gap between card rows, matching the `gap-5` grid spacing (20 px). */
 export const CARD_ROW_GAP = 20;

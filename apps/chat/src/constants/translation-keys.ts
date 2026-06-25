@@ -121,6 +121,8 @@ export enum CatalogI18nKeys {
   FavoriteAdded = 'catalog.favoriteAdded',
   FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
   FavoriteRemoved = 'catalog.favoriteRemoved',
+  FolderPersonal = 'catalog.folder.personal',
+  FolderPublic = 'catalog.folder.public',
 }
 
 export enum DeploymentsI18nKeys {

@@ -9,8 +9,16 @@
   );
 }
 
+.sectionLeaving {
+  animation: sectionExit 260ms ease-in forwards;
+  pointer-events: none;
+}
+
 .card {
-  background: var(--cat-fav-card-bg, var(--bg-accent-tertiary-alpha, #a972ff2e));
+  background: var(
+    --cat-fav-card-bg,
+    var(--bg-accent-tertiary-alpha, #a972ff2e)
+  );
   border: 1px solid var(--cat-fav-card-border, var(--stroke-secondary, #242c42));
   transition:
     transform 150ms ease-out,
@@ -25,8 +33,8 @@
   }
 }
 
-.sectionLeaving {
-  animation: sectionExit 260ms ease-in forwards;
+.cardLeaving {
+  animation: cardFadeOut 180ms ease-out forwards;
   pointer-events: none;
 }
 
@@ -45,11 +53,6 @@
 
 .gridPage > * {
   animation: favFadeIn 280ms ease-out;
-}
-
-.cardLeaving {
-  animation: cardFadeOut 180ms ease-out forwards;
-  pointer-events: none;
 }
 
 @keyframes sectionEnter {

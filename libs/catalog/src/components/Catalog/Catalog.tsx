@@ -67,6 +67,8 @@ export const Catalog: FC<CatalogProps> = ({
     },
   ];
   const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState<Set<string>>(new Set());
+  const [isMyAppsActive, setIsMyAppsActive] = useState(false);
 
   const [viewMode, setViewMode] = useState<CatalogViewMode>(
     CatalogViewMode.Grid,
@@ -80,7 +82,10 @@ export const Catalog: FC<CatalogProps> = ({
     [items],
   );
 
-  const tabs = buildCatalogTabs(filteredItems, titles?.tabLabels);
+  const tabs = useMemo(
+    () => buildCatalogTabs(filteredItems, titles?.tabLabels),
+    [filteredItems, titles?.tabLabels],
+  );
   const firstTabId = tabs[0]?.id ?? '';
   const [activeTab, setActiveTab] = useState(firstTabId);
 
@@ -116,7 +121,6 @@ export const Catalog: FC<CatalogProps> = ({
   const [isAboutLoading, setIsAboutLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
-  // TODO: check details
   const handleOpenDetails = useCallback(
     async (item: CatalogItem) => {
       setSelectedItem(item);
@@ -160,10 +164,33 @@ export const Catalog: FC<CatalogProps> = ({
     [sorted, query],
   );
 
+  const allFilterValues = useMemo(
+    () => new Set(filteredItems.flatMap((item) => item.topics)),
+    [filteredItems],
+  );
+
+  const topicFiltered = useMemo(
+    () =>
+      filters.size > 0
+        ? filtered.filter((item) => item.topics.some((t) => filters.has(t)))
+        : filtered,
+    [filtered, filters],
+  );
+
+  const myAppsFiltered = useMemo(
+    () =>
+      isMyAppsActive
+        ? topicFiltered.filter((item) => item.isMyApp)
+        : topicFiltered,
+    [topicFiltered, isMyAppsActive],
+  );
+
   const tabFiltered = useMemo(
     () =>
-      activeTab ? filtered.filter((item) => item.type === activeTab) : filtered,
-    [filtered, activeTab],
+      activeTab
+        ? myAppsFiltered.filter((item) => item.type === activeTab)
+        : myAppsFiltered,
+    [myAppsFiltered, activeTab],
   );
 
   const isSelectedItemStarred =
@@ -177,8 +204,17 @@ export const Catalog: FC<CatalogProps> = ({
     if (selectedItem == null) return;
     const rafId = requestAnimationFrame(() => setIsDetailsOpen(true));
     return () => cancelAnimationFrame(rafId);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedItem]);
+
+  const handleViewModeChange = (mode: CatalogViewMode) => {
+    if (mode === CatalogViewMode.List) setListEverShown(true);
+    setViewMode(mode);
+  };
+
+  const clearAllFilters = useCallback(() => {
+    setFilters(new Set());
+    setIsMyAppsActive(false);
+  }, []);
 
   if (isLoading) {
     return (
@@ -188,14 +224,7 @@ export const Catalog: FC<CatalogProps> = ({
     );
   }
 
-  const handleViewModeChange = (mode: CatalogViewMode) => {
-    if (mode === CatalogViewMode.List) setListEverShown(true);
-    setViewMode(mode);
-  };
-
-  const clearAllFilters = () => {
-    // TODO: implement when filters are added
-  };
+  const isAnyFilterActive = filters.size > 0 || isMyAppsActive;
 
   const tabsWithCounts: TabModel[] = tabs.map((tab) => ({
     ...tab,
@@ -203,13 +232,10 @@ export const Catalog: FC<CatalogProps> = ({
       <ItemHeader
         title={typeof tab.label === 'string' ? tab.label : String(tab.label)}
         titleClassName={typography?.tabClassName ?? 'dial-body-text'}
-        postfix={filtered.filter((item) => item.type === tab.id).length}
+        postfix={myAppsFiltered.filter((item) => item.type === tab.id).length}
       />
     ),
   }));
-
-  // TODO: determine if any filter is active (for now we have no filters, so this is always false)
-  const isAnyFilterActive = false;
 
   const emptyTitle = query ? noResultsTitle(query) : 'No items';
 
@@ -268,16 +294,25 @@ export const Catalog: FC<CatalogProps> = ({
         onQueryChange={setQuery}
         isAnyFilterActive={isAnyFilterActive}
         onClearFilters={clearAllFilters}
+        filters={filters}
+        onFiltersChange={setFilters}
+        filterValues={allFilterValues}
+        isMyAppsActive={isMyAppsActive}
+        onMyAppsChange={setIsMyAppsActive}
         title={browseTitle}
         searchPlaceholder={searchPlaceholder}
         sortOptions={sortOptions}
+        clearAllLabel={titles?.clearAllLabel}
+        filterFromLabel={titles?.filterFromLabel}
+        filterMyAppsLabel={titles?.filterMyAppsLabel}
+        filterTopicsLabel={titles?.filterTopicsLabel}
       />
 
       {/* Entity-type tabs — sticky as the page scrolls */}
       {tabs.length > 0 && (
         <div
           className={mergeClasses(
-            'sticky top-0 z-10 flex shrink-0 justify-center border-b pt-2',
+            'sticky top-0 z-10 mb-2 flex shrink-0 justify-center border-b pt-2',
             styles.stickyTabsRow,
           )}
         >

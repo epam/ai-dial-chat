@@ -65,4 +65,20 @@ export interface ToolbarProps {
   styles?: ToolbarStyles;
   /** Label for the "Clear all" filters button. Default: 'Clear all'. */
   clearAllLabel?: string;
+  /** Currently selected topic filters. Empty set means no topic filter is active. */
+  filters?: Set<string>;
+  /** Called when the topic filter selection changes. */
+  onFiltersChange?: (filters: Set<string>) => void;
+  /** All available topic strings shown as checkboxes in the filter dropdown. */
+  filterValues?: Set<string>;
+  /** Whether the "My Apps" filter checkbox is active. */
+  isMyAppsActive?: boolean;
+  /** Called when the "My Apps" toggle changes. */
+  onMyAppsChange?: (isActive: boolean) => void;
+  /** Label for the filter button when nothing is filtered. Default: 'From'. */
+  filterFromLabel?: string;
+  /** Label for the "My Apps" filter checkbox. Default: 'My Apps'. */
+  filterMyAppsLabel?: string;
+  /** Label for the Topics section inside the filter dropdown. Default: 'Topics'. */
+  filterTopicsLabel?: string;
 }
