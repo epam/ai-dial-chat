@@ -432,7 +432,13 @@ const ConversationView: FC<Props> = ({
       temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
       saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
     }),
-    [selectedDeployment?.features, conversation, onConversationChange, t],
+    [
+      selectedDeployment?.features,
+      conversation,
+      t,
+      onConversationChange,
+      showNotification,
+    ],
   );
 
   const handleAttachDialFiles = useCallback(

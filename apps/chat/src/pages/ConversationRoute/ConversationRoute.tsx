@@ -203,7 +203,14 @@ const ConversationRoute: FC = () => {
       temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
       saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
     }),
-    [selectedDeployment?.features, chatSettingsValues, t],
+    [
+      selectedDeployment?.features,
+      chatSettingsValues.responseFormat,
+      chatSettingsValues.systemPrompt,
+      chatSettingsValues.temperature,
+      t,
+      showNotification,
+    ],
   );
 
   const modelSelectorLabels = useMemo(
