@@ -55,7 +55,10 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import {
+  isAllowedMimeType,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   fitFolderNameToStorageLimits,
@@ -1208,9 +1211,14 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const model = ModelsSelectors.selectModelById(
+        state,
+        conversation.model.id,
+      );
+
       const rateBody: RateBody = {
         responseId: message.responseId,
-        modelId: conversation.model.id,
+        modelId: model?.id ?? conversation.model.id,
         id: conversation.id,
         reference: conversation.reference,
         value: payload.rate > 0,
@@ -1727,7 +1735,13 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
               message.custom_content?.configuration_value) && {
               custom_content: {
                 state: message.custom_content?.state,
-                attachments: message.custom_content?.attachments,
+                attachments: message.custom_content?.attachments?.filter(
+                  (attachment) =>
+                    isAllowedMimeType(
+                      model?.inputAttachmentTypes ?? [],
+                      attachment.type,
+                    ),
+                ),
                 form_value: message.custom_content?.form_value,
                 form_schema: message.custom_content?.form_schema,
                 configuration_value:

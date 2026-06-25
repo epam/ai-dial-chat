@@ -27,7 +27,7 @@ const headerItems = [
     sortKey: TableColumnSortKeys.OWNER,
   },
   {
-    label: MarketplaceI18nKeys.ReleaseDateMarketplace,
+    label: MarketplaceI18nKeys.Released,
     size: 114,
     sortKey: TableColumnSortKeys.RELEASED,
   },

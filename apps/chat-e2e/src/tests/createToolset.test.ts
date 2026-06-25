@@ -40,6 +40,7 @@ dialTest(
     '[Editor]: detailed card view is displayed by default on Preview side.\n' +
     `[Toolset]: toolset's card is open on My Workspace page when create toolset and click "save and exit" (without login).\n` +
     `Icon is shown on the toolset's card if the svg contains some special chars.\n` +
+    '[Toolsets] Create toolset without authentication.\n' +
     '[Toolset]: Login option is not displayed for toolsets without authentication.\n' +
     '[Toolset]: connect option is available from context menu',
   async (
@@ -78,6 +79,7 @@ dialTest(
       'EPMRTC-7292',
       'EPMRTC-6873',
       'EPMRTC-6888',
+      'EPMRTC-6970',
       'EPMRTC-7192',
       'EPMRTC-8745',
     );

@@ -67,6 +67,11 @@ export class EntityDetailsModal extends BaseElement {
     MarketplaceDetailsModal.manageCredsButton,
     this.rootLocator,
   );
+  public loginWithMyCredsButton = new Button(
+    this.page,
+    MarketplaceDetailsModal.loginWithMyCredsButton,
+    this.rootLocator,
+  );
   public arrowIcon = this.getChildElementBySelector(
     MarketplaceEntitySelectors.arrowIcon,
   ).getChildElementBySelector(Tags.svg);

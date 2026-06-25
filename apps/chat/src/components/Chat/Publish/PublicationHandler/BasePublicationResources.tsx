@@ -100,6 +100,11 @@ export const BasePublicationResources = ({
     [entities, publicationModel],
   );
 
+  const directContainerFolderIds = useMemo(
+    () => uniq(entities.map((entity) => entity.folderId).filter(Boolean)),
+    [entities],
+  );
+
   const folders = useMemo(
     () =>
       getFoldersFromIds(
@@ -139,6 +144,7 @@ export const BasePublicationResources = ({
           allFolders={folders}
           displayItems={displayFolderEntities}
           allItems={entities}
+          directContainerFolderIds={directContainerFolderIds}
           ItemComponent={ItemComponent}
           level={0}
         />

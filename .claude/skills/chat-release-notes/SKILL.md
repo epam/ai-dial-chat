@@ -54,6 +54,7 @@ The `Deployment Changes` section is built from primary sources, not PR titles:
 - `git diff <prev-tag>..<tag> -- apps/chat/README.md` — env-var additions/removals/renames.
 - For any env var that lands in the section, verify the **canonical name** by `Grep`-ing the codebase for `process.env.VAR_NAME` in `apps/chat/src` and `libs`. Past releases have caught README typos this way — the README said one thing, the code said another, code wins.
 - Confirm defaults by reading the `process.env.VAR_NAME ?? '<default>'` clause at the access site.
+- `git diff <prev-tag>..<tag> -- libs/shared/src/types/features.ts` — additions/removals of `Feature` enum members. Each member's **string value** (e.g. `VoiceInput = 'voice-input'`) is the key an operator lists in the `ENABLED_FEATURES` env var; the trailing `//` comment on the line is its description. A removed enum member means the flag no longer has any effect. The enum file is the source of truth for the flag key and its description — same "code wins" rule as env vars.
 
 ### 4. Classify each bullet (move things between sections, drop the noise)
 
@@ -172,6 +173,12 @@ Add this section **only** when the range introduces at least one env-var, behavi
 ### Removed environment variables
 <table: Variable | Reason>
 
+### New feature flags
+<table: Flag | Description>
+
+### Removed feature flags
+<table: Flag | Reason / replacement>
+
 ### Behavioral changes
 > [!NOTE]
 > <one-line explaining the behavioral shift, e.g. preview→GA graduations>
@@ -190,6 +197,8 @@ If a change requires the operator to touch a config file outside this repo (DIAL
 **Crucial — what does *not* belong here**: per-conversation settings, per-app overlay options the embedder passes at runtime, in-chat user preferences. Those changes belong in the **Features** bullet body where they're introduced. `Deployment Changes` is for operator-facing concerns: env vars, default-on/off behavioral shifts, schema-level deprecations.
 
 For the env-var tables, the description column comes from `apps/chat/README.md` when the row exists there; otherwise from the `process.env.VAR` access site's surrounding code. Cite default values verbatim from the README's "Default values" column or the `?? '<default>'` clause in source.
+
+For the feature-flag tables, the entries are the `Feature` enum members added or removed in the range (from the §3 `features.ts` diff). These flags are the keys an operator lists in the `ENABLED_FEATURES` env var, so they belong here with the other operator-facing concerns. The `Flag` column uses the enum's **string value** in backticks (e.g. `` `voice-input` ``, `` `conversations-publishing` ``), not the TypeScript member name — consistent with the §5 rule #5 that backticks feature-flag keys. The description comes from the trailing `//` comment on the enum line.
 
 ### 7. Pre-release / delta handling
 
@@ -241,13 +250,19 @@ The file saved to `claude/release-notes/<tag>-draft.md` follows this shape exact
 > …
 <table>
 
+### New feature flags
+<table>
+
+### Removed feature flags
+<table>
+
 ### Behavioral changes
 > [!NOTE]
 > …
 - <item>
 ```
 
-Section order: `Features` → `Fixes` → `Other` → `Deployment Changes`. Subsections inside `Deployment Changes` appear in the order: New env vars → Deprecated env vars → Removed env vars → Behavioral changes.
+Section order: `Features` → `Fixes` → `Other` → `Deployment Changes`. Subsections inside `Deployment Changes` appear in the order: New env vars → Deprecated env vars → Removed env vars → New feature flags → Removed feature flags → Behavioral changes.
 
 A delta `rc` release uses the same shape — no preamble paragraph, no header pointing at the previous rc.
 

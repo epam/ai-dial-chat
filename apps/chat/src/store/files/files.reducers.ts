@@ -111,6 +111,7 @@ const initialState: FilesState = {
   sharedWithMeFilesAndFoldersIds: [],
   localFileSizeCache: {},
   uploadReplaceDialog: null,
+  resolvedUploadIds: null,
 };
 
 export const filesSlice = createSlice({
@@ -1357,6 +1358,15 @@ export const filesSlice = createSlice({
     },
     clearUploadReplaceDialog: (state) => {
       state.uploadReplaceDialog = null;
+    },
+    setResolvedUploadIds: (
+      state,
+      { payload }: PayloadAction<{ ids: string[] }>,
+    ) => {
+      state.resolvedUploadIds = payload.ids;
+    },
+    clearResolvedUploadIds: (state) => {
+      state.resolvedUploadIds = null;
     },
   },
 });
