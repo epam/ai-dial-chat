@@ -300,6 +300,10 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setDeleteError(null);
     try {
       await deleteConversation(idToDelete);
+      showNotification({
+        variant: NotificationVariant.Success,
+        message: t(ConversationPanelI18nKeys.DeleteSuccess),
+      });
     } catch {
       setDeleteError(t(ConversationPanelI18nKeys.DeleteError));
       setIsDeleting(false);
@@ -316,7 +320,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     if (isActiveDeletion) {
       navigate(ROUTES.Root);
     }
-  }, [pendingDeleteId, deleteConversation, activeConversationId, navigate, t]);
+  }, [
+    pendingDeleteId,
+    showNotification,
+    deleteConversation,
+    activeConversationId,
+    navigate,
+    t,
+  ]);
 
   const handleCloseDeleteDialog = useCallback(() => {
     if (isDeleting) return;

@@ -246,6 +246,8 @@ export enum ConversationPanelI18nKeys {
   ActionsLabel = 'conversationPanel.actionsLabel',
   PinLabel = 'conversationPanel.pinLabel',
   UnpinLabel = 'conversationPanel.unpinLabel',
+  DeleteSuccess = 'conversationPanel.deleteSuccess',
+  DeleteSuccessTitle = 'conversationPanel.deleteSuccessTitle',
   DeleteConfirmTitle = 'conversationPanel.deleteConfirmTitle',
   DeleteConfirmDescription = 'conversationPanel.deleteConfirmDescription',
   DeleteError = 'conversationPanel.deleteError',

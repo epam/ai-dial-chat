@@ -190,6 +190,8 @@
     "pinLabel": "Pin",
     "unpinLabel": "Unpin",
     "deleteConfirmTitle": "Confirm Deleting Chat",
+    "deleteSuccess": "Conversation deleted successfully",
+    "deleteSuccessTitle": "Conversation deleted",
     "deleteConfirmDescription": "Are you sure you want to delete",
     "deleteError": "Failed to delete the conversation. Please try again.",
     "renameTitle": "Rename Chat",
