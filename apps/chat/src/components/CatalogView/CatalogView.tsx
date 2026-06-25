@@ -27,8 +27,11 @@ const CatalogView: FC = () => {
   const isLoading = isDeploymentsLoading || isFavoritesLoading;
 
   const catalogItems = useMemo(
-    () => deployments.map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
-    [deployments, favoriteIds],
+    () =>
+      deployments.map((d) =>
+        mapDeploymentToCatalogItem(d, favoriteIds, undefined, t),
+      ),
+    [deployments, favoriteIds, t],
   );
 
   const favorites = useMemo(
@@ -40,7 +43,7 @@ const CatalogView: FC = () => {
 
   // TODO: replace with a real API call, e.g. GET /api/catalog/{id}/about
   const fetchAboutContent = useCallback(
-    (item: CatalogItem): Promise<string | undefined> => {
+    (_item: CatalogItem): Promise<string | undefined> => {
       return Promise.resolve(undefined);
     },
     [],
