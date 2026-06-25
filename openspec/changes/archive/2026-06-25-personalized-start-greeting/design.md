@@ -30,7 +30,7 @@ A pure `getTimeOfDayGreeting(hour: number, firstName?: string): string` function
 
 Only the first word of `displayName` is used (e.g. "Will Smith" → "Will"). This avoids overly long greetings and matches common UX convention. Extraction is done inline in `ConversationRoute` — no need for a separate hook, as it is a single `split(' ')[0]` operation.
 
-**Alternative**: use `shortName` from `useUserProfile`. Rejected — `shortName` is two initials ("PG"), not a first name.
+**Alternative**: use `shortName` from `useUserProfile`. Rejected — `shortName` is two initials ("WS"), not a first name.
 
 ### 3. i18n key structure
 
