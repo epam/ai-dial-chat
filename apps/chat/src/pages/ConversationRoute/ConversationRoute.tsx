@@ -468,6 +468,7 @@ const ConversationRoute: FC = () => {
             isInputDisabled={isInputDisabled}
             modelSelectorLabels={modelSelectorLabels}
             sendLabel={t(ChatI18nKeys.SendMessage)}
+            sendTitle={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
             isTranscriptionSupported={isTranscriptionSupported}
             onUploadAudio={handleUploadAudio}
