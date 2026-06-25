@@ -9,7 +9,7 @@ import {
 import { BaseElement } from './baseElement';
 
 import { isApiStorageType } from '@/src/hooks/global-setup';
-import { Rate, Side } from '@/src/testData';
+import { API, Rate, Side } from '@/src/testData';
 import { Attributes, Tags } from '@/src/ui/domData';
 import { keys } from '@/src/ui/keyboard';
 import { IconSelectors } from '@/src/ui/selectors/iconSelectors';
@@ -653,7 +653,11 @@ export class ChatMessages extends BaseElement {
 
   public async editMessage(oldMessage: string | number, newMessage: string) {
     await this.fillEditData(oldMessage, newMessage);
+    const responsePromise = this.page.waitForResponse(
+      (r) => r.url().includes(API.unsubscribeHost()) && r.ok(),
+    );
     await this.saveAndSubmit.click();
+    await responsePromise;
     await this.waitForResponseReceived();
   }
 
@@ -686,9 +690,15 @@ export class ChatMessages extends BaseElement {
   }
 
   public async regenerateResponse(waitForAnswer = true) {
-    await this.regenerate.click();
     if (waitForAnswer) {
+      const responsePromise = this.page.waitForResponse(
+        (r) => r.url().includes(API.unsubscribeHost()) && r.ok(),
+      );
+      await this.regenerate.click();
+      await responsePromise;
       await this.waitForResponseReceived();
+    } else {
+      await this.regenerate.click();
     }
   }
 
