@@ -188,7 +188,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       }
     },
     // conversationRef is a stable ref — intentionally omitted from deps
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
     [conversationId],
   );
 

@@ -1,13 +1,21 @@
 import type { ICellRendererParams } from 'ag-grid-community';
-import { FC, MouseEvent, useState } from 'react';
+import { MouseEvent, forwardRef, useImperativeHandle, useState } from 'react';
 import { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
 import { StarToggleButton } from '../../StarToggleButton/StarToggleButton';
 
-export const StarCellRenderer: FC<
+// ag-grid calls refresh() on cell renderers instead of re-mounting when rowData
+// updates. Returning true tells ag-grid "handled" and preserves local state,
+// preventing the optimistic toggle from being overwritten by a stale data.isStarred.
+export const StarCellRenderer = forwardRef<
+  unknown,
   ICellRendererParams<CatalogItem, unknown, GridContext>
-> = ({ data, context }) => {
+>(({ data, context }, ref) => {
   const [isStarred, setIsStarred] = useState(data?.isStarred ?? false);
+
+  useImperativeHandle(ref, () => ({
+    refresh: () => true,
+  }));
 
   if (!data) return null;
 
@@ -23,4 +31,4 @@ export const StarCellRenderer: FC<
       <StarToggleButton isStarred={isStarred} onClick={handleToggle} />
     </div>
   );
-};
+});

@@ -90,7 +90,11 @@
     "favoriteAddedTitle": "Added to Favorites",
     "favoriteRemovedTitle": "Removed from Favorites",
     "favoriteAdded": "\"{{name}}\" added to Favorites",
-    "favoriteRemoved": "\"{{name}}\" removed from Favorites"
+    "favoriteRemoved": "\"{{name}}\" removed from Favorites",
+    "folder": {
+      "personal": "Personal",
+      "public": "Public"
+    }
   },
   "deployments": {
     "empty": "No models or applications available.",
