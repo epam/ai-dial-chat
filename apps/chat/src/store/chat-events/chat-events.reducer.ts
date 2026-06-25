@@ -7,7 +7,6 @@ import {
 } from '@/src/types/chat-events';
 
 import { ChatEventsState } from '@/src/store/chat-events/chat-events.types';
-import { SendMessagesPayload } from '@/src/store/conversations/conversations.types';
 
 import omit from 'lodash-es/omit';
 
@@ -29,9 +28,7 @@ export const chatEventsSlice = createSlice({
     },
     subscribe: (
       state,
-      _action: PayloadAction<
-        { retryAttempt?: number; resumeChat?: SendMessagesPayload } | undefined
-      >,
+      _action: PayloadAction<{ retryAttempt?: number } | undefined>,
     ) => {
       state.isSubscribing = true;
     },
@@ -41,7 +38,6 @@ export const chatEventsSlice = createSlice({
         | {
             retryAttempt?: number;
             traceId?: string;
-            resumeChat?: SendMessagesPayload;
           }
         | undefined
       >,

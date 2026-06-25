@@ -29,18 +29,19 @@ import { Translation } from '@/src/types/translation';
 
 import {
   ChatEventsActions,
-  ConversationsActions,
   ToolsetActions,
   UIActions,
 } from '@/src/store/actions';
 import { ChatEventsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import {
+  RECONNECT_INTERVAL,
+  RECONNECT_RETRY_COUNT,
+} from '@/src/constants/chat-events';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Feature } from '@epam/ai-dial-shared';
 
-const RECONNECT_INTERVAL = 3_000;
-const RECONNECT_RETRY_COUNT = 5;
 const EVENTS_SEPARATOR = 'data:';
 
 const mapChatEventFromApi = (event: ChatEvent): ChatEvent => ({
@@ -80,13 +81,9 @@ const subscribeEpic: AppEpic = (action$, state$) =>
         mergeMap((resp) => {
           if (resp.channelId) {
             retryAttempt = 0;
-            const resumeChatAction = payload?.resumeChat
-              ? of(ConversationsActions.sendMessages(payload.resumeChat))
-              : EMPTY;
             return concat(
-              of(ChatEventsActions.setIsSubscribed(true)),
               of(ChatEventsActions.setChannelId(resp.channelId)),
-              resumeChatAction,
+              of(ChatEventsActions.setIsSubscribed(true)),
             );
           }
           if (resp.done) {
@@ -118,7 +115,6 @@ const subscribeEpic: AppEpic = (action$, state$) =>
             ChatEventsActions.subscribeFailure({
               retryAttempt,
               traceId,
-              resumeChat: payload?.resumeChat,
             }),
           );
         }),
@@ -139,7 +135,6 @@ const reconnectEpic: AppEpic = (action$, state$) =>
         map(() =>
           ChatEventsActions.subscribe({
             retryAttempt: (payload?.retryAttempt ?? 0) + 1,
-            resumeChat: payload?.resumeChat,
           }),
         ),
       ),

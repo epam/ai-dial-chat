@@ -18,6 +18,7 @@ import {
   map,
   mergeMap,
   of,
+  race,
   startWith,
   switchMap,
   take,
@@ -28,7 +29,7 @@ import {
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
-import { combineEpics, ofType } from 'redux-observable';
+import { StateObservable, combineEpics, ofType } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { getDefaultConversationProps } from '@/src/utils/app/common';
@@ -133,6 +134,7 @@ import {
 } from '@/src/store/selectors';
 
 import { LOCAL_BUCKET } from '@/src/constants/chat';
+import { RECONNECT_RETRY_COUNT } from '@/src/constants/chat-events';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
@@ -1438,6 +1440,44 @@ const rateMessageFailEpic: AppEpic = (action$) =>
     }),
   );
 
+const waitForChatChannel =
+  (action$: Observable<AppAction>, state$: StateObservable<RootState>) =>
+  <T>(source: Observable<T>): Observable<T> =>
+    source.pipe(
+      mergeMap((value) => {
+        const isChatEventsEnabled = SettingsSelectors.isFeatureEnabled(
+          state$.value,
+          Feature.LiveChatInteraction,
+        );
+        const hasChannel = Boolean(
+          ChatEventsSelectors.selectChannelId(state$.value),
+        );
+
+        if (!isChatEventsEnabled || hasChannel) {
+          return of(value);
+        }
+
+        const channelReady$ = state$.pipe(
+          map((state) => ChatEventsSelectors.selectChannelId(state)),
+          filter((channelId): channelId is string => Boolean(channelId)),
+          take(1),
+        );
+
+        const subscriptionGaveUp$ = action$.pipe(
+          ofType(ChatEventsActions.subscribeFailure.type),
+          filter(
+            ({ payload }) => (payload?.retryAttempt ?? 0) > RECONNECT_RETRY_COUNT,
+          ),
+          take(1),
+        );
+
+        return race(channelReady$, subscriptionGaveUp$).pipe(
+          take(1),
+          map(() => value),
+        );
+      }),
+    );
+
 const sendMessagesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.sendMessages.type),
@@ -1447,10 +1487,12 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
         Feature.LiveChatInteraction,
       );
       const isSubscribed = ChatEventsSelectors.selectIsSubscribed(state$.value);
+      const isSubscribing = ChatEventsSelectors.selectIsSubscribing(
+        state$.value,
+      );
 
-      if (isChatEventsEnabled && !isSubscribed) {
-        return of(ChatEventsActions.subscribe({ resumeChat: payload }));
-      }
+      const shouldSubscribe =
+        isChatEventsEnabled && !isSubscribed && !isSubscribing;
 
       const isCompareMode = payload.conversations.length > 1;
 
@@ -1500,6 +1542,11 @@ const sendMessagesEpic: AppEpic = (action$, state$) =>
       }
 
       return concat(
+        iif(
+          () => shouldSubscribe,
+          of(ChatEventsActions.subscribe()),
+          EMPTY,
+        ),
         of(ConversationsActions.createAbortController()),
         ...payload.conversations.map((conv, index) => {
           return of(
@@ -1691,6 +1738,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 const streamMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.streamMessage.type),
+    waitForChatChannel(action$, state$),
     map(({ payload }) => {
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const isOptimisticLoadEnabled =
