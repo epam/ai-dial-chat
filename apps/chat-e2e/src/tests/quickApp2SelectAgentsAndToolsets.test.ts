@@ -13,6 +13,7 @@ dialTest(
     entityEditorGeneralForm,
     quickApp2EditorViewForm,
     agentAndToolsetSelectModal,
+    agentAndToolsetSelectModalAssertion,
     customApplicationBuilder,
     toolsetBuilder,
     applicationApiHelper,
@@ -64,38 +65,6 @@ dialTest(
       },
     );
 
-    // Pick the agent and toolset in the open modal.
-    const selectAgentAndToolset = async () => {
-      await agentAndToolsetSelectModal.searchInput.fillInInput(agentName);
-      await agentAndToolsetSelectModal.selectEntityByName(agentName);
-      await agentAndToolsetSelectModal.searchInput.fillInInput(toolsetName);
-      await agentAndToolsetSelectModal.selectEntityByName(toolsetName);
-      await baseAssertion.assertElementState(
-        agentAndToolsetSelectModal.getSelectedChipByName(agentName),
-        'visible',
-      );
-      await baseAssertion.assertElementState(
-        agentAndToolsetSelectModal.getSelectedChipByName(toolsetName),
-        'visible',
-      );
-    };
-
-    // Field stays empty: placeholder shown, no chips.
-    const assertFieldStaysEmpty = async () => {
-      await baseAssertion.assertElementState(
-        quickApp2EditorViewForm.getChipByName(agentName),
-        'hidden',
-      );
-      await baseAssertion.assertElementState(
-        quickApp2EditorViewForm.getChipByName(toolsetName),
-        'hidden',
-      );
-      await baseAssertion.assertElementState(
-        quickApp2EditorViewForm.noAgentsAndToolsetsPlaceholder,
-        'visible',
-      );
-    };
-
     await dialTest.step(
       'Select an agent and a toolset, then close the modal on Cancel — nothing is added to the field',
       async () => {
@@ -104,13 +73,25 @@ dialTest(
           agentAndToolsetSelectModal,
           'visible',
         );
-        await selectAgentAndToolset();
+        await agentAndToolsetSelectModal.selectEntities([agentName, toolsetName]);
+        await agentAndToolsetSelectModalAssertion.assertSelected(
+          [agentName, toolsetName],
+        );
         await agentAndToolsetSelectModal.getCancelButton().click();
         await baseAssertion.assertElementState(
           agentAndToolsetSelectModal,
           'hidden',
         );
-        await assertFieldStaysEmpty();
+        for (const name of [agentName, toolsetName]) {
+          await baseAssertion.assertElementState(
+            quickApp2EditorViewForm.getChipByName(name),
+            'hidden',
+          );
+        }
+        await baseAssertion.assertElementState(
+          quickApp2EditorViewForm.noAgentsAndToolsetsPlaceholder,
+          'visible',
+        );
       },
     );
 
@@ -122,23 +103,32 @@ dialTest(
           agentAndToolsetSelectModal,
           'visible',
         );
-        await baseAssertion.assertElementState(
-          agentAndToolsetSelectModal.selectedChips,
-          'hidden',
-        );
+        await agentAndToolsetSelectModalAssertion.assertNothingSelected();
       },
     );
 
     await dialTest.step(
       'Select an agent and a toolset, then close the modal on X — nothing is added to the field',
       async () => {
-        await selectAgentAndToolset();
+        await agentAndToolsetSelectModal.selectEntities([agentName, toolsetName]);
+        await agentAndToolsetSelectModalAssertion.assertSelected(
+          [agentName, toolsetName],
+        );
         await agentAndToolsetSelectModal.getCloseButton().click();
         await baseAssertion.assertElementState(
           agentAndToolsetSelectModal,
           'hidden',
         );
-        await assertFieldStaysEmpty();
+        for (const name of [agentName, toolsetName]) {
+          await baseAssertion.assertElementState(
+            quickApp2EditorViewForm.getChipByName(name),
+            'hidden',
+          );
+        }
+        await baseAssertion.assertElementState(
+          quickApp2EditorViewForm.noAgentsAndToolsetsPlaceholder,
+          'visible',
+        );
       },
     );
 
@@ -150,10 +140,7 @@ dialTest(
           agentAndToolsetSelectModal,
           'visible',
         );
-        await baseAssertion.assertElementState(
-          agentAndToolsetSelectModal.selectedChips,
-          'hidden',
-        );
+        await agentAndToolsetSelectModalAssertion.assertNothingSelected();
       },
     );
   },

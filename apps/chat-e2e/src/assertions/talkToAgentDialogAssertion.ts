@@ -1,21 +1,18 @@
 import { DialAIEntityModel } from '@/chat/types/models';
-import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
+import { AgentsBrowserModalAssertion } from '@/src/assertions/agentsBrowserModalAssertion';
 import { ElementState, MarketplaceExpectedMessages } from '@/src/testData';
 import { Attributes } from '@/src/ui/domData';
 import { TalkToAgentDialog } from '@/src/ui/webElements/talkToAgentDialog';
 
-export class TalkToAgentDialogAssertion extends BaseAssertion {
-  readonly talkToAgentDialog: TalkToAgentDialog;
-
+export class TalkToAgentDialogAssertion extends AgentsBrowserModalAssertion<TalkToAgentDialog> {
   constructor(talkToAgentDialog: TalkToAgentDialog) {
-    super();
-    this.talkToAgentDialog = talkToAgentDialog;
+    super(talkToAgentDialog);
   }
 
   public async assertAgentIsSelected(
     expectedAgent: DialAIEntityModel | string,
   ) {
-    const agent = this.talkToAgentDialog.getAgents().getEntity(expectedAgent);
+    const agent = this.agentsBrowserModal.getAgents().getEntity(expectedAgent);
     await this.assertElementAttribute(agent, Attributes.ariaSelected, 'true');
   }
 
@@ -24,7 +21,7 @@ export class TalkToAgentDialogAssertion extends BaseAssertion {
     expectedState: ElementState,
   ) {
     await super.assertElementState(
-      this.talkToAgentDialog.getTalkToAgent(agent),
+      this.agentsBrowserModal.getTalkToAgent(agent),
       expectedState,
       MarketplaceExpectedMessages.agentIsVisible(
         typeof agent === 'string' ? agent : agent.name,

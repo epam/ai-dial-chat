@@ -4,6 +4,8 @@ import {
   Button,
   EntityEditorViewForm,
 } from '@/src/ui/webElements';
+import { RegexUtil } from '@/src/utils';
+import { Locator } from '@playwright/test';
 
 export class QuickApp2EditorViewForm extends EntityEditorViewForm {
   public orchestratorSection = this.getChildElementBySelector(
@@ -69,9 +71,27 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
       AddQuickApp2SettingsFormSelector.agentsAndToolsetsJsonToggle,
     );
 
+  // Locator for a chip child (name/version) matching the exact text.
+  private chipChildWithText(selector: string, text: string): Locator {
+    return this.page.locator(selector, {
+      hasText: new RegExp(`^\\s*${RegexUtil.escapeRegexChars(text)}\\s*$`),
+    });
+  }
+
+  private chipsContainer(): Locator {
+    return this.agentsAndToolsetsList
+      .getChildElementBySelector(AddQuickApp2SettingsFormSelector.agentChip)
+      .getElementLocator();
+  }
+
   public getChipByName(name: string): BaseElement {
-    return this.agentsAndToolsetsList.getChildElementBySelector(
-      `${AddQuickApp2SettingsFormSelector.agentChip}:has(${AddQuickApp2SettingsFormSelector.chipName}:text-is("${name}"))`,
+    return this.createElementFromLocator(
+      this.chipsContainer().filter({
+        has: this.chipChildWithText(
+          AddQuickApp2SettingsFormSelector.chipName,
+          name,
+        ),
+      }),
     );
   }
 
@@ -83,8 +103,20 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
 
   // For agents with several versions added — one chip per version.
   public getChipByNameAndVersion(name: string, version: string): BaseElement {
-    return this.agentsAndToolsetsList.getChildElementBySelector(
-      `${AddQuickApp2SettingsFormSelector.agentChip}:has(${AddQuickApp2SettingsFormSelector.chipName}:text-is("${name}")):has(${AddQuickApp2SettingsFormSelector.chipVersion}:text-is("${version}"))`,
+    return this.createElementFromLocator(
+      this.chipsContainer()
+        .filter({
+          has: this.chipChildWithText(
+            AddQuickApp2SettingsFormSelector.chipName,
+            name,
+          ),
+        })
+        .filter({
+          has: this.chipChildWithText(
+            AddQuickApp2SettingsFormSelector.chipVersion,
+            version,
+          ),
+        }),
     );
   }
 

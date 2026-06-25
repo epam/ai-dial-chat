@@ -5,7 +5,8 @@ import {
 import { AgentsBrowserModal } from '@/src/ui/webElements/agentsBrowserModal';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Button } from '@/src/ui/webElements/common/button';
-import { Page } from '@playwright/test';
+import { RegexUtil } from '@/src/utils';
+import { Locator, Page } from '@playwright/test';
 
 export class AgentAndToolsetSelectModal extends AgentsBrowserModal {
   constructor(page: Page) {
@@ -18,6 +19,14 @@ export class AgentAndToolsetSelectModal extends AgentsBrowserModal {
     await this.getEntityByName(name).click();
   }
 
+  // Search for each entity and pick it; useful for multiple selections.
+  public async selectEntities(names: string[]): Promise<void> {
+    for (const name of names) {
+      await this.searchInput.fillInInput(name);
+      await this.selectEntityByName(name);
+    }
+  }
+
   // Only the "Selected" section renders chips inside the modal,
   // so the field's chip selector is safe to reuse here.
   public selectedChips = this.getChildElementBySelector(
@@ -25,8 +34,12 @@ export class AgentAndToolsetSelectModal extends AgentsBrowserModal {
   );
 
   public getSelectedChipByName(name: string): BaseElement {
-    return this.getChildElementBySelector(
-      `${AddQuickApp2SettingsFormSelector.agentChip}:has(${AddQuickApp2SettingsFormSelector.chipName}:text-is("${name}"))`,
+    const chipNameWithText = this.page.locator(
+      AddQuickApp2SettingsFormSelector.chipName,
+      { hasText: new RegExp(`^\\s*${RegexUtil.escapeRegexChars(name)}\\s*$`) },
+    );
+    return this.createElementFromLocator(
+      this.selectedChips.getElementLocator().filter({ has: chipNameWithText }),
     );
   }
 }
