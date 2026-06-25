@@ -5,8 +5,15 @@
     "noData": "No data"
   },
   "chat": {
-    "welcomeText": "Hello World, good day for prompting!",
-    "placeholder": "Ask anything...",
+    "greetingMorning": "Good morning, {{name}}",
+    "greetingMorningNoName": "Good morning",
+    "greetingAfternoon": "Afternoon, {{name}}",
+    "greetingAfternoonNoName": "Afternoon",
+    "greetingEvening": "Good evening, {{name}}",
+    "greetingEveningNoName": "Good evening",
+    "greetingNight": "Good night, {{name}}",
+    "greetingNightNoName": "Good night",
+    "placeholder": "How can I help you today?",
     "streamError": "Something went wrong while generating the response.",
     "createConversationError": "Failed to create the conversation. Please try again.",
     "deleteMessageTitle": "Confirm deleting message?",
