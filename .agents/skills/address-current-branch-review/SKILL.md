@@ -50,7 +50,7 @@ Process current-branch review feedback: inspect thread state, decide whether cod
 
 6. Implement `fix-required` threads.
    - Inspect the full affected file and related tests, not only the diff hunk.
-   - Follow `.claude/skills/incremental-implementation/SKILL.md` for multi-file work.
+   - For multi-file work, build in thin vertical slices and verify each slice (see the task rules in `openspec/config.yaml`).
    - Keep every change traceable to a specific review thread.
    - Preserve unrelated user changes and staged files.
    - Do not commit, push, or force-update branches unless explicitly requested.
