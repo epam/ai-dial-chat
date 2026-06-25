@@ -265,10 +265,16 @@ export class Chat extends BaseElement {
     const requestPromise = this.waitForRequestSent(message);
     apiPromises.push(requestPromise);
     if (waitForAnswer) {
-      const respPromise = this.page.waitForResponse(
-        (resp) => resp.request().method() === 'PUT',
+      const conversRespPromise = this.page.waitForResponse(
+        (resp) =>
+          resp.request().method() === 'PUT' &&
+          resp.url().includes(API.conversationHost),
       );
-      apiPromises.push(respPromise);
+      const unsubscrRespPromise = this.page.waitForResponse(
+        (r) => r.url().includes(API.unsubscribeHost()) && r.ok(),
+      );
+      apiPromises.push(conversRespPromise);
+      apiPromises.push(unsubscrRespPromise);
     }
     await sendMethod();
     let request;
