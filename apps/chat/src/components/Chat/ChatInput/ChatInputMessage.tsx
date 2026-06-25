@@ -35,6 +35,7 @@ import {
 } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
+  ChatEventsSelectors,
   ChatSelectors,
   ConversationsSelectors,
   FilesSelectors,
@@ -195,6 +196,14 @@ export const ChatInputMessage = Inversify.register(
     const isOptimisticDefaultModelLoad = useAppSelector(
       SettingsSelectors.selectIsOptimisticDefaultModelLoad,
     );
+    const isChatEventsEnabled = useAppSelector((state) =>
+      SettingsSelectors.isFeatureEnabled(state, Feature.LiveChatInteraction),
+    );
+    const _isSubscribing = useAppSelector(
+      ChatEventsSelectors.selectIsSubscribing,
+    );
+
+    const isSubscribing = isChatEventsEnabled && _isSubscribing;
 
     const {
       isRecording,
@@ -610,8 +619,8 @@ export const ChatInputMessage = Inversify.register(
     }, [isChatInputDisabled, t]);
 
     const isDisabled = useMemo(
-      () => isLoading || isChatInputDisabled || isTranscribing,
-      [isLoading, isChatInputDisabled, isTranscribing],
+      () => isLoading || isChatInputDisabled || isTranscribing || isSubscribing,
+      [isLoading, isChatInputDisabled, isTranscribing, isSubscribing],
     );
 
     const isMicDisabled = useMemo(

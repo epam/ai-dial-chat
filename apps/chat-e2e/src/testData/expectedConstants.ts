@@ -592,6 +592,7 @@ export const API = {
   authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
   tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
   toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
+  unsubscribeHost: () => `${API.api}/client-channels/unsubscribe`,
 };
 
 export const Import = {
