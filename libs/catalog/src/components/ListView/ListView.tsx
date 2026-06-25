@@ -103,11 +103,11 @@ export const ListView: FC<ListViewProps> = ({
     [items, visibleCount],
   );
 
+  // Refresh cell renderers when the search query changes so highlighting updates.
+  // rowData is kept in sync via the prop; no need to call setGridOption here.
   useEffect(() => {
-    if (!gridApiRef.current) return;
-    gridApiRef.current.setGridOption('rowData', windowedItems);
-    gridApiRef.current.refreshCells({ force: true });
-  }, [windowedItems, query]);
+    gridApiRef.current?.refreshCells({ force: true });
+  }, [query]);
 
   return (
     <div
@@ -136,7 +136,7 @@ export const ListView: FC<ListViewProps> = ({
             ? (event) => {
                 const col = event.column.getColDef();
                 if (col.field === 'isStarred') return; // ignore clicks on the star column
-                onItemClick(event.data as CatalogItem);
+                if (event.data) onItemClick(event.data);
               }
             : undefined,
           rowClass: onItemClick ? 'cursor-pointer' : undefined,

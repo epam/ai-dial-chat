@@ -28,6 +28,8 @@ export interface CatalogItem {
   isHidden?: boolean;
   /** Whether the item is marked as a favorite by the user. */
   isUserFavorite?: boolean;
+  /** Whether the item belongs to the current user (e.g. created by them or in their personal space). */
+  isMyApp?: boolean;
   /** Folder breadcrumb path segments, outermost first. */
   folder: string[];
   /** Topics associated with the item. */

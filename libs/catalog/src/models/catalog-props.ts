@@ -44,6 +44,14 @@ export interface CatalogTitles {
    * Guardrail → 'Guardrail', Skill → 'Skill', Mcp → 'MCP'.
    */
   tabLabels?: Partial<Record<CatalogEntityType, string>>;
+  /** Label for the "Clear all" filters button. Default: 'Clear all'. */
+  clearAllLabel?: string;
+  /** Label for the filter button when nothing is filtered. Default: 'From'. */
+  filterFromLabel?: string;
+  /** Label for the "My Apps" filter checkbox. Default: 'My Apps'. */
+  filterMyAppsLabel?: string;
+  /** Label for the Topics section inside the filter dropdown. Default: 'Topics'. */
+  filterTopicsLabel?: string;
 }
 
 /** Props for Catalog. */

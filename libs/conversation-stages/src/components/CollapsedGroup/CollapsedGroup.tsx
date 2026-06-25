@@ -27,11 +27,18 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
   collapseThreshold = 7,
   className,
   styles: groupStyles,
+  onAttachmentClick,
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (isStreaming) {
-    return <StagesPanel stages={stages} isStreaming />;
+    return (
+      <StagesPanel
+        stages={stages}
+        isStreaming
+        onAttachmentClick={onAttachmentClick}
+      />
+    );
   }
 
   const { colors, typography = { fontClassName: 'dial-tiny-text' } } =
@@ -51,7 +58,11 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
         style={cssVars}
         className={mergeClasses('flex w-full flex-col gap-1', className)}
       >
-        <StagesPanel stages={stages} isStreaming={false} />
+        <StagesPanel
+          stages={stages}
+          isStreaming={false}
+          onAttachmentClick={onAttachmentClick}
+        />
       </div>
     );
   }
@@ -110,14 +121,22 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
                   styles.contentBox,
                 )}
               >
-                <StagesPanel stages={completedStages} isStreaming={false} />
+                <StagesPanel
+                  stages={completedStages}
+                  isStreaming={false}
+                  onAttachmentClick={onAttachmentClick}
+                />
               </div>
             </div>
           </div>
         </div>
       )}
       {activeStages.length > 0 && (
-        <StagesPanel stages={activeStages} isStreaming={false} />
+        <StagesPanel
+          stages={activeStages}
+          isStreaming={false}
+          onAttachmentClick={onAttachmentClick}
+        />
       )}
     </div>
   );

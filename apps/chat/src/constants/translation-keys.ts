@@ -68,6 +68,7 @@ export enum ButtonsI18nKeys {
   RegenerateResponse = 'buttons.regenerateResponse',
   CopyResponse = 'buttons.copyResponse',
   CopyAsMarkdown = 'buttons.copyAsMarkdown',
+  CopyAsJson = 'buttons.copyAsJson',
   CopyText = 'buttons.copyText',
   LikeResponse = 'buttons.likeResponse',
   DislikeResponse = 'buttons.dislikeResponse',
@@ -120,6 +121,8 @@ export enum CatalogI18nKeys {
   FavoriteAdded = 'catalog.favoriteAdded',
   FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
   FavoriteRemoved = 'catalog.favoriteRemoved',
+  FolderPersonal = 'catalog.folder.personal',
+  FolderPublic = 'catalog.folder.public',
 }
 
 export enum DeploymentsI18nKeys {
@@ -161,6 +164,7 @@ export enum DialFileManagerI18nKeys {
   AllTypes = 'dialFileManager.allTypes',
   UpToFiles = 'dialFileManager.upToFiles',
   AttachingHiddenFilesNotAllowed = 'dialFileManager.attachingHiddenFilesNotAllowed',
+  UnsupportedFileTypeTooltip = 'dialFileManager.unsupportedFileTypeTooltip',
   UnsupportedFilesSkipped = 'dialFileManager.unsupportedFilesSkipped',
   UnsupportedFilesDescription = 'dialFileManager.unsupportedFilesDescription',
   TooManyFilesSelected = 'dialFileManager.tooManyFilesSelected',

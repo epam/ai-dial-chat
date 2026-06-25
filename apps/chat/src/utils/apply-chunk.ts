@@ -1,6 +1,7 @@
 import type {
   Annotation,
   Message,
+  MessageAttachment,
   Stage,
   StreamChunk,
 } from '@epam/ai-dial-chat-shared';
@@ -35,6 +36,31 @@ const mergeAnnotations = (
   return result;
 };
 
+const mergeStageAttachments = (
+  existing: MessageAttachment[],
+  incoming: MessageAttachment[],
+): MessageAttachment[] => {
+  const result = [...existing];
+  for (const att of incoming) {
+    const idx =
+      att.index != null ? result.findIndex((a) => a.index === att.index) : -1;
+    if (idx >= 0) {
+      result[idx] = {
+        ...result[idx],
+        ...att,
+        title: (result[idx].title ?? '') + (att.title ?? ''),
+        data:
+          att.data != null
+            ? (result[idx].data ?? '') + att.data
+            : result[idx].data,
+      };
+    } else {
+      result.push(att);
+    }
+  }
+  return result;
+};
+
 const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
   const result = [...existing];
   for (const stage of incoming) {
@@ -46,6 +72,12 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
         name: (result[idx].name ?? '') + (stage.name ?? ''),
         content:
           (result[idx].content ?? '') + (stage.content ?? '') || undefined,
+        attachments: stage.attachments?.length
+          ? mergeStageAttachments(
+              result[idx].attachments ?? [],
+              stage.attachments,
+            )
+          : result[idx].attachments,
       };
     } else {
       result.push(stage);

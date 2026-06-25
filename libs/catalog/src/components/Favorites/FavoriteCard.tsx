@@ -73,7 +73,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
       className={mergeClasses(
-        'box-border flex min-w-0 cursor-pointer flex-col gap-1 rounded-[6px] p-[13px] pb-[9px]',
+        'box-border flex min-w-0 cursor-pointer flex-col gap-1 rounded-[6px] p-3 pb-2',
         'w-full text-start',
         styles.card,
         isLeaving && styles.cardLeaving,
@@ -92,10 +92,11 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         item={item}
         featuredLabel={featuredLabel}
         nameClassName={nameClassName}
+        isFeaturedAvailable={false}
         versionClassName={versionClassName}
       />
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-1 pl-[50px]">
+        <div className="flex items-center gap-1 ps-[50px]">
           <DialIcon
             icon={<IconHistory size={DIAL_ICON_SIZE.SM} />}
             className={styles.historyIcon}

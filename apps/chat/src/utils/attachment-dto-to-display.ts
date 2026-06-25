@@ -27,7 +27,9 @@ export const attachmentDtoToDisplayAttachment = (
     type: isImage ? AttachmentType.Image : AttachmentType.File,
     status: RequestStatus.Idle,
     ...(dto.url ? { url: dto.url } : {}),
+    ...(dto.reference_url ? { referenceUrl: dto.reference_url } : {}),
     ...(isImage && (dto.url || dto.data) && dto.type ? { previewUrl } : {}),
+    ...(!isImage && dto.data ? { data: dto.data } : {}),
   };
 };
 
