@@ -76,7 +76,11 @@ export const TopicsLine: FC<TopicsLineProps> = ({
       ))}
       {overflow > 0 && (
         <DialTooltip tooltip={topics.slice(visibleCount).join(', ')}>
-          <span aria-label={overflowAriaLabel?.(overflow) ?? `and ${overflow} more topics`}>
+          <span
+            aria-label={
+              overflowAriaLabel?.(overflow) ?? `and ${overflow} more topics`
+            }
+          >
             <TopicTag label={`+${overflow}`} />
           </span>
         </DialTooltip>
