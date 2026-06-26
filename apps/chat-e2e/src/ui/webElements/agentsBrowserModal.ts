@@ -22,6 +22,10 @@ export class AgentsBrowserModal extends Popup {
   public marketplaceTab = this.getChildElementBySelector(
     AgentsBrowserModalSelectors.marketplaceTab,
   );
+  // Shown in the entity grid when a search returns nothing.
+  public noResultsFound = this.getChildElementBySelector(
+    AgentsBrowserModalSelectors.noResultsFound,
+  );
 
   getEntities(): MarketplaceEntities {
     if (!this.entities) {
