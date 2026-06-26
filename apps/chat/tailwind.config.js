@@ -62,6 +62,7 @@ module.exports = {
       'model-icon': 'var(--bg-model-icon, #FFFFFF00)',
       'icon-accent-primary': 'var(--text-accent-primary, #7DA4FF)',
       'controls-enable-primary': 'var(--controls-enable-primary, #FCFCFC)',
+      'text-secondary': 'var(--text-secondary, #9FA6BD)',
     },
     borderColor: commonBorderColors,
     stroke: commonBorderColors,
