@@ -18,17 +18,20 @@ import {
   map,
   mergeMap,
   of,
+  race,
   startWith,
   switchMap,
   take,
+  takeUntil,
   takeWhile,
   tap,
   throwError,
+  timer,
   zip,
 } from 'rxjs';
 import { fromFetch } from 'rxjs/fetch';
 
-import { combineEpics, ofType } from 'redux-observable';
+import { StateObservable, combineEpics, ofType } from 'redux-observable';
 
 import { clearStateForMessages } from '@/src/utils/app/clear-messages-state';
 import { getDefaultConversationProps } from '@/src/utils/app/common';
@@ -55,7 +58,10 @@ import { DefaultsService } from '@/src/utils/app/data/defaults-service';
 import { FileService } from '@/src/utils/app/data/file-service';
 import { getOrUploadConversation } from '@/src/utils/app/data/storages/api/conversation-api-storage';
 import { parseApiError } from '@/src/utils/app/epics-helpers/common.epic-helpers';
-import { notAllowedSymbolsRegex } from '@/src/utils/app/file';
+import {
+  isAllowedMimeType,
+  notAllowedSymbolsRegex,
+} from '@/src/utils/app/file';
 import {
   addGeneratedFolderId,
   fitFolderNameToStorageLimits,
@@ -107,6 +113,7 @@ import { Translation } from '@/src/types/translation';
 
 import {
   ChatActions,
+  ChatEventsActions,
   ConversationsActions,
   FilesActions,
   MarketplaceActions,
@@ -129,6 +136,7 @@ import {
 } from '@/src/store/selectors';
 
 import { LOCAL_BUCKET } from '@/src/constants/chat';
+import { RECONNECT_RETRY_COUNT } from '@/src/constants/chat-events';
 import {
   DEFAULT_CONVERSATION_NAME,
   DEFAULT_TEMPERATURE,
@@ -1208,9 +1216,14 @@ const rateMessageEpic: AppEpic = (action$, state$) =>
         );
       }
 
+      const model = ModelsSelectors.selectModelById(
+        state,
+        conversation.model.id,
+      );
+
       const rateBody: RateBody = {
         responseId: message.responseId,
-        modelId: conversation.model.id,
+        modelId: model?.id ?? conversation.model.id,
         id: conversation.id,
         reference: conversation.reference,
         value: payload.rate > 0,
@@ -1429,6 +1442,45 @@ const rateMessageFailEpic: AppEpic = (action$) =>
     }),
   );
 
+const waitForChatChannel =
+  (action$: Observable<AppAction>, state$: StateObservable<RootState>) =>
+  <T>(source: Observable<T>): Observable<T> =>
+    source.pipe(
+      mergeMap((value) => {
+        const isChatEventsEnabled = SettingsSelectors.isFeatureEnabled(
+          state$.value,
+          Feature.LiveChatInteraction,
+        );
+        const hasChannel = Boolean(
+          ChatEventsSelectors.selectChannelId(state$.value),
+        );
+
+        if (!isChatEventsEnabled || hasChannel) {
+          return of(value);
+        }
+
+        const channelReady$ = state$.pipe(
+          map((state) => ChatEventsSelectors.selectChannelId(state)),
+          filter((channelId): channelId is string => Boolean(channelId)),
+          take(1),
+        );
+
+        const subscriptionGaveUp$ = action$.pipe(
+          ofType(ChatEventsActions.subscribeFailure.type),
+          filter(
+            ({ payload }) =>
+              (payload?.retryAttempt ?? 0) > RECONNECT_RETRY_COUNT,
+          ),
+          take(1),
+        );
+
+        return race(channelReady$, subscriptionGaveUp$).pipe(
+          take(1),
+          map(() => value),
+        );
+      }),
+    );
+
 const sendMessagesEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.sendMessages.type),
@@ -1624,6 +1676,15 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
           state$.value,
           Feature.Marketplace,
         );
+        const isChatEventsEnabled = SettingsSelectors.isFeatureEnabled(
+          state$.value,
+          Feature.LiveChatInteraction,
+        );
+        const shouldSubscribe =
+          isChatEventsEnabled &&
+          !ChatEventsSelectors.selectIsSubscribed(state$.value) &&
+          !ChatEventsSelectors.selectIsSubscribing(state$.value);
+
         const model = modelsMap[updatedConversation.model.id];
 
         if (!payload.skipRecentModelsUpdate) {
@@ -1651,6 +1712,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
         }
 
         return concat(
+          iif(() => shouldSubscribe, of(ChatEventsActions.subscribe()), EMPTY),
           ...actions,
           of(
             ConversationsActions.updateConversation({
@@ -1672,6 +1734,7 @@ const sendMessageEpic: AppEpic = (action$, state$) =>
 const streamMessageEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.streamMessage.type),
+    waitForChatChannel(action$, state$),
     map(({ payload }) => {
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
       const isOptimisticLoadEnabled =
@@ -1727,7 +1790,14 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
               message.custom_content?.configuration_value) && {
               custom_content: {
                 state: message.custom_content?.state,
-                attachments: message.custom_content?.attachments,
+                attachments: message.custom_content?.attachments?.filter(
+                  (attachment) =>
+                    !attachment.type ||
+                    isAllowedMimeType(
+                      model?.inputAttachmentTypes ?? [],
+                      attachment.type,
+                    ),
+                ),
                 form_value: message.custom_content?.form_value,
                 form_schema: message.custom_content?.form_schema,
                 configuration_value:
@@ -1830,7 +1900,6 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
               !!message.custom_content?.attachments?.some((attachment) =>
                 isMyBucket(getEntityBucket({ id: attachment.url ?? '' })),
               );
-
             return concat(
               iif(
                 () => needToMapReviewAttachments,
@@ -1883,14 +1952,27 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
           );
         }),
         catchError((error: Error) => {
+          const selectedConversations =
+            ConversationsSelectors.selectSelectedConversations(state$.value);
+          const areOtherConversationsStreaming = selectedConversations
+            .filter((c) => c.id !== payload.conversation.id)
+            .some((c) => c.isMessageStreaming);
+
           if (error.name === 'AbortError') {
-            return of(
-              ConversationsActions.updateConversation({
-                id: payload.conversation.id,
-                values: {
-                  isMessageStreaming: false,
-                },
-              }),
+            return concat(
+              of(
+                ConversationsActions.updateConversation({
+                  id: payload.conversation.id,
+                  values: {
+                    isMessageStreaming: false,
+                  },
+                }),
+              ),
+              iif(
+                () => !areOtherConversationsStreaming,
+                of(ChatEventsActions.unsubscribe()),
+                EMPTY,
+              ),
             );
           }
 
@@ -1950,6 +2032,28 @@ const streamMessageEpic: AppEpic = (action$, state$) =>
     }),
   );
 
+const UNSUBSCRIBE_IDLE_DELAY_MS = 1_000;
+
+const unsubscribeWhenIdleEpic: AppEpic = (action$, state$) =>
+  action$.pipe(
+    ofType(ConversationsActions.streamMessageSuccess.type),
+    filter(() => ChatEventsSelectors.selectIsSubscribed(state$.value)),
+    switchMap(() =>
+      timer(UNSUBSCRIBE_IDLE_DELAY_MS).pipe(
+        takeUntil(
+          action$.pipe(ofType(ConversationsActions.streamMessage.type)),
+        ),
+        filter(
+          () =>
+            !ConversationsSelectors.selectIsConversationsStreaming(
+              state$.value,
+            ) && ChatEventsSelectors.selectIsSubscribed(state$.value),
+        ),
+        map(() => ChatEventsActions.unsubscribe()),
+      ),
+    ),
+  );
+
 const streamMessageFailEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ConversationsActions.streamMessageFail.type),
@@ -1977,6 +2081,11 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
         );
       const errorMessage = responseJSON?.message || payload.message;
       const modelsMap = ModelsSelectors.selectModelsMap(state$.value);
+      const selectedConversations =
+        ConversationsSelectors.selectSelectedConversations(state$.value);
+      const areOtherConversationsStreaming = selectedConversations
+        .filter((c) => c.id !== payload.conversation.id)
+        .some((c) => c.isMessageStreaming);
 
       const messages = [...payload.conversation.messages];
       const modelId = messages[messages.length - 1].model?.id;
@@ -2040,6 +2149,11 @@ const streamMessageFailEpic: AppEpic = (action$, state$) =>
               errorMessage,
             },
           }),
+        ),
+        iif(
+          () => !areOtherConversationsStreaming,
+          of(ChatEventsActions.unsubscribe()),
+          EMPTY,
         ),
       );
     }),
@@ -3961,6 +4075,7 @@ export const ConversationsEpics = combineEpics(
   sendMessagesEpic,
   stopStreamMessageEpic,
   streamMessageEpic,
+  unsubscribeWhenIdleEpic,
   streamMessageFailEpic,
   cleanMessagesEpic,
   replayConversationEpic,

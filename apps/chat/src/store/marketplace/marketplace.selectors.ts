@@ -16,17 +16,19 @@ import { ToolsetModel } from '@/src/types/toolsets';
 
 import { ApplicationTypesSchemasSelectors } from '@/src/store/applicationTypeSchemas/applicationTypeSchemas.selectors';
 import { ModelsSelectors } from '@/src/store/models/models.selectors';
+import { SettingsSelectors } from '@/src/store/settings/settings.selectors';
 import { ToolsetSelectors } from '@/src/store/toolset/toolset.selectors';
 
 import {
   ApplicationTypeToSourceType,
   MarketplaceEntitiesTabs,
+  MarketplaceTabs,
   SourceType,
 } from '@/src/constants/marketplace';
 
 import { MarketplaceActions } from './marketplace.reducers';
 
-import { UploadStatus } from '@epam/ai-dial-shared';
+import { Feature, UploadStatus } from '@epam/ai-dial-shared';
 
 const rootSelector = (state: RootState) => state.marketplace;
 
@@ -153,6 +155,13 @@ const selectLoginEntity = (state: RootState) => rootSelector(state).loginEntity;
 
 const selectShowLoader = (state: RootState) => rootSelector(state).showLoader;
 
+const PERSONAL_SOURCE_TYPES = new Set([
+  SourceType.SharedWithMe,
+  SourceType.MyCustomApps,
+  SourceType.MyCodeApps,
+  SourceType.MyToolsets,
+]);
+
 const selectFiltersContent = createSelector(
   [
     selectSelectedEntitiesTab,
@@ -165,9 +174,11 @@ const selectFiltersContent = createSelector(
     selectToolsetSourceTypes,
     selectSelectedToolsetsFilters,
     ToolsetSelectors.selectAreToolsetsLoaded,
+    selectSelectedTab,
+    SettingsSelectors.selectEnabledFeatures,
   ],
   (
-    selectedTab: MarketplaceEntitiesTabs,
+    selectedEntitiesTab: MarketplaceEntitiesTabs,
     topics: string[],
     sourceTypes: SourceType[],
     selectedAgentsFilters: MarketplaceFilters,
@@ -177,13 +188,26 @@ const selectFiltersContent = createSelector(
     toolsetSourceTypes: SourceType[],
     selectedToolsetsFilters: MarketplaceFilters,
     areToolsetsLoaded: boolean,
+    selectedTab,
+    enabledFeatures,
   ) => {
-    const isAgentsTab = selectedTab === MarketplaceEntitiesTabs.AGENTS;
+    const isAgentsTab = selectedEntitiesTab === MarketplaceEntitiesTabs.AGENTS;
+    const shouldHidePersonalSources =
+      selectedTab === MarketplaceTabs.HOME &&
+      enabledFeatures.has(Feature.MarketplaceHideMyApps);
+
+    const filterPersonalSources = (types: SourceType[]) =>
+      shouldHidePersonalSources
+        ? types.filter(
+            (type) =>
+              !PERSONAL_SOURCE_TYPES.has(type) && !type.startsWith('My '),
+          )
+        : types;
 
     if (isAgentsTab) {
       return {
         topicsFilters: topics,
-        sourcesFilters: sourceTypes,
+        sourcesFilters: filterPersonalSources(sourceTypes),
         selectedFilters: selectedAgentsFilters,
         showLoader: !areModelsLoaded || !!isMarketplaceLoading,
         setFilters: MarketplaceActions.setSelectedAgentsFilters,
@@ -191,7 +215,7 @@ const selectFiltersContent = createSelector(
     }
     return {
       topicsFilters: toolsetsTopics,
-      sourcesFilters: toolsetSourceTypes,
+      sourcesFilters: filterPersonalSources(toolsetSourceTypes),
       selectedFilters: selectedToolsetsFilters,
       showLoader: !areToolsetsLoaded || !!isMarketplaceLoading,
       setFilters: MarketplaceActions.setSelectedToolsetsFilters,

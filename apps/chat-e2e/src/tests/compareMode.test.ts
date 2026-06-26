@@ -1707,9 +1707,12 @@ dialTest(
     await dialTest.step(
       'Copy last response from the right conversation and edit the 1st request for the left chat with copied message',
       async () => {
-        await chatMessages.copyCompareRowMessage(
-          Side.right,
-          (firstConversationRequests.length - 1) * 2,
+        const copiedResponse = await dialHomePage.captureNextClipboardWrite(
+          () =>
+            chatMessages.copyCompareRowMessage(
+              Side.right,
+              (firstConversationRequests.length - 1) * 2,
+            ),
         );
         await chatMessages.openEditCompareRowMessageMode(Side.left, 1);
         await chatMessages.selectEditTextareaContent(
@@ -1719,7 +1722,6 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         await page.keyboard.press(keys.ctrlPlusV);
-        const copiedResponse = await dialHomePage.readTextFromClipboard();
         const expectedMessage: Message = {
           role: Role.User,
           content: copiedResponse,

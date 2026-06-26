@@ -772,9 +772,16 @@ export const getPartialAndFullyChosenFolders = (
   selectedItems: string[],
   emptyFolderIds: string[] = [],
   selectedEmptyFolderIds: string[] = [],
+  directContainerFolderIds: string[] = [],
 ) => {
-  const fullyChosenFolderIds = folders
-    .map((folder) => addTrailingSlashIfAbsent(folder.id))
+  const folderIds = folders.map((folder) =>
+    addTrailingSlashIfAbsent(folder.id),
+  );
+  const directContainerSet = new Set(
+    directContainerFolderIds.map(addTrailingSlashIfAbsent),
+  );
+
+  const fullyChosenFolderIds = folderIds
     .filter(
       (folderId) =>
         items.some((item) => item.id.startsWith(folderId)) ||
@@ -782,6 +789,7 @@ export const getPartialAndFullyChosenFolders = (
     )
     .filter(
       (folderId) =>
+        (directContainerSet.size === 0 || directContainerSet.has(folderId)) &&
         items
           .filter((item) => item.id.startsWith(folderId))
           .every((item) => selectedItems.includes(item.id)) &&
@@ -792,17 +800,15 @@ export const getPartialAndFullyChosenFolders = (
           ),
     );
 
-  const partialChosenFolderIds = folders
-    .map((folder) => addTrailingSlashIfAbsent(folder.id))
-    .filter(
-      (folderId) =>
-        !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
-        (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
-          fullyChosenFolderIds.some((entityId) =>
-            entityId.startsWith(folderId),
-          )) &&
-        !fullyChosenFolderIds.includes(folderId),
-    );
+  const partialChosenFolderIds = folderIds.filter(
+    (folderId) =>
+      !selectedItems.some((chosenId) => folderId.startsWith(chosenId)) &&
+      (selectedItems.some((chosenId) => chosenId.startsWith(folderId)) ||
+        fullyChosenFolderIds.some((entityId) =>
+          entityId.startsWith(folderId),
+        )) &&
+      !fullyChosenFolderIds.includes(folderId),
+  );
 
   return { fullyChosenFolderIds, partialChosenFolderIds };
 };

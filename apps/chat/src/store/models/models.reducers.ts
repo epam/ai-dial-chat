@@ -322,6 +322,12 @@ export const modelsSlice = createSlice({
       if (targetModel && targetModel.functionStatus) {
         const updatedModel = cloneDeep(targetModel);
         updatedModel.functionStatus = payload.status;
+        if (
+          payload.status === ApplicationStatus.DEPLOYED &&
+          updatedModel.features
+        ) {
+          updatedModel.features.chat_completion = true;
+        }
 
         state.models = state.models.map((model) =>
           model.reference === targetModel.reference ? updatedModel : model,

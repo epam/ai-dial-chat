@@ -41,6 +41,7 @@ const DEFAULT_TAB_ACTIONS: ActionsByTab = {
   shared: [
     DialFileManagerActions.Download,
     DialFileManagerActions.Unshare,
+    DialFileManagerActions.Delete,
     DialFileManagerActions.Info,
   ],
   organization: [DialFileManagerActions.Download, DialFileManagerActions.Info],

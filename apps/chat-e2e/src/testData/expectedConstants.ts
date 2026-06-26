@@ -616,6 +616,7 @@ export const API = {
   authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
   tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
   toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
+  unsubscribeHost: () => `${API.api}/client-channels/unsubscribe`,
 };
 
 export const Import = {
@@ -845,4 +846,12 @@ export const ExpectedConfirmationPopupData = {
 
 export const ExpectedConnectToolsetModalData = {
   header: 'Connect toolset',
+};
+
+export const ExpectedDeleteToolsetModalData = {
+  title: 'Confirm deleting toolset',
+  message: (name: string, version: string) =>
+    `Are you sure you want to delete the ${name} (version ${version})?`,
+  cancelButton: 'Cancel',
+  confirmButton: 'Delete',
 };

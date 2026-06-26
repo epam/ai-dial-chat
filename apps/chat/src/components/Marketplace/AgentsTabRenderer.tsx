@@ -2,6 +2,8 @@ import React, { useCallback } from 'react';
 
 import { useMarketplaceDisplayedEntities } from '@/src/hooks/useMarketplaceDisplayedEntities';
 
+import { isMyApplication } from '@/src/utils/app/id';
+
 import { DialAIEntityModel } from '@/src/types/models';
 
 import { MarketplaceActions, ModelsActions } from '@/src/store/actions';
@@ -53,6 +55,7 @@ export function AgentsTabRenderer() {
       allModels,
       installedModelIds,
       selectedFilters,
+      isMyApplication,
     );
 
   const handleSetDetailsModel = useCallback(
