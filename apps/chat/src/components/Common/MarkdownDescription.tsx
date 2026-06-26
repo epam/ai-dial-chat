@@ -4,6 +4,7 @@ import { Components } from 'react-markdown';
 
 import classNames from 'classnames';
 
+import { rehypeSanitizeInlineStyles } from '@/src/utils/app/data/markdown-helpers';
 import {
   isAllowedImageUrl,
   parseAllowedImageHosts,
@@ -18,7 +19,7 @@ import { MemoizedReactMarkdown } from '@/src/components/Markdown/MemoizedReactMa
 
 import rehypeExternalLinks from 'rehype-external-links';
 import rehypeRaw from 'rehype-raw';
-import rehypeSanitize from 'rehype-sanitize';
+import rehypeSanitize, { defaultSchema } from 'rehype-sanitize';
 import remarkGfm from 'remark-gfm';
 
 interface Props {
@@ -78,7 +79,19 @@ export const EntityMarkdownDescription = ({
       remarkPlugins={[remarkGfm]}
       rehypePlugins={[
         rehypeRaw,
-        rehypeSanitize,
+        [
+          rehypeSanitize,
+          {
+            ...defaultSchema,
+            attributes: {
+              ...defaultSchema.attributes,
+              // Let style attributes pass through rehypeSanitize so our
+              // allowlist plugin below can sanitize them.
+              span: [...(defaultSchema.attributes?.span || []), ['style']],
+            },
+          },
+        ],
+        rehypeSanitizeInlineStyles, // Allowlist-sanitizes inline style attributes
         [
           rehypeExternalLinks,
           { target: '_blank', rel: ['noopener', 'noreferrer'] },
