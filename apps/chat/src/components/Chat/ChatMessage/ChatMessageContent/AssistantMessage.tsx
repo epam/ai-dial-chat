@@ -451,6 +451,16 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
     setNewEditableAttachmentsIds(mappedEditableAttachmentsIds);
   }, [mappedEditableAttachmentsIds]);
 
+  const resolvedUploadIds = useAppSelector(
+    FilesSelectors.selectResolvedUploadIds,
+  );
+
+  useEffect(() => {
+    if (!resolvedUploadIds?.length) return;
+    setNewEditableAttachmentsIds((ids) => uniq(ids.concat(resolvedUploadIds)));
+    dispatch(FilesActions.clearResolvedUploadIds());
+  }, [resolvedUploadIds, dispatch]);
+
   useEffect(() => {
     if (shouldScroll) {
       anchorRef.current?.scrollIntoView({ block: 'end' });

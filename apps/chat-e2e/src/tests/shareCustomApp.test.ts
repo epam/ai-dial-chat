@@ -153,9 +153,10 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click on Copy icon, navigate to the copied url by another user and verify Marketplace page with opened app card is opened',
       async () => {
-        await shareAppModal.copyLinkButton.click();
+        const shareLink = await marketplacePage.captureNextClipboardWrite(() =>
+          shareAppModal.copyLinkButton.click(),
+        );
         await shareAppModal.closeButton.click();
-        const shareLink = await marketplacePage.readTextFromClipboard();
         await additionalShareUserMarketplacePage.navigateToUrl(shareLink);
         await additionalShareUserMarketplacePage.waitForPageLoaded();
         await additionalShareUserEntityDetailsModalAssertion.assertElementState(
@@ -506,8 +507,9 @@ dialSharedWithMeTest(
     await dialSharedWithMeTest.step(
       'Click on Copy icon, navigate to the copied url by another user and verify the app card is opened',
       async () => {
-        await shareAppModal.copyLinkButton.click();
-        const shareLink = await marketplacePage.readTextFromClipboard();
+        const shareLink = await marketplacePage.captureNextClipboardWrite(() =>
+          shareAppModal.copyLinkButton.click(),
+        );
         await additionalShareUserMarketplacePage.navigateToUrl(shareLink);
         await additionalShareUserMarketplacePage.waitForPageLoaded();
         await additionalShareUserEntityDetailsModalAssertion.assertElementState(

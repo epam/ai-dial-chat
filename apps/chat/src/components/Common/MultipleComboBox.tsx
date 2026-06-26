@@ -6,6 +6,7 @@ import {
   useFloating,
 } from '@floating-ui/react';
 import {
+  ChangeEvent,
   FC,
   Fragment,
   RefObject,
@@ -120,6 +121,7 @@ export function MultipleComboBox<T>({
   const [floatingWidth, setFloatingWidth] = useState(0);
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const cursorPositionRef = useRef<number | null>(null);
 
   const setInputRefs = (el: HTMLInputElement | null) => {
     inputRef.current = el;
@@ -253,6 +255,16 @@ export function MultipleComboBox<T>({
     }
   }, [isOpen, update, refs.floating, refs.reference]);
 
+  useLayoutEffect(() => {
+    if (cursorPositionRef.current !== null && inputRef.current) {
+      inputRef.current.setSelectionRange(
+        cursorPositionRef.current,
+        cursorPositionRef.current,
+      );
+      cursorPositionRef.current = null;
+    }
+  }, [inputValue]);
+
   return (
     <Tooltip tooltip={tooltip}>
       <div
@@ -351,6 +363,9 @@ export function MultipleComboBox<T>({
                   preventKeyAction: isOpen,
                   ref: setInputRefs,
                 }),
+                onChange: (e: ChangeEvent<HTMLInputElement>) => {
+                  cursorPositionRef.current = e.target.selectionStart;
+                },
               })}
               data-qa="filter-value-input"
             />

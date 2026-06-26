@@ -56,4 +56,5 @@ export interface SettingsState {
   };
   stageContentLimit: number;
   resourceMaxSegmentBytes: number;
+  availableLocales: string[];
 }
