@@ -450,7 +450,7 @@ describe('ConversationPanelView — delete-all header action', () => {
     });
   });
 
-  it('does not show a global notification for complete success', async () => {
+  it('shows a success notification for complete success', async () => {
     mockDeleteAllConversations.mockResolvedValueOnce({
       requested: 1,
       deleted: 1,
@@ -467,7 +467,11 @@ describe('ConversationPanelView — delete-all header action', () => {
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull();
     });
-    expect(mockShowNotification).not.toHaveBeenCalled();
+    expect(mockShowNotification).toHaveBeenCalledWith({
+      variant: 'success',
+      title: 'conversationPanel.deleteAllSuccessTitle',
+      message: 'conversationPanel.deleteAllSuccess',
+    });
   });
 
   it('cancel is a no-op while deletion is in progress', async () => {
