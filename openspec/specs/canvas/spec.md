@@ -2,7 +2,7 @@
 
 ### Overview
 
-The `AttachmentCanvas` side panel opens to the right of the main conversation area when a user activates an attachment. It renders file content in a resizable, closeable panel that stays alongside the conversation. Content type is resolved from the `DisplayAttachment` at the app layer and passed as a typed payload to the lib.
+The `AttachmentCanvas` side panel opens to the right of the main conversation area when a user activates an attachment. It renders file content in a fixed-width, closeable panel that stays alongside the conversation. Content type is resolved from the `DisplayAttachment` at the app layer and passed as a typed payload to the lib.
 
 ---
 
@@ -15,9 +15,7 @@ The `AttachmentCanvas` side panel opens to the right of the main conversation ar
 | `MessageBubble` (user message) | `ConversationView.tsx` → `handleMessageAttachmentClick` | Open canvas |
 | `MessageBubble` (assistant message) | `ConversationView.tsx` → `handleMessageAttachmentClick` | Open canvas |
 | `CollapsedGroup` stage attachments | `ConversationMessageItem.tsx` via `onAttachmentClick` | Open canvas |
-| `ConversationInput` tray (new message) | `ConversationRoute.tsx` → `handleAttachmentClick` | Open canvas |
-| `EditMessageInput` tray | `ConversationView.tsx` → `handleInputAttachmentClick` | Open canvas |
-| `ConversationSourcesPanel` | `ConversationSourcesPanel.tsx` → `handleAttachmentClick` | Open canvas if previewable (closes source panel), fall back to download if `openAttachmentCanvas` returns `false` |
+| `ConversationSourcesPanel` | `ConversationSourcesPanel.tsx` → `handleAttachmentClick` | Open canvas if previewable, fall back to download if `openAttachmentCanvas` returns `false` |
 
 #### Open behavior
 
@@ -37,9 +35,8 @@ The canvas closes when the URL `pathname` changes (conversation switch, catalog 
 - **Header**: file name (truncated) on the start side; action buttons + close icon button on the end side.
 - **Download button**: shown only when `onDownload` is provided **and** `content.type !== Unsupported`.
 - **Close button**: calls `onClose` (`closeCanvas`).
-- **Resizability**: enabled on desktop, disabled on mobile (`isMobile` prop from `useIsMobile()`).
-- **Width defaults**: 560 px default, 320 px min, 960 px max. Width is not persisted between sessions.
-- **Both panels**: `ConversationSourcesPanel` and `AttachmentCanvas` cannot be open simultaneously. Opening the canvas from the source panel closes the source panel first (calls `closeSourcesPanel()` before `openCanvas()`). Opening the canvas from any other surface does not affect the source panel state.
+- **Resizability**: not resizable. Fixed width of 560 px.
+- **Both panels**: `ConversationSourcesPanel` and `AttachmentCanvas` can be open simultaneously. Opening the canvas does not affect the source panel state.
 - **Conversation panel**: The conversation history panel (`isHistoryPanelOpen`) is automatically closed when the canvas opens. Implemented via a `useEffect` in `apps/chat/src/app/app.tsx` that watches `isCanvasOpen` and calls `closeHistoryPanel()` whenever it becomes `true`.
 
 #### i18n
