@@ -1,0 +1,2 @@
+export const RECONNECT_INTERVAL = 3_000;
+export const RECONNECT_RETRY_COUNT = 5;
