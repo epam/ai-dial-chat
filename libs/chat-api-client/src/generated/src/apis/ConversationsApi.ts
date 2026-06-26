@@ -26,6 +26,7 @@ import type {
   RenameConversationResponseDto,
   SaveConversationBodyDto,
   SendCompletionDto,
+  StopCompletionDto,
 } from '../models/index';
 
 export interface CreateConversationRequest {
@@ -71,6 +72,10 @@ export interface RenameConversationRequest {
 export interface SaveConversationRequest {
   path: string;
   saveConversationBodyDto: SaveConversationBodyDto;
+}
+
+export interface StopCompletionRequest {
+  stopCompletionDto: StopCompletionDto;
 }
 
 export interface StreamCompletionRequest {
@@ -620,7 +625,53 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.
+   * Stop an active generation
+   */
+  async stopCompletionRaw(
+    requestParameters: StopCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['stopCompletionDto'] == null) {
+      throw new runtime.RequiredError(
+        'stopCompletionDto',
+        'Required parameter "stopCompletionDto" was null or undefined when calling stopCompletion().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/completions/stop`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['stopCompletionDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Stop an active generation
+   */
+  async stopCompletion(
+    requestParameters: StopCompletionRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.stopCompletionRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.
    * Stream a chat completion
    */
   async streamCompletionRaw(
@@ -657,7 +708,7 @@ export class ConversationsApi extends runtime.BaseAPI {
   }
 
   /**
-   * Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.
+   * Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.
    * Stream a chat completion
    */
   async streamCompletion(

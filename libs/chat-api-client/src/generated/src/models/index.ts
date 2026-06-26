@@ -2080,17 +2080,17 @@ export interface SaveConversationBodyDto {
  */
 export interface SendCompletionDto {
   /**
+   * Client-generated UUID identifying this generation attempt.
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  generationId: string;
+  /**
    * Conversation path ({deploymentId}__{name}__{uuid}). May contain slashes.
    * @type {string}
    * @memberof SendCompletionDto
    */
   path: string;
-  /**
-   * The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.
-   * @type {string}
-   * @memberof SendCompletionDto
-   */
-  message: string;
   /**
    * DIAL Core deployment name to use for completion
    * @type {string}
@@ -2098,11 +2098,61 @@ export interface SendCompletionDto {
    */
   model: string;
   /**
+   * How the message should be inserted into history. append = new user+assistant turn; continue_last_user = conversation already ends with a user message; regenerate = replace assistant at messageIndex; edit = replace user message at messageIndex.
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  mode: SendCompletionDtoModeEnum;
+  /**
+   * The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  message?: string;
+  /**
+   * Zero-based message index for regenerate and edit modes. Ignored for append/continue_last_user.
+   * @type {number}
+   * @memberof SendCompletionDto
+   */
+  messageIndex?: number;
+  /**
    * Extra DIAL payload attached to the user message
    * @type {MessageCustomContentDto}
    * @memberof SendCompletionDto
    */
   customContent?: MessageCustomContentDto;
+}
+
+/**
+ * @export
+ */
+export const SendCompletionDtoModeEnum = {
+  Append: 'append',
+  ContinueLastUser: 'continue_last_user',
+  Regenerate: 'regenerate',
+  Edit: 'edit',
+} as const;
+export type SendCompletionDtoModeEnum =
+  (typeof SendCompletionDtoModeEnum)[keyof typeof SendCompletionDtoModeEnum];
+
+/**
+ *
+ * @export
+ * @interface StopCompletionDto
+ */
+export interface StopCompletionDto {
+  /**
+   * Generation ID that was returned by the active stream.
+   * @type {string}
+   * @memberof StopCompletionDto
+   */
+  generationId: string;
+  /**
+   * Conversation path of the active generation.
+   * @type {string}
+   * @memberof StopCompletionDto
+   */
+  path: string;
 }
 /**
  *

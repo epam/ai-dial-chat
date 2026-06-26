@@ -2,11 +2,13 @@ import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialError } from '../../common/utils/dial-error';
 import type { EnvironmentVariables } from '../../config/environment.config';
+import { ConversationGenerationService } from '../conversation-generation.service';
 import { ConversationService } from '../conversation.service';
 import {
   ConversationMessageRole,
   StatusEvent,
 } from '../dto/conversation-message.dto';
+import { CompletionMode } from '../dto/send-completion.dto';
 
 vi.mock('../../common/utils/dial-error', () => ({
   handleDialError: vi.fn(),
@@ -28,6 +30,44 @@ const TEST_CONVERSATION = {
   selectedAddons: [],
   assistantModelId: 'gpt-4o',
 };
+
+const makeMockRes = () => {
+  const written: Uint8Array[] = [];
+  return {
+    setHeader: vi.fn(),
+    flushHeaders: vi.fn(),
+    write: vi.fn((chunk: Uint8Array | string) => {
+      if (typeof chunk === 'string') {
+        written.push(new TextEncoder().encode(chunk));
+      } else {
+        written.push(chunk);
+      }
+    }),
+    end: vi.fn(),
+    on: vi.fn(),
+    off: vi.fn(),
+    writableEnded: false,
+    status: vi.fn().mockReturnThis(),
+    getWritten: () =>
+      new TextDecoder().decode(
+        Buffer.concat(written.map((b) => Buffer.from(b))),
+      ),
+  };
+};
+
+const defaultStreamArgs = (
+  overrides?: Partial<{
+    generationId: string;
+    mode: CompletionMode;
+    messageIndex: number | undefined;
+    sessionId: string;
+  }>,
+) => ({
+  generationId: overrides?.generationId ?? 'test-gen-id',
+  mode: overrides?.mode ?? CompletionMode.Append,
+  messageIndex: overrides?.messageIndex,
+  sessionId: overrides?.sessionId ?? 'test-session-id',
+});
 
 const textToStream = (chunks: string[]): ReadableStream<Uint8Array> => {
   const encoder = new TextEncoder();
@@ -72,6 +112,7 @@ describe('ConversationService', () => {
     updatePin: ReturnType<typeof vi.fn>;
     migratePin: ReturnType<typeof vi.fn>;
   };
+  let mockGenerationService: ConversationGenerationService;
 
   beforeEach(() => {
     mockConfigService = {
@@ -86,9 +127,17 @@ describe('ConversationService', () => {
       updatePin: vi.fn().mockResolvedValue(undefined),
       migratePin: vi.fn().mockResolvedValue(undefined),
     };
+    mockGenerationService = {
+      register: vi.fn().mockReturnValue(new AbortController()),
+      abort: vi.fn().mockReturnValue(true),
+      complete: vi.fn(),
+      error: vi.fn(),
+      getStatus: vi.fn().mockReturnValue('active'),
+    } as unknown as ConversationGenerationService;
     service = new ConversationService(
       mockConfigService as unknown as ConfigService<EnvironmentVariables>,
       mockUserConfigService as never,
+      mockGenerationService,
     );
     vi.mocked(handleDialError).mockReset();
     vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
@@ -710,6 +759,49 @@ describe('ConversationService', () => {
       updatedAt: 0,
     };
 
+    const callStream = async (
+      conversationData: object,
+      message: string,
+      model: string,
+      customContent?: Record<string, unknown>,
+      mode = CompletionMode.Append,
+      streamChunks = [': keepalive\n\n'],
+    ) => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: conversationData,
+      } as never);
+      const res = makeMockRes();
+      const encoder = new TextEncoder();
+      const mockStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          for (const c of streamChunks) controller.enqueue(encoder.encode(c));
+          controller.close();
+        },
+      });
+      const sendSpy = vi
+        .spyOn(service['client'], 'sendChatCompletionRequest')
+        .mockResolvedValue({
+          response: new Response(mockStream, {
+            status: 200,
+            headers: { 'Content-Type': 'text/event-stream' },
+          }),
+        } as never);
+      await service.streamCompletion(
+        'test-path',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        mode,
+        message,
+        undefined,
+        model,
+        customContent as never,
+        'test-session-id',
+        res as never,
+      );
+      return { sendSpy, res };
+    };
+
     it('excludes ConversationMessageRole.Status messages from the DIAL Core payload', async () => {
       const conversation = {
         ...baseConversation,
@@ -740,25 +832,11 @@ describe('ConversationService', () => {
         ],
       };
 
-      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: conversation,
-      } as never);
-
-      const mockStream = new ReadableStream();
-      const sendSpy = vi
-        .spyOn(service['client'], 'sendChatCompletionRequest')
-        .mockResolvedValue({
-          response: { ok: true, body: mockStream } as Response,
-        } as never);
-
-      await service.streamCompletion(
-        'test-path',
-        'test-token',
-        'test-bucket',
+      const { sendSpy } = await callStream(
+        conversation,
         'Next message',
         'gpt-4o',
       );
-
       const sentMessages: { role: string }[] =
         sendSpy.mock.calls[0][1].body.messages;
       expect(
@@ -802,25 +880,7 @@ describe('ConversationService', () => {
         ],
       };
 
-      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: conversation,
-      } as never);
-
-      const mockStream = new ReadableStream();
-      const sendSpy = vi
-        .spyOn(service['client'], 'sendChatCompletionRequest')
-        .mockResolvedValue({
-          response: { ok: true, body: mockStream } as Response,
-        } as never);
-
-      await service.streamCompletion(
-        'test-path',
-        'test-token',
-        'test-bucket',
-        'Follow-up',
-        'gpt-4o',
-      );
-
+      const { sendSpy } = await callStream(conversation, 'Follow-up', 'gpt-4o');
       const sentMessages = sendSpy.mock.calls[0][1].body.messages as {
         role: string;
         content: string;
@@ -849,44 +909,24 @@ describe('ConversationService', () => {
             role: ConversationMessageRole.User,
             content: 'Pick a number',
             timestamp: '2024-01-01T00:00:00.000Z',
-            custom_content: {
-              configuration_value: { button: 1 },
-            },
+            custom_content: { configuration_value: { button: 1 } },
           },
         ],
       };
 
-      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: conversation,
-      } as never);
-
-      const mockStream = new ReadableStream();
-      const sendSpy = vi
-        .spyOn(service['client'], 'sendChatCompletionRequest')
-        .mockResolvedValue({
-          response: { ok: true, body: mockStream } as Response,
-        } as never);
-
-      await service.streamCompletion(
-        'test-path',
-        'test-token',
-        'test-bucket',
+      // Conversation ends with user — use ContinueLastUser so history builder doesn't add another user msg
+      const { sendSpy } = await callStream(
+        conversation,
         '',
         'form-example',
         { configuration_value: { button: 1 } },
+        CompletionMode.ContinueLastUser,
       );
 
       expect(sendSpy.mock.calls[0][1].body).toMatchObject({
-        messages: [
-          {
-            role: ConversationMessageRole.User,
-            content: '',
-          },
-        ],
+        messages: [{ role: ConversationMessageRole.User, content: '' }],
         stream: true,
-        custom_fields: {
-          configuration: { button: 1 },
-        },
+        custom_fields: { configuration: { button: 1 } },
       });
       expect(
         (sendSpy.mock.calls[0][1].body.messages[0] as Record<string, unknown>)
@@ -903,9 +943,7 @@ describe('ConversationService', () => {
             role: ConversationMessageRole.User,
             content: 'Pick a number',
             timestamp: '2024-01-01T00:00:00.000Z',
-            custom_content: {
-              configuration_value: { button: 1 },
-            },
+            custom_content: { configuration_value: { button: 1 } },
           },
           {
             id: 'a1',
@@ -941,31 +979,12 @@ describe('ConversationService', () => {
         ],
       };
 
-      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: conversation,
-      } as never);
-
-      const mockStream = new ReadableStream();
-      const sendSpy = vi
-        .spyOn(service['client'], 'sendChatCompletionRequest')
-        .mockResolvedValue({
-          response: { ok: true, body: mockStream } as Response,
-        } as never);
-
-      await service.streamCompletion(
-        'test-path',
-        'test-token',
-        'test-bucket',
-        '',
-        'form-example',
-        { form_value: { button: 2 } },
-      );
+      const { sendSpy } = await callStream(conversation, '', 'form-example', {
+        form_value: { button: 2 },
+      });
 
       expect(sendSpy.mock.calls[0][1].body.messages).toEqual([
-        {
-          role: ConversationMessageRole.User,
-          content: '',
-        },
+        { role: ConversationMessageRole.User, content: '' },
         {
           role: ConversationMessageRole.Assistant,
           content: 'Pick a number',
@@ -979,9 +998,7 @@ describe('ConversationService', () => {
         {
           role: ConversationMessageRole.User,
           content: '',
-          custom_content: {
-            form_value: { button: 2 },
-          },
+          custom_content: { form_value: { button: 2 } },
         },
       ]);
       expect(sendSpy.mock.calls[0][1].body.custom_fields).toEqual({
@@ -989,16 +1006,13 @@ describe('ConversationService', () => {
       });
     });
 
-    it('logs and delegates to handleDialError when completion stream is rejected', async () => {
+    it('saves partial message with hasStreamError when DIAL Core returns non-ok response', async () => {
       vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
-      vi.mocked(handleDialError).mockImplementation(() => {
-        throw new Error('mapped DIAL error');
-      });
-      const logError = vi
-        .spyOn(service['logger'], 'error')
-        .mockImplementation(() => undefined);
+      const saveConversationSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
       vi.spyOn(
         service['client'],
         'sendChatCompletionRequest',
@@ -1009,56 +1023,76 @@ describe('ConversationService', () => {
         }),
       } as never);
 
-      await expect(
-        service.streamCompletion(
-          'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
-          'test-token',
-          'test-bucket',
-          'Hello',
-          'gpt-4o',
-        ),
-      ).rejects.toThrow('mapped DIAL error');
+      const res = makeMockRes();
+      await service.streamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
 
-      expect(logError).toHaveBeenCalled();
-      expect(handleDialError).toHaveBeenCalledWith({ status: 400 });
+      // Should have saved at start (placeholder) + at error (partial with hasStreamError)
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const errorSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { hasStreamError?: boolean }[];
+      };
+      const assistantMsg = errorSave.messages.at(-1);
+      expect((assistantMsg as Record<string, unknown>).hasStreamError).toBe(
+        true,
+      );
     });
 
-    it('passes the stream through when completion succeeds', async () => {
+    it('writes SSE chunks to res and saves conversation on completion', async () => {
       vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
         data: TEST_CONVERSATION,
       } as never);
+      const saveConversationSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
       const firstChunk =
-        'data: {"choices":[{"delta":{"content":"Hello"}}]}\n\n';
-      const secondChunk = 'data: [DONE]\n\n';
-      const sendCompletionSpy = vi.spyOn(
+        'data: {"id":"resp-1","choices":[{"delta":{"content":"Hello"}}]}\n\n';
+      const doneChunk = 'data: [DONE]\n\n';
+      vi.spyOn(
         service['client'],
         'sendChatCompletionRequest',
-      );
-      sendCompletionSpy.mockResolvedValue({
-        response: new Response(textToStream([firstChunk, secondChunk]), {
+      ).mockResolvedValue({
+        response: new Response(textToStream([firstChunk, doneChunk]), {
           status: 200,
           headers: { 'Content-Type': 'text/event-stream' },
         }),
       } as never);
 
-      const stream = await service.streamCompletion(
+      const res = makeMockRes();
+      await service.streamCompletion(
         'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
         'test-token',
         'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
         'Hello',
+        undefined,
         'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
       );
 
-      await expect(readStreamText(stream)).resolves.toBe(
-        `${firstChunk}${secondChunk}`,
-      );
-      expect(sendCompletionSpy).toHaveBeenCalledWith(
-        'gpt-4o',
-        expect.objectContaining({
-          params: { query: { 'api-version': '2024-10-21' } },
-        }),
-      );
-      expect(handleDialError).not.toHaveBeenCalled();
+      // Written SSE data should contain our chunks
+      const written = res.getWritten();
+      expect(written).toContain('Hello');
+      // Final save should include assembled content
+      expect(saveConversationSpy).toHaveBeenCalledTimes(2);
+      const finalSave = saveConversationSpy.mock.calls[1][2].body as {
+        messages: { content?: string }[];
+      };
+      expect(finalSave.messages.at(-1)?.content).toBe('Hello');
     });
   });
 

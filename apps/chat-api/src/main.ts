@@ -60,13 +60,8 @@ async function bootstrap() {
   });
 
   const port = process.env.PORT || 3005;
-  await app.listen(port);
-
-  Logger.log(
-    `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,
-  );
-
-  if (process.env['NODE_ENV'] !== 'production') {
+  const shouldExposeSwagger = process.env['NODE_ENV'] !== 'production';
+  if (shouldExposeSwagger) {
     const document = SwaggerModule.createDocument(
       app,
       createOpenApiConfig(port),
@@ -77,6 +72,12 @@ async function bootstrap() {
       `📚 Swagger documentation available at: http://localhost:${port}/api/docs`,
     );
   }
+
+  await app.listen(port);
+
+  Logger.log(
+    `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,
+  );
 
   if (module.hot) {
     module.hot.accept();

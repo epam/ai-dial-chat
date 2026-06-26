@@ -9,6 +9,7 @@ import type {
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserConfigService } from '../../user-config/user-config.service';
+import { ConversationGenerationService } from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 
@@ -41,9 +42,23 @@ describe('ConversationController (integration)', () => {
       deleteAllConversations: vi.fn(),
     };
 
+    const mockGenerationService = {
+      register: vi.fn().mockReturnValue(new AbortController()),
+      abort: vi.fn().mockReturnValue(true),
+      complete: vi.fn(),
+      error: vi.fn(),
+      getStatus: vi.fn().mockReturnValue('active'),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       controllers: [ConversationController],
-      providers: [{ provide: ConversationService, useValue: service }],
+      providers: [
+        { provide: ConversationService, useValue: service },
+        {
+          provide: ConversationGenerationService,
+          useValue: mockGenerationService,
+        },
+      ],
     }).compile();
 
     app = module.createNestApplication();
@@ -191,6 +206,7 @@ describe('ConversationController (integration)', () => {
           { provide: ConfigService, useValue: configService },
           ConversationService,
           UserConfigService,
+          ConversationGenerationService,
         ],
       }).compile();
 

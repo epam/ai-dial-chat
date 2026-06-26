@@ -30,11 +30,13 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useGeneration } from '../../context/GenerationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
+import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   transcribeAudio,
   transcribeAudioWithAsrModel,
@@ -250,6 +252,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     isConversationLoaded,
   );
 
+  const { getGeneration } = useGeneration();
+  // Conversation paths whose auto-stream has already been kicked off. Guards
+  // against React 18 StrictMode double-mounting (and any other re-run of
+  // loadConversation) firing two concurrent generations, which the backend
+  // rejects with 409 and surfaces as a spurious "Something went wrong" error.
+  const autoStartedPathsRef = useRef<Set<string>>(new Set());
+
   const { startStream, handleStop, isStreaming } = useConversationStream({
     conversationId,
     stoppedGeneratingText: t(ChatI18nKeys.StoppedGenerating),
@@ -278,6 +287,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         const lastMsg = result.messages[result.messages.length - 1];
 
         if (lastMsg?.role === MessageRole.User) {
+          // The conversation still awaits an assistant reply: show the typing
+          // placeholder so streamed chunks have a slot to land in.
           const assistantPlaceholder: Message = {
             role: MessageRole.Assistant,
             content: '',
@@ -289,13 +300,26 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           };
           setConversation(withPlaceholder);
           conversationRef.current = withPlaceholder;
-          startStream(
-            id,
-            lastMsg.content,
-            withPlaceholder.messages.length - 1,
-            lastDeploymentId ?? result.model.id,
-            lastMsg.custom_content,
-          );
+
+          // Start the generation only once per conversation. Guards against
+          // React StrictMode double-mounting (and any re-run of loadConversation)
+          // launching a second stream — which the backend rejects with 409.
+          const conversationPath = getConversationPath(id);
+          const alreadyStarted =
+            autoStartedPathsRef.current.has(conversationPath) ||
+            getGeneration(conversationPath)?.status === 'active';
+          if (!alreadyStarted) {
+            autoStartedPathsRef.current.add(conversationPath);
+            startStream(
+              id,
+              lastMsg.content,
+              withPlaceholder.messages.length - 1,
+              lastDeploymentId ?? result.model.id,
+              lastMsg.custom_content,
+              crypto.randomUUID(),
+              CompletionMode.ContinueLastUser,
+            );
+          }
         } else {
           setConversation(result);
         }
@@ -305,7 +329,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         setIsFetching(false);
       }
     },
-    [navigate, restoreSelectedItemId, startStream],
+    [navigate, restoreSelectedItemId, startStream, getGeneration],
   );
 
   useEffect(() => {

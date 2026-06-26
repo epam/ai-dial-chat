@@ -7,6 +7,8 @@ import { SendCompletionDto } from '../dto/send-completion.dto';
 describe('IsMessageOrAttachmentsPresent', () => {
   it('allows empty completion text when form_value is provided', async () => {
     const dto = plainToInstance(SendCompletionDto, {
+      generationId: 'test-gen-id',
+      mode: 'append',
       path: 'form-example__What do you want to do',
       message: '',
       model: 'form-example',
@@ -32,6 +34,8 @@ describe('IsMessageOrAttachmentsPresent', () => {
 
   it('rejects empty text without custom content', async () => {
     const dto = plainToInstance(SendCompletionDto, {
+      generationId: 'test-gen-id',
+      mode: 'append',
       path: 'form-example__What do you want to do',
       message: '',
       model: 'form-example',

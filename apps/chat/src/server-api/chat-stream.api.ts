@@ -1,6 +1,9 @@
 import { MessageCustomContent, StreamChunk } from '@epam/ai-dial-chat-shared';
+import { SendCompletionDtoModeEnum } from '@epam/chat-api-client';
 import { JSON_HEADERS } from '../constants/http';
 import { ApiEndpoints, getCsrfToken, setCsrfToken } from './base';
+
+export { SendCompletionDtoModeEnum as CompletionMode };
 
 export interface StreamCompletionOptions {
   onChunk: (chunk: StreamChunk) => void;
@@ -9,12 +12,32 @@ export interface StreamCompletionOptions {
   signal?: AbortSignal;
 }
 
+export const stopCompletion = async (dto: {
+  generationId: string;
+  path: string;
+}): Promise<void> => {
+  await fetch(`${ApiEndpoints.CONVERSATIONS}/completions/stop`, {
+    method: 'POST',
+    credentials: 'include',
+    headers: {
+      ...JSON_HEADERS,
+      ...(getCsrfToken() != null
+        ? { 'X-CSRF-Token': getCsrfToken() as string }
+        : {}),
+    },
+    body: JSON.stringify(dto),
+  });
+};
+
 export const streamCompletion = (
   path: string,
-  message: string,
+  message: string | undefined,
   model: string,
   options: StreamCompletionOptions,
   customContent?: MessageCustomContent,
+  generationId?: string,
+  mode?: SendCompletionDtoModeEnum,
+  messageIndex?: number,
 ): void => {
   const { onChunk, onComplete, onError, signal } = options;
 
@@ -33,9 +56,12 @@ export const streamCompletion = (
         },
         body: JSON.stringify({
           path,
-          message,
+          message: message ?? '',
           model,
           custom_content: customContent || {},
+          ...(generationId != null && { generationId }),
+          ...(mode != null && { mode }),
+          ...(messageIndex != null && { messageIndex }),
         }),
       });
     } catch (err) {

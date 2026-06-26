@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   Logger,
+  NotFoundException,
   Patch,
   Post,
   Put,
@@ -20,6 +21,7 @@ import {
   ConversationMetadataDto,
   ConversationResponseDto,
 } from '../openapi/openapi-response.dto';
+import { ConversationGenerationService } from './conversation-generation.service';
 import { ConversationService } from './conversation.service';
 import { ConversationListResponseDto } from './dto/conversation-list.dto';
 import { ConversationPathDto } from './dto/conversation-path.dto';
@@ -39,16 +41,17 @@ import {
   SaveConversationQueryDto,
 } from './dto/save-conversation.dto';
 import { SendCompletionDto } from './dto/send-completion.dto';
-
-const SSE_KEEPALIVE_INTERVAL_MS = 15_000;
-const SSE_KEEPALIVE_PAYLOAD = ': keepalive\n\n';
+import { StopCompletionDto } from './dto/stop-completion.dto';
 
 @ApiTags('conversations')
 @Controller({ path: 'conversations', version: '1' })
 export class ConversationController {
   private readonly logger = new Logger(ConversationController.name);
 
-  constructor(private readonly conversationService: ConversationService) {}
+  constructor(
+    private readonly conversationService: ConversationService,
+    private readonly generationService: ConversationGenerationService,
+  ) {}
 
   @Post()
   @HttpCode(201)
@@ -186,7 +189,7 @@ export class ConversationController {
   @ApiOperation({
     summary: 'Stream a chat completion',
     description:
-      'Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.',
+      'Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.',
   })
   @ApiResponse({ status: 200, description: 'SSE stream of completion chunks' })
   @ApiResponse({ status: 400, description: 'Invalid request body' })
@@ -196,6 +199,10 @@ export class ConversationController {
     description: 'Insufficient permissions on conversation',
   })
   @ApiResponse({ status: 404, description: 'Conversation not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Another generation is already active for this conversation',
+  })
   @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
@@ -203,69 +210,51 @@ export class ConversationController {
     @Req() req: Request,
     @Res() res: Response,
     @Body() dto: SendCompletionDto,
-  ) {
-    const { at, bucket } = req.user as SessionUser;
-    const stream = await this.conversationService.streamCompletion(
+  ): Promise<void> {
+    const { at, bucket, sid } = req.user as SessionUser;
+    await this.conversationService.streamCompletion(
       dto.path,
       at,
       bucket,
+      dto.generationId,
+      dto.mode,
       dto.message,
+      dto.messageIndex,
       dto.model,
       dto.custom_content,
+      sid,
+      res,
     );
+  }
 
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
-    res.flushHeaders();
-
-    const reader = stream.getReader();
-
-    let isClientAborted = false;
-    let isReaderReleased = false;
-    let isCancelRequested = false;
-
-    const handleClose = () => {
-      isClientAborted = true;
-      if (isReaderReleased || isCancelRequested) {
-        return;
-      }
-
-      isCancelRequested = true;
-      void reader.cancel().catch(() => undefined);
-    };
-
-    res.on('close', handleClose);
-
-    let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
-    try {
-      keepaliveTimer = setInterval(() => {
-        if (!isClientAborted && !res.writableEnded) {
-          res.write(SSE_KEEPALIVE_PAYLOAD);
-        }
-      }, SSE_KEEPALIVE_INTERVAL_MS);
-
-      while (true) {
-        if (isClientAborted) break;
-
-        const { done, value } = await reader.read();
-        if (done) break;
-
-        res.write(value);
-      }
-    } catch (err) {
-      if (!isClientAborted) {
-        this.logger.error('Error while streaming completion to client', err);
-      }
-    } finally {
-      if (keepaliveTimer) clearInterval(keepaliveTimer);
-      res.off('close', handleClose);
-      isReaderReleased = true;
-      reader.releaseLock();
-      if (!res.writableEnded) {
-        res.end();
-      }
+  @Post('completions/stop')
+  @HttpCode(204)
+  @Throttle({ default: { limit: 60, ttl: 60000 } })
+  @ApiOperation({ summary: 'Stop an active generation' })
+  @ApiResponse({ status: 204, description: 'Generation stopped successfully' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({
+    status: 404,
+    description:
+      'No active generation found for the given path and generationId',
+  })
+  async stopCompletion(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() dto: StopCompletionDto,
+  ): Promise<void> {
+    const { sid } = req.user as SessionUser;
+    const aborted = this.generationService.abort(
+      sid,
+      dto.path,
+      dto.generationId,
+    );
+    if (!aborted) {
+      throw new NotFoundException(
+        'No active generation found for the given path and generationId',
+      );
     }
+    res.status(204).end();
   }
 
   @Patch()
