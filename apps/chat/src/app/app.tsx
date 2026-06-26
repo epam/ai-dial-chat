@@ -123,6 +123,11 @@ const App: FC = () => {
   const [panelRequestedFilter, setPanelRequestedFilter] = useState<
     FilterTab | undefined
   >(undefined);
+  const activeFilterRef = useRef<FilterTab>(FilterTab.All);
+
+  const handlePanelActiveFilterChange = useCallback((tab: FilterTab) => {
+    activeFilterRef.current = tab;
+  }, []);
 
   useEffect(() => {
     if (!switchToMyChatsOnNavRef.current) return;
@@ -131,7 +136,10 @@ const App: FC = () => {
   }, [activeConversationId]);
 
   const handleDuplicateReadonly = useCallback(() => {
-    switchToMyChatsOnNavRef.current = true;
+    const filter = activeFilterRef.current;
+    if (filter === FilterTab.Organization || filter === FilterTab.Shared) {
+      switchToMyChatsOnNavRef.current = true;
+    }
   }, []);
 
   const handleSelectConversation = useCallback(
@@ -158,6 +166,7 @@ const App: FC = () => {
         onNewChat={() => navigate(ROUTES.Root)}
         requestedFilter={panelRequestedFilter}
         onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
+        onActiveFilterChange={handlePanelActiveFilterChange}
         onDuplicateReadonly={handleDuplicateReadonly}
       />
 
