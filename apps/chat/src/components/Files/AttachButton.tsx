@@ -188,19 +188,6 @@ export const AttachButton = ({
           isPreUploadOpen={isPreUploadDialogOpened}
         />
       )}
-      {/*{isPreUploadDialogOpened && (*/}
-      {/*  <PreUploadDialog*/}
-      {/*    isOpen*/}
-      {/*    allowedTypes={availableAttachmentsTypes}*/}
-      {/*    initialFilesSelect*/}
-      {/*    maximumAttachmentsAmount={maximumAttachmentsAmount}*/}
-      {/*    onUploadFiles={onUploadFromDevice}*/}
-      {/*    onClose={() => {*/}
-      {/*      setIsPreUploadDialogOpened(false);*/}
-      {/*    }}*/}
-      {/*    uploadFolderId={getQuickAttachmentsSavingPath()}*/}
-      {/*  />*/}
-      {/*)}*/}
       {isAttachLinkDialogOpened && (
         <AttachLinkDialog
           onClose={(link?: DialLink) => {
