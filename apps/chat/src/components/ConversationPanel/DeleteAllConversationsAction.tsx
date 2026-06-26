@@ -113,6 +113,12 @@ const DeleteAllConversationsAction: FC<DeleteAllConversationsActionProps> = ({
       if (activeConversationId) {
         navigate(ROUTES.Root);
       }
+
+      showNotification({
+        variant: NotificationVariant.Success,
+        title: t(ConversationPanelI18nKeys.DeleteAllSuccessTitle),
+        message: t(ConversationPanelI18nKeys.DeleteAllSuccess),
+      });
     } catch {
       setDeleteError(t(ConversationPanelI18nKeys.DeleteAllError));
     } finally {

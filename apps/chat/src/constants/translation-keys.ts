@@ -270,6 +270,8 @@ export enum ConversationPanelI18nKeys {
   DeleteAllConfirmDescription = 'conversationPanel.deleteAllConfirmDescription',
   DeleteAllError = 'conversationPanel.deleteAllError',
   DeleteAllPartialError = 'conversationPanel.deleteAllPartialError',
+  DeleteAllSuccessTitle = 'conversationPanel.deleteAllSuccessTitle',
+  DeleteAllSuccess = 'conversationPanel.deleteAllSuccess',
 }
 
 export enum SidebarI18nKeys {
