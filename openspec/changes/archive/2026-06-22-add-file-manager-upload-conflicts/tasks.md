@@ -13,7 +13,7 @@
 - [x] 2.2 Add `DialFileManagerConflictResolutionPopupOptions` import from `@epam/ai-dial-ui-kit` and `DialFileManagerConflictActions`, `DialFileManagerConflictStrategies` constants
 - [x] 2.3 Build `conflictResolutionPopupOptions` object in `DialFileManagerModal` (wrapped in `useMemo`) using the new i18n keys; include `singleFileTitle`, `multipleFilesTitle`, `actionLabels`, `strategyLabels`, `confirmLabel`, `cancelLabel`
 - [x] 2.4 Pass `conflictResolutionPopupOptions` to `DialFileManager` in `DialFileManagerModal`
-- [ ] 2.5 Add test in `apps/chat/src/components/DialFileManagerModal/tests/` verifying `conflictResolutionPopupOptions` is passed to `DialFileManager`
+- [x] 2.5 Add test in `apps/chat/src/components/DialFileManagerModal/tests/` verifying `conflictResolutionPopupOptions` is passed to `DialFileManager`
 - [x] 2.6 Run `npm exec nx test chat` and `npm exec nx lint chat` — no errors
 
 ## 3. Upload Mode: BFF `uploadMode` Field
