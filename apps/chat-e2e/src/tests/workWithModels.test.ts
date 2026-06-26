@@ -93,14 +93,27 @@ dialTest(
     sendMessage,
     localStorageManager,
     page,
+    fileApiHelper,
     baseAssertion,
+    toast,
+    toastAssertion,
   }) => {
     setTestIds('EPMRTC-477', 'EPMRTC-1463');
-    await dialTest.step('Set random application theme', async () => {
-      const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
-      await localStorageManager.setSettings(theme);
-      await localStorageManager.setShowSideBarPanels();
-    });
+    await dialTest.step(
+      'Set random application theme and installed model',
+      async () => {
+        const theme = GeneratorUtil.randomArrayElement(Object.keys(ThemeId));
+        await localStorageManager.setSettings(theme);
+        await localStorageManager.setShowSideBarPanels();
+        const randomModel = GeneratorUtil.randomArrayElement(
+          ModelsUtil.getModels(),
+        );
+        await fileApiHelper.updateInstalledDeployments([randomModel]);
+        await localStorageManager.setRecentModelsIdsOnceWithPermanentLastUsedModel(
+          randomModel,
+        );
+      },
+    );
 
     await dialTest.step(
       'Send a request in chat and emulate error until response received',
@@ -109,16 +122,18 @@ dialTest(
         await dialHomePage.waitForPageLoaded();
         await context.setOffline(true);
         await chat.sendRequestWithButton('Type a fairytale', false);
+        await toastAssertion.assertToastIsVisible();
+        await toast.closeToast();
       },
     );
+
     await dialTest.step(
       'Verify error is displayed as a response, regenerate button is available',
       async () => {
-        const generatedContent = await chatMessages.getLastMessageContent();
-        baseAssertion.assertValue(
-          generatedContent,
+        await chatMessages.getChatMessage(2).waitFor();
+        await baseAssertion.assertElementText(
+          chatMessages.getChatMessage(2),
           ExpectedConstants.answerError,
-          ExpectedMessages.errorReceivedOnReplay,
         );
         await baseAssertion.assertElementState(
           sendMessage.regenerate,
@@ -139,11 +154,10 @@ dialTest(
               GeneratorUtil.randomString(5),
             );
             await page.keyboard.press(keys.enter);
-            const messagesCountAfter =
-              await chatMessages.chatMessages.getElementsCount();
-            baseAssertion.assertValue(
+            await toastAssertion.assertToastIsVisible();
+            await baseAssertion.assertElementsCount(
+              chatMessages.chatMessages,
               messagesCountBefore,
-              messagesCountAfter,
               ExpectedMessages.messageCountIsCorrect,
             );
           }

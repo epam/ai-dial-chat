@@ -9,6 +9,7 @@ import {
   mergeMap,
   of,
   switchMap,
+  takeUntil,
   timer,
 } from 'rxjs';
 
@@ -35,12 +36,14 @@ import {
 } from '@/src/store/actions';
 import { ChatEventsSelectors, SettingsSelectors } from '@/src/store/selectors';
 
+import {
+  RECONNECT_INTERVAL,
+  RECONNECT_RETRY_COUNT,
+} from '@/src/constants/chat-events';
 import { ChatI18nKeys } from '@/src/constants/i18n';
 
 import { Feature } from '@epam/ai-dial-shared';
 
-const RECONNECT_INTERVAL = 3_000;
-const RECONNECT_RETRY_COUNT = 5;
 const EVENTS_SEPARATOR = 'data:';
 
 const mapChatEventFromApi = (event: ChatEvent): ChatEvent => ({
@@ -57,12 +60,7 @@ const initEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(ChatEventsActions.init.type),
     filter(() => !ChatEventsSelectors.selectIsInitialized(state$.value)),
-    switchMap(() =>
-      concat(
-        of(ChatEventsActions.subscribe()),
-        of(ChatEventsActions.initFinish()),
-      ),
-    ),
+    switchMap(() => concat(of(ChatEventsActions.initFinish()))),
   );
 
 const subscribeEpic: AppEpic = (action$, state$) =>
@@ -86,8 +84,8 @@ const subscribeEpic: AppEpic = (action$, state$) =>
           if (resp.channelId) {
             retryAttempt = 0;
             return concat(
-              of(ChatEventsActions.setIsSubscribed(true)),
               of(ChatEventsActions.setChannelId(resp.channelId)),
+              of(ChatEventsActions.setIsSubscribed(true)),
             );
           }
           if (resp.done) {
@@ -116,9 +114,13 @@ const subscribeEpic: AppEpic = (action$, state$) =>
           console.error(err);
           const { traceId } = parseApiError(err);
           return of(
-            ChatEventsActions.subscribeFailure({ retryAttempt, traceId }),
+            ChatEventsActions.subscribeFailure({
+              retryAttempt,
+              traceId,
+            }),
           );
         }),
+        takeUntil(action$.pipe(ofType(ChatEventsActions.unsubscribe.type))),
       );
     }),
   );
@@ -151,9 +153,16 @@ const unsubscribeEpic: AppEpic = (action$, state$) =>
 
       if (!channelId) return EMPTY;
 
+      const resetSubscription$ = concat(
+        of(ChatEventsActions.setIsSubscribed(false)),
+        of(ChatEventsActions.setChannelId()),
+      );
+
       return ChatEventsService.unsubscribe(channelId).pipe(
-        switchMap(() => {
-          return of(ChatEventsActions.setIsSubscribed(false));
+        switchMap(() => resetSubscription$),
+        catchError((err) => {
+          console.error(err);
+          return resetSubscription$;
         }),
       );
     }),

@@ -24,6 +24,7 @@ const overlayOptions = {
     Feature.ReportAnIssue,
     Feature.Likes,
     Feature.Marketplace,
+    Feature.LiveChatInteraction,
   ],
 };
 
