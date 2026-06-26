@@ -47,8 +47,11 @@ import { ThemeId } from '../types/theme-id';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 
+// Start loading the module immediately so the Suspense fallback is skipped on first navigation.
+const conversationPageModule = import('../pages/Conversation/Conversation');
+
 const ConversationPage = lazy(async () => {
-  const module = await import('../pages/Conversation/Conversation');
+  const module = await conversationPageModule;
   return { default: module.ConversationPage };
 });
 

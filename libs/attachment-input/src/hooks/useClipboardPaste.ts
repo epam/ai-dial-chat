@@ -25,8 +25,9 @@ export const useClipboardPaste = (
       const imageItems = items.filter(
         (item) => item.kind === 'file' && item.type.startsWith('image/'),
       );
+      const hasText = event.clipboardData.getData('text/plain').length > 0;
 
-      if (imageItems.length > 0) {
+      if (imageItems.length > 0 && !hasText) {
         const imageAttachments: Attachment[] = [];
         for (const item of imageItems) {
           const blob = item.getAsFile();
