@@ -2069,6 +2069,111 @@ export interface RenameConversationResponseDto {
 /**
  *
  * @export
+ * @interface RenameFilesDto
+ */
+export interface RenameFilesDto {
+  /**
+   *
+   * @type {Array<RenameItemDto>}
+   * @memberof RenameFilesDto
+   */
+  items: Array<RenameItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface RenameFilesResponseDto
+ */
+export interface RenameFilesResponseDto {
+  /**
+   *
+   * @type {Array<RenameItemResultDto>}
+   * @memberof RenameFilesResponseDto
+   */
+  results: Array<RenameItemResultDto>;
+}
+/**
+ *
+ * @export
+ * @interface RenameItemDto
+ */
+export interface RenameItemDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof RenameItemDto
+   */
+  bucket: string;
+  /**
+   * Relative source path within bucket
+   * @type {string}
+   * @memberof RenameItemDto
+   */
+  sourcePath: string;
+  /**
+   * Relative destination path within bucket
+   * @type {string}
+   * @memberof RenameItemDto
+   */
+  destinationPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof RenameItemDto
+   */
+  nodeType: RenameItemDtoNodeTypeEnum;
+  /**
+   * Display name (last segment) for error messages
+   * @type {string}
+   * @memberof RenameItemDto
+   */
+  name: string;
+}
+
+/**
+ * @export
+ */
+export const RenameItemDtoNodeTypeEnum = {
+  Item: 'item',
+  Folder: 'folder',
+} as const;
+export type RenameItemDtoNodeTypeEnum =
+  (typeof RenameItemDtoNodeTypeEnum)[keyof typeof RenameItemDtoNodeTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface RenameItemResultDto
+ */
+export interface RenameItemResultDto {
+  /**
+   * Source path from request
+   * @type {string}
+   * @memberof RenameItemResultDto
+   */
+  sourcePath: string;
+  /**
+   * Destination path from request
+   * @type {string}
+   * @memberof RenameItemResultDto
+   */
+  destinationPath: string;
+  /**
+   * true when all Core moveResource calls succeeded
+   * @type {boolean}
+   * @memberof RenameItemResultDto
+   */
+  success: boolean;
+  /**
+   * Human-readable error reason when success is false
+   * @type {string}
+   * @memberof RenameItemResultDto
+   */
+  error?: string;
+}
+/**
+ *
+ * @export
  * @interface SaveConversationBodyDto
  */
 export interface SaveConversationBodyDto {

@@ -1,4 +1,5 @@
 import { StringUtils } from '../../common/utils/string-utils';
+import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { COMPOUND_TOKEN_PREFIX } from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 
@@ -120,15 +121,6 @@ export const buildRenamedConversationPath = (
   return segments.length > 1
     ? [...segments.slice(0, -1), renamedFilename].join('/')
     : renamedFilename;
-};
-
-/** Decodes a URI component, returning the original string if decoding fails. */
-export const safeDecodeURIComponent = (value: string): string => {
-  try {
-    return decodeURIComponent(value);
-  } catch {
-    return value;
-  }
 };
 
 // TODO: Remove this once the DIAL SDK encodes resource path segments internally.
