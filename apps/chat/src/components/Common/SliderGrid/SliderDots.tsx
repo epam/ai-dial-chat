@@ -130,7 +130,7 @@ export const SliderDots: React.FC<Props> = ({
                   onClick={handleClickLeftArrow}
                   data-qa="slider-dot-arrow-prev"
                   disabled={activeSlide === 0}
-                  className="text-controls-disable enabled:hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                  className="text-secondary enabled:hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 >
                   <IconCaretLeftFilled size={18} />
                 </button>
@@ -152,7 +152,7 @@ export const SliderDots: React.FC<Props> = ({
                       >
                         <button
                           className={classNames(
-                            'rounded-full bg-controls-disable transition-all duration-200',
+                            'bg-text-secondary rounded-full transition-all duration-200',
                             getDotSizeClass(
                               slideNumber,
                               activeSlide,
@@ -170,7 +170,7 @@ export const SliderDots: React.FC<Props> = ({
                   onClick={handleClickRightArrow}
                   data-qa="slider-dot-arrow-next"
                   disabled={activeSlide === sliderDotsArray.length - 1}
-                  className="text-controls-disable enabled:hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
+                  className="text-secondary enabled:hover:text-accent-primary disabled:cursor-not-allowed disabled:text-controls-disable"
                 >
                   <IconCaretRightFilled size={18} />
                 </button>
