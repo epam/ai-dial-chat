@@ -232,29 +232,85 @@ export class ConversationService extends AppService {
     token: string,
     sessionBucket: string,
   ): Promise<ConversationResponseDto> {
-    const slashIndex = conversationPath.indexOf('/');
-    const bucket =
-      slashIndex === -1 ? sessionBucket : conversationPath.slice(0, slashIndex);
-    const subPath =
-      slashIndex === -1
-        ? conversationPath
-        : conversationPath.slice(slashIndex + 1);
-
     try {
-      const { data, error } = (await this.client.getConversation(
-        bucket,
-        encodeDialResourcePath(subPath),
-        { headers: getBearerAuthHeaders(token) },
-      )) as { data?: unknown; error?: unknown };
-      if (error != null || !data) {
-        this.logger.error('DIAL Core rejected getConversation', error);
-        return handleDialError(error);
-      }
-      return data as ConversationResponseDto;
+      const { conversation, subPath } = await this.getStoredConversation(
+        conversationPath,
+        token,
+        sessionBucket,
+      );
+      const filename = subPath.split('/').pop() ?? subPath;
+      const pathTitle = getConversationTitleFromName(
+        safeDecodeURIComponent(filename),
+      );
+      const resolvedName = this.resolveListDisplayTitle(
+        pathTitle,
+        conversation,
+      );
+      return resolvedName === conversation.name
+        ? conversation
+        : { ...conversation, name: resolvedName };
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversation', error);
       return handleDialError(error);
     }
+  }
+
+  private resolveConversationLocation(
+    conversationPath: string,
+    sessionBucket: string,
+  ): { bucket: string; subPath: string } {
+    if (
+      conversationPath === sessionBucket ||
+      conversationPath.startsWith(`${sessionBucket}/`)
+    ) {
+      return {
+        bucket: sessionBucket,
+        subPath:
+          conversationPath === sessionBucket
+            ? ''
+            : conversationPath.slice(sessionBucket.length + 1),
+      };
+    }
+
+    if (
+      conversationPath === PUBLIC_BUCKET ||
+      conversationPath.startsWith(`${PUBLIC_BUCKET}/`)
+    ) {
+      return {
+        bucket: PUBLIC_BUCKET,
+        subPath:
+          conversationPath === PUBLIC_BUCKET
+            ? ''
+            : conversationPath.slice(PUBLIC_BUCKET.length + 1),
+      };
+    }
+
+    return { bucket: sessionBucket, subPath: conversationPath };
+  }
+
+  private async getStoredConversation(
+    conversationPath: string,
+    token: string,
+    sessionBucket: string,
+  ): Promise<{ conversation: ConversationResponseDto; subPath: string }> {
+    const { bucket, subPath } = this.resolveConversationLocation(
+      conversationPath,
+      sessionBucket,
+    );
+
+    const { data, error } = (await this.client.getConversation(
+      bucket,
+      encodeDialResourcePath(subPath),
+      { headers: getBearerAuthHeaders(token) },
+    )) as { data?: unknown; error?: unknown };
+    if (error != null || !data) {
+      throw error ?? new Error('Conversation not found');
+    }
+
+    return {
+      conversation: data as ConversationResponseDto,
+      subPath,
+    };
   }
 
   async pinConversation(
@@ -341,7 +397,58 @@ export class ConversationService extends AppService {
         this.logger.error('Failed to migrate pin on rename', err),
       );
 
+    await this.syncStoredDisplayNameAfterPathRename(
+      renamedPath,
+      sanitisedTitle,
+      token,
+      bucket,
+    );
+
     return { newPath: buildConversationUrl(bucket, renamedPath) };
+  }
+
+  /**
+   * Path rename (moveResource) updates the filename only. Sync `conversation.name`
+   * in the stored body so list enrichment and GET do not keep an LLM title.
+   */
+  private async syncStoredDisplayNameAfterPathRename(
+    conversationPath: string,
+    displayName: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    try {
+      const { conversation: data } = await this.getStoredConversation(
+        conversationPath,
+        token,
+        bucket,
+      );
+      if (data.name?.trim() === displayName) {
+        return;
+      }
+
+      const { bucket: saveBucket, subPath } = this.resolveConversationLocation(
+        conversationPath,
+        bucket,
+      );
+
+      const { error: saveError } = (await this.client.saveConversation(
+        saveBucket,
+        encodeDialResourcePath(subPath),
+        {
+          headers: getBearerAuthHeaders(token),
+          body: { ...data, name: displayName } as never,
+        },
+      )) as { error?: unknown };
+      if (saveError != null) {
+        this.logger.warn(
+          'Failed to sync display name after path rename',
+          saveError,
+        );
+      }
+    } catch (error) {
+      this.logger.warn('Failed to sync display name after path rename', error);
+    }
   }
 
   async duplicateConversation(
@@ -785,7 +892,7 @@ export class ConversationService extends AppService {
     }
 
     try {
-      const existing = await this.getConversation(
+      const { conversation: existing } = await this.getStoredConversation(
         conversationPath,
         token,
         bucket,
@@ -840,12 +947,15 @@ export class ConversationService extends AppService {
       await Promise.all(
         batch.map(async (item) => {
           try {
-            const conversation = await this.getConversation(
+            const conversation = await this.getStoredConversation(
               this.getListItemRelativePath(item.id),
               token,
               bucket,
             );
-            const displayName = conversation.name?.trim();
+            const displayName = this.resolveListDisplayTitle(
+              item.title,
+              conversation.conversation,
+            );
             if (displayName) {
               displayNameById.set(item.id, displayName);
             }
@@ -860,6 +970,33 @@ export class ConversationService extends AppService {
       const displayName = displayNameById.get(item.id);
       return displayName ? { ...item, title: displayName } : item;
     });
+  }
+
+  private resolveListDisplayTitle(
+    pathTitle: string,
+    conversation: ConversationResponseDto,
+  ): string {
+    const storedName = conversation.name?.trim();
+    if (!storedName) {
+      return pathTitle;
+    }
+    if (storedName === pathTitle) {
+      return storedName;
+    }
+
+    if (conversation.llmNamingDone !== true) {
+      return pathTitle;
+    }
+
+    const firstUserMessage = conversation.messages?.find(
+      (message) => message.role === ConversationMessageRole.User,
+    )?.content;
+    const messageDerivedTitle = getConversationName(
+      'New chat',
+      firstUserMessage ?? '',
+    );
+
+    return pathTitle === messageDerivedTitle ? storedName : pathTitle;
   }
 
   private isOwnedBySessionBucket(id: string, sessionBucket: string): boolean {

@@ -411,6 +411,54 @@ describe('ConversationService', () => {
         expect.any(Object),
       );
     });
+
+    it('returns the stored LLM title when the path still uses the message-derived name', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: {
+          ...TEST_CONVERSATION,
+          name: 'Docker networking basics',
+          llmNamingDone: true,
+          messages: [
+            {
+              role: ConversationMessageRole.User,
+              content: 'How does Docker networking work?',
+            },
+          ],
+        },
+      } as never);
+
+      const result = await service.getConversation(
+        'test-bucket/gpt-4o__How does Docker networking work?',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.name).toBe('Docker networking basics');
+    });
+
+    it('prefers the path title when the conversation was path-renamed after LLM naming', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: {
+          ...TEST_CONVERSATION,
+          name: 'Docker networking basics',
+          llmNamingDone: true,
+          messages: [
+            {
+              role: ConversationMessageRole.User,
+              content: 'How does Docker networking work?',
+            },
+          ],
+        },
+      } as never);
+
+      const result = await service.getConversation(
+        'test-bucket/gpt-4o__My custom title',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(result.name).toBe('My custom title');
+    });
   });
 
   describe('encoded conversation resource paths', () => {
@@ -439,6 +487,18 @@ describe('ConversationService', () => {
       const moveSpy = vi
         .spyOn(service['client'], 'moveResource')
         .mockResolvedValue({ data: {} } as never);
+      const getSpy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({
+          data: {
+            ...TEST_CONVERSATION,
+            name: 'LLM generated title',
+            llmNamingDone: true,
+          },
+        } as never);
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
 
       const result = await service.renameConversation(
         conversationPath,
@@ -455,6 +515,21 @@ describe('ConversationService', () => {
               'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__renamed',
             overwrite: false,
           },
+        }),
+      );
+      expect(getSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+        expect.any(Object),
+      );
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Team%2FApp%20One__0.0.1__renamed',
+        expect.objectContaining({
+          body: expect.objectContaining({
+            name: 'renamed',
+            llmNamingDone: true,
+          }),
         }),
       );
       expect(result.newPath).toBe(
