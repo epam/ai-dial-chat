@@ -252,13 +252,19 @@ const ConversationRoute: FC = () => {
           selectedItemId,
           attachmentDtos,
         );
-        await saveConversation(getConversationPath(conversation.id), {
+        const savedConversation = {
           ...conversation,
           prompt: chatSettingsValues.systemPrompt,
           temperature: chatSettingsValues.temperature,
           responseFormat: chatSettingsValues.responseFormat,
-        } as ConversationResponseDto);
-        navigate(getConversationRoute(conversation.id));
+        } as ConversationResponseDto;
+        await saveConversation(
+          getConversationPath(conversation.id),
+          savedConversation,
+        );
+        navigate(getConversationRoute(conversation.id), {
+          state: { conversation: savedConversation },
+        });
       } catch (err) {
         const errorMessage = await getApiErrorMessage(err);
         showNotification({
