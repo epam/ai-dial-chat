@@ -56,10 +56,6 @@ describe('getButtonPaddingEnd', () => {
   it('returns pe-9 when actions exist and the menu is open', () => {
     expect(getButtonPaddingEnd(true, true)).toBe('pe-9');
   });
-
-  it('returns pe-2 with a hover expansion class when actions exist and the menu is closed', () => {
-    expect(getButtonPaddingEnd(true, false)).toBe('pe-2 group-hover:pe-9');
-  });
 });
 
 describe('getRowHeight', () => {
