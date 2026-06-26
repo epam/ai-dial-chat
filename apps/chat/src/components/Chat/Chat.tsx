@@ -42,7 +42,6 @@ import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
 import {
   ApplicationTypesSchemasSelectors,
   AuthSelectors,
-  ChatEventsSelectors,
   ChatSelectors,
   ConversationsSelectors,
   ModelsSelectors,
@@ -614,7 +613,6 @@ const ChatView = memo(({ isPreview, customViewer }: ChatViewProps) => {
     isIsolatedView ||
     isAdminPreview ||
     isApproveRequiredEntity;
-
   const isInputVisible =
     ((!isReplay || isNotEmptyConversations) &&
       !isReadOnly &&
@@ -1143,12 +1141,6 @@ export function Chat({ isPreview }: ChatProps) {
   const applicationTypeSchemas = useAppSelector(
     ApplicationTypesSchemasSelectors.selectAllSchemas,
   );
-  const isChatEventsEnabled = useAppSelector((state) =>
-    SettingsSelectors.isFeatureEnabled(state, Feature.LiveChatInteraction),
-  );
-  const isSubscribing = useAppSelector(ChatEventsSelectors.selectIsSubscribing);
-
-  const showIsSubscribingLoader = isChatEventsEnabled && isSubscribing;
 
   const isNoMessages = selectedConversations.every(
     ({ messages }) => !messages?.length,
@@ -1236,8 +1228,7 @@ export function Chat({ isPreview }: ChatProps) {
     // listing when the default model is already known from settings.
     (!isInstalledModelsInitialized && !isOptimisticDefaultModelLoad) ||
     loadingConfigurationSchemas.length ||
-    isPublicationUpdating ||
-    showIsSubscribingLoader
+    isPublicationUpdating
   ) {
     return <Loader />;
   }
