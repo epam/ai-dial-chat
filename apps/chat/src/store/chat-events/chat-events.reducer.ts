@@ -35,14 +35,18 @@ export const chatEventsSlice = createSlice({
     subscribeFailure: (
       state,
       _action: PayloadAction<
-        { retryAttempt?: number; traceId?: string } | undefined
+        | {
+            retryAttempt?: number;
+            traceId?: string;
+          }
+        | undefined
       >,
     ) => {
       state.isSubscribed = false;
       state.isSubscribing = false;
     },
     unsubscribe: (state) => state,
-    setChannelId: (state, { payload }: PayloadAction<string>) => {
+    setChannelId: (state, { payload }: PayloadAction<string | undefined>) => {
       state.channelId = payload;
       state.isSubscribing = false;
     },

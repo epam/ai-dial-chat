@@ -455,10 +455,12 @@ dialTest(
     dialHomePage,
     conversationData,
     chat,
+    toastAssertion,
     dataInjector,
     setTestIds,
     chatMessages,
     tooltipPortalAssertion,
+    baseAssertion,
     context,
     sendMessage,
     conversations,
@@ -486,18 +488,19 @@ dialTest(
         await conversations.selectEntity(replayConversation.name);
         await context.setOffline(true);
         await chat.replay.click();
+        await toastAssertion.assertToastIsVisible();
       },
     );
 
     await dialTest.step('Verify error message is displayed', async () => {
-      const generatedContent = await chatMessages.getLastMessageContent();
       await sendMessage.proceedGenerating.hoverOver();
       await tooltipPortalAssertion.assertTooltipContent(
         ExpectedConstants.continueReplayAfterErrorLabel,
       );
-      expect
-        .soft(generatedContent, ExpectedMessages.errorReceivedOnReplay)
-        .toBe(ExpectedConstants.answerError);
+      await baseAssertion.assertElementText(
+        chatMessages.getChatMessage(2),
+        ExpectedConstants.answerError,
+      );
     });
 
     await dialTest.step(
