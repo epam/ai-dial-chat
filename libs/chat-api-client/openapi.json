@@ -3213,10 +3213,7 @@
           "responseFormat": {
             "type": "string",
             "example": "markdown",
-            "enum": [
-              "markdown",
-              "plain_text"
-            ]
+            "enum": ["markdown", "plain_text"]
           },
           "llmNamingDone": {
             "type": "boolean",

@@ -13,6 +13,7 @@ const workspaceRoot = join(__dirname, '..', '..', '..');
 const outputPath = join(workspaceRoot, 'libs/chat-api-client/openapi.json');
 
 const ensureOpenApiEnv = () => {
+  process.env['OPENAPI_GENERATION'] = 'true';
   process.env['DIAL_CORE_URL'] ??= 'http://localhost:8080';
   process.env['AUTH_SESSION_SECRET'] ??=
     '0000000000000000000000000000000000000000000000000000000000000000';

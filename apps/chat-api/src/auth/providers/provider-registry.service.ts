@@ -24,6 +24,13 @@ export class ProviderRegistryService implements OnModuleInit {
   ) {}
 
   async onModuleInit(): Promise<void> {
+    if (process.env['OPENAPI_GENERATION'] === 'true') {
+      this.logger.log(
+        'Skipping OIDC provider discovery for OpenAPI generation',
+      );
+      return;
+    }
+
     const raw = this.config.get('AUTH_PROVIDERS', { infer: true });
     let parsed: unknown[];
     try {
