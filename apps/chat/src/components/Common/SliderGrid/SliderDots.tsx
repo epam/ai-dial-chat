@@ -152,7 +152,7 @@ export const SliderDots: React.FC<Props> = ({
                       >
                         <button
                           className={classNames(
-                            'bg-text-secondary rounded-full transition-all duration-200',
+                            'rounded-full bg-text-secondary transition-all duration-200',
                             getDotSizeClass(
                               slideNumber,
                               activeSlide,
