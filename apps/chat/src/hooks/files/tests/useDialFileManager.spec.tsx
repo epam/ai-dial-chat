@@ -120,41 +120,39 @@ describe('useDialFileManager', () => {
     const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    act(() => result.current.onPathChange('/All files/reports/'));
+    act(() => result.current.onPathChange('/My files/reports/'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(mockListFiles).toHaveBeenLastCalledWith(
       expect.objectContaining({ path: 'reports/' }),
     );
-    expect(result.current.path).toBe('/All files/reports/');
+    expect(result.current.path).toBe('/My files/reports/');
   });
 
   it('navigates via onPathChange without leading slash (DialFileManager breadcrumb format)', async () => {
     const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    // DialFileManager breadcrumb calls onPathChange with "All files/reports"
+    // DialFileManager breadcrumb calls onPathChange with "My files/reports"
     // (no leading /, no trailing /)
-    act(() => result.current.onPathChange('All files/reports'));
+    act(() => result.current.onPathChange('My files/reports'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(mockListFiles).toHaveBeenLastCalledWith(
       expect.objectContaining({ path: 'reports/' }),
     );
-    expect(result.current.path).toBe('/All files/reports/');
+    expect(result.current.path).toBe('/My files/reports/');
   });
 
   it('resets folderPath to root when onPathChange receives the root label path', async () => {
     const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    act(() => result.current.onPathChange('/All files/reports/'));
-    await waitFor(() =>
-      expect(result.current.path).toBe('/All files/reports/'),
-    );
+    act(() => result.current.onPathChange('/My files/reports/'));
+    await waitFor(() => expect(result.current.path).toBe('/My files/reports/'));
 
-    act(() => result.current.onPathChange('/All files'));
-    await waitFor(() => expect(result.current.path).toBe('/All files'));
+    act(() => result.current.onPathChange('/My files'));
+    await waitFor(() => expect(result.current.path).toBe('/My files'));
     expect(mockListFiles).toHaveBeenLastCalledWith(
       expect.objectContaining({ path: '' }),
     );
@@ -164,11 +162,11 @@ describe('useDialFileManager', () => {
     const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    act(() => result.current.onPathChange('All files/reports/'));
+    act(() => result.current.onPathChange('My files/reports/'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    act(() => result.current.onPathChange('All files'));
-    await waitFor(() => expect(result.current.path).toBe('/All files'));
+    act(() => result.current.onPathChange('My files'));
+    await waitFor(() => expect(result.current.path).toBe('/My files'));
     expect(mockListFiles).toHaveBeenLastCalledWith(
       expect.objectContaining({ path: '' }),
     );
@@ -251,7 +249,7 @@ describe('useDialFileManager', () => {
     const { result } = renderHook(() => useDialFileManager({ bucket: BUCKET }));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-    act(() => result.current.onPathChange('/All files/reports/'));
+    act(() => result.current.onPathChange('/My files/reports/'));
     await waitFor(() => expect(result.current.isLoading).toBe(false));
 
     expect(result.current.uploadEnabled).toBe(true);
@@ -275,8 +273,8 @@ describe('useDialFileManager', () => {
           name: HIDDEN_FILE,
           fileContent: new File([], HIDDEN_FILE),
         },
-        '/All files/2026',
-        `/All files/2026/${HIDDEN_FILE}`,
+        '/My files/2026',
+        `/My files/2026/${HIDDEN_FILE}`,
       );
     });
 
@@ -323,7 +321,7 @@ describe('useDialFileManager', () => {
             fileContent: new File(['data'], 'report.pdf'),
           },
         ],
-        '/All files',
+        '/My files',
       );
     });
 
@@ -358,8 +356,8 @@ describe('useDialFileManager', () => {
           name: HIDDEN_FILE,
           fileContent: new File([], HIDDEN_FILE),
         },
-        '/All files/2026',
-        `/All files/2026/${HIDDEN_FILE}`,
+        '/My files/2026',
+        `/My files/2026/${HIDDEN_FILE}`,
       );
     });
 
@@ -410,8 +408,8 @@ describe('useDialFileManager', () => {
           name: HIDDEN_FILE,
           fileContent: new File([], HIDDEN_FILE),
         },
-        '/All files/2026',
-        `/All files/2026/${HIDDEN_FILE}`,
+        '/My files/2026',
+        `/My files/2026/${HIDDEN_FILE}`,
       );
     });
 
@@ -442,8 +440,8 @@ describe('useDialFileManager', () => {
           name: HIDDEN_FILE,
           fileContent: new File([], HIDDEN_FILE),
         },
-        '/All files/2026',
-        `/All files/2026/${HIDDEN_FILE}`,
+        '/My files/2026',
+        `/My files/2026/${HIDDEN_FILE}`,
       );
     });
 
@@ -464,19 +462,19 @@ describe('useDialFileManager', () => {
     act(() => {
       result.current.onDownloadFiles([
         {
-          id: '/All files/report-a.pdf',
+          id: '/My files/report-a.pdf',
           name: 'report-a.pdf',
-          path: '/All files/report-a.pdf',
-          parentPath: '/All files',
+          path: '/My files/report-a.pdf',
+          parentPath: '/My files',
           nodeType: DialFileNodeType.ITEM,
           folderId: BUCKET,
           bucket: BUCKET,
         },
         {
-          id: '/All files/report-b.pdf',
+          id: '/My files/report-b.pdf',
           name: 'report-b.pdf',
-          path: '/All files/report-b.pdf',
-          parentPath: '/All files',
+          path: '/My files/report-b.pdf',
+          parentPath: '/My files',
           nodeType: DialFileNodeType.ITEM,
           folderId: BUCKET,
           bucket: BUCKET,
@@ -516,19 +514,19 @@ describe('useDialFileManager', () => {
     act(() => {
       result.current.onDownloadFiles([
         {
-          id: '/All files/report-a.pdf',
+          id: '/My files/report-a.pdf',
           name: 'report-a.pdf',
-          path: '/All files/report-a.pdf',
-          parentPath: '/All files',
+          path: '/My files/report-a.pdf',
+          parentPath: '/My files',
           nodeType: DialFileNodeType.ITEM,
           folderId: BUCKET,
           bucket: BUCKET,
         },
         {
-          id: '/All files/report-b.pdf',
+          id: '/My files/report-b.pdf',
           name: 'report-b.pdf',
-          path: '/All files/report-b.pdf',
-          parentPath: '/All files',
+          path: '/My files/report-b.pdf',
+          parentPath: '/My files',
           nodeType: DialFileNodeType.ITEM,
           folderId: BUCKET,
           bucket: BUCKET,
@@ -562,15 +560,15 @@ describe('useDialFileManager', () => {
       result.current.onDeleteFiles(
         [
           {
-            sourceUrl: '/All files/reports/old.pdf',
+            sourceUrl: '/My files/reports/old.pdf',
             nodeType: DialFileNodeType.ITEM,
           },
           {
-            sourceUrl: '/All files/reports/locked.pdf',
+            sourceUrl: '/My files/reports/locked.pdf',
             nodeType: DialFileNodeType.ITEM,
           },
         ],
-        '/All files/reports',
+        '/My files/reports',
       );
     });
 
@@ -612,7 +610,7 @@ describe('useDialFileManager', () => {
     act(() => {
       result.current.onUploadFiles(
         [{ name: 'REPORT.PDF', fileContent: new File(['data'], 'REPORT.PDF') }],
-        '/All files',
+        '/My files',
       );
     });
 
@@ -648,7 +646,7 @@ describe('useDialFileManager', () => {
             fileContent: new File(['data'], 'new-file.pdf'),
           },
         ],
-        '/All files',
+        '/My files',
       );
     });
 
@@ -702,7 +700,7 @@ describe('useDialFileManager', () => {
       ];
 
       await act(async () => {
-        await result.current.onValidateUpload(files, [], '/All files');
+        await result.current.onValidateUpload(files, [], '/My files');
       });
 
       expect(files[0].name).toBe('report_final.pdf');
@@ -748,7 +746,7 @@ describe('useDialFileManager', () => {
               fileContent: new File(['data'], 'new-file.pdf'),
             },
           ],
-          '/All files',
+          '/My files',
         );
       });
 
@@ -793,7 +791,7 @@ describe('useDialFileManager', () => {
         validation = await result.current.onValidateUpload(
           [{ name: 'report.pdf', fileContent: new File([], 'report.pdf') }],
           [existingFile as never],
-          '/All files',
+          '/My files',
         );
       });
 
@@ -809,6 +807,7 @@ describe('useDialFileManager', () => {
       nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
       bucket: OWNER_BUCKET,
       permissions: ['READ', 'WRITE'],
+      author: 'Owner User',
     };
 
     it('switching tabs resets folderPath to root and clears the listing cache', async () => {
@@ -826,9 +825,9 @@ describe('useDialFileManager', () => {
       );
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-      act(() => result.current.onPathChange('/All files/reports/'));
+      act(() => result.current.onPathChange('/My files/reports/'));
       await waitFor(() =>
-        expect(result.current.path).toBe('/All files/reports/'),
+        expect(result.current.path).toBe('/My files/reports/'),
       );
 
       mockListPublicFiles.mockClear();
@@ -836,7 +835,7 @@ describe('useDialFileManager', () => {
       rerender({ tab: DialFileManagerTabs.Organization });
       await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-      expect(result.current.path).toBe('/All files');
+      expect(result.current.path).toBe('/My files');
       expect(mockListPublicFiles).toHaveBeenCalled();
     });
 
@@ -890,7 +889,7 @@ describe('useDialFileManager', () => {
         );
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-        act(() => result.current.onPathChange('/All files/team-docs/'));
+        act(() => result.current.onPathChange('/My files/team-docs/'));
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
         expect(result.current.uploadEnabled).toBe(false);
@@ -917,7 +916,7 @@ describe('useDialFileManager', () => {
         );
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
-        act(() => result.current.onPathChange('/All files/team-docs/'));
+        act(() => result.current.onPathChange('/My files/team-docs/'));
         await waitFor(() => expect(result.current.isLoading).toBe(false));
 
         expect(result.current.uploadEnabled).toBe(true);
@@ -955,6 +954,24 @@ describe('useDialFileManager', () => {
         expect(result.current.visibleColumns).toContain(
           FileManagerColumnKey.Author,
         );
+      });
+
+      it('keeps Author values on Shared tab root items', async () => {
+        mockListSharedFiles.mockResolvedValue({
+          bucket: '',
+          path: '',
+          items: [sharedRootItem],
+        });
+
+        const { result } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: DialFileManagerTabs.Shared,
+          }),
+        );
+        await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+        expect(result.current.items[0].items?.[0].author).toBe('Owner User');
       });
 
       it('omits Author column on MyFiles tab', async () => {
@@ -1067,6 +1084,330 @@ describe('useDialFileManager', () => {
         await waitFor(() => expect(result.current.isLoading).toBe(false));
         expect(result.current.sharedWithMeIds).toBeUndefined();
       });
+    });
+  });
+
+  describe('onRenameValidate', () => {
+    const renderAndWait = async (opts?: object) => {
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET, ...opts }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      return result;
+    };
+
+    const dummyItem = {
+      id: 'file.pdf',
+      name: 'file.pdf',
+      path: '/My files/file.pdf',
+      parentPath: '/My files',
+      nodeType: DialFileNodeType.ITEM,
+      folderId: BUCKET,
+      bucket: BUCKET,
+      items: [],
+    };
+
+    it('returns null for a valid name', async () => {
+      const result = await renderAndWait();
+      expect(
+        result.current.onRenameValidate('report.pdf', dummyItem),
+      ).toBeNull();
+    });
+
+    it('returns empty-name error for an empty name', async () => {
+      const result = await renderAndWait();
+      expect(result.current.onRenameValidate('', dummyItem)).toBeTruthy();
+    });
+
+    it('returns reserved name error for ".dial_folder"', async () => {
+      const result = await renderAndWait();
+      const msg = result.current.onRenameValidate(HIDDEN_FILE, dummyItem);
+      expect(msg).toBeTruthy();
+    });
+
+    it('returns invalid chars error for name containing forward slash', async () => {
+      const result = await renderAndWait();
+      const msg = result.current.onRenameValidate('a/b', dummyItem);
+      expect(msg).toBeTruthy();
+    });
+
+    it('returns invalid chars error for name containing backslash', async () => {
+      const result = await renderAndWait();
+      const msg = result.current.onRenameValidate('a\\b', dummyItem);
+      expect(msg).toBeTruthy();
+    });
+
+    it('returns too-long error for name longer than 255 chars', async () => {
+      const result = await renderAndWait();
+      const msg = result.current.onRenameValidate('a'.repeat(256), dummyItem);
+      expect(msg).toBeTruthy();
+    });
+
+    it('returns invalid chars error when name matches forbiddenSymbolsRegExp', async () => {
+      const result = await renderAndWait({
+        forbiddenSymbolsRegExp: /[<>]/,
+      });
+      const msg = result.current.onRenameValidate('file<name>', dummyItem);
+      expect(msg).toBeTruthy();
+    });
+
+    it('returns null when name does not match forbiddenSymbolsRegExp', async () => {
+      const result = await renderAndWait({
+        forbiddenSymbolsRegExp: /[<>]/,
+      });
+      expect(
+        result.current.onRenameValidate('valid.pdf', dummyItem),
+      ).toBeNull();
+    });
+
+    it('returns duplicate-name error for a sibling with the same name', async () => {
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [
+          {
+            name: 'report.pdf',
+            path: 'report.pdf',
+            folderId: `${BUCKET}:`,
+            nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+            bucket: BUCKET,
+          },
+        ],
+        nextToken: undefined,
+      });
+
+      const result = await renderAndWait();
+
+      expect(
+        result.current.onRenameValidate('REPORT.PDF', dummyItem),
+      ).toBeTruthy();
+    });
+  });
+
+  describe('onMoveToFiles', () => {
+    const mockRenameFiles = vi.mocked(filesApi.renameFiles);
+    const mockNotification = vi.fn();
+
+    beforeEach(() => {
+      mockRenameFiles.mockResolvedValue({ results: [] });
+    });
+
+    const renderAndWait = async () => {
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          onNotification: mockNotification,
+        }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      return result;
+    };
+
+    it('calls renameFiles and triggers cache invalidation and retry on success', async () => {
+      mockRenameFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'file.pdf',
+            destinationPath: 'renamed.pdf',
+            success: true,
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onMoveToFiles(
+          [
+            {
+              sourceUrl: '/My files/file.pdf',
+              destinationUrl: '/My files/renamed.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files',
+          '/My files',
+        );
+      });
+
+      await waitFor(() => expect(mockRenameFiles).toHaveBeenCalledOnce());
+      expect(mockListFiles).toHaveBeenCalledTimes(2);
+    });
+
+    it('shows partial error toast when some items fail', async () => {
+      mockRenameFiles.mockResolvedValue({
+        results: [
+          { sourcePath: 'a.pdf', destinationPath: 'a2.pdf', success: true },
+          {
+            sourcePath: 'b.pdf',
+            destinationPath: 'b2.pdf',
+            success: false,
+            error: 'Forbidden',
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onMoveToFiles(
+          [
+            {
+              sourceUrl: '/My files/a.pdf',
+              destinationUrl: '/My files/a2.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+            {
+              sourceUrl: '/My files/b.pdf',
+              destinationUrl: '/My files/b2.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files',
+          '/My files',
+        );
+      });
+
+      await waitFor(() =>
+        expect(mockNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: NotificationVariant.Error }),
+        ),
+      );
+    });
+
+    it('shows error toast when all items fail', async () => {
+      mockRenameFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'file.pdf',
+            destinationPath: 'renamed.pdf',
+            success: false,
+            error: 'Forbidden',
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+
+      await act(async () => {
+        result.current.onMoveToFiles(
+          [
+            {
+              sourceUrl: '/My files/file.pdf',
+              destinationUrl: '/My files/renamed.pdf',
+              nodeType: DialFileNodeType.ITEM,
+            },
+          ],
+          '/My files',
+          '/My files',
+        );
+      });
+
+      await waitFor(() =>
+        expect(mockNotification).toHaveBeenCalledWith(
+          expect.objectContaining({ variant: NotificationVariant.Error }),
+        ),
+      );
+    });
+
+    it('navigates to the destination path after successfully renaming the current folder', async () => {
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [
+          {
+            name: 'reports',
+            path: 'reports/',
+            folderId: `${BUCKET}:reports/`,
+            nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+            bucket: BUCKET,
+          },
+        ],
+        nextToken: undefined,
+      });
+      mockRenameFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'reports/',
+            destinationPath: 'archive/',
+            success: true,
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+      act(() => result.current.onPathChange('/My files/reports/'));
+      await waitFor(() =>
+        expect(result.current.path).toBe('/My files/reports/'),
+      );
+
+      act(() => {
+        result.current.onMoveToFiles(
+          [
+            {
+              sourceUrl: '/My files/reports/',
+              destinationUrl: '/My files/archive/',
+              nodeType: DialFileNodeType.FOLDER,
+            },
+          ],
+          '/My files',
+          '/My files',
+        );
+      });
+
+      await waitFor(() =>
+        expect(result.current.path).toBe('/My files/archive/'),
+      );
+    });
+
+    it('keeps the current path when a current-folder rename fails', async () => {
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [
+          {
+            name: 'reports',
+            path: 'reports/',
+            folderId: `${BUCKET}:reports/`,
+            nodeType: ListFilesItemDtoNodeTypeEnum.Folder,
+            bucket: BUCKET,
+          },
+        ],
+        nextToken: undefined,
+      });
+      mockRenameFiles.mockResolvedValue({
+        results: [
+          {
+            sourcePath: 'reports/',
+            destinationPath: 'archive/',
+            success: false,
+            error: 'Conflict',
+          },
+        ],
+      });
+
+      const result = await renderAndWait();
+      act(() => result.current.onPathChange('/My files/reports/'));
+      await waitFor(() =>
+        expect(result.current.path).toBe('/My files/reports/'),
+      );
+
+      act(() => {
+        result.current.onMoveToFiles(
+          [
+            {
+              sourceUrl: '/My files/reports/',
+              destinationUrl: '/My files/archive/',
+              nodeType: DialFileNodeType.FOLDER,
+            },
+          ],
+          '/My files',
+          '/My files',
+        );
+      });
+
+      await waitFor(() => expect(mockRenameFiles).toHaveBeenCalledOnce());
+      expect(result.current.path).toBe('/My files/reports/');
     });
   });
 });

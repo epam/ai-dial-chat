@@ -113,21 +113,27 @@ const DialFileManagerModal: FC<Props> = ({
   const { t } = useTranslation();
   const { showNotification } = useNotification();
 
-  const {
-    activeTab,
-    handleTabChange,
-    tabs: allTabs,
-  } = useDialFileManagerTabs(
-    {
+  const tabLabels = useMemo(
+    () => ({
       [DialFileManagerTabs.MyFiles]: t(DialFileManagerI18nKeys.TabMyFiles),
       [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.TabShared),
       [DialFileManagerTabs.Organization]: t(
         DialFileManagerI18nKeys.TabOrganization,
       ),
       [DialFileManagerTabs.Review]: '',
-    },
-    DialFileManagerTabs.MyFiles,
+    }),
+    [t],
   );
+
+  const {
+    activeTab,
+    handleTabChange,
+    tabs: allTabs,
+  } = useDialFileManagerTabs(tabLabels, DialFileManagerTabs.MyFiles);
+
+  const rootLabel =
+    tabLabels[activeTab] || tabLabels[DialFileManagerTabs.MyFiles];
+
   const tabs = useMemo(
     () => allTabs?.filter((tab) => tab.id !== DialFileManagerTabs.Review),
     [allTabs],
@@ -152,6 +158,9 @@ const DialFileManagerModal: FC<Props> = ({
     isDownloading,
     onDeleteFiles,
     isDeleting,
+    onMoveToFiles,
+    onRenameValidate,
+    isRenaming,
     uploadEnabled,
     isNewButtonDisabled,
     disabledNewButtonTooltip,
@@ -163,6 +172,7 @@ const DialFileManagerModal: FC<Props> = ({
   } = useDialFileManager({
     bucket,
     activeTab,
+    rootLabel,
     onNotification: showNotification,
   });
 
@@ -398,7 +408,19 @@ const DialFileManagerModal: FC<Props> = ({
   );
 
   const isOperationInProgress =
-    isDownloading || isDeleting || isCreatingFolder || uploadBatchState != null;
+    isDownloading ||
+    isDeleting ||
+    isRenaming ||
+    isCreatingFolder ||
+    uploadBatchState != null;
+
+  const renameValidationMessages = useMemo(
+    () => ({
+      emptyName: t(DialFileManagerI18nKeys.RenameNameEmpty),
+      duplicateName: t(DialFileManagerI18nKeys.RenameDuplicateName),
+    }),
+    [t],
+  );
 
   const conflictResolutionPopupOptions = useMemo(
     () => ({
@@ -443,8 +465,13 @@ const DialFileManagerModal: FC<Props> = ({
     if (DialFileManagerActions.Delete in tabActionLabels) {
       labels[DialFileManagerActions.Delete] = deleteLabel;
     }
+    if (DialFileManagerActions.Rename in tabActionLabels) {
+      labels[DialFileManagerActions.Rename] = t(
+        DialFileManagerI18nKeys.RenameAction,
+      );
+    }
     return labels;
-  }, [tabActionLabels, downloadLabel, deleteLabel]);
+  }, [tabActionLabels, downloadLabel, deleteLabel, t]);
 
   const gridOptions = useMemo(
     () => ({
@@ -613,6 +640,10 @@ const DialFileManagerModal: FC<Props> = ({
               onCreateFolderValidate={onCreateFolderValidate}
               onDownloadFiles={onDownloadFiles}
               onDeleteFiles={onDeleteFiles}
+              onMoveToFiles={onMoveToFiles}
+              onRenameValidate={onRenameValidate}
+              renameValidationMessages={renameValidationMessages}
+              isRenameFileAvailable={uploadEnabled}
               deleteConfirmationOptions={deleteConfirmationOptions}
               conflictResolutionPopupOptions={conflictResolutionPopupOptions}
               forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}
@@ -643,6 +674,18 @@ const DialFileManagerModal: FC<Props> = ({
                   size={32}
                   fullWidth={false}
                   ariaLabel={deletingLabel}
+                />
+              </div>
+            )}
+            {isRenaming && (
+              <div
+                aria-live="polite"
+                className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
+              >
+                <DialLoader
+                  size={32}
+                  fullWidth={false}
+                  ariaLabel={t(DialFileManagerI18nKeys.RenamingLabel)}
                 />
               </div>
             )}
