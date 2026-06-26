@@ -352,6 +352,12 @@ export interface ClientConfigDto {
    * @memberof ClientConfigDto
    */
   transcribeSizeLimitBytes: number;
+  /**
+   * Operator-configured default deployment ID. Null when not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  defaultDeploymentId?: string | null;
 }
 /**
  *
@@ -794,7 +800,24 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   assistantModelId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationResponseDto
+   */
+  responseFormat?: ConversationResponseDtoResponseFormatEnum;
 }
+
+/**
+ * @export
+ */
+export const ConversationResponseDtoResponseFormatEnum = {
+  Markdown: 'markdown',
+  PlainText: 'plain_text',
+} as const;
+export type ConversationResponseDtoResponseFormatEnum =
+  (typeof ConversationResponseDtoResponseFormatEnum)[keyof typeof ConversationResponseDtoResponseFormatEnum];
+
 /**
  *
  * @export
@@ -1060,6 +1083,25 @@ export interface DeploymentConfigurationDto {
 /**
  *
  * @export
+ * @interface DeploymentFeaturesDto
+ */
+export interface DeploymentFeaturesDto {
+  /**
+   * Whether the deployment supports a custom system prompt
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  systemPrompt: boolean;
+  /**
+   * Whether the deployment supports temperature control
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  temperature: boolean;
+}
+/**
+ *
+ * @export
  * @interface DeploymentItemDto
  */
 export interface DeploymentItemDto {
@@ -1180,25 +1222,6 @@ export interface DeploymentItemDto {
 }
 
 /**
- * Feature flags for a deployment controlling which per-conversation settings are available.
- * @interface DeploymentFeaturesDto
- */
-export interface DeploymentFeaturesDto {
-  /**
-   * Whether the deployment supports a custom system prompt
-   * @type {boolean}
-   * @memberof DeploymentFeaturesDto
-   */
-  systemPrompt: boolean;
-  /**
-   * Whether the deployment supports temperature control
-   * @type {boolean}
-   * @memberof DeploymentFeaturesDto
-   */
-  temperature: boolean;
-}
-
-/**
  * @export
  */
 export const DeploymentItemDtoTypeEnum = {
@@ -1221,6 +1244,12 @@ export interface DeploymentsConfigDto {
    * @memberof DeploymentsConfigDto
    */
   installed: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof DeploymentsConfigDto
+   */
+  selectedId?: string | null;
 }
 /**
  *
@@ -2250,6 +2279,19 @@ export interface UpdatePinsDto {
    * @memberof UpdatePinsDto
    */
   isPinned: boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdateSelectedDeploymentDto
+ */
+export interface UpdateSelectedDeploymentDto {
+  /**
+   * Deployment ID to set as selected, or null to clear.
+   * @type {string}
+   * @memberof UpdateSelectedDeploymentDto
+   */
+  id?: string | null;
 }
 /**
  *

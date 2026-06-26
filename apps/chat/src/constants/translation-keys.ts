@@ -270,6 +270,8 @@ export enum ConversationPanelI18nKeys {
   DeleteAllConfirmDescription = 'conversationPanel.deleteAllConfirmDescription',
   DeleteAllError = 'conversationPanel.deleteAllError',
   DeleteAllPartialError = 'conversationPanel.deleteAllPartialError',
+  DeleteAllSuccessTitle = 'conversationPanel.deleteAllSuccessTitle',
+  DeleteAllSuccess = 'conversationPanel.deleteAllSuccess',
 }
 
 export enum SidebarI18nKeys {
@@ -331,6 +333,7 @@ export enum ChatSettingsI18nKeys {
   SaveLabel = 'chatSettings.saveLabel',
   TemperatureHint = 'chatSettings.temperatureHint',
   SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
+  SavedNotification = 'chatSettings.savedNotification',
 }
 
 export enum AttachmentCanvasI18nKeys {

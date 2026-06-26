@@ -251,6 +251,8 @@ export interface DisplayAttachment {
   errorReason?: AttachmentErrorReason;
   /** Object URL for image preview; only set when `type === AttachmentType.Image`. */
   previewUrl?: string;
+  /** Resolved playback URL for audio; only set when `type === AttachmentType.Audio`. */
+  playUrl?: string;
   /** Remote URL for an attachment that has already been uploaded. */
   url?: string;
   /** Alternate reference URL (e.g. from the DIAL API `reference_url` field); used when `url` is absent. */

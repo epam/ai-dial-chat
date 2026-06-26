@@ -167,6 +167,11 @@ All user-visible strings SHALL be provided as optional props (with English defau
 - **WHEN** the user dismisses the modal without saving
 - **THEN** the `onSave` callback is NOT called and the modal closes with no state change
 
+#### Scenario: Mobile bottom sheet discards unsaved edits on reopen
+
+- **WHEN** the user edits values in the bottom sheet, dismisses without saving, and then reopens it
+- **THEN** all form fields show the last saved values, not the discarded edits
+
 #### Scenario: Modal pre-fills current values
 
 - **WHEN** the modal opens with existing conversation `prompt`, `temperature`, and `responseFormat`

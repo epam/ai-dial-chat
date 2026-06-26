@@ -9,12 +9,13 @@ import {
 import {
   ConfirmationPopupVariant,
   DialConfirmationPopup,
+  DialSpinner,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import type { ConversationResponseDto } from '@epam/chat-api-client';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import ConversationView from '../../components/ConversationView/ConversationView';
 import NegativeFeedbackModal from '../../components/ConversationView/Rate/NegativeFeedbackModal';
 import { getConversationRoute } from '../../constants/routes';
@@ -46,7 +47,6 @@ import { uploadFile } from '../../server-api/files.api';
 import { ROUTES } from '../../types/routes';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
-import { setLastConversationSettings } from '../../utils/local-storage';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 interface Props {
@@ -55,8 +55,15 @@ interface Props {
 
 export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const { '*': conversationId } = useParams<{ '*': string }>();
-  const [conversation, setConversation] = useState<Conversation | null>(null);
-  const [isFetching, setIsFetching] = useState(!!conversationId);
+  const { state } = useLocation();
+  const prefetchedConversation =
+    (state as { conversation?: Conversation } | null)?.conversation ?? null;
+  const [conversation, setConversation] = useState<Conversation | null>(
+    prefetchedConversation,
+  );
+  const [isFetching, setIsFetching] = useState(
+    !prefetchedConversation && !!conversationId,
+  );
   const conversationRef = useRef<Conversation | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
@@ -176,10 +183,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     (updated: Conversation) => {
       setConversation(updated);
       conversationRef.current = updated;
-      setLastConversationSettings({
-        temperature: updated.temperature,
-        responseFormat: updated.responseFormat,
-      });
       if (conversationId) {
         void saveConversation(
           getConversationPath(conversationId),
@@ -255,11 +258,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   });
 
   const loadConversation = useCallback(
-    async (id: string) => {
-      setIsFetching(true);
+    async (id: string, initialData?: Conversation | null) => {
+      if (!initialData) {
+        setIsFetching(true);
+      }
       try {
-        const dto = await apiGetConversation(id);
-        const result = dto as Conversation; // adapt if API response shape differs
+        const result: Conversation =
+          initialData ?? ((await apiGetConversation(id)) as Conversation);
 
         // Restore the last selected agent from the conversation's change history
         // so the deployment selector reflects what was active, not the default.
@@ -308,7 +313,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       setIsFetching(false);
       return;
     }
-    void loadConversation(conversationId);
+    void loadConversation(conversationId, prefetchedConversation);
+    // prefetchedConversation intentionally omitted: it is router state captured at mount,
+    // re-running when it changes would re-initialize an already-loaded conversation.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, loadConversation]);
 
   const {
@@ -383,7 +391,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     setPendingDislikeMessageIndex(null);
   }, []);
 
-  if (isFetching) return null;
+  if (isFetching)
+    return (
+      <div className="flex size-full items-center justify-center">
+        <DialSpinner />
+      </div>
+    );
 
   if (!conversation) {
     navigate(ROUTES.Root);

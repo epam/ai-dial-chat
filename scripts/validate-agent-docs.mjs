@@ -1,7 +1,39 @@
 #!/usr/bin/env node
-// Validates AI-assistant configuration so broken or internally inconsistent
-// rules, skills, commands, settings, and MCP config cannot land unnoticed.
-// Shared by the pre-commit gate and the Claude PostToolUse hook.
+// Guards AI-assistant configuration against changes that would make a file
+// stop being readable by an agent, or inconsistently formatted. The goal is
+// narrow and deliberate: every rule, skill, command, settings, and MCP file
+// must keep PARSING and LOADING. This is a structural gate, NOT a content or
+// quality audit.
+//
+// IN SCOPE — a file must never silently break or become unloadable:
+//   - prettier formatting (also catches files prettier can no longer parse)
+//   - JSON / YAML / frontmatter parse correctness
+//   - unterminated frontmatter blocks
+//   - required frontmatter keys (skills/commands need `name` + `description`)
+//   - cross-agent frontmatter field shapes (paths/globs/applyTo/alwaysApply)
+//   - duplicate Claude skill names (one would silently shadow the other)
+//   - broken `@file` references in docs
+//   - hidden/invisible characters — bidi controls, zero-width chars, BOM, and
+//     U+FFFD from invalid UTF-8 — that corrupt parsing or silently alter text
+//   - floating MCP package versions (`@latest`) that break reproducibility
+//   - `npx nx` instead of `npm exec nx` in project-owned instructions
+//   - Tailwind breakpoints in source match tailwind.config.js (full scan only)
+//   - committed secrets (known token shapes) in any config file, and
+//     approval-gate-disabling permissions in .claude/settings.json. These are
+//     OBJECTIVE security facts (a leaked key, a `*` grant), not quality opinions.
+//
+// OUT OF SCOPE — by design; do NOT add these here. They are subjective quality
+// judgements that belong to the separate agent-config audit skill, not to this
+// load-bearing gate:
+//   - skill/command length, dedup, or "unique value" verdicts
+//   - whether referenced MCP/tool names exist or are worth keeping
+//   - command/skill content drift (vendor-generated files own their own sync)
+//   - freshness / ownership / staleness opinions
+//
+// Shared by three callers: the CI gate and the .githooks/pre-commit gate both
+// run it with no args (full scan), and the Claude PostToolUse hook runs it with
+// the single edited file as an argument. Behaviour is covered by
+// scripts/validate-agent-docs.spec.mjs (`npm run validate:agent-docs:test`).
 //
 // Usage: node scripts/validate-agent-docs.mjs <file...>
 //        node scripts/validate-agent-docs.mjs
@@ -112,6 +144,50 @@ const checkFormatting = async (src, file) => {
   if (!formatted) fail(file, 'prettier --check failed (run `npm run format`)');
 };
 
+// Invisible characters that would not survive a careful human review: bidi
+// controls (used to hide or reorder text), zero-width characters, the BOM, and
+// U+FFFD (which only appears when a file was decoded from invalid UTF-8). Any of
+// these can corrupt frontmatter parsing or silently change what an instruction
+// says, so they must never reach an agent-config file.
+const HIDDEN_CHARACTERS = new Map(
+  [
+    [0x200b, 'ZERO WIDTH SPACE'],
+    [0x200c, 'ZERO WIDTH NON-JOINER'],
+    [0x200d, 'ZERO WIDTH JOINER'],
+    [0x200e, 'LEFT-TO-RIGHT MARK'],
+    [0x200f, 'RIGHT-TO-LEFT MARK'],
+    [0x202a, 'LEFT-TO-RIGHT EMBEDDING'],
+    [0x202b, 'RIGHT-TO-LEFT EMBEDDING'],
+    [0x202c, 'POP DIRECTIONAL FORMATTING'],
+    [0x202d, 'LEFT-TO-RIGHT OVERRIDE'],
+    [0x202e, 'RIGHT-TO-LEFT OVERRIDE'],
+    [0x2066, 'LEFT-TO-RIGHT ISOLATE'],
+    [0x2067, 'RIGHT-TO-LEFT ISOLATE'],
+    [0x2068, 'FIRST STRONG ISOLATE'],
+    [0x2069, 'POP DIRECTIONAL ISOLATE'],
+    [0xfeff, 'BYTE ORDER MARK / ZERO WIDTH NO-BREAK SPACE'],
+    [0xfffd, 'REPLACEMENT CHARACTER (invalid UTF-8)'],
+  ].map(([code, name]) => [String.fromCodePoint(code), name]),
+);
+const HIDDEN_CHARACTER_PATTERN = new RegExp(
+  `[${[...HIDDEN_CHARACTERS.keys()].join('')}]`,
+  'gu',
+);
+
+const checkHiddenCharacters = (src, file) => {
+  for (const match of src.matchAll(HIDDEN_CHARACTER_PATTERN)) {
+    const codePoint = match[0]
+      .codePointAt(0)
+      .toString(16)
+      .toUpperCase()
+      .padStart(4, '0');
+    fail(
+      file,
+      `line ${lineNumberAt(src, match.index)} contains hidden character U+${codePoint} (${HIDDEN_CHARACTERS.get(match[0])})`,
+    );
+  }
+};
+
 const checkFileReferences = (src, file) => {
   for (const match of src.matchAll(/^@([^\s]+)\s*$/gm)) {
     const referencedPath = match[1];
@@ -148,6 +224,74 @@ const checkMcpVersions = (config, file) => {
         );
       }
     }
+  }
+};
+
+// A committed credential must never reach an agent-config file. Match only
+// well-known token shapes — deterministic, near-zero false positives. Generic
+// high-entropy detection is intentionally omitted: in a docs-heavy repo it
+// floods on hashes, ids, and base64 examples. Obvious placeholders (xxxx,
+// <...>, your-, example, redacted, sample) are allowed so a doc can show a fake
+// key without tripping the gate.
+const SECRET_PATTERNS = [
+  ['Anthropic API key', /\bsk-ant-[A-Za-z0-9_-]{16,}/g],
+  ['OpenAI API key', /\bsk-[A-Za-z0-9]{20,}/g],
+  ['GitHub token', /\b(?:ghp|gho|ghs|ghr)_[A-Za-z0-9]{20,}/g],
+  ['GitHub fine-grained token', /\bgithub_pat_[A-Za-z0-9_]{20,}/g],
+  ['AWS access key id', /\bAKIA[0-9A-Z]{16}\b/g],
+  ['Slack token', /\bxox[baprs]-[A-Za-z0-9-]{10,}/g],
+  ['Google API key', /\bAIza[0-9A-Za-z_-]{35}\b/g],
+  ['private key', /-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----/g],
+];
+const PLACEHOLDER_PATTERN =
+  /x{4,}|\.\.\.|<[^>]*>|your[-_]|example|placeholder|redacted|dummy|sample|\*{3,}/i;
+
+const checkSecrets = (src, file) => {
+  for (const [label, pattern] of SECRET_PATTERNS) {
+    for (const match of src.matchAll(pattern)) {
+      if (PLACEHOLDER_PATTERN.test(match[0])) continue;
+      fail(
+        file,
+        `line ${lineNumberAt(src, match.index)} looks like a committed ${label}; remove it and rotate the credential`,
+      );
+    }
+  }
+};
+
+// Permission grants that effectively disable the approval gate. Only
+// `.claude/settings.json` carries these; `.mcp.json` secrets are caught by
+// checkSecrets. A healthy entry is scoped, e.g. `Bash(npm run test:*)`; the
+// danger is a bare sensitive tool or a pure-wildcard argument.
+const SENSITIVE_BARE_TOOL = /^(?:Bash|Write|Edit|MultiEdit)$/;
+const WILDCARD_GRANT = /^[A-Za-z]+\(\s*:?\*\s*\)$/;
+
+const checkSettingsSecurity = (config, src, file) => {
+  const permissions = config.permissions ?? {};
+  for (const entry of permissions.allow ?? []) {
+    if (typeof entry !== 'string') continue;
+    const value = entry.trim();
+    if (value === '*') {
+      fail(file, 'permissions.allow grants every tool with `*`');
+    } else if (SENSITIVE_BARE_TOOL.test(value)) {
+      fail(
+        file,
+        `permissions.allow grants the entire \`${value}\` tool; scope it like \`${value}(...)\``,
+      );
+    } else if (WILDCARD_GRANT.test(value)) {
+      fail(
+        file,
+        `permissions.allow entry \`${entry}\` is a wildcard grant; scope it to specific commands`,
+      );
+    }
+  }
+  if (permissions.defaultMode === 'bypassPermissions') {
+    fail(
+      file,
+      'permissions.defaultMode `bypassPermissions` disables the approval gate',
+    );
+  }
+  if (src.includes('--dangerously-skip-permissions')) {
+    fail(file, 'contains `--dangerously-skip-permissions`, which bypasses all approvals');
   }
 };
 
@@ -205,8 +349,11 @@ const checkUniqueClaudeSkillNames = (skillNames) => {
   }
 };
 
-const files =
-  process.argv.length > 2 ? process.argv.slice(2) : allAgentConfigFiles();
+// Explicit files (hook, tests) validate only those files. The repo-wide
+// Tailwind breakpoint scan is a full-scan concern (CI), so it is skipped here:
+// editing a config file cannot introduce a source breakpoint regression.
+const explicitFiles = process.argv.length > 2;
+const files = explicitFiles ? process.argv.slice(2) : allAgentConfigFiles();
 const skillNames = [];
 let checkedConfigFiles = 0;
 
@@ -220,6 +367,8 @@ for (const file of files) {
   checkedConfigFiles += 1;
 
   await checkFormatting(src, file);
+  checkHiddenCharacters(src, file);
+  checkSecrets(src, file);
 
   const kind = classify(file);
 
@@ -227,6 +376,8 @@ for (const file of files) {
     try {
       const config = JSON.parse(src);
       if (file.endsWith('.mcp.json')) checkMcpVersions(config, file);
+      if (file.endsWith('.claude/settings.json'))
+        checkSettingsSecurity(config, src, file);
     } catch (e) {
       fail(file, `JSON: ${e.message}`);
     }
@@ -279,7 +430,7 @@ for (const file of files) {
 }
 
 checkUniqueClaudeSkillNames(skillNames);
-const checkedSourceFiles = checkSourceBreakpoints();
+const checkedSourceFiles = explicitFiles ? 0 : checkSourceBreakpoints();
 const summary = `${checkedConfigFiles} config files, ${checkedSourceFiles} source files`;
 
 if (errors.length) {
@@ -292,5 +443,5 @@ if (errors.length) {
 
 console.log(`Agent-config validation passed (${summary}).`);
 console.log(
-  'Checks: formatting, JSON/YAML/frontmatter, file references, Nx commands, skill names, MCP versions, Tailwind breakpoints.',
+  'Checks: formatting, JSON/YAML/frontmatter, hidden characters, secrets, settings permissions, file references, Nx commands, skill names, MCP versions, Tailwind breakpoints.',
 );

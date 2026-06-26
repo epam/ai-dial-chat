@@ -15,6 +15,7 @@ import {
   pinConversation as apiPinConversation,
   updateInstalledDeployment,
   updateInstalledToolset,
+  updateSelectedDeployment as apiUpdateSelectedDeployment,
 } from '../server-api/user-config.api';
 import { UserConfigStatus } from '../types/user-config-status';
 import { useNotification } from './NotificationContext';
@@ -23,10 +24,12 @@ interface UserConfigContextType {
   pinnedConversationIds: string[];
   installedToolsetIds: string[];
   installedDeploymentIds: string[];
+  selectedDeploymentId: string | null;
   status: UserConfigStatus;
   setPinnedConversation: (id: string, isPinned: boolean) => Promise<void>;
   setInstalledToolset: (id: string, isInstalled: boolean) => Promise<void>;
   setInstalledDeployment: (id: string, isInstalled: boolean) => Promise<void>;
+  setSelectedDeployment: (id: string | null) => Promise<void>;
 }
 
 const UserConfigContext = createContext<UserConfigContextType | undefined>(
@@ -47,6 +50,9 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
   const [installedDeploymentIds, setInstalledDeploymentIds] = useState<
     string[]
   >([]);
+  const [selectedDeploymentId, setSelectedDeploymentId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     const guard = { isCancelled: false };
@@ -58,6 +64,7 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
         setPinnedConversationIds(config.conversations?.pinnedIds ?? []);
         setInstalledToolsetIds(config.toolsets?.installed ?? []);
         setInstalledDeploymentIds(config.deployments?.installed ?? []);
+        setSelectedDeploymentId(config.deployments?.selectedId ?? null);
         setStatus(UserConfigStatus.Ready);
       } catch (err) {
         if (guard.isCancelled) return;
@@ -138,24 +145,40 @@ export const UserConfigProvider = ({ children }: { children: ReactNode }) => {
     [installedDeploymentIds],
   );
 
+  const setSelectedDeployment = useCallback(async (id: string | null) => {
+    setSelectedDeploymentId(id);
+    try {
+      await apiUpdateSelectedDeployment(id);
+    } catch (err) {
+      console.warn(
+        '[UserConfigContext] Failed to persist selected deployment',
+        err,
+      );
+    }
+  }, []);
+
   const value = useMemo(
     () => ({
       pinnedConversationIds,
       installedToolsetIds,
       installedDeploymentIds,
+      selectedDeploymentId,
       status,
       setPinnedConversation,
       setInstalledToolset,
       setInstalledDeployment,
+      setSelectedDeployment,
     }),
     [
       pinnedConversationIds,
       installedToolsetIds,
       installedDeploymentIds,
+      selectedDeploymentId,
       status,
       setPinnedConversation,
       setInstalledToolset,
       setInstalledDeployment,
+      setSelectedDeployment,
     ],
   );
 

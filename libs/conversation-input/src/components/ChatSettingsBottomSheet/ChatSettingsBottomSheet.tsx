@@ -1,4 +1,4 @@
-import { ResponseFormat } from '@epam/ai-dial-chat-shared';
+import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
 import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC } from 'react';
@@ -92,6 +92,7 @@ export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
     setTemperature,
     handleSubmit,
   } = useChatSettingsForm({
+    isOpen,
     features,
     initialResponseFormat,
     initialSystemPrompt,
@@ -128,7 +129,7 @@ export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
         temperatureLabels={temperatureLabels}
         temperatureHint={temperatureHint}
       />
-      <div className="px-6 py-4">
+      <div className={mergeClasses('px-6 py-4 mobile:pb-8')}>
         <DialPrimaryButton
           label={saveLabel}
           onClick={handleSubmit}

@@ -12,7 +12,12 @@ import {
   DialSpinner,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { IconPhoto, IconReload, IconX } from '@tabler/icons-react';
+import {
+  IconDownload,
+  IconPhoto,
+  IconReload,
+  IconX,
+} from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, type MouseEvent, useMemo } from 'react';
 import {
   LazyImageLoadStatus,
@@ -61,6 +66,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
     isLoading,
     isError,
     isImage,
+    isAudio,
     areActionsVisible,
     BottomIcon,
     typeLabel,
@@ -95,6 +101,56 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
       handleCardClick();
     }
   };
+
+  if (isAudio) {
+    return (
+      <div
+        style={cssVars}
+        className={mergeClasses(
+          'group flex w-full min-w-[280px] flex-col gap-2 border p-3',
+          roundedClassName,
+          cardColorClass,
+          className,
+        )}
+      >
+        <div className="flex items-center justify-between gap-2">
+          <span
+            title={attachment.name}
+            className={mergeClasses(
+              typography?.fontClassName ?? 'dial-tiny-text',
+              'min-w-0 truncate',
+              styles.name,
+            )}
+          >
+            {attachment.name}
+          </span>
+          {onClick && (
+            <DialGhostIconButton
+              icon={<IconDownload size={DIAL_ICON_SIZE.SM} aria-hidden />}
+              size={ElementSize.Small}
+              className={mergeClasses(
+                'h-6 w-6 shrink-0 rounded',
+                styles.actionBtn,
+              )}
+              aria-label={clickLabel}
+              onClick={(e: MouseEvent) => {
+                e.stopPropagation();
+                onClick(id);
+              }}
+            />
+          )}
+        </div>
+        {attachment.playUrl && (
+          <audio
+            controls
+            src={attachment.playUrl}
+            className="w-full"
+            preload="metadata"
+          />
+        )}
+      </div>
+    );
+  }
 
   const cardClassName = mergeClasses(
     'group relative flex h-[100px] w-[100px] flex-shrink-0 border focus-within:outline focus-within:outline-1 focus-within:outline-offset-1',

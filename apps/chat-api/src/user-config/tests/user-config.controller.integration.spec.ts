@@ -27,6 +27,7 @@ describe('UserConfigController (integration)', () => {
     updatePin: ReturnType<typeof vi.fn>;
     updateInstalledToolset: ReturnType<typeof vi.fn>;
     updateInstalledDeployment: ReturnType<typeof vi.fn>;
+    updateSelectedDeployment: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
@@ -35,6 +36,7 @@ describe('UserConfigController (integration)', () => {
       updatePin: vi.fn(),
       updateInstalledToolset: vi.fn(),
       updateInstalledDeployment: vi.fn(),
+      updateSelectedDeployment: vi.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -261,6 +263,53 @@ describe('UserConfigController (integration)', () => {
         .patch('/user-config/deployments')
         .send({})
         .expect(400);
+    });
+  });
+
+  describe('PATCH /user-config/deployments/selected', () => {
+    it('returns 204 for a valid id', async () => {
+      service.updateSelectedDeployment.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments/selected')
+        .send({ id: 'gpt-4o' })
+        .expect(204);
+
+      expect(service.updateSelectedDeployment).toHaveBeenCalledWith(
+        'gpt-4o',
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 204 for null id (clear selection)', async () => {
+      service.updateSelectedDeployment.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments/selected')
+        .send({ id: null })
+        .expect(204);
+
+      expect(service.updateSelectedDeployment).toHaveBeenCalledWith(
+        null,
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
+    });
+
+    it('returns 204 for empty body (id defaults to null)', async () => {
+      service.updateSelectedDeployment.mockResolvedValue(undefined);
+
+      await request(app.getHttpServer())
+        .patch('/user-config/deployments/selected')
+        .send({})
+        .expect(204);
+
+      expect(service.updateSelectedDeployment).toHaveBeenCalledWith(
+        null,
+        TEST_USER.at,
+        TEST_USER.bucket,
+      );
     });
   });
 });

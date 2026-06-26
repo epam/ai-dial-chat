@@ -7,7 +7,7 @@ Specifies inline editing of user messages within a conversation: entering edit m
 ---
 
 ### Requirement: Edit button availability
-The edit button on user message bubbles SHALL be visible at all times and disabled while the AI is streaming a response.
+The edit button on user message bubbles SHALL be visible at all times and disabled while the AI is streaming a response or when the conversation is read-only.
 
 #### Scenario: Edit button visible on user message
 - **WHEN** a user message is rendered in the conversation
@@ -16,6 +16,11 @@ The edit button on user message bubbles SHALL be visible at all times and disabl
 #### Scenario: Edit button disabled during streaming
 - **WHEN** the AI is actively streaming a response
 - **THEN** all edit buttons in the conversation are disabled and not interactive
+
+#### Scenario: Edit button hidden in read-only conversation
+- **WHEN** the conversation is read-only (isReadonly flag set or user lacks WRITE permission)
+- **THEN** the edit button is not rendered on any user message
+- **AND** clicking a user message does not trigger edit mode
 
 ---
 

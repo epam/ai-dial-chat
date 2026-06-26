@@ -1,11 +1,20 @@
-import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
+import {
+  mergeClasses,
+  ResponseFormat,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
   DialDropdown,
   DialGhostIconButton,
 } from '@epam/ai-dial-ui-kit';
-import { IconPaperclip, IconPlus, IconSettings } from '@tabler/icons-react';
+import {
+  IconPaperclip,
+  IconPlus,
+  IconSettings,
+  IconChevronRight,
+} from '@tabler/icons-react';
 import {
   CSSProperties,
   type FC,
@@ -13,7 +22,6 @@ import {
   useMemo,
   useState,
 } from 'react';
-import { useIsMobile } from '@epam/ai-dial-chat-shared';
 import type { ChatSettingsConfig } from '../../models/Input';
 import { BottomSheet } from '../BottomSheet/BottomSheet';
 import { ChatSettingsBottomSheet } from '../ChatSettingsBottomSheet/ChatSettingsBottomSheet';
@@ -90,12 +98,20 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               key: 'chat-settings',
               label: chatSettings.menuItemLabel ?? 'Chat settings',
               icon: <IconSettings size={BASE_ICON_SIZE} aria-hidden />,
+              iconAfter: isMobile ? (
+                <IconChevronRight
+                  size={BASE_ICON_SIZE}
+                  stroke={1.5}
+                  className="text-secondary"
+                  aria-hidden
+                />
+              ) : null,
               onClick: () => setIsChatSettingsOpen(true),
             },
           ]
         : []),
     ],
-    [attachLabel, onAttachClick, chatSettings, extraMenuItems],
+    [attachLabel, onAttachClick, chatSettings, extraMenuItems, isMobile],
   );
 
   if (menuItems.length === 0) return null;
@@ -120,6 +136,8 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
             onClose={() => setIsSheetOpen(false)}
             style={style}
             items={menuItems}
+            className="pb-4"
+            btnTextClassName="flex-1"
           />
           {chatSettings != null && (
             <ChatSettingsBottomSheet
