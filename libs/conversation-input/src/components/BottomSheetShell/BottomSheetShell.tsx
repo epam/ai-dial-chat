@@ -56,7 +56,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
   backLabel,
   'aria-label': ariaLabel,
   style,
-  titleClassName = 'dial-body-semi-bold-text',
+  titleClassName = 'dial-body-semi-text',
   className,
   children,
 }) => {
@@ -107,7 +107,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
               <span className={mergeClasses(styles.title, titleClassName)}>
                 {title}
               </span>
-              <div className="absolute end-4">
+              <div className="absolute end-4 m-2">
                 <DialCloseButton
                   ariaLabel={closeLabel}
                   size={DIAL_ICON_SIZE.LG}
@@ -115,9 +115,7 @@ export const BottomSheetShell: FC<BottomSheetShellProps> = ({
                 />
               </div>
             </div>
-            <div
-              className={mergeClasses(styles.divider, 'h-px flex-shrink-0')}
-            />
+            <div className="h-px flex-shrink-0" />
           </>
         )}
         <div className="overflow-y-auto">{children}</div>
