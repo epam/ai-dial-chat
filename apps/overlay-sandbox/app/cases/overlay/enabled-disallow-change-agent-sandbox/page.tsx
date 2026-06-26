@@ -13,6 +13,7 @@ const overlayOptions = {
     Feature.TopSettings,
     Feature.TopChatInfo,
     Feature.DisallowChangeAgent,
+    Feature.LiveChatInteraction,
   ],
 };
 
