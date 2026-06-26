@@ -21,10 +21,6 @@
   color: var(--cat-heading-title-text, var(--cat-text-primary));
 }
 
-.contentContainer {
-  background: var(--cat-content-bg, var(--cat-bg-layer-1));
-}
-
 .gridView {
   background: var(--cat-content-bg, var(--cat-bg-layer-1));
   padding-inline-start: 15%;
@@ -33,14 +29,6 @@
 
 .listView {
   background: var(--cat-content-bg, var(--cat-bg-layer-1));
-}
-
-.sectionHeading {
-  color: var(--cat-section-heading-text, var(--cat-text-primary));
-}
-
-.noResultsTitle {
-  color: var(--cat-no-results-title-text, var(--cat-text-primary));
 }
 
 .stickyTabsRow {

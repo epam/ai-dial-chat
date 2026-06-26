@@ -1,5 +1,15 @@
-import type { CatalogItem, FavoriteItem } from './catalog-item';
+import type { CatalogEntityType } from '../types/entity-type';
+import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
+import type { ItemDetailsTexts } from './item-details-props';
+
+/** A single option in the Create dropdown. */
+export interface CreateOption {
+  /** Display label shown in the dropdown menu. */
+  label: string;
+  /** Called when this option is selected. */
+  onClick: () => void;
+}
 
 /** Text labels used by the `Catalog` surface. */
 export interface CatalogTitles {
@@ -28,6 +38,20 @@ export interface CatalogTitles {
   featuredLabel?: string;
   /** ARIA label for the page/grid. Default: 'Catalog'. */
   ariaLabel?: string;
+  /**
+   * Display labels for entity-type filter tabs. Only types present in `items`
+   * are shown. Defaults: Model → 'Model', Agent → 'Agent', Toolset → 'Toolset',
+   * Guardrail → 'Guardrail', Skill → 'Skill', Mcp → 'MCP'.
+   */
+  tabLabels?: Partial<Record<CatalogEntityType, string>>;
+  /** Label for the "Clear all" filters button. Default: 'Clear all'. */
+  clearAllLabel?: string;
+  /** Label for the filter button when nothing is filtered. Default: 'From'. */
+  filterFromLabel?: string;
+  /** Label for the "My Apps" filter checkbox. Default: 'My Apps'. */
+  filterMyAppsLabel?: string;
+  /** Label for the Topics section inside the filter dropdown. Default: 'Topics'. */
+  filterTopicsLabel?: string;
 }
 
 /** Props for Catalog. */
@@ -35,7 +59,7 @@ export interface CatalogProps {
   /** Items to display in the Browse section. */
   items: CatalogItem[];
   /** Items to display in the Favorites section. */
-  favorites: FavoriteItem[];
+  favorites: CatalogItem[];
   /** Grouped text labels for headings and actions. */
   titles?: CatalogTitles;
   /** Whether catalog data is loading (reserved for future loading state). */
@@ -54,8 +78,15 @@ export interface CatalogProps {
    * Returns `undefined` to let the panel fall back to `item.longDescription`.
    */
   onFetchAboutContent?: (item: CatalogItem) => Promise<string | undefined>;
-  /** Called when the Create button is clicked. */
+  /**
+   * Dropdown options for the Create button. When provided, the button opens a
+   * menu instead of calling `onCreateClick` directly.
+   */
+  createOptions?: CreateOption[];
+  /** Called when the Create button is clicked (used when `createOptions` is absent). */
   onCreateClick?: () => void;
   /** Optional color and typography overrides. */
   styles?: CatalogStyles;
+  /** Text overrides forwarded to the item details panel. */
+  detailsTexts?: ItemDetailsTexts;
 }

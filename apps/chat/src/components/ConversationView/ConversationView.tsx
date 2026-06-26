@@ -1,24 +1,28 @@
 import {
-  AttachmentErrorReason,
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
+  ResponseFormat,
   StatusEvent,
   type Attachment,
+  type Conversation,
   type MessageRating,
   type Message as MessageType,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
+import {
+  FileDndOverlay,
+  type ChatSettingsValues,
+} from '@epam/ai-dial-conversation-input';
 import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
 import {
-  NotificationVariant,
   DialFabButton,
   DialNeutralButton,
   DialNotification,
+  NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
 import { IconCopy } from '@tabler/icons-react';
 import {
@@ -35,10 +39,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
-  AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
   ChatI18nKeys,
+  ChatSettingsI18nKeys,
   ConversationI18nKeys,
   ConversationPanelI18nKeys,
   DeploymentsI18nKeys,
@@ -48,13 +52,11 @@ import {
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
+import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
-import {
-  isMimeTypeAllowed,
-  mimeTypesToExtensionLabels,
-} from '../../utils/attachment-mime';
 import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
@@ -104,6 +106,8 @@ interface Props {
   isTranscriptionSupported?: boolean;
   onUploadAudio?: (file: File, contentType: string) => Promise<string>;
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
+  conversation: Conversation;
+  onConversationChange: (conv: Conversation) => void;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -133,8 +137,11 @@ const ConversationView: FC<Props> = ({
   isTranscriptionSupported = false,
   onUploadAudio,
   onTranscribeAudio,
+  conversation,
+  onConversationChange,
 }) => {
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -144,6 +151,7 @@ const ConversationView: FC<Props> = ({
   const [pendingDialAttachments, setPendingDialAttachments] = useState<
     Attachment[]
   >([]);
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
   const isEditActive = !!editingMessageIndexes?.size;
   const {
     items,
@@ -153,50 +161,39 @@ const ConversationView: FC<Props> = ({
     isLoading,
     error,
   } = useDeployments();
-  const { showNotification } = useNotification();
-
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),
     [items, selectedItemId],
   );
 
-  const inputAttachmentTypes = useMemo(
-    () => selectedDeployment?.inputAttachmentTypes ?? [],
-    [selectedDeployment],
-  );
-
-  const isAttachmentsAllowed = selectedDeployment?.inputAttachmentTypes != null;
-
-  const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
-
-  const validateAttachment = useCallback(
-    (attachment: Attachment): AttachmentErrorReason | undefined => {
-      if (!isMimeTypeAllowed(attachment.contentType, inputAttachmentTypes)) {
-        if (unsupportedTypeTimerRef.current != null) {
-          clearTimeout(unsupportedTypeTimerRef.current);
-        }
-        unsupportedTypeTimerRef.current = setTimeout(() => {
-          showNotification({
-            variant: NotificationVariant.Error,
-            title: t(AttachmentsI18nKeys.UnsupportedTypeTitle),
-            message: t(AttachmentsI18nKeys.UnsupportedTypeMessage, {
-              formats: mimeTypesToExtensionLabels(inputAttachmentTypes),
-            }),
-          });
-          unsupportedTypeTimerRef.current = null;
-        }, 100);
-        return AttachmentErrorReason.UnsupportedType;
-      }
-      return undefined;
-    },
-    [inputAttachmentTypes, showNotification, t],
-  );
+  const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
+    useAttachmentValidation(selectedDeployment);
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
     !isDialFileManagerOpen,
+  );
+
+  const deploymentItems = useMemo(
+    () =>
+      items.map(
+        ({
+          id,
+          displayName,
+          iconUrl,
+          type,
+          inputAttachmentTypes,
+          features,
+        }) => ({
+          id,
+          displayName,
+          iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
+          type,
+          inputAttachmentTypes,
+          features,
+        }),
+      ),
+    [items],
   );
 
   const isInputDisabled = useMemo(
@@ -248,18 +245,6 @@ const ConversationView: FC<Props> = ({
     () =>
       messages.filter((m) => m.role === MessageRole.User).map((m) => m.content),
     [messages],
-  );
-
-  const deploymentItems = useMemo(
-    () =>
-      items.map(({ id, displayName, iconUrl, type, inputAttachmentTypes }) => ({
-        id,
-        displayName,
-        iconUrl: iconUrl ? resolveCatalogIconUrl(iconUrl) : undefined,
-        type,
-        inputAttachmentTypes,
-      })),
-    [items],
   );
 
   const tooltips = useMemo<MessageActionTooltips>(
@@ -324,19 +309,45 @@ const ConversationView: FC<Props> = ({
 
   // Prevents the scroll handler from misreading programmatic scrolls as user input.
   const isProgrammaticRef = useRef(false);
+  // Fallback timer that clears isProgrammaticRef when scrollend is unsupported.
+  const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const scrollToBottom = useCallback((instant = false) => {
     const container = containerRef.current;
     if (!container) return;
+
+    if (smoothScrollTimerRef.current != null) {
+      clearTimeout(smoothScrollTimerRef.current);
+      smoothScrollTimerRef.current = null;
+    }
+
     isProgrammaticRef.current = true;
     container.scrollTo({
       top: container.scrollHeight,
       behavior: instant ? 'instant' : 'smooth',
     });
-    // Reset flag after the scroll event has fired
-    requestAnimationFrame(() => {
-      isProgrammaticRef.current = false;
-    });
+
+    if (instant) {
+      // A single frame is enough — instant scroll fires one synchronous event.
+      requestAnimationFrame(() => {
+        isProgrammaticRef.current = false;
+      });
+    } else {
+      // Smooth scroll fires scroll events for its entire ~300 ms animation.
+      // Keep the flag set until the browser signals the scroll is complete;
+      // fall back to a timeout for Safari < 17.4 which lacks scrollend.
+      const reset = () => {
+        if (smoothScrollTimerRef.current != null) {
+          clearTimeout(smoothScrollTimerRef.current);
+          smoothScrollTimerRef.current = null;
+        }
+        isProgrammaticRef.current = false;
+      };
+      container.addEventListener('scrollend', reset, { once: true });
+      smoothScrollTimerRef.current = setTimeout(reset, 400);
+    }
   }, []);
 
   // When streaming ends, release user override so the next send auto-scrolls.
@@ -396,12 +407,86 @@ const ConversationView: FC<Props> = ({
     scrollToBottom(false);
   }, [scrollToBottom]);
 
+  const chatSettings = useMemo(
+    () => ({
+      features: {
+        ...(selectedDeployment?.features ?? {
+          systemPrompt: false,
+          temperature: false,
+        }),
+        responseFormat: true,
+      },
+      responseFormat: conversation.responseFormat ?? ResponseFormat.Markdown,
+      systemPrompt: conversation.prompt ?? '',
+      temperature: conversation.temperature ?? 0.5,
+      onSave: (values: ChatSettingsValues) => {
+        onConversationChange({
+          ...conversation,
+          ...(values.responseFormat != null && {
+            responseFormat: values.responseFormat,
+          }),
+          ...(values.systemPrompt != null && {
+            prompt: values.systemPrompt,
+          }),
+          ...(values.temperature != null && {
+            temperature: values.temperature,
+          }),
+        });
+        showNotification({
+          variant: NotificationVariant.Success,
+          message: t(ChatSettingsI18nKeys.SavedNotification),
+        });
+      },
+      menuItemLabel: t(ChatI18nKeys.ChatSettings),
+      title: t(ChatSettingsI18nKeys.Title),
+      responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
+      responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
+      responseFormatMarkdownLabel: t(
+        ChatSettingsI18nKeys.ResponseFormatMarkdown,
+      ),
+      responseFormatPlainTextLabel: t(
+        ChatSettingsI18nKeys.ResponseFormatPlainText,
+      ),
+      systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
+      systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
+      temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),
+      temperatureLabels: [
+        t(ChatSettingsI18nKeys.TemperaturePrecise),
+        t(ChatSettingsI18nKeys.TemperatureNeutral),
+        t(ChatSettingsI18nKeys.TemperatureCreative),
+      ] as [string, string, string],
+      temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
+      saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
+    }),
+    [
+      selectedDeployment?.features,
+      conversation,
+      t,
+      onConversationChange,
+      showNotification,
+    ],
+  );
+
   const handleAttachDialFiles = useCallback(
     (result: AttachResult) => {
       setPendingDialAttachments(dialFilesToAttachments(result.files, bucket));
       setIsDialFileManagerOpen(false);
     },
     [bucket],
+  );
+
+  const handleInputAttachmentClick = useCallback(
+    (attachment: Attachment) => {
+      void openAttachmentCanvas(attachment);
+    },
+    [openAttachmentCanvas],
+  );
+
+  const handleMessageAttachmentClick = useCallback(
+    (attachment: DisplayAttachment) => {
+      void openAttachmentCanvas(attachment);
+    },
+    [openAttachmentCanvas],
   );
 
   return (
@@ -441,11 +526,13 @@ const ConversationView: FC<Props> = ({
                   isAssistantTyping={isAssistantTyping}
                   editingMessageIndexes={editingMessageIndexes}
                   onSelectStarter={onSelectStarter}
-                  onStartEdit={onStartEdit}
-                  onDeleteMessage={onDeleteMessage}
-                  onRegenerateMessage={onRegenerateMessage}
-                  onRateMessage={onRateMessage}
-                  onDislikeMessage={onDislikeMessage}
+                  onStartEdit={isReadOnly ? undefined : onStartEdit}
+                  onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}
+                  onRegenerateMessage={
+                    isReadOnly ? undefined : onRegenerateMessage
+                  }
+                  onRateMessage={isReadOnly ? undefined : onRateMessage}
+                  onDislikeMessage={isReadOnly ? undefined : onDislikeMessage}
                   onCancelEdit={onCancelEdit}
                   onEditMessage={onEditMessage}
                   onUploadAttachment={onUploadAttachment}
@@ -485,6 +572,11 @@ const ConversationView: FC<Props> = ({
                       ? onFilesConsumed
                       : undefined
                   }
+                  validateAttachment={
+                    selectedDeployment != null ? validateAttachment : undefined
+                  }
+                  hideAttachFile={!isAttachmentsAllowed}
+                  onAttachmentClick={handleMessageAttachmentClick}
                 />
               );
             })}
@@ -541,12 +633,14 @@ const ConversationView: FC<Props> = ({
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 sendLabel={t(ChatI18nKeys.SendMessage)}
+                sendTitle={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
                 isTranscriptionSupported={isTranscriptionSupported}
                 messageHistory={messageHistory}
                 onUploadAudio={onUploadAudio}
                 onTranscribeAudio={onTranscribeAudio}
                 sendOnEnter={sendOnEnter}
+                chatSettings={chatSettings}
                 pendingDropFiles={!isEditActive ? pendingFiles : undefined}
                 pendingAttachments={
                   !isEditActive ? pendingDialAttachments : undefined
@@ -560,13 +654,19 @@ const ConversationView: FC<Props> = ({
                     : undefined
                 }
                 autoFocus={!isMobile}
-                onDialFileSystemClick={() => setIsDialFileManagerOpen(true)}
+                onDialFileSystemClick={
+                  isAttachmentsAllowed
+                    ? () => setIsDialFileManagerOpen(true)
+                    : undefined
+                }
                 dialFileSystemLabel={t(
                   ConversationI18nKeys.AttachMenuDialFileSystem,
                 )}
                 validateAttachment={
-                  isAttachmentsAllowed ? validateAttachment : undefined
+                  selectedDeployment != null ? validateAttachment : undefined
                 }
+                hideAttachFile={!isAttachmentsAllowed}
+                onAttachmentClick={handleInputAttachmentClick}
               />
             </Suspense>
             <Suspense fallback={null}>

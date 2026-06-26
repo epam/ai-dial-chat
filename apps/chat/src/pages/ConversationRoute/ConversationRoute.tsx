@@ -6,9 +6,14 @@ import type {
 import {
   AttachmentErrorReason,
   isAudioTranscriptionSupported,
+  ResponseFormat,
 } from '@epam/ai-dial-chat-shared';
-import { FileDndOverlay } from '@epam/ai-dial-conversation-input';
+import {
+  FileDndOverlay,
+  type ChatSettingsValues,
+} from '@epam/ai-dial-conversation-input';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
+import type { ConversationResponseDto } from '@epam/chat-api-client';
 import {
   FC,
   lazy,
@@ -29,11 +34,12 @@ import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
+  ButtonsI18nKeys,
   ChatI18nKeys,
+  ChatSettingsI18nKeys,
   ConversationI18nKeys,
   DeploymentsI18nKeys,
   DialFileManagerI18nKeys,
-  ButtonsI18nKeys,
   FileDndI18nKeys,
 } from '../../constants/translation-keys';
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
@@ -41,23 +47,27 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
+import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
+import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   transcribeAudio,
   transcribeAudioWithAsrModel,
 } from '../../server-api/chat.api';
-import { createConversation as apiCreateConversation } from '../../server-api/conversations.api';
-import { uploadFile } from '../../server-api/files.api';
 import {
-  isMimeTypeAllowed,
-  mimeTypesToExtensionLabels,
-} from '../../utils/attachment-mime';
+  createConversation as apiCreateConversation,
+  saveConversation,
+} from '../../server-api/conversations.api';
+import { uploadFile } from '../../server-api/files.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
+import { getConversationPath } from '../../utils/conversation-path';
+import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import {
   getStarterPopulateText,
@@ -82,8 +92,15 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
+  const [chatSettingsValues, setChatSettingsValues] = useState({
+    responseFormat: ResponseFormat.Markdown,
+    systemPrompt: '',
+    temperature: 0.5,
+  });
   const { showNotification } = useNotification();
-  const { asrModelId, transcribeSizeLimitBytes } = useAppConfig();
+  const {
+    config: { asrModelId, transcribeSizeLimitBytes },
+  } = useAppConfig();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
   const {
@@ -109,42 +126,11 @@ const ConversationRoute: FC = () => {
     [items, selectedItemId],
   );
 
-  const inputAttachmentTypes = useMemo(
-    () => selectedDeployment?.inputAttachmentTypes ?? [],
-    [selectedDeployment],
-  );
-
-  const isAttachmentsAllowed = selectedDeployment?.inputAttachmentTypes != null;
-
-  const unsupportedTypeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
-    null,
-  );
+  const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
+    useAttachmentValidation(selectedDeployment);
 
   const pendingNetworkFilesRef = useRef<string[]>([]);
   const networkTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const validateAttachment = useCallback(
-    (attachment: Attachment): AttachmentErrorReason | undefined => {
-      if (!isMimeTypeAllowed(attachment.contentType, inputAttachmentTypes)) {
-        if (unsupportedTypeTimerRef.current != null) {
-          clearTimeout(unsupportedTypeTimerRef.current);
-        }
-        unsupportedTypeTimerRef.current = setTimeout(() => {
-          showNotification({
-            variant: NotificationVariant.Error,
-            title: t(AttachmentsI18nKeys.UnsupportedTypeTitle),
-            message: t(AttachmentsI18nKeys.UnsupportedTypeMessage, {
-              formats: mimeTypesToExtensionLabels(inputAttachmentTypes),
-            }),
-          });
-          unsupportedTypeTimerRef.current = null;
-        }, 100);
-        return AttachmentErrorReason.UnsupportedType;
-      }
-      return undefined;
-    },
-    [inputAttachmentTypes, showNotification, t],
-  );
 
   const { isDragging, pendingFiles, onFilesConsumed } = usePageFileDrag(
     isAttachmentsAllowed,
@@ -171,6 +157,60 @@ const ConversationRoute: FC = () => {
   const isInputDisabled = useMemo(
     () => !!selectedDeploymentConfiguration?.isChatMessageInputDisabled,
     [selectedDeploymentConfiguration],
+  );
+
+  const chatSettings = useMemo(
+    () => ({
+      features: {
+        ...(selectedDeployment?.features ?? {
+          systemPrompt: false,
+          temperature: false,
+        }),
+        responseFormat: true,
+      },
+      responseFormat: chatSettingsValues.responseFormat,
+      systemPrompt: chatSettingsValues.systemPrompt,
+      temperature: chatSettingsValues.temperature,
+      onSave: (values: ChatSettingsValues) => {
+        setChatSettingsValues((prev) => ({
+          responseFormat: values.responseFormat ?? prev.responseFormat,
+          systemPrompt: values.systemPrompt ?? prev.systemPrompt,
+          temperature: values.temperature ?? prev.temperature,
+        }));
+        showNotification({
+          variant: NotificationVariant.Success,
+          message: t(ChatSettingsI18nKeys.SavedNotification),
+        });
+      },
+      menuItemLabel: t(ChatI18nKeys.ChatSettings),
+      title: t(ChatSettingsI18nKeys.Title),
+      responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
+      responseFormatHint: t(ChatSettingsI18nKeys.ResponseFormatHint),
+      responseFormatMarkdownLabel: t(
+        ChatSettingsI18nKeys.ResponseFormatMarkdown,
+      ),
+      responseFormatPlainTextLabel: t(
+        ChatSettingsI18nKeys.ResponseFormatPlainText,
+      ),
+      systemPromptLabel: t(ChatSettingsI18nKeys.SystemPromptLabel),
+      systemPromptTooltip: t(ChatSettingsI18nKeys.SystemPromptTooltip),
+      temperatureLabel: t(ChatSettingsI18nKeys.TemperatureLabel),
+      temperatureLabels: [
+        t(ChatSettingsI18nKeys.TemperaturePrecise),
+        t(ChatSettingsI18nKeys.TemperatureNeutral),
+        t(ChatSettingsI18nKeys.TemperatureCreative),
+      ] as [string, string, string],
+      temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
+      saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
+    }),
+    [
+      selectedDeployment?.features,
+      chatSettingsValues.responseFormat,
+      chatSettingsValues.systemPrompt,
+      chatSettingsValues.temperature,
+      t,
+      showNotification,
+    ],
   );
 
   const modelSelectorLabels = useMemo(
@@ -212,7 +252,19 @@ const ConversationRoute: FC = () => {
           selectedItemId,
           attachmentDtos,
         );
-        navigate(getConversationRoute(conversation.id));
+        const savedConversation = {
+          ...conversation,
+          prompt: chatSettingsValues.systemPrompt,
+          temperature: chatSettingsValues.temperature,
+          responseFormat: chatSettingsValues.responseFormat,
+        } as ConversationResponseDto;
+        await saveConversation(
+          getConversationPath(conversation.id),
+          savedConversation,
+        );
+        navigate(getConversationRoute(conversation.id), {
+          state: { conversation: savedConversation },
+        });
       } catch (err) {
         const errorMessage = await getApiErrorMessage(err);
         showNotification({
@@ -223,7 +275,14 @@ const ConversationRoute: FC = () => {
         setIsSending(false);
       }
     },
-    [navigate, isSending, selectedItemId, showNotification, t],
+    [
+      navigate,
+      isSending,
+      selectedItemId,
+      showNotification,
+      t,
+      chatSettingsValues,
+    ],
   );
 
   const handleUploadAttachment = useCallback(
@@ -328,6 +387,16 @@ const ConversationRoute: FC = () => {
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const { displayName } = useUserProfile();
+  const firstName = displayName.split(' ')[0];
+  const { openAttachmentCanvas } = useOpenAttachmentCanvas();
+
+  const handleAttachmentClick = useCallback(
+    (attachment: Attachment) => {
+      void openAttachmentCanvas(attachment);
+    },
+    [openAttachmentCanvas],
+  );
 
   const isTranscriptionSupported = useMemo(() => {
     if (asrModelId != null) return true;
@@ -391,7 +460,7 @@ const ConversationRoute: FC = () => {
       />
       <Suspense fallback={<RouteFallback />}>
         <div
-          className="flex h-full flex-col items-center justify-center p-4 desktop:p-8"
+          className="flex flex-1 flex-col items-center justify-center p-4 desktop:p-8"
           role="region"
           aria-label={t(ChatI18nKeys.WelcomeScreen)}
         >
@@ -399,7 +468,28 @@ const ConversationRoute: FC = () => {
             onSend={handleSend}
             onUploadAttachment={handleUploadAttachment}
             message={inputMessage}
-            welcomeText={t(ChatI18nKeys.WelcomeText)}
+            welcomeText={getTimeOfDayGreeting(
+              new Date().getHours(),
+              {
+                morningWithName: t(ChatI18nKeys.GreetingMorning, {
+                  name: firstName,
+                }),
+                morningNoName: t(ChatI18nKeys.GreetingMorningNoName),
+                afternoonWithName: t(ChatI18nKeys.GreetingAfternoon, {
+                  name: firstName,
+                }),
+                afternoonNoName: t(ChatI18nKeys.GreetingAfternoonNoName),
+                eveningWithName: t(ChatI18nKeys.GreetingEvening, {
+                  name: firstName,
+                }),
+                eveningNoName: t(ChatI18nKeys.GreetingEveningNoName),
+                nightWithName: t(ChatI18nKeys.GreetingNight, {
+                  name: firstName,
+                }),
+                nightNoName: t(ChatI18nKeys.GreetingNightNoName),
+              },
+              firstName || undefined,
+            )}
             placeholder={t(ChatI18nKeys.Placeholder)}
             styles={{
               typography: {
@@ -413,23 +503,29 @@ const ConversationRoute: FC = () => {
             isInputDisabled={isInputDisabled}
             modelSelectorLabels={modelSelectorLabels}
             sendLabel={t(ChatI18nKeys.SendMessage)}
+            sendTitle={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
             isTranscriptionSupported={isTranscriptionSupported}
             onUploadAudio={handleUploadAudio}
             onTranscribeAudio={handleTranscribeAudio}
             sendOnEnter={sendOnEnter}
+            chatSettings={chatSettings}
             pendingDropFiles={pendingFiles}
             onDropFilesConsumed={onFilesConsumed}
             pendingAttachments={pendingDialAttachments}
             onPendingAttachmentsConsumed={clearPendingDialAttachments}
             autoFocus={!isMobile}
-            onDialFileSystemClick={openDialFileManager}
+            onDialFileSystemClick={
+              isAttachmentsAllowed ? openDialFileManager : undefined
+            }
             dialFileSystemLabel={t(
               ConversationI18nKeys.AttachMenuDialFileSystem,
             )}
             validateAttachment={
-              isAttachmentsAllowed ? validateAttachment : undefined
+              selectedDeployment != null ? validateAttachment : undefined
             }
+            hideAttachFile={!isAttachmentsAllowed}
+            onAttachmentClick={handleAttachmentClick}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>

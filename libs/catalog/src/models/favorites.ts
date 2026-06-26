@@ -1,4 +1,4 @@
-import { FavoriteItem } from './catalog-item';
+import { CatalogItem } from './catalog-item';
 
 /** Typography class overrides for `CatalogFavorites`. */
 export interface FavoritesTypography {
@@ -10,12 +10,8 @@ export interface FavoritesTypography {
 
 /** Color overrides for `CatalogFavorites`, applied via CSS custom properties. */
 export interface FavoritesColors {
-  /** Base section background color. Fallback: `--bg-layer-1`. */
+  /** Base section background color. Fallback: `--bg-layer-2`. */
   backgroundBase?: string;
-  /** Favorites gradient start color. Fallback: `--bg-accent-tertiary-alpha`. */
-  backgroundStart?: string;
-  /** Favorites gradient end color. Fallback: `--bg-accent-primary-alpha`. */
-  backgroundEnd?: string;
   /** Section bottom border color. Fallback: `--stroke-secondary`. */
   border?: string;
   /** Section title color. Fallback: `--text-primary`. */
@@ -35,13 +31,19 @@ export interface FavoritesStyles {
 /** Props for `CatalogFavorites`. */
 export interface FavoritesProps {
   /** Favorite items to paginate and display. */
-  items: FavoriteItem[];
+  items: CatalogItem[];
   /** Total favorites count shown in the heading (may exceed items.length). Default: items.length. */
   totalCount?: number;
   /** Section heading text. Default: 'Your Favorites'. */
   title?: string;
   /** Called when a favorite card's star is toggled. */
   onToggleFavorite?: (id: string, isStarred: boolean) => void;
+  /** Called when a favorite card body is clicked. Opens the details panel. */
+  onItemClick?: (item: CatalogItem) => void;
   /** Grouped typography and color overrides for the section. */
   styles?: FavoritesStyles;
+  /** When true the section plays its exit animation. The parent should unmount the section once `onExitComplete` fires. */
+  isLeaving?: boolean;
+  /** Called when the section exit animation finishes so the parent can safely unmount. */
+  onExitComplete?: () => void;
 }

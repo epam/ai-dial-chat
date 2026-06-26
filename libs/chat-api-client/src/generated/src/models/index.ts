@@ -3,25 +3,6 @@
 /**
  *
  * @export
- * @interface AppConfigDto
- */
-export interface AppConfigDto {
-  /**
-   * Deployment ID of the ASR model used for transcription. Null when ASR_MODEL is not configured.
-   * @type {object}
-   * @memberof AppConfigDto
-   */
-  asrModelId?: object | null;
-  /**
-   * Maximum audio file size in bytes accepted by the transcription endpoint.
-   * @type {number}
-   * @memberof AppConfigDto
-   */
-  transcribeSizeLimitBytes: number;
-}
-/**
- *
- * @export
  * @interface ApplicationDto
  */
 export interface ApplicationDto {
@@ -352,6 +333,81 @@ export interface Check200Response {
    * @memberof Check200Response
    */
   version?: string;
+}
+/**
+ *
+ * @export
+ * @interface ClientConfigDto
+ */
+export interface ClientConfigDto {
+  /**
+   * Deployment ID of the ASR model. Null when ASR is not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  asrModelId: string | null;
+  /**
+   * Maximum audio file size in bytes accepted by the transcription endpoint.
+   * @type {number}
+   * @memberof ClientConfigDto
+   */
+  transcribeSizeLimitBytes: number;
+  /**
+   * Operator-configured default deployment ID. Null when not configured.
+   * @type {string}
+   * @memberof ClientConfigDto
+   */
+  defaultDeploymentId?: string | null;
+}
+/**
+ *
+ * @export
+ * @interface ClientConfigMetadataDto
+ */
+export interface ClientConfigMetadataDto {
+  /**
+   * ISO timestamp when the config was resolved.
+   * @type {string}
+   * @memberof ClientConfigMetadataDto
+   */
+  resolvedAt: string;
+  /**
+   * Cache TTL in seconds applied to this response.
+   * @type {number}
+   * @memberof ClientConfigMetadataDto
+   */
+  cacheTtlSeconds: number;
+}
+/**
+ *
+ * @export
+ * @interface ClientConfigResponseDto
+ */
+export interface ClientConfigResponseDto {
+  /**
+   * Application identifier.
+   * @type {string}
+   * @memberof ClientConfigResponseDto
+   */
+  appId: string;
+  /**
+   * Feature flags — boolean per feature key.
+   * @type {object}
+   * @memberof ClientConfigResponseDto
+   */
+  features: object;
+  /**
+   * Non-boolean configuration values.
+   * @type {ClientConfigDto}
+   * @memberof ClientConfigResponseDto
+   */
+  config: ClientConfigDto;
+  /**
+   * Resolution metadata.
+   * @type {ClientConfigMetadataDto}
+   * @memberof ClientConfigResponseDto
+   */
+  metadata?: ClientConfigMetadataDto;
 }
 /**
  *
@@ -744,7 +800,24 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   assistantModelId: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ConversationResponseDto
+   */
+  responseFormat?: ConversationResponseDtoResponseFormatEnum;
 }
+
+/**
+ * @export
+ */
+export const ConversationResponseDtoResponseFormatEnum = {
+  Markdown: 'markdown',
+  PlainText: 'plain_text',
+} as const;
+export type ConversationResponseDtoResponseFormatEnum =
+  (typeof ConversationResponseDtoResponseFormatEnum)[keyof typeof ConversationResponseDtoResponseFormatEnum];
+
 /**
  *
  * @export
@@ -1010,6 +1083,25 @@ export interface DeploymentConfigurationDto {
 /**
  *
  * @export
+ * @interface DeploymentFeaturesDto
+ */
+export interface DeploymentFeaturesDto {
+  /**
+   * Whether the deployment supports a custom system prompt
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  systemPrompt: boolean;
+  /**
+   * Whether the deployment supports temperature control
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  temperature: boolean;
+}
+/**
+ *
+ * @export
  * @interface DeploymentItemDto
  */
 export interface DeploymentItemDto {
@@ -1086,6 +1178,12 @@ export interface DeploymentItemDto {
    */
   inputAttachmentTypes?: Array<string>;
   /**
+   * Feature flags from DIAL Core controlling which per-conversation settings are available
+   * @type {DeploymentFeaturesDto}
+   * @memberof DeploymentItemDto
+   */
+  features?: DeploymentFeaturesDto;
+  /**
    * Topics associated with this deployment from DIAL Core (e.g. ["topic1", "topic2"])
    * @type {Array<string>}
    * @memberof DeploymentItemDto
@@ -1103,6 +1201,24 @@ export interface DeploymentItemDto {
    * @memberof DeploymentItemDto
    */
   isInstalled?: boolean;
+  /**
+   * Owner of the deployment as reported by DIAL Core
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  owner?: string;
+  /**
+   * True when the deployment owner matches the current session user (computed post-cache)
+   * @type {boolean}
+   * @memberof DeploymentItemDto
+   */
+  isMy?: boolean;
+  /**
+   * Parent folder path for application-type deployments (absent for root-level or non-application items)
+   * @type {string}
+   * @memberof DeploymentItemDto
+   */
+  applicationFolder?: string;
 }
 
 /**
@@ -1128,6 +1244,12 @@ export interface DeploymentsConfigDto {
    * @memberof DeploymentsConfigDto
    */
   installed: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof DeploymentsConfigDto
+   */
+  selectedId?: string | null;
 }
 /**
  *
@@ -2157,6 +2279,19 @@ export interface UpdatePinsDto {
    * @memberof UpdatePinsDto
    */
   isPinned: boolean;
+}
+/**
+ *
+ * @export
+ * @interface UpdateSelectedDeploymentDto
+ */
+export interface UpdateSelectedDeploymentDto {
+  /**
+   * Deployment ID to set as selected, or null to clear.
+   * @type {string}
+   * @memberof UpdateSelectedDeploymentDto
+   */
+  id?: string | null;
 }
 /**
  *

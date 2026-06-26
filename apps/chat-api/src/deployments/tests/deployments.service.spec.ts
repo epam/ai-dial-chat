@@ -381,6 +381,186 @@ describe('DeploymentsService', () => {
       );
       expect(result.deployments[0].isInstalled).toBe(true);
     });
+
+    it('forwards owner when present in raw payload', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, owner: 'users/alice@example.com' }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].owner).toBe('users/alice@example.com');
+    });
+
+    it('leaves owner undefined when not in raw payload', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [mockModel],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].owner).toBeUndefined();
+    });
+
+    it('sets applicationFolder for nested application deployment', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, id: 'folder1/my-app' }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].applicationFolder).toBe('folder1');
+    });
+
+    it('sets applicationFolder for deeply nested application deployment', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockApplication, id: 'a/b/my-app' }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].applicationFolder).toBe('a/b');
+    });
+
+    it('leaves applicationFolder absent for root-level application', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [mockApplication],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].applicationFolder).toBeUndefined();
+    });
+
+    it('leaves applicationFolder absent for model deployments', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockModel, id: 'folder/gpt-4o' }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].applicationFolder).toBeUndefined();
+    });
+
+    it('leaves applicationFolder absent for toolset deployments', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [{ ...mockToolset, id: 'folder/search-tool' }],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'bucket-1',
+      );
+      expect(result.deployments[0].applicationFolder).toBeUndefined();
+    });
+
+    it('sets isMy=true when bucket appears as a path segment in id', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          {
+            ...mockApplication,
+            id: 'applications/BUCKET_HASH/my-app',
+            owner: 'Valery Dluski',
+          },
+        ],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].isMy).toBe(true);
+    });
+
+    it('sets isMy=false when bucket does not appear in id', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [
+          {
+            ...mockApplication,
+            id: 'applications/OTHER_BUCKET/their-app',
+            owner: 'Other User',
+          },
+        ],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].isMy).toBe(false);
+    });
+
+    it('sets isMy=false for root-level app whose id has no path segments matching bucket', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentsByInterfaceType.mockResolvedValue({
+        error: false,
+        response: { status: 200 },
+        data: [mockApplication],
+      });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].isMy).toBe(false);
+    });
+
+    it('re-evaluates isMy after cache hit using current bucket', async () => {
+      const cached: DeploymentItemDto[] = [
+        {
+          id: 'applications/BUCKET_HASH/my-app',
+          displayName: 'My App',
+          type: 'application',
+          isMy: false,
+        },
+      ];
+      const { service } = makeService({ cached });
+      const result = await service.listDeployments(
+        'user1',
+        'token',
+        'BUCKET_HASH',
+      );
+      expect(result.deployments[0].isMy).toBe(true);
+    });
   });
 
   describe('getDeploymentConfiguration', () => {

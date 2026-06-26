@@ -7,6 +7,8 @@ import type {
   FileMetadataResponseDto,
   FileUploadResponseDto,
   ListFilesResponseDto,
+  ListPublicFilesRequest,
+  ListSharedFilesRequest,
 } from '@epam/chat-api-client';
 import { filesApi } from './api-client';
 import {
@@ -20,6 +22,14 @@ const resolveUploadOptions = (
   options?: AbortSignal | UploadFileOptions,
 ): UploadFileOptions =>
   options instanceof AbortSignal ? { signal: options } : (options ?? {});
+
+export const listPublicFiles = (
+  params: ListPublicFilesRequest,
+): Promise<ListFilesResponseDto> => filesApi.listPublicFiles(params);
+
+export const listSharedFiles = (
+  params: ListSharedFilesRequest,
+): Promise<ListFilesResponseDto> => filesApi.listSharedFiles(params);
 
 export const listFiles = (params: {
   bucket: string;
@@ -36,14 +46,18 @@ export const uploadFile = (
   file: File,
   options?: AbortSignal | UploadFileOptions,
 ): Promise<FileUploadResponseDto> => {
-  const { signal, onProgress } = resolveUploadOptions(options);
+  const { signal, onProgress, uploadMode } = resolveUploadOptions(options);
 
   if (onProgress != null) {
-    return uploadFileWithProgress(bucket, path, file, { signal, onProgress });
+    return uploadFileWithProgress(bucket, path, file, {
+      signal,
+      onProgress,
+      uploadMode,
+    });
   }
 
   return filesApi.uploadFile(
-    { bucket, path, file },
+    { bucket, path, file, uploadMode },
     signal ? { signal } : undefined,
   );
 };

@@ -43,13 +43,13 @@ export class UserConfigService extends AppService {
             ...DEFAULT_USER_CONFIG,
             conversations: { pinnedIds: [] },
             toolsets: { installed: [] },
-            deployments: { installed: [] },
+            deployments: { installed: [], selectedId: null },
           };
         }
       }
 
       const { config: merged, changed } =
-        await this.consolidateLegacyInstallationFiles(config, token, bucket);
+        await this.consolidateLegacyInstallationFiles(config!, token, bucket);
 
       if (changed) {
         await this.writeConfig(merged, token, bucket);
@@ -62,7 +62,7 @@ export class UserConfigService extends AppService {
         ...DEFAULT_USER_CONFIG,
         conversations: { pinnedIds: [] },
         toolsets: { installed: [] },
-        deployments: { installed: [] },
+        deployments: { installed: [], selectedId: null },
       };
     }
   }
@@ -166,7 +166,10 @@ export class UserConfigService extends AppService {
         );
 
         if (merged !== current[section].installed) {
-          current = { ...current, [section]: { installed: merged } };
+          current = {
+            ...current,
+            [section]: { ...current[section], installed: merged },
+          };
           changed = true;
         }
       } catch {
@@ -322,6 +325,23 @@ export class UserConfigService extends AppService {
       'deployments',
       id,
       isInstalled,
+      token,
+      bucket,
+    );
+  }
+
+  async updateSelectedDeployment(
+    id: string | null,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    const config = await this.readConfig(token, bucket);
+    await this.writeConfig(
+      {
+        ...config,
+        version: CURRENT_CONFIG_VERSION,
+        deployments: { ...config.deployments, selectedId: id },
+      },
       token,
       bucket,
     );

@@ -23,14 +23,108 @@ Review every non-trivial change before it lands on the main line. Use **five axe
 
 Choose the review mode from the user's request and available context:
 
-| Mode                | Use when                            | Required context                                                                |
-| ------------------- | ----------------------------------- | ------------------------------------------------------------------------------- |
-| **Local review**    | Reviewing uncommitted local changes | `git status`, `git diff`, full changed files, related OpenSpec artifacts if any |
-| **PR review**       | Reviewing a GitHub PR number or URL | PR metadata, PR diff, full changed files at PR head, related OpenSpec artifacts |
-| **Self-review**     | Finishing an implementation slice   | Touched files, completed task, tests run, remaining task status                 |
-| **OpenSpec review** | Reviewing an OpenSpec-backed change | `proposal.md`, `design.md`, `tasks.md`, changed specs, implementation diff      |
+| Mode                | Use when                            | Required context                                                                               |
+| ------------------- | ----------------------------------- | ---------------------------------------------------------------------------------------------- |
+| **Local review**    | Reviewing uncommitted local changes | `git status`, `git diff`, full changed files, related OpenSpec artifacts if any                |
+| **PR review**       | Reviewing a GitHub PR number or URL | PR metadata, PR diff, full changed files at PR head, related OpenSpec artifacts                |
+| **Self-review**     | Finishing an implementation slice   | Touched files, completed task, tests run, remaining task status                                |
+| **OpenSpec review** | Reviewing an OpenSpec-backed change | `proposal.md`, `design.md`, `tasks.md`, changed specs, implementation diff                     |
+| **Pipeline review** | CI/bot review of a PR diff          | Base/head refs, PR diff, full changed files, related OpenSpec artifacts, relevant check output |
 
 For PR review, read full changed files, not only diff hunks. Diffs show what changed; full files show whether the change fits the surrounding design.
+
+## Pipeline review mode
+
+Use this mode when the review is executed by CI, a scheduled bot, or any non-interactive automation. Keep the normal five-axis review, but make the result deterministic and machine-readable.
+
+### Scope
+
+- Review only the PR/diff scope. Do not fail the pipeline for pre-existing issues unless the PR worsens them or makes them newly reachable.
+- Read full changed files and related artifacts for context, but comments/findings must point to changed lines or changed artifacts whenever possible.
+- Separate review from publishing:
+  - Review step produces a structured result artifact.
+  - Comment-publishing step may post inline comments and one top-level summary, but only from the structured result.
+
+### Output artifact
+
+Emit a JSON object with this shape:
+
+```json
+{
+  "verdict": "pass | warn | fail",
+  "summary": "Short human-readable summary.",
+  "findings": [
+    {
+      "severity": "critical | required | warning | nit | optional | fyi",
+      "category": "correctness | readability | architecture | security | performance | responsive | openspec | verification",
+      "file": "path/from/repo/root",
+      "line": 123,
+      "side": "RIGHT | LEFT",
+      "startLine": null,
+      "startSide": null,
+      "anchorable": true,
+      "message": "Review comment body.",
+      "blocking": true
+    }
+  ],
+  "verification": [
+    {
+      "command": "npm exec nx test @epam/chat",
+      "status": "passed | failed | skipped",
+      "reason": "Only for failed/skipped or notable context."
+    }
+  ],
+  "topLevelComment": "Markdown summary suitable for a PR conversation comment."
+}
+```
+
+Use `verdict: "fail"` when any finding is blocking or a required verification command failed. Use `verdict: "warn"` only for non-blocking risks or skipped verification. Use `verdict: "pass"` when there are no blocking findings and required verification is green or explicitly covered by trusted CI.
+
+`file`, `line`, `side`, `startLine`, and `startSide` are intended to be compatible with GitHub pull request review comments. Use `side: "RIGHT"` for new/head lines and `side: "LEFT"` only when the finding must anchor to a removed/base line. Use `startLine`/`startSide` only for multi-line comments; otherwise set them to `null`.
+
+Set `anchorable: true` only when the finding points to a line present in the PR diff. If the issue is real but cannot be anchored to a changed line, set `anchorable: false`, keep `file`/`line` as best-effort context if known, and include the finding in `topLevelComment` instead of attempting an inline comment.
+
+### Pipeline fail rules
+
+Fail the pipeline for:
+
+- Any `critical` or `required` finding.
+- Relevant Nx target failure.
+- OpenSpec drift: implementation materially diverges from proposal/design/tasks/specs.
+- API/OpenAPI/generated-client contract mismatch.
+- Hand-authored `libs/*` leaking host/external integration details.
+- Security, authz, secret exposure, data loss, or broken public contract risks.
+
+Do not fail the pipeline for `nit`, `optional`, or `fyi` findings. Use `warning` for non-blocking risk, missing non-critical evidence, or human-follow-up items.
+
+Simplification and extraction findings usually use `nit` or `optional`. Use `warning` only when duplication or missing extraction creates meaningful maintenance risk, repeated bug-prone logic, expensive test setup, or an ownership-boundary concern. Use `required` only when the structure causes a concrete defect, violates library isolation, or breaks a documented architecture rule.
+
+### Comment publishing
+
+If a pipeline job is configured to publish comments:
+
+- Post inline comments only for `critical`, `required`, and high-signal `warning` findings with `anchorable: true`.
+- Do not post inline comments for `nit` by default unless explicitly configured.
+- Do not attempt inline comments for findings with `anchorable: false`; summarize them in the top-level PR comment.
+- Always post one top-level PR conversation comment.
+- If everything is good, post a concise positive summary instead of staying silent, for example:
+
+```markdown
+Automated review passed.
+
+- No blocking findings.
+- Verification: `npm exec nx affected --target=test --base=origin/development-1.0` passed.
+- Scope checked: correctness, architecture boundaries, security, performance, responsive parity, and OpenSpec alignment.
+```
+
+If there are findings, the top-level comment must summarize the verdict, count blocking/non-blocking findings, and list verification status. Inline comments carry the detailed code-specific feedback.
+
+GitHub publishing step requirements:
+
+- Add the PR head SHA as `commit_id` at publish time; do not require the review agent to hardcode it into findings.
+- For individual inline comments, use GitHub's pull request review comment API with `path`, `line`, `side`, optional `start_line`/`start_side`, `body`, and `commit_id`.
+- If the API rejects an inline comment because the line is not in the diff, retry once as a top-level PR comment entry and mark the finding as not anchored in the publishing log.
+- For the top-level summary, use a PR conversation comment or a review body, depending on the CI integration.
 
 ## OpenSpec review gate
 
@@ -65,6 +159,9 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 - Names are specific; avoid meaningless `data`, `result`, `temp`
 - Control flow is easy to follow; avoid unnecessary cleverness
 - Abstractions **earn** their complexity; prefer duplication over wrong abstraction until patterns repeat
+- Flag simplification opportunities: repeated logic, deeply nested code, broad functions, or verbose conditionals that would become clearer as a focused helper, hook, component, utility, or method.
+- Recommend extracting reusable utilities, hooks, components, or methods when the same behavior appears in multiple places, when a local helper would clarify a complex block, or when nearby features are likely to reuse the behavior.
+- Do not request extraction just because code could be abstracted; require a concrete readability, testability, reuse, or ownership-boundary benefit.
 - Comments only where intent is non-obvious; remove dead code and noise
 
 ### 3. Architecture
@@ -75,6 +172,7 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 - Host/external integrations are adapted at the app edge and passed into libs through props, callbacks, resolved values, or narrow interfaces
 - No unjustified new patterns; justified new ones are called out
 - No sneaky circular deps or leaky module APIs
+- Reusable helpers live at the right ownership level: app-specific helpers stay in `apps/*`, host-agnostic helpers/components may move to `libs/*`, and shared types stay in `libs/chat-shared`
 - Relative `.ts`/`.tsx` imports and re-exports omit `.js`, `.jsx`, `.ts`, and `.tsx`; Vite projects use bundler resolution rather than Node ESM source specifiers
 - Named finite sets of statuses, modes, variants, or lifecycle states use string enums instead of string-literal unions when exported, reused, or compared
 - Duplication: only consolidate when the rule of three (or team norm) says so
@@ -94,7 +192,7 @@ Block merge for OpenSpec-backed work when code behavior materially diverges from
 
 ### 6. Responsive parity
 
-- UI changes use the project's named breakpoint prefixes (`mobile:` / `small_tablet:` / `large_tablet:` / `desktop:` / `large_desktop:`), not `sm:`/`md:`/`lg:` defaults or arbitrary `min-[…]:` queries
+- UI changes use the project's named breakpoint prefixes (`mobile:` / `desktop:`), not nonexistent `small_tablet:`/`large_tablet:`/`large_desktop:`, Tailwind defaults such as `sm:`/`md:`/`lg:`, or arbitrary `min-[…]:` queries
 - Authoring style is mobile-first — base classes describe the smallest supported viewport, larger bands are added via the named prefixes
 - Components that branch in JS use `useBreakpoint` / `useIsMobile` from `apps/chat/src/hooks/breakpoint/useBreakpoint.ts`, not direct `window.innerWidth` reads
 - Touch targets meet ~44×44 CSS px on mobile; no `:hover`-only affordances; no horizontal scroll at 360px
@@ -108,7 +206,7 @@ Use the repository skills and rules as the source of truth before applying gener
 | Change area                            | Read / apply                                                                                                                       |
 | -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
 | Workspace structure, project ownership | `openspec/config.yaml`, `AGENTS.md`, `.agents/skills/nx-workspace/SKILL.md`                                                        |
-| Multi-file implementation or refactor  | `.claude/skills/incremental-implementation/SKILL.md`                                                                               |
+| Multi-file implementation or refactor  | thin vertical slices + per-slice verify (`openspec/config.yaml` task rules)                                                        |
 | HTTP API contract or generated client  | `.agents/skills/api-design/SKILL.md`                                                                                               |
 | `apps/chat-api/**`                     | `.agents/skills/nestjs-chat-api/SKILL.md` and `apps/chat-api/AGENTS.md`                                                            |
 | `libs/*` React components              | `openspec/config.yaml`, library isolation rules from `AGENTS.md`, `openspec/lib-styling-guide.md` plus exported-symbol JSDoc rules |
@@ -124,6 +222,8 @@ Use these as cross-cutting checks after applying repo-specific rules:
 
 - Prefer clear, specific names over generic `data`, `result`, `temp`, `item` when the domain is known.
 - Keep control flow shallow with early returns or extracted helpers when nesting hides the main path.
+- When new code repeats behavior across files or components, call out whether it should become a reusable utility, hook, component, or method. Keep the suggested location consistent with ownership boundaries.
+- When a single function grows to mix several responsibilities, suggest extracting the smallest named helper that makes the main path easier to read and test.
 - Avoid functions that mix validation, IO, transformation, and presentation unless the surrounding pattern already does so.
 - Avoid magic numbers; name domain thresholds, debounce delays, limits, and TTLs.
 - Avoid mutation of shared state. Local mutation is acceptable only when contained, intentional, and clearer or measurably faster.
@@ -151,9 +251,12 @@ Use a prefix so authors know what is mandatory:
 | ----------------------------- | --------------------------------------------------- |
 | _(none)_ or **Required:**     | Must fix before merge                               |
 | **Critical:**                 | Blocks merge — security, data loss, broken contract |
+| **Warning:**                  | Non-blocking risk or missing non-critical evidence  |
 | **Nit:**                      | Optional — style, minor preference                  |
 | **Optional:** / **Consider:** | Worth discussing, not blocking                      |
 | **FYI:**                      | Context only                                        |
+
+In pipeline JSON, use lowercase severity values: `critical`, `required`, `warning`, `nit`, `optional`, `fyi`.
 
 ## Review process
 
@@ -169,23 +272,23 @@ Use a prefix so authors know what is mandatory:
 
 When checking "tests / build / lint":
 
-- Prefer `npx nx test <project>`, `npx nx lint <project>`, `npx nx build <project>` for touched projects (see `openspec/config.yaml` and `AGENTS.md`).
-- For broad checks, use affected targets with the repository base branch: `npx nx affected --target=<target> --base=origin/development-1.0`.
+- Prefer `npm exec nx test <project>`, `npm exec nx lint <project>`, `npm exec nx build <project>` for touched projects (see `openspec/config.yaml` and `AGENTS.md`).
+- For broad checks, use affected targets with the repository base branch: `npm exec nx affected --target=<target> --base=origin/development-1.0`.
 - Do not use `origin/main` as the affected base in this workspace.
-- When unsure which project owns a path, use `npx nx show projects` or `npx nx show project <name> --json`.
+- When unsure which project owns a path, use `npm exec nx show projects` or `npm exec nx show project <name> --json`.
 
 ## Validation matrix
 
 Select the smallest validation set that proves the change:
 
-| Change type                | Expected validation                                                                                                           |
-| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Frontend component / hook  | `npx nx test chat`, `npx nx lint chat`; build if route/bundling/shared imports changed                                        |
-| Backend `apps/chat-api/**` | `npx nx test chat-api`, `npx nx lint chat-api`, `npx nx build chat-api` when startup/module/config wiring changed             |
-| HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npx nx build chat-api-client`, `npx nx lint chat-api-client` |
-| Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                   |
-| Broad cross-project change | `npx nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                  |
-| CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context                                                        |
+| Change type                | Expected validation                                                                                                                     |
+| -------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Frontend component / hook  | `npm exec nx test chat`, `npm exec nx lint chat`; build if route/bundling/shared imports changed                                        |
+| Backend `apps/chat-api/**` | `npm exec nx test chat-api`, `npm exec nx lint chat-api`, `npm exec nx build chat-api` when startup/module/config wiring changed        |
+| HTTP API contract          | Backend checks plus `npm run openapi`, `npm run openapi:check`, `npm exec nx build chat-api-client`, `npm exec nx lint chat-api-client` |
+| Shared lib                 | Test/lint/build for the touched lib and any directly affected app when behavior is consumed                                             |
+| Broad cross-project change | `npm exec nx affected --target=lint --base=origin/development-1.0` and affected test/build targets as appropriate                       |
+| CI-only review             | Prefer `monitor-ci` skill for Nx Cloud status and self-healing context                                                                  |
 
 Record skipped checks with a reason. A review without a verification story is incomplete.
 
@@ -200,6 +303,12 @@ Use a clear verdict:
 | **Request changes** | Required issues, failing relevant checks, missing tests for risky behavior, OpenSpec drift  |
 | **Block**           | Security issue, data loss risk, broken public contract, secrets exposure, invalid auth flow |
 | **Comment only**    | Draft PR, exploratory review, or user explicitly asked for non-blocking feedback            |
+
+For pipeline JSON, map these to `pass`, `warn`, or `fail`:
+
+- `pass`: equivalent to Approve.
+- `warn`: equivalent to Approve/comment or Comment only with non-blocking findings.
+- `fail`: equivalent to Request changes or Block.
 
 ## Commit / PR description
 

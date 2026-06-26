@@ -12,6 +12,15 @@ alwaysApply: false
 - **Never** write ternary-in-ternary (nested conditional expressions). Use `if`/`else` blocks, early returns, or a `switch` statement instead.
 - Prefer `async`/`await` with `try`/`catch`/`finally` over Promise chains with `.then()`/`.catch()`; use async dynamic imports for `React.lazy` wrappers too.
 - Prefer arrow-function constants over `function` declarations for local helpers and exported functions.
+
+```ts
+// Correct
+const formatDate = (date: Date): string => { ... };
+
+// Wrong
+function formatDate(date: Date): string { ... }
+```
+
 - Use the `void` operator before Promise-returning calls only for intentional fire-and-forget work where errors are handled internally. Do not add it as a routine prefix for local async helpers.
 - Prefer `value == null` over `value === null || value === undefined`, and `value != null` over `value !== null && value !== undefined`, unless you must distinguish `null` from `undefined` explicitly.
 
@@ -76,3 +85,11 @@ isOpen, isLoading, hasError, canSend, shouldRedirect
 // Wrong
 open, loading, error as boolean, send, redirect
 ```
+
+## i18n translation keys
+
+In app TypeScript code, never pass a raw string literal translation key to
+`t()`. Every translation key must be declared in the appropriate string enum
+in `apps/chat/src/constants/translation-keys.ts` and referenced through that
+enum (for example, `t(DialFileManagerI18nKeys.ConflictReplace)`). When adding a
+key to a locale JSON file, add the matching enum member in the same change.

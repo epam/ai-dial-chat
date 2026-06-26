@@ -1,0 +1,146 @@
+import type { ClientConfigResponseDto } from '@epam/chat-api-client';
+import { act, renderHook, waitFor } from '@testing-library/react';
+import React from 'react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import * as appConfigApi from '../../server-api/app-config.api';
+import { UserConfigStatus } from '../../types/user-config-status';
+import AppConfigProvider, {
+  useAppConfig,
+  useFeatureFlag,
+} from '../AppConfigContext';
+
+vi.mock('../../server-api/app-config.api');
+vi.mock('../auth/UserContext', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../auth/UserContext')>();
+  return {
+    ...actual,
+    useUser: () => ({
+      user: null,
+      status: 'authenticated',
+      refresh: vi.fn(),
+      reset: vi.fn(),
+    }),
+  };
+});
+
+const mockGetClientConfig = vi.mocked(appConfigApi.getClientConfig);
+
+const READY_RESPONSE = {
+  appId: 'chat-ui',
+  features: { asrEnabled: true },
+  config: { asrModelId: 'whisper-1', transcribeSizeLimitBytes: 10_485_760 },
+  metadata: { resolvedAt: '2026-06-22T00:00:00.000Z', cacheTtlSeconds: 60 },
+} as unknown as ClientConfigResponseDto;
+
+const wrapper = ({ children }: { children: React.ReactNode }) =>
+  React.createElement(AppConfigProvider, null, children);
+
+describe('AppConfigContext', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('starts in loading state', () => {
+    mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+    expect(result.current.status).toBe(UserConfigStatus.Loading);
+  });
+
+  it('transitions to ready after successful API call', async () => {
+    mockGetClientConfig.mockResolvedValue(READY_RESPONSE);
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Ready),
+    );
+
+    expect(result.current.features['asrEnabled']).toBe(true);
+    expect(result.current.config.asrModelId).toBe('whisper-1');
+  });
+
+  it('transitions to error after API call failure', async () => {
+    mockGetClientConfig.mockRejectedValue(new Error('network error'));
+    const { result } = renderHook(() => useAppConfig(), { wrapper });
+
+    await waitFor(() =>
+      expect(result.current.status).toBe(UserConfigStatus.Error),
+    );
+
+    expect(result.current.config.asrModelId).toBeNull();
+    expect(result.current.config.transcribeSizeLimitBytes).toBe(
+      5 * 1024 * 1024,
+    );
+  });
+
+  describe('useFeatureFlag', () => {
+    it('returns false while loading', () => {
+      mockGetClientConfig.mockReturnValue(new Promise(() => undefined));
+      const { result } = renderHook(
+        () => useFeatureFlag('features.asrEnabled'),
+        { wrapper },
+      );
+      expect(result.current).toBe(false);
+    });
+
+    it('returns true when feature is enabled and ready', async () => {
+      mockGetClientConfig.mockResolvedValue(READY_RESPONSE);
+      const { result } = renderHook(() => useFeatureFlag('asrEnabled'), {
+        wrapper,
+      });
+
+      await waitFor(() => expect(result.current).toBe(true));
+    });
+
+    it('returns false for unknown feature key even when ready', async () => {
+      mockGetClientConfig.mockResolvedValue(READY_RESPONSE);
+      const { result } = renderHook(() => useFeatureFlag('unknownFeature'), {
+        wrapper,
+      });
+
+      await waitFor(() =>
+        expect(vi.mocked(appConfigApi.getClientConfig)).toHaveBeenCalledOnce(),
+      );
+      expect(result.current).toBe(false);
+    });
+  });
+
+  describe('useAppConfig outside provider', () => {
+    it('throws when used outside AppConfigProvider', () => {
+      expect(() => renderHook(() => useAppConfig())).toThrow(
+        'useAppConfig must be used within AppConfigProvider',
+      );
+    });
+  });
+
+  describe('cancellation on unmount', () => {
+    it('aborts the request and does not update state after unmount', async () => {
+      let resolvePromise!: (value: typeof READY_RESPONSE) => void;
+      const promise = new Promise<typeof READY_RESPONSE>((res) => {
+        resolvePromise = res;
+      });
+      mockGetClientConfig.mockReturnValue(promise);
+
+      const { result, unmount } = renderHook(() => useAppConfig(), { wrapper });
+      expect(result.current.status).toBe(UserConfigStatus.Loading);
+      const signal = mockGetClientConfig.mock.calls[0]?.[0];
+      expect(signal).toBeInstanceOf(AbortSignal);
+      expect(signal?.aborted).toBe(false);
+
+      unmount();
+      expect(signal?.aborted).toBe(true);
+
+      // Resolve after unmount — should not cause a state update
+      await act(async () => {
+        resolvePromise(READY_RESPONSE);
+        await promise;
+      });
+
+      // Status should still be loading because the provider was unmounted.
+      expect(result.current.status).toBe(UserConfigStatus.Loading);
+    });
+  });
+});

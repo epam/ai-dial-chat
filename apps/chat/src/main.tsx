@@ -1,4 +1,7 @@
+import { AttachmentCanvasProvider } from '@epam/ai-dial-attachment-canvas';
 import '@epam/ai-dial-ui-kit/styles.css';
+import '@epam/ai-dial-react-pdf-highlighter/styles.css';
+import '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css';
 import { lazy, StrictMode, Suspense } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
@@ -31,29 +34,31 @@ root.render(
           <NotificationContainer />
           <UserProvider>
             <ThemeProvider>
-              <DeploymentsProvider>
+              <AppConfigProvider>
                 <SourcesSidebarProvider>
-                  <Suspense fallback={null}>
-                    <Routes>
-                      <Route path="/login" element={<LoginPage />} />
-                      <Route
-                        path="*"
-                        element={
-                          <RequireAuth>
-                            <UserConfigProvider>
-                              <AppConfigProvider>
-                                <ConversationsProvider>
-                                  <App />
-                                </ConversationsProvider>
-                              </AppConfigProvider>
-                            </UserConfigProvider>
-                          </RequireAuth>
-                        }
-                      />
-                    </Routes>
-                  </Suspense>
+                  <AttachmentCanvasProvider>
+                    <Suspense fallback={null}>
+                      <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+                        <Route
+                          path="*"
+                          element={
+                            <RequireAuth>
+                              <UserConfigProvider>
+                                <DeploymentsProvider>
+                                  <ConversationsProvider>
+                                    <App />
+                                  </ConversationsProvider>
+                                </DeploymentsProvider>
+                              </UserConfigProvider>
+                            </RequireAuth>
+                          }
+                        />
+                      </Routes>
+                    </Suspense>
+                  </AttachmentCanvasProvider>
                 </SourcesSidebarProvider>
-              </DeploymentsProvider>
+              </AppConfigProvider>
             </ThemeProvider>
           </UserProvider>
         </NotificationProvider>

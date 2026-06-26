@@ -91,9 +91,9 @@ describe('MessageBubble', () => {
     expect(innerClassName).not.toContain('rounded-br-[24px]');
   });
 
-  it('renders default user actions when no actions prop is given', () => {
+  it('renders no action buttons when no actions prop is given (read-only)', () => {
     render(<MessageBubble text="msg" role={MessageRole.User} />);
-    expect(screen.getByRole('button', { name: 'Edit message' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Edit message' })).toBeNull();
   });
 
   it('renders user actions from actions prop', () => {
@@ -101,7 +101,7 @@ describe('MessageBubble', () => {
       <MessageBubble
         text="msg"
         role={MessageRole.User}
-        actions={{ role: MessageRole.User }}
+        actions={{ role: MessageRole.User, onEdit: vi.fn() }}
       />,
     );
     expect(screen.getByRole('button', { name: 'Edit message' })).toBeTruthy();
@@ -147,7 +147,7 @@ describe('MessageBubble', () => {
     expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
   });
 
-  it('does not pass onAttachmentClick to assistant bubble', () => {
+  it('forwards onAttachmentClick and attachmentClickLabel to assistant bubble', () => {
     const onAttachmentClick = vi.fn();
     render(
       <MessageBubble
@@ -158,8 +158,8 @@ describe('MessageBubble', () => {
         attachmentClickLabel="Download file"
       />,
     );
-    // assistant tray has no clickable cards
-    expect(screen.queryByLabelText('Download file')).toBeNull();
+    fireEvent.click(screen.getByLabelText('Download file'));
+    expect(onAttachmentClick).toHaveBeenCalledWith(ATTACHMENT);
   });
 });
 

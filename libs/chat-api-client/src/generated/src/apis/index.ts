@@ -1,9 +1,9 @@
 /* tslint:disable */
 /* eslint-disable */
+export * from './AppConfigApi';
 export * from './ApplicationsApi';
 export * from './AuthApi';
 export * from './ChatApi';
-export * from './ConfigApi';
 export * from './ConversationsApi';
 export * from './DeploymentsApi';
 export * from './FilesApi';

@@ -9,5 +9,3 @@ const summarizeNames = (
     .join(', ') || '(none)';
 
 export const summarizeDialRawItems = summarizeNames;
-
-export const summarizeListFilesItems = summarizeNames;

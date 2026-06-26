@@ -1,0 +1,74 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DialSkeleton } from '@epam/ai-dial-ui-kit';
+import { FC, useMemo } from 'react';
+import { CatalogItem } from '../../../models/catalog-item';
+import type { ItemDetailsStyles } from '../../../models/item-details-props';
+import type { AboutRun } from '../../../utils/parse-about-content';
+import { parseAboutContent } from '../../../utils/parse-about-content';
+
+interface AboutRunViewProps {
+  run: AboutRun;
+  contentClassName: string;
+}
+
+const AboutRunView: FC<AboutRunViewProps> = ({ run, contentClassName }) => {
+  if (run.kind === 'bullets') {
+    return (
+      <ul className="m-0 flex list-none flex-col gap-1 ps-0">
+        {run.items.map((text, i) => (
+          <li key={i} className={mergeClasses('flex gap-2', contentClassName)}>
+            <span aria-hidden="true">•</span>
+            <span>{text}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+  return <p className={mergeClasses('m-0', contentClassName)}>{run.text}</p>;
+};
+
+interface AboutTabProps {
+  item: CatalogItem;
+  aboutContent?: string;
+  isAboutLoading?: boolean;
+  detailsStyles?: ItemDetailsStyles;
+}
+
+/** Right-side slide-in panel displaying full details for a catalog item. */
+export const AboutTab: FC<AboutTabProps> = ({
+  item,
+  aboutContent,
+  isAboutLoading = false,
+  detailsStyles,
+}) => {
+  const {
+    contentHeadingClassName = 'dial-small-semi-text',
+    contentClassName = 'dial-small-text',
+  } = detailsStyles?.typography ?? {};
+
+  const parsedAboutBlocks = useMemo(
+    () => parseAboutContent(aboutContent ?? item.description),
+    [aboutContent, item.description],
+  );
+
+  return isAboutLoading && aboutContent == null ? (
+    <DialSkeleton showTitle={false} paragraph={{ rows: 8 }} />
+  ) : (
+    <div className="flex flex-col gap-5">
+      {parsedAboutBlocks.map((block, blockIdx) => (
+        <div key={blockIdx} className="flex flex-col gap-2">
+          {block.heading != null && (
+            <span className={contentHeadingClassName}>{block.heading}</span>
+          )}
+          {block.runs.map((run, runIdx) => (
+            <AboutRunView
+              key={runIdx}
+              run={run}
+              contentClassName={contentClassName}
+            />
+          ))}
+        </div>
+      ))}
+    </div>
+  );
+};

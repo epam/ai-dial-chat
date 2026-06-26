@@ -46,14 +46,8 @@ export interface CatalogTypography {
    * When provided, individual font CSS vars are ignored in favour of this class.
    */
   pageHeadingFontClassName?: string;
-  /** Typography class applied to section headings (Browse, Favorites). Defaults to `'dial-body-semi-text'`. */
-  sectionHeadingClassName?: string;
-  /** Typography class applied to "no results" title. Defaults to `'dial-body-semi-text'`. */
-  noResultsTitleClassName?: string;
-  /** Typography class applied to "no results" description. Defaults to `'dial-small-text'`. */
-  noResultsDescriptionClassName?: string;
-  /** Typography class applied to tab result-count numbers. Defaults to `'dial-tiny-text'`. */
-  tabCountClassName?: string;
+  /** Typography class applied to tab text. Defaults to `'dial-body-text'`. */
+  tabClassName?: string;
 }
 
 /**

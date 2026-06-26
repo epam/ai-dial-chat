@@ -1,6 +1,7 @@
 import { ConfigService } from '@nestjs/config';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { handleDialError } from '../../common/utils/dial-error';
+import type { EnvironmentVariables } from '../../config/environment.config';
 import {
   DEFAULT_USER_CONFIG,
   UserConfig,
@@ -19,7 +20,7 @@ const makeConfigService = () =>
       if (key === 'DIAL_API_KEY') return 'test-api-key';
       return undefined;
     }),
-  }) as unknown as ConfigService;
+  }) as unknown as ConfigService<EnvironmentVariables>;
 
 const makeDownloadSpy = (
   service: UserConfigService,
@@ -91,52 +92,73 @@ const v2Config = (overrides?: Partial<UserConfig>): UserConfig => ({
   version: 2,
   conversations: { pinnedIds: [] },
   toolsets: { installed: [] },
-  deployments: { installed: [] },
+  deployments: { installed: [], selectedId: null },
+  ...overrides,
+});
+
+const v3Config = (overrides?: Partial<UserConfig>): UserConfig => ({
+  version: 3,
+  conversations: { pinnedIds: [] },
+  toolsets: { installed: [] },
+  deployments: { installed: [], selectedId: null },
   ...overrides,
 });
 
 describe('migrateConfig', () => {
-  it('returns default v2 config for null input', () => {
+  it('returns default v3 config for null input', () => {
     expect(migrateConfig(null)).toEqual(DEFAULT_USER_CONFIG);
   });
 
-  it('returns default v2 config for non-object input', () => {
+  it('returns default v3 config for non-object input', () => {
     expect(migrateConfig('string')).toEqual(DEFAULT_USER_CONFIG);
     expect(migrateConfig(42)).toEqual(DEFAULT_USER_CONFIG);
   });
 
-  it('lifts v1 flat shape into v2', () => {
+  it('lifts v1 flat shape into v3 with selectedId null', () => {
     const v1 = { version: 1, pinnedConversationIds: ['conv-1', 'conv-2'] };
     expect(migrateConfig(v1)).toEqual({
-      version: 2,
+      version: 3,
       conversations: { pinnedIds: ['conv-1', 'conv-2'] },
       toolsets: { installed: [] },
-      deployments: { installed: [] },
+      deployments: { installed: [], selectedId: null },
     });
   });
 
   it('lifts v1 shape without version field', () => {
     const v1 = { pinnedConversationIds: ['conv-1'] };
     expect(migrateConfig(v1)).toEqual({
-      version: 2,
+      version: 3,
       conversations: { pinnedIds: ['conv-1'] },
       toolsets: { installed: [] },
-      deployments: { installed: [] },
+      deployments: { installed: [], selectedId: null },
     });
   });
 
-  it('filters non-string entries in pinnedConversationIds during v1→v2 lift', () => {
+  it('filters non-string entries in pinnedConversationIds during v1→v3 lift', () => {
     const v1 = { pinnedConversationIds: ['valid', 42, null, 'also-valid'] };
     const result = migrateConfig(v1);
     expect(result.conversations.pinnedIds).toEqual(['valid', 'also-valid']);
   });
 
-  it('passes through v2 shape unchanged', () => {
+  it('migrates v2 shape to v3 adding selectedId null', () => {
     const stored = v2Config({ conversations: { pinnedIds: ['conv-1'] } });
+    expect(migrateConfig(stored)).toEqual({
+      version: 3,
+      conversations: { pinnedIds: ['conv-1'] },
+      toolsets: { installed: [] },
+      deployments: { installed: [], selectedId: null },
+    });
+  });
+
+  it('passes through v3 shape with selectedId preserved', () => {
+    const stored = v3Config({
+      conversations: { pinnedIds: ['conv-1'] },
+      deployments: { installed: ['dep-a'], selectedId: 'gpt-4o' },
+    });
     expect(migrateConfig(stored)).toEqual(stored);
   });
 
-  it('sanitises non-string entries in v2 arrays', () => {
+  it('sanitises non-string entries in v2 arrays and migrates to v3', () => {
     const corrupt = {
       version: 2,
       conversations: { pinnedIds: ['valid', 42, null] },
@@ -145,6 +167,8 @@ describe('migrateConfig', () => {
     };
     const result = migrateConfig(corrupt);
     expect(result.conversations.pinnedIds).toEqual(['valid']);
+    expect(result.version).toBe(3);
+    expect(result.deployments.selectedId).toBeNull();
   });
 
   it('fills missing sections with empty arrays for v2+ shape', () => {
@@ -152,6 +176,7 @@ describe('migrateConfig', () => {
     const result = migrateConfig(partial);
     expect(result.toolsets.installed).toEqual([]);
     expect(result.deployments.installed).toEqual([]);
+    expect(result.deployments.selectedId).toBeNull();
   });
 });
 
@@ -164,7 +189,7 @@ describe('UserConfigService', () => {
   });
 
   describe('readConfig', () => {
-    it('returns default v2 config when both paths return non-ok', async () => {
+    it('returns default v3 config when both paths return non-ok', async () => {
       vi.spyOn(service['client'], 'downloadFile').mockResolvedValue({
         response: { ok: false, text: async () => '' },
       } as never);
@@ -173,7 +198,7 @@ describe('UserConfigService', () => {
       expect(result).toEqual(DEFAULT_USER_CONFIG);
     });
 
-    it('returns parsed v2 config from new path', async () => {
+    it('migrates stored v2 config to v3 when reading from new path', async () => {
       const stored = v2Config({ conversations: { pinnedIds: ['conv-1'] } });
       makeDownloadSpy(service, [
         {
@@ -185,7 +210,9 @@ describe('UserConfigService', () => {
         { path: 'clientdata/installed_deployments.json', ok: false },
       ]);
       const result = await service.readConfig('token', 'bucket');
-      expect(result).toEqual(stored);
+      expect(result).toEqual(
+        v3Config({ conversations: { pinnedIds: ['conv-1'] } }),
+      );
     });
 
     it('falls back to legacy path when new path returns non-ok', async () => {
@@ -201,7 +228,7 @@ describe('UserConfigService', () => {
 
       const result = await service.readConfig('token', 'bucket');
       expect(result.conversations.pinnedIds).toEqual(['conv-1']);
-      expect(result.version).toBe(2);
+      expect(result.version).toBe(3);
       expect(uploadSpy).toHaveBeenCalled();
     });
 
@@ -815,6 +842,50 @@ describe('UserConfigService', () => {
       );
       const uploaded = await getUploadedConfig(uploadSpy);
       expect((uploaded as UserConfig).deployments.installed).toHaveLength(0);
+    });
+  });
+
+  describe('updateSelectedDeployment', () => {
+    it('sets selectedId to the given id', async () => {
+      makeSingleDownloadSpy(service, {
+        ok: true,
+        body: JSON.stringify(v3Config()),
+      });
+      const uploadSpy = makeUploadSpy(service);
+      await service.updateSelectedDeployment('gpt-4o', 'token', 'bucket');
+      const uploaded = await getUploadedConfig(uploadSpy);
+      expect((uploaded as UserConfig).deployments.selectedId).toBe('gpt-4o');
+    });
+
+    it('sets selectedId to null when id is null', async () => {
+      makeSingleDownloadSpy(service, {
+        ok: true,
+        body: JSON.stringify(
+          v3Config({ deployments: { installed: [], selectedId: 'old-dep' } }),
+        ),
+      });
+      const uploadSpy = makeUploadSpy(service);
+      await service.updateSelectedDeployment(null, 'token', 'bucket');
+      const uploaded = await getUploadedConfig(uploadSpy);
+      expect((uploaded as UserConfig).deployments.selectedId).toBeNull();
+    });
+
+    it('preserves deployments.installed when updating selectedId', async () => {
+      makeSingleDownloadSpy(service, {
+        ok: true,
+        body: JSON.stringify(
+          v3Config({
+            deployments: { installed: ['dep-a', 'dep-b'], selectedId: null },
+          }),
+        ),
+      });
+      const uploadSpy = makeUploadSpy(service);
+      await service.updateSelectedDeployment('dep-a', 'token', 'bucket');
+      const uploaded = await getUploadedConfig(uploadSpy);
+      expect((uploaded as UserConfig).deployments.installed).toEqual([
+        'dep-a',
+        'dep-b',
+      ]);
     });
   });
 });

@@ -252,13 +252,13 @@ The proposed pattern is the only column that scores well on **all four** of your
 
 6. **Key management**: env-only for v1 (`AUTH_SESSION_SECRET` / `AUTH_SESSION_PREV_SECRET`). KMS integration deferred. Key rotation procedure: set old active key as `AUTH_SESSION_PREV_SECRET`, generate new key for `AUTH_SESSION_SECRET`, redeploy. Existing sessions decrypt via the previous key for one grace period.
 
-7. **CSRF strategy**: double-submit pattern — CSRF token sealed inside the JWE (unreadable by JS), exposed to the SPA only via `X-CSRF-Token` response header on `GET /api/v1/auth/me`. `CsrfGuard` validates `Origin`/`Referer` and the header token for all non-safe non-public methods.
+7. **CSRF strategy**: double-submit pattern — CSRF token sealed inside the JWE (unreadable by JS), exposed to the SPA via the `X-CSRF-Token` response header. `CsrfGuard` validates `Origin`/`Referer` and the header token for all non-safe non-public methods. The token remains stable during transparent access-token refresh so concurrent requests and browser tabs cannot observe a new session cookie while still holding the previous CSRF header value.
 
 ---
 
 ## 10. Suggested Thin Vertical Slice
 
-Following `incremental-implementation`:
+Building in thin vertical slices (see the task rules in `openspec/config.yaml`):
 
 1. **Slice 1 — single provider (Keycloak), happy path**
    `auth.module`, `provider-registry` with one entry, `/auth/login`, `/auth/callback`, `session.service` (encrypt/decrypt), `/auth/me`. Cookie holds full payload. No refresh yet.

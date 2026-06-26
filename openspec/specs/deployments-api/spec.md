@@ -26,6 +26,16 @@ The endpoint:
 - **WHEN** `GET /api/v1/deployments?interface_type=chat` is called with a valid session
 - **THEN** the endpoint responds 200 with `{ deployments: DeploymentItemDto[] }` containing only deployments whose DIAL Core `interfaces` array includes `'chat'`
 
+#### Scenario: New fields present on response items
+
+- **WHEN** `GET /api/v1/deployments` returns items with DIAL Core `owner` populated
+- **THEN** each item in the response includes `owner`, `isMy`, and (for folder-nested applications) `applicationFolder`
+
+#### Scenario: Backward compatibility — clients ignoring new fields are unaffected
+
+- **WHEN** an existing client calls `GET /api/v1/deployments` and does not read `owner`, `isMy`, or `applicationFolder`
+- **THEN** the response is identical to the prior behavior for all pre-existing fields
+
 #### Scenario: Authenticated user filters by multiple interface types
 
 - **WHEN** `GET /api/v1/deployments?interface_type=chat&interface_type=mcp` is called with a valid session
@@ -74,6 +84,9 @@ The endpoint:
 - `description?: string` — `description` from DIAL Core
 - `interfaces?: string[]` — `interfaces` from DIAL Core (list of interface types supported by the deployment)
 - `inputAttachmentTypes?: string[]` — `input_attachment_types` from DIAL Core; omitted when the source field is absent or null
+- `owner?: string` — `owner` from DIAL Core's `DeploymentBase`; forwarded verbatim; omitted when DIAL Core does not provide it
+- `isMy?: boolean` — `true` when the session `bucket` appears as a path segment of the deployment `id` (e.g. `applications/{bucket}/{name}`); `false` otherwise; computed post-cache and never stored in the cache entry
+- `applicationFolder?: string` — parent directory path of the application derived from `id` (everything before the last `/`); set only for `type === 'application'` items whose `id` contains a `/`; absent for root-level applications and all non-application types
 
 `DeploymentsResponseDto` SHALL wrap this as `{ deployments: DeploymentItemDto[] }`.
 

@@ -16,7 +16,7 @@ export const getButtonPaddingEnd = (
 ): string => {
   if (!hasActions) return 'pe-3';
   if (isMenuOpen) return 'pe-9';
-  return 'pe-2 group-hover:pe-9';
+  return 'pe-2 group-hover/conversation:pe-9';
 };
 
 /**

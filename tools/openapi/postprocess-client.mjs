@@ -115,7 +115,7 @@ const runtimeUpdated = runtimeSource
     'return value != null;',
   )
   .replace(
-    'constructor(\n    public cause: Error,',
+    /constructor\(\s*public cause: Error,/,
     'constructor(\n    public override cause: Error,',
   );
 

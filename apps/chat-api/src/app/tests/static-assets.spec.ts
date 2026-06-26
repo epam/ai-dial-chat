@@ -75,7 +75,7 @@ describe('static assets serving', () => {
     expect(
       resolveFrontendRootPath(
         join(appsDir, 'chat-api', 'dist'),
-        (candidate) => candidate === frontendDist,
+        (candidate: string) => candidate === frontendDist,
       ),
     ).toBe(frontendDist);
   });

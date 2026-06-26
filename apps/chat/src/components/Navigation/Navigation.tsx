@@ -2,7 +2,7 @@ import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { NAVIGATION_CONFIG } from '../../constants/navigation';
 import { NavigationI18nKeys } from '../../constants/translation-keys';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -20,7 +20,6 @@ interface Props {
 const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const { t } = useTranslation();
   const { pathname } = useLocation();
-  const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
 
@@ -28,15 +27,16 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
     const isActive =
       path === '/' ? pathname === '/' : pathname.startsWith(path);
     return (
-      <DialGhostIconButton
-        key={path}
-        icon={<Icon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-        aria-label={t(labelKey)}
-        aria-current={isActive ? 'page' : undefined}
-        tooltipProps={{ tooltip: t(labelKey) }}
-        onClick={() => navigate(path)}
-        className={isActive ? '!text-accent-primary' : undefined}
-      />
+      <Link key={path} to={path} className="contents">
+        <DialGhostIconButton
+          icon={<Icon size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+          aria-label={t(labelKey)}
+          aria-current={isActive ? 'page' : undefined}
+          tooltipProps={{ tooltip: t(labelKey) }}
+          tabIndex={-1}
+          className={isActive ? '!text-accent-primary' : undefined}
+        />
+      </Link>
     );
   });
 

@@ -12,6 +12,10 @@ export interface BottomSheetItem {
   label: string;
   /** Leading icon element. */
   icon: ReactNode;
+  /** Optional trailing icon element. */
+  iconAfter?: ReactNode;
+  /** CSS class applied to the item button text. Defaults to empty string */
+  textClassName?: string;
   /** Invoked when the item is tapped; the sheet closes automatically after. */
   onClick: () => void;
 }
@@ -30,10 +34,14 @@ export interface BottomSheetProps {
   style?: CSSProperties;
   /** Actions displayed in the sheet body. */
   items: BottomSheetItem[];
+  /** Extra classes appended to the sheet container (e.g. a max-height constraint). */
+  className?: string;
   /** CSS class applied to the sheet title. Defaults to `'dial-body-semi-bold-text'`. */
   titleClassName?: string;
   /** CSS class applied to each item label. Defaults to `'dial-small-text'`. */
   itemLabelClassName?: string;
+  /** CSS class applied to each item button text. Defaults to empty string */
+  btnTextClassName?: string;
 }
 
 /**
@@ -47,8 +55,10 @@ export const BottomSheet: FC<BottomSheetProps> = ({
   onClose,
   style,
   items,
+  className,
   titleClassName = 'dial-body-semi-text',
   itemLabelClassName = 'dial-small-text',
+  btnTextClassName = '',
 }) => {
   const handleItemClick = (onClick: () => void) => {
     onClick();
@@ -62,10 +72,11 @@ export const BottomSheet: FC<BottomSheetProps> = ({
       closeLabel={closeLabel}
       onClose={onClose}
       style={style}
+      className={className}
       titleClassName={titleClassName}
     >
       <ul role="list" className="flex flex-col">
-        {items.map(({ key, label, icon, onClick }) => (
+        {items.map(({ key, label, icon, iconAfter, onClick }) => (
           <li key={key}>
             <DialButton
               type="button"
@@ -74,6 +85,10 @@ export const BottomSheet: FC<BottomSheetProps> = ({
                 'flex w-full items-center gap-3 px-4 py-[10px] text-left',
               )}
               iconBefore={<span className={styles.itemIcon}>{icon}</span>}
+              iconAfter={
+                iconAfter ? <span className="ml-auto">{iconAfter}</span> : null
+              }
+              textClassName={btnTextClassName}
               label={<span className={itemLabelClassName}>{label}</span>}
               onClick={() => handleItemClick(onClick)}
             />

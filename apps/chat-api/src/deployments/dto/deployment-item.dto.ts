@@ -1,5 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export class DeploymentFeaturesDto {
+  @ApiProperty({
+    description: 'Whether the deployment supports a custom system prompt',
+  })
+  systemPrompt!: boolean;
+
+  @ApiProperty({
+    description: 'Whether the deployment supports temperature control',
+  })
+  temperature!: boolean;
+}
+
 export class DeploymentItemDto {
   @ApiProperty({ description: 'Unique stable identifier from DIAL Core' })
   id!: string;
@@ -55,8 +67,16 @@ export class DeploymentItemDto {
   inputAttachmentTypes?: string[];
 
   @ApiPropertyOptional({
+    type: DeploymentFeaturesDto,
+    description:
+      'Feature flags from DIAL Core controlling which per-conversation settings are available',
+  })
+  features?: DeploymentFeaturesDto;
+
+  @ApiPropertyOptional({
     description:
       'Topics associated with this deployment from DIAL Core (e.g. ["topic1", "topic2"])',
+    type: [String],
   })
   topics?: string[];
 
@@ -71,6 +91,23 @@ export class DeploymentItemDto {
       'Whether this deployment is installed by the current user (from user config)',
   })
   isInstalled?: boolean;
+
+  @ApiPropertyOptional({
+    description: 'Owner of the deployment as reported by DIAL Core',
+  })
+  owner?: string;
+
+  @ApiPropertyOptional({
+    description:
+      'True when the deployment owner matches the current session user (computed post-cache)',
+  })
+  isMy?: boolean;
+
+  @ApiPropertyOptional({
+    description:
+      'Parent folder path for application-type deployments (absent for root-level or non-application items)',
+  })
+  applicationFolder?: string;
 }
 
 export class DeploymentsResponseDto {

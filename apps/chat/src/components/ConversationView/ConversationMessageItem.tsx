@@ -3,6 +3,7 @@ import {
   isStatusMessage,
   MessageRole,
   type Attachment,
+  type AttachmentErrorReason,
   type DisplayAttachment,
   type MessageRating,
   type Message as MessageType,
@@ -96,6 +97,12 @@ interface Props {
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
+  validateAttachment?: (
+    attachment: Attachment,
+  ) => AttachmentErrorReason | undefined;
+  hideAttachFile?: boolean;
+  /** When provided, called instead of the default download action when an attachment card is activated. */
+  onAttachmentClick?: (attachment: DisplayAttachment) => void;
 }
 
 const ConversationMessageItem: FC<Props> = ({
@@ -133,10 +140,14 @@ const ConversationMessageItem: FC<Props> = ({
   thinkingLabel,
   executedLabel,
   stepsLabel,
+  validateAttachment,
+  hideAttachFile,
+  onAttachmentClick: onAttachmentClickProp,
 }) => {
   const { t } = useTranslation();
   const { currentTheme } = useTheme();
-  const { handleAttachmentClick } = useAttachmentAction();
+  const { handleAttachmentClick: handleDownload } = useAttachmentAction();
+  const handleAttachmentClick = onAttachmentClickProp ?? handleDownload;
   const isStreaming = isStreamingMessage(
     msg.role,
     index,
@@ -198,6 +209,8 @@ const ConversationMessageItem: FC<Props> = ({
             className="w-full max-w-[748px]"
             pendingDropFiles={pendingDropFiles}
             onDropFilesConsumed={onDropFilesConsumed}
+            validateAttachment={validateAttachment}
+            hideAttachFile={hideAttachFile}
           />
         </Suspense>
       </div>
@@ -272,6 +285,7 @@ const ConversationMessageItem: FC<Props> = ({
                 isStreaming={isStreaming}
                 executedLabel={executedLabel}
                 stepsLabel={stepsLabel}
+                onAttachmentClick={handleAttachmentClick}
               />
             )}
             {msg.hasStreamError && (

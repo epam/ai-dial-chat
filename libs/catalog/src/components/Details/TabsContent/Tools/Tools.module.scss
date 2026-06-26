@@ -1,0 +1,15 @@
+.divider {
+  border-top: 1px solid var(--stroke-tertiary, #1a2035);
+}
+
+.description {
+  color: var(--text-secondary, #9fa6bd);
+}
+
+.code {
+  font-family: 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+  background: none;
+  border: none;
+  padding: 0;
+  color: inherit;
+}

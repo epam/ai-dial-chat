@@ -2,10 +2,10 @@
 .npmignore
 README.md
 package.json
+src/apis/AppConfigApi.ts
 src/apis/ApplicationsApi.ts
 src/apis/AuthApi.ts
 src/apis/ChatApi.ts
-src/apis/ConfigApi.ts
 src/apis/ConversationsApi.ts
 src/apis/DeploymentsApi.ts
 src/apis/FilesApi.ts

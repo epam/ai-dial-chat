@@ -1,6 +1,13 @@
 export enum ChatI18nKeys {
   Placeholder = 'chat.placeholder',
-  WelcomeText = 'chat.welcomeText',
+  GreetingMorning = 'chat.greetingMorning',
+  GreetingMorningNoName = 'chat.greetingMorningNoName',
+  GreetingAfternoon = 'chat.greetingAfternoon',
+  GreetingAfternoonNoName = 'chat.greetingAfternoonNoName',
+  GreetingEvening = 'chat.greetingEvening',
+  GreetingEveningNoName = 'chat.greetingEveningNoName',
+  GreetingNight = 'chat.greetingNight',
+  GreetingNightNoName = 'chat.greetingNightNoName',
   StreamError = 'chat.streamError',
   CreateConversationError = 'chat.createConversationError',
   DeleteMessageTitle = 'chat.deleteMessageTitle',
@@ -20,6 +27,7 @@ export enum ChatI18nKeys {
   Thinking = 'chat.thinking',
   ShowMoreUserMessage = 'chat.showMoreUserMessage',
   ShowLessUserMessage = 'chat.showLessUserMessage',
+  ChatSettings = 'chat.chatSettings',
 }
 
 export enum RateI18nKeys {
@@ -67,12 +75,16 @@ export enum ButtonsI18nKeys {
   RegenerateResponse = 'buttons.regenerateResponse',
   CopyResponse = 'buttons.copyResponse',
   CopyAsMarkdown = 'buttons.copyAsMarkdown',
+  CopyAsJson = 'buttons.copyAsJson',
   CopyText = 'buttons.copyText',
   LikeResponse = 'buttons.likeResponse',
   DislikeResponse = 'buttons.dislikeResponse',
   Save = 'buttons.save',
   Close = 'buttons.close',
   Send = 'buttons.send',
+  UseInChat = 'buttons.useInChat',
+  Deploy = 'buttons.deploy',
+  Connect = 'buttons.connect',
 }
 
 export enum NavigationI18nKeys {
@@ -98,6 +110,26 @@ export enum CatalogI18nKeys {
   SortNewest = 'catalog.sortNewest',
   SortNameAZ = 'catalog.sortNameAZ',
   FeaturedLabel = 'catalog.featuredLabel',
+  // Details panel
+  DetailsTabTools = 'catalog.details.tabTools',
+  DetailsDailyLimit = 'catalog.details.dailyLimit',
+  DetailsApiResourceSection = 'catalog.details.api.resourceSection',
+  DetailsApiSnippetSection = 'catalog.details.api.snippetSection',
+  DetailsApiModelId = 'catalog.details.api.modelId',
+  DetailsApiEndpoint = 'catalog.details.api.endpoint',
+  DetailsApiRequestExample = 'catalog.details.api.requestExample',
+  DetailsApiResponseSchema = 'catalog.details.api.responseSchema',
+  DetailsApiCopy = 'catalog.details.api.copy',
+  DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
+  DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
+  CreateQuickApp = 'catalog.create.quickApp',
+  CreateToolset = 'catalog.create.toolset',
+  FavoriteAddedTitle = 'catalog.favoriteAddedTitle',
+  FavoriteAdded = 'catalog.favoriteAdded',
+  FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
+  FavoriteRemoved = 'catalog.favoriteRemoved',
+  FolderPersonal = 'catalog.folder.personal',
+  FolderPublic = 'catalog.folder.public',
 }
 
 export enum DeploymentsI18nKeys {
@@ -139,6 +171,7 @@ export enum DialFileManagerI18nKeys {
   AllTypes = 'dialFileManager.allTypes',
   UpToFiles = 'dialFileManager.upToFiles',
   AttachingHiddenFilesNotAllowed = 'dialFileManager.attachingHiddenFilesNotAllowed',
+  UnsupportedFileTypeTooltip = 'dialFileManager.unsupportedFileTypeTooltip',
   UnsupportedFilesSkipped = 'dialFileManager.unsupportedFilesSkipped',
   UnsupportedFilesDescription = 'dialFileManager.unsupportedFilesDescription',
   TooManyFilesSelected = 'dialFileManager.tooManyFilesSelected',
@@ -151,6 +184,34 @@ export enum DialFileManagerI18nKeys {
   DeleteConfirmBodyMultiple = 'dialFileManager.deleteConfirmBodyMultiple',
   DeleteConfirmBodyItems = 'dialFileManager.deleteConfirmBodyItems',
   DeleteConfirmButton = 'dialFileManager.deleteConfirmButton',
+  ConflictSingleTitle = 'dialFileManager.conflictSingleTitle',
+  ConflictMultipleTitle = 'dialFileManager.conflictMultipleTitle',
+  ConflictReplace = 'dialFileManager.conflictReplace',
+  ConflictDuplicate = 'dialFileManager.conflictDuplicate',
+  ConflictReplaceAll = 'dialFileManager.conflictReplaceAll',
+  ConflictDuplicateAll = 'dialFileManager.conflictDuplicateAll',
+  ConflictDecideForEach = 'dialFileManager.conflictDecideForEach',
+  ForbiddenSymbolsTooltip = 'dialFileManager.forbiddenSymbolsTooltip',
+  CheckInternetConnection = 'dialFileManager.checkInternetConnection',
+  UploadFailed = 'dialFileManager.uploadFailed',
+  UploadSuccess = 'dialFileManager.uploadSuccess',
+  DownloadFileError = 'dialFileManager.downloadFileError',
+  DownloadFilesError = 'dialFileManager.downloadFilesError',
+  FolderCreateError = 'dialFileManager.folderCreateError',
+  DeleteFilesError = 'dialFileManager.deleteFilesError',
+  ItemDeletedSuccessfully = 'dialFileManager.itemDeletedSuccessfully',
+  ItemsDeletedSuccessfully = 'dialFileManager.itemsDeletedSuccessfully',
+  ItemsDeletingFailed = 'dialFileManager.itemsDeletingFailed',
+  ItemDeletedFromFolder = 'dialFileManager.itemDeletedFromFolder',
+  ItemsDeletedFromFolder = 'dialFileManager.itemsDeletedFromFolder',
+  AndOtherItems = 'dialFileManager.andOtherItems',
+  SomeItemsNotDeleted = 'dialFileManager.someItemsNotDeleted',
+  TabMyFiles = 'dialFileManager.tab.myFiles',
+  TabShared = 'dialFileManager.tab.shared',
+  TabOrganization = 'dialFileManager.tab.organization',
+  ColumnModifiedDate = 'dialFileManager.column.modifiedDate',
+  ColumnSize = 'dialFileManager.column.size',
+  ColumnAuthor = 'dialFileManager.column.author',
 }
 
 export enum AuthI18nKeys {
@@ -192,6 +253,8 @@ export enum ConversationPanelI18nKeys {
   ActionsLabel = 'conversationPanel.actionsLabel',
   PinLabel = 'conversationPanel.pinLabel',
   UnpinLabel = 'conversationPanel.unpinLabel',
+  DeleteSuccess = 'conversationPanel.deleteSuccess',
+  DeleteSuccessTitle = 'conversationPanel.deleteSuccessTitle',
   DeleteConfirmTitle = 'conversationPanel.deleteConfirmTitle',
   DeleteConfirmDescription = 'conversationPanel.deleteConfirmDescription',
   DeleteError = 'conversationPanel.deleteError',
@@ -224,6 +287,8 @@ export enum AttachmentsI18nKeys {
   Download = 'attachments.downloadFile',
   UnsupportedTypeTitle = 'attachments.unsupportedType.title',
   UnsupportedTypeMessage = 'attachments.unsupportedType.message',
+  NoAttachmentsAllowedTitle = 'attachments.noAttachmentsAllowed.title',
+  NoAttachmentsAllowedMessage = 'attachments.noAttachmentsAllowed.message',
   NetworkErrorTitle = 'attachments.networkError.title',
   NetworkErrorMessage = 'attachments.networkError.message',
 }
@@ -250,4 +315,28 @@ export enum FileDndI18nKeys {
 
 export enum UserConfigI18nKeys {
   LoadError = 'userConfig.loadError',
+}
+
+export enum ChatSettingsI18nKeys {
+  Title = 'chatSettings.title',
+  ResponseFormatLabel = 'chatSettings.responseFormatLabel',
+  ResponseFormatHint = 'chatSettings.responseFormatHint',
+  ResponseFormatMarkdown = 'chatSettings.responseFormatMarkdown',
+  ResponseFormatPlainText = 'chatSettings.responseFormatPlainText',
+  SystemPromptLabel = 'chatSettings.systemPromptLabel',
+  TemperatureLabel = 'chatSettings.temperatureLabel',
+  TemperaturePrecise = 'chatSettings.temperaturePrecise',
+  TemperatureNeutral = 'chatSettings.temperatureNeutral',
+  TemperatureCreative = 'chatSettings.temperatureCreative',
+  SaveLabel = 'chatSettings.saveLabel',
+  TemperatureHint = 'chatSettings.temperatureHint',
+  SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
+  SavedNotification = 'chatSettings.savedNotification',
+}
+
+export enum AttachmentCanvasI18nKeys {
+  AriaLabel = 'attachmentCanvas.ariaLabel',
+  CloseLabel = 'attachmentCanvas.closeLabel',
+  DownloadLabel = 'attachmentCanvas.downloadLabel',
+  UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
 }

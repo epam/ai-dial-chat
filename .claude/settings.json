@@ -1,6 +1,6 @@
 {
   "permissions": {
-    "allow": ["Bash(Select-Object -First 10)"]
+    "allow": []
   },
   "enabledPlugins": {
     "nx@nx-claude-plugins": true
@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.claude/rules/*.md|*.claude/skills/*.md|*/AGENTS.md|*/CLAUDE.md|*openspec/config.yaml) node scripts/validate-agent-docs.mjs \"$f\" 1>&2 || exit 2 ;; esac"
+            "command": "f=$(jq -r '.tool_input.file_path // empty'); case \"$f\" in *.agents/skills/*.md|*.claude/commands/*.md|*.claude/rules/*.md|*.claude/skills/*.md|*.claude/settings.json|*.cursor/rules/*.mdc|*.mcp.json|*/AGENTS.md|*/CLAUDE.md|*openspec/config.yaml) node scripts/validate-agent-docs.mjs \"$f\" 1>&2 || exit 2 ;; esac"
           }
         ]
       }

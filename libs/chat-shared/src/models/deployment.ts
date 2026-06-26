@@ -1,3 +1,5 @@
+import type { DeploymentFeatures } from './deployment-features';
+
 /** A host-agnostic view model for a single deployment shown in UI components. */
 export interface DeploymentItem {
   /** Unique stable identifier from DIAL Core. */
@@ -10,6 +12,8 @@ export interface DeploymentItem {
   type?: string;
   /** MIME types accepted as input attachments (e.g. `['audio/*', 'image/*']`). Undefined when not specified by DIAL Core. */
   inputAttachmentTypes?: string[];
+  /** Feature flags for this deployment, controlling which per-conversation settings are available. */
+  features?: DeploymentFeatures;
   /** Maximum number of attachments allowed per message. Undefined when not specified by DIAL Core. */
   maxInputAttachments?: number;
   /** Human-readable description of the deployment. */

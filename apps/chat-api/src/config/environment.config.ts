@@ -133,6 +133,10 @@ export class EnvironmentVariables {
 
   @IsOptional()
   @IsString()
+  DEFAULT_DEPLOYMENT?: string;
+
+  @IsOptional()
+  @IsString()
   ASR_MODEL?: string;
 
   @IsOptional()
@@ -140,6 +144,17 @@ export class EnvironmentVariables {
   @IsInt()
   @Min(1)
   TRANSCRIBE_SIZE_LIMIT_BYTES?: number = 5 * 1024 * 1024;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null || value === '') return [];
+    return String(value)
+      .split(',')
+      .map((s: string) => s.trim())
+      .filter((s: string) => s.length > 0);
+  })
+  @IsString({ each: true })
+  ASR_ENABLED_ROLES?: string[] = [];
 
   @IsOptional()
   @Transform(({ value }) => {

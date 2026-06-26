@@ -5,6 +5,7 @@ import type {
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
 import type {
+  ChatSettingsConfig,
   InputColors,
   InputTypography,
   ModelSelectorLabels,
@@ -90,6 +91,18 @@ export interface EditMessageInputProps {
   pendingDropFiles?: File[];
   /** Called after the files have been consumed, signalling the parent to clear its state. */
   onDropFilesConsumed?: () => void;
+  /**
+   * Called synchronously for each attachment after it is added, before upload begins.
+   * Return an `AttachmentErrorReason` to reject the attachment (it enters error state
+   * and `onUploadAttachment` is NOT called). Return `undefined` to allow normal upload.
+   */
+  validateAttachment?: (
+    attachment: Attachment,
+  ) => AttachmentErrorReason | undefined;
+  /**
+   * When `true`, the "Attach file" button is hidden.
+   */
+  hideAttachFile?: boolean;
 }
 
 /** Props accepted by the `ConversationInput` component. */
@@ -140,6 +153,8 @@ export interface ConversationInputProps {
   modelSelectorLabels?: ModelSelectorLabels;
   /** Accessible label for the send button. */
   sendLabel?: string;
+  /** Tooltip shown on hover over the send button. */
+  sendTitle?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */
@@ -169,6 +184,11 @@ export interface ConversationInputProps {
    * - `SendOnEnter.MetaEnter`: ⌘+Enter (macOS) / Ctrl+Enter (Windows/Linux) submits; bare Enter inserts a newline.
    */
   sendOnEnter?: SendOnEnter;
+  /**
+   * When provided, a "Chat settings" item is added to the `+` menu.
+   * Clicking it opens a modal with fields gated by `features`.
+   */
+  chatSettings?: ChatSettingsConfig;
   /** When `true`, focuses the textarea on mount. Defaults to `false`. */
   autoFocus?: boolean;
   /**
@@ -191,4 +211,16 @@ export interface ConversationInputProps {
   validateAttachment?: (
     attachment: Attachment,
   ) => AttachmentErrorReason | undefined;
+  /**
+   * When `true`, the "Attach file" item is removed from the attach menu.
+   * Other menu items (e.g. DIAL file system) remain visible. When no items
+   * remain in the menu the entire attach (+) button is hidden automatically.
+   */
+  hideAttachFile?: boolean;
+  /**
+   * Called when the user clicks or keyboard-activates an attachment card.
+   * Receives the full `Attachment` object (including the local `File`).
+   * When absent the card is not rendered as interactive.
+   */
+  onAttachmentClick?: (attachment: Attachment) => void;
 }

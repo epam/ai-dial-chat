@@ -5,8 +5,15 @@
     "noData": "No data"
   },
   "chat": {
-    "welcomeText": "Hello World, good day for prompting!",
-    "placeholder": "Ask anything...",
+    "greetingMorning": "Good morning, {{name}}",
+    "greetingMorningNoName": "Good morning",
+    "greetingAfternoon": "Afternoon, {{name}}",
+    "greetingAfternoonNoName": "Afternoon",
+    "greetingEvening": "Good evening, {{name}}",
+    "greetingEveningNoName": "Good evening",
+    "greetingNight": "Good night, {{name}}",
+    "greetingNightNoName": "Good night",
+    "placeholder": "How can I help you today?",
     "streamError": "Something went wrong while generating the response.",
     "createConversationError": "Failed to create the conversation. Please try again.",
     "deleteMessageTitle": "Confirm deleting message?",
@@ -25,7 +32,8 @@
     "stoppedGenerating": "You stopped generating the response",
     "thinking": "Thinking",
     "showMoreUserMessage": "Show full user message",
-    "showLessUserMessage": "Collapse user message"
+    "showLessUserMessage": "Collapse user message",
+    "chatSettings": "Chat settings"
   },
   "rate": {
     "negativeFeedbackTitle": "Send negative feedback",
@@ -50,7 +58,7 @@
     "openMenu": "Open navigation menu",
     "closeMenu": "Close navigation menu",
     "mobileMenu": "Navigation menu",
-    "menu": "Menu",
+    "menu": "Main menu",
     "profile": "Profile",
     "back": "Back",
     "close": "Close"
@@ -64,7 +72,36 @@
     "sortRecentlyUpdated": "Recently Updated",
     "sortNewest": "Newest",
     "sortNameAZ": "Name A-Z",
-    "featuredLabel": "Featured"
+    "featuredLabel": "Featured",
+    "details": {
+      "tabTools": "Tools",
+      "dailyLimit": "Daily limit",
+      "api": {
+        "resourceSection": "Resource",
+        "snippetSection": "Code snippet",
+        "modelId": "Model ID",
+        "endpoint": "Endpoint",
+        "requestExample": "Request example",
+        "responseSchema": "Response schema",
+        "copy": "Copy"
+      },
+      "pricing": {
+        "pricesSection": "Token pricing",
+        "limitsSection": "Usage limits"
+      }
+    },
+    "create": {
+      "quickApp": "QuickApp",
+      "toolset": "Toolset"
+    },
+    "favoriteAddedTitle": "Added to Favorites",
+    "favoriteRemovedTitle": "Removed from Favorites",
+    "favoriteAdded": "\"{{name}}\" added to Favorites",
+    "favoriteRemoved": "\"{{name}}\" removed from Favorites",
+    "folder": {
+      "personal": "Personal",
+      "public": "Public"
+    }
   },
   "deployments": {
     "empty": "No models or applications available.",
@@ -109,9 +146,13 @@
     "regenerateResponse": "Regenerate response",
     "copyResponse": "Copy response",
     "copyAsMarkdown": "Copy markdown",
+    "copyAsJson": "Copy JSON",
     "copyText": "Copy text",
     "likeResponse": "Like response",
-    "dislikeResponse": "Dislike response"
+    "dislikeResponse": "Dislike response",
+    "useInChat": "Use in chat",
+    "deploy": "Deploy",
+    "connect": "Connect"
   },
   "sidebar": {
     "base": {
@@ -156,6 +197,8 @@
     "pinLabel": "Pin",
     "unpinLabel": "Unpin",
     "deleteConfirmTitle": "Confirm Deleting Chat",
+    "deleteSuccess": "Conversation deleted successfully",
+    "deleteSuccessTitle": "Conversation deleted",
     "deleteConfirmDescription": "Are you sure you want to delete",
     "deleteError": "Failed to delete the conversation. Please try again.",
     "renameTitle": "Rename Chat",
@@ -200,10 +243,30 @@
       "title": "File extension not supported",
       "message": "This model can only process {{formats}}. Please upload a file in a supported format."
     },
+    "noAttachmentsAllowed": {
+      "title": "Attachments not supported",
+      "message": "This model does not support file attachments."
+    },
     "networkError": {
       "title": "Network unavailable",
       "message": "Some files were not uploaded because your internet connection was lost.\n Please try again:\n"
     }
+  },
+  "chatSettings": {
+    "title": "Chat settings",
+    "responseFormatLabel": "Response format",
+    "responseFormatHint": "Applies to new and existing messages",
+    "responseFormatMarkdown": "Markdown",
+    "responseFormatPlainText": "Plain text",
+    "systemPromptLabel": "System prompt",
+    "temperatureLabel": "Temperature",
+    "temperaturePrecise": "Precise",
+    "temperatureNeutral": "Neutral",
+    "temperatureCreative": "Creative",
+    "saveLabel": "Apply changes",
+    "temperatureHint": "Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.",
+    "systemPromptTooltip": "Enter a prompt",
+    "savedNotification": "Chat settings have been saved"
   },
   "citations": {
     "marker": {
@@ -244,8 +307,21 @@
     "downloading": "Preparing download…",
     "uploadProgressTitle": "Uploading files",
     "uploadProgressSummary": "{{done}} of {{total}} complete",
+    "checkInternetConnection": "Please check your internet connection and try again.",
+    "uploadFailed": "Upload failed",
+    "uploadSuccess": "The file has been uploaded successfully to “{{parentPath}}”",
     "uploadConflict": "A file with this name already exists",
+    "forbiddenSymbolsTooltip": "File names cannot contain: : ; , = / { } % & \"",
+    "conflictSingleTitle": "Replace or Duplicate Item",
+    "conflictMultipleTitle": "Replace or Duplicate Items",
+    "conflictReplace": "Replace",
+    "conflictDuplicate": "Duplicate",
+    "conflictDecideForEach": "Decide for each",
+    "conflictReplaceAll": "Replace all",
+    "conflictDuplicateAll": "Duplicate all",
     "downloadError": "Download failed",
+    "downloadFileError": "Failed to download file. Please try again later.",
+    "downloadFilesError": "Failed to download files. Please try again later.",
     "folderCreateError": "Failed to create folder",
     "folderConflict": "A folder with this name already exists",
     "folderNameEmpty": "Folder name cannot be empty",
@@ -260,6 +336,7 @@
     "upToFiles_one": "Up to {{count}} file",
     "upToFiles_other": "Up to {{count}} files",
     "attachingHiddenFilesNotAllowed": "Attaching hidden files is not allowed",
+    "unsupportedFileTypeTooltip": "Unsupported file type. Supported types: {{allowedExtensions}}.",
     "unsupportedFilesSkipped": "Some files were skipped",
     "unsupportedFilesDescription": "Files with unsupported type were not attached",
     "tooManyFilesSelected": "Too many files selected",
@@ -273,10 +350,35 @@
     "deleteConfirmBodyItems": "items?",
     "deleteConfirmButton": "Delete",
     "deleteError": "Delete failed. Please try again.",
-    "deletePartialError": "{{count}} item(s) could not be deleted."
+    "deleteFilesError": "Failed to delete files. Please try again later.",
+    "createFolderError": "Failed to create folder. Please try again.",
+    "deletePartialError": "{{count}} item(s) could not be deleted.",
+    "itemDeletedSuccessfully": "Item deleted successfully",
+    "itemsDeletedSuccessfully": "Items deleted successfully",
+    "itemsDeletingFailed": "Items deleting failed",
+    "itemDeletedFromFolder": "“{{fileName}}” deleted from {{folder}}",
+    "itemsDeletedFromFolder": "{{count}} items deleted from {{folder}}",
+    "andOtherItems": " and {{count}} other items",
+    "someItemsNotDeleted": "{{files}}{{rest}} were not deleted. Please try again.",
+    "tab": {
+      "myFiles": "My files",
+      "shared": "Shared with me",
+      "organization": "Organization"
+    },
+    "column": {
+      "modifiedDate": "Modified date",
+      "size": "Size",
+      "author": "Author"
+    }
   },
   "userConfig": {
     "loadError": "Failed to load your settings. Some personalization may be unavailable."
+  },
+  "attachmentCanvas": {
+    "ariaLabel": "Attachment preview",
+    "closeLabel": "Close attachment preview",
+    "downloadLabel": "Download attachment",
+    "unsupportedLabel": "Preview is not supported for this file"
   },
   "errorBoundary": {
     "heading": "Something went wrong",

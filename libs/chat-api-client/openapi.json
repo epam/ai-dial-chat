@@ -251,24 +251,41 @@
         "tags": ["auth"]
       }
     },
-    "/api/v1/config": {
+    "/api/v1/client-config": {
       "get": {
-        "operationId": "getConfig",
-        "parameters": [],
+        "operationId": "getClientConfig",
+        "parameters": [
+          {
+            "name": "appId",
+            "required": true,
+            "in": "query",
+            "description": "Application identifier. Must be a known app ID.",
+            "schema": {
+              "example": "chat-ui",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AppConfigDto"
+                  "$ref": "#/components/schemas/ClientConfigResponseDto"
                 }
               }
             }
+          },
+          "400": {
+            "description": "Missing or invalid appId"
+          },
+          "429": {
+            "description": "Too Many Requests"
           }
         },
-        "summary": "Get application feature configuration",
-        "tags": ["config"]
+        "summary": "Get client-safe application configuration and feature flags",
+        "tags": ["app-config"]
       }
     },
     "/api/v1/application-schemas": {
@@ -598,6 +615,32 @@
           }
         },
         "summary": "Install or uninstall a deployment",
+        "tags": ["user-config"]
+      }
+    },
+    "/api/v1/user-config/deployments/selected": {
+      "patch": {
+        "operationId": "updateSelectedDeployment",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSelectedDeploymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Selected deployment updated"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "summary": "Set the selected deployment",
         "tags": ["user-config"]
       }
     },
@@ -1294,6 +1337,11 @@
                   },
                   "path": {
                     "type": "string"
+                  },
+                  "uploadMode": {
+                    "type": "string",
+                    "enum": ["overwrite", "create-only"],
+                    "description": "Optional upload mode. 'overwrite' (default) overwrites; 'create-only' fails with 409 if file exists."
                   }
                 }
               }
@@ -1319,6 +1367,9 @@
           },
           "403": {
             "description": "Forbidden"
+          },
+          "409": {
+            "description": "File already exists (create-only mode)"
           },
           "413": {
             "description": "Payload too large"
@@ -1435,6 +1486,151 @@
           }
         },
         "summary": "List files and folders",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/public": {
+      "get": {
+        "description": "Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket.",
+        "operationId": "listPublicFiles",
+        "parameters": [
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Folder path within public bucket (no leading slash, no ..)",
+            "schema": {
+              "example": "reports/",
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "required": false,
+            "in": "query",
+            "description": "Pagination token from previous response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max items to return",
+            "schema": {
+              "example": 100,
+              "type": "number"
+            }
+          },
+          {
+            "name": "recursive",
+            "required": false,
+            "in": "query",
+            "description": "Return items recursively",
+            "schema": {
+              "default": false,
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Paginated list of files from the public bucket",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid path or query parameter"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "Path not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "List files from the organization (public) bucket",
+        "tags": ["files"]
+      }
+    },
+    "/api/v1/files/shared": {
+      "get": {
+        "description": "Proxies the DIAL Core sharing API to return files shared with the authenticated user.",
+        "operationId": "listSharedFiles",
+        "parameters": [
+          {
+            "name": "path",
+            "required": false,
+            "in": "query",
+            "description": "Folder path filter (no leading slash, no ..)",
+            "schema": {
+              "example": "reports/",
+              "type": "string"
+            }
+          },
+          {
+            "name": "token",
+            "required": false,
+            "in": "query",
+            "description": "Pagination token from previous response",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Max items to return",
+            "schema": {
+              "example": 100,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Files shared with the current user",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListFilesResponseDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query parameter"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error"
+          },
+          "503": {
+            "description": "DIAL Core unreachable or timed out"
+          }
+        },
+        "summary": "List files shared with the current user",
         "tags": ["files"]
       }
     },
@@ -1958,20 +2154,76 @@
         },
         "required": ["sub", "providerId", "claims", "bucket"]
       },
-      "AppConfigDto": {
+      "ClientConfigDto": {
         "type": "object",
         "properties": {
           "asrModelId": {
-            "type": "object",
-            "description": "Deployment ID of the ASR model used for transcription. Null when ASR_MODEL is not configured.",
-            "nullable": true
+            "type": "string",
+            "description": "Deployment ID of the ASR model. Null when ASR is not configured.",
+            "nullable": true,
+            "example": "whisper-1"
           },
           "transcribeSizeLimitBytes": {
             "type": "number",
-            "description": "Maximum audio file size in bytes accepted by the transcription endpoint."
+            "description": "Maximum audio file size in bytes accepted by the transcription endpoint.",
+            "example": 5242880
+          },
+          "defaultDeploymentId": {
+            "type": "string",
+            "description": "Operator-configured default deployment ID. Null when not configured.",
+            "example": "gpt-4o",
+            "nullable": true
           }
         },
-        "required": ["transcribeSizeLimitBytes"]
+        "required": ["asrModelId", "transcribeSizeLimitBytes"]
+      },
+      "ClientConfigMetadataDto": {
+        "type": "object",
+        "properties": {
+          "resolvedAt": {
+            "type": "string",
+            "description": "ISO timestamp when the config was resolved."
+          },
+          "cacheTtlSeconds": {
+            "type": "number",
+            "description": "Cache TTL in seconds applied to this response."
+          }
+        },
+        "required": ["resolvedAt", "cacheTtlSeconds"]
+      },
+      "ClientConfigResponseDto": {
+        "type": "object",
+        "properties": {
+          "appId": {
+            "type": "string",
+            "description": "Application identifier.",
+            "example": "chat-ui"
+          },
+          "features": {
+            "type": "object",
+            "description": "Feature flags — boolean per feature key.",
+            "example": {
+              "asrEnabled": false
+            }
+          },
+          "config": {
+            "description": "Non-boolean configuration values.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientConfigDto"
+              }
+            ]
+          },
+          "metadata": {
+            "description": "Resolution metadata.",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/ClientConfigMetadataDto"
+              }
+            ]
+          }
+        },
+        "required": ["appId", "features", "config"]
       },
       "ApplicationSchemaSummaryDto": {
         "type": "object",
@@ -2067,6 +2319,20 @@
         },
         "required": ["data"]
       },
+      "DeploymentFeaturesDto": {
+        "type": "object",
+        "properties": {
+          "systemPrompt": {
+            "type": "boolean",
+            "description": "Whether the deployment supports a custom system prompt"
+          },
+          "temperature": {
+            "type": "boolean",
+            "description": "Whether the deployment supports temperature control"
+          }
+        },
+        "required": ["systemPrompt", "temperature"]
+      },
       "DeploymentItemDto": {
         "type": "object",
         "properties": {
@@ -2110,8 +2376,8 @@
             "description": "Whether this deployment is hidden (configured via env)"
           },
           "updatedAt": {
-            "type": "string",
-            "description": "ISO timestamp of last update time from DIAL Core (e.g. \"2024-05-01T12:34:56Z\")"
+            "type": "number",
+            "description": "Timestamp of last update time from DIAL Core (e.g. 1714768496000)"
           },
           "applicationTypeSchemaId": {
             "type": "string",
@@ -2123,6 +2389,14 @@
             "items": {
               "type": "string"
             }
+          },
+          "features": {
+            "description": "Feature flags from DIAL Core controlling which per-conversation settings are available",
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/DeploymentFeaturesDto"
+              }
+            ]
           },
           "topics": {
             "description": "Topics associated with this deployment from DIAL Core (e.g. [\"topic1\", \"topic2\"])",
@@ -2138,6 +2412,18 @@
           "isInstalled": {
             "type": "boolean",
             "description": "Whether this deployment is installed by the current user (from user config)"
+          },
+          "owner": {
+            "type": "string",
+            "description": "Owner of the deployment as reported by DIAL Core"
+          },
+          "isMy": {
+            "type": "boolean",
+            "description": "True when the deployment owner matches the current session user (computed post-cache)"
+          },
+          "applicationFolder": {
+            "type": "string",
+            "description": "Parent folder path for application-type deployments (absent for root-level or non-application items)"
           }
         },
         "required": ["id", "displayName", "type"]
@@ -2218,6 +2504,10 @@
             "items": {
               "type": "string"
             }
+          },
+          "selectedId": {
+            "type": "string",
+            "nullable": true
           }
         },
         "required": ["installed"]
@@ -2273,6 +2563,16 @@
           }
         },
         "required": ["id", "isInstalled"]
+      },
+      "UpdateSelectedDeploymentDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Deployment ID to set as selected, or null to clear.",
+            "nullable": true
+          }
+        }
       },
       "DialModelFeaturesDto": {
         "type": "object",
@@ -2864,6 +3164,11 @@
           "assistantModelId": {
             "type": "string",
             "example": "anthropic.claude-v3-sonnet"
+          },
+          "responseFormat": {
+            "type": "string",
+            "example": "markdown",
+            "enum": ["markdown", "plain_text"]
           }
         },
         "required": [
@@ -2912,6 +3217,11 @@
             "type": "boolean",
             "description": "True when the user has pinned this conversation.",
             "example": false
+          },
+          "isReadonly": {
+            "type": "boolean",
+            "description": "True when the current user does not have WRITE permission on this conversation.",
+            "example": false
           }
         },
         "required": [
@@ -2920,7 +3230,8 @@
           "updatedAt",
           "sharedWithMe",
           "publishedWithMe",
-          "isPinned"
+          "isPinned",
+          "isReadonly"
         ]
       },
       "ConversationListResponseDto": {

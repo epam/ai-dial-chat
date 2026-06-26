@@ -342,6 +342,22 @@ The lib enforces rules via `computeAllowedDropGroups` (computed at drag start); 
 
 ---
 
+### Requirement: A success notification is shown after a conversation row is deleted
+
+After `deleteConversation` resolves successfully, `ConversationPanelView` SHALL show a success notification with a localized title and message confirming the deletion. No success notification is shown when the deletion fails — only the inline error state is set.
+
+#### Scenario: Success notification shown after successful deletion
+
+- **WHEN** the user confirms deletion and the API call succeeds
+- **THEN** a success notification appears with the localized title and delete-success message
+
+#### Scenario: No success notification on deletion failure
+
+- **WHEN** the API call throws
+- **THEN** no success notification is shown and the inline delete error state is set instead
+
+---
+
 ### Requirement: Deleting the active conversation from the panel row navigates to root
 
 When the user confirms single-row deletion of the conversation currently open in the conversation view, `ConversationPanelView` SHALL navigate to `ROUTES.Root` after the deletion succeeds.

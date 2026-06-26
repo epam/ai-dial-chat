@@ -7,6 +7,8 @@ vi.mock('../../utils/copy-to-clipboard', () => ({
   copyToClipboard: vi.fn(),
 }));
 
+vi.mock('../../utils/copy-to-clipboard');
+
 describe('useCodeCopy', () => {
   beforeEach(() => {
     vi.useFakeTimers();
