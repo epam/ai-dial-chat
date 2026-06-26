@@ -1,5 +1,6 @@
 import type {
   Annotation,
+  Message,
   MessageAttachment,
   PdfBBoxSelector,
 } from '@epam/ai-dial-chat-shared';
@@ -157,3 +158,30 @@ export const normalizeRawAnnotations = (
       },
     ];
   });
+
+/**
+ * Resolves the annotation list for a message regardless of how it was loaded.
+ *
+ * Prefers `custom_content.annotations` (internal format) when present.
+ * Falls back to `custom_fields.annotations` (raw API wire format) and
+ * normalises those entries using the message's `custom_content.attachments`.
+ */
+export const resolveMessageAnnotations = (message: Message): Annotation[] => {
+  const contentAnnotations = message.custom_content?.annotations;
+  if (contentAnnotations?.length) {
+    return contentAnnotations.filter(
+      (a): a is Annotation =>
+        a != null && a.body?.source?.attachment?.url != null,
+    );
+  }
+
+  const customFields = (message as Record<string, unknown>)['custom_fields'];
+  if (typeof customFields !== 'object' || customFields === null) return [];
+  const raw = (customFields as Record<string, unknown>)['annotations'];
+  if (!Array.isArray(raw) || raw.length === 0) return [];
+
+  return normalizeRawAnnotations(
+    raw,
+    message.custom_content?.attachments ?? [],
+  );
+};
