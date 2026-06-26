@@ -6,6 +6,7 @@ interface ApiErrorBody {
 interface ErrorWithResponse {
   response?: {
     json: () => Promise<unknown>;
+    status?: number;
   };
 }
 
@@ -32,7 +33,17 @@ const getErrorResponse = (error: unknown): ErrorWithResponse['response'] => {
     return undefined;
   }
 
-  return { json: response.json.bind(response) };
+  return {
+    json: response.json.bind(response),
+    status: typeof response.status === 'number' ? response.status : undefined,
+  };
+};
+
+/** True when the API indicates the conversation resource no longer exists at the path. */
+export const isConversationNotFoundError = (error: unknown): boolean => {
+  const response = getErrorResponse(error);
+  if (!response?.status) return false;
+  return response.status === 404 || response.status === 502;
 };
 
 export const getApiErrorMessage = async (

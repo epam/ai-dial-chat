@@ -3396,6 +3396,11 @@
               "markdown",
               "plain_text"
             ]
+          },
+          "llmNamingDone": {
+            "type": "boolean",
+            "example": false,
+            "description": "When true, automatic LLM conversation naming has already run for this conversation."
           }
         },
         "required": [

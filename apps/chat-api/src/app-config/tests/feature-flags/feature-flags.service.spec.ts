@@ -29,6 +29,15 @@ describe('FeatureFlagsService', () => {
     expect(await service.isEnabled(FeatureKey.AsrEnabled, ctx)).toBe(false);
   });
 
+  it('resolves LlmConversationNaming through AppConfigService', async () => {
+    const service = makeService(
+      async (key) => key === FeatureKey.LlmConversationNaming,
+    );
+    expect(await service.isEnabled(FeatureKey.LlmConversationNaming, ctx)).toBe(
+      true,
+    );
+  });
+
   it('rejects non-feature keys with BadRequestException', async () => {
     const service = makeService(async () => false);
     await expect(

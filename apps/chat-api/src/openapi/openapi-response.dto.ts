@@ -358,4 +358,11 @@ export class ConversationResponseDto {
     enum: ['markdown', 'plain_text'],
   })
   responseFormat?: string;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'When true, automatic LLM conversation naming has already run for this conversation.',
+  })
+  llmNamingDone?: boolean;
 }
