@@ -103,6 +103,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             attachments={visibleAttachments}
             onAttachmentClick={onAttachmentClick}
             clickLabel={attachmentClickLabel}
+            className="flex-wrap"
           />
           {afterContent}
           <MessageActions
