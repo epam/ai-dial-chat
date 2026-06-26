@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ConflictException,
   ForbiddenException,
   HttpException,
   HttpStatus,
@@ -25,6 +26,7 @@ export const handleDialError = (error: unknown): never => {
     if (error.status === 401) throw new UnauthorizedException('Unauthorized');
     if (error.status === 403) throw new ForbiddenException('Forbidden');
     if (error.status === 404) throw new NotFoundException('Not found');
+    if (error.status === 409) throw new ConflictException('Conflict');
     if (error.status === 413)
       throw new PayloadTooLargeException('Payload too large');
     if (error.status === 429)
