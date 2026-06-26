@@ -212,7 +212,9 @@
     "deleteAllConfirmTitle": "Delete All Conversations?",
     "deleteAllConfirmDescription": "All conversations will be permanently deleted. This action cannot be undone.",
     "deleteAllError": "Failed to delete all conversations. Please try again.",
-    "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed."
+    "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed.",
+    "deleteAllSuccessTitle": "All conversations deleted",
+    "deleteAllSuccess": "All conversations have been deleted successfully."
   },
   "auth": {
     "signOut": "Sign out",
