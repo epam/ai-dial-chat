@@ -2,7 +2,13 @@ import { Publication } from '@/chat/types/publication';
 import { ToolsetCredentialsLevel } from '@/chat/types/toolsets';
 import dialAdminTest from '@/src/core/dialAdminFixtures';
 import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
-import { API, Attachment, Creds } from '@/src/testData';
+import {
+  API,
+  Attachment,
+  Creds,
+  ExpectedConstants,
+  ManageCredsModalText,
+} from '@/src/testData';
 import { OAuthMockHelper } from '@/src/testData/toolsets/oauthMockHelper';
 import { ThemeColorAttributes } from '@/src/ui/domData';
 import { GeneratorUtil } from '@/src/utils';
@@ -188,11 +194,10 @@ dialAdminTest(
       'Click Personal section and verify personal creds content is displayed',
       async () => {
         await adminToolsetLoginModal.myCredsAccordion.click();
-        await adminToolsetLoginModalAssertion.assertMyCredsSectionContent();
-        await adminToolsetLoginModalAssertion.assertElementActionabilityState(
-          adminToolsetLoginModal.loginButton,
-          'enabled',
-        );
+        await adminToolsetLoginModalAssertion.assertMyCredsSectionContent({
+          expectedText: ManageCredsModalText.personalCredsText,
+          expectedLoginBtnState: 'visible',
+        });
       },
     );
 
@@ -704,6 +709,321 @@ dialSharedWithMeTest(
           additionalShareUserEntityDetailsModal.credsLabel,
           expectedColor,
         );
+      },
+    );
+  },
+);
+
+dialAdminTest(
+  'Login first with personal creds and then with org creds to public toolset.\n' +
+    '[Toolsets] Logout first with personal creds when public toolset is logged with both org creds and personal creds of admin.\n' +
+    'Toast message on successfully logout for public toolset.\n' +
+    'Logout with org creds when public toolset is logged with org creds only',
+  async ({
+    toolsetBuilder,
+    toolsetApiHelper,
+    publicationApiHelper,
+    adminPublicationApiHelper,
+    adminUserItemApiHelper,
+    publishRequestBuilder,
+    adminMarketplacePage,
+    adminMarketplaceHeader,
+    adminMarketplaceEntitiesSection,
+    adminEntityDetailsModal,
+    adminEntityDetailsModalAssertion,
+    adminToolsetLoginModal,
+    adminToolsetLoginModalAssertion,
+    baseAssertion,
+    adminToast,
+    setTestIds,
+    adminPage,
+  }) => {
+    setTestIds('EPMRTC-7993', 'EPMRTC-7996', 'EPMRTC-8000', 'EPMRTC-7998');
+
+    const toolsetEntity = {
+      name: GeneratorUtil.randomToolsetName(),
+      version: GeneratorUtil.randomEntityVersion(),
+      endpoint: GeneratorUtil.randomUrl(),
+    };
+    const expectedColor = ThemesUtil.getRgbColorByKey(
+      ThemeColorAttributes.textSuccess,
+    );
+
+    let initialToolset: Toolset;
+    let publishedToolset: Toolset;
+    let adminOauthMockHelper: OAuthMockHelper;
+    let loginPopup: Page;
+
+    await dialAdminTest.step(
+      'Precondition: Create toolset via API',
+      async () => {
+        const toolsetModel = toolsetBuilder
+          .withDisplayName(toolsetEntity.name)
+          .withDisplayVersion(toolsetEntity.version)
+          .build();
+        await toolsetApiHelper.createToolset(toolsetModel);
+        initialToolset = (await toolsetApiHelper.getToolset(
+          toolsetEntity.name,
+          toolsetEntity.version,
+        ))!;
+      },
+    );
+
+    await dialAdminTest.step(
+      'Precondition: Publish toolset and approve publication',
+      async () => {
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withToolsetResource(initialToolset, PublishActions.ADD)
+          .build();
+        const publication: Publication =
+          await publicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+
+        const toolsetResource = publication.resources.find(
+          (r) => r.sourceUrl === initialToolset.id,
+        )!;
+        publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
+          toolsetResource.targetUrl,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Precondition: Setup OAuth mocks for admin user page',
+      async () => {
+        adminOauthMockHelper = new OAuthMockHelper(
+          adminPage,
+          publishedToolset,
+          toolsetEntity.endpoint,
+        );
+        await adminOauthMockHelper.setupMocks();
+        adminOauthMockHelper.enableMocking();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Open admin marketplace, navigate to toolsets and find published toolset',
+      async () => {
+        await adminMarketplacePage.openMarketplacePage({
+          updateInstalledDeployments: false,
+          getInstalledDeployments: true,
+          updateInstalledToolsets: false,
+          getInstalledToolsets: false,
+          getStyles: true,
+        });
+        await adminMarketplacePage.waitForPageLoaded();
+        await adminMarketplaceHeader.toolsetsTab.click();
+        await adminMarketplaceHeader
+          .getSearch()
+          .inputField.fillInInput(toolsetEntity.name);
+        const toolsetElement =
+          await adminMarketplaceEntitiesSection.findEntityElement(
+            toolsetEntity.name,
+          );
+        await baseAssertion.assertElementState(toolsetElement, 'visible');
+        await toolsetElement.click();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify entity details modal is displayed with LOGGED OUT label and Manage creds button',
+      async () => {
+        await adminEntityDetailsModalAssertion.assertElementState(
+          adminEntityDetailsModal,
+          'visible',
+        );
+        await adminEntityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedCredsLabel: Creds.loggedOut,
+        });
+        await baseAssertion.assertElementState(
+          adminEntityDetailsModal.manageCredsButton,
+          'visible',
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click Manage creds button, click login button in Personal tab and complete OAuth login process',
+      async () => {
+        await adminEntityDetailsModal.manageCredsButton.click();
+        await adminToolsetLoginModal.myCredsAccordion.click();
+        loginPopup =
+          await adminToolsetLoginModal.clickMyCredsLoginButtonForOAuth();
+        await adminMarketplacePage.waitForExpectedResponses(
+          () => adminOauthMockHelper.navigateToCallback(loginPopup),
+          [
+            {
+              apiMethod: 'GET',
+              urlPattern: API.toolsetCreateHost(),
+              status: 200,
+            },
+          ],
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify manage creds modal is closed and MY CREDS label is displayed on the toolset card',
+      async () => {
+        await adminToolsetLoginModalAssertion.assertElementState(
+          adminToolsetLoginModal,
+          'hidden',
+        );
+        await adminEntityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedCredsLabel: Creds.myCreds,
+        });
+        await adminEntityDetailsModalAssertion.assertElementColor(
+          adminEntityDetailsModal.credsLabel,
+          expectedColor,
+        );
+        await adminEntityDetailsModalAssertion.assertElementBorderColors(
+          adminEntityDetailsModal.credsLabel,
+          expectedColor,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click Manage creds button again, click login button in Organizational tab and complete OAuth login process',
+      async () => {
+        await adminEntityDetailsModal.manageCredsButton.click();
+        await adminToolsetLoginModal.orgCredsAccordion.click();
+        loginPopup =
+          await adminToolsetLoginModal.clickOrgCredsLoginButtonForOAuth();
+        await adminOauthMockHelper.navigateToCallback(loginPopup);
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify manage creds modal is closed and MY CREDS label is still displayed on the toolset card',
+      async () => {
+        await adminToolsetLoginModalAssertion.assertElementState(
+          adminToolsetLoginModal,
+          'hidden',
+        );
+        await adminEntityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedCredsLabel: [Creds.myCreds, Creds.orgCreds],
+        });
+        await adminEntityDetailsModalAssertion.assertElementColor(
+          adminEntityDetailsModal.credsLabel.getNthElement(1),
+          expectedColor,
+        );
+        await adminEntityDetailsModalAssertion.assertElementBorderColors(
+          adminEntityDetailsModal.credsLabel.getNthElement(1),
+          expectedColor,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click Manage creds button and verify both bars are displayed with logged-in status',
+      async () => {
+        await adminEntityDetailsModal.manageCredsButton.click();
+        await adminToolsetLoginModalAssertion.assertElementState(
+          adminToolsetLoginModal,
+          'visible',
+        );
+        await adminToolsetLoginModalAssertion.assertManageCredsModalCommonAttributes(
+          {
+            expectedName: toolsetEntity.name,
+            expectedVersion: toolsetEntity.version,
+          },
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click My credentials bar and verify personal section is expanded with logout button visible',
+      async () => {
+        await adminToolsetLoginModal.myCredsAccordion.click();
+        await adminToolsetLoginModalAssertion.assertMyCredsSectionContent({
+          expectedText: ManageCredsModalText.orgCredsLogoutText,
+          expectedLogoutBtnState: 'visible',
+        });
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click Logout button in personal credentials section and verify successful message is displayed',
+      async () => {
+        await adminOauthMockHelper.setupSignOutRoute({
+          isSignedInUser: false,
+          isSignedInGlobal: true,
+        });
+        await adminToolsetLoginModal.myCredsLogoutButton.click();
+        await baseAssertion.assertElementText(
+          adminToast,
+          ExpectedConstants.personalLogoutSuccessfulMessage(
+            toolsetEntity.name,
+            toolsetEntity.version,
+          ),
+        );
+        await adminToast.closeToast();
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify manage creds modal is closed and ORG CREDS green label is displayed on the toolset card',
+      async () => {
+        await adminToolsetLoginModalAssertion.assertElementState(
+          adminToolsetLoginModal,
+          'hidden',
+        );
+        await adminEntityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedCredsLabel: Creds.orgCreds,
+        });
+        await adminEntityDetailsModalAssertion.assertElementColor(
+          adminEntityDetailsModal.credsLabel,
+          expectedColor,
+        );
+        await adminEntityDetailsModalAssertion.assertElementBorderColors(
+          adminEntityDetailsModal.credsLabel,
+          expectedColor,
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click Manage creds button, click Organizational tab and verify org creds section shows logout text and logout button',
+      async () => {
+        await adminEntityDetailsModal.manageCredsButton.click();
+        await adminToolsetLoginModal.orgCredsAccordion.click();
+        await adminToolsetLoginModalAssertion.assertOrgCredsSectionContent({
+          expectedText: ManageCredsModalText.orgCredsAllUsersLogoutText,
+          expectedLogoutBtnState: 'visible',
+        });
+      },
+    );
+
+    await dialAdminTest.step(
+      'Click Logout button in org credentials section and verify successful message is displayed',
+      async () => {
+        await adminOauthMockHelper.setupSignOutRoute({
+          isSignedInUser: false,
+          isSignedInGlobal: false,
+        });
+        await adminToolsetLoginModal.orgCredsLogoutButton.click();
+        await baseAssertion.assertElementText(
+          adminToast,
+          ExpectedConstants.orgLogoutSuccessfulMessage(
+            toolsetEntity.name,
+            toolsetEntity.version,
+          ),
+        );
+      },
+    );
+
+    await dialAdminTest.step(
+      'Verify manage creds modal is closed and LOGGED OUT label is displayed on the toolset card',
+      async () => {
+        await adminToolsetLoginModalAssertion.assertElementState(
+          adminToolsetLoginModal,
+          'hidden',
+        );
+        await adminEntityDetailsModalAssertion.assertEntityCommonAttributes({
+          expectedCredsLabel: Creds.loggedOut,
+        });
       },
     );
   },

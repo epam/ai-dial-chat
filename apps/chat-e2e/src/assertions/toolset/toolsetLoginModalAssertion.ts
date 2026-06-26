@@ -136,29 +136,53 @@ export class ToolsetLoginModalAssertion extends BaseAssertion {
     );
   }
 
-  public async assertMyCredsSectionContent() {
+  public async assertMyCredsSectionContent(attributesToVerify: {
+    expectedText?: string;
+    expectedLoginBtnState?: ElementState;
+    expectedLogoutBtnState?: ElementState;
+  }) {
     await this.assertElementState(
       this.toolsetLoginModal.myCredsContent,
       'visible',
     );
-    await this.assertElementText(
-      this.toolsetLoginModal.myCredsText,
-      ManageCredsModalText.personalCredsText,
-    );
-    await this.assertElementState(
-      this.toolsetLoginModal.myCredsLoginButton,
-      'visible',
-    );
+    if (attributesToVerify.expectedText) {
+      await this.assertElementText(
+        this.toolsetLoginModal.myCredsText,
+        attributesToVerify.expectedText,
+      );
+    }
+    if (attributesToVerify.expectedLoginBtnState) {
+      await this.assertElementState(
+        this.toolsetLoginModal.myCredsLoginButton,
+        'visible',
+      );
+    }
+    if (attributesToVerify.expectedLogoutBtnState) {
+      await this.assertElementState(
+        this.toolsetLoginModal.myCredsLogoutButton,
+        'visible',
+      );
+    }
   }
 
-  public async assertOrgCredsSectionContent() {
+  public async assertOrgCredsSectionContent(attributesToVerify?: {
+    expectedText?: string;
+    expectedLogoutBtnState?: ElementState;
+  }) {
     await this.assertElementState(
       this.toolsetLoginModal.orgCredsContent,
       'visible',
     );
     await this.assertElementText(
       this.toolsetLoginModal.orgCredsText,
-      ManageCredsModalText.orgCredsText,
+      attributesToVerify?.expectedText ??
+        ManageCredsModalText.orgCredsLoginText,
     );
+    if (attributesToVerify?.expectedLogoutBtnState) {
+      await this.assertElementState(
+        this.toolsetLoginModal.orgCredsLogoutButton,
+        attributesToVerify.expectedLogoutBtnState,
+      );
+    }
   }
 }

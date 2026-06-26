@@ -89,6 +89,7 @@ export const ToolsetLoginModalSelectors = {
   apiKeyMaskedFieldInput: `${Tags.input}[${Attributes.type} = "${AttributeValues.password}"]`,
   apiKeyUnmaskedFieldInput: `${Tags.input}[${Attributes.type} = "${AttributeValues.text}"]`,
   loginButton: 'Log in',
+  logoutButton: 'Log out',
   orgCredsAccordion: '[data-qa="org-creds-accordion"]',
   orgCredsContent: '[data-qa="org-creds-content"]',
   myCredsAccordion: '[data-qa="my-creds-accordion"]',
