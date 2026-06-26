@@ -401,7 +401,12 @@ const ConversationRoute: FC = () => {
             message={inputMessage}
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
-            styles={{ typography: { welcomeClassName: 'dial-display2-text' } }}
+            styles={{
+              typography: {
+                welcomeClassName: 'dial-display2-text',
+                input: { fontClassName: 'dial-body-paragraph-text' },
+              },
+            }}
             deployments={deploymentItems}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}

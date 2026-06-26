@@ -10,6 +10,7 @@ import {
   MarkdownTable,
   type MarkdownTableClassNames,
 } from './Table/MarkdownTable';
+import { MarkdownTaskCheckbox } from './TaskCheckbox/MarkdownTaskCheckbox';
 
 /** Per-element className overrides passed to {@link MarkdownRenderer}. */
 export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
@@ -49,11 +50,11 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   codeBlockContainer?: string;
   /** Extra classes on the {@link MarkdownCodeBlock} header bar. */
   codeBlockHeader?: string;
-  /** Typography class for the `<code>` element inside a code block. Defaults to `'font-mono'`. */
+  /** Typography class for the `<code>` element inside a code block. Defaults to `'dial-code-text'`. */
   codeFont?: string;
   /** Extra classes on inline `<code>` (base: `rounded px-1 py-0.5`). */
   codeInline?: string;
-  /** Typography class for inline `<code>`. Defaults to `'font-mono text-sm'`. */
+  /** Typography class for inline `<code>`. Defaults to `'dial-code-text'`. */
   codeInlineFont?: string;
   /** Extra classes on `<blockquote>` (base uses a logical start border and padding). */
   blockquote?: string;
@@ -65,6 +66,8 @@ export interface MarkdownRendererClassNames extends MarkdownTableClassNames {
   del?: string;
   /** Extra classes on `<th>` and `<td>` (base includes borders, spacing, and text wrapping). */
   tableCell?: string;
+  /** Extra classes on `<td>` only (applied before `tableCell`, e.g. a body-cell background). */
+  tableBodyCell?: string;
   /** Extra classes on `<th>` only (applied alongside `tableCell`). */
   tableHeader?: string;
   /** Typography class for `<th>` cells. Defaults to `'font-semibold'`. */
@@ -164,7 +167,7 @@ const buildMarkdownComponents = (
       <code
         className={mergeClasses(
           'rounded px-1 py-0.5',
-          cn.codeInlineFont ?? 'font-mono text-sm',
+          cn.codeInlineFont ?? 'dial-code-text',
           cn.codeInline,
         )}
       >
@@ -175,8 +178,7 @@ const buildMarkdownComponents = (
   blockquote: ({ children }) => (
     <blockquote
       className={mergeClasses(
-        'border-s-2 py-1 ps-4 text-secondary',
-        styles.secondaryBorder,
+        'border-s-2 border-primary py-1 ps-4 text-secondary',
         cn.blockquote,
       )}
     >
@@ -189,7 +191,7 @@ const buildMarkdownComponents = (
       target="_blank"
       rel="noopener noreferrer"
       className={mergeClasses(
-        'decoration-current/60 text-accent-primary underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2',
+        'decoration-current/60 text-accent-primary underline underline-offset-2 hover:decoration-current focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-[var(--stroke-focus,#EEF1F7)]',
         cn.link,
       )}
     >
@@ -204,19 +206,13 @@ const buildMarkdownComponents = (
   del: ({ children }) => (
     <del className={mergeClasses('opacity-75', cn.del)}>{children}</del>
   ),
-  input: ({ type, checked, disabled }) => (
-    <input
-      type={type}
-      checked={checked}
-      disabled={disabled}
-      readOnly
-      className="me-2 size-4 appearance-auto align-middle"
-    />
-  ),
+  input: ({ type, checked }) =>
+    type === 'checkbox' ? (
+      <MarkdownTaskCheckbox checked={checked ?? false} />
+    ) : null,
   table: ({ children }) => (
     <MarkdownTable classNames={cn}>{children}</MarkdownTable>
   ),
-  tr: ({ children }) => <tr className="even:bg-white/[0.025]">{children}</tr>,
   th: ({ children }) => (
     <th
       className={mergeClasses(
@@ -235,6 +231,7 @@ const buildMarkdownComponents = (
       className={mergeClasses(
         'max-w-96 whitespace-normal break-words border-b px-3 py-2.5 align-top [overflow-wrap:anywhere]',
         styles.secondaryBorder,
+        cn.tableBodyCell,
         cn.tableCell,
       )}
     >

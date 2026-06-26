@@ -33,7 +33,7 @@ export interface MarkdownCodeBlockProps {
   containerClassName?: string;
   /** Extra classes applied to the sticky header bar. */
   headerClassName?: string;
-  /** Typography class for the `<code>` element (used when no language is detected). Defaults to `'font-mono text-sm'`. */
+  /** Typography class for the `<code>` element (used when no language is detected). Defaults to `'dial-code-text'`. */
   codeClassName?: string;
 }
 
@@ -56,7 +56,7 @@ export const MarkdownCodeBlock: FC<MarkdownCodeBlockProps> = memo(
     copiedLabel = 'Copied!',
     containerClassName,
     headerClassName,
-    codeClassName = 'font-mono text-sm',
+    codeClassName = 'dial-code-text',
   }) => {
     const { isCopied, copy } = useCodeCopy(value);
 

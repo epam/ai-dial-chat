@@ -1,8 +1,5 @@
 .scrollContainer {
-  border-color: var(
-    --cm-markdown-border,
-    var(--stroke-secondary, #242c42)
-  );
+  border-color: var(--cm-markdown-border, var(--stroke-secondary, #242c42));
   scrollbar-width: thin;
   scrollbar-color: var(--stroke-primary, #696e7c) transparent;
 

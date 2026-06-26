@@ -54,15 +54,16 @@ export const MDMessageViewer: FC<Props> = memo(
         h4: 'mb-2 mt-4 text-base font-semibold first:mt-0 [text-wrap:balance]',
         h5: 'mb-2 mt-4 text-sm font-semibold first:mt-0 [text-wrap:balance]',
         h6: 'mb-2 mt-4 text-sm font-medium text-secondary first:mt-0 [text-wrap:balance]',
-        p: 'mb-3 max-w-[70ch] break-words leading-[1.625] [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0',
+        p: 'dial-body-paragraph-text mb-3 break-words [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0',
         ul: 'mb-3 space-y-1',
         ol: 'mb-3 space-y-1',
         codeInline:
           'mx-0.5 bg-layer-3 px-1.5 text-[0.875em] text-primary break-words [overflow-wrap:anywhere]',
-        blockquote: 'my-4 max-w-[70ch]',
+        blockquote: 'my-4',
         link: 'break-words [overflow-wrap:anywhere]',
         tableWrapper: 'my-4',
         tableHeader: 'bg-layer-3',
+        tableBodyCell: 'bg-layer-2',
       }}
     />
   ),

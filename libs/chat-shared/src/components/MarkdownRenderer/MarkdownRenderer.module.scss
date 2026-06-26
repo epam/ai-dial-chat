@@ -28,8 +28,5 @@
 }
 
 .secondaryBorder {
-  border-color: var(
-    --cm-markdown-border,
-    var(--stroke-secondary, #242c42)
-  );
+  border-color: var(--cm-markdown-border, var(--stroke-secondary, #242c42));
 }

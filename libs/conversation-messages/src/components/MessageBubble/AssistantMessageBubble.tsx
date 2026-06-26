@@ -52,7 +52,11 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
       : undefined,
   });
 
-  const textClass = mergeClasses(styles.text, typography?.fontClassName);
+  const textClass = mergeClasses(
+    styles.text,
+    noCustomClass && styles.textFont,
+    typography?.fontClassName,
+  );
 
   const hasDeploymentIcon = !!(deploymentIconUrl || deploymentDisplayName);
 

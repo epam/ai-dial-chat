@@ -60,6 +60,7 @@ describe('MarkdownRenderer', () => {
           tableWrapper: 'custom-wrapper',
           tableCell: 'custom-cell',
           tableHeader: 'custom-header',
+          tableBodyCell: 'custom-body-cell',
         }}
       />,
     );
@@ -82,6 +83,8 @@ describe('MarkdownRenderer', () => {
     expect(cell.className).toContain('border-b');
     expect(cell.className).toContain('align-top');
     expect(cell.className).toContain('[overflow-wrap:anywhere]');
+    expect(cell.className).toContain('custom-body-cell');
+    expect(columnHeader.className).not.toContain('custom-body-cell');
   });
 
   it('renders a fenced TypeScript block with language label and copy button', () => {
@@ -171,8 +174,8 @@ describe('MarkdownRenderer', () => {
     ).toContain('custom-h4');
     expect(document.querySelector('hr')?.className).toContain('custom-hr');
     expect(screen.getByText('Removed').className).toContain('custom-del');
-    const checkboxClassName = screen.getByRole('checkbox').className;
-    expect(checkboxClassName).toContain('appearance-auto');
-    expect(checkboxClassName).toContain('size-4');
+    const checkbox = screen.getByRole('checkbox') as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+    expect(checkbox.getAttribute('aria-disabled')).toBe('true');
   });
 });
