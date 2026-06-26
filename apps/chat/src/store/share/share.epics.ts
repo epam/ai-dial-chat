@@ -1202,6 +1202,7 @@ const getSharedListingSuccessEpic: AppEpic = (action$, state$, { router }) =>
                   sharedWithMe: true,
                   isRootSharedItem: true,
                 })),
+              keepFileIds: selectedFilesIds,
               reviewBuckets: [
                 reviewBucket,
                 codeEditorBucket !== BucketService.getBucket()
