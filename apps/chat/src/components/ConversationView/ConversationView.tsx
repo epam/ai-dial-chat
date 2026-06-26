@@ -310,7 +310,9 @@ const ConversationView: FC<Props> = ({
   // Prevents the scroll handler from misreading programmatic scrolls as user input.
   const isProgrammaticRef = useRef(false);
   // Fallback timer that clears isProgrammaticRef when scrollend is unsupported.
-  const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const scrollToBottom = useCallback((instant = false) => {
     const container = containerRef.current;

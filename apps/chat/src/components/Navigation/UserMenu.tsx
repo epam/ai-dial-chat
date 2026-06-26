@@ -126,7 +126,7 @@ export const UserMenu = memo(() => {
       key: 'identity',
       type: DropdownItemType.PlainText,
       label: (
-        <div className="flex min-w-0 items-center gap-4 px-2 py-1">
+        <div className="flex h-[40px] min-w-0 items-center gap-4">
           <AvatarInitials shortName={shortName} />
           <DialEllipsisTooltip
             text={displayName}
@@ -135,7 +135,6 @@ export const UserMenu = memo(() => {
         </div>
       ),
     },
-    { key: 'divider-1', type: DropdownItemType.Divider },
     ...(SUPPORTED_LANGUAGES.length > 1
       ? [
           {
@@ -191,7 +190,7 @@ export const UserMenu = memo(() => {
         },
       ],
     },
-    { key: 'divider-2', type: DropdownItemType.Divider },
+    { key: 'divider-1', type: DropdownItemType.Divider },
     {
       key: 'logout',
       label: <span className="dial-small-text">{t(AuthI18nKeys.LogOut)}</span>,
@@ -208,6 +207,8 @@ export const UserMenu = memo(() => {
           matchReferenceWidth={false}
           items={menuItems}
           listClassName="shadow-md"
+          separatorClassName="m-0"
+          overlayContentClassName="p-0"
         >
           <button
             className="flex size-[44px] items-center justify-center rounded-full border border-transparent focus-within:border-focus hover:bg-accent-primary-alpha focus:border-transparent"
