@@ -874,7 +874,9 @@ describe('UserConfigService', () => {
       makeSingleDownloadSpy(service, {
         ok: true,
         body: JSON.stringify(
-          v3Config({ deployments: { installed: ['dep-a', 'dep-b'], selectedId: null } }),
+          v3Config({
+            deployments: { installed: ['dep-a', 'dep-b'], selectedId: null },
+          }),
         ),
       });
       const uploadSpy = makeUploadSpy(service);

@@ -19,7 +19,8 @@ export class ClientConfigDto {
   transcribeSizeLimitBytes!: number;
 
   @ApiPropertyOptional({
-    description: 'Operator-configured default deployment ID. Null when not configured.',
+    description:
+      'Operator-configured default deployment ID. Null when not configured.',
     example: 'gpt-4o',
     nullable: true,
     type: String,
