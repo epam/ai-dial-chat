@@ -40,7 +40,7 @@ export const chatEventsSlice = createSlice({
       state.isSubscribing = false;
     },
     unsubscribe: (state) => state,
-    setChannelId: (state, { payload }: PayloadAction<string>) => {
+    setChannelId: (state, { payload }: PayloadAction<string | undefined>) => {
       state.channelId = payload;
       state.isSubscribing = false;
     },

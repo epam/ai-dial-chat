@@ -9,7 +9,7 @@ import { Feature } from '@epam/ai-dial-shared';
 
 const overlayOptions = {
   ...commonOverlayProps,
-  enabledFeatures: [Feature.Header],
+  enabledFeatures: [Feature.Header, Feature.LiveChatInteraction],
 };
 
 export default function Index() {

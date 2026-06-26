@@ -112,4 +112,16 @@ export class SendMessage extends BaseElement {
     await this.regenerate.click();
     await requestPromise;
   }
+
+  public async sendRequest(waitForResponse = true) {
+    if (waitForResponse) {
+      const responsePromise = this.page.waitForResponse(
+        (r) => r.url().includes(API.unsubscribeHost()) && r.ok(),
+      );
+      await this.sendMessageButton.click();
+      await responsePromise;
+    } else {
+      await this.sendMessageButton.click();
+    }
+  }
 }

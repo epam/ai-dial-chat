@@ -13,6 +13,7 @@ const overlayOptions = {
     Feature.TopClearConversation,
     Feature.TopChatInfo,
     Feature.TopChatModelSettings,
+    Feature.LiveChatInteraction,
   ],
 };
 
