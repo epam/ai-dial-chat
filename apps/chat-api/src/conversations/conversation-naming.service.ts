@@ -7,7 +7,7 @@ import { getApiKeyAuthHeaders } from '../common/utils/auth-header';
 import { EnvironmentVariables } from '../config/environment.config';
 import { ConversationResponseDto } from '../openapi/openapi-response.dto';
 import type { ConversationPersistencePort } from './conversation-persistence.port';
-import type { ConversationService } from './conversation.service';
+import { ConversationService } from './conversation.service';
 import { ConversationMessageRole } from './dto/conversation-message.dto';
 import { CONVERSATION_NAMING_SYSTEM_PROMPT } from './prompts/conversation-naming.prompt';
 import { prepareEntityName } from './utils/conversation.utils';
@@ -26,9 +26,7 @@ export class ConversationNamingService extends AppService {
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     private readonly appConfigService: AppConfigService,
-    @Inject(
-      forwardRef(() => require('./conversation.service').ConversationService),
-    )
+    @Inject(forwardRef(() => ConversationService))
     private readonly conversationPersistence: ConversationPersistencePort,
   ) {
     super(configService);

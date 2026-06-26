@@ -22,7 +22,7 @@ import {
   MAX_LIST_DISPLAY_NAME_ENRICHMENTS,
   PUBLIC_BUCKET,
 } from './constants/conversation.constants';
-import type { ConversationNamingService } from './conversation-naming.service';
+import { ConversationNamingService } from './conversation-naming.service';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
@@ -70,12 +70,7 @@ export class ConversationService extends AppService {
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     private readonly userConfigService: UserConfigService,
-    @Inject(
-      forwardRef(
-        () =>
-          require('./conversation-naming.service').ConversationNamingService,
-      ),
-    )
+    @Inject(forwardRef(() => ConversationNamingService))
     private readonly conversationNamingService: ConversationNamingService,
   ) {
     super(configService);
