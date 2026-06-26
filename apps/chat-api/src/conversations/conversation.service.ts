@@ -1,5 +1,7 @@
 import {
   BadGatewayException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -20,7 +22,7 @@ import {
   MAX_LIST_DISPLAY_NAME_ENRICHMENTS,
   PUBLIC_BUCKET,
 } from './constants/conversation.constants';
-import { ConversationNamingService } from './conversation-naming.service';
+import type { ConversationNamingService } from './conversation-naming.service';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
@@ -68,6 +70,12 @@ export class ConversationService extends AppService {
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     private readonly userConfigService: UserConfigService,
+    @Inject(
+      forwardRef(
+        () =>
+          require('./conversation-naming.service').ConversationNamingService,
+      ),
+    )
     private readonly conversationNamingService: ConversationNamingService,
   ) {
     super(configService);
