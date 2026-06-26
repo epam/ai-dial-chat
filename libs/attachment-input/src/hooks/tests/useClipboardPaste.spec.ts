@@ -25,6 +25,18 @@ const makeImageEvent = () => {
   } as unknown as ClipboardEvent<HTMLTextAreaElement>;
 };
 
+const makeImageWithTextEvent = (text: string) => {
+  const blob = new Blob(['img'], { type: 'image/png' });
+  const item = { kind: 'file', type: 'image/png', getAsFile: () => blob };
+  return {
+    clipboardData: {
+      items: [item] as unknown as DataTransferItemList,
+      getData: () => text,
+    },
+    preventDefault: vi.fn(),
+  } as unknown as ClipboardEvent<HTMLTextAreaElement>;
+};
+
 describe('useClipboardPaste', () => {
   beforeEach(() => {
     vi.stubGlobal('URL', {
@@ -83,6 +95,23 @@ describe('useClipboardPaste', () => {
     const attachment = onAttachments.mock.calls[0][0][0];
     expect(attachment.name.endsWith('…')).toBe(true);
     expect([...attachment.name].length).toBe(81); // 80 chars + ellipsis character
+  });
+
+  it('ignores the image and pastes text when clipboard contains both image and text', () => {
+    const onAttachments = vi.fn();
+    const { result } = renderHook(() => useClipboardPaste(onAttachments, 10));
+    const event = makeImageWithTextEvent('This text is longer than ten characters');
+    result.current.handlePaste(event);
+    expect(onAttachments).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ type: AttachmentType.Pasted }),
+      ]),
+    );
+    expect(onAttachments).not.toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({ type: AttachmentType.Image }),
+      ]),
+    );
   });
 
   it('short text does not create an attachment', () => {
