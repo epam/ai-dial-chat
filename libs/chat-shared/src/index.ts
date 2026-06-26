@@ -25,3 +25,4 @@ export * from './components/MarkdownRenderer/MarkdownRenderer';
 export * from './components/MarkdownRenderer/MDMessageViewer';
 export * from './components/MarkdownRenderer/CodeBlock/CodeBlock';
 export * from './components/MarkdownRenderer/Table/MarkdownTable';
+export * from './hooks/useIsMobile';

@@ -37,6 +37,9 @@ const mockUpdateInstalledToolset = vi.mocked(
 const mockUpdateInstalledDeployment = vi.mocked(
   userConfigApi.updateInstalledDeployment,
 );
+const mockUpdateSelectedDeployment = vi.mocked(
+  userConfigApi.updateSelectedDeployment,
+);
 
 const fullConfig = {
   version: 2,
@@ -55,6 +58,7 @@ beforeEach(() => {
   mockPinConversation.mockResolvedValue(undefined);
   mockUpdateInstalledToolset.mockResolvedValue(undefined);
   mockUpdateInstalledDeployment.mockResolvedValue(undefined);
+  mockUpdateSelectedDeployment.mockResolvedValue(undefined);
 });
 
 afterEach(() => {
@@ -303,6 +307,105 @@ describe('UserConfigContext', () => {
         }),
       ).rejects.toThrow('toolset failed');
       expect(result.current.installedToolsetIds).not.toContain('ts-a');
+    });
+  });
+
+  describe('selectedDeploymentId', () => {
+    it('populates selectedDeploymentId from deployments.selectedId on load', async () => {
+      mockGetUserConfig.mockResolvedValue({
+        version: 3,
+        conversations: { pinnedIds: [] },
+        toolsets: { installed: [] },
+        deployments: { installed: [], selectedId: 'gpt-4o' },
+      } as never);
+      const { result } = renderHook(() => useUserConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.selectedDeploymentId).toBe('gpt-4o');
+    });
+
+    it('defaults selectedDeploymentId to null when absent', async () => {
+      mockGetUserConfig.mockResolvedValue({
+        version: 2,
+        conversations: { pinnedIds: [] },
+        toolsets: { installed: [] },
+        deployments: { installed: [] },
+      } as never);
+      const { result } = renderHook(() => useUserConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+      expect(result.current.selectedDeploymentId).toBeNull();
+    });
+  });
+
+  describe('setSelectedDeployment', () => {
+    it('updates selectedDeploymentId optimistically and calls the API', async () => {
+      mockGetUserConfig.mockResolvedValue({
+        version: 3,
+        conversations: { pinnedIds: [] },
+        toolsets: { installed: [] },
+        deployments: { installed: [], selectedId: null },
+      } as never);
+      const { result } = renderHook(() => useUserConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+
+      await act(async () => {
+        await result.current.setSelectedDeployment('gpt-4o');
+      });
+
+      expect(result.current.selectedDeploymentId).toBe('gpt-4o');
+      expect(mockUpdateSelectedDeployment).toHaveBeenCalledWith('gpt-4o');
+    });
+
+    it('clears selectedDeploymentId when called with null', async () => {
+      mockGetUserConfig.mockResolvedValue({
+        version: 3,
+        conversations: { pinnedIds: [] },
+        toolsets: { installed: [] },
+        deployments: { installed: [], selectedId: 'gpt-4o' },
+      } as never);
+      const { result } = renderHook(() => useUserConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+
+      await act(async () => {
+        await result.current.setSelectedDeployment(null);
+      });
+
+      expect(result.current.selectedDeploymentId).toBeNull();
+      expect(mockUpdateSelectedDeployment).toHaveBeenCalledWith(null);
+    });
+
+    it('keeps optimistic selectedDeploymentId when the API call fails', async () => {
+      mockGetUserConfig.mockResolvedValue({
+        version: 3,
+        conversations: { pinnedIds: [] },
+        toolsets: { installed: [] },
+        deployments: { installed: [], selectedId: null },
+      } as never);
+      mockUpdateSelectedDeployment.mockRejectedValue(new Error('save failed'));
+      const consoleSpy = vi
+        .spyOn(console, 'warn')
+        .mockImplementation(() => undefined);
+      const { result } = renderHook(() => useUserConfig(), { wrapper });
+      await waitFor(() =>
+        expect(result.current.status).toBe(UserConfigStatus.Ready),
+      );
+
+      await act(async () => {
+        await result.current.setSelectedDeployment('gpt-4o');
+      });
+
+      expect(result.current.selectedDeploymentId).toBe('gpt-4o');
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining('UserConfigContext'),
+        expect.any(Error),
+      );
     });
   });
 

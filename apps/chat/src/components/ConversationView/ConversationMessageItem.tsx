@@ -276,6 +276,7 @@ const ConversationMessageItem: FC<Props> = ({
                 isStreaming={isStreaming}
                 executedLabel={executedLabel}
                 stepsLabel={stepsLabel}
+                onAttachmentClick={handleAttachmentClick}
               />
             )}
             {msg.hasStreamError && (

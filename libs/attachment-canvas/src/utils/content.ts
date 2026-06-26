@@ -10,6 +10,9 @@ export const isTextPreviewable = (name: string): boolean => {
 };
 
 /** Creates an unsupported-format content payload. */
-export const createUnsupportedCanvasContent = (): UnsupportedCanvasContent => ({
+export const createUnsupportedCanvasContent = (
+  url?: string,
+): UnsupportedCanvasContent => ({
   type: AttachmentContentType.Unsupported,
+  ...(url != null && { url }),
 });

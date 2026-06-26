@@ -1,4 +1,6 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
+  DialCheckbox,
   DialDropdown,
   DialLinkButton,
   DIAL_ICON_SIZE,
@@ -8,55 +10,128 @@ import { FC } from 'react';
 import { getFromLabel } from '../../utils/catalog-filter';
 import styles from './Filter.module.scss';
 
-/** Props for FromFilter. */
+/** Props for Filter. */
 export interface FilterProps {
-  /** Set of currently checked source IDs. */
+  /** Set of topic strings currently selected for filtering. Empty = no topic filter. */
   checked: Set<string>;
-  /** Called when the checked set changes. */
+  /** Called when the topic selection changes. */
   onChange: (checked: Set<string>) => void;
-  /** All possible source topics, used to determine if "All" are selected. */
+  /** All available topic strings shown as checkboxes. */
   values?: Set<string>;
-  /** Button label when all or none are selected. Default: 'From'. */
+  /** Whether the "My Apps" filter checkbox is active. */
+  isMyAppsActive?: boolean;
+  /** Called when the "My Apps" toggle changes. */
+  onMyAppsChange?: (isActive: boolean) => void;
+  /** Label for the "My Apps" checkbox. Default: 'My Apps'. */
+  myAppsLabel?: string;
+  /** Label for the Topics section heading. Default: 'Topics'. */
+  topicsLabel?: string;
+  /** CSS class for the Topics section heading. Default: 'dial-tiny-text'. */
+  topicsSectionClassName?: string;
+  /** Button label when nothing is filtered. Default: 'From'. */
   defaultLabel?: string;
 }
 
-/** Hierarchical tree-checkbox dropdown filter for item sources. */
+const getFilterButtonLabel = (
+  checked: Set<string>,
+  values: Set<string> | undefined,
+  isMyAppsActive: boolean | undefined,
+  myAppsLabel: string,
+  defaultLabel: string,
+): string => {
+  const hasTopics = checked.size > 0;
+  if (isMyAppsActive && hasTopics) return `${myAppsLabel} · ${checked.size}`;
+  if (isMyAppsActive) return myAppsLabel;
+  if (hasTopics) return getFromLabel(checked, values, defaultLabel);
+  return defaultLabel;
+};
+
+const toggleTopic = (topic: string, checked: Set<string>): Set<string> => {
+  const next = new Set(checked);
+  if (next.has(topic)) {
+    next.delete(topic);
+  } else {
+    next.add(topic);
+  }
+  return next;
+};
+
+/** Dropdown filter with a "My Apps" toggle and a flat topic-checkbox list. */
 export const Filter: FC<FilterProps> = ({
   checked,
   onChange,
   values,
+  isMyAppsActive,
+  onMyAppsChange,
+  myAppsLabel = 'My Apps',
+  topicsLabel = 'Topics',
+  topicsSectionClassName = 'dial-tiny-text',
   defaultLabel = 'From',
 }) => {
-  const isActive = checked.size < (values?.size ?? 0);
+  const isActive = (isMyAppsActive ?? false) || checked.size > 0;
+  const topics = values != null ? [...values].sort() : [];
+
+  const buttonLabel = getFilterButtonLabel(
+    checked,
+    values,
+    isMyAppsActive,
+    myAppsLabel,
+    defaultLabel,
+  );
 
   return (
     <DialDropdown
       matchReferenceWidth={false}
       renderOverlay={() => (
         <div
-          className="bg-layer-2 px-2"
-          style={{
-            border: '1px solid var(--stroke-secondary, #242c42)',
-            borderRadius: 6,
-            padding: '6px 0',
-            minWidth: 220,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-          }}
+          className={mergeClasses(
+            styles.overlay,
+            'min-w-[220px] rounded-[6px] border px-2',
+          )}
         >
-          {/* {tree.map((node) => (
-            // <TreeCheckboxRow
-            //   key={node.id}
-            //   node={node}
-            //   depth={0}
-            //   checked={checked}
-            //   onToggle={(n) => onChange(applyToggle(n, checked))}
-            // />
-          ))} */}
+          {/* My Apps toggle */}
+          <div className="px-3 py-1">
+            <DialCheckbox
+              id="filter-my-apps"
+              label={myAppsLabel}
+              checked={isMyAppsActive ?? false}
+              onChange={(v) => onMyAppsChange?.(v ?? false)}
+            />
+          </div>
+
+          {topics.length > 0 && (
+            <>
+              <div className={mergeClasses(styles.separator, 'mx-1')} />
+
+              <div
+                className={mergeClasses(
+                  'px-3 py-1',
+                  styles.sectionLabel,
+                  topicsSectionClassName,
+                )}
+              >
+                {topicsLabel}
+              </div>
+
+              <div className="max-h-[240px] overflow-y-auto">
+                {topics.map((topic) => (
+                  <div key={topic} className="px-3 py-1">
+                    <DialCheckbox
+                      id={`filter-topic-${topic}`}
+                      label={topic}
+                      checked={checked.has(topic)}
+                      onChange={() => onChange(toggleTopic(topic, checked))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
         </div>
       )}
     >
       <DialLinkButton
-        label={getFromLabel(checked, values, defaultLabel)}
+        label={buttonLabel}
         iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
         className={isActive ? styles.activeLabel : undefined}
       />

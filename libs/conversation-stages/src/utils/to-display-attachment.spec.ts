@@ -40,4 +40,17 @@ describe('toDisplayAttachment', () => {
     });
     expect(displayAttachment.previewUrl).toBeUndefined();
   });
+
+  it('maps inline data to the data field', () => {
+    const attachment: MessageAttachment = {
+      title: '[1] report.pdf',
+      type: 'text/markdown',
+      data: '# Heading\n\nContent here.',
+    };
+
+    const displayAttachment = toDisplayAttachment(attachment, 0);
+
+    expect(displayAttachment.data).toBe('# Heading\n\nContent here.');
+    expect(displayAttachment.url).toBeUndefined();
+  });
 });

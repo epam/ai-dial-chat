@@ -53,6 +53,7 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   transcribeAudio,
@@ -66,11 +67,8 @@ import { uploadFile } from '../../server-api/files.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
+import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import {
-  getLastConversationSettings,
-  setLastConversationSettings,
-} from '../../utils/local-storage';
 import {
   getStarterPopulateText,
   getStartersFromSchema,
@@ -94,15 +92,10 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
-  const [chatSettingsValues, setChatSettingsValues] = useState(() => {
-    const saved = getLastConversationSettings();
-    return {
-      responseFormat:
-        (saved?.responseFormat as ResponseFormat | undefined) ??
-        ResponseFormat.Markdown,
-      systemPrompt: '',
-      temperature: saved?.temperature ?? 0.5,
-    };
+  const [chatSettingsValues, setChatSettingsValues] = useState({
+    responseFormat: ResponseFormat.Markdown,
+    systemPrompt: '',
+    temperature: 0.5,
   });
   const { showNotification } = useNotification();
   const {
@@ -178,12 +171,17 @@ const ConversationRoute: FC = () => {
       responseFormat: chatSettingsValues.responseFormat,
       systemPrompt: chatSettingsValues.systemPrompt,
       temperature: chatSettingsValues.temperature,
-      onSave: (values: ChatSettingsValues) =>
+      onSave: (values: ChatSettingsValues) => {
         setChatSettingsValues((prev) => ({
           responseFormat: values.responseFormat ?? prev.responseFormat,
           systemPrompt: values.systemPrompt ?? prev.systemPrompt,
           temperature: values.temperature ?? prev.temperature,
-        })),
+        }));
+        showNotification({
+          variant: NotificationVariant.Success,
+          message: t(ChatSettingsI18nKeys.SavedNotification),
+        });
+      },
       menuItemLabel: t(ChatI18nKeys.ChatSettings),
       title: t(ChatSettingsI18nKeys.Title),
       responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
@@ -205,7 +203,14 @@ const ConversationRoute: FC = () => {
       temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
       saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
     }),
-    [selectedDeployment?.features, chatSettingsValues, t],
+    [
+      selectedDeployment?.features,
+      chatSettingsValues.responseFormat,
+      chatSettingsValues.systemPrompt,
+      chatSettingsValues.temperature,
+      t,
+      showNotification,
+    ],
   );
 
   const modelSelectorLabels = useMemo(
@@ -253,10 +258,6 @@ const ConversationRoute: FC = () => {
           temperature: chatSettingsValues.temperature,
           responseFormat: chatSettingsValues.responseFormat,
         } as ConversationResponseDto);
-        setLastConversationSettings({
-          temperature: chatSettingsValues.temperature,
-          responseFormat: chatSettingsValues.responseFormat,
-        });
         navigate(getConversationRoute(conversation.id));
       } catch (err) {
         const errorMessage = await getApiErrorMessage(err);
@@ -380,6 +381,8 @@ const ConversationRoute: FC = () => {
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const { displayName } = useUserProfile();
+  const firstName = displayName.split(' ')[0];
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
 
   const handleAttachmentClick = useCallback(
@@ -459,7 +462,28 @@ const ConversationRoute: FC = () => {
             onSend={handleSend}
             onUploadAttachment={handleUploadAttachment}
             message={inputMessage}
-            welcomeText={t(ChatI18nKeys.WelcomeText)}
+            welcomeText={getTimeOfDayGreeting(
+              new Date().getHours(),
+              {
+                morningWithName: t(ChatI18nKeys.GreetingMorning, {
+                  name: firstName,
+                }),
+                morningNoName: t(ChatI18nKeys.GreetingMorningNoName),
+                afternoonWithName: t(ChatI18nKeys.GreetingAfternoon, {
+                  name: firstName,
+                }),
+                afternoonNoName: t(ChatI18nKeys.GreetingAfternoonNoName),
+                eveningWithName: t(ChatI18nKeys.GreetingEvening, {
+                  name: firstName,
+                }),
+                eveningNoName: t(ChatI18nKeys.GreetingEveningNoName),
+                nightWithName: t(ChatI18nKeys.GreetingNight, {
+                  name: firstName,
+                }),
+                nightNoName: t(ChatI18nKeys.GreetingNightNoName),
+              },
+              firstName || undefined,
+            )}
             placeholder={t(ChatI18nKeys.Placeholder)}
             styles={{ typography: { welcomeClassName: 'dial-display2-text' } }}
             deployments={deploymentItems}
@@ -468,6 +492,7 @@ const ConversationRoute: FC = () => {
             isInputDisabled={isInputDisabled}
             modelSelectorLabels={modelSelectorLabels}
             sendLabel={t(ChatI18nKeys.SendMessage)}
+            sendTitle={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
             isTranscriptionSupported={isTranscriptionSupported}
             onUploadAudio={handleUploadAudio}

@@ -396,7 +396,7 @@ parseInt(value, 10))` + `@IsNumber()`.
 
 ## 12. Verification After Each Slice
 
-Per repo rule `incremental-implementation`, after each slice run:
+Per the openspec task rules (thin vertical slices, `openspec/config.yaml`), after each slice run:
 
 ```sh
 npm exec nx test  chat-api

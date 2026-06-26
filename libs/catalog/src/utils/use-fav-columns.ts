@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 
 /**
  * Returns the number of columns for the Favorites grid based on viewport width.
- * Breakpoints mirror the source design: ≥1800→6, ≥1550→5, ≥1100→4, ≥800→3, else 2.
+ * Breakpoints: ≥1800→6, ≥1550→5, ≥1250→4, ≥950→3, ≥650→2, else 1.
  */
 export const useFavColumns = (): number => {
   const [width, setWidth] = useState(() => window.innerWidth);
@@ -15,7 +15,8 @@ export const useFavColumns = (): number => {
 
   if (width >= 1800) return 6;
   if (width >= 1550) return 5;
-  if (width >= 1100) return 4;
-  if (width >= 800) return 3;
-  return 2;
+  if (width >= 1250) return 4;
+  if (width >= 950) return 3;
+  if (width >= 650) return 2;
+  return 1;
 };

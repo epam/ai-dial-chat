@@ -1,4 +1,5 @@
 import {
+  AttachmentType,
   buildCssVars,
   DeploymentIcon,
   MDMessageViewer,
@@ -37,6 +38,9 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   codeBlockTheme,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
+  const visibleAttachments = isStreaming
+    ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
+    : (attachments ?? []);
   const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
@@ -96,7 +100,7 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
             </div>
           )}
           <AttachmentTray
-            attachments={attachments ?? []}
+            attachments={visibleAttachments}
             onAttachmentClick={onAttachmentClick}
             clickLabel={attachmentClickLabel}
           />

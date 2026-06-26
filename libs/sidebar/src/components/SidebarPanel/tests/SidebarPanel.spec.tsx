@@ -95,17 +95,17 @@ describe('SidebarPanel', () => {
     );
   });
 
-  it('side=right: applies border-l divider', () => {
+  it('side=right: applies border-s divider', () => {
     const { container } = render(
       <SidebarPanel {...defaultProps} orientation={SidebarOrientation.Right}>
         <span />
       </SidebarPanel>,
     );
     expect(
-      container.querySelector('aside')?.classList.contains('border-l'),
+      container.querySelector('aside')?.classList.contains('border-s'),
     ).toBe(true);
     expect(
-      container.querySelector('aside')?.classList.contains('border-r'),
+      container.querySelector('aside')?.classList.contains('border-e'),
     ).toBe(false);
   });
 
@@ -126,17 +126,17 @@ describe('SidebarPanel', () => {
     );
   });
 
-  it('side=left: applies border-r divider', () => {
+  it('side=left: applies border-e divider', () => {
     const { container } = render(
       <SidebarPanel {...defaultProps} orientation={SidebarOrientation.Left}>
         <span />
       </SidebarPanel>,
     );
     expect(
-      container.querySelector('aside')?.classList.contains('border-r'),
+      container.querySelector('aside')?.classList.contains('border-e'),
     ).toBe(true);
     expect(
-      container.querySelector('aside')?.classList.contains('border-l'),
+      container.querySelector('aside')?.classList.contains('border-s'),
     ).toBe(false);
   });
 

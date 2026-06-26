@@ -16,3 +16,8 @@ export const updateInstalledDeployment = (id: string, isInstalled: boolean) =>
   userConfigApi.updateInstalledDeployment({
     updateInstalledDto: { id, isInstalled },
   });
+
+export const updateSelectedDeployment = (id: string | null): Promise<void> =>
+  userConfigApi.updateSelectedDeployment({
+    updateSelectedDeploymentDto: { id },
+  });

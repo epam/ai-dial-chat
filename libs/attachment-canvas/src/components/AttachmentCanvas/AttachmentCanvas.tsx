@@ -1,13 +1,28 @@
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  MarkdownRenderer,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { SidebarOrientation, SidebarPanel } from '@epam/ai-dial-sidebar';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconDownload } from '@tabler/icons-react';
-import { type FC } from 'react';
+import {
+  IconCheck,
+  IconCopy,
+  IconDownload,
+  IconMarkdown,
+} from '@tabler/icons-react';
+import { type FC, memo, useCallback, useMemo, useRef, useState } from 'react';
+import { defaultStyles, JsonView } from 'react-json-view-lite';
+import 'react-json-view-lite/dist/index.css';
 import type { AttachmentCanvasProps } from '../../models/attachment-canvas';
 import { AttachmentContentType } from '../../types/attachment-canvas';
+import { isDownloadable } from '../../utils/download';
+import { PdfContent } from '../PdfContent/PdfContent';
 import styles from './AttachmentCanvas.module.scss';
 
-export const AttachmentCanvas: FC<AttachmentCanvasProps> = ({
+const COPY_RESET_MS = 2000;
+
+const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
   isOpen,
   onClose,
   content,
@@ -15,16 +30,52 @@ export const AttachmentCanvas: FC<AttachmentCanvasProps> = ({
   ariaLabel,
   closeLabel = 'Close',
   onDownload,
+  onCopyMarkdown,
+  onCopyJson,
   downloadLabel = 'Download',
+  copyMarkdownLabel = 'Copy as Markdown',
+  copiedMarkdownLabel = 'Copied!',
+  copyJsonLabel = 'Copy as JSON',
+  copiedJsonLabel = 'Copied!',
   unsupportedLabel = 'Preview is not supported for this file',
   isMobile = false,
-  defaultWidth = 560,
+  defaultWidth,
   minWidth = 320,
-  maxWidth = 960,
+  maxWidth = 1500,
   onResizeStop,
   styles: stylesProp,
   className,
+  codeBlockTheme,
+  loadPdf,
 }) => {
+  const [isCopiedMarkdown, setIsCopiedMarkdown] = useState(false);
+  const [isCopiedJson, setIsCopiedJson] = useState(false);
+  const copyResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const copyJsonResetRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleCopyMarkdown = useCallback(() => {
+    onCopyMarkdown?.();
+    if (copyResetRef.current != null) {
+      clearTimeout(copyResetRef.current);
+    }
+    setIsCopiedMarkdown(true);
+    copyResetRef.current = setTimeout(
+      () => setIsCopiedMarkdown(false),
+      COPY_RESET_MS,
+    );
+  }, [onCopyMarkdown]);
+
+  const handleCopyJson = useCallback(() => {
+    onCopyJson?.();
+    if (copyJsonResetRef.current != null) {
+      clearTimeout(copyJsonResetRef.current);
+    }
+    setIsCopiedJson(true);
+    copyJsonResetRef.current = setTimeout(
+      () => setIsCopiedJson(false),
+      COPY_RESET_MS,
+    );
+  }, [onCopyJson]);
   const {
     colors,
     typography,
@@ -34,23 +85,127 @@ export const AttachmentCanvas: FC<AttachmentCanvasProps> = ({
   } = stylesProp ?? {};
 
   const noCustomClass = !typography?.fontClassName;
-  const cssVars = {
-    ...buildCssVars({
-      '--ac-text': colors?.text,
-      '--ac-font-size': noCustomClass ? typography?.fontSize : undefined,
-      '--ac-font-weight': noCustomClass
-        ? typography?.fontWeight?.toString()
-        : undefined,
-      '--ac-line-height': noCustomClass
-        ? typography?.lineHeight?.toString()
-        : undefined,
-      '--ac-letter-spacing': noCustomClass
-        ? typography?.letterSpacing
-        : undefined,
-      '--ac-font-family': noCustomClass ? typography?.fontFamily : undefined,
+  const cssVars = useMemo(
+    () => ({
+      ...buildCssVars({
+        '--ac-text': colors?.text,
+        '--ac-font-size': noCustomClass ? typography?.fontSize : undefined,
+        '--ac-font-weight': noCustomClass
+          ? typography?.fontWeight?.toString()
+          : undefined,
+        '--ac-line-height': noCustomClass
+          ? typography?.lineHeight?.toString()
+          : undefined,
+        '--ac-letter-spacing': noCustomClass
+          ? typography?.letterSpacing
+          : undefined,
+        '--ac-font-family': noCustomClass ? typography?.fontFamily : undefined,
+      }),
+      ...extraCssVars,
     }),
-    ...extraCssVars,
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stylesProp],
+  );
+
+  const showCopyMarkdown =
+    onCopyMarkdown != null && content.type === AttachmentContentType.Markdown;
+  const showCopyJson =
+    onCopyJson != null && content.type === AttachmentContentType.Json;
+  const showDownload = onDownload != null && isDownloadable(content);
+
+  const bodyContainerClassName = useMemo(() => {
+    switch (content.type) {
+      case AttachmentContentType.Image:
+      case AttachmentContentType.Unsupported:
+        return 'h-full overflow-auto p-4 flex items-center justify-center';
+      case AttachmentContentType.Json:
+        return 'h-full overflow-auto';
+      case AttachmentContentType.Pdf:
+        return 'h-full overflow-hidden';
+      default:
+        return 'h-full overflow-auto p-4';
+    }
+  }, [content.type]);
+
+  const renderedContent = useMemo(() => {
+    switch (content.type) {
+      case AttachmentContentType.PlainText:
+        return (
+          <pre
+            className={mergeClasses(
+              'whitespace-pre-wrap break-words',
+              styles.body,
+              typography?.fontClassName,
+            )}
+          >
+            {content.text}
+          </pre>
+        );
+      case AttachmentContentType.Image:
+        return (
+          <img
+            src={content.url}
+            alt={fileName ?? ''}
+            className="max-h-full max-w-full object-contain"
+          />
+        );
+      case AttachmentContentType.Markdown:
+        return (
+          <MarkdownRenderer
+            content={content.text}
+            isStreaming={false}
+            codeBlockTheme={codeBlockTheme}
+          />
+        );
+      case AttachmentContentType.Json:
+        return (
+          <div dir="ltr" className="h-full overflow-auto">
+            <div className={styles.jsonWrapper}>
+              <JsonView
+                data={content.value as object}
+                style={{
+                  container: styles.jsonContainer,
+                  basicChildStyle: defaultStyles.basicChildStyle,
+                  childFieldsContainer: styles.jsonChildContainer,
+                  label: styles.jsonLabel,
+                  clickableLabel: styles.jsonClickableLabel,
+                  nullValue: styles.jsonNullValue,
+                  undefinedValue: styles.jsonNullValue,
+                  stringValue: styles.jsonStringValue,
+                  booleanValue: styles.jsonBooleanValue,
+                  numberValue: styles.jsonNumberValue,
+                  otherValue: styles.jsonNullValue,
+                  punctuation: styles.jsonPunctuation,
+                  collapseIcon: styles.jsonCollapseIcon,
+                  expandIcon: styles.jsonExpandIcon,
+                  collapsedContent: styles.jsonCollapsedContent,
+                }}
+              />
+            </div>
+          </div>
+        );
+      case AttachmentContentType.Pdf:
+        return (
+          <PdfContent
+            key={content.url}
+            fileName={fileName}
+            url={content.url}
+            highlights={content.highlights ?? []}
+            selectedHighlightId={content.selectedHighlightId}
+            loadPdf={loadPdf}
+          />
+        );
+      case AttachmentContentType.Unsupported:
+        return <p className="text-center text-secondary">{unsupportedLabel}</p>;
+    }
+  }, [
+    content,
+    typography?.fontClassName,
+    fileName,
+    codeBlockTheme,
+    unsupportedLabel,
+    loadPdf,
+  ]);
 
   return (
     <SidebarPanel
@@ -68,13 +223,53 @@ export const AttachmentCanvas: FC<AttachmentCanvasProps> = ({
       className={mergeClasses(isOpen ? 'mobile:w-full' : 'w-0', className)}
       styles={panelStyles}
       rightActions={
-        onDownload != null &&
-        content.type !== AttachmentContentType.Unsupported ? (
-          <DialGhostIconButton
-            icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
-            aria-label={downloadLabel}
-            onClick={onDownload}
-          />
+        showCopyMarkdown || showCopyJson || showDownload ? (
+          <>
+            {showCopyMarkdown && (
+              <DialGhostIconButton
+                icon={
+                  isCopiedMarkdown ? (
+                    <IconCheck size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                  ) : (
+                    <IconMarkdown size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                  )
+                }
+                aria-label={
+                  isCopiedMarkdown ? copiedMarkdownLabel : copyMarkdownLabel
+                }
+                tooltipProps={{
+                  tooltip: isCopiedMarkdown
+                    ? copiedMarkdownLabel
+                    : copyMarkdownLabel,
+                }}
+                onClick={handleCopyMarkdown}
+              />
+            )}
+            {showCopyJson && (
+              <DialGhostIconButton
+                icon={
+                  isCopiedJson ? (
+                    <IconCheck size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                  ) : (
+                    <IconCopy size={DIAL_ICON_SIZE.LG} stroke={1.5} />
+                  )
+                }
+                aria-label={isCopiedJson ? copiedJsonLabel : copyJsonLabel}
+                tooltipProps={{
+                  tooltip: isCopiedJson ? copiedJsonLabel : copyJsonLabel,
+                }}
+                onClick={handleCopyJson}
+              />
+            )}
+            {showDownload && (
+              <DialGhostIconButton
+                icon={<IconDownload size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
+                aria-label={downloadLabel}
+                tooltipProps={{ tooltip: downloadLabel }}
+                onClick={onDownload}
+              />
+            )}
+          </>
         ) : null
       }
     >
@@ -82,37 +277,12 @@ export const AttachmentCanvas: FC<AttachmentCanvasProps> = ({
         style={
           content.type === AttachmentContentType.PlainText ? cssVars : undefined
         }
-        className={mergeClasses(
-          'h-full overflow-auto p-4',
-          content.type === AttachmentContentType.Image &&
-            'flex items-center justify-center',
-          content.type === AttachmentContentType.Unsupported &&
-            'flex items-center justify-center',
-          bodyClassName,
-        )}
+        className={mergeClasses(bodyContainerClassName, bodyClassName)}
       >
-        {content.type === AttachmentContentType.PlainText && (
-          <pre
-            className={mergeClasses(
-              'whitespace-pre-wrap break-words',
-              styles.body,
-              typography?.fontClassName,
-            )}
-          >
-            {content.text}
-          </pre>
-        )}
-        {content.type === AttachmentContentType.Image && (
-          <img
-            src={content.url}
-            alt={fileName ?? ''}
-            className="max-h-full max-w-full object-contain"
-          />
-        )}
-        {content.type === AttachmentContentType.Unsupported && (
-          <p className="text-center text-secondary">{unsupportedLabel}</p>
-        )}
+        {renderedContent}
       </div>
     </SidebarPanel>
   );
 };
+
+export const AttachmentCanvas = memo(AttachmentCanvasBase);

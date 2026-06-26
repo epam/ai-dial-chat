@@ -1,6 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialSpinner, DialTabs, TabModel } from '@epam/ai-dial-ui-kit';
-import { FC, useCallback, useEffect, useRef, useState } from 'react';
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import { CatalogSortKey } from '../../types/sort';
@@ -66,9 +66,9 @@ export const Catalog: FC<CatalogProps> = ({
       label: titles?.sortNameAZLabel ?? 'Name A-Z',
     },
   ];
-  const filteredItems = items.filter((item) => !item.isHidden);
-
   const [query, setQuery] = useState('');
+  const [filters, setFilters] = useState<Set<string>>(new Set());
+  const [isMyAppsActive, setIsMyAppsActive] = useState(false);
 
   const [viewMode, setViewMode] = useState<CatalogViewMode>(
     CatalogViewMode.Grid,
@@ -77,7 +77,15 @@ export const Catalog: FC<CatalogProps> = ({
   const [sortKey, setSortKey] = useState<string>(
     CatalogSortKey.RecentlyUpdated,
   );
-  const tabs = buildCatalogTabs(filteredItems, titles?.tabLabels);
+  const filteredItems = useMemo(
+    () => items.filter((item) => !item.isHidden),
+    [items],
+  );
+
+  const tabs = useMemo(
+    () => buildCatalogTabs(filteredItems, titles?.tabLabels),
+    [filteredItems, titles?.tabLabels],
+  );
   const firstTabId = tabs[0]?.id ?? '';
   const [activeTab, setActiveTab] = useState(firstTabId);
 
@@ -100,6 +108,9 @@ export const Catalog: FC<CatalogProps> = ({
     setIsFavoritesRendered(false);
   }, []);
 
+  // isFavoritesLeaving is DERIVED (not state) so it is true in the same render
+  // where favorites becomes empty — avoiding the one painted frame where the
+  // section is visible without an exit animation (the blink).
   const isFavoritesLeaving = isFavoritesRendered && favorites.length === 0;
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
@@ -110,11 +121,9 @@ export const Catalog: FC<CatalogProps> = ({
   const [isAboutLoading, setIsAboutLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
-  // TODO: check details
   const handleOpenDetails = useCallback(
     async (item: CatalogItem) => {
       setSelectedItem(item);
-      setIsDetailsOpen(true);
       setAboutContent(undefined);
 
       if (onFetchAboutContent) {
@@ -145,6 +154,68 @@ export const Catalog: FC<CatalogProps> = ({
     }, 300);
   }, []);
 
+  const sorted = useMemo(
+    () => sortCatalogItems(filteredItems, sortKey),
+    [filteredItems, sortKey],
+  );
+
+  const filtered = useMemo(
+    () => filterCatalogItems(sorted, query),
+    [sorted, query],
+  );
+
+  const allFilterValues = useMemo(
+    () => new Set(filteredItems.flatMap((item) => item.topics)),
+    [filteredItems],
+  );
+
+  const topicFiltered = useMemo(
+    () =>
+      filters.size > 0
+        ? filtered.filter((item) => item.topics.some((t) => filters.has(t)))
+        : filtered,
+    [filtered, filters],
+  );
+
+  const myAppsFiltered = useMemo(
+    () =>
+      isMyAppsActive
+        ? topicFiltered.filter((item) => item.isMyApp)
+        : topicFiltered,
+    [topicFiltered, isMyAppsActive],
+  );
+
+  const tabFiltered = useMemo(
+    () =>
+      activeTab
+        ? myAppsFiltered.filter((item) => item.type === activeTab)
+        : myAppsFiltered,
+    [myAppsFiltered, activeTab],
+  );
+
+  const isSelectedItemStarred =
+    selectedItem != null && favorites.some((f) => f.id === selectedItem.id);
+
+  // Two-step open: mount the panel first (off-screen, isOpen=false), then
+  // trigger the CSS slide-in on the next animation frame so the transition plays.
+  // Only depends on selectedItem — isDetailsOpen must NOT be in deps or the effect
+  // re-fires when the panel closes (still non-null selectedItem) and blinks back open.
+  useEffect(() => {
+    if (selectedItem == null) return;
+    const rafId = requestAnimationFrame(() => setIsDetailsOpen(true));
+    return () => cancelAnimationFrame(rafId);
+  }, [selectedItem]);
+
+  const handleViewModeChange = (mode: CatalogViewMode) => {
+    if (mode === CatalogViewMode.List) setListEverShown(true);
+    setViewMode(mode);
+  };
+
+  const clearAllFilters = useCallback(() => {
+    setFilters(new Set());
+    setIsMyAppsActive(false);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -153,21 +224,7 @@ export const Catalog: FC<CatalogProps> = ({
     );
   }
 
-  const handleViewModeChange = (mode: CatalogViewMode) => {
-    if (mode === CatalogViewMode.List) setListEverShown(true);
-    setViewMode(mode);
-  };
-
-  const clearAllFilters = () => {
-    // TODO: implement when filters are added
-  };
-
-  const sorted = sortCatalogItems(filteredItems, sortKey);
-  const filtered = filterCatalogItems(sorted, query);
-
-  const tabFiltered = activeTab
-    ? filtered.filter((item) => item.type === activeTab)
-    : filtered;
+  const isAnyFilterActive = filters.size > 0 || isMyAppsActive;
 
   const tabsWithCounts: TabModel[] = tabs.map((tab) => ({
     ...tab,
@@ -175,13 +232,10 @@ export const Catalog: FC<CatalogProps> = ({
       <ItemHeader
         title={typeof tab.label === 'string' ? tab.label : String(tab.label)}
         titleClassName={typography?.tabClassName ?? 'dial-body-text'}
-        postfix={filtered.filter((item) => item.type === tab.id).length}
+        postfix={myAppsFiltered.filter((item) => item.type === tab.id).length}
       />
     ),
   }));
-
-  // TODO: determine if any filter is active (for now we have no filters, so this is always false)
-  const isAnyFilterActive = false;
 
   const emptyTitle = query ? noResultsTitle(query) : 'No items';
 
@@ -197,7 +251,7 @@ export const Catalog: FC<CatalogProps> = ({
       {/* Page heading */}
       <div
         className={mergeClasses(
-          'flex h-16 shrink-0 items-center justify-between border-b px-6',
+          'sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between border-b px-6',
           styles.heading,
         )}
       >
@@ -240,21 +294,29 @@ export const Catalog: FC<CatalogProps> = ({
         onQueryChange={setQuery}
         isAnyFilterActive={isAnyFilterActive}
         onClearFilters={clearAllFilters}
+        filters={filters}
+        onFiltersChange={setFilters}
+        filterValues={allFilterValues}
+        isMyAppsActive={isMyAppsActive}
+        onMyAppsChange={setIsMyAppsActive}
         title={browseTitle}
         searchPlaceholder={searchPlaceholder}
         sortOptions={sortOptions}
+        clearAllLabel={titles?.clearAllLabel}
+        filterFromLabel={titles?.filterFromLabel}
+        filterMyAppsLabel={titles?.filterMyAppsLabel}
+        filterTopicsLabel={titles?.filterTopicsLabel}
       />
 
       {/* Entity-type tabs — sticky as the page scrolls */}
       {tabs.length > 0 && (
         <div
           className={mergeClasses(
-            'sticky top-0 z-10 flex shrink-0 justify-center border-b pt-2',
+            'sticky top-0 z-10 mb-2 flex shrink-0 justify-center border-b pt-2',
             styles.stickyTabsRow,
           )}
         >
           <DialTabs
-            className="justify-center"
             tabs={tabsWithCounts}
             activeTab={activeTab}
             onClick={setActiveTab}
@@ -264,7 +326,7 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* Grid view */}
       {viewMode === CatalogViewMode.Grid && (
-        <div className={mergeClasses('min-h-0 flex-1 pb-5', styles.gridView)}>
+        <div className={mergeClasses('shrink-0 pb-5', styles.gridView)}>
           <CardGrid
             items={tabFiltered}
             query={query}
@@ -280,13 +342,15 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* List view — mounted only after first shown to avoid initializing ag-grid eagerly */}
       {listEverShown && viewMode === CatalogViewMode.List && (
-        <div className={mergeClasses('min-h-0 flex-1 pb-5', styles.listView)}>
+        <div className={mergeClasses('shrink-0 pb-5', styles.listView)}>
           <ListView
             items={tabFiltered}
             query={query}
             ariaLabel={resolvedAriaLabel}
             emptyStateTitle={emptyTitle}
             onToggleFavorite={onToggleFavorite}
+            onItemClick={handleOpenDetails}
+            stickyHeaderTop={64}
           />
         </div>
       )}
@@ -296,6 +360,7 @@ export const Catalog: FC<CatalogProps> = ({
         <DetailsPanel
           item={selectedItem}
           isOpen={isDetailsOpen}
+          isStarred={isSelectedItemStarred}
           aboutContent={aboutContent}
           isAboutLoading={isAboutLoading}
           onClose={handleCloseDetails}
