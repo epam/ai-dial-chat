@@ -1,5 +1,6 @@
 import { HIDDEN_FILE } from '@epam/ai-dial-chat-shared';
 import type {
+  DialCopiedItem,
   DialDeletedItem,
   DialFile,
   DialUploadFileItem,
@@ -16,11 +17,13 @@ import type {
   CreateFolderResponseDto,
   DeleteItemDto,
   ListFilesItemDto,
+  RenameItemDto,
 } from '@epam/chat-api-client';
 import {
   ArchiveItemDtoNodeTypeEnum,
   DeleteItemDtoNodeTypeEnum,
   ListFilesItemDtoNodeTypeEnum,
+  RenameItemDtoNodeTypeEnum,
 } from '@epam/chat-api-client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -38,6 +41,7 @@ import {
   listFiles,
   listPublicFiles,
   listSharedFiles,
+  renameFiles,
   uploadFile,
 } from '../../server-api/files.api';
 import {
@@ -55,12 +59,14 @@ import { safeDecodeURI } from '../../utils/string-utils';
 export interface UseDialFileManagerOptions {
   /** DIAL Core bucket to browse (used only for my_files tab). */
   bucket: string;
-  /** Display name for the root folder node. Defaults to `'All files'`. */
+  /** Display name for the root folder node. Defaults to `'My files'`. */
   rootLabel?: string;
   /** Active tab — drives listing source and per-tab options. Defaults to MyFiles. */
   activeTab?: DialFileManagerTabs;
   /** Called when a file-manager action should surface a toast notification. */
   onNotification?: (notification: FileManagerNotification) => void;
+  /** Regexp of characters forbidden in file/folder names (e.g. NOT_ALLOWED_SYMBOLS_REGEXP). */
+  forbiddenSymbolsRegExp?: RegExp;
 }
 
 export interface UseDialFileManagerResult {
@@ -70,7 +76,7 @@ export interface UseDialFileManagerResult {
   isLoading: boolean;
   /** Non-null when the last fetch failed. */
   error: string | null;
-  /** Current path in DialFileManager format (e.g. `"/All files"`, `"/All files/reports/"`). */
+  /** Current path in DialFileManager format (e.g. `"/My files"`, `"/My files/reports/"`). */
   path: string;
   /** Pass directly to DialFileManager's `onPathChange`. */
   onPathChange: (nextPath?: string) => void;
@@ -118,6 +124,17 @@ export interface UseDialFileManagerResult {
   onDeleteFiles: (items: DialDeletedItem[], sourceFolder: string) => void;
   /** True while a delete request is in flight. */
   isDeleting: boolean;
+
+  /** Rename: inline validation — returns error string or null. */
+  onRenameValidate: (value: string, item: DialFile) => string | null;
+  /** Rename: called when user confirms an inline rename. */
+  onMoveToFiles: (
+    items: DialCopiedItem[],
+    sourceFolder: string,
+    destinationFolder: string,
+  ) => void;
+  /** True while a rename request is in flight. */
+  isRenaming: boolean;
 
   /** True when the current folder grants WRITE (upload + new folder). */
   uploadEnabled: boolean;
@@ -429,9 +446,10 @@ const fetchByTab = (
  */
 export const useDialFileManager = ({
   bucket,
-  rootLabel = 'All files',
+  rootLabel = 'My files',
   activeTab = DialFileManagerTabs.MyFiles,
   onNotification,
+  forbiddenSymbolsRegExp,
 }: UseDialFileManagerOptions): UseDialFileManagerResult => {
   const { t, i18n } = useTranslation();
   const [folderPath, setFolderPath] = useState('');
@@ -458,6 +476,7 @@ export const useDialFileManager = ({
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
 
   // Clear cache and reset path on tab switch
   const prevTabRef = useRef(activeTab);
@@ -998,10 +1017,6 @@ export const useDialFileManager = ({
     [activeTab, bucket, rootLabel, t, folderPath, onNotification],
   );
 
-  const clearUploadBatch = useCallback(() => {
-    setUploadBatchState(null);
-  }, []);
-
   const path = folderPath ? `/${rootLabel}/${folderPath}` : `/${rootLabel}`;
 
   const currentFolder = useMemo((): DialFile | undefined => {
@@ -1012,6 +1027,167 @@ export const useDialFileManager = ({
     }
     return findFolderByVirtualPath(root.items ?? [], path);
   }, [items, path, rootLabel]);
+
+  const onRenameValidate = useCallback(
+    (value: string, item: DialFile): string | null => {
+      if (!value || value.trim() === '') {
+        return t(DialFileManagerI18nKeys.RenameNameEmpty);
+      }
+      if (value === RESERVED_MARKER_NAME) {
+        return t(DialFileManagerI18nKeys.RenameReservedName);
+      }
+      if (/[/\\]/.test(value)) {
+        return t(DialFileManagerI18nKeys.RenameInvalidChars);
+      }
+      if (
+        forbiddenSymbolsRegExp != null &&
+        forbiddenSymbolsRegExp.test(value)
+      ) {
+        return t(DialFileManagerI18nKeys.RenameInvalidChars);
+      }
+      if (value.length > 255) {
+        return t(DialFileManagerI18nKeys.RenameNameTooLong);
+      }
+      const siblings = currentFolder?.items ?? [];
+      const lowerValue = value.toLowerCase();
+      if (
+        siblings.some(
+          (s) => s.path !== item.path && s.name.toLowerCase() === lowerValue,
+        )
+      ) {
+        return t(DialFileManagerI18nKeys.RenameDuplicateName);
+      }
+      return null;
+    },
+    [t, forbiddenSymbolsRegExp, currentFolder],
+  );
+
+  const onMoveToFiles = useCallback(
+    (
+      copiedItems: DialCopiedItem[],
+      _sourceFolder: string,
+      _destinationFolder: string,
+    ) => {
+      if (copiedItems.length === 0) return;
+
+      const run = async () => {
+        setIsRenaming(true);
+
+        const dtos: RenameItemDto[] = copiedItems.map((item) => {
+          const isFolder = item.nodeType === DialFileNodeType.FOLDER;
+          const sourcePath = virtualPathToApiPath(item.sourceUrl, rootLabel);
+          const destinationPath = virtualPathToApiPath(
+            item.destinationUrl,
+            rootLabel,
+          );
+          const segments = item.sourceUrl.split('/').filter(Boolean);
+          const name = segments[segments.length - 1] ?? sourcePath;
+          return {
+            bucket,
+            sourcePath: isFolder
+              ? sourcePath.endsWith('/')
+                ? sourcePath
+                : `${sourcePath}/`
+              : sourcePath.replace(/\/$/, ''),
+            destinationPath: isFolder
+              ? destinationPath.endsWith('/')
+                ? destinationPath
+                : `${destinationPath}/`
+              : destinationPath.replace(/\/$/, ''),
+            nodeType: isFolder
+              ? RenameItemDtoNodeTypeEnum.Folder
+              : RenameItemDtoNodeTypeEnum.Item,
+            name,
+          };
+        });
+
+        try {
+          const { results } = await renameFiles(dtos);
+          const failedCount = results.filter((r) => !r.success).length;
+
+          if (failedCount > 0 && failedCount < results.length) {
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              message: t(DialFileManagerI18nKeys.RenamePartialError, {
+                count: failedCount,
+              }),
+            });
+          } else if (failedCount === results.length) {
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              message: t(DialFileManagerI18nKeys.RenameError),
+            });
+          }
+
+          // Navigate away if the current folder was renamed successfully.
+          const renamedFolderDto = dtos.find(
+            (dto) =>
+              dto.nodeType === RenameItemDtoNodeTypeEnum.Folder &&
+              results.some(
+                (result) =>
+                  result.success && result.sourcePath === dto.sourcePath,
+              ),
+          );
+          if (renamedFolderDto != null) {
+            const srcPrefix = renamedFolderDto.sourcePath.endsWith('/')
+              ? renamedFolderDto.sourcePath
+              : `${renamedFolderDto.sourcePath}/`;
+            if (folderPath === srcPrefix || folderPath.startsWith(srcPrefix)) {
+              const destPrefix = renamedFolderDto.destinationPath.endsWith('/')
+                ? renamedFolderDto.destinationPath
+                : `${renamedFolderDto.destinationPath}/`;
+              setFolderPath(folderPath.replace(srcPrefix, destPrefix));
+            }
+          }
+        } catch {
+          onNotification?.({
+            variant: NotificationVariant.Error,
+            message: t(DialFileManagerI18nKeys.RenameError),
+          });
+        } finally {
+          const affectedKeys = new Set(
+            dtos.flatMap((dto) => {
+              const normalizedSourcePath = dto.sourcePath.replace(/\/$/, '');
+              const normalizedDestinationPath = dto.destinationPath.replace(
+                /\/$/,
+                '',
+              );
+              const srcParent =
+                normalizedSourcePath.lastIndexOf('/') > 0
+                  ? normalizedSourcePath.slice(
+                      0,
+                      normalizedSourcePath.lastIndexOf('/') + 1,
+                    )
+                  : '';
+              const destParent =
+                normalizedDestinationPath.lastIndexOf('/') > 0
+                  ? normalizedDestinationPath.slice(
+                      0,
+                      normalizedDestinationPath.lastIndexOf('/') + 1,
+                    )
+                  : '';
+              return [srcParent, destParent];
+            }),
+          );
+
+          setCache((prev) => {
+            const next = new Map(prev);
+            affectedKeys.forEach((k) => next.delete(k));
+            return next;
+          });
+          setRetryCounter((c) => c + 1);
+          setIsRenaming(false);
+        }
+      };
+
+      void run();
+    },
+    [bucket, rootLabel, folderPath, onNotification, t],
+  );
+
+  const clearUploadBatch = useCallback(() => {
+    setUploadBatchState(null);
+  }, []);
 
   const canWriteCurrentFolder = hasDialFileWritePermission(currentFolder);
 
@@ -1031,18 +1207,20 @@ export const useDialFileManager = ({
     [activeTab],
   );
 
-  const actionLabels = useMemo(
-    (): Partial<Record<DialFileManagerActions, string>> =>
-      activeTab === DialFileManagerTabs.MyFiles
-        ? {
-            [DialFileManagerActions.Download]: t('dialFileManager.download'),
-            [DialFileManagerActions.Delete]: t('dialFileManager.deleteAction'),
-          }
-        : {
-            [DialFileManagerActions.Download]: t('dialFileManager.download'),
-          },
-    [activeTab, t],
-  );
+  const actionLabels = useMemo(() => {
+    const labels: Partial<Record<DialFileManagerActions, string>> = {
+      [DialFileManagerActions.Download]: t('dialFileManager.download'),
+    };
+    if (activeTab === DialFileManagerTabs.MyFiles) {
+      labels[DialFileManagerActions.Delete] = t('dialFileManager.deleteAction');
+      if (uploadEnabled) {
+        labels[DialFileManagerActions.Rename] = t(
+          DialFileManagerI18nKeys.RenameAction,
+        );
+      }
+    }
+    return labels;
+  }, [activeTab, uploadEnabled, t]);
 
   const sharedWithMeIds = useMemo(
     (): string[] | undefined =>
@@ -1071,6 +1249,9 @@ export const useDialFileManager = ({
     isDownloading,
     onDeleteFiles,
     isDeleting,
+    onRenameValidate,
+    onMoveToFiles,
+    isRenaming,
     uploadEnabled,
     isNewButtonDisabled: !uploadEnabled,
     disabledNewButtonTooltip,

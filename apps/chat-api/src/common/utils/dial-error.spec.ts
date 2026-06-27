@@ -1,6 +1,7 @@
 import {
   BadGatewayException,
   BadRequestException,
+  ConflictException,
   NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
@@ -30,6 +31,10 @@ describe('handleDialError', () => {
 
   it('throws BadRequestException for 400 http error', () => {
     expect(() => handleDialError({ status: 400 })).toThrow(BadRequestException);
+  });
+
+  it('throws ConflictException for 409 http error', () => {
+    expect(() => handleDialError({ status: 409 })).toThrow(ConflictException);
   });
 
   it('throws ServiceUnavailableException for TimeoutError', () => {

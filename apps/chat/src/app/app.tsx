@@ -47,8 +47,11 @@ import { ThemeId } from '../types/theme-id';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 
+// Start loading the module immediately so the Suspense fallback is skipped on first navigation.
+const conversationPageModule = import('../pages/Conversation/Conversation');
+
 const ConversationPage = lazy(async () => {
-  const module = await import('../pages/Conversation/Conversation');
+  const module = await conversationPageModule;
   return { default: module.ConversationPage };
 });
 
@@ -120,6 +123,11 @@ const App: FC = () => {
   const [panelRequestedFilter, setPanelRequestedFilter] = useState<
     FilterTab | undefined
   >(undefined);
+  const activeFilterRef = useRef<FilterTab>(FilterTab.All);
+
+  const handlePanelActiveFilterChange = useCallback((tab: FilterTab) => {
+    activeFilterRef.current = tab;
+  }, []);
 
   useEffect(() => {
     if (!switchToMyChatsOnNavRef.current) return;
@@ -128,7 +136,10 @@ const App: FC = () => {
   }, [activeConversationId]);
 
   const handleDuplicateReadonly = useCallback(() => {
-    switchToMyChatsOnNavRef.current = true;
+    const filter = activeFilterRef.current;
+    if (filter === FilterTab.Organization || filter === FilterTab.Shared) {
+      switchToMyChatsOnNavRef.current = true;
+    }
   }, []);
 
   const handleSelectConversation = useCallback(
@@ -155,6 +166,7 @@ const App: FC = () => {
         onNewChat={() => navigate(ROUTES.Root)}
         requestedFilter={panelRequestedFilter}
         onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
+        onActiveFilterChange={handlePanelActiveFilterChange}
         onDuplicateReadonly={handleDuplicateReadonly}
       />
 

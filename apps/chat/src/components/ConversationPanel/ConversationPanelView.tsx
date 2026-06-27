@@ -62,6 +62,7 @@ interface ConversationPanelViewProps {
   onNewChat: () => void;
   requestedFilter?: FilterTab;
   onRequestedFilterChange?: () => void;
+  onActiveFilterChange?: (tab: FilterTab) => void;
   onDuplicateReadonly?: () => void;
 }
 
@@ -73,6 +74,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onNewChat,
   requestedFilter,
   onRequestedFilterChange,
+  onActiveFilterChange,
   onDuplicateReadonly,
 }) => {
   const { t } = useTranslation();
@@ -375,6 +377,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setRenameError(null);
   }, [isRenaming]);
 
+  const handleActiveFilterChange = useCallback(
+    (tab: FilterTab) => {
+      onRequestedFilterChange?.();
+      onActiveFilterChange?.(tab);
+    },
+    [onRequestedFilterChange, onActiveFilterChange],
+  );
+
   return (
     <>
       <ConversationPanel
@@ -384,7 +394,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onSelectConversation={onSelectConversation}
         activeConversationId={activeConversationId}
         activeFilter={requestedFilter}
-        onActiveFilterChange={onRequestedFilterChange}
+        onActiveFilterChange={handleActiveFilterChange}
         title={t(ConversationPanelI18nKeys.Title)}
         emptyLabel={t(ConversationPanelI18nKeys.Empty)}
         noResultsLabel={t(BasicI18nKeys.NoResults)}

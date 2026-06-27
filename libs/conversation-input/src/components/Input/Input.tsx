@@ -185,14 +185,7 @@ export const Input: FC<InputProps> = ({
   const hasSendableContent =
     message.trim().length > 0 || attachments.length > 0;
   const canSend = hasSendableContent && !hasBlockedAttachments;
-  // Stacked layout: textarea on its own row above the action bar. Used when the
-  // caller opts in (edit mode), whenever attachments are present, or when the
-  // message spans multiple visual lines (either explicit newlines or word-wrap).
-  const isStackedLayout =
-    isStacked ||
-    attachments.length > 0 ||
-    message.includes('\n') ||
-    isMultiLine;
+  const isStackedLayout = isStacked || message.includes('\n') || isMultiLine;
   const hasModelSelected =
     deployments === undefined || selectedDeploymentId != null;
 
@@ -302,7 +295,8 @@ export const Input: FC<InputProps> = ({
       className={mergeClasses(
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
-        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded border p-3',
+        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded border',
+        attachments.length > 6 ? 'py-3 pl-3' : 'p-3',
         className,
       )}
     >
