@@ -1,4 +1,4 @@
-import { forwardRef, Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { AppService } from '../app/app.service';
 import { AppConfigService } from '../app-config/app-config.service';
@@ -6,8 +6,10 @@ import { FeatureKey } from '../app-config/feature-flags/feature-key.enum';
 import { getApiKeyAuthHeaders } from '../common/utils/auth-header';
 import { EnvironmentVariables } from '../config/environment.config';
 import { ConversationResponseDto } from '../openapi/openapi-response.dto';
-import type { ConversationPersistencePort } from './conversation-persistence.port';
-import { ConversationService } from './conversation.service';
+import {
+  CONVERSATION_PERSISTENCE,
+  type ConversationPersistencePort,
+} from './conversation-persistence.port';
 import { ConversationMessageRole } from './dto/conversation-message.dto';
 import { CONVERSATION_NAMING_SYSTEM_PROMPT } from './prompts/conversation-naming.prompt';
 import { prepareEntityName } from './utils/conversation.utils';
@@ -26,7 +28,7 @@ export class ConversationNamingService extends AppService {
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     private readonly appConfigService: AppConfigService,
-    @Inject(forwardRef(() => ConversationService))
+    @Inject(CONVERSATION_PERSISTENCE)
     private readonly conversationPersistence: ConversationPersistencePort,
   ) {
     super(configService);

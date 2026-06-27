@@ -8,10 +8,12 @@ import {
   MinLength,
   ValidateNested,
 } from 'class-validator';
+import {
+  DEPLOYMENT_ID_PATTERN,
+  DEPLOYMENT_ID_VALIDATION_MESSAGE,
+} from '../../common/validators/deployment-id.pattern';
 import { MessageCustomContentDto } from './message-custom-content.dto';
 import { IsMessageOrAttachmentsPresent } from './message-or-attachments.validator';
-
-const DEPLOYMENT_ID_PATTERN = /^(?:[\w.\-:@/]|%[\dA-Fa-f]{2})+$/;
 
 export class CreateConversationDto {
   @ApiProperty({
@@ -37,8 +39,7 @@ export class CreateConversationDto {
   @MinLength(1)
   @MaxLength(256)
   @Matches(DEPLOYMENT_ID_PATTERN, {
-    message:
-      'deploymentId must contain only supported characters or valid percent-encoded bytes',
+    message: DEPLOYMENT_ID_VALIDATION_MESSAGE,
   })
   deploymentId!: string;
 
