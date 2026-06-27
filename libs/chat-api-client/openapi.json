@@ -508,6 +508,57 @@
         "tags": ["deployments"]
       }
     },
+    "/api/v1/deployments/{deployment}/limits": {
+      "get": {
+        "description": "Returns spent/limit statistics for a single deployment. Proxies GET /v1/deployments/{deployment_name}/limits using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data.",
+        "operationId": "getDeploymentLimits",
+        "parameters": [
+          {
+            "name": "deployment",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved deployment limits",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeploymentLimitsResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to access deployment limits"
+          },
+          "404": {
+            "description": "Deployment limits not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get deployment usage limits",
+        "tags": ["deployments"]
+      }
+    },
     "/api/v1/user-config": {
       "get": {
         "operationId": "getUserConfig",
@@ -737,6 +788,102 @@
         },
         "summary": "Get model by name",
         "tags": ["models"]
+      }
+    },
+    "/api/v1/toolsets": {
+      "get": {
+        "description": "Returns the list of DIAL Core toolsets visible to the authenticated session user. Proxies GET /openai/toolsets using the caller's session access token. Results are cached server-side for 30 seconds per user.",
+        "operationId": "listToolsets",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved toolset list",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DialToolsetListResponseDto"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to list toolsets"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "List available toolsets",
+        "tags": ["toolsets"]
+      }
+    },
+    "/api/v1/toolsets/{toolsetName}": {
+      "get": {
+        "description": "Returns a single DIAL Core toolset by name for the authenticated session user. Proxies GET /openai/toolsets/{toolset_name} using the caller's session access token. Results are cached server-side for 60 seconds per user per toolset.",
+        "operationId": "getToolset",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successfully retrieved toolset",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DialToolsetDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid toolset name — disallowed characters"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission to access this toolset"
+          },
+          "404": {
+            "description": "Toolset not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "500": {
+            "description": "Internal server error"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Get toolset by name",
+        "tags": ["toolsets"]
       }
     },
     "/api/v1/chat/completions": {
@@ -2511,6 +2658,55 @@
           }
         }
       },
+      "LimitStatsDto": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "example": 100
+          },
+          "used": {
+            "type": "number",
+            "example": 10
+          }
+        },
+        "required": ["total", "used"]
+      },
+      "DeploymentLimitsResponseDto": {
+        "type": "object",
+        "properties": {
+          "hourRequestStats": {
+            "$ref": "#/components/schemas/LimitStatsDto"
+          },
+          "dayRequestStats": {
+            "$ref": "#/components/schemas/LimitStatsDto"
+          },
+          "minuteTokenStats": {
+            "$ref": "#/components/schemas/LimitStatsDto"
+          },
+          "dayTokenStats": {
+            "$ref": "#/components/schemas/LimitStatsDto"
+          },
+          "weekTokenStats": {
+            "$ref": "#/components/schemas/LimitStatsDto"
+          },
+          "monthTokenStats": {
+            "$ref": "#/components/schemas/LimitStatsDto"
+          },
+          "minuteCostStats": {
+            "$ref": "#/components/schemas/LimitStatsDto"
+          },
+          "dayCostStats": {
+            "$ref": "#/components/schemas/LimitStatsDto"
+          },
+          "weekCostStats": {
+            "$ref": "#/components/schemas/LimitStatsDto"
+          },
+          "monthCostStats": {
+            "$ref": "#/components/schemas/LimitStatsDto"
+          }
+        }
+      },
       "ConversationsConfigDto": {
         "type": "object",
         "properties": {
@@ -2876,6 +3072,145 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/DialModelDto"
+            }
+          }
+        },
+        "required": ["data"]
+      },
+      "DialToolsetAuthSettingsDto": {
+        "type": "object",
+        "properties": {
+          "authentication_type": {
+            "type": "string",
+            "example": "OAUTH",
+            "enum": ["OAUTH", "API_KEY", "NONE"]
+          },
+          "client_id": {
+            "type": "string",
+            "example": "my-client-id"
+          },
+          "redirect_uri": {
+            "type": "string",
+            "example": ""
+          },
+          "authorization_endpoint": {
+            "type": "string",
+            "example": ""
+          },
+          "token_endpoint": {
+            "type": "string",
+            "example": ""
+          },
+          "code_challenge_method": {
+            "type": "string",
+            "example": "S256"
+          },
+          "scopes_supported": {
+            "example": ["scope1", "scope2"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "global_auth_status": {
+            "type": "string",
+            "example": "SIGNED_OUT",
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
+          },
+          "user_level_auth_status": {
+            "type": "string",
+            "example": "SIGNED_OUT",
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
+          }
+        },
+        "required": ["authentication_type"]
+      },
+      "DialToolsetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "toolsets/encrypted-bucket/folder/toolset-name"
+          },
+          "toolset": {
+            "type": "string",
+            "example": "toolsets/encrypted-bucket/folder/toolset-name"
+          },
+          "display_name": {
+            "type": "string",
+            "example": "Toolset display name"
+          },
+          "display_version": {
+            "type": "string",
+            "example": "0.0.1"
+          },
+          "description": {
+            "type": "string",
+            "example": "My toolset description"
+          },
+          "icon_url": {
+            "type": "string",
+            "example": ""
+          },
+          "owner": {
+            "type": "string",
+            "example": "Owner's name"
+          },
+          "object": {
+            "type": "string",
+            "example": "toolset"
+          },
+          "status": {
+            "type": "string",
+            "example": "succeeded"
+          },
+          "description_keywords": {
+            "example": ["keyword1", "keyword2"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reference": {
+            "type": "string",
+            "example": "ff5584b7-a82b-4f4f-bf42-5bf74a3893d6"
+          },
+          "max_retry_attempts": {
+            "type": "number",
+            "example": 2
+          },
+          "created_at": {
+            "type": "number",
+            "example": 1672534800
+          },
+          "updated_at": {
+            "type": "number",
+            "example": 1672534900
+          },
+          "transport": {
+            "type": "string",
+            "example": "HTTP"
+          },
+          "allowed_tools": {
+            "example": ["tool1", "tool2"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "auth_settings": {
+            "$ref": "#/components/schemas/DialToolsetAuthSettingsDto"
+          }
+        },
+        "required": ["id", "toolset"]
+      },
+      "DialToolsetListResponseDto": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DialToolsetDto"
             }
           }
         },
