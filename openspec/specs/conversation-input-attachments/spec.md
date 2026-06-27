@@ -235,6 +235,39 @@ When `validateAttachment` is not provided, existing behaviour is unchanged.
 
 ---
 
+### Requirement: Input wrapper removes inline-end padding when the tray is full
+
+When the total attachment count (prefix + new) reaches 7 or more, the `Input` wrapper SHALL drop its inline-end (`padding-right`) to `0`. For fewer than 7 attachments the default `p-3` (12 px on all sides) applies.
+
+#### Scenario: No end padding with 7 or more attachments
+
+- **WHEN** the combined attachment count is 7 or more
+- **THEN** the input wrapper uses `py-3 pl-3` (no right padding)
+
+#### Scenario: Default padding with fewer than 7 attachments
+
+- **WHEN** the combined attachment count is 6 or fewer
+- **THEN** the input wrapper uses `p-3` (12 px on all sides)
+
+---
+
+### Requirement: Action bar stays inline when attachments are present
+
+The action bar layout (textarea, + button, model selector) SHALL remain on a single row on desktop even when the `AttachmentTray` is visible. Attachments are displayed in `AttachmentTray` above the action bar and MUST NOT trigger the stacked layout. The stacked layout (textarea above buttons) is only used when the caller explicitly opts in (`isStacked` prop) or when the message contains multiple visual lines.
+
+#### Scenario: Placeholder stays inline with buttons when files are attached
+
+- **WHEN** one or more files are attached and the message text is empty
+- **THEN** the placeholder text is on the same row as the + button and model selector on desktop
+- **AND** the `AttachmentTray` is rendered above the action bar
+
+#### Scenario: Stacked layout still activates for multi-line messages
+
+- **WHEN** the message text spans multiple lines (explicit newline or word-wrap)
+- **THEN** the textarea is on its own row above the action buttons
+
+---
+
 ### Requirement: Retry button is suppressed for non-retryable error reasons
 
 `AttachmentCard` SHALL NOT render the retry button when `attachment.errorReason === AttachmentErrorReason.UnsupportedType`, even if an `onRetry` prop is provided.

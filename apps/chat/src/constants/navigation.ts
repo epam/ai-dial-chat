@@ -5,6 +5,7 @@ import { NavigationI18nKeys } from './translation-keys';
 
 interface NavigationItem {
   path: string;
+  matchPaths?: string[];
   icon: FC<{ size?: number; stroke?: number }>;
   labelKey: NavigationI18nKeys;
 }
@@ -12,6 +13,7 @@ interface NavigationItem {
 export const NAVIGATION_CONFIG: NavigationItem[] = [
   {
     path: ROUTES.Root,
+    matchPaths: [ROUTES.Conversations],
     icon: IconMessage,
     labelKey: NavigationI18nKeys.Home,
   },

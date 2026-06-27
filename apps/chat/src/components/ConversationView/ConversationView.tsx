@@ -619,6 +619,11 @@ const ConversationView: FC<Props> = ({
                 onSend={onSend}
                 onUploadAttachment={onUploadAttachment}
                 onStop={onStop}
+                styles={{
+                  typography: {
+                    input: { fontClassName: 'dial-body-paragraph-text' },
+                  },
+                }}
                 isStreaming={isAssistantTyping}
                 onAttachmentsChange={onAttachmentsChange}
                 placeholder={placeholder}
