@@ -20,13 +20,16 @@ interface Props {
 const CitationMarker: FC<Props> = ({ sourceName, annotationCount, onOpen }) => {
   const { t } = useTranslation();
 
-  const label =
-    annotationCount > 1
-      ? t(CitationsI18nKeys.MarkerLabelWithOverflow, {
-          source: sourceName,
-          count: annotationCount - 1,
-        })
-      : t(CitationsI18nKeys.MarkerLabel, { source: sourceName });
+  const label = (
+    <span className="dial-caption-text">
+      {annotationCount > 1
+        ? t(CitationsI18nKeys.MarkerLabelWithOverflow, {
+            source: sourceName,
+            count: annotationCount - 1,
+          })
+        : t(CitationsI18nKeys.MarkerLabel, { source: sourceName })}
+    </span>
+  );
 
   return (
     <DialButton

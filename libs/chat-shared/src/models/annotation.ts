@@ -47,6 +47,8 @@ export interface AttachmentResource {
   type: string;
   /** Remote URL pointing to the file content. */
   url: string;
+  /** Human-readable display name for the file. Used in citation markers. */
+  title?: string;
 }
 
 /** Identifies the cited document attached to the annotation. */

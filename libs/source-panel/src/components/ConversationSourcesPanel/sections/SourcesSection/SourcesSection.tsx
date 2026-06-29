@@ -18,6 +18,8 @@ interface SourcesSectionProps {
   linkClassName?: string;
   /** CSS class applied to the quote text. Defaults to `'dial-tiny-text text-secondary'`. */
   quoteClassName?: string;
+  /** When provided, called on source link click instead of following the href. */
+  onSourceClick?: (source: QuotationSource) => void;
 }
 
 const SourcesSection: FC<SourcesSectionProps> = ({
@@ -27,6 +29,7 @@ const SourcesSection: FC<SourcesSectionProps> = ({
   titleClassName = 'dial-body-semi-text',
   linkClassName = 'dial-small-text !text-accent-primary',
   quoteClassName = 'dial-tiny-text text-secondary',
+  onSourceClick,
 }) => {
   if (sources.length === 0) {
     return null;
@@ -47,6 +50,14 @@ const SourcesSection: FC<SourcesSectionProps> = ({
                   linkClassName,
                   'min-w-0 flex-1 truncate',
                 )}
+                onClick={
+                  onSourceClick
+                    ? (e) => {
+                        e.preventDefault();
+                        onSourceClick(source);
+                      }
+                    : undefined
+                }
               >
                 {source.title}
               </a>
