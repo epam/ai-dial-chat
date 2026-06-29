@@ -24,7 +24,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
   ariaLabel,
   removeLabel,
   retryLabel,
-  addMenuLabel = 'Add',
+  addMenuTitle = 'Add',
   attachLabel = 'Attach file',
   menuTitle = 'Menu',
   menuCloseLabel = 'Close',
@@ -129,7 +129,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
               <AddAttachmentButton
                 onAttachClick={() => fileInputRef.current?.click()}
                 attachLabel={attachLabel}
-                addMenuLabel={addMenuLabel}
+                addMenuTitle={addMenuTitle}
                 menuTitle={menuTitle}
                 menuCloseLabel={menuCloseLabel}
               />

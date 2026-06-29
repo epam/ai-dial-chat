@@ -524,6 +524,7 @@ const ConversationRoute: FC = () => {
             onDeploymentChange={setSelectedItemId}
             isInputDisabled={isInputDisabled}
             modelSelectorLabels={modelSelectorLabels}
+            addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
             sendLabel={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
             isTranscriptionSupported={isTranscriptionSupported}

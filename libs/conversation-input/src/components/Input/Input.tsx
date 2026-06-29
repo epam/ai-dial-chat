@@ -43,7 +43,7 @@ export const Input: FC<InputProps> = ({
   placeholder = 'Type a message...',
   ariaLabel,
   attachLabel = 'Attach file',
-  addMenuLabel = 'Add',
+  addMenuTitle = 'Add',
   menuTitle = 'Menu',
   menuCloseLabel = 'Close',
   removeLabel,
@@ -363,7 +363,7 @@ export const Input: FC<InputProps> = ({
                     : () => fileInputRef.current?.click()
                 }
                 attachLabel={attachLabel}
-                addMenuLabel={addMenuLabel}
+                addMenuTitle={addMenuTitle}
                 menuTitle={menuTitle}
                 menuCloseLabel={menuCloseLabel}
                 style={cssVars}
