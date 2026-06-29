@@ -223,6 +223,15 @@ export enum DialFileManagerI18nKeys {
   RenameInvalidChars = 'dialFileManager.renameInvalidChars',
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
   SearchEmptyStateTitle = 'dialFileManager.search.emptyStateTitle',
+  MyFilesTreeHeader = 'dialFileManager.myFiles.treeHeader',
+  SharedTreeHeader = 'dialFileManager.shared.treeHeader',
+  OrganizationTreeHeader = 'dialFileManager.organization.treeHeader',
+  MyFilesEmptyStateTitle = 'dialFileManager.myFiles.emptyStateTitle',
+  MyFilesEmptyStateDescription = 'dialFileManager.myFiles.emptyStateDescription',
+  SharedEmptyStateTitle = 'dialFileManager.shared.emptyStateTitle',
+  SharedEmptyStateDescription = 'dialFileManager.shared.emptyStateDescription',
+  OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
+  OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
 }
 
 export enum AuthI18nKeys {

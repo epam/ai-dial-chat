@@ -75,6 +75,7 @@ interface Props {
   maximumAttachmentsAmount?: number;
   canAttachFolders?: boolean;
   allowedTypesLabel?: string;
+  autoSelectUploadedItems?: boolean;
 }
 
 const DialFileManagerModal: FC<Props> = ({
@@ -109,6 +110,7 @@ const DialFileManagerModal: FC<Props> = ({
   maximumAttachmentsAmount,
   canAttachFolders = false,
   allowedTypesLabel,
+  autoSelectUploadedItems = true,
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
@@ -150,6 +152,9 @@ const DialFileManagerModal: FC<Props> = ({
     isSearching,
     searchResults,
     clearSearchResults,
+    expandedPaths,
+    loadedPaths,
+    onExpandedPathsChange,
     onUploadFiles,
     onValidateUpload,
     uploadBatchState,
@@ -550,11 +555,60 @@ const DialFileManagerModal: FC<Props> = ({
     ],
   );
 
+  const treeHeaderByTab: Record<DialFileManagerTabs, string> = useMemo(
+    () => ({
+      [DialFileManagerTabs.MyFiles]: t(
+        DialFileManagerI18nKeys.MyFilesTreeHeader,
+      ),
+      [DialFileManagerTabs.Shared]: t(DialFileManagerI18nKeys.SharedTreeHeader),
+      [DialFileManagerTabs.Organization]: t(
+        DialFileManagerI18nKeys.OrganizationTreeHeader,
+      ),
+      [DialFileManagerTabs.Review]: '',
+    }),
+    [t],
+  );
+
   const treeOptions = useMemo(
     () => ({
+      header: treeHeaderByTab[activeTab],
+      expandedPaths,
+      loadedPaths,
+      onExpandedPathsChange,
       actionLabels,
     }),
-    [actionLabels],
+    [
+      treeHeaderByTab,
+      activeTab,
+      expandedPaths,
+      loadedPaths,
+      onExpandedPathsChange,
+      actionLabels,
+    ],
+  );
+
+  const emptyStateByTab = useMemo(
+    () => ({
+      [DialFileManagerTabs.MyFiles]: {
+        title: t(DialFileManagerI18nKeys.MyFilesEmptyStateTitle),
+        description: t(DialFileManagerI18nKeys.MyFilesEmptyStateDescription),
+      },
+      [DialFileManagerTabs.Shared]: {
+        title: t(DialFileManagerI18nKeys.SharedEmptyStateTitle),
+        description: t(DialFileManagerI18nKeys.SharedEmptyStateDescription),
+      },
+      [DialFileManagerTabs.Organization]: {
+        title: t(DialFileManagerI18nKeys.OrganizationEmptyStateTitle),
+        description: t(
+          DialFileManagerI18nKeys.OrganizationEmptyStateDescription,
+        ),
+      },
+      [DialFileManagerTabs.Review]: {
+        title: emptyTitle,
+        description: emptyDescription,
+      },
+    }),
+    [t, emptyTitle, emptyDescription],
   );
 
   const toolbarOptions = useMemo(
@@ -654,13 +708,16 @@ const DialFileManagerModal: FC<Props> = ({
               treeOptions={treeOptions}
               toolbarOptions={toolbarOptions}
               bulkActionsToolbarOptions={bulkActionsToolbarOptions}
+              autoSelectUploadedItems={autoSelectUploadedItems}
               emptyStateTitle={
                 searchResults != null && !isSearching
                   ? t(DialFileManagerI18nKeys.SearchEmptyStateTitle)
-                  : emptyTitle
+                  : emptyStateByTab[activeTab].title
               }
               emptyStateDescription={
-                searchResults != null && !isSearching ? '' : emptyDescription
+                searchResults != null && !isSearching
+                  ? ''
+                  : emptyStateByTab[activeTab].description
               }
               uploadEnabled={uploadEnabled}
               sharedWithMeIds={sharedWithMeIds}

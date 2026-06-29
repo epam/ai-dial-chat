@@ -73,6 +73,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       onSelectedPathsChange,
       sharedWithMeIds,
       conflictResolutionPopupOptions,
+      emptyStateTitle,
+      emptyStateDescription,
+      autoSelectUploadedItems,
     }: {
       className?: string;
       gridClassName?: string;
@@ -127,6 +130,9 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         confirmLabel?: string;
         cancelLabel?: string;
       };
+      emptyStateTitle?: string;
+      emptyStateDescription?: string;
+      autoSelectUploadedItems?: boolean;
     }) => (
       <div
         className={className}
@@ -175,6 +181,11 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         data-conflict-confirm-label={
           conflictResolutionPopupOptions?.confirmLabel
         }
+        data-empty-state-title={emptyStateTitle}
+        data-empty-state-description={emptyStateDescription}
+        data-auto-select-uploaded-items={String(
+          autoSelectUploadedItems ?? true,
+        )}
       >
         {toolbarOptions?.tabs?.map((tab) => (
           <button
@@ -287,6 +298,9 @@ const defaultHookResult: UseDialFileManagerResult = {
   isSearching: false,
   searchResults: null,
   clearSearchResults: vi.fn(),
+  expandedPaths: new Set<string>(),
+  loadedPaths: new Set<string>(),
+  onExpandedPathsChange: vi.fn(),
   uploadEnabled: true,
   isNewButtonDisabled: false,
   disabledNewButtonTooltip: 'No permission',
@@ -801,5 +815,66 @@ describe('DialFileManagerModal — per-tab visibleColumns', () => {
     const manager = screen.getByRole('region', { name: 'file manager' });
     const cols = manager.getAttribute('data-visible-columns') ?? '';
     expect(cols).toContain(FileManagerColumnKey.Author);
+  });
+});
+
+describe('DialFileManagerModal — autoSelectUploadedItems', () => {
+  it('passes autoSelectUploadedItems=true by default', () => {
+    render(<DialFileManagerModal {...defaultProps} />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
+      'true',
+    );
+  });
+
+  it('passes autoSelectUploadedItems=false when prop is false', () => {
+    render(
+      <DialFileManagerModal
+        {...defaultProps}
+        autoSelectUploadedItems={false}
+      />,
+    );
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-auto-select-uploaded-items')).toBe(
+      'false',
+    );
+  });
+});
+
+describe('DialFileManagerModal — tab-specific empty states', () => {
+  it('shows MyFiles empty state on the MyFiles tab', () => {
+    mockActiveTab.value = DialFileManagerTabs.MyFiles;
+    render(<DialFileManagerModal {...defaultProps} />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-empty-state-title')).toBe(
+      'dialFileManager.myFiles.emptyStateTitle',
+    );
+    expect(manager.getAttribute('data-empty-state-description')).toBe(
+      'dialFileManager.myFiles.emptyStateDescription',
+    );
+  });
+
+  it('shows Shared empty state on the Shared tab', () => {
+    mockActiveTab.value = DialFileManagerTabs.Shared;
+    render(<DialFileManagerModal {...defaultProps} />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-empty-state-title')).toBe(
+      'dialFileManager.shared.emptyStateTitle',
+    );
+    expect(manager.getAttribute('data-empty-state-description')).toBe(
+      'dialFileManager.shared.emptyStateDescription',
+    );
+  });
+
+  it('shows Organization empty state on the Organization tab', () => {
+    mockActiveTab.value = DialFileManagerTabs.Organization;
+    render(<DialFileManagerModal {...defaultProps} />);
+    const manager = screen.getByRole('region', { name: 'file manager' });
+    expect(manager.getAttribute('data-empty-state-title')).toBe(
+      'dialFileManager.organization.emptyStateTitle',
+    );
+    expect(manager.getAttribute('data-empty-state-description')).toBe(
+      'dialFileManager.organization.emptyStateDescription',
+    );
   });
 });

@@ -384,6 +384,21 @@
     },
     "search": {
       "emptyStateTitle": "No results found"
+    },
+    "myFiles": {
+      "treeHeader": "My files",
+      "emptyStateTitle": "No files yet",
+      "emptyStateDescription": "Upload files to your personal storage"
+    },
+    "shared": {
+      "treeHeader": "Shared with me",
+      "emptyStateTitle": "No shared files",
+      "emptyStateDescription": "Files shared with you will appear here"
+    },
+    "organization": {
+      "treeHeader": "Organization",
+      "emptyStateTitle": "No organization files",
+      "emptyStateDescription": "No files are available in the organization storage"
     }
   },
   "userConfig": {

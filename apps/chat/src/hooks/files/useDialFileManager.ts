@@ -92,6 +92,13 @@ export interface UseDialFileManagerResult {
   /** Search: clears results and exits search mode. */
   clearSearchResults: () => void;
 
+  /** Tree: controlled set of expanded folder virtual paths. */
+  expandedPaths: Set<string>;
+  /** Tree: virtual paths whose children are already in the cache (derived). */
+  loadedPaths: Set<string>;
+  /** Tree: called by DialFileManager when a folder is expanded/collapsed. */
+  onExpandedPathsChange: (paths: Set<string>) => void;
+
   /** Upload: start a new batch. */
   onUploadFiles: (
     files: DialUploadFileItem[],
@@ -577,6 +584,10 @@ export const useDialFileManager = ({
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchCancelRef = useRef<(() => void) | null>(null);
 
+  const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
+    () => new Set(),
+  );
+
   // Clear cache and reset path on tab switch
   const prevTabRef = useRef(activeTab);
   useEffect(() => {
@@ -595,6 +606,7 @@ export const useDialFileManager = ({
     searchCancelRef.current = null;
     setSearchResults(null);
     setIsSearching(false);
+    setExpandedPaths(new Set());
   }, [activeTab]);
 
   useEffect(() => {
@@ -709,6 +721,44 @@ export const useDialFileManager = ({
   const retry = useCallback(() => {
     setRetryCounter((c) => c + 1);
   }, []);
+
+  const loadedPaths = useMemo(() => {
+    const result = new Set<string>();
+    for (const virtualPath of expandedPaths) {
+      const apiPath = virtualPathToApiPath(virtualPath, rootLabel);
+      if (cache.has(apiPath)) {
+        result.add(virtualPath);
+      }
+    }
+    return result;
+  }, [expandedPaths, cache, rootLabel]);
+
+  const onExpandedPathsChange = useCallback(
+    (paths: Set<string>) => {
+      setExpandedPaths(paths);
+      const newlyExpanded = [...paths].filter((p) => {
+        if (expandedPaths.has(p)) return false;
+        const apiPath = virtualPathToApiPath(p, rootLabel);
+        return !cache.has(apiPath);
+      });
+      newlyExpanded.forEach((virtualPath) => {
+        const apiPath = virtualPathToApiPath(virtualPath, rootLabel);
+        fetchByTab(activeTab, bucket, apiPath, sharedRootMetaRef.current)
+          .then(({ items: flat, permissions }) => {
+            setCache((prev) => new Map(prev).set(apiPath, flat));
+            if (permissions != null) {
+              setListingPermissionsCache((prev) =>
+                new Map(prev).set(apiPath, permissions),
+              );
+            }
+          })
+          .catch(() => {
+            // Silently ignore — tree node shows empty; cache unchanged
+          });
+      });
+    },
+    [activeTab, bucket, cache, expandedPaths, rootLabel],
+  );
 
   const clearSearchResults = useCallback(() => {
     if (searchDebounceRef.current != null) {
@@ -1427,6 +1477,9 @@ export const useDialFileManager = ({
     isSearching,
     searchResults,
     clearSearchResults,
+    expandedPaths,
+    loadedPaths,
+    onExpandedPathsChange,
     onUploadFiles,
     onValidateUpload,
     uploadBatchState,
