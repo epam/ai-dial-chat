@@ -397,7 +397,12 @@ export const ChangePathDialog = ({
   });
 
   const publishedFolderIds = useMemo(
-    () => new Set(additionalOrganizationFolders.map((f) => f.id)),
+    () =>
+      new Set(
+        additionalOrganizationFolders
+          .filter((f) => !f.temporary)
+          .map((f) => f.id),
+      ),
     [additionalOrganizationFolders],
   );
 
