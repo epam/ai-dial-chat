@@ -91,12 +91,9 @@ export const useConversationStream = ({
     });
   }, []);
 
-  // Note: an in-flight generation is intentionally NOT aborted when this page
-  // unmounts. The generation is owned by the app-level GenerationContext so it
-  // survives navigation between conversations; only an explicit Stop (handleStop)
-  // or tab close ends it. Aborting on unmount would also break React StrictMode,
-  // whose simulated unmount/remount would otherwise cancel a freshly-started
-  // stream before any chunks arrive.
+  // An in-flight generation is intentionally NOT aborted on unmount: it is owned
+  // by GenerationContext and must survive navigation; only Stop or tab close ends
+  // it. (Aborting here would also let StrictMode's remount cancel a fresh stream.)
 
   const startStream = useCallback(
     (
@@ -112,13 +109,9 @@ export const useConversationStream = ({
       const conversationPath = getConversationPath(currentConversationId);
       activeGenerationIdRef.current = genId;
 
-      // The backend rebuilds history by truncating the saved conversation at a
-      // message index. `messageIndex` here is the local assistant-placeholder
-      // index used by onChunk; translate it to the backend's truncation index:
-      // - Regenerate: truncate at the assistant being regenerated (same index).
-      // - Edit: the placeholder follows the edited user message, so truncate at
-      //   the user message (one before the placeholder).
-      // - Append / ContinueLastUser: the backend does not use an index.
+      // `messageIndex` is the local placeholder index (for onChunk); translate it
+      // to the backend's truncation index. Regenerate truncates at the assistant
+      // (same index); Edit truncates at the user message (one before it).
       let serverMessageIndex: number | undefined;
       if (mode === CompletionMode.Regenerate) {
         serverMessageIndex = messageIndex;
@@ -220,16 +213,9 @@ export const useConversationStream = ({
 
     const conversationPath = getConversationPath(conversationId);
 
-    // Ask the backend to stop. It aborts the upstream model call, persists the
-    // partial answer (flagged wasStoppedByUser) and then closes the SSE stream.
-    //
-    // We intentionally keep our own fetch open and do not reload here: the
-    // backend keeps flushing already-generated tokens until it closes, so every
-    // received token still reaches onChunk, and the stream's natural end runs
-    // onComplete, which reloads the authoritative saved partial. Because the
-    // backend finishes saving before ending the response, that reload is
-    // race-free — this is what fixes the "empty on stop, text after refresh"
-    // mismatch and avoids truncating the partial answer.
+    // Only signal the backend; it aborts upstream, saves the partial, and closes
+    // the stream. Keeping our fetch open lets onComplete reload the saved partial
+    // race-free (do not reload here — it would race the backend save).
     void stopCompletion({ generationId: genId, path: conversationPath });
   }, [conversationId]);
 

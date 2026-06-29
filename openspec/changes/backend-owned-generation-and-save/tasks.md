@@ -125,9 +125,9 @@
 - [x] 15.1 Run `npm exec nx run chat-api:lint && npm exec nx run chat-api:build` â€” no errors
 - [x] 15.2 Run `npm exec nx run chat:lint && npm exec nx run chat:build` â€” no errors
 - [x] 15.3 Run `npm exec nx run chat-api-client:build` â€” no errors (no contract changes since last openapi run)
-- [ ] 15.4 Start dev server; send a message; navigate to another conversation while generating; navigate back â€” confirm the response lands in the correct conversation
-- [ ] 15.5 Start dev server; send a message; click Stop â€” confirm partial assistant message with `wasStoppedByUser: true` is visible and conversation is saved correctly
-- [ ] 15.6 Verify regenerate and edit flows work with correct modes
+- [x] 15.4 Start dev server; send a message; navigate to another conversation while generating; navigate back â€” confirm the response lands in the correct conversation
+- [x] 15.5 Start dev server; send a message; click Stop â€” confirm partial assistant message with `wasStoppedByUser: true` is visible and conversation is saved correctly
+- [x] 15.6 Verify regenerate and edit flows work with correct modes
 
 
 

@@ -258,6 +258,16 @@ When a user navigates away from a conversation that has an active stream:
   - If generation finished while away, the server returns the fully saved final state.
 - No cross-conversation contamination is possible because the backend writes to the specific `path` it received at stream start.
 
+### Implementation notes (deviations from the initial design)
+
+Discovered while implementing/stabilising the change. The capability specs under `specs/` reflect the final behaviour:
+
+- **The conversation page is NOT remounted between conversations.** It is rendered without a per-id key, so the single `useConversationStream` instance is reused. The "chunks dropped because the hook unmounted" assumption above does not hold; instead `onChunk`/`onComplete`/`onError` are guarded by the currently displayed path, and `isStreaming` reflects only the displayed conversation. (`app-level-generation-manager`)
+- **The stream is not aborted on page unmount.** Aborting there both contradicted "navigation must not stop generation" and let React StrictMode's simulated remount cancel a freshly started stream.
+- **Auto-start on load is idempotent** (already-started set + `getGeneration`) to survive StrictMode's double mount; the placeholder is always rendered even when the start is skipped.
+- **Stop is race-free via natural completion.** `handleStop` only calls the stop API and lets the stream end through `onComplete` (which reloads the saved partial); it does not abort the local fetch or reload eagerly. The backend finalises on `[DONE]` (not socket close) and releases the registry entry on any pre-stream failure.
+- **`messageIndex` translation.** The frontend forwards the backend truncation index per mode (equal to the placeholder index for `Regenerate`, one less for `Edit`).
+
 ### Error handling summary
 
 | Scenario | Backend action | Frontend state |
