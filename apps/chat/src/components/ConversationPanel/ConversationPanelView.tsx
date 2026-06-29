@@ -26,6 +26,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  type CSSProperties,
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -363,45 +364,85 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setRenameError(null);
   }, [isRenaming]);
 
+  const panelCssVars = {
+    '--cp-trigger-bg': 'var(--controls-bg-accent-primary, #3664E2)',
+    '--cp-trigger-icon': 'var(--controls-text-permanent, #fff)',
+    '--cp-filter-tab-active-bg': 'var(--bg-layer-1)',
+    '--cp-filter-tab-active-border': 'var(--stroke-accent-primary)',
+    '--cp-filter-tab-border': 'transparent',
+    '--cp-item-active-border': 'var(--bg-accent-secondary)',
+  } as CSSProperties;
+
   return (
     <>
-      <ConversationPanel
-        conversations={conversations}
-        isLoading={isLoading}
-        isOpen={isOpen}
-        onSelectConversation={onSelectConversation}
-        activeConversationId={activeConversationId}
-        activeFilter={requestedFilter}
-        onActiveFilterChange={onRequestedFilterChange}
-        title={t(ConversationPanelI18nKeys.Title)}
-        emptyLabel={t(ConversationPanelI18nKeys.Empty)}
-        noResultsLabel={t(BasicI18nKeys.NoResults)}
-        onNewChat={onNewChat}
-        newChatLabel={t(ConversationPanelI18nKeys.NewChat)}
-        searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
-        filterLabels={filterLabels}
-        groupLabels={groupLabels}
-        getActions={getActions}
-        actionsLabel={t(ConversationPanelI18nKeys.ActionsLabel)}
-        onToggle={isMobile ? onClose : undefined}
-        closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
-        className={
-          isMobile
-            ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
-            : undefined
-        }
-        styles={{ typography: { fontClassName: 'dial-body-text' } }}
-        resizable={!isMobile}
-        defaultPanelWidth={defaultPanelWidth}
-        maxPanelWidth={maxPanelWidth}
-        onPanelResizeStop={setStoredPanelWidth}
-        onMoveConversation={handleMoveConversation}
-        headerActions={
-          <DeleteAllConversationsAction
-            activeConversationId={activeConversationId}
-          />
-        }
-      />
+      {/* display:contents lets CSS custom properties cascade without adding a layout box */}
+      <div className="contents" style={panelCssVars}>
+        <ConversationPanel
+          conversations={conversations}
+          isLoading={isLoading}
+          isOpen={isOpen}
+          onSelectConversation={onSelectConversation}
+          activeConversationId={activeConversationId}
+          activeFilter={requestedFilter}
+          onActiveFilterChange={onRequestedFilterChange}
+          title={t(ConversationPanelI18nKeys.Title)}
+          emptyLabel={t(ConversationPanelI18nKeys.Empty)}
+          noResultsLabel={t(BasicI18nKeys.NoResults)}
+          onNewChat={onNewChat}
+          newChatLabel={t(ConversationPanelI18nKeys.NewChat)}
+          searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
+          filterLabels={filterLabels}
+          groupLabels={groupLabels}
+          getActions={getActions}
+          actionsLabel={t(ConversationPanelI18nKeys.ActionsLabel)}
+          onToggle={isMobile ? onClose : undefined}
+          closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
+          className={
+            isMobile
+              ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
+              : undefined
+          }
+          styles={{
+            colors: {
+              background: 'var(--bg-layer-0)',
+              border: 'var(--stroke-tertiary)',
+              headerBorder: 'var(--stroke-tertiary)',
+              itemHover: 'var(--bg-layer-3)',
+              itemActive: 'var(--bg-accent-secondary-alpha)',
+              text: 'var(--text-primary)',
+              textSecondary: 'var(--text-secondary)',
+              newChatBorderRadius: '12px',
+              newChatDivider: 'transparent',
+              newChatIconBackground: 'rgba(255,255,255,0.18)',
+              newChatIconBackgroundHover: 'rgba(255,255,255,0.25)',
+              newChatIconBackgroundActive: 'rgba(255,255,255,0.12)',
+              newChatIconColor: 'var(--controls-text-permanent, #fff)',
+              newChatHoverBackground:
+                'var(--controls-bg-accent-primary-hover, #2656D9)',
+              newChatActiveBackground:
+                'var(--controls-bg-accent-primary-active, #124ACE)',
+            },
+            typography: {
+              fontClassName: 'dial-body-text',
+              itemTitleClassName: 'dial-small-text',
+              groupHeaderClassName:
+                'dial-tiny-semi-text uppercase tracking-wider',
+              newChatLabelClassName: 'dial-small-semi-text',
+              tabClassName: 'dial-tiny-semi-text',
+            },
+          }}
+          resizable={!isMobile}
+          defaultPanelWidth={defaultPanelWidth}
+          maxPanelWidth={maxPanelWidth}
+          onPanelResizeStop={setStoredPanelWidth}
+          onMoveConversation={handleMoveConversation}
+          headerActions={
+            <DeleteAllConversationsAction
+              activeConversationId={activeConversationId}
+            />
+          }
+        />
+      </div>
 
       <DialConfirmationPopup
         open={!!pendingDeleteId}

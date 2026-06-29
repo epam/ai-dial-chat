@@ -1,21 +1,26 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag, DialTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, useLayoutEffect, useRef, useState } from 'react';
-import styles from './TopicTag.module.scss';
 
 /** Props for TopicTag. */
 export interface TopicTagProps {
-  /** Text to display inside the tag, e.g. 'Free' or 'Pay-as-you-go'. */
+  /** Text to display inside the tag, e.g. 'Vision' or 'Code'. */
   label: string;
-  /** CSS class for the tag text. Default: 'dial-tiny-text'. */
+  /** CSS class for the tag text. Default: `'dial-tiny-text'`. */
   className?: string;
+  /**
+   * CSS class applied to the tag container (background, border, color, radius).
+   * Default: `'bg-accent-primary-alpha border-transparent text-accent-primary rounded-full'`.
+   */
+  tagClassName?: string;
 }
 
 /** Simple tag component for displaying item topics or pricing tiers. */
 export const TopicTag: FC<TopicTagProps> = ({
   label,
   className = 'dial-tiny-text',
-}) => <DialTag label={label} className={mergeClasses(className, styles.tag)} />;
+  tagClassName = 'bg-layer-2 border-tertiary text-secondary rounded-full',
+}) => <DialTag label={label} className={mergeClasses(tagClassName, className)} />;
 
 const MAX_ROWS = 1;
 

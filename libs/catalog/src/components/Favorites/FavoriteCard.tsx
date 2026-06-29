@@ -1,9 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DIAL_ICON_SIZE, DialIcon, ElementSize } from '@epam/ai-dial-ui-kit';
-import { IconHistory } from '@tabler/icons-react';
+import { ElementSize } from '@epam/ai-dial-ui-kit';
 import { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
+import { ENTITY_TYPE_COLOR } from '../../constants/entity-colors';
 import { CatalogItem } from '../../models/catalog-item';
-import { EntityHeader } from '../EntityHeader/EntityHeader';
+import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import styles from './Favorites.module.scss';
 
@@ -11,23 +11,23 @@ import styles from './Favorites.module.scss';
 export interface FavoriteCardProps {
   /** The favorite item to display. */
   item: CatalogItem;
-  /** Initial starred state. Default: true (items in favorites are starred by default). */
+  /** Initial starred state. Default: true — items in favorites are starred by default. */
   initialIsStarred?: boolean;
   /** Called when the star button is toggled. */
   onToggle?: (id: string, isStarred: boolean) => void;
-  /** Called when the card body is clicked. Opens the details panel. */
+  /** Called when the card body is clicked. */
   onClick?: (item: CatalogItem) => void;
-  /** CSS class for the item name. Default: 'dial-h3-text text-primary'. */
+  /** CSS class for the entity name. Default: 'dial-body-semi-text text-primary'. */
   nameClassName?: string;
-  /** CSS class for the version text. Default: 'dial-tiny-text text-secondary'. */
+  /** CSS class for the version string. Default: 'dial-tiny-text text-secondary'. */
   versionClassName?: string;
-  /** CSS class for the "last used" text. Default: 'dial-caption-text text-secondary'. */
+  /** CSS class for the last-used text. Default: 'dial-tiny-text text-secondary'. */
   lastUsedClassName?: string;
-  /** Label for the featured tag shown when item.isFeatured is true. Default: 'Featured'. */
-  featuredLabel?: string;
+  /** Search query string; matching text in the name is highlighted when provided. */
+  query?: string;
 }
 
-/** Compact card for the Favorites strip with hover lift and star toggle. */
+/** Compact favorite card: logo + type + name + version + last-used, star aligned right. */
 export const FavoriteCard: FC<FavoriteCardProps> = ({
   item,
   initialIsStarred = true,
@@ -35,8 +35,8 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   onClick,
   nameClassName,
   versionClassName,
-  lastUsedClassName = 'dial-caption-text text-secondary',
-  featuredLabel = 'Featured',
+  lastUsedClassName,
+  query,
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -46,8 +46,6 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
     const next = !isStarred;
     setIsStarred(next);
     if (!next) {
-      // Keep the card in the DOM while it plays its exit animation;
-      // onAnimationEnd on the div fires onToggle once the animation finishes.
       setIsLeaving(true);
     } else {
       onToggle?.(item.id, next);
@@ -68,13 +66,14 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   );
 
   return (
-    <div
+    <article
       data-card-id={item.id}
       role={onClick ? 'button' : undefined}
       tabIndex={onClick ? 0 : undefined}
+      aria-label={item.name}
       className={mergeClasses(
-        'box-border flex min-w-0 cursor-pointer flex-col rounded-[6px] p-[13px] pb-[9px]',
-        'w-full text-start',
+        'box-border flex min-w-0 cursor-pointer items-start gap-1',
+        'rounded-[16px] border px-4 py-3 text-start',
         styles.card,
         isLeaving && styles.cardLeaving,
       )}
@@ -88,27 +87,27 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
           : undefined
       }
     >
-      <EntityHeader
-        item={item}
-        featuredLabel={featuredLabel}
+      <AppIdentity
+        icon={item.iconUrl}
+        type={item.type}
+        name={item.name}
+        version={item.version}
+        lastUsed={item.lastUsed}
+        size="lg"
+        query={query}
+        className="min-w-0 flex-1"
+        typeColor={ENTITY_TYPE_COLOR[item.type]}
         nameClassName={nameClassName}
         versionClassName={versionClassName}
+        lastUsedClassName={lastUsedClassName}
       />
-      <div className="-mt-2 flex items-center justify-between">
-        <div className="flex items-center gap-1 ps-[56px]">
-          <DialIcon
-            icon={<IconHistory size={DIAL_ICON_SIZE.SM} />}
-            className={styles.historyIcon}
-          />
-          <span className={lastUsedClassName}>{item.lastUsed}</span>
-        </div>
-
-        <StarToggleButton
-          isStarred={isStarred}
-          size={ElementSize.Small}
-          onClick={handleToggle}
-        />
-      </div>
-    </div>
+      <StarToggleButton
+        isStarred={isStarred}
+        size={ElementSize.Small}
+        onClick={handleToggle}
+        ariaLabel={isStarred ? 'Remove from favorites' : 'Add to favorites'}
+        className="self-end"
+      />
+    </article>
   );
 };

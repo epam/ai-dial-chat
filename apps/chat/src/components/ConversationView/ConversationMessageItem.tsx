@@ -1,6 +1,7 @@
 import {
   CodeBlockTheme,
   isStatusMessage,
+  mergeClasses,
   MessageRole,
   type Attachment,
   type AttachmentErrorReason,
@@ -16,6 +17,7 @@ import {
 } from '@epam/ai-dial-conversation-messages';
 import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { IconSparkles } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -237,7 +239,11 @@ const ConversationMessageItem: FC<Props> = ({
   const messageText =
     msg.role === MessageRole.Assistant ? processedContent : msg.content;
 
-  return (
+  const isUserMessage = msg.role === MessageRole.User;
+  const isAssistantNarrative =
+    msg.role === MessageRole.Assistant && !isStatusMessage(msg);
+
+  const bubble = (
     <MessageBubble
       role={msg.role}
       text={messageText}
@@ -263,10 +269,17 @@ const ConversationMessageItem: FC<Props> = ({
         tooltips,
         ariaLabels,
       )}
-      className={
-        msg.role === MessageRole.User ? 'justify-end' : 'justify-start'
-      }
-      bubbleClassName={msg.hasStreamError ? 'w-full' : undefined}
+      className={isUserMessage ? 'justify-end' : 'justify-start'}
+      bubbleClassName={mergeClasses(
+        msg.hasStreamError ? 'w-full' : undefined,
+        isUserMessage
+          ? '!rounded-ss-[16px] !rounded-se-[16px] !rounded-ee-[6px] !rounded-es-[16px] border border-secondary'
+          : undefined,
+      )}
+      styles={{
+        colors: { userBackground: 'var(--bg-layer-2)' },
+        typography: { fontClassName: 'dial-body-text' },
+      }}
       afterContent={
         hasStages || msg.hasStreamError ? (
           <>
@@ -297,8 +310,12 @@ const ConversationMessageItem: FC<Props> = ({
       showLessLabel={showLessLabel}
       showMoreAriaLabel={showMoreUserMessageAriaLabel}
       showLessAriaLabel={showLessUserMessageAriaLabel}
-      deploymentIconUrl={deploymentEntry?.iconUrl}
-      deploymentDisplayName={deploymentEntry?.displayName}
+      deploymentIconUrl={
+        isAssistantNarrative ? undefined : deploymentEntry?.iconUrl
+      }
+      deploymentDisplayName={
+        isAssistantNarrative ? undefined : deploymentEntry?.displayName
+      }
       thinkingLabel={thinkingLabel}
       codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
       codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
@@ -312,6 +329,22 @@ const ConversationMessageItem: FC<Props> = ({
       {...statusProps}
     />
   );
+
+  if (isAssistantNarrative) {
+    return (
+      <div className="flex w-full items-start gap-3.5">
+        <span
+          aria-hidden
+          className="flex size-7 flex-none items-center justify-center rounded-lg bg-accent-tertiary-alpha text-accent-tertiary"
+        >
+          <IconSparkles size={14} stroke={1.5} />
+        </span>
+        <div className="min-w-0 flex-1">{bubble}</div>
+      </div>
+    );
+  }
+
+  return bubble;
 };
 
 export default memo(ConversationMessageItem);

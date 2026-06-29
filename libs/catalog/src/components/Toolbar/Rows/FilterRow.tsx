@@ -12,33 +12,27 @@ interface FilterRowProps {
   onClearFilters: () => void;
   isAnyFilterActive: boolean;
 }
-/** Browse section header: title, view/sort controls, search bar, filter row, and tabs. */
+/** Browse filter row — only rendered when at least one filter is active. */
 export const FilterRow: FC<FilterRowProps> = ({
   isAnyFilterActive,
   onClearFilters,
   clearAllLabel = 'Clear all',
 }) => {
+  if (!isAnyFilterActive) return null;
+
   return (
     <div className="flex flex-wrap items-center gap-2 pb-4">
       <DialIcon
         icon={<IconFilter size={DIAL_ICON_SIZE.MD} />}
         className={styles.icon}
       />
-      {/* <FromFilter
-        checked={fromChecked}
-        onChange={onFromChange}
-        tree={fromTree}
-        allIds={allFromIds}
-      /> */}
       {/* TODO: implement topic filters? */}
-      {isAnyFilterActive && (
-        <DialDangerButton
-          label={clearAllLabel}
-          iconBefore={<IconX size={DIAL_ICON_SIZE.SM} />}
-          className={styles.clearAll}
-          onClick={onClearFilters}
-        />
-      )}
+      <DialDangerButton
+        label={clearAllLabel}
+        iconBefore={<IconX size={DIAL_ICON_SIZE.SM} />}
+        className={styles.clearAll}
+        onClick={onClearFilters}
+      />
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialSearch } from '@epam/ai-dial-ui-kit';
 import { type CSSProperties, FC } from 'react';
 import { ToolbarProps } from '../../models/toolbar-props';
+import { SearchBar } from '../SearchBar/SearchBar';
 import { FilterRow } from './Rows/FilterRow';
 import { TitleRow } from './Rows/TitleRow';
 import styles from './Toolbar.module.scss';
@@ -28,7 +28,7 @@ export const Toolbar: FC<ToolbarProps> = ({
 
   return (
     <section
-      className={mergeClasses('flex-shrink-0 px-4 pt-4', styles.section)}
+      className={mergeClasses('flex-shrink-0 px-4', styles.section)}
       style={cssVars}
     >
       {/* Title row */}
@@ -36,10 +36,10 @@ export const Toolbar: FC<ToolbarProps> = ({
 
       {/* Search bar */}
       <div className="mb-4">
-        <DialSearch
+        <SearchBar
           value={query}
-          placeholder={searchPlaceholder}
           onChange={onQueryChange}
+          placeholder={searchPlaceholder}
         />
       </div>
 

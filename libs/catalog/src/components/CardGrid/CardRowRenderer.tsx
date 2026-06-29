@@ -34,7 +34,7 @@ export const CardRowRenderer = ({
   };
 
   return (
-    <div style={style} className="flex gap-5 pb-5">
+    <div style={style} className="flex gap-4 pb-4">
       {Array.from({ length: columnCount }, (_, colIndex) => {
         const item = rowItems[colIndex];
         return (

@@ -16,6 +16,7 @@ import {
   useCallback,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import { useAttachments } from '../../hooks/useAttachments';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
@@ -82,8 +83,10 @@ export const Input: FC<InputProps> = ({
   dialFileSystemLabel,
   validateAttachment,
   onAttachmentClick,
+  modelPickerOverlay,
 }) => {
   const isMobile = useIsMobile();
+  const [isPickerOpen, setIsPickerOpen] = useState(false);
   const historyNav = useInputHistoryNavigation(messageHistory);
 
   const cssVars = useMemo(
@@ -92,8 +95,11 @@ export const Input: FC<InputProps> = ({
         '--ci-bg': colors?.background,
         '--ci-text': colors?.text,
         '--ci-border': colors?.border,
+        '--ci-border-hover': colors?.borderHover,
         '--ci-border-focus': colors?.borderFocus,
         '--ci-placeholder': colors?.placeholder,
+        '--ci-shadow': colors?.shadow,
+        '--ci-shadow-focus': colors?.shadowFocus,
         '--ci-send-bg': colors?.sendBackground,
         '--ci-send-text': colors?.sendText,
         '--ci-stop-color': colors?.stopColor,
@@ -175,6 +181,7 @@ export const Input: FC<InputProps> = ({
   });
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { handlePaste } = useClipboardPaste(addAttachments, pasteTextThreshold);
 
   const hasSendableContent =
@@ -289,13 +296,14 @@ export const Input: FC<InputProps> = ({
     />
   );
 
-  return (
+  const inputBox = (
     <div
+      ref={containerRef}
       style={cssVars}
       className={mergeClasses(
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
-        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded border px-3 py-2',
+        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border px-3 py-2',
         className,
       )}
     >
@@ -394,6 +402,10 @@ export const Input: FC<InputProps> = ({
                   isMobile={isMobile}
                   isInputDisabled={isInputDisabled}
                   style={cssVars}
+                  modelPickerOverlay={modelPickerOverlay}
+                  isPickerOpen={isPickerOpen}
+                  onPickerToggle={() => setIsPickerOpen((prev) => !prev)}
+                  onPickerOpenChange={setIsPickerOpen}
                 />
                 {isStreaming ? (
                   <StopButton onStop={onStop} ariaLabel={stopLabel} />
@@ -428,4 +440,6 @@ export const Input: FC<InputProps> = ({
       )}
     </div>
   );
+
+  return inputBox;
 };

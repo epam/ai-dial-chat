@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
@@ -35,7 +36,10 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
         aria-current={isActive ? 'page' : undefined}
         tooltipProps={{ tooltip: t(labelKey) }}
         onClick={() => navigate(path)}
-        className={isActive ? '!text-accent-primary' : undefined}
+        className={mergeClasses(
+          'hover:!bg-layer-1 hover:!text-primary',
+          isActive && '!bg-accent-primary-alpha !text-accent-primary',
+        )}
       />
     );
   });
@@ -46,9 +50,11 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
       {!isMobile && (
         <nav
           aria-label={t(NavigationI18nKeys.AriaLabel)}
-          className="flex h-full w-[60px] flex-col justify-between bg-layer-3"
+          className="flex h-full w-[64px] flex-col justify-between border-e border-tertiary bg-layer-3"
         >
-          <div className="flex flex-col items-center gap-2 p-2">{navItems}</div>
+          <div className="flex flex-col items-center gap-1.5 pb-4 pt-3">
+            {navItems}
+          </div>
           <UserMenu />
         </nav>
       )}

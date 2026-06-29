@@ -1,25 +1,44 @@
 .card {
-  background: var(--cat-card-bg, var(--bg-layer-2, #161b2d));
-  border-color: var(--cat-card-border, var(--stroke-secondary, #242c42));
+  background: var(--bg-layer-0, #FCFCFC);
+  border-color: rgba(0, 0, 0, 0.07);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  transition:
+    transform 180ms ease-out,
+    box-shadow 180ms ease-out;
 
-  &:hover {
-    background: var(--cat-card-hover-bg, var(--bg-layer-3, #1d2439));
+  @media (hover: hover) {
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+
+    &:hover {
+      transform: none;
+    }
   }
 }
 
 .featuredCard {
-  box-shadow: 0 0 15px 0 var(--cat-card-featured-glow, rgba(125, 164, 255, 0.5));
+  border-color: rgba(0, 0, 0, 0.07);
 }
 
 .description {
-  color: var(--cat-card-text-primary, var(--text-primary, #eef1f7));
+  color: var(--text-secondary, #575F73);
 }
 
-.cardFooter {
-  border-color: var(--cat-card-footer-border, var(--stroke-secondary, #242c42));
+.featuredChip {
+  background: color-mix(in srgb, var(--entity-color, #2764D9) 12%, var(--bg-layer-0, #fcfcfc)) !important;
+  border: none !important;
+  color: var(--entity-color, #2764D9) !important;
+  font-size: 10px !important;
+  border-radius: 16px !important;
 }
 
 .skeletonCard {
-  border-color: var(--cat-card-border, var(--stroke-secondary, #242c42));
-  --cat-skeleton-bg: var(--bg-layer-4);
+  background: var(--bg-layer-0, #FCFCFC);
+  border-color: rgba(0, 0, 0, 0.07);
 }

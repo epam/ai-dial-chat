@@ -84,13 +84,24 @@
       }
     },
     "create": {
-      "quickApp": "QuickApp",
-      "toolset": "Toolset"
+      "quickApp": "Quick App",
+      "quickAppDescription": "Generate a no-code app from a prompt",
+      "toolset": "Toolset",
+      "toolsetDescription": "Group tools and functions into a reusable set"
     },
     "favoriteAddedTitle": "Added to Favorites",
     "favoriteRemovedTitle": "Removed from Favorites",
     "favoriteAdded": "\"{{name}}\" added to Favorites",
-    "favoriteRemoved": "\"{{name}}\" removed from Favorites"
+    "favoriteRemoved": "\"{{name}}\" removed from Favorites",
+    "picker": {
+      "title": "Talk to",
+      "searchPlaceholder": "Search models, agents…",
+      "searchAriaLabel": "Search models and agents",
+      "favoritesLabel": "Favorites",
+      "emptyHint": "Star a model or agent to pin it here.",
+      "browseCatalogLabel": "Browse",
+      "removeFromFavoritesLabel": "Remove from favorites"
+    }
   },
   "deployments": {
     "empty": "No models or applications available.",

@@ -39,6 +39,8 @@ export interface UseModelSelectorResult {
   selectorIcon: ReactNode;
   /** Accessible label for the trigger button. */
   selectorAriaLabel: string;
+  /** Display name of the currently selected deployment, or `undefined` when none is selected or loading. */
+  selectedLabel: string | undefined;
   /** Menu items for the deployment dropdown. */
   menuItems: DropdownItem[];
   /** Sticky search header rendered above the menu items. */
@@ -163,6 +165,7 @@ export const useModelSelector = ({
   return {
     selectorIcon,
     selectorAriaLabel,
+    selectedLabel,
     menuItems,
     menuHeader,
     onOpenChange: handleOpenChange,

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type {
   Attachment,
   AttachmentErrorReason,
@@ -221,4 +222,10 @@ export interface ConversationInputProps {
    * When absent the card is not rendered as interactive.
    */
   onAttachmentClick?: (attachment: Attachment) => void;
+  /**
+   * When provided, the desktop model-selector chip opens this panel instead of
+   * the flat deployment list. Receives `onClose` so the panel can close the
+   * popover after a selection or an explicit dismiss.
+   */
+  modelPickerOverlay?: (onClose: () => void) => ReactNode;
 }

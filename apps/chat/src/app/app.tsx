@@ -67,7 +67,7 @@ const App: FC = () => {
 
   const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useLocalStorage(
     StorageKey.ConversationPanelOpen,
-    false,
+    true,
   );
   const toggleHistoryPanel = useCallback(
     () => setIsHistoryPanelOpen(!isHistoryPanelOpen),
@@ -154,12 +154,13 @@ const App: FC = () => {
       <main
         id="main-content"
         role="main"
-        className="flex min-h-0 min-w-0 flex-1 flex-col bg-layer-1"
+        className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#F5F7FA]"
       >
         <Header
           onMenuToggle={toggleNav}
           isConversationPanelOpen={isHistoryPanelOpen}
           onConversationPanelToggle={toggleHistoryPanel}
+          onNewChat={() => navigate(ROUTES.Root)}
         />
         <Routes>
           <Route path={ROUTES.Root} element={<ConversationRoute />} />

@@ -73,6 +73,7 @@ const textColors = {
   transparent: 'transparent',
   primary: 'var(--text-primary, #EEF1F7)',
   secondary: 'var(--text-secondary, #9FA6BD)',
+  tertiary: 'var(--text-tertiary, #808898)',
   error: 'var(--text-error, #F76464)',
   warning: 'var(--text-warning, #EEC840)',
   'warning-icon': 'var(--text-warning-icon, #EEC840)',

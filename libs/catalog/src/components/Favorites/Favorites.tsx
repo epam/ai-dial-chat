@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialPagination } from '@epam/ai-dial-ui-kit';
+import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
 import {
   type CSSProperties,
   FC,
@@ -59,16 +59,15 @@ export const Favorites: FC<FavoritesProps> = ({
   styles: favoritesStyles,
   isLeaving,
   onExitComplete,
+  prevPageAriaLabel = 'Previous page',
+  nextPageAriaLabel = 'Next page',
 }) => {
   const titleClassName =
-    favoritesStyles?.typography?.titleClassName ?? 'dial-h3-text';
+    favoritesStyles?.typography?.titleClassName ?? 'dial-h3-text text-primary';
   const countClassName =
-    favoritesStyles?.typography?.countClassName ?? 'dial-tiny-text';
+    favoritesStyles?.typography?.countClassName ?? 'dial-tiny-text text-secondary';
   const cssVars = {
-    '--cat-favorites-bg-base': favoritesStyles?.colors?.backgroundBase,
     '--cat-favorites-border': favoritesStyles?.colors?.border,
-    '--cat-favorites-title-text': favoritesStyles?.colors?.titleText,
-    '--cat-favorites-count-text': favoritesStyles?.colors?.countText,
   } as CSSProperties;
 
   const sortedItems = useMemo(
@@ -344,7 +343,7 @@ export const Favorites: FC<FavoritesProps> = ({
       <section
         ref={sectionRef}
         className={mergeClasses(
-          'flex flex-shrink-0 flex-col gap-4 border-b px-6 py-6',
+          'flex flex-shrink-0 flex-col gap-4 pb-2 pt-2',
           styles.section,
           isLeaving && styles.sectionLeaving,
         )}
@@ -358,12 +357,37 @@ export const Favorites: FC<FavoritesProps> = ({
           postfix={displayCount}
           titleClassName={titleClassName}
           postfixClassName={countClassName}
+          trailing={
+            favTotalPages > 1 ? (
+              <div className={styles.pageNav}>
+                <button
+                  aria-label={prevPageAriaLabel}
+                  disabled={favPage === 1}
+                  onClick={() => setFavPage((p) => p - 1)}
+                  className={styles.navBtn}
+                >
+                  <IconChevronLeft size={14} className="rtl:scale-x-[-1]" />
+                </button>
+                <span className={styles.pageCounter}>
+                  {favPage} / {favTotalPages}
+                </span>
+                <button
+                  aria-label={nextPageAriaLabel}
+                  disabled={favPage === favTotalPages}
+                  onClick={() => setFavPage((p) => p + 1)}
+                  className={styles.navBtn}
+                >
+                  <IconChevronRight size={14} className="rtl:scale-x-[-1]" />
+                </button>
+              </div>
+            ) : undefined
+          }
         />
 
         <div
           ref={gridRef}
           className={mergeClasses(
-            'grid content-start gap-x-6 gap-y-5',
+            'grid content-start gap-4',
             styles.gridPage,
           )}
           style={{
@@ -381,15 +405,6 @@ export const Favorites: FC<FavoritesProps> = ({
           ))}
         </div>
 
-        {favTotalPages > 1 && (
-          <div className="flex justify-center pt-2">
-            <DialPagination
-              page={favPage}
-              totalPages={favTotalPages}
-              onPageChange={setFavPage}
-            />
-          </div>
-        )}
       </section>
     </div>
   );

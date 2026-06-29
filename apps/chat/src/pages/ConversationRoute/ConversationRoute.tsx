@@ -27,6 +27,8 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
+import { MOCK_CATALOG_ITEMS } from '../../components/CatalogView/mock-catalog-items';
+import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
@@ -35,6 +37,7 @@ import {
   AttachmentsI18nKeys,
   BasicI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   ChatI18nKeys,
   ChatSettingsI18nKeys,
   ConversationI18nKeys,
@@ -87,6 +90,17 @@ const DialFileManagerModal = lazy(async () => {
   return { default: module.default };
 });
 
+const ModelPickerPanel = lazy(async () => {
+  const module = await import('../../components/ModelPicker/ModelPickerPanel');
+  return { default: module.ModelPickerPanel };
+});
+
+const CatalogPickerModal = lazy(async () => {
+  const module =
+    await import('../../components/ModelPicker/CatalogPickerModal');
+  return { default: module.default };
+});
+
 // TODO: rename page and component
 // TODO: review component after ConversationPage implementation, maybe move ConversationInput here and remove ConversationInput component
 const ConversationRoute: FC = () => {
@@ -131,6 +145,43 @@ const ConversationRoute: FC = () => {
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),
     [items, selectedItemId],
+  );
+
+  const [isCatalogPickerOpen, setIsCatalogPickerOpen] = useState(false);
+
+  const [favoritedIds, setFavoritedIds] = useState<ReadonlySet<string>>(
+    () =>
+      new Set(
+        MOCK_CATALOG_ITEMS.filter((item) => item.isUserFavorite).map(
+          (item) => item.id,
+        ),
+      ),
+  );
+
+  const mockFavoriteItems = useMemo(
+    () => MOCK_CATALOG_ITEMS.filter((item) => favoritedIds.has(item.id)),
+    [favoritedIds],
+  );
+
+  const handlePickerToggleFavorite = useCallback(
+    (id: string, isFavorite: boolean) => {
+      setFavoritedIds((prev) => {
+        const next = new Set(prev);
+        if (isFavorite) next.add(id);
+        else next.delete(id);
+        return next;
+      });
+      if (!isFavorite) {
+        const name =
+          MOCK_CATALOG_ITEMS.find((item) => item.id === id)?.name ?? id;
+        showNotification({
+          variant: NotificationVariant.Info,
+          title: t(CatalogI18nKeys.FavoriteRemovedTitle),
+          message: t(CatalogI18nKeys.FavoriteRemoved, { name }),
+        });
+      }
+    },
+    [showNotification, t],
   );
 
   const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
@@ -434,7 +485,10 @@ const ConversationRoute: FC = () => {
   );
 
   return (
-    <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
+    <div
+      ref={inputRef}
+      className="flex flex-1 flex-col overflow-y-auto"
+    >
       <FileDndOverlay
         isVisible={isDragging}
         isAttachmentsAllowed={isAttachmentsAllowed}
@@ -451,7 +505,7 @@ const ConversationRoute: FC = () => {
       />
       <Suspense fallback={<RouteFallback />}>
         <div
-          className="flex flex-1 flex-col items-center justify-center p-4 desktop:p-8"
+          className="relative flex flex-1 flex-col items-center justify-center overflow-hidden p-4 [container-type:inline-size] desktop:p-8"
           role="region"
           aria-label={t(ChatI18nKeys.WelcomeScreen)}
         >
@@ -461,7 +515,10 @@ const ConversationRoute: FC = () => {
             message={inputMessage}
             welcomeText={t(ChatI18nKeys.WelcomeText)}
             placeholder={t(ChatI18nKeys.Placeholder)}
-            styles={{ typography: { welcomeClassName: 'dial-display2-text' } }}
+            styles={{
+              ...CONVERSATION_INPUT_STYLES,
+              typography: { welcomeClassName: 'dial-display2-text' },
+            }}
             deployments={deploymentItems}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
@@ -490,6 +547,30 @@ const ConversationRoute: FC = () => {
             }
             hideAttachFile={!isAttachmentsAllowed}
             onAttachmentClick={handleAttachmentClick}
+            modelPickerOverlay={(onClose) => (
+              <Suspense fallback={null}>
+                <ModelPickerPanel
+                  favorites={mockFavoriteItems}
+                  selectedId={selectedItemId}
+                  onSelect={setSelectedItemId}
+                  onToggleFavorite={handlePickerToggleFavorite}
+                  onBrowseCatalog={() => setIsCatalogPickerOpen(true)}
+                  onClose={onClose}
+                  labels={{
+                    searchPlaceholder: t(
+                      CatalogI18nKeys.PickerSearchPlaceholder,
+                    ),
+                    searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
+                    favoritesLabel: t(CatalogI18nKeys.PickerFavoritesLabel),
+                    emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
+                    browseCatalogLabel: t(CatalogI18nKeys.PickerBrowseCatalog),
+                    removeFromFavoritesLabel: t(
+                      CatalogI18nKeys.PickerRemoveFromFavorites,
+                    ),
+                  }}
+                />
+              </Suspense>
+            )}
           />
           <StarterButtons starters={starters} onSelect={handleStarterSelect} />
         </div>
@@ -553,6 +634,12 @@ const ConversationRoute: FC = () => {
             cancelLabel={t(ButtonsI18nKeys.Cancel)}
           />
         )}
+        <Suspense fallback={null}>
+          <CatalogPickerModal
+            isOpen={isCatalogPickerOpen}
+            onClose={() => setIsCatalogPickerOpen(false)}
+          />
+        </Suspense>
       </Suspense>
     </div>
   );

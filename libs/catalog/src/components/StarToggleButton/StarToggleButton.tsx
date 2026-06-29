@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialGhostIconButton,
@@ -17,6 +18,8 @@ export interface StarToggleButtonProps {
   size?: ElementSize;
   /** Accessible label for the button. Defaults to `'Toggle favorite'`. */
   ariaLabel?: string;
+  /** Additional CSS classes forwarded to the button root element. */
+  className?: string;
 }
 
 /** Ghost icon button that toggles between a filled and outline star. */
@@ -25,10 +28,11 @@ export const StarToggleButton: FC<StarToggleButtonProps> = ({
   onClick,
   size,
   ariaLabel = 'Toggle favorite',
+  className,
 }) => (
   <DialGhostIconButton
     size={size}
-    className="!h-auto !py-1"
+    className={mergeClasses('!h-auto !py-0', className)}
     icon={
       isStarred ? (
         <IconStarFilled

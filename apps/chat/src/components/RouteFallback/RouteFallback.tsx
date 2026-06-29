@@ -1,10 +1,6 @@
-import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
+import PageLoader from '../PageLoader/PageLoader';
 
-const RouteFallback: FC = () => (
-  <div className="flex size-full items-center justify-center">
-    <DialSpinner />
-  </div>
-);
+const RouteFallback: FC = () => <PageLoader />;
 
 export default memo(RouteFallback);

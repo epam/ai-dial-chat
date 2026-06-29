@@ -116,11 +116,20 @@ export enum CatalogI18nKeys {
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
   CreateQuickApp = 'catalog.create.quickApp',
+  CreateQuickAppDescription = 'catalog.create.quickAppDescription',
   CreateToolset = 'catalog.create.toolset',
+  CreateToolsetDescription = 'catalog.create.toolsetDescription',
   FavoriteAddedTitle = 'catalog.favoriteAddedTitle',
   FavoriteAdded = 'catalog.favoriteAdded',
   FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
   FavoriteRemoved = 'catalog.favoriteRemoved',
+  PickerTitle = 'catalog.picker.title',
+  PickerSearchPlaceholder = 'catalog.picker.searchPlaceholder',
+  PickerSearchAriaLabel = 'catalog.picker.searchAriaLabel',
+  PickerFavoritesLabel = 'catalog.picker.favoritesLabel',
+  PickerEmptyHint = 'catalog.picker.emptyHint',
+  PickerBrowseCatalog = 'catalog.picker.browseCatalogLabel',
+  PickerRemoveFromFavorites = 'catalog.picker.removeFromFavoritesLabel',
 }
 
 export enum DeploymentsI18nKeys {
