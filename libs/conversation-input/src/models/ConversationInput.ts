@@ -78,7 +78,7 @@ export interface EditMessageInputProps {
   /** Accessible label for each attachment card's retry button (error state only). */
   retryLabel?: string;
   /** Accessible label for the add-menu trigger button. */
-  addMenuLabel?: string;
+  addMenuTitle?: string;
   /** Label for the attach-file menu item. */
   attachLabel?: string;
   /** Heading text shown in the mobile bottom-sheet add-menu. Defaults to `'Menu'`. */
@@ -203,6 +203,8 @@ export interface ConversationInputProps {
   onDialFileSystemClick?: () => void;
   /** Label for the "DIAL file system" menu item. Defaults to `'DIAL file system'`. */
   dialFileSystemLabel?: string;
+  /** Accessible label for the `+` trigger button. Defaults to `'Add'`. */
+  addMenuTitle?: string;
   /**
    * Called synchronously for each attachment after it is added, before upload begins.
    * Return an `AttachmentErrorReason` to reject the attachment (it enters error state
