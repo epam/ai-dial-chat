@@ -4,7 +4,7 @@ import {
   Inject,
   Injectable,
   Logger,
-  NotFoundException,
+  BadRequestException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -400,7 +400,7 @@ export class ConversationService extends AppService {
         typeof moveError === 'string' &&
         moveError.includes('does not exist')
       ) {
-        throw new NotFoundException('Conversation not found');
+        throw new BadRequestException('Conversation not found');
       }
       return handleDialError(moveError);
     }
