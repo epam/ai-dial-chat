@@ -57,6 +57,7 @@ function makeService(
       data: [mockModel, mockApplication, mockToolset],
     }),
     configurationDeployment: vi.fn(),
+    getDeploymentLimits: vi.fn(),
   };
 
   const configService = {
@@ -656,6 +657,75 @@ describe('DeploymentsService', () => {
       );
       await expect(
         service.getDeploymentConfiguration('statgpt', 'user-123', 'token'),
+      ).rejects.toThrow(BadGatewayException);
+    });
+  });
+
+  describe('getDeploymentLimits', () => {
+    const mockLimits = {
+      dayTokenStats: { total: 10000, used: 4000 },
+      dayCostStats: { total: 100, used: 10 },
+    };
+
+    it('returns limits from upstream', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentLimits.mockResolvedValue(okResponse(mockLimits));
+
+      const result = await service.getDeploymentLimits('gpt-4o', 'token');
+      expect(result).toEqual(mockLimits);
+    });
+
+    it('forwards Authorization header to DIAL Core', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentLimits.mockResolvedValue(okResponse(mockLimits));
+
+      await service.getDeploymentLimits('gpt-4o', 'my-token');
+      expect(sdkClient.getDeploymentLimits).toHaveBeenCalledWith(
+        'gpt-4o',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer my-token',
+          }),
+        }),
+      );
+    });
+
+    it('does not use cache — two calls invoke upstream twice', async () => {
+      const { service, sdkClient, cacheManager } = makeService();
+      sdkClient.getDeploymentLimits.mockResolvedValue(okResponse(mockLimits));
+
+      await service.getDeploymentLimits('gpt-4o', 'token');
+      await service.getDeploymentLimits('gpt-4o', 'token');
+
+      expect(sdkClient.getDeploymentLimits).toHaveBeenCalledTimes(2);
+      expect(cacheManager.get).not.toHaveBeenCalledWith(
+        expect.stringContaining('limits'),
+      );
+    });
+
+    it('throws NotFoundException on upstream 404', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentLimits.mockResolvedValue(errResponse(404));
+      await expect(
+        service.getDeploymentLimits('unknown', 'token'),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('throws ServiceUnavailableException on network error', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentLimits.mockRejectedValue(
+        new TypeError('fetch failed'),
+      );
+      await expect(
+        service.getDeploymentLimits('gpt-4o', 'token'),
+      ).rejects.toThrow(ServiceUnavailableException);
+    });
+
+    it('throws BadGatewayException on upstream 5xx', async () => {
+      const { service, sdkClient } = makeService();
+      sdkClient.getDeploymentLimits.mockResolvedValue(errResponse(502));
+      await expect(
+        service.getDeploymentLimits('gpt-4o', 'token'),
       ).rejects.toThrow(BadGatewayException);
     });
   });

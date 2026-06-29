@@ -11,5 +11,6 @@ export * from './HealthApi';
 export * from './ModelsApi';
 export * from './RateApi';
 export * from './ThemesApi';
+export * from './ToolsetsApi';
 export * from './TranscriptionApi';
 export * from './UserConfigApi';

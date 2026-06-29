@@ -5,7 +5,7 @@ import { AddAttachmentButton } from '../AddAttachmentButton';
 const defaultProps = {
   onAttachClick: vi.fn(),
   attachLabel: 'Attach file',
-  addMenuLabel: 'Add',
+  addMenuTitle: 'Add',
   menuTitle: 'Menu',
   menuCloseLabel: 'Close',
 };

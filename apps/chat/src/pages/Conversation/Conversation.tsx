@@ -49,6 +49,7 @@ import { uploadFile } from '../../server-api/files.api';
 import { ROUTES } from '../../types/routes';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
+import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 interface Props {
@@ -67,6 +68,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     !prefetchedConversation && !!conversationId,
   );
   const conversationRef = useRef<Conversation | null>(null);
+  const displayNameWatchCleanupRef = useRef<(() => void) | null>(null);
+  const displayNameWatchKeyRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
@@ -82,7 +85,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
-  const { conversations, duplicateConversation } = useConversations();
+  const {
+    conversations,
+    duplicateConversation,
+    updateConversationTitle,
+    watchForDisplayNameUpdate,
+  } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   const isTranscriptionSupported = useMemo(() => {
@@ -265,6 +273,59 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     conversationRef,
   });
 
+  useEffect(() => {
+    return () => {
+      displayNameWatchCleanupRef.current?.();
+    };
+  }, []);
+
+  const messageCount = conversation?.messages.length ?? 0;
+  const conversationName = conversation?.name ?? '';
+
+  useEffect(() => {
+    if (
+      !conversationId ||
+      !conversation ||
+      !shouldWatchForDisplayNameUpdate(conversation)
+    ) {
+      displayNameWatchKeyRef.current = null;
+      displayNameWatchCleanupRef.current?.();
+      displayNameWatchCleanupRef.current = null;
+      return;
+    }
+
+    const watchKey = `${conversationId}:${messageCount}`;
+    if (displayNameWatchKeyRef.current === watchKey) return;
+    displayNameWatchKeyRef.current = watchKey;
+
+    displayNameWatchCleanupRef.current?.();
+    displayNameWatchCleanupRef.current = watchForDisplayNameUpdate(
+      conversationId,
+      conversationName,
+      (title) => {
+        setConversation((prev) =>
+          prev
+            ? ({ ...prev, name: title, llmNamingDone: true } as Conversation)
+            : prev,
+        );
+        if (conversationRef.current) {
+          conversationRef.current = {
+            ...conversationRef.current,
+            name: title,
+            llmNamingDone: true,
+          } as Conversation;
+        }
+        displayNameWatchCleanupRef.current = null;
+      },
+    );
+  }, [
+    conversation,
+    conversationId,
+    conversationName,
+    messageCount,
+    watchForDisplayNameUpdate,
+  ]);
+
   const loadConversation = useCallback(
     async (id: string, initialData?: Conversation | null) => {
       if (!initialData) {
@@ -273,6 +334,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       try {
         const result: Conversation =
           initialData ?? ((await apiGetConversation(id)) as Conversation);
+        if (result.name) {
+          updateConversationTitle(id, result.name);
+        }
 
         // Restore the last selected agent from the conversation's change history
         // so the deployment selector reflects what was active, not the default.
@@ -328,7 +392,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         setIsFetching(false);
       }
     },
-    [navigate, restoreSelectedItemId, startStream, getGeneration],
+    [
+      navigate,
+      restoreSelectedItemId,
+      startStream,
+      updateConversationTitle,
+      getGeneration,
+    ],
   );
 
   useEffect(() => {

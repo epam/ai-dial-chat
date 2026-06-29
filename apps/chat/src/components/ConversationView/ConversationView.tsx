@@ -635,6 +635,7 @@ const ConversationView: FC<Props> = ({
                 onDeploymentChange={setSelectedItemId}
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
+                addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
                 sendLabel={t(ChatI18nKeys.SendMessage)}
                 sendTitle={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
