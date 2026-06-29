@@ -69,12 +69,14 @@ describe('DeploymentsController (integration)', () => {
   let service: {
     listDeployments: ReturnType<typeof vi.fn>;
     getDeploymentConfiguration: ReturnType<typeof vi.fn>;
+    getDeploymentLimits: ReturnType<typeof vi.fn>;
   };
 
   beforeEach(async () => {
     service = {
       listDeployments: vi.fn().mockResolvedValue(mockResponse),
       getDeploymentConfiguration: vi.fn(),
+      getDeploymentLimits: vi.fn(),
     };
     app = await buildApp(service);
   });
@@ -230,6 +232,59 @@ describe('DeploymentsController (integration)', () => {
 
       await request(app.getHttpServer())
         .get('/api/v1/deployments/statgpt/configuration')
+        .expect(503);
+    });
+  });
+
+  describe('GET /api/v1/deployments/:deployment/limits', () => {
+    const mockLimits = {
+      dayTokenStats: { total: 10000, used: 4000 },
+    };
+
+    it('returns 200 with deployment limits', async () => {
+      service.getDeploymentLimits.mockResolvedValue(mockLimits);
+
+      const res = await request(app.getHttpServer())
+        .get('/api/v1/deployments/gpt-4o/limits')
+        .expect(200);
+
+      expect(res.body).toEqual(mockLimits);
+      expect(service.getDeploymentLimits).toHaveBeenCalledWith(
+        'gpt-4o',
+        TEST_USER.at,
+      );
+    });
+
+    it('accepts percent-encoded deployment names in a single path segment', async () => {
+      service.getDeploymentLimits.mockResolvedValue(mockLimits);
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/applications%2Ffoo%2Fbar/limits')
+        .expect(200);
+
+      expect(service.getDeploymentLimits).toHaveBeenCalledWith(
+        'applications/foo/bar',
+        TEST_USER.at,
+      );
+    });
+
+    it('returns 404 when limits not found', async () => {
+      const { NotFoundException } = await import('@nestjs/common');
+      service.getDeploymentLimits.mockRejectedValue(new NotFoundException());
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/unknown/limits')
+        .expect(404);
+    });
+
+    it('returns 503 when DIAL Core is unreachable', async () => {
+      const { ServiceUnavailableException } = await import('@nestjs/common');
+      service.getDeploymentLimits.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+
+      await request(app.getHttpServer())
+        .get('/api/v1/deployments/gpt-4o/limits')
         .expect(503);
     });
   });
