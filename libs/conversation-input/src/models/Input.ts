@@ -99,8 +99,8 @@ export interface InputProps {
   typography?: InputTypography;
   /** Label for the attach-file menu item. */
   attachLabel?: string;
-  /** Accessible label for the add-menu trigger button. */
-  addMenuLabel?: string;
+  /** Tooltip title for the add-menu trigger button. */
+  addMenuTitle?: string;
   /** Accessible label for each attachment card's remove button. */
   removeLabel?: string;
   /** Accessible label for each attachment card's retry button (error state only). */

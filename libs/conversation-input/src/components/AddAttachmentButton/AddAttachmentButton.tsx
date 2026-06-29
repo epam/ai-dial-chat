@@ -46,7 +46,7 @@ interface AddAttachmentButtonProps {
   /** Label for the "Attach file" menu item. */
   attachLabel: string;
   /** Aria-label for the + trigger button. */
-  addMenuLabel: string;
+  addMenuTitle: string;
   /** Title shown in the mobile bottom sheet. */
   menuTitle: string;
   /** Close label for the mobile bottom sheet. */
@@ -66,7 +66,7 @@ interface AddAttachmentButtonProps {
 export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   onAttachClick,
   attachLabel,
-  addMenuLabel,
+  addMenuTitle,
   menuTitle,
   menuCloseLabel,
   style,
@@ -122,7 +122,8 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
         <>
           <DialGhostIconButton
             icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
-            aria-label={addMenuLabel}
+            aria-label={addMenuTitle}
+            tooltipProps={{ tooltip: addMenuTitle }}
             className={mergeClasses(
               'size-10 flex-shrink-0',
               isDisabled && 'pointer-events-none opacity-50',
@@ -185,7 +186,8 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
           >
             <DialGhostIconButton
               icon={<IconPlus size={DIAL_ICON_SIZE.LG} aria-hidden />}
-              aria-label={addMenuLabel}
+              aria-label={addMenuTitle}
+              tooltipProps={{ tooltip: addMenuTitle }}
               className="size-10 flex-shrink-0"
               disabled={isDisabled}
             />
