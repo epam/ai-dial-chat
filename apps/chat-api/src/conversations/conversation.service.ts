@@ -1160,6 +1160,46 @@ export class ConversationService extends AppService {
     return this.deleteConversations(allIds, token, bucket);
   }
 
+  async watchConversation(
+    conversationPath: string,
+    token: string,
+    sessionBucket: string,
+  ): Promise<ReadableStream<Uint8Array>> {
+    const { bucket, subPath } = this.resolveConversationLocation(
+      conversationPath,
+      sessionBucket,
+    );
+    const resourceUrl = buildConversationUrl(
+      bucket,
+      encodeDialResourcePath(subPath),
+    );
+    this.logger.debug(
+      `watchConversation subscribing to resource: ${resourceUrl}`,
+    );
+
+    try {
+      const result = (await this.client.subscribeToResources({
+        body: { resources: [{ url: resourceUrl }] },
+        headers: {
+          ...getBearerAuthHeaders(token),
+          Accept: 'text/event-stream',
+        },
+        parseAs: 'stream',
+      })) as { response: Response; error?: unknown };
+
+      if (!result.response.ok || !result.response.body) {
+        this.logger.error(
+          `DIAL Core rejected subscribeToResources — status: ${result.response.status}`,
+        );
+        return handleDialError({ status: result.response.status });
+      }
+      return result.response.body;
+    } catch (error) {
+      this.logger.error('DIAL Core subscribeToResources failed', error);
+      return handleDialError(error);
+    }
+  }
+
   async streamCompletion(
     conversationPath: string,
     token: string,

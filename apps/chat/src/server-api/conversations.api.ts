@@ -82,3 +82,17 @@ export const deleteAllConversations = () =>
   conversationsApi.deleteAllConversations({
     deleteAllConversationsBodyDto: { confirm: true },
   });
+
+export const watchConversation = async (
+  conversationPath: string,
+  signal?: AbortSignal,
+): Promise<ReadableStream<Uint8Array>> => {
+  const apiResponse = await conversationsApi.watchConversationRaw(
+    { watchConversationBodyDto: { path: conversationPath } },
+    signal ? { signal } : undefined,
+  );
+  if (!apiResponse.raw.body) {
+    throw new Error('Watch endpoint returned no response body');
+  }
+  return apiResponse.raw.body as ReadableStream<Uint8Array>;
+};
