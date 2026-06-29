@@ -1,5 +1,5 @@
 .container {
-  background: var(--ci-bg, var(--bg-layer-2, #EEF1F7));
+  background: var(--ci-bg, var(--bg-layer-2, #eef1f7));
   border-color: var(--ci-border, transparent);
 
   &.containerError {
@@ -12,7 +12,7 @@
    * `color` is read via getComputedStyle in the canvas draw effect so that
    * the bar fill respects the themed value without hard-coding a hex.
    */
-  color: var(--ci-voice-waveform, var(--text-primary, #161B2D));
+  color: var(--ci-voice-waveform, var(--text-primary, #161b2d));
 }
 
 .recordingDot {

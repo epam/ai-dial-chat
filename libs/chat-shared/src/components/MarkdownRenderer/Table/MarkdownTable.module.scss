@@ -1,7 +1,8 @@
 .scrollContainer {
-  border-color: var(--cm-markdown-border, var(--stroke-secondary, #D1DBEA));
+  border-color: var(--cm-markdown-border, var(--stroke-secondary, #d1dbea));
   scrollbar-width: thin;
-  scrollbar-color: var(--cm-table-scrollbar, var(--stroke-primary, #7C8293)) transparent;
+  scrollbar-color: var(--cm-table-scrollbar, var(--stroke-primary, #7c8293))
+    transparent;
 
   &::-webkit-scrollbar {
     height: 4px;
@@ -12,7 +13,7 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background-color: var(--cm-table-scrollbar, var(--stroke-primary, #7C8293));
+    background-color: var(--cm-table-scrollbar, var(--stroke-primary, #7c8293));
     border-radius: 4px;
   }
 }

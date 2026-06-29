@@ -2,7 +2,7 @@
 // Layout, spacing, and transitions live in Tailwind classes in the TSX file.
 
 .tab {
-  border-color: var(--cp-filter-tab-border, var(--stroke-primary, #7C8293));
+  border-color: var(--cp-filter-tab-border, var(--stroke-primary, #7c8293));
 
   &.tabActive {
     border-color: var(

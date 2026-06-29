@@ -1,12 +1,12 @@
 .model {
   color: var(
     --cat-entity-type-model,
-    var(--controls-bg-accent-primary, #124ACE)
+    var(--controls-bg-accent-primary, #124ace)
   );
 }
 
 .toolset {
-  color: var(--cat-entity-type-toolset, var(--text-accent-tertiary, #7E39EC));
+  color: var(--cat-entity-type-toolset, var(--text-accent-tertiary, #7e39ec));
 }
 
 .mcp {
@@ -26,5 +26,5 @@
 }
 
 .fallback {
-  color: var(--cat-entity-type-fallback, var(--text-secondary, #575F73));
+  color: var(--cat-entity-type-fallback, var(--text-secondary, #575f73));
 }
