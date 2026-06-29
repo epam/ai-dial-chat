@@ -49,4 +49,27 @@ export const CONFIG_DEFINITIONS: ConfigDefinition[] = [
     owner: 'chat-team',
     allowedRolesEnvVar: 'ASR_ENABLED_ROLES',
   },
+  {
+    key: 'utility.modelId',
+    type: 'config',
+    valueType: 'string',
+    visibility: 'server',
+    defaultValue: null,
+    critical: false,
+    description:
+      'Deployment ID of the utility model used for server-side tasks such as LLM conversation naming. Null when UTILITY_MODEL is not configured.',
+    owner: 'chat-team',
+    envVar: 'UTILITY_MODEL',
+  },
+  {
+    key: 'features.llmConversationNaming',
+    type: 'feature',
+    valueType: 'boolean',
+    visibility: 'server',
+    defaultValue: false,
+    critical: false,
+    description:
+      'Whether LLM-based conversation naming runs after the first assistant reply. Derived from UTILITY_MODEL and DIAL_API_KEY presence plus LLM_CONVERSATION_NAMING_ENABLED=true.',
+    owner: 'chat-team',
+  },
 ];

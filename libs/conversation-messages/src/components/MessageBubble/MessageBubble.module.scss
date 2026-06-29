@@ -41,6 +41,9 @@
 
 .text {
   color: var(--cm-bubble-text, var(--text-primary, #eef1f7));
+}
+
+.textFont {
   font-size: var(--cm-bubble-font-size, 16px);
   font-weight: var(--cm-bubble-font-weight, 400);
   line-height: var(--cm-bubble-line-height, 1.5);

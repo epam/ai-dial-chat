@@ -1,5 +1,22 @@
 import { describe, expect, it, vi } from 'vitest';
-import { getApiErrorMessage } from '../api-error';
+import { getApiErrorMessage, isConversationNotFoundError } from '../api-error';
+
+describe('isConversationNotFoundError', () => {
+  it('returns true for 404 and 502 API responses', () => {
+    expect(
+      isConversationNotFoundError({ response: { status: 404, json: vi.fn() } }),
+    ).toBe(true);
+    expect(
+      isConversationNotFoundError({ response: { status: 502, json: vi.fn() } }),
+    ).toBe(true);
+  });
+
+  it('returns false for other statuses', () => {
+    expect(
+      isConversationNotFoundError({ response: { status: 400, json: vi.fn() } }),
+    ).toBe(false);
+  });
+});
 
 describe('getApiErrorMessage', () => {
   it('joins validation messages from API error responses', async () => {
