@@ -94,6 +94,7 @@ interface Props {
   statusModelChangedTitle: string;
   formatStatusModelChangedBody: (from: string, to: string) => string;
   streamErrorText: string;
+  stoppedGeneratingText: string;
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
@@ -137,6 +138,7 @@ const ConversationMessageItem: FC<Props> = ({
   statusModelChangedTitle,
   formatStatusModelChangedBody,
   streamErrorText,
+  stoppedGeneratingText,
   thinkingLabel,
   executedLabel,
   stepsLabel,
@@ -240,8 +242,23 @@ const ConversationMessageItem: FC<Props> = ({
       )
     : {};
 
-  const messageText =
-    msg.role === MessageRole.Assistant ? processedContent : msg.content;
+  // A generation stopped before any token produces an empty assistant message;
+  // show a "Stopped generating" label instead of an empty bubble. (The label is
+  // rendered, never written into msg.content, so a late token can't corrupt it.)
+  const isEmptyStopped =
+    msg.role === MessageRole.Assistant &&
+    !isStreaming &&
+    !!msg.wasStoppedByUser &&
+    !msg.content;
+
+  let messageText: string;
+  if (isEmptyStopped) {
+    messageText = stoppedGeneratingText;
+  } else if (msg.role === MessageRole.Assistant) {
+    messageText = processedContent;
+  } else {
+    messageText = msg.content;
+  }
 
   return (
     <MessageBubble

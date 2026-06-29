@@ -43,7 +43,6 @@ const makeParams = (
   overrides?: Partial<Parameters<typeof useConversationStream>[0]>,
 ) => ({
   conversationId: 'bucket/gpt-4o__Hello__uuid',
-  stoppedGeneratingText: 'Stopped',
   setConversation: vi.fn(),
   conversationRef: { current: null as Conversation | null },
   ...overrides,
@@ -352,9 +351,48 @@ describe('useConversationStream', () => {
     expect(result.current.isStreaming).toBe(false);
   });
 
-  it('handleStop calls stopCompletion API then reloads from server', async () => {
+  it('handleStop calls the stopCompletion API for the active generation', async () => {
     mockStreamCompletion.mockImplementation(() => {
       // keep stream open (don't call onComplete)
+    });
+
+    const { result } = renderHook(
+      () =>
+        useConversationStream(
+          makeParams({ conversationId: 'bucket/gpt-4o__Hello__uuid' }),
+        ),
+      { wrapper },
+    );
+
+    await act(async () => {
+      result.current.startStream(
+        'bucket/gpt-4o__Hello__uuid',
+        'hello',
+        0,
+        'gpt-4o',
+        undefined,
+        'stop-gen-id',
+      );
+    });
+
+    await act(async () => {
+      result.current.handleStop();
+    });
+
+    await waitFor(() => {
+      expect(mockStopCompletion).toHaveBeenCalledWith({
+        generationId: 'stop-gen-id',
+        path: 'gpt-4o__Hello__uuid',
+      });
+    });
+  });
+
+  it('does not eagerly reload on stop — the stream end reloads the saved partial', async () => {
+    // Capture onComplete so we can simulate the backend closing the stream
+    // after it has aborted and saved the partial answer.
+    let capturedOnComplete: StreamCompletionOptions['onComplete'] | null = null;
+    mockStreamCompletion.mockImplementation((_p, _m, _model, opts) => {
+      capturedOnComplete = opts.onComplete;
     });
 
     const setConversation = vi.fn();
@@ -392,12 +430,17 @@ describe('useConversationStream', () => {
       result.current.handleStop();
     });
 
+    // Stop must not reload by itself (that would race the backend's save).
+    expect(mockGetConversation).not.toHaveBeenCalled();
+
+    // When the backend closes the stream, onComplete reloads the saved partial.
+    await act(async () => {
+      await capturedOnComplete?.();
+    });
+
     await waitFor(() => {
-      expect(mockStopCompletion).toHaveBeenCalledWith({
-        generationId: 'stop-gen-id',
-        path: 'gpt-4o__Hello__uuid',
-      });
       expect(mockGetConversation).toHaveBeenCalledWith('gpt-4o__Hello__uuid');
+      expect(setConversation).toHaveBeenCalledWith(serverAfterStop);
     });
   });
 

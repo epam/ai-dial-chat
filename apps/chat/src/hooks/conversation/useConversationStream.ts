@@ -1,7 +1,6 @@
 import {
   type Conversation,
   type MessageCustomContent,
-  MessageRole,
 } from '@epam/ai-dial-chat-shared';
 import type { SendCompletionDtoModeEnum } from '@epam/chat-api-client'; // type-only is fine here — used only as a type annotation
 import {
@@ -25,7 +24,6 @@ import { getConversationPath } from '../../utils/conversation-path';
 
 interface Params {
   conversationId: string | undefined;
-  stoppedGeneratingText: string;
   setConversation: Dispatch<SetStateAction<Conversation | null>>;
   conversationRef: MutableRefObject<Conversation | null>;
 }
@@ -48,7 +46,6 @@ interface Result {
 
 export const useConversationStream = ({
   conversationId,
-  stoppedGeneratingText,
   setConversation,
   conversationRef,
 }: Params): Result => {
@@ -59,8 +56,7 @@ export const useConversationStream = ({
   );
   const [hasStreamError, setHasStreamError] = useState(false);
   const activeGenerationIdRef = useRef<string | null>(null);
-  const { startGeneration, completeGeneration, stopGeneration } =
-    useGeneration();
+  const { startGeneration, completeGeneration } = useGeneration();
 
   // ConversationPage is NOT remounted when navigating between conversations
   // (it has no per-id key), so this single hook instance is reused. Stream
@@ -223,59 +219,19 @@ export const useConversationStream = ({
     if (!genId || !conversationId) return;
 
     const conversationPath = getConversationPath(conversationId);
-    activeGenerationIdRef.current = null;
-    removeStreamingPath(conversationPath);
 
-    // Mark stopped in local UI immediately
-    setConversation((prev) => {
-      if (!prev) return prev;
-      const lastMsg = prev.messages[prev.messages.length - 1];
-      if (lastMsg?.role !== MessageRole.Assistant) return prev;
-      const hasNoContent = !lastMsg.content;
-      const stoppedContent = hasNoContent
-        ? stoppedGeneratingText
-        : lastMsg.content;
-      const updated = {
-        ...prev,
-        messages: prev.messages.map((m) =>
-          m.id === lastMsg.id
-            ? {
-                ...m,
-                content: stoppedContent,
-                wasStoppedByUser: true,
-                ...(hasNoContent && { stoppedWithoutContent: true }),
-              }
-            : m,
-        ),
-      };
-      conversationRef.current = updated;
-      return updated;
-    });
-
-    // Signal backend to abort and save partial — then reload from server
-    void stopCompletion({ generationId: genId, path: conversationPath }).then(
-      async () => {
-        try {
-          const refreshed = (await getConversation(
-            conversationPath,
-          )) as Conversation;
-          setConversation(refreshed);
-          conversationRef.current = refreshed;
-        } catch {
-          // Non-fatal: keep local state
-        }
-      },
-    );
-
-    stopGeneration(conversationPath, genId);
-  }, [
-    conversationId,
-    stoppedGeneratingText,
-    conversationRef,
-    setConversation,
-    stopGeneration,
-    removeStreamingPath,
-  ]);
+    // Ask the backend to stop. It aborts the upstream model call, persists the
+    // partial answer (flagged wasStoppedByUser) and then closes the SSE stream.
+    //
+    // We intentionally keep our own fetch open and do not reload here: the
+    // backend keeps flushing already-generated tokens until it closes, so every
+    // received token still reaches onChunk, and the stream's natural end runs
+    // onComplete, which reloads the authoritative saved partial. Because the
+    // backend finishes saving before ending the response, that reload is
+    // race-free — this is what fixes the "empty on stop, text after refresh"
+    // mismatch and avoids truncating the partial answer.
+    void stopCompletion({ generationId: genId, path: conversationPath });
+  }, [conversationId]);
 
   // Reflects only the currently-displayed conversation: a stream running in a
   // different chat must not show this chat as generating.

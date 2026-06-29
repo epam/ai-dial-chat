@@ -261,7 +261,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
 
   const { startStream, handleStop, isStreaming } = useConversationStream({
     conversationId,
-    stoppedGeneratingText: t(ChatI18nKeys.StoppedGenerating),
     setConversation,
     conversationRef,
   });
@@ -450,6 +449,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
           streamErrorText={t(ChatI18nKeys.StreamError)}
+          stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}
           duplicateError={duplicateError ?? undefined}
