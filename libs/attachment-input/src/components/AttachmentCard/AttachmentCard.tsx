@@ -107,7 +107,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
       <div
         style={cssVars}
         className={mergeClasses(
-          'group flex w-full min-w-[280px] flex-col gap-2 border p-3',
+          'group flex w-full min-w-[280px] max-w-[300px] flex-col gap-2 border p-3',
           roundedClassName,
           cardColorClass,
           className,

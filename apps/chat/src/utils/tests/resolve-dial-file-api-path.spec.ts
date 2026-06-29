@@ -6,14 +6,14 @@ import {
   virtualPathToApiPath,
 } from '../resolve-dial-file-api-path';
 
-const ROOT_LABEL = 'All files';
+const ROOT_LABEL = 'My files';
 const BUCKET = 'user-bucket';
 
 const makeFile = (overrides: Partial<DialFile>): DialFile => ({
   id: 'report.pdf',
   name: 'report.pdf',
-  path: '/All files/report.pdf',
-  parentPath: '/All files',
+  path: '/My files/report.pdf',
+  parentPath: '/My files',
   nodeType: DialFileNodeType.ITEM,
   folderId: BUCKET,
   bucket: BUCKET,
@@ -22,11 +22,11 @@ const makeFile = (overrides: Partial<DialFile>): DialFile => ({
 
 describe('virtualPathToApiPath', () => {
   it('maps the root virtual path to an empty API path', () => {
-    expect(virtualPathToApiPath('/All files', ROOT_LABEL)).toBe('');
+    expect(virtualPathToApiPath('/My files', ROOT_LABEL)).toBe('');
   });
 
   it('maps nested folder virtual paths to API folder paths', () => {
-    expect(virtualPathToApiPath('/All files/reports/', ROOT_LABEL)).toBe(
+    expect(virtualPathToApiPath('/My files/reports/', ROOT_LABEL)).toBe(
       'reports/',
     );
   });
@@ -36,7 +36,7 @@ describe('resolveDialFileApiPath', () => {
   it('uses DIAL resource ids when they are already bucket-relative', () => {
     expect(
       resolveDialFileApiPath(
-        makeFile({ id: 'reports/q1.pdf', path: '/All files/reports/q1.pdf' }),
+        makeFile({ id: 'reports/q1.pdf', path: '/My files/reports/q1.pdf' }),
         BUCKET,
         ROOT_LABEL,
       ),
@@ -48,7 +48,7 @@ describe('resolveDialFileApiPath', () => {
       resolveDialFileApiPath(
         makeFile({
           id: `files/${BUCKET}/reports/q1.pdf`,
-          path: '/All files/reports/q1.pdf',
+          path: '/My files/reports/q1.pdf',
         }),
         BUCKET,
         ROOT_LABEL,
@@ -60,8 +60,8 @@ describe('resolveDialFileApiPath', () => {
     expect(
       resolveDialFileApiPath(
         makeFile({
-          id: '/All files/reports/q1.pdf',
-          path: '/All files/reports/q1.pdf',
+          id: '/My files/reports/q1.pdf',
+          path: '/My files/reports/q1.pdf',
         }),
         BUCKET,
         ROOT_LABEL,
@@ -74,7 +74,7 @@ describe('resolveDialFileApiPath', () => {
       resolveDialFileApiPath(
         makeFile({
           id: undefined,
-          path: 'All files/reports/q1.pdf',
+          path: 'My files/reports/q1.pdf',
         }),
         BUCKET,
         ROOT_LABEL,
@@ -87,7 +87,7 @@ describe('resolveDialFileApiPath', () => {
       resolveDialFileApiPath(
         makeFile({
           id: 'reports/',
-          path: '/All files/reports/',
+          path: '/My files/reports/',
           nodeType: DialFileNodeType.FOLDER,
           name: 'reports',
         }),
@@ -99,8 +99,8 @@ describe('resolveDialFileApiPath', () => {
     expect(
       resolveDialFileApiPath(
         makeFile({
-          id: '/All files/report.pdf',
-          path: '/All files/report.pdf',
+          id: '/My files/report.pdf',
+          path: '/My files/report.pdf',
         }),
         BUCKET,
         ROOT_LABEL,

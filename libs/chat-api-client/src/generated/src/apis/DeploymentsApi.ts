@@ -15,10 +15,15 @@
 import * as runtime from '../runtime';
 import type {
   DeploymentConfigurationDto,
+  DeploymentLimitsResponseDto,
   DeploymentsResponseDto,
 } from '../models/index';
 
 export interface GetDeploymentConfigurationRequest {
+  deployment: string;
+}
+
+export interface GetDeploymentLimitsRequest {
   deployment: string;
 }
 
@@ -77,6 +82,59 @@ export class DeploymentsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DeploymentConfigurationDto> {
     const response = await this.getDeploymentConfigurationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Returns spent/limit statistics for a single deployment. Proxies GET /v1/deployments/{deployment_name}/limits using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
+   * Get deployment usage limits
+   */
+  async getDeploymentLimitsRaw(
+    requestParameters: GetDeploymentLimitsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<DeploymentLimitsResponseDto>> {
+    if (requestParameters['deployment'] == null) {
+      throw new runtime.RequiredError(
+        'deployment',
+        'Required parameter "deployment" was null or undefined when calling getDeploymentLimits().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/deployments/{deployment}/limits`;
+    urlPath = urlPath.replace(
+      `{${'deployment'}}`,
+      encodeURIComponent(String(requestParameters['deployment'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'GET',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<DeploymentLimitsResponseDto>(response);
+  }
+
+  /**
+   * Returns spent/limit statistics for a single deployment. Proxies GET /v1/deployments/{deployment_name}/limits using the caller\'s session access token. Not cached — every request hits DIAL Core for real-time usage data.
+   * Get deployment usage limits
+   */
+  async getDeploymentLimits(
+    requestParameters: GetDeploymentLimitsRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<DeploymentLimitsResponseDto> {
+    const response = await this.getDeploymentLimitsRaw(
       requestParameters,
       initOverrides,
     );

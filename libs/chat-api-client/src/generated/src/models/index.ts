@@ -806,6 +806,12 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   responseFormat?: ConversationResponseDtoResponseFormatEnum;
+  /**
+   * When true, automatic LLM conversation naming has already run for this conversation.
+   * @type {boolean}
+   * @memberof ConversationResponseDto
+   */
+  llmNamingDone?: boolean;
 }
 
 /**
@@ -1235,6 +1241,73 @@ export type DeploymentItemDtoTypeEnum =
 /**
  *
  * @export
+ * @interface DeploymentLimitsResponseDto
+ */
+export interface DeploymentLimitsResponseDto {
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  hourRequestStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  dayRequestStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  minuteTokenStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  dayTokenStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  weekTokenStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  monthTokenStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  minuteCostStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  dayCostStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  weekCostStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  monthCostStats?: LimitStatsDto;
+}
+/**
+ *
+ * @export
  * @interface DeploymentsConfigDto
  */
 export interface DeploymentsConfigDto {
@@ -1639,6 +1712,221 @@ export interface DialModelPricingDto {
 /**
  *
  * @export
+ * @interface DialToolsetAuthSettingsDto
+ */
+export interface DialToolsetAuthSettingsDto {
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  authenticationType: DialToolsetAuthSettingsDtoAuthenticationTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  redirectUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  tokenEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  codeChallengeMethod?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  scopesSupported?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  globalAuthStatus?: DialToolsetAuthSettingsDtoGlobalAuthStatusEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  userLevelAuthStatus?: DialToolsetAuthSettingsDtoUserLevelAuthStatusEnum;
+}
+
+/**
+ * @export
+ */
+export const DialToolsetAuthSettingsDtoAuthenticationTypeEnum = {
+  Oauth: 'OAUTH',
+  ApiKey: 'API_KEY',
+  None: 'NONE',
+} as const;
+export type DialToolsetAuthSettingsDtoAuthenticationTypeEnum =
+  (typeof DialToolsetAuthSettingsDtoAuthenticationTypeEnum)[keyof typeof DialToolsetAuthSettingsDtoAuthenticationTypeEnum];
+
+/**
+ * @export
+ */
+export const DialToolsetAuthSettingsDtoGlobalAuthStatusEnum = {
+  SignedIn: 'SIGNED_IN',
+  SignedOut: 'SIGNED_OUT',
+} as const;
+export type DialToolsetAuthSettingsDtoGlobalAuthStatusEnum =
+  (typeof DialToolsetAuthSettingsDtoGlobalAuthStatusEnum)[keyof typeof DialToolsetAuthSettingsDtoGlobalAuthStatusEnum];
+
+/**
+ * @export
+ */
+export const DialToolsetAuthSettingsDtoUserLevelAuthStatusEnum = {
+  SignedIn: 'SIGNED_IN',
+  SignedOut: 'SIGNED_OUT',
+} as const;
+export type DialToolsetAuthSettingsDtoUserLevelAuthStatusEnum =
+  (typeof DialToolsetAuthSettingsDtoUserLevelAuthStatusEnum)[keyof typeof DialToolsetAuthSettingsDtoUserLevelAuthStatusEnum];
+
+/**
+ *
+ * @export
+ * @interface DialToolsetDto
+ */
+export interface DialToolsetDto {
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  toolset: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  displayVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  owner?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  object?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  status?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialToolsetDto
+   */
+  descriptionKeywords?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof DialToolsetDto
+   */
+  maxRetryAttempts?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof DialToolsetDto
+   */
+  createdAt?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof DialToolsetDto
+   */
+  updatedAt?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  transport?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialToolsetDto
+   */
+  allowedTools?: Array<string>;
+  /**
+   *
+   * @type {DialToolsetAuthSettingsDto}
+   * @memberof DialToolsetDto
+   */
+  authSettings?: DialToolsetAuthSettingsDto;
+}
+/**
+ *
+ * @export
+ * @interface DialToolsetListResponseDto
+ */
+export interface DialToolsetListResponseDto {
+  /**
+   *
+   * @type {Array<DialToolsetDto>}
+   * @memberof DialToolsetListResponseDto
+   */
+  data: Array<DialToolsetDto>;
+}
+/**
+ *
+ * @export
  * @interface DownloadArchiveDto
  */
 export interface DownloadArchiveDto {
@@ -1759,6 +2047,25 @@ export interface FileUploadResponseDto {
    * @memberof FileUploadResponseDto
    */
   url: string;
+}
+/**
+ *
+ * @export
+ * @interface LimitStatsDto
+ */
+export interface LimitStatsDto {
+  /**
+   *
+   * @type {number}
+   * @memberof LimitStatsDto
+   */
+  total: number;
+  /**
+   *
+   * @type {number}
+   * @memberof LimitStatsDto
+   */
+  used: number;
 }
 /**
  *
@@ -2059,6 +2366,111 @@ export interface RenameConversationResponseDto {
    * @memberof RenameConversationResponseDto
    */
   newPath: string;
+}
+/**
+ *
+ * @export
+ * @interface RenameFilesDto
+ */
+export interface RenameFilesDto {
+  /**
+   *
+   * @type {Array<RenameItemDto>}
+   * @memberof RenameFilesDto
+   */
+  items: Array<RenameItemDto>;
+}
+/**
+ *
+ * @export
+ * @interface RenameFilesResponseDto
+ */
+export interface RenameFilesResponseDto {
+  /**
+   *
+   * @type {Array<RenameItemResultDto>}
+   * @memberof RenameFilesResponseDto
+   */
+  results: Array<RenameItemResultDto>;
+}
+/**
+ *
+ * @export
+ * @interface RenameItemDto
+ */
+export interface RenameItemDto {
+  /**
+   * DIAL Core bucket name
+   * @type {string}
+   * @memberof RenameItemDto
+   */
+  bucket: string;
+  /**
+   * Relative source path within bucket
+   * @type {string}
+   * @memberof RenameItemDto
+   */
+  sourcePath: string;
+  /**
+   * Relative destination path within bucket
+   * @type {string}
+   * @memberof RenameItemDto
+   */
+  destinationPath: string;
+  /**
+   *
+   * @type {string}
+   * @memberof RenameItemDto
+   */
+  nodeType: RenameItemDtoNodeTypeEnum;
+  /**
+   * Display name (last segment) for error messages
+   * @type {string}
+   * @memberof RenameItemDto
+   */
+  name: string;
+}
+
+/**
+ * @export
+ */
+export const RenameItemDtoNodeTypeEnum = {
+  Item: 'item',
+  Folder: 'folder',
+} as const;
+export type RenameItemDtoNodeTypeEnum =
+  (typeof RenameItemDtoNodeTypeEnum)[keyof typeof RenameItemDtoNodeTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface RenameItemResultDto
+ */
+export interface RenameItemResultDto {
+  /**
+   * Source path from request
+   * @type {string}
+   * @memberof RenameItemResultDto
+   */
+  sourcePath: string;
+  /**
+   * Destination path from request
+   * @type {string}
+   * @memberof RenameItemResultDto
+   */
+  destinationPath: string;
+  /**
+   * true when all Core moveResource calls succeeded
+   * @type {boolean}
+   * @memberof RenameItemResultDto
+   */
+  success: boolean;
+  /**
+   * Human-readable error reason when success is false
+   * @type {string}
+   * @memberof RenameItemResultDto
+   */
+  error?: string;
 }
 /**
  *

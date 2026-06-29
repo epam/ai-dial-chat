@@ -22,6 +22,8 @@ import type {
   FileMetadataResponseDto,
   FileUploadResponseDto,
   ListFilesResponseDto,
+  RenameFilesDto,
+  RenameFilesResponseDto,
 } from '../models/index';
 
 export interface CreateFolderRequest {
@@ -66,6 +68,10 @@ export interface ListSharedFilesRequest {
   path?: string;
   token?: string;
   limit?: number;
+}
+
+export interface RenameFilesRequest {
+  renameFilesDto: RenameFilesDto;
 }
 
 export interface UploadFileRequest {
@@ -529,6 +535,56 @@ export class FilesApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<ListFilesResponseDto> {
     const response = await this.listSharedFilesRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Rename files and folders
+   */
+  async renameFilesRaw(
+    requestParameters: RenameFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<RenameFilesResponseDto>> {
+    if (requestParameters['renameFilesDto'] == null) {
+      throw new runtime.RequiredError(
+        'renameFilesDto',
+        'Required parameter "renameFilesDto" was null or undefined when calling renameFiles().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/files/rename`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['renameFilesDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<RenameFilesResponseDto>(response);
+  }
+
+  /**
+   * Rename files and folders
+   */
+  async renameFiles(
+    requestParameters: RenameFilesRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<RenameFilesResponseDto> {
+    const response = await this.renameFilesRaw(
       requestParameters,
       initOverrides,
     );

@@ -1,6 +1,10 @@
 import { FileNodeType } from './dto/list-files.dto';
 import type { ListFilesItemDto } from './dto/list-files.dto';
 
+interface SharedUserInfo {
+  user?: string;
+}
+
 export interface DialFileItem {
   name?: string;
   url?: string;
@@ -12,7 +16,28 @@ export interface DialFileItem {
   permissions?: string[];
   resourceType?: string;
   author?: string;
+  owner?: string;
+  sharedBy?: string | SharedUserInfo[];
+  items?: DialFileItem[];
 }
+
+const getSharedByAuthor = (
+  sharedBy: DialFileItem['sharedBy'],
+): string | undefined =>
+  Array.isArray(sharedBy)
+    ? sharedBy.find((item) => item.user != null)?.user
+    : sharedBy;
+
+const getItemAuthor = (item: DialFileItem): string | undefined =>
+  item.author ??
+  item.owner ??
+  getSharedByAuthor(item.sharedBy) ??
+  item.items
+    ?.map(
+      (child) =>
+        child.author ?? child.owner ?? getSharedByAuthor(child.sharedBy),
+    )
+    .find((author) => author != null);
 
 export const normalizeFileItem = (
   item: DialFileItem,
@@ -44,7 +69,7 @@ export const normalizeFileItem = (
     updatedAt: item.updatedAt,
     permissions: item.permissions,
     resourceType: item.resourceType,
-    author: item.author,
+    author: getItemAuthor(item),
   };
 
   if (!isFolder) {

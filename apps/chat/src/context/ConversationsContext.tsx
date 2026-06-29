@@ -1,6 +1,7 @@
 import type {
   ConversationDeletionResultDto,
   ConversationListItemDto,
+  ConversationResponseDto,
 } from '@epam/chat-api-client';
 import {
   createContext,
@@ -16,11 +17,16 @@ import {
   deleteAllConversations as apiDeleteAllConversations,
   deleteConversation as apiDeleteConversation,
   duplicateConversation as apiDuplicateConversation,
+  getConversation,
   listConversations,
   renameConversation as apiRenameConversation,
 } from '../server-api/conversations.api';
+import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { getConversationPath } from '../utils/conversation-path';
 import { useUserConfig } from './UserConfigContext';
+
+const DISPLAY_NAME_POLL_INTERVAL_MS = 2000;
+const DISPLAY_NAME_POLL_MAX_ATTEMPTS = 25;
 
 interface ConversationsContextType {
   /** Flat list of all loaded conversations. */
@@ -39,6 +45,17 @@ interface ConversationsContextType {
   duplicateConversation: (id: string) => Promise<string>;
   /** Re-fetch the full conversation list from the server. */
   refreshConversations: () => Promise<void>;
+  /** Updates the sidebar title for a conversation without changing its id. */
+  updateConversationTitle: (id: string, title: string) => void;
+  /**
+   * Polls GET conversation until the display name changes or LLM naming completes.
+   * Returns a cleanup function that cancels polling.
+   */
+  watchForDisplayNameUpdate: (
+    conversationId: string,
+    previousName: string,
+    onUpdated: (title: string) => void,
+  ) => () => void;
   /**
    * Delete every conversation in the authenticated user's bucket.
    * Returns the structured result. The list is re-fetched whenever at least one
@@ -77,6 +94,75 @@ export const ConversationsProvider = ({
       setIsLoading(false);
     }
   }, []);
+
+  const silentRefreshConversations = useCallback(async () => {
+    try {
+      const response = await listConversations();
+      setConversations(response.items);
+    } catch {
+      // Background refresh must not disturb the panel loading state.
+    }
+  }, []);
+
+  const updateConversationTitle = useCallback((id: string, title: string) => {
+    setConversations((prev) =>
+      prev.map((item) =>
+        conversationIdsMatch(item.id, id) ? { ...item, title } : item,
+      ),
+    );
+  }, []);
+
+  const watchForDisplayNameUpdate = useCallback(
+    (
+      conversationId: string,
+      previousName: string,
+      onUpdated: (title: string) => void,
+    ) => {
+      let cancelled = false;
+      let attempts = 0;
+      const conversationPath = getConversationPath(
+        normalizeConversationId(conversationId),
+      );
+
+      const poll = async () => {
+        if (cancelled) return;
+        attempts += 1;
+
+        try {
+          const conversation = (await getConversation(
+            conversationPath,
+          )) as ConversationResponseDto;
+          const nextName = conversation.name?.trim();
+          if (
+            conversation.llmNamingDone === true ||
+            (nextName && nextName !== previousName.trim())
+          ) {
+            if (nextName) {
+              updateConversationTitle(conversationId, nextName);
+              onUpdated(nextName);
+              void silentRefreshConversations();
+            }
+            return;
+          }
+        } catch {
+          // Keep polling until attempts are exhausted.
+        }
+
+        if (!cancelled && attempts < DISPLAY_NAME_POLL_MAX_ATTEMPTS) {
+          window.setTimeout(() => {
+            void poll();
+          }, DISPLAY_NAME_POLL_INTERVAL_MS);
+        }
+      };
+
+      void poll();
+
+      return () => {
+        cancelled = true;
+      };
+    },
+    [silentRefreshConversations, updateConversationTitle],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -174,6 +260,15 @@ export const ConversationsProvider = ({
       const conversationPath = normalizeConversationId(id);
       const { newPath } = await apiDuplicateConversation(conversationPath);
       await refreshConversations();
+      // Move the duplicate to the front so it appears at the top of My chats.
+      // The backend sorts by updatedAt, but DIAL Core may copy the source's
+      // timestamp on copyResource, making the position unpredictable.
+      setConversations((prev) => {
+        const idx = prev.findIndex((c) => c.id === newPath);
+        if (idx <= 0) return prev;
+        const dup = prev[idx];
+        return [dup, ...prev.slice(0, idx), ...prev.slice(idx + 1)];
+      });
       return newPath;
     },
     [refreshConversations],
@@ -204,6 +299,8 @@ export const ConversationsProvider = ({
       renameConversation,
       duplicateConversation,
       refreshConversations,
+      updateConversationTitle,
+      watchForDisplayNameUpdate,
       deleteAllConversations,
     }),
     [
@@ -215,6 +312,8 @@ export const ConversationsProvider = ({
       renameConversation,
       duplicateConversation,
       refreshConversations,
+      updateConversationTitle,
+      watchForDisplayNameUpdate,
       deleteAllConversations,
     ],
   );

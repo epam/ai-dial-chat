@@ -213,7 +213,9 @@
     "deleteAllConfirmTitle": "Delete All Conversations?",
     "deleteAllConfirmDescription": "All conversations will be permanently deleted. This action cannot be undone.",
     "deleteAllError": "Failed to delete all conversations. Please try again.",
-    "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed."
+    "deleteAllPartialError": "Some conversations could not be deleted. The list has been refreshed.",
+    "deleteAllSuccessTitle": "All conversations deleted",
+    "deleteAllSuccess": "All conversations have been deleted successfully."
   },
   "auth": {
     "signOut": "Sign out",
@@ -361,6 +363,15 @@
     "itemsDeletedFromFolder": "{{count}} items deleted from {{folder}}",
     "andOtherItems": " and {{count}} other items",
     "someItemsNotDeleted": "{{files}}{{rest}} were not deleted. Please try again.",
+    "renameAction": "Rename",
+    "renamingLabel": "Renaming…",
+    "renameError": "Rename failed. Please try again.",
+    "renamePartialError": "{{count}} item(s) could not be renamed.",
+    "renameNameEmpty": "Name cannot be empty",
+    "renameDuplicateName": "An item with this name already exists",
+    "renameReservedName": "This name is reserved",
+    "renameInvalidChars": "Name contains invalid characters",
+    "renameNameTooLong": "Name must be 255 characters or fewer",
     "tab": {
       "myFiles": "My files",
       "shared": "Shared with me",
