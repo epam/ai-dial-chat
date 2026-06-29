@@ -1,76 +1,55 @@
-// Colors only — no layout, spacing, border-radius (those live in Tailwind)
+// Color-only rules. Layout, spacing, and border-radius live in Tailwind classes in the TSX file.
 
 .card {
-  --_card-bg: var(--ci-card-bg, var(--bg-layer-0, #000000));
-  border-color: var(--ci-card-border, var(--stroke-secondary, #242c42));
-  background: var(--_card-bg);
+  border-color: var(--ci-card-border, var(--stroke-secondary, #d1dbea));
+  background: var(--ci-card-bg, var(--bg-layer-0, #fcfcfc));
 }
 
 .cardError {
-  border-color: var(--ci-card-border-error, var(--stroke-error, #f76464));
+  border-color: var(--ci-card-border-error, var(--stroke-error, #ae2f2f));
 }
 
 .cardSelected {
-  --_card-bg: var(
-    --ci-card-bg-selected,
-    var(--bg-accent-primary-alpha, #7da4ff26)
-  );
-  border-color: var(
-    --ci-card-border-selected,
-    var(--stroke-accent-primary, #7da4ff)
-  );
+  background: var(--ci-card-bg-selected, var(--bg-accent-primary-alpha, #7da4ff2e));
+  border-color: var(--ci-card-border-selected, var(--stroke-accent-primary, #124ace));
 }
 
 .cardPrompt,
 .cardPasted {
   &:hover {
-    --_card-bg: var(
-      --ci-card-bg-hover,
-      var(--controls-bg-neutral-hover, #242c42)
-    );
-    background: var(--_card-bg);
+    background: var(--ci-card-bg-hover, var(--controls-bg-neutral-hover, #d1dbea));
   }
 }
 
 .name {
-  color: var(--ci-card-name, var(--text-primary, #eef1f7));
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
-  overflow: hidden;
-  overflow-wrap: break-word;
-  word-break: break-word;
+  color: var(--ci-card-name, var(--text-primary, #161b2d));
 }
 
 .meta {
-  color: var(--ci-card-meta, var(--text-secondary, #9fa6bd));
+  color: var(--ci-card-meta, var(--text-secondary, #575f73));
 }
 
 .loadingOverlay {
-  background: var(--ci-loading-overlay-bg, var(--bg-blackout, #0c101db2));
+  background: var(--ci-loading-overlay-bg, var(--bg-blackout, #0c101d4d));
 }
 
 .actionBtn {
-  color: var(--ci-card-action-color, var(--text-primary, #eef1f7));
-  background: var(--_card-bg);
+  color: var(--ci-card-action-color, var(--text-primary, #161b2d));
 
   &:hover {
-    background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #1d2439));
+    background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #fcfcfc));
   }
 }
 
 .card:focus-within {
-  outline-color: var(
-    --ci-card-focus-outline,
-    var(--controls-stroke-focus, #eef1f7)
-  );
+  outline-color: var(--ci-card-focus-outline, var(--controls-stroke-focus, #eef1f7));
 }
 
 .removeBtnImage {
-  background: var(--ci-card-remove-bg, var(--bg-layer-2, #161b2d));
-  color: var(--ci-card-remove-color, var(--text-primary, #eef1f7));
+  background: var(--ci-card-remove-bg, var(--bg-layer-2, #eef1f7));
+  color: var(--ci-card-remove-color, var(--text-primary, #161b2d));
 
   &:hover {
-    background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #1d2439));
+    background: var(--ci-card-remove-bg-hover, var(--bg-layer-3, #fcfcfc));
   }
 }

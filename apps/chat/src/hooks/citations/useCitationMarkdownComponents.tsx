@@ -60,8 +60,7 @@ export const useCitationMarkdownComponents = (
       if (pdfContent != null) {
         const attachment = annotation.body?.source?.attachment;
         const rawSegment = attachment?.url?.split('/').pop() ?? '';
-        const fileName =
-          attachment?.title ?? decodeURIComponent(rawSegment);
+        const fileName = attachment?.title ?? decodeURIComponent(rawSegment);
         openCanvas(pdfContent, fileName);
         return;
       }

@@ -75,7 +75,12 @@ describe('useAnnotations', () => {
       ...baseMessage(),
       custom_content: {
         attachments: [
-          { index: 0, title: 'report.pdf', type: 'application/pdf', url: 'files/report.pdf' },
+          {
+            index: 0,
+            title: 'report.pdf',
+            type: 'application/pdf',
+            url: 'files/report.pdf',
+          },
         ],
       },
       custom_fields: {
@@ -84,7 +89,11 @@ describe('useAnnotations', () => {
             index: 0,
             target: {
               source: { attachment_index: 0 },
-              selector: { type: 'pdf_region', page: 2, bbox: { left: 10, top: 20, width: 30, height: 40 } },
+              selector: {
+                type: 'pdf_region',
+                page: 2,
+                bbox: { left: 10, top: 20, width: 30, height: 40 },
+              },
             },
             body: { title: 'Section 1' },
           },
@@ -98,14 +107,28 @@ describe('useAnnotations', () => {
     expect(ann.body?.source?.attachment?.url).toBe('files/report.pdf');
     expect(ann.body?.title).toBe('Section 1');
     const sel = ann.body?.selector;
-    expect(sel).toMatchObject({ type: 'pdf_bbox', page: 2, x1: 10, y1: 20, x2: 40, y2: 60 });
+    expect(sel).toMatchObject({
+      type: 'pdf_bbox',
+      page: 2,
+      x1: 10,
+      y1: 20,
+      x2: 40,
+      y2: 60,
+    });
   });
 
   it('skips raw annotations whose attachment_index does not resolve', () => {
     const msg: Message = {
       ...baseMessage(),
       custom_content: {
-        attachments: [{ index: 1, title: 'other.pdf', type: 'application/pdf', url: 'files/other.pdf' }],
+        attachments: [
+          {
+            index: 1,
+            title: 'other.pdf',
+            type: 'application/pdf',
+            url: 'files/other.pdf',
+          },
+        ],
       },
       custom_fields: {
         annotations: [
@@ -113,7 +136,11 @@ describe('useAnnotations', () => {
             index: 0,
             target: {
               source: { attachment_index: 99 },
-              selector: { type: 'pdf_region', page: 1, bbox: { left: 0, top: 0, width: 10, height: 10 } },
+              selector: {
+                type: 'pdf_region',
+                page: 1,
+                bbox: { left: 0, top: 0, width: 10, height: 10 },
+              },
             },
             body: { title: 'Orphan' },
           },

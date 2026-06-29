@@ -1,5 +1,5 @@
 .userBubble {
-  background: var(--cm-bubble-user-bg, var(--bg-layer-4, #242c42));
+  background: var(--cm-bubble-user-bg, var(--bg-layer-4, #d1dbea));
 }
 
 .collapsibleText {
@@ -21,7 +21,7 @@
   background: linear-gradient(
     to bottom,
     rgb(0 0 0 / 0),
-    var(--cm-bubble-user-bg, var(--bg-layer-4, #242c42))
+    var(--cm-bubble-user-bg, var(--bg-layer-4, #d1dbea))
   );
 }
 
@@ -36,16 +36,9 @@
 }
 
 .startersDivider {
-  border-color: var(--cm-starters-divider, var(--stroke-secondary, #242c42));
+  border-color: var(--cm-starters-divider, var(--stroke-secondary, #d1dbea));
 }
 
 .text {
-  color: var(--cm-bubble-text, var(--text-primary, #eef1f7));
-}
-
-.textFont {
-  font-size: var(--cm-bubble-font-size, 16px);
-  font-weight: var(--cm-bubble-font-weight, 400);
-  line-height: var(--cm-bubble-line-height, 1.5);
-  font-family: var(--cm-bubble-font-family, var(--theme-font, sans-serif));
+  color: var(--cm-bubble-text, var(--text-primary, #161b2d));
 }

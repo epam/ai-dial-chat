@@ -1,15 +1,15 @@
 .item {
-  color: var(--ci-sheet-text, var(--text-primary, #eef1f7));
+  color: var(--ci-sheet-text, var(--text-primary, #161B2D));
 
   &:hover {
-    background: var(--ci-sheet-item-hover, var(--bg-layer-3, #1d2439));
+    background: var(--ci-sheet-item-hover, var(--bg-layer-3, #FCFCFC));
   }
 
   &:active {
-    background: var(--ci-sheet-item-active, var(--bg-layer-4, #242c42));
+    background: var(--ci-sheet-item-active, var(--bg-layer-4, #D1DBEA));
   }
 }
 
 .itemIcon {
-  color: var(--ci-sheet-icon, var(--text-secondary, #9fa6bd));
+  color: var(--ci-sheet-icon, var(--text-secondary, #575F73));
 }

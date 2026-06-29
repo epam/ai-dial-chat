@@ -84,22 +84,10 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
     panelStyles,
   } = stylesProp ?? {};
 
-  const noCustomClass = !typography?.fontClassName;
   const cssVars = useMemo(
     () => ({
       ...buildCssVars({
         '--ac-text': colors?.text,
-        '--ac-font-size': noCustomClass ? typography?.fontSize : undefined,
-        '--ac-font-weight': noCustomClass
-          ? typography?.fontWeight?.toString()
-          : undefined,
-        '--ac-line-height': noCustomClass
-          ? typography?.lineHeight?.toString()
-          : undefined,
-        '--ac-letter-spacing': noCustomClass
-          ? typography?.letterSpacing
-          : undefined,
-        '--ac-font-family': noCustomClass ? typography?.fontFamily : undefined,
       }),
       ...extraCssVars,
     }),
@@ -160,25 +148,45 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
       case AttachmentContentType.Json:
         return (
           <div dir="ltr" className="h-full overflow-auto">
-            <div className={styles.jsonWrapper}>
+            <div
+              className={mergeClasses(
+                'm-3 overflow-auto rounded-md border',
+                styles.jsonWrapper,
+              )}
+            >
               <JsonView
                 data={content.value as object}
                 style={{
-                  container: styles.jsonContainer,
+                  container: mergeClasses(
+                    'whitespace-pre-wrap break-words p-2',
+                    styles.jsonContainer,
+                  ),
                   basicChildStyle: defaultStyles.basicChildStyle,
-                  childFieldsContainer: styles.jsonChildContainer,
-                  label: styles.jsonLabel,
-                  clickableLabel: styles.jsonClickableLabel,
-                  nullValue: styles.jsonNullValue,
-                  undefinedValue: styles.jsonNullValue,
+                  childFieldsContainer: 'm-0 ps-3',
+                  label: mergeClasses('me-1 font-semibold', styles.jsonLabel),
+                  clickableLabel: mergeClasses(
+                    'me-1 cursor-pointer font-semibold hover:underline',
+                    styles.jsonClickableLabel,
+                  ),
+                  nullValue: mergeClasses('italic', styles.jsonNullValue),
+                  undefinedValue: mergeClasses('italic', styles.jsonNullValue),
                   stringValue: styles.jsonStringValue,
                   booleanValue: styles.jsonBooleanValue,
                   numberValue: styles.jsonNumberValue,
-                  otherValue: styles.jsonNullValue,
-                  punctuation: styles.jsonPunctuation,
-                  collapseIcon: styles.jsonCollapseIcon,
-                  expandIcon: styles.jsonExpandIcon,
-                  collapsedContent: styles.jsonCollapsedContent,
+                  otherValue: mergeClasses('italic', styles.jsonNullValue),
+                  punctuation: mergeClasses('me-1', styles.jsonPunctuation),
+                  collapseIcon: mergeClasses(
+                    'me-1 cursor-pointer select-none transition-colors',
+                    styles.jsonCollapseIcon,
+                  ),
+                  expandIcon: mergeClasses(
+                    'me-1 cursor-pointer select-none transition-colors',
+                    styles.jsonExpandIcon,
+                  ),
+                  collapsedContent: mergeClasses(
+                    'me-1 cursor-pointer rounded px-1',
+                    styles.jsonCollapsedContent,
+                  ),
                 }}
               />
             </div>
@@ -196,7 +204,11 @@ const AttachmentCanvasBase: FC<AttachmentCanvasProps> = ({
           />
         );
       case AttachmentContentType.Unsupported:
-        return <p className="text-center text-secondary">{unsupportedLabel}</p>;
+        return (
+          <p className={mergeClasses('text-center', styles.unsupportedLabel)}>
+            {unsupportedLabel}
+          </p>
+        );
     }
   }, [
     content,

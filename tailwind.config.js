@@ -1,33 +1,36 @@
-// Default color palette is black when no themes presented
+// Default color palette is light when no themes presented
 
 const backgroundsColors = {
   transparent: 'transparent',
-  'layer-0': 'var(--bg-layer-0, #000000)',
-  'layer-1': 'var(--bg-layer-1, #0C101D)',
-  'layer-2': 'var(--bg-layer-2, #161B2D)',
-  'layer-3': 'var(--bg-layer-3, #1D2439)',
-  'layer-4': 'var(--bg-layer-4, #242C42)',
-  blackout: 'var(--bg-blackout, #0C101DB3)',
-  error: 'var(--bg-error, #402027)',
-  warning: 'var(--bg-warning, #3F3D25)',
-  info: 'var(--bg-info, #1C2C47)',
-  success: 'var(--bg-success, #1D3841)',
-  neutral: 'var(--bg-neutral, #1D2439)',
-  inverted: 'var(--bg-inverted, #EEF1F7)',
+  'layer-0': 'var(--bg-layer-0, #FCFCFC)',
+  'layer-1': 'var(--bg-layer-1, #E0E6F0)',
+  'layer-2': 'var(--bg-layer-2, #EEF1F7)',
+  'layer-3': 'var(--bg-layer-3, #FCFCFC)',
+  'layer-4': 'var(--bg-layer-4, #D1DBEA)',
+  'layer-5': 'var(--bg-layer-5, #F5F7FA)', // TODO: new color
+  'layer-6': 'var(--bg-layer-6, #F8FAFC)', // TODO: new color
+  'layer-7': 'var(--bg-layer-7, #00000006)', // TODO: new color
+  blackout: 'var(--bg-blackout, #0C101D4D)',
+  error: 'var(--bg-error, #F3D6D8)',
+  warning: 'var(--bg-warning, #FAF0CF)',
+  info: 'var(--bg-info, #D6E2F9)',
+  success: 'var(--bg-success, #D9F0F1)',
+  neutral: 'var(--bg-neutral, #FCFCFC)',
+  inverted: 'var(--bg-inverted, #161B2D)',
   'model-icon': 'var(--bg-model-icon, #FFFFFF00)',
-  'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF26)',
+  'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
   'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC2E)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
 };
 
 const controlsBgColors = {
-  'controls-accent-primary': 'var(--controls-bg-accent-primary, #3664E2)',
+  'controls-accent-primary': 'var(--controls-bg-accent-primary, #124ACE)',
   'controls-accent-primary-hover':
     'var(--controls-bg-accent-primary-hover, #2656D9)',
   'controls-accent-primary-active':
-    'var(--controls-bg-accent-primary-active, #124ACE)',
+    'var(--controls-bg-accent-primary-active, #3664E2)',
   'controls-accent-primary-alpha-active':
-    'var(--controls-bg-accent-primary-alpha-active, #7DA4FF4D)',
+    'var(--controls-bg-accent-primary-alpha-active, #7DA4FF5C)',
 
   'controls-accent-secondary-alpha-active':
     'var(--controls-bg-accent-secondary-alpha-active, #37BABC5C)',
@@ -35,18 +38,18 @@ const controlsBgColors = {
   'controls-accent-tertiary-alpha-active':
     'var(--controls-bg-accent-tertiary-alpha-active, #A972FF5C)',
 
-  'controls-error': 'var(--controls-bg-error, #CC4545)',
+  'controls-error': 'var(--controls-bg-error, #AE2F2F)',
   'controls-error-hover': 'var(--controls-bg-error-hover, #BF3939)',
-  'controls-error-active': 'var(--controls-bg-error-active, #AE2F2F)',
+  'controls-error-active': 'var(--controls-bg-error-active, #CC4545)',
   'controls-error-alpha-hover': 'var(--controls-bg-alpha-hover, #F764642E)',
   'controls-error-alpha-active':
     'var(--controls-bg-error-alpha-active, #F764645C)',
 
-  'controls-disable-accent': 'var(--controls-bg-disable-accent, #696E7C)',
-  'controls-disable': 'var(--controls-bg-disable, #242C42)',
+  'controls-disable-accent': 'var(--controls-bg-disable-accent, #7C8293)',
+  'controls-disable': 'var(--controls-bg-disable, #D1DBEA)',
 
-  'controls-neutral-hover': 'var(--controls-bg-neutral-hover, #242C42)',
-  'controls-neutral-active': 'var(--controls-bg-neutral-active, #575F73)',
+  'controls-neutral-hover': 'var(--controls-bg-neutral-hover, #D1DBEA)',
+  'controls-neutral-active': 'var(--controls-bg-neutral-active, #9FA6BD)',
 
   'controls-accent-success-alpha-hover':
     'var(--controls-bg-accent-success-alpha-hover, #37BABC2E)',
@@ -56,51 +59,52 @@ const controlsBgColors = {
 
 const borderColors = {
   transparent: 'transparent',
-  primary: 'var(--stroke-primary, #696E7C)',
-  secondary: 'var(--stroke-secondary, #242C42)',
-  tertiary: 'var(--stroke-tertiary, #0C101D)',
-  focus: 'var(--stroke-focus, #EEF1F7)',
-  error: 'var(--stroke-error, #F76464)',
+  primary: 'var(--stroke-primary, #7C8293)',
+  secondary: 'var(--stroke-secondary, #D1DBEA)',
+  tertiary: 'var(--stroke-tertiary, #E0E6F0)',
+  focus: 'var(--stroke-focus, #161B2D)',
+  error: 'var(--stroke-error, #AE2F2F)',
   warning: 'var(--stroke-warning, #EEC840)',
-  info: 'var(--stroke-info, #7DA4FF)',
-  success: 'var(--stroke-success, #37BABC)',
-  'accent-primary': 'var(--stroke-accent-primary, #7DA4FF)',
-  'accent-secondary': 'var(--stroke-accent-secondary, #37BABC)',
-  'accent-tertiary': 'var(--stroke-accent-tertiary, #A972FF)',
+  info: 'var(--stroke-info, #124ACE)',
+  success: 'var(--stroke-success, #007274)',
+  'accent-primary': 'var(--stroke-accent-primary, #124ACE)',
+  'accent-secondary': 'var(--stroke-accent-secondary, #007274)',
+  'accent-tertiary': 'var(--stroke-accent-tertiary, #7E39EC)',
 };
 
 const textColors = {
   transparent: 'transparent',
-  primary: 'var(--text-primary, #EEF1F7)',
-  secondary: 'var(--text-secondary, #9FA6BD)',
-  error: 'var(--text-error, #F76464)',
-  warning: 'var(--text-warning, #EEC840)',
+  primary: 'var(--text-primary, #161B2D)',
+  secondary: 'var(--text-secondary, #575F73)',
+  tertiary: 'var(--text-tertiary, #808898)',
+  error: 'var(--text-error, #AE2F2F)',
+  warning: 'var(--text-warning, #7F6300)',
   'warning-icon': 'var(--text-warning-icon, #EEC840)',
-  info: 'var(--text-info, #7DA4FF)',
-  success: 'var(--text-success, #37BABC)',
-  'accent-primary': 'var(--text-accent-primary, #7DA4FF)',
-  'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
-  'accent-tertiary': 'var(--text-accent-tertiary, #A972FF)',
+  info: 'var(--text-info, #124ACE)',
+  success: 'var(--text-success, #007274)',
+  'accent-primary': 'var(--text-accent-primary, #124ACE)',
+  'accent-secondary': 'var(--text-accent-secondary, #007274)',
+  'accent-tertiary': 'var(--text-accent-tertiary, #7E39EC)',
 };
 
 const placeholderColor = {
-  primary: 'var(--text-primary, #EEF1F7)',
+  primary: 'var(--text-primary, #161B2D)',
 };
 
 const controlsTextColors = {
   'controls-permanent': 'var(--controls-text-permanent, #FCFCFC)',
 
-  'controls-accent-disable': 'var(--controls-text-accent-disable, #242C42)',
-  'controls-primary-disable': 'var(--controls-text-primary-disable, #7C8293)',
+  'controls-accent-disable': 'var(--controls-text-accent-disable, #D1DBEA)',
+  'controls-primary-disable': 'var(--controls-text-primary-disable, #696E7C)',
   'controls-secondary-disable':
-    'var(--controls-text-secondary-disable, #575F73)',
+    'var(--controls-text-secondary-disable, #9FA6BD)',
 
-  'controls-neutral': 'var(--controls-text-neutral, #FCFCFC)',
+  'controls-neutral': 'var(--controls-text-neutral, #161B2D)',
 
   'controls-accent-primary-hover':
     'var(--controls-text-accent-primary-hover, #3664E2)',
   'controls-accent-primary-active':
-    'var(--controls-text-accent-primary-active, #124ACE)',
+    'var(--controls-text-accent-primary-active, #7DA4FF)',
 };
 
 /** @type {import('tailwindcss').Config} */
@@ -154,9 +158,9 @@ module.exports = {
       typography: {
         DEFAULT: {
           css: {
-            color: 'var(--text-primary, #EEF1F7)',
+            color: 'var(--text-primary, #161B2D)',
             a: {
-              color: 'var(--text-accent-primary, #7DA4FF)',
+              color: 'var(--text-accent-primary, #124ACE)',
             },
             pre: {
               border: 'none',

@@ -41,27 +41,12 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   const visibleAttachments = isStreaming
     ? (attachments ?? []).filter((a) => a.type !== AttachmentType.Audio)
     : (attachments ?? []);
-  const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
     '--cm-bubble-text': colors?.text,
     '--cm-starters-divider': colors?.startersDivider,
-    '--cm-bubble-font-family': noCustomClass
-      ? typography?.fontFamily
-      : undefined,
-    '--cm-bubble-font-size': noCustomClass ? typography?.fontSize : undefined,
-    '--cm-bubble-font-weight': noCustomClass
-      ? typography?.fontWeight
-      : undefined,
-    '--cm-bubble-line-height': noCustomClass
-      ? typography?.lineHeight
-      : undefined,
   });
 
-  const textClass = mergeClasses(
-    styles.text,
-    noCustomClass && styles.textFont,
-    typography?.fontClassName,
-  );
+  const textClass = mergeClasses(styles.text, typography?.fontClassName);
 
   const hasDeploymentIcon = !!(deploymentIconUrl || deploymentDisplayName);
 
