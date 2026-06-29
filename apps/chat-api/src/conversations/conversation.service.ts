@@ -377,12 +377,14 @@ export class ConversationService extends AppService {
     let moveError: unknown = undefined;
     let moveStatus: number | undefined = undefined;
     try {
-      const { error, response } = (await this.client.moveResource({
+      const result = (await this.client.moveResource({
         headers: getBearerAuthHeaders(token),
         body: { sourceUrl, destinationUrl, overwrite: false },
-      })) as { error?: unknown; response: Response };
-      moveStatus = response.status;
-      moveError = error ?? null;
+      })) as { error?: unknown; response?: Response };
+      if (result.error != null) {
+        moveError = result.error;
+        moveStatus = result.response?.status;
+      }
     } catch (error) {
       moveError = error;
     }
