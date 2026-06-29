@@ -7,7 +7,7 @@ import classnames from 'classnames';
 import { useScreenState } from '@/src/hooks/useScreenState';
 
 import { getMappedAttachmentUrl } from '@/src/utils/app/attachments';
-import { dataToBlobUrl } from '@/src/utils/app/dataUrl';
+import { dataToBlobUrl, getMimeFromDataUrl } from '@/src/utils/app/dataUrl';
 import {
   isAllowedImageUrl,
   parseAllowedImageHosts,
@@ -35,6 +35,7 @@ import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import 'katex/dist/katex.min.css';
 import isObject from 'lodash-es/isObject';
 import partition from 'lodash-es/partition';
+import { extension } from 'mime-types';
 import rehypeExternalLinks from 'rehype-external-links';
 import rehypeKatex from 'rehype-katex';
 import rehypeRaw from 'rehype-raw';
@@ -190,7 +191,18 @@ const getMDComponents = (
     a({ href, children, ...props }) {
       if (href?.startsWith('data:image')) {
         const blobUrl = dataToBlobUrl(href);
-        return <a href={blobUrl ?? href}>{children}</a>;
+        const mime = getMimeFromDataUrl(href);
+        const ext = (mime && extension(mime)) || 'png';
+        const base =
+          typeof children === 'string' && children.trim()
+            ? children.trim()
+            : 'image';
+        const downloadName = base.includes('.') ? base : `${base}.${ext}`;
+        return (
+          <a href={blobUrl ?? href} download={downloadName}>
+            {children}
+          </a>
+        );
       }
 
       return (
