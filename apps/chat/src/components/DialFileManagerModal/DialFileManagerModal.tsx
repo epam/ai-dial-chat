@@ -277,7 +277,16 @@ const DialFileManagerModal: FC<Props> = ({
       return;
     }
 
-    onAttach({ files: dedupedFiles, folderPaths: dedupedFolderPaths });
+    const dialCoreFolderPaths = dedupedFolderPaths.map((virtualPath) => {
+      const file = filesByPath.get(virtualPath);
+      const source = file?.url ?? file?.id ?? '';
+      const dialPath = source.startsWith('files/')
+        ? source
+        : `files/${file?.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
+      return dialPath.endsWith('/') ? dialPath : `${dialPath}/`;
+    });
+
+    onAttach({ files: dedupedFiles, folderPaths: dialCoreFolderPaths });
   }, [
     onAttach,
     selectedFiles,
@@ -285,6 +294,8 @@ const DialFileManagerModal: FC<Props> = ({
     maximumAttachmentsAmount,
     showNotification,
     t,
+    filesByPath,
+    bucket,
   ]);
 
   const headerDescription = useMemo(() => {

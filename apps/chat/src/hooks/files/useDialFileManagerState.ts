@@ -1,7 +1,10 @@
 import type { Attachment } from '@epam/ai-dial-chat-shared';
 import { useCallback, useState } from 'react';
 import type { AttachResult } from '../../components/DialFileManagerModal/types/attach-result';
-import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
+import {
+  dialFilesToAttachments,
+  dialFolderPathToAttachment,
+} from '../../utils/dial-file-to-attachment';
 
 export interface UseDialFileManagerStateResult {
   isOpen: boolean;
@@ -29,7 +32,11 @@ export const useDialFileManagerState = (
 
   const handleAttach = useCallback(
     (result: AttachResult) => {
-      setPendingAttachments(dialFilesToAttachments(result.files, bucket));
+      const fileAttachments = dialFilesToAttachments(result.files, bucket);
+      const folderAttachments = result.folderPaths.map(
+        dialFolderPathToAttachment,
+      );
+      setPendingAttachments([...fileAttachments, ...folderAttachments]);
       setIsOpen(false);
     },
     [bucket],

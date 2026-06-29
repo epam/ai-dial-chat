@@ -77,7 +77,14 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
       className?: string;
       gridClassName?: string;
       gridOptions?: {
-        additionalGridOptions?: { domLayout?: string };
+        additionalGridOptions?: {
+          domLayout?: string;
+          rowSelection?: {
+            isRowSelectable?: (node: {
+              data?: { nodeType?: string; path?: string } | null;
+            }) => boolean;
+          };
+        };
         actionLabels?: Partial<Record<DialFileManagerActions, string>>;
         visibleColumns?: FileManagerColumnKey[];
       };
@@ -201,6 +208,22 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         >
           Select report
         </button>
+        <button
+          type="button"
+          data-folder-selectable={String(
+            gridOptions?.additionalGridOptions?.rowSelection?.isRowSelectable?.({
+              data: {
+                nodeType: DialFileNodeType.FOLDER,
+                path: '/My files/docs/',
+              },
+            }) ?? false,
+          )}
+          onClick={() =>
+            onSelectedPathsChange?.(new Set(['/My files/docs/']))
+          }
+        >
+          Select docs folder
+        </button>
       </div>
     ),
   };
@@ -228,6 +251,14 @@ const defaultHookResult: UseDialFileManagerResult = {
           nodeType: DialFileNodeType.ITEM,
           folderId: 'test-bucket',
           contentType: 'application/pdf',
+        },
+        {
+          id: 'docs/',
+          name: 'docs',
+          path: '/My files/docs/',
+          parentPath: '/My files',
+          nodeType: DialFileNodeType.FOLDER,
+          folderId: 'test-bucket',
         },
       ],
     },
@@ -419,6 +450,46 @@ describe('DialFileManagerModal', () => {
       files: [expect.objectContaining({ name: 'report.pdf' })],
       folderPaths: [],
     });
+  });
+
+  it('attaches selected folder as DIAL Core path when canAttachFolders is true', () => {
+    const onAttach = vi.fn();
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(
+      <DialFileManagerModal
+        {...defaultProps}
+        onAttach={onAttach}
+        canAttachFolders
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Select docs folder' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Attach' }));
+
+    expect(onAttach).toHaveBeenCalledWith({
+      files: [],
+      folderPaths: ['files/test-bucket/docs/'],
+    });
+  });
+
+  it('marks folder rows as selectable when canAttachFolders is true', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} canAttachFolders />);
+
+    expect(
+      screen.getByRole('button', { name: 'Select docs folder' }).dataset
+        .folderSelectable,
+    ).toBe('true');
+  });
+
+  it('marks folder rows as not selectable when canAttachFolders is false (default)', () => {
+    mockUseDialFileManager.mockReturnValue(defaultHookResult);
+    render(<DialFileManagerModal {...defaultProps} />);
+
+    expect(
+      screen.getByRole('button', { name: 'Select docs folder' }).dataset
+        .folderSelectable,
+    ).toBe('false');
   });
 
   it('shows the selection count and clears the selection', () => {

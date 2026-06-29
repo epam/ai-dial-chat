@@ -57,3 +57,23 @@ export const dialFilesToAttachments = (
   files
     .map((file) => dialFileToAttachment(file, bucket))
     .filter((attachment): attachment is Attachment => attachment != null);
+
+/**
+ * Converts a DIAL Core folder path (e.g. `files/{bucket}/{path}/`) into an
+ * attachment. DIAL Core resolves folder contents server-side when the path is
+ * sent as an attachment URL.
+ */
+export const dialFolderPathToAttachment = (folderPath: string): Attachment => {
+  const rawSegment =
+    folderPath.replace(/\/$/, '').split('/').filter(Boolean).pop() ?? '';
+  const name = decodeURIComponent(rawSegment);
+  return {
+    id: folderPath,
+    name,
+    contentType: 'application/octet-stream',
+    type: AttachmentType.File,
+    status: RequestStatus.Idle,
+    url: folderPath,
+    file: new File([], name),
+  };
+};

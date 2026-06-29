@@ -1104,6 +1104,12 @@ export interface DeploymentFeaturesDto {
    * @memberof DeploymentFeaturesDto
    */
   temperature: boolean;
+  /**
+   * Whether the deployment supports attaching folders from the file manager
+   * @type {boolean}
+   * @memberof DeploymentFeaturesDto
+   */
+  folderAttachments?: boolean;
 }
 /**
  *

@@ -31,12 +31,8 @@ const toAdditionalProperties = (
   return undefined;
 };
 
-type RawDeploymentWithFeatures = RawDeploymentDto & {
-  features?: { system_prompt?: boolean; temperature?: boolean };
-};
-
 const mapToDeploymentItem = (
-  raw: RawDeploymentWithFeatures,
+  raw: RawDeploymentDto,
   featuredIds: Set<string>,
   hiddenTags: Set<string>,
 ): DeploymentItemDto | null => {
@@ -84,6 +80,9 @@ const mapToDeploymentItem = (
       ? {
           systemPrompt: raw.features.system_prompt ?? false,
           temperature: raw.features.temperature ?? false,
+          ...(raw.features.folder_attachments != null && {
+            folderAttachments: raw.features.folder_attachments,
+          }),
         }
       : undefined,
     maxInputAttachments:
