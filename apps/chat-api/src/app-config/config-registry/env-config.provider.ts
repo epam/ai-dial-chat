@@ -32,6 +32,24 @@ export class EnvConfigProvider implements ConfigProvider {
       return this.applyRoleGating(definition, context, true);
     }
 
+    // features.llmConversationNaming requires UTILITY_MODEL, DIAL_API_KEY, and explicit opt-in
+    if (key === 'features.llmConversationNaming') {
+      const utilityModel = this.configService.get('UTILITY_MODEL', {
+        infer: true,
+      });
+      const dialApiKey = this.configService.get('DIAL_API_KEY', {
+        infer: true,
+      });
+      if (!utilityModel || !dialApiKey) return undefined;
+      const enabled = this.configService.get(
+        'LLM_CONVERSATION_NAMING_ENABLED',
+        {
+          infer: true,
+        },
+      );
+      return enabled === true;
+    }
+
     if (!definition.envVar) {
       return undefined;
     }

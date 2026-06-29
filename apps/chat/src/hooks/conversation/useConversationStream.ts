@@ -100,17 +100,21 @@ export const useConversationStream = ({
                 const conversationPath = getConversationPath(
                   currentConversationId,
                 );
-                await saveConversation(
+                const saved = (await saveConversation(
                   conversationPath,
                   final as ConversationResponseDto,
-                );
+                )) as ConversationResponseDto;
                 // Reload from server so server-computed fields (e.g. stage
                 // attachment `data` extracted by DIAL Core from referenced docs)
                 // are available in React state for canvas preview.
                 if (!abortRef.current) {
-                  const refreshed = (await getConversation(
-                    conversationPath,
-                  )) as Conversation;
+                  const refreshed = {
+                    ...((await getConversation(
+                      conversationPath,
+                    )) as ConversationResponseDto),
+                    name: saved.name,
+                    llmNamingDone: saved.llmNamingDone,
+                  } as unknown as Conversation;
                   setConversation(refreshed);
                   conversationRef.current = refreshed;
                 }

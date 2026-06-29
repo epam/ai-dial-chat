@@ -9,6 +9,7 @@ import {
   Middleware,
   ModelsApi,
   RateApi,
+  ToolsetsApi,
   UserConfigApi,
 } from '@epam/chat-api-client';
 import {
@@ -79,3 +80,4 @@ export const conversationsApi = new ConversationsApi(config);
 export const userConfigApi = new UserConfigApi(config);
 export const authApi = new AuthApi(config);
 export const rateApi = new RateApi(config);
+export const toolsetsApi = new ToolsetsApi(config);

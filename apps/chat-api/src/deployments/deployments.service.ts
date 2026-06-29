@@ -10,6 +10,7 @@ import {
 } from '../common/utils/dial-fetch-error';
 import type { EnvironmentVariables } from '../config/environment.config';
 import { HIDDEN_FILE } from '../constants/dial.constants';
+import type { DeploymentLimitsResponseDto } from '../openapi/openapi-response.dto';
 import { UserConfigService } from '../user-config/user-config.service';
 import type { DeploymentConfigurationDto } from './dto/deployment-configuration.dto';
 import type {
@@ -247,6 +248,32 @@ export class DeploymentsService extends AppService {
       return handleDialFetchError(
         err,
         `get deployment configuration "${name}"`,
+        this.logger,
+        0,
+      );
+    }
+  }
+
+  async getDeploymentLimits(
+    deploymentName: string,
+    accessToken: string,
+  ): Promise<DeploymentLimitsResponseDto> {
+    try {
+      const result = await this.client.getDeploymentLimits(deploymentName, {
+        headers: getBearerAuthHeaders(accessToken),
+      });
+      if (result.error) {
+        return mapDialHttpStatus(
+          result.response.status,
+          `get deployment limits "${deploymentName}"`,
+          this.logger,
+        );
+      }
+      return result.data as unknown as DeploymentLimitsResponseDto;
+    } catch (err) {
+      return handleDialFetchError(
+        err,
+        `get deployment limits "${deploymentName}"`,
         this.logger,
         0,
       );
