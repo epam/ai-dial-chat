@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
 import * as BreakpointModule from '../../../hooks/breakpoint/useBreakpoint';
+import { AuthI18nKeys } from '../../../constants/translation-keys';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserMenu } from '../UserMenu';
 
@@ -92,7 +93,7 @@ describe('UserMenu', () => {
       </MemoryRouter>,
     );
 
-    const avatar = screen.getByRole('img', { name: 'User avatar' });
+    const avatar = screen.getByRole('img', { name: AuthI18nKeys.UserAvatar });
     expect(avatar).not.toBeNull();
     expect(avatar.getAttribute('src')).toBe('https://example.com/avatar.png');
   });
@@ -112,7 +113,7 @@ describe('UserMenu', () => {
     );
 
     expect(screen.getByText('JD')).not.toBeNull();
-    expect(screen.queryByRole('img', { name: 'User avatar' })).toBeNull();
+    expect(screen.queryByRole('img', { name: AuthI18nKeys.UserAvatar })).toBeNull();
   });
 
   it('switches to fallback when image fails to load', () => {
@@ -135,7 +136,7 @@ describe('UserMenu', () => {
       </MemoryRouter>,
     );
 
-    const avatar = screen.getByRole('img', { name: 'User avatar' });
+    const avatar = screen.getByRole('img', { name: AuthI18nKeys.UserAvatar });
     fireEvent.error(avatar);
 
     expect(screen.getByText('JD')).not.toBeNull();

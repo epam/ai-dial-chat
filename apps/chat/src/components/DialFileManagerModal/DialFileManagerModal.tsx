@@ -386,7 +386,7 @@ const DialFileManagerModal: FC<Props> = ({
       (file) => file.status !== FileUploadStatus.Uploading,
     ).length;
 
-    return t('dialFileManager.uploadProgressSummary', {
+    return t(DialFileManagerI18nKeys.UploadProgressSummary, {
       done,
       total: uploadBatchState.files.length,
     });
