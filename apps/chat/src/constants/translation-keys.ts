@@ -352,3 +352,26 @@ export enum AttachmentCanvasI18nKeys {
   DownloadLabel = 'attachmentCanvas.downloadLabel',
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
 }
+
+export enum AppsEditorI18nKeys {
+  StepGeneral = 'appsEditor.stepGeneral',
+  StepSettings = 'appsEditor.stepSettings',
+  BackAriaLabel = 'appsEditor.backAriaLabel',
+  GeneralFormNameLabel = 'appsEditor.generalForm.nameLabel',
+  GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
+  GeneralFormDescriptionLabel = 'appsEditor.generalForm.descriptionLabel',
+  GeneralFormDescriptionPlaceholder = 'appsEditor.generalForm.descriptionPlaceholder',
+  GeneralFormIconUrlLabel = 'appsEditor.generalForm.iconUrlLabel',
+  GeneralFormIconUrlPlaceholder = 'appsEditor.generalForm.iconUrlPlaceholder',
+  GeneralFormNextButton = 'appsEditor.generalForm.nextButton',
+  GeneralFormCancelButton = 'appsEditor.generalForm.cancelButton',
+  GeneralFormNameRequired = 'appsEditor.generalForm.nameRequired',
+  GeneralFormVersionLabel = 'appsEditor.generalForm.versionLabel',
+  GeneralFormVersionPlaceholder = 'appsEditor.generalForm.versionPlaceholder',
+  GeneralFormTopicsLabel = 'appsEditor.generalForm.topicsLabel',
+  GeneralFormTopicsPlaceholder = 'appsEditor.generalForm.topicsPlaceholder',
+  GeneralFormPreviewTitle = 'appsEditor.generalForm.previewTitle',
+  SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
+  SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
+  ErrorCreateFailed = 'appsEditor.error.createFailed',
+}

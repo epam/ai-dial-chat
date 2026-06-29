@@ -1,10 +1,14 @@
-import { Controller, Get, Header, Req } from '@nestjs/common';
-import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Header, Post, Req } from '@nestjs/common';
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
 import type { SessionUser } from '../auth/session/session.types';
 import { ApplicationsService } from './applications.service';
 import { ApplicationsResponseDto } from './dto/application.dto';
+import {
+  CreateApplicationBodyDto,
+  CreatedApplicationDto,
+} from './dto/create-application.dto';
 
 @ApiTags('applications')
 @Controller({ path: 'applications', version: '1' })
@@ -47,5 +51,42 @@ export class ApplicationsController {
   listApplications(@Req() req: Request) {
     const { sub, at } = req.user as SessionUser;
     return this.applicationsService.listApplications(sub, at);
+  }
+
+  @Post()
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'createApplication',
+    summary: 'Create a new application',
+    description:
+      'Creates a new application for the authenticated session user by proxying DIAL Core. ' +
+      'Invalidates the applications list cache on success.',
+  })
+  @ApiBody({ type: CreateApplicationBodyDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Application created successfully',
+    type: CreatedApplicationDto,
+  })
+  @ApiResponse({
+    status: 400,
+    description: 'Validation error — missing or invalid fields',
+  })
+  @ApiResponse({
+    status: 401,
+    description: 'Not authenticated — valid session cookie required',
+  })
+  @ApiResponse({ status: 409, description: 'Application name already taken' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core is unavailable or timed out',
+  })
+  createApplication(
+    @Req() req: Request,
+    @Body() body: CreateApplicationBodyDto,
+  ): Promise<CreatedApplicationDto> {
+    const { sub, at } = req.user as SessionUser;
+    return this.applicationsService.createApplication(sub, at, body);
   }
 }

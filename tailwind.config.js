@@ -81,6 +81,7 @@ const textColors = {
   'accent-primary': 'var(--text-accent-primary, #7DA4FF)',
   'accent-secondary': 'var(--text-accent-secondary, #37BABC)',
   'accent-tertiary': 'var(--text-accent-tertiary, #A972FF)',
+  white: 'var(--text-white, #FFFFFF)',
 };
 
 const placeholderColor = {
