@@ -1123,6 +1123,63 @@ describe('ConversationService', () => {
       };
       expect(finalSave.messages.at(-1)?.content).toBe('Hello');
     });
+
+    it('finalizes the generation on [DONE] even when the upstream keeps the connection open', async () => {
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: TEST_CONVERSATION,
+      } as never);
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        data: {},
+      } as never);
+
+      const encoder = new TextEncoder();
+      // Stream that emits content + [DONE] but is intentionally never closed,
+      // mimicking a provider that holds the SSE socket open after [DONE].
+      const neverClosingStream = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(
+            encoder.encode(
+              'data: {"id":"resp-1","choices":[{"delta":{"content":"Hi"}}]}\n\n',
+            ),
+          );
+          controller.enqueue(encoder.encode('data: [DONE]\n\n'));
+          // no controller.close() — would hang the old "wait for socket close" logic
+        },
+      });
+      vi.spyOn(
+        service['client'],
+        'sendChatCompletionRequest',
+      ).mockResolvedValue({
+        response: new Response(neverClosingStream, {
+          status: 200,
+          headers: { 'Content-Type': 'text/event-stream' },
+        }),
+      } as never);
+
+      const res = makeMockRes();
+      await service.streamCompletion(
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-token',
+        'test-bucket',
+        'test-gen-id',
+        CompletionMode.Append,
+        'Hello',
+        undefined,
+        'gpt-4o',
+        undefined,
+        'test-session-id',
+        res as never,
+      );
+
+      // The generation is released (complete), not left active — so a
+      // subsequent request (e.g. regenerate) would not get a 409.
+      expect(mockGenerationService.complete).toHaveBeenCalledWith(
+        'test-session-id',
+        'gpt-4o__Test__11111111-1111-1111-1111-111111111111',
+        'test-gen-id',
+      );
+      expect(mockGenerationService.error).not.toHaveBeenCalled();
+    });
   });
 
   describe('listConversations', () => {

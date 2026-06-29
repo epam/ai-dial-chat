@@ -116,6 +116,20 @@ export const useConversationStream = ({
       const conversationPath = getConversationPath(currentConversationId);
       activeGenerationIdRef.current = genId;
 
+      // The backend rebuilds history by truncating the saved conversation at a
+      // message index. `messageIndex` here is the local assistant-placeholder
+      // index used by onChunk; translate it to the backend's truncation index:
+      // - Regenerate: truncate at the assistant being regenerated (same index).
+      // - Edit: the placeholder follows the edited user message, so truncate at
+      //   the user message (one before the placeholder).
+      // - Append / ContinueLastUser: the backend does not use an index.
+      let serverMessageIndex: number | undefined;
+      if (mode === CompletionMode.Regenerate) {
+        serverMessageIndex = messageIndex;
+      } else if (mode === CompletionMode.Edit) {
+        serverMessageIndex = messageIndex - 1;
+      }
+
       const controller = startGeneration(conversationPath, genId);
       addStreamingPath(conversationPath);
 
@@ -190,7 +204,7 @@ export const useConversationStream = ({
         customContent,
         genId,
         mode,
-        undefined,
+        serverMessageIndex,
       );
     },
     // setConversation and conversationRef are stable refs — intentionally omitted

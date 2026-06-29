@@ -892,20 +892,30 @@ export class ConversationService extends AppService {
       generationId,
     );
 
-    const fetchedConversation = await this.getConversation(
-      conversationPath,
-      token,
-      bucket,
-    );
-
-    const { conversation: startConversation, assistantMessageIndex } =
-      buildConversationHistory(
+    let startState: ReturnType<typeof buildConversationHistory>;
+    try {
+      const fetchedConversation = await this.getConversation(
+        conversationPath,
+        token,
+        bucket,
+      );
+      startState = buildConversationHistory(
         mode,
         fetchedConversation,
         message,
         messageIndex,
         customContent,
       );
+    } catch (err) {
+      // Release the just-registered entry so a failure before streaming starts
+      // doesn't leave the conversation "locked" — otherwise the next request
+      // (e.g. regenerate) would be rejected with a 409 until stale eviction.
+      this.generationService.error(sessionId, conversationPath, generationId);
+      throw err;
+    }
+
+    const { conversation: startConversation, assistantMessageIndex } =
+      startState;
 
     try {
       await this.saveConversation(
@@ -1061,6 +1071,7 @@ export class ConversationService extends AppService {
       upstreamReader = dialResult.response.body.getReader();
       const decoder = new TextDecoder();
       let sseBuffer = '';
+      let receivedDone = false;
 
       while (true) {
         const { done, value } = await upstreamReader.read();
@@ -1077,7 +1088,10 @@ export class ConversationService extends AppService {
           if (!trimmed || trimmed.startsWith(':')) continue;
           if (trimmed.startsWith('data:')) {
             const payload = trimmed.slice(5).trim();
-            if (payload === '[DONE]') continue;
+            if (payload === '[DONE]') {
+              receivedDone = true;
+              continue;
+            }
             try {
               const parsed: unknown = JSON.parse(payload);
               assembledMessage = applyChunkToMessage(assembledMessage, parsed);
@@ -1086,6 +1100,13 @@ export class ConversationService extends AppService {
             }
           }
         }
+
+        // `[DONE]` is the SSE completion signal. Stop here rather than waiting
+        // for the upstream socket to close — some providers keep the connection
+        // open after `[DONE]`, which would otherwise leave this generation
+        // registered as active and reject the next request (e.g. regenerate)
+        // with a 409 conflict.
+        if (receivedDone) break;
       }
 
       await finalize('done', assembledMessage);
@@ -1116,9 +1137,11 @@ export class ConversationService extends AppService {
     } finally {
       if (upstreamReader) {
         try {
-          upstreamReader.releaseLock();
+          // cancel() (not releaseLock) so the upstream connection is closed
+          // when we stop early on `[DONE]`, instead of being left dangling.
+          await upstreamReader.cancel();
         } catch {
-          /* already released */
+          /* already closed */
         }
       }
       if (!res.writableEnded) res.end();

@@ -191,7 +191,7 @@ describe('useConversationStream', () => {
     expect(setConversation).not.toHaveBeenCalled();
   });
 
-  it('passes generationId and mode to streamCompletion', async () => {
+  it('passes generationId and mode to streamCompletion, forwarding the regenerate index', async () => {
     const { result } = renderHook(() => useConversationStream(makeParams()), {
       wrapper,
     });
@@ -200,7 +200,7 @@ describe('useConversationStream', () => {
       result.current.startStream(
         'bucket/gpt-4o__Hello__uuid',
         'hello',
-        0,
+        3,
         'gpt-4o',
         undefined,
         'my-gen-id',
@@ -216,7 +216,38 @@ describe('useConversationStream', () => {
       undefined,
       'my-gen-id',
       'regenerate',
+      // Regenerate truncates at the assistant index (same as the local index).
+      3,
+    );
+  });
+
+  it('translates the edit placeholder index to the user message index for the backend', async () => {
+    const { result } = renderHook(() => useConversationStream(makeParams()), {
+      wrapper,
+    });
+
+    await act(async () => {
+      result.current.startStream(
+        'bucket/gpt-4o__Hello__uuid',
+        'edited',
+        3,
+        'gpt-4o',
+        undefined,
+        'edit-gen-id',
+        CompletionMode.Edit as never,
+      );
+    });
+
+    expect(mockStreamCompletion).toHaveBeenCalledWith(
+      'gpt-4o__Hello__uuid',
+      'edited',
+      'gpt-4o',
+      expect.any(Object),
       undefined,
+      'edit-gen-id',
+      'edit',
+      // Edit truncates at the user message — one before the placeholder index.
+      2,
     );
   });
 
