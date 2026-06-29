@@ -593,6 +593,7 @@ const DialFileManagerModal: FC<Props> = ({
         size={PopupSize.Lg}
         className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-2 [&>[aria-label='popup-description']]:flex [&>[aria-label='popup-description']]:min-h-0 [&>[aria-label='popup-description']]:flex-col"
         onClose={onClose}
+        hideClose={true}
         footer={
           <div className="flex justify-end px-6 py-4">
             <DialPrimaryButton
