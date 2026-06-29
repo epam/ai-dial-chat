@@ -25,6 +25,7 @@ import {
   hasPdfExtension,
   isDialApiFileUrl,
 } from '@/src/utils/app/attachments';
+import { getFileName } from '@/src/utils/app/file';
 
 import { Translation } from '@/src/types/translation';
 
@@ -62,6 +63,7 @@ import ChevronDown from '@/public/images/icons/chevron-down.svg';
 import { Attachment, MIMEType, MessageAnnotation } from '@epam/ai-dial-shared';
 import { DialGhostIconButton, ElementSize } from '@epam/ai-dial-ui-kit';
 import { sanitize } from 'isomorphic-dompurify';
+import { extension } from 'mime-types';
 
 interface AttachmentDataRendererProps {
   attachment: Attachment;
@@ -70,6 +72,16 @@ interface AttachmentDataRendererProps {
   isInner?: boolean;
   forceDefaultView?: boolean;
 }
+
+const getDownloadName = (attachment: Attachment): string => {
+  const urlName = getFileName(attachment.url);
+  if (urlName) return urlName;
+  const title = attachment.title;
+  if (title && title.includes('.')) return title;
+  const ext = extension(attachment.type);
+  const base = title || 'file';
+  return ext ? `${base}.${ext}` : base;
+};
 
 const getSourceDataUrl = (attachment: Attachment): string | undefined => {
   if (attachment.url) {
@@ -486,7 +498,7 @@ export const MessageAttachment = ({
         >
           {isDownloadable && !isFolder && (
             <a
-              download={attachment.title}
+              download={getDownloadName(attachment)}
               href={mappedAttachmentUrl}
               target="_blank"
               className="link-icon-button-small"
@@ -569,7 +581,7 @@ export const MessageAttachment = ({
               <div className="flex gap-2">
                 {isDownloadable && (
                   <a
-                    download={attachment.title}
+                    download={getDownloadName(attachment)}
                     href={mappedAttachmentUrl}
                     onClick={stopBubbling}
                     className="link-icon-button-small"
@@ -609,7 +621,7 @@ export const MessageAttachment = ({
               !isFolder &&
               !mappedAttachmentReferenceUrl && (
                 <a
-                  download={attachment.title}
+                  download={getDownloadName(attachment)}
                   href={mappedAttachmentUrl}
                   onClick={stopBubbling}
                   target="_blank"
