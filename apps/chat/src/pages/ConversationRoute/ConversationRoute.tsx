@@ -28,10 +28,10 @@ import {
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { MOCK_CATALOG_ITEMS } from '../../components/CatalogView/mock-catalog-items';
-import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
+import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
@@ -56,6 +56,7 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { getApiErrorMessage } from '../../server-api/api-error';
 import {
   transcribeAudio,
@@ -69,11 +70,8 @@ import { uploadFile } from '../../server-api/files.api';
 import { attachmentsToDtos } from '../../utils/attachment-to-dto';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
+import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import {
-  getLastConversationSettings,
-  setLastConversationSettings,
-} from '../../utils/local-storage';
 import {
   getStarterPopulateText,
   getStartersFromSchema,
@@ -108,15 +106,10 @@ const ConversationRoute: FC = () => {
   const navigate = useNavigate();
   const [isSending, setIsSending] = useState(false);
   const [inputMessage, setInputMessage] = useState<string | undefined>();
-  const [chatSettingsValues, setChatSettingsValues] = useState(() => {
-    const saved = getLastConversationSettings();
-    return {
-      responseFormat:
-        (saved?.responseFormat as ResponseFormat | undefined) ??
-        ResponseFormat.Markdown,
-      systemPrompt: '',
-      temperature: saved?.temperature ?? 0.5,
-    };
+  const [chatSettingsValues, setChatSettingsValues] = useState({
+    responseFormat: ResponseFormat.Markdown,
+    systemPrompt: '',
+    temperature: 0.5,
   });
   const { showNotification } = useNotification();
   const {
@@ -298,17 +291,19 @@ const ConversationRoute: FC = () => {
           selectedItemId,
           attachmentDtos,
         );
-        await saveConversation(getConversationPath(conversation.id), {
+        const savedConversation = {
           ...conversation,
           prompt: chatSettingsValues.systemPrompt,
           temperature: chatSettingsValues.temperature,
           responseFormat: chatSettingsValues.responseFormat,
-        } as ConversationResponseDto);
-        setLastConversationSettings({
-          temperature: chatSettingsValues.temperature,
-          responseFormat: chatSettingsValues.responseFormat,
+        } as ConversationResponseDto;
+        await saveConversation(
+          getConversationPath(conversation.id),
+          savedConversation,
+        );
+        navigate(getConversationRoute(conversation.id), {
+          state: { conversation: savedConversation },
         });
-        navigate(getConversationRoute(conversation.id));
       } catch (err) {
         const errorMessage = await getApiErrorMessage(err);
         showNotification({
@@ -431,6 +426,8 @@ const ConversationRoute: FC = () => {
 
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
+  const { displayName } = useUserProfile();
+  const firstName = displayName.split(' ')[0];
   const { openAttachmentCanvas } = useOpenAttachmentCanvas();
 
   const handleAttachmentClick = useCallback(
@@ -485,10 +482,7 @@ const ConversationRoute: FC = () => {
   );
 
   return (
-    <div
-      ref={inputRef}
-      className="flex flex-1 flex-col overflow-y-auto"
-    >
+    <div ref={inputRef} className="flex flex-1 flex-col overflow-y-auto">
       <FileDndOverlay
         isVisible={isDragging}
         isAttachmentsAllowed={isAttachmentsAllowed}
@@ -513,7 +507,28 @@ const ConversationRoute: FC = () => {
             onSend={handleSend}
             onUploadAttachment={handleUploadAttachment}
             message={inputMessage}
-            welcomeText={t(ChatI18nKeys.WelcomeText)}
+            welcomeText={getTimeOfDayGreeting(
+              new Date().getHours(),
+              {
+                morningWithName: t(ChatI18nKeys.GreetingMorning, {
+                  name: firstName,
+                }),
+                morningNoName: t(ChatI18nKeys.GreetingMorningNoName),
+                afternoonWithName: t(ChatI18nKeys.GreetingAfternoon, {
+                  name: firstName,
+                }),
+                afternoonNoName: t(ChatI18nKeys.GreetingAfternoonNoName),
+                eveningWithName: t(ChatI18nKeys.GreetingEvening, {
+                  name: firstName,
+                }),
+                eveningNoName: t(ChatI18nKeys.GreetingEveningNoName),
+                nightWithName: t(ChatI18nKeys.GreetingNight, {
+                  name: firstName,
+                }),
+                nightNoName: t(ChatI18nKeys.GreetingNightNoName),
+              },
+              firstName || undefined,
+            )}
             placeholder={t(ChatI18nKeys.Placeholder)}
             styles={{
               ...CONVERSATION_INPUT_STYLES,

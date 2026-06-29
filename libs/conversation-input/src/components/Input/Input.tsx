@@ -2,7 +2,11 @@ import {
   AttachmentTray,
   useClipboardPaste,
 } from '@epam/ai-dial-attachment-input';
-import { buildCssVars, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  buildCssVars,
+  mergeClasses,
+  useIsMobile,
+} from '@epam/ai-dial-chat-shared';
 import {
   BASE_ICON_SIZE,
   DIAL_ICON_SIZE,
@@ -20,7 +24,6 @@ import {
 } from 'react';
 import { useAttachments } from '../../hooks/useAttachments';
 import { useInputHistoryNavigation } from '../../hooks/useInputHistoryNavigation';
-import { useIsMobile } from '../../hooks/useIsMobile';
 import { useMessageState } from '../../hooks/useMessageState';
 import { useVoiceRecorder } from '../../hooks/useVoiceRecorder';
 import { SendOnEnter } from '../../models/Input';
