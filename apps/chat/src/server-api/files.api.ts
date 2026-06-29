@@ -9,6 +9,8 @@ import type {
   ListFilesResponseDto,
   ListPublicFilesRequest,
   ListSharedFilesRequest,
+  RenameFilesResponseDto,
+  RenameItemDto,
 } from '@epam/chat-api-client';
 import { filesApi } from './api-client';
 import {
@@ -88,6 +90,11 @@ export const deleteFiles = (
   items: DeleteItemDto[],
 ): Promise<DeleteFilesResponseDto> =>
   filesApi.deleteFiles({ deleteFilesDto: { items } });
+
+export const renameFiles = (
+  items: RenameItemDto[],
+): Promise<RenameFilesResponseDto> =>
+  filesApi.renameFiles({ renameFilesDto: { items } });
 
 // downloadArchiveRaw() is used instead of downloadArchive() for the same reason
 // as downloadFileRaw() above — binary response semantics require the raw fetch Response.

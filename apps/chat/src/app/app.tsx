@@ -47,8 +47,11 @@ import { ThemeId } from '../types/theme-id';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 
+// Start loading the module immediately so the Suspense fallback is skipped on first navigation.
+const conversationPageModule = import('../pages/Conversation/Conversation');
+
 const ConversationPage = lazy(async () => {
-  const module = await import('../pages/Conversation/Conversation');
+  const module = await conversationPageModule;
   return { default: module.ConversationPage };
 });
 
@@ -57,6 +60,9 @@ const App: FC = () => {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
+  const canvasDefaultWidth = isMobile
+    ? undefined
+    : Math.min(1500, Math.round(window.innerWidth * (2 / 3)));
   const { currentTheme } = useTheme();
   const codeBlockTheme =
     currentTheme === ThemeId.Light ? CodeBlockTheme.Light : CodeBlockTheme.Dark;
@@ -87,10 +93,14 @@ const App: FC = () => {
     if (pathname === ROUTES.Catalog) closeHistoryPanel();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { closeCanvas } = useAttachmentCanvas();
+  const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   useEffect(() => {
     closeCanvas();
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (isCanvasOpen) closeHistoryPanel();
+  }, [isCanvasOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const matchRoot = useMatch(ROUTES.Root);
   const matchConversation = useMatch(`${ROUTES.Conversations}/*`);
@@ -113,6 +123,11 @@ const App: FC = () => {
   const [panelRequestedFilter, setPanelRequestedFilter] = useState<
     FilterTab | undefined
   >(undefined);
+  const activeFilterRef = useRef<FilterTab>(FilterTab.All);
+
+  const handlePanelActiveFilterChange = useCallback((tab: FilterTab) => {
+    activeFilterRef.current = tab;
+  }, []);
 
   useEffect(() => {
     if (!switchToMyChatsOnNavRef.current) return;
@@ -121,7 +136,10 @@ const App: FC = () => {
   }, [activeConversationId]);
 
   const handleDuplicateReadonly = useCallback(() => {
-    switchToMyChatsOnNavRef.current = true;
+    const filter = activeFilterRef.current;
+    if (filter === FilterTab.Organization || filter === FilterTab.Shared) {
+      switchToMyChatsOnNavRef.current = true;
+    }
   }, []);
 
   const handleSelectConversation = useCallback(
@@ -148,6 +166,7 @@ const App: FC = () => {
         onNewChat={() => navigate(ROUTES.Root)}
         requestedFilter={panelRequestedFilter}
         onRequestedFilterChange={() => setPanelRequestedFilter(undefined)}
+        onActiveFilterChange={handlePanelActiveFilterChange}
         onDuplicateReadonly={handleDuplicateReadonly}
       />
 
@@ -200,6 +219,7 @@ const App: FC = () => {
           copyJsonLabel={t(ButtonsI18nKeys.CopyAsJson)}
           copiedJsonLabel={t(ButtonsI18nKeys.Copied)}
           isMobile={isMobile}
+          defaultWidth={canvasDefaultWidth}
           codeBlockTheme={codeBlockTheme}
         />
       )}

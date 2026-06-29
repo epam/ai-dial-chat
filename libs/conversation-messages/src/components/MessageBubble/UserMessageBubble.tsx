@@ -74,7 +74,11 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   const positionRadius =
     position === BubblePosition.Top ? 'rounded-ee-[24px]' : 'rounded-se-[24px]';
 
-  const textClass = mergeClasses(styles.text, typography?.fontClassName);
+  const textClass = mergeClasses(
+    styles.text,
+    noCustomClass && styles.textFont,
+    typography?.fontClassName,
+  );
   const expandAriaLabel = showMoreAriaLabel ?? showMoreLabel;
   const collapseAriaLabel = showLessAriaLabel ?? showLessLabel;
   const toggleLabel = isCollapsed ? showMoreLabel : showLessLabel;

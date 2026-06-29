@@ -15,6 +15,14 @@ export const Toolbar: FC<ToolbarProps> = ({
   searchPlaceholder = 'Search models, tools, agents…',
   styles: browseStyles,
   clearAllLabel = 'Clear all',
+  filters,
+  onFiltersChange,
+  filterValues,
+  isMyAppsActive,
+  onMyAppsChange,
+  filterFromLabel,
+  filterMyAppsLabel,
+  filterTopicsLabel,
   ...innerProps
 }) => {
   const cssVars = {
@@ -45,9 +53,17 @@ export const Toolbar: FC<ToolbarProps> = ({
 
       {/* Filter row */}
       <FilterRow
+        filters={filters}
+        onFiltersChange={onFiltersChange}
+        filterValues={filterValues}
+        isMyAppsActive={isMyAppsActive}
+        onMyAppsChange={onMyAppsChange}
         isAnyFilterActive={isAnyFilterActive}
         onClearFilters={onClearFilters}
         clearAllLabel={clearAllLabel}
+        filterFromLabel={filterFromLabel}
+        filterMyAppsLabel={filterMyAppsLabel}
+        filterTopicsLabel={filterTopicsLabel}
       />
     </section>
   );

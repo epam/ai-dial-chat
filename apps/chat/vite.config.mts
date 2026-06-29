@@ -72,6 +72,14 @@ export default defineConfig(() => ({
         __dirname,
         '../../libs/attachment-input/src/index.ts',
       ),
+      '@epam/ai-dial-react-pdf-highlighter/styles.css': path.resolve(
+        __dirname,
+        '../../node_modules/@epam/ai-dial-react-pdf-highlighter/dist/index.css',
+      ),
+      '@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css': path.resolve(
+        __dirname,
+        '../../node_modules/@epam/pdf-highlighter-kit/dist/pdf-highlight-viewer.css',
+      ),
     },
   },
   build: {
@@ -104,6 +112,14 @@ export default defineConfig(() => ({
     coverage: {
       reportsDirectory: './test-output/vitest/coverage',
       provider: 'v8' as const,
+    },
+    server: {
+      deps: {
+        inline: [
+          '@epam/pdf-highlighter-kit',
+          '@epam/ai-dial-react-pdf-highlighter',
+        ],
+      },
     },
   },
 }));

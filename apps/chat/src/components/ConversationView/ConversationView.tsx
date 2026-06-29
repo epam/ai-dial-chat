@@ -52,6 +52,7 @@ import {
 } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { useNotification } from '../../context/NotificationContext';
 import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentValidation';
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
@@ -148,6 +149,7 @@ const ConversationView: FC<Props> = ({
   onBrowseCatalog,
 }) => {
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const isMobile = useIsMobile();
   const { preference: sendOnEnter } = useKeyboardShortcutPreference();
   const { user } = useUser();
@@ -325,19 +327,45 @@ const ConversationView: FC<Props> = ({
 
   // Prevents the scroll handler from misreading programmatic scrolls as user input.
   const isProgrammaticRef = useRef(false);
+  // Fallback timer that clears isProgrammaticRef when scrollend is unsupported.
+  const smoothScrollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
 
   const scrollToBottom = useCallback((instant = false) => {
     const container = containerRef.current;
     if (!container) return;
+
+    if (smoothScrollTimerRef.current != null) {
+      clearTimeout(smoothScrollTimerRef.current);
+      smoothScrollTimerRef.current = null;
+    }
+
     isProgrammaticRef.current = true;
     container.scrollTo({
       top: container.scrollHeight,
       behavior: instant ? 'instant' : 'smooth',
     });
-    // Reset flag after the scroll event has fired
-    requestAnimationFrame(() => {
-      isProgrammaticRef.current = false;
-    });
+
+    if (instant) {
+      // A single frame is enough — instant scroll fires one synchronous event.
+      requestAnimationFrame(() => {
+        isProgrammaticRef.current = false;
+      });
+    } else {
+      // Smooth scroll fires scroll events for its entire ~300 ms animation.
+      // Keep the flag set until the browser signals the scroll is complete;
+      // fall back to a timeout for Safari < 17.4 which lacks scrollend.
+      const reset = () => {
+        if (smoothScrollTimerRef.current != null) {
+          clearTimeout(smoothScrollTimerRef.current);
+          smoothScrollTimerRef.current = null;
+        }
+        isProgrammaticRef.current = false;
+      };
+      container.addEventListener('scrollend', reset, { once: true });
+      smoothScrollTimerRef.current = setTimeout(reset, 400);
+    }
   }, []);
 
   // When streaming ends, release user override so the next send auto-scrolls.
@@ -409,7 +437,7 @@ const ConversationView: FC<Props> = ({
       responseFormat: conversation.responseFormat ?? ResponseFormat.Markdown,
       systemPrompt: conversation.prompt ?? '',
       temperature: conversation.temperature ?? 0.5,
-      onSave: (values: ChatSettingsValues) =>
+      onSave: (values: ChatSettingsValues) => {
         onConversationChange({
           ...conversation,
           ...(values.responseFormat != null && {
@@ -421,7 +449,12 @@ const ConversationView: FC<Props> = ({
           ...(values.temperature != null && {
             temperature: values.temperature,
           }),
-        }),
+        });
+        showNotification({
+          variant: NotificationVariant.Success,
+          message: t(ChatSettingsI18nKeys.SavedNotification),
+        });
+      },
       menuItemLabel: t(ChatI18nKeys.ChatSettings),
       title: t(ChatSettingsI18nKeys.Title),
       responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
@@ -443,7 +476,13 @@ const ConversationView: FC<Props> = ({
       temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
       saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
     }),
-    [selectedDeployment?.features, conversation, onConversationChange, t],
+    [
+      selectedDeployment?.features,
+      conversation,
+      t,
+      onConversationChange,
+      showNotification,
+    ],
   );
 
   const handleAttachDialFiles = useCallback(
@@ -505,11 +544,13 @@ const ConversationView: FC<Props> = ({
                   isAssistantTyping={isAssistantTyping}
                   editingMessageIndexes={editingMessageIndexes}
                   onSelectStarter={onSelectStarter}
-                  onStartEdit={onStartEdit}
-                  onDeleteMessage={onDeleteMessage}
-                  onRegenerateMessage={onRegenerateMessage}
-                  onRateMessage={onRateMessage}
-                  onDislikeMessage={onDislikeMessage}
+                  onStartEdit={isReadOnly ? undefined : onStartEdit}
+                  onDeleteMessage={isReadOnly ? undefined : onDeleteMessage}
+                  onRegenerateMessage={
+                    isReadOnly ? undefined : onRegenerateMessage
+                  }
+                  onRateMessage={isReadOnly ? undefined : onRateMessage}
+                  onDislikeMessage={isReadOnly ? undefined : onDislikeMessage}
                   onCancelEdit={onCancelEdit}
                   onEditMessage={onEditMessage}
                   onUploadAttachment={onUploadAttachment}
@@ -597,6 +638,11 @@ const ConversationView: FC<Props> = ({
                 onSend={onSend}
                 onUploadAttachment={onUploadAttachment}
                 onStop={onStop}
+                styles={{
+                  typography: {
+                    input: { fontClassName: 'dial-body-paragraph-text' },
+                  },
+                }}
                 isStreaming={isAssistantTyping}
                 onAttachmentsChange={onAttachmentsChange}
                 placeholder={placeholder}
@@ -606,6 +652,7 @@ const ConversationView: FC<Props> = ({
                 isInputDisabled={isInputDisabled}
                 modelSelectorLabels={modelSelectorLabels}
                 sendLabel={t(ChatI18nKeys.SendMessage)}
+                sendTitle={t(ChatI18nKeys.SendMessage)}
                 stopLabel={t(ChatI18nKeys.StopStreaming)}
                 isTranscriptionSupported={isTranscriptionSupported}
                 messageHistory={messageHistory}

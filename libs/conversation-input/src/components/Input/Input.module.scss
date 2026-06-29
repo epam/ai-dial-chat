@@ -21,10 +21,6 @@
 
 .textarea {
   color: var(--ci-text, var(--text-primary, #eef1f7));
-  font-family: var(--ci-font-family);
-  font-size: var(--ci-font-size);
-  font-weight: var(--ci-font-weight);
-  line-height: var(--ci-line-height);
 
   &::placeholder {
     color: var(--ci-placeholder, var(--text-secondary, #9fa6bd));
@@ -44,6 +40,13 @@
       );
     }
   }
+}
+
+.textareaFont {
+  font-family: var(--ci-font-family);
+  font-size: var(--ci-font-size);
+  font-weight: var(--ci-font-weight);
+  line-height: var(--ci-line-height);
 }
 
 .stopIcon {

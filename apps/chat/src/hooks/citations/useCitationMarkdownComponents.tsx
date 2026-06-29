@@ -1,7 +1,9 @@
+import { useAttachmentCanvas } from '@epam/ai-dial-attachment-canvas';
 import type { Annotation, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { useCallback, useMemo } from 'react';
 import type { Components } from 'react-markdown';
 import CitationDropdown from '../../components/Citations/CitationDropdown/CitationDropdown';
+import { annotationToPdfCanvasContent } from '../../utils/attachment-canvas';
 import { annotationToDisplayAttachment } from '../../utils/attachment-dto-to-display';
 import {
   injectCitationSentinels,
@@ -27,6 +29,8 @@ export const useCitationMarkdownComponents = (
   citationCard: CitationCardHook,
   onAttachmentPreview: (attachment: DisplayAttachment) => void,
 ): { processedContent: string; markdownComponents: Components } => {
+  const { openCanvas } = useAttachmentCanvas();
+
   const onOpenInBrowser = useCallback((annotation: Annotation) => {
     const url = annotation.body?.source?.attachment?.url;
     if (url) window.open(url, '_blank', 'noopener,noreferrer');
@@ -34,10 +38,17 @@ export const useCitationMarkdownComponents = (
 
   const onPreview = useCallback(
     (annotation: Annotation) => {
+      const pdfContent = annotationToPdfCanvasContent(annotation, groups);
+      if (pdfContent != null) {
+        const fileName =
+          annotation.body?.source?.attachment?.url?.split('/').pop() ?? '';
+        openCanvas(pdfContent, fileName);
+        return;
+      }
       const display = annotationToDisplayAttachment(annotation);
       if (display) onAttachmentPreview(display);
     },
-    [onAttachmentPreview],
+    [groups, openCanvas, onAttachmentPreview],
   );
 
   const processedContent = useMemo(
@@ -70,12 +81,15 @@ export const useCitationMarkdownComponents = (
 
     return {
       p: ({ children, ...rest }) => (
-        <p {...rest} className="mb-2 break-words last:mb-0">
+        <p
+          {...rest}
+          className="dial-body-paragraph-text mb-3 break-words [overflow-wrap:anywhere] [text-wrap:pretty] last:mb-0"
+        >
           {replaceSentinelsInChildren(children, renderMarker)}
         </p>
       ),
       li: ({ children, ...rest }) => (
-        <li {...rest} className="mb-2">
+        <li {...rest} className="mb-1.5 last:mb-0">
           {replaceSentinelsInChildren(children, renderMarker)}
         </li>
       ),

@@ -39,6 +39,7 @@ import {
   ListPublicFilesQueryDto,
   ListSharedFilesQueryDto,
 } from './dto/list-files.dto';
+import { RenameFilesDto, RenameFilesResponseDto } from './dto/rename-files.dto';
 import { FileUploadResponseDto } from './dto/upload-file-response.dto';
 import { UploadFileDto } from './dto/upload-file.dto';
 import { FilesService } from './files.service';
@@ -334,6 +335,28 @@ export class FilesController {
   ): Promise<DeleteFilesResponseDto> {
     const { at } = req.user as SessionUser;
     return this.filesService.deleteFiles(body.items, at);
+  }
+
+  @Post('rename')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
+  @ApiOperation({ summary: 'Rename files and folders' })
+  @ApiBody({ type: RenameFilesDto })
+  @ApiResponse({ status: 200, type: RenameFilesResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request body' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 429, description: 'Rate limit exceeded' })
+  @ApiResponse({ status: 502, description: 'DIAL Core returned an error' })
+  @ApiResponse({
+    status: 503,
+    description: 'DIAL Core unreachable or timed out',
+  })
+  async renameFiles(
+    @Body() body: RenameFilesDto,
+    @Req() req: Request,
+  ): Promise<RenameFilesResponseDto> {
+    const { at } = req.user as SessionUser;
+    return this.filesService.renameFiles(body.items, at);
   }
 
   @Get('download')

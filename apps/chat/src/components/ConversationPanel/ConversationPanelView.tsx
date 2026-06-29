@@ -26,15 +26,11 @@ import {
   useEffect,
   useMemo,
   useState,
-  type CSSProperties,
   type FC,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
-  getConversationRoute,
-  normalizeConversationId,
-} from '../../constants/routes';
+import { getConversationRoute } from '../../constants/routes';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -48,9 +44,12 @@ import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { ROUTES } from '../../types/routes';
 import { StorageKey } from '../../types/storage-key';
+import {
+  conversationIdsMatch,
+  toPanelConversationId,
+} from '../../utils/conversation-id-match';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import { safeDecodeURIComponent } from '../../utils/string-utils';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
 import DeleteAllConversationsAction from './DeleteAllConversationsAction';
 import { getConversationSource } from './get-conversation-source';
@@ -63,6 +62,7 @@ interface ConversationPanelViewProps {
   onNewChat: () => void;
   requestedFilter?: FilterTab;
   onRequestedFilterChange?: () => void;
+  onActiveFilterChange?: (tab: FilterTab) => void;
   onDuplicateReadonly?: () => void;
 }
 
@@ -74,6 +74,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onNewChat,
   requestedFilter,
   onRequestedFilterChange,
+  onActiveFilterChange,
   onDuplicateReadonly,
 }) => {
   const { t } = useTranslation();
@@ -110,14 +111,22 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [deployments],
   );
 
+  const panelActiveConversationId = useMemo(
+    () =>
+      activeConversationId
+        ? toPanelConversationId(activeConversationId)
+        : undefined,
+    [activeConversationId],
+  );
+
   useEffect(() => {
-    if (!activeConversationId) return;
-    const isListed = items.some(
-      (item) => normalizeConversationId(item.id) === activeConversationId,
+    if (!panelActiveConversationId) return;
+    const isListed = items.some((item) =>
+      conversationIdsMatch(item.id, panelActiveConversationId),
     );
     if (!isListed) void refreshConversations();
     // Intentionally not including items or refreshConversations in the dependency array to avoid re-triggering on every list update.
-  }, [activeConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [panelActiveConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -133,14 +142,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
     () =>
-      new Map(items.map((item) => [normalizeConversationId(item.id), item.id])),
+      new Map(items.map((item) => [toPanelConversationId(item.id), item.id])),
     [items],
   );
 
   const conversations: ConversationHistoryItem[] = useMemo(
     () =>
       items.map((item) => {
-        const id = normalizeConversationId(item.id);
+        const id = toPanelConversationId(item.id);
         const modelId = getModelIdFromConversationId(item.id);
         const iconUrl = modelId
           ? deploymentIconByModelId.get(modelId)
@@ -233,7 +242,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onClick: async () => {
           try {
             const newPath = await duplicateConversation(contextId);
-            if (isReadonlyItem && panelItem.id === activeConversationId) {
+            if (
+              isReadonlyItem &&
+              panelActiveConversationId &&
+              conversationIdsMatch(panelItem.id, panelActiveConversationId)
+            ) {
               onDuplicateReadonly?.();
             }
             navigate(getConversationRoute(newPath));
@@ -281,7 +294,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       t,
       pinConversation,
       duplicateConversation,
-      activeConversationId,
+      panelActiveConversationId,
       navigate,
       onDuplicateReadonly,
       showNotification,
@@ -301,6 +314,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setDeleteError(null);
     try {
       await deleteConversation(idToDelete);
+      showNotification({
+        variant: NotificationVariant.Success,
+        message: t(ConversationPanelI18nKeys.DeleteSuccess),
+        title: t(ConversationPanelI18nKeys.DeleteSuccessTitle),
+      });
     } catch {
       setDeleteError(t(ConversationPanelI18nKeys.DeleteError));
       setIsDeleting(false);
@@ -309,15 +327,20 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setIsDeleting(false);
     setPendingDeleteId(null);
 
-    const normalizedId = normalizeConversationId(idToDelete);
     const isActiveDeletion =
-      activeConversationId != null &&
-      safeDecodeURIComponent(normalizedId) ===
-        safeDecodeURIComponent(activeConversationId);
+      panelActiveConversationId != null &&
+      conversationIdsMatch(idToDelete, panelActiveConversationId);
     if (isActiveDeletion) {
       navigate(ROUTES.Root);
     }
-  }, [pendingDeleteId, deleteConversation, activeConversationId, navigate, t]);
+  }, [
+    pendingDeleteId,
+    showNotification,
+    deleteConversation,
+    panelActiveConversationId,
+    navigate,
+    t,
+  ]);
 
   const handleCloseDeleteDialog = useCallback(() => {
     if (isDeleting) return;
@@ -343,15 +366,15 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       setIsRenaming(false);
       setPendingRenameItem(null);
 
-      const activeContextId = activeConversationId
-        ? panelToContextId.get(activeConversationId)
+      const activeContextId = panelActiveConversationId
+        ? panelToContextId.get(panelActiveConversationId)
         : undefined;
       if (activeContextId === id) navigate(getConversationRoute(newPath));
     },
     [
       pendingRenameItem,
       renameConversation,
-      activeConversationId,
+      panelActiveConversationId,
       panelToContextId,
       navigate,
       t,
@@ -364,85 +387,53 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setRenameError(null);
   }, [isRenaming]);
 
-  const panelCssVars = {
-    '--cp-trigger-bg': 'var(--controls-bg-accent-primary, #3664E2)',
-    '--cp-trigger-icon': 'var(--controls-text-permanent, #fff)',
-    '--cp-filter-tab-active-bg': 'var(--bg-layer-1)',
-    '--cp-filter-tab-active-border': 'var(--stroke-accent-primary)',
-    '--cp-filter-tab-border': 'transparent',
-    '--cp-item-active-border': 'var(--bg-accent-secondary)',
-  } as CSSProperties;
+  const handleActiveFilterChange = useCallback(
+    (tab: FilterTab) => {
+      onRequestedFilterChange?.();
+      onActiveFilterChange?.(tab);
+    },
+    [onRequestedFilterChange, onActiveFilterChange],
+  );
 
   return (
     <>
-      {/* display:contents lets CSS custom properties cascade without adding a layout box */}
-      <div className="contents" style={panelCssVars}>
-        <ConversationPanel
-          conversations={conversations}
-          isLoading={isLoading}
-          isOpen={isOpen}
-          onSelectConversation={onSelectConversation}
-          activeConversationId={activeConversationId}
-          activeFilter={requestedFilter}
-          onActiveFilterChange={onRequestedFilterChange}
-          title={t(ConversationPanelI18nKeys.Title)}
-          emptyLabel={t(ConversationPanelI18nKeys.Empty)}
-          noResultsLabel={t(BasicI18nKeys.NoResults)}
-          onNewChat={onNewChat}
-          newChatLabel={t(ConversationPanelI18nKeys.NewChat)}
-          searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
-          filterLabels={filterLabels}
-          groupLabels={groupLabels}
-          getActions={getActions}
-          actionsLabel={t(ConversationPanelI18nKeys.ActionsLabel)}
-          onToggle={isMobile ? onClose : undefined}
-          closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
-          className={
-            isMobile
-              ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
-              : undefined
-          }
-          styles={{
-            colors: {
-              background: 'var(--bg-layer-0)',
-              border: 'var(--stroke-tertiary)',
-              headerBorder: 'var(--stroke-tertiary)',
-              itemHover: 'var(--bg-layer-3)',
-              itemActive: 'var(--bg-accent-secondary-alpha)',
-              text: 'var(--text-primary)',
-              textSecondary: 'var(--text-secondary)',
-              newChatBorderRadius: '12px',
-              newChatDivider: 'transparent',
-              newChatIconBackground: 'rgba(255,255,255,0.18)',
-              newChatIconBackgroundHover: 'rgba(255,255,255,0.25)',
-              newChatIconBackgroundActive: 'rgba(255,255,255,0.12)',
-              newChatIconColor: 'var(--controls-text-permanent, #fff)',
-              newChatHoverBackground:
-                'var(--controls-bg-accent-primary-hover, #2656D9)',
-              newChatActiveBackground:
-                'var(--controls-bg-accent-primary-active, #124ACE)',
-            },
-            typography: {
-              fontClassName: 'dial-body-text',
-              itemTitleClassName: 'dial-small-text',
-              groupHeaderClassName:
-                'dial-tiny-semi-text uppercase tracking-wider',
-              newChatLabelClassName: 'dial-small-semi-text',
-              tabClassName: 'dial-tiny-semi-text',
-            },
-          }}
-          resizable={!isMobile}
-          defaultPanelWidth={defaultPanelWidth}
-          maxPanelWidth={maxPanelWidth}
-          onPanelResizeStop={setStoredPanelWidth}
-          onMoveConversation={handleMoveConversation}
-          headerActions={
-            <DeleteAllConversationsAction
-              activeConversationId={activeConversationId}
-            />
-          }
-        />
-      </div>
+      <ConversationPanel
+        conversations={conversations}
+        isLoading={isLoading}
+        isOpen={isOpen}
+        onSelectConversation={onSelectConversation}
+        activeConversationId={panelActiveConversationId}
+        activeFilter={requestedFilter}
+        onActiveFilterChange={handleActiveFilterChange}
+        title={t(ConversationPanelI18nKeys.Title)}
+        emptyLabel={t(ConversationPanelI18nKeys.Empty)}
+        noResultsLabel={t(BasicI18nKeys.NoResults)}
+        onNewChat={onNewChat}
+        newChatLabel={t(ConversationPanelI18nKeys.NewChat)}
+        searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
+        filterLabels={filterLabels}
+        groupLabels={groupLabels}
+        getActions={getActions}
+        actionsLabel={t(ConversationPanelI18nKeys.ActionsLabel)}
+        onToggle={isMobile ? onClose : undefined}
+        closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
+        className={
+          isMobile
+            ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
+            : undefined
+        }
+        styles={{ typography: { fontClassName: 'dial-body-text' } }}
+        resizable={!isMobile}
+        defaultPanelWidth={defaultPanelWidth}
+        maxPanelWidth={maxPanelWidth}
+        onPanelResizeStop={setStoredPanelWidth}
+        onMoveConversation={handleMoveConversation}
+        headerActions={
+          <DeleteAllConversationsAction
+            activeConversationId={activeConversationId}
+          />
+        }
+      />
 
       <DialConfirmationPopup
         open={!!pendingDeleteId}

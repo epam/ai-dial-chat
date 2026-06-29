@@ -9,6 +9,7 @@ import type {
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserConfigService } from '../../user-config/user-config.service';
+import { ConversationNamingService } from '../conversation-naming.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 
@@ -191,6 +192,10 @@ describe('ConversationController (integration)', () => {
           { provide: ConfigService, useValue: configService },
           ConversationService,
           UserConfigService,
+          {
+            provide: ConversationNamingService,
+            useValue: { maybeRenameAfterFirstReply: vi.fn() },
+          },
         ],
       }).compile();
 
@@ -210,6 +215,10 @@ describe('ConversationController (integration)', () => {
         realApp.get(ConversationService)['client'],
         'saveConversation',
       ).mockResolvedValue({ data: {} } as never);
+      vi.spyOn(
+        realApp.get(ConversationService)['client'],
+        'getConversationMetadata',
+      ).mockResolvedValue({ data: null, error: { status: 404 } } as never);
 
       const result = await request(realApp.getHttpServer())
         .post('/conversations')

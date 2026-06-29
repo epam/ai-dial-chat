@@ -64,8 +64,8 @@ const ProfilePageContent: FC<Props> = ({ onLogoutRequest }) => {
     <img
       className="rounded-full"
       src={image}
-      width={40}
-      height={40}
+      width={28}
+      height={28}
       alt=""
       onError={() => setIsFallbackIconShown(true)}
     />
@@ -74,7 +74,7 @@ const ProfilePageContent: FC<Props> = ({ onLogoutRequest }) => {
   return (
     <>
       {/* User identity */}
-      <div className="flex items-center gap-3 px-4 py-[10px]">
+      <div className="flex h-[56px] items-center gap-3 px-4 py-2">
         {avatar}
         <DialEllipsisTooltip
           text={displayName}
@@ -82,7 +82,7 @@ const ProfilePageContent: FC<Props> = ({ onLogoutRequest }) => {
         />
       </div>
 
-      <ul className="flex flex-col py-1">
+      <ul className="flex flex-col">
         {hasMultipleThemes && (
           <li>
             <button
@@ -141,7 +141,7 @@ const ProfilePageContent: FC<Props> = ({ onLogoutRequest }) => {
 
       <hr className="border-secondary" />
 
-      <ul className="flex flex-col py-1 pb-4">
+      <ul className="flex flex-col pb-4">
         <li>
           <button
             type="button"

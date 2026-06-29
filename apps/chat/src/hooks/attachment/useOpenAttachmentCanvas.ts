@@ -5,6 +5,7 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import {
   AttachmentType,
+  FileExtension,
   MIMEType,
   type DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
@@ -13,9 +14,85 @@ import {
   resolveImageCanvasContent,
   resolveJsonCanvasContent,
   resolveMarkdownCanvasContent,
+  resolvePdfCanvasContent,
   resolveTextCanvasContent,
 } from '../../utils/attachment-canvas';
 import { resolveDialUrl } from '../../utils/dial-file';
+
+type OpenCanvas = ReturnType<typeof useAttachmentCanvas>['openCanvas'];
+
+async function openFileCanvas(
+  attachment: DisplayAttachment,
+  openCanvas: OpenCanvas,
+): Promise<boolean> {
+  const contentType = attachment.contentType.toLowerCase();
+
+  switch (contentType) {
+    case MIMEType.PDF: {
+      const content = resolvePdfCanvasContent(attachment);
+      openCanvas(
+        content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+        attachment.name,
+      );
+      return true;
+    }
+    case MIMEType.Markdown: {
+      const content = await resolveMarkdownCanvasContent(attachment);
+      openCanvas(
+        content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+        attachment.name,
+      );
+      return true;
+    }
+    case MIMEType.JSON: {
+      const content = await resolveJsonCanvasContent(attachment);
+      openCanvas(
+        content ?? createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+        attachment.name,
+      );
+      return true;
+    }
+  }
+
+  const fileName = attachment.name ?? '';
+  const dotIdx = fileName.lastIndexOf('.');
+  const ext = dotIdx !== -1 ? fileName.slice(dotIdx + 1).toLowerCase() : '';
+
+  switch (ext) {
+    case FileExtension.Markdown:
+    case FileExtension.MarkdownAlt: {
+      const content = await resolveMarkdownCanvasContent(attachment);
+      if (content == null) return false;
+      openCanvas(content, attachment.name);
+      return true;
+    }
+    case FileExtension.JSON: {
+      const content = await resolveJsonCanvasContent(attachment);
+      if (content == null) return false;
+      openCanvas(content, attachment.name);
+      return true;
+    }
+    case FileExtension.PDF: {
+      const content = resolvePdfCanvasContent(attachment);
+      if (content == null) return false;
+      openCanvas(content, attachment.name);
+      return true;
+    }
+  }
+
+  if (attachment.name != null && !isTextPreviewable(attachment.name)) {
+    openCanvas(
+      createUnsupportedCanvasContent(resolveDialUrl(attachment)),
+      attachment.name,
+    );
+    return true;
+  }
+
+  const content = await resolveTextCanvasContent(attachment);
+  if (content == null) return false;
+  openCanvas(content, attachment.name);
+  return true;
+}
 
 /**
  * Returns `openAttachmentCanvas`, an async function that opens the attachment
@@ -35,57 +112,8 @@ export const useOpenAttachmentCanvas = () => {
           openCanvas(content, attachment.name);
           return true;
         }
-        case AttachmentType.File: {
-          const contentType = attachment.contentType.toLowerCase();
-
-          if (contentType === MIMEType.Markdown) {
-            const content = await resolveMarkdownCanvasContent(attachment);
-            openCanvas(
-              content ??
-                createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-              attachment.name,
-            );
-            return true;
-          }
-          if (contentType === MIMEType.JSON) {
-            const content = await resolveJsonCanvasContent(attachment);
-            openCanvas(
-              content ??
-                createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-              attachment.name,
-            );
-            return true;
-          }
-
-          const fileName = attachment.name ?? '';
-          const dotIdx = fileName.lastIndexOf('.');
-          const ext =
-            dotIdx !== -1 ? fileName.slice(dotIdx + 1).toLowerCase() : '';
-
-          if (ext === 'md' || ext === 'markdown') {
-            const content = await resolveMarkdownCanvasContent(attachment);
-            if (content == null) return false;
-            openCanvas(content, attachment.name);
-            return true;
-          }
-          if (ext === 'json') {
-            const content = await resolveJsonCanvasContent(attachment);
-            if (content == null) return false;
-            openCanvas(content, attachment.name);
-            return true;
-          }
-          if (attachment.name != null && !isTextPreviewable(attachment.name)) {
-            openCanvas(
-              createUnsupportedCanvasContent(resolveDialUrl(attachment)),
-              attachment.name,
-            );
-            return true;
-          }
-          const content = await resolveTextCanvasContent(attachment);
-          if (content == null) return false;
-          openCanvas(content, attachment.name);
-          return true;
-        }
+        case AttachmentType.File:
+          return openFileCanvas(attachment, openCanvas);
         case AttachmentType.Pasted:
         case AttachmentType.Prompt: {
           const content = await resolveTextCanvasContent(attachment);

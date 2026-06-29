@@ -208,6 +208,148 @@ export class DialModelListResponseDto {
   data!: DialModelDto[];
 }
 
+export class DialToolsetAuthSettingsDto {
+  @ApiProperty({ example: 'OAUTH', enum: ['OAUTH', 'API_KEY', 'NONE'] })
+  authentication_type!: string;
+
+  @ApiPropertyOptional({ example: 'my-client-id' })
+  client_id?: string;
+
+  @ApiPropertyOptional({ example: '' })
+  redirect_uri?: string;
+
+  @ApiPropertyOptional({ example: '' })
+  authorization_endpoint?: string;
+
+  @ApiPropertyOptional({ example: '' })
+  token_endpoint?: string;
+
+  @ApiPropertyOptional({ example: 'S256' })
+  code_challenge_method?: string;
+
+  @ApiPropertyOptional({ type: [String], example: ['scope1', 'scope2'] })
+  scopes_supported?: string[];
+
+  @ApiPropertyOptional({
+    example: 'SIGNED_OUT',
+    enum: ['SIGNED_IN', 'SIGNED_OUT'],
+  })
+  global_auth_status?: string;
+
+  @ApiPropertyOptional({
+    example: 'SIGNED_OUT',
+    enum: ['SIGNED_IN', 'SIGNED_OUT'],
+  })
+  user_level_auth_status?: string;
+}
+
+export class DialToolsetDto {
+  @ApiProperty({
+    example: 'toolsets/encrypted-bucket/folder/toolset-name',
+  })
+  id!: string;
+
+  @ApiProperty({
+    example: 'toolsets/encrypted-bucket/folder/toolset-name',
+  })
+  toolset!: string;
+
+  @ApiPropertyOptional({ example: 'Toolset display name' })
+  display_name?: string;
+
+  @ApiPropertyOptional({ example: '0.0.1' })
+  display_version?: string;
+
+  @ApiPropertyOptional({ example: 'My toolset description' })
+  description?: string;
+
+  @ApiPropertyOptional({ example: '' })
+  icon_url?: string;
+
+  @ApiPropertyOptional({ example: "Owner's name" })
+  owner?: string;
+
+  @ApiPropertyOptional({ example: 'toolset' })
+  object?: string;
+
+  @ApiPropertyOptional({ example: 'succeeded' })
+  status?: string;
+
+  @ApiPropertyOptional({
+    type: [String],
+    example: ['keyword1', 'keyword2'],
+  })
+  description_keywords?: string[];
+
+  @ApiPropertyOptional({
+    example: 'ff5584b7-a82b-4f4f-bf42-5bf74a3893d6',
+  })
+  reference?: string;
+
+  @ApiPropertyOptional({ example: 2 })
+  max_retry_attempts?: number;
+
+  @ApiPropertyOptional({ example: 1672534800 })
+  created_at?: number;
+
+  @ApiPropertyOptional({ example: 1672534900 })
+  updated_at?: number;
+
+  @ApiPropertyOptional({ example: 'HTTP' })
+  transport?: string;
+
+  @ApiPropertyOptional({ type: [String], example: ['tool1', 'tool2'] })
+  allowed_tools?: string[];
+
+  @ApiPropertyOptional({ type: () => DialToolsetAuthSettingsDto })
+  auth_settings?: DialToolsetAuthSettingsDto;
+}
+
+export class DialToolsetListResponseDto {
+  @ApiProperty({ type: () => [DialToolsetDto] })
+  data!: DialToolsetDto[];
+}
+
+export class LimitStatsDto {
+  @ApiProperty({ example: 100 })
+  total!: number;
+
+  @ApiProperty({ example: 10 })
+  used!: number;
+}
+
+export class DeploymentLimitsResponseDto {
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  hourRequestStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  dayRequestStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  minuteTokenStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  dayTokenStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  weekTokenStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  monthTokenStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  minuteCostStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  dayCostStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  weekCostStats?: LimitStatsDto;
+
+  @ApiPropertyOptional({ type: () => LimitStatsDto })
+  monthCostStats?: LimitStatsDto;
+}
+
 export class ThemeDto {
   @ApiProperty({ example: 'light' })
   id!: string;
@@ -358,4 +500,11 @@ export class ConversationResponseDto {
     enum: ['markdown', 'plain_text'],
   })
   responseFormat?: string;
+
+  @ApiPropertyOptional({
+    example: false,
+    description:
+      'When true, automatic LLM conversation naming has already run for this conversation.',
+  })
+  llmNamingDone?: boolean;
 }

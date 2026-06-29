@@ -22,7 +22,6 @@ const NotificationEntry: FC<NotificationEntryProps> = memo(
 
     return (
       <DialNotification
-        className="w-[min(calc(100vw-2rem),40rem)] pe-10 rtl:pe-3 rtl:ps-10"
         variant={item.variant}
         title={item.title}
         message={item.message}
@@ -40,7 +39,7 @@ const NotificationContainer: FC = () => {
   if (!notifications.length) return null;
 
   return createPortal(
-    <div className="fixed start-1/2 top-6 z-50 flex -translate-x-1/2 flex-col gap-2">
+    <div className="fixed start-1/2 top-6 z-[70] flex -translate-x-1/2 flex-col gap-2">
       {notifications.map((item) => (
         <NotificationEntry
           key={item.id}

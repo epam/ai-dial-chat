@@ -19,6 +19,7 @@ import { ModelsModule } from '../models/models.module';
 import { RateModule } from '../rate/rate.module';
 import { ThemeController } from '../themes/theme.controller';
 import { ThemeService } from '../themes/theme.service';
+import { ToolsetsModule } from '../toolsets/toolsets.module';
 import { TranscriptionModule } from '../transcription/transcription.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { AppController } from './app.controller';
@@ -50,6 +51,7 @@ import { createServeStaticOptions } from './static-assets';
     ApplicationsModule,
     DeploymentsModule,
     ModelsModule,
+    ToolsetsModule,
     ChatModule,
     ConversationModule,
     UserConfigModule,

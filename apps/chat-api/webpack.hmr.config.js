@@ -8,9 +8,11 @@ const {
   NESTJS_RESOLVE_ALIASES,
 } = require('./webpack.shared');
 
+// Watch + auto-restart dev config. NestJS DI/services cannot be hot-swapped via
+// webpack HMR — a full process restart on each rebuild is the reliable path.
 module.exports = {
   entry: {
-    main: ['webpack/hot/poll?100', './src/main.ts'],
+    main: './src/main.ts',
   },
   target: 'node',
   devtool: 'inline-source-map',
@@ -19,7 +21,7 @@ module.exports = {
     path: join(__dirname, 'dist'),
     filename: '[name].js',
   },
-  externals: [nodeExternals({ allowlist: ['webpack/hot/poll?100'] })],
+  externals: [nodeExternals()],
   module: {
     rules: [
       {
@@ -47,8 +49,7 @@ module.exports = {
     ],
   },
   plugins: [
-    new webpack.HotModuleReplacementPlugin(),
     new webpack.WatchIgnorePlugin({ paths: [/\.js$/, /\.d\.ts$/] }),
-    new RunScriptWebpackPlugin({ name: 'main.js', autoRestart: false }),
+    new RunScriptWebpackPlugin({ name: 'main.js', autoRestart: true }),
   ],
 };

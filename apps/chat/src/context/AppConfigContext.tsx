@@ -22,6 +22,7 @@ interface AppConfigState {
   config: {
     asrModelId: string | null;
     transcribeSizeLimitBytes: number;
+    defaultDeploymentId: string | null;
   };
   metadata?: { resolvedAt: string; cacheTtlSeconds: number };
 }
@@ -32,6 +33,7 @@ const INITIAL_STATE: AppConfigState = {
   config: {
     asrModelId: null,
     transcribeSizeLimitBytes: DEFAULT_TRANSCRIBE_SIZE_LIMIT,
+    defaultDeploymentId: null,
   },
 };
 
@@ -58,6 +60,7 @@ const AppConfigProvider: FC<Props> = ({ children }) => {
             transcribeSizeLimitBytes:
               response.config?.transcribeSizeLimitBytes ??
               DEFAULT_TRANSCRIBE_SIZE_LIMIT,
+            defaultDeploymentId: response.config?.defaultDeploymentId ?? null,
           },
           metadata: response.metadata,
         });

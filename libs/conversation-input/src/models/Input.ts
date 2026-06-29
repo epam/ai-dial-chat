@@ -48,6 +48,8 @@ export interface InputColors {
 
 /** Typography overrides for the `Input` component. */
 export interface InputTypography {
+  /** Typography utility class applied to the textarea (e.g. `'dial-body-paragraph-text'`). */
+  fontClassName?: string;
   /** Font family applied to the textarea. */
   fontFamily?: string;
   /** Font size applied to the textarea (CSS value, e.g. `'14px'`). */
@@ -111,6 +113,8 @@ export interface InputProps {
   retryLabel?: string;
   /** Accessible label for the send button. */
   sendLabel?: string;
+  /** Tooltip shown on hover over the send button. */
+  sendTitle?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** Extra class name(s) merged onto the root wrapper element. */

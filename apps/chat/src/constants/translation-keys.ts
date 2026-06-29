@@ -1,6 +1,13 @@
 export enum ChatI18nKeys {
   Placeholder = 'chat.placeholder',
-  WelcomeText = 'chat.welcomeText',
+  GreetingMorning = 'chat.greetingMorning',
+  GreetingMorningNoName = 'chat.greetingMorningNoName',
+  GreetingAfternoon = 'chat.greetingAfternoon',
+  GreetingAfternoonNoName = 'chat.greetingAfternoonNoName',
+  GreetingEvening = 'chat.greetingEvening',
+  GreetingEveningNoName = 'chat.greetingEveningNoName',
+  GreetingNight = 'chat.greetingNight',
+  GreetingNightNoName = 'chat.greetingNightNoName',
   StreamError = 'chat.streamError',
   CreateConversationError = 'chat.createConversationError',
   DeleteMessageTitle = 'chat.deleteMessageTitle',
@@ -116,13 +123,13 @@ export enum CatalogI18nKeys {
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
   CreateQuickApp = 'catalog.create.quickApp',
-  CreateQuickAppDescription = 'catalog.create.quickAppDescription',
   CreateToolset = 'catalog.create.toolset',
-  CreateToolsetDescription = 'catalog.create.toolsetDescription',
   FavoriteAddedTitle = 'catalog.favoriteAddedTitle',
   FavoriteAdded = 'catalog.favoriteAdded',
   FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
   FavoriteRemoved = 'catalog.favoriteRemoved',
+  FolderPersonal = 'catalog.folder.personal',
+  FolderPublic = 'catalog.folder.public',
   PickerTitle = 'catalog.picker.title',
   PickerSearchPlaceholder = 'catalog.picker.searchPlaceholder',
   PickerSearchAriaLabel = 'catalog.picker.searchAriaLabel',
@@ -212,6 +219,15 @@ export enum DialFileManagerI18nKeys {
   ColumnModifiedDate = 'dialFileManager.column.modifiedDate',
   ColumnSize = 'dialFileManager.column.size',
   ColumnAuthor = 'dialFileManager.column.author',
+  RenameAction = 'dialFileManager.renameAction',
+  RenamingLabel = 'dialFileManager.renamingLabel',
+  RenameError = 'dialFileManager.renameError',
+  RenamePartialError = 'dialFileManager.renamePartialError',
+  RenameNameEmpty = 'dialFileManager.renameNameEmpty',
+  RenameDuplicateName = 'dialFileManager.renameDuplicateName',
+  RenameReservedName = 'dialFileManager.renameReservedName',
+  RenameInvalidChars = 'dialFileManager.renameInvalidChars',
+  RenameNameTooLong = 'dialFileManager.renameNameTooLong',
 }
 
 export enum AuthI18nKeys {
@@ -253,6 +269,8 @@ export enum ConversationPanelI18nKeys {
   ActionsLabel = 'conversationPanel.actionsLabel',
   PinLabel = 'conversationPanel.pinLabel',
   UnpinLabel = 'conversationPanel.unpinLabel',
+  DeleteSuccess = 'conversationPanel.deleteSuccess',
+  DeleteSuccessTitle = 'conversationPanel.deleteSuccessTitle',
   DeleteConfirmTitle = 'conversationPanel.deleteConfirmTitle',
   DeleteConfirmDescription = 'conversationPanel.deleteConfirmDescription',
   DeleteError = 'conversationPanel.deleteError',
@@ -268,6 +286,8 @@ export enum ConversationPanelI18nKeys {
   DeleteAllConfirmDescription = 'conversationPanel.deleteAllConfirmDescription',
   DeleteAllError = 'conversationPanel.deleteAllError',
   DeleteAllPartialError = 'conversationPanel.deleteAllPartialError',
+  DeleteAllSuccessTitle = 'conversationPanel.deleteAllSuccessTitle',
+  DeleteAllSuccess = 'conversationPanel.deleteAllSuccess',
 }
 
 export enum SidebarI18nKeys {
@@ -329,6 +349,7 @@ export enum ChatSettingsI18nKeys {
   SaveLabel = 'chatSettings.saveLabel',
   TemperatureHint = 'chatSettings.temperatureHint',
   SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
+  SavedNotification = 'chatSettings.savedNotification',
 }
 
 export enum AttachmentCanvasI18nKeys {

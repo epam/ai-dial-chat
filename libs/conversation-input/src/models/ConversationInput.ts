@@ -154,6 +154,8 @@ export interface ConversationInputProps {
   modelSelectorLabels?: ModelSelectorLabels;
   /** Accessible label for the send button. */
   sendLabel?: string;
+  /** Tooltip shown on hover over the send button. */
+  sendTitle?: string;
   /** Accessible label for the stop button. */
   stopLabel?: string;
   /** When `true`, blocks all text input, send, attach, and drop interactions. Starter/action buttons remain usable. Defaults to `false`. */

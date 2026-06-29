@@ -1,26 +1,21 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag, DialTooltip } from '@epam/ai-dial-ui-kit';
 import { FC, useLayoutEffect, useRef, useState } from 'react';
+import styles from './TopicTag.module.scss';
 
 /** Props for TopicTag. */
 export interface TopicTagProps {
-  /** Text to display inside the tag, e.g. 'Vision' or 'Code'. */
+  /** Text to display inside the tag, e.g. 'Free' or 'Pay-as-you-go'. */
   label: string;
-  /** CSS class for the tag text. Default: `'dial-tiny-text'`. */
+  /** CSS class for the tag text. Default: 'dial-tiny-text'. */
   className?: string;
-  /**
-   * CSS class applied to the tag container (background, border, color, radius).
-   * Default: `'bg-accent-primary-alpha border-transparent text-accent-primary rounded-full'`.
-   */
-  tagClassName?: string;
 }
 
 /** Simple tag component for displaying item topics or pricing tiers. */
 export const TopicTag: FC<TopicTagProps> = ({
   label,
   className = 'dial-tiny-text',
-  tagClassName = 'bg-layer-2 border-tertiary text-secondary rounded-full',
-}) => <DialTag label={label} className={mergeClasses(tagClassName, className)} />;
+}) => <DialTag label={label} className={mergeClasses(className, styles.tag)} />;
 
 const MAX_ROWS = 1;
 
@@ -81,7 +76,11 @@ export const TopicsLine: FC<TopicsLineProps> = ({
       ))}
       {overflow > 0 && (
         <DialTooltip tooltip={topics.slice(visibleCount).join(', ')}>
-          <span aria-label={overflowAriaLabel?.(overflow) ?? `and ${overflow} more topics`}>
+          <span
+            aria-label={
+              overflowAriaLabel?.(overflow) ?? `and ${overflow} more topics`
+            }
+          >
             <TopicTag label={`+${overflow}`} />
           </span>
         </DialTooltip>

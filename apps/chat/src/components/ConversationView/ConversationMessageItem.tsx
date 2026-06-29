@@ -47,6 +47,11 @@ const EditMessageInput = lazy(async () => {
 
 const preloadEditInput = () => void import('@epam/ai-dial-conversation-input');
 
+/** Body text style applied to user message bubbles (16px / 26px). */
+const USER_MESSAGE_TEXT_STYLES = {
+  typography: { fontClassName: 'dial-body-paragraph-text' },
+};
+
 interface Props {
   msg: MessageType;
   index: number;
@@ -176,6 +181,7 @@ const ConversationMessageItem: FC<Props> = ({
             <MessageBubble
               role={msg.role}
               text={msg.content}
+              styles={USER_MESSAGE_TEXT_STYLES}
               attachments={attachmentDtosToDisplayAttachments(
                 msg.custom_content?.attachments,
               )}
@@ -247,6 +253,9 @@ const ConversationMessageItem: FC<Props> = ({
     <MessageBubble
       role={msg.role}
       text={messageText}
+      styles={
+        msg.role === MessageRole.User ? USER_MESSAGE_TEXT_STYLES : undefined
+      }
       markdownComponents={
         msg.role === MessageRole.Assistant ? markdownComponents : undefined
       }

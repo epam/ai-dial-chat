@@ -1,4 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsString } from 'class-validator';
 
 export class ClientConfigDto {
   @ApiProperty({
@@ -16,6 +17,17 @@ export class ClientConfigDto {
     example: 5242880,
   })
   transcribeSizeLimitBytes!: number;
+
+  @ApiPropertyOptional({
+    description:
+      'Operator-configured default deployment ID. Null when not configured.',
+    example: 'gpt-4o',
+    nullable: true,
+    type: String,
+  })
+  @IsOptional()
+  @IsString()
+  defaultDeploymentId!: string | null;
 }
 
 export class ClientConfigMetadataDto {

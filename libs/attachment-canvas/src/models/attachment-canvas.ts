@@ -1,5 +1,6 @@
 import type { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import type { SidebarPanelStyles } from '@epam/ai-dial-sidebar';
+import type { InputHighlightData } from '@epam/pdf-highlighter-kit';
 import type { CSSProperties } from 'react';
 import { AttachmentContentType } from '../types/attachment-canvas';
 
@@ -35,6 +36,18 @@ export interface JsonCanvasContent {
   value: unknown;
 }
 
+/** Content payload for PDF file attachments. */
+export interface PdfCanvasContent {
+  /** Discriminates the content type to select the correct renderer. */
+  type: AttachmentContentType.Pdf;
+  /** Resolved download URL or object URL for the PDF file. */
+  url: string;
+  /** Highlight regions to render over the PDF pages. */
+  highlights?: InputHighlightData[];
+  /** ID of the highlight to scroll to and select on initial load. */
+  selectedHighlightId?: string;
+}
+
 /** Content payload for attachments whose format cannot be previewed. */
 export interface UnsupportedCanvasContent {
   /** Discriminates the content type to select the correct renderer. */
@@ -49,6 +62,7 @@ export type AttachmentCanvasContent =
   | ImageCanvasContent
   | MarkdownCanvasContent
   | JsonCanvasContent
+  | PdfCanvasContent
   | UnsupportedCanvasContent;
 
 /** Themeable color overrides for the AttachmentCanvas content body. */
@@ -128,11 +142,11 @@ export interface AttachmentCanvasProps {
   copiedJsonLabel?: string;
   /** Whether the viewport is in mobile breakpoint — disables drag-to-resize. */
   isMobile?: boolean;
-  /** Initial panel width in pixels (when resizable). Defaults to `560`. */
+  /** Initial panel width in pixels (when resizable). Defaults to `min(maxWidth, 2/3 of viewport width)`. */
   defaultWidth?: number;
   /** Minimum panel width in pixels (when resizable). Defaults to `320`. */
   minWidth?: number;
-  /** Maximum panel width in pixels (when resizable). Defaults to `960`. */
+  /** Maximum panel width in pixels (when resizable). Defaults to `1500`. */
   maxWidth?: number;
   /** Called with the new width in pixels after the user finishes a resize drag. */
   onResizeStop?: (width: number) => void;
@@ -142,4 +156,10 @@ export interface AttachmentCanvasProps {
   className?: string;
   /** Syntax highlight color theme forwarded to MarkdownRenderer code blocks. */
   codeBlockTheme?: CodeBlockTheme;
+  /**
+   * Fetches a PDF file by URL and returns its bytes as a `Blob`. Used when
+   * content type is `Pdf` to load the file before rendering. Defaults to a
+   * plain `fetch` if not provided.
+   */
+  loadPdf?: (url: string) => Promise<Blob>;
 }
