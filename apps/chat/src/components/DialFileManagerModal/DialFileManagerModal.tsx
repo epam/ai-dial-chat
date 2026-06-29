@@ -290,13 +290,14 @@ const DialFileManagerModal: FC<Props> = ({
       return;
     }
 
-    const dialCoreFolderPaths = dedupedFolderPaths.map((virtualPath) => {
+    const dialCoreFolderPaths = dedupedFolderPaths.flatMap((virtualPath) => {
       const file = filesByPath.get(virtualPath);
-      const source = file?.url ?? file?.id ?? '';
+      if (file == null) return [];
+      const source = file.url ?? file.id ?? '';
       const dialPath = source.startsWith('files/')
         ? source
-        : `files/${file?.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
-      return dialPath.endsWith('/') ? dialPath : `${dialPath}/`;
+        : `files/${file.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
+      return [dialPath.endsWith('/') ? dialPath : `${dialPath}/`];
     });
 
     onAttach({ files: dedupedFiles, folderPaths: dialCoreFolderPaths });
@@ -410,7 +411,7 @@ const DialFileManagerModal: FC<Props> = ({
       (file) => file.status !== FileUploadStatus.Uploading,
     ).length;
 
-    return t('dialFileManager.uploadProgressSummary', {
+    return t(DialFileManagerI18nKeys.UploadProgressSummary, {
       done,
       total: uploadBatchState.files.length,
     });

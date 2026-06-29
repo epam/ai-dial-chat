@@ -1410,4 +1410,164 @@ describe('useDialFileManager', () => {
       expect(result.current.path).toBe('/My files/reports/');
     });
   });
+
+  describe('onSearchFiles', () => {
+    it('debounces search and calls listFiles only once after 300ms', async () => {
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [
+          {
+            name: 'report.pdf',
+            path: 'report.pdf',
+            folderId: `${BUCKET}:`,
+            nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+            bucket: BUCKET,
+          },
+        ],
+        nextToken: undefined,
+      });
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      const initialCallCount = mockListFiles.mock.calls.length;
+
+      vi.useFakeTimers();
+      try {
+        act(() => result.current.onSearchFiles('/', 'rep'));
+        act(() => result.current.onSearchFiles('/', 'repo'));
+        act(() => result.current.onSearchFiles('/', 'repor'));
+
+        expect(mockListFiles).toHaveBeenCalledTimes(initialCallCount);
+
+        act(() => {
+          vi.advanceTimersByTime(300);
+        });
+        await act(() => Promise.resolve());
+
+        expect(mockListFiles).toHaveBeenCalledTimes(initialCallCount + 1);
+        const lastCall =
+          mockListFiles.mock.calls[mockListFiles.mock.calls.length - 1][0];
+        expect(lastCall).toMatchObject({ recursive: true });
+        expect(result.current.searchResults).toHaveLength(1);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('cancels in-flight search when a second query arrives before the first resolves', async () => {
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+      const initialCallCount = mockListFiles.mock.calls.length;
+
+      let resolveFirst!: (value: {
+        bucket: string;
+        path: string;
+        items: ListFilesItemDto[];
+        nextToken: undefined;
+      }) => void;
+      const firstPromise = new Promise<{
+        bucket: string;
+        path: string;
+        items: ListFilesItemDto[];
+        nextToken: undefined;
+      }>((res) => {
+        resolveFirst = res;
+      });
+      mockListFiles.mockReturnValueOnce(firstPromise).mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [],
+        nextToken: undefined,
+      });
+
+      vi.useFakeTimers();
+      try {
+        act(() => result.current.onSearchFiles('/', 'first'));
+        act(() => {
+          vi.advanceTimersByTime(300);
+        });
+
+        act(() => result.current.onSearchFiles('/', 'second'));
+        act(() => {
+          vi.advanceTimersByTime(300);
+        });
+
+        // Flush second fetch (empty result)
+        await act(() => Promise.resolve());
+
+        expect(mockListFiles).toHaveBeenCalledTimes(initialCallCount + 2);
+        expect(result.current.isSearching).toBe(false);
+
+        // Resolve the stale first fetch — its result should be ignored
+        resolveFirst({
+          bucket: BUCKET,
+          path: '',
+          items: [
+            {
+              name: 'first-only.pdf',
+              path: 'first-only.pdf',
+              folderId: `${BUCKET}:`,
+              nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+              bucket: BUCKET,
+            },
+          ],
+          nextToken: undefined,
+        });
+        await act(() => Promise.resolve());
+
+        expect(
+          result.current.searchResults?.some(
+            (r) => r.name === 'first-only.pdf',
+          ),
+        ).toBe(false);
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it('reconstructs virtual path for a nested file returned by search', async () => {
+      const nestedItem: ListFilesItemDto = {
+        name: 'summary.pdf',
+        path: 'reports/q1/summary.pdf',
+        url: `files/${BUCKET}/reports/q1/summary.pdf`,
+        folderId: `${BUCKET}:reports/q1/`,
+        nodeType: ListFilesItemDtoNodeTypeEnum.Item,
+        bucket: BUCKET,
+      };
+      mockListFiles.mockResolvedValue({
+        bucket: BUCKET,
+        path: '',
+        items: [nestedItem],
+        nextToken: undefined,
+      });
+
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+
+      vi.useFakeTimers();
+      try {
+        act(() => result.current.onSearchFiles('/', 'summary'));
+        act(() => {
+          vi.advanceTimersByTime(300);
+        });
+        await act(() => Promise.resolve());
+
+        const found = result.current.searchResults?.find(
+          (r) => r.name === 'summary.pdf',
+        );
+        expect(found).toBeDefined();
+        expect(found?.path).toBe('/My files/reports/q1/summary.pdf');
+        expect(found?.parentPath).toBe('/My files/reports/q1');
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+  });
 });

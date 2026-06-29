@@ -753,11 +753,14 @@ export const useDialFileManager = ({
             }
           })
           .catch(() => {
-            // Silently ignore — tree node shows empty; cache unchanged
+            onNotification?.({
+              variant: NotificationVariant.Error,
+              message: t(DialFileManagerI18nKeys.FolderLoadError),
+            });
           });
       });
     },
-    [activeTab, bucket, cache, expandedPaths, rootLabel],
+    [activeTab, bucket, cache, expandedPaths, onNotification, rootLabel, t],
   );
 
   const clearSearchResults = useCallback(() => {

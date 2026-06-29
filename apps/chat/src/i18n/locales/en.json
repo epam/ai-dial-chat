@@ -326,6 +326,7 @@
     "downloadFileError": "Failed to download file. Please try again later.",
     "downloadFilesError": "Failed to download files. Please try again later.",
     "folderCreateError": "Failed to create folder",
+    "folderLoadError": "Failed to load folder contents. Please try again.",
     "folderConflict": "A folder with this name already exists",
     "folderNameEmpty": "Folder name cannot be empty",
     "folderNameInvalidChars": "Folder name cannot contain / or \\",
