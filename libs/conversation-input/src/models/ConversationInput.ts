@@ -1,10 +1,10 @@
-import type { ReactNode } from 'react';
 import type {
   Attachment,
   AttachmentErrorReason,
   DeploymentItem,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
+import type { ReactNode } from 'react';
 import type {
   ChatSettingsConfig,
   InputColors,
@@ -231,5 +231,6 @@ export interface ConversationInputProps {
    * the flat deployment list. Receives `onClose` so the panel can close the
    * popover after a selection or an explicit dismiss.
    */
+  // TODO: review usage
   modelPickerOverlay?: (onClose: () => void) => ReactNode;
 }

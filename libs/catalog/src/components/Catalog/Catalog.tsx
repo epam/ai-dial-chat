@@ -66,9 +66,13 @@ export const Catalog: FC<CatalogProps> = ({
   ];
 
   const [query, setQuery] = useState('');
-  const [viewMode, setViewMode] = useState<CatalogViewMode>(CatalogViewMode.Grid);
+  const [viewMode, setViewMode] = useState<CatalogViewMode>(
+    CatalogViewMode.Grid,
+  );
   const [listEverShown, setListEverShown] = useState(false);
-  const [sortKey, setSortKey] = useState<string>(CatalogSortKey.RecentlyUpdated);
+  const [sortKey, setSortKey] = useState<string>(
+    CatalogSortKey.RecentlyUpdated,
+  );
 
   const filteredItems = useMemo(
     () => items.filter((item) => !item.isHidden),
@@ -105,7 +109,9 @@ export const Catalog: FC<CatalogProps> = ({
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [aboutContent, setAboutContent] = useState<string | undefined>(undefined);
+  const [aboutContent, setAboutContent] = useState<string | undefined>(
+    undefined,
+  );
   const [isAboutLoading, setIsAboutLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
@@ -167,7 +173,6 @@ export const Catalog: FC<CatalogProps> = ({
     return () => cancelAnimationFrame(rafId);
   }, [selectedItem]);
 
-
   if (isLoading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -191,10 +196,7 @@ export const Catalog: FC<CatalogProps> = ({
   return (
     <section
       aria-label={resolvedAriaLabel}
-      className={mergeClasses(
-        'flex min-h-0 flex-1 flex-col',
-        styles.root,
-      )}
+      className={mergeClasses('flex min-h-0 flex-1 flex-col', styles.root)}
       style={cssVars}
     >
       {/* ── Sticky page heading ─────────────────────────────────── */}
@@ -218,108 +220,116 @@ export const Catalog: FC<CatalogProps> = ({
 
       {/* ── Scrollable body ───────────────────────────────────── */}
       <div className="min-h-0 flex-1 overflow-auto">
-      {/* ── Favorites strip — full viewport width ─────────────── */}
-      {isFavoritesRendered && (
-        <div className="w-full px-8">
-          <Favorites
-            items={favorites}
-            totalCount={favorites.length}
-            title={favoritesTitle}
-            onToggleFavorite={onToggleFavorite}
-            onItemClick={handleOpenDetails}
-            isLeaving={isFavoritesLeaving}
-            onExitComplete={handleFavoritesExitComplete}
+        {/* ── Favorites strip — full viewport width ─────────────── */}
+        {isFavoritesRendered && (
+          <div className="w-full px-8">
+            <Favorites
+              items={favorites}
+              totalCount={favorites.length}
+              title={favoritesTitle}
+              onToggleFavorite={onToggleFavorite}
+              onItemClick={handleOpenDetails}
+              isLeaving={isFavoritesLeaving}
+              onExitComplete={handleFavoritesExitComplete}
+            />
+          </div>
+        )}
+
+        {/* ── Browse toolbar — full width (outer px-4 + inner px-4 = 32px from edge) */}
+        <div className="w-full px-4 pt-6">
+          <Toolbar
+            totalCount={filteredItems.length}
+            viewMode={viewMode}
+            onViewModeChange={handleViewModeChange}
+            sortKey={sortKey}
+            onSortChange={setSortKey}
+            query={query}
+            onQueryChange={setQuery}
+            isAnyFilterActive={isAnyFilterActive}
+            onClearFilters={clearAllFilters}
+            title={browseTitle}
+            searchPlaceholder={searchPlaceholder}
+            sortOptions={sortOptions}
           />
         </div>
-      )}
 
-      {/* ── Browse toolbar — full width (outer px-4 + inner px-4 = 32px from edge) */}
-      <div className="w-full px-4 pt-6">
-        <Toolbar
-          totalCount={filteredItems.length}
-          viewMode={viewMode}
-          onViewModeChange={handleViewModeChange}
-          sortKey={sortKey}
-          onSortChange={setSortKey}
-          query={query}
-          onQueryChange={setQuery}
-          isAnyFilterActive={isAnyFilterActive}
-          onClearFilters={clearAllFilters}
-          title={browseTitle}
-          searchPlaceholder={searchPlaceholder}
-          sortOptions={sortOptions}
-        />
-      </div>
-
-      {/* ── Entity-type tabs — full width */}
-      {tabs.length > 0 && (
-        <div className="px-8">
-          <div className={mergeClasses('flex justify-start gap-1 border-b', styles.tabsRow)}>
-            {tabs.map((tab) => {
-              const count = filtered.filter((item) => item.type === tab.id).length;
-              const isActive = activeTab === tab.id;
-              const label = typeof tab.label === 'string' ? tab.label : String(tab.label);
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={mergeClasses(
-                    'flex items-center gap-1.5 px-3 py-2.5 -mb-px border-b-2 dial-small-semi-text transition-colors',
-                    isActive
-                      ? mergeClasses(styles.activeTab, 'text-[#111827]')
-                      : 'border-transparent text-[#6B7280] hover:text-[#374151]',
-                  )}
-                >
-                  <span>{label}</span>
-                  <span
+        {/* ── Entity-type tabs — full width */}
+        {tabs.length > 0 && (
+          <div className="px-8">
+            <div
+              className={mergeClasses(
+                'flex justify-start gap-1 border-b',
+                styles.tabsRow,
+              )}
+            >
+              {tabs.map((tab) => {
+                const count = filtered.filter(
+                  (item) => item.type === tab.id,
+                ).length;
+                const isActive = activeTab === tab.id;
+                const label =
+                  typeof tab.label === 'string' ? tab.label : String(tab.label);
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
                     className={mergeClasses(
-                      'dial-tiny-semi-text rounded-full px-1.5 py-0.5',
+                      'dial-small-semi-text -mb-px flex items-center gap-1.5 border-b-2 px-3 py-2.5 transition-colors',
                       isActive
-                        ? 'bg-[#EEF2FF] text-[#2764D9]'
-                        : 'bg-[#F3F4F6] text-[#9CA3AF]',
+                        ? mergeClasses(styles.activeTab, 'text-[#111827]')
+                        : 'border-transparent text-[#6B7280] hover:text-[#374151]',
                     )}
                   >
-                    {count}
-                  </span>
-                </button>
-              );
-            })}
+                    <span>{label}</span>
+                    <span
+                      className={mergeClasses(
+                        'dial-tiny-semi-text rounded-full px-1.5 py-0.5',
+                        isActive
+                          ? 'bg-[#EEF2FF] text-[#2764D9]'
+                          : 'bg-[#F3F4F6] text-[#9CA3AF]',
+                      )}
+                    >
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
+        )}
+
+        {/* ── Card / list grid — centred max-width column */}
+        <div className="mx-auto w-full max-w-[1180px] px-8 pt-6">
+          {/* Grid view */}
+          {viewMode === CatalogViewMode.Grid && (
+            <div className="pb-8">
+              <CardGrid
+                items={tabFiltered}
+                query={query}
+                onToggleFavorite={onToggleFavorite}
+                onItemClick={handleOpenDetails}
+                titles={{ noResultsTitle: emptyTitle, featuredLabel }}
+              />
+            </div>
+          )}
+
+          {/* List view — lazy-mounted */}
+          {listEverShown && viewMode === CatalogViewMode.List && (
+            <div className="pb-8">
+              <ListView
+                items={tabFiltered}
+                query={query}
+                ariaLabel={resolvedAriaLabel}
+                emptyStateTitle={emptyTitle}
+                onToggleFavorite={onToggleFavorite}
+                onItemClick={handleOpenDetails}
+                stickyHeaderTop={0}
+              />
+            </div>
+          )}
         </div>
-      )}
-
-      {/* ── Card / list grid — centred max-width column */}
-      <div className="mx-auto w-full max-w-[1180px] px-8 pt-6">
-        {/* Grid view */}
-        {viewMode === CatalogViewMode.Grid && (
-          <div className="pb-8">
-            <CardGrid
-              items={tabFiltered}
-              query={query}
-              onToggleFavorite={onToggleFavorite}
-              onItemClick={handleOpenDetails}
-              titles={{ noResultsTitle: emptyTitle, featuredLabel }}
-            />
-          </div>
-        )}
-
-        {/* List view — lazy-mounted */}
-        {listEverShown && viewMode === CatalogViewMode.List && (
-          <div className="pb-8">
-            <ListView
-              items={tabFiltered}
-              query={query}
-              ariaLabel={resolvedAriaLabel}
-              emptyStateTitle={emptyTitle}
-              onToggleFavorite={onToggleFavorite}
-              onItemClick={handleOpenDetails}
-              stickyHeaderTop={0}
-            />
-          </div>
-        )}
       </div>
-
-      </div>{/* end scrollable body */}
+      {/* end scrollable body */}
 
       {/* Details panel */}
       {selectedItem != null && (

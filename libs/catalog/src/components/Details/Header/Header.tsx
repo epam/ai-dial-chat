@@ -63,9 +63,7 @@ export const Header: FC<HeaderProps> = ({
       <div className="flex flex-wrap gap-2 ps-[60px]">
         <DialPrimaryButton
           label={
-            texts?.primaryActionLabel ??
-            texts?.useInChatLabel ??
-            'Use in chat'
+            texts?.primaryActionLabel ?? texts?.useInChatLabel ?? 'Use in chat'
           }
           iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
           onClick={handleUseInChat}

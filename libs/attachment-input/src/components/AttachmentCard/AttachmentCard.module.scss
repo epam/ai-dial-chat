@@ -1,7 +1,7 @@
 // Colors only — no layout, spacing, border-radius (those live in Tailwind)
 
 .card {
-  --_card-bg: var(--ci-card-bg, var(--bg-layer-0, #000000));
+  --_card-bg: var(--ci-card-bg, var(--bg-layer-0, #fcfcfc));
   border-color: var(--ci-card-border, var(--stroke-secondary, #242c42));
   background: var(--_card-bg);
 }

@@ -1,4 +1,8 @@
-import { DeploymentIcon, Highlight, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  DeploymentIcon,
+  Highlight,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { FC, ReactNode } from 'react';
 
 /** Props for the shared AppIdentity block used in browse and favorite cards. */
@@ -83,7 +87,10 @@ export const AppIdentity: FC<AppIdentityProps> = ({
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Type: more space below separates it from the name group */}
         <span
-          className={mergeClasses('mb-2 uppercase tracking-[0.06em]', typeClassName)}
+          className={mergeClasses(
+            'mb-2 uppercase tracking-[0.06em]',
+            typeClassName,
+          )}
           style={typeColor ? { color: typeColor } : undefined}
         >
           {type}

@@ -1,7 +1,7 @@
 .panel {
   background: var(--cs-bg, transparent);
   border-color: var(--cs-border, transparent);
-  color: var(--cs-text, var(--text-primary, #eef1f7));
+  color: var(--cs-text, var(--text-primary, #161B2D));
 }
 
 .collapseButton {
@@ -9,15 +9,15 @@
 }
 
 .stageName {
-  color: var(--cs-stage-text, var(--text-secondary, #9fa6bd));
+  color: var(--cs-stage-text, var(--text-secondary, #575F73));
 }
 
 .iconSecondary {
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #575F73);
 }
 
 .stageContent {
-  color: var(--cs-stage-text, var(--text-secondary, #9fa6bd));
+  color: var(--cs-stage-text, var(--text-secondary, #575F73));
   font-size: var(--cs-font-size);
   font-weight: var(--cs-font-weight);
   line-height: var(--cs-line-height);
@@ -26,26 +26,26 @@
 }
 
 .codeBlock {
-  background: var(--cs-code-bg, var(--bg-layer-0, #000000));
-  border-color: var(--cs-code-border, var(--stroke-secondary, #242c42));
-  color: var(--cs-code-text, var(--text-primary, #eef1f7));
+  background: var(--cs-code-bg, var(--bg-layer-0, #FCFCFC));
+  border-color: var(--cs-code-border, var(--stroke-secondary, #D1DBEA));
+  color: var(--cs-code-text, var(--text-primary, #161B2D));
 }
 
 .codeInline {
-  background: var(--cs-code-bg, var(--bg-layer-0, #000000));
-  color: var(--cs-code-text, var(--text-primary, #eef1f7));
+  background: var(--cs-code-bg, var(--bg-layer-0, #FCFCFC));
+  color: var(--cs-code-text, var(--text-primary, #161B2D));
 }
 
 .blockquote {
-  border-color: var(--cs-stage-text, var(--text-secondary, #9fa6bd));
-  color: var(--cs-stage-text, var(--text-secondary, #9fa6bd));
+  border-color: var(--cs-stage-text, var(--text-secondary, #575F73));
+  color: var(--cs-stage-text, var(--text-secondary, #575F73));
 }
 
 .tableCell {
-  border-color: var(--cs-border, var(--stroke-secondary, #242c42));
-  color: var(--cs-stage-text, var(--text-secondary, #9fa6bd));
+  border-color: var(--cs-border, var(--stroke-secondary, #D1DBEA));
+  color: var(--cs-stage-text, var(--text-secondary, #575F73));
 }
 
 .tableHeader {
-  background: var(--cs-code-bg, var(--bg-layer-0, #000000));
+  background: var(--cs-code-bg, var(--bg-layer-0, #FCFCFC));
 }

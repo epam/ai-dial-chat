@@ -150,7 +150,10 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         <div className="shrink-0 px-[22px]">
           <div
             role="tablist"
-            className={mergeClasses('flex justify-start gap-1 border-b', styles.tabsRow)}
+            className={mergeClasses(
+              'flex justify-start gap-1 border-b',
+              styles.tabsRow,
+            )}
           >
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
@@ -161,7 +164,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
                   aria-selected={isActive}
                   onClick={() => setActiveTab(tab.id)}
                   className={mergeClasses(
-                    '-mb-px flex items-center border-b-2 px-3 py-2.5 text-start dial-small-semi-text transition-colors',
+                    'dial-small-semi-text -mb-px flex items-center border-b-2 px-3 py-2.5 text-start transition-colors',
                     isActive
                       ? mergeClasses(styles.activeTab, 'text-[#111827]')
                       : 'border-transparent text-[#6B7280] hover:text-[#374151]',

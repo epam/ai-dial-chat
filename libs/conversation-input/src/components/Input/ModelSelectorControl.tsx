@@ -126,7 +126,9 @@ export const ModelSelectorControl: FC<Props> = ({
         onOpenChange={onPickerOpenChange}
         trigger={[]}
         outsideClosable
-        renderOverlay={() => modelPickerOverlay(() => onPickerOpenChange?.(false))}
+        renderOverlay={() =>
+          modelPickerOverlay(() => onPickerOpenChange?.(false))
+        }
         listClassName="shadow-xl"
       >
         <button

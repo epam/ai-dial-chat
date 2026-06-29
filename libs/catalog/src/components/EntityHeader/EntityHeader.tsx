@@ -46,15 +46,24 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
 }) => {
   return (
     <div className="flex items-start gap-2">
-      <DeploymentIcon src={item.iconUrl} size={iconSize} badgeClassName={iconBadgeClassName} />
+      <DeploymentIcon
+        src={item.iconUrl}
+        size={iconSize}
+        badgeClassName={iconBadgeClassName}
+      />
 
-      <div className={mergeClasses(
-        'flex min-w-0 flex-1 flex-col',
-        footer == null ? 'gap-1' : 'self-stretch',
-      )}>
+      <div
+        className={mergeClasses(
+          'flex min-w-0 flex-1 flex-col',
+          footer == null ? 'gap-1' : 'self-stretch',
+        )}
+      >
         <div className="relative flex flex-row items-center justify-between">
           <span
-            className={mergeClasses('uppercase tracking-[0.06em]', typeClassName)}
+            className={mergeClasses(
+              'uppercase tracking-[0.06em]',
+              typeClassName,
+            )}
             style={{ color: ENTITY_TYPE_COLOR[item.type] }}
           >
             {item.type}

@@ -13,7 +13,7 @@
 }
 
 .sheet {
-  background: var(--ci-sheet-bg, var(--bg-layer-0, #000000));
+  background: var(--ci-sheet-bg, var(--bg-layer-0, #fcfcfc));
   animation: slide-up 300ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 

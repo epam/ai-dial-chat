@@ -1,7 +1,16 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag, ElementSize } from '@epam/ai-dial-ui-kit';
-import React, { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
-import { ENTITY_TYPE_COLOR, ENTITY_TYPE_SHADOW } from '../../constants/entity-colors';
+import React, {
+  FC,
+  KeyboardEvent,
+  MouseEvent,
+  useCallback,
+  useState,
+} from 'react';
+import {
+  ENTITY_TYPE_COLOR,
+  ENTITY_TYPE_SHADOW,
+} from '../../constants/entity-colors';
 import type { CardProps } from '../../models/card-props';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { FolderPath } from '../FolderPath/FolderPath';

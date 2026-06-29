@@ -52,6 +52,7 @@ export const Input: FC<InputProps> = ({
   removeLabel,
   retryLabel,
   sendLabel,
+  sendTitle,
   stopLabel,
   micLabel = 'Record voice message',
   colors,
@@ -91,6 +92,7 @@ export const Input: FC<InputProps> = ({
   const isMobile = useIsMobile();
   const [isPickerOpen, setIsPickerOpen] = useState(false);
   const historyNav = useInputHistoryNavigation(messageHistory);
+  const noCustomFontClass = !typography?.fontClassName;
 
   const cssVars = useMemo(
     () =>
@@ -280,6 +282,8 @@ export const Input: FC<InputProps> = ({
     <textarea
       className={mergeClasses(
         styles.textarea,
+        noCustomFontClass && styles.textareaFont,
+        typography?.fontClassName,
         'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
       )}
       ref={textareaRef}
@@ -306,7 +310,8 @@ export const Input: FC<InputProps> = ({
       className={mergeClasses(
         styles.wrapper,
         isInputDisabled && styles.wrapperDisabled,
-        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border px-3 py-2',
+        'flex min-h-[56px] w-full max-w-[748px] flex-col justify-center gap-3 rounded-xl border',
+        attachments.length > 6 ? 'py-3 pl-3' : 'p-3',
         className,
       )}
     >
@@ -339,7 +344,7 @@ export const Input: FC<InputProps> = ({
       ) : (
         <div
           className={mergeClasses(
-            'flex items-center gap-2',
+            'flex items-center gap-2 mobile:gap-y-3',
             isStackedLayout ? 'flex-wrap' : 'flex-wrap desktop:flex-nowrap',
           )}
         >
@@ -422,6 +427,7 @@ export const Input: FC<InputProps> = ({
                         hasBlockedAttachments
                       }
                       ariaLabel={sendLabel}
+                      title={sendTitle}
                     />
                   )
                 )}

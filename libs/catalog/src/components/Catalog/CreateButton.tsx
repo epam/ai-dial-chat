@@ -112,7 +112,14 @@ export const CreateButton: FC<CreateButtonProps> = ({
             className={styles.menu}
             onKeyDown={handleMenuKeyDown}
           >
-            <div className={mergeClasses(styles.menuCaption, 'dial-tiny-semi-text')}>Create new</div>
+            <div
+              className={mergeClasses(
+                styles.menuCaption,
+                'dial-tiny-semi-text',
+              )}
+            >
+              Create new
+            </div>
 
             {options.map((opt, i) => (
               <button
@@ -147,9 +154,23 @@ export const CreateButton: FC<CreateButtonProps> = ({
                 )}
 
                 <div className={styles.itemText}>
-                  <span className={mergeClasses(styles.itemLabel, 'dial-small-semi-text')}>{opt.label}</span>
+                  <span
+                    className={mergeClasses(
+                      styles.itemLabel,
+                      'dial-small-semi-text',
+                    )}
+                  >
+                    {opt.label}
+                  </span>
                   {opt.description && (
-                    <span className={mergeClasses(styles.itemDescription, 'dial-tiny-text')}>{opt.description}</span>
+                    <span
+                      className={mergeClasses(
+                        styles.itemDescription,
+                        'dial-tiny-text',
+                      )}
+                    >
+                      {opt.description}
+                    </span>
                   )}
                 </div>
               </button>

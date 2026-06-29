@@ -58,29 +58,31 @@ export const TitleRow: FC<TitleRowProps> = ({
       <div className="flex items-center gap-2">
         {/* Segmented view toggle: bg-layer-3 track, active button stands out */}
         <div className="flex items-center rounded-[8px] bg-layer-3 p-0.5">
-          {([CatalogViewMode.Grid, CatalogViewMode.List] as const).map((mode) => {
-            const isActive = viewMode === mode;
-            return (
-              <DialGhostIconButton
-                key={mode}
-                size={ElementSize.Small}
-                icon={
-                  mode === CatalogViewMode.Grid ? (
-                    <IconLayoutCards size={DIAL_ICON_SIZE.SM} />
-                  ) : (
-                    <IconLayoutList size={DIAL_ICON_SIZE.SM} />
-                  )
-                }
-                onClick={() => onViewModeChange(mode)}
-                className={mergeClasses(
-                  'rounded-[6px]',
-                  isActive
-                    ? '!bg-layer-0 !text-accent-primary shadow-sm'
-                    : '!text-secondary',
-                )}
-              />
-            );
-          })}
+          {([CatalogViewMode.Grid, CatalogViewMode.List] as const).map(
+            (mode) => {
+              const isActive = viewMode === mode;
+              return (
+                <DialGhostIconButton
+                  key={mode}
+                  size={ElementSize.Small}
+                  icon={
+                    mode === CatalogViewMode.Grid ? (
+                      <IconLayoutCards size={DIAL_ICON_SIZE.SM} />
+                    ) : (
+                      <IconLayoutList size={DIAL_ICON_SIZE.SM} />
+                    )
+                  }
+                  onClick={() => onViewModeChange(mode)}
+                  className={mergeClasses(
+                    'rounded-[6px]',
+                    isActive
+                      ? '!bg-layer-0 !text-accent-primary shadow-sm'
+                      : '!text-secondary',
+                  )}
+                />
+              );
+            },
+          )}
         </div>
 
         <div className={mergeClasses('mx-0.5 h-5 w-px', styles.divider)} />

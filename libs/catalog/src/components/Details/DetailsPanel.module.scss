@@ -6,7 +6,7 @@
 }
 
 .panel {
-  background: var(--bg-layer-0, #000000);
+  background: var(--bg-layer-0, #fcfcfc);
   border-inline-start-color: var(--stroke-secondary, #242c42);
 }
 
@@ -35,9 +35,10 @@
 
 .activeTab {
   border-image: linear-gradient(
-    135deg,
-    var(--bg-accent-secondary, #37babc) 0%,
-    var(--bg-accent-primary, #5c8dea) 30%,
-    var(--bg-accent-tertiary, #a972ff) 100%
-  ) 1;
+      135deg,
+      var(--bg-accent-secondary, #37babc) 0%,
+      var(--bg-accent-primary, #5c8dea) 30%,
+      var(--bg-accent-tertiary, #a972ff) 100%
+    )
+    1;
 }
