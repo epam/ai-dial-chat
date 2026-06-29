@@ -22,6 +22,8 @@ export const CardRowRenderer = ({
   onToggleFavorite,
   onItemClick,
   featuredLabel,
+  addToFavoritesAriaLabel,
+  removeFromFavoritesAriaLabel,
 }: CardRowRendererProps): ReactElement => {
   const start = rowIndex * columnCount;
   const rowItems = items.slice(start, start + columnCount);
@@ -50,6 +52,8 @@ export const CardRowRenderer = ({
                 onToggle={onToggleFavorite}
                 onClick={onItemClick}
                 featuredLabel={featuredLabel}
+                addToFavoritesAriaLabel={addToFavoritesAriaLabel}
+                removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
                 className="h-full"
               />
             )}

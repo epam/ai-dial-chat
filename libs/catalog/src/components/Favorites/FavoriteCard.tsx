@@ -25,6 +25,10 @@ export interface FavoriteCardProps {
   lastUsedClassName?: string;
   /** Search query string; matching text in the name is highlighted when provided. */
   query?: string;
+  /** Accessible label for the star button when the item is not starred. Default: `'Add to favorites'`. */
+  addToFavoritesAriaLabel?: string;
+  /** Accessible label for the star button when the item is already starred. Default: `'Remove from favorites'`. */
+  removeFromFavoritesAriaLabel?: string;
 }
 
 /** Compact favorite card: logo + type + name + version + last-used, star aligned right. */
@@ -37,6 +41,8 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   versionClassName,
   lastUsedClassName,
   query,
+  addToFavoritesAriaLabel = 'Add to favorites',
+  removeFromFavoritesAriaLabel = 'Remove from favorites',
 }) => {
   const [isStarred, setIsStarred] = useState(initialIsStarred);
   const [isLeaving, setIsLeaving] = useState(false);
@@ -105,7 +111,9 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
         isStarred={isStarred}
         size={ElementSize.Small}
         onClick={handleToggle}
-        ariaLabel={isStarred ? 'Remove from favorites' : 'Add to favorites'}
+        ariaLabel={
+          isStarred ? removeFromFavoritesAriaLabel : addToFavoritesAriaLabel
+        }
         className="self-end"
       />
     </article>

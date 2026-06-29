@@ -61,6 +61,8 @@ export const Favorites: FC<FavoritesProps> = ({
   onExitComplete,
   prevPageAriaLabel = 'Previous page',
   nextPageAriaLabel = 'Next page',
+  addToFavoritesAriaLabel,
+  removeFromFavoritesAriaLabel,
 }) => {
   const titleClassName =
     favoritesStyles?.typography?.titleClassName ?? 'dial-h3-text text-primary';
@@ -399,6 +401,8 @@ export const Favorites: FC<FavoritesProps> = ({
               item={item}
               onToggle={onToggleFavorite}
               onClick={onItemClick}
+              addToFavoritesAriaLabel={addToFavoritesAriaLabel}
+              removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
             />
           ))}
         </div>

@@ -26,6 +26,8 @@ export const Card: FC<CardProps> = ({
   initialIsStarred = false,
   onToggle,
   featuredLabel = 'Featured',
+  addToFavoritesAriaLabel = 'Add to favorites',
+  removeFromFavoritesAriaLabel = 'Remove from favorites',
   className,
   styles: cardStyles,
 }) => {
@@ -137,7 +139,9 @@ export const Card: FC<CardProps> = ({
             isStarred={isStarred}
             size={ElementSize.Small}
             onClick={handleStarToggle}
-            ariaLabel={isStarred ? 'Remove from favorites' : 'Add to favorites'}
+            ariaLabel={
+              isStarred ? removeFromFavoritesAriaLabel : addToFavoritesAriaLabel
+            }
           />
         </div>
       </div>

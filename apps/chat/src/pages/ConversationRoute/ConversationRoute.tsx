@@ -27,7 +27,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_CATALOG_ITEMS } from '../../components/CatalogView/mock-catalog-items';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
@@ -55,6 +54,7 @@ import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmen
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useDialFileManagerState } from '../../hooks/files/useDialFileManagerState';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { useUserProfile } from '../../hooks/user-profile/useUserProfile';
 import { getApiErrorMessage } from '../../server-api/api-error';
@@ -72,6 +72,7 @@ import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { getTimeOfDayGreeting } from '../../utils/greeting';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import {
   getStarterPopulateText,
   getStartersFromSchema,
@@ -142,39 +143,13 @@ const ConversationRoute: FC = () => {
 
   const [isCatalogPickerOpen, setIsCatalogPickerOpen] = useState(false);
 
-  const [favoritedIds, setFavoritedIds] = useState<ReadonlySet<string>>(
+  const { favoriteIds, toggleFavorite } = useFavoriteApplications();
+  const favoriteCatalogItems = useMemo(
     () =>
-      new Set(
-        MOCK_CATALOG_ITEMS.filter((item) => item.isUserFavorite).map(
-          (item) => item.id,
-        ),
-      ),
-  );
-
-  const mockFavoriteItems = useMemo(
-    () => MOCK_CATALOG_ITEMS.filter((item) => favoritedIds.has(item.id)),
-    [favoritedIds],
-  );
-
-  const handlePickerToggleFavorite = useCallback(
-    (id: string, isFavorite: boolean) => {
-      setFavoritedIds((prev) => {
-        const next = new Set(prev);
-        if (isFavorite) next.add(id);
-        else next.delete(id);
-        return next;
-      });
-      if (!isFavorite) {
-        const name =
-          MOCK_CATALOG_ITEMS.find((item) => item.id === id)?.name ?? id;
-        showNotification({
-          variant: NotificationVariant.Info,
-          title: t(CatalogI18nKeys.FavoriteRemovedTitle),
-          message: t(CatalogI18nKeys.FavoriteRemoved, { name }),
-        });
-      }
-    },
-    [showNotification, t],
+      items
+        .filter((d) => favoriteIds.has(d.id))
+        .map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
+    [items, favoriteIds],
   );
 
   const { inputAttachmentTypes, isAttachmentsAllowed, validateAttachment } =
@@ -222,12 +197,17 @@ const ConversationRoute: FC = () => {
       responseFormat: chatSettingsValues.responseFormat,
       systemPrompt: chatSettingsValues.systemPrompt,
       temperature: chatSettingsValues.temperature,
-      onSave: (values: ChatSettingsValues) =>
+      onSave: (values: ChatSettingsValues) => {
         setChatSettingsValues((prev) => ({
           responseFormat: values.responseFormat ?? prev.responseFormat,
           systemPrompt: values.systemPrompt ?? prev.systemPrompt,
           temperature: values.temperature ?? prev.temperature,
-        })),
+        }));
+        showNotification({
+          variant: NotificationVariant.Success,
+          message: t(ChatSettingsI18nKeys.SavedNotification),
+        });
+      },
       menuItemLabel: t(ChatI18nKeys.ChatSettings),
       title: t(ChatSettingsI18nKeys.Title),
       responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
@@ -250,7 +230,7 @@ const ConversationRoute: FC = () => {
       saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
       saveDisabledTooltip: t(ChatSettingsI18nKeys.SaveDisabledTooltip),
     }),
-    [selectedDeployment?.features, chatSettingsValues, t],
+    [selectedDeployment?.features, chatSettingsValues, t, showNotification],
   );
 
   const modelSelectorLabels = useMemo(
@@ -567,10 +547,10 @@ const ConversationRoute: FC = () => {
             modelPickerOverlay={(onClose) => (
               <Suspense fallback={null}>
                 <ModelPickerPanel
-                  favorites={mockFavoriteItems}
+                  favorites={favoriteCatalogItems}
                   selectedId={selectedItemId}
                   onSelect={setSelectedItemId}
-                  onToggleFavorite={handlePickerToggleFavorite}
+                  onToggleFavorite={toggleFavorite}
                   onBrowseCatalog={() => setIsCatalogPickerOpen(true)}
                   onClose={onClose}
                   labels={{

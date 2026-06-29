@@ -54,4 +54,8 @@ export interface FavoritesProps {
   prevPageLabel?: string;
   /** Visible label for the "next page" button. Default: 'Next'. */
   nextPageLabel?: string;
+  /** Accessible label for the star button when the item is not starred. Default: 'Add to favorites'. */
+  addToFavoritesAriaLabel?: string;
+  /** Accessible label for the star button when the item is already starred. Default: 'Remove from favorites'. */
+  removeFromFavoritesAriaLabel?: string;
 }
