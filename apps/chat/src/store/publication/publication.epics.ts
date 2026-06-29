@@ -672,6 +672,13 @@ const uploadPublishedWithMeItemsFailEpic: AppEpic = (action$) =>
     ),
   );
 
+const chatPanelFeatureTypes = [FeatureType.Chat, FeatureType.File];
+const promptPanelFeatureTypes = [
+  FeatureType.Prompt,
+  FeatureType.Application,
+  FeatureType.Toolset,
+];
+
 const approvePublicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.approvePublication.type),
@@ -1033,6 +1040,23 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
             );
           }
 
+          const chatPanelPubs = PublicationSelectors.selectFilteredPublications(
+            chatPanelFeatureTypes,
+            true,
+          )(state);
+          const resolvedInChatPanel = chatPanelPubs.some(
+            (p) => p.url === payload.url,
+          );
+          const panelPubs = resolvedInChatPanel
+            ? chatPanelPubs
+            : PublicationSelectors.selectFilteredPublications(
+                promptPanelFeatureTypes,
+                false,
+              )(state);
+          const resolvedPublicationIndex = panelPubs.findIndex(
+            (p) => p.url === payload.url,
+          );
+
           return concat(
             ...actions,
             of(
@@ -1044,6 +1068,8 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 triggerPublicFilesListing: selectedPublication.resources.some(
                   (resource) => isFileId(resource.reviewUrl),
                 ),
+                resolvedPublicationIndex,
+                resolvedInChatPanel,
               }),
             ),
           );
@@ -1074,13 +1100,37 @@ const approvePublicationFailEpic: AppEpic = (action$) =>
     ),
   );
 
-const rejectPublicationEpic: AppEpic = (action$) =>
+const rejectPublicationEpic: AppEpic = (action$, state$) =>
   action$.pipe(
     ofType(PublicationActions.rejectPublication.type),
-    switchMap(({ payload }) =>
-      PublicationService.rejectPublication(payload.url).pipe(
+    switchMap(({ payload }) => {
+      const state = state$.value;
+      const chatPanelPubs = PublicationSelectors.selectFilteredPublications(
+        chatPanelFeatureTypes,
+        true,
+      )(state);
+      const resolvedInChatPanel = chatPanelPubs.some(
+        (p) => p.url === payload.url,
+      );
+      const panelPubs = resolvedInChatPanel
+        ? chatPanelPubs
+        : PublicationSelectors.selectFilteredPublications(
+            promptPanelFeatureTypes,
+            false,
+          )(state);
+      const resolvedPublicationIndex = panelPubs.findIndex(
+        (p) => p.url === payload.url,
+      );
+
+      return PublicationService.rejectPublication(payload.url).pipe(
         switchMap(() =>
-          of(PublicationActions.rejectPublicationSuccess({ url: payload.url })),
+          of(
+            PublicationActions.rejectPublicationSuccess({
+              url: payload.url,
+              resolvedPublicationIndex,
+              resolvedInChatPanel,
+            }),
+          ),
         ),
         catchError((err) => {
           console.error(err);
@@ -1088,8 +1138,8 @@ const rejectPublicationEpic: AppEpic = (action$) =>
             PublicationActions.rejectPublicationFail(parseApiError(err)),
           );
         }),
-      ),
-    ),
+      );
+    }),
   );
 
 const rejectPublicationFailEpic: AppEpic = (action$) =>
@@ -1135,39 +1185,74 @@ const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
       PublicationActions.rejectPublicationSuccess.type,
       PublicationActions.approvePublicationSuccess.type,
     ),
-    switchMap(() => {
-      const state = state$.value;
+    switchMap(
+      ({
+        payload,
+      }: {
+        payload: {
+          resolvedPublicationIndex: number;
+          resolvedInChatPanel: boolean;
+        };
+      }) => {
+        const state = state$.value;
+        const publications = PublicationSelectors.selectPublications(state);
 
-      const publications = PublicationSelectors.selectPublications(state);
+        if (!publications.length) {
+          const conversations =
+            ConversationsSelectors.selectConversations(state);
 
-      if (!publications.length) {
-        const conversations = ConversationsSelectors.selectConversations(state);
+          return iif(
+            () => !!conversations.length,
+            of(
+              ConversationsActions.selectConversations({
+                conversationIds: [conversations[0].id],
+              }),
+            ),
+            of(
+              ConversationsActions.createNewConversations({
+                names: [
+                  translate(ChatI18nKeys.NewConversation, {
+                    ns: Translation.Chat,
+                  }),
+                ],
+              }),
+            ),
+          );
+        }
 
-        return iif(
-          () => !!conversations.length,
-          of(
-            ConversationsActions.selectConversations({
-              conversationIds: [conversations[0].id],
-            }),
-          ),
-          of(
-            ConversationsActions.createNewConversations({
-              names: [
-                translate(ChatI18nKeys.NewConversation, {
-                  ns: Translation.Chat,
-                }),
-              ],
-            }),
+        const samePanelPublications = payload.resolvedInChatPanel
+          ? PublicationSelectors.selectFilteredPublications(
+              chatPanelFeatureTypes,
+              true,
+            )(state)
+          : PublicationSelectors.selectFilteredPublications(
+              promptPanelFeatureTypes,
+              false,
+            )(state);
+
+        const otherPanelPublications = payload.resolvedInChatPanel
+          ? PublicationSelectors.selectFilteredPublications(
+              promptPanelFeatureTypes,
+              false,
+            )(state)
+          : PublicationSelectors.selectFilteredPublications(
+              chatPanelFeatureTypes,
+              true,
+            )(state);
+
+        // Next below resolved index in same panel → first in same panel → first in other panel
+        const nextPublication =
+          samePanelPublications[payload.resolvedPublicationIndex] ??
+          samePanelPublications[0] ??
+          otherPanelPublications[0];
+
+        return ConversationService.setSelectedConversationsIds([]).pipe(
+          map(() =>
+            PublicationActions.uploadPublication({ url: nextPublication.url }),
           ),
         );
-      }
-
-      return ConversationService.setSelectedConversationsIds([]).pipe(
-        map(() =>
-          PublicationActions.uploadPublication({ url: publications[0].url }),
-        ),
-      );
-    }),
+      },
+    ),
   );
 
 const uploadRulesEpic: AppEpic = (action$) =>
