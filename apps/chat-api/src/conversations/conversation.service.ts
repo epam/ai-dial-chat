@@ -1,5 +1,7 @@
 import {
   BadGatewayException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   ServiceUnavailableException,
@@ -16,7 +18,11 @@ import {
   ConversationResponseDto,
 } from '../openapi/openapi-response.dto';
 import { UserConfigService } from '../user-config/user-config.service';
-import { PUBLIC_BUCKET } from './constants/conversation.constants';
+import {
+  MAX_LIST_DISPLAY_NAME_ENRICHMENTS,
+  PUBLIC_BUCKET,
+} from './constants/conversation.constants';
+import { ConversationNamingService } from './conversation-naming.service';
 import {
   ConversationListItemDto,
   ConversationListResponseDto,
@@ -64,8 +70,43 @@ export class ConversationService extends AppService {
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     private readonly userConfigService: UserConfigService,
+    @Inject(forwardRef(() => ConversationNamingService))
+    private readonly conversationNamingService: ConversationNamingService,
   ) {
     super(configService);
+  }
+
+  private async conversationPathExists(
+    token: string,
+    bucket: string,
+    relativePath: string,
+  ): Promise<boolean> {
+    try {
+      const { data, error } = (await this.client.getConversationMetadata(
+        bucket,
+        encodeDialResourcePath(relativePath),
+        { headers: getBearerAuthHeaders(token) },
+      )) as { data?: unknown; error?: unknown };
+
+      if (error != null) {
+        if (isHttpLikeError(error) && error.status === 404) {
+          return false;
+        }
+        this.logger.warn(
+          `Path collision check failed for "${relativePath}"; using UUID suffix`,
+          error,
+        );
+        return true;
+      }
+
+      return data != null;
+    } catch (error) {
+      this.logger.warn(
+        `Path collision check threw for "${relativePath}"; using UUID suffix`,
+        error,
+      );
+      return true;
+    }
   }
 
   private async fetchAllUserTitles(
@@ -126,9 +167,16 @@ export class ConversationService extends AppService {
     const now = Date.now();
     const uuid = crypto.randomUUID();
     const baseName = getConversationName('New chat', firstMessage);
-    const existingTitles = await this.fetchAllUserTitles(token, bucket);
-    const name = resolveUniqueConversationName(baseName, existingTitles);
-    const conversationPath = `${deploymentId}__${name}`;
+    const name = baseName;
+    const twoPartPath = `${deploymentId}__${baseName}`;
+    const pathExists = await this.conversationPathExists(
+      token,
+      bucket,
+      twoPartPath,
+    );
+    const conversationPath = pathExists
+      ? `${deploymentId}__${baseName}__${uuid}`
+      : twoPartPath;
     const folderId = `${bucket}`; // TODO: check
 
     const userMessage: ConversationMessageDto = {
@@ -184,29 +232,85 @@ export class ConversationService extends AppService {
     token: string,
     sessionBucket: string,
   ): Promise<ConversationResponseDto> {
-    const slashIndex = conversationPath.indexOf('/');
-    const bucket =
-      slashIndex === -1 ? sessionBucket : conversationPath.slice(0, slashIndex);
-    const subPath =
-      slashIndex === -1
-        ? conversationPath
-        : conversationPath.slice(slashIndex + 1);
-
     try {
-      const { data, error } = (await this.client.getConversation(
-        bucket,
-        encodeDialResourcePath(subPath),
-        { headers: getBearerAuthHeaders(token) },
-      )) as { data?: unknown; error?: unknown };
-      if (error != null || !data) {
-        this.logger.error('DIAL Core rejected getConversation', error);
-        return handleDialError(error);
-      }
-      return data as ConversationResponseDto;
+      const { conversation, subPath } = await this.getStoredConversation(
+        conversationPath,
+        token,
+        sessionBucket,
+      );
+      const filename = subPath.split('/').pop() ?? subPath;
+      const pathTitle = getConversationTitleFromName(
+        safeDecodeURIComponent(filename),
+      );
+      const resolvedName = this.resolveListDisplayTitle(
+        pathTitle,
+        conversation,
+      );
+      return resolvedName === conversation.name
+        ? conversation
+        : { ...conversation, name: resolvedName };
     } catch (error) {
       this.logger.error('DIAL Core rejected getConversation', error);
       return handleDialError(error);
     }
+  }
+
+  private resolveConversationLocation(
+    conversationPath: string,
+    sessionBucket: string,
+  ): { bucket: string; subPath: string } {
+    if (
+      conversationPath === sessionBucket ||
+      conversationPath.startsWith(`${sessionBucket}/`)
+    ) {
+      return {
+        bucket: sessionBucket,
+        subPath:
+          conversationPath === sessionBucket
+            ? ''
+            : conversationPath.slice(sessionBucket.length + 1),
+      };
+    }
+
+    if (
+      conversationPath === PUBLIC_BUCKET ||
+      conversationPath.startsWith(`${PUBLIC_BUCKET}/`)
+    ) {
+      return {
+        bucket: PUBLIC_BUCKET,
+        subPath:
+          conversationPath === PUBLIC_BUCKET
+            ? ''
+            : conversationPath.slice(PUBLIC_BUCKET.length + 1),
+      };
+    }
+
+    return { bucket: sessionBucket, subPath: conversationPath };
+  }
+
+  private async getStoredConversation(
+    conversationPath: string,
+    token: string,
+    sessionBucket: string,
+  ): Promise<{ conversation: ConversationResponseDto; subPath: string }> {
+    const { bucket, subPath } = this.resolveConversationLocation(
+      conversationPath,
+      sessionBucket,
+    );
+
+    const { data, error } = (await this.client.getConversation(
+      bucket,
+      encodeDialResourcePath(subPath),
+      { headers: getBearerAuthHeaders(token) },
+    )) as { data?: unknown; error?: unknown };
+    if (error != null || !data) {
+      throw error ?? new Error('Conversation not found');
+    }
+
+    return {
+      conversation: data as ConversationResponseDto,
+      subPath,
+    };
   }
 
   async pinConversation(
@@ -293,7 +397,58 @@ export class ConversationService extends AppService {
         this.logger.error('Failed to migrate pin on rename', err),
       );
 
+    await this.syncStoredDisplayNameAfterPathRename(
+      renamedPath,
+      sanitisedTitle,
+      token,
+      bucket,
+    );
+
     return { newPath: buildConversationUrl(bucket, renamedPath) };
+  }
+
+  /**
+   * Path rename (moveResource) updates the filename only. Sync `conversation.name`
+   * in the stored body so list enrichment and GET do not keep an LLM title.
+   */
+  private async syncStoredDisplayNameAfterPathRename(
+    conversationPath: string,
+    displayName: string,
+    token: string,
+    bucket: string,
+  ): Promise<void> {
+    try {
+      const { conversation: data } = await this.getStoredConversation(
+        conversationPath,
+        token,
+        bucket,
+      );
+      if (data.name?.trim() === displayName) {
+        return;
+      }
+
+      const { bucket: saveBucket, subPath } = this.resolveConversationLocation(
+        conversationPath,
+        bucket,
+      );
+
+      const { error: saveError } = (await this.client.saveConversation(
+        saveBucket,
+        encodeDialResourcePath(subPath),
+        {
+          headers: getBearerAuthHeaders(token),
+          body: { ...data, name: displayName } as never,
+        },
+      )) as { error?: unknown };
+      if (saveError != null) {
+        this.logger.warn(
+          'Failed to sync display name after path rename',
+          saveError,
+        );
+      }
+    } catch (error) {
+      this.logger.warn('Failed to sync display name after path rename', error);
+    }
   }
 
   async duplicateConversation(
@@ -630,11 +785,15 @@ export class ConversationService extends AppService {
               })
           : [];
 
-      const items = [...userItems, ...publicItems, ...sharedItems]
-        .sort((a, b) => b.updatedAt - a.updatedAt)
-        .filter(
-          (item) => item.id !== HIDDEN_FILE && !item.id.includes(HIDDEN_FILE),
-        );
+      const items = await this.enrichListItemsWithStoredDisplayNames(
+        [...userItems, ...publicItems, ...sharedItems]
+          .sort((a, b) => b.updatedAt - a.updatedAt)
+          .filter(
+            (item) => item.id !== HIDDEN_FILE && !item.id.includes(HIDDEN_FILE),
+          ),
+        token,
+        bucket,
+      );
 
       return {
         items,
@@ -682,24 +841,162 @@ export class ConversationService extends AppService {
     bucket: string,
     conversation: ConversationResponseDto,
   ): Promise<ConversationResponseDto> {
+    const bodyToSave = await this.preserveLlmDisplayName(
+      conversationPath,
+      token,
+      bucket,
+      conversation,
+    );
+
     try {
       const { data, error } = (await this.client.saveConversation(
         bucket,
         encodeDialResourcePath(conversationPath),
         {
           headers: getBearerAuthHeaders(token),
-          body: conversation as never,
+          body: bodyToSave as never,
         },
       )) as { data?: unknown; error?: unknown };
       if (error != null || !data) {
         this.logger.error('DIAL Core rejected saveConversation', error);
         return handleDialError(error);
       }
-      return { ...data, ...conversation } as ConversationResponseDto;
+      const saved = { ...data, ...bodyToSave } as ConversationResponseDto;
+      if (saved.llmNamingDone !== true) {
+        this.conversationNamingService.maybeRenameAfterFirstReply(
+          conversationPath,
+          token,
+          bucket,
+          saved,
+        );
+      }
+      return saved;
     } catch (error) {
       this.logger.error('DIAL Core rejected saveConversation', error);
       return handleDialError(error);
     }
+  }
+
+  /**
+   * Client saves often carry a stale message-derived `name`. Once LLM naming has
+   * persisted a display title, later saves must not overwrite it.
+   */
+  private async preserveLlmDisplayName(
+    conversationPath: string,
+    token: string,
+    bucket: string,
+    conversation: ConversationResponseDto,
+  ): Promise<ConversationResponseDto> {
+    if (conversation.llmNamingDone === true) {
+      return conversation;
+    }
+
+    try {
+      const { conversation: existing } = await this.getStoredConversation(
+        conversationPath,
+        token,
+        bucket,
+      );
+      if (existing.llmNamingDone === true && existing.name?.trim()) {
+        return {
+          ...conversation,
+          name: existing.name,
+          llmNamingDone: true,
+        };
+      }
+    } catch {
+      // New conversations or transient read failures keep the incoming body.
+    }
+
+    return conversation;
+  }
+
+  private getListItemRelativePath(itemId: string): string {
+    const decodedId = safeDecodeURIComponent(itemId);
+    const parts = decodedId.split('/');
+    if (parts.length >= 3 && parts[0] === 'conversations') {
+      return parts.slice(2).join('/');
+    }
+    if (parts.length >= 2) {
+      return parts.slice(1).join('/');
+    }
+    return decodedId;
+  }
+
+  private async enrichListItemsWithStoredDisplayNames(
+    items: ConversationListItemDto[],
+    token: string,
+    bucket: string,
+  ): Promise<ConversationListItemDto[]> {
+    const enrichable = items.filter(
+      (item) => !item.isReadonly && !item.sharedWithMe && !item.publishedWithMe,
+    );
+    if (enrichable.length === 0) {
+      return items;
+    }
+
+    const candidates = [...enrichable]
+      .sort((left, right) => right.updatedAt - left.updatedAt)
+      .slice(0, MAX_LIST_DISPLAY_NAME_ENRICHMENTS);
+
+    const displayNameById = new Map<string, string>();
+    const batchSize = 25;
+
+    for (let index = 0; index < candidates.length; index += batchSize) {
+      const batch = candidates.slice(index, index + batchSize);
+      await Promise.all(
+        batch.map(async (item) => {
+          try {
+            const conversation = await this.getStoredConversation(
+              this.getListItemRelativePath(item.id),
+              token,
+              bucket,
+            );
+            const displayName = this.resolveListDisplayTitle(
+              item.title,
+              conversation.conversation,
+            );
+            if (displayName) {
+              displayNameById.set(item.id, displayName);
+            }
+          } catch {
+            // Keep the filename-derived title when the body cannot be read.
+          }
+        }),
+      );
+    }
+
+    return items.map((item) => {
+      const displayName = displayNameById.get(item.id);
+      return displayName ? { ...item, title: displayName } : item;
+    });
+  }
+
+  private resolveListDisplayTitle(
+    pathTitle: string,
+    conversation: ConversationResponseDto,
+  ): string {
+    const storedName = conversation.name?.trim();
+    if (!storedName) {
+      return pathTitle;
+    }
+    if (storedName === pathTitle) {
+      return storedName;
+    }
+
+    if (conversation.llmNamingDone !== true) {
+      return pathTitle;
+    }
+
+    const firstUserMessage = conversation.messages?.find(
+      (message) => message.role === ConversationMessageRole.User,
+    )?.content;
+    const messageDerivedTitle = getConversationName(
+      'New chat',
+      firstUserMessage ?? '',
+    );
+
+    return pathTitle === messageDerivedTitle ? storedName : pathTitle;
   }
 
   private isOwnedBySessionBucket(id: string, sessionBucket: string): boolean {

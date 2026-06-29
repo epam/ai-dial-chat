@@ -806,6 +806,12 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   responseFormat?: ConversationResponseDtoResponseFormatEnum;
+  /**
+   * When true, automatic LLM conversation naming has already run for this conversation.
+   * @type {boolean}
+   * @memberof ConversationResponseDto
+   */
+  llmNamingDone?: boolean;
 }
 
 /**
