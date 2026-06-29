@@ -649,7 +649,7 @@ dialTest(
           MockedChatApiResponseBodies.simpleTextBody,
         );
         const respPromise = page.waitForResponse((resp) =>
-          resp.url().includes(API.moveHost),
+          resp.url().includes(API.unsubscribeHost()),
         );
         const replayRequests = await chat.startReplayForDifferentModels();
         await respPromise;
