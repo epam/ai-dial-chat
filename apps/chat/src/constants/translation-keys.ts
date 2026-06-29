@@ -356,7 +356,6 @@ export enum AttachmentCanvasI18nKeys {
 export enum AppsEditorI18nKeys {
   StepGeneral = 'appsEditor.stepGeneral',
   StepSettings = 'appsEditor.stepSettings',
-  BackAriaLabel = 'appsEditor.backAriaLabel',
   GeneralFormNameLabel = 'appsEditor.generalForm.nameLabel',
   GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
   GeneralFormDescriptionLabel = 'appsEditor.generalForm.descriptionLabel',
@@ -364,7 +363,6 @@ export enum AppsEditorI18nKeys {
   GeneralFormIconUrlLabel = 'appsEditor.generalForm.iconUrlLabel',
   GeneralFormIconUrlPlaceholder = 'appsEditor.generalForm.iconUrlPlaceholder',
   GeneralFormNextButton = 'appsEditor.generalForm.nextButton',
-  GeneralFormCancelButton = 'appsEditor.generalForm.cancelButton',
   GeneralFormNameRequired = 'appsEditor.generalForm.nameRequired',
   GeneralFormVersionLabel = 'appsEditor.generalForm.versionLabel',
   GeneralFormVersionPlaceholder = 'appsEditor.generalForm.versionPlaceholder',

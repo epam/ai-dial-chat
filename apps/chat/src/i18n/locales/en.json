@@ -401,7 +401,6 @@
   "appsEditor": {
     "stepGeneral": "General",
     "stepSettings": "Settings",
-    "backAriaLabel": "Back",
     "generalForm": {
       "nameLabel": "Name",
       "namePlaceholder": "Enter application name",
@@ -410,7 +409,6 @@
       "iconUrlLabel": "Icon URL",
       "iconUrlPlaceholder": "https://...",
       "nextButton": "Next",
-      "cancelButton": "Cancel",
       "nameRequired": "Name is required",
       "versionLabel": "Version",
       "versionPlaceholder": "e.g. 1.0.0",

@@ -4,11 +4,8 @@ import type { FC } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
-  AppsEditorQuery,
-  AppsEditorStep,
-  QUERY_VALUE_TRUE,
-} from '../../constants/apps-editor';
+import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
+import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,

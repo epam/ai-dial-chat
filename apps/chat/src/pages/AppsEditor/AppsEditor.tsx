@@ -10,7 +10,7 @@ import type { FC } from 'react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AppsEditorQuery, AppsEditorStep } from '../../constants/apps-editor';
+import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { ROUTES } from '../../types/routes';

@@ -12,7 +12,7 @@ import {
 import type { FC } from 'react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppsEditorI18nKeys } from '../../constants/translation-keys';
+import { AppsEditorI18nKeys, ButtonsI18nKeys } from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
 
 interface Props {
@@ -147,7 +147,7 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
           <div className="flex w-full justify-end gap-3">
             <DialNeutralButton
               type="button"
-              label={t(AppsEditorI18nKeys.GeneralFormCancelButton)}
+              label={t(ButtonsI18nKeys.Cancel)}
               onClick={onCancel}
               disabled={isSubmitting}
             />

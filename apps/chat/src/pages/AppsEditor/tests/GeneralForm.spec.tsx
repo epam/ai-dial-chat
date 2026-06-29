@@ -2,7 +2,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppsEditorI18nKeys } from '../../../constants/translation-keys';
+import { AppsEditorI18nKeys, ButtonsI18nKeys } from '../../../constants/translation-keys';
 import { createApplication } from '../../../server-api/applications';
 import GeneralForm from '../GeneralForm';
 
@@ -111,7 +111,7 @@ const getNextButton = () =>
 
 const getCancelButton = () =>
   screen.getByRole('button', {
-    name: AppsEditorI18nKeys.GeneralFormCancelButton,
+    name: ButtonsI18nKeys.Cancel,
   }) as HTMLButtonElement;
 
 describe('GeneralForm', () => {
