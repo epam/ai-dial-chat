@@ -223,6 +223,17 @@ export class ChatMessagesAssertion extends BaseAssertion {
     );
   }
 
+  public async assertMessageImageDownloadName(
+    message: number,
+    expectedName: string,
+  ) {
+    await this.assertElementAttribute(
+      this.chatMessages.getAttachmentLink(message),
+      Attributes.download,
+      expectedName,
+    );
+  }
+
   public assertCopiedMessage(copiedMessage: string, expectedMessage: string) {
     this.assertValue(copiedMessage.replace(/\r\n/g, '\n'), expectedMessage);
   }

@@ -196,7 +196,10 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
     return this.userSignInRequest;
   }
 
-  async setupSignOutRoute(): Promise<void> {
+  async setupSignOutRoute(options?: {
+    isSignedInGlobal?: boolean;
+    isSignedInUser?: boolean;
+  }): Promise<void> {
     const signOutUrl = `**${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_OUT}`;
     await this.page.route(signOutUrl, async (route, request) => {
       const requestData = request.postDataJSON();
@@ -205,8 +208,8 @@ export abstract class BaseAuthMockHelper<T extends SignInRequest> {
       }
 
       this.state.isSignedIn = false;
-      this.isSignedInGlobal = false;
-      this.isSignedInUser = false;
+      this.isSignedInGlobal = options?.isSignedInGlobal ?? false;
+      this.isSignedInUser = options?.isSignedInUser ?? false;
       this.state.signOutRequest = requestData;
 
       await route.fulfill({

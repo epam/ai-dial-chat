@@ -418,6 +418,10 @@ export const ExpectedConstants = {
     `Successful login\nYou have successfully logged into the "${name}" version ${version} with credentials to entire organization.`,
   personalLoginSuccessfulMessage: (name: string, version: string) =>
     `Successful login\nYou have successfully logged into the "${name}" version ${version} with personal credentials.`,
+  personalLogoutSuccessfulMessage: (name: string, version: string) =>
+    `Successful logout\nYou have successfully logged out of the "${name}" version ${version} using your personal credentials.`,
+  orgLogoutSuccessfulMessage: (name: string, version: string) =>
+    `Successful logout\nYou have successfully logged out of the "${name}" version ${version} with credentials to entire organization.`,
   copyToolsetUrlPattern: (toolset: Toolset) =>
     new RegExp(`/v1/toolset/${toolset.id ?? toolset.name}/mcp$`),
 };
@@ -616,6 +620,7 @@ export const API = {
   authorizationEndpoint: (endpoint: string) => `${endpoint}/oauth/authorize`,
   tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
   toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
+  unsubscribeHost: () => `${API.api}/client-channels/unsubscribe`,
 };
 
 export const Import = {
@@ -831,7 +836,9 @@ export enum SignInButtonTitles {
 export enum ManageCredsModalText {
   title = 'Manage credentials',
   personalCredsText = 'Log in with personal credentials.',
-  orgCredsText = 'Log in with credentials that will be available to other users in the organization.',
+  orgCredsLoginText = 'Log in with credentials that will be available to other users in the organization.',
+  myCredsLogoutText = 'Log out of the toolset using personal credentials.',
+  orgCredsAllUsersLogoutText = 'Log out of the toolset for all users in the organization using these credentials.',
 }
 
 export const ExpectedConfirmationPopupData = {
