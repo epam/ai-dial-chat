@@ -4,9 +4,9 @@ import type { DisplayAttachment, Stage } from '@epam/ai-dial-chat-shared';
 export interface CollapsedGroupColors {
   /** Color of the toggle button label and icon. Defaults to `var(--text-secondary, #575F73)`. */
   labelColor?: string;
-  /** Color of the toggle button label and icon on hover. Defaults to `var(--text-primary, #eef1f7)`. */
+  /** Color of the toggle button label and icon on hover. Defaults to `var(--text-primary, #161B2D)`. */
   labelHoverColor?: string;
-  /** Color of the steps count. Defaults to `var(--text-primary, #eef1f7)`. */
+  /** Color of the steps count. Defaults to `var(--text-primary, #161B2D)`. */
   stepsCountColor?: string;
   /** Border color of the completed-stages content box. Defaults to `var(--stroke-secondary, #242c42)`. */
   contentBorderColor?: string;

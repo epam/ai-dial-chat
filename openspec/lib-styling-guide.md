@@ -154,12 +154,6 @@ const noCustomClass = !typography?.fontClassName;
 const cssVars = buildCssVars({
   '--ci-bg': colors?.background,
   '--ci-text': colors?.text,
-  // font class takes priority — skip individual typography vars when fontClassName is set
-  '--ci-font-size': noCustomClass ? typography?.fontSize : undefined,
-  '--ci-font-weight': noCustomClass ? typography?.fontWeight?.toString() : undefined,
-  '--ci-line-height': noCustomClass ? typography?.lineHeight?.toString() : undefined,
-  '--ci-letter-spacing': noCustomClass ? typography?.letterSpacing : undefined,
-  '--ci-font-family': noCustomClass ? typography?.fontFamily : undefined,
 });
 
 return <div style={cssVars} className={mergeClasses(styles.wrapper, 'flex w-full ...', className)}>

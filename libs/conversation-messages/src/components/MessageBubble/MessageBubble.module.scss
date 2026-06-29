@@ -41,12 +41,5 @@
 }
 
 .text {
-  color: var(--cm-bubble-text, var(--text-primary, #eef1f7));
-}
-
-.textFont {
-  font-size: var(--cm-bubble-font-size, 16px);
-  font-weight: var(--cm-bubble-font-weight, 400);
-  line-height: var(--cm-bubble-line-height, 1.5);
-  font-family: var(--cm-bubble-font-family, var(--theme-font, sans-serif));
+  color: var(--cm-bubble-text, var(--text-primary, #161b2d));
 }

@@ -38,7 +38,6 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   attachmentClickLabel,
 }) => {
   const { colors, typography } = bubbleStyles ?? {};
-  const noCustomClass = !typography?.fontClassName;
 
   const {
     textRef,
@@ -53,16 +52,6 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   const cssVars = buildCssVars({
     '--cm-bubble-user-bg': colors?.userBackground,
     '--cm-bubble-text': colors?.text,
-    '--cm-bubble-font-family': noCustomClass
-      ? typography?.fontFamily
-      : undefined,
-    '--cm-bubble-font-size': noCustomClass ? typography?.fontSize : undefined,
-    '--cm-bubble-font-weight': noCustomClass
-      ? typography?.fontWeight
-      : undefined,
-    '--cm-bubble-line-height': noCustomClass
-      ? typography?.lineHeight
-      : undefined,
     '--cm-bubble-collapsed-height': isOverflowing
       ? `${collapsedMaxHeight}px`
       : undefined,
@@ -76,11 +65,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
       ? 'rounded-ee-[6px] rounded-se-[16px]'
       : 'rounded-se-[6px] rounded-ee-[16px]';
 
-  const textClass = mergeClasses(
-    styles.text,
-    noCustomClass && styles.textFont,
-    typography?.fontClassName,
-  );
+  const textClass = mergeClasses(styles.text, typography?.fontClassName);
   const expandAriaLabel = showMoreAriaLabel ?? showMoreLabel;
   const collapseAriaLabel = showLessAriaLabel ?? showLessLabel;
   const toggleLabel = isCollapsed ? showMoreLabel : showLessLabel;

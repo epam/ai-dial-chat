@@ -1,10 +1,3 @@
 .welcome {
   color: var(--ci-welcome-color, var(--text-primary, #161b2d));
 }
-
-.welcomeFont {
-  font-family: var(--ci-welcome-font-family);
-  font-size: var(--ci-welcome-font-size);
-  font-weight: var(--ci-welcome-font-weight);
-  line-height: var(--ci-welcome-line-height);
-}

@@ -2,9 +2,6 @@
   background: var(--cm-source-bg, var(--bg-neutral, #fcfcfc));
   border-color: var(--cm-source-border, var(--stroke-secondary, #d1dbea));
   color: var(--cm-source-text, var(--text-primary, #161b2d));
-  font-size: var(--cm-source-font-size, 10px);
-  font-weight: var(--cm-source-font-weight, 400);
-  line-height: var(--cm-source-line-height, 0.75rem);
 
   &:hover,
   &:active {

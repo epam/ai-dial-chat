@@ -41,17 +41,10 @@
     &::placeholder {
       color: var(
         --ci-placeholder-disabled,
-        var(--controls-text-secondary-disable, #575f73)
+        var(--controls-text-secondary-disable, #9fa6bd)
       );
     }
   }
-}
-
-.textareaFont {
-  font-family: var(--ci-font-family);
-  font-size: var(--ci-font-size);
-  font-weight: var(--ci-font-weight);
-  line-height: var(--ci-line-height);
 }
 
 .stopIcon {
@@ -105,20 +98,21 @@
 .sendButton {
   background: var(--ci-send-bg, var(--controls-bg-accent-primary, #124ace));
   color: var(--ci-send-text, var(--controls-text-permanent, #fcfcfc));
-  font-family: var(--ci-font-family);
-  font-size: var(--ci-font-size);
 
   &:hover {
     background: var(
       --ci-send-bg-hover,
-      var(--controls-bg-accent-primary-hover, #3664e2)
+      <<<<<<< HEAD var(--controls-bg-accent-primary-hover, #3664e2) =======
+        var(--controls-bg-accent-primary-hover, #2656d9) >>>>>>> development-1.0
     );
   }
 
   &:active {
     background: var(
       --ci-send-bg-active,
-      var(--controls-bg-accent-primary-active, #7da4ff)
+      <<<<<<< HEAD var(--controls-bg-accent-primary-active, #7da4ff) =======
+        var(--controls-bg-accent-primary-active, #3664e2) >>>>>>>
+        development-1.0
     );
   }
 
@@ -126,7 +120,8 @@
     background: var(--ci-send-bg-disabled, var(--controls-bg-disable, #d1dbea));
     color: var(
       --ci-send-text-disabled,
-      var(--controls-text-accent-disable, #d1dbea)
+      <<<<<<< HEAD var(--controls-text-accent-disable, #d1dbea) =======
+        var(--controls-text-primary-disable, #696e7c) >>>>>>> development-1.0
     );
   }
 }
