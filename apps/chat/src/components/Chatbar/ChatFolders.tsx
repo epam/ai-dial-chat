@@ -35,6 +35,7 @@ import {
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import { ChatI18nKeys } from '@/src/constants/i18n';
+import { CHAT_PANEL_PUBLICATION_FEATURE_TYPES } from '@/src/constants/publication';
 import {
   APPROVE_REQUIRED_SECTION_NAME,
   ORGANIZATION_SECTION_NAME,
@@ -57,7 +58,7 @@ interface ChatFolderProps {
   includeEmpty: boolean;
 }
 
-const publicationFeatureTypes = [FeatureType.Chat, FeatureType.File];
+const publicationFeatureTypes = CHAT_PANEL_PUBLICATION_FEATURE_TYPES;
 
 const ChatFolderTemplate = ({
   folder,

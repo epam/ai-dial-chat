@@ -145,8 +145,7 @@ export const publicationSlice = createSlice({
         url: string;
         triggerModelsListing: boolean;
         triggerPublicFilesListing: boolean;
-        resolvedPublicationIndex: number;
-        resolvedInChatPanel: boolean;
+        nextPublicationUrl: string | null;
       }>,
     ) => {
       state.isPublicationUpdating = false;
@@ -171,8 +170,7 @@ export const publicationSlice = createSlice({
         payload,
       }: PayloadAction<{
         url: string;
-        resolvedPublicationIndex: number;
-        resolvedInChatPanel: boolean;
+        nextPublicationUrl: string | null;
       }>,
     ) => {
       state.isPublicationUpdating = false;
