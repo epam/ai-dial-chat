@@ -621,10 +621,7 @@ export class BasePage {
           custom_content: {
             attachments: [
               {
-                data: 'That is a mock prompt example',
-                title: 'Revised prompt',
-              },
-              {
+                index: 0,
                 title: imageName,
                 type: imageType,
                 url: `${imagePath}/${imageName}`,
