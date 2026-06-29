@@ -63,6 +63,8 @@ export interface ConversationSourcesPanelProps {
   sources: QuotationSource[];
   /** Called when the user activates an attachment card. */
   onAttachmentClick?: (attachment: DisplayAttachment) => void;
+  /** Called when the user clicks a source link. When omitted, the link navigates normally. */
+  onSourceClick?: (source: QuotationSource) => void;
   /** Whether the viewport is in mobile breakpoint (disables resizing). */
   isMobile: boolean;
   /** Initial panel width in pixels. */
@@ -89,6 +91,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
   generated,
   sources,
   onAttachmentClick,
+  onSourceClick,
   isMobile,
   defaultWidth,
   minWidth,
@@ -203,6 +206,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
               linkClassName={styles?.sourceLinkClassName}
               quoteClassName={styles?.sourceQuoteClassName}
               copyLabel={labels.copySourceLabel}
+              onSourceClick={onSourceClick}
             />
           </>
         )}

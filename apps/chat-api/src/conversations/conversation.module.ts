@@ -1,4 +1,4 @@
-import { forwardRef, Module } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { AppConfigModule } from '../app-config/app-config.module';
 import { UserConfigModule } from '../user-config/user-config.module';
 import { ConversationNamingService } from './conversation-naming.service';
@@ -14,7 +14,7 @@ import { ConversationService } from './conversation.service';
     ConversationNamingService,
     {
       provide: CONVERSATION_PERSISTENCE,
-      useExisting: forwardRef(() => ConversationService),
+      useExisting: ConversationService,
     },
   ],
 })

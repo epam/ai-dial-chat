@@ -71,7 +71,7 @@ export const UserMenu = memo(() => {
       src={image}
       width={28}
       height={28}
-      alt="User avatar"
+      alt={t(AuthI18nKeys.UserAvatar)}
       onError={() => setIsFallbackIconShown(true)}
     />
   );

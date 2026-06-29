@@ -22,6 +22,7 @@ const makeSource = (
 ): QuotationSource => ({
   url,
   title,
+  contentType: 'application/pdf',
   quote,
 });
 

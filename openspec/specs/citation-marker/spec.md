@@ -16,7 +16,10 @@ interface AnnotationGroup {
 
 Grouping rules:
 - Annotations are grouped by `body.source.attachment.url`.
-- `sourceName` SHALL be derived by extracting the last path segment of the URL (decoded, without query params); if that segment is empty or not parseable, fall back to the URL hostname.
+- `sourceName` SHALL be resolved in priority order:
+  1. `body.source.attachment.title` when present and non-empty.
+  2. Otherwise, extract the last non-empty decoded path segment of the URL (without query params); for absolute URLs use `new URL()` to parse; for relative paths split on `/` directly.
+  3. If no path segment is found for an absolute URL, fall back to the URL hostname.
 - Within a group, annotations SHALL preserve their original order.
 - Annotations without `body.source.attachment.url` SHALL be excluded (already filtered by `useAnnotations`).
 
@@ -34,10 +37,20 @@ Grouping rules:
 - **WHEN** `groupAnnotationsBySource` is called with two annotations with different `body.source.attachment.url` values
 - **THEN** the result contains two `AnnotationGroup` objects
 
-#### Scenario: Source name uses filename from URL path
+#### Scenario: Source name prefers attachment.title over URL
 
-- **WHEN** the attachment URL is `https://files.example.com/path/to/report.pdf`
+- **WHEN** the annotation has `body.source.attachment.title = "Q3 Revenue Report"` and URL `https://files.example.com/path/to/abc123.pdf`
+- **THEN** `sourceName` is `"Q3 Revenue Report"`
+
+#### Scenario: Source name uses filename from absolute URL path when title is absent
+
+- **WHEN** the attachment URL is `https://files.example.com/path/to/report.pdf` and `attachment.title` is absent
 - **THEN** `sourceName` is `"report.pdf"`
+
+#### Scenario: Source name uses filename from relative URL path when title is absent
+
+- **WHEN** the attachment URL is `files/6FEup-abc/Group1-2.pdf` (a relative path, no protocol) and `attachment.title` is absent
+- **THEN** `sourceName` is `"Group1-2.pdf"`
 
 #### Scenario: Source name falls back to hostname when path has no filename
 
@@ -84,6 +97,46 @@ interface CitationMarkerProps {
 
 ---
 
+### Requirement: `useAnnotations` resolves the annotation list for a message
+
+`apps/chat/src/hooks/annotations/useAnnotations.ts` SHALL export `useAnnotations(message: Message, isStreaming: boolean): Annotation[]` that:
+
+- Returns `[]` immediately when `isStreaming` is `true` (markers are suppressed while streaming is active).
+- When not streaming, resolves annotations in priority order:
+  1. `message.custom_content?.annotations` — the internal normalised format accumulated by `apply-chunk.ts` as streaming deltas arrive.
+  2. `message['custom_fields']?.annotations` — the raw DIAL API wire format present on messages loaded from the server rather than streamed in the current session. These are normalised via `normalizeRawAnnotations(raw, message.custom_content?.attachments ?? [])` from `apps/chat/src/utils/annotation.ts`.
+- Filters the resolved list to exclude annotations without `body.source.attachment.url`.
+- Handles `null`/`undefined` annotation items gracefully (skips them without throwing).
+- Wraps the result in `useMemo` keyed on `[isStreaming, contentAnnotations, attachments, customFields]`.
+
+`normalizeRawAnnotations` converts raw DIAL `pdf_region` selectors (`{ left, top, width, height }`) to internal `PdfBBoxSelector` (`{ x1, y1, x2, y2, page }`) and resolves `attachment_index` references against the message's attachment list.
+
+**i18n**: none.
+**RTL**: none — hook returns data only.
+**Feature flag**: none.
+
+#### Scenario: Returns empty array during streaming
+
+- **WHEN** `useAnnotations` is called with `isStreaming: true`
+- **THEN** it returns `[]` regardless of what `message.custom_content?.annotations` contains
+
+#### Scenario: Returns internal normalised annotations for a completed streamed message
+
+- **WHEN** `message.custom_content.annotations` has entries and `isStreaming` is `false`
+- **THEN** those annotations (filtered to those with `body.source.attachment.url`) are returned without normalisation
+
+#### Scenario: Falls back to raw `custom_fields.annotations` for server-loaded messages
+
+- **WHEN** `message.custom_content?.annotations` is absent but `message['custom_fields']?.annotations` is a non-empty array and `isStreaming` is `false`
+- **THEN** `normalizeRawAnnotations` is applied and the normalised, filtered list is returned
+
+#### Scenario: Annotations without a source URL are excluded
+
+- **WHEN** the resolved annotation list contains one entry with `body.source.attachment.url` and one without
+- **THEN** only the entry with a URL is included in the returned array
+
+---
+
 ### Requirement: Citation markers injected into rendered assistant message text
 
 The assistant message markdown renderer in `apps/chat` SHALL inject `<CitationMarker>` components after the character offset indicated by each `AnnotationGroup`'s `primaryAnnotation.target.selector` (type `text_character_range`, using the `end` index as the insertion point).
@@ -108,7 +161,7 @@ Injection rules:
 #### Scenario: No markers during streaming
 
 - **WHEN** `isStreaming` is `true`
-- **THEN** no `CitationMarker` components are rendered in the message bubble
+- **THEN** `useAnnotations` returns `[]`, `groups` is empty, `markdownComponents` returns `{}`, and no `CitationMarker` components are rendered in the message bubble
 
 #### Scenario: Missing selector appends marker at end of text
 
