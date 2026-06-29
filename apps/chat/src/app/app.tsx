@@ -173,7 +173,7 @@ const App: FC = () => {
       <main
         id="main-content"
         role="main"
-        className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#F5F7FA]"
+        className="bg-layer-5 flex min-h-0 min-w-0 flex-1 flex-col"
       >
         <Header
           onMenuToggle={toggleNav}

@@ -76,6 +76,9 @@
     },
     {
       "path": "../../libs/attachment-canvas/tsconfig.lib.json"
+    },
+    {
+      "path": "../../libs/ai-dial-kit/tsconfig.lib.json"
     }
   ]
 }

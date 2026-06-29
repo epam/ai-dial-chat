@@ -279,12 +279,7 @@ const ConversationMessageItem: FC<Props> = ({
         ariaLabels,
       )}
       className={isUserMessage ? 'justify-end' : 'justify-start'}
-      bubbleClassName={mergeClasses(
-        msg.hasStreamError ? 'w-full' : undefined,
-        isUserMessage
-          ? '!rounded-ss-[16px] !rounded-se-[16px] !rounded-ee-[6px] !rounded-es-[16px] border border-secondary'
-          : undefined,
-      )}
+      bubbleClassName={mergeClasses(msg.hasStreamError ? 'w-full' : undefined)}
       styles={{
         colors: { userBackground: 'var(--bg-layer-2)' },
         typography: { fontClassName: 'dial-body-text' },

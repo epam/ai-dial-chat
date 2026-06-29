@@ -72,7 +72,9 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
   });
 
   const positionRadius =
-    position === BubblePosition.Top ? 'rounded-ee-[24px]' : 'rounded-se-[24px]';
+    position === BubblePosition.Top
+      ? 'rounded-ee-[6px] rounded-se-[16px]'
+      : 'rounded-se-[6px] rounded-ee-[16px]';
 
   const textClass = mergeClasses(
     styles.text,
@@ -97,7 +99,7 @@ export const UserMessageBubble: FC<UserMessageBubbleProps> = ({
           <div
             className={mergeClasses(
               styles.userBubble,
-              'flex w-fit items-center justify-end rounded-es-[16px] rounded-ss-[16px] px-6 py-4',
+              'flex w-fit items-center justify-end rounded-es-[16px] rounded-ss-[16px] border px-6 py-4',
               positionRadius,
               bubbleClassName,
             )}

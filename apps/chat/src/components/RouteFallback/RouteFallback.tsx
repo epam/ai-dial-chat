@@ -1,6 +1,6 @@
+import { Spinner } from '@epam/ai-dial-kit';
 import { memo, type FC } from 'react';
-import PageLoader from '../PageLoader/PageLoader';
 
-const RouteFallback: FC = () => <PageLoader />;
+const RouteFallback: FC = () => <Spinner />;
 
 export default memo(RouteFallback);
