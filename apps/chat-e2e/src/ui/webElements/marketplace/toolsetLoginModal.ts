@@ -66,6 +66,11 @@ export class ToolsetLoginModal extends Popup {
     ToolsetLoginModalSelectors.loginButton,
     this.orgCredsContent.getElementLocator(),
   );
+  public orgCredsLogoutButton = new Button(
+    this.page,
+    ToolsetLoginModalSelectors.logoutButton,
+    this.orgCredsContent.getElementLocator(),
+  );
   public myCredsAccordion = this.getChildElementBySelector(
     ToolsetLoginModalSelectors.myCredsAccordion,
   );
@@ -79,6 +84,11 @@ export class ToolsetLoginModal extends Popup {
   public myCredsLoginButton = new Button(
     this.page,
     ToolsetLoginModalSelectors.loginButton,
+    this.myCredsContent.getElementLocator(),
+  );
+  public myCredsLogoutButton = new Button(
+    this.page,
+    ToolsetLoginModalSelectors.logoutButton,
     this.myCredsContent.getElementLocator(),
   );
   public orgCredsText = this.orgCredsContent.getChildElementBySelector(Tags.p);
