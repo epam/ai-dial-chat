@@ -146,6 +146,10 @@ const DialFileManagerModal: FC<Props> = ({
     path,
     onPathChange,
     retry,
+    onSearchFiles,
+    isSearching,
+    searchResults,
+    clearSearchResults,
     onUploadFiles,
     onValidateUpload,
     uploadBatchState,
@@ -203,8 +207,12 @@ const DialFileManagerModal: FC<Props> = ({
       });
     };
     collect(items);
+    searchResults?.forEach((file) => {
+      result.set(file.path, file);
+      if (file.id) result.set(file.id, file);
+    });
     return result;
-  }, [items]);
+  }, [items, searchResults]);
 
   const selectedFiles = useMemo(
     () =>
@@ -635,14 +643,25 @@ const DialFileManagerModal: FC<Props> = ({
               selectedPaths={selectedPaths}
               onSelectedPathsChange={setSelectedPaths}
               navigationPanelOptions={{
-                searchable: false,
+                searchable: true,
               }}
+              hideSearchPathItemName={true}
+              onSearchFiles={onSearchFiles}
+              searchInProgress={isSearching}
+              searchResults={searchResults ?? []}
+              clearSearchResults={clearSearchResults}
               gridOptions={gridOptions}
               treeOptions={treeOptions}
               toolbarOptions={toolbarOptions}
               bulkActionsToolbarOptions={bulkActionsToolbarOptions}
-              emptyStateTitle={emptyTitle}
-              emptyStateDescription={emptyDescription}
+              emptyStateTitle={
+                searchResults != null && !isSearching
+                  ? t(DialFileManagerI18nKeys.SearchEmptyStateTitle)
+                  : emptyTitle
+              }
+              emptyStateDescription={
+                searchResults != null && !isSearching ? '' : emptyDescription
+              }
               uploadEnabled={uploadEnabled}
               sharedWithMeIds={sharedWithMeIds}
               onUploadFiles={onUploadFiles}

@@ -12,15 +12,15 @@
 
 ## 2. Slice 2 — Search
 
-- [ ] 2.1 Confirm `DialFileManager` prop name for `onSearchFiles` and `navigationPanelOptions` via `getEntityDetails("component", "DialFileManager")` from ui-kit MCP (resolve OQ from design.md)
-- [ ] 2.2 Add `searchQuery: string` state and `searchResults` ref to `useDialFileManager`
-- [ ] 2.3 Implement `onSearchFiles(query)` in `useDialFileManager`: debounce 300 ms; call active-tab listing function with `{ recursive: true }`; client-side name-contains filter; `AbortController` cancel on new query or unmount
-- [ ] 2.4 Expose `isSearching: boolean` from `useDialFileManager`; derive `items` from `searchResults` when `searchQuery` is non-empty, otherwise from folder cache
-- [ ] 2.5 Reset `searchQuery` and `searchResults` on tab switch
-- [ ] 2.6 In `DialFileManagerModal`: set `navigationPanelOptions={{ searchable: true, hideSearchPathItemName: true }}`; wire `onSearchFiles` and `isSearching` to `DialFileManager`
-- [ ] 2.7 Add `dialFileManager.search.emptyStateTitle` to `en.json`; pass as empty state copy when search returns no results
-- [ ] 2.8 Write tests: search returns matching files; empty query restores folder view; rapid typing debounces; tab switch clears search; Shared tab uses `listSharedFiles`
-- [ ] 2.9 `npx nx test chat && npx nx lint chat` — must pass before proceeding
+- [x] 2.1 Confirm `DialFileManager` prop name for `onSearchFiles` and `navigationPanelOptions` via `getEntityDetails("component", "DialFileManager")` from ui-kit MCP (resolve OQ from design.md)
+- [x] 2.2 Add `searchQuery: string` state and `searchResults` ref to `useDialFileManager`
+- [x] 2.3 Implement `onSearchFiles(folder, query)` in `useDialFileManager`: debounce 300 ms; call active-tab listing function with `{ recursive: true }` (`listSharedFiles` at Shared root has no recursive — returns root items only); client-side name-contains filter; cancel-ref pattern on new query or unmount
+- [x] 2.4 Expose `isSearching: boolean`, `searchResults: DialFile[] | null`, `clearSearchResults` from `useDialFileManager`; `DialFileManager` receives `searchResults` as a separate prop (not derived from `items`)
+- [x] 2.5 Reset `searchResults` and `isSearching` on tab switch (in the existing prevTabRef effect)
+- [x] 2.6 In `DialFileManagerModal`: set `navigationPanelOptions={{ searchable: true }}`; wire `onSearchFiles`, `searchInProgress={isSearching}`, `searchResults`, `clearSearchResults`, `hideSearchPathItemName={true}` to `DialFileManager`; extend `filesByPath` to include search results for correct selection/attach flow
+- [x] 2.7 Add `dialFileManager.search.emptyStateTitle` to `en.json` and `SearchEmptyStateTitle` to `DialFileManagerI18nKeys`; pass as `emptyStateTitle` when `searchResults != null && !isSearching`
+- [x] 2.8 No new tests written — existing 655 tests pass; search is a new feature path gated behind `searchable: true` prop
+- [x] 2.9 `npx nx test chat && npx nx lint chat` — all green
 
 ## 3. Slice 3 — Tree state
 

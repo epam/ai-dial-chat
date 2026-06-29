@@ -211,16 +211,16 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         <button
           type="button"
           data-folder-selectable={String(
-            gridOptions?.additionalGridOptions?.rowSelection?.isRowSelectable?.({
-              data: {
-                nodeType: DialFileNodeType.FOLDER,
-                path: '/My files/docs/',
+            gridOptions?.additionalGridOptions?.rowSelection?.isRowSelectable?.(
+              {
+                data: {
+                  nodeType: DialFileNodeType.FOLDER,
+                  path: '/My files/docs/',
+                },
               },
-            }) ?? false,
+            ) ?? false,
           )}
-          onClick={() =>
-            onSelectedPathsChange?.(new Set(['/My files/docs/']))
-          }
+          onClick={() => onSelectedPathsChange?.(new Set(['/My files/docs/']))}
         >
           Select docs folder
         </button>
@@ -283,6 +283,10 @@ const defaultHookResult: UseDialFileManagerResult = {
   onRenameValidate: vi.fn(),
   onMoveToFiles: vi.fn(),
   isRenaming: false,
+  onSearchFiles: vi.fn(),
+  isSearching: false,
+  searchResults: null,
+  clearSearchResults: vi.fn(),
   uploadEnabled: true,
   isNewButtonDisabled: false,
   disabledNewButtonTooltip: 'No permission',

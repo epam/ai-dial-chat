@@ -381,6 +381,9 @@
       "modifiedDate": "Modified date",
       "size": "Size",
       "author": "Author"
+    },
+    "search": {
+      "emptyStateTitle": "No results found"
     }
   },
   "userConfig": {

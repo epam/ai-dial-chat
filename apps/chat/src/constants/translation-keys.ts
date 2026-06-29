@@ -222,6 +222,7 @@ export enum DialFileManagerI18nKeys {
   RenameReservedName = 'dialFileManager.renameReservedName',
   RenameInvalidChars = 'dialFileManager.renameInvalidChars',
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
+  SearchEmptyStateTitle = 'dialFileManager.search.emptyStateTitle',
 }
 
 export enum AuthI18nKeys {
