@@ -938,7 +938,7 @@ dialAdminTest(
       async () => {
         await adminToolsetLoginModal.myCredsAccordion.click();
         await adminToolsetLoginModalAssertion.assertMyCredsSectionContent({
-          expectedText: ManageCredsModalText.orgCredsLogoutText,
+          expectedText: ManageCredsModalText.myCredsLogoutText,
           expectedLogoutBtnState: 'visible',
         });
       },
@@ -1011,6 +1011,7 @@ dialAdminTest(
             toolsetEntity.version,
           ),
         );
+        await adminToast.closeToast();
       },
     );
 

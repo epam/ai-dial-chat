@@ -837,7 +837,7 @@ export enum ManageCredsModalText {
   title = 'Manage credentials',
   personalCredsText = 'Log in with personal credentials.',
   orgCredsLoginText = 'Log in with credentials that will be available to other users in the organization.',
-  orgCredsLogoutText = 'Log out of the toolset using personal credentials.',
+  myCredsLogoutText = 'Log out of the toolset using personal credentials.',
   orgCredsAllUsersLogoutText = 'Log out of the toolset for all users in the organization using these credentials.',
 }
 

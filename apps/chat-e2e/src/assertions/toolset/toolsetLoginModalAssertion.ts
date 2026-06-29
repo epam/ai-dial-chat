@@ -154,13 +154,13 @@ export class ToolsetLoginModalAssertion extends BaseAssertion {
     if (attributesToVerify.expectedLoginBtnState) {
       await this.assertElementState(
         this.toolsetLoginModal.myCredsLoginButton,
-        'visible',
+        attributesToVerify.expectedLoginBtnState,
       );
     }
     if (attributesToVerify.expectedLogoutBtnState) {
       await this.assertElementState(
         this.toolsetLoginModal.myCredsLogoutButton,
-        'visible',
+        attributesToVerify.expectedLogoutBtnState,
       );
     }
   }
