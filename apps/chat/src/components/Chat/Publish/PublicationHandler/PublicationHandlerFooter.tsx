@@ -98,6 +98,7 @@ interface Props {
   isFormChanged: boolean;
   areRulesChanged: boolean;
   isDraftRuleFilterOpen: boolean;
+  isReview: boolean;
 }
 
 export const PublicationHandlerFooter = ({
@@ -106,6 +107,7 @@ export const PublicationHandlerFooter = ({
   isFormChanged,
   areRulesChanged,
   isDraftRuleFilterOpen,
+  isReview,
 }: Props) => {
   const router = useRouter();
   const { t } = useTranslation(Translation.Chat);
@@ -226,6 +228,8 @@ export const PublicationHandlerFooter = ({
       reviewed: ResourceToReview[],
       featureType: FeatureType,
     ) => {
+      if (isReview) return;
+
       const paths = uniq(
         [...toReview, ...reviewed].flatMap((resource) =>
           getParentFolderIdsFromEntityId(
@@ -243,7 +247,7 @@ export const PublicationHandlerFooter = ({
         );
       }
     },
-    [dispatch],
+    [dispatch, isReview],
   );
 
   const handlePublicationReview = useCallback(() => {

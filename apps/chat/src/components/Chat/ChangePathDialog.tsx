@@ -396,13 +396,22 @@ export const ChangePathDialog = ({
     gridEditingOptions,
   });
 
+  const publishedFolderIds = useMemo(
+    () => new Set(additionalOrganizationFolders.map((f) => f.id)),
+    [additionalOrganizationFolders],
+  );
+
   const isTempFolder = useCallback(
-    (id: string) =>
-      addedTempFolderIdsRef.current.has(id) ||
-      [...addedTempFolderIdsRef.current].some((rootId) =>
-        id.startsWith(`${rootId}/`),
-      ),
-    [],
+    (id: string) => {
+      if (publishedFolderIds.has(id)) return false;
+      return (
+        addedTempFolderIdsRef.current.has(id) ||
+        [...addedTempFolderIdsRef.current].some((rootId) =>
+          id.startsWith(`${rootId}/`),
+        )
+      );
+    },
+    [publishedFolderIds],
   );
 
   const handleOrganizationRenameValidation = useCallback(
