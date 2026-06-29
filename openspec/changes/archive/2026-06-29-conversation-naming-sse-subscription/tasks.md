@@ -28,6 +28,6 @@
 ## 6. Verification
 
 - [x] 6.1 Run `npm exec nx test chat-api` — all tests green
-- [ ] 6.2 Start both servers (`npm run start:all`) and create a new conversation with LLM naming enabled — confirm the title updates without polling GETs in the network tab
-- [ ] 6.3 Navigate to an old conversation (no `llmNamingDone`) and confirm no repeated GET /conversations calls appear in the network tab
-- [ ] 6.4 Navigate away mid-watch and confirm the SSE connection is closed (network tab shows request cancelled)
+- [x] 6.2 Start both servers (`npm run start:all`) and create a new conversation with LLM naming enabled — confirm the title updates without polling GETs in the network tab
+- [x] 6.3 Navigate to an old conversation (no `llmNamingDone`) and confirm no repeated GET /conversations calls appear in the network tab
+- [x] 6.4 Navigate away mid-watch and confirm the SSE connection is closed (network tab shows request cancelled)
