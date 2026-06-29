@@ -180,7 +180,8 @@
       "step_one": "step",
       "step_other": "steps"
     },
-    "attachMenuDialFileSystem": "DIAL file system"
+    "attachMenuDialFileSystem": "DIAL file system",
+    "addMenuTitle": "Add files"
   },
   "conversationPanel": {
     "title": "Chats",

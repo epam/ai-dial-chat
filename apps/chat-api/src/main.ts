@@ -30,6 +30,7 @@ async function bootstrap() {
           ],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           scriptSrc: ["'self'"],
+          workerSrc: ["'self'", 'blob:'],
           imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
         },
       },
