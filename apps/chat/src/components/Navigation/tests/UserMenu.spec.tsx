@@ -1,10 +1,10 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthI18nKeys } from '../../../constants/translation-keys';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
 import * as BreakpointModule from '../../../hooks/breakpoint/useBreakpoint';
-import { AuthI18nKeys } from '../../../constants/translation-keys';
 import { AuthStatus } from '../../../types/auth-status';
 import { UserMenu } from '../UserMenu';
 
@@ -113,7 +113,9 @@ describe('UserMenu', () => {
     );
 
     expect(screen.getByText('JD')).not.toBeNull();
-    expect(screen.queryByRole('img', { name: AuthI18nKeys.UserAvatar })).toBeNull();
+    expect(
+      screen.queryByRole('img', { name: AuthI18nKeys.UserAvatar }),
+    ).toBeNull();
   });
 
   it('switches to fallback when image fails to load', () => {

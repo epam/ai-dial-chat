@@ -18,7 +18,7 @@ export const StagesPanel: FC<StagesPanelProps> = ({
 }) => {
   const { colors, typography = { fontClassName: 'dial-small-text' } } =
     panelStyles ?? {};
-  const noCustomClass = !typography.fontClassName;
+
   const cssVars = buildCssVars({
     '--cs-bg': colors?.background,
     '--cs-border': colors?.border,
@@ -28,7 +28,6 @@ export const StagesPanel: FC<StagesPanelProps> = ({
     '--cs-completed': colors?.completedColor,
     '--cs-failed': colors?.failedColor,
     '--cs-button-bg': colors?.buttonBackground,
-    '--cs-font-family': noCustomClass ? typography?.fontFamily : undefined,
   });
 
   const lastRunningStageIndex = isStreaming

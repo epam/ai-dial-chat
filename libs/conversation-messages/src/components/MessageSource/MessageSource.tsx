@@ -11,20 +11,12 @@ export const MessageSource: FC<MessageSourceProps> = ({
   styles: sourceStyles,
 }) => {
   const { colors, typography } = sourceStyles ?? {};
-  const noCustomClass = !typography?.fontClassName;
   const cssVars = buildCssVars({
     '--cm-source-bg': colors?.background,
     '--cm-source-border': colors?.border,
     '--cm-source-text': colors?.text,
     '--cm-source-bg-hover': colors?.backgroundHover,
     '--cm-source-border-hover': colors?.borderHover,
-    '--cm-source-font-size': noCustomClass ? typography?.fontSize : undefined,
-    '--cm-source-font-weight': noCustomClass
-      ? typography?.fontWeight
-      : undefined,
-    '--cm-source-line-height': noCustomClass
-      ? typography?.lineHeight
-      : undefined,
   });
 
   return (

@@ -16,9 +16,9 @@
 .thinking {
   background: linear-gradient(
     270deg,
-    var(--cm-thinking-inverted, #161b2d) 0%,
-    var(--cm-thinking-secondary, var(--text-secondary, #9fa6bd)) 40%,
-    var(--cm-thinking-inverted, #161b2d) 80%
+    var(--cm-thinking-inverted, var(--bg-inverted, #161b2d)) 0%,
+    var(--cm-thinking-secondary, var(--text-secondary, #575f73)) 40%,
+    var(--cm-thinking-inverted, var(--bg-inverted, #161b2d)) 80%
   );
   background-size: 200% auto;
   -webkit-background-clip: text;
@@ -28,5 +28,5 @@
 }
 
 .secondaryBorder {
-  border-color: var(--cm-markdown-border, var(--stroke-secondary, #242c42));
+  border-color: var(--cm-markdown-border, var(--stroke-secondary, #d1dbea));
 }

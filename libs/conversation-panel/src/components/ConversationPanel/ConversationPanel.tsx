@@ -171,7 +171,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       [clearDragState, onMoveConversation],
     );
 
-    const hasTypographyClass = Boolean(typography?.fontClassName);
     const cssVars = buildCssVars({
       '--cp-bg': colors?.background,
       '--sb-border': colors?.border,
@@ -186,20 +185,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
       '--cp-new-chat-icon-bg-hover': colors?.newChatIconBackgroundHover,
       '--cp-new-chat-icon-bg-active': colors?.newChatIconBackgroundActive,
       '--cp-new-chat-icon': colors?.newChatIconColor,
-      '--cp-new-chat-radius': colors?.newChatBorderRadius,
       '--cp-new-chat-divider': colors?.newChatDivider,
-      '--cp-title-font-family': hasTypographyClass
-        ? undefined
-        : typography?.fontFamily,
-      '--cp-title-font-size': hasTypographyClass
-        ? undefined
-        : typography?.fontSize,
-      '--cp-title-font-weight': hasTypographyClass
-        ? undefined
-        : typography?.fontWeight?.toString(),
-      '--cp-title-line-height': hasTypographyClass
-        ? undefined
-        : typography?.lineHeight,
     });
 
     const filteredItems = useMemo(
