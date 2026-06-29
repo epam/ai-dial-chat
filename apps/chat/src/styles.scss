@@ -14,7 +14,6 @@
     @apply size-full bg-layer-1 text-primary;
     font-family: 'Inter', sans-serif;
     --theme-font: 'Inter', sans-serif;
-    --text-tertiary: #808898;
 
     // ConversationPanel CSS vars not exposed via the styles.colors prop.
     // These cascade into the panel's shadow DOM through inheritance.

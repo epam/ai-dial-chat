@@ -13,16 +13,11 @@
 }
 
 .iconSecondary {
-  color: var(--text-secondary, #575F73);
+  color: var(--cs-icon-secondary, var(--text-secondary, #575F73));
 }
 
 .stageContent {
   color: var(--cs-stage-text, var(--text-secondary, #575F73));
-  font-size: var(--cs-font-size);
-  font-weight: var(--cs-font-weight);
-  line-height: var(--cs-line-height);
-  letter-spacing: var(--cs-letter-spacing);
-  font-family: var(--cs-font-family);
 }
 
 .codeBlock {
