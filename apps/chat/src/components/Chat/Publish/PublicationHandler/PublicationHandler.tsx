@@ -827,6 +827,7 @@ export function PublicationHandler({ publication, onSubmit }: Props) {
             areRulesChanged={hasUserChangedRules}
             initialState={initialState}
             isDraftRuleFilterOpen={isRulesSetterVisible}
+            isReview={isReview}
           />
         </div>
         {isCompareModalOpened && comparePath && (

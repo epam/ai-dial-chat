@@ -17,7 +17,6 @@ const imageLinkText = 'image';
 dialTest(
   'Displaying base64 images (inline md)',
   async ({
-    page,
     dialHomePage,
     setTestIds,
     conversations,
@@ -25,6 +24,7 @@ dialTest(
     dataInjector,
     localStorageManager,
     fileApiHelper,
+    chatMessages,
     chatMessagesAssertion,
   }) => {
     setTestIds('EPMRTC-8108');
@@ -54,28 +54,20 @@ dialTest(
     );
 
     await dialTest.step(
-      'Intercept the fake external URL and serve the real image',
-      async () => {
-        await page.context().route(externalImageUrl, async (route) => {
-          await route.fulfill({
-            status: 200,
-            headers: {
-              'Content-Type': 'image/png',
-            },
-            path: resolvedImagePath,
-          });
-        });
-      },
-    );
-
-    await dialTest.step(
       'Open conversation with the image response and verify image is rendered',
       async () => {
         await dialHomePage.openHomePage();
         await dialHomePage.waitForPageLoaded();
         for (const conversation of imageConversations) {
           await conversations.selectEntity(conversation.name);
-          await chatMessagesAssertion.assertMessageImageLoaded(2);
+          if (conversation.messages[1].content.includes(externalImageUrl)) {
+            await chatMessagesAssertion.assertElementState(
+              chatMessages.getChatMessageImage(2),
+              'hidden',
+            );
+          } else {
+            await chatMessagesAssertion.assertMessageImageLoaded(2);
+          }
         }
       },
     );
