@@ -2835,3 +2835,16 @@ export interface UserProfileDto {
    */
   bucket: string;
 }
+/**
+ *
+ * @export
+ * @interface WatchConversationBodyDto
+ */
+export interface WatchConversationBodyDto {
+  /**
+   * Conversation sub-path (bucket-stripped), e.g. "gpt-4o__My Chat".
+   * @type {string}
+   * @memberof WatchConversationBodyDto
+   */
+  path: string;
+}

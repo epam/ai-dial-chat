@@ -20,13 +20,13 @@ import {
   getConversation,
   listConversations,
   renameConversation as apiRenameConversation,
+  watchConversation,
 } from '../server-api/conversations.api';
 import { conversationIdsMatch } from '../utils/conversation-id-match';
 import { getConversationPath } from '../utils/conversation-path';
 import { useUserConfig } from './UserConfigContext';
 
-const DISPLAY_NAME_POLL_INTERVAL_MS = 2000;
-const DISPLAY_NAME_POLL_MAX_ATTEMPTS = 25;
+const DISPLAY_NAME_WATCH_TIMEOUT_MS = 120_000;
 
 interface ConversationsContextType {
   /** Flat list of all loaded conversations. */
@@ -118,47 +118,85 @@ export const ConversationsProvider = ({
       previousName: string,
       onUpdated: (title: string) => void,
     ) => {
-      let cancelled = false;
-      let attempts = 0;
       const conversationPath = getConversationPath(
         normalizeConversationId(conversationId),
       );
 
-      const poll = async () => {
-        if (cancelled) return;
-        attempts += 1;
+      const controller = new AbortController();
 
+      const run = async () => {
+        let stream: ReadableStream<Uint8Array>;
         try {
-          const conversation = (await getConversation(
-            conversationPath,
-          )) as ConversationResponseDto;
-          const nextName = conversation.name?.trim();
-          if (
-            conversation.llmNamingDone === true ||
-            (nextName && nextName !== previousName.trim())
-          ) {
-            if (nextName) {
-              updateConversationTitle(conversationId, nextName);
-              onUpdated(nextName);
-              void silentRefreshConversations();
-            }
-            return;
-          }
+          stream = await watchConversation(conversationPath, controller.signal);
         } catch {
-          // Keep polling until attempts are exhausted.
+          return;
         }
 
-        if (!cancelled && attempts < DISPLAY_NAME_POLL_MAX_ATTEMPTS) {
-          window.setTimeout(() => {
-            void poll();
-          }, DISPLAY_NAME_POLL_INTERVAL_MS);
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        const timeoutId = window.setTimeout(() => {
+          controller.abort();
+        }, DISPLAY_NAME_WATCH_TIMEOUT_MS);
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+
+            const lines = buffer.split('\n');
+            buffer = lines.pop() ?? '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith('data:')) continue;
+
+              const data = trimmed.slice(5).trim();
+              let event: { url?: string; action?: string } | null = null;
+              try {
+                event = JSON.parse(data) as { url?: string; action?: string };
+              } catch {
+                continue;
+              }
+
+              if (event?.action !== 'UPDATE') continue;
+
+              try {
+                const conversation = (await getConversation(
+                  conversationPath,
+                )) as ConversationResponseDto;
+                const nextName = conversation.name?.trim();
+                if (
+                  conversation.llmNamingDone === true ||
+                  (nextName && nextName !== previousName.trim())
+                ) {
+                  if (nextName) {
+                    updateConversationTitle(conversationId, nextName);
+                    onUpdated(nextName);
+                    void silentRefreshConversations();
+                  }
+                  return;
+                }
+              } catch {
+                // Keep watching until stream ends or timeout.
+              }
+            }
+          }
+        } catch {
+          // AbortError on timeout/unmount or unexpected stream error — exit silently.
+        } finally {
+          clearTimeout(timeoutId);
+          reader.releaseLock();
         }
       };
 
-      void poll();
+      void run();
 
       return () => {
-        cancelled = true;
+        controller.abort();
       };
     },
     [silentRefreshConversations, updateConversationTitle],
@@ -260,15 +298,6 @@ export const ConversationsProvider = ({
       const conversationPath = normalizeConversationId(id);
       const { newPath } = await apiDuplicateConversation(conversationPath);
       await refreshConversations();
-      // Move the duplicate to the front so it appears at the top of My chats.
-      // The backend sorts by updatedAt, but DIAL Core may copy the source's
-      // timestamp on copyResource, making the position unpredictable.
-      setConversations((prev) => {
-        const idx = prev.findIndex((c) => c.id === newPath);
-        if (idx <= 0) return prev;
-        const dup = prev[idx];
-        return [dup, ...prev.slice(0, idx), ...prev.slice(idx + 1)];
-      });
       return newPath;
     },
     [refreshConversations],

@@ -1443,6 +1443,39 @@
         ]
       }
     },
+    "/api/v1/conversations/watch": {
+      "post": {
+        "description": "Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.",
+        "operationId": "watchConversation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchConversationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream of resource events"
+          },
+          "400": {
+            "description": "Invalid or missing path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "502": {
+            "description": "DIAL Core subscription failed"
+          }
+        },
+        "summary": "Subscribe to conversation resource updates via SSE",
+        "tags": ["conversations"]
+      }
+    },
     "/api/v1/conversations/duplicate": {
       "post": {
         "operationId": "duplicateConversation",
@@ -4119,6 +4152,17 @@
           "message",
           "model"
         ]
+      },
+      "WatchConversationBodyDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Conversation sub-path (bucket-stripped), e.g. \"gpt-4o__My Chat\".",
+            "example": "gpt-4o__My Chat"
+          }
+        },
+        "required": ["path"]
       },
       "RenameConversationBodyDto": {
         "type": "object",
