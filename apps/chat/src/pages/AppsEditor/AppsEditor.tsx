@@ -1,18 +1,12 @@
-import {
-  DIAL_ICON_SIZE,
-  DialIconButton,
-  DialNeutralButton,
-  DialSteps,
-} from '@epam/ai-dial-ui-kit';
+import { DialSteps } from '@epam/ai-dial-ui-kit';
 import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
-import { IconArrowLeft, IconArrowNarrowLeft } from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
 import GeneralForm from './GeneralForm';
 import SettingsStep from './SettingsStep';
@@ -36,10 +30,6 @@ const AppsEditor: FC = () => {
     () => schemas.find((s) => s.id === schemaId),
     [schemas, schemaId],
   );
-
-  const handleBack = useCallback(() => {
-    navigate(returnUrl);
-  }, [navigate, returnUrl]);
 
   const handleCreated = useCallback(
     (appId: string) => {
@@ -102,8 +92,6 @@ const AppsEditor: FC = () => {
             />
           </nav>
         </div>
-
-        <div></div>
       </header>
 
       <div className="min-h-0 flex-1 overflow-auto">

@@ -222,6 +222,7 @@ export enum DialFileManagerI18nKeys {
   RenameReservedName = 'dialFileManager.renameReservedName',
   RenameInvalidChars = 'dialFileManager.renameInvalidChars',
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
+  UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
 }
 
 export enum AuthI18nKeys {
@@ -236,6 +237,7 @@ export enum AuthI18nKeys {
   LogOut = 'auth.logOut',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
+  UserAvatar = 'auth.userAvatar',
 }
 
 export enum SettingsI18nKeys {
@@ -372,4 +374,11 @@ export enum AppsEditorI18nKeys {
   SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
   SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
   ErrorCreateFailed = 'appsEditor.error.createFailed',
+}
+
+export enum ErrorBoundaryI18nKeys {
+  Heading = 'errorBoundary.heading',
+  Description = 'errorBoundary.description',
+  RetryLabel = 'errorBoundary.retryLabel',
+  ReloadLabel = 'errorBoundary.reloadLabel',
 }

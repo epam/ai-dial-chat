@@ -228,7 +228,8 @@
     "userMenuLabel": "User menu",
     "logOut": "Log out",
     "logOutConfirmTitle": "Log out?",
-    "logOutConfirmDescription": "Are you sure you want to log out?"
+    "logOutConfirmDescription": "Are you sure you want to log out?",
+    "userAvatar": "User avatar"
   },
   "settings": {
     "language": "Language",
