@@ -21,6 +21,16 @@ vi.mock('@/src/hooks/useTranslation', () => ({
   useTranslation: () => ({ t: (key: string) => key }),
 }));
 
+vi.mock('@/src/store/hooks', () => ({
+  useAppSelector: vi.fn((selector) => selector()),
+}));
+
+vi.mock('@/src/store/selectors', () => ({
+  SettingsSelectors: {
+    selectAllowedImageSources: vi.fn(() => ''),
+  },
+}));
+
 const configurationSchema: MessageFormSchema = {
   type: 'object',
   properties: {

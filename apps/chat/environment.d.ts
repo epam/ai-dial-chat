@@ -19,6 +19,7 @@ declare global {
       ALLOWED_IFRAME_ORIGINS?: string;
       ALLOWED_IFRAME_SOURCES?: string;
       ALLOWED_SCRIPT_SOURCES?: string;
+      ALLOWED_IMAGE_SOURCES?: string;
       IS_IFRAME?: string;
       ALLOW_OPEN_SIGNIN_PAGE_IN_IFRAME?: string;
       CUSTOM_VISUALIZERS?: string;

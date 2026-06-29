@@ -299,6 +299,9 @@ const selectAsrModelId = (state: RootState) => rootSelector(state).asrModelId;
 const selectAudioTypesDefaultOrder = (state: RootState) =>
   rootSelector(state).audioTypesDefaultOrder;
 
+const selectAllowedImageSources = (state: RootState) =>
+  rootSelector(state).allowedImageSources;
+
 const selectIsCompareModeDisabled = createSelector(
   [selectEnabledFeatures],
   (enabledFeatures) => enabledFeatures.has(Feature.CompareModeDisabled),
@@ -349,5 +352,6 @@ export const SettingsSelectors = {
   selectResourceMaxSegmentBytes,
   selectAsrModelId,
   selectAudioTypesDefaultOrder,
+  selectAllowedImageSources,
   selectIsCompareModeDisabled,
 };

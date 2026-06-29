@@ -41,6 +41,7 @@ export interface SettingsState {
   externalAppsSchemaId?: string;
   dialApiHost?: string;
   dialCoreExternalUrl?: string;
+  allowedImageSources: string;
   defaultSystemPrompt?: string;
   asrModelId: string | null;
   audioTypesDefaultOrder: string[];

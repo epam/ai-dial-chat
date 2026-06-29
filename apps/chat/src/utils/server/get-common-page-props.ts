@@ -178,6 +178,7 @@ export const getCommonPageProps: GetServerSideProps = async ({
       process.env.EXTERNAL_APPS_SCHEMA_ID || DEFAULT_EXTERNAL_APPS_SCHEMA_ID,
     dialApiHost: process.env.DIAL_API_HOST || '',
     dialCoreExternalUrl: process.env.DIAL_CORE_EXTERNAL_URL || '',
+    allowedImageSources: process.env.ALLOWED_IMAGE_SOURCES || '',
     defaultSystemPrompt: process.env.NEXT_PUBLIC_DEFAULT_SYSTEM_PROMPT || '',
     asrModelId: process.env.ASR_MODEL || null,
     audioTypesDefaultOrder: parseCommaSeparatedList(
