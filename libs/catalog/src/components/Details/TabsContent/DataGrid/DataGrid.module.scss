@@ -1,5 +1,5 @@
 .container {
-  border: 1px solid var(--stroke-secondary, #242c42);
+  border: 1px solid var(--stroke-secondary, #d1dbea);
 }
 
 .header {
@@ -10,10 +10,10 @@
 }
 
 .cell {
-  color: var(--text-primary, #e4e6f0);
-  border-top: 1px solid var(--stroke-secondary, #242c42);
+  color: var(--text-primary, #161b2d);
+  border-top: 1px solid var(--stroke-secondary, #d1dbea);
 }
 
 .evenRow {
-  background: var(--bg-layer-1, rgba(0, 0, 0, 0.025));
+  background: var(--bg-layer-7, #00000006);
 }

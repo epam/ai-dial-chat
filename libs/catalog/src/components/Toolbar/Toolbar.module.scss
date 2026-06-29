@@ -1,5 +1,5 @@
 .section {
-  background: var(--cat-bg, var(--layer-6, #f8fafc));
+  background: var(--cat-bg, var(--bg-layer-6, #f8fafc));
 }
 
 .icon {
@@ -7,9 +7,14 @@
 }
 
 .divider {
-  background: var(--cat-browse-divider, var(--stroke-secondary, #242c42));
+  background: var(--cat-browse-divider, var(--stroke-secondary, #d1dbea));
 }
+
 // TODO: add for filters
 .clearAll {
-  color: var(--cat-browse-clear-all, var(--text-error, #f76464));
+  color: var(--cat-browse-clear-all, var(--text-error, #ae2f2f));
+}
+
+.viewToggle {
+  background-color: var(--cat-browse-view-toggle-bg, var(--bg-layer-3, #fcfcfc));
 }

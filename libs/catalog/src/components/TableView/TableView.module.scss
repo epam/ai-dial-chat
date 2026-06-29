@@ -3,7 +3,7 @@
 }
 
 .rowAlt {
-  background: var(--bg-layer-1, rgba(0, 0, 0, 0.025));
+  background: var(--bg-layer-7, #00000006);
 }
 
 .label {
@@ -11,11 +11,11 @@
 }
 
 .checkIcon {
-  color: var(--text-accent-secondary, #37babc);
+  color: var(--text-accent-secondary, #007274);
 }
 
 .valueTrue {
-  color: var(--text-primary, #eef1f7);
+  color: var(--text-primary, #161b2d);
 }
 
 .valueFalse {
@@ -23,5 +23,5 @@
 }
 
 .valueText {
-  color: var(--text-primary, #eef1f7);
+  color: var(--text-primary, #161b2d);
 }

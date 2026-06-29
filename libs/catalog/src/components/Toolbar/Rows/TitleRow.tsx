@@ -1,10 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GhostIconButton } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   ButtonVariant,
   DIAL_ICON_SIZE,
   DialButtonDropdown,
-  DialGhostIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutCards, IconLayoutList } from '@tabler/icons-react';
@@ -56,13 +56,12 @@ export const TitleRow: FC<TitleRowProps> = ({
       />
 
       <div className="flex items-center gap-2">
-        {/* Segmented view toggle: bg-layer-3 track, active button stands out */}
         <div className="flex items-center rounded-[8px] bg-layer-3 p-0.5">
           {([CatalogViewMode.Grid, CatalogViewMode.List] as const).map(
             (mode) => {
               const isActive = viewMode === mode;
               return (
-                <DialGhostIconButton
+                <GhostIconButton
                   key={mode}
                   size={ElementSize.Small}
                   icon={
@@ -73,12 +72,7 @@ export const TitleRow: FC<TitleRowProps> = ({
                     )
                   }
                   onClick={() => onViewModeChange(mode)}
-                  className={mergeClasses(
-                    'rounded-[6px]',
-                    isActive
-                      ? '!bg-layer-0 !text-accent-primary shadow-sm'
-                      : '!text-secondary',
-                  )}
+                  isActive={isActive}
                 />
               );
             },
