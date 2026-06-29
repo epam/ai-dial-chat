@@ -348,6 +348,9 @@ describe('AssistantMessageBubble — attachments', () => {
     const paragraph = screen.getByText(longToken);
     expect(paragraph.className).toContain('[overflow-wrap:anywhere]');
     expect(paragraph.className).toContain('break-words');
+    expect(paragraph.className).toContain('dial-body-paragraph-text');
+    expect(paragraph.className).toContain('mb-3');
+    expect(paragraph.className).toContain('[text-wrap:pretty]');
     expect(container.querySelector('.min-w-0.max-w-full')).not.toBeNull();
   });
 

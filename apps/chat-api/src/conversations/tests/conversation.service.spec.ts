@@ -744,6 +744,35 @@ describe('ConversationService', () => {
         'conversations/test-bucket/gpt-4o__New%20chat%201',
       );
     });
+
+    it('preserves temperature and responseFormat from the source conversation', async () => {
+      vi.spyOn(service['client'], 'copyResource').mockResolvedValue({
+        data: {},
+      } as never);
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+        data: {
+          ...SHARED_CONVERSATION,
+          temperature: 0.7,
+          responseFormat: 'plain_text',
+        },
+      } as never);
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      const savedBody = saveSpy.mock.calls[0][2].body as Record<
+        string,
+        unknown
+      >;
+      expect(savedBody.temperature).toBe(0.7);
+      expect(savedBody.responseFormat).toBe('plain_text');
+    });
   });
 
   describe('streamCompletion', () => {
