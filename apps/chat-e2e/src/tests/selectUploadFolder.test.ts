@@ -349,7 +349,8 @@ dialTest.skip(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   '[Select folder] Error message appears if to add a dot to the end of folder name.\n' +
     '[Select folder] Error message appears if to create a folder with already existing name.\n' +
     '[Select folder] Error message appears if to add a dot to the beginning of folder name.\n' +
@@ -452,7 +453,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   '[Select folder] Folder name can not be blank or with spaces only',
   async ({
     dialHomePage,
