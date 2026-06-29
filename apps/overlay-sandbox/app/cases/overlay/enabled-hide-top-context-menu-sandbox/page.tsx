@@ -11,6 +11,7 @@ const overlayOptions = {
     Feature.TopSettings,
     Feature.ConversationsSection,
     Feature.HideTopContextMenu,
+    Feature.LiveChatInteraction,
   ],
 };
 
