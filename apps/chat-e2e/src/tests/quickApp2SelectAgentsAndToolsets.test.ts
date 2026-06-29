@@ -73,10 +73,14 @@ dialTest(
           agentAndToolsetSelectModal,
           'visible',
         );
-        await agentAndToolsetSelectModal.selectEntities([agentName, toolsetName]);
-        await agentAndToolsetSelectModalAssertion.assertSelected(
-          [agentName, toolsetName],
-        );
+        await agentAndToolsetSelectModal.selectEntities([
+          agentName,
+          toolsetName,
+        ]);
+        await agentAndToolsetSelectModalAssertion.assertSelected([
+          agentName,
+          toolsetName,
+        ]);
         await agentAndToolsetSelectModal.getCancelButton().click();
         await baseAssertion.assertElementState(
           agentAndToolsetSelectModal,
@@ -110,10 +114,14 @@ dialTest(
     await dialTest.step(
       'Select an agent and a toolset, then close the modal on X — nothing is added to the field',
       async () => {
-        await agentAndToolsetSelectModal.selectEntities([agentName, toolsetName]);
-        await agentAndToolsetSelectModalAssertion.assertSelected(
-          [agentName, toolsetName],
-        );
+        await agentAndToolsetSelectModal.selectEntities([
+          agentName,
+          toolsetName,
+        ]);
+        await agentAndToolsetSelectModalAssertion.assertSelected([
+          agentName,
+          toolsetName,
+        ]);
         await agentAndToolsetSelectModal.getCloseButton().click();
         await baseAssertion.assertElementState(
           agentAndToolsetSelectModal,
@@ -146,7 +154,7 @@ dialTest(
   },
 );
 
-dialTest.only(
+dialTest(
   '[Select agents and toolsets] the quick app which is currently being CREATED could not be found and added\n' +
     '[Select agents and toolsets] the quick app which is currently being EDITED could not be found and added', // EPMRTC-7285 + EPMRTC-7286
   async ({
@@ -156,9 +164,9 @@ dialTest.only(
     entityEditorPage,
     entityEditorGeneralForm,
     entityEditorHeader,
+    entityDetailsModal,
     quickApp2EditorViewForm,
     agentAndToolsetSelectModal,
-    modelApiHelper,
     baseAssertion,
     setTestIds,
   }) => {
@@ -213,20 +221,23 @@ dialTest.only(
       },
     );
 
-    await dialTest.step('Save the app and exit to My workspace', async () => {
-      await entityEditorHeader.saveAndExitButton.click();
-      await marketplacePage.waitForPageLoaded();
-    });
+    await dialTest.step(
+      'Save the app and exit — the entity details modal opens',
+      async () => {
+        await entityEditorHeader.saveAndExitButton.click();
+        await baseAssertion.assertElementState(entityDetailsModal, 'visible');
+      },
+    );
 
-    await dialTest.step('Reopen the created Quick app 2.0 in edit mode', async () => {
-      const quickApp = await modelApiHelper.getAgentByNameAndVersion({
-        name: quickAppName,
-      });
-      await marketplacePage.openEditQuickApp2Page(quickApp.reference);
-      await entityEditorPage.waitForPageLoadedForEdit(
-        EntityEditorAppTypes.QuickApp2,
-      );
-    });
+    await dialTest.step(
+      'Open the saved app for editing from the details modal',
+      async () => {
+        await entityDetailsModal.editButton.click();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
 
     await dialTest.step(
       'Search the app being edited in the select modal — it cannot add itself',
