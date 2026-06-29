@@ -1,6 +1,6 @@
 .userBubble {
   border-color: var(--cm-bubble-user-border, var(--stroke-secondary, #d1dbea));
-  background: var(--cm-bubble-user-bg, var(--bg-layer-4, #d1dbea));
+  background: var(--cm-bubble-user-bg, var(--bg-layer-2, #eef1f7));
 }
 
 .collapsibleText {
@@ -22,7 +22,7 @@
   background: linear-gradient(
     to bottom,
     rgb(0 0 0 / 0),
-    var(--cm-bubble-user-bg, var(--bg-layer-4, #d1dbea))
+    var(--cm-bubble-user-bg, var(--bg-layer-2, #eef1f7))
   );
 }
 

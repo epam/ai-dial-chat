@@ -30,7 +30,6 @@ import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
-import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
@@ -512,7 +511,6 @@ const ConversationRoute: FC = () => {
             )}
             placeholder={t(ChatI18nKeys.Placeholder)}
             styles={{
-              ...CONVERSATION_INPUT_STYLES,
               typography: { welcomeClassName: 'dial-display2-text' },
             }}
             deployments={deploymentItems}
@@ -522,6 +520,7 @@ const ConversationRoute: FC = () => {
             modelSelectorLabels={modelSelectorLabels}
             addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
             sendLabel={t(ChatI18nKeys.SendMessage)}
+            sendTitle={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
             isTranscriptionSupported={isTranscriptionSupported}
             onUploadAudio={handleUploadAudio}

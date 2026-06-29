@@ -1,4 +1,3 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
   DialGhostIconButton,
@@ -32,7 +31,7 @@ export const StarToggleButton: FC<StarToggleButtonProps> = ({
 }) => (
   <DialGhostIconButton
     size={size}
-    className={mergeClasses('!h-auto !py-0', className)}
+    className={className}
     icon={
       isStarred ? (
         <IconStarFilled

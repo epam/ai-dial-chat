@@ -16,5 +16,8 @@
 }
 
 .viewToggle {
-  background-color: var(--cat-browse-view-toggle-bg, var(--bg-layer-3, #fcfcfc));
+  background-color: var(
+    --cat-browse-view-toggle-bg,
+    var(--bg-layer-3, #fcfcfc)
+  );
 }

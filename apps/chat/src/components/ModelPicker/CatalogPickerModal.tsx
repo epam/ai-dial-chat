@@ -21,9 +21,7 @@ const CatalogPickerModal: FC<Props> = ({ isOpen, onClose }) => (
     onClose={onClose}
   >
     <div className="h-full overflow-auto">
-      <Suspense fallback={null}>
-        {isOpen && <CatalogView />}
-      </Suspense>
+      <Suspense fallback={null}>{isOpen && <CatalogView />}</Suspense>
     </div>
   </DialPopup>
 );

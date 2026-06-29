@@ -48,9 +48,8 @@ const EditMessageInput = lazy(async () => {
 
 const preloadEditInput = () => void import('@epam/ai-dial-conversation-input');
 
-/** Body text style applied to user message bubbles (16px / 26px). */
 const USER_MESSAGE_TEXT_STYLES = {
-  typography: { fontClassName: 'dial-body-paragraph-text' },
+  typography: { fontClassName: 'dial-body-text' },
 };
 
 interface Props {
@@ -283,10 +282,6 @@ const ConversationMessageItem: FC<Props> = ({
         bubbleClassName={mergeClasses(
           msg.hasStreamError ? 'w-full' : undefined,
         )}
-        styles={{
-          colors: { userBackground: 'var(--bg-layer-2)' },
-          typography: { fontClassName: 'dial-body-text' },
-        }}
         afterContent={
           hasStages || msg.hasStreamError ? (
             <>

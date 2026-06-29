@@ -1,7 +1,7 @@
 .panel {
   background: var(--cs-bg, transparent);
   border-color: var(--cs-border, transparent);
-  color: var(--cs-text, var(--text-primary, #161B2D));
+  color: var(--cs-text, var(--text-primary, #161b2d));
 }
 
 .collapseButton {
@@ -9,38 +9,38 @@
 }
 
 .stageName {
-  color: var(--cs-stage-text, var(--text-secondary, #575F73));
+  color: var(--cs-stage-text, var(--text-secondary, #575f73));
 }
 
 .iconSecondary {
-  color: var(--cs-icon-secondary, var(--text-secondary, #575F73));
+  color: var(--cs-icon-secondary, var(--text-secondary, #575f73));
 }
 
 .stageContent {
-  color: var(--cs-stage-text, var(--text-secondary, #575F73));
+  color: var(--cs-stage-text, var(--text-secondary, #575f73));
 }
 
 .codeBlock {
-  background: var(--cs-code-bg, var(--bg-layer-0, #FCFCFC));
-  border-color: var(--cs-code-border, var(--stroke-secondary, #D1DBEA));
-  color: var(--cs-code-text, var(--text-primary, #161B2D));
+  background: var(--cs-code-bg, var(--bg-layer-0, #fcfcfc));
+  border-color: var(--cs-code-border, var(--stroke-secondary, #d1dbea));
+  color: var(--cs-code-text, var(--text-primary, #161b2d));
 }
 
 .codeInline {
-  background: var(--cs-code-bg, var(--bg-layer-0, #FCFCFC));
-  color: var(--cs-code-text, var(--text-primary, #161B2D));
+  background: var(--cs-code-bg, var(--bg-layer-0, #fcfcfc));
+  color: var(--cs-code-text, var(--text-primary, #161b2d));
 }
 
 .blockquote {
-  border-color: var(--cs-stage-text, var(--text-secondary, #575F73));
-  color: var(--cs-stage-text, var(--text-secondary, #575F73));
+  border-color: var(--cs-stage-text, var(--text-secondary, #575f73));
+  color: var(--cs-stage-text, var(--text-secondary, #575f73));
 }
 
 .tableCell {
-  border-color: var(--cs-border, var(--stroke-secondary, #D1DBEA));
-  color: var(--cs-stage-text, var(--text-secondary, #575F73));
+  border-color: var(--cs-border, var(--stroke-secondary, #d1dbea));
+  color: var(--cs-stage-text, var(--text-secondary, #575f73));
 }
 
 .tableHeader {
-  background: var(--cs-code-bg, var(--bg-layer-0, #FCFCFC));
+  background: var(--cs-code-bg, var(--bg-layer-0, #fcfcfc));
 }

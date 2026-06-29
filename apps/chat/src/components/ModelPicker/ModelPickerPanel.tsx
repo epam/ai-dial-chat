@@ -1,8 +1,9 @@
+import { CatalogEntityType, type CatalogItem } from '@epam/ai-dial-catalog';
 import {
-  CatalogEntityType,
-  type CatalogItem,
-} from '@epam/ai-dial-catalog';
-import { DeploymentIcon, Highlight, mergeClasses } from '@epam/ai-dial-chat-shared';
+  DeploymentIcon,
+  Highlight,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonVariant,
@@ -95,7 +96,10 @@ export const ModelPickerPanel: FC<Props> = ({
     onClose();
   };
 
-  const handleItemKeyDown = (e: KeyboardEvent<HTMLDivElement>, item: CatalogItem) => {
+  const handleItemKeyDown = (
+    e: KeyboardEvent<HTMLDivElement>,
+    item: CatalogItem,
+  ) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault();
       handleSelect(item);
@@ -111,7 +115,7 @@ export const ModelPickerPanel: FC<Props> = ({
     <div className="flex min-w-[240px] flex-col">
       {/* Sticky search header — mirrors the original deployment selector header */}
       <div className="sticky top-0 z-10 flex flex-col gap-1 bg-layer-0 pb-1 ps-2 pt-2">
-        <span className="dial-caption-text text-secondary uppercase tracking-wider px-1">
+        <span className="dial-caption-text px-1 uppercase tracking-wider text-secondary">
           {favoritesLabel}
         </span>
         <DialSearch
@@ -149,7 +153,7 @@ export const ModelPickerPanel: FC<Props> = ({
                     <DialEllipsisTooltip text={item.name} />
                   )}
                   {item.version != null && (
-                    <span className="dial-tiny-text text-secondary flex-shrink-0">
+                    <span className="dial-tiny-text flex-shrink-0 text-secondary">
                       {item.version}
                     </span>
                   )}
@@ -173,7 +177,7 @@ export const ModelPickerPanel: FC<Props> = ({
           ))}
         </ul>
       ) : (
-        <p className="dial-small-text text-secondary px-4 py-4 text-center">
+        <p className="dial-small-text px-4 py-4 text-center text-secondary">
           {emptyHint}
         </p>
       )}

@@ -64,7 +64,6 @@ import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalo
 import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import { ModelPickerPanel } from '../ModelPicker/ModelPickerPanel';
-import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -636,7 +635,6 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
-                styles={CONVERSATION_INPUT_STYLES}
                 onSend={onSend}
                 onUploadAttachment={onUploadAttachment}
                 onStop={onStop}

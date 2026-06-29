@@ -1,4 +1,4 @@
-import { Spinner } from '@epam/ai-dial-kit';
+import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import { memo, type FC, type ReactNode } from 'react';
 import { useUser } from '../../context/auth/UserContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
@@ -13,7 +13,11 @@ const RequireAuth: FC<Props> = ({ children }) => {
   useAuthRedirect();
 
   if (status === AuthStatus.Loading) {
-    return <Spinner />;
+    return (
+      <div className="flex size-full items-center justify-center">
+        <DialSpinner />
+      </div>
+    );
   }
 
   if (status !== AuthStatus.Authenticated) {
