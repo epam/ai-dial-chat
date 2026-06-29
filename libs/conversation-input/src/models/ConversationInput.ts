@@ -24,16 +24,8 @@ export interface ConversationInputColors {
 
 /** Typography overrides for the `ConversationInput` component. */
 export interface ConversationInputTypography {
-  /** Tailwind (or custom) class applied to the welcome heading — takes precedence over the individual font properties below. */
+  /** Tailwind (or custom) class applied to the welcome heading. */
   welcomeClassName?: string;
-  /** Font family of the welcome heading (CSS value, e.g. `"'Inter', sans-serif"`). Ignored when `welcomeClassName` is set. */
-  welcomeFontFamily?: string;
-  /** Font size of the welcome heading (CSS value, e.g. `'24px'`). Ignored when `welcomeClassName` is set. */
-  welcomeFontSize?: string;
-  /** Font weight of the welcome heading. Ignored when `welcomeClassName` is set. */
-  welcomeFontWeight?: string | number;
-  /** Line height of the welcome heading. Ignored when `welcomeClassName` is set. */
-  welcomeLineHeight?: string | number;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;
 }

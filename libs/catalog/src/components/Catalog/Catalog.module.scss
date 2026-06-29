@@ -2,16 +2,16 @@
 // Layout, spacing, and border-radius live in Tailwind classes in the TSX file.
 
 .root {
-  --cat-text-primary: var(--text-primary, #eef1f7);
-  --cat-text-secondary: var(--text-secondary, #9fa6bd);
-  --cat-bg-layer-1: var(--bg-layer-1, #161b2d);
+  --cat-text-primary: var(--text-primary, #161B2D);
+  --cat-text-secondary: var(--text-secondary, #575F73);
+  --cat-bg-layer-1: var(--bg-layer-1, #E0E6F0);
   background: var(--cat-bg, var(--cat-bg-layer-1));
 }
 
 .heading {
   border-bottom-color: var(
     --cat-heading-border,
-    var(--stroke-secondary, #242c42)
+    var(--stroke-secondary, #D1DBEA)
   );
   background: var(--cat-heading-bg, var(--cat-bg-layer-1));
   color: var(--cat-heading-text, var(--cat-text-primary));
@@ -32,6 +32,6 @@
 }
 
 .stickyTabsRow {
-  background: var(--cat-bg, var(--bg-layer-1, #0c101d));
-  border-bottom-color: var(--stroke-secondary, #242c42);
+  background: var(--cat-bg, var(--bg-layer-1, #E0E6F0));
+  border-bottom-color: var(--stroke-secondary, #D1DBEA);
 }
