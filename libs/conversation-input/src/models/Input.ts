@@ -287,6 +287,8 @@ export interface ChatSettingsConfig {
   temperatureHint?: string;
   /** Label for the save button. Defaults to `'Apply changes'`. */
   saveLabel?: string;
+  /** Tooltip shown on the save button when it is disabled (e.g. no response format selected). */
+  saveDisabledTooltip?: string;
   /** Accessible label for the back arrow in the mobile bottom-sheet stack. Defaults to `'Back'`. */
   backLabel?: string;
 }

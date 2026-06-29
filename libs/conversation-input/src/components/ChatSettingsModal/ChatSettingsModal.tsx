@@ -1,6 +1,11 @@
 import { ResponseFormat } from '@epam/ai-dial-chat-shared';
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
-import { DialPopup, DialPrimaryButton, PopupSize } from '@epam/ai-dial-ui-kit';
+import {
+  DialPopup,
+  DialPrimaryButton,
+  DialTooltip,
+  PopupSize,
+} from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
@@ -42,6 +47,8 @@ export interface ChatSettingsModalProps {
   temperatureHint?: string;
   /** Label for the save button. Defaults to `'Apply changes'`. */
   saveLabel?: string;
+  /** Tooltip shown on the save button when it is disabled (e.g. no response format selected). */
+  saveDisabledTooltip?: string;
 }
 
 export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
@@ -62,11 +69,13 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
   temperatureLabels,
   temperatureHint,
   saveLabel = 'Apply changes',
+  saveDisabledTooltip,
 }) => {
   const {
     responseFormat,
     systemPrompt,
     temperature,
+    canSubmit,
     setResponseFormat,
     setSystemPrompt,
     setTemperature,
@@ -89,7 +98,16 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
       className="!bg-layer-2"
       footer={
         <div className="flex justify-end px-6 py-4">
-          <DialPrimaryButton label={saveLabel} onClick={handleSubmit} />
+          <DialTooltip
+            tooltip={saveDisabledTooltip}
+            hideTooltip={canSubmit || !saveDisabledTooltip}
+          >
+            <DialPrimaryButton
+              label={saveLabel}
+              onClick={handleSubmit}
+              disabled={!canSubmit}
+            />
+          </DialTooltip>
         </div>
       }
     >

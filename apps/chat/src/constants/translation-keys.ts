@@ -340,6 +340,7 @@ export enum ChatSettingsI18nKeys {
   TemperatureNeutral = 'chatSettings.temperatureNeutral',
   TemperatureCreative = 'chatSettings.temperatureCreative',
   SaveLabel = 'chatSettings.saveLabel',
+  SaveDisabledTooltip = 'chatSettings.saveDisabledTooltip',
   TemperatureHint = 'chatSettings.temperatureHint',
   SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
   SavedNotification = 'chatSettings.savedNotification',

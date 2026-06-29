@@ -15,8 +15,8 @@ const LABEL_CLASS_NAME =
 export interface ChatSettingsFieldsProps {
   /** Feature flags controlling which fields are rendered. */
   features: DeploymentFeatures;
-  /** Current response format value. */
-  responseFormat: ResponseFormat;
+  /** Current response format value. `undefined` when no option is selected. */
+  responseFormat: ResponseFormat | undefined;
   /** Current system prompt value. */
   systemPrompt: string;
   /** Current temperature value. */

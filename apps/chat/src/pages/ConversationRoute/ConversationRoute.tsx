@@ -202,6 +202,7 @@ const ConversationRoute: FC = () => {
       ] as [string, string, string],
       temperatureHint: t(ChatSettingsI18nKeys.TemperatureHint),
       saveLabel: t(ChatSettingsI18nKeys.SaveLabel),
+      saveDisabledTooltip: t(ChatSettingsI18nKeys.SaveDisabledTooltip),
     }),
     [
       selectedDeployment?.features,
