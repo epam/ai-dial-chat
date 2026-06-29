@@ -1,27 +1,35 @@
 import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconSearch } from '@tabler/icons-react';
 import { type FC } from 'react';
+
 import styles from './SearchBar.module.scss';
 
-/** Props for SearchBar. */
+/** Props for the {@link SearchBar} component. */
 export interface SearchBarProps {
-  /** Current search query value. */
+  /** Current search value. */
   value: string;
-  /** Called on every keystroke with the new value. */
+  /** Called when the search value changes. */
   onChange: (value: string) => void;
-  /** Input placeholder text. Default: 'Search'. */
+  /** Placeholder text shown when the input is empty. Defaults to `'Search'`. */
   placeholder?: string;
-  /**
-   * Accessible label for the input element.
-   * Defaults to the `placeholder` value, or `'Search'` if neither is provided.
-   */
+  /** Accessible label for the input. Falls back to `placeholder` when omitted. */
   ariaLabel?: string;
 }
 
 /**
- * Catalog search bar.
- * The container carries all visual state (default / hover / focus-within);
- * the inner <input> stays transparent with no outline of its own.
+ * A search bar with a leading search icon and a plain text input.
+ *
+ * Renders a styled rounded container whose border and shadow update on
+ * hover and focus-within to signal interactivity.
+ *
+ * @example
+ * ```tsx
+ * <SearchBar
+ *   value={query}
+ *   placeholder="Search models, tools, agents…"
+ *   onChange={(value) => setQuery(value)}
+ * />
+ * ```
  */
 export const SearchBar: FC<SearchBarProps> = ({
   value,

@@ -5,7 +5,7 @@ export const CONVERSATION_INPUT_STYLES: ConversationInputStyles = {
   colors: {
     input: {
       background: 'var(--bg-layer-0, #fcfcfc)',
-      placeholder: 'var(--text-tertiary, var(--text-secondary, #9fa6bd))',
+      placeholder: 'var(--text-tertiary, var(--text-secondary, #575F73))',
       border: 'var(--stroke-secondary, #d1dbea)',
       borderHover: 'var(--stroke-accent-primary)',
       borderFocus: 'var(--stroke-accent-primary)',

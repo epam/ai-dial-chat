@@ -58,7 +58,7 @@
 
 .jsonPunctuation {
   margin-inline-end: 0.25rem;
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #575f73);
 }
 
 .jsonStringValue {
@@ -75,7 +75,7 @@
 
 .jsonNullValue {
   font-style: italic;
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #575f73);
 }
 
 .jsonExpandIcon {
@@ -83,7 +83,7 @@
   cursor: pointer;
   user-select: none;
   transition: color 150ms;
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #575f73);
 
   &:hover {
     color: var(--text-primary, #eef1f7);
@@ -101,7 +101,7 @@
   cursor: pointer;
   user-select: none;
   transition: color 150ms;
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #575f73);
 
   &:hover {
     color: var(--text-primary, #eef1f7);
@@ -126,7 +126,7 @@
   cursor: pointer;
   border-radius: 0.25rem;
   padding-inline: 0.25rem;
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #575f73);
   background-color: var(--bg-layer-3, #1d2439);
   font-size: 0.75em;
 

@@ -29,11 +29,11 @@
 }
 
 .itemDate {
-  color: var(--cp-text-secondary, var(--text-secondary, #9fa6bd));
+  color: var(--cp-text-secondary, var(--text-secondary, #575f73));
 }
 
 .groupHeader {
-  color: var(--cp-text-secondary, var(--text-secondary, #9fa6bd));
+  color: var(--cp-text-secondary, var(--text-secondary, #575f73));
 }
 
 .divider {
@@ -58,5 +58,5 @@
 }
 
 .triggerIcon {
-  color: var(--cp-trigger-icon-idle, var(--text-secondary, #9fa6bd));
+  color: var(--cp-trigger-icon-idle, var(--text-secondary, #575f73));
 }

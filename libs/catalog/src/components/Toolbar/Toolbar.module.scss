@@ -1,9 +1,9 @@
 .section {
-  background: var(--cat-bg, #F8FAFC);
+  background: var(--cat-bg, var(--layer-6, #f8fafc));
 }
 
 .icon {
-  color: var(--cat-browse-icon, var(--text-secondary, #9fa6bd));
+  color: var(--cat-browse-icon, var(--text-secondary, #575f73));
 }
 
 .divider {

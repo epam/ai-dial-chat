@@ -8,6 +8,7 @@ const backgroundsColors = {
   'layer-3': 'var(--bg-layer-3, #FCFCFC)',
   'layer-4': 'var(--bg-layer-4, #D1DBEA)',
   'layer-5': 'var(--bg-layer-5, #F5F7FA)', // TODO: new color
+  'layer-6': 'var(--bg-layer-6, #F8FAFC)', // TODO: new color
   blackout: 'var(--bg-blackout, #0C101D4D)',
   error: 'var(--bg-error, #F3D6D8)',
   warning: 'var(--bg-warning, #FAF0CF)',

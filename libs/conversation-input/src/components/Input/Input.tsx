@@ -303,7 +303,7 @@ export const Input: FC<InputProps> = ({
     />
   );
 
-  const inputBox = (
+  return (
     <div
       ref={containerRef}
       style={cssVars}
@@ -449,6 +449,4 @@ export const Input: FC<InputProps> = ({
       )}
     </div>
   );
-
-  return inputBox;
 };
