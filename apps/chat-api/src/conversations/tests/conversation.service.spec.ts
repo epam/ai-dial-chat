@@ -538,15 +538,14 @@ describe('ConversationService', () => {
     });
 
     it('preserves nested deployment paths when duplicating', async () => {
-      const copySpy = vi
-        .spyOn(service['client'], 'copyResource')
+      const getSpy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({
+          data: { ...TEST_CONVERSATION },
+        } as never);
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
         .mockResolvedValue({ data: {} } as never);
-      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
-        data: { ...TEST_CONVERSATION },
-      } as never);
-      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
-        data: {},
-      } as never);
 
       const result = await service.duplicateConversation(
         `source-bucket/${conversationPath}`,
@@ -554,14 +553,20 @@ describe('ConversationService', () => {
         'test-bucket',
       );
 
-      expect(copySpy).toHaveBeenCalledWith(
+      expect(getSpy).toHaveBeenCalledWith(
+        'source-bucket',
+        conversationPath,
+        expect.any(Object),
+      );
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'applications/catalog/Team%2FApp%20One__0.0.1__hello%201',
         expect.objectContaining({
-          body: {
-            sourceUrl: `conversations/source-bucket/${conversationPath}`,
-            destinationUrl:
-              'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello%201',
-            overwrite: false,
-          },
+          body: expect.objectContaining({
+            id: 'test-bucket/applications/catalog/Team/App One__0.0.1__hello 1',
+            folderId: 'test-bucket/applications/catalog',
+            name: 'hello 1',
+          }),
         }),
       );
       expect(result.newPath).toBe(

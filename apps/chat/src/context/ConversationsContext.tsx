@@ -260,15 +260,6 @@ export const ConversationsProvider = ({
       const conversationPath = normalizeConversationId(id);
       const { newPath } = await apiDuplicateConversation(conversationPath);
       await refreshConversations();
-      // Move the duplicate to the front so it appears at the top of My chats.
-      // The backend sorts by updatedAt, but DIAL Core may copy the source's
-      // timestamp on copyResource, making the position unpredictable.
-      setConversations((prev) => {
-        const idx = prev.findIndex((c) => c.id === newPath);
-        if (idx <= 0) return prev;
-        const dup = prev[idx];
-        return [dup, ...prev.slice(0, idx), ...prev.slice(idx + 1)];
-      });
       return newPath;
     },
     [refreshConversations],
