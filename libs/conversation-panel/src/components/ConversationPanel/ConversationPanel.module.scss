@@ -2,12 +2,12 @@
 // Layout, spacing, and transitions live in Tailwind classes in the TSX file.
 
 .header {
-  border-color: var(--cp-header-border, var(--stroke-tertiary, #0c101d));
-  color: var(--cp-text, var(--text-primary, #eef1f7));
+  border-color: var(--cp-header-border, var(--stroke-tertiary, #e0e6f0));
+  color: var(--cp-text, var(--text-primary, #161b2d));
 }
 
 .item {
-  color: var(--cp-text, var(--text-primary, #eef1f7));
+  color: var(--cp-text, var(--text-primary, #161b2d));
 
   &:hover {
     background: var(
@@ -21,28 +21,28 @@
       --cp-item-active,
       var(--bg-accent-secondary-alpha, #37babc2e)
     );
-    border-left-color: var(
+    border-inline-start-color: var(
       --cp-item-active-border,
-      var(--stroke-success, #37babc)
+      var(--stroke-success, #007274)
     );
   }
 }
 
 .itemDate {
-  color: var(--cp-text-secondary, var(--text-secondary, #9fa6bd));
+  color: var(--cp-text-secondary, var(--text-secondary, #575f73));
 }
 
 .groupHeader {
-  color: var(--cp-text-secondary, var(--text-secondary, #9fa6bd));
+  color: var(--cp-text-secondary, var(--text-secondary, #575f73));
 }
 
 .divider {
-  border-color: var(--cp-new-chat-divider, var(--stroke-tertiary, #0c101d));
+  border-color: var(--cp-new-chat-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
 .itemIcon {
-  background: var(--cp-item-hover, var(--bg-layer-4, #252c42));
-  color: var(--cp-text, var(--text-primary, #eef1f7));
+  background: var(--cp-item-hover, var(--bg-layer-4, #d1dbea));
+  color: var(--cp-text, var(--text-primary, #161b2d));
 }
 
 .trigger {
@@ -52,11 +52,11 @@
       var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
     );
     .triggerIcon {
-      color: var(--cp-trigger-icon, var(--text-accent-secondary, #37babc));
+      color: var(--cp-trigger-icon, var(--text-accent-secondary, #007274));
     }
   }
 }
 
 .triggerIcon {
-  color: var(--cp-trigger-icon-idle, var(--text-secondary, #9fa6bd));
+  color: var(--cp-trigger-icon-idle, var(--text-secondary, #575f73));
 }

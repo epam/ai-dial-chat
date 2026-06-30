@@ -2,7 +2,6 @@ import {
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
-  ResponseFormat,
   StatusEvent,
   type Attachment,
   type Conversation,
@@ -59,6 +58,7 @@ import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/use
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import ConversationMessageItem from './ConversationMessageItem';
 
@@ -418,7 +418,9 @@ const ConversationView: FC<Props> = ({
         }),
         responseFormat: true,
       },
-      responseFormat: conversation.responseFormat ?? ResponseFormat.Markdown,
+      responseFormat: normalizeResponseFormat(
+        conversation.responseFormat as string | undefined,
+      ),
       systemPrompt: conversation.prompt ?? '',
       temperature: conversation.temperature ?? 0.5,
       onSave: (values: ChatSettingsValues) => {

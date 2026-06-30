@@ -505,92 +505,52 @@ export class ConversationService extends AppService {
       encodeURIComponent(decodedRenamedFilename),
     ].join('/');
 
-    const sourceUrl = buildConversationUrl(
-      sourceBucket,
-      encodeDialResourcePath(subPath),
-    );
     const destinationUrl = buildConversationUrl(
       sessionBucket,
       encodedDestinationSubPath,
     );
 
-    try {
-      const { error } = (await this.client.copyResource({
-        headers: getBearerAuthHeaders(token),
-        body: { sourceUrl, destinationUrl, overwrite: false },
-      })) as { error?: unknown };
-      if (error != null) {
-        this.logger.error('DIAL Core rejected copyResource (duplicate)', error);
-        return handleDialError(error);
-      }
-    } catch (error) {
-      this.logger.error('DIAL Core copyResource (duplicate) failed', error);
-      return handleDialError(error);
+    // Read source directly instead of copyResource+rewrite so that we control
+    // updatedAt from the start and avoid the race where a just-copied file is
+    // not yet readable.
+    const { data: sourceData, error: readError } =
+      (await this.client.getConversation(
+        sourceBucket,
+        encodeDialResourcePath(subPath),
+        { headers: getBearerAuthHeaders(token) },
+      )) as { data?: ConversationResponseDto; error?: unknown };
+    if (readError != null || !sourceData) {
+      this.logger.error(
+        'Could not read source conversation for duplicate',
+        readError,
+      );
+      return handleDialError(readError);
     }
 
     const folderId = decodedFolderSegments.length
       ? `${sessionBucket}/${decodedFolderSegments.join('/')}`
       : sessionBucket;
-    await this.rewriteDuplicatedConversationMetadata(
+
+    const { error: saveError } = (await this.client.saveConversation(
       sessionBucket,
       encodedDestinationSubPath,
       {
-        id: `${sessionBucket}/${decodedDestinationSubPath}`,
-        folderId,
-        name: uniqueTitle,
+        headers: getBearerAuthHeaders(token),
+        body: {
+          ...sourceData,
+          id: `${sessionBucket}/${decodedDestinationSubPath}`,
+          folderId,
+          name: uniqueTitle,
+          updatedAt: Date.now(),
+        },
       },
-      token,
-    );
+    )) as { error?: unknown };
+    if (saveError != null) {
+      this.logger.error('Could not save duplicated conversation', saveError);
+      return handleDialError(saveError);
+    }
 
     return { newPath: destinationUrl };
-  }
-
-  /**
-   * Repoints a freshly-copied conversation's identity fields (id/folderId/name)
-   * at the destination bucket/path. Reads from the user's own bucket and
-   * re-saves; all failures are logged and swallowed so the duplicate still
-   * succeeds.
-   */
-  private async rewriteDuplicatedConversationMetadata(
-    bucket: string,
-    encodedSubPath: string,
-    identity: Pick<ConversationResponseDto, 'id' | 'folderId' | 'name'>,
-    token: string,
-  ): Promise<void> {
-    try {
-      const { data, error } = (await this.client.getConversation(
-        bucket,
-        encodedSubPath,
-        { headers: getBearerAuthHeaders(token) },
-      )) as { data?: ConversationResponseDto; error?: unknown };
-      if (error != null || !data) {
-        this.logger.warn(
-          'Could not read duplicated conversation to fix its metadata',
-          error,
-        );
-        return;
-      }
-
-      const { error: saveError } = (await this.client.saveConversation(
-        bucket,
-        encodedSubPath,
-        {
-          headers: getBearerAuthHeaders(token),
-          body: { ...data, ...identity } as never,
-        },
-      )) as { error?: unknown };
-      if (saveError != null) {
-        this.logger.warn(
-          'Could not re-save duplicated conversation metadata',
-          saveError,
-        );
-      }
-    } catch (error) {
-      this.logger.warn(
-        'Failed to rewrite duplicated conversation metadata',
-        error,
-      );
-    }
   }
 
   async listConversations(
@@ -1167,6 +1127,46 @@ export class ConversationService extends AppService {
     }
 
     return this.deleteConversations(allIds, token, bucket);
+  }
+
+  async watchConversation(
+    conversationPath: string,
+    token: string,
+    sessionBucket: string,
+  ): Promise<ReadableStream<Uint8Array>> {
+    const { bucket, subPath } = this.resolveConversationLocation(
+      conversationPath,
+      sessionBucket,
+    );
+    const resourceUrl = buildConversationUrl(
+      bucket,
+      encodeDialResourcePath(subPath),
+    );
+    this.logger.debug(
+      `watchConversation subscribing to resource: ${resourceUrl}`,
+    );
+
+    try {
+      const result = (await this.client.subscribeToResources({
+        body: { resources: [{ url: resourceUrl }] },
+        headers: {
+          ...getBearerAuthHeaders(token),
+          Accept: 'text/event-stream',
+        },
+        parseAs: 'stream',
+      })) as { response: Response; error?: unknown };
+
+      if (!result.response.ok || !result.response.body) {
+        this.logger.error(
+          `DIAL Core rejected subscribeToResources — status: ${result.response.status}`,
+        );
+        return handleDialError({ status: result.response.status });
+      }
+      return result.response.body;
+    } catch (error) {
+      this.logger.error('DIAL Core subscribeToResources failed', error);
+      return handleDialError(error);
+    }
   }
 
   async streamCompletion(

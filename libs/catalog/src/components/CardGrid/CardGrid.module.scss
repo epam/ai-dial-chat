@@ -1,9 +1,9 @@
 .card {
-  background: var(--cat-card-bg, var(--bg-layer-2, #161b2d));
-  border-color: var(--cat-card-border, var(--stroke-secondary, #242c42));
+  background: var(--cat-card-bg, var(--bg-layer-2, #eef1f7));
+  border-color: var(--cat-card-border, var(--stroke-secondary, #d1dbea));
 
   &:hover {
-    background: var(--cat-card-hover-bg, var(--bg-layer-3, #1d2439));
+    background: var(--cat-card-hover-bg, var(--bg-layer-3, #fcfcfc));
   }
 }
 
@@ -12,14 +12,14 @@
 }
 
 .description {
-  color: var(--cat-card-text-primary, var(--text-primary, #eef1f7));
+  color: var(--cat-card-text-primary, var(--text-primary, #161b2d));
 }
 
 .cardFooter {
-  border-color: var(--cat-card-footer-border, var(--stroke-secondary, #242c42));
+  border-color: var(--cat-card-footer-border, var(--stroke-secondary, #d1dbea));
 }
 
 .skeletonCard {
-  border-color: var(--cat-card-border, var(--stroke-secondary, #242c42));
+  border-color: var(--cat-card-border, var(--stroke-secondary, #d1dbea));
   --cat-skeleton-bg: var(--bg-layer-4);
 }

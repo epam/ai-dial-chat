@@ -4,7 +4,7 @@
 
 The backend SHALL expose `GET /api/v1/conversations/list` (not `GET /api/v1/conversations`) in `apps/chat-api/src/conversations/conversation.controller.ts`. The controller MUST be versioned (`version: '1'`), annotated with `@ApiTags('conversations')`, and delegate all logic to `ConversationService`. The endpoint is backed by DIAL Core metadata (not an in-memory store). It accepts the following query parameters validated by `ListConversationsQueryDto`:
 
-- `limit` — integer, default 20, max 100 (`@IsInt @Min(1) @Max(100) @IsOptional`)
+- `limit` — integer, default 100, max 1000 (`@IsInt @Min(1) @Max(1000) @IsOptional`)
 - `nextToken` — string cursor from a previous response, passed through to DIAL Core (`@IsString @MaxLength(512) @IsOptional`)
 - `path` — string subfolder path to scope the listing, default `''` (bucket root = "My Files") (`@IsString @MaxLength(512) @IsOptional`)
 
@@ -60,7 +60,7 @@ Generated-client impact:
 
 #### Scenario: Invalid limit returns 400
 
-- **WHEN** `GET /api/v1/conversations/list?limit=200` is called (exceeds max 100)
+- **WHEN** `GET /api/v1/conversations/list?limit=1001` is called (exceeds max 1000)
 - **THEN** the response is 400 with a validation error
 
 ## REMOVED Requirements

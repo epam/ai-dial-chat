@@ -89,7 +89,6 @@ export const Input: FC<InputProps> = ({
 }) => {
   const isMobile = useIsMobile();
   const historyNav = useInputHistoryNavigation(messageHistory);
-  const noCustomFontClass = !typography?.fontClassName;
 
   const cssVars = useMemo(
     () =>
@@ -102,12 +101,8 @@ export const Input: FC<InputProps> = ({
         '--ci-send-bg': colors?.sendBackground,
         '--ci-send-text': colors?.sendText,
         '--ci-stop-color': colors?.stopColor,
-        '--ci-font-family': typography?.fontFamily,
-        '--ci-font-size': typography?.fontSize,
-        '--ci-font-weight': typography?.fontWeight?.toString(),
-        '--ci-line-height': typography?.lineHeight,
       }),
-    [colors, typography],
+    [colors],
   );
 
   const dialFileSystemMenuItem = useMemo(
@@ -268,7 +263,6 @@ export const Input: FC<InputProps> = ({
     <textarea
       className={mergeClasses(
         styles.textarea,
-        noCustomFontClass && styles.textareaFont,
         'max-h-[272px] w-full resize-none overflow-y-auto border-0 bg-transparent outline-none [field-sizing:content]',
         typography?.fontClassName,
       )}

@@ -93,8 +93,6 @@ export interface ConversationHistoryColors {
   newChatIconBackgroundActive?: string;
   /** Color of the plus icon inside the New chat button. */
   newChatIconColor?: string;
-  /** Border-radius of the New chat button. Defaults to `0.25rem`. */
-  newChatBorderRadius?: string;
   /** Bottom-border color of the New chat button container divider. */
   newChatDivider?: string;
 }

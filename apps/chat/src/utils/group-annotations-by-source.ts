@@ -1,4 +1,5 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
+import { safeDecodeURI } from './string-utils';
 
 /** A set of annotations that all cite the same source document. */
 export interface AnnotationGroup {
@@ -20,11 +21,15 @@ const deriveSourceName = (url: string): string => {
     const parsed = new URL(url);
     const segments = parsed.pathname
       .split('/')
-      .map((s) => decodeURIComponent(s))
+      .map((s) => safeDecodeURI(s))
       .filter(Boolean);
     return segments.at(-1) ?? parsed.hostname;
   } catch {
-    return url;
+    const segments = url
+      .split('/')
+      .map((s) => safeDecodeURI(s))
+      .filter(Boolean);
+    return segments.at(-1) ?? url;
   }
 };
 
@@ -47,7 +52,8 @@ export const groupAnnotationsBySource = (
     } else {
       map.set(url, {
         sourceUrl: url,
-        sourceName: deriveSourceName(url),
+        sourceName:
+          annotation.body?.source?.attachment?.title ?? deriveSourceName(url),
         annotations: [annotation],
         primaryAnnotation: annotation,
       });

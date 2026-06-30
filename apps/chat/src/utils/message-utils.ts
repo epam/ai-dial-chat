@@ -3,6 +3,7 @@ import {
   type DisplayAttachment,
   Message,
   MessageRole,
+  ResponseFormat,
   StatusEvent,
   isStatusMessage,
 } from '@epam/ai-dial-chat-shared';
@@ -63,3 +64,14 @@ export const isMessageChanged = (
 export const messageHasStages = (message: Message): boolean =>
   message.role === MessageRole.Assistant &&
   (message.custom_content?.stages?.length ?? 0) > 0;
+
+/** Normalises a stored response-format string to the current enum.
+ * Legacy data may contain 'Markdown' or 'PlainText' (capital-first) instead
+ * of the current enum values 'markdown' / 'plain_text'. */
+export const normalizeResponseFormat = (
+  value: string | undefined,
+): ResponseFormat => {
+  const lower = (value ?? '').toLowerCase().replace(/[^a-z]/g, '');
+  if (lower === 'plaintext') return ResponseFormat.PlainText;
+  return ResponseFormat.Markdown;
+};

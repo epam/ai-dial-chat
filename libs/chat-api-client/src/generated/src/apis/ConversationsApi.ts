@@ -27,6 +27,7 @@ import type {
   SaveConversationBodyDto,
   SendCompletionDto,
   StopCompletionDto,
+  WatchConversationBodyDto,
 } from '../models/index';
 
 export interface CreateConversationRequest {
@@ -80,6 +81,10 @@ export interface StopCompletionRequest {
 
 export interface StreamCompletionRequest {
   sendCompletionDto: SendCompletionDto;
+}
+
+export interface WatchConversationRequest {
+  watchConversationBodyDto: WatchConversationBodyDto;
 }
 
 /**
@@ -716,5 +721,53 @@ export class ConversationsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<void> {
     await this.streamCompletionRaw(requestParameters, initOverrides);
+  }
+
+  /**
+   * Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.
+   * Subscribe to conversation resource updates via SSE
+   */
+  async watchConversationRaw(
+    requestParameters: WatchConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['watchConversationBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'watchConversationBodyDto',
+        'Required parameter "watchConversationBodyDto" was null or undefined when calling watchConversation().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/conversations/watch`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['watchConversationBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.
+   * Subscribe to conversation resource updates via SSE
+   */
+  async watchConversation(
+    requestParameters: WatchConversationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.watchConversationRaw(requestParameters, initOverrides);
   }
 }

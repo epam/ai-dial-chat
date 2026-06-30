@@ -42,6 +42,10 @@ import {
 } from './dto/save-conversation.dto';
 import { SendCompletionDto } from './dto/send-completion.dto';
 import { StopCompletionDto } from './dto/stop-completion.dto';
+import { WatchConversationBodyDto } from './dto/watch-conversation.dto';
+
+const SSE_KEEPALIVE_INTERVAL_MS = 15_000;
+const SSE_KEEPALIVE_PAYLOAD = ': keepalive\n\n';
 
 @ApiTags('conversations')
 @Controller({ path: 'conversations', version: '1' })
@@ -254,6 +258,85 @@ export class ConversationController {
       );
     }
     res.status(204).end();
+  }
+
+  @Post('watch')
+  @HttpCode(200)
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  @ApiOperation({
+    operationId: 'watchConversation',
+    summary: 'Subscribe to conversation resource updates via SSE',
+    description:
+      'Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.',
+  })
+  @ApiResponse({ status: 200, description: 'SSE stream of resource events' })
+  @ApiResponse({ status: 400, description: 'Invalid or missing path' })
+  @ApiResponse({ status: 401, description: 'Not authenticated' })
+  @ApiResponse({ status: 502, description: 'DIAL Core subscription failed' })
+  async watchConversation(
+    @Req() req: Request,
+    @Res() res: Response,
+    @Body() dto: WatchConversationBodyDto,
+  ) {
+    const { at, bucket } = req.user as SessionUser;
+    const stream = await this.conversationService.watchConversation(
+      dto.path,
+      at,
+      bucket,
+    );
+
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    const reader = stream.getReader();
+
+    let isClientAborted = false;
+    let isReaderReleased = false;
+    let isCancelRequested = false;
+
+    const handleClose = () => {
+      isClientAborted = true;
+      if (isReaderReleased || isCancelRequested) {
+        return;
+      }
+
+      isCancelRequested = true;
+      void reader.cancel().catch(() => undefined);
+    };
+
+    res.on('close', handleClose);
+
+    let keepaliveTimer: ReturnType<typeof setInterval> | null = null;
+    try {
+      keepaliveTimer = setInterval(() => {
+        if (!isClientAborted && !res.writableEnded) {
+          res.write(SSE_KEEPALIVE_PAYLOAD);
+        }
+      }, SSE_KEEPALIVE_INTERVAL_MS);
+
+      while (true) {
+        if (isClientAborted) break;
+
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        res.write(value);
+      }
+    } catch (err) {
+      if (!isClientAborted) {
+        this.logger.error('Error while streaming watch events to client', err);
+      }
+    } finally {
+      if (keepaliveTimer) clearInterval(keepaliveTimer);
+      res.off('close', handleClose);
+      isReaderReleased = true;
+      reader.releaseLock();
+      if (!res.writableEnded) {
+        res.end();
+      }
+    }
   }
 
   @Patch()

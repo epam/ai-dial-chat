@@ -1,6 +1,7 @@
 import { memo, type FC, type ReactNode } from 'react';
 import { ErrorBoundary } from 'react-error-boundary';
 import { useLocation } from 'react-router-dom';
+import { ErrorBoundaryI18nKeys } from '../../constants/translation-keys';
 import ErrorFallback, { type ErrorFallbackProps } from './ErrorFallback';
 
 export type { ErrorFallbackProps };
@@ -18,7 +19,7 @@ const RootErrorBoundaryInner: FC<RootErrorBoundaryProps> = ({ children }) => (
       <ErrorFallback
         error={error}
         resetErrorBoundary={() => window.location.reload()}
-        actionLabel="errorBoundary.reloadLabel"
+        actionLabel={ErrorBoundaryI18nKeys.ReloadLabel}
       />
     )}
     onError={(error, info) =>
