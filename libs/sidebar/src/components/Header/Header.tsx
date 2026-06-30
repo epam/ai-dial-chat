@@ -41,11 +41,7 @@ export const Header: FC<HeaderProps> = memo(
 
       <DialEllipsisTooltip
         text={title}
-        className={mergeClasses(
-          'min-w-0 flex-1 truncate',
-          !titleClassName && styles.headerTitle,
-          titleClassName,
-        )}
+        className={mergeClasses('min-w-0 flex-1 truncate', titleClassName)}
       />
 
       {rightActions && (

@@ -6,5 +6,4 @@ const RouteFallback: FC = () => (
     <DialSpinner />
   </div>
 );
-
 export default memo(RouteFallback);

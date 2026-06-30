@@ -16,7 +16,13 @@ import * as runtime from '../runtime';
 import type {
   ApplicationSchemasResponseDto,
   ApplicationsResponseDto,
+  CreateApplicationBodyDto,
+  CreatedApplicationDto,
 } from '../models/index';
+
+export interface CreateApplicationRequest {
+  createApplicationBodyDto: CreateApplicationBodyDto;
+}
 
 export interface GetApplicationSchemaRequest {
   id: string;
@@ -26,6 +32,58 @@ export interface GetApplicationSchemaRequest {
  *
  */
 export class ApplicationsApi extends runtime.BaseAPI {
+  /**
+   * Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.
+   * Create a new application
+   */
+  async createApplicationRaw(
+    requestParameters: CreateApplicationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<CreatedApplicationDto>> {
+    if (requestParameters['createApplicationBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'createApplicationBodyDto',
+        'Required parameter "createApplicationBodyDto" was null or undefined when calling createApplication().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/applications`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['createApplicationBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<CreatedApplicationDto>(response);
+  }
+
+  /**
+   * Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.
+   * Create a new application
+   */
+  async createApplication(
+    requestParameters: CreateApplicationRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<CreatedApplicationDto> {
+    const response = await this.createApplicationRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
   /**
    * Returns one DIAL Core application type schema by its $id. Results are cached server-side for 60 seconds per user per schema.
    * Get application type schema by id

@@ -5,6 +5,7 @@ import type {
   Stage,
   StreamChunk,
 } from '@epam/ai-dial-chat-shared';
+import { normalizeRawAnnotations } from './annotation';
 
 const mergeAnnotations = (
   existing: Annotation[],
@@ -111,12 +112,14 @@ export const applyChunkToMessages = (
   const attachments = delta?.custom_content?.attachments;
   const stages = delta?.custom_content?.stages;
   const annotations = delta?.custom_content?.annotations;
+  const rawAnnotations = delta?.custom_fields?.annotations;
   const hasContentUpdate =
     !!content ||
     !!formSchema ||
     !!attachments?.length ||
     !!stages?.length ||
-    !!annotations?.length;
+    !!annotations?.length ||
+    !!rawAnnotations?.length;
   const responseId =
     delta?.responseId ?? (hasContentUpdate ? chunk.id : undefined);
 
@@ -125,11 +128,23 @@ export const applyChunkToMessages = (
   return messages.map((message, index) => {
     if (index !== messageIndex) return message;
 
+    const allAttachments = [
+      ...(message.custom_content?.attachments ?? []),
+      ...(attachments ?? []),
+    ];
+    const normalizedRawAnnotations = rawAnnotations?.length
+      ? normalizeRawAnnotations(rawAnnotations, allAttachments)
+      : [];
+    const incomingAnnotations = [
+      ...(annotations ?? []),
+      ...normalizedRawAnnotations,
+    ];
+
     const hasCustomContentUpdate =
       formSchema ||
       attachments?.length ||
       stages?.length ||
-      annotations?.length;
+      incomingAnnotations.length;
 
     return {
       ...message,
@@ -140,18 +155,15 @@ export const applyChunkToMessages = (
           ...message.custom_content,
           ...(formSchema && { form_schema: formSchema }),
           ...(attachments?.length && {
-            attachments: [
-              ...(message.custom_content?.attachments ?? []),
-              ...attachments,
-            ],
+            attachments: allAttachments,
           }),
           ...(stages?.length && {
             stages: mergeStages(message.custom_content?.stages ?? [], stages),
           }),
-          ...(annotations?.length && {
+          ...(incomingAnnotations.length && {
             annotations: mergeAnnotations(
               message.custom_content?.annotations ?? [],
-              annotations,
+              incomingAnnotations,
             ),
           }),
         },

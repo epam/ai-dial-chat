@@ -8,7 +8,10 @@ import {
   MessageRole,
   type StarterOption,
 } from '@epam/ai-dial-chat-shared';
-import type { ConversationResponseDto } from '@epam/chat-api-client';
+import type {
+  ConversationResponseDto,
+  SendCompletionDtoModeEnum,
+} from '@epam/chat-api-client';
 import {
   type Dispatch,
   type MutableRefObject,
@@ -20,6 +23,7 @@ import {
 import { type NavigateFunction } from 'react-router-dom';
 import { NETWORK_ERROR_DEBOUNCE_MS } from '../../constants/upload';
 import { useDeployments } from '../../context/DeploymentsContext';
+import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   deleteConversation as apiDeleteConversation,
   saveConversation,
@@ -45,6 +49,8 @@ interface Params {
     messageIndex: number,
     model: string,
     customContent?: MessageCustomContent,
+    generationId?: string,
+    mode?: SendCompletionDtoModeEnum,
   ) => void;
   conversationRef: MutableRefObject<Conversation | null>;
   setConversation: Dispatch<SetStateAction<Conversation | null>>;
@@ -146,6 +152,8 @@ export const useConversationHandlers = ({
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
         { attachments: attachmentDtos },
+        crypto.randomUUID(),
+        CompletionMode.Append,
       );
     },
     [
@@ -203,6 +211,8 @@ export const useConversationHandlers = ({
         messageIndex,
         selectedItemId ?? conversation.model.id,
         userMsg.custom_content,
+        crypto.randomUUID(),
+        CompletionMode.Regenerate,
       );
     },
     [
@@ -371,6 +381,8 @@ export const useConversationHandlers = ({
         conversation.messages.length + 1,
         selectedItemId ?? conversation.model.id,
         configurationValue ? { form_value: configurationValue } : undefined,
+        crypto.randomUUID(),
+        CompletionMode.Append,
       );
     },
     [
@@ -429,7 +441,6 @@ export const useConversationHandlers = ({
         return;
 
       const originalMessage = conversation.messages[idx];
-      const conversationPath = getConversationPath(conversationId);
 
       if (
         !isMessageChanged(
@@ -494,14 +505,15 @@ export const useConversationHandlers = ({
         return updated;
       });
 
-      saveConversation(conversationPath, updated as ConversationResponseDto);
-
+      // Backend will save the conversation at stream start; no pre-save needed.
       startStream(
         conversationId,
         text,
         updatedMessages.length - 1,
         selectedItemId ?? conversation.model.id,
         allAttachments.length > 0 ? { attachments: allAttachments } : undefined,
+        crypto.randomUUID(),
+        CompletionMode.Edit,
       );
 
       setEditingMessageIndexes(new Set());

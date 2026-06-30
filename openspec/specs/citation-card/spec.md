@@ -33,6 +33,15 @@ interface CitationCardProps {
 }
 ```
 
+`CitationDropdown` (the parent that owns the `DialTooltip`) SHALL read open/close/index state from `CitationCardContext` rather than accepting `isOpen`, `activeIndex`, `onOpen`, `onClose`, and `onIndexChange` as props. Its own Props interface is:
+```ts
+interface CitationDropdownProps {
+  group: AnnotationGroup;
+  onPreview: (annotation: Annotation) => void;
+  onOpenInBrowser: (annotation: Annotation) => void;
+}
+```
+
 **i18n keys**: `citations.popup.switcher`, `citations.popup.preview`, `citations.popup.openInBrowser`, `citations.popup.download`, `citations.popup.previousCitation`, `citations.popup.nextCitation`, `citations.popup.ariaLabel`.
 **RTL**: switcher chevron icons SHALL be mirrored with `rtl:scale-x-[-1]`; all layout uses logical flex properties.
 **Accessibility**: `role="dialog"`, `aria-modal="true"`, `aria-label` derived from source name.
@@ -63,6 +72,26 @@ interface CitationCardProps {
 - **WHEN** the user clicks the "Preview" button
 - **THEN** `onPreview` is called with the current active `Annotation`
 
+---
+
+### Requirement: Citation popup closes only on "Preview"; navigation and download buttons leave it open
+
+`CitationDropdown` SHALL close the popup immediately after forwarding the `onPreview` event — by calling `citationCard.closePopup()` from `CitationCardContext`. No other button in `CitationCard` (Previous, Next, "Open in browser", "Download") SHALL close the popup.
+
+The `CitationCard` component itself only calls the `onPreview` prop; closing is the responsibility of `CitationDropdown`.
+
+The reason navigation buttons (Prev/Next) must not cause a close: they update `activeIndex` in `useCitationCard`, which previously triggered `markdownComponents` to recompute with new function references, causing ReactMarkdown to unmount and remount the paragraph subtree (including `CitationDropdown` and its `DialTooltip`). The context-based architecture prevents this — see the `CitationCardContext` requirement below.
+
+#### Scenario: Popup closes on preview click
+
+- **WHEN** the user clicks the "Preview" button inside the open citation popup
+- **THEN** `citationCard.closePopup()` is called and the popup is dismissed
+
+#### Scenario: Popup stays open when navigating between annotations
+
+- **WHEN** the user clicks the Previous or Next switcher button inside the open citation popup
+- **THEN** `activeIndex` advances (or wraps) and the popup remains open, displaying the new annotation
+
 #### Scenario: File source shows "Download" button
 
 - **WHEN** the source content type is `application/pdf`
@@ -75,7 +104,7 @@ interface CitationCardProps {
 
 ---
 
-### Requirement: Citation popup state managed by `useCitationCard` hook
+### Requirement: Citation popup state managed by `useCitationCard` hook and `CitationCardContext`
 
 `apps/chat/src/hooks/citations/useCitationCard.ts` SHALL export `useCitationCard` that:
 - Tracks `openGroupSourceUrl: string | null` (which group's popup is open, or null when closed).
@@ -84,6 +113,23 @@ interface CitationCardProps {
 - Returns derived state: `isOpen(sourceUrl: string): boolean`, `getActiveIndex(sourceUrl: string): number`.
 
 **Memoisation**: exposed callbacks SHALL be wrapped in `useCallback`; state object SHALL be wrapped in `useMemo`.
+
+`apps/chat/src/context/CitationCardContext.tsx` SHALL export:
+- `CitationCardProvider` — the React context provider component.
+- `useCitationCardContext()` — hook that returns the current `CitationCardHook` value; throws if used outside a provider.
+- `CitationCardHook` — the inferred return type of `useCitationCard`.
+
+`ConversationMessageItem` SHALL wrap its return value in `<CitationCardProvider value={citationCard}>` so that all `CitationDropdown` instances rendered via `markdownComponents` can access the shared citation state without prop drilling.
+
+`useCitationMarkdownComponents` SHALL NOT accept `citationCard` as a parameter. Its signature is:
+```ts
+useCitationMarkdownComponents(
+  content: string,
+  groups: AnnotationGroup[],
+  onAttachmentPreview: (attachment: DisplayAttachment) => void,
+): { processedContent: string; markdownComponents: Components }
+```
+The `markdownComponents` returned SHALL only depend on `groups`, `onPreview`, and `onOpenInBrowser` — all of which are stable between switcher-index changes — so that ReactMarkdown never unmounts the paragraph subtree in response to a citation state update.
 
 #### Scenario: Opening a popup sets the open group
 
@@ -115,9 +161,18 @@ When the "Preview" button is clicked in `CitationCard`, the app SHALL invoke the
 
 ### Requirement: Second footer button opens the source URL or downloads the file
 
-When the second footer button is clicked, the app SHALL call `window.open(annotation.body.source.attachment.url, '_blank', 'noopener,noreferrer')`.
+When the second footer button is clicked, the `onOpenInBrowser` handler in `useCitationMarkdownComponents` SHALL:
+- **DIAL file URLs** (`url.startsWith('files/')`): resolve the download URL via `resolveDialFileDownloadUrl`, then trigger a browser download using a programmatically created `<a download>` element clicked via `.click()`. The `download` attribute SHALL be set to `attachment.title` if present, otherwise the last path segment of the URL.
+- **Web URLs** (all other values): call `window.open(url, '_blank', 'noopener,noreferrer')`.
 
-#### Scenario: Open in browser calls window.open with the attachment URL
+Clicking this button SHALL NOT close the citation popup.
 
-- **WHEN** the user clicks "Open in browser" or "Download" for an annotation
-- **THEN** `window.open` is called with the attachment URL, `"_blank"`, and `"noopener,noreferrer"`
+#### Scenario: DIAL file triggers anchor-download
+
+- **WHEN** the user clicks "Download" for an annotation whose URL starts with `"files/"`
+- **THEN** a resolved download URL is fetched and a hidden `<a download>` click is dispatched; `window.open` is NOT called
+
+#### Scenario: Web link calls window.open
+
+- **WHEN** the user clicks "Open in browser" for an annotation whose URL is an `https://` URL
+- **THEN** `window.open` is called with the URL, `"_blank"`, and `"noopener,noreferrer"`

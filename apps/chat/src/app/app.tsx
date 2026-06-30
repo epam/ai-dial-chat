@@ -39,13 +39,12 @@ import {
 } from '../constants/translation-keys';
 import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
-import useLocalStorage from '../hooks/useLocalStorage';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
-import { StorageKey } from '../types/storage-key';
 import { ThemeId } from '../types/theme-id';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
+const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 
 // Start loading the module immediately so the Suspense fallback is skipped on first navigation.
 const conversationPageModule = import('../pages/Conversation/Conversation');
@@ -71,10 +70,7 @@ const App: FC = () => {
   const closeNav = useCallback(() => setIsNavOpen(false), []);
   const toggleNav = useCallback(() => setIsNavOpen((prev) => !prev), []);
 
-  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useLocalStorage(
-    StorageKey.ConversationPanelOpen,
-    false,
-  );
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(true);
   const toggleHistoryPanel = useCallback(
     () => setIsHistoryPanelOpen(!isHistoryPanelOpen),
     [isHistoryPanelOpen, setIsHistoryPanelOpen],
@@ -89,13 +85,14 @@ const App: FC = () => {
     if (isMobile) closeHistoryPanel();
   }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (pathname === ROUTES.Catalog) closeHistoryPanel();
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   useEffect(() => {
     closeCanvas();
+    if (pathname === ROUTES.Catalog) {
+      closeHistoryPanel();
+    } else if (!isMobile && !isCanvasOpen) {
+      setIsHistoryPanelOpen(true);
+    }
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -173,12 +170,13 @@ const App: FC = () => {
       <main
         id="main-content"
         role="main"
-        className="flex min-h-0 min-w-0 flex-1 flex-col bg-layer-1"
+        className="bg-layer-5 flex min-h-0 min-w-0 flex-1 flex-col"
       >
         <Header
           onMenuToggle={toggleNav}
           isConversationPanelOpen={isHistoryPanelOpen}
           onConversationPanelToggle={toggleHistoryPanel}
+          onNewChat={() => navigate(ROUTES.Root)}
         />
         <Routes>
           <Route path={ROUTES.Root} element={<ConversationRoute />} />
@@ -200,6 +198,16 @@ const App: FC = () => {
                   <ConversationPage
                     onDuplicateReadonly={handleDuplicateReadonly}
                   />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.AppsEditor}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <AppsEditorPage />
                 </Suspense>
               </RouteErrorBoundary>
             }

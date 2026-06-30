@@ -130,6 +130,13 @@ export enum CatalogI18nKeys {
   FavoriteRemoved = 'catalog.favoriteRemoved',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
+  PickerTitle = 'catalog.picker.title',
+  PickerSearchPlaceholder = 'catalog.picker.searchPlaceholder',
+  PickerSearchAriaLabel = 'catalog.picker.searchAriaLabel',
+  PickerFavoritesLabel = 'catalog.picker.favoritesLabel',
+  PickerEmptyHint = 'catalog.picker.emptyHint',
+  PickerBrowseCatalog = 'catalog.picker.browseCatalogLabel',
+  PickerRemoveFromFavorites = 'catalog.picker.removeFromFavoritesLabel',
 }
 
 export enum DeploymentsI18nKeys {
@@ -167,7 +174,6 @@ export enum DialFileManagerI18nKeys {
   Download = 'dialFileManager.download',
   Downloading = 'dialFileManager.downloading',
   UploadProgressTitle = 'dialFileManager.uploadProgressTitle',
-  UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
   MaxSizeSupportedTypes = 'dialFileManager.maxSizeSupportedTypes',
   MaxSizeOnly = 'dialFileManager.maxSizeOnly',
   AllTypes = 'dialFileManager.allTypes',
@@ -234,6 +240,7 @@ export enum DialFileManagerI18nKeys {
   SharedEmptyStateDescription = 'dialFileManager.shared.emptyStateDescription',
   OrganizationEmptyStateTitle = 'dialFileManager.organization.emptyStateTitle',
   OrganizationEmptyStateDescription = 'dialFileManager.organization.emptyStateDescription',
+  UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
 }
 
 export enum AuthI18nKeys {
@@ -248,6 +255,7 @@ export enum AuthI18nKeys {
   LogOut = 'auth.logOut',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
+  UserAvatar = 'auth.userAvatar',
 }
 
 export enum SettingsI18nKeys {
@@ -353,6 +361,7 @@ export enum ChatSettingsI18nKeys {
   TemperatureNeutral = 'chatSettings.temperatureNeutral',
   TemperatureCreative = 'chatSettings.temperatureCreative',
   SaveLabel = 'chatSettings.saveLabel',
+  SaveDisabledTooltip = 'chatSettings.saveDisabledTooltip',
   TemperatureHint = 'chatSettings.temperatureHint',
   SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
   SavedNotification = 'chatSettings.savedNotification',
@@ -363,4 +372,34 @@ export enum AttachmentCanvasI18nKeys {
   CloseLabel = 'attachmentCanvas.closeLabel',
   DownloadLabel = 'attachmentCanvas.downloadLabel',
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
+}
+
+export enum AppsEditorI18nKeys {
+  StepGeneral = 'appsEditor.stepGeneral',
+  StepSettings = 'appsEditor.stepSettings',
+  GeneralFormNameLabel = 'appsEditor.generalForm.nameLabel',
+  GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
+  GeneralFormDescriptionLabel = 'appsEditor.generalForm.descriptionLabel',
+  GeneralFormDescriptionPlaceholder = 'appsEditor.generalForm.descriptionPlaceholder',
+  GeneralFormIconUrlLabel = 'appsEditor.generalForm.iconUrlLabel',
+  GeneralFormIconUrlPlaceholder = 'appsEditor.generalForm.iconUrlPlaceholder',
+  GeneralFormNextButton = 'appsEditor.generalForm.nextButton',
+  GeneralFormNameRequired = 'appsEditor.generalForm.nameRequired',
+  GeneralFormNameInvalid = 'appsEditor.generalForm.nameInvalid',
+  GeneralFormVersionInvalid = 'appsEditor.generalForm.versionInvalid',
+  GeneralFormVersionLabel = 'appsEditor.generalForm.versionLabel',
+  GeneralFormVersionPlaceholder = 'appsEditor.generalForm.versionPlaceholder',
+  GeneralFormTopicsLabel = 'appsEditor.generalForm.topicsLabel',
+  GeneralFormTopicsPlaceholder = 'appsEditor.generalForm.topicsPlaceholder',
+  GeneralFormPreviewTitle = 'appsEditor.generalForm.previewTitle',
+  SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
+  SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
+  ErrorCreateFailed = 'appsEditor.error.createFailed',
+}
+
+export enum ErrorBoundaryI18nKeys {
+  Heading = 'errorBoundary.heading',
+  Description = 'errorBoundary.description',
+  RetryLabel = 'errorBoundary.retryLabel',
+  ReloadLabel = 'errorBoundary.reloadLabel',
 }

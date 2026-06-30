@@ -18,6 +18,7 @@ const makeDeploymentsContext = (selectedItemId: string | null) => ({
   selectedDeploymentConfiguration: null,
   isLoading: false,
   error: null,
+  schemas: [],
 });
 
 describe('useDeploymentChangeEffect', () => {

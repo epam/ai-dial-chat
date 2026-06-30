@@ -4,6 +4,7 @@ import type {
   DeploymentItem,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
+import type { ReactNode } from 'react';
 import type {
   ChatSettingsConfig,
   InputColors,
@@ -24,16 +25,8 @@ export interface ConversationInputColors {
 
 /** Typography overrides for the `ConversationInput` component. */
 export interface ConversationInputTypography {
-  /** Tailwind (or custom) class applied to the welcome heading — takes precedence over the individual font properties below. */
+  /** Tailwind (or custom) class applied to the welcome heading. */
   welcomeClassName?: string;
-  /** Font family of the welcome heading (CSS value, e.g. `"'Inter', sans-serif"`). Ignored when `welcomeClassName` is set. */
-  welcomeFontFamily?: string;
-  /** Font size of the welcome heading (CSS value, e.g. `'24px'`). Ignored when `welcomeClassName` is set. */
-  welcomeFontSize?: string;
-  /** Font weight of the welcome heading. Ignored when `welcomeClassName` is set. */
-  welcomeFontWeight?: string | number;
-  /** Line height of the welcome heading. Ignored when `welcomeClassName` is set. */
-  welcomeLineHeight?: string | number;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;
 }
@@ -225,4 +218,11 @@ export interface ConversationInputProps {
    * When absent the card is not rendered as interactive.
    */
   onAttachmentClick?: (attachment: Attachment) => void;
+  /**
+   * When provided, the desktop model-selector chip opens this panel instead of
+   * the flat deployment list. Receives `onClose` so the panel can close the
+   * popover after a selection or an explicit dismiss.
+   */
+  // TODO: review usage
+  modelPickerOverlay?: (onClose: () => void) => ReactNode;
 }

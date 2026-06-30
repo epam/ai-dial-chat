@@ -31,8 +31,9 @@ export const EntityBadge: FC<EntityBadgeProps> = ({
   return (
     <span
       className={mergeClasses(
-        'uppercase tracking-[0.04em]',
+        'uppercase tracking-[0.06em]',
         className,
+        styles.pill,
         typeClassName,
       )}
     >

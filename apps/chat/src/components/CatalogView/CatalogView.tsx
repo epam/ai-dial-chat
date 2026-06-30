@@ -1,9 +1,11 @@
-/* eslint-disable @typescript-eslint/no-empty-function */
 import { Catalog, CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
+import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
@@ -11,13 +13,18 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { ROUTES } from '../../types/routes';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const { showNotification } = useNotification();
-  const { items: deployments, isLoading: isDeploymentsLoading } =
-    useDeployments();
+  const {
+    items: deployments,
+    isLoading: isDeploymentsLoading,
+    schemas,
+  } = useDeployments();
   const {
     favoriteIds,
     isLoading: isFavoritesLoading,
@@ -78,13 +85,41 @@ const CatalogView: FC = () => {
     [isLoading, toggleFavorite, catalogItems, showNotification, t],
   );
 
-  const createOptions = useMemo<CreateOption[]>(
-    () => [
-      { label: t(CatalogI18nKeys.CreateQuickApp), onClick: () => {} },
-      { label: t(CatalogI18nKeys.CreateToolset), onClick: () => {} },
-    ],
-    [t],
-  );
+  const buildEditorUrl = useCallback((schemaId: string): string => {
+    const params = new URLSearchParams({
+      [AppsEditorQuery.Step]: AppsEditorStep.General,
+      [AppsEditorQuery.Schema]: schemaId,
+      [AppsEditorQuery.ReturnUrl]: ROUTES.Catalog,
+      [AppsEditorQuery.IsCreating]: QUERY_VALUE_TRUE,
+    });
+    return `${ROUTES.AppsEditor}?${params.toString()}`;
+  }, []);
+
+  const createOptions = useMemo<CreateOption[]>(() => {
+    const options: CreateOption[] = [];
+    const quickAppSchema = schemas.find(
+      (s) => s.id?.endsWith('quickapps2') || s.displayName === 'Quick app 2.0',
+    );
+    const toolsetSchema = schemas.find((s) => s.id?.includes('toolset'));
+
+    if (quickAppSchema?.id) {
+      const schemaId = quickAppSchema.id;
+      options.push({
+        label: t(CatalogI18nKeys.CreateQuickApp),
+        onClick: () => navigate(buildEditorUrl(schemaId)),
+      });
+    }
+
+    if (toolsetSchema?.id) {
+      const schemaId = toolsetSchema.id;
+      options.push({
+        label: t(CatalogI18nKeys.CreateToolset),
+        onClick: () => navigate(buildEditorUrl(schemaId)),
+      });
+    }
+
+    return options;
+  }, [schemas, navigate, t, buildEditorUrl]);
 
   return (
     <Catalog

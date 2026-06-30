@@ -101,6 +101,15 @@
     "folder": {
       "personal": "Personal",
       "public": "Public"
+    },
+    "picker": {
+      "title": "Talk to",
+      "searchPlaceholder": "Search models, agents…",
+      "searchAriaLabel": "Search models and agents",
+      "favoritesLabel": "Favorites",
+      "emptyHint": "Star a model or agent to pin it here.",
+      "browseCatalogLabel": "Browse",
+      "removeFromFavoritesLabel": "Remove from favorites"
     }
   },
   "deployments": {
@@ -228,7 +237,8 @@
     "userMenuLabel": "User menu",
     "logOut": "Log out",
     "logOutConfirmTitle": "Log out?",
-    "logOutConfirmDescription": "Are you sure you want to log out?"
+    "logOutConfirmDescription": "Are you sure you want to log out?",
+    "userAvatar": "User avatar"
   },
   "settings": {
     "language": "Language",
@@ -267,6 +277,7 @@
     "temperatureNeutral": "Neutral",
     "temperatureCreative": "Creative",
     "saveLabel": "Apply changes",
+    "saveDisabledTooltip": "Please select a response format",
     "temperatureHint": "Higher values like 0.8 will make the output more random, while lower values like 0.2 will make it more focused and deterministic.",
     "systemPromptTooltip": "Enter a prompt",
     "savedNotification": "Chat settings have been saved"
@@ -416,5 +427,33 @@
     "description": "An unexpected error occurred. You can try again or reload the page.",
     "retryLabel": "Try again",
     "reloadLabel": "Reload the page"
+  },
+  "appsEditor": {
+    "stepGeneral": "General",
+    "stepSettings": "Settings",
+    "generalForm": {
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter application name",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe your application",
+      "iconUrlLabel": "Icon URL",
+      "iconUrlPlaceholder": "https://...",
+      "nextButton": "Next",
+      "nameRequired": "Name is required",
+      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes",
+      "versionLabel": "Version",
+      "versionPlaceholder": "e.g. 1.0.0",
+      "topicsLabel": "Topics",
+      "topicsPlaceholder": "Add a topic",
+      "previewTitle": "Preview"
+    },
+    "settingsStep": {
+      "loadingLabel": "Loading editor…",
+      "noEditorPlaceholder": "Editor not available for this application type yet."
+    },
+    "error": {
+      "createFailed": "Failed to create application. Please try again."
+    }
   }
 }
