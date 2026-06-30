@@ -64,6 +64,8 @@ import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import { ModelPickerPanel } from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
+import useFavoriteApplications from '@/src/hooks/useFavoriteApplications/useFavoriteApplications';
+import { mapDeploymentToCatalogItem } from '@/src/utils/map-deployment-to-catalog-item';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
