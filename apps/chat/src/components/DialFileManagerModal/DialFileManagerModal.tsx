@@ -8,7 +8,7 @@ import {
   DialFileManagerActions,
   DialFileManagerTabs,
   DialFileNodeType,
-  DialLoader,
+  DialSpinner,
   DialPopup,
   GridSelectionMode,
   NOT_ALLOWED_SYMBOLS_REGEXP,
@@ -659,7 +659,7 @@ const DialFileManagerModal: FC<Props> = ({
                 aria-live="polite"
                 className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
               >
-                <DialLoader
+                <DialSpinner
                   size={32}
                   fullWidth={false}
                   ariaLabel={downloadingLabel}
@@ -671,7 +671,7 @@ const DialFileManagerModal: FC<Props> = ({
                 aria-live="polite"
                 className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
               >
-                <DialLoader
+                <DialSpinner
                   size={32}
                   fullWidth={false}
                   ariaLabel={deletingLabel}
@@ -683,7 +683,7 @@ const DialFileManagerModal: FC<Props> = ({
                 aria-live="polite"
                 className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
               >
-                <DialLoader
+                <DialSpinner
                   size={32}
                   fullWidth={false}
                   ariaLabel={t(DialFileManagerI18nKeys.RenamingLabel)}
