@@ -21,6 +21,73 @@
   }
 }
 
+// ─── ConversationPanel visual overrides ────────────────────────────────────
+// Anchor: `aside[class~="dial-body-text"]` (set via styles.typography.fontClassName).
+// This scopes every selector below to the ConversationPanel without touching
+// hash-unstable internal module class names where avoidable.
+
+// Pane title row ("Chats") — match app header height, no bottom divider
+aside[class~='dial-body-text'] > [class~='h-12'][class~='shrink-0'] {
+  height: 64px !important;
+  border-bottom: none !important;
+}
+
+aside[class~='dial-body-text']
+  > [class~='h-12'][class~='shrink-0']
+  > span:first-child {
+  font-size: 22px !important;
+  line-height: 32px !important;
+  font-weight: 600 !important;
+}
+
+// Group section headers ("MY CHATS", "ORGANIZATION") — subtle, reduced prominence
+aside[class~='dial-body-text'] [class~='uppercase'][class~='tracking-wider'] {
+  opacity: 0.55;
+}
+
+// Chat row buttons — 8px radius (not pill), correct text color, vertical padding
+aside[class~='dial-body-text'] [class~='group/conversation'] > button {
+  border-radius: 8px;
+  padding-block: 9px;
+  color: var(--text-primary);
+}
+
+// Active chat row — 3px brand-gradient start-edge indicator bar
+// Anchor: aria-current="page" on the button, parent has class "group/conversation relative"
+aside[class~='dial-body-text']
+  [class~='group/conversation']:has(> button[aria-current='page'])::before {
+  content: '';
+  position: absolute;
+  inset-block: 4px;
+  inset-inline-start: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+  background: linear-gradient(180deg, #37babc 0%, #5c8dea 48%, #a972ff 100%);
+}
+
+// Composer input — match catalog search bar radius (not exposed via ci- vars)
+[role='region'] [class~='rounded-xl'][class~='border'] {
+  border-radius: 12px !important;
+}
+
+// TODO: review - DS classes and tokens overrides.
+// Tertiary — ghost pill, no border, secondary text
+.dial-primary-ghost-button:not(.dial-icon-button) {
+  border: none;
+  border-radius: 9999px;
+  color: var(--bg-accent-primary, #2764d9);
+
+  @media (hover: hover) {
+    &:hover:enabled {
+      background-color: rgba(39, 100, 217, 0.05);
+    }
+  }
+
+  &:active:enabled {
+    background-color: rgba(39, 100, 217, 0.08);
+  }
+}
+
 // DS token overrides
 .dial-small-text {
   line-height: 24px;
@@ -109,78 +176,5 @@
     background-color: transparent;
     background-image: none;
     color: var(--controls-text-neutral-disable, #575f73);
-  }
-}
-
-// ─── ConversationPanel visual overrides ────────────────────────────────────
-// Anchor: `aside[class~="dial-body-text"]` (set via styles.typography.fontClassName).
-// This scopes every selector below to the ConversationPanel without touching
-// hash-unstable internal module class names where avoidable.
-
-// Pane title row ("Chats") — match app header height, no bottom divider
-aside[class~='dial-body-text'] > [class~='h-12'][class~='shrink-0'] {
-  height: 64px !important;
-  border-bottom: none !important;
-}
-
-aside[class~='dial-body-text']
-  > [class~='h-12'][class~='shrink-0']
-  > span:first-child {
-  font-size: 22px !important;
-  line-height: 32px !important;
-  font-weight: 600 !important;
-}
-
-// Group section headers ("MY CHATS", "ORGANIZATION") — subtle, reduced prominence
-aside[class~='dial-body-text'] [class~='uppercase'][class~='tracking-wider'] {
-  opacity: 0.55;
-}
-
-// Chat row buttons — 8px radius (not pill), correct text color, vertical padding
-aside[class~='dial-body-text'] [class~='group/conversation'] > button {
-  border-radius: 8px;
-  padding-block: 9px;
-  color: var(--text-primary);
-}
-
-// Conversation avatar — rounded square instead of circle
-aside[class~='dial-body-text']
-  [class~='group/conversation']
-  [class~='rounded-full'] {
-  border-radius: 6px !important;
-}
-
-// Active chat row — 3px brand-gradient start-edge indicator bar
-// Anchor: aria-current="page" on the button, parent has class "group/conversation relative"
-aside[class~='dial-body-text']
-  [class~='group/conversation']:has(> button[aria-current='page'])::before {
-  content: '';
-  position: absolute;
-  inset-block: 4px;
-  inset-inline-start: 0;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
-  background: linear-gradient(180deg, #37babc 0%, #5c8dea 48%, #a972ff 100%);
-}
-
-// Composer input — match catalog search bar radius (not exposed via ci- vars)
-[role='region'] [class~='rounded-xl'][class~='border'] {
-  border-radius: 12px !important;
-}
-
-// Tertiary — ghost pill, no border, secondary text
-.dial-primary-ghost-button:not(.dial-icon-button) {
-  border: none;
-  border-radius: 9999px;
-  color: var(--bg-accent-primary, #2764d9);
-
-  @media (hover: hover) {
-    &:hover:enabled {
-      background-color: rgba(39, 100, 217, 0.05);
-    }
-  }
-
-  &:active:enabled {
-    background-color: rgba(39, 100, 217, 0.08);
   }
 }
