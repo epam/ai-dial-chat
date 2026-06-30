@@ -1,9 +1,8 @@
 // Color-only rules. Layout, spacing, and border-radius live in Tailwind classes in the TSX file.
 
 .card {
-  --_card-bg: var(--ci-card-bg, var(--bg-layer-0, #fcfcfc));
   border-color: var(--ci-card-border, var(--stroke-secondary, #d1dbea));
-  background: var(--_card-bg);
+  background: var(--ci-card-bg, var(--bg-layer-0, #fcfcfc));
 }
 
 .cardError {

@@ -23,7 +23,7 @@
     );
     border-inline-start-color: var(
       --cp-item-active-border,
-      var(--stroke-success, #007274)
+      var(--bg-accent-secondary, #37babc)
     );
   }
 }
@@ -49,10 +49,10 @@
   &.triggerActive {
     background: var(
       --cp-trigger-bg,
-      var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
+      var(--controls-bg-accent-primary, #124ace)
     );
     .triggerIcon {
-      color: var(--cp-trigger-icon, var(--text-accent-secondary, #007274));
+      color: var(--cp-trigger-icon, var(--controls-text-permanent, #fff));
     }
   }
 }

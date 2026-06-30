@@ -102,17 +102,14 @@
   &:hover {
     background: var(
       --ci-send-bg-hover,
-      <<<<<<< HEAD var(--controls-bg-accent-primary-hover, #3664e2) =======
-        var(--controls-bg-accent-primary-hover, #2656d9) >>>>>>> development-1.0
+      var(--controls-bg-accent-primary-hover, #2656d9)
     );
   }
 
   &:active {
     background: var(
       --ci-send-bg-active,
-      <<<<<<< HEAD var(--controls-bg-accent-primary-active, #7da4ff) =======
-        var(--controls-bg-accent-primary-active, #3664e2) >>>>>>>
-        development-1.0
+      var(--controls-bg-accent-primary-active, #3664e2)
     );
   }
 
@@ -120,8 +117,7 @@
     background: var(--ci-send-bg-disabled, var(--controls-bg-disable, #d1dbea));
     color: var(
       --ci-send-text-disabled,
-      <<<<<<< HEAD var(--controls-text-accent-disable, #d1dbea) =======
-        var(--controls-text-primary-disable, #696e7c) >>>>>>> development-1.0
+      var(--controls-text-primary-disable, #696e7c)
     );
   }
 }
