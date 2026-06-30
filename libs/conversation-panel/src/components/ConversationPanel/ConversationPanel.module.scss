@@ -2,7 +2,6 @@
 // Layout, spacing, and transitions live in Tailwind classes in the TSX file.
 
 .header {
-  border-color: var(--cp-header-border, var(--stroke-tertiary, #e0e6f0));
   color: var(--cp-text, var(--text-primary, #161b2d));
 }
 

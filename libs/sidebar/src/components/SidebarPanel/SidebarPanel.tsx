@@ -38,7 +38,6 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
       buildCssVars({
         '--sb-bg': colors?.background,
         '--sb-border': colors?.border,
-        '--sb-header-border': colors?.headerBorder,
       }),
     [colors],
   );
