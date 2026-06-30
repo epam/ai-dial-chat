@@ -173,32 +173,6 @@ aside[class~='dial-body-text'] [class~='border-b']:not([class~='flex-wrap']) {
   border-bottom-color: var(--stroke-tertiary);
 }
 
-// Search wrapper — Catalog-style card: full border, near-white bg, inset shadow, accent focus ring.
-// Uses :has() to identify the SearchInput wrapper div (which has border-b) by its dial-input descendant.
-// The `border` shorthand here overrides the `border-b`-only color set by the general rule above.
-aside[class~='dial-body-text'] [class~='border-b']:has([class~='dial-input']) {
-  border: 1px solid var(--stroke-secondary, #d1dbea) !important;
-  border-radius: 12px !important;
-  background-color: var(--bg-layer-0, #fcfcfc) !important;
-  box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.03);
-  box-sizing: border-box;
-  overflow: hidden;
-  margin: 12px 12px 0;
-  width: calc(100% - 24px);
-  transition:
-    border-color 0.15s,
-    box-shadow 0.15s;
-
-  &:hover:not(:focus-within) {
-    border-color: var(--controls-bg-accent, #5c8dea) !important;
-  }
-
-  &:focus-within {
-    border-color: var(--stroke-accent-primary) !important;
-    box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha) !important;
-  }
-}
-
 // Segmented filter control — increased gaps above (vs search) and below (vs list)
 aside[class~='dial-body-text'] [class~='flex-wrap'][class~='gap-2'] {
   flex-wrap: nowrap;

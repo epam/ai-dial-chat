@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialSearch } from '@epam/ai-dial-ui-kit';
+import { SearchBar } from '@epam/ai-dial-kit';
 import { type FC, memo } from 'react';
 import styles from '../SidebarPanel/SidebarPanel.module.scss';
 
@@ -16,13 +16,8 @@ export interface SearchInputProps {
 /** Thin wrapper around `DialSearch` styled for use inside a sidebar panel. */
 export const SearchInput: FC<SearchInputProps> = memo(
   ({ placeholder, value, onChange }) => (
-    <div className={mergeClasses('border-b', styles.divider)}>
-      <DialSearch
-        value={value}
-        placeholder={placeholder}
-        onChange={onChange}
-        withoutBorder
-      />
+    <div className={mergeClasses('mx-3 border-b pb-3', styles.divider)}>
+      <SearchBar value={value} onChange={onChange} placeholder={placeholder} />
     </div>
   ),
 );

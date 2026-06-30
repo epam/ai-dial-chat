@@ -44,7 +44,7 @@ export const SearchBar: FC<SearchBarProps> = ({
       <div
         className={mergeClasses(
           styles.container,
-          'flex cursor-text items-center gap-3 rounded-xl border px-[18px] py-[9px] transition-[border-color,box-shadow] duration-150 ease-in-out',
+          'flex cursor-text items-center gap-3 rounded-xl border px-4 py-2 transition-[border-color,box-shadow] duration-150 ease-in-out',
         )}
       >
         <IconSearch
@@ -56,7 +56,7 @@ export const SearchBar: FC<SearchBarProps> = ({
           aria-hidden
         />
         <input
-          type="search"
+          type="text"
           className={mergeClasses(
             styles.input,
             'min-w-0 flex-1 border-0 p-0 text-sm font-normal leading-5 outline-none',

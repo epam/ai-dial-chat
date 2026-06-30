@@ -13,6 +13,7 @@
   }
 
   &:focus-within {
+    border-color: var(--stroke-accent-primary, #124ace);
     box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff2e);
   }
 }
