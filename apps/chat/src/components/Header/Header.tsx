@@ -104,19 +104,15 @@ const Header: FC<Props> = ({
                   >
                     <stop
                       offset="0%"
-                      style={{
-                        stopColor: 'var(--bg-accent-secondary, #37babc)',
-                      }}
+                      style={{ stopColor: 'var(--bg-accent-secondary)' }}
                     />
                     <stop
                       offset="50%"
-                      style={{ stopColor: 'var(--bg-accent-primary, #5c8dea)' }}
+                      style={{ stopColor: 'var(--bg-accent-primary)' }}
                     />
                     <stop
                       offset="100%"
-                      style={{
-                        stopColor: 'var(--bg-accent-tertiary, #a972ff)',
-                      }}
+                      style={{ stopColor: 'var(--bg-accent-tertiary)' }}
                     />
                   </linearGradient>
                 </defs>
