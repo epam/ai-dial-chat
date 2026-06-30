@@ -147,12 +147,12 @@ describe('Catalog', () => {
       topics: [],
     };
     render(<Catalog items={[]} favorites={[fav]} />);
-    expect(screen.getByText('Your Favorites')).toBeTruthy();
+    expect(screen.getByText('Your favorites')).toBeTruthy();
   });
 
   it('does not render CatalogFavorites when favorites is empty', () => {
     render(<Catalog items={[]} favorites={[]} />);
-    expect(screen.queryByText('Your Favorites')).toBeNull();
+    expect(screen.queryByText('Your favorites')).toBeNull();
   });
 
   it('renders items in the card grid', () => {
