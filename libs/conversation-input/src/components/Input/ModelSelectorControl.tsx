@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   DIAL_ICON_SIZE,
+  DialDropdown,
   DialDropdownIcon,
   DialGhostIconButton,
   ElementSize,
@@ -21,6 +22,13 @@ interface Props {
   isMobile: boolean;
   isInputDisabled?: boolean;
   style: CSSProperties;
+  modelPickerOverlay: InputProps['modelPickerOverlay'];
+  /** Whether the model picker popover is open (controlled from Input). */
+  isPickerOpen?: boolean;
+  /** Toggles the model picker popover open/closed. */
+  onPickerToggle?: () => void;
+  /** Called by DialDropdown when open state changes (e.g. outside click). */
+  onPickerOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -35,6 +43,10 @@ export const ModelSelectorControl: FC<Props> = ({
   isMobile,
   isInputDisabled = false,
   style,
+  modelPickerOverlay,
+  isPickerOpen,
+  onPickerToggle,
+  onPickerOpenChange,
 }) => {
   const [isModelSheetOpen, setIsModelSheetOpen] = useState(false);
 
@@ -102,6 +114,44 @@ export const ModelSelectorControl: FC<Props> = ({
           style={style}
         />
       </>
+    );
+  }
+
+  if (modelPickerOverlay) {
+    return (
+      <DialDropdown
+        placement="top-end"
+        matchReferenceWidth={false}
+        open={isPickerOpen}
+        onOpenChange={onPickerOpenChange}
+        trigger={[]}
+        outsideClosable
+        renderOverlay={() =>
+          modelPickerOverlay(() => onPickerOpenChange?.(false))
+        }
+        listClassName="shadow-xl"
+      >
+        <button
+          type="button"
+          aria-label={selectorAriaLabel}
+          className={mergeClasses(
+            'relative flex items-center justify-center rounded-[6px] p-2',
+            styles.modelSelectorButton,
+            isInputDisabled || isStreaming ? disabledIconClassName : undefined,
+            isInputDisabled && styles.modelSelectorButtonDisabled,
+          )}
+          onClick={() => {
+            if (!isInputDisabled && !isStreaming) {
+              onPickerToggle?.();
+            }
+          }}
+        >
+          <div className="relative flex items-center">
+            {selectorIcon}
+            <div className="absolute right-[-12px]">{caretIcon}</div>
+          </div>
+        </button>
+      </DialDropdown>
     );
   }
 

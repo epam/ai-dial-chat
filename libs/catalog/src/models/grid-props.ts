@@ -6,6 +6,10 @@ export interface CardGridTitles {
   noResultsTitle?: string;
   /** Label for the "Featured" tag on cards. Default: `'Featured'`. */
   featuredLabel?: string;
+  /** Accessible label for the star button when the item is not starred. Default: `'Add to favorites'`. */
+  addToFavoritesAriaLabel?: string;
+  /** Accessible label for the star button when the item is already starred. Default: `'Remove from favorites'`. */
+  removeFromFavoritesAriaLabel?: string;
 }
 
 /** Props for `CardGrid`. */

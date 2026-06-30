@@ -1,5 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { DialCloseButton, DialTabs } from '@epam/ai-dial-ui-kit';
+import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import type { DetailsPanelProps } from '../../models/item-details-props';
 import { CatalogDetailsTab } from '../../types/detail-tab';
@@ -147,8 +147,34 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
         <Summary item={item} texts={texts} detailsStyles={detailsStyles} />
 
-        <div className={mergeClasses('shrink-0', styles.divider, 'px-[22px]')}>
-          <DialTabs tabs={tabs} activeTab={activeTab} onClick={setActiveTab} />
+        <div className="shrink-0 px-[22px]">
+          <div
+            role="tablist"
+            className={mergeClasses(
+              'flex justify-start gap-1 border-b',
+              styles.tabsRow,
+            )}
+          >
+            {tabs.map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  role="tab"
+                  aria-selected={isActive}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={mergeClasses(
+                    'dial-small-semi-text -mb-px flex items-center border-b-2 px-3 py-2.5 text-start transition-colors',
+                    isActive
+                      ? mergeClasses(styles.activeTab, 'text-[#111827]')
+                      : 'border-transparent text-[#6B7280] hover:text-[#374151]',
+                  )}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Tab content — scrollable */}
