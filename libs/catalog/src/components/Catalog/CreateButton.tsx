@@ -1,9 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DialDropdown,
-  DialPrimaryButton,
-} from '@epam/ai-dial-ui-kit';
+import { PrimaryButton } from '@epam/ai-dial-kit';
+import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
 import { FC, KeyboardEvent, useCallback, useRef, useState } from 'react';
 import type { CreateOption } from '../../models/catalog-props';
@@ -13,6 +10,8 @@ import styles from './CreateButton.module.scss';
 export interface CreateButtonProps {
   /** Button label. */
   label: string;
+  /** Caption shown at the top of the dropdown menu. Default: 'Create new'. */
+  menuCaption?: string;
   /**
    * When provided, the button opens a dropdown with these options instead of
    * calling `onClick` directly.
@@ -25,6 +24,7 @@ export interface CreateButtonProps {
 /** Renders either a plain primary button or a split-chevron dropdown. */
 export const CreateButton: FC<CreateButtonProps> = ({
   label,
+  menuCaption = 'Create new',
   options,
   onClick,
 }) => {
@@ -87,7 +87,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
 
   if (!options?.length) {
     return (
-      <DialPrimaryButton
+      <PrimaryButton
         label={label}
         iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
         onClick={onClick}
@@ -118,7 +118,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
                 'dial-tiny-semi-text',
               )}
             >
-              Create new
+              {menuCaption}
             </div>
 
             {options.map((opt, i) => (
@@ -178,7 +178,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
           </div>
         )}
       >
-        <DialPrimaryButton
+        <PrimaryButton
           label={label}
           iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
           iconAfter={

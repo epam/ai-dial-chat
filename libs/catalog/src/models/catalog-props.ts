@@ -27,6 +27,8 @@ export interface CatalogTitles {
   pageTitle?: string;
   /** Create button label. Default: 'Create'. */
   createLabel?: string;
+  /** Caption shown at the top of the Create dropdown menu. Default: 'Create new'. */
+  createMenuCaption?: string;
   /** Favorites section heading. Default: 'Your Favorites'. */
   favoritesTitle?: string;
   /** Browse section heading. Default: 'Browse'. */

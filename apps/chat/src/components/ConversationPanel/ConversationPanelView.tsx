@@ -101,7 +101,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     refreshConversations,
   } = useConversations();
 
-  const { items: deployments } = useDeployments();
+  const { items: deployments, isLoading: isDeploymentsLoading } =
+    useDeployments();
   const deploymentIconByModelId = useMemo(
     () => new Map(deployments.map((d) => [d.id, d.iconUrl])),
     [deployments],
@@ -163,11 +164,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           iconTooltip: modelId
             ? deploymentNameByModelId.get(modelId)
             : undefined,
+          isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: getConversationRoute(id),
         };
       }),
-    [items, deploymentIconByModelId, deploymentNameByModelId],
+    [
+      items,
+      deploymentIconByModelId,
+      deploymentNameByModelId,
+      isDeploymentsLoading,
+    ],
   );
 
   const filterLabels = useMemo(

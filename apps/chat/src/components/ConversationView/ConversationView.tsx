@@ -17,9 +17,9 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
+import { NeutralButton } from '@epam/ai-dial-kit';
 import {
   DialFabButton,
-  DialNeutralButton,
   DialNotification,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
@@ -56,15 +56,15 @@ import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentVal
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
-import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import { ModelPickerPanel } from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
+import useFavoriteApplications from '@/src/hooks/useFavoriteApplications/useFavoriteApplications';
+import { mapDeploymentToCatalogItem } from '@/src/utils/map-deployment-to-catalog-item';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -628,7 +628,7 @@ const ConversationView: FC<Props> = ({
                 message={duplicateError}
               />
             )}
-            <DialNeutralButton
+            <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
               iconBefore={<IconCopy />}
               onClick={onDuplicateConversation}

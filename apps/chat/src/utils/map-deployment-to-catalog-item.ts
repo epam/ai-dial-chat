@@ -11,7 +11,7 @@ import { safeDecodeURIComponent } from './string-utils';
 const TYPE_MAP: Record<string, CatalogEntityType> = {
   model: CatalogEntityType.Model,
   toolset: CatalogEntityType.Toolset,
-  application: CatalogEntityType.Model,
+  application: CatalogEntityType.Application,
 };
 
 const APPLICATIONS_PREFIX = 'applications/';

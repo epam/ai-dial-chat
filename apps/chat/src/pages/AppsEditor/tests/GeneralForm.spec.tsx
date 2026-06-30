@@ -62,7 +62,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         />
       </label>
     ),
-    DialPrimaryButton: ({
+    PrimaryButton: ({
       label,
       disabled,
       type,
@@ -78,7 +78,7 @@ vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
         {label}
       </button>
     ),
-    DialNeutralButton: ({
+    NeutralButton: ({
       label,
       disabled,
       onClick,

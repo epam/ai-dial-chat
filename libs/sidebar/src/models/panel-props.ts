@@ -7,8 +7,6 @@ export interface SidebarPanelColors {
   background?: string;
   /** Divider border color on the inner edge. */
   border?: string;
-  /** Header bar bottom-border color. */
-  headerBorder?: string;
 }
 
 /** Typography overrides for the `SidebarPanel` component. */

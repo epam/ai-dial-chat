@@ -91,6 +91,7 @@
       }
     },
     "create": {
+      "menuCaption": "Create new",
       "quickApp": "QuickApp",
       "toolset": "Toolset"
     },
@@ -98,6 +99,10 @@
     "favoriteRemovedTitle": "Removed from Favorites",
     "favoriteAdded": "\"{{name}}\" added to Favorites",
     "favoriteRemoved": "\"{{name}}\" removed from Favorites",
+    "tab": {
+      "models": "Models",
+      "applications": "Agents"
+    },
     "folder": {
       "personal": "Personal",
       "public": "Public"

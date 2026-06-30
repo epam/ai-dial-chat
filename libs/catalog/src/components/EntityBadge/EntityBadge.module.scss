@@ -13,6 +13,11 @@
   background: var(--cat-entity-model-bg, rgba(39, 100, 217, 0.1));
 }
 
+.application {
+  color: var(--cat-entity-type-application, #059669);
+  background: var(--cat-entity-application-bg, rgba(5, 150, 105, 0.1));
+}
+
 .agent {
   color: var(--cat-entity-type-agent, #7c3aed);
   background: var(--cat-entity-agent-bg, rgba(124, 58, 237, 0.1));

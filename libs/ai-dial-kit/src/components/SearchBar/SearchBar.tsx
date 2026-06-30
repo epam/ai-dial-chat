@@ -16,21 +16,7 @@ export interface SearchBarProps {
   ariaLabel?: string;
 }
 
-/**
- * A search bar with a leading search icon and a plain text input.
- *
- * Renders a styled rounded container whose border and shadow update on
- * hover and focus-within to signal interactivity.
- *
- * @example
- * ```tsx
- * <SearchBar
- *   value={query}
- *   placeholder="Search models, tools, agents…"
- *   onChange={(value) => setQuery(value)}
- * />
- * ```
- */
+/** Search input with leading icon, hover/focus border, and aria-label fallback to placeholder. */
 export const SearchBar: FC<SearchBarProps> = ({
   value,
   onChange,

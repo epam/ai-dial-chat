@@ -13,7 +13,7 @@ export interface SearchInputProps {
   onChange: (value: string) => void;
 }
 
-/** Thin wrapper around `DialSearch` styled for use inside a sidebar panel. */
+/** Thin wrapper around `SearchBar` styled for use inside a sidebar panel. */
 export const SearchInput: FC<SearchInputProps> = memo(
   ({ placeholder, value, onChange }) => (
     <div className={mergeClasses('mx-3 border-b pb-3', styles.divider)}>
