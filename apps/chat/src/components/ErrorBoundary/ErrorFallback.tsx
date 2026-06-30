@@ -1,9 +1,9 @@
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import type { ParseKeys } from 'i18next';
 import { memo, type FC } from 'react';
 import type { FallbackProps } from 'react-error-boundary';
 import { useTranslation } from 'react-i18next';
-import { PrimaryButton } from '../../../../../libs/ai-dial-kit/src/components/Button/Buttons';
 import { ErrorBoundaryI18nKeys } from '../../constants/translation-keys';
 
 interface Props extends FallbackProps {

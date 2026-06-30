@@ -17,6 +17,7 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
+import { NeutralButton } from '@epam/ai-dial-kit';
 import {
   DialFabButton,
   DialNotification,
@@ -64,7 +65,6 @@ import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import { ModelPickerPanel } from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
-import { NeutralButton } from '../../../../../libs/ai-dial-kit/src/components/Button/Buttons';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
