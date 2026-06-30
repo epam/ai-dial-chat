@@ -3,13 +3,10 @@ import type { ApplicationSchemaSummaryDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  READY_TO_INTERACT_EVENT,
-  UPDATED_SUCCESS_EVENT,
-} from '../../constants/apps-editor';
 import { AppsEditorI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
+import { AppsEditorEvent } from '../../types/apps-editor';
 
 interface Props {
   schema: ApplicationSchemaSummaryDto;
@@ -37,16 +34,23 @@ const AppEditorIframe: FC<Props> = ({ schema, appId, onUpdated }) => {
 
   const handleMessage = useCallback(
     (event: MessageEvent) => {
+      if (
+        !schema.editorUrl ||
+        event.origin !== new URL(schema.editorUrl).origin
+      )
+        return;
       const displayName = schema.displayName ?? '';
-      if (event.data?.type === `${displayName}/${READY_TO_INTERACT_EVENT}`) {
+      if (
+        event.data?.type === `${displayName}/${AppsEditorEvent.ReadyToInteract}`
+      ) {
         setIsLoading(false);
       } else if (
-        event.data?.type === `${displayName}/${UPDATED_SUCCESS_EVENT}`
+        event.data?.type === `${displayName}/${AppsEditorEvent.UpdatedSuccess}`
       ) {
         onUpdated?.();
       }
     },
-    [schema.displayName, onUpdated],
+    [schema.editorUrl, schema.displayName, onUpdated],
   );
 
   useEffect(() => {

@@ -2,7 +2,10 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppsEditorI18nKeys, ButtonsI18nKeys } from '../../../constants/translation-keys';
+import {
+  AppsEditorI18nKeys,
+  ButtonsI18nKeys,
+} from '../../../constants/translation-keys';
 import { createApplication } from '../../../server-api/applications';
 import GeneralForm from '../GeneralForm';
 
@@ -88,6 +91,19 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  DialTagInput: ({
+    label,
+    onChange,
+  }: {
+    elementId?: string;
+    label?: string;
+    placeholder?: string;
+    onChange?: (tags: string[]) => void;
+  }) => <div onClick={() => onChange?.([])}>{label}</div>,
+  DialNotification: ({ message }: { variant?: string; message?: string }) => (
+    <p role="alert">{message}</p>
+  ),
+  NotificationVariant: { Error: 'error' },
 }));
 
 const DEFAULT_PROPS = {
@@ -139,6 +155,32 @@ describe('GeneralForm', () => {
     await user.click(getNextButton());
     expect(screen.getByRole('alert').textContent).toContain(
       AppsEditorI18nKeys.GeneralFormNameRequired,
+    );
+    expect(createApplication).not.toHaveBeenCalled();
+  });
+
+  it('shows invalid error and does not call API when name contains forbidden characters', async () => {
+    renderForm();
+    await user.type(getNameInput(), 'bad/name');
+    await user.click(getNextButton());
+    expect(screen.getByRole('alert').textContent).toContain(
+      AppsEditorI18nKeys.GeneralFormNameInvalid,
+    );
+    expect(createApplication).not.toHaveBeenCalled();
+  });
+
+  it('shows invalid error and does not call API when version contains forbidden characters', async () => {
+    renderForm();
+    await user.type(getNameInput(), 'My App');
+    await user.type(
+      screen.getByLabelText(
+        AppsEditorI18nKeys.GeneralFormVersionLabel,
+      ) as HTMLInputElement,
+      '1.0/bad',
+    );
+    await user.click(getNextButton());
+    expect(screen.getByRole('alert').textContent).toContain(
+      AppsEditorI18nKeys.GeneralFormVersionInvalid,
     );
     expect(createApplication).not.toHaveBeenCalled();
   });

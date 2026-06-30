@@ -412,6 +412,8 @@
       "iconUrlPlaceholder": "https://...",
       "nextButton": "Next",
       "nameRequired": "Name is required",
+      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes",
       "versionLabel": "Version",
       "versionPlaceholder": "e.g. 1.0.0",
       "topicsLabel": "Topics",

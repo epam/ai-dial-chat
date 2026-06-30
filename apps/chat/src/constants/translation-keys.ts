@@ -367,6 +367,8 @@ export enum AppsEditorI18nKeys {
   GeneralFormIconUrlPlaceholder = 'appsEditor.generalForm.iconUrlPlaceholder',
   GeneralFormNextButton = 'appsEditor.generalForm.nextButton',
   GeneralFormNameRequired = 'appsEditor.generalForm.nameRequired',
+  GeneralFormNameInvalid = 'appsEditor.generalForm.nameInvalid',
+  GeneralFormVersionInvalid = 'appsEditor.generalForm.versionInvalid',
   GeneralFormVersionLabel = 'appsEditor.generalForm.versionLabel',
   GeneralFormVersionPlaceholder = 'appsEditor.generalForm.versionPlaceholder',
   GeneralFormTopicsLabel = 'appsEditor.generalForm.topicsLabel',

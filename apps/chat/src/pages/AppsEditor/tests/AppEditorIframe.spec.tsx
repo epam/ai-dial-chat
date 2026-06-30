@@ -1,11 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import {
-  READY_TO_INTERACT_EVENT,
-  UPDATED_SUCCESS_EVENT,
-} from '../../../constants/apps-editor';
 import * as UserContextModule from '../../../context/auth/UserContext';
 import * as ThemeContextModule from '../../../context/ThemeContext';
+import { AppsEditorEvent } from '../../../types/apps-editor';
 import { AuthStatus } from '../../../types/auth-status';
 import AppEditorIframe from '../AppEditorIframe';
 
@@ -56,9 +53,10 @@ describe('AppEditorIframe', () => {
   it('builds iframe src with correct auth params', () => {
     renderIframe();
     const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
-    expect(iframe.src).toBe(
-      'https://editor.example.com?authProvider=local&id=abc&theme=dark',
-    );
+    const url = new URL(iframe.src);
+    expect(url.searchParams.get('authProvider')).toBe('local');
+    expect(url.searchParams.get('id')).toBe('abc');
+    expect(url.searchParams.get('theme')).toBe('dark');
   });
 
   it('shows spinner on mount', () => {
@@ -78,7 +76,10 @@ describe('AppEditorIframe', () => {
     fireEvent(
       window,
       new MessageEvent('message', {
-        data: { type: `${SCHEMA.displayName}/${READY_TO_INTERACT_EVENT}` },
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.ReadyToInteract}`,
+        },
+        origin: 'https://editor.example.com',
       }),
     );
     expect(screen.queryByRole('status')).toBeNull();
@@ -90,10 +91,29 @@ describe('AppEditorIframe', () => {
     fireEvent(
       window,
       new MessageEvent('message', {
-        data: { type: `${SCHEMA.displayName}/${UPDATED_SUCCESS_EVENT}` },
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.UpdatedSuccess}`,
+        },
+        origin: 'https://editor.example.com',
       }),
     );
     expect(onUpdated).toHaveBeenCalledOnce();
+  });
+
+  it('ignores messages from a different origin', () => {
+    const onUpdated = vi.fn();
+    renderIframe({ onUpdated });
+    fireEvent(
+      window,
+      new MessageEvent('message', {
+        data: {
+          type: `${SCHEMA.displayName}/${AppsEditorEvent.ReadyToInteract}`,
+        },
+        origin: 'https://evil.example.com',
+      }),
+    );
+    expect(screen.getByRole('status')).toBeTruthy();
+    expect(onUpdated).not.toHaveBeenCalled();
   });
 
   it('removes message listener on unmount', () => {

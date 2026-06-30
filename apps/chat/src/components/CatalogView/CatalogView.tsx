@@ -100,10 +100,7 @@ const CatalogView: FC = () => {
     const quickAppSchema = schemas.find(
       (s) => s.id?.endsWith('quickapps2') || s.displayName === 'Quick app 2.0',
     );
-    // TODO: replace with a proper schema identifier once toolset schema has a stable id/displayName
-    const toolsetSchema = schemas.find(
-      (s) => s.id?.includes('toolset') || s.displayName === 'CodeApps',
-    );
+    const toolsetSchema = schemas.find((s) => s.id?.includes('toolset'));
 
     if (quickAppSchema?.id) {
       const schemaId = quickAppSchema.id;
