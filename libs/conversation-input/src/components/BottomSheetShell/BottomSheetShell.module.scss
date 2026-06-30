@@ -13,14 +13,14 @@
 }
 
 .sheet {
-  background: var(--ci-sheet-bg, var(--bg-layer-0, #000000));
+  background: var(--ci-sheet-bg, var(--bg-layer-0, #fcfcfc));
   animation: slide-up 300ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 .title {
-  color: var(--ci-sheet-text, var(--text-primary, #eef1f7));
+  color: var(--ci-sheet-text, var(--text-primary, #161b2d));
 }
 
 .divider {
-  background: var(--ci-sheet-divider, var(--bg-layer-4, #242c42));
+  background: var(--ci-sheet-divider, var(--bg-layer-4, #d1dbea));
 }

@@ -1,27 +1,27 @@
 .divider {
-  background: var(--ci-sheet-divider, var(--bg-layer-4, #242c42));
+  background: var(--ci-sheet-divider, var(--bg-layer-4, #d1dbea));
 }
 
 .item {
-  color: var(--ci-sheet-text, var(--text-primary, #eef1f7));
+  color: var(--ci-sheet-text, var(--text-primary, #161b2d));
 
   &:hover {
-    background: var(--ci-sheet-item-hover, var(--bg-layer-3, #1d2439));
+    background: var(--ci-sheet-item-hover, var(--bg-layer-3, #fcfcfc));
   }
 
   &:active {
-    background: var(--ci-sheet-item-active, var(--bg-layer-4, #242c42));
+    background: var(--ci-sheet-item-active, var(--bg-layer-4, #d1dbea));
   }
 }
 
 .itemIcon {
-  color: var(--ci-sheet-icon, var(--text-secondary, #9fa6bd));
+  color: var(--ci-sheet-icon, var(--text-secondary, #575f73));
 }
 
 .checkIcon {
-  color: var(--ci-check-icon, var(--text-accent-primary, #7da4ff));
+  color: var(--ci-check-icon, var(--text-accent-primary, #124ace));
 }
 
 .stateLabel {
-  color: var(--ci-sheet-text, var(--text-secondary, #9fa6bd));
+  color: var(--ci-sheet-text, var(--text-secondary, #575f73));
 }

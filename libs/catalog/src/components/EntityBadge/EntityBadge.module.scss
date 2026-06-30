@@ -1,16 +1,16 @@
 .model {
   color: var(
     --cat-entity-type-model,
-    var(--controls-bg-accent-primary, #3664e2)
+    var(--controls-bg-accent-primary, #124ace)
   );
 }
 
 .toolset {
-  color: var(--cat-entity-type-toolset, var(--text-accent-tertiary, #a972ff));
+  color: var(--cat-entity-type-toolset, var(--text-accent-tertiary, #7e39ec));
 }
 
 .mcp {
-  color: var(--cat-entity-type-mcp, var(--text-accent-secondary, #37babc));
+  color: var(--cat-entity-type-mcp, var(--text-accent-secondary, #007274));
 }
 
 .guardrail {
@@ -18,13 +18,13 @@
 }
 
 .agent {
-  color: var(--cat-entity-type-agent, var(--text-success, #5fbeae));
+  color: var(--cat-entity-type-agent, var(--text-success, #007274));
 }
 
 .skill {
-  color: var(--cat-entity-type-skill, var(--text-accent-secondary, #37babc));
+  color: var(--cat-entity-type-skill, var(--text-accent-secondary, #007274));
 }
 
 .fallback {
-  color: var(--cat-entity-type-fallback, var(--text-secondary, #9fa6bd));
+  color: var(--cat-entity-type-fallback, var(--text-secondary, #575f73));
 }

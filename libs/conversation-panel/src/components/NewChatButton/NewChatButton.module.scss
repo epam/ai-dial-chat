@@ -1,6 +1,4 @@
 .button {
-  border-radius: var(--cp-new-chat-radius, 4px);
-
   &:hover {
     background: var(
       --cp-new-chat-hover,
@@ -38,5 +36,5 @@
 }
 
 .iconColor {
-  color: var(--cp-new-chat-icon, var(--text-success, #37babc));
+  color: var(--cp-new-chat-icon, var(--text-success, #007274));
 }
