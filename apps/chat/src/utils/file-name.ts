@@ -1,12 +1,9 @@
+import { truncateToUtf8Bytes } from '@epam/ai-dial-chat-shared';
 import { NOT_ALLOWED_SYMBOLS_REGEXP } from '@epam/ai-dial-ui-kit';
 
-/**
- * Trims a filename so its UTF-8 byte length does not exceed `limit` (default 255).
- * Splits on character boundaries to avoid truncating multi-byte sequences.
- * Preserves the file extension when possible.
- */
+const encoder = new TextEncoder();
+
 export const trimFileNameToByteLimit = (name: string, limit = 255): string => {
-  const encoder = new TextEncoder();
   if (encoder.encode(name).length <= limit) return name;
 
   const lastDot = name.lastIndexOf('.');
@@ -17,27 +14,10 @@ export const trimFileNameToByteLimit = (name: string, limit = 255): string => {
   const baseLimit = limit - extBytes;
 
   if (baseLimit <= 0) {
-    let result = '';
-    let bytes = 0;
-    for (const char of name) {
-      const charBytes = encoder.encode(char).length;
-      if (bytes + charBytes > limit) break;
-      result += char;
-      bytes += charBytes;
-    }
-    return result;
+    return truncateToUtf8Bytes(name, limit);
   }
 
-  let trimmedBase = '';
-  let bytes = 0;
-  for (const char of base) {
-    const charBytes = encoder.encode(char).length;
-    if (bytes + charBytes > baseLimit) break;
-    trimmedBase += char;
-    bytes += charBytes;
-  }
-
-  return `${trimmedBase}${ext}`;
+  return `${truncateToUtf8Bytes(base, baseLimit)}${ext}`;
 };
 
 /**

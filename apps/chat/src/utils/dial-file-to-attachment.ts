@@ -6,6 +6,7 @@ import {
 import { DialFileNodeType, type DialFile } from '@epam/ai-dial-ui-kit';
 import { isDialFileId } from './dial-file';
 import { resolveCatalogIconUrl } from './icon-path';
+import { safeDecodeURIComponent } from './string-utils';
 
 const getDialFileUrl = (file: DialFile, bucket: string): string | undefined => {
   const source = file.url ?? file.id;
@@ -66,7 +67,7 @@ export const dialFilesToAttachments = (
 export const dialFolderPathToAttachment = (folderPath: string): Attachment => {
   const rawSegment =
     folderPath.replace(/\/$/, '').split('/').filter(Boolean).pop() ?? '';
-  const name = decodeURIComponent(rawSegment);
+  const name = safeDecodeURIComponent(rawSegment);
   return {
     id: folderPath,
     name,
