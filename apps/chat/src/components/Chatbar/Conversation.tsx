@@ -33,6 +33,7 @@ import { Translation } from '@/src/types/translation';
 
 import { ConversationsActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PublicationPanel } from '@/src/store/publication/publication.types';
 import {
   ConversationsSelectors,
   ModelsSelectors,
@@ -332,9 +333,10 @@ export const ConversationComponent = memo(
                 (additionalItemData?.publicationUrl || selectedPublicationUrl)
               ) {
                 dispatch(
-                  PublicationActions.selectPublication(
-                    additionalItemData?.publicationUrl ?? null,
-                  ),
+                  PublicationActions.selectPublication({
+                    url: additionalItemData?.publicationUrl ?? null,
+                    panel: PublicationPanel.Chat,
+                  }),
                 );
               }
             }

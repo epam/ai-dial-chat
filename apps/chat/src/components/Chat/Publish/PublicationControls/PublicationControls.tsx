@@ -74,7 +74,9 @@ function PublicationControlsView({
 
   const handleClearReviewSelection = useCallback(() => {
     dispatch(
-      PublicationActions.selectPublication(resourceToReview.publicationUrl),
+      PublicationActions.selectPublication({
+        url: resourceToReview.publicationUrl,
+      }),
     );
     dispatch(
       ConversationsActions.selectConversations({

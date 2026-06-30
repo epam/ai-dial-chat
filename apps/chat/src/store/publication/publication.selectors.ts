@@ -55,6 +55,9 @@ const selectFilteredPublicationResources = (featureTypes: FeatureType[]) =>
 const selectSelectedPublicationUrl = (state: RootState) =>
   rootSelector(state).selectedPublicationUrl;
 
+const selectSelectedPublicationPanel = (state: RootState) =>
+  rootSelector(state).selectedPublicationPanel;
+
 const selectSelectedPublication = createSelector(
   [selectSelectedPublicationUrl, selectPublications],
   (selectedPublicationUrl, publications) => {
@@ -346,6 +349,7 @@ export const PublicationSelectors = {
   selectFilteredPublications,
   selectFilteredPublicationResources,
   selectSelectedPublicationUrl,
+  selectSelectedPublicationPanel,
   selectSelectedPublication,
   selectPublicationByUrl,
   selectResourcesToReview,

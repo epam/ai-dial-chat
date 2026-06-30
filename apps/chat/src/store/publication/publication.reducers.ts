@@ -22,8 +22,10 @@ import { SendMessagePayload } from '@/src/store/conversations/conversations.type
 
 import {
   EDITED_FOLDER_NAME_KEY,
+  FocusedPublication,
   FolderEditTree,
   FolderNode,
+  PublicationPanel,
   PublicationState,
 } from './publication.types';
 
@@ -42,6 +44,7 @@ const initialState: PublicationState = {
   initialized: false,
   publications: [],
   selectedPublicationUrl: null,
+  selectedPublicationPanel: null,
   resourcesToReview: [],
   rules: {},
   isRulesLoading: false,
@@ -95,8 +98,10 @@ export const publicationSlice = createSlice({
       state,
       _action: PayloadAction<{ traceId?: string } | undefined>,
     ) => state,
-    uploadPublication: (state, _action: PayloadAction<{ url: string }>) =>
+    uploadPublication: (
       state,
+      _action: PayloadAction<{ url: string; panel?: PublicationPanel }>,
+    ) => state,
     uploadPublicationSuccess: (
       state,
       { payload }: PayloadAction<{ publication: Publication }>,
@@ -145,7 +150,7 @@ export const publicationSlice = createSlice({
         url: string;
         triggerModelsListing: boolean;
         triggerPublicFilesListing: boolean;
-        nextPublicationUrl: string | null;
+        nextPublication: FocusedPublication | null;
       }>,
     ) => {
       state.isPublicationUpdating = false;
@@ -170,7 +175,7 @@ export const publicationSlice = createSlice({
         payload,
       }: PayloadAction<{
         url: string;
-        nextPublicationUrl: string | null;
+        nextPublication: FocusedPublication | null;
       }>,
     ) => {
       state.isPublicationUpdating = false;
@@ -184,8 +189,19 @@ export const publicationSlice = createSlice({
     ) => {
       state.isPublicationUpdating = false;
     },
-    selectPublication: (state, { payload }: PayloadAction<string | null>) => {
-      state.selectedPublicationUrl = payload;
+    selectPublication: (
+      state,
+      {
+        payload,
+      }: PayloadAction<{ url: string | null; panel?: PublicationPanel }>,
+    ) => {
+      state.selectedPublicationUrl = payload.url;
+
+      if (payload.url === null) {
+        state.selectedPublicationPanel = null;
+      } else if (payload.panel) {
+        state.selectedPublicationPanel = payload.panel;
+      }
     },
     setPublicationsToReview: (
       state,
