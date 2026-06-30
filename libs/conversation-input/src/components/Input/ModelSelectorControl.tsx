@@ -89,7 +89,7 @@ export const ModelSelectorControl: FC<Props> = ({
           icon={
             <div className="relative flex items-center">
               {selectorIcon}
-              <div className="absolute right-[-12px]"> {caretIcon}</div>
+              <div className="absolute end-[-12px]"> {caretIcon}</div>
             </div>
           }
           aria-label={selectorAriaLabel}
@@ -148,7 +148,7 @@ export const ModelSelectorControl: FC<Props> = ({
         >
           <div className="relative flex items-center">
             {selectorIcon}
-            <div className="absolute right-[-12px]">{caretIcon}</div>
+            <div className="absolute end-[-12px]">{caretIcon}</div>
           </div>
         </button>
       </DialDropdown>

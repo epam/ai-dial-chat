@@ -9,6 +9,7 @@ import { CatalogEntityType } from '../types/entity-type';
  */
 const DEFAULT_TAB_LABELS: Record<CatalogEntityType, string> = {
   [CatalogEntityType.Model]: 'Models',
+  [CatalogEntityType.Application]: 'Agents',
   [CatalogEntityType.Agent]: 'Agents',
   [CatalogEntityType.Toolset]: 'Toolsets',
   [CatalogEntityType.Guardrail]: 'Guardrails',
@@ -16,16 +17,25 @@ const DEFAULT_TAB_LABELS: Record<CatalogEntityType, string> = {
   [CatalogEntityType.Mcp]: 'MCP',
 };
 
-/** Derives entity-type tabs from items present in the catalog. */
+/** Canonical display order for entity type tabs. */
+const TAB_ORDER: CatalogEntityType[] = [
+  CatalogEntityType.Model,
+  CatalogEntityType.Application,
+  CatalogEntityType.Agent,
+  CatalogEntityType.Toolset,
+  CatalogEntityType.Guardrail,
+  CatalogEntityType.Skill,
+  CatalogEntityType.Mcp,
+];
+
+/** Derives entity-type tabs from items present in the catalog, sorted by canonical order. */
 export const buildCatalogTabs = (
   items: CatalogItem[],
   tabLabels?: CatalogTitles['tabLabels'],
 ): TabModel[] => {
   const labels = { ...DEFAULT_TAB_LABELS, ...tabLabels };
-  const presentTypes = [
-    ...new Set(items.map((item) => item.type)),
-  ] as CatalogEntityType[];
-  return presentTypes.map((type) => ({
+  const presentTypes = new Set(items.map((item) => item.type));
+  return TAB_ORDER.filter((type) => presentTypes.has(type)).map((type) => ({
     id: type,
     label: labels[type] ?? type,
   }));

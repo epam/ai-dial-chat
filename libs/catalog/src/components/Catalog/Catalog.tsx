@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { TabRow } from '@epam/ai-dial-kit';
 import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CatalogItem } from '../../models/catalog-item';
@@ -41,6 +42,7 @@ export const Catalog: FC<CatalogProps> = ({
 
   const pageTitle = titles?.pageTitle ?? 'Catalog';
   const createLabel = titles?.createLabel ?? 'Create';
+  const createMenuCaption = titles?.createMenuCaption;
   const favoritesTitle = titles?.favoritesTitle ?? 'Your favorites';
   const browseTitle = titles?.browseTitle ?? 'Browse';
   const searchPlaceholder =
@@ -199,7 +201,6 @@ export const Catalog: FC<CatalogProps> = ({
       className={mergeClasses('flex min-h-0 flex-1 flex-col', styles.root)}
       style={cssVars}
     >
-      {/* ── Sticky page heading ─────────────────────────────────── */}
       <div className={mergeClasses('shrink-0', styles.heading)}>
         <div className="flex h-[64px] w-full items-center justify-between px-8">
           <h1
@@ -212,15 +213,14 @@ export const Catalog: FC<CatalogProps> = ({
           </h1>
           <CreateButton
             label={createLabel}
+            menuCaption={createMenuCaption}
             options={createOptions}
             onClick={onCreateClick}
           />
         </div>
       </div>
 
-      {/* ── Scrollable body ───────────────────────────────────── */}
       <div className="min-h-0 flex-1 overflow-auto">
-        {/* ── Favorites strip — full viewport width ─────────────── */}
         {isFavoritesRendered && (
           <div className="w-full px-8">
             <Favorites
@@ -235,7 +235,6 @@ export const Catalog: FC<CatalogProps> = ({
           </div>
         )}
 
-        {/* ── Browse toolbar — full width (outer px-4 + inner px-4 = 32px from edge) */}
         <div className="w-full px-4 pt-6">
           <Toolbar
             totalCount={filteredItems.length}
@@ -253,54 +252,26 @@ export const Catalog: FC<CatalogProps> = ({
           />
         </div>
 
-        {/* ── Entity-type tabs — full width */}
         {tabs.length > 0 && (
           <div className="px-8">
-            <div
-              className={mergeClasses(
-                'flex justify-start gap-1 border-b',
-                styles.tabsRow,
-              )}
-            >
-              {tabs.map((tab) => {
-                const count = filtered.filter(
-                  (item) => item.type === tab.id,
-                ).length;
-                const isActive = activeTab === tab.id;
-                const label =
-                  typeof tab.label === 'string' ? tab.label : String(tab.label);
-                return (
-                  <button
-                    key={tab.id}
-                    onClick={() => setActiveTab(tab.id)}
-                    className={mergeClasses(
-                      'dial-small-semi-text -mb-px flex items-center gap-1.5 border-b-2 px-3 py-2.5 transition-colors',
-                      isActive
-                        ? mergeClasses(styles.activeTab, 'text-[#111827]')
-                        : 'border-transparent text-[#6B7280] hover:text-[#374151]',
-                    )}
-                  >
-                    <span>{label}</span>
-                    <span
-                      className={mergeClasses(
-                        'dial-tiny-semi-text rounded-full px-1.5 py-0.5',
-                        isActive
-                          ? 'bg-[#EEF2FF] text-[#2764D9]'
-                          : 'bg-[#F3F4F6] text-[#9CA3AF]',
-                      )}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
+            <TabRow
+              tabs={tabs.map((tab) => ({
+                id: tab.id,
+                label:
+                  typeof tab.label === 'string' ? tab.label : String(tab.label),
+                count: filtered.filter((item) => item.type === tab.id).length,
+              }))}
+              activeTabId={activeTab}
+              onTabChange={setActiveTab}
+              activeTabClassName="text-catalog-tab-active"
+              inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
+              activeBadgeClassName="bg-catalog-badge-active text-catalog-badge-active"
+              inactiveBadgeClassName="bg-catalog-badge-inactive text-catalog-badge-inactive"
+            />
           </div>
         )}
 
-        {/* ── Card / list grid — centred max-width column */}
         <div className="mx-auto w-full max-w-[1180px] px-8 pt-6">
-          {/* Grid view */}
           {viewMode === CatalogViewMode.Grid && (
             <div className="pb-8">
               <CardGrid
@@ -313,7 +284,6 @@ export const Catalog: FC<CatalogProps> = ({
             </div>
           )}
 
-          {/* List view — lazy-mounted */}
           {listEverShown && viewMode === CatalogViewMode.List && (
             <div className="pb-8">
               <ListView
@@ -329,9 +299,7 @@ export const Catalog: FC<CatalogProps> = ({
           )}
         </div>
       </div>
-      {/* end scrollable body */}
 
-      {/* Details panel */}
       {selectedItem != null && (
         <DetailsPanel
           item={selectedItem}

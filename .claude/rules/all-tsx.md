@@ -73,6 +73,18 @@ import { DialSpinner } from '@epam/ai-dial-ui-kit';
 import { DialLoader } from '@epam/ai-dial-ui-kit';
 ```
 
+### Tab row
+
+**Never** use `DialTab` from `@epam/ai-dial-ui-kit`. Use `TabRow` from `@epam/ai-dial-kit` instead.
+
+```tsx
+// Correct
+import { TabRow } from '@epam/ai-dial-kit';
+
+// Wrong
+import { DialTab } from '@epam/ai-dial-ui-kit';
+```
+
 ## Semantic HTML
 
 Use semantic HTML elements (`button`, `nav`, `main`, `section`) before reaching for `div`/`span`.

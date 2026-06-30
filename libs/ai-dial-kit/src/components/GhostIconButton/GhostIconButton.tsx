@@ -16,17 +16,7 @@ export interface GhostIconButtonProps extends DialGhostIconButtonProps {
   inactiveClassName?: string;
 }
 
-/**
- * A ghost icon button with no solid background, used for subtle or secondary icon actions.
- *
- * Supports an `isActive` toggle that swaps between `activeClassName` and `inactiveClassName`.
- *
- * @example
- * ```tsx
- * <GhostIconButton icon={<IconX />} aria-label="Close" onClick={handleClose} />
- * <GhostIconButton icon={<IconGrid />} isActive={viewMode === 'grid'} onClick={handleClick} />
- * ```
- */
+/** Ghost icon button with active/inactive state toggle via className swap. */
 export const GhostIconButton: FC<GhostIconButtonProps> = ({
   isActive,
   activeClassName = '!bg-layer-0 !text-accent-primary shadow-sm',
