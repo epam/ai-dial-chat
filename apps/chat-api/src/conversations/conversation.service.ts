@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  BadRequestException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -380,18 +381,35 @@ export class ConversationService extends AppService {
     const sourceUrl = `${buildConversationUrl(bucket, encodeDialResourcePath(conversationPath))}`;
     const destinationUrl = `${buildConversationUrl(bucket, encodeDialResourcePath(renamedPath))}`;
 
+    let moveError: unknown = undefined;
+    let moveStatus: number | undefined = undefined;
     try {
-      const { error } = (await this.client.moveResource({
+      const result = (await this.client.moveResource({
         headers: getBearerAuthHeaders(token),
         body: { sourceUrl, destinationUrl, overwrite: false },
-      })) as { error?: unknown };
-      if (error != null) {
-        this.logger.error('DIAL Core rejected moveResource (rename)', error);
-        return handleDialError(error);
+      })) as { error?: unknown; response?: Response };
+      if (result.error != null) {
+        moveError = result.error;
+        moveStatus = result.response?.status;
       }
     } catch (error) {
-      this.logger.error('DIAL Core moveResource (rename) failed', error);
-      return handleDialError(error);
+      moveError = error;
+    }
+
+    if (moveError != null) {
+      this.logger.error('DIAL Core moveResource (rename) failed', {
+        status: moveStatus,
+        error: moveError,
+      });
+      // DIAL Core bug: returns 400 with "Source resource ... does not exist" instead of 404.
+      if (
+        moveStatus === 400 &&
+        typeof moveError === 'string' &&
+        moveError.includes('does not exist')
+      ) {
+        throw new BadRequestException('Conversation not found');
+      }
+      return handleDialError(moveError);
     }
 
     // Migrate pin state: if the old conversation was pinned, point the pin at

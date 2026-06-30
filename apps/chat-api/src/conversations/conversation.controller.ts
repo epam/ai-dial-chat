@@ -361,7 +361,6 @@ export class ConversationController {
     description: 'Missing or invalid path or newTitle',
   })
   @ApiResponse({ status: 401, description: 'Not authenticated' })
-  @ApiResponse({ status: 404, description: 'Conversation not found' })
   @ApiResponse({ status: 409, description: 'Destination path already exists' })
   @ApiResponse({ status: 502, description: 'DIAL Core error' })
   @ApiResponse({ status: 503, description: 'DIAL Core unreachable' })
