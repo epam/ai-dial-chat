@@ -39,6 +39,7 @@ const initialState: SettingsState = {
   stageContentLimit: 40,
   resourceMaxSegmentBytes: DEFAULT_RESOURCE_MAX_SEGMENT_BYTES,
   availableLocales: ['en'],
+  allowedImageSources: '',
 };
 
 export const settingsSlice = createSlice({
