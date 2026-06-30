@@ -38,6 +38,8 @@ export interface DeploymentsContextType {
   isLoading: boolean;
   /** Non-null if the deployments fetch failed. */
   error: Error | null;
+  /** List of application type schemas fetched in parallel with deployments. Empty when the fetch failed. */
+  schemas: ApplicationSchemaSummaryDto[];
 }
 
 export const DeploymentsContext = createContext<
@@ -222,6 +224,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       selectedDeploymentConfiguration,
       isLoading,
       error,
+      schemas,
     }),
     [
       items,
@@ -231,6 +234,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       selectedDeploymentConfiguration,
       isLoading,
       error,
+      schemas,
     ],
   );
 
