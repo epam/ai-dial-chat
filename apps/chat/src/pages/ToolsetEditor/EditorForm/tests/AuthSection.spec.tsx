@@ -163,7 +163,7 @@ const apiKeyAuth = (): ToolsetAuthFormData => ({
   withLogin: WithLogin.WithLogin,
   isLoggedIn: false,
   keyHeader: 'X-API-Key',
-  apiKey: '',
+  apiKey: 'secret',
 });
 
 const oauthWithConfigAuth = (): ToolsetAuthFormData => ({
@@ -303,7 +303,7 @@ describe('AuthSection', () => {
       );
       const stored = sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY);
       expect(stored).not.toBeNull();
-      const state = JSON.parse(stored!);
+      const state = JSON.parse(stored as string);
       expect(state.toolsetId).toBe('toolsets/b/my__1.0.0');
       expect(state.credentialsLevel).toBe(ToolsetCredentialsLevel.User);
     });
@@ -366,9 +366,38 @@ describe('AuthSection', () => {
       expect(btn.disabled).toBe(true);
     });
 
-    it('disables the Log In button when required auth fields are empty', () => {
+    it('disables the Log In button when endpoint is invalid', () => {
+      renderSection(apiKeyAuth(), 'toolsets/b/my__1.0.0', vi.fn(), 'not-url');
+      const btn = screen.getByRole('button', {
+        name: ToolsetEditorI18nKeys.LogInButton,
+      }) as HTMLButtonElement;
+      expect(btn.disabled).toBe(true);
+    });
+
+    it('enables the Log In button before the toolset is saved when the form is valid', () => {
+      renderSection(apiKeyAuth(), '', vi.fn(), VALID_ENDPOINT);
+      const btn = screen.getByRole('button', {
+        name: ToolsetEditorI18nKeys.LogInButton,
+      }) as HTMLButtonElement;
+      expect(btn.disabled).toBe(false);
+    });
+
+    it('disables the Log In button when the key header is empty', () => {
       renderSection(
         { ...apiKeyAuth(), keyHeader: '' },
+        'toolsets/b/my__1.0.0',
+        vi.fn(),
+        VALID_ENDPOINT,
+      );
+      const btn = screen.getByRole('button', {
+        name: ToolsetEditorI18nKeys.LogInButton,
+      }) as HTMLButtonElement;
+      expect(btn.disabled).toBe(true);
+    });
+
+    it('disables the Log In button when the API key is empty', () => {
+      renderSection(
+        { ...apiKeyAuth(), apiKey: '' },
         'toolsets/b/my__1.0.0',
         vi.fn(),
         VALID_ENDPOINT,

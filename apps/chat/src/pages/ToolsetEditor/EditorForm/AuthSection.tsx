@@ -38,6 +38,10 @@ import {
   ToolsetCredentialsLevel,
   WithLogin,
 } from '../../../types/toolsets';
+import {
+  buildToolsetAuthorizeUrl,
+  isValidEndpointUrl,
+} from '../../../utils/toolsets';
 
 interface Props {
   auth: ToolsetAuthFormData;
@@ -57,29 +61,6 @@ const ORDERED_AUTH_TYPES = [
 const defaultWithLoginFor = (type: ToolsetAuthTypes): WithLogin => {
   if (type === ToolsetAuthTypes.None) return WithLogin.WithoutLogin;
   return WithLogin.WithLogin;
-};
-
-const buildAuthorizeUrl = (
-  auth: ToolsetAuthFormData,
-  redirectUri: string,
-): { url: string; state: string } | null => {
-  if (!auth.authorizationEndpoint?.trim() || !auth.clientId?.trim()) {
-    return null;
-  }
-  try {
-    const url = new URL(auth.authorizationEndpoint.trim());
-    const state = crypto.randomUUID();
-    url.searchParams.set('response_type', 'code');
-    url.searchParams.set('client_id', auth.clientId.trim());
-    url.searchParams.set('redirect_uri', redirectUri);
-    url.searchParams.set('state', state);
-    if (auth.scopes && auth.scopes.length > 0) {
-      url.searchParams.set('scope', auth.scopes.join(' '));
-    }
-    return { url: url.toString(), state };
-  } catch {
-    return null;
-  }
 };
 
 const AuthSection: FC<Props> = ({
@@ -104,13 +85,13 @@ const AuthSection: FC<Props> = ({
       return Boolean(auth.clientId?.trim() && auth.clientSecret?.trim());
     }
     if (type === ToolsetAuthTypes.ApiKey && wl === WithLogin.WithLogin) {
-      return Boolean(auth.keyHeader?.trim());
+      return Boolean(auth.keyHeader?.trim() && auth.apiKey?.trim());
     }
     return true;
   }, [auth]);
 
   const canLogIn =
-    Boolean(endpoint.trim()) && isLoginFormValid && !isControlsDisabled;
+    isValidEndpointUrl(endpoint) && isLoginFormValid && !isControlsDisabled;
 
   const handleSelectType = (type: ToolsetAuthTypes) => {
     if (isControlsDisabled || type === auth.authenticationType) return;
@@ -130,7 +111,7 @@ const AuthSection: FC<Props> = ({
 
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
       const redirectUri = `${window.location.origin}${ROUTES.ToolsetEditorCallback}`;
-      const result = buildAuthorizeUrl(auth, redirectUri);
+      const result = buildToolsetAuthorizeUrl(auth, redirectUri);
       if (!result) {
         setAuthActionError(t(ToolsetEditorI18nKeys.ErrorLoginFailed));
         return;
@@ -157,7 +138,7 @@ const AuthSection: FC<Props> = ({
           ToolsetCredentialsLevel.User as ToolsetLoginBodyDto['credentialsLevel'],
         authenticationType:
           auth.authenticationType as ToolsetLoginBodyDto['authenticationType'],
-        apiKey: auth.apiKey,
+        apiKey: auth.apiKey?.trim(),
       };
       await loginToolset(toolsetId, body);
       onAuthChange({ isLoggedIn: true });
@@ -342,7 +323,12 @@ const AuthSection: FC<Props> = ({
             id="toolset-api-key"
             value={auth.apiKey ?? ''}
             onChange={(value) => onAuthChange({ apiKey: value ?? '' })}
-            labelProps={{ label: t(ToolsetEditorI18nKeys.ApiKeyLabel) }}
+            labelProps={{
+              label: t(ToolsetEditorI18nKeys.ApiKeyLabel),
+              required: true,
+            }}
+            error={errors.apiKey || undefined}
+            invalid={!!errors.apiKey}
             disabled={isControlsDisabled}
           />
         </div>

@@ -7,8 +7,10 @@ import {
 } from '../../types/toolsets';
 import type { ToolsetFormData } from '../../types/toolsets';
 import {
+  buildToolsetAuthorizeUrl,
   formToToolsetBody,
   getStorageSafeUniqueToolsetName,
+  isToolsetAuthValid,
   isValidEndpointUrl,
   toolsetDtoToForm,
 } from '../toolsets';
@@ -116,6 +118,52 @@ describe('formToToolsetBody', () => {
       authorizationEndpoint: 'https://auth.example.com/authorize',
       scopesSupported: ['read'],
     });
+  });
+});
+
+describe('buildToolsetAuthorizeUrl', () => {
+  it('builds an OAuth authorize URL with state and scopes', () => {
+    const result = buildToolsetAuthorizeUrl(
+      {
+        authenticationType: ToolsetAuthTypes.OAuth,
+        withLogin: WithLogin.WithConfig,
+        isLoggedIn: false,
+        clientId: 'client',
+        authorizationEndpoint: 'https://auth.example.com/authorize',
+        scopes: ['read', 'write'],
+      },
+      'http://localhost/toolset-editor/callback',
+    );
+
+    expect(result).not.toBeNull();
+    const url = new URL(result?.url ?? '');
+    expect(url.searchParams.get('response_type')).toBe('code');
+    expect(url.searchParams.get('client_id')).toBe('client');
+    expect(url.searchParams.get('scope')).toBe('read write');
+    expect(url.searchParams.get('state')).toBe(result?.state);
+  });
+});
+
+describe('isToolsetAuthValid', () => {
+  it('requires both API key header and value for API-key login', () => {
+    expect(
+      isToolsetAuthValid({
+        authenticationType: ToolsetAuthTypes.ApiKey,
+        withLogin: WithLogin.WithLogin,
+        isLoggedIn: false,
+        keyHeader: 'X-API-Key',
+        apiKey: '',
+      }),
+    ).toBe(false);
+    expect(
+      isToolsetAuthValid({
+        authenticationType: ToolsetAuthTypes.ApiKey,
+        withLogin: WithLogin.WithLogin,
+        isLoggedIn: false,
+        keyHeader: 'X-API-Key',
+        apiKey: 'secret',
+      }),
+    ).toBe(true);
   });
 });
 

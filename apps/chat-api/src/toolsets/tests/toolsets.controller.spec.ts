@@ -291,6 +291,31 @@ describe('ToolsetsController — write operations (integration)', () => {
         })
         .expect(400);
     });
+
+    it('returns 400 when API key auth omits the API key', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'API_KEY',
+        })
+        .expect(400);
+      expect(service.loginToolset).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when API key auth sends an empty API key', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'API_KEY',
+          apiKey: '',
+        })
+        .expect(400);
+      expect(service.loginToolset).not.toHaveBeenCalled();
+    });
   });
 
   describe('POST /api/v1/toolsets/:toolsetName/logout', () => {

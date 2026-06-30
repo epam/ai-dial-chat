@@ -1,5 +1,12 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEnum, IsOptional, IsString, Matches } from 'class-validator';
+import {
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  Matches,
+  ValidateIf,
+} from 'class-validator';
 import { ToolsetAuthType } from './toolset-body.dto';
 
 export enum ToolsetCredentialsLevel {
@@ -32,8 +39,12 @@ export class ToolsetLoginBodyDto {
   authenticationType!: ToolsetAuthType;
 
   @ApiPropertyOptional({ description: 'API key value (API_KEY auth).' })
+  @ValidateIf(
+    (body: ToolsetLoginBodyDto) =>
+      body.authenticationType === ToolsetAuthType.ApiKey,
+  )
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   apiKey?: string;
 
   @ApiPropertyOptional({

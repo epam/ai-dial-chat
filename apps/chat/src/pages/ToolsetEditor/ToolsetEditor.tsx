@@ -1,14 +1,19 @@
+import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import { ToolsetEditorQuery } from '../../constants/toolsets';
+import {
+  TOOLSET_REDIRECT_STATE_KEY,
+  ToolsetEditorQuery,
+} from '../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../constants/translation-keys';
 import {
   createToolset,
   getToolset,
   listToolsets,
+  loginToolset,
   updateToolset,
 } from '../../server-api/toolsets';
 import { ROUTES } from '../../types/routes';
@@ -16,13 +21,16 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
   ToolsetFormErrors,
+  ToolsetRedirectState,
 } from '../../types/toolsets';
 import {
   ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
   ToolsetEditorSteps,
   WithLogin,
 } from '../../types/toolsets';
 import {
+  buildToolsetAuthorizeUrl,
   formToToolsetBody,
   getDefaultToolsetForm,
   isValidEndpointUrl,
@@ -46,9 +54,6 @@ const ToolsetEditor: FC = () => {
     [searchParams],
   );
 
-  const returnUrlRef = useRef(returnUrl);
-  returnUrlRef.current = returnUrl;
-
   const [form, setForm] = useState<ToolsetFormData | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [isSaving, setIsSaving] = useState(false);
@@ -66,7 +71,7 @@ const ToolsetEditor: FC = () => {
           if (!cancelled) setForm(toolsetDtoToForm(dto));
         } catch {
           // Edit target missing/unreachable — leave the editor.
-          if (!cancelled) navigate(returnUrlRef.current, { replace: true });
+          if (!cancelled) navigate(returnUrl, { replace: true });
         } finally {
           if (!cancelled) setIsLoading(false);
         }
@@ -91,7 +96,7 @@ const ToolsetEditor: FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [isEditMode, toolsetId, navigate]);
+  }, [isEditMode, toolsetId, navigate, returnUrl]);
 
   const handleChange = useCallback((patch: Partial<ToolsetFormData>) => {
     setForm((prev) => (prev ? { ...prev, ...patch } : prev));
@@ -160,10 +165,14 @@ const ToolsetEditor: FC = () => {
       if (!data.auth.isLoggedIn) {
         if (
           data.auth.authenticationType === ToolsetAuthTypes.ApiKey &&
-          data.auth.withLogin === WithLogin.WithLogin &&
-          !data.auth.keyHeader?.trim()
+          data.auth.withLogin === WithLogin.WithLogin
         ) {
-          nextErrors.keyHeader = t(ToolsetEditorI18nKeys.KeyHeaderRequired);
+          if (!data.auth.keyHeader?.trim()) {
+            nextErrors.keyHeader = t(ToolsetEditorI18nKeys.KeyHeaderRequired);
+          }
+          if (!data.auth.apiKey?.trim()) {
+            nextErrors.apiKey = t(ToolsetEditorI18nKeys.ApiKeyRequired);
+          }
         }
         if (
           data.auth.authenticationType === ToolsetAuthTypes.OAuth &&
@@ -184,6 +193,65 @@ const ToolsetEditor: FC = () => {
     [t],
   );
 
+  const buildEditorCallbackUrl = useCallback(
+    (savedToolsetId: string): string => {
+      const params = new URLSearchParams({
+        [ToolsetEditorQuery.Id]: savedToolsetId,
+        [ToolsetEditorQuery.Step]: ToolsetEditorSteps.Settings,
+        [ToolsetEditorQuery.ReturnUrl]: returnUrl,
+      });
+      return `${ROUTES.ToolsetEditor}?${params.toString()}`;
+    },
+    [returnUrl],
+  );
+
+  const runPostSaveAuth = useCallback(
+    async (savedToolsetId: string, data: ToolsetFormData): Promise<boolean> => {
+      if (data.auth.isLoggedIn) return false;
+
+      if (
+        data.auth.authenticationType === ToolsetAuthTypes.ApiKey &&
+        data.auth.withLogin === WithLogin.WithLogin
+      ) {
+        const body: ToolsetLoginBodyDto = {
+          url: savedToolsetId,
+          credentialsLevel:
+            ToolsetCredentialsLevel.User as ToolsetLoginBodyDto['credentialsLevel'],
+          authenticationType:
+            ToolsetAuthTypes.ApiKey as ToolsetLoginBodyDto['authenticationType'],
+          apiKey: data.auth.apiKey?.trim(),
+        };
+        await loginToolset(savedToolsetId, body);
+        return false;
+      }
+
+      if (
+        data.auth.authenticationType === ToolsetAuthTypes.OAuth &&
+        data.auth.withLogin === WithLogin.WithConfig
+      ) {
+        const redirectUri = `${window.location.origin}${ROUTES.ToolsetEditorCallback}`;
+        const result = buildToolsetAuthorizeUrl(data.auth, redirectUri);
+        if (!result) throw new Error('OAuth authorization URL is invalid.');
+
+        const redirectState: ToolsetRedirectState = {
+          toolsetId: savedToolsetId,
+          credentialsLevel: ToolsetCredentialsLevel.User,
+          callbackUrl: buildEditorCallbackUrl(savedToolsetId),
+          state: result.state,
+        };
+        sessionStorage.setItem(
+          TOOLSET_REDIRECT_STATE_KEY,
+          JSON.stringify(redirectState),
+        );
+        window.location.href = result.url;
+        return true;
+      }
+
+      return false;
+    },
+    [buildEditorCallbackUrl],
+  );
+
   const handleSave = useCallback(async () => {
     if (!form) return;
     const nextErrors = validate(form);
@@ -194,6 +262,7 @@ const ToolsetEditor: FC = () => {
       else if (
         nextErrors.endpoint ||
         nextErrors.keyHeader ||
+        nextErrors.apiKey ||
         nextErrors.clientId ||
         nextErrors.clientSecret
       ) {
@@ -207,12 +276,15 @@ const ToolsetEditor: FC = () => {
     setIsSaving(true);
     try {
       const body = formToToolsetBody(form);
-      if (isEditMode) {
-        await updateToolset(toolsetId, body);
-      } else {
-        await createToolset(body);
+      const result = isEditMode
+        ? await updateToolset(toolsetId, body)
+        : await createToolset(body);
+      try {
+        const isRedirecting = await runPostSaveAuth(result.id, form);
+        if (!isRedirecting) navigate(returnUrl);
+      } catch {
+        setSaveError(t(ToolsetEditorI18nKeys.ErrorLoginFailed));
       }
-      navigate(returnUrl);
     } catch {
       setSaveError(
         isEditMode
@@ -231,6 +303,7 @@ const ToolsetEditor: FC = () => {
     returnUrl,
     t,
     handleChangeStep,
+    runPostSaveAuth,
   ]);
 
   if (isLoading || !form) {

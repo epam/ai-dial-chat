@@ -53,6 +53,29 @@ export const getDefaultToolsetForm = (
 const isSignedIn = (status?: string): boolean =>
   status === ToolsetAuthStatus.SignedIn;
 
+export const buildToolsetAuthorizeUrl = (
+  auth: ToolsetAuthFormData,
+  redirectUri: string,
+): { url: string; state: string } | null => {
+  if (!auth.authorizationEndpoint?.trim() || !auth.clientId?.trim()) {
+    return null;
+  }
+  try {
+    const url = new URL(auth.authorizationEndpoint.trim());
+    const state = crypto.randomUUID();
+    url.searchParams.set('response_type', 'code');
+    url.searchParams.set('client_id', auth.clientId.trim());
+    url.searchParams.set('redirect_uri', redirectUri);
+    url.searchParams.set('state', state);
+    if (auth.scopes && auth.scopes.length > 0) {
+      url.searchParams.set('scope', auth.scopes.join(' '));
+    }
+    return { url: url.toString(), state };
+  } catch {
+    return null;
+  }
+};
+
 /** Maps a loaded toolset DTO (snake_case) into editor form state. */
 export const toolsetDtoToForm = (dto: DialToolsetDto): ToolsetFormData => {
   const authSettings = dto.authSettings;
@@ -146,7 +169,7 @@ export const isToolsetAuthValid = (auth: ToolsetAuthFormData): boolean => {
   if (auth.isLoggedIn) return true;
   if (auth.authenticationType === ToolsetAuthTypes.ApiKey) {
     if (auth.withLogin === WithLogin.WithoutLogin) return true;
-    return Boolean(auth.keyHeader?.trim());
+    return Boolean(auth.keyHeader?.trim() && auth.apiKey?.trim());
   }
   if (
     auth.authenticationType === ToolsetAuthTypes.OAuth &&
