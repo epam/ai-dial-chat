@@ -42,7 +42,13 @@ When `isOpen` is `true`, `ConversationPanel` SHALL render conversation items spl
 - **Shared** — items where `source === ConversationSource.Shared` and `isPinned` is falsy.
 - **Organization** — items where `source === ConversationSource.Organization` and `isPinned` is falsy.
 
-Each section renders a disclosure button (chevron icon) as its header that toggles open/closed. All sections start expanded. A section with zero items after active search + tab filter SHALL be hidden. Each item SHALL display the conversation `title` (truncated) and optionally an icon from `item.iconUrl`. When `item.iconTooltip` is provided, the deployment icon SHALL show a tooltip with that text on hover. The item SHALL call `onSelectConversation(id)` when activated. The active conversation (matching `activeConversationId`) SHALL receive `aria-current="page"`. Section headings via optional `groupLabels?: { pinned?, myChats?, shared?, organization? }` (English defaults: `"Pinned"`, `"My chats"`, `"Shared"`, `"Organization"`).
+Each section renders a disclosure button (chevron icon) as its header that toggles open/closed. All sections start expanded. A section with zero items after active search + tab filter SHALL be hidden. Each item SHALL display the conversation `title` (truncated) and its deployment icon according to the following rules:
+
+- When `item.isIconLoading` is `true`, an animated skeleton placeholder MUST be shown in the icon slot instead of the deployment icon or fallback.
+- When `item.isIconLoading` is `false` or `undefined` and `item.iconUrl` is set, the resolved image MUST be shown.
+- When `item.isIconLoading` is `false` or `undefined` and `item.iconUrl` is absent, the default fallback icon MUST be shown.
+
+When `item.iconTooltip` is provided and `item.isIconLoading` is `false` or `undefined`, the deployment icon SHALL show a tooltip with that text on hover. The item SHALL call `onSelectConversation(id)` when activated. The active conversation (matching `activeConversationId`) SHALL receive `aria-current="page"`. Section headings via optional `groupLabels?: { pinned?, myChats?, shared?, organization? }` (English defaults: `"Pinned"`, `"My chats"`, `"Shared"`, `"Organization"`).
 
 #### Scenario: Renders pinned conversations in Pinned section
 
@@ -58,6 +64,21 @@ Each section renders a disclosure button (chevron icon) as its header that toggl
 
 - **WHEN** the user clicks a conversation item
 - **THEN** `onSelectConversation` is called with that item's `id`
+
+#### Scenario: Icon skeleton shown when `isIconLoading` is true
+
+- **WHEN** an item has `isIconLoading: true`
+- **THEN** the icon slot contains a skeleton placeholder and no `DeploymentIcon` is rendered for that item
+
+#### Scenario: Real icon shown when `isIconLoading` is false and `iconUrl` is set
+
+- **WHEN** an item has `isIconLoading: false` and a resolved `iconUrl`
+- **THEN** the icon slot contains `DeploymentIcon` with the provided URL
+
+#### Scenario: Fallback icon shown when `isIconLoading` is false and `iconUrl` is absent
+
+- **WHEN** an item has `isIconLoading: false` and no `iconUrl`
+- **THEN** `DeploymentIcon` renders its fallback SVG
 
 #### Scenario: Middle mouse button click opens conversation in a new tab
 
