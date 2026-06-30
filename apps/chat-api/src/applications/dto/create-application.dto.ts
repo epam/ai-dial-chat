@@ -5,12 +5,17 @@ import {
   IsOptional,
   IsString,
   IsUrl,
+  Matches,
 } from 'class-validator';
 
 export class CreateApplicationBodyDto {
   @ApiProperty({ example: 'My App' })
   @IsString()
   @IsNotEmpty()
+  @Matches(/^[a-zA-Z0-9 _.-]+$/, {
+    message:
+      'name must contain only letters, digits, spaces, underscores, dots, and dashes',
+  })
   name!: string;
 
   @ApiProperty({
@@ -34,6 +39,10 @@ export class CreateApplicationBodyDto {
   @ApiPropertyOptional({ example: '1.0' })
   @IsString()
   @IsOptional()
+  @Matches(/^[a-zA-Z0-9._-]+$/, {
+    message:
+      'version must contain only letters, digits, dots, underscores, and dashes',
+  })
   version?: string;
 
   @ApiPropertyOptional({ example: ['nlp', 'assistant'], type: [String] })

@@ -10,3 +10,8 @@ export enum AppsEditorStep {
   General = 'general',
   Settings = 'settings',
 }
+
+export enum AppsEditorEvent {
+  ReadyToInteract = 'readyToInteract',
+  UpdatedSuccess = 'updatedApplicationSuccess',
+}

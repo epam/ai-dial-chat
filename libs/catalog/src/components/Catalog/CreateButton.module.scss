@@ -1,0 +1,170 @@
+.splitDivider {
+  display: block;
+  flex-shrink: 0;
+  width: 1px;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.35);
+  border-radius: 1px;
+}
+
+// Double-class specificity (0,2,0) overrides .dial-primary-solid-button (0,1,0)
+// and its :hover state. Gradient uses DS accent tokens; violet (#A972FF) is
+// the logo-matched stop at the trailing edge.
+.gradientBtn.gradientBtn {
+  background-color: transparent;
+  background-image: linear-gradient(
+    135deg,
+    var(--bg-accent-secondary, #37babc) 0%,
+    var(--bg-accent-primary, #5c8dea) 30%,
+    var(--bg-accent-tertiary, #a972ff) 100%
+  );
+  border: none;
+  border-radius: 9999px;
+  box-shadow:
+    0 0 16px rgba(55, 186, 188, 0.25),
+    0 4px 12px rgba(169, 114, 255, 0.22);
+  transition:
+    box-shadow 200ms ease,
+    transform 150ms ease;
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: transparent;
+      background-image: linear-gradient(
+        135deg,
+        var(--bg-accent-secondary, #37babc) 0%,
+        var(--bg-accent-primary, #5c8dea) 30%,
+        var(--bg-accent-tertiary, #a972ff) 100%
+      );
+      box-shadow:
+        0 0 24px rgba(55, 186, 188, 0.35),
+        0 6px 18px rgba(169, 114, 255, 0.3);
+      transform: translateY(-1px);
+    }
+  }
+
+  &:active {
+    background-color: transparent;
+    background-image: linear-gradient(
+      135deg,
+      var(--bg-accent-secondary, #37babc) 0%,
+      var(--bg-accent-primary, #5c8dea) 30%,
+      var(--bg-accent-tertiary, #a972ff) 100%
+    );
+    filter: brightness(0.92);
+    transform: translateY(0);
+    box-shadow:
+      0 0 10px rgba(55, 186, 188, 0.2),
+      0 2px 6px rgba(169, 114, 255, 0.16);
+  }
+}
+
+// ── Chevron ──────────────────────────────────────────────────────────────────
+
+.chevron {
+  transition: transform 150ms ease;
+}
+
+.chevronOpen {
+  transform: rotate(180deg);
+}
+
+// ── Menu surface ─────────────────────────────────────────────────────────────
+
+// Applied via DialDropdown's listClassName — overrides the kit's wrapper
+// shadow/radius/overflow so the shadow is visible outside the clipping boundary.
+.dropdownWrapper {
+  border-radius: 12px !important;
+  overflow: hidden !important;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.1) !important;
+}
+
+.menu {
+  width: 288px;
+  margin-top: 8px;
+  padding: 6px;
+  background: var(--bg-layer-0);
+  border-radius: 12px;
+  animation: menuEnter 120ms ease-out;
+
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+  }
+}
+
+.menuCaption {
+  padding: 8px 10px 4px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary, #808898);
+}
+
+// ── Menu item ─────────────────────────────────────────────────────────────────
+
+.item {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 9px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+  outline: none;
+  transition: background 100ms ease;
+
+  &:hover {
+    background: var(--bg-accent-primary-alpha);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--text-accent-primary);
+    outline-offset: -2px;
+    background: var(--bg-accent-primary-alpha);
+  }
+}
+
+.itemIcon {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+}
+
+.itemText {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.itemLabel {
+  color: var(--text-primary);
+}
+
+.itemDescription {
+  color: var(--text-secondary);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+// ── Animations ───────────────────────────────────────────────────────────────
+
+@keyframes menuEnter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

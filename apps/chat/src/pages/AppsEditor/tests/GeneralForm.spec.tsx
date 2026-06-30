@@ -13,116 +13,97 @@ vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
 }));
 
-vi.mock('@epam/ai-dial-catalog', () => ({
-  Card: () => null,
-  CatalogEntityType: { Model: 'model' },
-}));
-
-vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DialInput: ({
-    value,
-    onChange,
-    labelProps,
-    error,
-    placeholder,
-  }: {
-    value?: string;
-    onChange?: (v?: string) => void;
-    labelProps?: { label?: string; required?: boolean };
-    error?: string;
-    placeholder?: string;
-  }) => (
-    <>
+vi.mock('@epam/ai-dial-ui-kit', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('@epam/ai-dial-ui-kit')>();
+  return {
+    ...actual,
+    DialInput: ({
+      value,
+      onChange,
+      labelProps,
+      error,
+      placeholder,
+    }: {
+      value?: string;
+      onChange?: (v?: string) => void;
+      labelProps?: { label?: string; required?: boolean };
+      error?: string;
+      placeholder?: string;
+    }) => (
+      <>
+        <label>
+          {labelProps?.label}
+          <input
+            value={value ?? ''}
+            placeholder={placeholder}
+            onChange={(e) => onChange?.(e.target.value)}
+          />
+        </label>
+        {error && <p role="alert">{error}</p>}
+      </>
+    ),
+    DialTextarea: ({
+      value,
+      onChange,
+      labelProps,
+      placeholder,
+    }: {
+      value?: string;
+      onChange?: (v: string) => void;
+      labelProps?: { label?: string };
+      placeholder?: string;
+    }) => (
       <label>
         {labelProps?.label}
-        <input
+        <textarea
           value={value ?? ''}
           placeholder={placeholder}
           onChange={(e) => onChange?.(e.target.value)}
         />
       </label>
-      {error && <p role="alert">{error}</p>}
-    </>
-  ),
-  DialTextarea: ({
-    value,
-    onChange,
-    labelProps,
-    placeholder,
-  }: {
-    value?: string;
-    onChange?: (v: string) => void;
-    labelProps?: { label?: string };
-    placeholder?: string;
-  }) => (
-    <label>
-      {labelProps?.label}
-      <textarea
-        value={value ?? ''}
-        placeholder={placeholder}
-        onChange={(e) => onChange?.(e.target.value)}
-      />
-    </label>
-  ),
-  DialPrimaryButton: ({
-    label,
-    disabled,
-    type,
-  }: {
-    label?: ReactNode;
-    disabled?: boolean;
-    type?: string;
-  }) => (
-    <button type={type === 'submit' ? 'submit' : 'button'} disabled={disabled}>
-      {label}
-    </button>
-  ),
-  DialNeutralButton: ({
-    label,
-    disabled,
-    onClick,
-    type,
-  }: {
-    label?: ReactNode;
-    disabled?: boolean;
-    onClick?: () => void;
-    type?: string;
-  }) => (
-    <button
-      type={type === 'submit' ? 'submit' : 'button'}
-      disabled={disabled}
-      onClick={onClick}
-    >
-      {label}
-    </button>
-  ),
-  DialTagInput: ({
-    label,
-    placeholder,
-    onChange,
-    initialTags,
-  }: {
-    label?: string;
-    placeholder?: string;
-    onChange?: (tags: string[]) => void;
-    initialTags?: string[];
-  }) => (
-    <label>
-      {label}
-      <input
-        placeholder={placeholder}
-        defaultValue={(initialTags ?? []).join(',')}
-        onChange={(e) =>
-          onChange?.(e.target.value ? e.target.value.split(',') : [])
-        }
-      />
-    </label>
-  ),
-  DialNotification: ({ message }: { message?: string }) => (
-    <p role="alert">{message}</p>
-  ),
-  NotificationVariant: { Error: 'error' },
-}));
+    ),
+    DialPrimaryButton: ({
+      label,
+      disabled,
+      type,
+    }: {
+      label?: ReactNode;
+      disabled?: boolean;
+      type?: string;
+    }) => (
+      <button
+        type={type === 'submit' ? 'submit' : 'button'}
+        disabled={disabled}
+      >
+        {label}
+      </button>
+    ),
+    DialNeutralButton: ({
+      label,
+      disabled,
+      onClick,
+      type,
+    }: {
+      label?: ReactNode;
+      disabled?: boolean;
+      onClick?: () => void;
+      type?: string;
+    }) => (
+      <button
+        type={type === 'submit' ? 'submit' : 'button'}
+        disabled={disabled}
+        onClick={onClick}
+      >
+        {label}
+      </button>
+    ),
+    DialTagInput: ({ label }: { label?: string }) => <span>{label}</span>,
+    DialNotification: ({ message }: { variant?: string; message?: string }) => (
+      <p role="alert">{message}</p>
+    ),
+    NotificationVariant: { Error: 'error' },
+  };
+});
 
 const DEFAULT_PROPS = {
   schemaId: 'quickapps2-schema',
@@ -177,6 +158,32 @@ describe('GeneralForm', () => {
     expect(createApplication).not.toHaveBeenCalled();
   });
 
+  it('shows invalid error and does not call API when name contains forbidden characters', async () => {
+    renderForm();
+    await user.type(getNameInput(), 'bad/name');
+    await user.click(getNextButton());
+    expect(screen.getByRole('alert').textContent).toContain(
+      AppsEditorI18nKeys.GeneralFormNameInvalid,
+    );
+    expect(createApplication).not.toHaveBeenCalled();
+  });
+
+  it('shows invalid error and does not call API when version contains forbidden characters', async () => {
+    renderForm();
+    await user.type(getNameInput(), 'My App');
+    await user.type(
+      screen.getByLabelText(
+        AppsEditorI18nKeys.GeneralFormVersionLabel,
+      ) as HTMLInputElement,
+      '1.0/bad',
+    );
+    await user.click(getNextButton());
+    expect(screen.getByRole('alert').textContent).toContain(
+      AppsEditorI18nKeys.GeneralFormVersionInvalid,
+    );
+    expect(createApplication).not.toHaveBeenCalled();
+  });
+
   it('calls createApplication and onCreated on valid submit', async () => {
     const onCreated = vi.fn();
     vi.mocked(createApplication).mockResolvedValue({
@@ -197,7 +204,9 @@ describe('GeneralForm', () => {
   });
 
   it('disables Next button while submitting', async () => {
-    vi.mocked(createApplication).mockReturnValue(new Promise(() => void 0));
+    vi.mocked(createApplication).mockReturnValue(
+      new Promise((_resolve) => undefined),
+    );
     renderForm();
     await user.type(getNameInput(), 'My App');
     await user.click(getNextButton());

@@ -18,6 +18,9 @@ import {
 } from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
 
+const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
+const VERSION_PATTERN = /^[a-zA-Z0-9._-]+$/;
+
 interface Props {
   schemaId: string;
   onCreated: (appId: string) => void;
@@ -33,6 +36,7 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
   const [version, setVersion] = useState('');
   const [topics, setTopics] = useState<string[]>([]);
   const [nameError, setNameError] = useState('');
+  const [versionError, setVersionError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState('');
 
@@ -41,21 +45,37 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
     if (nameError) setNameError('');
   };
 
+  const handleVersionChange = (value?: string) => {
+    setVersion(value ?? '');
+    if (versionError) setVersionError('');
+  };
+
   const handleSubmit = async () => {
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    const trimmedVersion = version.trim();
+    if (!trimmedName) {
       setNameError(t(AppsEditorI18nKeys.GeneralFormNameRequired));
       return;
     }
+    if (!NAME_PATTERN.test(trimmedName)) {
+      setNameError(t(AppsEditorI18nKeys.GeneralFormNameInvalid));
+      return;
+    }
+    if (trimmedVersion && !VERSION_PATTERN.test(trimmedVersion)) {
+      setVersionError(t(AppsEditorI18nKeys.GeneralFormVersionInvalid));
+      return;
+    }
     setNameError('');
+    setVersionError('');
     setIsSubmitting(true);
     setSubmitError('');
     try {
       const result = await createApplication({
-        name: name.trim(),
+        name: trimmedName,
         type: schemaId,
         description: description.trim() || undefined,
         iconUrl: iconUrl.trim() || undefined,
-        version: version.trim() || undefined,
+        version: trimmedVersion || undefined,
         topics: topics.length > 0 ? topics : undefined,
       });
       onCreated(result.id);
@@ -130,11 +150,13 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
           <DialInput
             id="app-version"
             value={version}
-            onChange={(value) => setVersion(value ?? '')}
+            onChange={handleVersionChange}
             labelProps={{
               label: t(AppsEditorI18nKeys.GeneralFormVersionLabel),
             }}
             placeholder={t(AppsEditorI18nKeys.GeneralFormVersionPlaceholder)}
+            error={versionError || undefined}
+            invalid={!!versionError}
           />
 
           <DialTagInput

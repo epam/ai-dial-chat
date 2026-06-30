@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Header, Post, Req } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Header,
+  HttpCode,
+  Post,
+  Req,
+} from '@nestjs/common';
 import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Request } from 'express';
@@ -54,6 +62,7 @@ export class ApplicationsController {
   }
 
   @Post()
+  @HttpCode(201)
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   @ApiOperation({
     operationId: 'createApplication',

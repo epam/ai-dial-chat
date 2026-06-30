@@ -60,7 +60,7 @@ export interface ItemDetailsTexts {
 
 /** Typography class overrides for `DetailsPanel` text elements. */
 export interface ItemDetailsTypography {
-  /** Typography class for the entity name. Default: `'dial-display-2-text'`. */
+  /** Typography class for the entity name. Default: `'dial-body-semi-text text-primary'`. */
   nameClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;

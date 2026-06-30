@@ -1,5 +1,12 @@
 .button {
-  border-radius: var(--cp-new-chat-radius, 4px);
+  background: linear-gradient(
+    135deg,
+    var(--bg-accent-secondary, #37babc) 0%,
+    var(--bg-accent-primary, #5c8dea) 50%,
+    var(--bg-accent-tertiary, #a972ff) 100%
+  );
+
+  color: var(--cp-new-chat-color, var(--controls-text-permanent, #fcfcfc));
 
   &:hover {
     background: var(
@@ -33,10 +40,10 @@
 .iconCircle {
   background: var(
     --cp-new-chat-icon-bg,
-    var(--bg-accent-secondary-alpha, #37babc2e)
+    var(--bg-accent-secondary-alpha, #fcfcfc)
   );
 }
 
 .iconColor {
-  color: var(--cp-new-chat-icon, var(--text-success, #37babc));
+  color: var(--cp-new-chat-icon, var(--controls-text-permanent, #fcfcfc));
 }

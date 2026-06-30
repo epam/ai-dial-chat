@@ -1,66 +1,71 @@
 .wrapper {
-  background: var(--ci-bg, var(--bg-layer-2, #161b2d));
-  border-color: var(--ci-border, transparent);
+  background: var(--ci-bg, var(--bg-layer-0, #fcfcfc));
+  border-color: var(--ci-border, var(--stroke-secondary, #d1dbea));
+  box-shadow: var(--ci-shadow, none);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+
+  &:hover:not(:focus-within) {
+    border-color: var(--ci-border-hover, var(--stroke-accent-primary, #7da4ff));
+  }
 
   &:focus-within {
-    border-color: var(--ci-border-focus, transparent);
+    border-color: var(--ci-border-focus, var(--stroke-accent-primary, #7da4ff));
+    box-shadow: var(
+      --ci-shadow-focus,
+      0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff2e)
+    );
   }
 
   &.wrapperDisabled {
-    background: var(--ci-bg-disabled, var(--controls-bg-disable, #1d2439));
+    background: var(--ci-bg-disabled, var(--controls-bg-disable, #d1dbea));
     cursor: not-allowed;
   }
 }
 
 .textarea {
-  color: var(--ci-text, var(--text-primary, #eef1f7));
+  color: var(--ci-text, var(--text-primary, #161b2d));
 
   &::placeholder {
-    color: var(--ci-placeholder, var(--text-secondary, #9fa6bd));
+    color: var(--ci-placeholder, var(--text-secondary, #575f73));
   }
 
   &:disabled {
     color: var(
       --ci-text-disabled,
-      var(--controls-text-primary-disable, #7c8293)
+      var(--controls-text-primary-disable, #696e7c)
     );
     cursor: not-allowed;
 
     &::placeholder {
       color: var(
         --ci-placeholder-disabled,
-        var(--controls-text-secondary-disable, #575f73)
+        var(--controls-text-secondary-disable, #9fa6bd)
       );
     }
   }
 }
 
-.textareaFont {
-  font-family: var(--ci-font-family);
-  font-size: var(--ci-font-size);
-  font-weight: var(--ci-font-weight);
-  line-height: var(--ci-line-height);
-}
-
 .stopIcon {
-  color: var(--ci-stop-color, var(--text-secondary, #9fa6bd));
+  color: var(--ci-stop-color, var(--text-secondary, #575f73));
 }
 
 .modelSelectorButton {
   .modelSelectorCaret {
-    color: var(--ci-model-selector-caret-color, var(--text-primary, #eef1f7));
+    color: var(--ci-model-selector-caret-color, var(--text-primary, #161b2d));
   }
   &:hover,
   &:active {
     background: var(
       --ci-model-selector-hover-bg,
-      var(--controls-bg-accent-primary-alpha-active, #7da4ff4d)
+      var(--controls-bg-accent-primary-alpha-active, #7da4ff5c)
     );
 
     .modelSelectorCaret {
       background: var(
         --ci-model-selector-caret-hover-bg,
-        var(--bg-accent-primary-alpha, #7da4ff26)
+        var(--bg-accent-primary-alpha, #7da4ff2e)
       );
     }
   }
@@ -69,7 +74,7 @@
     .modelSelectorCaret {
       background: var(
         --ci-model-selector-hover-bg,
-        var(--controls-bg-accent-primary-alpha-active, #7da4ff4d)
+        var(--controls-bg-accent-primary-alpha-active, #7da4ff5c)
       );
     }
   }
@@ -77,41 +82,42 @@
   &.modelSelectorButtonDisabled {
     color: var(
       --ci-model-selector-disabled-color,
-      var(--controls-text-primary-disable, #7c8293)
+      var(--controls-text-primary-disable, #696e7c)
     );
 
     .modelSelectorCaret {
       color: var(
         --ci-model-selector-disabled-color,
-        var(--controls-text-primary-disable, #7c8293)
+        var(--controls-text-primary-disable, #696e7c)
       );
-      background: var(--ci-bg-disabled, var(--controls-bg-disable, #1d2439));
+      background: var(--ci-bg-disabled, var(--controls-bg-disable, #d1dbea));
     }
   }
 }
 
 .sendButton {
-  background: var(--ci-send-bg, var(--controls-bg-accent-primary, #3664e2));
+  background: var(--ci-send-bg, var(--controls-bg-accent-primary, #124ace));
   color: var(--ci-send-text, var(--controls-text-permanent, #fcfcfc));
-  font-family: var(--ci-font-family);
-  font-size: var(--ci-font-size);
 
   &:hover {
     background: var(
       --ci-send-bg-hover,
-      var(--controls-bg-accent-primary-hover, #2a52c7)
+      var(--controls-bg-accent-primary-hover, #2656d9)
     );
   }
 
   &:active {
     background: var(
       --ci-send-bg-active,
-      var(--controls-bg-accent-primary-active, #1e3ea8)
+      var(--controls-bg-accent-primary-active, #3664e2)
     );
   }
 
   &:disabled {
-    background: var(--ci-send-bg-disabled, var(--controls-bg-disable, #2e3550));
-    color: var(--ci-send-text-disabled, var(--controls-text-disable, #5a6282));
+    background: var(--ci-send-bg-disabled, var(--controls-bg-disable, #d1dbea));
+    color: var(
+      --ci-send-text-disabled,
+      var(--controls-text-primary-disable, #696e7c)
+    );
   }
 }

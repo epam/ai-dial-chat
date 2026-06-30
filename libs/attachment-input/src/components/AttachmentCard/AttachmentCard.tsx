@@ -130,7 +130,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               size={ElementSize.Small}
               className={mergeClasses(
                 'h-6 w-6 shrink-0 rounded',
-                styles.actionBtn,
+                removeBtnClass,
               )}
               aria-label={clickLabel}
               onClick={(e: MouseEvent) => {
@@ -223,6 +223,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               title={displayName}
               className={mergeClasses(
                 typography?.fontClassName ?? 'dial-tiny-text',
+                'line-clamp-3 break-words',
                 styles.name,
               )}
             >
@@ -238,6 +239,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
               title={displayName}
               className={mergeClasses(
                 typography?.fontClassName ?? 'dial-tiny-text',
+                'line-clamp-3 break-words',
                 styles.name,
               )}
             >
@@ -284,7 +286,7 @@ export const AttachmentCard: FC<AttachmentCardProps> = ({
       {!isLoading && (
         <div
           className={mergeClasses(
-            'absolute right-1 top-1 flex gap-1 transition-opacity',
+            'absolute end-1 top-1 flex gap-1 transition-opacity',
             areActionsVisible
               ? 'opacity-100'
               : 'opacity-0 group-focus-within:opacity-100 group-hover:opacity-100 mobile:opacity-100',

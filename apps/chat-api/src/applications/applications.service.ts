@@ -69,33 +69,33 @@ export class ApplicationsService extends AppService {
     const authHeaders = getBearerAuthHeaders(accessToken);
     const cacheKey = `applications:list:${userSub}`;
 
-    const bucketResponse = await fetch(`${this.baseUrl}/v1/bucket`, {
-      headers: authHeaders,
-    });
-    if (!bucketResponse.ok) {
-      return mapDialHttpStatus(
-        bucketResponse.status,
-        'get user bucket',
-        this.logger,
-      );
-    }
-    const { bucket } = (await bucketResponse.json()) as { bucket: string };
-
-    const version = body.version ?? '0.0.1';
-    const appPath = `${body.name}__${version}`;
-    const encodedPath = encodeURIComponent(appPath);
-
-    const dialBody: Record<string, unknown> = {
-      display_name: body.name,
-      display_version: version,
-      application_type_schema_id: body.type,
-    };
-    if (body.description != null) dialBody.description = body.description;
-    if (body.iconUrl != null) dialBody.icon_url = body.iconUrl;
-    if (body.topics != null && body.topics.length > 0)
-      dialBody.topics = body.topics;
-
     try {
+      const bucketResponse = await fetch(`${this.baseUrl}/v1/bucket`, {
+        headers: authHeaders,
+      });
+      if (!bucketResponse.ok) {
+        return mapDialHttpStatus(
+          bucketResponse.status,
+          'get user bucket',
+          this.logger,
+        );
+      }
+      const { bucket } = (await bucketResponse.json()) as { bucket: string };
+
+      const version = body.version ?? '0.0.1';
+      const appPath = `${body.name}__${version}`;
+      const encodedPath = encodeURIComponent(appPath);
+
+      const dialBody: Record<string, unknown> = {
+        display_name: body.name,
+        display_version: version,
+        application_type_schema_id: body.type,
+      };
+      if (body.description != null) dialBody.description = body.description;
+      if (body.iconUrl != null) dialBody.icon_url = body.iconUrl;
+      if (body.topics != null && body.topics.length > 0)
+        dialBody.topics = body.topics;
+
       const response = await fetch(
         `${this.baseUrl}/v1/applications/${bucket}/${encodedPath}`,
         {

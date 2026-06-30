@@ -1,6 +1,7 @@
 import {
   CodeBlockTheme,
   isStatusMessage,
+  mergeClasses,
   MessageRole,
   type Attachment,
   type AttachmentErrorReason,
@@ -16,6 +17,7 @@ import {
 } from '@epam/ai-dial-conversation-messages';
 import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import { IconSparkles } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -46,9 +48,8 @@ const EditMessageInput = lazy(async () => {
 
 const preloadEditInput = () => void import('@epam/ai-dial-conversation-input');
 
-/** Body text style applied to user message bubbles (16px / 26px). */
 const USER_MESSAGE_TEXT_STYLES = {
-  typography: { fontClassName: 'dial-body-paragraph-text' },
+  typography: { fontClassName: 'dial-body-text' },
 };
 
 interface Props {
@@ -95,6 +96,7 @@ interface Props {
   statusModelChangedTitle: string;
   formatStatusModelChangedBody: (from: string, to: string) => string;
   streamErrorText: string;
+  stoppedGeneratingText: string;
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
@@ -138,6 +140,7 @@ const ConversationMessageItem: FC<Props> = ({
   statusModelChangedTitle,
   formatStatusModelChangedBody,
   streamErrorText,
+  stoppedGeneratingText,
   thinkingLabel,
   executedLabel,
   stepsLabel,
@@ -240,10 +243,29 @@ const ConversationMessageItem: FC<Props> = ({
       )
     : {};
 
-  const messageText =
-    msg.role === MessageRole.Assistant ? processedContent : msg.content;
+  // A generation stopped before any token produces an empty assistant message;
+  // show a "Stopped generating" label instead of an empty bubble. (The label is
+  // rendered, never written into msg.content, so a late token can't corrupt it.)
+  const isEmptyStopped =
+    msg.role === MessageRole.Assistant &&
+    !isStreaming &&
+    !!msg.wasStoppedByUser &&
+    !msg.content;
 
-  return (
+  let messageText: string;
+  if (isEmptyStopped) {
+    messageText = stoppedGeneratingText;
+  } else if (msg.role === MessageRole.Assistant) {
+    messageText = processedContent;
+  } else {
+    messageText = msg.content;
+  }
+
+  const isUserMessage = msg.role === MessageRole.User;
+  const isAssistantNarrative =
+    msg.role === MessageRole.Assistant && !isStatusMessage(msg);
+
+  const bubble = (
     <CitationCardProvider value={citationCard}>
       <MessageBubble
         role={msg.role}
@@ -273,10 +295,10 @@ const ConversationMessageItem: FC<Props> = ({
           tooltips,
           ariaLabels,
         )}
-        className={
-          msg.role === MessageRole.User ? 'justify-end' : 'justify-start'
-        }
-        bubbleClassName={msg.hasStreamError ? 'w-full' : undefined}
+        className={isUserMessage ? 'justify-end' : 'justify-start'}
+        bubbleClassName={mergeClasses(
+          msg.hasStreamError ? 'w-full' : undefined,
+        )}
         afterContent={
           hasStages || msg.hasStreamError ? (
             <>
@@ -307,8 +329,12 @@ const ConversationMessageItem: FC<Props> = ({
         showLessLabel={showLessLabel}
         showMoreAriaLabel={showMoreUserMessageAriaLabel}
         showLessAriaLabel={showLessUserMessageAriaLabel}
-        deploymentIconUrl={deploymentEntry?.iconUrl}
-        deploymentDisplayName={deploymentEntry?.displayName}
+        deploymentIconUrl={
+          isAssistantNarrative ? undefined : deploymentEntry?.iconUrl
+        }
+        deploymentDisplayName={
+          isAssistantNarrative ? undefined : deploymentEntry?.displayName
+        }
         thinkingLabel={thinkingLabel}
         codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
         codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
@@ -323,6 +349,22 @@ const ConversationMessageItem: FC<Props> = ({
       />
     </CitationCardProvider>
   );
+
+  if (isAssistantNarrative) {
+    return (
+      <div className="flex w-full items-start gap-3.5">
+        <span
+          aria-hidden
+          className="flex size-7 flex-none items-center justify-center rounded-lg bg-accent-tertiary-alpha text-accent-tertiary"
+        >
+          <IconSparkles size={14} stroke={1.5} />
+        </span>
+        <div className="min-w-0 flex-1">{bubble}</div>
+      </div>
+    );
+  }
+
+  return bubble;
 };
 
 export default memo(ConversationMessageItem);

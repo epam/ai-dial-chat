@@ -101,6 +101,15 @@
     "folder": {
       "personal": "Personal",
       "public": "Public"
+    },
+    "picker": {
+      "title": "Talk to",
+      "searchPlaceholder": "Search models, agents…",
+      "searchAriaLabel": "Search models and agents",
+      "favoritesLabel": "Favorites",
+      "emptyHint": "Star a model or agent to pin it here.",
+      "browseCatalogLabel": "Browse",
+      "removeFromFavoritesLabel": "Remove from favorites"
     }
   },
   "deployments": {
@@ -413,6 +422,8 @@
       "iconUrlPlaceholder": "https://...",
       "nextButton": "Next",
       "nameRequired": "Name is required",
+      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes",
       "versionLabel": "Version",
       "versionPlaceholder": "e.g. 1.0.0",
       "topicsLabel": "Topics",

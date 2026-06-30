@@ -6,7 +6,7 @@
 
 Schema resolution: use `useDeployments().schemas` to find the matching `ApplicationSchemaSummaryDto`:
 - **Quick App**: `schemas.find(s => s.id?.endsWith('quickapps2') || s.displayName === 'Quick app 2.0')`
-- **Toolset** *(temporary — TODO: replace with a proper identifier once toolset schema has a stable id/displayName)*: `schemas.find(s => s.id?.includes('toolset') || s.displayName === 'CodeApps')`
+- **Toolset** *(temporary — TODO: replace with a proper identifier once toolset schema has a stable id/displayName)*: `schemas.find(s => s.id?.includes('toolset'))`
 
 Navigation URL for each option:
 ```
@@ -49,14 +49,9 @@ The `createOptions` array SHALL be wrapped in `useMemo` with `[schemas, navigate
 - **WHEN** `useDeployments().schemas` contains no entry whose `id` ends with `quickapps2` and no entry with `displayName === 'Quick app 2.0'`
 - **THEN** `createOptions` does NOT include a Quick App entry
 
-#### Scenario: Toolset option present when schema matched by displayName (temporary CodeApps)
-
-- **WHEN** `useDeployments().schemas` contains `{ id: "https://dial-code-apps.aks.dev.dial.parts", displayName: "CodeApps", ... }`
-- **THEN** `createOptions` includes an entry with label `t("catalog.create.toolset")`
-
 #### Scenario: Toolset option hidden when no matching schema
 
-- **WHEN** `useDeployments().schemas` contains no entry whose `id` includes `toolset` and no entry with `displayName === 'CodeApps'`
+- **WHEN** `useDeployments().schemas` contains no entry whose `id` includes `toolset`
 - **THEN** `createOptions` does NOT include a Toolset entry
 
 #### Scenario: Both options hidden while schemas are still loading

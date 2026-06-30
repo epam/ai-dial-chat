@@ -4,9 +4,11 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import type { Response } from 'express';
 import { AppService } from '../app/app.service';
 import { getBearerAuthHeaders } from '../common/utils/auth-header';
 import { handleDialError } from '../common/utils/dial-error';
@@ -22,6 +24,10 @@ import {
   MAX_LIST_DISPLAY_NAME_ENRICHMENTS,
   PUBLIC_BUCKET,
 } from './constants/conversation.constants';
+import {
+  ConversationGenerationService,
+  GenerationStatus,
+} from './conversation-generation.service';
 import { ConversationNamingService } from './conversation-naming.service';
 import {
   ConversationListItemDto,
@@ -38,11 +44,14 @@ import {
 import { DuplicateConversationResponseDto } from './dto/duplicate-conversation.dto';
 import { MessageCustomContentDto } from './dto/message-custom-content.dto';
 import { RenameConversationResponseDto } from './dto/rename-conversation.dto';
+import { CompletionMode } from './dto/send-completion.dto';
 import type {
   MetadataItem,
   MetadataResult,
   SharedResourcesResult,
 } from './types/conversation.types';
+import { applyChunkToMessage } from './utils/apply-chunk.server';
+import { buildConversationHistory } from './utils/conversation-history-builder';
 import {
   buildConversationUrl,
   buildRenamedConversationPath,
@@ -70,6 +79,7 @@ export class ConversationService extends AppService {
   constructor(
     configService: ConfigService<EnvironmentVariables>,
     private readonly userConfigService: UserConfigService,
+    private readonly generationService: ConversationGenerationService,
     @Inject(forwardRef(() => ConversationNamingService))
     private readonly conversationNamingService: ConversationNamingService,
   ) {
@@ -285,7 +295,24 @@ export class ConversationService extends AppService {
       };
     }
 
+    const slashIndex = conversationPath.indexOf('/');
+    if (slashIndex !== -1) {
+      return {
+        bucket: conversationPath.slice(0, slashIndex),
+        subPath: conversationPath.slice(slashIndex + 1),
+      };
+    }
     return { bucket: sessionBucket, subPath: conversationPath };
+  }
+
+  private qualifySessionConversationPath(
+    conversationPath: string,
+    sessionBucket: string,
+  ): string {
+    return conversationPath === sessionBucket ||
+      conversationPath.startsWith(`${sessionBucket}/`)
+      ? conversationPath
+      : `${sessionBucket}/${conversationPath}`;
   }
 
   private async getStoredConversation(
@@ -373,18 +400,35 @@ export class ConversationService extends AppService {
     const sourceUrl = `${buildConversationUrl(bucket, encodeDialResourcePath(conversationPath))}`;
     const destinationUrl = `${buildConversationUrl(bucket, encodeDialResourcePath(renamedPath))}`;
 
+    let moveError: unknown = undefined;
+    let moveStatus: number | undefined = undefined;
     try {
-      const { error } = (await this.client.moveResource({
+      const result = (await this.client.moveResource({
         headers: getBearerAuthHeaders(token),
         body: { sourceUrl, destinationUrl, overwrite: false },
-      })) as { error?: unknown };
-      if (error != null) {
-        this.logger.error('DIAL Core rejected moveResource (rename)', error);
-        return handleDialError(error);
+      })) as { error?: unknown; response?: globalThis.Response };
+      if (result.error != null) {
+        moveError = result.error;
+        moveStatus = result.response?.status;
       }
     } catch (error) {
-      this.logger.error('DIAL Core moveResource (rename) failed', error);
-      return handleDialError(error);
+      moveError = error;
+    }
+
+    if (moveError != null) {
+      this.logger.error('DIAL Core moveResource (rename) failed', {
+        status: moveStatus,
+        error: moveError,
+      });
+      // DIAL Core bug: returns 400 with "Source resource ... does not exist" instead of 404.
+      if (
+        moveStatus === 400 &&
+        typeof moveError === 'string' &&
+        moveError.includes('does not exist')
+      ) {
+        throw new NotFoundException('Conversation not found');
+      }
+      return handleDialError(moveError);
     }
 
     // Migrate pin state: if the old conversation was pinned, point the pin at
@@ -417,9 +461,13 @@ export class ConversationService extends AppService {
     token: string,
     bucket: string,
   ): Promise<void> {
+    const qualifiedPath = this.qualifySessionConversationPath(
+      conversationPath,
+      bucket,
+    );
     try {
       const { conversation: data } = await this.getStoredConversation(
-        conversationPath,
+        qualifiedPath,
         token,
         bucket,
       );
@@ -428,7 +476,7 @@ export class ConversationService extends AppService {
       }
 
       const { bucket: saveBucket, subPath } = this.resolveConversationLocation(
-        conversationPath,
+        qualifiedPath,
         bucket,
       );
 
@@ -533,7 +581,7 @@ export class ConversationService extends AppService {
           folderId,
           name: uniqueTitle,
           updatedAt: Date.now(),
-        },
+        } as never,
       },
     )) as { error?: unknown };
     if (saveError != null) {
@@ -853,7 +901,7 @@ export class ConversationService extends AppService {
 
     try {
       const { conversation: existing } = await this.getStoredConversation(
-        conversationPath,
+        this.qualifySessionConversationPath(conversationPath, bucket),
         token,
         bucket,
       );
@@ -908,7 +956,10 @@ export class ConversationService extends AppService {
         batch.map(async (item) => {
           try {
             const conversation = await this.getStoredConversation(
-              this.getListItemRelativePath(item.id),
+              this.qualifySessionConversationPath(
+                this.getListItemRelativePath(item.id),
+                bucket,
+              ),
               token,
               bucket,
             );
@@ -1126,7 +1177,7 @@ export class ConversationService extends AppService {
     sessionBucket: string,
   ): Promise<ReadableStream<Uint8Array>> {
     const { bucket, subPath } = this.resolveConversationLocation(
-      conversationPath,
+      this.qualifySessionConversationPath(conversationPath, sessionBucket),
       sessionBucket,
     );
     const resourceUrl = buildConversationUrl(
@@ -1145,7 +1196,7 @@ export class ConversationService extends AppService {
           Accept: 'text/event-stream',
         },
         parseAs: 'stream',
-      })) as { response: Response; error?: unknown };
+      })) as { response: globalThis.Response; error?: unknown };
 
       if (!result.response.ok || !result.response.body) {
         this.logger.error(
@@ -1164,52 +1215,82 @@ export class ConversationService extends AppService {
     conversationPath: string,
     token: string,
     bucket: string,
-    message: string,
+    generationId: string,
+    mode: CompletionMode,
+    message: string | undefined,
+    messageIndex: number | undefined,
     model: string,
-    customContent?: MessageCustomContentDto,
-  ): Promise<ReadableStream<Uint8Array>> {
+    customContent: MessageCustomContentDto | undefined,
+    sessionId: string,
+    res: Response,
+  ): Promise<void> {
     this.logger.debug(
-      `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}`,
+      `streamCompletion start — model: ${model}, bucket: ${bucket}, path: ${conversationPath}, mode: ${mode}`,
     );
 
-    const conversation = await this.getConversation(
+    const abortController = this.generationService.register(
+      sessionId,
       conversationPath,
-      token,
-      bucket,
+      generationId,
     );
 
-    const userMessage: ConversationMessageDto = {
-      id: crypto.randomUUID(),
-      role: ConversationMessageRole.User,
-      content: message,
-      timestamp: new Date().toISOString(),
-      ...(customContent &&
-        Object.keys(customContent).length > 0 && {
-          custom_content: {
-            attachments: customContent.attachments,
-            form_value: customContent.form_value,
-          },
-        }),
-    };
+    let startState: ReturnType<typeof buildConversationHistory>;
+    try {
+      const fetchedConversation = await this.getConversation(
+        this.qualifySessionConversationPath(conversationPath, bucket),
+        token,
+        bucket,
+      );
+      startState = buildConversationHistory(
+        mode,
+        fetchedConversation,
+        message,
+        messageIndex,
+        customContent,
+      );
+    } catch (err) {
+      // Release the just-registered entry so a failure before streaming starts
+      // doesn't leave the conversation "locked" — otherwise the next request
+      // (e.g. regenerate) would be rejected with a 409 until stale eviction.
+      this.generationService.error(sessionId, conversationPath, generationId);
+      throw err;
+    }
 
-    // If the conversation already ends with a user turn (e.g. first-message auto-stream),
-    // don't append again — the message is already in the persisted history.
-    const lastMessage = conversation.messages[conversation.messages.length - 1];
-    const messagesForCompletion =
-      lastMessage?.role === ConversationMessageRole.User
-        ? conversation.messages
-        : [...conversation.messages, userMessage];
+    const { conversation: startConversation, assistantMessageIndex } =
+      startState;
+
+    try {
+      await this.saveConversation(
+        conversationPath,
+        token,
+        bucket,
+        startConversation,
+      );
+    } catch (err) {
+      this.logger.warn(
+        'Failed to save start-state conversation, continuing stream',
+        err,
+      );
+    }
+
+    const messagesForCompletion = startConversation.messages.slice(
+      0,
+      assistantMessageIndex,
+    );
 
     const configuration =
       customContent?.configuration_value ??
       messagesForCompletion
         .filter((m) => m.custom_content?.configuration_value)
         .at(-1)?.custom_content?.configuration_value;
+
+    const lastUserMessage =
+      messagesForCompletion[messagesForCompletion.length - 1];
     const shouldHideCurrentConfigurationContent =
       customContent?.configuration_value !== undefined &&
-      lastMessage?.role === ConversationMessageRole.User;
+      lastUserMessage?.role === ConversationMessageRole.User;
 
-    const messages = messagesForCompletion
+    const dialMessages = messagesForCompletion
       .filter((m) => m.role !== ConversationMessageRole.Status)
       .map((m, index, filteredMessages) => {
         const validAttachments = getValidAttachments(m.custom_content);
@@ -1237,25 +1318,70 @@ export class ConversationService extends AppService {
         };
       });
 
-    const systemMessages = conversation.prompt
-      ? [{ role: 'system', content: conversation.prompt }]
+    const systemMessages = startConversation.prompt
+      ? [{ role: 'system', content: startConversation.prompt }]
       : [];
 
     const requestBody = {
-      messages: [...systemMessages, ...messages],
+      messages: [...systemMessages, ...dialMessages],
       stream: true,
-      ...(conversation.temperature != null && {
-        temperature: conversation.temperature,
+      ...(startConversation.temperature != null && {
+        temperature: startConversation.temperature,
       }),
       ...(configuration ? { custom_fields: { configuration } } : {}),
     };
 
     this.logger.debug(
-      `streamCompletion sending ${messages.length} message(s) to model: ${model}`,
+      `streamCompletion sending ${dialMessages.length} message(s) to model: ${model}`,
     );
 
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.flushHeaders();
+
+    let assembledMessage = {
+      ...startConversation.messages[assistantMessageIndex],
+    };
+    let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
+
+    const finalize = async (
+      status:
+        | GenerationStatus.Done
+        | GenerationStatus.Stopped
+        | GenerationStatus.Error,
+      partialMessage: ConversationMessageDto,
+    ): Promise<void> => {
+      const finalConversation = {
+        ...startConversation,
+        messages: [
+          ...startConversation.messages.slice(0, assistantMessageIndex),
+          partialMessage,
+        ],
+      };
+      try {
+        await this.saveConversation(
+          conversationPath,
+          token,
+          bucket,
+          finalConversation,
+        );
+      } catch (err) {
+        this.logger.warn(`Failed to save ${status} conversation`, err);
+      }
+      if (status === GenerationStatus.Done) {
+        this.generationService.complete(
+          sessionId,
+          conversationPath,
+          generationId,
+        );
+      } else {
+        this.generationService.error(sessionId, conversationPath, generationId);
+      }
+    };
+
     try {
-      const result = (await this.client.sendChatCompletionRequest(model, {
+      const dialResult = (await this.client.sendChatCompletionRequest(model, {
         body: requestBody as never,
         headers: {
           ...getBearerAuthHeaders(token),
@@ -1263,18 +1389,110 @@ export class ConversationService extends AppService {
         },
         params: { query: { 'api-version': this.dialApiVersion } },
         parseAs: 'stream',
-      })) as { response: Response; error?: unknown };
+        signal: abortController.signal,
+      })) as { response: globalThis.Response; error?: unknown };
 
-      if (!result.response.ok || !result.response.body) {
+      if (!dialResult.response.ok || !dialResult.response.body) {
         this.logger.error(
-          `DIAL Core rejected streamCompletion — model: ${model}, status: ${result.response.status}`,
+          `DIAL Core rejected streamCompletion — model: ${model}, status: ${dialResult.response.status}`,
         );
-        return handleDialError({ status: result.response.status });
+        assembledMessage = {
+          ...assembledMessage,
+          custom_content: {
+            ...assembledMessage.custom_content,
+            event_type: undefined,
+          } as never,
+        };
+        (
+          assembledMessage as ConversationMessageDto & {
+            hasStreamError?: boolean;
+          }
+        ).hasStreamError = true;
+        await finalize(GenerationStatus.Error, assembledMessage);
+        if (!res.writableEnded) res.end();
+        return;
       }
-      return result.response.body;
-    } catch (error) {
-      this.logger.error('DIAL Core streamCompletion failed', error);
-      return handleDialError(error);
+
+      upstreamReader = dialResult.response.body.getReader();
+      const decoder = new TextDecoder();
+      let sseBuffer = '';
+      let receivedDone = false;
+
+      while (true) {
+        const { done, value } = await upstreamReader.read();
+        if (done) break;
+
+        res.write(value);
+
+        sseBuffer += decoder.decode(value, { stream: true });
+        const lines = sseBuffer.split('\n');
+        sseBuffer = lines.pop() ?? '';
+
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith(':')) continue;
+          if (trimmed.startsWith('data:')) {
+            const payload = trimmed.slice(5).trim();
+            if (payload === '[DONE]') {
+              receivedDone = true;
+              continue;
+            }
+            try {
+              const parsed: unknown = JSON.parse(payload);
+              assembledMessage = applyChunkToMessage(assembledMessage, parsed);
+            } catch {
+              // Malformed chunk — skip
+            }
+          }
+        }
+
+        // `[DONE]` is the SSE completion signal. Stop here rather than waiting
+        // for the upstream socket to close — some providers keep the connection
+        // open after `[DONE]`, which would otherwise leave this generation
+        // registered as active and reject the next request (e.g. regenerate)
+        // with a 409 conflict.
+        if (receivedDone) break;
+      }
+
+      await finalize(GenerationStatus.Done, assembledMessage);
+    } catch (err) {
+      const isAbort =
+        err instanceof Error &&
+        (err.name === 'AbortError' || err.name === 'DOMException');
+
+      if (isAbort) {
+        const wasStopped =
+          this.generationService.getStatus(sessionId, conversationPath) ===
+          GenerationStatus.Stopped;
+        const partialMsg = {
+          ...assembledMessage,
+          ...(wasStopped
+            ? { wasStoppedByUser: true }
+            : { hasStreamError: true }),
+        } as ConversationMessageDto;
+        await finalize(
+          wasStopped ? GenerationStatus.Stopped : GenerationStatus.Error,
+          partialMsg,
+        );
+      } else {
+        this.logger.error('DIAL Core streamCompletion failed', err);
+        const partialMsg = {
+          ...assembledMessage,
+          hasStreamError: true,
+        } as ConversationMessageDto;
+        await finalize(GenerationStatus.Error, partialMsg);
+      }
+    } finally {
+      if (upstreamReader) {
+        try {
+          // cancel() (not releaseLock) so the upstream connection is closed
+          // when we stop early on `[DONE]`, instead of being left dangling.
+          await upstreamReader.cancel();
+        } catch {
+          /* already closed */
+        }
+      }
+      if (!res.writableEnded) res.end();
     }
   }
 }
