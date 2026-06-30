@@ -408,5 +408,33 @@
     "description": "An unexpected error occurred. You can try again or reload the page.",
     "retryLabel": "Try again",
     "reloadLabel": "Reload the page"
+  },
+  "appsEditor": {
+    "stepGeneral": "General",
+    "stepSettings": "Settings",
+    "generalForm": {
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter application name",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe your application",
+      "iconUrlLabel": "Icon URL",
+      "iconUrlPlaceholder": "https://...",
+      "nextButton": "Next",
+      "nameRequired": "Name is required",
+      "nameInvalid": "Name may only contain letters, digits, spaces, underscores, dots, and dashes",
+      "versionInvalid": "Version may only contain letters, digits, dots, underscores, and dashes",
+      "versionLabel": "Version",
+      "versionPlaceholder": "e.g. 1.0.0",
+      "topicsLabel": "Topics",
+      "topicsPlaceholder": "Add a topic",
+      "previewTitle": "Preview"
+    },
+    "settingsStep": {
+      "loadingLabel": "Loading editor…",
+      "noEditorPlaceholder": "Editor not available for this application type yet."
+    },
+    "error": {
+      "createFailed": "Failed to create application. Please try again."
+    }
   }
 }

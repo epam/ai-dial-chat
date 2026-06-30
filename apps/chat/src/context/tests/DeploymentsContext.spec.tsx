@@ -390,4 +390,45 @@ describe('DeploymentsContext', () => {
       });
     });
   });
+
+  describe('schemas in context', () => {
+    it('exposes schemas from successful fetch in context value', async () => {
+      const schemaList = [
+        { id: 'schema-abc', displayName: 'Quick App 2.0' },
+        { id: 'schema-xyz', displayName: 'Toolset' },
+      ];
+      mockGetApplicationSchemas.mockResolvedValueOnce({ schemas: schemaList });
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.schemas).toEqual(schemaList);
+      });
+    });
+
+    it('exposes empty schemas array when fetch fails', async () => {
+      mockGetApplicationSchemas.mockRejectedValueOnce(
+        new Error('Schema fetch failed'),
+      );
+
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+        expect(result.current.schemas).toEqual([]);
+      });
+    });
+
+    it('initial schemas value is an empty array', () => {
+      const { result } = renderHook(() => useDeployments(), {
+        wrapper: DeploymentsProvider,
+      });
+
+      expect(result.current.schemas).toEqual([]);
+    });
+  });
 });

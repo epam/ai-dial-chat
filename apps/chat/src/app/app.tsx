@@ -44,6 +44,7 @@ import { ROUTES } from '../types/routes';
 import { ThemeId } from '../types/theme-id';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
+const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
 
 // Start loading the module immediately so the Suspense fallback is skipped on first navigation.
 const conversationPageModule = import('../pages/Conversation/Conversation');
@@ -197,6 +198,16 @@ const App: FC = () => {
                   <ConversationPage
                     onDuplicateReadonly={handleDuplicateReadonly}
                   />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.AppsEditor}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <AppsEditorPage />
                 </Suspense>
               </RouteErrorBoundary>
             }

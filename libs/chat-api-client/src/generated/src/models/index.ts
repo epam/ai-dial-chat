@@ -840,6 +840,49 @@ export interface ConversationsConfigDto {
 /**
  *
  * @export
+ * @interface CreateApplicationBodyDto
+ */
+export interface CreateApplicationBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  type: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof CreateApplicationBodyDto
+   */
+  topics?: Array<string>;
+}
+/**
+ *
+ * @export
  * @interface CreateConversationDto
  */
 export interface CreateConversationDto {
@@ -929,6 +972,31 @@ export interface CreateFolderResponseDto {
    * @memberof CreateFolderResponseDto
    */
   folderId: string;
+}
+/**
+ *
+ * @export
+ * @interface CreatedApplicationDto
+ */
+export interface CreatedApplicationDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedApplicationDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedApplicationDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedApplicationDto
+   */
+  object?: string;
 }
 /**
  *
