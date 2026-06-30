@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { KeyboardEvent, useEffect, useState } from 'react';
 
 import { useTranslation } from '@/src/hooks/useTranslation';
 
@@ -46,7 +46,7 @@ export const DownloadTableCsvModal = ({
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleConfirm();
     }
