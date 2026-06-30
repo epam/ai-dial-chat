@@ -1096,6 +1096,13 @@ const dialTest = test.extend<{
     );
     await use(adminApplicationApiHelper);
   },
+  adminToolsetApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminToolsetApiHelper = new ToolsetApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminToolsetApiHelper);
+  },
   adminShareApiHelper: async ({ adminUserRequestContext }, use) => {
     const adminShareApiHelper = new ShareApiHelper(
       adminUserRequestContext,

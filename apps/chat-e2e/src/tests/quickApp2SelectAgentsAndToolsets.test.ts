@@ -1,7 +1,8 @@
 import dialTest from '@/src/core/dialFixtures';
+import dialSharedWithMeTest from '@/src/core/dialSharedWithMeFixtures';
 import { AddAppMenuOptions, EntityEditorAppTypes } from '@/src/testData';
-import { GeneratorUtil } from '@/src/utils';
-import { PublishActions } from '@epam/ai-dial-shared';
+import { ApplicationsUtil, GeneratorUtil } from '@/src/utils';
+import { PublishActions, Toolset } from '@epam/ai-dial-shared';
 
 dialTest(
   '[Select agents and toolsets] No changes are applied if user closes the modal on Cancel\n' +
@@ -390,6 +391,229 @@ dialTest(
             'visible',
           );
         }
+      },
+    );
+  },
+);
+
+dialSharedWithMeTest(
+  "[Select agents and toolsets] available agents and toolsets on 'My workspace'\n" +
+    "[Select agents and toolsets] available agents and toolsets on 'Marketplace'\n" +
+    "[Select agents and toolsets] External app is not available on 'My workspace'/'Marketplace'", // EPMRTC-7318 + EPMRTC-7319 + EPMRTC-7976
+  async ({
+    marketplacePage,
+    marketplaceHeader,
+    addAppDropdownMenu,
+    entityEditorPage,
+    entityEditorGeneralForm,
+    quickApp2EditorViewForm,
+    agentAndToolsetSelectModal,
+    agentAndToolsetSelectModalAssertion,
+    customApplicationBuilder,
+    toolsetBuilder,
+    externalApplicationBuilder,
+    applicationApiHelper,
+    toolsetApiHelper,
+    fileApiHelper,
+    modelApiHelper,
+    adminApplicationApiHelper,
+    adminToolsetApiHelper,
+    adminPublicationApiHelper,
+    publishRequestBuilder,
+    additionalUserApplicationApiHelper,
+    additionalUserShareApiHelper,
+    mainUserShareApiHelper,
+    baseAssertion,
+    setTestIds,
+  }) => {
+    dialSharedWithMeTest.slow();
+    setTestIds('EPMRTC-7318', 'EPMRTC-7319', 'EPMRTC-7976');
+    const myAppName = GeneratorUtil.randomApplicationName();
+    const myToolsetName = GeneratorUtil.randomToolsetName();
+    const bookmarkedAppName = GeneratorUtil.randomApplicationName();
+    const bookmarkedToolsetName = GeneratorUtil.randomToolsetName();
+    const publicAppName = GeneratorUtil.randomApplicationName();
+    const publicToolsetName = GeneratorUtil.randomToolsetName();
+    const sharedAppName = GeneratorUtil.randomApplicationName();
+    const externalAppName = GeneratorUtil.randomApplicationName();
+    const quickAppName = GeneratorUtil.randomApplicationName();
+
+    const myWorkspaceVisible = [
+      myAppName,
+      myToolsetName,
+      bookmarkedAppName,
+      bookmarkedToolsetName,
+      sharedAppName,
+    ];
+    // Not-bookmarked public items and the external app must not be on My workspace.
+    const myWorkspaceHidden = [
+      publicAppName,
+      publicToolsetName,
+      externalAppName,
+    ];
+    const marketplaceVisible = [
+      bookmarkedAppName,
+      bookmarkedToolsetName,
+      publicAppName,
+      publicToolsetName,
+    ];
+    // The external app is not available on the Marketplace tab either.
+    const marketplaceHidden = [externalAppName];
+
+    await dialSharedWithMeTest.step(
+      'Precondition: main user creates an app and a toolset (My workspace source)',
+      async () => {
+        await applicationApiHelper.createApplication(
+          customApplicationBuilder.withDisplayName(myAppName).build(),
+        );
+        await toolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(myToolsetName).build(),
+        );
+      },
+    );
+
+    let bookmarkedToolset: Toolset | undefined;
+    await dialSharedWithMeTest.step(
+      'Precondition: admin publishes two apps and two toolsets to the Marketplace',
+      async () => {
+        const adminBookmarkedApp =
+          await adminApplicationApiHelper.createApplication(
+            customApplicationBuilder.withDisplayName(bookmarkedAppName).build(),
+          );
+        const adminPublicApp =
+          await adminApplicationApiHelper.createApplication(
+            customApplicationBuilder.withDisplayName(publicAppName).build(),
+          );
+        await adminToolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(bookmarkedToolsetName).build(),
+        );
+        await adminToolsetApiHelper.createToolset(
+          toolsetBuilder.withDisplayName(publicToolsetName).build(),
+        );
+        bookmarkedToolset = (await adminToolsetApiHelper.getToolset(
+          bookmarkedToolsetName,
+        ))!;
+        const adminPublicToolset =
+          (await adminToolsetApiHelper.getToolset(publicToolsetName))!;
+        const publishRequest = publishRequestBuilder
+          .withName(GeneratorUtil.randomPublicationRequestName())
+          .withApplicationResource(adminBookmarkedApp, PublishActions.ADD)
+          .withApplicationResource(adminPublicApp, PublishActions.ADD)
+          .withToolsetResource(bookmarkedToolset, PublishActions.ADD)
+          .withToolsetResource(adminPublicToolset, PublishActions.ADD)
+          .build();
+        const publication =
+          await adminPublicationApiHelper.createPublishRequest(publishRequest);
+        await adminPublicationApiHelper.approveRequest(publication);
+        bookmarkedToolset = (await toolsetApiHelper.getToolset(
+          bookmarkedToolsetName,
+        ))!;
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Precondition: an app shared with the main user and a My external app',
+      async () => {
+        const sharedApp =
+          await additionalUserApplicationApiHelper.createApplication(
+            customApplicationBuilder.withDisplayName(sharedAppName).build(),
+          );
+        const shareResponse =
+          await additionalUserShareApiHelper.shareAppByLink(sharedApp);
+        await mainUserShareApiHelper.acceptInvite(shareResponse);
+
+        await applicationApiHelper.createApplication(
+          externalApplicationBuilder
+            .withDisplayName(externalAppName)
+            .withExternalUrl(`http://${GeneratorUtil.randomString(6)}.com`)
+            .withApplicationTypeSchemaId(
+              ApplicationsUtil.getAppSchemaByName(
+                EntityEditorAppTypes.ExternalApp,
+              ),
+            )
+            .build(),
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Precondition: main user bookmarks one published app and one published toolset',
+      async () => {
+        const bookmarkedApp = await modelApiHelper.getAgentByNameAndVersion({
+          name: bookmarkedAppName,
+        });
+        await fileApiHelper.updateInstalledDeployments([bookmarkedApp]);
+        await fileApiHelper.updateInstalledToolsets([bookmarkedToolset!]);
+      },
+    );
+
+    await dialSharedWithMeTest.step('Open My workspace', async () => {
+      await marketplacePage.openMyWorkspacePage({
+        updateInstalledDeployments: false,
+        getStyles: true,
+        updateInstalledToolsets: false,
+      });
+      await marketplacePage.waitForPageLoaded();
+    });
+
+    await dialSharedWithMeTest.step(
+      'Start Quick app 2.0 creation',
+      async () => {
+        await marketplaceHeader.addAppButton.click();
+        await addAppDropdownMenu.selectMenuOption(AddAppMenuOptions.quickApp2);
+        await entityEditorPage.waitForPageLoaded(
+          EntityEditorAppTypes.QuickApp2,
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Fill in the name and proceed to the App settings step',
+      async () => {
+        await entityEditorGeneralForm.fillInEntityFields({
+          name: quickAppName,
+        });
+        await entityEditorGeneralForm.goNext();
+        await entityEditorPage.waitForPageLoadedForEdit(
+          EntityEditorAppTypes.QuickApp2,
+        );
+        await quickApp2EditorViewForm.addAgentsButton.click();
+        await baseAssertion.assertElementState(
+          agentAndToolsetSelectModal,
+          'visible',
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'My workspace tab shows my created and bookmarked items, but not the not-bookmarked public ones',
+      async () => {
+        await agentAndToolsetSelectModalAssertion.assertTabIsActive(
+          agentAndToolsetSelectModal.myWorkspaceTab,
+        );
+        await agentAndToolsetSelectModalAssertion.assertEntitiesState(
+          myWorkspaceVisible,
+          'visible',
+        );
+        await agentAndToolsetSelectModalAssertion.assertEntitiesState(
+          myWorkspaceHidden,
+          'hidden',
+        );
+      },
+    );
+
+    await dialSharedWithMeTest.step(
+      'Marketplace tab shows all published items, but not the external app',
+      async () => {
+        await agentAndToolsetSelectModal.marketplaceTab.click();
+        await agentAndToolsetSelectModalAssertion.assertEntitiesState(
+          marketplaceVisible,
+          'visible',
+        );
+        await agentAndToolsetSelectModalAssertion.assertEntitiesState(
+          marketplaceHidden,
+          'hidden',
+        );
       },
     );
   },
