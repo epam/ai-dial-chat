@@ -295,14 +295,14 @@ export class ToolsetsService extends AppService {
     // NOTE: never log apiKey / code — only the toolset reference and level.
     const dialBody: Record<string, unknown> = {
       url: body.url,
-      credentialsLevel: body.credentialsLevel,
-      authenticationType: body.authenticationType,
+      credentials_level: body.credentialsLevel,
+      authentication_type: body.authenticationType,
     };
     if (body.authenticationType === ToolsetAuthType.ApiKey) {
-      dialBody.apiKey = body.apiKey;
+      dialBody.api_key = body.apiKey;
     } else if (body.authenticationType === ToolsetAuthType.OAuth) {
       dialBody.code = body.code;
-      dialBody.redirectUri = body.redirectUri;
+      dialBody.redirect_uri = body.redirectUri;
     }
 
     try {
@@ -344,8 +344,8 @@ export class ToolsetsService extends AppService {
         headers: { ...authHeaders, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           url: body.url,
-          credentialsLevel: body.credentialsLevel,
-          authenticationType: body.authenticationType,
+          credentials_level: body.credentialsLevel,
+          authentication_type: body.authenticationType,
         }),
       });
       if (!response.ok) {

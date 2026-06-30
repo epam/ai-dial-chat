@@ -555,7 +555,7 @@ describe('ToolsetsService — write operations', () => {
       const sentBody = JSON.parse(
         fetchSpy.mock.calls[0][1].body as string,
       ) as Record<string, unknown>;
-      expect(sentBody.apiKey).toBe('secret-key');
+      expect(sentBody.api_key).toBe('secret-key');
       expect(sentBody.code).toBeUndefined();
     });
 
@@ -576,10 +576,10 @@ describe('ToolsetsService — write operations', () => {
         fetchSpy.mock.calls[0][1].body as string,
       ) as Record<string, unknown>;
       expect(sentBody.code).toBe('auth-code');
-      expect(sentBody.redirectUri).toBe(
+      expect(sentBody.redirect_uri).toBe(
         'https://chat.example.com/toolset-editor/callback',
       );
-      expect(sentBody.apiKey).toBeUndefined();
+      expect(sentBody.api_key).toBeUndefined();
     });
 
     it('throws UnauthorizedException on upstream 401', async () => {

@@ -115,15 +115,17 @@ const CatalogView: FC = () => {
       });
     }
 
-    options.push({
-      label: t(CatalogI18nKeys.CreateToolset),
-      onClick: () => {
-        const params = new URLSearchParams({
-          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
-        });
-        navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
-      },
-    });
+    if (schemas.some((s) => s.id?.includes('toolset'))) {
+      options.push({
+        label: t(CatalogI18nKeys.CreateToolset),
+        onClick: () => {
+          const params = new URLSearchParams({
+            [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+          });
+          navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
+        },
+      });
+    }
 
     return options;
   }, [schemas, navigate, t, buildEditorUrl]);

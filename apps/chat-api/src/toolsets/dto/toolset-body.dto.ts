@@ -1,4 +1,4 @@
-import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+﻿import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -25,6 +25,19 @@ export enum ToolsetAuthType {
 // proxied request or a log line cannot carry unexpected characters.
 const ENDPOINT_URL_PATTERN = /^(https?|sse):\/\/[^\s]+$/;
 const ENDPOINT_URL_MESSAGE = 'Must be a valid http(s) or sse URL';
+
+// Display name: excludes ASCII control characters (Unicode Cc category) and
+// surrogates to prevent log-injection through names that appear in log lines.
+const DISPLAY_NAME_PATTERN = /^[^\p{Cc}\p{Cs}]{1,255}$/u;
+const DISPLAY_NAME_MESSAGE =
+  'Must not contain control characters and must be 1-255 characters';
+
+const VERSION_PATTERN = /^[\w.+-]{1,64}$/;
+const VERSION_MESSAGE =
+  'Must contain only word characters, dots, hyphens, and plus signs (max 64 chars)';
+
+const ICON_URL_PATTERN = /^https?:\/\/[^\s]+$/;
+const ICON_URL_MESSAGE = 'Must be a valid https?:// URL';
 
 export class ToolsetAuthSettingsBodyDto {
   @ApiProperty({ enum: ToolsetAuthType, example: ToolsetAuthType.None })
@@ -86,11 +99,13 @@ export class ToolsetBodyDto {
   @ApiProperty({ example: 'My toolset' })
   @IsString()
   @IsNotEmpty()
+  @Matches(DISPLAY_NAME_PATTERN, { message: DISPLAY_NAME_MESSAGE })
   name!: string;
 
   @ApiPropertyOptional({ example: '0.0.1' })
   @IsString()
   @IsOptional()
+  @Matches(VERSION_PATTERN, { message: VERSION_MESSAGE })
   version?: string;
 
   @ApiPropertyOptional({ example: 'My toolset description' })
@@ -101,6 +116,7 @@ export class ToolsetBodyDto {
   @ApiPropertyOptional({ example: 'https://example.com/icon.svg' })
   @IsString()
   @IsOptional()
+  @Matches(ICON_URL_PATTERN, { message: ICON_URL_MESSAGE })
   iconUrl?: string;
 
   @ApiPropertyOptional({ type: [String], example: ['keyword1', 'keyword2'] })

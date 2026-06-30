@@ -1,8 +1,5 @@
-import {
-  DialNeutralButton,
-  DialPrimaryButton,
-  DialSteps,
-} from '@epam/ai-dial-ui-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { DialSteps } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -57,13 +54,13 @@ const ToolsetEditorHeader: FC<Props> = ({
         />
       </nav>
       <div className="flex items-center gap-2">
-        <DialNeutralButton
+        <NeutralButton
           type="button"
           label={t(ButtonsI18nKeys.Cancel)}
           onClick={onCancel}
           disabled={isSaving}
         />
-        <DialPrimaryButton
+        <PrimaryButton
           type="button"
           label={t(ToolsetEditorI18nKeys.SaveButton)}
           onClick={onSave}

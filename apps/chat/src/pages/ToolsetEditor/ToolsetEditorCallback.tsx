@@ -34,10 +34,16 @@ const ToolsetEditorCallback: FC = () => {
 
     const complete = async () => {
       const code = searchParams.get('code');
+      const state = searchParams.get('state');
       const redirectState = readRedirectState();
       sessionStorage.removeItem(TOOLSET_REDIRECT_STATE_KEY);
 
       if (!code || !redirectState?.toolsetId) {
+        navigate(ROUTES.Catalog, { replace: true });
+        return;
+      }
+
+      if (redirectState.state != null && redirectState.state !== state) {
         navigate(ROUTES.Catalog, { replace: true });
         return;
       }

@@ -105,9 +105,6 @@ export const formToToolsetBody = (form: ToolsetFormData): ToolsetBodyDto => {
   };
   if (auth.authenticationType === ToolsetAuthTypes.ApiKey) {
     authSettings.apiKeyHeader = auth.keyHeader?.trim() || undefined;
-    if (auth.withLogin === WithLogin.WithLogin) {
-      authSettings.clientSecret = undefined;
-    }
   } else if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
     authSettings.clientId = auth.clientId?.trim() || undefined;
     authSettings.clientSecret = auth.clientSecret?.trim() || undefined;

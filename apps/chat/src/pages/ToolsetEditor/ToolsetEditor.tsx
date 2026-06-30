@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
@@ -17,7 +17,11 @@ import type {
   ToolsetFormData,
   ToolsetFormErrors,
 } from '../../types/toolsets';
-import { ToolsetAuthTypes, ToolsetEditorSteps } from '../../types/toolsets';
+import {
+  ToolsetAuthTypes,
+  ToolsetEditorSteps,
+  WithLogin,
+} from '../../types/toolsets';
 import {
   formToToolsetBody,
   getDefaultToolsetForm,
@@ -42,6 +46,9 @@ const ToolsetEditor: FC = () => {
     [searchParams],
   );
 
+  const returnUrlRef = useRef(returnUrl);
+  returnUrlRef.current = returnUrl;
+
   const [form, setForm] = useState<ToolsetFormData | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [isSaving, setIsSaving] = useState(false);
@@ -59,7 +66,7 @@ const ToolsetEditor: FC = () => {
           if (!cancelled) setForm(toolsetDtoToForm(dto));
         } catch {
           // Edit target missing/unreachable — leave the editor.
-          if (!cancelled) navigate(returnUrl, { replace: true });
+          if (!cancelled) navigate(returnUrlRef.current, { replace: true });
         } finally {
           if (!cancelled) setIsLoading(false);
         }
@@ -84,7 +91,7 @@ const ToolsetEditor: FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [isEditMode, toolsetId, navigate, returnUrl]);
+  }, [isEditMode, toolsetId, navigate]);
 
   const handleChange = useCallback((patch: Partial<ToolsetFormData>) => {
     setForm((prev) => (prev ? { ...prev, ...patch } : prev));
@@ -153,11 +160,15 @@ const ToolsetEditor: FC = () => {
       if (!data.auth.isLoggedIn) {
         if (
           data.auth.authenticationType === ToolsetAuthTypes.ApiKey &&
+          data.auth.withLogin === WithLogin.WithLogin &&
           !data.auth.keyHeader?.trim()
         ) {
           nextErrors.keyHeader = t(ToolsetEditorI18nKeys.KeyHeaderRequired);
         }
-        if (data.auth.authenticationType === ToolsetAuthTypes.OAuth) {
+        if (
+          data.auth.authenticationType === ToolsetAuthTypes.OAuth &&
+          data.auth.withLogin === WithLogin.WithConfig
+        ) {
           if (!data.auth.clientId?.trim()) {
             nextErrors.clientId = t(ToolsetEditorI18nKeys.ClientIdRequired);
           }

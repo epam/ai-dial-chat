@@ -1,9 +1,5 @@
-import {
-  DialNeutralButton,
-  DialNotification,
-  DialPrimaryButton,
-  NotificationVariant,
-} from '@epam/ai-dial-ui-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -76,12 +72,12 @@ const ToolsetEditorView: FC<Props> = ({
 
         {isGeneralStep && (
           <div className="flex shrink-0 items-center justify-end gap-3 border-t border-t-primary px-4 py-3">
-            <DialNeutralButton
+            <NeutralButton
               type="button"
               label={t(ButtonsI18nKeys.Cancel)}
               onClick={onCancel}
             />
-            <DialPrimaryButton
+            <PrimaryButton
               type="button"
               label={t(ToolsetEditorI18nKeys.NextButton)}
               onClick={onNext}

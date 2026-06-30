@@ -1,10 +1,10 @@
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
   DialConfirmationPopup,
   DialInput,
   DialNotification,
-  DialPrimaryButton,
   DialRadioButton,
   DialTagInput,
   ElementSize,
@@ -62,19 +62,21 @@ const defaultWithLoginFor = (type: ToolsetAuthTypes): WithLogin => {
 const buildAuthorizeUrl = (
   auth: ToolsetAuthFormData,
   redirectUri: string,
-): string | null => {
+): { url: string; state: string } | null => {
   if (!auth.authorizationEndpoint?.trim() || !auth.clientId?.trim()) {
     return null;
   }
   try {
     const url = new URL(auth.authorizationEndpoint.trim());
+    const state = crypto.randomUUID();
     url.searchParams.set('response_type', 'code');
     url.searchParams.set('client_id', auth.clientId.trim());
     url.searchParams.set('redirect_uri', redirectUri);
+    url.searchParams.set('state', state);
     if (auth.scopes && auth.scopes.length > 0) {
       url.searchParams.set('scope', auth.scopes.join(' '));
     }
-    return url.toString();
+    return { url: url.toString(), state };
   } catch {
     return null;
   }
@@ -128,8 +130,8 @@ const AuthSection: FC<Props> = ({
 
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
       const redirectUri = `${window.location.origin}${ROUTES.ToolsetEditorCallback}`;
-      const authorizeUrl = buildAuthorizeUrl(auth, redirectUri);
-      if (!authorizeUrl) {
+      const result = buildAuthorizeUrl(auth, redirectUri);
+      if (!result) {
         setAuthActionError(t(ToolsetEditorI18nKeys.ErrorLoginFailed));
         return;
       }
@@ -137,12 +139,13 @@ const AuthSection: FC<Props> = ({
         toolsetId,
         credentialsLevel: ToolsetCredentialsLevel.User,
         callbackUrl: window.location.href,
+        state: result.state,
       };
       sessionStorage.setItem(
         TOOLSET_REDIRECT_STATE_KEY,
         JSON.stringify(redirectState),
       );
-      window.location.href = authorizeUrl;
+      window.location.href = result.url;
       return;
     }
 
@@ -193,7 +196,7 @@ const AuthSection: FC<Props> = ({
           <span className="dial-small-text text-success">
             {t(ToolsetEditorI18nKeys.LoggedInLabel)}
           </span>
-          <DialPrimaryButton
+          <PrimaryButton
             type="button"
             size={ElementSize.Small}
             label={t(ToolsetEditorI18nKeys.LogOutButton)}
@@ -205,7 +208,7 @@ const AuthSection: FC<Props> = ({
     }
     return (
       <div className="flex">
-        <DialPrimaryButton
+        <PrimaryButton
           type="button"
           size={ElementSize.Small}
           label={t(ToolsetEditorI18nKeys.LogInButton)}
