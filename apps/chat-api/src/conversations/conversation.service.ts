@@ -285,6 +285,13 @@ export class ConversationService extends AppService {
       };
     }
 
+    const slashIndex = conversationPath.indexOf('/');
+    if (slashIndex !== -1) {
+      return {
+        bucket: conversationPath.slice(0, slashIndex),
+        subPath: conversationPath.slice(slashIndex + 1),
+      };
+    }
     return { bucket: sessionBucket, subPath: conversationPath };
   }
 
@@ -417,9 +424,10 @@ export class ConversationService extends AppService {
     token: string,
     bucket: string,
   ): Promise<void> {
+    const qualifiedPath = `${bucket}/${conversationPath}`;
     try {
       const { conversation: data } = await this.getStoredConversation(
-        conversationPath,
+        qualifiedPath,
         token,
         bucket,
       );
@@ -428,7 +436,7 @@ export class ConversationService extends AppService {
       }
 
       const { bucket: saveBucket, subPath } = this.resolveConversationLocation(
-        conversationPath,
+        qualifiedPath,
         bucket,
       );
 
@@ -853,7 +861,7 @@ export class ConversationService extends AppService {
 
     try {
       const { conversation: existing } = await this.getStoredConversation(
-        conversationPath,
+        `${bucket}/${conversationPath}`,
         token,
         bucket,
       );
@@ -908,7 +916,7 @@ export class ConversationService extends AppService {
         batch.map(async (item) => {
           try {
             const conversation = await this.getStoredConversation(
-              this.getListItemRelativePath(item.id),
+              `${bucket}/${this.getListItemRelativePath(item.id)}`,
               token,
               bucket,
             );
@@ -1173,7 +1181,7 @@ export class ConversationService extends AppService {
     );
 
     const conversation = await this.getConversation(
-      conversationPath,
+      `${bucket}/${conversationPath}`,
       token,
       bucket,
     );
