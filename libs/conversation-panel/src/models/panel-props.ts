@@ -30,6 +30,8 @@ export interface ConversationHistoryItem {
   iconUrl?: string;
   /** Tooltip text shown on the deployment icon. Typically the agent or model display name. */
   iconTooltip?: string;
+  /** When `true`, a skeleton placeholder is shown instead of the deployment icon. */
+  isIconLoading?: boolean;
   /**
    * Browser-navigable URL for the conversation (e.g. `/conversations/<id>`).
    * When provided, a middle mouse button click on the row opens this URL in a new tab,
