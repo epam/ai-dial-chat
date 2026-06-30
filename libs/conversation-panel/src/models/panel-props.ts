@@ -69,8 +69,6 @@ export interface ConversationHistoryColors {
   background?: string;
   /** Inner-edge divider border color. */
   border?: string;
-  /** Header bar bottom-border color. */
-  headerBorder?: string;
   /** Hover background for a conversation row. */
   itemHover?: string;
   /** Active/selected background for a conversation row. */
