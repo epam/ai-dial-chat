@@ -1,9 +1,8 @@
 import type { CatalogItem } from '@epam/ai-dial-catalog';
 import { Card, CatalogEntityType } from '@epam/ai-dial-catalog';
-import { PrimaryButton } from '@epam/ai-dial-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialInput,
-  DialNeutralButton,
   DialNotification,
   DialTagInput,
   DialTextarea,
@@ -176,7 +175,7 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
 
         <div className="flex shrink-0 border-t border-t-primary bg-layer-2 p-2">
           <div className="flex w-full justify-end gap-3">
-            <DialNeutralButton
+            <NeutralButton
               type="button"
               label={t(ButtonsI18nKeys.Cancel)}
               onClick={onCancel}

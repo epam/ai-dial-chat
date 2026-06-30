@@ -7,7 +7,7 @@ import { ConversationPanel } from '../ConversationPanel';
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16, LG: 24 },
-  DialGhostButton: ({
+  GhostButton: ({
     onClick,
     label,
     'aria-current': ariaCurrent,

@@ -157,7 +157,7 @@ The page header SHALL display:
 - **Version** (`DialInput`, optional): maps to `CreateApplicationBodyDto.version`.
 - **Topics** (`DialTagInput`, optional): maps to `CreateApplicationBodyDto.topics`.
 
-Footer (pinned to bottom of left column): **Cancel** (`DialNeutralButton`) and **Next** (`PrimaryButton`).
+Footer (pinned to bottom of left column): **Cancel** (`NeutralButton`) and **Next** (`PrimaryButton`).
 
 **Right column** — live preview (`w-1/2`, `bg-layer-1`):
 
@@ -178,7 +178,7 @@ The **Next** button (`PrimaryButton`, `type="submit"`):
 - On submit, validates name is non-empty, then calls `createApplication({ name, type: schemaId, description, iconUrl, version, topics })` via the server-api wrapper.
 - On success, invokes the `onCreated(appId)` callback prop.
 
-The **Cancel** button (`DialNeutralButton`, `type="button"`) calls `onCancel`.
+The **Cancel** button (`NeutralButton`, `type="button"`) calls `onCancel`.
 
 Props:
 ```ts

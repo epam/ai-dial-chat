@@ -1,7 +1,6 @@
 import type { Attachment, DisplayAttachment } from '@epam/ai-dial-chat-shared';
 import { RequestStatus, mergeClasses } from '@epam/ai-dial-chat-shared';
-import { PrimaryButton } from '@epam/ai-dial-kit';
-import { DialNeutralButton } from '@epam/ai-dial-ui-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
 import {
   ChangeEvent,
   type FC,
@@ -139,7 +138,7 @@ export const EditMessageInput: FC<EditMessageInputProps> = ({
         </div>
 
         <div className="flex gap-2">
-          <DialNeutralButton label={cancelLabel} onClick={onCancel} />
+          <NeutralButton label={cancelLabel} onClick={onCancel} />
           <PrimaryButton
             label={saveLabel}
             onClick={handleSaveClick}

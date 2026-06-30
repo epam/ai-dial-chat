@@ -1,8 +1,5 @@
-import {
-  DialFileName,
-  DialNeutralButton,
-  DialPopup,
-} from '@epam/ai-dial-ui-kit';
+import { NeutralButton } from '@epam/ai-dial-kit';
+import { DialFileName, DialPopup } from '@epam/ai-dial-ui-kit';
 import { memo, useCallback, type FC, type ReactNode } from 'react';
 import type { FileUploadBatchState } from './types/upload';
 
@@ -55,7 +52,7 @@ const UploadProgressModal: FC<Props> = ({
       onClose={onCancel}
       footer={
         <div className="flex justify-end gap-2 px-6 py-4">
-          <DialNeutralButton label={cancelLabel} onClick={onCancel} />
+          <NeutralButton label={cancelLabel} onClick={onCancel} />
         </div>
       }
       header={

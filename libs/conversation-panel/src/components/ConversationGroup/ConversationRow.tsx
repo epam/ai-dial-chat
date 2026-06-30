@@ -1,10 +1,10 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GhostButton } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialDropdown,
   DialEllipsisTooltip,
-  DialGhostButton,
   DialIconButton,
   ElementSize,
   type DropdownItem,
@@ -155,7 +155,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         className="contents"
         onClick={(e) => e.preventDefault()}
       >
-        <DialGhostButton
+        <GhostButton
           iconBefore={avatar}
           label={
             <DialEllipsisTooltip

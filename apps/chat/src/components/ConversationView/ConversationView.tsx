@@ -19,7 +19,6 @@ import type {
 } from '@epam/ai-dial-conversation-messages';
 import {
   DialFabButton,
-  DialNeutralButton,
   DialNotification,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
@@ -65,6 +64,7 @@ import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import { ModelPickerPanel } from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
+import { NeutralButton } from '../../../../../libs/ai-dial-kit/src/components/Button/Buttons';
 
 const ConversationInput = lazy(async () => {
   const module = await import('@epam/ai-dial-conversation-input');
@@ -628,7 +628,7 @@ const ConversationView: FC<Props> = ({
                 message={duplicateError}
               />
             )}
-            <DialNeutralButton
+            <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
               iconBefore={<IconCopy />}
               onClick={onDuplicateConversation}

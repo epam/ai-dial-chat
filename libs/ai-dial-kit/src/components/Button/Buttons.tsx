@@ -31,23 +31,23 @@ export const PrimaryButton: FC<PrimaryButtonProps> = (props) => (
   <DialPrimaryButton {...props} />
 );
 
-/** Props for the {@link SecondaryButton} component. `variant` and `appearance` are fixed. */
-export type SecondaryButtonProps = Omit<
+/** Props for the {@link NeutralButton} component. `variant` and `appearance` are fixed. */
+export type NeutralButtonProps = Omit<
   DialButtonProps,
   'variant' | 'appearance'
 >;
 
 /**
- * Soft blue outlined pill secondary action button (`dial-neutral-outlined-button`).
+ * Soft blue outlined pill neutral action button (`dial-neutral-outlined-button`).
  *
  * Visual style is applied by the app via `.dial-neutral-outlined-button` CSS overrides.
  *
  * @example
  * ```tsx
- * <SecondaryButton label="Cancel" onClick={handleCancel} />
+ * <NeutralButton label="Cancel" onClick={handleCancel} />
  * ```
  */
-export const SecondaryButton: FC<SecondaryButtonProps> = (props) => (
+export const NeutralButton: FC<NeutralButtonProps> = (props) => (
   <DialButton
     {...props}
     variant={ButtonVariant.Neutral}

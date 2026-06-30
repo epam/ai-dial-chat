@@ -4,11 +4,11 @@ export { GhostIconButton } from './components/GhostIconButton/GhostIconButton';
 export type { GhostIconButtonProps } from './components/GhostIconButton/GhostIconButton';
 export {
   PrimaryButton,
-  SecondaryButton,
+  NeutralButton,
   GhostButton,
 } from './components/Button/Buttons';
 export type {
   PrimaryButtonProps,
-  SecondaryButtonProps,
+  NeutralButtonProps,
   GhostButtonProps,
 } from './components/Button/Buttons';
