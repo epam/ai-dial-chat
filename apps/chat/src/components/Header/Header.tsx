@@ -61,7 +61,7 @@ const Header: FC<Props> = ({
           icon={<IconMenu2 size={DIAL_ICON_SIZE.LG} stroke={1.5} />}
           aria-label={t(NavigationI18nKeys.OpenMenu)}
           onClick={onMenuToggle}
-          className="desktop:hidden"
+          className="tablet:hidden"
         />
       </div>
       <Logo />

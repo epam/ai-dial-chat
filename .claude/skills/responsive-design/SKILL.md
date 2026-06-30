@@ -1,13 +1,13 @@
 ---
 name: responsive-design
-description: Responsive (mobile + desktop) layout workflow. Use whenever a UI change must work on both phones and desktops, when implementing Figma frames that have separate mobile and desktop variants, or when reviewing a change for mobile parity.
+description: Responsive (mobile + tablet + desktop) layout workflow. Use whenever a UI change must work on phones, tablets, or large screens, when implementing Figma frames that have separate mobile and desktop variants, or when reviewing a change for mobile parity.
 ---
 
 # Responsive design
 
 ## Overview
 
-The chat app must render correctly on mobile (≤768px) and desktop (≥769px). Desktop is the historical baseline — most existing code is desktop-only. Treat **mobile-first** as the authoring default for new and changed UI: write the base classes for the smallest supported viewport and add desktop overrides via `desktop:`.
+The chat app must render correctly on mobile (≤768px), tablet (≥769px), and desktop (≥1920px). Tablet is the historical baseline — most existing code targets tablet and up. Treat **mobile-first** as the authoring default for new and changed UI: write the base classes for the smallest supported viewport and add wider overrides via `tablet:` or `desktop:`.
 
 ## Project breakpoints
 
@@ -15,17 +15,19 @@ Defined in `tailwind.config.js` (`extend.screens`) and inherited by all lib Tail
 
 ```js
 // tailwind.config.js — extend.screens
-mobile: { max: '768px' },   // ≤768 px  — phones and small tablets
-desktop: { min: '769px' },  // ≥769 px  — tablets landscape, laptops, monitors
+mobile: { max: '768px' },    // ≤768 px  — phones and small tablets
+tablet: { min: '769px' },    // ≥769 px  — tablets landscape, laptops, monitors
+desktop: { min: '1920px' },  // ≥1920 px — large monitors and wide displays
 ```
 
-| Prefix        | Range   | When to use                          |
-| ------------- | ------- | ------------------------------------ |
-| _(no prefix)_ | always  | mobile-first base — smallest layout  |
-| `mobile:`     | ≤768 px | overrides that apply **only** mobile |
-| `desktop:`    | ≥769 px | overrides that kick in on desktop    |
+| Prefix        | Range     | When to use                              |
+| ------------- | --------- | ---------------------------------------- |
+| _(no prefix)_ | always    | mobile-first base — smallest layout      |
+| `mobile:`     | ≤768 px   | overrides that apply **only** on mobile  |
+| `tablet:`     | ≥769 px   | overrides that kick in on tablet+        |
+| `desktop:`    | ≥1920 px  | overrides for large/wide screens only    |
 
-**`desktop:` is a min-width prefix** — styles cascade upward to all wider viewports.
+**`tablet:` and `desktop:` are min-width prefixes** — styles cascade upward to all wider viewports.
 
 > **Do not use `small_tablet:`, `large_tablet:`, `large_desktop:`** — these prefixes are not in the config and Tailwind will silently ignore any class that uses them.
 >
@@ -36,7 +38,7 @@ desktop: { min: '769px' },  // ≥769 px  — tablets landscape, laptops, monito
 **Default: Tailwind utility prefixes.** They are SSR-safe, avoid first-paint flicker, and keep layout decisions in markup.
 
 ```tsx
-<aside className="hidden desktop:block">…</aside>
+<aside className="hidden tablet:block">…</aside>
 <button className="h-12 mobile:h-14">…</button>
 ```
 
@@ -46,7 +48,7 @@ desktop: { min: '769px' },  // ≥769 px  — tablets landscape, laptops, monito
 - An effect or imperative handler needs to branch on viewport size (focus, autoplay, virtualisation row count)
 - A third-party component accepts a prop that toggles its mobile layout
 
-Never call `window.matchMedia` directly inside components — go through the hook so the SSR fallback, listener cleanup, and breakpoint names stay consistent.
+Never call `window.matchMedia` directly inside components — go through the hook so the SSR fallback, listener cleanup, and breakpoint names (`'mobile'`, `'tablet'`, `'desktop'`) stay consistent.
 
 ## Library Tailwind configs
 
@@ -98,14 +100,14 @@ When a Figma file has separate mobile and desktop frames:
 
 1. Fetch **both** frames in the design context call — never implement one without inspecting the other
 2. If the design provides only desktop, ask before deriving a mobile version; do not guess
-3. Map Figma's responsive frame sizes to the closest named breakpoint (375/390 → `mobile` ≤768px, 769+ → `desktop`)
+3. Map Figma's responsive frame sizes to the closest named breakpoint (375/390 → `mobile` ≤768px, 769–1919 → `tablet`, 1920+ → `desktop`)
 4. Capture the divergences (drawer vs. sidebar, vertical vs. horizontal toolbar, hidden sections) before writing code; these drive whether you need the hook
 
 ## Verification
 
 For any responsive change:
 
-1. **DevTools** — exercise the feature at 360 (mobile) and 769, 1280, 1920 (desktop)
+1. **DevTools** — exercise the feature at 360 (mobile), 769 and 1280 (tablet), 1920 and 2560 (desktop)
 2. **Touch** — verify interactive elements work without hover (use the DevTools touch simulator)
 3. **Unit tests** — when a component branches on `useBreakpoint`, add a test per branch by mocking the hook
 4. **Lint / typecheck** — `npm exec nx lint chat`, `npm exec nx test chat` for the projects you touched
@@ -175,7 +177,7 @@ Playwright MCP is pre-configured in `.mcp.json` — no manual setup needed. It s
 
 ## Anti-patterns
 
-- `className={isMobile ? 'flex-col' : 'flex-row'}` — use `flex-col desktop:flex-row` instead
+- `className={isMobile ? 'flex-col' : 'flex-row'}` — use `flex-col tablet:flex-row` instead
 - Reading `window.innerWidth` in render or effects — use `useBreakpoint`
 - Hiding mobile UI with `display:none` while still mounting heavy subtrees — branch with the hook
 - Authoring desktop-first and then trying to reset on `mobile:` — invert it

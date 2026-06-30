@@ -20,13 +20,13 @@ const Logo: FC = () => {
           style={{
             backgroundImage: `url(${getIconPath(currentThemeFavicon)})`,
           }}
-          className="h-[32px] w-[32px] bg-contain bg-center bg-no-repeat desktop:hidden"
+          className="h-[32px] w-[32px] bg-contain bg-center bg-no-repeat tablet:hidden"
         />
       )}
       {currentThemeLogo && (
         <span
           style={{ backgroundImage: `url(${getIconPath(currentThemeLogo)})` }}
-          className="hidden h-[48px] min-w-[125px] bg-contain bg-right bg-no-repeat desktop:block"
+          className="hidden h-[48px] min-w-[125px] bg-contain bg-right bg-no-repeat tablet:block"
         />
       )}
     </a>

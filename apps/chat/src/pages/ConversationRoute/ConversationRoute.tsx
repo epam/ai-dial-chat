@@ -460,7 +460,7 @@ const ConversationRoute: FC = () => {
       />
       <Suspense fallback={<RouteFallback />}>
         <div
-          className="flex flex-1 flex-col items-center justify-center p-4 desktop:p-8"
+          className="flex flex-1 flex-col items-center justify-center p-4 tablet:p-8"
           role="region"
           aria-label={t(ChatI18nKeys.WelcomeScreen)}
         >
