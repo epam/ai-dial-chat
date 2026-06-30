@@ -1,4 +1,3 @@
-import { type CatalogItem } from '@epam/ai-dial-catalog';
 import {
   DisplayAttachment,
   isStatusMessage,
