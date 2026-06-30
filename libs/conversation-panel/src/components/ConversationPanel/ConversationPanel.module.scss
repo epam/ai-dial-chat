@@ -36,10 +36,6 @@
   color: var(--cp-text-secondary, var(--text-secondary, #575f73));
 }
 
-.divider {
-  border-color: var(--cp-new-chat-divider, var(--stroke-tertiary, #e0e6f0));
-}
-
 .itemIcon {
   background: var(--cp-item-hover, var(--bg-layer-4, #d1dbea));
   color: var(--cp-text, var(--text-primary, #161b2d));
