@@ -1,0 +1,38 @@
+contract_version: "0.1"
+name: security-monitor-triager
+skill: security-monitor-triager
+agent_version: "0.1.0"
+description: "Read-only AppSec triage (reviewer): re-verifies version-match + reachability of proactive-security-monitor's OSV advisories against this repo's actual code, and re-judges the news pass's RELEVANT/TANGENTIAL/IGNORE calls. Emits per-item verdicts (CONFIRMED / OVERSTATED / FALSE_POSITIVE / NEEDS_REVIEW). Ports the dial-core .security-poc reviewer to the Node ecosystem."
+# Batch reviewer of the producer's output: real triggers are `schedule` (daily)
+# + `workflow_dispatch` (manual) via dispatch-schedule.yml. `pull_request` is a
+# TEMPORARY sandbox-only harness (schedule/workflow_dispatch can't fire from the
+# non-default sdlc-test-base branch); drop it once on the default branch.
+triggers: [pull_request, schedule, workflow_dispatch]
+allowed_tools: "Read,Grep,Glob,Bash(git diff:*),Bash(python3:*),Skill"
+
+# Public repo: encrypt this agent's verdicts, and decrypt the encrypted producer
+# artifact it consumes. SDLC_ARTIFACT_KEY is the shared key; run-agent injects it
+# for both decrypt and encrypt.
+secrets: [SDLC_ARTIFACT_KEY]
+private_output: true
+model: claude-sonnet-4-6
+phase: sandbox
+cost_class: medium
+timeout_minutes: 30
+max_turns: 60
+
+# Consume the producer's findings + news at
+# upstream/proactive-security-monitor/stage-output.json (payload.findings[] +
+# payload.news[]). The platform downloads + decrypts it before this agent runs.
+needs: [proactive-security-monitor]
+
+# The SBOM + advisories were resolved against chat-2.0 (development-1.0). The
+# platform overlays that branch's source so reachability is validated against the
+# right code, and scopes the SARIF upload to that branch/commit.
+analysis_ref: development-1.0
+
+# SARIF -> Security tab: convert CONFIRMED/NEEDS_REVIEW payload.findings[] into
+# alerts (non-actionable verdicts upload as dismissed), scoped to analysis_ref.
+# PAUSED for the first sandbox runs while we validate the chain + encryption;
+# flip to true once verdicts look trustworthy.
+emit_sarif: false

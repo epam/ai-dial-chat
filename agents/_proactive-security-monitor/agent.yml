@@ -1,0 +1,43 @@
+contract_version: "0.1"
+name: proactive-security-monitor
+skill: proactive-security-monitor
+agent_version: "0.1.0"
+description: "Proactive supply-chain watch (producer): resolves the npm SBOM from package-lock.json (no install), batch-queries OSV.dev for freshly-modified advisories, and runs an industry-news pass (CISA KEV, OpenSSF, GitHub Security Lab, Socket, The Hacker News) filtered to this repo's stack. Emits OSV findings + tagged news for the security-monitor-triager stage. Ports the dial-core .security-poc producer to the Node ecosystem."
+# This is a batch job over the standing dependency surface + security press, so
+# its real triggers are `schedule` (daily) + `workflow_dispatch` (manual) via
+# dispatch-schedule.yml. `pull_request` is a TEMPORARY sandbox-only harness:
+# schedule/workflow_dispatch don't fire from the non-default sdlc-test-base
+# branch, so PR is the only way to exercise the chain there. Drop `pull_request`
+# once the framework lands on the default branch.
+triggers: [pull_request, schedule, workflow_dispatch]
+
+# The only Bash capability is invoking the committed fetch script (SBOM + OSV).
+# The industry-news pass is the model's own WebFetch step. No git/shell beyond
+# the script — the agent reads code only through Read (it does NOT assess
+# reachability; that is the triager's job against analysis_ref source).
+allowed_tools: "Bash(bash .claude/skills/proactive-security-monitor/fetch.sh:*),Read,WebFetch,Skill"
+
+# This repo is PUBLIC and artifacts are world-downloadable. The OSV/news content
+# is public, but encrypt the output anyway so the chain is uniform and the
+# triager (private_output) can decrypt this upstream artifact. SDLC_ARTIFACT_KEY
+# is the shared key (add under repo/org Actions secrets).
+secrets: [SDLC_ARTIFACT_KEY]
+private_output: true
+
+# Operator-tunable, non-secret knobs from Actions Variables (Settings → Variables):
+#   PSM_WINDOW_DAYS  advisory recency window (default 7; widen for a catch-up run)
+#   PSM_MAX_FINDINGS cap on inlined OSV findings (default 50; 0 = no cap)
+vars: [PSM_WINDOW_DAYS, PSM_MAX_FINDINGS]
+
+# Inspect chat-2.0's real dependency surface + lockfile, not the sandbox base.
+# The platform overlays development-1.0 source (preserving .github/.claude/agents)
+# so fetch.sh reads that branch's package-lock.json.
+analysis_ref: development-1.0
+
+# Sonnet: the OSV pass is deterministic (script), but the news pass needs real
+# RELEVANT/TANGENTIAL/IGNORE judgement against the stack.
+model: claude-sonnet-4-6
+phase: sandbox
+cost_class: light
+timeout_minutes: 15
+max_turns: 25
