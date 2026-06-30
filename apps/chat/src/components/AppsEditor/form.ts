@@ -278,6 +278,7 @@ export const QuickApp2Schema = zodValidation
     availableModelIds: zodValidation.array(zodValidation.string()).optional(),
     agentSkills: zodValidation.array(zodValidation.string()),
     timestamp: zodValidation.boolean(),
+    fileTools: zodValidation.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.isJsonView) {
@@ -531,6 +532,10 @@ const getQuickApp2FormData = (
     'timestamp' in (appProperties?.features ?? {})
       ? !!appProperties?.features?.timestamp
       : true;
+  const fileTools =
+    'dial_files' in (appProperties?.features ?? {})
+      ? !!appProperties?.features?.dial_files
+      : false;
 
   return {
     type: AppsEditorSchemaTypes.QuickApp2,
@@ -570,6 +575,7 @@ const getQuickApp2FormData = (
       .filter((s): s is DialPromptSkill => s.type === 'dial-prompt')
       .map((s) => ApiUtils.decodeApiUrl(s.url)),
     timestamp,
+    fileTools,
   };
 };
 
@@ -1029,6 +1035,7 @@ export const getApplicationPayload = ({
                   injection_strategy: 'tool_call',
                 }
               : null,
+            dial_files: data.fileTools ? {} : null,
           },
           ...(starters.length
             ? {

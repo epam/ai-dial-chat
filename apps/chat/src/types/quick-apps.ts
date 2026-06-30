@@ -113,6 +113,7 @@ export interface QuickApp2Config {
     timestamp?: {
       injection_strategy: 'tool_call';
     } | null;
+    dial_files?: object | null;
   };
 }
 

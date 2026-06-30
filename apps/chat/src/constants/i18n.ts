@@ -836,6 +836,7 @@ export enum ChatI18nKeys {
   On = 'On',
   Off = 'Off',
   TimeAwareness = 'Time awareness',
+  FileTools = 'File tools',
   AgentSkills = 'Agent Skills',
   Agents = 'Agents',
   Endpoint = 'Endpoint',
@@ -1241,4 +1242,7 @@ export enum MarketplaceI18nKeys {
   NoAgents = 'No agents',
   YouDontHaveAnyAgents = "You don't have any agents.",
   AbsentChatCompletionDisabledMessage = 'This application has no chat endpoint and cannot be selected for conversations',
+  FileTools = 'File tools',
+  AllowTheAgentToAccessAppFiles = 'Allow the agent to access app files',
+  FileToolsDescription = 'Enables the orchestrator’s built-in file tools for this app. When enabled, the agent can browse, search, read, and write or edit files in the app’s file context. When disabled, no file tools are exposed to the orchestrator.',
 }

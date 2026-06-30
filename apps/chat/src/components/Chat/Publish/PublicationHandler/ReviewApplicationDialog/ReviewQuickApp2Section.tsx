@@ -148,6 +148,10 @@ const ReviewQuickApp2SectionView = ({
     'timestamp' in (config?.features ?? {})
       ? !!config?.features?.timestamp
       : true;
+  const fileTools =
+    'dial_files' in (config?.features ?? {})
+      ? !!config?.features?.dial_files
+      : false;
   const skills = useMemo(
     () =>
       (config?.skills ?? []).map(({ url }) => ({
@@ -169,6 +173,12 @@ const ReviewQuickApp2SectionView = ({
           valueClassName="max-w-[414px] break-all text-primary"
         />
       )}
+
+      <MarketplaceEntityInfoRow
+        label={t(ChatI18nKeys.FileTools)}
+        value={t(fileTools ? ChatI18nKeys.On : ChatI18nKeys.Off)}
+        valueClassName="max-w-[414px] break-all text-primary"
+      />
 
       <MarketplaceEntityInfoRow
         label={t(ChatI18nKeys.TimeAwareness)}

@@ -335,6 +335,25 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
         <div data-qa="code-interpreter-field">
           <CodeInterpreterField />
         </div>
+
+        <Controller
+          name="fileTools"
+          control={control}
+          render={({ field }) => (
+            <ToggleSwitchField
+              isOn={field.value}
+              handleSwitch={() => field.onChange(!field.value)}
+              switchOnText="ON"
+              switchOFFText="OFF"
+              label={t(MarketplaceI18nKeys.FileTools)}
+              additionalText={t(
+                MarketplaceI18nKeys.AllowTheAgentToAccessAppFiles,
+              )}
+              info={t(MarketplaceI18nKeys.FileToolsDescription)}
+              className="flex items-center gap-2"
+            />
+          )}
+        />
       </FormCollapsibleSection>
 
       <FormCollapsibleSection
