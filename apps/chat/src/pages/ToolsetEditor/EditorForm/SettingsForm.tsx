@@ -122,6 +122,7 @@ const SettingsForm: FC<Props> = ({
         errors={errors}
         isSaving={isSaving}
         toolsetId={toolsetId}
+        endpoint={form.endpoint}
         onAuthChange={onAuthChange}
       />
     </div>

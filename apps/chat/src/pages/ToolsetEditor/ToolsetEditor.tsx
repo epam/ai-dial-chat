@@ -106,15 +106,33 @@ const ToolsetEditor: FC = () => {
     [],
   );
 
+  const handleNext = useCallback(() => {
+    if (!form) return;
+    if (!form.name.trim()) {
+      setErrors({ name: t(ToolsetEditorI18nKeys.NameRequired) });
+      return;
+    }
+    setErrors({});
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set(ToolsetEditorQuery.Step, ToolsetEditorSteps.Settings);
+      return next;
+    });
+  }, [form, t, setSearchParams]);
+
   const handleChangeStep = useCallback(
     (stepId: string) => {
+      if (!isEditMode && stepId === ToolsetEditorSteps.Settings) {
+        handleNext();
+        return;
+      }
       setSearchParams((prev) => {
         const next = new URLSearchParams(prev);
         next.set(ToolsetEditorQuery.Step, stepId);
         return next;
       });
     },
-    [setSearchParams],
+    [setSearchParams, isEditMode, handleNext],
   );
 
   const handleCancel = useCallback(() => {
@@ -214,8 +232,8 @@ const ToolsetEditor: FC = () => {
         step={step}
         isSaving={isSaving}
         onChangeStep={handleChangeStep}
-        onSave={handleSave}
         onCancel={handleCancel}
+        onSave={handleSave}
       />
       <ToolsetEditorView
         step={step}
@@ -224,6 +242,8 @@ const ToolsetEditor: FC = () => {
         saveError={saveError}
         isSaving={isSaving}
         toolsetId={toolsetId}
+        onNext={handleNext}
+        onCancel={handleCancel}
         onChange={handleChange}
         onAuthChange={handleAuthChange}
       />

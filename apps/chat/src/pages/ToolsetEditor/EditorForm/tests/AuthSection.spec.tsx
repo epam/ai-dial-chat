@@ -19,31 +19,6 @@ vi.mock('../../../../server-api/toolsets', () => ({
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
-  DialAccordion: ({
-    title,
-    children,
-    expanded,
-    onToggle,
-    disabled,
-  }: {
-    title: ReactNode;
-    children?: ReactNode;
-    expanded?: boolean;
-    onToggle?: () => void;
-    disabled?: boolean;
-  }) => (
-    <div>
-      <button
-        type="button"
-        onClick={() => onToggle?.()}
-        disabled={disabled}
-        aria-expanded={expanded}
-      >
-        {title}
-      </button>
-      {expanded && <div>{children}</div>}
-    </div>
-  ),
   DialInput: ({
     value,
     onChange,
@@ -69,31 +44,33 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {error && <p role="alert">{error}</p>}
     </>
   ),
-  DialSelect: ({
-    options,
+  DialRadioButton: ({
+    inputId,
     value,
-    onChange,
-    elementId,
+    label,
+    checked,
     disabled,
+    onChange,
   }: {
-    options: { value: string; label: string }[];
+    name?: string;
+    inputId?: string;
     value?: string;
-    onChange?: (v: string) => void;
-    elementId?: string;
+    label?: string;
+    checked?: boolean;
     disabled?: boolean;
+    onChange?: (v: string) => void;
   }) => (
-    <select
-      id={elementId}
-      value={value}
-      disabled={disabled}
-      onChange={(e) => onChange?.(e.target.value)}
-    >
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </select>
+    <label htmlFor={inputId}>
+      <input
+        id={inputId}
+        type="radio"
+        value={value}
+        checked={checked}
+        disabled={disabled}
+        onChange={() => onChange?.(value ?? '')}
+      />
+      {label}
+    </label>
   ),
   DialTagInput: ({
     label,
@@ -169,7 +146,10 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
   ConfirmationPopupVariant: { Danger: 'danger' },
   NotificationVariant: { Error: 'error' },
+  ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
   DIAL_ICON_SIZE: { SM: 16 },
+  mergeClasses: (...classes: (string | undefined | false)[]) =>
+    classes.filter(Boolean).join(' '),
 }));
 
 const noneAuth = (): ToolsetAuthFormData => ({
@@ -182,7 +162,7 @@ const apiKeyAuth = (): ToolsetAuthFormData => ({
   authenticationType: ToolsetAuthTypes.ApiKey,
   withLogin: WithLogin.WithLogin,
   isLoggedIn: false,
-  keyHeader: '',
+  keyHeader: 'X-API-Key',
   apiKey: '',
 });
 
@@ -197,10 +177,13 @@ const oauthWithConfigAuth = (): ToolsetAuthFormData => ({
   scopes: [],
 });
 
+const VALID_ENDPOINT = 'https://example.com/mcp';
+
 const renderSection = (
   auth: ToolsetAuthFormData = noneAuth(),
   toolsetId = 'toolsets/b/my__1.0.0',
   onAuthChange = vi.fn(),
+  endpoint = VALID_ENDPOINT,
 ) =>
   render(
     <AuthSection
@@ -208,6 +191,7 @@ const renderSection = (
       errors={{}}
       isSaving={false}
       toolsetId={toolsetId}
+      endpoint={endpoint}
       onAuthChange={onAuthChange}
     />,
   );
@@ -224,8 +208,8 @@ describe('AuthSection', () => {
     });
   });
 
-  describe('accordion single-select', () => {
-    it('calls onAuthChange with ApiKey type when the ApiKey accordion is toggled', async () => {
+  describe('type selection', () => {
+    it('calls onAuthChange with ApiKey type when the ApiKey row is clicked', async () => {
       const onAuthChange = vi.fn();
       renderSection(noneAuth(), 'toolsets/b/my__1.0.0', onAuthChange);
       await user.click(
@@ -240,7 +224,7 @@ describe('AuthSection', () => {
       );
     });
 
-    it('calls onAuthChange with OAuth type when the OAuth accordion is toggled', async () => {
+    it('calls onAuthChange with OAuth type when the OAuth row is clicked', async () => {
       const onAuthChange = vi.fn();
       renderSection(noneAuth(), 'toolsets/b/my__1.0.0', onAuthChange);
       await user.click(
@@ -266,6 +250,16 @@ describe('AuthSection', () => {
         screen.getByLabelText(ToolsetEditorI18nKeys.ApiKeyLabel),
       ).toBeTruthy();
     });
+
+    it('renders WithLogin and WithoutLogin radio buttons for ApiKey', () => {
+      renderSection(apiKeyAuth());
+      expect(
+        screen.getByLabelText(ToolsetEditorI18nKeys.WithLoginLabel),
+      ).toBeTruthy();
+      expect(
+        screen.getByLabelText(ToolsetEditorI18nKeys.WithoutLoginLabel),
+      ).toBeTruthy();
+    });
   });
 
   describe('OAuth conditional fields', () => {
@@ -285,6 +279,16 @@ describe('AuthSection', () => {
       ).toBeTruthy();
       expect(
         screen.getByLabelText(ToolsetEditorI18nKeys.ScopesLabel),
+      ).toBeTruthy();
+    });
+
+    it('renders WithLogin and WithLogin+Config radio buttons for OAuth', () => {
+      renderSection(oauthWithConfigAuth());
+      expect(
+        screen.getByLabelText(ToolsetEditorI18nKeys.WithLoginLabel),
+      ).toBeTruthy();
+      expect(
+        screen.getByLabelText(ToolsetEditorI18nKeys.WithConfigLabel),
       ).toBeTruthy();
     });
   });
@@ -352,6 +356,27 @@ describe('AuthSection', () => {
           ToolsetEditorI18nKeys.ErrorLoginFailed,
         ),
       );
+    });
+
+    it('disables the Log In button when endpoint is empty', () => {
+      renderSection(apiKeyAuth(), 'toolsets/b/my__1.0.0', vi.fn(), '');
+      const btn = screen.getByRole('button', {
+        name: ToolsetEditorI18nKeys.LogInButton,
+      }) as HTMLButtonElement;
+      expect(btn.disabled).toBe(true);
+    });
+
+    it('disables the Log In button when required auth fields are empty', () => {
+      renderSection(
+        { ...apiKeyAuth(), keyHeader: '' },
+        'toolsets/b/my__1.0.0',
+        vi.fn(),
+        VALID_ENDPOINT,
+      );
+      const btn = screen.getByRole('button', {
+        name: ToolsetEditorI18nKeys.LogInButton,
+      }) as HTMLButtonElement;
+      expect(btn.disabled).toBe(true);
     });
   });
 });

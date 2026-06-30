@@ -1,14 +1,15 @@
 import {
   ConfirmationPopupVariant,
   DIAL_ICON_SIZE,
-  DialAccordion,
   DialConfirmationPopup,
   DialInput,
   DialNotification,
   DialPrimaryButton,
-  DialSelect,
+  DialRadioButton,
   DialTagInput,
+  ElementSize,
   NotificationVariant,
+  mergeClasses,
 } from '@epam/ai-dial-ui-kit';
 import type {
   ToolsetLoginBodyDto,
@@ -43,6 +44,7 @@ interface Props {
   errors: ToolsetFormErrors;
   isSaving: boolean;
   toolsetId: string;
+  endpoint: string;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
 }
 
@@ -54,7 +56,6 @@ const ORDERED_AUTH_TYPES = [
 
 const defaultWithLoginFor = (type: ToolsetAuthTypes): WithLogin => {
   if (type === ToolsetAuthTypes.None) return WithLogin.WithoutLogin;
-  if (type === ToolsetAuthTypes.OAuth) return WithLogin.WithConfig;
   return WithLogin.WithLogin;
 };
 
@@ -84,6 +85,7 @@ const AuthSection: FC<Props> = ({
   errors,
   isSaving,
   toolsetId,
+  endpoint,
   onAuthChange,
 }) => {
   const { t } = useTranslation();
@@ -92,27 +94,21 @@ const AuthSection: FC<Props> = ({
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const isControlsDisabled = auth.isLoggedIn || isSaving || isAuthBusy;
-  const canLogIn = Boolean(toolsetId) && !isControlsDisabled;
 
-  const withLoginOptions = useMemo(() => {
-    const base = [
-      {
-        value: WithLogin.WithoutLogin,
-        label: t(ToolsetEditorI18nKeys.WithoutLoginLabel),
-      },
-      {
-        value: WithLogin.WithLogin,
-        label: t(ToolsetEditorI18nKeys.WithLoginLabel),
-      },
-    ];
-    if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
-      base.push({
-        value: WithLogin.WithConfig,
-        label: t(ToolsetEditorI18nKeys.WithConfigLabel),
-      });
+  const isLoginFormValid = useMemo(() => {
+    if (auth.isLoggedIn) return true;
+    const { authenticationType: type, withLogin: wl } = auth;
+    if (type === ToolsetAuthTypes.OAuth && wl === WithLogin.WithConfig) {
+      return Boolean(auth.clientId?.trim() && auth.clientSecret?.trim());
     }
-    return base;
-  }, [auth.authenticationType, t]);
+    if (type === ToolsetAuthTypes.ApiKey && wl === WithLogin.WithLogin) {
+      return Boolean(auth.keyHeader?.trim());
+    }
+    return true;
+  }, [auth]);
+
+  const canLogIn =
+    Boolean(endpoint.trim()) && isLoginFormValid && !isControlsDisabled;
 
   const handleSelectType = (type: ToolsetAuthTypes) => {
     if (isControlsDisabled || type === auth.authenticationType) return;
@@ -122,10 +118,8 @@ const AuthSection: FC<Props> = ({
     });
   };
 
-  const handleWithLoginChange = (next: string | string[]) => {
-    if (typeof next === 'string') {
-      onAuthChange({ withLogin: next as WithLogin });
-    }
+  const handleWithLoginChange = (value: string) => {
+    onAuthChange({ withLogin: value as WithLogin });
   };
 
   const handleLogIn = async () => {
@@ -192,90 +186,168 @@ const AuthSection: FC<Props> = ({
     }
   };
 
-  const renderApiKeyFields = () => {
-    if (auth.withLogin === WithLogin.WithoutLogin) return null;
+  const renderLoginStatus = () => {
+    if (auth.isLoggedIn) {
+      return (
+        <div className="flex items-center gap-3">
+          <span className="dial-small-text text-success">
+            {t(ToolsetEditorI18nKeys.LoggedInLabel)}
+          </span>
+          <DialPrimaryButton
+            type="button"
+            size={ElementSize.Small}
+            label={t(ToolsetEditorI18nKeys.LogOutButton)}
+            onClick={() => setShowLogoutConfirm(true)}
+            disabled={isSaving || isAuthBusy}
+          />
+        </div>
+      );
+    }
     return (
-      <div className="flex flex-col gap-3 pt-3">
-        <DialInput
-          id="toolset-key-header"
-          value={auth.keyHeader ?? ''}
-          onChange={(value) => onAuthChange({ keyHeader: value ?? '' })}
-          labelProps={{
-            label: t(ToolsetEditorI18nKeys.KeyHeaderLabel),
-            required: true,
-          }}
-          error={errors.keyHeader || undefined}
-          invalid={!!errors.keyHeader}
-          disabled={isControlsDisabled}
-        />
-        <DialInput
-          id="toolset-api-key"
-          value={auth.apiKey ?? ''}
-          onChange={(value) => onAuthChange({ apiKey: value ?? '' })}
-          labelProps={{ label: t(ToolsetEditorI18nKeys.ApiKeyLabel) }}
-          disabled={isControlsDisabled}
+      <div className="flex">
+        <DialPrimaryButton
+          type="button"
+          size={ElementSize.Small}
+          label={t(ToolsetEditorI18nKeys.LogInButton)}
+          onClick={handleLogIn}
+          disabled={!canLogIn}
         />
       </div>
     );
   };
 
-  const renderOAuthFields = () => {
-    if (auth.withLogin !== WithLogin.WithConfig) return null;
-    return (
-      <div className="flex flex-col gap-3 pt-3">
-        <DialInput
-          id="toolset-client-id"
-          value={auth.clientId ?? ''}
-          onChange={(value) => onAuthChange({ clientId: value ?? '' })}
-          labelProps={{
-            label: t(ToolsetEditorI18nKeys.ClientIdLabel),
-            required: true,
-          }}
-          error={errors.clientId || undefined}
-          invalid={!!errors.clientId}
+  const renderOAuthContent = () => (
+    <div className="flex flex-col gap-3 pb-3 ps-4">
+      <div className="flex flex-col gap-2">
+        <DialRadioButton
+          name="oauth-login-mode"
+          inputId="oauth-with-login"
+          value={WithLogin.WithLogin}
+          label={t(ToolsetEditorI18nKeys.WithLoginLabel)}
+          checked={auth.withLogin === WithLogin.WithLogin}
           disabled={isControlsDisabled}
+          onChange={handleWithLoginChange}
         />
-        <DialInput
-          id="toolset-client-secret"
-          value={auth.clientSecret ?? ''}
-          onChange={(value) => onAuthChange({ clientSecret: value ?? '' })}
-          labelProps={{
-            label: t(ToolsetEditorI18nKeys.ClientSecretLabel),
-            required: true,
-          }}
-          error={errors.clientSecret || undefined}
-          invalid={!!errors.clientSecret}
+        <DialRadioButton
+          name="oauth-login-mode"
+          inputId="oauth-with-config"
+          value={WithLogin.WithConfig}
+          label={t(ToolsetEditorI18nKeys.WithConfigLabel)}
+          checked={auth.withLogin === WithLogin.WithConfig}
           disabled={isControlsDisabled}
-        />
-        <DialInput
-          id="toolset-authorization-endpoint"
-          value={auth.authorizationEndpoint ?? ''}
-          onChange={(value) =>
-            onAuthChange({ authorizationEndpoint: value ?? '' })
-          }
-          labelProps={{
-            label: t(ToolsetEditorI18nKeys.AuthorizationEndpointLabel),
-          }}
-          disabled={isControlsDisabled}
-        />
-        <DialInput
-          id="toolset-token-endpoint"
-          value={auth.tokenEndpoint ?? ''}
-          onChange={(value) => onAuthChange({ tokenEndpoint: value ?? '' })}
-          labelProps={{ label: t(ToolsetEditorI18nKeys.TokenEndpointLabel) }}
-          disabled={isControlsDisabled}
-        />
-        <DialTagInput
-          elementId="toolset-scopes"
-          label={t(ToolsetEditorI18nKeys.ScopesLabel)}
-          placeholder={t(ToolsetEditorI18nKeys.ScopesPlaceholder)}
-          initialTags={auth.scopes ?? []}
-          onChange={(scopes) => onAuthChange({ scopes })}
-          disabled={isControlsDisabled}
+          onChange={handleWithLoginChange}
         />
       </div>
-    );
-  };
+
+      {auth.withLogin === WithLogin.WithConfig && (
+        <div className="flex flex-col gap-3">
+          <DialInput
+            id="toolset-client-id"
+            value={auth.clientId ?? ''}
+            onChange={(value) => onAuthChange({ clientId: value ?? '' })}
+            labelProps={{
+              label: t(ToolsetEditorI18nKeys.ClientIdLabel),
+              required: true,
+            }}
+            error={errors.clientId || undefined}
+            invalid={!!errors.clientId}
+            disabled={isControlsDisabled}
+          />
+          <DialInput
+            id="toolset-client-secret"
+            value={auth.clientSecret ?? ''}
+            onChange={(value) => onAuthChange({ clientSecret: value ?? '' })}
+            labelProps={{
+              label: t(ToolsetEditorI18nKeys.ClientSecretLabel),
+              required: true,
+            }}
+            error={errors.clientSecret || undefined}
+            invalid={!!errors.clientSecret}
+            disabled={isControlsDisabled}
+          />
+          <DialInput
+            id="toolset-authorization-endpoint"
+            value={auth.authorizationEndpoint ?? ''}
+            onChange={(value) =>
+              onAuthChange({ authorizationEndpoint: value ?? '' })
+            }
+            labelProps={{
+              label: t(ToolsetEditorI18nKeys.AuthorizationEndpointLabel),
+            }}
+            disabled={isControlsDisabled}
+          />
+          <DialInput
+            id="toolset-token-endpoint"
+            value={auth.tokenEndpoint ?? ''}
+            onChange={(value) => onAuthChange({ tokenEndpoint: value ?? '' })}
+            labelProps={{ label: t(ToolsetEditorI18nKeys.TokenEndpointLabel) }}
+            disabled={isControlsDisabled}
+          />
+          <DialTagInput
+            elementId="toolset-scopes"
+            label={t(ToolsetEditorI18nKeys.ScopesLabel)}
+            placeholder={t(ToolsetEditorI18nKeys.ScopesPlaceholder)}
+            initialTags={auth.scopes ?? []}
+            onChange={(scopes) => onAuthChange({ scopes })}
+            disabled={isControlsDisabled}
+          />
+        </div>
+      )}
+
+      {renderLoginStatus()}
+    </div>
+  );
+
+  const renderApiKeyContent = () => (
+    <div className="flex flex-col gap-3 pb-3 ps-4">
+      <div className="flex flex-col gap-2">
+        <DialRadioButton
+          name="apikey-login-mode"
+          inputId="apikey-with-login"
+          value={WithLogin.WithLogin}
+          label={t(ToolsetEditorI18nKeys.WithLoginLabel)}
+          checked={auth.withLogin === WithLogin.WithLogin}
+          disabled={isControlsDisabled}
+          onChange={handleWithLoginChange}
+        />
+        <DialRadioButton
+          name="apikey-login-mode"
+          inputId="apikey-without-login"
+          value={WithLogin.WithoutLogin}
+          label={t(ToolsetEditorI18nKeys.WithoutLoginLabel)}
+          checked={auth.withLogin === WithLogin.WithoutLogin}
+          disabled={isControlsDisabled}
+          onChange={handleWithLoginChange}
+        />
+      </div>
+
+      {auth.withLogin === WithLogin.WithLogin && (
+        <div className="flex flex-col gap-3">
+          <DialInput
+            id="toolset-key-header"
+            value={auth.keyHeader ?? ''}
+            onChange={(value) => onAuthChange({ keyHeader: value ?? '' })}
+            labelProps={{
+              label: t(ToolsetEditorI18nKeys.KeyHeaderLabel),
+              required: true,
+            }}
+            error={errors.keyHeader || undefined}
+            invalid={!!errors.keyHeader}
+            disabled={isControlsDisabled}
+          />
+          <DialInput
+            id="toolset-api-key"
+            value={auth.apiKey ?? ''}
+            onChange={(value) => onAuthChange({ apiKey: value ?? '' })}
+            labelProps={{ label: t(ToolsetEditorI18nKeys.ApiKeyLabel) }}
+            disabled={isControlsDisabled}
+          />
+        </div>
+      )}
+
+      {auth.withLogin !== WithLogin.WithoutLogin && renderLoginStatus()}
+    </div>
+  );
 
   return (
     <section className="flex flex-col gap-2">
@@ -287,59 +359,45 @@ const AuthSection: FC<Props> = ({
         const option = AUTH_TYPE_OPTIONS[type];
         const Icon = option.Icon;
         const isSelected = auth.authenticationType === type;
+        const isLocked = isControlsDisabled && !isSelected;
+
         return (
-          <DialAccordion
-            key={type}
-            expanded={isSelected}
-            disabled={isControlsDisabled && !isSelected}
-            onToggle={() => handleSelectType(type)}
-            title={
-              <span className="flex items-center gap-2">
-                <Icon size={DIAL_ICON_SIZE.SM} className="text-secondary" />
+          <div key={type}>
+            <button
+              type="button"
+              className={mergeClasses(
+                'flex w-full items-center gap-3 border-s-2 px-4 py-3',
+                isSelected ? 'border-s-accent-primary' : 'border-s-transparent',
+                isLocked && 'cursor-not-allowed opacity-50',
+              )}
+              onClick={() => handleSelectType(type)}
+              disabled={isLocked}
+            >
+              <Icon
+                size={DIAL_ICON_SIZE.SM}
+                className={
+                  isSelected ? 'text-accent-primary' : 'text-secondary'
+                }
+              />
+              <span
+                className={mergeClasses(
+                  'text-sm',
+                  isSelected ? 'text-accent-primary' : 'text-primary',
+                )}
+              >
                 {t(option.labelKey)}
               </span>
-            }
-          >
-            {type !== ToolsetAuthTypes.None && (
-              <div className="flex flex-col gap-3">
-                <DialSelect
-                  elementId={`toolset-with-login-${type}`}
-                  options={withLoginOptions}
-                  value={auth.withLogin}
-                  onChange={handleWithLoginChange}
-                  disabled={isControlsDisabled}
-                />
-                {type === ToolsetAuthTypes.ApiKey
-                  ? renderApiKeyFields()
-                  : renderOAuthFields()}
-              </div>
-            )}
-          </DialAccordion>
+            </button>
+
+            {isSelected &&
+              type === ToolsetAuthTypes.OAuth &&
+              renderOAuthContent()}
+            {isSelected &&
+              type === ToolsetAuthTypes.ApiKey &&
+              renderApiKeyContent()}
+          </div>
         );
       })}
-
-      {auth.isLoggedIn ? (
-        <div className="flex items-center justify-between">
-          <span className="dial-small-text text-success">
-            {t(ToolsetEditorI18nKeys.LoggedInLabel)}
-          </span>
-          <DialPrimaryButton
-            type="button"
-            label={t(ToolsetEditorI18nKeys.LogOutButton)}
-            onClick={() => setShowLogoutConfirm(true)}
-            disabled={isSaving || isAuthBusy}
-          />
-        </div>
-      ) : (
-        auth.authenticationType !== ToolsetAuthTypes.None && (
-          <DialPrimaryButton
-            type="button"
-            label={t(ToolsetEditorI18nKeys.LogInButton)}
-            onClick={handleLogIn}
-            disabled={!canLogIn}
-          />
-        )
-      )}
 
       {authActionError && (
         <DialNotification

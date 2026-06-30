@@ -391,6 +391,7 @@ export enum ToolsetEditorI18nKeys {
   StepGeneral = 'toolsetEditor.stepGeneral',
   StepSettings = 'toolsetEditor.stepSettings',
   StepsNavAriaLabel = 'toolsetEditor.stepsNavAriaLabel',
+  NextButton = 'toolsetEditor.nextButton',
   SaveButton = 'toolsetEditor.saveButton',
   PreviewTitle = 'toolsetEditor.previewTitle',
   // General form

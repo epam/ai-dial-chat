@@ -1,6 +1,16 @@
-import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
+import {
+  DialNeutralButton,
+  DialNotification,
+  DialPrimaryButton,
+  NotificationVariant,
+} from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import {
+  ButtonsI18nKeys,
+  ToolsetEditorI18nKeys,
+} from '../../constants/translation-keys';
 import type {
   ToolsetAuthFormData,
   ToolsetFormData,
@@ -18,6 +28,8 @@ interface Props {
   saveError: string;
   isSaving: boolean;
   toolsetId: string;
+  onNext: () => void;
+  onCancel: () => void;
   onChange: (patch: Partial<ToolsetFormData>) => void;
   onAuthChange: (patch: Partial<ToolsetAuthFormData>) => void;
 }
@@ -29,32 +41,52 @@ const ToolsetEditorView: FC<Props> = ({
   saveError,
   isSaving,
   toolsetId,
+  onNext,
+  onCancel,
   onChange,
   onAuthChange,
 }) => {
+  const { t } = useTranslation();
   const isGeneralStep = step === ToolsetEditorSteps.General;
 
   return (
     <div className="flex min-h-0 flex-1">
-      <div className="flex h-full w-1/2 flex-col gap-4 overflow-y-auto border-e border-e-primary p-4">
-        {isGeneralStep ? (
-          <GeneralForm form={form} errors={errors} onChange={onChange} />
-        ) : (
-          <SettingsForm
-            form={form}
-            errors={errors}
-            isSaving={isSaving}
-            toolsetId={toolsetId}
-            onChange={onChange}
-            onAuthChange={onAuthChange}
-          />
-        )}
+      <div className="flex h-full w-1/2 flex-col border-e border-e-primary">
+        <div className="flex-1 overflow-y-auto p-4">
+          {isGeneralStep ? (
+            <GeneralForm form={form} errors={errors} onChange={onChange} />
+          ) : (
+            <SettingsForm
+              form={form}
+              errors={errors}
+              isSaving={isSaving}
+              toolsetId={toolsetId}
+              onChange={onChange}
+              onAuthChange={onAuthChange}
+            />
+          )}
 
-        {saveError && (
-          <DialNotification
-            variant={NotificationVariant.Error}
-            message={saveError}
-          />
+          {saveError && (
+            <DialNotification
+              variant={NotificationVariant.Error}
+              message={saveError}
+            />
+          )}
+        </div>
+
+        {isGeneralStep && (
+          <div className="flex shrink-0 items-center justify-end gap-3 border-t border-t-primary px-4 py-3">
+            <DialNeutralButton
+              type="button"
+              label={t(ButtonsI18nKeys.Cancel)}
+              onClick={onCancel}
+            />
+            <DialPrimaryButton
+              type="button"
+              label={t(ToolsetEditorI18nKeys.NextButton)}
+              onClick={onNext}
+            />
+          </div>
         )}
       </div>
 

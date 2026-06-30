@@ -16,16 +16,16 @@ interface Props {
   step: ToolsetEditorSteps;
   isSaving: boolean;
   onChangeStep: (stepId: string) => void;
-  onSave: () => void;
   onCancel: () => void;
+  onSave: () => void;
 }
 
 const ToolsetEditorHeader: FC<Props> = ({
   step,
   isSaving,
   onChangeStep,
-  onSave,
   onCancel,
+  onSave,
 }) => {
   const { t } = useTranslation();
 
@@ -44,7 +44,7 @@ const ToolsetEditorHeader: FC<Props> = ({
   );
 
   return (
-    <header className="flex items-center justify-between gap-3 border-b border-b-primary bg-layer-2 px-4 py-1">
+    <header className="flex items-center justify-between border-b border-b-primary bg-layer-2 px-4 py-1">
       <nav
         role="navigation"
         aria-label={t(ToolsetEditorI18nKeys.StepsNavAriaLabel)}
@@ -56,7 +56,7 @@ const ToolsetEditorHeader: FC<Props> = ({
           onChangeStep={onChangeStep}
         />
       </nav>
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         <DialNeutralButton
           type="button"
           label={t(ButtonsI18nKeys.Cancel)}
