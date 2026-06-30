@@ -1,3 +1,4 @@
+import { type CatalogItem } from '@epam/ai-dial-catalog';
 import {
   DisplayAttachment,
   isStatusMessage,
@@ -56,11 +57,9 @@ import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentVal
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
-import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import { ModelPickerPanel } from '../ModelPicker/ModelPickerPanel';

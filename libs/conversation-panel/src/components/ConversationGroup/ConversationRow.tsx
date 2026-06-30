@@ -6,6 +6,8 @@ import {
   DialEllipsisTooltip,
   DialGhostButton,
   DialIconButton,
+  DialSkeleton,
+  DialSkeletonVariant,
   ElementSize,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
@@ -87,7 +89,15 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
 
-  const avatar = (
+  const avatar = item.isIconLoading ? (
+    <DialSkeleton
+      variant={DialSkeletonVariant.Circular}
+      width={DIAL_ICON_SIZE.LG}
+      height={DIAL_ICON_SIZE.LG}
+      color="var(--bg-layer-4)"
+      aria-hidden
+    />
+  ) : (
     <DeploymentIcon
       src={item.iconUrl}
       size={DIAL_ICON_SIZE.LG}
