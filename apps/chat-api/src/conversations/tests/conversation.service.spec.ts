@@ -376,6 +376,24 @@ describe('ConversationService', () => {
       );
     });
 
+    it('fetches shared conversation from the originating bucket, not the session bucket', async () => {
+      const spy = vi
+        .spyOn(service['client'], 'getConversation')
+        .mockResolvedValue({ data: TEST_CONVERSATION } as never);
+
+      await service.getConversation(
+        'other-user-bucket/gpt-4o__shared-chat__uuid',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(spy).toHaveBeenCalledWith(
+        'other-user-bucket',
+        'gpt-4o__shared-chat__uuid',
+        expect.any(Object),
+      );
+    });
+
     it('uses session bucket for a path with no slash', async () => {
       const spy = vi
         .spyOn(service['client'], 'getConversation')
