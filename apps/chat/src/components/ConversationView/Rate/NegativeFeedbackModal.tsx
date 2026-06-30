@@ -1,7 +1,7 @@
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialFormItem,
   DialFormPopup,
-  DialPrimaryButton,
   DialSelect,
   DialTextarea,
   PopupSize,
@@ -43,7 +43,7 @@ const NegativeFeedbackModal: FC<Props> = ({ onClose, onSubmit }) => {
   const footer = useMemo(
     () => (
       <div className="flex items-center justify-end gap-2 px-6 pb-6">
-        <DialPrimaryButton
+        <PrimaryButton
           label={t(ButtonsI18nKeys.Send)}
           disabled={!category}
           onClick={handleSubmit}

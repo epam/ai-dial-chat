@@ -1,10 +1,10 @@
-import { Card, CatalogEntityType } from '@epam/ai-dial-catalog';
 import type { CatalogItem } from '@epam/ai-dial-catalog';
+import { Card, CatalogEntityType } from '@epam/ai-dial-catalog';
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialInput,
   DialNeutralButton,
   DialNotification,
-  DialPrimaryButton,
   DialTagInput,
   DialTextarea,
   NotificationVariant,
@@ -12,7 +12,10 @@ import {
 import type { FC } from 'react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppsEditorI18nKeys, ButtonsI18nKeys } from '../../constants/translation-keys';
+import {
+  AppsEditorI18nKeys,
+  ButtonsI18nKeys,
+} from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
 
 const NAME_PATTERN = /^[a-zA-Z0-9 _.-]+$/;
@@ -129,14 +132,18 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
             labelProps={{
               label: t(AppsEditorI18nKeys.GeneralFormDescriptionLabel),
             }}
-            placeholder={t(AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder)}
+            placeholder={t(
+              AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder,
+            )}
           />
 
           <DialInput
             id="app-icon-url"
             value={iconUrl}
             onChange={(value) => setIconUrl(value ?? '')}
-            labelProps={{ label: t(AppsEditorI18nKeys.GeneralFormIconUrlLabel) }}
+            labelProps={{
+              label: t(AppsEditorI18nKeys.GeneralFormIconUrlLabel),
+            }}
             placeholder={t(AppsEditorI18nKeys.GeneralFormIconUrlPlaceholder)}
           />
 
@@ -144,7 +151,9 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
             id="app-version"
             value={version}
             onChange={handleVersionChange}
-            labelProps={{ label: t(AppsEditorI18nKeys.GeneralFormVersionLabel) }}
+            labelProps={{
+              label: t(AppsEditorI18nKeys.GeneralFormVersionLabel),
+            }}
             placeholder={t(AppsEditorI18nKeys.GeneralFormVersionPlaceholder)}
             error={versionError || undefined}
             invalid={!!versionError}
@@ -173,7 +182,7 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
               onClick={onCancel}
               disabled={isSubmitting}
             />
-            <DialPrimaryButton
+            <PrimaryButton
               type="submit"
               label={t(AppsEditorI18nKeys.GeneralFormNextButton)}
               disabled={isSubmitting}

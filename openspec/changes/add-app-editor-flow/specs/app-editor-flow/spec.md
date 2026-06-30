@@ -157,7 +157,7 @@ The page header SHALL display:
 - **Version** (`DialInput`, optional): maps to `CreateApplicationBodyDto.version`.
 - **Topics** (`DialTagInput`, optional): maps to `CreateApplicationBodyDto.topics`.
 
-Footer (pinned to bottom of left column): **Cancel** (`DialNeutralButton`) and **Next** (`DialPrimaryButton`).
+Footer (pinned to bottom of left column): **Cancel** (`DialNeutralButton`) and **Next** (`PrimaryButton`).
 
 **Right column** — live preview (`w-1/2`, `bg-layer-1`):
 
@@ -173,7 +173,7 @@ State owned locally via `useState`:
 
 Client-side validation: only the Name field is validated (must be non-empty). No URL format validation is performed on the icon URL field; that is enforced server-side only.
 
-The **Next** button (`DialPrimaryButton`, `type="submit"`):
+The **Next** button (`PrimaryButton`, `type="submit"`):
 - Is disabled while `isSubmitting` is true.
 - On submit, validates name is non-empty, then calls `createApplication({ name, type: schemaId, description, iconUrl, version, topics })` via the server-api wrapper.
 - On success, invokes the `onCreated(appId)` callback prop.

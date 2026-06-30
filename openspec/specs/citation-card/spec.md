@@ -15,7 +15,7 @@
 - Description: `body.quote` (optional, omitted when absent), `dial-small-text text-secondary`
 
 **Footer** (buttons fit content, left-aligned):
-- "Preview" button (`DialPrimaryButton`, `ElementSize.Small`)
+- "Preview" button (`PrimaryButton`, `ElementSize.Small`)
 - Second button label depends on source type:
   - `text/html` or `application/xhtml+xml` → "Open in browser" (`citations.popup.openInBrowser`)
   - All other types → "Download" (`citations.popup.download`)

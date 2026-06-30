@@ -1,6 +1,7 @@
-import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
-import { DialPrimaryButton, DialTooltip } from '@epam/ai-dial-ui-kit';
+import { mergeClasses, ResponseFormat } from '@epam/ai-dial-chat-shared';
+import { PrimaryButton } from '@epam/ai-dial-kit';
+import { DialTooltip } from '@epam/ai-dial-ui-kit';
 import type { CSSProperties, FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
@@ -139,7 +140,7 @@ export const ChatSettingsBottomSheet: FC<ChatSettingsBottomSheetProps> = ({
           hideTooltip={canSubmit || !saveDisabledTooltip}
           triggerClassName="w-full"
         >
-          <DialPrimaryButton
+          <PrimaryButton
             label={saveLabel}
             onClick={handleSubmit}
             disabled={!canSubmit}

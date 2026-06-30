@@ -1,8 +1,8 @@
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialNeutralButton,
-  DialPrimaryButton,
 } from '@epam/ai-dial-ui-kit';
 import {
   IconChevronDown,
@@ -61,7 +61,7 @@ export const Header: FC<HeaderProps> = ({
         }
       />
       <div className="flex flex-wrap gap-2 ps-[60px]">
-        <DialPrimaryButton
+        <PrimaryButton
           label={
             texts?.primaryActionLabel ?? texts?.useInChatLabel ?? 'Use in chat'
           }

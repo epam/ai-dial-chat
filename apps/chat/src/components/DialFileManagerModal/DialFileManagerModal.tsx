@@ -2,6 +2,7 @@ import {
   isMimeTypeAllowed,
   mimeTypesToExtensionLabels,
 } from '@epam/ai-dial-attachment-input';
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialFileManager,
   DialFileManagerActions,
@@ -9,14 +10,13 @@ import {
   DialFileNodeType,
   DialLoader,
   DialPopup,
-  DialPrimaryButton,
   GridSelectionMode,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
   PopupSize,
+  useDialFileManagerTabs,
   type DialFile,
   type FileManagerGridRow,
-  useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
@@ -596,7 +596,7 @@ const DialFileManagerModal: FC<Props> = ({
         hideClose={true}
         footer={
           <div className="flex justify-end px-6 py-4">
-            <DialPrimaryButton
+            <PrimaryButton
               label={attachLabel}
               disabled={
                 selectedFiles.length === 0 || isLoading || isOperationInProgress
@@ -609,7 +609,7 @@ const DialFileManagerModal: FC<Props> = ({
         {error != null ? (
           <div role="alert" className="flex flex-col items-center gap-4 p-6">
             <p>{errorMessage}</p>
-            <DialPrimaryButton label={retryLabel} onClick={retry} />
+            <PrimaryButton label={retryLabel} onClick={retry} />
           </div>
         ) : (
           <div className="relative flex min-h-0 w-full grow overflow-auto bg-layer-2">

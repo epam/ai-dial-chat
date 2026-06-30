@@ -1,9 +1,9 @@
 import type { Annotation } from '@epam/ai-dial-chat-shared';
 import { MIMEType } from '@epam/ai-dial-chat-shared';
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialEllipsisTooltip,
   DialGhostIconButton,
-  DialPrimaryButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronLeft, IconChevronRight } from '@tabler/icons-react';
@@ -108,12 +108,12 @@ const CitationCard: FC<Props> = ({
 
       {/* Footer */}
       <div className="flex justify-start gap-2">
-        <DialPrimaryButton
+        <PrimaryButton
           label={t(CitationsI18nKeys.PopupPreview)}
           size={ElementSize.Small}
           onClick={() => onPreview(annotation)}
         />
-        <DialPrimaryButton
+        <PrimaryButton
           label={t(
             isWebLink
               ? CitationsI18nKeys.PopupOpenInBrowser

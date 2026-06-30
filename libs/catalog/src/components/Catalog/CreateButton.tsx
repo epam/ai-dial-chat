@@ -1,9 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  DIAL_ICON_SIZE,
-  DialDropdown,
-  DialPrimaryButton,
-} from '@epam/ai-dial-ui-kit';
+import { PrimaryButton } from '@epam/ai-dial-kit';
+import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconPlus } from '@tabler/icons-react';
 import { FC, KeyboardEvent, useCallback, useRef, useState } from 'react';
 import type { CreateOption } from '../../models/catalog-props';
@@ -87,7 +84,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
 
   if (!options?.length) {
     return (
-      <DialPrimaryButton
+      <PrimaryButton
         label={label}
         iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
         onClick={onClick}
@@ -178,7 +175,7 @@ export const CreateButton: FC<CreateButtonProps> = ({
           </div>
         )}
       >
-        <DialPrimaryButton
+        <PrimaryButton
           label={label}
           iconBefore={<IconPlus size={DIAL_ICON_SIZE.SM} />}
           iconAfter={
