@@ -4,6 +4,7 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -294,7 +295,24 @@ export class ConversationService extends AppService {
       };
     }
 
+    const slashIndex = conversationPath.indexOf('/');
+    if (slashIndex !== -1) {
+      return {
+        bucket: conversationPath.slice(0, slashIndex),
+        subPath: conversationPath.slice(slashIndex + 1),
+      };
+    }
     return { bucket: sessionBucket, subPath: conversationPath };
+  }
+
+  private qualifySessionConversationPath(
+    conversationPath: string,
+    sessionBucket: string,
+  ): string {
+    return conversationPath === sessionBucket ||
+      conversationPath.startsWith(`${sessionBucket}/`)
+      ? conversationPath
+      : `${sessionBucket}/${conversationPath}`;
   }
 
   private async getStoredConversation(
@@ -382,18 +400,35 @@ export class ConversationService extends AppService {
     const sourceUrl = `${buildConversationUrl(bucket, encodeDialResourcePath(conversationPath))}`;
     const destinationUrl = `${buildConversationUrl(bucket, encodeDialResourcePath(renamedPath))}`;
 
+    let moveError: unknown = undefined;
+    let moveStatus: number | undefined = undefined;
     try {
-      const { error } = (await this.client.moveResource({
+      const result = (await this.client.moveResource({
         headers: getBearerAuthHeaders(token),
         body: { sourceUrl, destinationUrl, overwrite: false },
-      })) as { error?: unknown };
-      if (error != null) {
-        this.logger.error('DIAL Core rejected moveResource (rename)', error);
-        return handleDialError(error);
+      })) as { error?: unknown; response?: globalThis.Response };
+      if (result.error != null) {
+        moveError = result.error;
+        moveStatus = result.response?.status;
       }
     } catch (error) {
-      this.logger.error('DIAL Core moveResource (rename) failed', error);
-      return handleDialError(error);
+      moveError = error;
+    }
+
+    if (moveError != null) {
+      this.logger.error('DIAL Core moveResource (rename) failed', {
+        status: moveStatus,
+        error: moveError,
+      });
+      // DIAL Core bug: returns 400 with "Source resource ... does not exist" instead of 404.
+      if (
+        moveStatus === 400 &&
+        typeof moveError === 'string' &&
+        moveError.includes('does not exist')
+      ) {
+        throw new NotFoundException('Conversation not found');
+      }
+      return handleDialError(moveError);
     }
 
     // Migrate pin state: if the old conversation was pinned, point the pin at
@@ -426,9 +461,13 @@ export class ConversationService extends AppService {
     token: string,
     bucket: string,
   ): Promise<void> {
+    const qualifiedPath = this.qualifySessionConversationPath(
+      conversationPath,
+      bucket,
+    );
     try {
       const { conversation: data } = await this.getStoredConversation(
-        conversationPath,
+        qualifiedPath,
         token,
         bucket,
       );
@@ -437,7 +476,7 @@ export class ConversationService extends AppService {
       }
 
       const { bucket: saveBucket, subPath } = this.resolveConversationLocation(
-        conversationPath,
+        qualifiedPath,
         bucket,
       );
 
@@ -542,7 +581,7 @@ export class ConversationService extends AppService {
           folderId,
           name: uniqueTitle,
           updatedAt: Date.now(),
-        },
+        } as never,
       },
     )) as { error?: unknown };
     if (saveError != null) {
@@ -862,7 +901,7 @@ export class ConversationService extends AppService {
 
     try {
       const { conversation: existing } = await this.getStoredConversation(
-        conversationPath,
+        this.qualifySessionConversationPath(conversationPath, bucket),
         token,
         bucket,
       );
@@ -917,7 +956,10 @@ export class ConversationService extends AppService {
         batch.map(async (item) => {
           try {
             const conversation = await this.getStoredConversation(
-              this.getListItemRelativePath(item.id),
+              this.qualifySessionConversationPath(
+                this.getListItemRelativePath(item.id),
+                bucket,
+              ),
               token,
               bucket,
             );
@@ -1135,7 +1177,7 @@ export class ConversationService extends AppService {
     sessionBucket: string,
   ): Promise<ReadableStream<Uint8Array>> {
     const { bucket, subPath } = this.resolveConversationLocation(
-      conversationPath,
+      this.qualifySessionConversationPath(conversationPath, sessionBucket),
       sessionBucket,
     );
     const resourceUrl = buildConversationUrl(
@@ -1154,7 +1196,7 @@ export class ConversationService extends AppService {
           Accept: 'text/event-stream',
         },
         parseAs: 'stream',
-      })) as { response: Response; error?: unknown };
+      })) as { response: globalThis.Response; error?: unknown };
 
       if (!result.response.ok || !result.response.body) {
         this.logger.error(
@@ -1195,7 +1237,7 @@ export class ConversationService extends AppService {
     let startState: ReturnType<typeof buildConversationHistory>;
     try {
       const fetchedConversation = await this.getConversation(
-        conversationPath,
+        this.qualifySessionConversationPath(conversationPath, bucket),
         token,
         bucket,
       );
