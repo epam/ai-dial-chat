@@ -31,9 +31,7 @@ const ErrorFallback: FC<Props> = ({
         className="text-error"
       />
       <h2>{t(ErrorBoundaryI18nKeys.Heading)}</h2>
-      <p className="text-base text-secondary">
-        {t(ErrorBoundaryI18nKeys.Description)}
-      </p>
+      <p className="text-secondary">{t(ErrorBoundaryI18nKeys.Description)}</p>
       <PrimaryButton
         autoFocus
         label={t(actionLabel ?? ErrorBoundaryI18nKeys.RetryLabel)}

@@ -18,7 +18,6 @@ const backgroundsColors = {
   success: 'var(--bg-success, #D9F0F1)',
   neutral: 'var(--bg-neutral, #FCFCFC)',
   inverted: 'var(--bg-inverted, #161B2D)',
-  'model-icon': 'var(--bg-model-icon, #FFFFFF00)',
   'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
   'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC2E)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',

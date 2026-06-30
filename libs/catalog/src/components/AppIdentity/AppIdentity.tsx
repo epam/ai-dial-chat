@@ -41,8 +41,6 @@ export interface AppIdentityProps {
   lastUsedClassName?: string;
   /** Element rendered at the end of the last-used row (size 'lg' only). */
   lastUsedTrailing?: ReactNode;
-  /** CSS class applied to the icon badge. Defaults to `'bg-layer-2'`. */
-  badgeClassName?: string;
 }
 
 /** Shared identity block: logo + type + name + version + optional last-used row. */
@@ -61,7 +59,6 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   versionClassName = 'dial-tiny-text text-secondary',
   lastUsedClassName = 'dial-tiny-text text-tertiary',
   lastUsedTrailing,
-  badgeClassName = 'bg-layer-2',
 }) => {
   const isLg = size === 'lg';
   const logoClass = isLg
@@ -79,7 +76,6 @@ export const AppIdentity: FC<AppIdentityProps> = ({
           initialsName={name}
           badgeClassName={mergeClasses(
             isLg ? 'rounded-[14px]' : 'rounded-[12px]',
-            badgeClassName,
           )}
         />
       </div>

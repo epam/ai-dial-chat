@@ -60,7 +60,6 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
           src={deploymentIconUrl}
           size={28}
           initialsName={deploymentDisplayName ?? ''}
-          badgeClassName={styles.agentIconBadge}
           tooltip={deploymentDisplayName}
         />
       )}
