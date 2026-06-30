@@ -374,7 +374,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             onActiveFilterChange?.(tab);
           }}
           tabClassName={typography?.tabClassName}
-          tabColorClassName={typography?.tabColorClassName}
         />
 
         <div className="flex-1 overflow-hidden px-2 py-1">
