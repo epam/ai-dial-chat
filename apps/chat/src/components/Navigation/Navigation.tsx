@@ -4,9 +4,11 @@ import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { NAVIGATION_CONFIG } from '../../constants/navigation';
-import { NavigationI18nKeys } from '../../constants/translation-keys';
+import { ChatI18nKeys, NavigationI18nKeys } from '../../constants/translation-keys';
+import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';
+import { getIconPath } from '../../utils/icon-path';
 import LogoutConfirmationModal from '../LogoutConfirmation/LogoutConfirmationModal';
 import NavPageContent from '../MobileNavBottomSheet/NavPageContent';
 import NavigableBottomSheet from '../NavigableBottomSheet/NavigableBottomSheet';
@@ -22,6 +24,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
   const { pathname } = useLocation();
   const isMobile = useIsMobile();
   const { isLogoutOpen, openLogout, closeLogout } = useLogout();
+  const { currentThemeFavicon } = useTheme();
 
   const navItems = NAVIGATION_CONFIG.map(
     ({ path, matchPaths, icon: Icon, labelKey }) => {
@@ -49,9 +52,25 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
       {!isMobile && (
         <nav
           aria-label={t(NavigationI18nKeys.AriaLabel)}
-          className="flex h-full w-[60px] flex-col justify-between bg-layer-3"
+          className="flex h-full w-[60px] flex-col justify-between bg-layer-3 [box-shadow:2px_0_8px_rgba(0,0,0,0.08)] rtl:[box-shadow:-2px_0_8px_rgba(0,0,0,0.08)]"
         >
-          <div className="flex flex-col items-center gap-2 p-2">{navItems}</div>
+          <div className="flex flex-col items-center gap-2 p-2">
+            {currentThemeFavicon && (
+              <a
+                href="/"
+                aria-label={t(ChatI18nKeys.Logo)}
+                className="mb-1 flex items-center justify-center"
+              >
+                <span
+                  style={{
+                    backgroundImage: `url(${getIconPath(currentThemeFavicon)})`,
+                  }}
+                  className="h-6 w-6 bg-contain bg-center bg-no-repeat"
+                />
+              </a>
+            )}
+            {navItems}
+          </div>
           <UserMenu />
         </nav>
       )}

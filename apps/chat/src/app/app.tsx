@@ -175,12 +175,14 @@ const App: FC = () => {
         role="main"
         className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#F5F7FA]"
       >
-        <Header
-          onMenuToggle={toggleNav}
-          isConversationPanelOpen={isHistoryPanelOpen}
-          onConversationPanelToggle={toggleHistoryPanel}
-          onNewChat={() => navigate(ROUTES.Root)}
-        />
+        <div className="desktop:hidden">
+          <Header
+            onMenuToggle={toggleNav}
+            isConversationPanelOpen={isHistoryPanelOpen}
+            onConversationPanelToggle={toggleHistoryPanel}
+            onNewChat={() => navigate(ROUTES.Root)}
+          />
+        </div>
         <Routes>
           <Route path={ROUTES.Root} element={<ConversationRoute />} />
           <Route
