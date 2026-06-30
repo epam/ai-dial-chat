@@ -131,48 +131,6 @@ aside[class~='dial-body-text']
   font-weight: 600 !important;
 }
 
-// New chat button row — no bottom divider, side padding
-aside[class~='dial-body-text']
-  [class~='border-b'][class~='py-1'][class~='px-2'] {
-  background: var(--bg-layer-0);
-  border-bottom: none !important;
-  padding: 8px 12px !important;
-}
-
-// New chat button — sidebar-matching bg, primary blue label, gradient icon circle
-aside[class~='dial-body-text']
-  [class~='border-b'][class~='py-1'][class~='px-2']
-  > button {
-  background-color: var(--bg-layer-0) !important;
-  border-radius: 12px !important;
-  color: var(--text-accent-primary) !important;
-  box-shadow: none !important;
-
-  &:hover {
-    background-color: rgba(0, 0, 0, 0.04) !important;
-  }
-
-  &:active {
-    background-color: rgba(0, 0, 0, 0.08) !important;
-  }
-
-  // Icon circle — brand gradient with white plus icon
-  [class~='rounded-full'] {
-    background: linear-gradient(
-      135deg,
-      var(--bg-accent-secondary, #37babc) 0%,
-      var(--bg-accent-primary, #5c8dea) 50%,
-      var(--bg-accent-tertiary, #a972ff) 100%
-    ) !important;
-    color: #fff !important;
-  }
-}
-
-// Sidebar inner dividers — visible only between inner sections (header + new-chat + search excluded above)
-aside[class~='dial-body-text'] [class~='border-b']:not([class~='flex-wrap']) {
-  border-bottom-color: var(--stroke-tertiary);
-}
-
 // Segmented filter control — increased gaps above (vs search) and below (vs list)
 aside[class~='dial-body-text'] [class~='flex-wrap'][class~='gap-2'] {
   flex-wrap: nowrap;
