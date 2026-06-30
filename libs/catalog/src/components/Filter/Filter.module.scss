@@ -13,5 +13,5 @@
 }
 
 .sectionLabel {
-  color: var(--cat-filter-section-label, var(--text-secondary));
+  color: var(--cat-filter-section-label, var(--text-secondary, #575f73));
 }

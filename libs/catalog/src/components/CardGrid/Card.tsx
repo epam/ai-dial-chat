@@ -1,82 +1,66 @@
-import {
-  buildCssVars,
-  Highlight,
-  mergeClasses,
-} from '@epam/ai-dial-chat-shared';
-import {
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { DialTag, ElementSize } from '@epam/ai-dial-ui-kit';
+import React, {
   FC,
   KeyboardEvent,
   MouseEvent,
   useCallback,
-  useEffect,
   useState,
 } from 'react';
+import {
+  ENTITY_TYPE_COLOR,
+  ENTITY_TYPE_SHADOW,
+} from '../../constants/entity-colors';
 import type { CardProps } from '../../models/card-props';
-import { EntityHeader } from '../EntityHeader/EntityHeader';
+import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { FolderPath } from '../FolderPath/FolderPath';
 import { StarToggleButton } from '../StarToggleButton/StarToggleButton';
 import { TopicsLine } from '../TopicTag/TopicTag';
 import styles from './CardGrid.module.scss';
 
-/** Card for the Browse grid with highlighted search text and optional featured styling. */
+/** Browse grid card: AppIdentity header + description + topic chips + breadcrumbs + star. */
 export const Card: FC<CardProps> = ({
   item,
   query = '',
+  onClick,
   initialIsStarred = false,
   onToggle,
-  onClick,
-  styles: cardStyles,
   featuredLabel = 'Featured',
+  addToFavoritesAriaLabel = 'Add to favorites',
+  removeFromFavoritesAriaLabel = 'Remove from favorites',
   className,
+  styles: cardStyles,
 }) => {
-  const { colors, typography } = cardStyles ?? {};
-  const nameClassName = typography?.nameClassName ?? 'dial-h3-text';
-  const versionClassName = typography?.versionClassName ?? 'dial-tiny-text';
+  const [isStarred, setIsStarred] = useState(initialIsStarred);
+
   const descriptionClassName =
-    typography?.descriptionClassName ?? 'dial-small-text';
-
-  const cssVars = buildCssVars({
-    '--cat-card-bg': colors?.background,
-    '--cat-card-hover-bg': colors?.hoverBackground,
-    '--cat-card-border': colors?.border,
-    '--cat-card-featured-glow': colors?.featuredGlow,
-    '--cat-card-featured-bar': colors?.featuredBar,
-    '--cat-card-text-primary': colors?.textPrimary,
-    '--cat-card-text-secondary': colors?.textSecondary,
-    '--cat-card-star-filled': colors?.starFilled,
-  });
-
-  const [isStarred, setIsStarred] = useState(initialIsStarred ?? false);
-
-  // Sync when the parent updates the starred state externally (e.g. un-starring
-  // from the Favorites strip should reflect back on the Browse card).
-  useEffect(() => {
-    setIsStarred(initialIsStarred ?? false);
-  }, [initialIsStarred]);
-
-  const handleToggle = (e: MouseEvent<HTMLElement>) => {
-    e.stopPropagation();
-    const next = !isStarred;
-    setIsStarred(next);
-    onToggle?.(item.id, next);
-  };
-
+    cardStyles?.typography?.descriptionClassName ??
+    'dial-small-text text-secondary';
   const handleClick = onClick ? () => onClick(item) : undefined;
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLElement>) => {
       if (!onClick) return;
-
       if (e.key === 'Enter' || e.key === ' ') {
         e.preventDefault();
-        onClick?.(item);
+        onClick(item);
       }
     },
     [onClick, item],
   );
 
+  const handleStarToggle = useCallback(
+    (e: MouseEvent<HTMLElement>) => {
+      e.stopPropagation();
+      const next = !isStarred;
+      setIsStarred(next);
+      onToggle?.(item.id, next);
+    },
+    [isStarred, onToggle, item.id],
+  );
+
   return (
-    <div
+    <article
       {...(onClick
         ? {
             role: 'button' as const,
@@ -85,44 +69,82 @@ export const Card: FC<CardProps> = ({
             onKeyDown: handleKeyDown,
           }
         : {})}
+      aria-label={item.name}
+      style={
+        item.isFeatured
+          ? ({
+              '--entity-color': ENTITY_TYPE_COLOR[item.type],
+              '--entity-shadow': ENTITY_TYPE_SHADOW[item.type],
+            } as React.CSSProperties)
+          : undefined
+      }
       className={mergeClasses(
-        'relative box-border flex cursor-pointer flex-col gap-2 rounded-[6px] border p-4 transition-transform duration-150 ease-out hover:-translate-y-[4px]',
+        'relative box-border flex cursor-pointer flex-col gap-[14px]',
+        'rounded-[16px] border p-[18px]',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
         className,
       )}
-      style={cssVars}
     >
-      <EntityHeader
-        item={item}
-        featuredLabel={featuredLabel}
-        versionClassName={versionClassName}
-        nameClassName={nameClassName}
+      {item.isFeatured && (
+        <DialTag
+          label={featuredLabel}
+          className={mergeClasses(
+            'absolute end-[18px] top-0 -translate-y-1/2',
+            'dial-tiny-semi-text uppercase tracking-[0.06em]',
+            styles.featuredChip,
+          )}
+        />
+      )}
+
+      {/* Top row: AppIdentity */}
+      <AppIdentity
+        icon={item.iconUrl}
+        type={item.type}
+        name={item.name}
+        version={item.version}
+        size="sm"
+        query={query}
+        className="min-w-0 flex-1"
+        typeColor={ENTITY_TYPE_COLOR[item.type]}
       />
 
+      {/* Description */}
       <p
         className={mergeClasses(
-          'line-clamp-2',
           descriptionClassName,
+          'line-clamp-2',
           styles.description,
         )}
       >
-        <Highlight text={item.description} query={query} />
+        {item.description}
       </p>
 
-      <div className="mt-auto flex flex-col gap-4">
-        <TopicsLine topics={item.topics} />
+      {/* Topic chips */}
+      <TopicsLine topics={item.topics} />
 
-        <div
-          className={mergeClasses(
-            '-me-[10px] flex items-center justify-between border-t pt-2',
-            styles.cardFooter,
-          )}
-        >
-          <FolderPath segments={item.folder} />
-          <StarToggleButton isStarred={isStarred} onClick={handleToggle} />
+      {/* Breadcrumbs + star — pinned to card bottom via mt-auto */}
+      <div className="mt-auto border-t border-tertiary pt-3">
+        <div className="flex items-center gap-2">
+          <div className="min-w-0 flex-1">
+            {item.folder.length > 0 && (
+              <FolderPath
+                segments={item.folder}
+                labelClassName="dial-tiny-text"
+                leafClassName="dial-tiny-semi-text"
+              />
+            )}
+          </div>
+          <StarToggleButton
+            isStarred={isStarred}
+            size={ElementSize.Small}
+            onClick={handleStarToggle}
+            ariaLabel={
+              isStarred ? removeFromFavoritesAriaLabel : addToFavoritesAriaLabel
+            }
+          />
         </div>
       </div>
-    </div>
+    </article>
   );
 };

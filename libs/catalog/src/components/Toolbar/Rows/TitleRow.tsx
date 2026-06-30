@@ -1,10 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GhostIconButton } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   ButtonVariant,
   DIAL_ICON_SIZE,
   DialButtonDropdown,
-  DialPrimaryIconButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconLayoutCards, IconLayoutList } from '@tabler/icons-react';
@@ -25,7 +25,8 @@ interface TitleRowProps {
   sortOptions?: { value: string; label: string }[];
   styles?: ToolbarProps['styles'];
 }
-/** Browse section header: title, view/sort controls, search bar, filter row, and tabs. */
+
+/** Browse section header: title + count, segmented view toggle, sort dropdown. */
 export const TitleRow: FC<TitleRowProps> = ({
   totalCount,
   viewMode,
@@ -55,25 +56,28 @@ export const TitleRow: FC<TitleRowProps> = ({
       />
 
       <div className="flex items-center gap-2">
-        {[CatalogViewMode.Grid, CatalogViewMode.List].map((mode) => (
-          <DialPrimaryIconButton
-            key={mode}
-            appearance={
-              viewMode === mode
-                ? ButtonAppearance.Solid
-                : ButtonAppearance.Ghost
-            }
-            size={ElementSize.Small}
-            icon={
-              mode === CatalogViewMode.Grid ? (
-                <IconLayoutCards size={DIAL_ICON_SIZE.SM} />
-              ) : (
-                <IconLayoutList size={DIAL_ICON_SIZE.SM} />
-              )
-            }
-            onClick={() => onViewModeChange(mode)}
-          />
-        ))}
+        <div className="flex items-center rounded-[8px] bg-layer-3 p-0.5">
+          {([CatalogViewMode.Grid, CatalogViewMode.List] as const).map(
+            (mode) => {
+              const isActive = viewMode === mode;
+              return (
+                <GhostIconButton
+                  key={mode}
+                  size={ElementSize.Small}
+                  icon={
+                    mode === CatalogViewMode.Grid ? (
+                      <IconLayoutCards size={DIAL_ICON_SIZE.SM} />
+                    ) : (
+                      <IconLayoutList size={DIAL_ICON_SIZE.SM} />
+                    )
+                  }
+                  onClick={() => onViewModeChange(mode)}
+                  isActive={isActive}
+                />
+              );
+            },
+          )}
+        </div>
 
         <div className={mergeClasses('mx-0.5 h-5 w-px', styles.divider)} />
 

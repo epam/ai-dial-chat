@@ -23,7 +23,7 @@
     );
     border-inline-start-color: var(
       --cp-item-active-border,
-      var(--stroke-success, #007274)
+      var(--bg-accent-secondary, #37babc)
     );
   }
 }
@@ -36,10 +36,6 @@
   color: var(--cp-text-secondary, var(--text-secondary, #575f73));
 }
 
-.divider {
-  border-color: var(--cp-new-chat-divider, var(--stroke-tertiary, #e0e6f0));
-}
-
 .itemIcon {
   background: var(--cp-item-hover, var(--bg-layer-4, #d1dbea));
   color: var(--cp-text, var(--text-primary, #161b2d));
@@ -49,10 +45,10 @@
   &.triggerActive {
     background: var(
       --cp-trigger-bg,
-      var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
+      var(--controls-bg-accent-primary, #124ace)
     );
     .triggerIcon {
-      color: var(--cp-trigger-icon, var(--text-accent-secondary, #007274));
+      color: var(--cp-trigger-icon, var(--controls-text-permanent, #fff));
     }
   }
 }
