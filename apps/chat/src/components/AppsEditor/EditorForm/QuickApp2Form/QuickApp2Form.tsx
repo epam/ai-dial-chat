@@ -124,11 +124,21 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     control,
     name: 'documentRelativeUrl',
   });
+  const inputAttachmentTypes = useWatch({
+    control,
+    name: 'inputAttachmentTypes',
+  });
+  const processLargeFiles = useWatch({
+    control,
+    name: 'processLargeFiles',
+  });
 
   const showTemperatureSlider = useMemo(() => {
     const selectedModel = modelsMap[modelId];
     return selectedModel ? doesModelAllowTemperature(selectedModel) : true;
   }, [modelId, modelsMap]);
+
+  const showProcessLargeFiles = !!inputAttachmentTypes?.length;
 
   const hasStarters = useMemo(
     () => starters.some((s) => s.title.trim() && s.text.trim()),
@@ -236,6 +246,15 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
     }
   }, [dispatch, isPublicationReview, reviewBucket]);
 
+  useEffect(() => {
+    if (!inputAttachmentTypes.length && processLargeFiles) {
+      setValue('processLargeFiles', false, {
+        shouldDirty: true,
+        shouldTouch: true,
+      });
+    }
+  }, [inputAttachmentTypes.length, processLargeFiles, setValue]);
+
   return (
     <div
       className="flex size-full grow flex-col divide-y divide-tertiary overflow-hidden overflow-y-auto bg-layer-2"
@@ -285,6 +304,27 @@ export const QuickApp2Form: FC<AppsEditorProps> = ({ onAutoSave }) => {
             />
           )}
         />
+
+        {showProcessLargeFiles && (
+          <Controller
+            name="processLargeFiles"
+            control={control}
+            render={({ field }) => (
+              <ToggleSwitchField
+                isOn={field.value}
+                handleSwitch={() => field.onChange(!field.value)}
+                switchOnText="ON"
+                switchOFFText="OFF"
+                label={t(MarketplaceI18nKeys.ProcessLargeFiles)}
+                additionalText={t(
+                  MarketplaceI18nKeys.AllowOrchestratorToProcessLargeFiles,
+                )}
+                info={t(MarketplaceI18nKeys.ProcessLargeFilesDescription)}
+                className="flex items-center gap-2"
+              />
+            )}
+          />
+        )}
       </FormCollapsibleSection>
 
       <FormCollapsibleSection

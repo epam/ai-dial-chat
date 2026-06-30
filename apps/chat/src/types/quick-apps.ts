@@ -102,6 +102,7 @@ export interface QuickApp2Config {
       variables: object;
       content: string;
     };
+    attachment_strategy?: { type: 'lazy_on_demand' } | null;
   };
   contexts: FileContext[];
   tool_sets: AnyToolset[];
