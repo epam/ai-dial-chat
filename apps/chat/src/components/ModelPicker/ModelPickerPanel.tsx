@@ -143,7 +143,11 @@ export const ModelPickerPanel: FC<Props> = ({
                 onClick={() => handleSelect(item)}
                 onKeyDown={(e) => handleItemKeyDown(e, item)}
               >
-                <DeploymentIcon src={item.iconUrl} size={DIAL_ICON_SIZE.MD} />
+                <DeploymentIcon
+                  src={item.iconUrl}
+                  size={DIAL_ICON_SIZE.MD}
+                  initialsName={item.name}
+                />
                 <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
                   {query.trim() ? (
                     <span className="truncate">

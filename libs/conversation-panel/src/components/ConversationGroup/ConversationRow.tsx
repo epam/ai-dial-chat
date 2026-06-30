@@ -91,6 +91,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
     <DeploymentIcon
       src={item.iconUrl}
       size={DIAL_ICON_SIZE.LG}
+      initialsName={item.iconTooltip ?? ''}
       tooltip={item.iconTooltip}
     />
   );
