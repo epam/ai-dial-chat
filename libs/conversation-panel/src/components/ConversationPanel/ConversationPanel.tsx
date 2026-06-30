@@ -174,7 +174,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const cssVars = buildCssVars({
       '--cp-bg': colors?.background,
       '--sb-border': colors?.border,
-      '--cp-header-border': colors?.headerBorder,
       '--cp-item-hover': colors?.itemHover,
       '--cp-item-active': colors?.itemActive,
       '--cp-text': colors?.text,
@@ -330,7 +329,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           colors: {
             background: colors?.background,
             border: colors?.border,
-            headerBorder: colors?.headerBorder,
           },
           typography: {
             fontClassName: typography?.fontClassName,

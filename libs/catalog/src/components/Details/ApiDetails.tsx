@@ -1,9 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { NeutralButton } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
   DialGhostIconButton,
-  DialNeutralButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconCopy } from '@tabler/icons-react';
@@ -133,7 +133,7 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
               )}
             >
               <DialDropdown items={snippetItems}>
-                <DialNeutralButton
+                <NeutralButton
                   size={ElementSize.Small}
                   label={activeLabel}
                   iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
