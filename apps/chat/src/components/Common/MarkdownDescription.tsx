@@ -1,6 +1,17 @@
+/* eslint-disable @next/next/no-img-element */
 import { useMemo } from 'react';
+import { Components } from 'react-markdown';
 
 import classNames from 'classnames';
+
+import { rehypeSanitizeInlineStyles } from '@/src/utils/app/data/markdown-helpers';
+import {
+  isAllowedImageUrl,
+  parseAllowedImageHosts,
+} from '@/src/utils/app/image-security';
+
+import { useAppSelector } from '@/src/store/hooks';
+import { SettingsSelectors } from '@/src/store/selectors';
 
 import { DESCRIPTION_DELIMITER_REGEX } from '@/src/constants/chat';
 
@@ -22,6 +33,10 @@ export const EntityMarkdownDescription = ({
   isShortDescription,
   className,
 }: Props) => {
+  const allowedImageSources = useAppSelector(
+    SettingsSelectors.selectAllowedImageSources,
+  );
+
   const transformedChildren = useMemo(() => {
     if (isShortDescription && children) {
       const indexOfDelimiter = children.search(DESCRIPTION_DELIMITER_REGEX);
@@ -33,6 +48,27 @@ export const EntityMarkdownDescription = ({
       return children;
     }
   }, [children, isShortDescription]);
+
+  const components: Components = useMemo(() => {
+    const allowedImageHosts = parseAllowedImageHosts(allowedImageSources);
+
+    return {
+      img({ src, ...props }) {
+        // Strip external images entirely to prevent silent data exfiltration
+        // via auto-loaded image URLs.
+        if (
+          !isAllowedImageUrl(
+            typeof src === 'string' ? src : undefined,
+            allowedImageHosts,
+          )
+        ) {
+          return null;
+        }
+
+        return <img src={src} {...props} />;
+      },
+    };
+  }, [allowedImageSources]);
 
   return (
     <MemoizedReactMarkdown
@@ -49,15 +85,19 @@ export const EntityMarkdownDescription = ({
             ...defaultSchema,
             attributes: {
               ...defaultSchema.attributes,
+              // Let style attributes pass through rehypeSanitize so our
+              // allowlist plugin below can sanitize them.
               span: [...(defaultSchema.attributes?.span || []), ['style']],
             },
           },
         ],
+        rehypeSanitizeInlineStyles, // Allowlist-sanitizes inline style attributes
         [
           rehypeExternalLinks,
           { target: '_blank', rel: ['noopener', 'noreferrer'] },
         ],
       ]}
+      components={components}
     >
       {transformedChildren}
     </MemoizedReactMarkdown>

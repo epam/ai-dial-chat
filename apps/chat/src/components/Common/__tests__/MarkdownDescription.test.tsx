@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { render } from '@testing-library/react';
 
@@ -7,6 +7,16 @@ import {
   expectMarkdownRenderedAsHtml,
 } from '@/src/components/Chat/ChatMessage/MessageSchema/__tests__/markdown-test-helpers';
 import { EntityMarkdownDescription } from '@/src/components/Common/MarkdownDescription';
+
+vi.mock('@/src/store/hooks', () => ({
+  useAppSelector: vi.fn((selector) => selector()),
+}));
+
+vi.mock('@/src/store/selectors', () => ({
+  SettingsSelectors: {
+    selectAllowedImageSources: vi.fn(() => ''),
+  },
+}));
 
 describe('EntityMarkdownDescription', () => {
   it('renders markdown as HTML elements, not as raw or encoded markup', () => {
