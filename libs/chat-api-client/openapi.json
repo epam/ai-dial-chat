@@ -1398,7 +1398,7 @@
     },
     "/api/v1/conversations/completions": {
       "post": {
-        "description": "Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.",
+        "description": "Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.",
         "operationId": "streamCompletion",
         "parameters": [],
         "requestBody": {
@@ -1427,6 +1427,9 @@
           "404": {
             "description": "Conversation not found"
           },
+          "409": {
+            "description": "Another generation is already active for this conversation"
+          },
           "429": {
             "description": "Rate limit exceeded"
           },
@@ -1441,6 +1444,35 @@
         "tags": [
           "conversations"
         ]
+      }
+    },
+    "/api/v1/conversations/completions/stop": {
+      "post": {
+        "operationId": "stopCompletion",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopCompletionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Generation stopped successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No active generation found for the given path and generationId"
+          }
+        },
+        "summary": "Stop an active generation",
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/watch": {
@@ -4122,10 +4154,27 @@
       "SendCompletionDto": {
         "type": "object",
         "properties": {
+          "generationId": {
+            "type": "string",
+            "description": "Client-generated UUID identifying this generation attempt.",
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
+            "format": "uuid"
+          },
           "path": {
             "type": "string",
             "description": "Conversation path ({deploymentId}__{name}__{uuid}). May contain slashes.",
             "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          },
+          "model": {
+            "type": "string",
+            "description": "DIAL Core deployment name to use for completion",
+            "example": "anthropic.claude-v3-sonnet",
+            "maxLength": 256
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["append", "continue_last_user", "regenerate", "edit"],
+            "description": "How the message should be inserted into history. append = new user+assistant turn; continue_last_user = conversation already ends with a user message; regenerate = replace assistant at messageIndex; edit = replace user message at messageIndex."
           },
           "message": {
             "type": "string",
@@ -4133,10 +4182,10 @@
             "example": "What is the capital of France?",
             "maxLength": 4000
           },
-          "model": {
-            "type": "string",
-            "description": "DIAL Core deployment name to use for completion",
-            "example": "anthropic.claude-v3-sonnet"
+          "messageIndex": {
+            "type": "number",
+            "description": "Zero-based message index for regenerate and edit modes. Ignored for append/continue_last_user.",
+            "example": 3
           },
           "custom_content": {
             "description": "Extra DIAL payload attached to the user message",
@@ -4147,11 +4196,24 @@
             ]
           }
         },
-        "required": [
-          "path",
-          "message",
-          "model"
-        ]
+        "required": ["generationId", "path", "model", "mode"]
+      },
+      "StopCompletionDto": {
+        "type": "object",
+        "properties": {
+          "generationId": {
+            "type": "string",
+            "description": "Generation ID that was returned by the active stream.",
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
+            "format": "uuid"
+          },
+          "path": {
+            "type": "string",
+            "description": "Conversation path of the active generation.",
+            "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          }
+        },
+        "required": ["generationId", "path"]
       },
       "WatchConversationBodyDto": {
         "type": "object",
