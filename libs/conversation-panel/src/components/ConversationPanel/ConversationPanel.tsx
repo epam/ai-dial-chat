@@ -335,7 +335,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           typography: {
             fontClassName: typography?.fontClassName,
           },
-          bodyClassName: 'flex flex-col overflow-hidden p-0',
+          bodyClassName: 'flex flex-col overflow-hidden p-0 gap-3',
           cssVars,
           titleClassName: typography?.fontClassName,
         }}
@@ -374,7 +374,6 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
             onActiveFilterChange?.(tab);
           }}
           tabClassName={typography?.tabClassName}
-          tabColorClassName={typography?.tabColorClassName}
         />
 
         <div className="flex-1 overflow-hidden px-2 py-1">

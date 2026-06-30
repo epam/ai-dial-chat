@@ -61,8 +61,6 @@ export interface ConversationHistoryTypography {
   newChatLabelClassName?: string;
   /** Typography class applied to each filter tab label. Defaults to `'dial-tiny-semi-text'`. */
   tabClassName?: string;
-  /** Text color class applied to each filter tab label. Defaults to `'text-primary'`. */
-  tabColorClassName?: string;
 }
 
 /** CSS custom-property overrides for `ConversationPanel`. */

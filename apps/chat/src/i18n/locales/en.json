@@ -101,6 +101,15 @@
     "folder": {
       "personal": "Personal",
       "public": "Public"
+    },
+    "picker": {
+      "title": "Talk to",
+      "searchPlaceholder": "Search models, agents…",
+      "searchAriaLabel": "Search models and agents",
+      "favoritesLabel": "Favorites",
+      "emptyHint": "Star a model or agent to pin it here.",
+      "browseCatalogLabel": "Browse",
+      "removeFromFavoritesLabel": "Remove from favorites"
     }
   },
   "deployments": {

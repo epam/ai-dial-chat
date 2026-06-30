@@ -40,6 +40,7 @@ import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
+  CatalogI18nKeys,
   ChatI18nKeys,
   ChatSettingsI18nKeys,
   ConversationI18nKeys,
@@ -55,11 +56,14 @@ import { useAttachmentValidation } from '../../hooks/attachment/useAttachmentVal
 import { useOpenAttachmentCanvas } from '../../hooks/attachment/useOpenAttachmentCanvas';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
+import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
+import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
+import { ModelPickerPanel } from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -108,6 +112,8 @@ interface Props {
   onTranscribeAudio?: (audioUrl: string) => Promise<string>;
   conversation: Conversation;
   onConversationChange: (conv: Conversation) => void;
+  /** Called when the user clicks "Browse full catalog" inside the model picker. */
+  onBrowseCatalog?: () => void;
 }
 
 const NEAR_BOTTOM_THRESHOLD = 80;
@@ -139,6 +145,7 @@ const ConversationView: FC<Props> = ({
   onTranscribeAudio,
   conversation,
   onConversationChange,
+  onBrowseCatalog,
 }) => {
   const { t } = useTranslation();
   const { showNotification } = useNotification();
@@ -161,6 +168,16 @@ const ConversationView: FC<Props> = ({
     isLoading,
     error,
   } = useDeployments();
+  const { favoriteIds, toggleFavorite } = useFavoriteApplications();
+
+  const favoriteCatalogItems = useMemo(
+    () =>
+      items
+        .filter((d) => favoriteIds.has(d.id))
+        .map((d) => mapDeploymentToCatalogItem(d, favoriteIds)),
+    [items, favoriteIds],
+  );
+
   const selectedDeployment = useMemo(
     () => items.find((item) => item.id === selectedItemId),
     [items, selectedItemId],
@@ -516,7 +533,7 @@ const ConversationView: FC<Props> = ({
           aria-relevant="additions"
           className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden"
         >
-          <div className="mx-auto flex w-full min-w-0 max-w-[748px] flex-1 flex-col gap-6 overflow-x-hidden px-4 pt-2">
+          <div className="mx-auto flex w-full min-w-0 max-w-[760px] flex-1 flex-col gap-[26px] overflow-x-hidden px-6 pb-[18px] pt-7">
             {messages.map((msg, index) => {
               const isThisMessageEditing = editingMessageIndexes?.has(index);
               return (
@@ -598,7 +615,7 @@ const ConversationView: FC<Props> = ({
       <div
         role="region"
         aria-label={t(ChatI18nKeys.MessageInput)}
-        className="w-full"
+        className="w-full bg-layer-0 px-6 pb-[22px] pt-3.5"
       >
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
@@ -670,6 +687,30 @@ const ConversationView: FC<Props> = ({
                 }
                 hideAttachFile={!isAttachmentsAllowed}
                 onAttachmentClick={handleInputAttachmentClick}
+                modelPickerOverlay={(onClose) => (
+                  <ModelPickerPanel
+                    favorites={favoriteCatalogItems}
+                    selectedId={selectedItemId}
+                    onSelect={setSelectedItemId}
+                    onToggleFavorite={toggleFavorite}
+                    onBrowseCatalog={onBrowseCatalog}
+                    onClose={onClose}
+                    labels={{
+                      searchPlaceholder: t(
+                        CatalogI18nKeys.PickerSearchPlaceholder,
+                      ),
+                      searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
+                      favoritesLabel: t(CatalogI18nKeys.PickerFavoritesLabel),
+                      emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
+                      browseCatalogLabel: t(
+                        CatalogI18nKeys.PickerBrowseCatalog,
+                      ),
+                      removeFromFavoritesLabel: t(
+                        CatalogI18nKeys.PickerRemoveFromFavorites,
+                      ),
+                    }}
+                  />
+                )}
               />
             </Suspense>
             <Suspense fallback={null}>

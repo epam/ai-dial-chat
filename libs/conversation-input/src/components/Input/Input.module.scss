@@ -1,9 +1,21 @@
 .wrapper {
-  background: var(--ci-bg, var(--bg-layer-2, #eef1f7));
-  border-color: var(--ci-border, transparent);
+  background: var(--ci-bg, var(--bg-layer-0, #fcfcfc));
+  border-color: var(--ci-border, var(--stroke-secondary, #d1dbea));
+  box-shadow: var(--ci-shadow, none);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+
+  &:hover:not(:focus-within) {
+    border-color: var(--ci-border-hover, var(--stroke-accent-primary, #7da4ff));
+  }
 
   &:focus-within {
-    border-color: var(--ci-border-focus, transparent);
+    border-color: var(--ci-border-focus, var(--stroke-accent-primary, #7da4ff));
+    box-shadow: var(
+      --ci-shadow-focus,
+      0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff2e)
+    );
   }
 
   &.wrapperDisabled {

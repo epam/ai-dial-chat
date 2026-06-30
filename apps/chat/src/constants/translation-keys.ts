@@ -130,6 +130,13 @@ export enum CatalogI18nKeys {
   FavoriteRemoved = 'catalog.favoriteRemoved',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
+  PickerTitle = 'catalog.picker.title',
+  PickerSearchPlaceholder = 'catalog.picker.searchPlaceholder',
+  PickerSearchAriaLabel = 'catalog.picker.searchAriaLabel',
+  PickerFavoritesLabel = 'catalog.picker.favoritesLabel',
+  PickerEmptyHint = 'catalog.picker.emptyHint',
+  PickerBrowseCatalog = 'catalog.picker.browseCatalogLabel',
+  PickerRemoveFromFavorites = 'catalog.picker.removeFromFavoritesLabel',
 }
 
 export enum DeploymentsI18nKeys {

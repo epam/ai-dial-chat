@@ -4,6 +4,7 @@ import type {
   DeploymentItem,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
+import type { ReactNode } from 'react';
 import type {
   ChatSettingsConfig,
   InputColors,
@@ -217,4 +218,11 @@ export interface ConversationInputProps {
    * When absent the card is not rendered as interactive.
    */
   onAttachmentClick?: (attachment: Attachment) => void;
+  /**
+   * When provided, the desktop model-selector chip opens this panel instead of
+   * the flat deployment list. Receives `onClose` so the panel can close the
+   * popover after a selection or an explicit dismiss.
+   */
+  // TODO: review usage
+  modelPickerOverlay?: (onClose: () => void) => ReactNode;
 }

@@ -28,10 +28,16 @@ export interface InputColors {
   text?: string;
   /** Border color in the default (unfocused) state. */
   border?: string;
+  /** Border color on hover (unfocused). */
+  borderHover?: string;
   /** Border color when the input is focused. */
   borderFocus?: string;
   /** Placeholder text color. */
   placeholder?: string;
+  /** Box-shadow in the default state (e.g. a subtle inset shadow). */
+  shadow?: string;
+  /** Box-shadow when the input is focused. Falls back to `shadow` when unset. */
+  shadowFocus?: string;
   /** Background color of the send button. */
   sendBackground?: string;
   /** Icon/text color of the send button. */
@@ -231,6 +237,12 @@ export interface InputProps {
    * When absent the card is not rendered as interactive.
    */
   onAttachmentClick?: (attachment: Attachment) => void;
+  /**
+   * When provided, the desktop model-selector chip opens this panel instead of
+   * the flat deployment list. Receives `onClose` so the panel can close the
+   * popover after a selection or an explicit dismiss.
+   */
+  modelPickerOverlay?: (onClose: () => void) => ReactNode;
 }
 
 /** Values emitted by the chat-settings modal when the user clicks Save. */

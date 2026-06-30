@@ -56,4 +56,8 @@ export interface CardProps {
   styles?: CardStyles;
   /** Label for the "Featured" tag. Default: `'Featured'`. */
   featuredLabel?: string;
+  /** Accessible label for the star button when the item is not yet starred. Default: `'Add to favorites'`. */
+  addToFavoritesAriaLabel?: string;
+  /** Accessible label for the star button when the item is already starred. Default: `'Remove from favorites'`. */
+  removeFromFavoritesAriaLabel?: string;
 }

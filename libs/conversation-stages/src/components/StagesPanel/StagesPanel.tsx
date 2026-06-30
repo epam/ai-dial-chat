@@ -18,7 +18,6 @@ export const StagesPanel: FC<StagesPanelProps> = ({
 }) => {
   const { colors, typography = { fontClassName: 'dial-small-text' } } =
     panelStyles ?? {};
-
   const cssVars = buildCssVars({
     '--cs-bg': colors?.background,
     '--cs-border': colors?.border,
