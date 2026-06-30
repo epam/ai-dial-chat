@@ -48,6 +48,8 @@ import {
   DownloadAssertion,
   FileManagerGridAssertion,
   FoldersTreeAssertion,
+  PublishToolsetAssertion,
+  PublishingRequestDialogAssertion,
   SelectFolderModalAssertion,
   TalkToAgentDialogAssertion,
   ToastAssertion,
@@ -83,6 +85,7 @@ import {
   FolderPrompts,
   Folders,
   PromptsTree,
+  PublishToolsetsTree,
 } from '@/src/ui/webElements/entityTree';
 import { SharedFolderConversations } from '@/src/ui/webElements/entityTree/sidebar/sharedFolderConversations';
 import { SharedWithMeConversationsTree } from '@/src/ui/webElements/entityTree/sidebar/sharedWithMeConversationsTree';
@@ -147,6 +150,9 @@ const dialSharedWithMeTest = dialTest.extend<{
   additionalShareUserVariableModalAssertion: VariableModalAssertion;
   additionalShareUserConversationDropdownMenu: DropdownMenu;
   additionalShareUserPublishingRequestDialog: PublishingRequestDialog;
+  additionalShareUserToolsetsToPublishTree: PublishToolsetsTree;
+  additionalShareUserPublishingRequestDialogAssertion: PublishingRequestDialogAssertion;
+  additionalShareUserToolsetToPublishAssertion: PublishToolsetAssertion<PublishToolsetsTree>;
   additionalShareUserInformationModal: InformationModal;
   additionalShareUserInformationModalAssertion: InformationModalAssertion;
   additionalShareUserSharedFolderPromptsAssertions: FolderAssertion<FolderPrompts>;
@@ -241,7 +247,7 @@ const dialSharedWithMeTest = dialTest.extend<{
     },
     { scope: 'test', auto: true },
   ],
-
+  // eslint-disable-next-line no-empty-pattern
   additionalShareUserDownloadAssertion: async ({}, use) => {
     const additionalShareUserDownloadAssertion = new DownloadAssertion();
     await use(additionalShareUserDownloadAssertion);
@@ -518,6 +524,33 @@ const dialSharedWithMeTest = dialTest.extend<{
     const additionalShareUserPublishingRequestDialog =
       new PublishingRequestDialog(additionalShareUserPage);
     await use(additionalShareUserPublishingRequestDialog);
+  },
+  additionalShareUserToolsetsToPublishTree: async (
+    { additionalShareUserPublishingRequestDialog },
+    use,
+  ) => {
+    const additionalShareUserToolsetsToPublishTree =
+      additionalShareUserPublishingRequestDialog.getPublishToolsetsTree();
+    await use(additionalShareUserToolsetsToPublishTree);
+  },
+  additionalShareUserPublishingRequestDialogAssertion: async (
+    { additionalShareUserPublishingRequestDialog },
+    use,
+  ) => {
+    const additionalShareUserP = new PublishingRequestDialogAssertion(
+      additionalShareUserPublishingRequestDialog,
+    );
+    await use(additionalShareUserP);
+  },
+  additionalShareUserToolsetToPublishAssertion: async (
+    { additionalShareUserToolsetsToPublishTree },
+    use,
+  ) => {
+    const additionalShareUserToolsetToPublishAssertion =
+      new PublishToolsetAssertion<PublishToolsetsTree>(
+        additionalShareUserToolsetsToPublishTree,
+      );
+    await use(additionalShareUserToolsetToPublishAssertion);
   },
   additionalShareUserInformationModal: async (
     { additionalShareUserPage },
