@@ -174,6 +174,7 @@ interface UseFileManagerOptions {
   availableTabs?: Set<string>;
   reviewBucket?: string;
   initialTab?: DialFileManagerTabs;
+  initialPath?: string;
   additionalFilesAndFolders?: {
     files: LocalDialFileType[];
     folders?: FolderInterface[];
@@ -187,6 +188,7 @@ export const useFileManager = ({
   availableTabs = defaultAvailableTabs,
   reviewBucket,
   initialTab,
+  initialPath,
   additionalFilesAndFolders,
   gridEditingOptions: gridEditingOptionsConfig,
 }: UseFileManagerOptions = {}) => {
@@ -359,7 +361,9 @@ export const useFileManager = ({
     FilesSelectors.selectIsLoadingSearchListing,
   );
 
-  const [currentPath, setCurrentPath] = useState<string | undefined>();
+  const [currentPath, setCurrentPath] = useState<string | undefined>(
+    initialPath,
+  );
   const [isSearching, setIsSearching] = useState(false);
   const [destinationPath, setDestinationPath] = useState<string | undefined>();
 
@@ -632,6 +636,7 @@ export const useFileManager = ({
     }
 
     if (
+      previousActiveTabRef.current &&
       activeTab !== previousActiveTabRef.current &&
       rootFolder.id &&
       isRootId(rootFolder.id)

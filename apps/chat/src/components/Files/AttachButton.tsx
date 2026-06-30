@@ -11,6 +11,8 @@ import { JSX, useCallback, useMemo, useState } from 'react';
 import { useIsPublicationReview } from '@/src/hooks/useIsPublicationReview';
 import { useTranslation } from '@/src/hooks/useTranslation';
 
+import { getQuickAttachmentsSavingPath } from '@/src/utils/app/conversation';
+
 import { FeatureType } from '@/src/types/common';
 import { DialLink, FileSourceType } from '@/src/types/files';
 import { DisplayMenuItemProps } from '@/src/types/menu';
@@ -186,6 +188,11 @@ export const AttachButton = ({
           selectedFilesIds={selectedFilesIds}
           onClose={handleCloseFileManagerModal}
           isPreUploadOpen={isPreUploadDialogOpened}
+          initialPath={
+            isPreUploadDialogOpened
+              ? getQuickAttachmentsSavingPath()
+              : undefined
+          }
         />
       )}
       {isAttachLinkDialogOpened && (

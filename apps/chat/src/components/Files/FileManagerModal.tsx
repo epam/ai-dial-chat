@@ -48,6 +48,7 @@ import {
 
 interface Props {
   isOpen: boolean;
+  initialPath?: string;
   selectedFilesIds?: string[];
   allowedTypes?: string[];
   allowedTypesLabel?: string | null;
@@ -70,6 +71,7 @@ interface Props {
 export const FileManagerModal = memo(
   ({
     isOpen,
+    initialPath,
     allowedTypes = [],
     allowedTypesLabel,
     selectedFilesIds: previousSelectedFilesIds = [],
@@ -374,6 +376,7 @@ export const FileManagerModal = memo(
       availableTabs,
       reviewBucket,
       additionalFilesAndFolders,
+      initialPath,
     });
 
     const mergedGridOptions = useMemo(
