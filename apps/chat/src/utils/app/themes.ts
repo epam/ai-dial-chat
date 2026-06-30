@@ -7,7 +7,7 @@ export const getThemeIconUrl = (iconUrl: string) =>
     ? iconUrl
     : `/api/themes/image/${encodeURIComponent(iconUrl)}`;
 
-export const faviconUrl = getThemeIconUrl('chat-favicon');
+export const faviconUrl = '/api/themes/favicon';
 
 export const getImageUrl = (theme: ThemesConfig, name: string): string => {
   return theme.images[name as keyof ThemesConfig['images']] as string;
