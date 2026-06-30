@@ -13,7 +13,11 @@ let cachedTheme: ThemesConfig | undefined = undefined;
 let cachedThemeExpiration: number | undefined;
 
 const loadThemesConfig = async (): Promise<ThemesConfig> => {
-  if (cachedTheme && cachedThemeExpiration && cachedThemeExpiration > Date.now()) {
+  if (
+    cachedTheme &&
+    cachedThemeExpiration &&
+    cachedThemeExpiration > Date.now()
+  ) {
     return cachedTheme;
   }
 
