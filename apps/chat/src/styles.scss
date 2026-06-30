@@ -2,6 +2,7 @@
 @use 'tailwindcss/components';
 @use 'tailwindcss/utilities';
 
+// model selector
 @keyframes new-chat-pop {
   from {
     transform: scale(0.3);
@@ -21,17 +22,12 @@
   }
 }
 
-// ─── ConversationPanel visual overrides ────────────────────────────────────
-// Anchor: `aside[class~="dial-body-text"]` (set via styles.typography.fontClassName).
-// This scopes every selector below to the ConversationPanel without touching
-// hash-unstable internal module class names where avoidable.
-
-// Pane title row ("Chats") — match app header height, no bottom divider
+// libs\sidebar\src\components\Header\Header.tsx
 aside[class~='dial-body-text'] > [class~='h-12'][class~='shrink-0'] {
   height: 64px !important;
-  border-bottom: none !important;
 }
 
+// libs\sidebar\src\components\Header\Header.tsx
 aside[class~='dial-body-text']
   > [class~='h-12'][class~='shrink-0']
   > span:first-child {
@@ -40,6 +36,7 @@ aside[class~='dial-body-text']
   font-weight: 600 !important;
 }
 
+// apps\chat\src\components\ModelPicker\ModelPickerPanel.tsx
 // Group section headers ("MY CHATS", "ORGANIZATION") — subtle, reduced prominence
 aside[class~='dial-body-text'] [class~='uppercase'][class~='tracking-wider'] {
   opacity: 0.55;
@@ -63,11 +60,6 @@ aside[class~='dial-body-text']
   width: 3px;
   border-radius: 0 2px 2px 0;
   background: linear-gradient(180deg, #37babc 0%, #5c8dea 48%, #a972ff 100%);
-}
-
-// Composer input — match catalog search bar radius (not exposed via ci- vars)
-[role='region'] [class~='rounded-xl'][class~='border'] {
-  border-radius: 12px !important;
 }
 
 // DS token overrides

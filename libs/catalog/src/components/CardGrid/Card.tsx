@@ -97,7 +97,6 @@ export const Card: FC<CardProps> = ({
         />
       )}
 
-      {/* Top row: AppIdentity */}
       <AppIdentity
         icon={item.iconUrl}
         type={item.type}
@@ -109,7 +108,6 @@ export const Card: FC<CardProps> = ({
         typeColor={ENTITY_TYPE_COLOR[item.type]}
       />
 
-      {/* Description */}
       <p
         className={mergeClasses(
           descriptionClassName,
@@ -120,10 +118,8 @@ export const Card: FC<CardProps> = ({
         {item.description}
       </p>
 
-      {/* Topic chips */}
       <TopicsLine topics={item.topics} />
 
-      {/* Breadcrumbs + star — pinned to card bottom via mt-auto */}
       <div className="mt-auto border-t border-tertiary pt-3">
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">

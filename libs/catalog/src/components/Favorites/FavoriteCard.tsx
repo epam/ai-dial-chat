@@ -74,8 +74,8 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
   return (
     <article
       data-card-id={item.id}
-      role={onClick ? 'button' : undefined}
-      tabIndex={onClick ? 0 : undefined}
+      role={handleClick != null ? 'button' : undefined}
+      tabIndex={handleClick != null ? 0 : undefined}
       aria-label={item.name}
       className={mergeClasses(
         'box-border flex min-w-0 cursor-pointer items-start gap-1',

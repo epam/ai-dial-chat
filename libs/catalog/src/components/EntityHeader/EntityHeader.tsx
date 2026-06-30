@@ -22,7 +22,7 @@ export interface EntityHeaderProps {
   /** Label for the featured tag shown when item.isFeatured is true. Default: 'Featured'. */
   featuredLabel?: string;
   /** Whether to render the featured tag. Default: true. */
-  showFeaturedTag?: boolean;
+  hasFeaturedTag?: boolean;
   /** Size of the deployment icon. Default: 48. */
   iconSize?: number;
   /** Search query string; when provided, matching text in the title is highlighted. */
@@ -39,7 +39,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
   typeClassName = 'dial-caption-text font-semibold',
   iconBadgeClassName = 'rounded-[14px]',
   featuredLabel = 'Featured',
-  showFeaturedTag = true,
+  hasFeaturedTag = true,
   iconSize = 48,
   query,
   footer,
@@ -69,7 +69,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
           >
             {item.type}
           </span>
-          {showFeaturedTag && item.isFeatured && (
+          {hasFeaturedTag && item.isFeatured && (
             <div className="absolute end-0 top-[-6px]">
               <DialTag
                 label={featuredLabel}

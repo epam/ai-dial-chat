@@ -49,6 +49,18 @@ import { PrimaryButton, NeutralButton, GhostButton } from '@epam/ai-dial-kit';
 import { DialPrimaryButton, DialGhostButton } from '@epam/ai-dial-ui-kit';
 ```
 
+### Search bar
+
+**Never** use `DialSearch` from `@epam/ai-dial-ui-kit`. Use `SearchBar` from `@epam/ai-dial-kit` instead.
+
+```tsx
+// Correct
+import { SearchBar } from '@epam/ai-dial-kit';
+
+// Wrong
+import { DialSearch } from '@epam/ai-dial-ui-kit';
+```
+
 ### Spinner / loader
 
 **Never** use `DialLoader`. Use `DialSpinner` from `@epam/ai-dial-ui-kit` instead.
@@ -59,6 +71,18 @@ import { DialSpinner } from '@epam/ai-dial-ui-kit';
 
 // Wrong
 import { DialLoader } from '@epam/ai-dial-ui-kit';
+```
+
+### Tab row
+
+**Never** use `DialTab` from `@epam/ai-dial-ui-kit`. Use `TabRow` from `@epam/ai-dial-kit` instead.
+
+```tsx
+// Correct
+import { TabRow } from '@epam/ai-dial-kit';
+
+// Wrong
+import { DialTab } from '@epam/ai-dial-ui-kit';
 ```
 
 ## Semantic HTML

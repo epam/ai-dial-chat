@@ -1,4 +1,9 @@
-import { Catalog, CatalogItem, CreateOption } from '@epam/ai-dial-catalog';
+import {
+  Catalog,
+  CatalogEntityType,
+  CatalogItem,
+  CreateOption,
+} from '@epam/ai-dial-catalog';
 import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo, useCallback, useMemo } from 'react';
@@ -132,6 +137,7 @@ const CatalogView: FC = () => {
       titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),
         createLabel: t(ButtonsI18nKeys.Create),
+        createMenuCaption: t(CatalogI18nKeys.CreateMenuCaption),
         favoritesTitle: t(CatalogI18nKeys.FavoritesTitle),
         browseTitle: t(ButtonsI18nKeys.Browse),
         searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
@@ -141,6 +147,10 @@ const CatalogView: FC = () => {
         sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
         featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
         ariaLabel: t(CatalogI18nKeys.AriaLabel),
+        tabLabels: {
+          [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
+          [CatalogEntityType.Application]: t(CatalogI18nKeys.TabApplications),
+        },
       }}
       detailsTexts={{
         tabToolsLabel: t(CatalogI18nKeys.DetailsTabTools),

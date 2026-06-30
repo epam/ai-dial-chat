@@ -19,6 +19,9 @@ const backgroundsColors = {
   neutral: 'var(--bg-neutral, #FCFCFC)',
   inverted: 'var(--bg-inverted, #161B2D)',
   'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
+  // Catalog tab bar — override via CSS custom properties for dark-theme support
+  'catalog-badge-active': 'var(--cat-badge-active-bg, #EEF2FF)',
+  'catalog-badge-inactive': 'var(--cat-badge-inactive-bg, #F3F4F6)',
   'accent-secondary-alpha': 'var(--bg-accent-secondary-alpha, #37BABC2E)',
   'accent-tertiary-alpha': 'var(--bg-accent-tertiary-alpha, #A972FF2E)',
 };
@@ -75,6 +78,12 @@ const borderColors = {
 const textColors = {
   transparent: 'transparent',
   primary: 'var(--text-primary, #161B2D)',
+  // Catalog tab bar — override via CSS custom properties for dark-theme support
+  'catalog-tab-active': 'var(--cat-tab-active-text, #111827)',
+  'catalog-tab-inactive': 'var(--cat-tab-inactive-text, #6B7280)',
+  'catalog-tab-hover': 'var(--cat-tab-hover-text, #374151)',
+  'catalog-badge-active': 'var(--cat-badge-active-text, #2764D9)',
+  'catalog-badge-inactive': 'var(--cat-badge-inactive-text, #9CA3AF)',
   secondary: 'var(--text-secondary, #575F73)',
   tertiary: 'var(--text-tertiary, #808898)',
   error: 'var(--text-error, #AE2F2F)',
