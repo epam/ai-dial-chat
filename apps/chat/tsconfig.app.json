@@ -66,6 +66,9 @@
       "path": "../../libs/chat-api-client/tsconfig.lib.json"
     },
     {
+      "path": "../../libs/ai-dial-kit/tsconfig.lib.json"
+    },
+    {
       "path": "../../libs/catalog/tsconfig.lib.json"
     },
     {

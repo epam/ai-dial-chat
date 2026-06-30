@@ -1,4 +1,4 @@
-import { DialPrimaryButton } from '@epam/ai-dial-ui-kit';
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import { IconAlertTriangle } from '@tabler/icons-react';
 import type { ParseKeys } from 'i18next';
 import { memo, type FC } from 'react';
@@ -31,7 +31,7 @@ const ErrorFallback: FC<Props> = ({
       <p className="text-base text-secondary">
         {t(ErrorBoundaryI18nKeys.Description)}
       </p>
-      <DialPrimaryButton
+      <PrimaryButton
         autoFocus
         label={t(actionLabel ?? ErrorBoundaryI18nKeys.RetryLabel)}
         onClick={resetErrorBoundary}

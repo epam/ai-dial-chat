@@ -1,11 +1,7 @@
-import { ResponseFormat } from '@epam/ai-dial-chat-shared';
 import type { DeploymentFeatures } from '@epam/ai-dial-chat-shared';
-import {
-  DialPopup,
-  DialPrimaryButton,
-  DialTooltip,
-  PopupSize,
-} from '@epam/ai-dial-ui-kit';
+import { ResponseFormat } from '@epam/ai-dial-chat-shared';
+import { PrimaryButton } from '@epam/ai-dial-kit';
+import { DialPopup, DialTooltip, PopupSize } from '@epam/ai-dial-ui-kit';
 import { memo, type FC } from 'react';
 import { useChatSettingsForm } from '../../hooks/useChatSettingsForm';
 import type { ChatSettingsValues } from '../../models/Input';
@@ -102,7 +98,7 @@ export const ChatSettingsModal: FC<ChatSettingsModalProps> = ({
             tooltip={saveDisabledTooltip}
             hideTooltip={canSubmit || !saveDisabledTooltip}
           >
-            <DialPrimaryButton
+            <PrimaryButton
               label={saveLabel}
               onClick={handleSubmit}
               disabled={!canSubmit}

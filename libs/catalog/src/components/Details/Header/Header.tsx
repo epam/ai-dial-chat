@@ -1,9 +1,5 @@
-import {
-  ButtonAppearance,
-  DIAL_ICON_SIZE,
-  DialNeutralButton,
-  DialPrimaryButton,
-} from '@epam/ai-dial-ui-kit';
+import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
+import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import {
   IconChevronDown,
   IconPlayerPlayFilled,
@@ -61,15 +57,14 @@ export const Header: FC<HeaderProps> = ({
         }
       />
       <div className="flex flex-wrap gap-2 ps-[60px]">
-        <DialPrimaryButton
+        <PrimaryButton
           label={
             texts?.primaryActionLabel ?? texts?.useInChatLabel ?? 'Use in chat'
           }
           iconBefore={<IconPlayerPlayFilled size={DIAL_ICON_SIZE.MD} />}
           onClick={handleUseInChat}
         />
-        <DialNeutralButton
-          appearance={ButtonAppearance.Outlined}
+        <NeutralButton
           label={texts?.shareLabel ?? 'Share'}
           iconBefore={<IconShare size={DIAL_ICON_SIZE.MD} />}
           iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.MD} />}

@@ -88,7 +88,11 @@ const App: FC = () => {
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   useEffect(() => {
     closeCanvas();
-    if (pathname === ROUTES.Catalog) {
+    if (
+      pathname !== ROUTES.Root &&
+      pathname !== ROUTES.Conversations &&
+      !pathname.startsWith(ROUTES.Conversations)
+    ) {
       closeHistoryPanel();
     } else if (!isMobile && !isCanvasOpen) {
       setIsHistoryPanelOpen(true);

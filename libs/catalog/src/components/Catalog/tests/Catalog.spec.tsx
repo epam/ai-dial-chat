@@ -15,7 +15,7 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
     text: unknown;
     className?: string;
   }) => <span className={className}>{text as string}</span>,
-  DialPrimaryButton: ({
+  PrimaryButton: ({
     label,
     onClick,
   }: {

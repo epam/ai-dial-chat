@@ -17,9 +17,9 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
+import { NeutralButton } from '@epam/ai-dial-kit';
 import {
   DialFabButton,
-  DialNeutralButton,
   DialNotification,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
@@ -628,7 +628,7 @@ const ConversationView: FC<Props> = ({
                 message={duplicateError}
               />
             )}
-            <DialNeutralButton
+            <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
               iconBefore={<IconCopy />}
               onClick={onDuplicateConversation}
