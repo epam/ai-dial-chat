@@ -709,22 +709,28 @@ const getNextFocusedPublication = (
     ? PublicationPanel.Prompt
     : PublicationPanel.Chat;
 
-  const remainingInPanel = (panel: PublicationPanel) =>
-    (panel === PublicationPanel.Chat
+  const publicationsInPanel = (panel: PublicationPanel) =>
+    panel === PublicationPanel.Chat
       ? chatPanelPublications
-      : promptPanelPublications
-    ).filter((p) => p.url !== resolvedUrl);
+      : promptPanelPublications;
 
-  const samePanelPublications = remainingInPanel(samePanel);
-  const otherPanelPublications = remainingInPanel(otherPanel);
+  const samePanelPublications = publicationsInPanel(samePanel);
+  const resolvedIndex = samePanelPublications.findIndex(
+    (p) => p.url === resolvedUrl,
+  );
+  const remainingSamePanel = samePanelPublications.filter(
+    (p) => p.url !== resolvedUrl,
+  );
 
-  const nextInSamePanel = samePanelPublications[0];
+  const nextInSamePanel = remainingSamePanel[Math.max(resolvedIndex - 1, 0)];
   if (nextInSamePanel) {
     return { url: nextInSamePanel.url, panel: samePanel };
   }
 
-  const nextInOtherPanel =
-    otherPanelPublications[otherPanelPublications.length - 1];
+  const remainingOtherPanel = publicationsInPanel(otherPanel).filter(
+    (p) => p.url !== resolvedUrl,
+  );
+  const nextInOtherPanel = remainingOtherPanel[remainingOtherPanel.length - 1];
   if (nextInOtherPanel) {
     return { url: nextInOtherPanel.url, panel: otherPanel };
   }
@@ -1215,18 +1221,24 @@ const resolvePublicationSuccessEpic: AppEpic = (action$, state$) =>
         const state = state$.value;
         const publications = PublicationSelectors.selectPublications(state);
         const { nextPublication } = payload;
+        const nextPublicationEntity = nextPublication
+          ? publications.find((p) => p.url === nextPublication.url)
+          : undefined;
 
-        if (
-          nextPublication &&
-          publications.some((p) => p.url === nextPublication.url)
-        ) {
+        if (nextPublication && nextPublicationEntity) {
+          const focusAction =
+            nextPublicationEntity.uploadStatus === UploadStatus.LOADED
+              ? PublicationActions.selectPublication({
+                  url: nextPublication.url,
+                  panel: nextPublication.panel,
+                })
+              : PublicationActions.uploadPublication({
+                  url: nextPublication.url,
+                  panel: nextPublication.panel,
+                });
+
           return ConversationService.setSelectedConversationsIds([]).pipe(
-            map(() =>
-              PublicationActions.selectPublication({
-                url: nextPublication.url,
-                panel: nextPublication.panel,
-              }),
-            ),
+            map(() => focusAction),
           );
         }
 
