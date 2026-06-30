@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { TabRow } from '@epam/ai-dial-kit';
 import { DialCloseButton } from '@epam/ai-dial-ui-kit';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import type { DetailsPanelProps } from '../../models/item-details-props';
@@ -100,7 +101,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
 
   return (
     <>
-      {/* Backdrop */}
       <div
         className={mergeClasses(
           'fixed inset-0 z-40 transition-opacity duration-300',
@@ -111,7 +111,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         aria-hidden="true"
       />
 
-      {/* Slide-in panel */}
       <div
         role="dialog"
         aria-modal="true"
@@ -124,7 +123,6 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
           isOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full',
         )}
       >
-        {/* Header: favorite + close */}
         <div className="flex shrink-0 items-center justify-end gap-1.5 px-[22px] py-3">
           <StarToggleButton
             isStarred={isStarred}
@@ -148,36 +146,15 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         <Summary item={item} texts={texts} detailsStyles={detailsStyles} />
 
         <div className="shrink-0 px-[22px]">
-          <div
-            role="tablist"
-            className={mergeClasses(
-              'flex justify-start gap-1 border-b',
-              styles.tabsRow,
-            )}
-          >
-            {tabs.map((tab) => {
-              const isActive = activeTab === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  role="tab"
-                  aria-selected={isActive}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={mergeClasses(
-                    'dial-small-semi-text -mb-px flex items-center border-b-2 px-3 py-2.5 text-start transition-colors',
-                    isActive
-                      ? mergeClasses(styles.activeTab, 'text-[#111827]')
-                      : 'border-transparent text-[#6B7280] hover:text-[#374151]',
-                  )}
-                >
-                  {tab.label}
-                </button>
-              );
-            })}
-          </div>
+          <TabRow
+            tabs={tabs}
+            activeTabId={activeTab}
+            onTabChange={setActiveTab}
+            activeTabClassName="text-catalog-tab-active"
+            inactiveTabClassName="text-catalog-tab-inactive hover:text-catalog-tab-hover border-transparent"
+          />
         </div>
 
-        {/* Tab content — scrollable */}
         <div
           className={mergeClasses(
             'min-h-0 flex-1 overflow-y-auto',

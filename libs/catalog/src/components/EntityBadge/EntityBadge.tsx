@@ -6,6 +6,7 @@ import styles from './EntityBadge.module.scss';
 /** CSS module class names keyed by `CatalogEntityType`. */
 const ENTITY_TYPE_CLASS_NAME: Record<CatalogEntityType, string> = {
   [CatalogEntityType.Model]: styles.model,
+  [CatalogEntityType.Application]: styles.application,
   [CatalogEntityType.Agent]: styles.agent,
   [CatalogEntityType.Toolset]: styles.toolset,
   [CatalogEntityType.Guardrail]: styles.guardrail,
