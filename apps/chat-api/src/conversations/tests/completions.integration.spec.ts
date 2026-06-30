@@ -11,7 +11,10 @@ import type {
 } from 'express';
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { ConversationGenerationService } from '../conversation-generation.service';
+import {
+  ConversationGenerationService,
+  GenerationStatus,
+} from '../conversation-generation.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
 
@@ -32,6 +35,8 @@ const VALID_COMPLETION_BODY = {
   mode: 'append',
   message: 'Hello',
 };
+const VALID_STOP_GENERATION_ID = 'bbbbbbbb-bbbb-4bbb-bbbb-bbbbbbbbbbbb';
+const UNKNOWN_GENERATION_ID = 'cccccccc-cccc-4ccc-8ccc-cccccccccccc';
 
 describe('POST /conversations/completions (integration)', () => {
   let app: INestApplication;
@@ -75,7 +80,7 @@ describe('POST /conversations/completions (integration)', () => {
       abort: vi.fn().mockReturnValue(true),
       complete: vi.fn(),
       error: vi.fn(),
-      getStatus: vi.fn().mockReturnValue('active'),
+      getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -150,6 +155,13 @@ describe('POST /conversations/completions (integration)', () => {
       .expect(400);
   });
 
+  it('returns 400 when generationId is not a UUID v4', async () => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions')
+      .send({ ...VALID_COMPLETION_BODY, generationId: 'not-a-uuid' })
+      .expect(400);
+  });
+
   it('returns 400 when mode is missing', async () => {
     const { mode: _, ...bodyWithout } = VALID_COMPLETION_BODY;
     await request(app.getHttpServer())
@@ -207,7 +219,7 @@ describe('POST /conversations/completions/stop (integration)', () => {
       abort: vi.fn().mockReturnValue(true),
       complete: vi.fn(),
       error: vi.fn(),
-      getStatus: vi.fn().mockReturnValue('active'),
+      getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -248,13 +260,16 @@ describe('POST /conversations/completions/stop (integration)', () => {
 
     await request(app.getHttpServer())
       .post('/conversations/completions/stop')
-      .send({ generationId: 'gen-id', path: 'test-bucket/gpt-4o__Hello__uuid' })
+      .send({
+        generationId: VALID_STOP_GENERATION_ID,
+        path: 'test-bucket/gpt-4o__Hello__uuid',
+      })
       .expect(204);
 
     expect(mockGenerationService.abort).toHaveBeenCalledWith(
       TEST_USER.sid,
       'test-bucket/gpt-4o__Hello__uuid',
-      'gen-id',
+      VALID_STOP_GENERATION_ID,
     );
   });
 
@@ -264,7 +279,7 @@ describe('POST /conversations/completions/stop (integration)', () => {
     await request(app.getHttpServer())
       .post('/conversations/completions/stop')
       .send({
-        generationId: 'unknown-gen-id',
+        generationId: UNKNOWN_GENERATION_ID,
         path: 'test-bucket/gpt-4o__Hello__uuid',
       })
       .expect(404);
@@ -277,17 +292,30 @@ describe('POST /conversations/completions/stop (integration)', () => {
       .expect(400);
   });
 
+  it('returns 400 when generationId is not a UUID v4', async () => {
+    await request(app.getHttpServer())
+      .post('/conversations/completions/stop')
+      .send({
+        generationId: 'not-a-uuid',
+        path: 'test-bucket/gpt-4o__Hello__uuid',
+      })
+      .expect(400);
+  });
+
   it('returns 400 when path is missing', async () => {
     await request(app.getHttpServer())
       .post('/conversations/completions/stop')
-      .send({ generationId: 'gen-id' })
+      .send({ generationId: VALID_STOP_GENERATION_ID })
       .expect(400);
   });
 
   it('returns 400 when path contains path traversal characters (..)', async () => {
     await request(app.getHttpServer())
       .post('/conversations/completions/stop')
-      .send({ generationId: 'gen-id', path: 'bucket/../secret' })
+      .send({
+        generationId: VALID_STOP_GENERATION_ID,
+        path: 'bucket/../secret',
+      })
       .expect(400);
   });
 });

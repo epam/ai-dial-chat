@@ -140,6 +140,40 @@ describe('buildConversationHistory', () => {
         ),
       ).toThrow(BadRequestException);
     });
+
+    it('throws BadRequestException when messageIndex is out of range', () => {
+      const conv = makeConversation([
+        { role: ConversationMessageRole.User, content: 'q' },
+        { role: ConversationMessageRole.Assistant, content: 'old answer' },
+      ]);
+
+      expect(() =>
+        buildConversationHistory(
+          CompletionMode.Regenerate,
+          conv,
+          undefined,
+          2,
+          undefined,
+        ),
+      ).toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when messageIndex does not point to an assistant message', () => {
+      const conv = makeConversation([
+        { role: ConversationMessageRole.User, content: 'q' },
+        { role: ConversationMessageRole.Assistant, content: 'old answer' },
+      ]);
+
+      expect(() =>
+        buildConversationHistory(
+          CompletionMode.Regenerate,
+          conv,
+          undefined,
+          0,
+          undefined,
+        ),
+      ).toThrow(BadRequestException);
+    });
   });
 
   describe('Edit mode', () => {
@@ -173,6 +207,40 @@ describe('buildConversationHistory', () => {
           conv,
           'q',
           undefined,
+          undefined,
+        ),
+      ).toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when messageIndex is out of range', () => {
+      const conv = makeConversation([
+        { role: ConversationMessageRole.User, content: 'old question' },
+        { role: ConversationMessageRole.Assistant, content: 'old answer' },
+      ]);
+
+      expect(() =>
+        buildConversationHistory(
+          CompletionMode.Edit,
+          conv,
+          'new question',
+          2,
+          undefined,
+        ),
+      ).toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when messageIndex does not point to a user message', () => {
+      const conv = makeConversation([
+        { role: ConversationMessageRole.User, content: 'old question' },
+        { role: ConversationMessageRole.Assistant, content: 'old answer' },
+      ]);
+
+      expect(() =>
+        buildConversationHistory(
+          CompletionMode.Edit,
+          conv,
+          'new question',
+          1,
           undefined,
         ),
       ).toThrow(BadRequestException);

@@ -3,9 +3,9 @@ import { Type } from 'class-transformer';
 import {
   IsEnum,
   IsInt,
-  IsNotEmpty,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   MaxLength,
   Min,
@@ -26,9 +26,9 @@ export class SendCompletionDto {
   @ApiProperty({
     description: 'Client-generated UUID identifying this generation attempt.',
     example: 'cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8',
+    format: 'uuid',
   })
-  @IsString()
-  @IsNotEmpty()
+  @IsUUID('4')
   generationId!: string;
 
   @ApiProperty({
@@ -46,9 +46,11 @@ export class SendCompletionDto {
   @ApiProperty({
     description: 'DIAL Core deployment name to use for completion',
     example: 'anthropic.claude-v3-sonnet',
+    maxLength: 256,
   })
   @IsString()
   @MinLength(1)
+  @MaxLength(256)
   model!: string;
 
   @ApiProperty({

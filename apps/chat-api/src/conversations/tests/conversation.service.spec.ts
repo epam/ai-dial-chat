@@ -2,7 +2,10 @@ import { ConfigService } from '@nestjs/config';
 import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { handleDialError } from '../../common/utils/dial-error';
 import type { EnvironmentVariables } from '../../config/environment.config';
-import { ConversationGenerationService } from '../conversation-generation.service';
+import {
+  ConversationGenerationService,
+  GenerationStatus,
+} from '../conversation-generation.service';
 import { ConversationService } from '../conversation.service';
 import {
   ConversationMessageRole,
@@ -102,7 +105,7 @@ describe('ConversationService', () => {
       abort: vi.fn().mockReturnValue(true),
       complete: vi.fn(),
       error: vi.fn(),
-      getStatus: vi.fn().mockReturnValue('active'),
+      getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
     } as unknown as ConversationGenerationService;
     service = new ConversationService(
       mockConfigService as unknown as ConfigService<EnvironmentVariables>,

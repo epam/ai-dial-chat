@@ -9,7 +9,10 @@ import type {
 import request from 'supertest';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { UserConfigService } from '../../user-config/user-config.service';
-import { ConversationGenerationService } from '../conversation-generation.service';
+import {
+  ConversationGenerationService,
+  GenerationStatus,
+} from '../conversation-generation.service';
 import { ConversationNamingService } from '../conversation-naming.service';
 import { ConversationController } from '../conversation.controller';
 import { ConversationService } from '../conversation.service';
@@ -48,7 +51,7 @@ describe('ConversationController (integration)', () => {
       abort: vi.fn().mockReturnValue(true),
       complete: vi.fn(),
       error: vi.fn(),
-      getStatus: vi.fn().mockReturnValue('active'),
+      getStatus: vi.fn().mockReturnValue(GenerationStatus.Active),
     };
 
     const module: TestingModule = await Test.createTestingModule({

@@ -77,6 +77,29 @@ describe('applyChunkToMessage', () => {
     expect(stages[0].content).toBe('part1part2');
   });
 
+  it('preserves explicitly empty stage content while merging stage updates', () => {
+    const msg1 = applyChunkToMessage(
+      baseMessage(),
+      makeChunk({
+        custom_content: {
+          stages: [{ index: 0, name: 'Header', content: '' }],
+        },
+      }),
+    );
+    const msg2 = applyChunkToMessage(
+      msg1,
+      makeChunk({
+        custom_content: {
+          stages: [{ index: 0, attachments: [{ title: 'log' }] }],
+        },
+      }),
+    );
+    const stages = (msg2.custom_content as { stages: { content?: string }[] })
+      .stages;
+
+    expect(stages[0].content).toBe('');
+  });
+
   it('merges annotations by index', () => {
     const msg1 = applyChunkToMessage(
       baseMessage(),

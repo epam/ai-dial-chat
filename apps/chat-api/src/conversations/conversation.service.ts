@@ -23,7 +23,10 @@ import {
   MAX_LIST_DISPLAY_NAME_ENRICHMENTS,
   PUBLIC_BUCKET,
 } from './constants/conversation.constants';
-import { ConversationGenerationService } from './conversation-generation.service';
+import {
+  ConversationGenerationService,
+  GenerationStatus,
+} from './conversation-generation.service';
 import { ConversationNamingService } from './conversation-naming.service';
 import {
   ConversationListItemDto,
@@ -1301,7 +1304,10 @@ export class ConversationService extends AppService {
     let upstreamReader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
     const finalize = async (
-      status: 'done' | 'stopped' | 'error',
+      status:
+        | GenerationStatus.Done
+        | GenerationStatus.Stopped
+        | GenerationStatus.Error,
       partialMessage: ConversationMessageDto,
     ): Promise<void> => {
       const finalConversation = {
@@ -1321,7 +1327,7 @@ export class ConversationService extends AppService {
       } catch (err) {
         this.logger.warn(`Failed to save ${status} conversation`, err);
       }
-      if (status === 'done') {
+      if (status === GenerationStatus.Done) {
         this.generationService.complete(
           sessionId,
           conversationPath,
@@ -1360,7 +1366,7 @@ export class ConversationService extends AppService {
             hasStreamError?: boolean;
           }
         ).hasStreamError = true;
-        await finalize('error', assembledMessage);
+        await finalize(GenerationStatus.Error, assembledMessage);
         if (!res.writableEnded) res.end();
         return;
       }
@@ -1406,7 +1412,7 @@ export class ConversationService extends AppService {
         if (receivedDone) break;
       }
 
-      await finalize('done', assembledMessage);
+      await finalize(GenerationStatus.Done, assembledMessage);
     } catch (err) {
       const isAbort =
         err instanceof Error &&
@@ -1415,21 +1421,24 @@ export class ConversationService extends AppService {
       if (isAbort) {
         const wasStopped =
           this.generationService.getStatus(sessionId, conversationPath) ===
-          'stopped';
+          GenerationStatus.Stopped;
         const partialMsg = {
           ...assembledMessage,
           ...(wasStopped
             ? { wasStoppedByUser: true }
             : { hasStreamError: true }),
         } as ConversationMessageDto;
-        await finalize(wasStopped ? 'stopped' : 'error', partialMsg);
+        await finalize(
+          wasStopped ? GenerationStatus.Stopped : GenerationStatus.Error,
+          partialMsg,
+        );
       } else {
         this.logger.error('DIAL Core streamCompletion failed', err);
         const partialMsg = {
           ...assembledMessage,
           hasStreamError: true,
         } as ConversationMessageDto;
-        await finalize('error', partialMsg);
+        await finalize(GenerationStatus.Error, partialMsg);
       }
     } finally {
       if (upstreamReader) {

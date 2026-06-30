@@ -3748,7 +3748,8 @@
           "generationId": {
             "type": "string",
             "description": "Client-generated UUID identifying this generation attempt.",
-            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
+            "format": "uuid"
           },
           "path": {
             "type": "string",
@@ -3758,7 +3759,8 @@
           "model": {
             "type": "string",
             "description": "DIAL Core deployment name to use for completion",
-            "example": "anthropic.claude-v3-sonnet"
+            "example": "anthropic.claude-v3-sonnet",
+            "maxLength": 256
           },
           "mode": {
             "type": "string",
@@ -3793,7 +3795,8 @@
           "generationId": {
             "type": "string",
             "description": "Generation ID that was returned by the active stream.",
-            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
+            "format": "uuid"
           },
           "path": {
             "type": "string",

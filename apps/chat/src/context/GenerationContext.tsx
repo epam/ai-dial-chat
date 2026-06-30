@@ -11,7 +11,12 @@ interface GenerationEntry {
   generationId: string;
   path: string;
   abortController: AbortController;
-  status: 'active' | 'done' | 'error';
+  status: ClientGenerationStatus;
+}
+
+export enum ClientGenerationStatus {
+  Active = 'active',
+  Done = 'done',
 }
 
 interface Props {
@@ -20,7 +25,6 @@ interface Props {
 
 interface GenerationContextValue {
   startGeneration: (path: string, generationId: string) => AbortController;
-  stopGeneration: (path: string, generationId: string) => void;
   completeGeneration: (path: string, generationId: string) => void;
   getGeneration: (path: string) => GenerationEntry | undefined;
 }
@@ -33,7 +37,7 @@ export const GenerationProvider: FC<Props> = ({ children }) => {
   const startGeneration = useCallback(
     (path: string, generationId: string): AbortController => {
       const existing = registryRef.current.get(path);
-      if (existing?.status === 'active') {
+      if (existing?.status === ClientGenerationStatus.Active) {
         existing.abortController.abort();
       }
       const abortController = new AbortController();
@@ -41,20 +45,9 @@ export const GenerationProvider: FC<Props> = ({ children }) => {
         generationId,
         path,
         abortController,
-        status: 'active',
+        status: ClientGenerationStatus.Active,
       });
       return abortController;
-    },
-    [],
-  );
-
-  const stopGeneration = useCallback(
-    (path: string, generationId: string): void => {
-      const entry = registryRef.current.get(path);
-      if (entry?.generationId === generationId && entry.status === 'active') {
-        entry.abortController.abort();
-        registryRef.current.set(path, { ...entry, status: 'error' });
-      }
     },
     [],
   );
@@ -63,7 +56,10 @@ export const GenerationProvider: FC<Props> = ({ children }) => {
     (path: string, generationId: string): void => {
       const entry = registryRef.current.get(path);
       if (entry?.generationId === generationId) {
-        registryRef.current.set(path, { ...entry, status: 'done' });
+        registryRef.current.set(path, {
+          ...entry,
+          status: ClientGenerationStatus.Done,
+        });
       }
     },
     [],
@@ -79,7 +75,6 @@ export const GenerationProvider: FC<Props> = ({ children }) => {
     <GenerationContext.Provider
       value={{
         startGeneration,
-        stopGeneration,
         completeGeneration,
         getGeneration,
       }}

@@ -228,7 +228,6 @@ export class ConversationController {
   }
 
   @Post('completions/stop')
-  @HttpCode(204)
   @Throttle({ default: { limit: 60, ttl: 60000 } })
   @ApiOperation({ summary: 'Stop an active generation' })
   @ApiResponse({ status: 204, description: 'Generation stopped successfully' })

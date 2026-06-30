@@ -516,4 +516,44 @@ describe('useConversationStream', () => {
       );
     });
   });
+
+  it('handleStop surfaces stopCompletion failures', async () => {
+    mockStreamCompletion.mockImplementation(() => {
+      // keep stream open
+    });
+    const onStopError = vi.fn();
+    const stopError = new Error('stop failed');
+    mockStopCompletion.mockRejectedValueOnce(stopError);
+
+    const { result } = renderHook(
+      () =>
+        useConversationStream(
+          makeParams({
+            conversationId: 'bucket/gpt-4o__Hello__uuid',
+            onStopError,
+          }),
+        ),
+      { wrapper },
+    );
+
+    await act(async () => {
+      result.current.startStream(
+        'bucket/gpt-4o__Hello__uuid',
+        'hello',
+        0,
+        'gpt-4o',
+        undefined,
+        'stop-gen-id',
+      );
+    });
+
+    await act(async () => {
+      result.current.handleStop();
+    });
+
+    await waitFor(() => {
+      expect(onStopError).toHaveBeenCalledWith(stopError);
+      expect(result.current.hasStreamError).toBe(true);
+    });
+  });
 });

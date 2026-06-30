@@ -26,6 +26,7 @@ interface Params {
   conversationId: string | undefined;
   setConversation: Dispatch<SetStateAction<Conversation | null>>;
   conversationRef: MutableRefObject<Conversation | null>;
+  onStopError?: (error: Error) => void;
 }
 
 interface Result {
@@ -48,6 +49,7 @@ export const useConversationStream = ({
   conversationId,
   setConversation,
   conversationRef,
+  onStopError,
 }: Params): Result => {
   // Paths with an in-flight generation. A Set (not a boolean) so concurrent
   // generations across conversations each track their own streaming state.
@@ -216,8 +218,14 @@ export const useConversationStream = ({
     // Only signal the backend; it aborts upstream, saves the partial, and closes
     // the stream. Keeping our fetch open lets onComplete reload the saved partial
     // race-free (do not reload here — it would race the backend save).
-    void stopCompletion({ generationId: genId, path: conversationPath });
-  }, [conversationId]);
+    void stopCompletion({ generationId: genId, path: conversationPath }).catch(
+      (err: unknown) => {
+        const error = err instanceof Error ? err : new Error(String(err));
+        setHasStreamError(true);
+        onStopError?.(error);
+      },
+    );
+  }, [conversationId, onStopError]);
 
   // Reflects only the currently-displayed conversation: a stream running in a
   // different chat must not show this chat as generating.

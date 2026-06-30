@@ -16,17 +16,27 @@ export const stopCompletion = async (dto: {
   generationId: string;
   path: string;
 }): Promise<void> => {
-  await fetch(`${ApiEndpoints.CONVERSATIONS}/completions/stop`, {
-    method: 'POST',
-    credentials: 'include',
-    headers: {
-      ...JSON_HEADERS,
-      ...(getCsrfToken() != null
-        ? { 'X-CSRF-Token': getCsrfToken() as string }
-        : {}),
+  const response = await fetch(
+    `${ApiEndpoints.CONVERSATIONS}/completions/stop`,
+    {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        ...JSON_HEADERS,
+        ...(getCsrfToken() != null
+          ? { 'X-CSRF-Token': getCsrfToken() as string }
+          : {}),
+      },
+      body: JSON.stringify(dto),
     },
-    body: JSON.stringify(dto),
-  });
+  );
+
+  const rotatedCsrf = response.headers.get('x-csrf-token');
+  if (rotatedCsrf) setCsrfToken(rotatedCsrf);
+
+  if (!response.ok) {
+    throw new Error(`stopCompletion failed: ${response.status}`);
+  }
 };
 
 export const streamCompletion = (

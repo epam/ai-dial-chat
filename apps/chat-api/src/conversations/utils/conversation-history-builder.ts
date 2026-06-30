@@ -31,6 +31,30 @@ const makeAssistantPlaceholder = (): ConversationMessageDto => ({
   timestamp: new Date().toISOString(),
 });
 
+const assertMessageIndexInRange = (
+  messageIndex: number,
+  messageCount: number,
+): void => {
+  if (messageIndex >= messageCount) {
+    throw new BadRequestException(
+      `messageIndex ${messageIndex} is out of range for a ${messageCount}-message conversation`,
+    );
+  }
+};
+
+const assertMessageIndexRole = (
+  messages: ConversationMessageDto[],
+  messageIndex: number,
+  expectedRole: ConversationMessageRole,
+  mode: CompletionMode,
+): void => {
+  if (messages[messageIndex]?.role !== expectedRole) {
+    throw new BadRequestException(
+      `messageIndex ${messageIndex} must reference a message with role "${expectedRole}" for ${mode} mode`,
+    );
+  }
+};
+
 /**
  * Builds the initial conversation state for each completion mode, returning
  * the modified conversation and the index of the assistant placeholder.
@@ -76,6 +100,13 @@ export const buildConversationHistory = (
         'messageIndex is required for regenerate mode',
       );
     }
+    assertMessageIndexInRange(messageIndex, messages.length);
+    assertMessageIndexRole(
+      messages,
+      messageIndex,
+      ConversationMessageRole.Assistant,
+      mode,
+    );
     // Truncate up to (but not including) messageIndex, then append assistant placeholder
     const truncated = messages.slice(0, messageIndex);
     const assistantPlaceholder = makeAssistantPlaceholder();
@@ -90,6 +121,13 @@ export const buildConversationHistory = (
     if (messageIndex == null) {
       throw new BadRequestException('messageIndex is required for edit mode');
     }
+    assertMessageIndexInRange(messageIndex, messages.length);
+    assertMessageIndexRole(
+      messages,
+      messageIndex,
+      ConversationMessageRole.User,
+      mode,
+    );
     // Truncate up to (but not including) messageIndex, then append new user message + assistant placeholder
     const truncated = messages.slice(0, messageIndex);
     const userMessage = makeUserMessage(message ?? '', customContent);

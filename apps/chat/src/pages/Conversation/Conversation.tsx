@@ -30,7 +30,10 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
-import { useGeneration } from '../../context/GenerationContext';
+import {
+  ClientGenerationStatus,
+  useGeneration,
+} from '../../context/GenerationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
@@ -267,10 +270,18 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   // rejects with 409 and surfaces as a spurious "Something went wrong" error.
   const autoStartedPathsRef = useRef<Set<string>>(new Set());
 
+  const handleStopError = useCallback(() => {
+    showNotification({
+      variant: NotificationVariant.Error,
+      message: t(ChatI18nKeys.StreamError),
+    });
+  }, [showNotification, t]);
+
   const { startStream, handleStop, isStreaming } = useConversationStream({
     conversationId,
     setConversation,
     conversationRef,
+    onStopError: handleStopError,
   });
 
   useEffect(() => {
@@ -370,7 +381,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           const conversationPath = getConversationPath(id);
           const alreadyStarted =
             autoStartedPathsRef.current.has(conversationPath) ||
-            getGeneration(conversationPath)?.status === 'active';
+            getGeneration(conversationPath)?.status ===
+              ClientGenerationStatus.Active;
           if (!alreadyStarted) {
             autoStartedPathsRef.current.add(conversationPath);
             startStream(

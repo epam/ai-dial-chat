@@ -1,13 +1,13 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsNotEmpty, IsString, Matches, MinLength } from 'class-validator';
+import { IsString, IsUUID, Matches, MinLength } from 'class-validator';
 
 export class StopCompletionDto {
   @ApiProperty({
     description: 'Generation ID that was returned by the active stream.',
     example: 'cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8',
+    format: 'uuid',
   })
-  @IsString()
-  @IsNotEmpty()
+  @IsUUID('4')
   generationId!: string;
 
   @ApiProperty({

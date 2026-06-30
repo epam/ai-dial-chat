@@ -74,6 +74,14 @@ const mergeStageAttachments = (
   return result;
 };
 
+const mergeOptionalText = (
+  existing: string | undefined,
+  incoming: string | undefined,
+): string | undefined =>
+  existing !== undefined || incoming !== undefined
+    ? (existing ?? '') + (incoming ?? '')
+    : undefined;
+
 const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
   const result = [...existing];
   for (const stage of incoming) {
@@ -83,8 +91,7 @@ const mergeStages = (existing: Stage[], incoming: Stage[]): Stage[] => {
         ...result[idx],
         ...stage,
         name: (result[idx].name ?? '') + (stage.name ?? ''),
-        content:
-          (result[idx].content ?? '') + (stage.content ?? '') || undefined,
+        content: mergeOptionalText(result[idx].content, stage.content),
         attachments: stage.attachments?.length
           ? mergeStageAttachments(
               result[idx].attachments ?? [],
