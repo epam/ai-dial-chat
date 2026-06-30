@@ -5,7 +5,6 @@ import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
-import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
@@ -13,6 +12,7 @@ import {
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 

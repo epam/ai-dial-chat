@@ -57,7 +57,7 @@ describe('AppEditorIframe', () => {
     renderIframe();
     const iframe = screen.getByTitle('QuickApp') as HTMLIFrameElement;
     expect(iframe.src).toBe(
-      'https://editor.example.com?authProvider=local&id=abc&theme=dark',
+      'https://editor.example.com/?authProvider=local&id=abc&theme=dark',
     );
   });
 

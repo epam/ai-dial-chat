@@ -47,6 +47,12 @@ import { ThemeId } from '../types/theme-id';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
 const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
+const ToolsetEditorPage = lazy(
+  () => import('../pages/ToolsetEditor/ToolsetEditor'),
+);
+const ToolsetEditorCallbackPage = lazy(
+  () => import('../pages/ToolsetEditor/ToolsetEditorCallback'),
+);
 
 // Start loading the module immediately so the Suspense fallback is skipped on first navigation.
 const conversationPageModule = import('../pages/Conversation/Conversation');
@@ -211,6 +217,26 @@ const App: FC = () => {
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
                   <AppsEditorPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.ToolsetEditorCallback}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ToolsetEditorCallbackPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.ToolsetEditor}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ToolsetEditorPage />
                 </Suspense>
               </RouteErrorBoundary>
             }

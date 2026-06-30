@@ -925,6 +925,58 @@
         "tags": [
           "toolsets"
         ]
+      },
+      "post": {
+        "description": "Creates a new toolset for the authenticated session user by proxying DIAL Core. Invalidates the toolset list cache on success.",
+        "operationId": "createToolset",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolsetBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Toolset created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutatedToolsetDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — missing or invalid fields"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "409": {
+            "description": "Toolset name already taken"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Create a new toolset",
+        "tags": [
+          "toolsets"
+        ]
       }
     },
     "/api/v1/toolsets/{toolsetName}": {
@@ -981,6 +1033,243 @@
           }
         },
         "summary": "Get toolset by name",
+        "tags": [
+          "toolsets"
+        ]
+      },
+      "patch": {
+        "description": "Updates an existing toolset for the authenticated session user by proxying DIAL Core. Invalidates the relevant caches on success.",
+        "operationId": "updateToolset",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolsetBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Toolset updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutatedToolsetDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid toolset name or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "404": {
+            "description": "Toolset not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Update a toolset",
+        "tags": [
+          "toolsets"
+        ]
+      },
+      "delete": {
+        "description": "Deletes a toolset for the authenticated session user by proxying DIAL Core. Invalidates the relevant caches on success.",
+        "operationId": "deleteToolset",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Toolset deleted successfully"
+          },
+          "400": {
+            "description": "Invalid toolset name"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "404": {
+            "description": "Toolset not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Delete a toolset",
+        "tags": [
+          "toolsets"
+        ]
+      }
+    },
+    "/api/v1/toolsets/{toolsetName}/login": {
+      "post": {
+        "description": "Submits API key or OAuth authorization-code credentials for a toolset by proxying DIAL Core (POST /v1/ops/toolset/signin). Credential payloads are never logged.",
+        "operationId": "loginToolset",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolsetLoginBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolsetAuthResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid toolset name or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Submit toolset credentials",
+        "tags": [
+          "toolsets"
+        ]
+      }
+    },
+    "/api/v1/toolsets/{toolsetName}/logout": {
+      "post": {
+        "description": "Revokes a toolset's credentials by proxying DIAL Core (POST /v1/ops/toolset/signout).",
+        "operationId": "logoutToolset",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolsetLogoutBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolsetAuthResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid toolset name or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Revoke toolset credentials",
         "tags": [
           "toolsets"
         ]
@@ -1473,7 +1762,9 @@
           }
         },
         "summary": "Subscribe to conversation resource updates via SSE",
-        "tags": ["conversations"]
+        "tags": [
+          "conversations"
+        ]
       }
     },
     "/api/v1/conversations/duplicate": {
@@ -3427,6 +3718,10 @@
               "NONE"
             ]
           },
+          "api_key_header": {
+            "type": "string",
+            "example": "X-Api-Key"
+          },
           "client_id": {
             "type": "string",
             "example": "my-client-id"
@@ -3543,6 +3838,10 @@
             "type": "number",
             "example": 1672534900
           },
+          "endpoint": {
+            "type": "string",
+            "example": "https://my-toolset.example.com/mcp"
+          },
           "transport": {
             "type": "string",
             "example": "HTTP"
@@ -3578,6 +3877,231 @@
         },
         "required": [
           "data"
+        ]
+      },
+      "ToolsetAuthSettingsBodyDto": {
+        "type": "object",
+        "properties": {
+          "authenticationType": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "API_KEY",
+              "OAUTH"
+            ],
+            "example": "NONE"
+          },
+          "apiKeyHeader": {
+            "type": "string",
+            "example": "X-Api-Key"
+          },
+          "clientId": {
+            "type": "string",
+            "example": "my-client-id"
+          },
+          "clientSecret": {
+            "type": "string",
+            "example": "my-client-secret"
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://auth.example.com/authorize"
+          },
+          "tokenEndpoint": {
+            "type": "string",
+            "example": "https://auth.example.com/token"
+          },
+          "scopesSupported": {
+            "example": [
+              "read",
+              "write"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "redirectUri": {
+            "type": "string",
+            "example": "https://chat.example.com/toolset-editor/callback"
+          },
+          "codeChallengeMethod": {
+            "type": "string",
+            "example": "S256"
+          },
+          "codeChallenge": {
+            "type": "string",
+            "example": "abc123"
+          }
+        },
+        "required": [
+          "authenticationType"
+        ]
+      },
+      "ToolsetBodyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "My toolset"
+          },
+          "version": {
+            "type": "string",
+            "example": "0.0.1"
+          },
+          "description": {
+            "type": "string",
+            "example": "My toolset description"
+          },
+          "iconUrl": {
+            "type": "string",
+            "example": "https://example.com/icon.svg"
+          },
+          "topics": {
+            "example": [
+              "keyword1",
+              "keyword2"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "endpoint": {
+            "type": "string",
+            "example": "https://my-toolset.example.com/mcp"
+          },
+          "transport": {
+            "type": "string",
+            "enum": [
+              "HTTP",
+              "SSE"
+            ],
+            "example": "HTTP"
+          },
+          "allowedTools": {
+            "example": [
+              "tool1",
+              "tool2"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reference": {
+            "type": "string",
+            "example": "ff5584b7-a82b-4f4f-bf42-5bf74a3893d6"
+          },
+          "authSettings": {
+            "$ref": "#/components/schemas/ToolsetAuthSettingsBodyDto"
+          }
+        },
+        "required": [
+          "name",
+          "endpoint",
+          "transport",
+          "authSettings"
+        ]
+      },
+      "MutatedToolsetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "toolsets/encrypted-bucket/My%20toolset__0.0.1"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "ToolsetLoginBodyDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "toolsets/encrypted-bucket/My%20toolset__0.0.1"
+          },
+          "credentialsLevel": {
+            "type": "string",
+            "enum": [
+              "GLOBAL",
+              "USER",
+              "APP"
+            ],
+            "example": "USER"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "API_KEY",
+              "OAUTH"
+            ],
+            "example": "API_KEY"
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "API key value (API_KEY auth)."
+          },
+          "code": {
+            "type": "string",
+            "description": "OAuth authorization code (OAUTH auth)."
+          },
+          "redirectUri": {
+            "type": "string",
+            "description": "OAuth redirect URI used for the code exchange."
+          }
+        },
+        "required": [
+          "url",
+          "credentialsLevel",
+          "authenticationType"
+        ]
+      },
+      "ToolsetAuthResultDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": [
+          "success"
+        ]
+      },
+      "ToolsetLogoutBodyDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "toolsets/encrypted-bucket/My%20toolset__0.0.1"
+          },
+          "credentialsLevel": {
+            "type": "string",
+            "enum": [
+              "GLOBAL",
+              "USER",
+              "APP"
+            ],
+            "example": "USER"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": [
+              "NONE",
+              "API_KEY",
+              "OAUTH"
+            ],
+            "example": "OAUTH"
+          }
+        },
+        "required": [
+          "url",
+          "credentialsLevel",
+          "authenticationType"
         ]
       },
       "AttachmentDto": {
@@ -4162,7 +4686,9 @@
             "example": "gpt-4o__My Chat"
           }
         },
-        "required": ["path"]
+        "required": [
+          "path"
+        ]
       },
       "RenameConversationBodyDto": {
         "type": "object",

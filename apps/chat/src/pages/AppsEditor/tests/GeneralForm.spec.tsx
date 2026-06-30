@@ -2,12 +2,20 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AppsEditorI18nKeys, ButtonsI18nKeys } from '../../../constants/translation-keys';
+import {
+  AppsEditorI18nKeys,
+  ButtonsI18nKeys,
+} from '../../../constants/translation-keys';
 import { createApplication } from '../../../server-api/applications';
 import GeneralForm from '../GeneralForm';
 
 vi.mock('../../../server-api/applications', () => ({
   createApplication: vi.fn(),
+}));
+
+vi.mock('@epam/ai-dial-catalog', () => ({
+  Card: () => null,
+  CatalogEntityType: { Model: 'model' },
 }));
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
@@ -88,6 +96,32 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </button>
   ),
+  DialTagInput: ({
+    label,
+    placeholder,
+    onChange,
+    initialTags,
+  }: {
+    label?: string;
+    placeholder?: string;
+    onChange?: (tags: string[]) => void;
+    initialTags?: string[];
+  }) => (
+    <label>
+      {label}
+      <input
+        placeholder={placeholder}
+        defaultValue={(initialTags ?? []).join(',')}
+        onChange={(e) =>
+          onChange?.(e.target.value ? e.target.value.split(',') : [])
+        }
+      />
+    </label>
+  ),
+  DialNotification: ({ message }: { message?: string }) => (
+    <p role="alert">{message}</p>
+  ),
+  NotificationVariant: { Error: 'error' },
 }));
 
 const DEFAULT_PROPS = {
@@ -163,7 +197,7 @@ describe('GeneralForm', () => {
   });
 
   it('disables Next button while submitting', async () => {
-    vi.mocked(createApplication).mockReturnValue(new Promise((_resolve) => {}));
+    vi.mocked(createApplication).mockReturnValue(new Promise(() => void 0));
     renderForm();
     await user.type(getNameInput(), 'My App');
     await user.click(getNextButton());

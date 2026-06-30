@@ -1,0 +1,99 @@
+// Local enums and editor form-state types for the toolset editor.
+// Values mirror the DIAL Core / generated client contract; the loaded toolset
+// entity itself comes from the generated `@epam/chat-api-client` DTO, so only
+// the editor form state and auth-flow shapes are modelled here.
+
+export enum ToolsetAuthTypes {
+  None = 'NONE',
+  ApiKey = 'API_KEY',
+  OAuth = 'OAUTH',
+}
+
+export enum ToolsetTransportType {
+  Http = 'HTTP',
+  Sse = 'SSE',
+}
+
+export enum ToolsetAuthStatus {
+  SignedIn = 'SIGNED_IN',
+  SignedOut = 'SIGNED_OUT',
+  Failed = 'FAILED',
+}
+
+export enum ToolsetCredentialsLevel {
+  Global = 'GLOBAL',
+  User = 'USER',
+  App = 'APP',
+}
+
+export enum ToolsetEditorSteps {
+  General = 'general',
+  Settings = 'settings',
+}
+
+export enum WithLogin {
+  WithLogin = 'with-login',
+  WithoutLogin = 'without-login',
+  WithConfig = 'with-config',
+}
+
+export interface ToolsetAuthFormData {
+  authenticationType: ToolsetAuthTypes;
+  withLogin: WithLogin;
+  isLoggedIn: boolean;
+  // API_KEY
+  keyHeader?: string;
+  apiKey?: string;
+  // OAUTH
+  clientId?: string;
+  clientSecret?: string;
+  authorizationEndpoint?: string;
+  tokenEndpoint?: string;
+  scopes?: string[];
+}
+
+export interface ToolsetFormData {
+  name: string;
+  version: string;
+  iconUrl: string;
+  description: string;
+  topics: string[];
+  endpoint: string;
+  protocol: ToolsetTransportType;
+  allowedTools: string[];
+  reference?: string;
+  auth: ToolsetAuthFormData;
+}
+
+export interface ToolsetFormErrors {
+  name?: string;
+  endpoint?: string;
+  keyHeader?: string;
+  clientId?: string;
+  clientSecret?: string;
+}
+
+export interface ToolsetAuthPayloadBase {
+  url: string;
+  credentialsLevel: ToolsetCredentialsLevel;
+  authenticationType: ToolsetAuthTypes;
+}
+
+export interface ToolsetOAuthLoginPayload extends ToolsetAuthPayloadBase {
+  code: string;
+  redirectUri: string;
+}
+
+export interface ToolsetApiKeyLoginPayload extends ToolsetAuthPayloadBase {
+  apiKey: string;
+}
+
+export type ToolsetLoginPayload =
+  | ToolsetOAuthLoginPayload
+  | ToolsetApiKeyLoginPayload;
+
+export interface ToolsetRedirectState {
+  toolsetId: string;
+  credentialsLevel?: ToolsetCredentialsLevel;
+  callbackUrl?: string;
+}

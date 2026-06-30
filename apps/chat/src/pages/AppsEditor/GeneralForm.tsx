@@ -12,7 +12,10 @@ import {
 import type { FC } from 'react';
 import { memo, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { AppsEditorI18nKeys, ButtonsI18nKeys } from '../../constants/translation-keys';
+import {
+  AppsEditorI18nKeys,
+  ButtonsI18nKeys,
+} from '../../constants/translation-keys';
 import { createApplication } from '../../server-api/applications';
 
 interface Props {
@@ -109,14 +112,18 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
             labelProps={{
               label: t(AppsEditorI18nKeys.GeneralFormDescriptionLabel),
             }}
-            placeholder={t(AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder)}
+            placeholder={t(
+              AppsEditorI18nKeys.GeneralFormDescriptionPlaceholder,
+            )}
           />
 
           <DialInput
             id="app-icon-url"
             value={iconUrl}
             onChange={(value) => setIconUrl(value ?? '')}
-            labelProps={{ label: t(AppsEditorI18nKeys.GeneralFormIconUrlLabel) }}
+            labelProps={{
+              label: t(AppsEditorI18nKeys.GeneralFormIconUrlLabel),
+            }}
             placeholder={t(AppsEditorI18nKeys.GeneralFormIconUrlPlaceholder)}
           />
 
@@ -124,7 +131,9 @@ const GeneralForm: FC<Props> = ({ schemaId, onCreated, onCancel }) => {
             id="app-version"
             value={version}
             onChange={(value) => setVersion(value ?? '')}
-            labelProps={{ label: t(AppsEditorI18nKeys.GeneralFormVersionLabel) }}
+            labelProps={{
+              label: t(AppsEditorI18nKeys.GeneralFormVersionLabel),
+            }}
             placeholder={t(AppsEditorI18nKeys.GeneralFormVersionPlaceholder)}
           />
 
