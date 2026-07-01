@@ -5,7 +5,7 @@ You are running the **{{stage}}** agent.
 - Working tree: the current checkout (repo root).
 - PR diff: `git diff origin/{{base_ref}}...HEAD`.
 - Upstream agent outputs:
-{{upstream_inputs}}
+  {{upstream_inputs}}
 
 If an upstream artifact is listed above but missing at runtime, treat it as a platform-level race: write `status: "passed"` with a `summary` naming the absent artifact — do not search the workspace for substitutes, and do not run the upstream agent's tooling yourself. If the file exists but is malformed (unparseable JSON, missing the expected `payload`), write `status: "passed_with_findings"` with one `info`-severity finding explaining the parse failure rather than guessing at the contents.
 
@@ -17,7 +17,7 @@ Your `Bash` tool only accepts the specific patterns in `allowed_tools` (e.g. `Ba
 - Shell variable expansion (`$VAR`, `${VAR}` — including `$GITHUB_BASE_REF`, `$GITHUB_WORKSPACE`)
 - Pipes (`|`), redirections (`>`, `>>`, `<`), and command chains (`&&`, `||`, `;`)
 
-For everything that *isn't* an allow-listed CLI invocation:
+For everything that _isn't_ an allow-listed CLI invocation:
 
 - **Read files** with the `Read` tool (give an absolute path), not `cat`/`head`.
 - **Search** with the `Grep` tool, not `bash grep` / `awk` pipelines.
@@ -32,7 +32,7 @@ You run under a strict turn limit. Be decisive — do not over-analyze or re-ver
 
 ## Task
 
-Invoke the local `/{{skill}}` skill against the inputs above. Follow its **methodology and criteria** verbatim — don't freelance criteria the skill doesn't cover. But the **platform owns input and output plumbing**: where inputs live (above) and how/where results are written (below) are defined *here*, not by the skill. If the skill's instructions about input location or output format/destination differ from this wrapper, **the wrapper wins**. Map the skill's results into the response schema below.
+Invoke the local `/{{skill}}` skill against the inputs above. Follow its **methodology and criteria** verbatim — don't freelance criteria the skill doesn't cover. But the **platform owns input and output plumbing**: where inputs live (above) and how/where results are written (below) are defined _here_, not by the skill. If the skill's instructions about input location or output format/destination differ from this wrapper, **the wrapper wins**. Map the skill's results into the response schema below.
 
 ## Output
 
@@ -46,7 +46,7 @@ The JSON object you write must have:
 - `status`: `"passed"` (clean), `"passed_with_findings"` (non-blocking results to surface), or `"failed"` (blocking problem)
 - `summary`: one short line summarizing the result (max 280 chars)
 
-**Optional `payload`** (object) — put the skill's results here in **whatever shape fits the skill**. `payload` is open; the shapes below are *helpers the renderer/processors recognize*, not requirements — pick the one that matches your skill's output, or use your own keys:
+**Optional `payload`** (object) — put the skill's results here in **whatever shape fits the skill**. `payload` is open; the shapes below are _helpers the renderer/processors recognize_, not requirements — pick the one that matches your skill's output, or use your own keys:
 
 - `payload.findings[]` — for skills that emit **issues/findings** (scan, review, triage). Shape: `{severity, file?, line?, message, suggested_fix?, requirement_ref?}`. Severity: `info`/`low`/`medium`/`high`/`critical`. Preserve the skill's severity verbatim; don't downgrade. The renderer turns these into a table automatically.
 - `payload.comment_markdown` — a verbatim markdown body (test-suite summaries, benchmark numbers, prose). **Long markdown inside JSON is escape-error-prone** — embedded code fences, nested backticks, and `"` in block quotes can produce malformed JSON; keep it brief (~5 lines) and avoid nested code blocks.

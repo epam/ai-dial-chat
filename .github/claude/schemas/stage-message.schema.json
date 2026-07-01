@@ -25,8 +25,8 @@
       "additionalProperties": false,
       "properties": {
         "event": { "type": "string" },
-        "ref":   { "type": "string" },
-        "sha":   { "type": "string" }
+        "ref": { "type": "string" },
+        "sha": { "type": "string" }
       }
     },
     "stage": {

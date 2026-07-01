@@ -45,7 +45,7 @@ Do only as much as the verdict requires:
    monorepo (`apps/*`, `libs/*`, `packages/*`). Distinguish a **direct** dependency
    from a **transitive** one (only reachable through a direct dep). If the package
    is never imported in production code, that is decisive.
-3. **Reachability — the most error-prone step.** For the *specific* vulnerable
+3. **Reachability — the most error-prone step.** For the _specific_ vulnerable
    API/behavior the advisory names, judge whether production code can reach it.
    Read the real call sites; trace the path. State **operator-controlled vs
    attacker-controlled** input: an advisory whose sink only consumes build config
@@ -68,7 +68,7 @@ Do only as much as the verdict requires:
 - **FALSE_POSITIVE** — proven not applicable: version doesn't actually match,
   package unused in production, dev/build-only, or the vulnerable path is
   unreachable. Requires proof, not "looks unlikely".
-- **NEEDS_REVIEW** — can't prove exploitability *or* safety statically (ambiguous
+- **NEEDS_REVIEW** — can't prove exploitability _or_ safety statically (ambiguous
   dataflow, runtime/deploy-dependent). State what's missing.
 
 Severity: keep the producer's as `original_severity`; set `adjusted_severity`
@@ -80,7 +80,7 @@ Re-evaluate the producer's **classifications** (not the items themselves):
 
 - Walk `news_ignored[]`: would any be RELEVANT/TANGENTIAL read fresh? (e.g. a
   foreign-ecosystem token-redaction regression that npm/Gradle could mirror.)
-- Walk TANGENTIAL: does each rationale trace a *concrete* path to this stack, or
+- Walk TANGENTIAL: does each rationale trace a _concrete_ path to this stack, or
   is it hand-waving? Downgrade vague ones to IGNORE.
 - Flag coverage gaps (e.g. Snyk/Socket Node-specific disclosures the source set
   missed) and judge whether each `suggested_action` is a real task or vague

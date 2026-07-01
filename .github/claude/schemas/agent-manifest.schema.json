@@ -3,7 +3,13 @@
   "title": "DIAL SDLC Agent Manifest",
   "description": "Manifest at agents/<name>/agent.yml. The matcher validates every manifest against this schema at discovery time; violations fail the dispatcher loudly. Accepts the framework's v0.1 fields (some recorded-only today; see PLATFORM_REFERENCE.md for which are runtime-honored).",
   "type": "object",
-  "required": ["contract_version", "name", "skill", "triggers", "allowed_tools"],
+  "required": [
+    "contract_version",
+    "name",
+    "skill",
+    "triggers",
+    "allowed_tools"
+  ],
   "additionalProperties": false,
   "properties": {
     "contract_version": {
@@ -65,7 +71,13 @@
             "properties": {
               "on": {
                 "type": "string",
-                "enum": ["pull_request", "push", "schedule", "workflow_dispatch", "workflow_run"]
+                "enum": [
+                  "pull_request",
+                  "push",
+                  "schedule",
+                  "workflow_dispatch",
+                  "workflow_run"
+                ]
               },
               "filters": {
                 "type": "object",
@@ -166,9 +178,18 @@
                 "required": ["name"],
                 "additionalProperties": false,
                 "properties": {
-                  "name":    { "type": "string", "description": "For npm: the package name. For shell: a display name used in logs." },
-                  "version": { "type": "string", "description": "For npm: appended as `@<version>` to the install command (default: latest stable). For shell: available as `{{version}}` placeholder inside `install`." },
-                  "install": { "type": "string", "description": "Shell command to install the tool. When present, overrides the npm path. May reference `{{version}}` for substitution from the sibling `version` field." }
+                  "name": {
+                    "type": "string",
+                    "description": "For npm: the package name. For shell: a display name used in logs."
+                  },
+                  "version": {
+                    "type": "string",
+                    "description": "For npm: appended as `@<version>` to the install command (default: latest stable). For shell: available as `{{version}}` placeholder inside `install`."
+                  },
+                  "install": {
+                    "type": "string",
+                    "description": "Shell command to install the tool. When present, overrides the npm path. May reference `{{version}}` for substitution from the sibling `version` field."
+                  }
                 }
               }
             ]
