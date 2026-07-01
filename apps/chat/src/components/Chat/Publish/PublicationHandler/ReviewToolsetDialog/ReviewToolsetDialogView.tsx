@@ -118,7 +118,18 @@ const view = withRenderWhenEntities<ReviewToolsetDialogContentProps>({
           />
           <MarketplaceEntityInfoRow
             label={t(ChatI18nKeys.AllowedTools)}
-            value={toolset.allowedTools?.join(', ')}
+            value={
+              <div className="flex flex-wrap items-center gap-1 truncate">
+                {toolset.allowedTools?.map((tool) => (
+                  <span
+                    key={tool}
+                    className="max-w-[150px] truncate break-all rounded bg-accent-primary-alpha p-1 text-xs"
+                  >
+                    {tool}
+                  </span>
+                ))}
+              </div>
+            }
             dataQa="toolset-allowed-tools"
           />
         </div>
