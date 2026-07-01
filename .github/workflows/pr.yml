@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   run_tests:
-    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.6.0
+    uses: epam/ai-dial-ci/.github/workflows/node_pr.yml@4.7.0
     secrets: inherit
     with:
       node-version: 24
