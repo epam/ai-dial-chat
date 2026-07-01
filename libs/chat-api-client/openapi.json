@@ -28,9 +28,7 @@
           }
         },
         "summary": "Get themes configuration",
-        "tags": [
-          "themes"
-        ]
+        "tags": ["themes"]
       }
     },
     "/api/themes/icon": {
@@ -88,9 +86,7 @@
           }
         },
         "summary": "Get theme icon",
-        "tags": [
-          "themes"
-        ]
+        "tags": ["themes"]
       }
     },
     "/api/health": {
@@ -128,9 +124,7 @@
           }
         },
         "summary": "Check application health status",
-        "tags": [
-          "health"
-        ]
+        "tags": ["health"]
       }
     },
     "/api/v1/auth/providers": {
@@ -153,9 +147,7 @@
           }
         },
         "summary": "List configured identity providers",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/login/{providerId}": {
@@ -185,9 +177,7 @@
           }
         },
         "summary": "Start OIDC login flow",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/callback/{providerId}": {
@@ -217,9 +207,7 @@
           }
         },
         "summary": "OIDC authorization callback",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/logout": {
@@ -232,9 +220,7 @@
           }
         },
         "summary": "Log out and clear session cookie",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/auth/me": {
@@ -262,9 +248,7 @@
           }
         ],
         "summary": "Get current user profile",
-        "tags": [
-          "auth"
-        ]
+        "tags": ["auth"]
       }
     },
     "/api/v1/client-config": {
@@ -301,9 +285,7 @@
           }
         },
         "summary": "Get client-safe application configuration and feature flags",
-        "tags": [
-          "app-config"
-        ]
+        "tags": ["app-config"]
       }
     },
     "/api/v1/application-schemas": {
@@ -339,9 +321,7 @@
           }
         },
         "summary": "List application type schemas",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/application-schemas/{id}": {
@@ -395,9 +375,7 @@
           }
         },
         "summary": "Get application type schema by id",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/applications": {
@@ -433,9 +411,7 @@
           }
         },
         "summary": "List available applications",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       },
       "post": {
         "description": "Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.",
@@ -479,9 +455,7 @@
           }
         },
         "summary": "Create a new application",
-        "tags": [
-          "applications"
-        ]
+        "tags": ["applications"]
       }
     },
     "/api/v1/deployments": {
@@ -497,13 +471,7 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": [
-                  "chat",
-                  "embeddings",
-                  "mcp",
-                  "custom_ui",
-                  "all"
-                ]
+                "enum": ["chat", "embeddings", "mcp", "custom_ui", "all"]
               }
             }
           }
@@ -539,9 +507,7 @@
           }
         },
         "summary": "List deployments by interface type",
-        "tags": [
-          "deployments"
-        ]
+        "tags": ["deployments"]
       }
     },
     "/api/v1/deployments/{deployment}/configuration": {
@@ -583,9 +549,7 @@
           }
         },
         "summary": "Get JSON Schema configuration for a deployment",
-        "tags": [
-          "deployments"
-        ]
+        "tags": ["deployments"]
       }
     },
     "/api/v1/deployments/{deployment}/limits": {
@@ -636,9 +600,7 @@
           }
         },
         "summary": "Get deployment usage limits",
-        "tags": [
-          "deployments"
-        ]
+        "tags": ["deployments"]
       }
     },
     "/api/v1/user-config": {
@@ -661,9 +623,7 @@
           }
         },
         "summary": "Get current user configuration",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/pins": {
@@ -692,9 +652,7 @@
           }
         },
         "summary": "Pin or unpin a conversation",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/toolsets": {
@@ -723,9 +681,7 @@
           }
         },
         "summary": "Install or uninstall a toolset",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/deployments": {
@@ -754,9 +710,7 @@
           }
         },
         "summary": "Install or uninstall a deployment",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/user-config/deployments/selected": {
@@ -782,9 +736,7 @@
           }
         },
         "summary": "Set the selected deployment",
-        "tags": [
-          "user-config"
-        ]
+        "tags": ["user-config"]
       }
     },
     "/api/v1/models": {
@@ -823,9 +775,7 @@
           }
         },
         "summary": "List available models",
-        "tags": [
-          "models"
-        ]
+        "tags": ["models"]
       }
     },
     "/api/v1/models/{modelName}": {
@@ -881,9 +831,7 @@
           }
         },
         "summary": "Get model by name",
-        "tags": [
-          "models"
-        ]
+        "tags": ["models"]
       }
     },
     "/api/v1/toolsets": {
@@ -922,9 +870,57 @@
           }
         },
         "summary": "List available toolsets",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
+      },
+      "post": {
+        "description": "Creates a new toolset for the authenticated session user by proxying DIAL Core. Invalidates the toolset list cache on success.",
+        "operationId": "createToolset",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolsetBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Toolset created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutatedToolsetDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — missing or invalid fields"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "409": {
+            "description": "Toolset name already taken"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Create a new toolset",
+        "tags": ["toolsets"]
       }
     },
     "/api/v1/toolsets/{toolsetName}": {
@@ -981,9 +977,236 @@
           }
         },
         "summary": "Get toolset by name",
-        "tags": [
-          "toolsets"
-        ]
+        "tags": ["toolsets"]
+      },
+      "patch": {
+        "description": "Updates an existing toolset for the authenticated session user by proxying DIAL Core. Invalidates the relevant caches on success.",
+        "operationId": "updateToolset",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolsetBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Toolset updated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutatedToolsetDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid toolset name or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "404": {
+            "description": "Toolset not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Update a toolset",
+        "tags": ["toolsets"]
+      },
+      "delete": {
+        "description": "Deletes a toolset for the authenticated session user by proxying DIAL Core. Invalidates the relevant caches on success.",
+        "operationId": "deleteToolset",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Toolset deleted successfully"
+          },
+          "400": {
+            "description": "Invalid toolset name"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "404": {
+            "description": "Toolset not found"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Delete a toolset",
+        "tags": ["toolsets"]
+      }
+    },
+    "/api/v1/toolsets/{toolsetName}/login": {
+      "post": {
+        "description": "Submits API key or OAuth authorization-code credentials for a toolset by proxying DIAL Core (POST /v1/ops/toolset/signin). Credential payloads are never logged.",
+        "operationId": "loginToolset",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolsetLoginBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials submitted successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolsetAuthResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid toolset name or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Submit toolset credentials",
+        "tags": ["toolsets"]
+      }
+    },
+    "/api/v1/toolsets/{toolsetName}/logout": {
+      "post": {
+        "description": "Revokes a toolset's credentials by proxying DIAL Core (POST /v1/ops/toolset/signout).",
+        "operationId": "logoutToolset",
+        "parameters": [
+          {
+            "name": "toolsetName",
+            "required": true,
+            "in": "path",
+            "description": "Toolset identifier. Slash-separated names must be percent-encoded in the URL (%2F).",
+            "schema": {
+              "pattern": "^(?:[\\w.\\-:@/]|%[\\dA-Fa-f]{2})+$",
+              "example": "my-toolset",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolsetLogoutBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Credentials revoked successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ToolsetAuthResultDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid toolset name or body"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "403": {
+            "description": "Caller lacks permission"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "502": {
+            "description": "DIAL Core returned an error response"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Revoke toolset credentials",
+        "tags": ["toolsets"]
       }
     },
     "/api/v1/chat/completions": {
@@ -1025,9 +1248,7 @@
           }
         },
         "summary": "Send a chat completion request to DIAL Core",
-        "tags": [
-          "chat"
-        ]
+        "tags": ["chat"]
       }
     },
     "/api/v1/conversations": {
@@ -1064,9 +1285,7 @@
           }
         },
         "summary": "Create a new conversation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "get": {
         "operationId": "getConversation",
@@ -1110,9 +1329,7 @@
           }
         },
         "summary": "Get a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "put": {
         "operationId": "saveConversation",
@@ -1166,9 +1383,7 @@
           }
         },
         "summary": "Save (overwrite) a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "patch": {
         "operationId": "renameConversation",
@@ -1211,6 +1426,9 @@
           "401": {
             "description": "Not authenticated"
           },
+          "404": {
+            "description": "Conversation not found"
+          },
           "409": {
             "description": "Destination path already exists"
           },
@@ -1222,9 +1440,7 @@
           }
         },
         "summary": "Rename a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       },
       "delete": {
         "operationId": "deleteConversation",
@@ -1261,9 +1477,7 @@
           }
         },
         "summary": "Delete a conversation by path",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/list": {
@@ -1330,9 +1544,7 @@
           }
         },
         "summary": "List conversations",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/metadata": {
@@ -1388,9 +1600,7 @@
           }
         },
         "summary": "Get metadata for a conversation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/completions": {
@@ -1438,9 +1648,7 @@
           }
         },
         "summary": "Stream a chat completion",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/completions/stop": {
@@ -1469,9 +1677,7 @@
           }
         },
         "summary": "Stop an active generation",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/watch": {
@@ -1504,9 +1710,7 @@
           }
         },
         "summary": "Subscribe to conversation resource updates via SSE",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/duplicate": {
@@ -1552,9 +1756,7 @@
           }
         },
         "summary": "Duplicate a conversation into the user's own bucket",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/deletions": {
@@ -1597,9 +1799,7 @@
           }
         },
         "summary": "Delete selected conversations",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/conversations/deletions/all": {
@@ -1648,9 +1848,7 @@
           }
         },
         "summary": "Delete all conversations in the user bucket",
-        "tags": [
-          "conversations"
-        ]
+        "tags": ["conversations"]
       }
     },
     "/api/v1/files": {
@@ -1663,11 +1861,7 @@
             "multipart/form-data": {
               "schema": {
                 "type": "object",
-                "required": [
-                  "file",
-                  "bucket",
-                  "path"
-                ],
+                "required": ["file", "bucket", "path"],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -1681,10 +1875,7 @@
                   },
                   "uploadMode": {
                     "type": "string",
-                    "enum": [
-                      "overwrite",
-                      "create-only"
-                    ],
+                    "enum": ["overwrite", "create-only"],
                     "description": "Optional upload mode. 'overwrite' (default) overwrites; 'create-only' fails with 409 if file exists."
                   }
                 }
@@ -1728,9 +1919,7 @@
             "description": "DIAL Core unreachable or timed out"
           }
         },
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/list": {
@@ -1832,9 +2021,7 @@
           }
         },
         "summary": "List files and folders",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/public": {
@@ -1913,9 +2100,7 @@
           }
         },
         "summary": "List files from the organization (public) bucket",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/shared": {
@@ -1981,9 +2166,7 @@
           }
         },
         "summary": "List files shared with the current user",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/metadata": {
@@ -2046,9 +2229,7 @@
           }
         },
         "summary": "Get file metadata",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/folders": {
@@ -2102,9 +2283,7 @@
           }
         },
         "summary": "Create a folder",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/download-archive": {
@@ -2159,9 +2338,7 @@
           }
         },
         "summary": "Download files and folders as a ZIP archive",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/delete": {
@@ -2206,9 +2383,7 @@
           }
         },
         "summary": "Delete files and folders",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/rename": {
@@ -2253,9 +2428,7 @@
           }
         },
         "summary": "Rename files and folders",
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/files/download": {
@@ -2317,9 +2490,7 @@
             "description": "DIAL Core unreachable or timed out"
           }
         },
-        "tags": [
-          "files"
-        ]
+        "tags": ["files"]
       }
     },
     "/api/v1/rate": {
@@ -2358,9 +2529,7 @@
           }
         },
         "summary": "Rate an assistant message",
-        "tags": [
-          "rate"
-        ]
+        "tags": ["rate"]
       }
     },
     "/api/v1/transcription": {
@@ -2406,9 +2575,7 @@
           }
         },
         "summary": "Transcribe audio using the configured ASR model",
-        "tags": [
-          "transcription"
-        ]
+        "tags": ["transcription"]
       }
     }
   },
@@ -2484,12 +2651,7 @@
             "example": "https://example.com/logo-light.svg"
           }
         },
-        "required": [
-          "id",
-          "displayName",
-          "colors",
-          "app-logo"
-        ]
+        "required": ["id", "displayName", "colors", "app-logo"]
       },
       "ThemeImagesDto": {
         "type": "object",
@@ -2519,11 +2681,7 @@
             "example": "https://example.com/chat-favicon.png"
           }
         },
-        "required": [
-          "default-addon",
-          "default-model",
-          "favicon"
-        ]
+        "required": ["default-addon", "default-model", "favicon"]
       },
       "ThemeConfigResponseDto": {
         "type": "object",
@@ -2538,10 +2696,7 @@
             "$ref": "#/components/schemas/ThemeImagesDto"
           }
         },
-        "required": [
-          "themes",
-          "images"
-        ]
+        "required": ["themes", "images"]
       },
       "ProviderInfoDto": {
         "type": "object",
@@ -2555,10 +2710,7 @@
             "example": "Local"
           }
         },
-        "required": [
-          "id",
-          "label"
-        ]
+        "required": ["id", "label"]
       },
       "UserProfileDto": {
         "type": "object",
@@ -2580,12 +2732,7 @@
             "example": "default-bucket"
           }
         },
-        "required": [
-          "sub",
-          "providerId",
-          "claims",
-          "bucket"
-        ]
+        "required": ["sub", "providerId", "claims", "bucket"]
       },
       "ClientConfigDto": {
         "type": "object",
@@ -2608,10 +2755,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "asrModelId",
-          "transcribeSizeLimitBytes"
-        ]
+        "required": ["asrModelId", "transcribeSizeLimitBytes"]
       },
       "ClientConfigMetadataDto": {
         "type": "object",
@@ -2625,10 +2769,7 @@
             "description": "Cache TTL in seconds applied to this response."
           }
         },
-        "required": [
-          "resolvedAt",
-          "cacheTtlSeconds"
-        ]
+        "required": ["resolvedAt", "cacheTtlSeconds"]
       },
       "ClientConfigResponseDto": {
         "type": "object",
@@ -2662,11 +2803,7 @@
             ]
           }
         },
-        "required": [
-          "appId",
-          "features",
-          "config"
-        ]
+        "required": ["appId", "features", "config"]
       },
       "ApplicationSchemaSummaryDto": {
         "type": "object",
@@ -2707,9 +2844,7 @@
             }
           }
         },
-        "required": [
-          "schemas"
-        ]
+        "required": ["schemas"]
       },
       "ApplicationDto": {
         "type": "object",
@@ -2739,9 +2874,7 @@
             "example": "A custom application."
           },
           "input_attachment_types": {
-            "example": [
-              "image/png"
-            ],
+            "example": ["image/png"],
             "type": "array",
             "items": {
               "type": "string"
@@ -2752,10 +2885,7 @@
             "example": 5
           }
         },
-        "required": [
-          "id",
-          "object"
-        ]
+        "required": ["id", "object"]
       },
       "ApplicationsResponseDto": {
         "type": "object",
@@ -2767,9 +2897,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "CreateApplicationBodyDto": {
         "type": "object",
@@ -2795,20 +2923,14 @@
             "example": "1.0"
           },
           "topics": {
-            "example": [
-              "nlp",
-              "assistant"
-            ],
+            "example": ["nlp", "assistant"],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": [
-          "name",
-          "type"
-        ]
+        "required": ["name", "type"]
       },
       "CreatedApplicationDto": {
         "type": "object",
@@ -2826,9 +2948,7 @@
             "example": "application"
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
       },
       "DeploymentFeaturesDto": {
         "type": "object",
@@ -2842,10 +2962,7 @@
             "description": "Whether the deployment supports temperature control"
           }
         },
-        "required": [
-          "systemPrompt",
-          "temperature"
-        ]
+        "required": ["systemPrompt", "temperature"]
       },
       "DeploymentItemDto": {
         "type": "object",
@@ -2860,11 +2977,7 @@
           },
           "type": {
             "type": "string",
-            "enum": [
-              "model",
-              "application",
-              "toolset"
-            ]
+            "enum": ["model", "application", "toolset"]
           },
           "iconUrl": {
             "type": "string",
@@ -2944,11 +3057,7 @@
             "description": "Parent folder path for application-type deployments (absent for root-level or non-application items)"
           }
         },
-        "required": [
-          "id",
-          "displayName",
-          "type"
-        ]
+        "required": ["id", "displayName", "type"]
       },
       "DeploymentsResponseDto": {
         "type": "object",
@@ -2960,9 +3069,7 @@
             }
           }
         },
-        "required": [
-          "deployments"
-        ]
+        "required": ["deployments"]
       },
       "DeploymentConfigurationDto": {
         "type": "object",
@@ -3002,10 +3109,7 @@
             "example": 10
           }
         },
-        "required": [
-          "total",
-          "used"
-        ]
+        "required": ["total", "used"]
       },
       "DeploymentLimitsResponseDto": {
         "type": "object",
@@ -3047,45 +3151,35 @@
         "properties": {
           "pinnedIds": {
             "description": "Pinned conversation identifiers.",
-            "example": [
-              "conversations/default-bucket/gpt-4__My chat__uuid"
-            ],
+            "example": ["conversations/default-bucket/gpt-4__My chat__uuid"],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": [
-          "pinnedIds"
-        ]
+        "required": ["pinnedIds"]
       },
       "ToolsetsConfigDto": {
         "type": "object",
         "properties": {
           "installed": {
             "description": "Installed toolset identifiers.",
-            "example": [
-              "toolset-abc"
-            ],
+            "example": ["toolset-abc"],
             "type": "array",
             "items": {
               "type": "string"
             }
           }
         },
-        "required": [
-          "installed"
-        ]
+        "required": ["installed"]
       },
       "DeploymentsConfigDto": {
         "type": "object",
         "properties": {
           "installed": {
             "description": "Installed deployment identifiers.",
-            "example": [
-              "deployment-xyz"
-            ],
+            "example": ["deployment-xyz"],
             "type": "array",
             "items": {
               "type": "string"
@@ -3096,9 +3190,7 @@
             "nullable": true
           }
         },
-        "required": [
-          "installed"
-        ]
+        "required": ["installed"]
       },
       "UserConfigDto": {
         "type": "object",
@@ -3118,12 +3210,7 @@
             "$ref": "#/components/schemas/DeploymentsConfigDto"
           }
         },
-        "required": [
-          "version",
-          "conversations",
-          "toolsets",
-          "deployments"
-        ]
+        "required": ["version", "conversations", "toolsets", "deployments"]
       },
       "UpdatePinsDto": {
         "type": "object",
@@ -3139,10 +3226,7 @@
             "example": true
           }
         },
-        "required": [
-          "path",
-          "isPinned"
-        ]
+        "required": ["path", "isPinned"]
       },
       "UpdateInstalledDto": {
         "type": "object",
@@ -3158,10 +3242,7 @@
             "example": true
           }
         },
-        "required": [
-          "id",
-          "isInstalled"
-        ]
+        "required": ["id", "isInstalled"]
       },
       "UpdateSelectedDeploymentDto": {
         "type": "object",
@@ -3254,9 +3335,7 @@
         "type": "object",
         "properties": {
           "scale_types": {
-            "example": [
-              "standard"
-            ],
+            "example": ["standard"],
             "type": "array",
             "items": {
               "type": "string"
@@ -3369,10 +3448,7 @@
             "$ref": "#/components/schemas/DialModelFeaturesDto"
           },
           "input_attachment_types": {
-            "example": [
-              "image/png",
-              "application/pdf"
-            ],
+            "example": ["image/png", "application/pdf"],
             "type": "array",
             "items": {
               "type": "string"
@@ -3391,10 +3467,7 @@
             "additionalProperties": true
           },
           "description_keywords": {
-            "example": [
-              "Text Generation",
-              "Image Recognition"
-            ],
+            "example": ["Text Generation", "Image Recognition"],
             "type": "array",
             "items": {
               "type": "string"
@@ -3429,10 +3502,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "object"
-        ]
+        "required": ["id", "object"]
       },
       "DialModelListResponseDto": {
         "type": "object",
@@ -3444,9 +3514,7 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
       },
       "DialToolsetAuthSettingsDto": {
         "type": "object",
@@ -3454,11 +3522,11 @@
           "authentication_type": {
             "type": "string",
             "example": "OAUTH",
-            "enum": [
-              "OAUTH",
-              "API_KEY",
-              "NONE"
-            ]
+            "enum": ["OAUTH", "API_KEY", "NONE"]
+          },
+          "api_key_header": {
+            "type": "string",
+            "example": "X-Api-Key"
           },
           "client_id": {
             "type": "string",
@@ -3481,10 +3549,7 @@
             "example": "S256"
           },
           "scopes_supported": {
-            "example": [
-              "scope1",
-              "scope2"
-            ],
+            "example": ["scope1", "scope2"],
             "type": "array",
             "items": {
               "type": "string"
@@ -3493,23 +3558,15 @@
           "global_auth_status": {
             "type": "string",
             "example": "SIGNED_OUT",
-            "enum": [
-              "SIGNED_IN",
-              "SIGNED_OUT"
-            ]
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
           },
           "user_level_auth_status": {
             "type": "string",
             "example": "SIGNED_OUT",
-            "enum": [
-              "SIGNED_IN",
-              "SIGNED_OUT"
-            ]
+            "enum": ["SIGNED_IN", "SIGNED_OUT"]
           }
         },
-        "required": [
-          "authentication_type"
-        ]
+        "required": ["authentication_type"]
       },
       "DialToolsetDto": {
         "type": "object",
@@ -3551,10 +3608,7 @@
             "example": "succeeded"
           },
           "description_keywords": {
-            "example": [
-              "keyword1",
-              "keyword2"
-            ],
+            "example": ["keyword1", "keyword2"],
             "type": "array",
             "items": {
               "type": "string"
@@ -3576,15 +3630,16 @@
             "type": "number",
             "example": 1672534900
           },
+          "endpoint": {
+            "type": "string",
+            "example": "https://my-toolset.example.com/mcp"
+          },
           "transport": {
             "type": "string",
             "example": "HTTP"
           },
           "allowed_tools": {
-            "example": [
-              "tool1",
-              "tool2"
-            ],
+            "example": ["tool1", "tool2"],
             "type": "array",
             "items": {
               "type": "string"
@@ -3594,10 +3649,7 @@
             "$ref": "#/components/schemas/DialToolsetAuthSettingsDto"
           }
         },
-        "required": [
-          "id",
-          "toolset"
-        ]
+        "required": ["id", "toolset"]
       },
       "DialToolsetListResponseDto": {
         "type": "object",
@@ -3609,9 +3661,181 @@
             }
           }
         },
-        "required": [
-          "data"
-        ]
+        "required": ["data"]
+      },
+      "ToolsetAuthSettingsBodyDto": {
+        "type": "object",
+        "properties": {
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "example": "NONE"
+          },
+          "apiKeyHeader": {
+            "type": "string",
+            "example": "X-Api-Key"
+          },
+          "clientId": {
+            "type": "string",
+            "example": "my-client-id"
+          },
+          "clientSecret": {
+            "type": "string",
+            "example": "my-client-secret"
+          },
+          "authorizationEndpoint": {
+            "type": "string",
+            "example": "https://auth.example.com/authorize"
+          },
+          "tokenEndpoint": {
+            "type": "string",
+            "example": "https://auth.example.com/token"
+          },
+          "scopesSupported": {
+            "example": ["read", "write"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "redirectUri": {
+            "type": "string",
+            "example": "https://chat.example.com/toolset-editor/callback"
+          },
+          "codeChallengeMethod": {
+            "type": "string",
+            "example": "S256"
+          },
+          "codeChallenge": {
+            "type": "string",
+            "example": "abc123"
+          }
+        },
+        "required": ["authenticationType"]
+      },
+      "ToolsetBodyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "My toolset"
+          },
+          "version": {
+            "type": "string",
+            "example": "0.0.1"
+          },
+          "description": {
+            "type": "string",
+            "example": "My toolset description"
+          },
+          "iconUrl": {
+            "type": "string",
+            "example": "https://example.com/icon.svg"
+          },
+          "topics": {
+            "example": ["keyword1", "keyword2"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "endpoint": {
+            "type": "string",
+            "example": "https://my-toolset.example.com/mcp"
+          },
+          "transport": {
+            "type": "string",
+            "enum": ["HTTP", "SSE"],
+            "example": "HTTP"
+          },
+          "allowedTools": {
+            "example": ["tool1", "tool2"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "reference": {
+            "type": "string",
+            "example": "ff5584b7-a82b-4f4f-bf42-5bf74a3893d6"
+          },
+          "authSettings": {
+            "$ref": "#/components/schemas/ToolsetAuthSettingsBodyDto"
+          }
+        },
+        "required": ["name", "endpoint", "transport", "authSettings"]
+      },
+      "MutatedToolsetDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "toolsets/encrypted-bucket/My%20toolset__0.0.1"
+          }
+        },
+        "required": ["id"]
+      },
+      "ToolsetLoginBodyDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "toolsets/encrypted-bucket/My%20toolset__0.0.1"
+          },
+          "credentialsLevel": {
+            "type": "string",
+            "enum": ["GLOBAL", "USER", "APP"],
+            "example": "USER"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "example": "API_KEY"
+          },
+          "apiKey": {
+            "type": "string",
+            "description": "API key value (API_KEY auth)."
+          },
+          "code": {
+            "type": "string",
+            "description": "OAuth authorization code (OAUTH auth)."
+          },
+          "redirectUri": {
+            "type": "string",
+            "description": "OAuth redirect URI used for the code exchange."
+          }
+        },
+        "required": ["url", "credentialsLevel", "authenticationType"]
+      },
+      "ToolsetAuthResultDto": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          }
+        },
+        "required": ["success"]
+      },
+      "ToolsetLogoutBodyDto": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "example": "toolsets/encrypted-bucket/My%20toolset__0.0.1"
+          },
+          "credentialsLevel": {
+            "type": "string",
+            "enum": ["GLOBAL", "USER", "APP"],
+            "example": "USER"
+          },
+          "authenticationType": {
+            "type": "string",
+            "enum": ["NONE", "API_KEY", "OAUTH"],
+            "example": "OAUTH"
+          }
+        },
+        "required": ["url", "credentialsLevel", "authenticationType"]
       },
       "AttachmentDto": {
         "type": "object",
@@ -3645,10 +3869,7 @@
             "description": "URL of the reference resource"
           }
         },
-        "required": [
-          "type",
-          "title"
-        ]
+        "required": ["type", "title"]
       },
       "MessageCustomContentDto": {
         "type": "object",
@@ -3688,11 +3909,7 @@
           "role": {
             "type": "string",
             "description": "Message author role",
-            "enum": [
-              "system",
-              "user",
-              "assistant"
-            ],
+            "enum": ["system", "user", "assistant"],
             "example": "user"
           },
           "content": {
@@ -3714,10 +3931,7 @@
             ]
           }
         },
-        "required": [
-          "role",
-          "content"
-        ]
+        "required": ["role", "content"]
       },
       "ChatCompletionDto": {
         "type": "object",
@@ -3748,10 +3962,7 @@
             "minimum": 1
           }
         },
-        "required": [
-          "deployment",
-          "messages"
-        ]
+        "required": ["deployment", "messages"]
       },
       "ChatCompletionChoiceDto": {
         "type": "object",
@@ -3774,10 +3985,7 @@
             }
           }
         },
-        "required": [
-          "index",
-          "message"
-        ]
+        "required": ["index", "message"]
       },
       "ChatCompletionResponseDto": {
         "type": "object",
@@ -3797,11 +4005,7 @@
             }
           }
         },
-        "required": [
-          "id",
-          "object",
-          "choices"
-        ]
+        "required": ["id", "object", "choices"]
       },
       "CreateConversationDto": {
         "type": "object",
@@ -3829,10 +4033,7 @@
             ]
           }
         },
-        "required": [
-          "firstMessage",
-          "deploymentId"
-        ]
+        "required": ["firstMessage", "deploymentId"]
       },
       "ConversationModelDto": {
         "type": "object",
@@ -3842,9 +4043,7 @@
             "example": "anthropic.claude-v3-sonnet"
           }
         },
-        "required": [
-          "id"
-        ]
+        "required": ["id"]
       },
       "ConversationMessageCustomContentDto": {
         "type": "object",
@@ -3873,9 +4072,7 @@
           },
           "event_type": {
             "type": "string",
-            "enum": [
-              "model_changed"
-            ],
+            "enum": ["model_changed"],
             "description": "Status event discriminator when role is status"
           },
           "previous_deployment_id": {
@@ -3901,11 +4098,7 @@
           },
           "role": {
             "type": "string",
-            "enum": [
-              "user",
-              "assistant",
-              "status"
-            ],
+            "enum": ["user", "assistant", "status"],
             "example": "user"
           },
           "content": {
@@ -3920,11 +4113,7 @@
             "$ref": "#/components/schemas/ConversationMessageCustomContentDto"
           }
         },
-        "required": [
-          "role",
-          "content",
-          "timestamp"
-        ]
+        "required": ["role", "content", "timestamp"]
       },
       "ConversationResponseDto": {
         "type": "object",
@@ -3980,10 +4169,7 @@
           "responseFormat": {
             "type": "string",
             "example": "markdown",
-            "enum": [
-              "markdown",
-              "plain_text"
-            ]
+            "enum": ["markdown", "plain_text"]
           },
           "llmNamingDone": {
             "type": "boolean",
@@ -4069,9 +4255,7 @@
             "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9"
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "ConversationMetadataDto": {
         "type": "object",
@@ -4117,10 +4301,7 @@
             "example": 1779206400000
           },
           "permissions": {
-            "example": [
-              "READ",
-              "WRITE"
-            ],
+            "example": ["READ", "WRITE"],
             "type": "array",
             "items": {
               "type": "string"
@@ -4148,9 +4329,7 @@
             ]
           }
         },
-        "required": [
-          "conversation"
-        ]
+        "required": ["conversation"]
       },
       "SendCompletionDto": {
         "type": "object",
@@ -4174,12 +4353,7 @@
           },
           "mode": {
             "type": "string",
-            "enum": [
-              "append",
-              "continue_last_user",
-              "regenerate",
-              "edit"
-            ],
+            "enum": ["append", "continue_last_user", "regenerate", "edit"],
             "description": "How the message should be inserted into history. append = new user+assistant turn; continue_last_user = conversation already ends with a user message; regenerate = replace assistant at messageIndex; edit = replace user message at messageIndex."
           },
           "message": {
@@ -4202,12 +4376,7 @@
             ]
           }
         },
-        "required": [
-          "generationId",
-          "path",
-          "model",
-          "mode"
-        ]
+        "required": ["generationId", "path", "model", "mode"]
       },
       "StopCompletionDto": {
         "type": "object",
@@ -4224,10 +4393,7 @@
             "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
           }
         },
-        "required": [
-          "generationId",
-          "path"
-        ]
+        "required": ["generationId", "path"]
       },
       "WatchConversationBodyDto": {
         "type": "object",
@@ -4238,9 +4404,7 @@
             "example": "gpt-4o__My Chat"
           }
         },
-        "required": [
-          "path"
-        ]
+        "required": ["path"]
       },
       "RenameConversationBodyDto": {
         "type": "object",
@@ -4251,9 +4415,7 @@
             "example": "My renamed chat"
           }
         },
-        "required": [
-          "newTitle"
-        ]
+        "required": ["newTitle"]
       },
       "RenameConversationResponseDto": {
         "type": "object",
@@ -4264,9 +4426,7 @@
             "example": "conversations/bucket/gpt-4o__My renamed chat__uuid"
           }
         },
-        "required": [
-          "newPath"
-        ]
+        "required": ["newPath"]
       },
       "DuplicateConversationResponseDto": {
         "type": "object",
@@ -4277,9 +4437,7 @@
             "example": "conversations/bucket/gpt-4o__My conversation"
           }
         },
-        "required": [
-          "newPath"
-        ]
+        "required": ["newPath"]
       },
       "DeleteConversationsBodyDto": {
         "type": "object",
@@ -4294,9 +4452,7 @@
             }
           }
         },
-        "required": [
-          "ids"
-        ]
+        "required": ["ids"]
       },
       "ConversationDeletionFailureDto": {
         "type": "object",
@@ -4308,18 +4464,10 @@
           "code": {
             "type": "string",
             "description": "Stable application error code",
-            "enum": [
-              "NOT_FOUND",
-              "FORBIDDEN",
-              "UPSTREAM_ERROR",
-              "UNKNOWN"
-            ]
+            "enum": ["NOT_FOUND", "FORBIDDEN", "UPSTREAM_ERROR", "UNKNOWN"]
           }
         },
-        "required": [
-          "id",
-          "code"
-        ]
+        "required": ["id", "code"]
       },
       "ConversationDeletionResultDto": {
         "type": "object",
@@ -4344,12 +4492,7 @@
             }
           }
         },
-        "required": [
-          "requested",
-          "deleted",
-          "alreadyAbsent",
-          "failed"
-        ]
+        "required": ["requested", "deleted", "alreadyAbsent", "failed"]
       },
       "DeleteAllConversationsBodyDto": {
         "type": "object",
@@ -4360,9 +4503,7 @@
             "example": true
           }
         },
-        "required": [
-          "confirm"
-        ]
+        "required": ["confirm"]
       },
       "FileUploadResponseDto": {
         "type": "object",
@@ -4373,9 +4514,7 @@
             "example": "files/my-bucket/folder/file.pdf"
           }
         },
-        "required": [
-          "url"
-        ]
+        "required": ["url"]
       },
       "ListFilesItemDto": {
         "type": "object",
@@ -4391,10 +4530,7 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           },
           "bucket": {
             "type": "string"
@@ -4428,13 +4564,7 @@
             "type": "string"
           }
         },
-        "required": [
-          "name",
-          "path",
-          "folderId",
-          "nodeType",
-          "bucket"
-        ]
+        "required": ["name", "path", "folderId", "nodeType", "bucket"]
       },
       "ListFilesResponseDto": {
         "type": "object",
@@ -4462,11 +4592,7 @@
             }
           }
         },
-        "required": [
-          "bucket",
-          "path",
-          "items"
-        ]
+        "required": ["bucket", "path", "items"]
       },
       "FileMetadataResponseDto": {
         "type": "object",
@@ -4542,10 +4668,7 @@
             "example": "reports"
           }
         },
-        "required": [
-          "bucket",
-          "name"
-        ]
+        "required": ["bucket", "name"]
       },
       "CreateFolderResponseDto": {
         "type": "object",
@@ -4604,18 +4727,10 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           }
         },
-        "required": [
-          "bucket",
-          "path",
-          "name",
-          "nodeType"
-        ]
+        "required": ["bucket", "path", "name", "nodeType"]
       },
       "DownloadArchiveDto": {
         "type": "object",
@@ -4627,9 +4742,7 @@
             }
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "DeleteItemDto": {
         "type": "object",
@@ -4651,18 +4764,10 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           }
         },
-        "required": [
-          "bucket",
-          "path",
-          "name",
-          "nodeType"
-        ]
+        "required": ["bucket", "path", "name", "nodeType"]
       },
       "DeleteFilesDto": {
         "type": "object",
@@ -4674,9 +4779,7 @@
             }
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "DeleteItemResultDto": {
         "type": "object",
@@ -4694,10 +4797,7 @@
             "description": "Human-readable error reason when success is false"
           }
         },
-        "required": [
-          "path",
-          "success"
-        ]
+        "required": ["path", "success"]
       },
       "DeleteFilesResponseDto": {
         "type": "object",
@@ -4709,9 +4809,7 @@
             }
           }
         },
-        "required": [
-          "results"
-        ]
+        "required": ["results"]
       },
       "RenameItemDto": {
         "type": "object",
@@ -4733,10 +4831,7 @@
           },
           "nodeType": {
             "type": "string",
-            "enum": [
-              "item",
-              "folder"
-            ]
+            "enum": ["item", "folder"]
           },
           "name": {
             "type": "string",
@@ -4762,9 +4857,7 @@
             }
           }
         },
-        "required": [
-          "items"
-        ]
+        "required": ["items"]
       },
       "RenameItemResultDto": {
         "type": "object",
@@ -4786,11 +4879,7 @@
             "description": "Human-readable error reason when success is false"
           }
         },
-        "required": [
-          "sourcePath",
-          "destinationPath",
-          "success"
-        ]
+        "required": ["sourcePath", "destinationPath", "success"]
       },
       "RenameFilesResponseDto": {
         "type": "object",
@@ -4802,9 +4891,7 @@
             }
           }
         },
-        "required": [
-          "results"
-        ]
+        "required": ["results"]
       },
       "RateMessageDto": {
         "type": "object",
@@ -4827,10 +4914,7 @@
           "rate": {
             "type": "number",
             "description": "Rating value — 1 (like/thumbs-up) or -1 (dislike/thumbs-down). DIAL Core adds this value to the message like count.",
-            "enum": [
-              1,
-              -1
-            ]
+            "enum": [1, -1]
           },
           "comment": {
             "type": "string",
@@ -4838,12 +4922,7 @@
             "example": "The response was too brief"
           }
         },
-        "required": [
-          "conversationId",
-          "responseId",
-          "modelId",
-          "rate"
-        ]
+        "required": ["conversationId", "responseId", "modelId", "rate"]
       },
       "TranscribeAudioDto": {
         "type": "object",
@@ -4857,10 +4936,7 @@
             "description": "MIME type of the audio file (e.g. audio/webm;codecs=opus)."
           }
         },
-        "required": [
-          "audioUrl",
-          "mimeType"
-        ]
+        "required": ["audioUrl", "mimeType"]
       }
     }
   }
