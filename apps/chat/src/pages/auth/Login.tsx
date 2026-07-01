@@ -1,3 +1,4 @@
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import type { ProviderInfoDto } from '@epam/chat-api-client';
 import { memo, useCallback, useEffect, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -6,8 +7,8 @@ import { AuthI18nKeys } from '../../constants/translation-keys';
 import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
-import { ThemeId } from '../../types/theme-id';
 import { getProviders } from '../../server-api/auth.api';
+import { ThemeId } from '../../types/theme-id';
 import { getIconPath } from '../../utils/icon-path';
 
 const handleIconError = (e: React.SyntheticEvent<HTMLImageElement>) => {
@@ -96,8 +97,11 @@ const LoginPage: FC = () => {
   }, [loadProviders]);
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-2">
-      <picture className="pointer-events-none absolute inset-0 size-full" aria-hidden="true">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-2 mobile:bg-layer-0 mobile:px-6">
+      <picture
+        className="pointer-events-none absolute inset-0 size-full mobile:hidden"
+        aria-hidden="true"
+      >
         <source
           media="(min-width: 1920px)"
           srcSet={`/1920_login_${themeSlug}%20mode.png`}
@@ -109,7 +113,12 @@ const LoginPage: FC = () => {
         />
       </picture>
 
-      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-layer-0 bg-opacity-50 p-16">
+      <div
+        className={mergeClasses(
+          'relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0',
+          currentTheme === ThemeId.Light ? 'bg-blackout-light' : 'bg-blackout',
+        )}
+      >
         {currentThemeFavicon && (
           <span
             style={{
@@ -120,12 +129,12 @@ const LoginPage: FC = () => {
           />
         )}
 
-        <div className="flex flex-col items-center gap-8">
-          <h1 className="text-center text-[28px] font-semibold leading-10 text-primary">
+        <div className="flex w-full flex-col items-center gap-8 mobile:gap-6">
+          <h1 className="text-center text-[28px] font-semibold leading-10 text-primary mobile:text-[22px] mobile:leading-8">
             {t(AuthI18nKeys.LoginTitle)}
           </h1>
 
-          <div className="flex w-full flex-col items-center gap-5 tablet:w-[400px]">
+          <div className="flex w-full flex-col items-center gap-5 desktop:w-[400px]">
             {hasError && (
               <p className="text-center text-primary">
                 {t(AuthI18nKeys.ProvidersError)}

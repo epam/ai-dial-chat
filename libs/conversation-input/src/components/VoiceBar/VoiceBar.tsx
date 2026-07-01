@@ -238,11 +238,11 @@ export const VoiceBar: FC<VoiceBarProps> = ({
         style={style}
         className={mergeClasses(
           styles.container,
-          'flex min-h-[56px] w-full flex-col gap-3 rounded border px-3 py-3 tablet:flex-row tablet:items-center tablet:gap-2 tablet:py-2',
+          'flex min-h-[56px] w-full flex-col gap-3 rounded border px-3 py-3 desktop:flex-row desktop:items-center desktop:gap-2 desktop:py-2',
           isError && styles.containerError,
         )}
       >
-        {/* Row 1 on mobile / inline on tablet: recording dot + canvas */}
+        {/* Row 1 on mobile / inline on desktop: recording dot + canvas */}
         <div className="flex min-w-0 flex-1 items-center gap-2">
           {isRecording && (
             <span
@@ -258,12 +258,12 @@ export const VoiceBar: FC<VoiceBarProps> = ({
             height={32}
             className={mergeClasses(
               styles.waveformCanvas,
-              'h-8 min-w-0 flex-1 tablet:h-6',
+              'h-8 min-w-0 flex-1 desktop:h-6',
             )}
           />
         </div>
 
-        {/* Row 2 on mobile / inline on tablet: state-based controls */}
+        {/* Row 2 on mobile / inline on desktop: state-based controls */}
         {controls}
       </div>
 

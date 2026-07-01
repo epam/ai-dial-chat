@@ -47,7 +47,7 @@ const UploadProgressModal: FC<Props> = ({
 
   return (
     <DialPopup
-      className="!h-fit !max-h-full !w-[400px] tablet:!max-h-[693px]"
+      className="!h-fit !max-h-full !w-[400px] desktop:!max-h-[693px]"
       open={batchState.isOpen}
       dividers={false}
       closeOnOutsideClick={false}

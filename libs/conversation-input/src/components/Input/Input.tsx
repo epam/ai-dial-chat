@@ -330,14 +330,14 @@ export const Input: FC<InputProps> = ({
         <div
           className={mergeClasses(
             'flex items-center gap-2 mobile:gap-y-3',
-            isStackedLayout ? 'flex-wrap' : 'flex-wrap tablet:flex-nowrap',
+            isStackedLayout ? 'flex-wrap' : 'flex-wrap desktop:flex-nowrap',
           )}
         >
           {!hideAddButton && (
             <div
               className={mergeClasses(
                 'order-2 flex',
-                !isStackedLayout && 'tablet:order-1',
+                !isStackedLayout && 'desktop:order-1',
               )}
             >
               <input
@@ -370,7 +370,7 @@ export const Input: FC<InputProps> = ({
             className={mergeClasses(
               'order-1 flex w-full min-w-0 items-center self-stretch',
               !isStackedLayout &&
-                'tablet:order-2 tablet:w-auto tablet:flex-1',
+                'desktop:order-2 desktop:w-auto desktop:flex-1',
             )}
           >
             {textarea}
@@ -379,7 +379,7 @@ export const Input: FC<InputProps> = ({
             className={mergeClasses(
               'flex flex-shrink-0 items-center gap-1',
               'order-3 ms-auto',
-              !isStackedLayout && 'tablet:ms-0',
+              !isStackedLayout && 'desktop:ms-0',
             )}
           >
             {renderFooterActions ? (

@@ -8,6 +8,7 @@ const backgroundsColors = {
   'layer-3': 'var(--bg-layer-3, #1D2439)',
   'layer-4': 'var(--bg-layer-4, #242C42)',
   blackout: 'var(--bg-blackout, #0C101DB3)',
+  'blackout-light': 'var(--bg-blackout-light, #FCFCFC80)',
   error: 'var(--bg-error, #402027)',
   warning: 'var(--bg-warning, #3F3D25)',
   info: 'var(--bg-info, #1C2C47)',
@@ -122,8 +123,7 @@ module.exports = {
     extend: {
       screens: {
         mobile: { max: '768px' },
-        tablet: { min: '769px' },
-        desktop: { min: '1920px' },
+        desktop: { min: '769px' },
       },
       boxShadow: {
         DEFAULT: '0 0 4px 0 var(--shadow-default, rgba(0, 0, 0, 0.30))',

@@ -118,7 +118,7 @@ export const DetailsPanel: FC<DetailsPanelProps> = ({
         aria-label={panelAriaLabel}
         className={mergeClasses(
           'fixed inset-y-0 end-0 z-50 flex w-full flex-col overflow-hidden',
-          'tablet:rounded-ts-xl tablet:rounded-bs-xl tablet:w-[540px] tablet:border-s',
+          'desktop:rounded-ts-xl desktop:rounded-bs-xl desktop:w-[540px] desktop:border-s',
           'transition-transform duration-300',
           styles.panel,
           isOpen ? 'translate-x-0' : 'translate-x-full rtl:-translate-x-full',

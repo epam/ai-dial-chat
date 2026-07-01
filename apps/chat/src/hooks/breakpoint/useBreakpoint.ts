@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 
-export type Breakpoint = 'mobile' | 'tablet' | 'desktop';
+export type Breakpoint = 'mobile' | 'desktop';
 
 /**
  * Min-width queries ordered from largest to smallest. The first query that
@@ -11,19 +11,14 @@ export type Breakpoint = 'mobile' | 'tablet' | 'desktop';
 const BREAKPOINT_QUERIES: ReadonlyArray<{
   query: string;
   breakpoint: Breakpoint;
-}> = [
-  { query: '(min-width: 1920px)', breakpoint: 'desktop' },
-  { query: '(min-width: 769px)', breakpoint: 'tablet' },
-];
+}> = [{ query: '(min-width: 769px)', breakpoint: 'desktop' }];
 
 const resolveBreakpoint = (): Breakpoint => {
   if (
     typeof window === 'undefined' ||
     typeof window.matchMedia !== 'function'
   ) {
-    // SSR / non-DOM test env: default to tablet so server-rendered markup
-    // matches the historical baseline (formerly called 'desktop').
-    return 'tablet';
+    return 'desktop';
   }
   for (const { query, breakpoint } of BREAKPOINT_QUERIES) {
     if (window.matchMedia(query).matches) {
@@ -37,7 +32,7 @@ const resolveBreakpoint = (): Breakpoint => {
  * Returns the current named breakpoint, kept in sync with viewport changes.
  *
  * Use only when a component must branch in JS — most responsive layout should
- * use Tailwind's `mobile:` / `tablet:` / `desktop:` utility prefixes instead.
+ * use Tailwind's `mobile:` / `desktop:` utility prefixes instead.
  * See `.claude/skills/responsive-design/SKILL.md` for the decision rubric.
  *
  * @example
