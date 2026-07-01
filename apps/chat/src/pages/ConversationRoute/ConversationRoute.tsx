@@ -27,11 +27,9 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import { MOCK_CATALOG_ITEMS } from '../../components/CatalogView/mock-catalog-items';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
-import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
@@ -198,12 +196,17 @@ const ConversationRoute: FC = () => {
       responseFormat: chatSettingsValues.responseFormat,
       systemPrompt: chatSettingsValues.systemPrompt,
       temperature: chatSettingsValues.temperature,
-      onSave: (values: ChatSettingsValues) =>
+      onSave: (values: ChatSettingsValues) => {
         setChatSettingsValues((prev) => ({
           responseFormat: values.responseFormat ?? prev.responseFormat,
           systemPrompt: values.systemPrompt ?? prev.systemPrompt,
           temperature: values.temperature ?? prev.temperature,
-        })),
+        }));
+        showNotification({
+          variant: NotificationVariant.Success,
+          message: t(ChatSettingsI18nKeys.SavedNotification),
+        });
+      },
       menuItemLabel: t(ChatI18nKeys.ChatSettings),
       title: t(ChatSettingsI18nKeys.Title),
       responseFormatLabel: t(ChatSettingsI18nKeys.ResponseFormatLabel),
@@ -518,6 +521,7 @@ const ConversationRoute: FC = () => {
             modelSelectorLabels={modelSelectorLabels}
             addMenuTitle={t(ConversationI18nKeys.AddMenuTitle)}
             sendLabel={t(ChatI18nKeys.SendMessage)}
+            sendTitle={t(ChatI18nKeys.SendMessage)}
             stopLabel={t(ChatI18nKeys.StopStreaming)}
             isTranscriptionSupported={isTranscriptionSupported}
             onUploadAudio={handleUploadAudio}

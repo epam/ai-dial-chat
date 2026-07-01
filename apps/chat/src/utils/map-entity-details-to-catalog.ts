@@ -68,9 +68,15 @@ const mapModelDetails = (data: ModelEntityDetails): CatalogItemTabData => {
     if (s.hostedBy != null)
       specs.push({ label: 'Hosted by', value: s.hostedBy });
     if (s.contextWindowTokens != null)
-      specs.push({ label: 'Context window', value: formatTokens(s.contextWindowTokens) });
+      specs.push({
+        label: 'Context window',
+        value: formatTokens(s.contextWindowTokens),
+      });
     if (s.maxOutputTokens != null)
-      specs.push({ label: 'Max output tokens', value: formatTokens(s.maxOutputTokens) });
+      specs.push({
+        label: 'Max output tokens',
+        value: formatTokens(s.maxOutputTokens),
+      });
     if (s.inputTypes?.length)
       specs.push({ label: 'Input type', value: s.inputTypes.join(' · ') });
     if (s.outputTypes?.length)
@@ -97,23 +103,46 @@ const mapModelPricing = (
   if (pricing == null) return undefined;
 
   const prices = [
-    pricing.inputTokensPrice != null && { label: 'Input tokens', price: pricing.inputTokensPrice },
-    pricing.outputTokensPrice != null && { label: 'Output tokens', price: pricing.outputTokensPrice },
-    pricing.cachedInputPrice != null && { label: 'Cached input', price: pricing.cachedInputPrice },
-    pricing.batchPrice != null && { label: 'Batch / async', price: pricing.batchPrice },
+    pricing.inputTokensPrice != null && {
+      label: 'Input tokens',
+      price: pricing.inputTokensPrice,
+    },
+    pricing.outputTokensPrice != null && {
+      label: 'Output tokens',
+      price: pricing.outputTokensPrice,
+    },
+    pricing.cachedInputPrice != null && {
+      label: 'Cached input',
+      price: pricing.cachedInputPrice,
+    },
+    pricing.batchPrice != null && {
+      label: 'Batch / async',
+      price: pricing.batchPrice,
+    },
   ].filter(Boolean) as CatalogItemPricing['prices'];
 
   const limits = [
-    pricing.dailyLimit != null && { label: 'Daily limit', value: pricing.dailyLimit },
-    pricing.weeklyLimit != null && { label: 'Weekly limit', value: pricing.weeklyLimit },
-    pricing.monthlyLimit != null && { label: 'Monthly limit', value: pricing.monthlyLimit },
+    pricing.dailyLimit != null && {
+      label: 'Daily limit',
+      value: pricing.dailyLimit,
+    },
+    pricing.weeklyLimit != null && {
+      label: 'Weekly limit',
+      value: pricing.weeklyLimit,
+    },
+    pricing.monthlyLimit != null && {
+      label: 'Monthly limit',
+      value: pricing.monthlyLimit,
+    },
   ].filter(Boolean) as CatalogItemPricing['limits'];
 
   if (!prices?.length && !limits?.length) return undefined;
   return { prices, limits };
 };
 
-const mapModelApi = (data: ModelEntityDetails): CatalogItemApiDetails | undefined => {
+const mapModelApi = (
+  data: ModelEntityDetails,
+): CatalogItemApiDetails | undefined => {
   const { api } = data;
   if (api == null) return undefined;
 
@@ -141,7 +170,8 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
 
     if (s.domain != null) specs.push({ label: 'Domain', value: s.domain });
     if (s.useCase != null) specs.push({ label: 'Use case', value: s.useCase });
-    if (s.maturity != null) specs.push({ label: 'Maturity', value: s.maturity });
+    if (s.maturity != null)
+      specs.push({ label: 'Maturity', value: s.maturity });
     if (s.permissions?.length)
       specs.push({ label: 'Permissions', value: s.permissions.join(' · ') });
     if (s.skills?.length)
@@ -154,11 +184,18 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
     const { configuration: c } = data;
     const specs: OverviewSection['specs'] = [];
 
-    if (c.baseModelId != null) specs.push({ label: 'Base model', value: c.baseModelId });
+    if (c.baseModelId != null)
+      specs.push({ label: 'Base model', value: c.baseModelId });
     if (c.inputAttachmentTypes?.length)
-      specs.push({ label: 'Input attachments', value: c.inputAttachmentTypes.join(' · ') });
+      specs.push({
+        label: 'Input attachments',
+        value: c.inputAttachmentTypes.join(' · '),
+      });
     if (c.outputAttachmentTypes?.length)
-      specs.push({ label: 'Output attachments', value: c.outputAttachmentTypes.join(' · ') });
+      specs.push({
+        label: 'Output attachments',
+        value: c.outputAttachmentTypes.join(' · '),
+      });
     if (c.authentication != null)
       specs.push({ label: 'Authentication', value: c.authentication });
 
@@ -168,7 +205,10 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
   if (data.capabilityLinks?.length) {
     sections.push({
       title: 'References',
-      specs: data.capabilityLinks.map((ref) => ({ label: ref.id, value: ref.label })),
+      specs: data.capabilityLinks.map((ref) => ({
+        label: ref.id,
+        value: ref.label,
+      })),
     });
   }
 
@@ -176,7 +216,9 @@ const mapAgentDetails = (data: AgentEntityDetails): CatalogItemTabData => {
     data.api != null
       ? {
           resource:
-            data.api.endpointUrl != null ? { endpointUrl: data.api.endpointUrl } : undefined,
+            data.api.endpointUrl != null
+              ? { endpointUrl: data.api.endpointUrl }
+              : undefined,
           requestExample: data.api.requestExample,
           responseSchema: data.api.responseSchema,
         }
@@ -195,7 +237,8 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
     const { specification: s } = data;
     const specs: OverviewSection['specs'] = [];
 
-    if (s.provider != null) specs.push({ label: 'Provider', value: s.provider });
+    if (s.provider != null)
+      specs.push({ label: 'Provider', value: s.provider });
     if (s.authentication != null)
       specs.push({ label: 'Authentication', value: s.authentication });
     if (s.permissions?.length)
@@ -209,7 +252,9 @@ const mapToolsetDetails = (data: ToolsetEntityDetails): CatalogItemTabData => {
   };
 };
 
-const mapGuardrailDetails = (data: GuardrailEntityDetails): CatalogItemTabData => {
+const mapGuardrailDetails = (
+  data: GuardrailEntityDetails,
+): CatalogItemTabData => {
   const sections: OverviewSection[] = [];
 
   if (data.specification != null) {
@@ -218,16 +263,20 @@ const mapGuardrailDetails = (data: GuardrailEntityDetails): CatalogItemTabData =
 
     if (s.stage != null) specs.push({ label: 'Stage', value: s.stage });
     if (s.type != null) specs.push({ label: 'Type', value: s.type });
-    if (s.checks?.length) specs.push({ label: 'Checks', value: s.checks.join(' · ') });
+    if (s.checks?.length)
+      specs.push({ label: 'Checks', value: s.checks.join(' · ') });
     if (s.actionOnMatch != null)
       specs.push({ label: 'Action on match', value: s.actionOnMatch });
-    if (s.sensitivity != null) specs.push({ label: 'Sensitivity', value: s.sensitivity });
+    if (s.sensitivity != null)
+      specs.push({ label: 'Sensitivity', value: s.sensitivity });
     if (s.compliance?.length)
       specs.push({ label: 'Compliance', value: s.compliance.join(' · ') });
     if (s.appliesTo?.length)
       specs.push({ label: 'Applies to', value: s.appliesTo.join(' · ') });
-    if (s.failureMode != null) specs.push({ label: 'Failure mode', value: s.failureMode });
-    if (s.hasLogging != null) specs.push({ label: 'Logging', value: s.hasLogging });
+    if (s.failureMode != null)
+      specs.push({ label: 'Failure mode', value: s.failureMode });
+    if (s.hasLogging != null)
+      specs.push({ label: 'Logging', value: s.hasLogging });
 
     if (specs.length > 0) sections.push({ title: 'Specification', specs });
   }
@@ -247,7 +296,10 @@ const mapSkillDetails = (data: SkillEntityDetails): CatalogItemTabData => {
     if (a.allowedTools?.length)
       specs.push({ label: 'Allowed tools', value: a.allowedTools.join(' · ') });
     if (a.bundledResources?.length)
-      specs.push({ label: 'Bundled resources', value: a.bundledResources.join(' · ') });
+      specs.push({
+        label: 'Bundled resources',
+        value: a.bundledResources.join(' · '),
+      });
 
     if (specs.length > 0) sections.push({ title: 'Specification', specs });
 

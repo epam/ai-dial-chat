@@ -436,7 +436,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
         className={panelClassName}
         styles={{
-          typography: { fontClassName: 'dial-body-text', itemIconBadgeClassName: 'rounded-lg', newChatLabelClassName: 'dial-small-text', groupHeaderClassName: 'dial-tiny-semi-text uppercase tracking-wider', tabClassName: 'dial-tiny-semi-text cp-filter-tab' },
+          typography: {
+            fontClassName: 'dial-body-text',
+            itemIconBadgeClassName: 'rounded-lg',
+            newChatLabelClassName: 'dial-small-text',
+            groupHeaderClassName:
+              'dial-tiny-semi-text uppercase tracking-wider',
+            tabClassName: 'dial-tiny-semi-text cp-filter-tab',
+          },
           colors: { border: '#00000004', text: 'var(--text-primary)' },
         }}
         resizable={!isMobile}

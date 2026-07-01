@@ -17,7 +17,6 @@ import {
 } from '@epam/ai-dial-conversation-messages';
 import { CollapsedGroup } from '@epam/ai-dial-conversation-stages';
 import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
-import { IconSparkles } from '@tabler/icons-react';
 import { FC, lazy, memo, Suspense, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
@@ -343,22 +342,6 @@ const ConversationMessageItem: FC<Props> = ({
       />
     </CitationCardProvider>
   );
-
-  if (isAssistantNarrative) {
-    return (
-      <div className="flex w-full items-start gap-3.5">
-        <span
-          aria-hidden
-          className="flex size-7 flex-none items-center justify-center rounded-lg bg-accent-tertiary-alpha text-accent-tertiary"
-        >
-          <IconSparkles size={14} stroke={1.5} />
-        </span>
-        <div className="min-w-0 flex-1">{bubble}</div>
-      </div>
-    );
-  }
-
-  return bubble;
 };
 
 export default memo(ConversationMessageItem);

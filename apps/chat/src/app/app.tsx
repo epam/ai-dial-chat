@@ -4,7 +4,6 @@ import {
 } from '@epam/ai-dial-attachment-canvas';
 import { CodeBlockTheme } from '@epam/ai-dial-chat-shared';
 import { FilterTab } from '@epam/ai-dial-conversation-panel';
-
 import {
   lazy,
   memo,
@@ -24,8 +23,8 @@ import {
   useMatch,
   useNavigate,
 } from 'react-router-dom';
-import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
 import ChatLayout from '../components/ChatLayout/ChatLayout';
+import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
 import Header from '../components/Header/Header';
@@ -165,10 +164,7 @@ const App: FC = () => {
 
   return (
     <div className="flex size-full flex-row">
-      <Navigation
-        isOpen={isNavOpen}
-        onClose={closeNav}
-      />
+      <Navigation isOpen={isNavOpen} onClose={closeNav} />
 
       <ConversationPanelView
         isOpen={isHistoryPanelOpen}
@@ -185,7 +181,7 @@ const App: FC = () => {
       <main
         id="main-content"
         role="main"
-        className="flex min-h-0 min-w-0 flex-1 flex-col bg-[#F5F7FA] [box-shadow:inset_1px_0_8px_rgba(0,0,0,0.04)] rtl:[box-shadow:inset_-1px_0_8px_rgba(0,0,0,0.04)]"
+        className="main-inset-shadow flex min-h-0 min-w-0 flex-1 flex-col"
       >
         <Header
           onMenuToggle={toggleNav}
