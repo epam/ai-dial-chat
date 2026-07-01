@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
+import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
