@@ -18,10 +18,21 @@ export interface FolderNode {
 
 export type FolderEditTree = Record<string, FolderNode>;
 
+export enum PublicationPanel {
+  Chat = 'chat',
+  Prompt = 'prompt',
+}
+
+export interface FocusedPublication {
+  url: string;
+  panel: PublicationPanel;
+}
+
 export interface PublicationState {
   initialized: boolean;
   publications: (PublicationInfo & Partial<Publication>)[];
   selectedPublicationUrl: string | null;
+  selectedPublicationPanel: PublicationPanel | null;
   resourcesToReview: ResourceToReview[];
   rules: Record<string, PublicationRule[]>;
   isRulesLoading: boolean;

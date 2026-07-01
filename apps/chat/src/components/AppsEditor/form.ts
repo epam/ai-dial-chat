@@ -278,6 +278,8 @@ export const QuickApp2Schema = zodValidation
     availableModelIds: zodValidation.array(zodValidation.string()).optional(),
     agentSkills: zodValidation.array(zodValidation.string()),
     timestamp: zodValidation.boolean(),
+    fileTools: zodValidation.boolean(),
+    processLargeFiles: zodValidation.boolean(),
   })
   .superRefine((data, ctx) => {
     if (data.isJsonView) {
@@ -527,10 +529,19 @@ const getQuickApp2FormData = (
       ? defaultModelId // use default quick app model
       : (toolSupportingModelIds?.[0] ?? ''); // use first from list
   }
+
   const timestamp =
     'timestamp' in (appProperties?.features ?? {})
       ? !!appProperties?.features?.timestamp
       : true;
+  const fileTools =
+    'dial_files' in (appProperties?.features ?? {})
+      ? !!appProperties?.features?.dial_files
+      : false;
+  const processLargeFiles =
+    'attachment_strategy' in (appProperties?.orchestrator ?? {})
+      ? !!appProperties?.orchestrator?.attachment_strategy
+      : false;
 
   return {
     type: AppsEditorSchemaTypes.QuickApp2,
@@ -570,6 +581,8 @@ const getQuickApp2FormData = (
       .filter((s): s is DialPromptSkill => s.type === 'dial-prompt')
       .map((s) => ApiUtils.decodeApiUrl(s.url)),
     timestamp,
+    fileTools,
+    processLargeFiles,
   };
 };
 
@@ -1005,6 +1018,11 @@ export const getApplicationPayload = ({
               variables: {},
               content: data.instructions,
             },
+            ...(!!data.inputAttachmentTypes.length && {
+              attachment_strategy: data.processLargeFiles
+                ? { type: 'lazy_on_demand' }
+                : null,
+            }),
           },
           contexts:
             data.documentRelativeUrl?.map((url) => ({
@@ -1029,6 +1047,7 @@ export const getApplicationPayload = ({
                   injection_strategy: 'tool_call',
                 }
               : null,
+            dial_files: data.fileTools ? {} : null,
           },
           ...(starters.length
             ? {
