@@ -35,7 +35,7 @@ jobs:
           persist-credentials: true # TODO: set false when upstream issue be resolved https://github.com/anthropics/claude-code-action/issues/1236
       - name: Run Claude Code
         id: claude
-        uses: anthropics/claude-code-action@80b31826338489861333dc17217865dfe8085cdc # v1.0.155
+        uses: anthropics/claude-code-action@fad22eb3fa582b7357fc0ea48af6645851b884fd # v1.0.161
         with:
           anthropic_api_key: ${{ secrets.DIAL_API_KEY }}
           prompt: |
