@@ -221,25 +221,23 @@ aside[class~='dial-body-text'] [data-cp-search-wrapper] {
   }
 }
 
-// Filter pill row — no track, just spaced pills
-aside[class~='dial-body-text'] [class~='flex-wrap'][class~='gap-2'] {
-  flex-wrap: nowrap;
-  gap: 4px;
-  padding: 0;
-  margin: 8px 12px 4px;
-  width: calc(100% - 24px);
-  background-color: transparent;
-  border-radius: 0;
-  border-bottom: none;
+// Filter pill row — remove track background, use flat spaced layout.
+// ui-kit v0.11+ uses flex-nowrap + rounded-full for the row (was flex-wrap).
+aside[class~='dial-body-text'] [class~='flex-nowrap'][class~='gap-2'][class~='rounded-full'] {
+  gap: 4px !important;
+  padding: 0 !important;
+  background-color: transparent !important;
+  border-radius: 0 !important;
 }
 
-// Individual pill — subtle primary tint bg, secondary text
-aside[class~='dial-body-text'] [class~='flex-wrap'][class~='gap-2'] > div {
-  flex: 1 !important;
-  height: auto !important;
-  padding-block: 5px !important;
-  justify-content: center !important;
-  border: 1px solid rgba(92, 141, 234, 0.14) !important;
+// Individual pill — subtle border outline, muted text.
+// tabClassName='dial-tiny-semi-text cp-filter-tab' is passed from ConversationPanelView
+// so we can hook here without relying on hash-unstable CSS module class names.
+// Specificity (0,2,1) with !important beats the ui-kit module rule (0,2,0) !important.
+aside[class~='dial-body-text'] .cp-filter-tab {
+  border-style: solid !important;
+  border-width: 1px !important;
+  border-color: rgba(92, 141, 234, 0.14) !important;
   background-color: transparent !important;
   border-radius: 9999px !important;
   color: var(--text-tertiary, #808898) !important;
@@ -257,14 +255,11 @@ aside[class~='dial-body-text'] [class~='flex-wrap'][class~='gap-2'] > div {
 }
 
 // Active pill — solid blue tint, visible stroke, accent text
-aside[class~='dial-body-text']
-  [class~='flex-wrap'][class~='gap-2']
-  > div[class~='bg-accent-primary-alpha'] {
+aside[class~='dial-body-text'] .cp-filter-tab[class~='bg-accent-primary-alpha'] {
   background-color: rgba(39, 100, 217, 0.14) !important;
   border-color: rgba(39, 100, 217, 0.45) !important;
   color: var(--text-accent-primary, #2764d9) !important;
   box-shadow: none !important;
-  justify-content: center !important;
 }
 
 
