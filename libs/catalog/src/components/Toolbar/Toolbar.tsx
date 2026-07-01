@@ -1,8 +1,6 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { SearchBar } from '@epam/ai-dial-kit';
 import { type CSSProperties, FC } from 'react';
 import { ToolbarProps } from '../../models/toolbar-props';
-import { FilterRow } from './Rows/FilterRow';
 import { TitleRow } from './Rows/TitleRow';
 import styles from './Toolbar.module.scss';
 
@@ -42,7 +40,7 @@ export const Toolbar: FC<ToolbarProps> = ({
       className={mergeClasses('flex-shrink-0 px-4', styles.section)}
       style={cssVars}
     >
-      {/* Title row with search and sort */}
+      {/* Title row with search, filter, and sort */}
       <TitleRow
         styles={browseStyles}
         query={query}
@@ -51,22 +49,15 @@ export const Toolbar: FC<ToolbarProps> = ({
         sortKey={sortKey}
         onSortChange={onSortChange}
         sortOptions={sortOptions}
-        {...innerProps}
-      />
-
-      {/* Filter row */}
-      <FilterRow
         filters={filters}
         onFiltersChange={onFiltersChange}
         filterValues={filterValues}
         isMyAppsActive={isMyAppsActive}
         onMyAppsChange={onMyAppsChange}
-        isAnyFilterActive={isAnyFilterActive}
-        onClearFilters={onClearFilters}
-        clearAllLabel={clearAllLabel}
         filterFromLabel={filterFromLabel}
         filterMyAppsLabel={filterMyAppsLabel}
         filterTopicsLabel={filterTopicsLabel}
+        {...innerProps}
       />
     </section>
   );

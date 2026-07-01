@@ -508,6 +508,7 @@ const ConversationRoute: FC = () => {
             )}
             placeholder={t(ChatI18nKeys.Placeholder)}
             styles={{
+              ...CONVERSATION_INPUT_STYLES,
               typography: { welcomeClassName: 'dial-display2-text' },
             }}
             deployments={deploymentItems}

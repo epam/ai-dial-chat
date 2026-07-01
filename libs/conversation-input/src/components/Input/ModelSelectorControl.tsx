@@ -129,7 +129,7 @@ export const ModelSelectorControl: FC<Props> = ({
         renderOverlay={() =>
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
-        listClassName="shadow-xl"
+        listClassName="cp-dropdown-overlay"
       >
         <button
           type="button"
@@ -163,7 +163,7 @@ export const ModelSelectorControl: FC<Props> = ({
       menuHeader={menuHeader}
       placement="bottom-end"
       matchReferenceWidth={false}
-      listClassName="!w-[240px] !max-h-80 shadow-md"
+      listClassName="cp-dropdown-overlay !w-[240px] !max-h-80"
       onOpenChange={handleModelSelectorOpenChange}
       size={ElementSize.Standard}
       caretIcon={caretIcon}

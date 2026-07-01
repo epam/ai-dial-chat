@@ -7,57 +7,10 @@
   border-radius: 1px;
 }
 
-// Double-class specificity (0,2,0) overrides .dial-primary-solid-button (0,1,0)
-// and its :hover state. Gradient uses DS accent tokens; violet (#A972FF) is
-// the logo-matched stop at the trailing edge.
-.gradientBtn.gradientBtn {
-  background-color: transparent;
-  background-image: linear-gradient(
-    135deg,
-    var(--bg-accent-secondary, #37babc) 0%,
-    var(--bg-accent-primary, #5c8dea) 30%,
-    var(--bg-accent-tertiary, #a972ff) 100%
-  );
-  border: none;
-  border-radius: 9999px;
-  box-shadow:
-    0 0 16px rgba(55, 186, 188, 0.25),
-    0 4px 12px rgba(169, 114, 255, 0.22);
-  transition:
-    box-shadow 200ms ease,
-    transform 150ms ease;
-
-  @media (hover: hover) {
-    &:hover {
-      background-color: transparent;
-      background-image: linear-gradient(
-        135deg,
-        var(--bg-accent-secondary, #37babc) 0%,
-        var(--bg-accent-primary, #5c8dea) 30%,
-        var(--bg-accent-tertiary, #a972ff) 100%
-      );
-      box-shadow:
-        0 0 24px rgba(55, 186, 188, 0.35),
-        0 6px 18px rgba(169, 114, 255, 0.3);
-      transform: translateY(-1px);
-    }
-  }
-
-  &:active {
-    background-color: transparent;
-    background-image: linear-gradient(
-      135deg,
-      var(--bg-accent-secondary, #37babc) 0%,
-      var(--bg-accent-primary, #5c8dea) 30%,
-      var(--bg-accent-tertiary, #a972ff) 100%
-    );
-    filter: brightness(0.92);
-    transform: translateY(0);
-    box-shadow:
-      0 0 10px rgba(55, 186, 188, 0.2),
-      0 2px 6px rgba(169, 114, 255, 0.16);
-  }
-}
+// Gradient and shadow are now handled globally by .dial-primary-solid-button.dial-primary-solid-button
+// in styles.scss. This class only needs to exist so the className prop can be set;
+// no extra declarations required.
+.gradientBtn {}
 
 // ── Chevron ──────────────────────────────────────────────────────────────────
 
@@ -76,12 +29,12 @@
 .dropdownWrapper {
   border-radius: 12px !important;
   overflow: hidden !important;
-  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.1) !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 16px 40px rgba(16, 24, 40, 0.12) !important;
 }
 
 .menu {
   width: 288px;
-  margin-top: 8px;
   padding: 6px;
   background: var(--bg-layer-0);
   border-radius: 12px;
@@ -116,13 +69,13 @@
   transition: background 100ms ease;
 
   &:hover {
-    background: var(--bg-accent-primary-alpha);
+    background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
   }
 
   &:focus-visible {
     outline: 2px solid var(--text-accent-primary);
     outline-offset: -2px;
-    background: var(--bg-accent-primary-alpha);
+    background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
   }
 }
 

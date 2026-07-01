@@ -32,7 +32,7 @@ export const RowRenderer = ({
   if (row.kind === VirtualRowKind.Header) {
     const isPinnedHeader = row.groupKey === ConversationGroupKey.Pinned;
     return (
-      <div style={style} className={index === 0 ? 'pt-4' : 'pt-8'}>
+      <div style={style} className={index === 0 ? 'pt-0' : 'pt-8'}>
         <ConversationGroupHeader
           label={row.label}
           isExpanded={expandedGroups.has(row.groupKey)}

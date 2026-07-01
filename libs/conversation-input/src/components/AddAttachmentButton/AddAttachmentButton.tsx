@@ -70,7 +70,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   menuTitle,
   menuCloseLabel,
   style,
-  listClassName = '!w-[240px] shadow-md',
+  listClassName = 'cp-dropdown-overlay !w-[240px]',
   isDisabled = false,
   chatSettings,
   extraMenuItems,

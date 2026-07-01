@@ -1,4 +1,4 @@
-import { DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
+import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { IconSearch } from '@tabler/icons-react';
 import { type FC } from 'react';
 import styles from './SearchBar.module.scss';
@@ -16,11 +16,13 @@ export interface SearchBarProps {
    * Defaults to the `placeholder` value, or `'Search'` if neither is provided.
    */
   ariaLabel?: string;
+  /** Additional CSS class applied to the container for layout purposes (e.g. flex-1). */
+  className?: string;
 }
 
 /**
  * Catalog search bar.
- * The container carries all visual state (default / hover / focus-within);
+ * The container carries all visual state (default / focus-within);
  * the inner <input> stays transparent with no outline of its own.
  */
 export const SearchBar: FC<SearchBarProps> = ({
@@ -28,26 +30,26 @@ export const SearchBar: FC<SearchBarProps> = ({
   onChange,
   placeholder = 'Search',
   ariaLabel,
+  className,
 }) => {
   const resolvedAriaLabel = ariaLabel ?? placeholder;
 
   return (
-    <div role="search">
-      <div className={styles.container}>
-        <IconSearch
-          size={DIAL_ICON_SIZE.MD}
-          className={styles.icon}
-          aria-hidden
-        />
-        <input
-          type="search"
-          className={styles.input}
-          value={value}
-          placeholder={placeholder}
-          aria-label={resolvedAriaLabel}
-          onChange={(e) => onChange(e.target.value)}
-        />
-      </div>
+    <div role="search" className={mergeClasses(styles.container, className)}>
+      <IconSearch
+        size={18}
+        strokeWidth={1.8}
+        className={styles.icon}
+        aria-hidden
+      />
+      <input
+        type="search"
+        className={styles.input}
+        value={value}
+        placeholder={placeholder}
+        aria-label={resolvedAriaLabel}
+        onChange={(e) => onChange(e.target.value)}
+      />
     </div>
   );
 };

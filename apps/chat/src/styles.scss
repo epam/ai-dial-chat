@@ -37,19 +37,76 @@
   line-height: 24px;
 }
 
-.dial-primary-solid-button {
+// ── Shared dropdown overlay style ────────────────────────────────────────────
+// Applied via listClassName="cp-dropdown-overlay" on every DialDropdown to match
+// the Filter overlay spec: 12px radius, 1px hairline border, large ambient shadow,
+// 6px inset padding, and 8px-radius hover rows replacing the kit defaults.
+
+.cp-dropdown-overlay {
+  padding: 6px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 16px 40px rgba(16, 24, 40, 0.12) !important;
+
+  // Reset the inner py-1 wrapper added by DialDropdown for items mode
+  > [role='none'] {
+    padding: 0 !important;
+  }
+
+  // Item buttons — auto height, custom padding/radius, layer-3 hover
+  button[role='menuitem'] {
+    height: auto !important;
+    border-radius: 8px !important;
+    padding: 9px 10px !important;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--bg-layer-3, rgba(0, 0, 0, 0.04)) !important;
+      }
+    }
+  }
+
+  // Separator — thin hairline, no Tailwind border
+  [role='separator'] {
+    height: 1px !important;
+    border: none !important;
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    margin: 4px 0 !important;
+  }
+}
+
+// Submenu containers rendered by DialDropdown's nested children prop.
+// These get role="menu" on the outer floating div but have no listClassName hook.
+div[role='menu']:has(> [role='none']) {
+  padding: 6px !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  box-shadow: 0 16px 40px rgba(16, 24, 40, 0.12) !important;
+
+  > [role='none'] {
+    padding: 0 !important;
+  }
+
+  button[role='menuitem'] {
+    height: auto !important;
+    border-radius: 8px !important;
+    padding: 9px 10px !important;
+
+    @media (hover: hover) {
+      &:hover {
+        background-color: var(--bg-layer-3, rgba(0, 0, 0, 0.04)) !important;
+      }
+    }
+  }
+}
+
+// Double-class specificity (0,2,0) beats the kit's (0,1,0) base and hover rules.
+.dial-primary-solid-button.dial-primary-solid-button {
   background-color: transparent;
-  background-image: linear-gradient(
-    135deg,
-    var(--bg-accent-secondary, #37babc) 0%,
-    var(--bg-accent-primary, #5c8dea) 30%,
-    var(--bg-accent-tertiary, #a972ff) 100%
-  );
+  background-image: linear-gradient(135deg, #4b7be6 0%, #9355f4 100%);
   border: none;
   border-radius: 9999px;
-  box-shadow:
-    0 0 16px rgba(55, 186, 188, 0.25),
-    0 4px 12px rgba(169, 114, 255, 0.22);
+  box-shadow: 0 4px 16px rgba(92, 141, 234, 0.32);
   transition:
     box-shadow 200ms ease,
     transform 150ms ease;
@@ -57,32 +114,18 @@
   @media (hover: hover) {
     &:hover {
       background-color: transparent;
-      background-image: linear-gradient(
-        135deg,
-        var(--bg-accent-secondary, #37babc) 0%,
-        var(--bg-accent-primary, #5c8dea) 30%,
-        var(--bg-accent-tertiary, #a972ff) 100%
-      );
-      box-shadow:
-        0 0 24px rgba(55, 186, 188, 0.35),
-        0 6px 18px rgba(169, 114, 255, 0.3);
+      background-image: linear-gradient(135deg, #4b7be6 0%, #9355f4 100%);
+      box-shadow: 0 6px 20px rgba(92, 141, 234, 0.42);
       transform: translateY(-1px);
     }
   }
 
   &:active {
     background-color: transparent;
-    background-image: linear-gradient(
-      135deg,
-      var(--bg-accent-secondary, #37babc) 0%,
-      var(--bg-accent-primary, #5c8dea) 30%,
-      var(--bg-accent-tertiary, #a972ff) 100%
-    );
+    background-image: linear-gradient(135deg, #4b7be6 0%, #9355f4 100%);
     filter: brightness(0.92);
     transform: translateY(0);
-    box-shadow:
-      0 0 10px rgba(55, 186, 188, 0.2),
-      0 2px 6px rgba(169, 114, 255, 0.16);
+    box-shadow: 0 2px 8px rgba(92, 141, 234, 0.22);
   }
 
   &:disabled {
@@ -221,6 +264,24 @@ aside[class~='dial-body-text'] [data-cp-search-wrapper] {
   }
 }
 
+// Search row border — match catalog SearchBar strokes.
+// Anchored on stable Tailwind classes (h-9 w-full items-center ps-3 pe-3);
+// avoids the hashed CSS-module class name on the panel's internal row element.
+aside[class~='dial-body-text'] [class~='h-9'][class~='w-full'][class~='items-center'][class~='ps-3'][class~='pe-3'] {
+  border-color: rgba(0, 0, 0, 0.05) !important;
+
+  @media (hover: hover) {
+    &:hover:not(:focus-within) {
+      border-color: rgba(0, 0, 0, 0.12) !important;
+    }
+  }
+
+  &:focus-within {
+    border-color: rgba(125, 164, 255, 0.5) !important;
+    box-shadow: none !important;
+  }
+}
+
 // Filter pill row — remove track background, use flat spaced layout.
 // ui-kit v0.11+ uses flex-nowrap + rounded-full for the row (was flex-wrap).
 aside[class~='dial-body-text'] [class~='flex-nowrap'][class~='gap-2'][class~='rounded-full'] {
@@ -237,7 +298,7 @@ aside[class~='dial-body-text'] [class~='flex-nowrap'][class~='gap-2'][class~='ro
 aside[class~='dial-body-text'] .cp-filter-tab {
   border-style: solid !important;
   border-width: 1px !important;
-  border-color: rgba(92, 141, 234, 0.14) !important;
+  border-color: transparent !important;
   background-color: transparent !important;
   border-radius: 9999px !important;
   color: var(--text-tertiary, #808898) !important;
@@ -245,7 +306,7 @@ aside[class~='dial-body-text'] .cp-filter-tab {
   &:hover {
     color: var(--text-secondary) !important;
     background-color: rgba(92, 141, 234, 0.06) !important;
-    border-color: rgba(92, 141, 234, 0.25) !important;
+    border-color: transparent !important;
   }
 
   > span {
@@ -254,11 +315,11 @@ aside[class~='dial-body-text'] .cp-filter-tab {
   }
 }
 
-// Active pill — solid blue tint, visible stroke, accent text
+// Active pill — very subtle tint, no border, secondary text
 aside[class~='dial-body-text'] .cp-filter-tab[class~='bg-accent-primary-alpha'] {
-  background-color: rgba(39, 100, 217, 0.14) !important;
-  border-color: rgba(39, 100, 217, 0.45) !important;
-  color: var(--text-accent-primary, #2764d9) !important;
+  background-color: rgba(39, 100, 217, 0.07) !important;
+  border-color: transparent !important;
+  color: var(--text-secondary, #64748b) !important;
   box-shadow: none !important;
 }
 

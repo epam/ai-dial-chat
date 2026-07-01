@@ -6,7 +6,7 @@ import {
   DialNeutralButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { IconChevronDown, IconCopy } from '@tabler/icons-react';
+import { IconCheck, IconChevronDown, IconCopy } from '@tabler/icons-react';
 import { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import type {
   CatalogItemApiDetails,
@@ -79,10 +79,17 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
     () =>
       snippets.map((s) => ({
         key: s.language,
-        label: LANGUAGE_LABELS[s.language] ?? s.language,
+        label: (
+          <span className="flex w-full items-center justify-between gap-2">
+            {LANGUAGE_LABELS[s.language] ?? s.language}
+            {s.language === activeSnippet && (
+              <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
+            )}
+          </span>
+        ),
         onClick: () => setActiveSnippet(s.language),
       })),
-    [snippets],
+    [snippets, activeSnippet],
   );
 
   const activeLabel =
@@ -114,7 +121,11 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
             'flex items-center justify-end gap-2',
           )}
         >
-          <DialDropdown items={snippetItems}>
+          <DialDropdown
+            items={snippetItems}
+            matchReferenceWidth={false}
+            listClassName="cp-dropdown-overlay"
+          >
             <DialNeutralButton
               size={ElementSize.Small}
               label={activeLabel}
@@ -169,10 +180,17 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
     () =>
       endpoints.map((e, i) => ({
         key: String(i),
-        label: e.label,
+        label: (
+          <span className="flex w-full items-center justify-between gap-2">
+            {e.label}
+            {i === activeEndpointIdx && (
+              <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
+            )}
+          </span>
+        ),
         onClick: () => setActiveEndpointIdx(i),
       })),
-    [endpoints],
+    [endpoints, activeEndpointIdx],
   );
 
   const resourceRows: TableViewRow[] = [];
@@ -215,7 +233,11 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
             >
               {endpointSectionLabel}
             </p>
-            <DialDropdown items={endpointDropdownItems}>
+            <DialDropdown
+              items={endpointDropdownItems}
+              matchReferenceWidth={false}
+              listClassName="cp-dropdown-overlay"
+            >
               <DialNeutralButton
                 size={ElementSize.Small}
                 label={activeEndpoint?.label}

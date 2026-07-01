@@ -1,42 +1,234 @@
-.chip {
-  border: 1px solid
-    var(--cat-filter-chip-border, var(--stroke-tertiary, #e0e6f0));
+/* ============================================================
+ * Filter trigger button
+ * ============================================================ */
+
+.filterBtn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  height: 50px;
+  padding-inline: 18px;
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 150ms ease, box-shadow 150ms ease;
+
+  @media (hover: hover) {
+    &:hover:not(:focus-visible) {
+      border-color: rgba(0, 0, 0, 0.12);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    border-color: rgba(125, 164, 255, 0.5);
+    box-shadow: none;
+  }
 }
 
-.chipActive {
-  border-color: var(
-    --cat-filter-active-border,
-    var(--text-accent-primary, #7da4ff)
-  );
-  background-color: var(
-    --cat-filter-active-bg,
-    var(--bg-accent-primary-alpha, #7da4ff1a)
-  );
-  color: var(--cat-filter-active-label, var(--text-accent-primary, #7da4ff));
+.filterBtnActive {
+  border-color: var(--stroke-accent-primary, #7da4ff);
 }
+
+.filterBtnLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #131a29);
+}
+
+.filterBtnFunnel {
+  flex-shrink: 0;
+  color: var(--text-secondary, #64748b);
+}
+
+.filterBtnChevron {
+  flex-shrink: 0;
+  color: var(--text-tertiary, #98a2b3);
+  transition: transform 150ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.filterBtnChevronOpen {
+  transform: rotate(180deg);
+}
+
+/* ============================================================
+ * Dropdown overlay
+ * ============================================================ */
 
 .overlay {
-  background: var(--cat-filter-bg, var(--bg-layer-0, #fff));
-  border: 1px solid
-    var(--cat-filter-overlay-border, var(--stroke-tertiary, #e0e6f0));
+  min-width: 360px;
+  padding: 6px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(16, 24, 40, 0.12);
 }
 
-.separator {
-  border-top: 1px solid
-    var(--cat-filter-separator, var(--stroke-tertiary, #e0e6f0));
-}
+/* Checkbox row ------------------------------------------------ */
 
-.sectionLabel {
-  color: var(--cat-filter-section-label, var(--text-secondary, #575f73));
-}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  outline: none;
+  user-select: none;
 
-.item {
   @media (hover: hover) {
     &:hover {
-      background: var(
-        --cat-filter-item-hover,
-        var(--bg-accent-primary-alpha, #7da4ff26)
-      );
+      background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
     }
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px rgba(125, 164, 255, 0.5);
+  }
+}
+
+.rowChecked {
+  background: var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.15));
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--bg-accent-primary-alpha, rgba(125, 164, 255, 0.15));
+    }
+  }
+}
+
+.rowLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  color: var(--text-primary, #131a29);
+}
+
+/* Custom 20 × 20 checkbox ------------------------------------ */
+
+.checkbox {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 1.5px solid rgba(0, 0, 0, 0.12); /* stroke-hover */
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 150ms ease, background-color 150ms ease;
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.checkboxChecked {
+  background-color: #3664e2; /* controls-bg-accent-primary */
+  border-color: #3664e2;
+
+  /* Checkmark drawn from two border sides of a rotated element.
+     border-left is physical here — the ✓ glyph must not flip in RTL. */
+  &::after {
+    content: '';
+    display: block;
+    width: 5px;
+    height: 10px;
+    border: 2px solid #ffffff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg) translate(-1px, -2px);
+  }
+}
+
+/* Section separator ----------------------------------------- */
+
+.divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.05); /* stroke-primary */
+  margin: 4px 0;
+}
+
+/* Topics section label --------------------------------------- */
+
+.sectionLabel {
+  padding: 10px 10px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-tertiary, #98a2b3);
+}
+
+/* Scrollable topics list ------------------------------------ */
+
+.topicsList {
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+/* Footer ---------------------------------------------------- */
+
+.footer {
+  display: flex;
+  align-items: center;
+  padding: 8px 4px 4px;
+  margin-top: 4px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05); /* stroke-primary */
+}
+
+/* Clear — ghost style */
+.clearBtn {
+  padding: 7px 12px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary, #64748b);
+  cursor: pointer;
+  transition: background-color 150ms ease;
+
+  @media (hover: hover) {
+    &:hover {
+      background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(125, 164, 255, 0.5);
+    outline-offset: 2px;
+  }
+}
+
+/* Apply — solid accent fill */
+.applyBtn {
+  margin-inline-start: auto;
+  padding: 7px 18px;
+  border: none;
+  border-radius: 8px;
+  background-color: #3664e2; /* controls-bg-accent-primary */
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+
+  @media (hover: hover) {
+    &:hover {
+      background-color: #2d57c8;
+    }
+  }
+
+  &:focus-visible {
+    outline: 2px solid rgba(125, 164, 255, 0.5);
+    outline-offset: 2px;
   }
 }

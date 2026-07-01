@@ -205,7 +205,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
             items={menuItems}
             onOpenChange={setIsMenuOpen}
             matchReferenceWidth={false}
-            listClassName="w-[140px] shadow-md"
+            listClassName="w-[140px] cp-dropdown-overlay"
           >
             <DialIconButton
               icon={

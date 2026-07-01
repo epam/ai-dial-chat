@@ -58,7 +58,7 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
       {!isMobile && (
         <nav
           aria-label={t(NavigationI18nKeys.AriaLabel)}
-          className="flex h-full w-[60px] flex-col justify-between bg-layer-3"
+          className="relative z-10 flex h-full w-[60px] flex-col justify-between bg-layer-3 [box-shadow:2px_0_8px_rgba(0,0,0,0.04)] rtl:[box-shadow:-2px_0_8px_rgba(0,0,0,0.04)]"
         >
           <div className="flex flex-col items-center">
             {currentThemeFavicon && (

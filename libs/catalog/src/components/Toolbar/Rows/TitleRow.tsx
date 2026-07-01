@@ -1,14 +1,11 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import {
-  ButtonAppearance,
-  ButtonVariant,
-  DIAL_ICON_SIZE,
-  DialButtonDropdown,
-} from '@epam/ai-dial-ui-kit';
-import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
+import { GhostButton } from '@epam/ai-dial-kit';
+import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
+import { IconCheck, IconChevronDown, IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 import { FC } from 'react';
 import { CatalogSortOption, ToolbarProps } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
+import { Filter } from '../../Filter/Filter';
 import { ItemHeader } from '../../ItemHeader/ItemHeader';
 import { SearchBar } from '../../SearchBar/SearchBar';
 
@@ -24,9 +21,17 @@ interface TitleRowProps {
   sortKey?: string;
   onSortChange?: (key: string) => void;
   sortOptions?: CatalogSortOption[];
+  filters?: Set<string>;
+  onFiltersChange?: (filters: Set<string>) => void;
+  filterValues?: Set<string>;
+  isMyAppsActive?: boolean;
+  onMyAppsChange?: (isActive: boolean) => void;
+  filterFromLabel?: string;
+  filterMyAppsLabel?: string;
+  filterTopicsLabel?: string;
 }
 
-/** Browse section header: title + view toggle + sort, then search bar below. */
+/** Browse section header: title + view toggle + sort, then search + filter row below. */
 export const TitleRow: FC<TitleRowProps> = ({
   totalCount,
   viewMode,
@@ -39,6 +44,14 @@ export const TitleRow: FC<TitleRowProps> = ({
   sortKey,
   onSortChange,
   sortOptions,
+  filters,
+  onFiltersChange,
+  filterValues,
+  isMyAppsActive,
+  onMyAppsChange,
+  filterFromLabel,
+  filterMyAppsLabel,
+  filterTopicsLabel,
 }) => {
   const titleClassName =
     browseStyles?.typography?.titleClassName ?? 'dial-body-semi-text';
@@ -49,7 +62,7 @@ export const TitleRow: FC<TitleRowProps> = ({
     sortOptions?.find((o) => o.value === sortKey)?.label ?? '';
 
   return (
-    <div className="mb-4 flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       {/* Row 1: title | view toggle | divider | sort */}
       <div className="flex items-center gap-2">
         <ItemHeader
@@ -107,27 +120,52 @@ export const TitleRow: FC<TitleRowProps> = ({
                 style={{ background: 'var(--stroke-secondary, #d1dbea)' }}
               />
 
-              <DialButtonDropdown
-                label={activeLabel}
-                variant={ButtonVariant.Primary}
-                appearance={ButtonAppearance.Ghost}
+              <DialDropdown
+                matchReferenceWidth={false}
+                placement="bottom-end"
+                listClassName="cp-dropdown-overlay"
                 items={sortOptions.map((o) => ({
                   key: o.value,
-                  label: o.label,
-                  onClick: ({ key }: { key: string }) => onSortChange?.(key),
+                  label: (
+                    <span className="flex w-full items-center justify-between gap-2">
+                      {o.label}
+                      {o.value === sortKey && (
+                        <IconCheck size={DIAL_ICON_SIZE.SM} aria-hidden />
+                      )}
+                    </span>
+                  ),
+                  onClick: () => onSortChange?.(o.value),
                 }))}
-              />
+              >
+                <GhostButton
+                  label={activeLabel}
+                  iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />}
+                />
+              </DialDropdown>
             </>
           )}
         </div>
       </div>
 
-      {/* Row 2: full-width search bar */}
-      <SearchBar
-        value={query}
-        onChange={onQueryChange}
-        placeholder={searchPlaceholder}
-      />
+      {/* Row 2: search field + from filter */}
+      <div className="mb-5 flex items-center gap-3">
+        <SearchBar
+          value={query}
+          onChange={onQueryChange}
+          placeholder={searchPlaceholder}
+          className="flex-1"
+        />
+        <Filter
+          checked={filters ?? new Set()}
+          onChange={onFiltersChange ?? (() => undefined)}
+          values={filterValues}
+          isMyAppsActive={isMyAppsActive}
+          onMyAppsChange={onMyAppsChange}
+          defaultLabel={filterFromLabel}
+          myAppsLabel={filterMyAppsLabel}
+          topicsLabel={filterTopicsLabel}
+        />
+      </div>
     </div>
   );
 };

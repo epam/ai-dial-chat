@@ -11,10 +11,6 @@
       box-shadow: 0 4px 10px rgba(16, 24, 40, 0.06), 0 18px 44px rgba(16, 24, 40, 0.10);
     }
 
-    &:hover .cardIcon {
-      transform: scale(1.06);
-    }
-
     &:hover .emptyStarHidden {
       opacity: 1;
     }
@@ -27,14 +23,6 @@
       transform: none;
     }
 
-    .cardIcon {
-      transition: none !important;
-    }
-
-    &:hover .cardIcon {
-      transform: none;
-    }
-
     .starBtn {
       transition: none !important;
     }
@@ -43,10 +31,6 @@
       transition: none !important;
     }
   }
-}
-
-.cardIcon {
-  transition: transform 200ms ease-out;
 }
 
 .starBtn {

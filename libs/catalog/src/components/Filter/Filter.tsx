@@ -1,12 +1,15 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostButton } from '@epam/ai-dial-kit';
-import {
-  DialCheckbox,
-  DialDropdown,
-  DIAL_ICON_SIZE,
-} from '@epam/ai-dial-ui-kit';
+import { DialDropdown } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconFilter } from '@tabler/icons-react';
-import { FC } from 'react';
+import {
+  FC,
+  KeyboardEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { getFromLabel } from '../../utils/catalog-filter';
 import styles from './Filter.module.scss';
 
@@ -26,10 +29,14 @@ export interface FilterProps {
   myAppsLabel?: string;
   /** Label for the Topics section heading. Default: 'Topics'. */
   topicsLabel?: string;
-  /** CSS class for the Topics section heading. Default: 'dial-tiny-text'. */
+  /** @deprecated No longer applied — section style is set by the DS spec. */
   topicsSectionClassName?: string;
   /** Button label when nothing is filtered. Default: 'From'. */
   defaultLabel?: string;
+  /** Label for the footer Clear button. Default: 'Clear'. */
+  clearLabel?: string;
+  /** Label for the footer Apply button. Default: 'Apply'. */
+  applyLabel?: string;
 }
 
 const getFilterButtonLabel = (
@@ -56,7 +63,10 @@ const toggleTopic = (topic: string, checked: Set<string>): Set<string> => {
   return next;
 };
 
-/** Dropdown filter with a "My Apps" toggle and a flat topic-checkbox list. */
+/**
+ * Source-filter dropdown with checkbox list, keyboard navigation, and a
+ * footer with Clear + Apply buttons (buffered — changes are committed on Apply).
+ */
 export const Filter: FC<FilterProps> = ({
   checked,
   onChange,
@@ -65,11 +75,17 @@ export const Filter: FC<FilterProps> = ({
   onMyAppsChange,
   myAppsLabel = 'My Apps',
   topicsLabel = 'Topics',
-  topicsSectionClassName = 'dial-tiny-text',
   defaultLabel = 'From',
+  clearLabel = 'Clear',
+  applyLabel = 'Apply',
 }) => {
   const isActive = (isMyAppsActive ?? false) || checked.size > 0;
-  const topics = values != null ? [...values].sort() : [];
+  const [isOpen, setIsOpen] = useState(false);
+
+  const topics = useMemo(
+    () => (values != null ? [...values].sort() : []),
+    [values],
+  );
 
   const buttonLabel = getFilterButtonLabel(
     checked,
@@ -79,74 +95,231 @@ export const Filter: FC<FilterProps> = ({
     defaultLabel,
   );
 
+  // Pending (buffered) state — committed to parent only on Apply.
+  const [pendingChecked, setPendingChecked] = useState<Set<string>>(
+    () => new Set(checked),
+  );
+  const [pendingMyApps, setPendingMyApps] = useState(isMyAppsActive ?? false);
+
+  // Sync pending from applied state each time the dropdown opens.
+  useEffect(() => {
+    if (!isOpen) return;
+    setPendingChecked(new Set(checked));
+    setPendingMyApps(isMyAppsActive ?? false);
+  }, [isOpen, checked, isMyAppsActive]);
+
+  // Keyboard navigation — roving tabindex across checkbox rows only.
+  // Footer buttons live outside the roving group (natural tab order).
+  const totalItems = topics.length + 1;
+  const [focusedIndex, setFocusedIndex] = useState(-1);
+  const rowRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  const focusRow = useCallback(
+    (index: number) => {
+      const clamped = (index + totalItems) % totalItems;
+      setFocusedIndex(clamped);
+      rowRefs.current[clamped]?.focus();
+    },
+    [totalItems],
+  );
+
+  // Focus first row after overlay renders.
+  useEffect(() => {
+    if (!isOpen) {
+      setFocusedIndex(-1);
+      return;
+    }
+    const frame = requestAnimationFrame(() => focusRow(0));
+    return () => cancelAnimationFrame(frame);
+  }, [isOpen, focusRow]);
+
+  const handleOpenChange = (next: boolean) => {
+    setIsOpen(next);
+    if (!next) triggerRef.current?.focus();
+  };
+
+  const handleTriggerKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (e.key === 'ArrowDown' && !isOpen) {
+      e.preventDefault();
+      setIsOpen(true);
+    }
+  };
+
+  // Arrow keys navigate checkbox rows; Escape closes. Footer buttons stop
+  // propagation of Arrow keys so they don't accidentally move row focus.
+  const handleMenuKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      focusRow(focusedIndex + 1);
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      focusRow(focusedIndex - 1);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setIsOpen(false);
+      triggerRef.current?.focus();
+    }
+  };
+
+  const makeRowKeyDown =
+    (toggle: () => void) => (e: KeyboardEvent<HTMLDivElement>) => {
+      if (e.key === ' ' || e.key === 'Enter') {
+        e.preventDefault();
+        toggle();
+      }
+    };
+
+  const handleApply = () => {
+    onChange(pendingChecked);
+    onMyAppsChange?.(pendingMyApps);
+    handleOpenChange(false);
+  };
+
+  const handleClear = () => {
+    onChange(new Set());
+    onMyAppsChange?.(false);
+    handleOpenChange(false);
+  };
+
   return (
     <DialDropdown
       matchReferenceWidth={false}
+      placement="bottom-start"
+      open={isOpen}
+      onOpenChange={handleOpenChange}
       renderOverlay={() => (
         <div
-          className={mergeClasses(
-            styles.overlay,
-            'min-w-[220px] rounded py-1 shadow',
-          )}
+          role="menu"
+          aria-label={defaultLabel}
+          className={styles.overlay}
+          onKeyDown={handleMenuKeyDown}
         >
-          {/* My Apps toggle */}
+          {/* My Apps row */}
           <div
+            role="menuitemcheckbox"
+            aria-checked={pendingMyApps}
+            tabIndex={focusedIndex === 0 ? 0 : -1}
+            ref={(el) => {
+              rowRefs.current[0] = el;
+            }}
             className={mergeClasses(
-              'flex min-h-[34px] w-full cursor-pointer items-center rounded px-3',
-              styles.item,
+              styles.row,
+              pendingMyApps && styles.rowChecked,
             )}
+            onClick={() => setPendingMyApps(!pendingMyApps)}
+            onKeyDown={makeRowKeyDown(() => setPendingMyApps(!pendingMyApps))}
           >
-            <DialCheckbox
-              id="filter-my-apps"
-              label={myAppsLabel}
-              checked={isMyAppsActive ?? false}
-              onChange={(v) => onMyAppsChange?.(v ?? false)}
+            <span
+              className={mergeClasses(
+                styles.checkbox,
+                pendingMyApps && styles.checkboxChecked,
+              )}
+              aria-hidden
             />
+            <span className={styles.rowLabel}>{myAppsLabel}</span>
           </div>
 
           {topics.length > 0 && (
             <>
-              <div className={mergeClasses(styles.separator, 'mx-1 my-1')} />
-
-              <div
-                className={mergeClasses(
-                  'px-3 py-1',
-                  styles.sectionLabel,
-                  topicsSectionClassName,
-                )}
-              >
+              <div role="separator" className={styles.divider} aria-hidden />
+              <div className={styles.sectionLabel} aria-hidden>
                 {topicsLabel}
               </div>
-
-              <div className="max-h-[240px] overflow-y-auto">
-                {topics.map((topic) => (
-                  <div
-                    key={topic}
-                    className={mergeClasses(
-                      'flex min-h-[34px] w-full cursor-pointer items-center rounded px-3',
-                      styles.item,
-                    )}
-                  >
-                    <DialCheckbox
-                      id={`filter-topic-${topic}`}
-                      label={topic}
-                      checked={checked.has(topic)}
-                      onChange={() => onChange(toggleTopic(topic, checked))}
-                    />
-                  </div>
-                ))}
+              <div className={styles.topicsList}>
+                {topics.map((topic, i) => {
+                  const isChecked = pendingChecked.has(topic);
+                  const idx = i + 1;
+                  const toggle = () =>
+                    setPendingChecked(toggleTopic(topic, pendingChecked));
+                  return (
+                    <div
+                      key={topic}
+                      role="menuitemcheckbox"
+                      aria-checked={isChecked}
+                      tabIndex={focusedIndex === idx ? 0 : -1}
+                      ref={(el) => {
+                        rowRefs.current[idx] = el;
+                      }}
+                      className={mergeClasses(
+                        styles.row,
+                        isChecked && styles.rowChecked,
+                      )}
+                      onClick={toggle}
+                      onKeyDown={makeRowKeyDown(toggle)}
+                    >
+                      <span
+                        className={mergeClasses(
+                          styles.checkbox,
+                          isChecked && styles.checkboxChecked,
+                        )}
+                        aria-hidden
+                      />
+                      <span className={styles.rowLabel}>{topic}</span>
+                    </div>
+                  );
+                })}
               </div>
             </>
           )}
+
+          {/* Footer — kit PrimaryButton/GhostButton can't be used here:
+              Buttons.scss applies border-radius:9999px !important and a
+              gradient that can't be overridden to the spec's flat solid style. */}
+          <div
+            className={styles.footer}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+                e.stopPropagation();
+              }
+            }}
+          >
+            <button
+              type="button"
+              className={styles.clearBtn}
+              onClick={handleClear}
+            >
+              {clearLabel}
+            </button>
+            <button
+              type="button"
+              className={styles.applyBtn}
+              onClick={handleApply}
+            >
+              {applyLabel}
+            </button>
+          </div>
         </div>
       )}
     >
-      <GhostButton
-        label={buttonLabel}
-        iconBefore={<IconFilter size={DIAL_ICON_SIZE.SM} />}
-        iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
-        className={mergeClasses(styles.chip, isActive && styles.chipActive)}
-      />
+      <button
+        ref={triggerRef}
+        type="button"
+        aria-haspopup="menu"
+        aria-expanded={isOpen}
+        onKeyDown={handleTriggerKeyDown}
+        className={mergeClasses(
+          styles.filterBtn,
+          (isActive || isOpen) && styles.filterBtnActive,
+        )}
+      >
+        <IconFilter
+          size={16}
+          strokeWidth={1.8}
+          className={styles.filterBtnFunnel}
+          aria-hidden
+        />
+        <span className={styles.filterBtnLabel}>{buttonLabel}</span>
+        <IconChevronDown
+          size={14}
+          strokeWidth={2.2}
+          className={mergeClasses(
+            styles.filterBtnChevron,
+            isOpen && styles.filterBtnChevronOpen,
+          )}
+          aria-hidden
+        />
+      </button>
     </DialDropdown>
   );
 };
