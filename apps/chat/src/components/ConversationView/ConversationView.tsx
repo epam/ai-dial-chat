@@ -37,7 +37,6 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
-import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -640,7 +639,6 @@ const ConversationView: FC<Props> = ({
             <Suspense fallback={null}>
               <ConversationInput
                 styles={{
-                  ...CONVERSATION_INPUT_STYLES,
                   typography: {
                     input: { fontClassName: 'dial-body-paragraph-text' },
                   },

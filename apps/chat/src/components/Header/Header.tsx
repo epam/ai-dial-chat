@@ -25,6 +25,7 @@ interface Props {
   onNewChat?: () => void;
 }
 
+// TODO: remove? need change after full redesign
 const Header: FC<Props> = ({
   onMenuToggle,
   isConversationPanelOpen,

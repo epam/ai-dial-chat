@@ -352,3 +352,8 @@ aside[class~='dial-body-text']
 .dial-small-text {
   line-height: 24px;
 }
+
+// Main content area — subtle inset shadow on the start edge; flips for RTL
+.main-inset-shadow {
+  @apply shadow-main-inset rtl:shadow-main-inset-rtl;
+}
