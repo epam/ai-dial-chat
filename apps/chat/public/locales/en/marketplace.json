@@ -215,5 +215,11 @@
   "You don't have any toolsets.": "You don't have any toolsets.",
   "No agents": "No agents",
   "You don't have any agents.": "You don't have any agents.",
-  "This application has no chat endpoint and cannot be selected for conversations": "This application has no chat endpoint and cannot be selected for conversations"
+  "This application has no chat endpoint and cannot be selected for conversations": "This application has no chat endpoint and cannot be selected for conversations",
+  "File tools": "File tools",
+  "Allow the agent to access app files": "Allow the agent to access app files",
+  "Enables the orchestrator’s built-in file tools for this app. When enabled, the agent can browse, search, read, and write or edit files in the app’s file context. When disabled, no file tools are exposed to the orchestrator.": "Enables the orchestrator’s built-in file tools for this app. When enabled, the agent can browse, search, read, and write or edit files in the app’s file context. When disabled, no file tools are exposed to the orchestrator.",
+  "Allow orchestrator to process large files": "Allow orchestrator to process large files",
+  "Process large files": "Process large files",
+  "Lets the orchestrator handle large or many attachments by reading file content on demand instead of including all attachment content in the initial prompt. This helps reduce context window usage while preserving access to the files when needed.": "Lets the orchestrator handle large or many attachments by reading file content on demand instead of including all attachment content in the initial prompt. This helps reduce context window usage while preserving access to the files when needed."
 }
