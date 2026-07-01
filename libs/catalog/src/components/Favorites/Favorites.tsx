@@ -390,7 +390,7 @@ export const Favorites: FC<FavoritesProps> = ({
 
         <div
           ref={gridRef}
-          className={mergeClasses('grid content-start gap-4', styles.gridPage)}
+          className={mergeClasses('grid content-start gap-5', styles.gridPage)}
           style={{
             gridTemplateColumns: `repeat(${favColumns}, minmax(0, 1fr))`,
             minHeight: lockedGridHeight,

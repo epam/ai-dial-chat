@@ -55,18 +55,15 @@
 
 .card {
   background: var(--bg-layer-0, #fcfcfc);
-  border-color: rgba(0, 0, 0, 0.06);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.05);
   transition:
-    transform 180ms ease-out,
-    box-shadow 180ms ease-out,
-    border-color 180ms ease-out;
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out;
 
   @media (hover: hover) {
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(16, 24, 40, 0.1);
-      border-color: rgba(0, 0, 0, 0.12);
+      transform: translateY(-3px);
+      box-shadow: 0 4px 10px rgba(16, 24, 40, 0.06), 0 18px 44px rgba(16, 24, 40, 0.10);
     }
   }
 
