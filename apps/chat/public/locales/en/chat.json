@@ -413,5 +413,7 @@
   "Importing": "Importing",
   "Exporting": "Exporting",
   "Maximize": "Maximize",
-  "This application has no chat endpoint and cannot be selected for conversations": "This application has no chat endpoint and cannot be selected for conversations"
+  "This application has no chat endpoint and cannot be selected for conversations": "This application has no chat endpoint and cannot be selected for conversations",
+  "File tools": "File tools",
+  "Process large files": "Process large files"
 }

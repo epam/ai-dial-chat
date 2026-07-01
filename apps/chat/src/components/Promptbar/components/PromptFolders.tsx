@@ -31,6 +31,7 @@ import {
 
 import { MAX_CONVERSATION_AND_PROMPT_FOLDERS_DEPTH } from '@/src/constants/folders';
 import { ChatI18nKeys } from '@/src/constants/i18n';
+import { PROMPT_PANEL_PUBLICATION_FEATURE_TYPES } from '@/src/constants/publication';
 import {
   APPROVE_REQUIRED_SECTION_NAME,
   ORGANIZATION_SECTION_NAME,
@@ -53,11 +54,7 @@ interface promptFolderProps {
   allowHighlight?: boolean;
 }
 
-const publicationFeatureTypes = [
-  FeatureType.Prompt,
-  FeatureType.Application,
-  FeatureType.Toolset,
-];
+const publicationFeatureTypes = PROMPT_PANEL_PUBLICATION_FEATURE_TYPES;
 
 const PromptFolderTemplate = ({
   folder,

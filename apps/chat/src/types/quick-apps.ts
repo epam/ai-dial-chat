@@ -102,6 +102,7 @@ export interface QuickApp2Config {
       variables: object;
       content: string;
     };
+    attachment_strategy?: { type: 'lazy_on_demand' } | null;
   };
   contexts: FileContext[];
   tool_sets: AnyToolset[];
@@ -113,6 +114,7 @@ export interface QuickApp2Config {
     timestamp?: {
       injection_strategy: 'tool_call';
     } | null;
+    dial_files?: object | null;
   };
 }
 
