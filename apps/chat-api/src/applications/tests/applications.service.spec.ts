@@ -264,9 +264,32 @@ describe('ApplicationsService', () => {
         display_version: '1.0',
         application_type_schema_id:
           'https://mydial.epam.com/custom_application_schemas/quickapps2',
+        application_properties: {},
         description: 'A description',
         icon_url: 'https://example.com/icon.svg',
       });
+    });
+
+    it('maps topics to description_keywords in PUT body', async () => {
+      const { service } = makeService();
+      const fetchSpy = vi
+        .fn()
+        .mockResolvedValueOnce(bucketOk)
+        .mockResolvedValueOnce(putOk);
+      vi.stubGlobal('fetch', fetchSpy);
+
+      await service.createApplication('user1', 'token', {
+        ...body,
+        topics: ['nlp', 'assistant'],
+      });
+
+      const sentBody = JSON.parse(
+        fetchSpy.mock.calls[1][1].body as string,
+      ) as Record<string, unknown>;
+      expect(sentBody).toMatchObject({
+        description_keywords: ['nlp', 'assistant'],
+      });
+      expect(sentBody).not.toHaveProperty('topics');
     });
 
     it('forwards Authorization header to both bucket and PUT requests', async () => {

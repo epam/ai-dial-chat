@@ -1,0 +1,102 @@
+name: SDLC Dispatch / Core
+
+# Reusable dispatch pipeline shared by every trigger-specific dispatcher
+# (dispatch-pr.yml, dispatch-schedule.yml). It discovers agents whose manifests
+# match the CALLER's event, then runs them ALL in one matrix via run-agent.yml —
+# each agent waits for its own `needs:` upstreams inside its job (no rounds), so
+# a dependent starts as soon as ITS upstream finishes, not the whole level. The
+# triggering event is read from `github.event_name` (reusable workflows inherit
+# the caller's github context), so the same core serves pull_request, schedule,
+# and workflow_dispatch without modification.
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  security-events: write
+  id-token: write   # required by anthropics/claude-code-action for OIDC auth
+  actions: read     # caller cap: run-agent.yml's `gh run download` needs this
+
+jobs:
+  # Round-0 trust gate (ADR-0005 M1/M2). Classifies the PR source and rejects
+  # the run if the PR touches agent-trust paths or adds symlinks. A no-op for
+  # schedule / workflow_dispatch (no PR, runs from the trusted default branch),
+  # so the same core serves every trigger. discover gates on this — a failed
+  # gate blocks the whole dispatch.
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      trusted: ${{ steps.trust.outputs.trusted }}
+    steps:
+      # Checkout provides the .git dir the gate needs for its symlink ls-tree.
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - id: trust
+        uses: ./.github/actions/pr-trust-gate
+        with:
+          event_name: ${{ github.event_name }}
+          pr: ${{ toJSON(github.event.pull_request) }}
+          repo: ${{ github.repository }}
+          github_token: ${{ github.token }}
+          # Fork-facing posture (set when AI review opens to external forks):
+          #   trust_label: ai-review-approved   # maintainer label = trust boundary
+          #   fail_on_untrusted: 'false'        # branch on outputs.trusted instead
+          # Defaults (hard-block forks, reject trust-path edits on all PRs) are
+          # correct for the current internal-only (`pull_request`) tier.
+
+  discover:
+    needs: gate
+    runs-on: ubuntu-latest
+    outputs:
+      agents: ${{ steps.match.outputs.agents }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Install matcher deps
+        run: pip install --quiet pyyaml jsonschema
+
+      - id: match
+        env:
+          VARS_JSON: ${{ toJSON(vars) }}
+          EVENT_JSON: ${{ toJSON(github.event) }}
+          EVENT_NAME: ${{ github.event_name }}
+          GITHUB_REF: ${{ github.ref }}
+        run: |
+          set -euo pipefail
+          echo "$VARS_JSON" > /tmp/vars.json
+          echo "$EVENT_JSON" > /tmp/event.json
+          echo "Dispatching agents for event: $EVENT_NAME"
+          MATCHED=$(python3 .github/claude/scripts/match-agents.py "$EVENT_NAME" \
+            --vars /tmp/vars.json --event-context /tmp/event.json)
+          echo "Matched: $MATCHED"
+          echo "agents=$(echo "$MATCHED" | python3 -c 'import sys,json; print(json.dumps(json.load(sys.stdin).get("agents", [])))')" >> "$GITHUB_OUTPUT"
+
+  # One matrix over ALL matched agents — no rounds. Every agent starts at once;
+  # those with `needs:` wait for their specific upstream jobs inside run-agent
+  # (the "Wait for and download upstream artifacts" step), so a dependent runs
+  # as soon as ITS upstream finishes rather than waiting on a whole round.
+  # fail-fast: false keeps independent agents running if one fails.
+  run-agents:
+    # Constant middle segment (NOT the agent name). GitHub's "All jobs" sidebar
+    # shows the LEAF reusable job's name — run-agent's `agent` job, which we name
+    # after the agent — so the agent name belongs there, not here. Putting it
+    # here too would double the graph path to `dispatch / <agent> / <agent>`.
+    # With a constant the path reads cleanly as `dispatch / agent / <agent>` in
+    # the graph while the sidebar stays `<agent>`. The upstream-wait step matches
+    # the agent name as the trailing path segment, so this is safe.
+    name: agent
+    needs: discover
+    if: needs.discover.outputs.agents != '[]'
+    strategy:
+      fail-fast: false
+      matrix:
+        agent: ${{ fromJSON(needs.discover.outputs.agents) }}
+    uses: ./.github/workflows/run-agent.yml
+    with:
+      agent_name: ${{ matrix.agent.name }}
+      upstream_artifacts: ${{ join(matrix.agent.needs, ',') }}
+      timeout_minutes: ${{ matrix.agent.timeout_minutes }}
+      concurrency_group: ${{ matrix.agent.concurrency_group }}
+    secrets: inherit

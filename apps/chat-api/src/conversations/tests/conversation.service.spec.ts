@@ -575,7 +575,7 @@ describe('ConversationService', () => {
       const getSpy = vi
         .spyOn(service['client'], 'getConversation')
         .mockResolvedValue({
-          data: { ...TEST_CONVERSATION },
+          data: { ...TEST_CONVERSATION, name: 'hello' },
         } as never);
       const saveSpy = vi
         .spyOn(service['client'], 'saveConversation')
@@ -594,17 +594,17 @@ describe('ConversationService', () => {
       );
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'applications/catalog/Team%2FApp%20One__0.0.1__hello%201',
+        'applications/catalog/Team%2FApp%20One__0.0.1__hello',
         expect.objectContaining({
           body: expect.objectContaining({
-            id: 'test-bucket/applications/catalog/Team/App One__0.0.1__hello 1',
+            id: 'test-bucket/applications/catalog/Team/App One__0.0.1__hello',
             folderId: 'test-bucket/applications/catalog',
-            name: 'hello 1',
+            name: 'hello',
           }),
         }),
       );
       expect(result.newPath).toBe(
-        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello%201',
+        'conversations/test-bucket/applications/catalog/Team%2FApp%20One__0.0.1__hello',
       );
     });
 
@@ -753,18 +753,12 @@ describe('ConversationService', () => {
       name: 'New chat',
     };
 
-    // The copy is performed by copyResource; the metadata fix then reads the
-    // copy back (getConversation) and re-saves it (saveConversation).
     const mockGetConversation = (
       conversation: typeof TEST_CONVERSATION = SHARED_CONVERSATION,
-    ) => {
-      vi.spyOn(service['client'], 'copyResource').mockResolvedValue({
-        data: {},
-      } as never);
-      return vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
+    ) =>
+      vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
         data: { ...conversation },
       } as never);
-    };
 
     it('decodes the encoded filename so the title is not mangled (no "New20 chat")', async () => {
       mockGetConversation();
@@ -781,16 +775,14 @@ describe('ConversationService', () => {
       // The space stays a real space (encoded %20), never collapsed to "New20".
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'gpt-4o__New%20chat%201',
+        'gpt-4o__New%20chat',
         expect.objectContaining({
-          body: expect.objectContaining({ name: 'New chat 1' }),
+          body: expect.objectContaining({ name: 'New chat' }),
         }),
       );
     });
 
-    it('gives the copy a distinct name so it does not collide with the source path', async () => {
-      // Source is in another (shared/org) bucket and has no namesake in the user
-      // bucket, yet the copy must still be renamed so its relative path differs.
+    it('preserves the source display name without adding a numeric suffix', async () => {
       mockGetConversation();
       const saveSpy = vi
         .spyOn(service['client'], 'saveConversation')
@@ -804,10 +796,67 @@ describe('ConversationService', () => {
 
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        expect.not.stringMatching(/__New%20chat$/),
+        'gpt-4o__New%20chat',
         expect.objectContaining({
-          body: expect.objectContaining({ name: 'New chat 1' }),
+          body: expect.objectContaining({ name: 'New chat' }),
         }),
+      );
+    });
+
+    it('regression: does not produce a double suffix when source title ends with a number', async () => {
+      mockGetConversation({
+        ...SHARED_CONVERSATION,
+        id: 'shared-bucket/gpt-4o__New chat 1',
+        name: 'New chat 1',
+      });
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat%201',
+        'test-token',
+        'test-bucket',
+      );
+
+      const savedBody = saveSpy.mock.calls[0][2].body as Record<
+        string,
+        unknown
+      >;
+      expect(savedBody.name).toBe('New chat 1');
+      expect(savedBody.name).not.toBe('New chat 1 1');
+    });
+
+    it('uses the stored name field when the conversation was LLM-renamed', async () => {
+      // Storage path still uses the original first-message name, but JSON name
+      // was updated by the LLM to a meaningful title.
+      mockGetConversation({
+        ...SHARED_CONVERSATION,
+        id: 'shared-bucket/gpt-4o__Hello there',
+        name: 'AI Discussion',
+        llmNamingDone: true,
+      });
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__Hello%20there',
+        'test-token',
+        'test-bucket',
+      );
+
+      const savedBody = saveSpy.mock.calls[0][2].body as Record<
+        string,
+        unknown
+      >;
+      expect(savedBody.name).toBe('AI Discussion');
+      expect(savedBody.name).not.toBe('Hello there');
+      // Path built from the LLM-assigned name
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__AI%20Discussion',
+        expect.anything(),
       );
     });
 
@@ -825,24 +874,19 @@ describe('ConversationService', () => {
 
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'gpt-4o__New%20chat%201',
+        'gpt-4o__New%20chat',
         expect.objectContaining({
           body: expect.objectContaining({
-            id: 'test-bucket/gpt-4o__New chat 1',
+            id: 'test-bucket/gpt-4o__New chat',
             folderId: 'test-bucket',
           }),
         }),
       );
     });
 
-    it('increments the suffix past existing copies in the bucket', async () => {
+    it('appends a UUID segment when the destination path already exists', async () => {
       vi.spyOn(service['client'], 'getConversationMetadata').mockResolvedValue({
-        data: {
-          items: [
-            { name: 'gpt-4o__New chat', nodeType: 'CONVERSATION' },
-            { name: 'gpt-4o__New chat 1', nodeType: 'CONVERSATION' },
-          ],
-        },
+        data: { name: 'gpt-4o__New chat' },
       } as never);
       mockGetConversation();
       const saveSpy = vi
@@ -857,14 +901,88 @@ describe('ConversationService', () => {
 
       expect(saveSpy).toHaveBeenCalledWith(
         'test-bucket',
-        'gpt-4o__New%20chat%202',
+        expect.stringMatching(/^gpt-4o__New%20chat__[\w-]{36}$/),
         expect.objectContaining({
-          body: expect.objectContaining({
-            name: 'New chat 2',
-            id: 'test-bucket/gpt-4o__New chat 2',
-          }),
+          body: expect.objectContaining({ name: 'New chat' }),
         }),
       );
+    });
+
+    it('builds a clean 2-part path when source already has a UUID suffix', async () => {
+      mockGetConversation({
+        ...SHARED_CONVERSATION,
+        id: 'shared-bucket/gpt-4o__hello__a557f695-6bf5-4796-b609-2532881ae91a',
+        name: 'hello',
+      });
+      const metadataSpy = vi
+        .spyOn(service['client'], 'getConversationMetadata')
+        .mockResolvedValue({ error: { status: 404 } } as never);
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveConversation')
+        .mockResolvedValue({ data: {} } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__hello__a557f695-6bf5-4796-b609-2532881ae91a',
+        'test-token',
+        'test-bucket',
+      );
+
+      // Collision check must be for the clean 2-part path, not a 3-part path
+      expect(metadataSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__hello',
+        expect.anything(),
+      );
+      // Saved path must be clean (no old UUID carried over)
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'gpt-4o__hello',
+        expect.objectContaining({
+          body: expect.objectContaining({ name: 'hello' }),
+        }),
+      );
+    });
+
+    it('does not call fetchAllUserTitles during duplicate', async () => {
+      mockGetConversation();
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        data: {},
+      } as never);
+      const metadataSpy = vi.spyOn(
+        service['client'],
+        'getConversationMetadata',
+      );
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      // getConversationMetadata is called once for the path collision check,
+      // never for a full bucket title scan (which would pass an empty path '').
+      expect(metadataSpy).not.toHaveBeenCalledWith(
+        expect.anything(),
+        '',
+        expect.anything(),
+      );
+    });
+
+    it('does not invoke ConversationNamingService during duplicate', async () => {
+      mockGetConversation();
+      vi.spyOn(service['client'], 'saveConversation').mockResolvedValue({
+        data: {},
+      } as never);
+
+      await service.duplicateConversation(
+        'shared-bucket/gpt-4o__New%20chat',
+        'test-token',
+        'test-bucket',
+      );
+
+      expect(
+        mockConversationNamingService.maybeRenameAfterFirstReply,
+      ).not.toHaveBeenCalled();
     });
 
     it('returns the encoded path of the new conversation', async () => {
@@ -880,14 +998,11 @@ describe('ConversationService', () => {
       );
 
       expect(result.newPath).toBe(
-        'conversations/test-bucket/gpt-4o__New%20chat%201',
+        'conversations/test-bucket/gpt-4o__New%20chat',
       );
     });
 
     it('preserves temperature and responseFormat from the source conversation', async () => {
-      vi.spyOn(service['client'], 'copyResource').mockResolvedValue({
-        data: {},
-      } as never);
       vi.spyOn(service['client'], 'getConversation').mockResolvedValue({
         data: {
           ...SHARED_CONVERSATION,

@@ -16,16 +16,145 @@ import * as runtime from '../runtime';
 import type {
   DialToolsetDto,
   DialToolsetListResponseDto,
+  MutatedToolsetDto,
+  ToolsetAuthResultDto,
+  ToolsetBodyDto,
+  ToolsetLoginBodyDto,
+  ToolsetLogoutBodyDto,
 } from '../models/index';
+
+export interface CreateToolsetRequest {
+  toolsetBodyDto: ToolsetBodyDto;
+}
+
+export interface DeleteToolsetRequest {
+  toolsetName: string;
+}
 
 export interface GetToolsetRequest {
   toolsetName: string;
+}
+
+export interface LoginToolsetRequest {
+  toolsetName: string;
+  toolsetLoginBodyDto: ToolsetLoginBodyDto;
+}
+
+export interface LogoutToolsetRequest {
+  toolsetName: string;
+  toolsetLogoutBodyDto: ToolsetLogoutBodyDto;
+}
+
+export interface UpdateToolsetRequest {
+  toolsetName: string;
+  toolsetBodyDto: ToolsetBodyDto;
 }
 
 /**
  *
  */
 export class ToolsetsApi extends runtime.BaseAPI {
+  /**
+   * Creates a new toolset for the authenticated session user by proxying DIAL Core. Invalidates the toolset list cache on success.
+   * Create a new toolset
+   */
+  async createToolsetRaw(
+    requestParameters: CreateToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<MutatedToolsetDto>> {
+    if (requestParameters['toolsetBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetBodyDto',
+        'Required parameter "toolsetBodyDto" was null or undefined when calling createToolset().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/toolsets`;
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['toolsetBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<MutatedToolsetDto>(response);
+  }
+
+  /**
+   * Creates a new toolset for the authenticated session user by proxying DIAL Core. Invalidates the toolset list cache on success.
+   * Create a new toolset
+   */
+  async createToolset(
+    requestParameters: CreateToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<MutatedToolsetDto> {
+    const response = await this.createToolsetRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Deletes a toolset for the authenticated session user by proxying DIAL Core. Invalidates the relevant caches on success.
+   * Delete a toolset
+   */
+  async deleteToolsetRaw(
+    requestParameters: DeleteToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<void>> {
+    if (requestParameters['toolsetName'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetName',
+        'Required parameter "toolsetName" was null or undefined when calling deleteToolset().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    let urlPath = `/api/v1/toolsets/{toolsetName}`;
+    urlPath = urlPath.replace(
+      `{${'toolsetName'}}`,
+      encodeURIComponent(String(requestParameters['toolsetName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'DELETE',
+        headers: headerParameters,
+        query: queryParameters,
+      },
+      initOverrides,
+    );
+
+    return new runtime.VoidApiResponse(response);
+  }
+
+  /**
+   * Deletes a toolset for the authenticated session user by proxying DIAL Core. Invalidates the relevant caches on success.
+   * Delete a toolset
+   */
+  async deleteToolset(
+    requestParameters: DeleteToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<void> {
+    await this.deleteToolsetRaw(requestParameters, initOverrides);
+  }
+
   /**
    * Returns a single DIAL Core toolset by name for the authenticated session user. Proxies GET /openai/toolsets/{toolset_name} using the caller\'s session access token. Results are cached server-side for 60 seconds per user per toolset.
    * Get toolset by name
@@ -110,6 +239,195 @@ export class ToolsetsApi extends runtime.BaseAPI {
     initOverrides?: RequestInit | runtime.InitOverrideFunction,
   ): Promise<DialToolsetListResponseDto> {
     const response = await this.listToolsetsRaw(initOverrides);
+    return await response.value();
+  }
+
+  /**
+   * Submits API key or OAuth authorization-code credentials for a toolset by proxying DIAL Core (POST /v1/ops/toolset/signin). Credential payloads are never logged.
+   * Submit toolset credentials
+   */
+  async loginToolsetRaw(
+    requestParameters: LoginToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ToolsetAuthResultDto>> {
+    if (requestParameters['toolsetName'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetName',
+        'Required parameter "toolsetName" was null or undefined when calling loginToolset().',
+      );
+    }
+
+    if (requestParameters['toolsetLoginBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetLoginBodyDto',
+        'Required parameter "toolsetLoginBodyDto" was null or undefined when calling loginToolset().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/toolsets/{toolsetName}/login`;
+    urlPath = urlPath.replace(
+      `{${'toolsetName'}}`,
+      encodeURIComponent(String(requestParameters['toolsetName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['toolsetLoginBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ToolsetAuthResultDto>(response);
+  }
+
+  /**
+   * Submits API key or OAuth authorization-code credentials for a toolset by proxying DIAL Core (POST /v1/ops/toolset/signin). Credential payloads are never logged.
+   * Submit toolset credentials
+   */
+  async loginToolset(
+    requestParameters: LoginToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ToolsetAuthResultDto> {
+    const response = await this.loginToolsetRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Revokes a toolset\'s credentials by proxying DIAL Core (POST /v1/ops/toolset/signout).
+   * Revoke toolset credentials
+   */
+  async logoutToolsetRaw(
+    requestParameters: LogoutToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<ToolsetAuthResultDto>> {
+    if (requestParameters['toolsetName'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetName',
+        'Required parameter "toolsetName" was null or undefined when calling logoutToolset().',
+      );
+    }
+
+    if (requestParameters['toolsetLogoutBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetLogoutBodyDto',
+        'Required parameter "toolsetLogoutBodyDto" was null or undefined when calling logoutToolset().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/toolsets/{toolsetName}/logout`;
+    urlPath = urlPath.replace(
+      `{${'toolsetName'}}`,
+      encodeURIComponent(String(requestParameters['toolsetName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'POST',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['toolsetLogoutBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<ToolsetAuthResultDto>(response);
+  }
+
+  /**
+   * Revokes a toolset\'s credentials by proxying DIAL Core (POST /v1/ops/toolset/signout).
+   * Revoke toolset credentials
+   */
+  async logoutToolset(
+    requestParameters: LogoutToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<ToolsetAuthResultDto> {
+    const response = await this.logoutToolsetRaw(
+      requestParameters,
+      initOverrides,
+    );
+    return await response.value();
+  }
+
+  /**
+   * Updates an existing toolset for the authenticated session user by proxying DIAL Core. Invalidates the relevant caches on success.
+   * Update a toolset
+   */
+  async updateToolsetRaw(
+    requestParameters: UpdateToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<runtime.ApiResponse<MutatedToolsetDto>> {
+    if (requestParameters['toolsetName'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetName',
+        'Required parameter "toolsetName" was null or undefined when calling updateToolset().',
+      );
+    }
+
+    if (requestParameters['toolsetBodyDto'] == null) {
+      throw new runtime.RequiredError(
+        'toolsetBodyDto',
+        'Required parameter "toolsetBodyDto" was null or undefined when calling updateToolset().',
+      );
+    }
+
+    const queryParameters: runtime.HTTPQuery = {};
+
+    const headerParameters: runtime.HTTPHeaders = {};
+
+    headerParameters['Content-Type'] = 'application/json';
+
+    let urlPath = `/api/v1/toolsets/{toolsetName}`;
+    urlPath = urlPath.replace(
+      `{${'toolsetName'}}`,
+      encodeURIComponent(String(requestParameters['toolsetName'])),
+    );
+
+    const response = await this.request(
+      {
+        path: urlPath,
+        method: 'PATCH',
+        headers: headerParameters,
+        query: queryParameters,
+        body: requestParameters['toolsetBodyDto'],
+      },
+      initOverrides,
+    );
+
+    return new runtime.JSONApiResponse<MutatedToolsetDto>(response);
+  }
+
+  /**
+   * Updates an existing toolset for the authenticated session user by proxying DIAL Core. Invalidates the relevant caches on success.
+   * Update a toolset
+   */
+  async updateToolset(
+    requestParameters: UpdateToolsetRequest,
+    initOverrides?: RequestInit | runtime.InitOverrideFunction,
+  ): Promise<MutatedToolsetDto> {
+    const response = await this.updateToolsetRaw(
+      requestParameters,
+      initOverrides,
+    );
     return await response.value();
   }
 }
