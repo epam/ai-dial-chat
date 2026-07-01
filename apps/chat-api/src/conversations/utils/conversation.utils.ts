@@ -107,6 +107,16 @@ export const buildRenamedFilename = (
 };
 
 /**
+ * Returns the deployment key (e.g. `"gpt-4o"` or `"app__1.0.0"`) from a
+ * bare conversation filename. Used when building a clean destination path
+ * for duplicate (where the legacy UUID suffix must NOT be carried over).
+ */
+export const getDeploymentKey = (filename: string): string => {
+  const parts = filename.split(CONVERSATION_NAME_SEPARATOR);
+  return getDeploymentNameParts(parts).join(CONVERSATION_NAME_SEPARATOR);
+};
+
+/**
  * Builds the new conversation path by replacing the title segment in the filename.
  * Preserves versioned application deployment IDs and legacy UUID suffixes.
  */

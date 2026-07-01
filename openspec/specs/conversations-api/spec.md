@@ -4,24 +4,26 @@
 
 ### Requirement: POST /api/v1/conversations creates and persists a new conversation
 
-The backend SHALL expose `POST /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The controller MUST be versioned (`version: '1'`), annotated with `@ApiTags('conversations')`, and delegate all logic to `ConversationService`. The endpoint accepts a JSON body validated by `CreateConversationDto`. On success it returns HTTP 201 with the created `Conversation`. The service generates a UUID via `crypto.randomUUID()`, constructs a `Conversation` object using the provided `catalogItemId` for `model.id` and `assistantModelId`, and persists it to DIAL Core via the SDK client.
+The backend SHALL expose `POST /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The controller MUST be versioned (`version: '1'`), annotated with `@ApiTags('conversations')`, and delegate all logic to `ConversationService`. The endpoint accepts a JSON body validated by `CreateConversationDto`. On success it returns HTTP 201 with the created `Conversation`. The service generates a UUID via `crypto.randomUUID()`, constructs a `Conversation` object using the provided `deploymentId` for `model.id` and `assistantModelId`, and persists it to DIAL Core via the SDK client.
 
 Request body (`CreateConversationDto`):
 
 ```
 {
-  "firstMessage": "<string, @IsString, @MinLength(1), @MaxLength(4000)>",
-  "catalogItemId": "<string, @IsString, @MinLength(1), @MaxLength(256), @Matches(/^[\w.\-:@/]+$/)>",
-  "attachments"?: "<AttachmentDto[], optional>"
+  "firstMessage": "<string, @IsString, @MaxLength(4000)>",
+  "deploymentId": "<string, @IsString, @MinLength(1), @MaxLength(256), @Matches(/^(?:[\w.\-:@/]|%[\dA-Fa-f]{2})+$/)>",
+  "custom_content"?: "<MessageCustomContentDto, optional>"
 }
 ```
+
+`firstMessage` may be an empty string when `custom_content` carries `attachments`, `form_value`, or `configuration_value`; at least one of `firstMessage` (non-empty) or a non-empty `custom_content` field MUST be present (enforced by `@IsMessageOrAttachmentsPresent`).
 
 Response body (201 Created) — shape matches the `Conversation` type from `@epam/ai-dial-chat-shared`:
 
 ```
 {
   "id": "<folder/path>",
-  "model": { "id": "<catalogItemId>" },
+  "model": { "id": "<deploymentId>" },
   "messages": [...],
   "createdAt": "<ISO-8601>"
 }
@@ -31,40 +33,44 @@ Rate limiting: `@Throttle({ default: { limit: 20, ttl: 60000 } })` on the handle
 
 Error codes:
 
-- `400 Bad Request` — body fails DTO validation (empty `firstMessage`, exceeds 4000 chars, missing `catalogItemId`, empty `catalogItemId`, `catalogItemId` exceeds 256 chars, `catalogItemId` contains disallowed characters)
+- `400 Bad Request` — body fails DTO validation (both `firstMessage` and `custom_content` absent/empty, `firstMessage` exceeds 4000 chars, missing `deploymentId`, empty `deploymentId`, `deploymentId` exceeds 256 chars, `deploymentId` contains disallowed characters)
 - `401 Unauthorized` — missing or invalid bearer token
-- `502 Bad Gateway` — DIAL Core returned an error response
-- `503 Service Unavailable` — DIAL Core unreachable
+- `500 Internal Server Error` — unexpected server-side failure
 
 #### Scenario: Valid request returns 201 with conversation
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello", "catalogItemId": "anthropic.claude-v3-sonnet" }`
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello", "deploymentId": "anthropic.claude-v3-sonnet" }`
 - **THEN** the response status is 201 and the body contains a `Conversation` with `model.id === "anthropic.claude-v3-sonnet"`, `messages` array with one user message, and an `id` string
 
-#### Scenario: Empty firstMessage returns 400
+#### Scenario: Empty firstMessage without custom_content returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "", "catalogItemId": "dep-1" }`
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "", "deploymentId": "dep-1" }` and no `custom_content`
 - **THEN** the response status is 400 with a validation error message
+
+#### Scenario: Empty firstMessage with attachments returns 201
+
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "", "deploymentId": "dep-1", "custom_content": { "attachments": [...] } }`
+- **THEN** the response status is 201 (custom_content with attachments satisfies the validation)
 
 #### Scenario: Missing firstMessage returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "catalogItemId": "dep-1" }`
+- **WHEN** `POST /api/v1/conversations` is called with `{ "deploymentId": "dep-1" }` and no `custom_content`
 - **THEN** the response status is 400
 
 #### Scenario: firstMessage exceeding 4000 chars returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `firstMessage` of length 4001 and a valid `catalogItemId`
+- **WHEN** `POST /api/v1/conversations` is called with `firstMessage` of length 4001 and a valid `deploymentId`
 - **THEN** the response status is 400
 
-#### Scenario: Missing catalogItemId returns 400
+#### Scenario: Missing deploymentId returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello" }` and no `catalogItemId`
-- **THEN** the response status is 400 with a validation error referencing `catalogItemId`
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello" }` and no `deploymentId`
+- **THEN** the response status is 400 with a validation error referencing `deploymentId`
 
-#### Scenario: catalogItemId with disallowed characters returns 400
+#### Scenario: deploymentId with disallowed characters returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `catalogItemId` containing characters outside `[\w.\-:@/]` (e.g. `"bad id!"`)
-- **THEN** the response status is 400 with a validation error referencing `catalogItemId`
+- **WHEN** `POST /api/v1/conversations` is called with `deploymentId` containing characters outside `[\w.\-:@/]` or invalid percent-encoding (e.g. `"bad id!"`)
+- **THEN** the response status is 400 with a validation error referencing `deploymentId`
 
 ---
 
@@ -140,7 +146,7 @@ DIAL Core's sharing mechanism grants READ access to the resource at its original
 
 The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint is backed by DIAL Core metadata and the DIAL Core sharing API (not an in-memory store). It accepts the following query parameters validated by `ListConversationsQueryDto`:
 
-- `limit` — integer, default 20, max 100 (`@IsInt @Min(1) @Max(100) @IsOptional`)
+- `limit` — integer, default 100, max 1000 (`@IsInt @Min(1) @Max(1000) @IsOptional`)
 - `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(512) @IsOptional`)
 - `path` — string subfolder path to scope the listing, default `''` (bucket root = "My Files") (`@IsString @MaxLength(512) @IsOptional`)
 
@@ -178,7 +184,7 @@ Items from all three sources are merged and sorted by `updatedAt` descending. `F
 
 `isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). Errors fall back to `[]`.
 
-Rate limiting: `@Throttle({ default: { limit: 30, ttl: 60000 } })` on the handler.
+Rate limiting: global default applies (no handler-level `@Throttle` override).
 
 Generated-client impact:
 - OpenAPI operationId: `listConversations`
@@ -187,7 +193,7 @@ Generated-client impact:
 - Frontend callers use the normal (non-Raw) generated method via `apps/chat/src/server-api/conversations.api.ts`
 
 Error codes:
-- `400 Bad Request` — invalid `limit` (out of range or non-integer), `nextToken` or `path` exceeds 512 chars
+- `400 Bad Request` — invalid `limit` (out of range [1–1000] or non-integer), `nextToken` or `path` exceeds 512 chars
 - `401 Unauthorized` — missing or invalid bearer token
 - `502 Bad Gateway` — user bucket DIAL Core returned an error response
 
@@ -248,7 +254,7 @@ Error codes:
 
 #### Scenario: Invalid limit returns 400
 
-- **WHEN** `GET /api/v1/conversations/list?limit=200` is called (exceeds max 100)
+- **WHEN** `GET /api/v1/conversations/list?limit=1001` is called (exceeds max 1000)
 - **THEN** the response is 400 with a validation error
 
 ---

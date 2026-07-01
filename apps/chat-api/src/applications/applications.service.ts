@@ -90,11 +90,12 @@ export class ApplicationsService extends AppService {
         display_name: body.name,
         display_version: version,
         application_type_schema_id: body.type,
+        application_properties: {},
       };
       if (body.description != null) dialBody.description = body.description;
       if (body.iconUrl != null) dialBody.icon_url = body.iconUrl;
       if (body.topics != null && body.topics.length > 0)
-        dialBody.topics = body.topics;
+        dialBody.description_keywords = body.topics;
 
       const response = await fetch(
         `${this.baseUrl}/v1/applications/${bucket}/${encodedPath}`,

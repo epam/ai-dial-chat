@@ -82,7 +82,7 @@ const AppsEditor: FC = () => {
           )}
           <nav
             role="navigation"
-            aria-label="Editor steps"
+            aria-label={t(AppsEditorI18nKeys.StepsNavAriaLabel)}
             className="flex items-center gap-2 text-sm"
           >
             <DialSteps

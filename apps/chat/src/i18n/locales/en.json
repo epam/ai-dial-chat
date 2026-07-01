@@ -417,6 +417,7 @@
   "appsEditor": {
     "stepGeneral": "General",
     "stepSettings": "Settings",
+    "stepsNavAriaLabel": "Editor steps",
     "generalForm": {
       "nameLabel": "Name",
       "namePlaceholder": "Enter application name",
@@ -440,6 +441,69 @@
     },
     "error": {
       "createFailed": "Failed to create application. Please try again."
+    }
+  },
+  "toolsetEditor": {
+    "stepGeneral": "General",
+    "stepSettings": "Settings",
+    "stepsNavAriaLabel": "Editor steps",
+    "nextButton": "Next",
+    "saveButton": "Save & Exit",
+    "previewTitle": "Preview",
+    "general": {
+      "nameLabel": "Name",
+      "namePlaceholder": "Enter toolset name",
+      "nameRequired": "Name is required",
+      "versionLabel": "Version",
+      "versionPlaceholder": "e.g. 1.0.0",
+      "iconUrlLabel": "Icon URL",
+      "iconUrlPlaceholder": "https://...",
+      "descriptionLabel": "Description",
+      "descriptionPlaceholder": "Describe your toolset",
+      "topicsLabel": "Topics",
+      "topicsPlaceholder": "Add a topic"
+    },
+    "settings": {
+      "endpointLabel": "Endpoint",
+      "endpointPlaceholder": "https://...",
+      "endpointRequired": "Endpoint is required",
+      "endpointInvalid": "Enter a valid http(s) or sse URL",
+      "protocolLabel": "Protocol",
+      "allowedToolsLabel": "Allowed tools",
+      "allowedToolsPlaceholder": "Add a tool",
+      "copyUrlLabel": "Copy endpoint URL"
+    },
+    "auth": {
+      "sectionTitle": "Authentication",
+      "typeOAuth": "OAuth",
+      "typeApiKey": "API Key",
+      "typeNone": "Without authentication",
+      "withLoginLabel": "With login",
+      "withoutLoginLabel": "Without login",
+      "withConfigLabel": "With login & config",
+      "keyHeaderLabel": "Key name",
+      "keyHeaderRequired": "Key name is required",
+      "apiKeyLabel": "API key",
+      "apiKeyRequired": "API key is required",
+      "clientIdLabel": "Client ID",
+      "clientIdRequired": "Client ID is required",
+      "clientSecretLabel": "Client secret",
+      "clientSecretRequired": "Client secret is required",
+      "authorizationEndpointLabel": "Authorization endpoint",
+      "tokenEndpointLabel": "Token endpoint",
+      "scopesLabel": "Scopes",
+      "scopesPlaceholder": "Add a scope",
+      "logInButton": "Log in",
+      "logOutButton": "Log out",
+      "loggedInLabel": "Logged in",
+      "logoutConfirmTitle": "Log out",
+      "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."
+    },
+    "error": {
+      "createFailed": "Failed to create toolset. Please try again.",
+      "updateFailed": "Failed to update toolset. Please try again.",
+      "loginFailed": "Failed to log in. Please check your credentials and try again.",
+      "logoutFailed": "Failed to log out. Please try again."
     }
   }
 }

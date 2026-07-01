@@ -55,7 +55,7 @@ import { buildConversationHistory } from './utils/conversation-history-builder';
 import {
   buildConversationUrl,
   buildRenamedConversationPath,
-  buildRenamedFilename,
+  getDeploymentKey,
   decodeNextToken,
   encodeCompoundToken,
   encodeDialResourcePath,
@@ -63,7 +63,6 @@ import {
   getConversationTitleFromName,
   prepareEntityName,
 } from './utils/conversation.utils';
-import { resolveUniqueConversationName } from './utils/resolve-unique-conversation-name';
 
 const getValidAttachments = (
   customContent?: ConversationMessageDto['custom_content'],
@@ -117,54 +116,6 @@ export class ConversationService extends AppService {
       );
       return true;
     }
-  }
-
-  private async fetchAllUserTitles(
-    token: string,
-    bucket: string,
-  ): Promise<Set<string>> {
-    const titles = new Set<string>();
-    let cursor: string | undefined;
-
-    try {
-      do {
-        const { data, error } = (await this.client.getConversationMetadata(
-          bucket,
-          '',
-          {
-            headers: getBearerAuthHeaders(token),
-            params: {
-              query: {
-                recursive: true,
-                limit: 1000,
-                ...(cursor ? { token: cursor } : {}),
-              },
-            },
-          },
-        )) as MetadataResult;
-
-        if (error != null || !data) break;
-
-        for (const item of data.items ?? []) {
-          const filename = item.name ?? item.url?.split('/').at(-1);
-          if (item.nodeType !== 'FOLDER' && filename) {
-            titles.add(getConversationTitleFromName(filename));
-          }
-        }
-
-        // DIAL Core may return nextToken as null (JSON null) when exhausted.
-        // Treat both null and undefined as "no more pages".
-        cursor = data.nextToken ?? undefined;
-      } while (cursor != null && cursor !== '');
-    } catch (error) {
-      this.logger.warn(
-        'Unable to finish conversation title lookup; continuing with collected titles',
-        error,
-      );
-      // Resilient: return whatever was collected before the failure
-    }
-
-    return titles;
   }
 
   async createConversation(
@@ -520,38 +471,8 @@ export class ConversationService extends AppService {
       .slice(0, -1)
       .map(safeDecodeURIComponent);
 
-    const sourceTitle = getConversationTitleFromName(decodedFilename);
-    const baseTitle = prepareEntityName(sourceTitle);
-    const existingTitles = await this.fetchAllUserTitles(token, sessionBucket);
-    // A duplicate must never reuse the source's exact name+path
-    const reservedTitles = new Set(existingTitles);
-    reservedTitles.add(baseTitle);
-    const uniqueTitle = resolveUniqueConversationName(
-      baseTitle,
-      reservedTitles,
-    );
-
-    const decodedRenamedFilename = buildRenamedFilename(
-      decodedFilename,
-      uniqueTitle,
-    );
-    const decodedDestinationSubPath = [
-      ...decodedFolderSegments,
-      decodedRenamedFilename,
-    ].join('/');
-    const encodedDestinationSubPath = [
-      ...decodedFolderSegments.map(encodeURIComponent),
-      encodeURIComponent(decodedRenamedFilename),
-    ].join('/');
-
-    const destinationUrl = buildConversationUrl(
-      sessionBucket,
-      encodedDestinationSubPath,
-    );
-
-    // Read source directly instead of copyResource+rewrite so that we control
-    // updatedAt from the start and avoid the race where a just-copied file is
-    // not yet readable.
+    // Read source first so we can use its `name` field (which may have been
+    // updated by LLM naming without renaming the storage path).
     const { data: sourceData, error: readError } =
       (await this.client.getConversation(
         sourceBucket,
@@ -565,6 +486,36 @@ export class ConversationService extends AppService {
       );
       return handleDialError(readError);
     }
+
+    // Prefer the stored `name` field (set by LLM naming) over the path-derived
+    // title so that conversations renamed by the model keep that name in the copy.
+    const pathTitle = getConversationTitleFromName(decodedFilename);
+    const sourceTitle = sourceData.name?.trim() || pathTitle;
+    const uniqueTitle = prepareEntityName(sourceTitle);
+
+    const deploymentKey = getDeploymentKey(decodedFilename);
+    const decodedRenamedFilename = `${deploymentKey}__${uniqueTitle}`;
+    const pathExists = await this.conversationPathExists(
+      token,
+      sessionBucket,
+      [...decodedFolderSegments, decodedRenamedFilename].join('/'),
+    );
+    const decodedFinalFilename = pathExists
+      ? `${decodedRenamedFilename}__${crypto.randomUUID()}`
+      : decodedRenamedFilename;
+    const decodedDestinationSubPath = [
+      ...decodedFolderSegments,
+      decodedFinalFilename,
+    ].join('/');
+    const encodedDestinationSubPath = [
+      ...decodedFolderSegments.map(encodeURIComponent),
+      encodeURIComponent(decodedFinalFilename),
+    ].join('/');
+
+    const destinationUrl = buildConversationUrl(
+      sessionBucket,
+      encodedDestinationSubPath,
+    );
 
     const folderId = decodedFolderSegments.length
       ? `${sessionBucket}/${decodedFolderSegments.join('/')}`
