@@ -1,10 +1,9 @@
 ## Context
 
-The v1 `ai-dial-chat` repo (`C:\ai-dial-chat\apps\chat\src\components\ToolsetEditor\`)
-implements toolset creation/editing with `react-hook-form` + `zod`, a Redux slice with
-sagas, and shared enums from `@epam/ai-dial-shared`. The target app uses different
-conventions — **local `useState`, `useSearchParams` step routing, and no external state
-library** — so the port re-expresses the same flow on that stack
+The v1 `ai-dial-chat` implements toolset creation/editing with `react-hook-form` + `zod`,
+a Redux slice with sagas, and shared enums from `@epam/ai-dial-shared`. The target app uses 
+different conventions — **local `useState`, `useSearchParams` step routing, and no external
+state library** — so the port re-expresses the same flow on that stack
 (`toolset-editor-migration.md`).
 
 Current target state:
