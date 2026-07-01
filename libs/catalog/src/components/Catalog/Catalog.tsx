@@ -122,7 +122,9 @@ export const Catalog: FC<CatalogProps> = ({
 
   const [selectedItem, setSelectedItem] = useState<CatalogItem | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
-  const [aboutContent, setAboutContent] = useState<string | undefined>(undefined);
+  const [aboutContent, setAboutContent] = useState<string | undefined>(
+    undefined,
+  );
   const [isAboutLoading, setIsAboutLoading] = useState(false);
   const pendingItemIdRef = useRef<string | null>(null);
 
