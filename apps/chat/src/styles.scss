@@ -276,10 +276,12 @@ aside[class~='dial-body-text'] [class~='uppercase'][class~='tracking-wider'] {
 // Chat row — 8px radius, correct text color, vertical padding.
 // Each item is: <li> → <a class="contents"> → <button class="border-l-2 …">
 // The <a> is display:contents (invisible), so we must target the inner <button>.
-aside[class~='dial-body-text'] li > a > button {
+// .dial-primary-ghost-button in the selector raises specificity above the ui-kit's
+// own !important rule on that class, which would otherwise override our color.
+aside[class~='dial-body-text'] li > a > button.dial-primary-ghost-button {
   border-radius: 12px !important;
   padding-block: 9px;
-  color: var(--text-secondary) !important;
+  color: var(--text-primary) !important;
 }
 
 // Active chat row — grey background, no left indicator bar.
@@ -336,17 +338,10 @@ aside[class~='dial-body-text'] [class~='uppercase'][class~='tracking-wider'] {
   opacity: 0.55;
 }
 
-// Chat row buttons — 8px radius (not pill), correct text color, vertical padding
-aside[class~='dial-body-text'] [class~='group/conversation'] > button {
-  border-radius: 8px;
-  padding-block: 9px;
-  color: var(--text-primary);
-}
-
 // Active chat row — 3px brand-gradient start-edge indicator bar
-// Anchor: aria-current="page" on the button, parent has class "group/conversation relative"
+// Anchor: aria-current="page" on the button; the <a class="contents"> sits between li and button.
 aside[class~='dial-body-text']
-  [class~='group/conversation']:has(> button[aria-current='page'])::before {
+  [class~='group/conversation']:has(> a > button[aria-current='page'])::before {
   content: '';
   position: absolute;
   inset-block: 4px;
