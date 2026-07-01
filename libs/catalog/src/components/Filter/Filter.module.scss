@@ -1,17 +1,30 @@
-.activeLabel {
+.chip {
+  border: 1px solid var(--cat-filter-chip-border, var(--stroke-tertiary, #e0e6f0));
+}
+
+.chipActive {
+  border-color: var(--cat-filter-active-border, var(--text-accent-primary, #7da4ff));
+  background-color: var(--cat-filter-active-bg, var(--bg-accent-primary-alpha, #7da4ff1a));
   color: var(--cat-filter-active-label, var(--text-accent-primary, #7da4ff));
 }
 
 .overlay {
-  background: var(--bg-layer-2);
-  border-color: var(--stroke-secondary, #242c42);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+  background: var(--cat-filter-bg, var(--bg-layer-0, #fff));
+  border: 1px solid var(--cat-filter-overlay-border, var(--stroke-tertiary, #e0e6f0));
 }
 
 .separator {
-  border-top: 1px solid var(--stroke-secondary, #242c42);
+  border-top: 1px solid var(--cat-filter-separator, var(--stroke-tertiary, #e0e6f0));
 }
 
 .sectionLabel {
   color: var(--cat-filter-section-label, var(--text-secondary, #575f73));
+}
+
+.item {
+  @media (hover: hover) {
+    &:hover {
+      background: var(--cat-filter-item-hover, var(--bg-accent-primary-alpha, #7da4ff26));
+    }
+  }
 }

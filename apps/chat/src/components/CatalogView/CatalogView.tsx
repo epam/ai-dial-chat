@@ -52,11 +52,6 @@ const CatalogView: FC = () => {
     [catalogItems],
   );
 
-  const filteredItems = useMemo(
-    () => catalogItems.filter((item) => !item.isUserFavorite),
-    [catalogItems],
-  );
-
   // TODO: replace with a real API call, e.g. GET /api/catalog/{id}/about
   const fetchAboutContent = useCallback(
     (_item: CatalogItem): Promise<string | undefined> => {
@@ -130,7 +125,7 @@ const CatalogView: FC = () => {
 
   return (
     <Catalog
-      items={filteredItems}
+      items={catalogItems}
       isLoading={isLoading}
       favorites={favorites}
       createOptions={createOptions}

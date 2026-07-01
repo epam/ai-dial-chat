@@ -4,16 +4,8 @@ import {
   Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import {
-  ButtonAppearance,
-  ButtonVariant,
-  DIAL_ICON_SIZE,
-  DialButton,
-  DialEllipsisTooltip,
-  DialGhostIconButton,
-  DialSearch,
-  ElementSize,
-} from '@epam/ai-dial-ui-kit';
+import { GhostButton, GhostIconButton, SearchBar } from '@epam/ai-dial-kit';
+import { DialEllipsisTooltip, DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, useMemo, useState } from 'react';
 
@@ -118,12 +110,10 @@ export const ModelPickerPanel: FC<Props> = ({
         <span className="dial-caption-text px-1 uppercase tracking-wider text-secondary">
           {favoritesLabel}
         </span>
-        <DialSearch
+        <SearchBar
           value={query}
           placeholder={searchPlaceholder}
-          aria-label={searchAriaLabel}
-          size={ElementSize.Small}
-          wrapperClassName="border-0"
+          ariaLabel={searchAriaLabel}
           onChange={setQuery}
         />
       </div>
@@ -143,7 +133,11 @@ export const ModelPickerPanel: FC<Props> = ({
                 onClick={() => handleSelect(item)}
                 onKeyDown={(e) => handleItemKeyDown(e, item)}
               >
-                <DeploymentIcon src={item.iconUrl} size={DIAL_ICON_SIZE.MD} />
+                <DeploymentIcon
+                  src={item.iconUrl}
+                  size={DIAL_ICON_SIZE.MD}
+                  initialsName={item.name}
+                />
                 <div className="flex min-w-0 flex-1 items-baseline gap-1.5">
                   {query.trim() ? (
                     <span className="truncate">
@@ -158,7 +152,7 @@ export const ModelPickerPanel: FC<Props> = ({
                     </span>
                   )}
                 </div>
-                <DialGhostIconButton
+                <GhostIconButton
                   icon={
                     <IconStarFilled
                       size={DIAL_ICON_SIZE.SM}
@@ -183,10 +177,8 @@ export const ModelPickerPanel: FC<Props> = ({
       )}
 
       <div className="border-t border-secondary px-2 py-1">
-        <DialButton
+        <GhostButton
           label={browseCatalogLabel}
-          variant={ButtonVariant.Primary}
-          appearance={ButtonAppearance.Link}
           className="w-full justify-center"
           onClick={handleBrowse}
         />

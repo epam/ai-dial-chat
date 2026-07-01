@@ -49,6 +49,7 @@ export const EntityHeader: FC<EntityHeaderProps> = ({
       <DeploymentIcon
         src={item.iconUrl}
         size={iconSize}
+        initialsName={item.name}
         badgeClassName={iconBadgeClassName}
       />
 

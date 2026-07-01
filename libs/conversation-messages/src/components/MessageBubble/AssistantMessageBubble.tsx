@@ -53,13 +53,13 @@ export const AssistantMessageBubble: FC<AssistantMessageBubbleProps> = ({
   return (
     <div
       style={cssVars}
-      className={mergeClasses('flex w-full items-start gap-5', className)}
+      className={mergeClasses('flex w-full items-start gap-3', className)}
     >
       {hasDeploymentIcon && (
         <DeploymentIcon
           src={deploymentIconUrl}
           size={28}
-          badgeClassName={styles.agentIconBadge}
+          initialsName={deploymentDisplayName ?? ''}
           tooltip={deploymentDisplayName}
         />
       )}

@@ -10,9 +10,8 @@
   background: var(--cat-browse-divider, var(--stroke-tertiary, #e0e6f0));
 }
 
-// TODO: add for filters
 .clearAll {
-  color: var(--cat-browse-clear-all, var(--text-error, #ae2f2f));
+  color: var(--cat-browse-clear-all, var(--text-secondary, #575f73));
 }
 
 .viewToggle {
