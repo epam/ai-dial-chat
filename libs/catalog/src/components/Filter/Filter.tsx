@@ -263,9 +263,6 @@ export const Filter: FC<FilterProps> = ({
             </>
           )}
 
-          {/* Footer — kit PrimaryButton/GhostButton can't be used here:
-              Buttons.scss applies border-radius:9999px !important and a
-              gradient that can't be overridden to the spec's flat solid style. */}
           <div
             className={styles.footer}
             onKeyDown={(e) => {
@@ -283,7 +280,10 @@ export const Filter: FC<FilterProps> = ({
             </button>
             <button
               type="button"
-              className={styles.applyBtn}
+              className={mergeClasses(
+                styles.applyBtn,
+                'dial-primary-solid-button',
+              )}
               onClick={handleApply}
             >
               {applyLabel}

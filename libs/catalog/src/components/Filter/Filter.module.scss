@@ -179,7 +179,7 @@
 .footer {
   display: flex;
   align-items: center;
-  padding: 8px 4px 4px;
+  padding: 12px 4px;
   margin-top: 4px;
   border-top: 1px solid rgba(0, 0, 0, 0.05); /* stroke-primary */
 }
@@ -208,24 +208,16 @@
   }
 }
 
-/* Apply — solid accent fill */
+/* Apply — uses the app-level primary action gradient. */
 .applyBtn {
   margin-inline-start: auto;
-  padding: 7px 18px;
+  padding-block: 7px;
+  padding-inline: 24px;
   border: none;
-  border-radius: 8px;
-  background-color: #3664e2; /* controls-bg-accent-primary */
   font-size: 14px;
   font-weight: 600;
   color: #ffffff;
   cursor: pointer;
-  transition: background-color 150ms ease;
-
-  @media (hover: hover) {
-    &:hover {
-      background-color: #2d57c8;
-    }
-  }
 
   &:focus-visible {
     outline: 2px solid rgba(125, 164, 255, 0.5);

@@ -107,6 +107,7 @@ div[role='menu']:has(> [role='none']) {
   border: none;
   border-radius: 9999px;
   box-shadow: 0 4px 16px rgba(92, 141, 234, 0.32);
+  padding-inline: 24px !important;
   transition:
     box-shadow 200ms ease,
     transform 150ms ease;
