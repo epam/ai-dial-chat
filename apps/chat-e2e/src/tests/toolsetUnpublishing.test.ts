@@ -146,7 +146,6 @@ dialAdminTest(
       async () => {
         await marketplacePage.openMarketplacePage({
           updateInstalledDeployments: false,
-          getInstalledDeployments: true,
           updateInstalledToolsets: false,
           getInstalledToolsets: false,
           getStyles: true,
