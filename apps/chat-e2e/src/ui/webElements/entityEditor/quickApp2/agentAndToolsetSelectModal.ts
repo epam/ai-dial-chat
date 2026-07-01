@@ -6,7 +6,7 @@ import { AgentsBrowserModal } from '@/src/ui/webElements/agentsBrowserModal';
 import { BaseElement } from '@/src/ui/webElements/baseElement';
 import { Button } from '@/src/ui/webElements/common/button';
 import { RegexUtil } from '@/src/utils';
-import { Locator, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
 export class AgentAndToolsetSelectModal extends AgentsBrowserModal {
   constructor(page: Page) {
