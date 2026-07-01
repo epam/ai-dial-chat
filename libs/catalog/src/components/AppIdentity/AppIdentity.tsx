@@ -96,8 +96,10 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         {/* Name + last-used grouped tightly together */}
         <div className="flex min-w-0 flex-col">
           {/* Name + version: version sits immediately after name text */}
-          <div className="flex min-w-0 items-start gap-1">
-            <span className={mergeClasses('min-w-0 truncate', nameClassName)}>
+          <div className="flex min-w-0 items-start gap-1 overflow-hidden">
+            <span
+              className={mergeClasses('min-w-0 flex-1 truncate', nameClassName)}
+            >
               {query ? <Highlight text={name} query={query} /> : name}
             </span>
             {version != null && (

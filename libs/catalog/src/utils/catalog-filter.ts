@@ -16,6 +16,19 @@ export const getFromLabel = (
   return `${defaultLabel}: ${n} of ${total}`;
 };
 
+/** Returns items that have at least one topic in the selected set. No-ops when `topics` is empty. */
+export const filterByTopics = (
+  items: CatalogItem[],
+  topics: Set<string>,
+): CatalogItem[] => {
+  if (topics.size === 0) return items;
+  return items.filter((item) => item.topics.some((t) => topics.has(t)));
+};
+
+/** Returns items where `isMyApp` is `true`. */
+export const filterByMyApp = (items: CatalogItem[]): CatalogItem[] =>
+  items.filter((item) => item.isMyApp === true);
+
 /**
  * Returns a filtered array of items whose name, description, or type includes the query.
  * Case-insensitive and ignores leading/trailing whitespace.
