@@ -1,3 +1,4 @@
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { ToolsetLoginBodyDto } from '@epam/chat-api-client';
 import type { FC } from 'react';
 import { memo, useCallback, useEffect, useMemo, useState } from 'react';
@@ -6,6 +7,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import { ToolsetEditorQuery } from '../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../constants/translation-keys';
+import { useNotification } from '../../context/NotificationContext';
 import {
   createToolset,
   getToolset,
@@ -37,6 +39,7 @@ import ToolsetEditorView from './ToolsetEditorView';
 
 const ToolsetEditor: FC = () => {
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -54,7 +57,6 @@ const ToolsetEditor: FC = () => {
   const [isLoading, setIsLoading] = useState(isEditMode);
   const [isSaving, setIsSaving] = useState(false);
   const [errors, setErrors] = useState<ToolsetFormErrors>({});
-  const [saveError, setSaveError] = useState('');
 
   useEffect(() => {
     let cancelled = false;
@@ -259,7 +261,6 @@ const ToolsetEditor: FC = () => {
     }
 
     setErrors({});
-    setSaveError('');
     setIsSaving(true);
     try {
       const body = formToToolsetBody(form);
@@ -270,14 +271,20 @@ const ToolsetEditor: FC = () => {
         const isRedirecting = await runPostSaveAuth(result.id, form);
         if (!isRedirecting) navigate(returnUrl);
       } catch {
-        setSaveError(t(ToolsetEditorI18nKeys.ErrorLoginFailed));
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+        });
       }
     } catch {
-      setSaveError(
-        isEditMode
-          ? t(ToolsetEditorI18nKeys.ErrorUpdateFailed)
-          : t(ToolsetEditorI18nKeys.ErrorCreateFailed),
-      );
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(
+          isEditMode
+            ? ToolsetEditorI18nKeys.ErrorUpdateFailed
+            : ToolsetEditorI18nKeys.ErrorCreateFailed,
+        ),
+      });
     } finally {
       setIsSaving(false);
     }
@@ -289,6 +296,7 @@ const ToolsetEditor: FC = () => {
     navigate,
     returnUrl,
     t,
+    showNotification,
     handleChangeStep,
     runPostSaveAuth,
   ]);
@@ -310,7 +318,6 @@ const ToolsetEditor: FC = () => {
         step={step}
         form={form}
         errors={errors}
-        saveError={saveError}
         isSaving={isSaving}
         toolsetId={toolsetId}
         onNext={handleNext}

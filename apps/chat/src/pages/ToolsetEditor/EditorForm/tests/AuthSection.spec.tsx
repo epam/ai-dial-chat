@@ -1,9 +1,11 @@
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { TOOLSET_REDIRECT_STATE_KEY } from '../../../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../../../constants/translation-keys';
+import { useNotification } from '../../../../context/NotificationContext';
 import * as toolsetsApi from '../../../../server-api/toolsets';
 import type { ToolsetAuthFormData } from '../../../../types/toolsets';
 import {
@@ -17,6 +19,10 @@ vi.mock('../../../../server-api/toolsets', () => ({
   loginToolset: vi.fn(),
   logoutToolset: vi.fn(),
 }));
+
+vi.mock('../../../../context/NotificationContext');
+
+const mockShowNotification = vi.fn();
 
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DialInput: ({
@@ -141,9 +147,6 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
         </button>
       </div>
     ) : null,
-  DialNotification: ({ message }: { message?: string }) => (
-    <p role="alert">{message}</p>
-  ),
   ConfirmationPopupVariant: { Danger: 'danger' },
   NotificationVariant: { Error: 'error' },
   ElementSize: { Small: 'small', Standard: 'standard', Large: 'large' },
@@ -205,6 +208,11 @@ describe('AuthSection', () => {
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: { origin: 'http://localhost', href: 'http://localhost/' },
+    });
+    vi.mocked(useNotification).mockReturnValue({
+      notifications: [],
+      showNotification: mockShowNotification,
+      dismissNotification: vi.fn(),
     });
   });
 
@@ -321,12 +329,12 @@ describe('AuthSection', () => {
       expect(sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY)).toBeNull();
     });
 
-    it('disables the Log In button before the toolset is saved', () => {
+    it('enables the Log In button before the toolset is saved when the form is valid', () => {
       renderSection(oauthWithConfigAuth(), '', vi.fn());
       const btn = screen.getByRole('button', {
         name: ToolsetEditorI18nKeys.LogInButton,
       }) as HTMLButtonElement;
-      expect(btn.disabled).toBe(true);
+      expect(btn.disabled).toBe(false);
     });
   });
 
@@ -360,9 +368,10 @@ describe('AuthSection', () => {
         }),
       );
       await waitFor(() =>
-        expect(screen.getByRole('alert').textContent).toContain(
-          ToolsetEditorI18nKeys.ErrorLoginFailed,
-        ),
+        expect(mockShowNotification).toHaveBeenCalledWith({
+          variant: NotificationVariant.Error,
+          message: ToolsetEditorI18nKeys.ErrorLoginFailed,
+        }),
       );
     });
 

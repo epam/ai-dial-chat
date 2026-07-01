@@ -1,5 +1,4 @@
 import { NeutralButton, PrimaryButton } from '@epam/ai-dial-kit';
-import { DialNotification, NotificationVariant } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -21,7 +20,6 @@ interface Props {
   step: ToolsetEditorSteps;
   form: ToolsetFormData;
   errors: ToolsetFormErrors;
-  saveError: string;
   isSaving: boolean;
   toolsetId: string;
   onNext: () => void;
@@ -34,7 +32,6 @@ const ToolsetEditorView: FC<Props> = ({
   step,
   form,
   errors,
-  saveError,
   isSaving,
   toolsetId,
   onNext,
@@ -59,13 +56,6 @@ const ToolsetEditorView: FC<Props> = ({
               toolsetId={toolsetId}
               onChange={onChange}
               onAuthChange={onAuthChange}
-            />
-          )}
-
-          {saveError && (
-            <DialNotification
-              variant={NotificationVariant.Error}
-              message={saveError}
             />
           )}
         </div>

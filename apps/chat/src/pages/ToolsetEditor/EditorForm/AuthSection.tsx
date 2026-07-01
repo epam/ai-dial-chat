@@ -4,7 +4,6 @@ import {
   DIAL_ICON_SIZE,
   DialConfirmationPopup,
   DialInput,
-  DialNotification,
   DialRadioButton,
   DialTagInput,
   ElementSize,
@@ -23,6 +22,7 @@ import {
   ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
+import { useNotification } from '../../../context/NotificationContext';
 import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
 import type {
   ToolsetAuthFormData,
@@ -68,20 +68,16 @@ const AuthSection: FC<Props> = ({
   onAuthChange,
 }) => {
   const { t } = useTranslation();
+  const { showNotification } = useNotification();
   const [isAuthBusy, setIsAuthBusy] = useState(false);
-  const [authActionError, setAuthActionError] = useState('');
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
   const isControlsDisabled = auth.isLoggedIn || isSaving || isAuthBusy;
 
-  // OAuth login redirects to an external provider and calls back with the
-  // toolsetId, so it requires the toolset to already be saved; API-key login
-  // posts credentials directly and works before the first save too.
   const canLogIn =
     isValidEndpointUrl(endpoint) &&
     isToolsetAuthValid(auth) &&
-    !isControlsDisabled &&
-    !(auth.authenticationType === ToolsetAuthTypes.OAuth && !toolsetId);
+    !isControlsDisabled;
 
   const handleSelectType = (type: ToolsetAuthTypes) => {
     if (isControlsDisabled || type === auth.authenticationType) return;
@@ -97,12 +93,14 @@ const AuthSection: FC<Props> = ({
 
   const handleLogIn = async () => {
     if (!canLogIn) return;
-    setAuthActionError('');
 
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
       const started = initiateOAuthLogin(auth, toolsetId, window.location.href);
       if (!started) {
-        setAuthActionError(t(ToolsetEditorI18nKeys.ErrorLoginFailed));
+        showNotification({
+          variant: NotificationVariant.Error,
+          message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+        });
       }
       return;
     }
@@ -120,14 +118,16 @@ const AuthSection: FC<Props> = ({
       await loginToolset(toolsetId, body);
       onAuthChange({ isLoggedIn: true });
     } catch {
-      setAuthActionError(t(ToolsetEditorI18nKeys.ErrorLoginFailed));
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(ToolsetEditorI18nKeys.ErrorLoginFailed),
+      });
     } finally {
       setIsAuthBusy(false);
     }
   };
 
   const handleConfirmLogout = async () => {
-    setAuthActionError('');
     setIsAuthBusy(true);
     try {
       const body: ToolsetLogoutBodyDto = {
@@ -141,7 +141,10 @@ const AuthSection: FC<Props> = ({
       onAuthChange({ isLoggedIn: false });
       setShowLogoutConfirm(false);
     } catch {
-      setAuthActionError(t(ToolsetEditorI18nKeys.ErrorLogoutFailed));
+      showNotification({
+        variant: NotificationVariant.Error,
+        message: t(ToolsetEditorI18nKeys.ErrorLogoutFailed),
+      });
     } finally {
       setIsAuthBusy(false);
     }
@@ -364,13 +367,6 @@ const AuthSection: FC<Props> = ({
           </div>
         );
       })}
-
-      {authActionError && (
-        <DialNotification
-          variant={NotificationVariant.Error}
-          message={authActionError}
-        />
-      )}
 
       {showLogoutConfirm && (
         <DialConfirmationPopup

@@ -1,7 +1,10 @@
+import { NotificationVariant } from '@epam/ai-dial-ui-kit';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { ToolsetEditorI18nKeys } from '../../../constants/translation-keys';
+import { useNotification } from '../../../context/NotificationContext';
 import * as toolsetsApi from '../../../server-api/toolsets';
 import { ROUTES } from '../../../types/routes';
 import { ToolsetAuthTypes } from '../../../types/toolsets';
@@ -14,6 +17,10 @@ vi.mock('../../../server-api/toolsets', () => ({
   loginToolset: vi.fn(),
   updateToolset: vi.fn(),
 }));
+
+vi.mock('../../../context/NotificationContext');
+
+const mockShowNotification = vi.fn();
 
 vi.mock('../../../components/RouteFallback/RouteFallback', () => ({
   default: () => <div>Loading</div>,
@@ -72,6 +79,11 @@ describe('ToolsetEditor', () => {
       id: 'toolsets/b/my__0.0.1',
     });
     vi.mocked(toolsetsApi.loginToolset).mockResolvedValue({ success: true });
+    vi.mocked(useNotification).mockReturnValue({
+      notifications: [],
+      showNotification: mockShowNotification,
+      dismissNotification: vi.fn(),
+    });
   });
 
   it('logs in a newly created API-key toolset using the returned id', async () => {
@@ -97,6 +109,29 @@ describe('ToolsetEditor', () => {
           apiKey: 'secret',
         }),
       ),
+    );
+  });
+
+  it('shows an error notification when create fails', async () => {
+    vi.mocked(toolsetsApi.createToolset).mockRejectedValue(new Error('fail'));
+    renderEditor();
+
+    await user.click(
+      await screen.findByRole('button', {
+        name: 'fill-api-key-toolset',
+      }),
+    );
+    await user.click(
+      screen.getByRole('button', {
+        name: 'save-toolset',
+      }),
+    );
+
+    await waitFor(() =>
+      expect(mockShowNotification).toHaveBeenCalledWith({
+        variant: NotificationVariant.Error,
+        message: ToolsetEditorI18nKeys.ErrorCreateFailed,
+      }),
     );
   });
 });
