@@ -6,7 +6,11 @@ import { CatalogItem } from '../../models/catalog-item';
 import type { CatalogProps } from '../../models/catalog-props';
 import { CatalogSortKey } from '../../types/sort';
 import { CatalogViewMode } from '../../types/view-mode';
-import { filterCatalogItems } from '../../utils/catalog-filter';
+import {
+  filterByMyApp,
+  filterByTopics,
+  filterCatalogItems,
+} from '../../utils/catalog-filter';
 import { sortCatalogItems } from '../../utils/catalog-sort';
 import { buildCatalogTabs } from '../../utils/catalog-tabs';
 import { getStyles } from '../../utils/styles';
@@ -75,10 +79,17 @@ export const Catalog: FC<CatalogProps> = ({
   const [sortKey, setSortKey] = useState<string>(
     CatalogSortKey.RecentlyUpdated,
   );
+  const [filters, setFilters] = useState<Set<string>>(new Set());
+  const [isMyAppsActive, setIsMyAppsActive] = useState(false);
 
   const filteredItems = useMemo(
     () => items.filter((item) => !item.isHidden),
     [items],
+  );
+
+  const allFilterValues = useMemo(
+    () => new Set(filteredItems.flatMap((item) => item.topics)),
+    [filteredItems],
   );
 
   const tabs = useMemo(
@@ -160,10 +171,22 @@ export const Catalog: FC<CatalogProps> = ({
     [sorted, query],
   );
 
+  const topicFiltered = useMemo(
+    () => (filters.size > 0 ? filterByTopics(filtered, filters) : filtered),
+    [filtered, filters],
+  );
+
+  const myAppsFiltered = useMemo(
+    () => (isMyAppsActive ? filterByMyApp(topicFiltered) : topicFiltered),
+    [topicFiltered, isMyAppsActive],
+  );
+
   const tabFiltered = useMemo(
     () =>
-      activeTab ? filtered.filter((item) => item.type === activeTab) : filtered,
-    [filtered, activeTab],
+      activeTab
+        ? myAppsFiltered.filter((item) => item.type === activeTab)
+        : myAppsFiltered,
+    [myAppsFiltered, activeTab],
   );
 
   const isSelectedItemStarred =
@@ -175,6 +198,18 @@ export const Catalog: FC<CatalogProps> = ({
     return () => cancelAnimationFrame(rafId);
   }, [selectedItem]);
 
+  const handleViewModeChange = useCallback((mode: CatalogViewMode) => {
+    if (mode === CatalogViewMode.List) setListEverShown(true);
+    setViewMode(mode);
+  }, []);
+
+  const clearAllFilters = useCallback(() => {
+    setFilters(new Set());
+    setIsMyAppsActive(false);
+  }, []);
+
+  const isAnyFilterActive = filters.size > 0 || isMyAppsActive;
+
   if (isLoading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -182,17 +217,6 @@ export const Catalog: FC<CatalogProps> = ({
       </div>
     );
   }
-
-  const handleViewModeChange = (mode: CatalogViewMode) => {
-    if (mode === CatalogViewMode.List) setListEverShown(true);
-    setViewMode(mode);
-  };
-
-  const clearAllFilters = () => {
-    // TODO: implement when filters are added
-  };
-
-  const isAnyFilterActive = false;
   const emptyTitle = query ? noResultsTitle(query) : 'No items';
 
   return (
@@ -249,6 +273,15 @@ export const Catalog: FC<CatalogProps> = ({
             title={browseTitle}
             searchPlaceholder={searchPlaceholder}
             sortOptions={sortOptions}
+            filters={filters}
+            onFiltersChange={setFilters}
+            filterValues={allFilterValues}
+            isMyAppsActive={isMyAppsActive}
+            onMyAppsChange={setIsMyAppsActive}
+            clearAllLabel={titles?.clearAllLabel}
+            filterFromLabel={titles?.filterFromLabel}
+            filterMyAppsLabel={titles?.filterMyAppsLabel}
+            filterTopicsLabel={titles?.filterTopicsLabel}
           />
         </div>
 
@@ -259,7 +292,8 @@ export const Catalog: FC<CatalogProps> = ({
                 id: tab.id,
                 label:
                   typeof tab.label === 'string' ? tab.label : String(tab.label),
-                count: filtered.filter((item) => item.type === tab.id).length,
+                count: myAppsFiltered.filter((item) => item.type === tab.id)
+                  .length,
               }))}
               activeTabId={activeTab}
               onTabChange={setActiveTab}

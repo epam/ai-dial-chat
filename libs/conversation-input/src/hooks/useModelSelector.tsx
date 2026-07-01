@@ -73,8 +73,8 @@ export const useModelSelector = ({
         buildDeploymentIcon(
           selectedItem?.iconUrl,
           selectedItem?.type,
+          selectedItem?.displayName ?? selectedItem?.id ?? '',
           DIAL_ICON_SIZE.LG,
-          selectedItem?.displayName ?? selectedItem?.id,
         )
       ),
     [isLoading, selectedItem],
@@ -115,7 +115,11 @@ export const useModelSelector = ({
     return filterDeployments(deployments, searchQuery).map((item) => ({
       key: item.id,
       label: <DialEllipsisTooltip text={getDeploymentLabel(item)} />,
-      icon: buildDeploymentIcon(item.iconUrl, item.type),
+      icon: buildDeploymentIcon(
+        item.iconUrl,
+        item.type,
+        item.displayName ?? item.id,
+      ),
       onClick: () => onDeploymentChange?.(item.id),
       className:
         item.id === selectedDeploymentId

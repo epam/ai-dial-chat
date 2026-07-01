@@ -45,6 +45,7 @@ const ModelRow = ({
   const modelIcon = buildDeploymentIcon(
     item.iconUrl,
     item.type,
+    item.displayName ?? item.id,
     DIAL_ICON_SIZE.SM,
   );
   const isSelected = item.id === selectedDeploymentId;

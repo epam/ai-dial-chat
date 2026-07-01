@@ -1,0 +1,21 @@
+contract_version: "0.1"
+name: scan-deps
+skill: dep-scan
+agent_version: "0.1.0"
+description: "Filesystem dependency scan (Trivy). Detects known CVEs in repo lockfiles and emits structured findings for downstream triage."
+triggers: [pull_request]
+allowed_tools: "Read,Glob,Bash(trivy:*),Skill"
+tools:
+  extra:
+    - name: trivy
+      # Version intentionally unpinned: pinning to v0.69.0 caused install.sh
+      # to fail silently after "install trivy v0.69.0" — likely the release
+      # asset for that tag isn't where install.sh expects (the tag may be
+      # missing the standard tarball naming, or simply isn't a real release).
+      # install.sh's default = latest stable, which works reliably. Add a
+      # `version:` field back once we confirm a specific tarball-shipped
+      # release tag.
+      install: 'mkdir -p "$HOME/.local/bin" && curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "$HOME/.local/bin" && echo "$HOME/.local/bin" >> "$GITHUB_PATH"'
+model: claude-sonnet-4-6
+phase: pilot
+cost_class: medium
