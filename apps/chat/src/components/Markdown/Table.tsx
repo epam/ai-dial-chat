@@ -2,6 +2,7 @@ import {
   Icon,
   IconCheck,
   IconCsv,
+  IconDownload,
   IconMarkdown,
   IconTxt,
 } from '@tabler/icons-react';
@@ -9,6 +10,7 @@ import {
   Children,
   ReactElement,
   ReactNode,
+  RefObject,
   isValidElement,
   useCallback,
   useEffect,
@@ -20,6 +22,7 @@ import {
 import { useTranslation } from '@/src/hooks/useTranslation';
 
 import { writeTextToClipboard } from '@/src/utils/app/clipboard';
+import { triggerDownload } from '@/src/utils/app/file';
 
 import { CopyTableType } from '@/src/types/chat';
 import { Translation } from '@/src/types/translation';
@@ -28,6 +31,9 @@ import { MarkdownI18nKeys } from '@/src/constants/i18n';
 import { DEFAULT_ICON_SIZES } from '@/src/constants/icons';
 
 import { Tooltip } from '@/src/components/Common/Tooltip';
+import { DownloadTableCsvModal } from '@/src/components/Markdown/DownloadTableCsvModal';
+
+import { DialButton } from '@epam/ai-dial-ui-kit';
 
 interface CopyIconProps {
   Icon: Icon;
@@ -54,6 +60,32 @@ const CopyIcon = ({ Icon, onClick, copied, type }: CopyIconProps) => {
   );
 };
 
+const buildCsvString = (
+  headerRef: RefObject<HTMLTableElement | null>,
+  bodyRef: RefObject<HTMLTableElement | null>,
+): string => {
+  const rows = [
+    ...(headerRef.current ? Array.from(headerRef.current.rows) : []),
+    ...(bodyRef.current ? Array.from(bodyRef.current.rows) : []),
+  ];
+  return rows
+    .map((row) =>
+      Array.from(row.cells)
+        .map((cell) =>
+          cell.textContent?.trim()
+            ? `"${cell.textContent.trim().replace(/"/g, '""')}"`
+            : '',
+        )
+        .join(','),
+    )
+    .join('\n');
+};
+
+const getDefaultFilename = (): string => {
+  const date = new Date().toISOString().slice(0, 10);
+  return `table_${date}.csv`;
+};
+
 interface Props {
   children: ReactNode[] | ReactNode;
   isLastMessageStreaming: boolean;
@@ -74,6 +106,7 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
     undefined,
   );
   const [timer, setTimer] = useState<NodeJS.Timeout | undefined>(undefined);
+  const [isDownloadModalOpen, setIsDownloadModalOpen] = useState(false);
 
   const childArray = Children.toArray(children);
   const head = childArray.find(isThead);
@@ -240,21 +273,18 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
 
   const copyTableToCSV = useCallback(
     () =>
-      withCopyToClipboard(CopyTableType.CSV, (rows) => {
-        const csv = rows.map((row) => {
-          const rowArray = Array.from(row.cells).map((cell) =>
-            cell.textContent?.trim()
-              ? `"${cell.textContent.trim().replace(/"/g, '""')}"`
-              : '',
-          );
-
-          return rowArray.join(',');
-        });
-
-        return csv.join('\n');
-      })(),
+      withCopyToClipboard(CopyTableType.CSV, () =>
+        buildCsvString(headerTableRef, bodyTableRef),
+      )(),
     [withCopyToClipboard],
   );
+
+  const downloadTableAsCSV = useCallback((filename: string) => {
+    const csv = '﻿' + buildCsvString(headerTableRef, bodyTableRef);
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    triggerDownload(url, filename);
+  }, []);
 
   return (
     <div className="mt-7 max-w-full" data-qa="table">
@@ -303,6 +333,25 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
                 type={CopyTableType.MD}
               />
             </Tooltip>
+            <DialButton
+              className="flex max-h-[24px] items-center !px-0 text-secondary hover:text-accent-primary"
+              data-qa="download-csv"
+              aria-label={t(MarkdownI18nKeys.DownloadAsCSV, {
+                ns: Translation.Markdown,
+              })}
+              tooltipProps={{
+                placement: 'top',
+                isTriggerClickable: true,
+                tooltip: t(MarkdownI18nKeys.DownloadAsCSV, {
+                  ns: Translation.Markdown,
+                }),
+                contentClassName: 'text-base',
+              }}
+              onClick={() => setIsDownloadModalOpen(true)}
+              iconBefore={
+                <IconDownload size={DEFAULT_ICON_SIZES.SMALL} stroke={1.5} />
+              }
+            />
           </div>
         </div>
       )}
@@ -332,6 +381,12 @@ export const Table = ({ children, isLastMessageStreaming }: Props) => {
           {body}
         </table>
       </div>
+      <DownloadTableCsvModal
+        isOpen={isDownloadModalOpen}
+        defaultFilename={getDefaultFilename()}
+        onConfirm={downloadTableAsCSV}
+        onClose={() => setIsDownloadModalOpen(false)}
+      />
     </div>
   );
 };

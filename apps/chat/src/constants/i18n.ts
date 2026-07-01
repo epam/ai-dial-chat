@@ -26,6 +26,9 @@ export enum MarkdownI18nKeys {
   CopyAsCSV = 'Copy as CSV',
   CopyAsTXT = 'Copy as TXT',
   CopyAsMD = 'Copy as MD',
+  DownloadAsCSV = 'Download as CSV',
+  DownloadTableAsCSV = 'Download table as CSV',
+  FileName = 'File name',
 }
 
 // settings.json
