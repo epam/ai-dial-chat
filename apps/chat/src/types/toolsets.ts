@@ -1,8 +1,3 @@
-// Local enums and editor form-state types for the toolset editor.
-// Values mirror the DIAL Core / generated client contract; the loaded toolset
-// entity itself comes from the generated `@epam/chat-api-client` DTO, so only
-// the editor form state and auth-flow shapes are modelled here.
-
 export enum ToolsetAuthTypes {
   None = 'NONE',
   ApiKey = 'API_KEY',
