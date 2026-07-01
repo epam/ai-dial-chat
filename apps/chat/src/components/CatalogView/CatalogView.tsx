@@ -129,6 +129,7 @@ const CatalogView: FC = () => {
       createOptions={createOptions}
       onFetchAboutContent={fetchAboutContent}
       onToggleFavorite={onToggleFavorite}
+      styles={{ typography: { pageHeadingFontClassName: 'catalog-heading-text' } }}
       titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),
         createLabel: t(ButtonsI18nKeys.Create),

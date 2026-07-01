@@ -346,6 +346,13 @@ aside[class~='dial-body-text']
   background: linear-gradient(180deg, #37babc 0%, #5c8dea 48%, #a972ff 100%);
 }
 
+// Catalog page heading — matches the "Chats" panel header size (22px / 600 / 32px)
+.catalog-heading-text {
+  font-size: 22px;
+  line-height: 32px;
+  font-weight: 600;
+}
+
 // DS token overrides
 .dial-small-text {
   line-height: 24px;
