@@ -62,6 +62,10 @@ export interface ToolbarProps {
   title?: string;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
   searchPlaceholder?: string;
+  /** Accessible label for switching to grid view. Default: 'Grid view'. */
+  gridViewLabel?: string;
+  /** Accessible label for switching to list view. Default: 'List view'. */
+  listViewLabel?: string;
   /** Grouped typography and color overrides. */
   styles?: ToolbarStyles;
   /** Label for the "Clear all" filters button. Default: 'Clear all'. */

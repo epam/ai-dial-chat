@@ -21,6 +21,8 @@ export const Toolbar: FC<ToolbarProps> = ({
   filterFromLabel,
   filterMyAppsLabel,
   filterTopicsLabel,
+  gridViewLabel,
+  listViewLabel,
   sortKey,
   onSortChange,
   sortOptions,
@@ -46,6 +48,8 @@ export const Toolbar: FC<ToolbarProps> = ({
         query={query}
         onQueryChange={onQueryChange}
         searchPlaceholder={searchPlaceholder}
+        gridViewLabel={gridViewLabel}
+        listViewLabel={listViewLabel}
         sortKey={sortKey}
         onSortChange={onSortChange}
         sortOptions={sortOptions}

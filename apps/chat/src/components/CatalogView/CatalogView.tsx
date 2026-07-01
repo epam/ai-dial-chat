@@ -144,6 +144,8 @@ const CatalogView: FC = () => {
         sortNewestLabel: t(CatalogI18nKeys.SortNewest),
         sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
         featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
+        gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
+        listViewLabel: t(CatalogI18nKeys.ListViewLabel),
         ariaLabel: t(CatalogI18nKeys.AriaLabel),
         tabLabels: {
           [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),

@@ -18,6 +18,8 @@ interface TitleRowProps {
   query: string;
   onQueryChange: (q: string) => void;
   searchPlaceholder?: string;
+  gridViewLabel?: string;
+  listViewLabel?: string;
   sortKey?: string;
   onSortChange?: (key: string) => void;
   sortOptions?: CatalogSortOption[];
@@ -41,6 +43,8 @@ export const TitleRow: FC<TitleRowProps> = ({
   query,
   onQueryChange,
   searchPlaceholder,
+  gridViewLabel = 'Grid view',
+  listViewLabel = 'List view',
   sortKey,
   onSortChange,
   sortOptions,
@@ -90,12 +94,14 @@ export const TitleRow: FC<TitleRowProps> = ({
                     key={mode}
                     type="button"
                     aria-label={
-                      mode === CatalogViewMode.Grid ? 'Grid view' : 'List view'
+                      mode === CatalogViewMode.Grid
+                        ? gridViewLabel
+                        : listViewLabel
                     }
                     aria-pressed={isActive}
                     onClick={() => onViewModeChange(mode)}
                     className={mergeClasses(
-                      'flex items-center justify-center rounded-full px-3 py-1.5 transition-colors',
+                      'flex min-h-11 min-w-11 items-center justify-center rounded-full px-3 py-1.5 transition-colors desktop:min-h-8 desktop:min-w-10',
                       isActive
                         ? 'bg-layer-0 text-accent-primary shadow-sm'
                         : 'text-secondary hover:text-primary',

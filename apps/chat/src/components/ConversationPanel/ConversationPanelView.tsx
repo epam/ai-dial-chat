@@ -428,6 +428,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onNewChat={onNewChat}
         newChatLabel={t(ConversationPanelI18nKeys.NewChat)}
         searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
+        searchClearLabel={t(BasicI18nKeys.ClearSearch)}
         filterLabels={filterLabels}
         groupLabels={groupLabels}
         getActions={getActions}

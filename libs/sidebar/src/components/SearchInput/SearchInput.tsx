@@ -12,20 +12,28 @@ export interface SearchInputProps {
   value: string;
   /** Called whenever the query changes. */
   onChange: (value: string) => void;
+  /** Accessible label for the clear-search button. */
+  clearLabel: string;
   /** CSS class applied to the search icon. Defaults to `'text-secondary'`. */
   iconClassName?: string;
 }
 
 /** Minimal search input with icon positioned to align with sibling action buttons. */
 export const SearchInput: FC<SearchInputProps> = memo(
-  ({ placeholder, value, onChange, iconClassName = 'text-secondary' }) => (
+  ({
+    placeholder,
+    value,
+    onChange,
+    clearLabel,
+    iconClassName = 'text-secondary',
+  }) => (
     <div
       className={mergeClasses('border-b px-2 py-1', panelStyles.divider)}
       data-cp-search-wrapper
     >
       <div
         className={mergeClasses(
-          'flex h-9 w-full items-center gap-2 pe-3 ps-3',
+          'flex min-h-11 w-full items-center gap-2 pe-3 ps-3 desktop:min-h-9',
           styles.row,
         )}
       >
@@ -48,8 +56,11 @@ export const SearchInput: FC<SearchInputProps> = memo(
           <button
             type="button"
             onClick={() => onChange('')}
-            className={mergeClasses('shrink-0', iconClassName)}
-            aria-label="Clear search"
+            className={mergeClasses(
+              'flex size-11 shrink-0 items-center justify-center desktop:size-6',
+              iconClassName,
+            )}
+            aria-label={clearLabel}
           >
             <IconX size={14} stroke={1.5} />
           </button>

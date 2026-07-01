@@ -47,6 +47,7 @@ export enum RateI18nKeys {
 
 export enum BasicI18nKeys {
   SearchPlaceholder = 'basic.searchPlaceholder',
+  ClearSearch = 'basic.clearSearch',
   NoResults = 'basic.noResults',
   Empty = 'basic.noData',
 }
@@ -110,6 +111,8 @@ export enum CatalogI18nKeys {
   SortNewest = 'catalog.sortNewest',
   SortNameAZ = 'catalog.sortNameAZ',
   FeaturedLabel = 'catalog.featuredLabel',
+  GridViewLabel = 'catalog.gridViewLabel',
+  ListViewLabel = 'catalog.listViewLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsDailyLimit = 'catalog.details.dailyLimit',

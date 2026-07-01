@@ -131,6 +131,8 @@ export interface ConversationPanelProps {
   newChatLabel: string;
   /** Placeholder text for the search input (e.g. `"Search chat…"`). */
   searchPlaceholder: string;
+  /** Accessible label for the search input clear button. */
+  searchClearLabel: string;
   /** Labels for the four filter tabs. */
   filterLabels: FilterLabels;
   /** Labels for collapsible group section headings. */

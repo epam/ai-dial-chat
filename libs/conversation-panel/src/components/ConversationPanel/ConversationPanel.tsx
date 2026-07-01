@@ -57,6 +57,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onNewChat,
     newChatLabel,
     searchPlaceholder,
+    searchClearLabel,
     filterLabels,
     groupLabels,
     styles: panelStyles,
@@ -364,6 +365,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={setSearchQuery}
+          clearLabel={searchClearLabel}
         />
 
         <FilterTabs

@@ -87,8 +87,9 @@ vi.mock('@tabler/icons-react', () => ({
   IconFilter: () => null,
   IconX: () => null,
   IconChevronDown: () => null,
-  IconLayoutCards: () => null,
+  IconLayoutGrid: () => null,
   IconLayoutList: () => null,
+  IconSearch: () => null,
 }));
 
 vi.mock('@epam/ai-dial-chat-shared', () => ({

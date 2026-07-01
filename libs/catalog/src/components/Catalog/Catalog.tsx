@@ -54,6 +54,8 @@ export const Catalog: FC<CatalogProps> = ({
   const noResultsTitle =
     titles?.noResultsTitle ?? ((q: string) => `No results for "${q}"`);
   const featuredLabel = titles?.featuredLabel ?? 'Featured';
+  const gridViewLabel = titles?.gridViewLabel ?? 'Grid view';
+  const listViewLabel = titles?.listViewLabel ?? 'List view';
   const resolvedAriaLabel = titles?.ariaLabel ?? 'Catalog';
 
   const sortOptions = [
@@ -183,8 +185,10 @@ export const Catalog: FC<CatalogProps> = ({
 
   const tabFiltered = useMemo(
     () =>
-      activeTab ? filtered.filter((item) => item.type === activeTab) : filtered,
-    [filtered, activeTab],
+      activeTab
+        ? myAppsFiltered.filter((item) => item.type === activeTab)
+        : myAppsFiltered,
+    [myAppsFiltered, activeTab],
   );
 
   const isSelectedItemStarred =
@@ -270,6 +274,8 @@ export const Catalog: FC<CatalogProps> = ({
             onClearFilters={clearAllFilters}
             title={browseTitle}
             searchPlaceholder={searchPlaceholder}
+            gridViewLabel={gridViewLabel}
+            listViewLabel={listViewLabel}
             sortOptions={sortOptions}
             filters={filters}
             onFiltersChange={setFilters}
