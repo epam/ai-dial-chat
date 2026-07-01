@@ -363,11 +363,8 @@ function makeWriteService() {
   return { service, cacheManager };
 }
 
-const bucketOk = {
-  ok: true,
-  json: () => Promise.resolve({ bucket: 'test-bucket' }),
-};
-const putOk = { ok: true };
+const bucketSdkOk = okResponse({ bucket: 'test-bucket' });
+const mutationSdkOk = okResponse({});
 
 const baseBody: ToolsetBodyDto = {
   name: 'My toolset',
@@ -384,9 +381,11 @@ describe('ToolsetsService — write operations', () => {
   describe('createToolset', () => {
     it('creates toolset, returns composite id, and invalidates the list cache', async () => {
       const { service, cacheManager } = makeWriteService();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValueOnce(bucketOk).mockResolvedValueOnce(putOk),
+      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+        bucketSdkOk,
+      );
+      vi.spyOn(service['client'], 'saveToolSet').mockResolvedValue(
+        mutationSdkOk,
       );
 
       const result = await service.createToolset('user1', 'token', baseBody);
@@ -396,13 +395,38 @@ describe('ToolsetsService — write operations', () => {
       expect(cacheManager.del).toHaveBeenCalledWith('toolsets:list:user1');
     });
 
+    it('encodes slashes inside the display name as filename characters', async () => {
+      const { service } = makeWriteService();
+      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+        bucketSdkOk,
+      );
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
+
+      const result = await service.createToolset('user1', 'token', {
+        ...baseBody,
+        name: 'Team/toolset',
+      });
+
+      expect(result).toEqual({
+        id: 'toolsets/test-bucket/Team%2Ftoolset__0.0.1',
+      });
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'Team%2Ftoolset__0.0.1',
+        expect.any(Object),
+      );
+    });
+
     it('maps fields to DIAL Core snake_case in the PUT body', async () => {
       const { service } = makeWriteService();
-      const fetchSpy = vi
-        .fn()
-        .mockResolvedValueOnce(bucketOk)
-        .mockResolvedValueOnce(putOk);
-      vi.stubGlobal('fetch', fetchSpy);
+      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+        bucketSdkOk,
+      );
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
 
       await service.createToolset('user1', 'token', {
         ...baseBody,
@@ -416,9 +440,16 @@ describe('ToolsetsService — write operations', () => {
         },
       });
 
-      const sentBody = JSON.parse(
-        fetchSpy.mock.calls[1][1].body as string,
-      ) as Record<string, unknown>;
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'My%20toolset__0.0.1',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+          }),
+        }),
+      );
+      const sentBody = saveSpy.mock.calls[0][2].body as Record<string, unknown>;
       expect(sentBody).toEqual({
         display_name: 'My toolset',
         display_version: '0.0.1',
@@ -437,9 +468,8 @@ describe('ToolsetsService — write operations', () => {
 
     it('throws UnauthorizedException when the bucket call returns 401', async () => {
       const { service } = makeWriteService();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 401 }),
+      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+        errResponse(401),
       );
       await expect(service.createToolset('u', 't', baseBody)).rejects.toThrow(
         UnauthorizedException,
@@ -448,12 +478,11 @@ describe('ToolsetsService — write operations', () => {
 
     it('does not invalidate cache when the PUT returns an error', async () => {
       const { service, cacheManager } = makeWriteService();
-      vi.stubGlobal(
-        'fetch',
-        vi
-          .fn()
-          .mockResolvedValueOnce(bucketOk)
-          .mockResolvedValueOnce({ ok: false, status: 409 }),
+      vi.spyOn(service['client'], 'getUserBucket').mockResolvedValue(
+        bucketSdkOk,
+      );
+      vi.spyOn(service['client'], 'saveToolSet').mockResolvedValue(
+        errResponse(409),
       );
       await expect(
         service.createToolset('user1', 't', baseBody),
@@ -463,9 +492,8 @@ describe('ToolsetsService — write operations', () => {
 
     it('throws ServiceUnavailableException on network error', async () => {
       const { service } = makeWriteService();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockRejectedValue(new TypeError('fetch failed')),
+      vi.spyOn(service['client'], 'getUserBucket').mockRejectedValue(
+        new TypeError('fetch failed'),
       );
       await expect(service.createToolset('u', 't', baseBody)).rejects.toThrow(
         ServiceUnavailableException,
@@ -478,8 +506,9 @@ describe('ToolsetsService — write operations', () => {
 
     it('PUTs to the toolset id path and invalidates list + single caches', async () => {
       const { service, cacheManager } = makeWriteService();
-      const fetchSpy = vi.fn().mockResolvedValue(putOk);
-      vi.stubGlobal('fetch', fetchSpy);
+      const saveSpy = vi
+        .spyOn(service['client'], 'saveToolSet')
+        .mockResolvedValue(mutationSdkOk);
 
       const result = await service.updateToolset(
         'user1',
@@ -488,7 +517,18 @@ describe('ToolsetsService — write operations', () => {
         baseBody,
       );
       expect(result).toEqual({ id });
-      expect(fetchSpy.mock.calls[0][0]).toBe(`http://dial-core/v1/${id}`);
+      expect(saveSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'My%20toolset__0.0.1',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+          }),
+          body: expect.objectContaining({
+            display_name: 'My toolset',
+          }),
+        }),
+      );
       expect(cacheManager.del).toHaveBeenCalledWith('toolsets:list:user1');
       expect(cacheManager.del).toHaveBeenCalledWith(
         `toolsets:single:user1:${id}`,
@@ -497,9 +537,8 @@ describe('ToolsetsService — write operations', () => {
 
     it('throws NotFoundException on upstream 404', async () => {
       const { service } = makeWriteService();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 404 }),
+      vi.spyOn(service['client'], 'saveToolSet').mockResolvedValue(
+        errResponse(404),
       );
       await expect(
         service.updateToolset('u', 't', id, baseBody),
@@ -512,11 +551,20 @@ describe('ToolsetsService — write operations', () => {
 
     it('DELETEs the toolset id path and invalidates caches', async () => {
       const { service, cacheManager } = makeWriteService();
-      const fetchSpy = vi.fn().mockResolvedValue({ ok: true });
-      vi.stubGlobal('fetch', fetchSpy);
+      const deleteSpy = vi
+        .spyOn(service['client'], 'deleteToolSet')
+        .mockResolvedValue(mutationSdkOk);
 
       await service.deleteToolset('user1', 'token', id);
-      expect(fetchSpy.mock.calls[0][1].method).toBe('DELETE');
+      expect(deleteSpy).toHaveBeenCalledWith(
+        'test-bucket',
+        'My%20toolset__0.0.1',
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+          }),
+        }),
+      );
       expect(cacheManager.del).toHaveBeenCalledWith(
         `toolsets:single:user1:${id}`,
       );
@@ -524,9 +572,8 @@ describe('ToolsetsService — write operations', () => {
 
     it('throws ForbiddenException on upstream 403', async () => {
       const { service } = makeWriteService();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 403 }),
+      vi.spyOn(service['client'], 'deleteToolSet').mockResolvedValue(
+        errResponse(403),
       );
       await expect(service.deleteToolset('u', 't', id)).rejects.toThrow(
         ForbiddenException,
@@ -539,8 +586,9 @@ describe('ToolsetsService — write operations', () => {
 
     it('posts API key credentials to the signin endpoint', async () => {
       const { service } = makeWriteService();
-      const fetchSpy = vi.fn().mockResolvedValue({ ok: true });
-      vi.stubGlobal('fetch', fetchSpy);
+      const signinSpy = vi
+        .spyOn(service['client'], 'toolsetSignin')
+        .mockResolvedValue(mutationSdkOk);
 
       await service.loginToolset('user1', 'token', id, {
         url: id,
@@ -549,20 +597,26 @@ describe('ToolsetsService — write operations', () => {
         apiKey: 'secret-key',
       });
 
-      expect(fetchSpy.mock.calls[0][0]).toBe(
-        'http://dial-core/v1/ops/toolset/signin',
+      expect(signinSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+          }),
+        }),
       );
-      const sentBody = JSON.parse(
-        fetchSpy.mock.calls[0][1].body as string,
-      ) as Record<string, unknown>;
+      const sentBody = signinSpy.mock.calls[0][0].body as Record<
+        string,
+        unknown
+      >;
       expect(sentBody.api_key).toBe('secret-key');
       expect(sentBody.code).toBeUndefined();
     });
 
     it('posts OAuth code + redirectUri to the signin endpoint', async () => {
       const { service } = makeWriteService();
-      const fetchSpy = vi.fn().mockResolvedValue({ ok: true });
-      vi.stubGlobal('fetch', fetchSpy);
+      const signinSpy = vi
+        .spyOn(service['client'], 'toolsetSignin')
+        .mockResolvedValue(mutationSdkOk);
 
       await service.loginToolset('user1', 'token', id, {
         url: id,
@@ -572,9 +626,10 @@ describe('ToolsetsService — write operations', () => {
         redirectUri: 'https://chat.example.com/toolset-editor/callback',
       });
 
-      const sentBody = JSON.parse(
-        fetchSpy.mock.calls[0][1].body as string,
-      ) as Record<string, unknown>;
+      const sentBody = signinSpy.mock.calls[0][0].body as Record<
+        string,
+        unknown
+      >;
       expect(sentBody.code).toBe('auth-code');
       expect(sentBody.redirect_uri).toBe(
         'https://chat.example.com/toolset-editor/callback',
@@ -584,9 +639,8 @@ describe('ToolsetsService — write operations', () => {
 
     it('throws UnauthorizedException on upstream 401', async () => {
       const { service } = makeWriteService();
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockResolvedValue({ ok: false, status: 401 }),
+      vi.spyOn(service['client'], 'toolsetSignin').mockResolvedValue(
+        errResponse(401),
       );
       await expect(
         service.loginToolset('u', 't', id, {
@@ -604,8 +658,9 @@ describe('ToolsetsService — write operations', () => {
 
     it('posts to the signout endpoint and invalidates caches', async () => {
       const { service, cacheManager } = makeWriteService();
-      const fetchSpy = vi.fn().mockResolvedValue({ ok: true });
-      vi.stubGlobal('fetch', fetchSpy);
+      const signoutSpy = vi
+        .spyOn(service['client'], 'toolSetSignout')
+        .mockResolvedValue(mutationSdkOk);
 
       await service.logoutToolset('user1', 'token', id, {
         url: id,
@@ -613,8 +668,17 @@ describe('ToolsetsService — write operations', () => {
         authenticationType: ToolsetAuthType.OAuth,
       });
 
-      expect(fetchSpy.mock.calls[0][0]).toBe(
-        'http://dial-core/v1/ops/toolset/signout',
+      expect(signoutSpy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          headers: expect.objectContaining({
+            Authorization: 'Bearer token',
+          }),
+          body: expect.objectContaining({
+            authentication_type: ToolsetAuthType.OAuth,
+            credentials_level: ToolsetCredentialsLevel.User,
+            url: id,
+          }),
+        }),
       );
       expect(cacheManager.del).toHaveBeenCalledWith(
         `toolsets:single:user1:${id}`,

@@ -1,5 +1,12 @@
+import type { components, operations } from '@epam/ai-dial-typescript-sdk';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  Inject,
+  Injectable,
+  Logger,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import type { Cache } from 'cache-manager';
 import { AppService } from '../app/app.service';
@@ -8,6 +15,7 @@ import {
   handleDialFetchError,
   mapDialHttpStatus,
 } from '../common/utils/dial-fetch-error';
+import { safeDecodeURIComponent } from '../common/utils/uri';
 import type { EnvironmentVariables } from '../config/environment.config';
 import type {
   DialToolsetAuthSettingsDto,
@@ -22,44 +30,99 @@ import { ToolsetAuthType } from './dto/toolset-body.dto';
 import type { MutatedToolsetDto, ToolsetBodyDto } from './dto/toolset-body.dto';
 
 const DEFAULT_TOOLSET_VERSION = '0.0.1';
+const TOOLSET_RESOURCE_PREFIX = 'toolsets/';
+
+type DialAuthSettings = components['schemas']['ResourceAuthSettings'];
+type DialToolsetBody = components['schemas']['Toolset'];
+type DialToolsetSigninBody =
+  operations['toolsetSignin']['requestBody']['content']['application/json'] & {
+    redirect_uri?: string;
+  };
+type DialToolsetSignoutBody =
+  operations['toolSetSignout']['requestBody']['content']['application/json'];
+
+interface DialToolsetResource {
+  bucket: string;
+  path: string;
+}
+
+const encodeDialToolsetPath = (path: string): string =>
+  path
+    .split('/')
+    .map((segment) => encodeURIComponent(safeDecodeURIComponent(segment)))
+    .join('/');
+
+const parseDialToolsetResource = (
+  toolsetName: string,
+): DialToolsetResource | undefined => {
+  if (!toolsetName.startsWith(TOOLSET_RESOURCE_PREFIX)) {
+    return undefined;
+  }
+
+  const resource = toolsetName.slice(TOOLSET_RESOURCE_PREFIX.length);
+  const [bucket, ...pathSegments] = resource.split('/');
+  const path = pathSegments.join('/');
+  if (!bucket || !path) {
+    throw new BadRequestException('Toolset id must include bucket and path');
+  }
+
+  return { bucket, path: encodeDialToolsetPath(path) };
+};
+
+const toDialAuthSettings = (
+  auth: ToolsetBodyDto['authSettings'],
+): DialAuthSettings => {
+  if (auth.authenticationType === ToolsetAuthType.ApiKey) {
+    return {
+      authentication_type: auth.authenticationType,
+      ...(auth.apiKeyHeader != null
+        ? { api_key_header: auth.apiKeyHeader }
+        : {}),
+    };
+  }
+
+  if (auth.authenticationType === ToolsetAuthType.OAuth) {
+    return {
+      authentication_type: auth.authenticationType,
+      ...(auth.clientId != null ? { client_id: auth.clientId } : {}),
+      ...(auth.clientSecret != null
+        ? { client_secret: auth.clientSecret }
+        : {}),
+      ...(auth.authorizationEndpoint != null
+        ? { authorization_endpoint: auth.authorizationEndpoint }
+        : {}),
+      ...(auth.tokenEndpoint != null
+        ? { token_endpoint: auth.tokenEndpoint }
+        : {}),
+      ...(auth.scopesSupported != null
+        ? { scopes_supported: auth.scopesSupported }
+        : {}),
+      ...(auth.redirectUri != null ? { redirect_uri: auth.redirectUri } : {}),
+      ...(auth.codeChallenge != null
+        ? { code_challenge: auth.codeChallenge }
+        : {}),
+      ...(auth.codeChallengeMethod != null
+        ? { code_challenge_method: auth.codeChallengeMethod }
+        : {}),
+    };
+  }
+
+  return { authentication_type: auth.authenticationType };
+};
 
 // Maps the camelCase request DTO to the snake_case body DIAL Core expects,
 // only including auth fields relevant to the selected authentication type.
 const toDialToolsetBody = (
   body: ToolsetBodyDto,
   version: string,
-): Record<string, unknown> => {
-  const auth = body.authSettings;
-  const authSettings: Record<string, unknown> = {
-    authentication_type: auth.authenticationType,
-  };
-  if (auth.authenticationType === ToolsetAuthType.ApiKey) {
-    if (auth.apiKeyHeader != null)
-      authSettings.api_key_header = auth.apiKeyHeader;
-  } else if (auth.authenticationType === ToolsetAuthType.OAuth) {
-    if (auth.clientId != null) authSettings.client_id = auth.clientId;
-    if (auth.clientSecret != null)
-      authSettings.client_secret = auth.clientSecret;
-    if (auth.authorizationEndpoint != null)
-      authSettings.authorization_endpoint = auth.authorizationEndpoint;
-    if (auth.tokenEndpoint != null)
-      authSettings.token_endpoint = auth.tokenEndpoint;
-    if (auth.scopesSupported != null)
-      authSettings.scopes_supported = auth.scopesSupported;
-    if (auth.redirectUri != null) authSettings.redirect_uri = auth.redirectUri;
-    if (auth.codeChallenge != null)
-      authSettings.code_challenge = auth.codeChallenge;
-    if (auth.codeChallengeMethod != null)
-      authSettings.code_challenge_method = auth.codeChallengeMethod;
-  }
-
-  const dialBody: Record<string, unknown> = {
+): DialToolsetBody => {
+  const dialBody: DialToolsetBody = {
     display_name: body.name,
     display_version: version,
     endpoint: body.endpoint.trim(),
     transport: body.transport,
     allowed_tools: body.allowedTools ?? [],
-    auth_settings: authSettings,
+    auth_settings: toDialAuthSettings(body.authSettings),
   };
   if (body.description != null) dialBody.description = body.description;
   if (body.iconUrl != null) dialBody.icon_url = body.iconUrl;
@@ -68,14 +131,61 @@ const toDialToolsetBody = (
   return dialBody;
 };
 
+const toDialToolsetSigninBody = (
+  body: ToolsetLoginBodyDto,
+): DialToolsetSigninBody => {
+  const base = {
+    url: body.url,
+    credentials_level:
+      body.credentialsLevel as DialToolsetSigninBody['credentials_level'],
+  };
+
+  if (body.authenticationType === ToolsetAuthType.ApiKey) {
+    return {
+      ...base,
+      authentication_type: ToolsetAuthType.ApiKey,
+      api_key: body.apiKey,
+    };
+  }
+
+  if (body.authenticationType === ToolsetAuthType.OAuth) {
+    return {
+      ...base,
+      authentication_type: ToolsetAuthType.OAuth,
+      code: body.code,
+      redirect_uri: body.redirectUri,
+    };
+  }
+
+  throw new BadRequestException('Unsupported toolset authentication type');
+};
+
+const toDialToolsetSignoutBody = (
+  body: ToolsetLogoutBodyDto,
+): DialToolsetSignoutBody => {
+  if (
+    body.authenticationType !== ToolsetAuthType.ApiKey &&
+    body.authenticationType !== ToolsetAuthType.OAuth
+  ) {
+    throw new BadRequestException('Unsupported toolset authentication type');
+  }
+
+  return {
+    url: body.url,
+    credentials_level:
+      body.credentialsLevel as DialToolsetSignoutBody['credentials_level'],
+    authentication_type: body.authenticationType,
+  };
+};
+
 const redactToolsetSecrets = (toolset: DialToolsetDto): DialToolsetDto => {
-  if (toolset.auth_settings?.client_secret == null) {
+  const authSettingsWithSecret = toolset.auth_settings as
+    | (DialToolsetAuthSettingsDto & { client_secret?: string })
+    | undefined;
+  if (authSettingsWithSecret?.client_secret == null) {
     return toolset;
   }
-  const { client_secret: _, ...authSettings } =
-    toolset.auth_settings as DialToolsetAuthSettingsDto & {
-      client_secret?: string;
-    };
+  const { client_secret: _, ...authSettings } = authSettingsWithSecret;
   return { ...toolset, auth_settings: authSettings };
 };
 
@@ -175,6 +285,35 @@ export class ToolsetsService extends AppService {
     }
   }
 
+  private async getUserBucket(
+    authHeaders: ReturnType<typeof getBearerAuthHeaders>,
+    context: string,
+  ): Promise<string> {
+    const result = await this.client.getUserBucket({ headers: authHeaders });
+    if (result.error) {
+      return mapDialHttpStatus(result.response.status, context, this.logger);
+    }
+    if (result.data == null) {
+      throw new BadGatewayException('DIAL Core returned an empty bucket');
+    }
+    return result.data.bucket;
+  }
+
+  private async resolveToolsetResource(
+    authHeaders: ReturnType<typeof getBearerAuthHeaders>,
+    toolsetName: string,
+  ): Promise<DialToolsetResource> {
+    const resource = parseDialToolsetResource(toolsetName);
+    if (resource != null) {
+      return resource;
+    }
+
+    return {
+      bucket: await this.getUserBucket(authHeaders, 'get user bucket'),
+      path: encodeDialToolsetPath(toolsetName),
+    };
+  }
+
   async createToolset(
     userSub: string,
     accessToken: string,
@@ -183,30 +322,20 @@ export class ToolsetsService extends AppService {
     const authHeaders = getBearerAuthHeaders(accessToken);
 
     try {
-      const bucketResponse = await fetch(`${this.baseUrl}/v1/bucket`, {
-        headers: authHeaders,
-      });
-      if (!bucketResponse.ok) {
-        return mapDialHttpStatus(
-          bucketResponse.status,
-          'get user bucket',
-          this.logger,
-        );
-      }
-      const { bucket } = (await bucketResponse.json()) as { bucket: string };
-
+      const bucket = await this.getUserBucket(authHeaders, 'get user bucket');
       const version = body.version ?? DEFAULT_TOOLSET_VERSION;
-      const encodedPath = encodeURIComponent(`${body.name}__${version}`);
-      const id = `toolsets/${bucket}/${encodedPath}`;
+      const path = encodeURIComponent(
+        safeDecodeURIComponent(`${body.name}__${version}`),
+      );
+      const id = `${TOOLSET_RESOURCE_PREFIX}${bucket}/${path}`;
 
-      const response = await fetch(`${this.baseUrl}/v1/${id}`, {
-        method: 'PUT',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify(toDialToolsetBody(body, version)),
+      const response = await this.client.saveToolSet(bucket, path, {
+        headers: authHeaders,
+        body: toDialToolsetBody(body, version),
       });
-      if (!response.ok) {
+      if (response.error) {
         return mapDialHttpStatus(
-          response.status,
+          response.response.status,
           'create toolset',
           this.logger,
         );
@@ -229,14 +358,17 @@ export class ToolsetsService extends AppService {
     const version = body.version ?? DEFAULT_TOOLSET_VERSION;
 
     try {
-      const response = await fetch(`${this.baseUrl}/v1/${toolsetName}`, {
-        method: 'PUT',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify(toDialToolsetBody(body, version)),
+      const { bucket, path } = await this.resolveToolsetResource(
+        authHeaders,
+        toolsetName,
+      );
+      const response = await this.client.saveToolSet(bucket, path, {
+        headers: authHeaders,
+        body: toDialToolsetBody(body, version),
       });
-      if (!response.ok) {
+      if (response.error) {
         return mapDialHttpStatus(
-          response.status,
+          response.response.status,
           `update toolset "${toolsetName}"`,
           this.logger,
         );
@@ -262,13 +394,16 @@ export class ToolsetsService extends AppService {
     const authHeaders = getBearerAuthHeaders(accessToken);
 
     try {
-      const response = await fetch(`${this.baseUrl}/v1/${toolsetName}`, {
-        method: 'DELETE',
+      const { bucket, path } = await this.resolveToolsetResource(
+        authHeaders,
+        toolsetName,
+      );
+      const response = await this.client.deleteToolSet(bucket, path, {
         headers: authHeaders,
       });
-      if (!response.ok) {
+      if (response.error) {
         return mapDialHttpStatus(
-          response.status,
+          response.response.status,
           `delete toolset "${toolsetName}"`,
           this.logger,
         );
@@ -293,27 +428,16 @@ export class ToolsetsService extends AppService {
   ): Promise<void> {
     const authHeaders = getBearerAuthHeaders(accessToken);
     // NOTE: never log apiKey / code — only the toolset reference and level.
-    const dialBody: Record<string, unknown> = {
-      url: body.url,
-      credentials_level: body.credentialsLevel,
-      authentication_type: body.authenticationType,
-    };
-    if (body.authenticationType === ToolsetAuthType.ApiKey) {
-      dialBody.api_key = body.apiKey;
-    } else if (body.authenticationType === ToolsetAuthType.OAuth) {
-      dialBody.code = body.code;
-      dialBody.redirect_uri = body.redirectUri;
-    }
+    const dialBody = toDialToolsetSigninBody(body);
 
     try {
-      const response = await fetch(`${this.baseUrl}/v1/ops/toolset/signin`, {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify(dialBody),
+      const response = await this.client.toolsetSignin({
+        headers: authHeaders,
+        body: dialBody,
       });
-      if (!response.ok) {
+      if (response.error) {
         return mapDialHttpStatus(
-          response.status,
+          response.response.status,
           `log in toolset "${toolsetName}"`,
           this.logger,
         );
@@ -339,18 +463,13 @@ export class ToolsetsService extends AppService {
     const authHeaders = getBearerAuthHeaders(accessToken);
 
     try {
-      const response = await fetch(`${this.baseUrl}/v1/ops/toolset/signout`, {
-        method: 'POST',
-        headers: { ...authHeaders, 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          url: body.url,
-          credentials_level: body.credentialsLevel,
-          authentication_type: body.authenticationType,
-        }),
+      const response = await this.client.toolSetSignout({
+        headers: authHeaders,
+        body: toDialToolsetSignoutBody(body),
       });
-      if (!response.ok) {
+      if (response.error) {
         return mapDialHttpStatus(
-          response.status,
+          response.response.status,
           `log out toolset "${toolsetName}"`,
           this.logger,
         );
