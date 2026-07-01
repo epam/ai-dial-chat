@@ -88,12 +88,23 @@ results).
               "locations": [
                 {
                   "physicalLocation": {
-                    "artifactLocation": { "uri": "apps/chat-api/src/auth/auth.controller.ts", "uriBaseId": "%SRCROOT%" },
-                    "region": { "startLine": 315, "endLine": 315, "startColumn": 5, "endColumn": 25 }
+                    "artifactLocation": {
+                      "uri": "apps/chat-api/src/auth/auth.controller.ts",
+                      "uriBaseId": "%SRCROOT%"
+                    },
+                    "region": {
+                      "startLine": 315,
+                      "endLine": 315,
+                      "startColumn": 5,
+                      "endColumn": 25
+                    }
                   }
                 }
               ],
-              "fingerprints": { "0": "3d9f1c7a8b2e4f60a1c5d2e7b9043f18", "1": "openredirect.authcontroller.v1" },
+              "fingerprints": {
+                "0": "3d9f1c7a8b2e4f60a1c5d2e7b9043f18",
+                "1": "openredirect.authcontroller.v1"
+              },
               "codeFlows": [
                 {
                   "threadFlows": [
@@ -102,24 +113,48 @@ results).
                         {
                           "location": {
                             "physicalLocation": {
-                              "artifactLocation": { "uri": "apps/chat-api/src/auth/auth.controller.ts", "uriBaseId": "%SRCROOT%" },
-                              "region": { "startLine": 163, "endLine": 163, "startColumn": 5, "endColumn": 44 }
+                              "artifactLocation": {
+                                "uri": "apps/chat-api/src/auth/auth.controller.ts",
+                                "uriBaseId": "%SRCROOT%"
+                              },
+                              "region": {
+                                "startLine": 163,
+                                "endLine": 163,
+                                "startColumn": 5,
+                                "endColumn": 44
+                              }
                             }
                           }
                         },
                         {
                           "location": {
                             "physicalLocation": {
-                              "artifactLocation": { "uri": "apps/chat-api/src/auth/auth.controller.ts", "uriBaseId": "%SRCROOT%" },
-                              "region": { "startLine": 233, "endLine": 236, "startColumn": 5, "endColumn": 6 }
+                              "artifactLocation": {
+                                "uri": "apps/chat-api/src/auth/auth.controller.ts",
+                                "uriBaseId": "%SRCROOT%"
+                              },
+                              "region": {
+                                "startLine": 233,
+                                "endLine": 236,
+                                "startColumn": 5,
+                                "endColumn": 6
+                              }
                             }
                           }
                         },
                         {
                           "location": {
                             "physicalLocation": {
-                              "artifactLocation": { "uri": "apps/chat-api/src/auth/auth.controller.ts", "uriBaseId": "%SRCROOT%" },
-                              "region": { "startLine": 315, "endLine": 315, "startColumn": 5, "endColumn": 25 }
+                              "artifactLocation": {
+                                "uri": "apps/chat-api/src/auth/auth.controller.ts",
+                                "uriBaseId": "%SRCROOT%"
+                              },
+                              "region": {
+                                "startLine": 315,
+                                "endLine": 315,
+                                "startColumn": 5,
+                                "endColumn": 25
+                              }
                             }
                           }
                         }
@@ -140,12 +175,23 @@ results).
               "locations": [
                 {
                   "physicalLocation": {
-                    "artifactLocation": { "uri": "apps/chat-api/src/legacy/unsafe-eval.ts", "uriBaseId": "%SRCROOT%" },
-                    "region": { "startLine": 42, "endLine": 42, "startColumn": 3, "endColumn": 28 }
+                    "artifactLocation": {
+                      "uri": "apps/chat-api/src/legacy/unsafe-eval.ts",
+                      "uriBaseId": "%SRCROOT%"
+                    },
+                    "region": {
+                      "startLine": 42,
+                      "endLine": 42,
+                      "startColumn": 3,
+                      "endColumn": 28
+                    }
                   }
                 }
               ],
-              "fingerprints": { "0": "a17be03c9d4422f15e8c6b07d3219ef4", "1": "codeinjection.legacyeval.v1" },
+              "fingerprints": {
+                "0": "a17be03c9d4422f15e8c6b07d3219ef4",
+                "1": "codeinjection.legacyeval.v1"
+              },
               "codeFlows": [
                 {
                   "threadFlows": [
@@ -154,16 +200,32 @@ results).
                         {
                           "location": {
                             "physicalLocation": {
-                              "artifactLocation": { "uri": "apps/chat-api/src/legacy/unsafe-eval.ts", "uriBaseId": "%SRCROOT%" },
-                              "region": { "startLine": 38, "endLine": 38, "startColumn": 3, "endColumn": 30 }
+                              "artifactLocation": {
+                                "uri": "apps/chat-api/src/legacy/unsafe-eval.ts",
+                                "uriBaseId": "%SRCROOT%"
+                              },
+                              "region": {
+                                "startLine": 38,
+                                "endLine": 38,
+                                "startColumn": 3,
+                                "endColumn": 30
+                              }
                             }
                           }
                         },
                         {
                           "location": {
                             "physicalLocation": {
-                              "artifactLocation": { "uri": "apps/chat-api/src/legacy/unsafe-eval.ts", "uriBaseId": "%SRCROOT%" },
-                              "region": { "startLine": 42, "endLine": 42, "startColumn": 3, "endColumn": 28 }
+                              "artifactLocation": {
+                                "uri": "apps/chat-api/src/legacy/unsafe-eval.ts",
+                                "uriBaseId": "%SRCROOT%"
+                              },
+                              "region": {
+                                "startLine": 42,
+                                "endLine": 42,
+                                "startColumn": 3,
+                                "endColumn": 28
+                              }
                             }
                           }
                         }
@@ -177,7 +239,12 @@ results).
           ],
           "properties": {
             "coverage": [
-              { "files": 1, "isSuppressed": false, "lang": "TypeScript", "type": "SUPPORTED" }
+              {
+                "files": 1,
+                "isSuppressed": false,
+                "lang": "TypeScript",
+                "type": "SUPPORTED"
+              }
             ]
           }
         }

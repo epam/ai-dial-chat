@@ -1015,26 +1015,26 @@ Use this structure:
 
 ## Summary
 
-| Metric | Count |
-|---|---:|
-| Total findings |  |
-| Confirmed |  |
-| False positive |  |
-| Needs review |  |
-| Duplicate |  |
-| Not applicable |  |
+| Metric         | Count |
+| -------------- | ----: |
+| Total findings |       |
+| Confirmed      |       |
+| False positive |       |
+| Needs review   |       |
+| Duplicate      |       |
+| Not applicable |       |
 
 ## Severity Summary
 
 | Adjusted Severity | Count |
-|---|---:|
-| Critical |  |
-| High |  |
-| Medium |  |
-| Low |  |
-| Info |  |
-| None |  |
-| Unknown |  |
+| ----------------- | ----: |
+| Critical          |       |
+| High              |       |
+| Medium            |       |
+| Low               |       |
+| Info              |       |
+| None              |       |
+| Unknown           |       |
 
 ## Findings
 
@@ -1057,10 +1057,10 @@ Use this structure:
 
 #### Code Locations
 
-| Role | File | Line | Symbol / Code |
-|---|---|---:|---|
-| Source |  |  |  |
-| Sink |  |  |  |
+| Role   | File | Line | Symbol / Code |
+| ------ | ---- | ---: | ------------- |
+| Source |      |      |               |
+| Sink   |      |      |               |
 
 #### Production Relevance
 

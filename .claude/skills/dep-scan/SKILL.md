@@ -49,7 +49,7 @@ Notes:
 
 - `--quiet` suppresses interactive UI noise.
 - If `/tmp/trivy.json` is missing or zero-length after the command,
-  treat it as a scanner failure (see *Heuristics*).
+  treat it as a scanner failure (see _Heuristics_).
 
 ### 2. Parse the report
 

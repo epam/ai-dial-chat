@@ -212,6 +212,9 @@ export class DialToolsetAuthSettingsDto {
   @ApiProperty({ example: 'OAUTH', enum: ['OAUTH', 'API_KEY', 'NONE'] })
   authentication_type!: string;
 
+  @ApiPropertyOptional({ example: 'X-Api-Key' })
+  api_key_header?: string;
+
   @ApiPropertyOptional({ example: 'my-client-id' })
   client_id?: string;
 
@@ -294,6 +297,9 @@ export class DialToolsetDto {
 
   @ApiPropertyOptional({ example: 1672534900 })
   updated_at?: number;
+
+  @ApiPropertyOptional({ example: 'https://my-toolset.example.com/mcp' })
+  endpoint?: string;
 
   @ApiPropertyOptional({ example: 'HTTP' })
   transport?: string;

@@ -427,17 +427,15 @@ export const Input: FC<InputProps> = ({
                 )}
               </>
             )}
-            {isTranscriptionSupported &&
-              !message.trim() &&
-              attachments.length === 0 && (
-                <DialGhostIconButton
-                  icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
-                  aria-label={micLabel}
-                  className="size-10 flex-shrink-0"
-                  onClick={startRecording}
-                  disabled={isInputDisabled || isStreaming}
-                />
-              )}
+            {isTranscriptionSupported && !message.trim() && (
+              <DialGhostIconButton
+                icon={<IconMicrophone size={DIAL_ICON_SIZE.LG} aria-hidden />}
+                aria-label={micLabel}
+                className="size-10 flex-shrink-0"
+                onClick={startRecording}
+                disabled={isInputDisabled || isStreaming}
+              />
+            )}
           </div>
         </div>
       )}
