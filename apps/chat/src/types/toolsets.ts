@@ -74,25 +74,6 @@ export interface ToolsetFormErrors {
   clientSecret?: string;
 }
 
-export interface ToolsetAuthPayloadBase {
-  url: string;
-  credentialsLevel: ToolsetCredentialsLevel;
-  authenticationType: ToolsetAuthTypes;
-}
-
-export interface ToolsetOAuthLoginPayload extends ToolsetAuthPayloadBase {
-  code: string;
-  redirectUri: string;
-}
-
-export interface ToolsetApiKeyLoginPayload extends ToolsetAuthPayloadBase {
-  apiKey: string;
-}
-
-export type ToolsetLoginPayload =
-  | ToolsetOAuthLoginPayload
-  | ToolsetApiKeyLoginPayload;
-
 export interface ToolsetRedirectState {
   toolsetId: string;
   credentialsLevel?: ToolsetCredentialsLevel;

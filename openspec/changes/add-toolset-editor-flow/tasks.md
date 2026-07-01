@@ -1,7 +1,7 @@
 ## 1. Types, constants, routing (new files + minimal shared edits)
 
-- [x] 1.1 Create `apps/chat/src/types/toolsets.ts` with local string enums (`ToolsetAuthTypes`, `ToolsetTransportType`, `ToolsetCredentialsLevel`, `ToolsetEditorSteps`, `WithLogin`) and ported interfaces (auth-payload types, `ToolsetRedirectState`, `ToolsetFormData`). Note: the loaded toolset entity uses the generated client DTO (target convention) instead of a hand-ported camelCase `ToolsetModel`; editor state is modelled as `ToolsetFormData`.
-- [x] 1.2 Create `apps/chat/src/constants/toolsets.ts` with `ToolsetEditorQuery` enum, `AUTH_TYPE_OPTIONS` (icon + i18n labelKey per auth type), default name/version constants, and the endpoint placeholder
+- [x] 1.1 Create `apps/chat/src/types/toolsets.ts` with local string enums (`ToolsetAuthTypes`, `ToolsetTransportType`, `ToolsetCredentialsLevel`, `ToolsetEditorSteps`, `WithLogin`) and ported interfaces (`ToolsetRedirectState`, `ToolsetFormData`). Note: the loaded toolset entity uses the generated client DTO (target convention) instead of a hand-ported camelCase `ToolsetModel`; editor state is modelled as `ToolsetFormData`. The login/logout request bodies are built directly as the generated `ToolsetLoginBodyDto`/`ToolsetLogoutBodyDto` at each call site, so no separate hand-ported auth-payload types were needed.
+- [x] 1.2 Create `apps/chat/src/constants/toolsets.ts` with `ToolsetEditorQuery` enum, `AUTH_TYPE_OPTIONS` (icon + i18n labelKey per auth type), and default name/version constants
 - [x] 1.3 Add a single `ToolsetEditor = '/toolset-editor'` member (and a `ToolsetEditorCallback` path) to `apps/chat/src/types/routes.ts`
 - [x] 1.4 Add a dedicated, contiguous block of toolset-editor translation keys to `apps/chat/src/constants/translation-keys.ts` and matching keys to `apps/chat/src/i18n/locales/en.json`
 - [x] 1.5 Register the `/toolset-editor` and callback `<Route>` (lazy-loaded) in `app.tsx` as a single additive insertion; minimal page shells created to keep the build green
@@ -9,7 +9,7 @@
 ## 2. Backend write + auth endpoints (additive in existing toolsets module)
 
 - [x] 2.1 Add request/response DTOs under `apps/chat-api/src/toolsets/dto/` (`toolset-body.dto.ts`: `ToolsetBodyDto`/`ToolsetAuthSettingsBodyDto`/`MutatedToolsetDto`; `toolset-auth.dto.ts`: login/logout/result) with `class-validator` + `@ApiProperty`, allowlist `@Matches` on endpoint/URL strings
-- [x] 2.2 Add `createToolset`, `updateToolset`, `deleteToolset`, `loginToolset`, `logoutToolset` to `ToolsetsService`: create resolves bucket + PUTs `/v1/toolsets/{bucket}/{name}__{version}`; update/delete hit the id path; login/logout proxy `/v1/ops/toolset/signin|signout`. snake_case body mapping, cache invalidation, `mapDialHttpStatus`/`handleDialFetchError`. (Bucket fetch kept inside `try` so network errors map correctly — a bug the `applications.service.ts` pattern has.)
+- [x] 2.2 Add `createToolset`, `updateToolset`, `deleteToolset`, `loginToolset`, `logoutToolset` to `ToolsetsService`: create resolves bucket + PUTs `/v1/toolsets/{bucket}/{name}__{version}`; update/delete hit the id path; login/logout proxy `/v1/ops/toolset/signin|signout`. snake_case body mapping, cache invalidation, `mapDialHttpStatus`/`handleDialFetchError`. (Bucket fetch kept inside `try` so network errors map correctly, mirroring the existing `applications.service.ts` `createApplication` pattern.)
 - [x] 2.3 Add `@Post`/`@Patch`/`@Delete`/`@Post .../login`/`@Post .../logout` handlers to `ToolsetsController` with `@ApiOperation` (operationIds), full `@ApiResponse` coverage, `@Throttle`, `@HttpCode` (204 delete, 200 login/logout)
 - [x] 2.4 Credential payloads (apiKey/code) are never logged; `redactToolsetSecrets` is reused on read responses
 - [x] 2.5 Added write-operation specs to `toolsets.service.spec.ts` (happy path, snake_case mapping, cache invalidation, each thrown exception, network error) and `toolsets.controller.spec.ts` (201/200/204, validation rejection incl. bad name + extra prop, invalid enum, missing session) — 54 toolset tests pass
@@ -43,12 +43,12 @@
 
 ## 7. Authentication section
 
-- [x] 7.1 Build the `AuthAccordion` single-select on `DialAccordion`, driven by a single `authenticationType` state (only one open at a time)
+- [x] 7.1 Build the auth type single-select as a plain button list, driven by a single `authenticationType` state (only one option expanded at a time; no ui-kit `DialAccordion` component fit the single-external-state-driven-selection shape, so it is hand-rolled)
 - [x] 7.2 Build the login form with conditional fields by `authenticationType` + `WithLogin` (API Key: key header + key; OAuth: client id/secret, endpoints, scopes) and manual validation
 - [x] 7.3 Wire logout via `DialConfirmationPopup` and an `onLogout` callback prop; disable selector + fields when logged in or while saving
 - [x] 7.4 Implement the OAuth initiate flow: save config, persist `ToolsetRedirectState` to `sessionStorage`, redirect to the provider auth URL
 - [x] 7.5 Create the OAuth callback route component: read stored state, call login with `code` + `redirectUri`, return to editor; handle missing-state safely
-- [x] 7.6 Add unit tests for the accordion single-select, conditional validation, and the `sessionStorage` redirect round-trip
+- [x] 7.6 Add unit tests for the auth type list single-select, conditional validation, and the `sessionStorage` redirect round-trip
 
 ## 8. Final verification
 

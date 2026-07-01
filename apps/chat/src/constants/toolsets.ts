@@ -7,7 +7,6 @@ export enum ToolsetEditorQuery {
   Id = 'id',
   Step = 'step',
   ReturnUrl = 'returnUrl',
-  IsCreating = 'isCreating',
 }
 
 export const DEFAULT_TOOLSET_NAME = 'New toolset';
@@ -17,11 +16,6 @@ export const DEFAULT_TOOLSET_VERSION = '0.0.1';
 // being authorized across the external provider redirect so the callback route
 // can complete the code exchange.
 export const TOOLSET_REDIRECT_STATE_KEY = 'toolset-redirect-state';
-
-// Sentinel used in create mode before the user has entered a real endpoint,
-// mirroring the v1 editor so an empty endpoint does not fail URL validation
-// until the user actually edits the field.
-export const ENDPOINT_PLACEHOLDER = 'ENDPOINT_PLACEHOLDER';
 
 export interface AuthTypeOption {
   labelKey: ToolsetEditorI18nKeys;

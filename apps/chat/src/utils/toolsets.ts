@@ -2,11 +2,18 @@ import type { DialToolsetDto, ToolsetBodyDto } from '@epam/chat-api-client';
 import {
   DEFAULT_TOOLSET_NAME,
   DEFAULT_TOOLSET_VERSION,
+  TOOLSET_REDIRECT_STATE_KEY,
 } from '../constants/toolsets';
-import type { ToolsetAuthFormData, ToolsetFormData } from '../types/toolsets';
+import { ROUTES } from '../types/routes';
+import type {
+  ToolsetAuthFormData,
+  ToolsetFormData,
+  ToolsetRedirectState,
+} from '../types/toolsets';
 import {
   ToolsetAuthStatus,
   ToolsetAuthTypes,
+  ToolsetCredentialsLevel,
   ToolsetTransportType,
   WithLogin,
 } from '../types/toolsets';
@@ -74,6 +81,36 @@ export const buildToolsetAuthorizeUrl = (
   } catch {
     return null;
   }
+};
+
+/**
+ * Builds the OAuth authorize URL, persists the redirect state to
+ * `sessionStorage`, and navigates to the provider. Shared by the post-save
+ * auto-login flow and the manual Log In action so both trigger points stay
+ * in sync. Returns `false` (without navigating) when the auth config is
+ * invalid.
+ */
+export const initiateOAuthLogin = (
+  auth: ToolsetAuthFormData,
+  toolsetId: string,
+  callbackUrl: string,
+): boolean => {
+  const redirectUri = `${window.location.origin}${ROUTES.ToolsetEditorCallback}`;
+  const result = buildToolsetAuthorizeUrl(auth, redirectUri);
+  if (!result) return false;
+
+  const redirectState: ToolsetRedirectState = {
+    toolsetId,
+    credentialsLevel: ToolsetCredentialsLevel.User,
+    callbackUrl,
+    state: result.state,
+  };
+  sessionStorage.setItem(
+    TOOLSET_REDIRECT_STATE_KEY,
+    JSON.stringify(redirectState),
+  );
+  window.location.href = result.url;
+  return true;
 };
 
 /** Maps a loaded toolset DTO (snake_case) into editor form state. */

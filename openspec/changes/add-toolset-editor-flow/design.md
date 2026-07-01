@@ -59,14 +59,15 @@ shapes are ported there too.
   shared barrel.
 
 ### D4. Step routing via `useSearchParams`
-A `ToolsetEditorQuery.Step` search param drives the `DialSteps` header. `id` (edit mode),
-`isCreating`, and `returnUrl` are also search params. On mount: `id` present → load toolset;
-absent → create mode with a default form.
+A `ToolsetEditorQuery.Step` search param drives the `DialSteps` header. `id` (edit mode) and
+`returnUrl` are also search params; create mode is inferred purely from the absence of `id`,
+so no separate `isCreating` flag is needed. On mount: `id` present → load toolset; absent →
+create mode with a default form.
 
 ### D5. UI components — ui-kit first
 Map v1 custom inputs to ui-kit (`DialInput`, `DialTextarea`, `DialTagInput`, `DialSelect`,
 `DialSteps`, `DialConfirmationPopup`, `DialTooltip`) per migration §5. Only two need custom
-work: the auth **accordion** single-select (built on `DialAccordion`, single-open driven by
+work: the auth type **list** single-select (a plain button list, single-open driven by
 `authenticationType` state) and a copy-endpoint-URL button (`DialIconButton` + clipboard).
 Confirm every prop signature via the `@epam/ai-dial-ui-kit` MCP before use.
 
@@ -128,7 +129,7 @@ Expose the new endpoints through the generated `@epam/chat-api-client` and a thi
 2. Backend: add write + login/logout methods, DTOs, controller handlers, tests.
 3. Regenerate OpenAPI + `chat-api-client`; add the server-api adapter.
 4. Frontend: page + `DialSteps` header + view/preview, GeneralForm, SettingsForm.
-5. Auth section: accordion + login form + OAuth callback route.
+5. Auth section: type list + login form + OAuth callback route.
 6. Verify per slice (`nx test/lint/build chat-api`, `nx test chat`, `npm run openapi:check`).
 
 Rollback: the route is additive and feature-isolated; removing the `<Route>` registration

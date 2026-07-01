@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsEnum,
   IsNotEmpty,
-  IsOptional,
   IsString,
   Matches,
   ValidateIf,
@@ -50,15 +49,23 @@ export class ToolsetLoginBodyDto {
   @ApiPropertyOptional({
     description: 'OAuth authorization code (OAUTH auth).',
   })
+  @ValidateIf(
+    (body: ToolsetLoginBodyDto) =>
+      body.authenticationType === ToolsetAuthType.OAuth,
+  )
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   code?: string;
 
   @ApiPropertyOptional({
     description: 'OAuth redirect URI used for the code exchange.',
   })
+  @ValidateIf(
+    (body: ToolsetLoginBodyDto) =>
+      body.authenticationType === ToolsetAuthType.OAuth,
+  )
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
   redirectUri?: string;
 }
 

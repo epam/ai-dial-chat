@@ -4,10 +4,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
-import {
-  TOOLSET_REDIRECT_STATE_KEY,
-  ToolsetEditorQuery,
-} from '../../constants/toolsets';
+import { ToolsetEditorQuery } from '../../constants/toolsets';
 import { ToolsetEditorI18nKeys } from '../../constants/translation-keys';
 import {
   createToolset,
@@ -21,7 +18,6 @@ import type {
   ToolsetAuthFormData,
   ToolsetFormData,
   ToolsetFormErrors,
-  ToolsetRedirectState,
 } from '../../types/toolsets';
 import {
   ToolsetAuthTypes,
@@ -30,9 +26,9 @@ import {
   WithLogin,
 } from '../../types/toolsets';
 import {
-  buildToolsetAuthorizeUrl,
   formToToolsetBody,
   getDefaultToolsetForm,
+  initiateOAuthLogin,
   isValidEndpointUrl,
   toolsetDtoToForm,
 } from '../../utils/toolsets';
@@ -229,21 +225,12 @@ const ToolsetEditor: FC = () => {
         data.auth.authenticationType === ToolsetAuthTypes.OAuth &&
         data.auth.withLogin === WithLogin.WithConfig
       ) {
-        const redirectUri = `${window.location.origin}${ROUTES.ToolsetEditorCallback}`;
-        const result = buildToolsetAuthorizeUrl(data.auth, redirectUri);
-        if (!result) throw new Error('OAuth authorization URL is invalid.');
-
-        const redirectState: ToolsetRedirectState = {
-          toolsetId: savedToolsetId,
-          credentialsLevel: ToolsetCredentialsLevel.User,
-          callbackUrl: buildEditorCallbackUrl(savedToolsetId),
-          state: result.state,
-        };
-        sessionStorage.setItem(
-          TOOLSET_REDIRECT_STATE_KEY,
-          JSON.stringify(redirectState),
+        const started = initiateOAuthLogin(
+          data.auth,
+          savedToolsetId,
+          buildEditorCallbackUrl(savedToolsetId),
         );
-        window.location.href = result.url;
+        if (!started) throw new Error('OAuth authorization URL is invalid.');
         return true;
       }
 

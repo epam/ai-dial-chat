@@ -16,22 +16,17 @@ import type {
   ToolsetLogoutBodyDto,
 } from '@epam/chat-api-client';
 import type { FC } from 'react';
-import { memo, useMemo, useState } from 'react';
+import { memo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  AUTH_TYPE_OPTIONS,
-  TOOLSET_REDIRECT_STATE_KEY,
-} from '../../../constants/toolsets';
+import { AUTH_TYPE_OPTIONS } from '../../../constants/toolsets';
 import {
   ButtonsI18nKeys,
   ToolsetEditorI18nKeys,
 } from '../../../constants/translation-keys';
 import { loginToolset, logoutToolset } from '../../../server-api/toolsets';
-import { ROUTES } from '../../../types/routes';
 import type {
   ToolsetAuthFormData,
   ToolsetFormErrors,
-  ToolsetRedirectState,
 } from '../../../types/toolsets';
 import {
   ToolsetAuthTypes,
@@ -39,7 +34,8 @@ import {
   WithLogin,
 } from '../../../types/toolsets';
 import {
-  buildToolsetAuthorizeUrl,
+  initiateOAuthLogin,
+  isToolsetAuthValid,
   isValidEndpointUrl,
 } from '../../../utils/toolsets';
 
@@ -78,20 +74,14 @@ const AuthSection: FC<Props> = ({
 
   const isControlsDisabled = auth.isLoggedIn || isSaving || isAuthBusy;
 
-  const isLoginFormValid = useMemo(() => {
-    if (auth.isLoggedIn) return true;
-    const { authenticationType: type, withLogin: wl } = auth;
-    if (type === ToolsetAuthTypes.OAuth && wl === WithLogin.WithConfig) {
-      return Boolean(auth.clientId?.trim() && auth.clientSecret?.trim());
-    }
-    if (type === ToolsetAuthTypes.ApiKey && wl === WithLogin.WithLogin) {
-      return Boolean(auth.keyHeader?.trim() && auth.apiKey?.trim());
-    }
-    return true;
-  }, [auth]);
-
+  // OAuth login redirects to an external provider and calls back with the
+  // toolsetId, so it requires the toolset to already be saved; API-key login
+  // posts credentials directly and works before the first save too.
   const canLogIn =
-    isValidEndpointUrl(endpoint) && isLoginFormValid && !isControlsDisabled;
+    isValidEndpointUrl(endpoint) &&
+    isToolsetAuthValid(auth) &&
+    !isControlsDisabled &&
+    !(auth.authenticationType === ToolsetAuthTypes.OAuth && !toolsetId);
 
   const handleSelectType = (type: ToolsetAuthTypes) => {
     if (isControlsDisabled || type === auth.authenticationType) return;
@@ -110,23 +100,10 @@ const AuthSection: FC<Props> = ({
     setAuthActionError('');
 
     if (auth.authenticationType === ToolsetAuthTypes.OAuth) {
-      const redirectUri = `${window.location.origin}${ROUTES.ToolsetEditorCallback}`;
-      const result = buildToolsetAuthorizeUrl(auth, redirectUri);
-      if (!result) {
+      const started = initiateOAuthLogin(auth, toolsetId, window.location.href);
+      if (!started) {
         setAuthActionError(t(ToolsetEditorI18nKeys.ErrorLoginFailed));
-        return;
       }
-      const redirectState: ToolsetRedirectState = {
-        toolsetId,
-        credentialsLevel: ToolsetCredentialsLevel.User,
-        callbackUrl: window.location.href,
-        state: result.state,
-      };
-      sessionStorage.setItem(
-        TOOLSET_REDIRECT_STATE_KEY,
-        JSON.stringify(redirectState),
-      );
-      window.location.href = result.url;
       return;
     }
 

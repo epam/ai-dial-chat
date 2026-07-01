@@ -320,6 +320,14 @@ describe('AuthSection', () => {
       );
       expect(sessionStorage.getItem(TOOLSET_REDIRECT_STATE_KEY)).toBeNull();
     });
+
+    it('disables the Log In button before the toolset is saved', () => {
+      renderSection(oauthWithConfigAuth(), '', vi.fn());
+      const btn = screen.getByRole('button', {
+        name: ToolsetEditorI18nKeys.LogInButton,
+      }) as HTMLButtonElement;
+      expect(btn.disabled).toBe(true);
+    });
   });
 
   describe('API key login', () => {

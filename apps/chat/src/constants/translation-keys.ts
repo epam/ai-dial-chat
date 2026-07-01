@@ -418,7 +418,6 @@ export enum ToolsetEditorI18nKeys {
   AllowedToolsLabel = 'toolsetEditor.settings.allowedToolsLabel',
   AllowedToolsPlaceholder = 'toolsetEditor.settings.allowedToolsPlaceholder',
   CopyUrlLabel = 'toolsetEditor.settings.copyUrlLabel',
-  CopiedLabel = 'toolsetEditor.settings.copiedLabel',
   // Authentication
   AuthSectionTitle = 'toolsetEditor.auth.sectionTitle',
   AuthTypeOAuth = 'toolsetEditor.auth.typeOAuth',
@@ -445,7 +444,6 @@ export enum ToolsetEditorI18nKeys {
   LogoutConfirmTitle = 'toolsetEditor.auth.logoutConfirmTitle',
   LogoutConfirmDescription = 'toolsetEditor.auth.logoutConfirmDescription',
   // Errors
-  ErrorLoadFailed = 'toolsetEditor.error.loadFailed',
   ErrorCreateFailed = 'toolsetEditor.error.createFailed',
   ErrorUpdateFailed = 'toolsetEditor.error.updateFailed',
   ErrorLoginFailed = 'toolsetEditor.error.loginFailed',

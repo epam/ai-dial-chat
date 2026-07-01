@@ -316,6 +316,46 @@ describe('ToolsetsController — write operations (integration)', () => {
         .expect(400);
       expect(service.loginToolset).not.toHaveBeenCalled();
     });
+
+    it('returns 200 for a valid OAuth body', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'OAUTH',
+          code: 'auth-code',
+          redirectUri: 'https://example.com/toolset-editor/callback',
+        })
+        .expect(200);
+      expect(res.body).toEqual({ success: true });
+    });
+
+    it('returns 400 when OAuth auth omits the code', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'OAUTH',
+          redirectUri: 'https://example.com/toolset-editor/callback',
+        })
+        .expect(400);
+      expect(service.loginToolset).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when OAuth auth omits the redirect URI', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'OAUTH',
+          code: 'auth-code',
+        })
+        .expect(400);
+      expect(service.loginToolset).not.toHaveBeenCalled();
+    });
   });
 
   describe('POST /api/v1/toolsets/:toolsetName/logout', () => {

@@ -471,8 +471,7 @@
       "protocolLabel": "Protocol",
       "allowedToolsLabel": "Allowed tools",
       "allowedToolsPlaceholder": "Add a tool",
-      "copyUrlLabel": "Copy endpoint URL",
-      "copiedLabel": "Copied"
+      "copyUrlLabel": "Copy endpoint URL"
     },
     "auth": {
       "sectionTitle": "Authentication",
@@ -501,7 +500,6 @@
       "logoutConfirmDescription": "Are you sure you want to log out? You will need to re-enter your credentials to use this toolset again."
     },
     "error": {
-      "loadFailed": "Failed to load toolset. Please try again.",
       "createFailed": "Failed to create toolset. Please try again.",
       "updateFailed": "Failed to update toolset. Please try again.",
       "loginFailed": "Failed to log in. Please check your credentials and try again.",

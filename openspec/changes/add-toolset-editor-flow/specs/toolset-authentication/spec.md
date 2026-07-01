@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Authentication type selection
-The Settings step SHALL present an accordion-style single-select for the authentication type
+The Settings step SHALL present a list-style single-select for the authentication type
 with three options — None, API Key, and OAuth — driven by a single `authenticationType`
 state value so that only one option is expanded at a time.
 

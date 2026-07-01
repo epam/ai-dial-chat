@@ -21,7 +21,7 @@ large merge conflicts later.
   (plain text input — no file-manager wiring), description, topics (free-entry tags).
 - **Settings step**: endpoint URL, transport protocol (HTTP/SSE) select, allowed-tools tag
   input, copy-endpoint-URL action, and the authentication section.
-- **Authentication section** (the most complex part): accordion-style single-select between
+- **Authentication section** (the most complex part): a list-style single-select between
   `NONE` / `API_KEY` / `OAUTH`, conditional credential fields driven by a single
   `authenticationType` + `WithLogin` state, login/logout with a confirmation dialog, and an
   **OAuth redirect callback** flow handed off via `sessionStorage`.
