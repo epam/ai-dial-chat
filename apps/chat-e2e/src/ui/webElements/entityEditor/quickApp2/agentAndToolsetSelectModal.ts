@@ -33,18 +33,14 @@ export class AgentAndToolsetSelectModal extends AgentsBrowserModal {
   );
 
   public getSelectedChipByName(name: string): BaseElement {
-    const chipNameWithText = this.getChildElementBySelector(
-      AddQuickApp2SettingsFormSelector.chipName,
-    ).getElementLocatorByText(
-      new RegExp(`^\\s*${RegexUtil.escapeRegexChars(name)}\\s*$`),
-    );
-    // The overflow container renders a hidden copy of each chip to measure
-    // width; the visible one comes first in the DOM, so take it.
+    // Only the "Selected" section renders chip-name; the overflow container adds
+    // a hidden copy, so getElementLocatorByText's first match is the visible one.
     return this.createElementFromLocator(
-      this.selectedChips
-        .getElementLocator()
-        .filter({ has: chipNameWithText })
-        .first(),
+      this.getChildElementBySelector(
+        AddQuickApp2SettingsFormSelector.chipName,
+      ).getElementLocatorByText(
+        new RegExp(`^\\s*${RegexUtil.escapeRegexChars(name)}\\s*$`),
+      ),
     );
   }
 }

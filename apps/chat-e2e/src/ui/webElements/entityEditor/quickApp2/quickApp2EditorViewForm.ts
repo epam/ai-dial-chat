@@ -71,11 +71,14 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
       AddQuickApp2SettingsFormSelector.agentsAndToolsetsJsonToggle,
     );
 
-  // Locator for a chip child (name/version) matching the exact text.
+  // Chip child (name/version) matching the exact text, used as a `filter({ has })`
+  // argument. It must be page-rooted (the `marketplaceEntities.getEntity` idiom):
+  // a `this`-scoped locator carries the form ancestor chain and never matches
+  // once Playwright re-roots the `has` argument under a chip.
   private chipChildWithText(selector: string, text: string): Locator {
-    return this.getChildElementBySelector(selector).getElementLocatorByText(
-      new RegExp(`^\\s*${RegexUtil.escapeRegexChars(text)}\\s*$`),
-    );
+    return new BaseElement(this.page, selector).getElementLocator().filter({
+      hasText: new RegExp(`^\\s*${RegexUtil.escapeRegexChars(text)}\\s*$`),
+    });
   }
 
   private chipsContainer(): Locator {

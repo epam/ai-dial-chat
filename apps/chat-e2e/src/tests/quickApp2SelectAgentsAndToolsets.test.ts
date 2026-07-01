@@ -525,7 +525,7 @@ dialSharedWithMeTest(
         await applicationApiHelper.createApplication(
           externalApplicationBuilder
             .withDisplayName(externalAppName)
-            .withExternalUrl(`http://${GeneratorUtil.randomString(6)}.com`)
+            .withExternalUrl(GeneratorUtil.randomUrl())
             .withApplicationTypeSchemaId(
               ApplicationsUtil.getAppSchemaByName(
                 EntityEditorAppTypes.ExternalApp,
