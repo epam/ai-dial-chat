@@ -1,7 +1,4 @@
-import {
-  DIAL_ICON_SIZE,
-  DialGhostIconButton,
-} from '@epam/ai-dial-ui-kit';
+import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';

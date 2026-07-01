@@ -1,6 +1,10 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
-import { IconFileDescription, IconLayoutSidebarRight, IconMenu2 } from '@tabler/icons-react';
+import {
+  IconFileDescription,
+  IconLayoutSidebarRight,
+  IconMenu2,
+} from '@tabler/icons-react';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -43,12 +47,16 @@ const Header: FC<Props> = ({
               <IconLayoutSidebarRight
                 size={DIAL_ICON_SIZE.LG}
                 stroke={1.5}
-                className={!isConversationPanelOpen ? 'scale-x-[-1]' : undefined}
+                className={
+                  !isConversationPanelOpen ? 'scale-x-[-1]' : undefined
+                }
               />
             }
             aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
             aria-pressed={isConversationPanelOpen}
-            tooltipProps={{ tooltip: t(ConversationPanelI18nKeys.ToggleAriaLabel) }}
+            tooltipProps={{
+              tooltip: t(ConversationPanelI18nKeys.ToggleAriaLabel),
+            }}
             onClick={onConversationPanelToggle}
           />
         )}

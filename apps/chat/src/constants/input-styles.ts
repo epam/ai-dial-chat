@@ -10,7 +10,8 @@ export const CONVERSATION_INPUT_STYLES: ConversationInputStyles = {
       borderHover: 'rgba(0, 0, 0, 0.12)',
       borderFocus: 'var(--stroke-accent-primary)',
       shadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
-      shadowFocus: '0 8px 24px rgba(16, 24, 40, 0.08), 0 0 0 4px var(--bg-accent-primary-alpha)',
+      shadowFocus:
+        '0 8px 24px rgba(16, 24, 40, 0.08), 0 0 0 4px var(--bg-accent-primary-alpha)',
     },
   },
 };

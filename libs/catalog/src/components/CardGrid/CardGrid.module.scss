@@ -1,5 +1,5 @@
 .card {
-  background: var(--bg-layer-0, #FCFCFC);
+  background: var(--bg-layer-0, #fcfcfc);
   border-color: rgba(0, 0, 0, 0.07);
   transition:
     transform 180ms ease-out,
@@ -9,7 +9,7 @@
   @media (hover: hover) {
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(16, 24, 40, 0.10);
+      box-shadow: 0 12px 32px rgba(16, 24, 40, 0.1);
       border-color: rgba(0, 0, 0, 0.12);
     }
   }
@@ -28,18 +28,22 @@
 }
 
 .description {
-  color: var(--text-secondary, #575F73);
+  color: var(--text-secondary, #575f73);
 }
 
 .featuredChip {
-  background: color-mix(in srgb, var(--entity-color, #2764D9) 12%, var(--bg-layer-0, #fcfcfc)) !important;
+  background: color-mix(
+    in srgb,
+    var(--entity-color, #2764d9) 12%,
+    var(--bg-layer-0, #fcfcfc)
+  ) !important;
   border: none !important;
-  color: var(--entity-color, #2764D9) !important;
+  color: var(--entity-color, #2764d9) !important;
   font-size: 10px !important;
   border-radius: 16px !important;
 }
 
 .skeletonCard {
-  background: var(--bg-layer-0, #FCFCFC);
+  background: var(--bg-layer-0, #fcfcfc);
   border-color: rgba(0, 0, 0, 0.07);
 }

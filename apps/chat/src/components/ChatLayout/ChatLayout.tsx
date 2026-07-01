@@ -27,11 +27,15 @@ const ChatLayout: FC<Props> = ({
             <IconLayoutSidebarRight
               size={DIAL_ICON_SIZE.LG}
               stroke={1.5}
-              className={isHistoryPanelOpen ? 'rtl:scale-x-[-1]' : 'ltr:scale-x-[-1]'}
+              className={
+                isHistoryPanelOpen ? 'rtl:scale-x-[-1]' : 'ltr:scale-x-[-1]'
+              }
             />
           }
           aria-label={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
-          tooltipProps={{ tooltip: t(ConversationPanelI18nKeys.ToggleAriaLabel) }}
+          tooltipProps={{
+            tooltip: t(ConversationPanelI18nKeys.ToggleAriaLabel),
+          }}
           onClick={onToggleHistoryPanel}
         />
         {!isHistoryPanelOpen && (
