@@ -302,6 +302,8 @@ export enum CommonI18nKeys {
   ToolsetSignOutFailed = 'Failed to sign out toolset',
   PublicationWithExternalFilesFailed = 'Publishing failed. You are only allowed to publish conversations with attachments from "My files"',
   PublicationRequestCreatedSuccessfully = 'Publication request created successfully',
+  PublicationApprovedSuccessfully = 'The request has been approved',
+  PublicationRejectedSuccessfully = 'The request has been rejected',
   PublicationFailed = 'Creation of publication failed. Please try again later.',
   PublicationsUploadFailed = 'Publications uploading failed.',
   PublicationUploadFailed = 'Publication uploading failed.',

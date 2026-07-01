@@ -1046,6 +1046,13 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 ),
               }),
             ),
+            of(
+              UIActions.showSuccessToast(
+                translate(CommonI18nKeys.PublicationApprovedSuccessfully, {
+                  ns: Translation.Common,
+                }),
+              ),
+            ),
           );
         }),
         catchError((err) => {
@@ -1080,7 +1087,18 @@ const rejectPublicationEpic: AppEpic = (action$) =>
     switchMap(({ payload }) =>
       PublicationService.rejectPublication(payload.url).pipe(
         switchMap(() =>
-          of(PublicationActions.rejectPublicationSuccess({ url: payload.url })),
+          concat(
+            of(
+              PublicationActions.rejectPublicationSuccess({ url: payload.url }),
+            ),
+            of(
+              UIActions.showSuccessToast(
+                translate(CommonI18nKeys.PublicationRejectedSuccessfully, {
+                  ns: Translation.Common,
+                }),
+              ),
+            ),
+          ),
         ),
         catchError((err) => {
           console.error(err);
