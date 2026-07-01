@@ -84,6 +84,8 @@ Use `verdict: "fail"` when any finding is blocking or a required verification co
 
 Set `anchorable: true` only when the finding points to a line present in the PR diff. If the issue is real but cannot be anchored to a changed line, set `anchorable: false`, keep `file`/`line` as best-effort context if known, and include the finding in `topLevelComment` instead of attempting an inline comment.
 
+Every finding must include a non-empty `message` containing the full review comment body. Do not put the explanation only in custom fields, summary text, or the top-level comment; pipeline publishers use `message` for both inline review comments and the sticky summary table.
+
 ### Pipeline fail rules
 
 Fail the pipeline for:

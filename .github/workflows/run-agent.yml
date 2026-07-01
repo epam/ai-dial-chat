@@ -197,6 +197,7 @@ jobs:
           # emit_sarif: convert findings[] -> SARIF and upload to code scanning.
           print(f"analysis_ref={m.get('analysis_ref', '')}")
           print(f"emit_sarif={str(m.get('emit_sarif', False)).lower()}")
+          print(f"publish_inline_comments={str(m.get('publish_inline_comments', False)).lower()}")
           EOF
 
       - name: Install agent-declared CLI tools
@@ -365,3 +366,4 @@ jobs:
           upstream_artifacts: ${{ inputs.upstream_artifacts }}
           private_output: ${{ steps.manifest.outputs.private_output }}
           emit_sarif: ${{ steps.manifest.outputs.emit_sarif }}
+          publish_inline_comments: ${{ steps.manifest.outputs.publish_inline_comments }}
