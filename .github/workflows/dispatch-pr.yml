@@ -1,0 +1,19 @@
+name: SDLC Dispatch / PR
+
+on:
+  pull_request:
+    branches: [development-1.0]
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  security-events: write
+  id-token: write   # required by anthropics/claude-code-action for OIDC auth
+  actions: read     # caller cap: run-agent.yml's `gh run download` needs this
+
+jobs:
+  dispatch:
+    uses: ./.github/workflows/dispatch-core.yml
+    secrets: inherit
