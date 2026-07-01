@@ -861,7 +861,7 @@ const duplicateConversationEpic: AppEpic = (action$, state$) =>
         ),
         iif(
           () => !!selectedPublicationUrl,
-          of(PublicationActions.selectPublication(null)),
+          of(PublicationActions.selectPublication({ url: null })),
           EMPTY,
         ),
       );
