@@ -409,13 +409,6 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
       textContent?: string,
       selection?: { start: number; end: number },
     ) => {
-      if (canAttachFiles) {
-        uploadPastedFiles(pasteFiles)?.then((newFiles) => {
-          setNewEditableAttachmentsIds((ids) =>
-            uniq(ids.concat(newFiles.map(({ id }) => id))),
-          );
-        });
-      }
       if (textContent) {
         setMessageContent((prev) =>
           selection
@@ -427,6 +420,12 @@ const AssistantMessageEditor = memo(function AssistantMessageEditor({
               )
             : textContent,
         );
+      } else if (canAttachFiles) {
+        uploadPastedFiles(pasteFiles)?.then((newFiles) => {
+          setNewEditableAttachmentsIds((ids) =>
+            uniq(ids.concat(newFiles.map(({ id }) => id))),
+          );
+        });
       }
     },
     [uploadPastedFiles, canAttachFiles],
