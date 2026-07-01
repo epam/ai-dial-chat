@@ -37,4 +37,19 @@ export class AgentsBrowserModal extends Popup {
   public getEntityByName(name: string): BaseElement {
     return this.getEntities().getEntity(name);
   }
+
+  // The tab carries the accent-border class only when it is the active one.
+  public getActiveTab(tab: BaseElement): BaseElement {
+    return this.createElementFromLocator(
+      tab
+        .getElementLocator()
+        .and(this.page.locator(AgentsBrowserModalSelectors.selectedTab)),
+    );
+  }
+
+  // Search for an entity by name and return its card.
+  public async searchForEntity(name: string): Promise<BaseElement> {
+    await this.searchInput.fillInInput(name);
+    return this.getEntityByName(name);
+  }
 }

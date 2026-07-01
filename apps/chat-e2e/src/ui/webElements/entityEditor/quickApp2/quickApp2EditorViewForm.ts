@@ -73,9 +73,9 @@ export class QuickApp2EditorViewForm extends EntityEditorViewForm {
 
   // Locator for a chip child (name/version) matching the exact text.
   private chipChildWithText(selector: string, text: string): Locator {
-    return this.page.locator(selector, {
-      hasText: new RegExp(`^\\s*${RegexUtil.escapeRegexChars(text)}\\s*$`),
-    });
+    return this.getChildElementBySelector(selector).getElementLocatorByText(
+      new RegExp(`^\\s*${RegexUtil.escapeRegexChars(text)}\\s*$`),
+    );
   }
 
   private chipsContainer(): Locator {
