@@ -1,11 +1,11 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GhostButton } from '@epam/ai-dial-kit';
 import {
   DialCheckbox,
   DialDropdown,
-  DialLinkButton,
   DIAL_ICON_SIZE,
 } from '@epam/ai-dial-ui-kit';
-import { IconChevronDown } from '@tabler/icons-react';
+import { IconChevronDown, IconFilter } from '@tabler/icons-react';
 import { FC } from 'react';
 import { getFromLabel } from '../../utils/catalog-filter';
 import styles from './Filter.module.scss';
@@ -86,11 +86,16 @@ export const Filter: FC<FilterProps> = ({
         <div
           className={mergeClasses(
             styles.overlay,
-            'min-w-[220px] rounded-[6px] border px-2',
+            'min-w-[220px] rounded py-1 shadow',
           )}
         >
           {/* My Apps toggle */}
-          <div className="px-3 py-1">
+          <div
+            className={mergeClasses(
+              'flex min-h-[34px] w-full cursor-pointer items-center rounded px-3',
+              styles.item,
+            )}
+          >
             <DialCheckbox
               id="filter-my-apps"
               label={myAppsLabel}
@@ -101,7 +106,7 @@ export const Filter: FC<FilterProps> = ({
 
           {topics.length > 0 && (
             <>
-              <div className={mergeClasses(styles.separator, 'mx-1')} />
+              <div className={mergeClasses(styles.separator, 'mx-1 my-1')} />
 
               <div
                 className={mergeClasses(
@@ -115,7 +120,13 @@ export const Filter: FC<FilterProps> = ({
 
               <div className="max-h-[240px] overflow-y-auto">
                 {topics.map((topic) => (
-                  <div key={topic} className="px-3 py-1">
+                  <div
+                    key={topic}
+                    className={mergeClasses(
+                      'flex min-h-[34px] w-full cursor-pointer items-center rounded px-3',
+                      styles.item,
+                    )}
+                  >
                     <DialCheckbox
                       id={`filter-topic-${topic}`}
                       label={topic}
@@ -130,10 +141,11 @@ export const Filter: FC<FilterProps> = ({
         </div>
       )}
     >
-      <DialLinkButton
+      <GhostButton
         label={buttonLabel}
+        iconBefore={<IconFilter size={DIAL_ICON_SIZE.SM} />}
         iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
-        className={isActive ? styles.activeLabel : undefined}
+        className={mergeClasses(styles.chip, isActive && styles.chipActive)}
       />
     </DialDropdown>
   );
