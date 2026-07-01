@@ -11,6 +11,7 @@ import {
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
   isAllowedMimeType,
+  prepareFileName,
 } from '@/src/utils/app/file';
 import { isParentFolderSelected } from '@/src/utils/app/folders';
 import { isHiddenPath } from '@/src/utils/app/search';
@@ -493,6 +494,7 @@ export const FileManagerModal = memo(
               deleteConfirmationOptions={deleteConfirmationOptions}
               conflictResolutionPopupOptions={conflictResolutionPopupOptions}
               onUploadFiles={handleUploadFiles}
+              prepareUploadFileName={prepareFileName}
               onCreateFolder={handleCreateFolder}
               onUploadArchive={handleUploadArchive}
               onMoveToFiles={handleMoveFiles}
