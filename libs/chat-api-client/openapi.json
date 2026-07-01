@@ -412,6 +412,50 @@
         },
         "summary": "List available applications",
         "tags": ["applications"]
+      },
+      "post": {
+        "description": "Creates a new application for the authenticated session user by proxying DIAL Core. Invalidates the applications list cache on success.",
+        "operationId": "createApplication",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateApplicationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Application created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreatedApplicationDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error — missing or invalid fields"
+          },
+          "401": {
+            "description": "Not authenticated — valid session cookie required"
+          },
+          "409": {
+            "description": "Application name already taken"
+          },
+          "429": {
+            "description": "Rate limit exceeded"
+          },
+          "503": {
+            "description": "DIAL Core is unavailable or timed out"
+          }
+        },
+        "summary": "Create a new application",
+        "tags": ["applications"]
       }
     },
     "/api/v1/deployments": {
@@ -1282,7 +1326,7 @@
     },
     "/api/v1/conversations/completions": {
       "post": {
-        "description": "Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, and returns the raw event stream.",
+        "description": "Appends the user message to the conversation history, streams a completion from DIAL Core as SSE, persists the result, and returns the raw event stream. Backend owns persistence.",
         "operationId": "streamCompletion",
         "parameters": [],
         "requestBody": {
@@ -1311,6 +1355,9 @@
           "404": {
             "description": "Conversation not found"
           },
+          "409": {
+            "description": "Another generation is already active for this conversation"
+          },
           "429": {
             "description": "Rate limit exceeded"
           },
@@ -1322,6 +1369,68 @@
           }
         },
         "summary": "Stream a chat completion",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/completions/stop": {
+      "post": {
+        "operationId": "stopCompletion",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StopCompletionDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "204": {
+            "description": "Generation stopped successfully"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "404": {
+            "description": "No active generation found for the given path and generationId"
+          }
+        },
+        "summary": "Stop an active generation",
+        "tags": ["conversations"]
+      }
+    },
+    "/api/v1/conversations/watch": {
+      "post": {
+        "description": "Opens an SSE stream that proxies DIAL Core resource-update events for the given conversation path. Used by the frontend to detect when LLM naming completes.",
+        "operationId": "watchConversation",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WatchConversationBodyDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "SSE stream of resource events"
+          },
+          "400": {
+            "description": "Invalid or missing path"
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "502": {
+            "description": "DIAL Core subscription failed"
+          }
+        },
+        "summary": "Subscribe to conversation resource updates via SSE",
         "tags": ["conversations"]
       }
     },
@@ -2510,6 +2619,57 @@
           }
         },
         "required": ["data"]
+      },
+      "CreateApplicationBodyDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "My App"
+          },
+          "type": {
+            "type": "string",
+            "example": "https://mydial.epam.com/custom_application_schemas/quickapps2"
+          },
+          "description": {
+            "type": "string",
+            "example": "A custom application."
+          },
+          "iconUrl": {
+            "type": "string",
+            "example": "https://example.com/icon.svg"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0"
+          },
+          "topics": {
+            "example": ["nlp", "assistant"],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": ["name", "type"]
+      },
+      "CreatedApplicationDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "example": "users/my-user/applications/my-app"
+          },
+          "displayName": {
+            "type": "string",
+            "example": "My App"
+          },
+          "object": {
+            "type": "string",
+            "example": "application"
+          }
+        },
+        "required": ["id"]
       },
       "DeploymentFeaturesDto": {
         "type": "object",
@@ -3713,10 +3873,27 @@
       "SendCompletionDto": {
         "type": "object",
         "properties": {
+          "generationId": {
+            "type": "string",
+            "description": "Client-generated UUID identifying this generation attempt.",
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
+            "format": "uuid"
+          },
           "path": {
             "type": "string",
             "description": "Conversation path ({deploymentId}__{name}__{uuid}). May contain slashes.",
             "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          },
+          "model": {
+            "type": "string",
+            "description": "DIAL Core deployment name to use for completion",
+            "example": "anthropic.claude-v3-sonnet",
+            "maxLength": 256
+          },
+          "mode": {
+            "type": "string",
+            "enum": ["append", "continue_last_user", "regenerate", "edit"],
+            "description": "How the message should be inserted into history. append = new user+assistant turn; continue_last_user = conversation already ends with a user message; regenerate = replace assistant at messageIndex; edit = replace user message at messageIndex."
           },
           "message": {
             "type": "string",
@@ -3724,10 +3901,10 @@
             "example": "What is the capital of France?",
             "maxLength": 4000
           },
-          "model": {
-            "type": "string",
-            "description": "DIAL Core deployment name to use for completion",
-            "example": "anthropic.claude-v3-sonnet"
+          "messageIndex": {
+            "type": "number",
+            "description": "Zero-based message index for regenerate and edit modes. Ignored for append/continue_last_user.",
+            "example": 3
           },
           "custom_content": {
             "description": "Extra DIAL payload attached to the user message",
@@ -3738,7 +3915,35 @@
             ]
           }
         },
-        "required": ["path", "message", "model"]
+        "required": ["generationId", "path", "model", "mode"]
+      },
+      "StopCompletionDto": {
+        "type": "object",
+        "properties": {
+          "generationId": {
+            "type": "string",
+            "description": "Generation ID that was returned by the active stream.",
+            "example": "cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8",
+            "format": "uuid"
+          },
+          "path": {
+            "type": "string",
+            "description": "Conversation path of the active generation.",
+            "example": "gpt-4o__My Conversation__cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8"
+          }
+        },
+        "required": ["generationId", "path"]
+      },
+      "WatchConversationBodyDto": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "Conversation sub-path (bucket-stripped), e.g. \"gpt-4o__My Chat\".",
+            "example": "gpt-4o__My Chat"
+          }
+        },
+        "required": ["path"]
       },
       "RenameConversationBodyDto": {
         "type": "object",

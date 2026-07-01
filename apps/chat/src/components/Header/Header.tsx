@@ -56,7 +56,9 @@ const Header: FC<Props> = ({
           <div
             className={mergeClasses(
               'overflow-hidden transition-all duration-200 ease-in-out',
-              isConversationPanelOpen ? 'max-w-0 opacity-0' : 'max-w-[32px] opacity-100',
+              isConversationPanelOpen
+                ? 'max-w-0 opacity-0'
+                : 'max-w-[32px] opacity-100',
             )}
           >
             <button
@@ -84,15 +86,39 @@ const Header: FC<Props> = ({
                 }}
               >
                 <defs>
-                  <linearGradient id="new-chat-plus-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-                    <stop offset="0%" style={{ stopColor: 'var(--bg-accent-secondary, #37babc)' }} />
-                    <stop offset="50%" style={{ stopColor: 'var(--bg-accent-primary, #5c8dea)' }} />
-                    <stop offset="100%" style={{ stopColor: 'var(--bg-accent-tertiary, #a972ff)' }} />
+                  <linearGradient
+                    id="new-chat-plus-grad"
+                    x1="0"
+                    y1="0"
+                    x2="24"
+                    y2="24"
+                    gradientUnits="userSpaceOnUse"
+                  >
+                    <stop
+                      offset="0%"
+                      style={{ stopColor: 'var(--bg-accent-secondary)' }}
+                    />
+                    <stop
+                      offset="50%"
+                      style={{ stopColor: 'var(--bg-accent-primary)' }}
+                    />
+                    <stop
+                      offset="100%"
+                      style={{ stopColor: 'var(--bg-accent-tertiary)' }}
+                    />
                   </linearGradient>
                 </defs>
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <path d="M12 5v14" stroke="url(#new-chat-plus-grad)" strokeWidth={2} />
-                <path d="M5 12h14" stroke="url(#new-chat-plus-grad)" strokeWidth={2} />
+                <path
+                  d="M12 5v14"
+                  stroke="url(#new-chat-plus-grad)"
+                  strokeWidth={2}
+                />
+                <path
+                  d="M5 12h14"
+                  stroke="url(#new-chat-plus-grad)"
+                  strokeWidth={2}
+                />
               </svg>
             </button>
           </div>

@@ -32,7 +32,7 @@ export const StarToggleButton: FC<StarToggleButtonProps> = ({
 }) => (
   <DialGhostIconButton
     size={size}
-    className={mergeClasses('!h-auto !py-0', className)}
+    className={className}
     icon={
       isStarred ? (
         <IconStarFilled

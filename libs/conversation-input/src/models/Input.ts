@@ -50,14 +50,6 @@ export interface InputColors {
 export interface InputTypography {
   /** Typography utility class applied to the textarea (e.g. `'dial-body-paragraph-text'`). */
   fontClassName?: string;
-  /** Font family applied to the textarea. */
-  fontFamily?: string;
-  /** Font size applied to the textarea (CSS value, e.g. `'14px'`). */
-  fontSize?: string;
-  /** Font weight applied to the textarea. */
-  fontWeight?: string | number;
-  /** Line height applied to the textarea (CSS value, e.g. `'1.5'`). */
-  lineHeight?: string;
 }
 
 /** Status labels displayed inside the model selector dropdown and mobile bottom-sheet. */
@@ -299,6 +291,8 @@ export interface ChatSettingsConfig {
   temperatureHint?: string;
   /** Label for the save button. Defaults to `'Apply changes'`. */
   saveLabel?: string;
+  /** Tooltip shown on the save button when it is disabled (e.g. no response format selected). */
+  saveDisabledTooltip?: string;
   /** Accessible label for the back arrow in the mobile bottom-sheet stack. Defaults to `'Back'`. */
   backLabel?: string;
 }

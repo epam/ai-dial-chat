@@ -38,7 +38,7 @@
       );
       box-shadow:
         0 0 24px rgba(55, 186, 188, 0.35),
-        0 6px 18px rgba(169, 114, 255, 0.30);
+        0 6px 18px rgba(169, 114, 255, 0.3);
       transform: translateY(-1px);
     }
   }
@@ -54,7 +54,7 @@
     filter: brightness(0.92);
     transform: translateY(0);
     box-shadow:
-      0 0 10px rgba(55, 186, 188, 0.20),
+      0 0 10px rgba(55, 186, 188, 0.2),
       0 2px 6px rgba(169, 114, 255, 0.16);
   }
 }
@@ -76,7 +76,7 @@
 .dropdownWrapper {
   border-radius: 12px !important;
   overflow: hidden !important;
-  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.10) !important;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.1) !important;
 }
 
 .menu {
@@ -96,7 +96,7 @@
   padding: 8px 10px 4px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: var(--text-tertiary);
+  color: var(--text-tertiary, #808898);
 }
 
 // ── Menu item ─────────────────────────────────────────────────────────────────

@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { SearchBar } from '@epam/ai-dial-kit';
 import { type CSSProperties, FC } from 'react';
 import { ToolbarProps } from '../../models/toolbar-props';
 import { SearchBar } from '../SearchBar/SearchBar';

@@ -1,27 +1,23 @@
 import type { Annotation, Message } from '@epam/ai-dial-chat-shared';
 import { useMemo } from 'react';
+import { resolveMessageAnnotations } from '../../utils/annotation';
 
 /**
  * Returns the resolved annotation list for an assistant message.
  *
- * Returns an empty array while streaming is in progress; once the stream
- * completes the final message contains the fully assembled annotations and
- * they are returned filtered to those with a `body.source.attachment.url`.
- * Annotations without a source URL have no citation marker and are excluded.
+ * Returns an empty array while streaming is in progress.
+ *
+ * Prefers `custom_content.annotations` (internal format) when present.
+ * Falls back to `custom_fields.annotations` (raw API wire format) and
+ * normalises those using the message's `custom_content.attachments` to
+ * resolve attachment URLs and convert `pdf_region` selectors to `pdf_bbox`.
  */
 export const useAnnotations = (
   message: Message,
   isStreaming: boolean,
 ): Annotation[] => {
-  const annotations = message.custom_content?.annotations;
-
   return useMemo(() => {
     if (isStreaming) return [];
-
-    const source = annotations ?? [];
-    return source.filter(
-      (a): a is Annotation =>
-        a != null && a.body?.source?.attachment?.url != null,
-    );
-  }, [isStreaming, annotations]);
+    return resolveMessageAnnotations(message);
+  }, [isStreaming, message]);
 };

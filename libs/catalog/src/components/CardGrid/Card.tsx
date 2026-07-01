@@ -1,7 +1,16 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { DialTag, ElementSize } from '@epam/ai-dial-ui-kit';
-import React, { FC, KeyboardEvent, MouseEvent, useCallback, useState } from 'react';
-import { ENTITY_TYPE_COLOR, ENTITY_TYPE_SHADOW } from '../../constants/entity-colors';
+import React, {
+  FC,
+  KeyboardEvent,
+  MouseEvent,
+  useCallback,
+  useState,
+} from 'react';
+import {
+  ENTITY_TYPE_COLOR,
+  ENTITY_TYPE_SHADOW,
+} from '../../constants/entity-colors';
 import type { CardProps } from '../../models/card-props';
 import { AppIdentity } from '../AppIdentity/AppIdentity';
 import { FolderPath } from '../FolderPath/FolderPath';
@@ -17,6 +26,8 @@ export const Card: FC<CardProps> = ({
   initialIsStarred = false,
   onToggle,
   featuredLabel = 'Featured',
+  addToFavoritesAriaLabel = 'Add to favorites',
+  removeFromFavoritesAriaLabel = 'Remove from favorites',
   className,
   styles: cardStyles,
 }) => {
@@ -86,7 +97,6 @@ export const Card: FC<CardProps> = ({
         />
       )}
 
-      {/* Top row: AppIdentity */}
       <AppIdentity
         icon={item.iconUrl}
         type={item.type}
@@ -109,10 +119,8 @@ export const Card: FC<CardProps> = ({
         {item.description}
       </p>
 
-      {/* Topic chips */}
       <TopicsLine topics={item.topics} />
 
-      {/* Breadcrumbs + star — pinned to card bottom via mt-auto */}
       <div className="mt-auto border-t border-tertiary pt-3">
         <div className="flex items-center gap-2">
           <div className="min-w-0 flex-1">
@@ -128,7 +136,9 @@ export const Card: FC<CardProps> = ({
             isStarred={isStarred}
             size={ElementSize.Small}
             onClick={handleStarToggle}
-            ariaLabel={isStarred ? 'Remove from favorites' : 'Add to favorites'}
+            ariaLabel={
+              isStarred ? removeFromFavoritesAriaLabel : addToFavoritesAriaLabel
+            }
           />
         </div>
       </div>

@@ -1,11 +1,4 @@
-import {
-  DIAL_ICON_SIZE,
-  DialDangerButton,
-  DialIcon,
-  ElementSize,
-  ButtonAppearance,
-} from '@epam/ai-dial-ui-kit';
-import { IconFilter, IconX } from '@tabler/icons-react';
+import { GhostButton } from '@epam/ai-dial-kit';
 import { FC } from 'react';
 import { Filter } from '../../Filter/Filter';
 import styles from '../Toolbar.module.scss';
@@ -24,7 +17,7 @@ interface FilterRowProps {
   filterTopicsLabel?: string;
 }
 
-/** Filter row: filter dropdown, active filter indicators, and "Clear all" button. */
+/** Filter row: filter dropdown chip and conditional "Clear all" link. */
 export const FilterRow: FC<FilterRowProps> = ({
   filters = new Set(),
   onFiltersChange,
@@ -39,11 +32,6 @@ export const FilterRow: FC<FilterRowProps> = ({
   filterTopicsLabel,
 }) => (
   <div className="flex flex-wrap items-center gap-2 pb-4">
-    <DialIcon
-      icon={<IconFilter size={DIAL_ICON_SIZE.MD} />}
-      className={styles.icon}
-    />
-
     <Filter
       checked={filters}
       onChange={onFiltersChange ?? (() => undefined)}
@@ -56,13 +44,10 @@ export const FilterRow: FC<FilterRowProps> = ({
     />
 
     {isAnyFilterActive && (
-      <DialDangerButton
+      <GhostButton
         label={clearAllLabel}
-        iconBefore={<IconX size={DIAL_ICON_SIZE.SM} />}
         className={styles.clearAll}
         onClick={onClearFilters}
-        size={ElementSize.Small}
-        appearance={ButtonAppearance.Ghost}
       />
     )}
   </div>

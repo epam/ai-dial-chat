@@ -24,6 +24,7 @@ import {
   AttachmentsI18nKeys,
   ButtonsI18nKeys,
 } from '../../constants/translation-keys';
+import { CitationCardProvider } from '../../context/CitationCardContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAnnotations } from '../../hooks/annotations/useAnnotations';
 import { useAttachmentAction } from '../../hooks/attachment/useAttachmentAction';
@@ -47,9 +48,8 @@ const EditMessageInput = lazy(async () => {
 
 const preloadEditInput = () => void import('@epam/ai-dial-conversation-input');
 
-/** Body text style applied to user message bubbles (16px / 26px). */
 const USER_MESSAGE_TEXT_STYLES = {
-  typography: { fontClassName: 'dial-body-paragraph-text' },
+  typography: { fontClassName: 'dial-body-text' },
 };
 
 interface Props {
@@ -96,6 +96,7 @@ interface Props {
   statusModelChangedTitle: string;
   formatStatusModelChangedBody: (from: string, to: string) => string;
   streamErrorText: string;
+  stoppedGeneratingText: string;
   thinkingLabel: string;
   executedLabel: string;
   stepsLabel: (count: number) => string;
@@ -139,6 +140,7 @@ const ConversationMessageItem: FC<Props> = ({
   statusModelChangedTitle,
   formatStatusModelChangedBody,
   streamErrorText,
+  stoppedGeneratingText,
   thinkingLabel,
   executedLabel,
   stepsLabel,
@@ -169,7 +171,6 @@ const ConversationMessageItem: FC<Props> = ({
     useCitationMarkdownComponents(
       msg.content,
       citationGroups,
-      citationCard,
       handleAttachmentClick,
     );
 
@@ -242,101 +243,105 @@ const ConversationMessageItem: FC<Props> = ({
       )
     : {};
 
-  const messageText =
-    msg.role === MessageRole.Assistant ? processedContent : msg.content;
+  // A generation stopped before any token produces an empty assistant message;
+  // show a "Stopped generating" label instead of an empty bubble. (The label is
+  // rendered, never written into msg.content, so a late token can't corrupt it.)
+  const isEmptyStopped =
+    msg.role === MessageRole.Assistant &&
+    !isStreaming &&
+    !!msg.wasStoppedByUser &&
+    !msg.content;
+
+  let messageText: string;
+  if (isEmptyStopped) {
+    messageText = stoppedGeneratingText;
+  } else if (msg.role === MessageRole.Assistant) {
+    messageText = processedContent;
+  } else {
+    messageText = msg.content;
+  }
 
   const isUserMessage = msg.role === MessageRole.User;
-  const isAssistantNarrative =
-    msg.role === MessageRole.Assistant && !isStatusMessage(msg);
 
-  const bubble = (
-    <MessageBubble
-      role={msg.role}
-      text={messageText}
-      styles={
-        msg.role === MessageRole.User ? USER_MESSAGE_TEXT_STYLES : undefined
-      }
-      markdownComponents={
-        msg.role === MessageRole.Assistant ? markdownComponents : undefined
-      }
-      attachments={attachmentDtosToDisplayAttachments(
-        msg.custom_content?.attachments,
-      )}
-      isStreaming={isStreaming}
-      hasAlwaysVisibleActions={!isStreaming}
-      actions={buildMessageActions(
-        msg,
-        index,
-        {
-          onEdit: !isAssistantTyping ? onStartEdit : undefined,
-          onHoverEdit: preloadEditInput,
-          onDelete: onDeleteMessage,
-          onRegenerate: onRegenerateMessage,
-          onRate: onRateMessage,
-          onDislike: onDislikeMessage,
-        },
-        tooltips,
-        ariaLabels,
-      )}
-      className={isUserMessage ? 'justify-end' : 'justify-start'}
-      bubbleClassName={mergeClasses(
-        msg.hasStreamError ? 'w-full' : undefined,
-        isUserMessage
-          ? '!rounded-ss-[16px] !rounded-se-[16px] !rounded-ee-[6px] !rounded-es-[16px] border border-secondary'
-          : undefined,
-      )}
-      styles={{
-        colors: { userBackground: 'var(--bg-layer-2)' },
-        typography: { fontClassName: 'dial-body-text' },
-      }}
-      afterContent={
-        hasStages || msg.hasStreamError ? (
-          <>
-            {hasStages && (
-              <CollapsedGroup
-                stages={msg.custom_content?.stages ?? []}
-                isStreaming={isStreaming}
-                executedLabel={executedLabel}
-                stepsLabel={stepsLabel}
-                onAttachmentClick={handleAttachmentClick}
-              />
-            )}
-            {msg.hasStreamError && (
-              <div className="w-full">
-                <DialNotification
-                  variant={NotificationVariant.Error}
-                  message={streamErrorText}
+  return (
+    <CitationCardProvider value={citationCard}>
+      <MessageBubble
+        role={msg.role}
+        text={messageText}
+        styles={
+          msg.role === MessageRole.User ? USER_MESSAGE_TEXT_STYLES : undefined
+        }
+        markdownComponents={
+          msg.role === MessageRole.Assistant ? markdownComponents : undefined
+        }
+        attachments={attachmentDtosToDisplayAttachments(
+          msg.custom_content?.attachments,
+        )}
+        isStreaming={isStreaming}
+        hasAlwaysVisibleActions={!isStreaming}
+        actions={buildMessageActions(
+          msg,
+          index,
+          {
+            onEdit: !isAssistantTyping ? onStartEdit : undefined,
+            onHoverEdit: preloadEditInput,
+            onDelete: onDeleteMessage,
+            onRegenerate: onRegenerateMessage,
+            onRate: onRateMessage,
+            onDislike: onDislikeMessage,
+          },
+          tooltips,
+          ariaLabels,
+        )}
+        className={isUserMessage ? 'justify-end' : 'justify-start'}
+        bubbleClassName={mergeClasses(
+          msg.hasStreamError ? 'w-full' : undefined,
+        )}
+        afterContent={
+          hasStages || msg.hasStreamError ? (
+            <>
+              {hasStages && (
+                <CollapsedGroup
+                  stages={msg.custom_content?.stages ?? []}
+                  isStreaming={isStreaming}
+                  executedLabel={executedLabel}
+                  stepsLabel={stepsLabel}
+                  onAttachmentClick={handleAttachmentClick}
                 />
-              </div>
-            )}
-          </>
-        ) : undefined
-      }
-      starters={activeStarters}
-      onSelectStarter={handleSelectStarter}
-      startersAriaLabel={quickReplyButtonsAriaLabel}
-      showMoreLabel={showMoreLabel}
-      showLessLabel={showLessLabel}
-      showMoreAriaLabel={showMoreUserMessageAriaLabel}
-      showLessAriaLabel={showLessUserMessageAriaLabel}
-      deploymentIconUrl={
-        isAssistantNarrative ? undefined : deploymentEntry?.iconUrl
-      }
-      deploymentDisplayName={
-        isAssistantNarrative ? undefined : deploymentEntry?.displayName
-      }
-      thinkingLabel={thinkingLabel}
-      codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
-      codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
-      codeBlockTheme={
-        currentTheme === ThemeId.Light
-          ? CodeBlockTheme.Light
-          : CodeBlockTheme.Dark
-      }
-      onAttachmentClick={handleAttachmentClick}
-      attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
-      {...statusProps}
-    />
+              )}
+              {msg.hasStreamError && (
+                <div className="w-full">
+                  <DialNotification
+                    variant={NotificationVariant.Error}
+                    message={streamErrorText}
+                  />
+                </div>
+              )}
+            </>
+          ) : undefined
+        }
+        starters={activeStarters}
+        onSelectStarter={handleSelectStarter}
+        startersAriaLabel={quickReplyButtonsAriaLabel}
+        showMoreLabel={showMoreLabel}
+        showLessLabel={showLessLabel}
+        showMoreAriaLabel={showMoreUserMessageAriaLabel}
+        showLessAriaLabel={showLessUserMessageAriaLabel}
+        deploymentIconUrl={deploymentEntry?.iconUrl}
+        deploymentDisplayName={deploymentEntry?.displayName}
+        thinkingLabel={thinkingLabel}
+        codeBlockCopyLabel={t(ButtonsI18nKeys.Copy)}
+        codeBlockCopiedLabel={t(ButtonsI18nKeys.Copied)}
+        codeBlockTheme={
+          currentTheme === ThemeId.Light
+            ? CodeBlockTheme.Light
+            : CodeBlockTheme.Dark
+        }
+        onAttachmentClick={handleAttachmentClick}
+        attachmentClickLabel={t(AttachmentsI18nKeys.Download)}
+        {...statusProps}
+      />
+    </CitationCardProvider>
   );
 
   if (isAssistantNarrative) {

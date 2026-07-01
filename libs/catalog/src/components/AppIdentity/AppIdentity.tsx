@@ -1,4 +1,8 @@
-import { DeploymentIcon, Highlight, mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  DeploymentIcon,
+  Highlight,
+  mergeClasses,
+} from '@epam/ai-dial-chat-shared';
 import { FC, ReactNode } from 'react';
 
 /** Props for the shared AppIdentity block used in browse and favorite cards. */
@@ -37,8 +41,6 @@ export interface AppIdentityProps {
   lastUsedClassName?: string;
   /** Element rendered at the end of the last-used row (size 'lg' only). */
   lastUsedTrailing?: ReactNode;
-  /** CSS class applied to the icon badge. Defaults to `'bg-layer-2'`. */
-  badgeClassName?: string;
 }
 
 /** Shared identity block: logo + type + name + version + optional last-used row. */
@@ -57,7 +59,6 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   versionClassName = 'dial-tiny-text text-secondary',
   lastUsedClassName = 'dial-tiny-text text-tertiary',
   lastUsedTrailing,
-  badgeClassName = 'bg-layer-2',
 }) => {
   const isLg = size === 'lg';
   const logoClass = isLg
@@ -72,9 +73,9 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         <DeploymentIcon
           src={icon ?? undefined}
           size={logoSize}
+          initialsName={name}
           badgeClassName={mergeClasses(
             isLg ? 'rounded-[14px]' : 'rounded-[12px]',
-            badgeClassName,
           )}
         />
       </div>
@@ -83,7 +84,10 @@ export const AppIdentity: FC<AppIdentityProps> = ({
       <div className="flex min-w-0 flex-1 flex-col">
         {/* Type: more space below separates it from the name group */}
         <span
-          className={mergeClasses('mb-2 uppercase tracking-[0.06em]', typeClassName)}
+          className={mergeClasses(
+            'mb-2 uppercase tracking-[0.06em]',
+            typeClassName,
+          )}
           style={typeColor ? { color: typeColor } : undefined}
         >
           {type}
@@ -92,8 +96,10 @@ export const AppIdentity: FC<AppIdentityProps> = ({
         {/* Name + last-used grouped tightly together */}
         <div className="flex min-w-0 flex-col">
           {/* Name + version: version sits immediately after name text */}
-          <div className="flex min-w-0 items-start gap-1">
-            <span className={mergeClasses('min-w-0 truncate', nameClassName)}>
+          <div className="flex min-w-0 items-start gap-1 overflow-hidden">
+            <span
+              className={mergeClasses('min-w-0 flex-1 truncate', nameClassName)}
+            >
               {query ? <Highlight text={name} query={query} /> : name}
             </span>
             {version != null && (

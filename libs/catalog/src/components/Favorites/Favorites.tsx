@@ -61,11 +61,14 @@ export const Favorites: FC<FavoritesProps> = ({
   onExitComplete,
   prevPageAriaLabel = 'Previous page',
   nextPageAriaLabel = 'Next page',
+  addToFavoritesAriaLabel,
+  removeFromFavoritesAriaLabel,
 }) => {
   const titleClassName =
     favoritesStyles?.typography?.titleClassName ?? 'dial-h3-text text-primary';
   const countClassName =
-    favoritesStyles?.typography?.countClassName ?? 'dial-tiny-text text-secondary';
+    favoritesStyles?.typography?.countClassName ??
+    'dial-tiny-text text-secondary';
   const cssVars = {
     '--cat-favorites-border': favoritesStyles?.colors?.border,
   } as CSSProperties;
@@ -386,10 +389,7 @@ export const Favorites: FC<FavoritesProps> = ({
 
         <div
           ref={gridRef}
-          className={mergeClasses(
-            'grid content-start gap-4',
-            styles.gridPage,
-          )}
+          className={mergeClasses('grid content-start gap-4', styles.gridPage)}
           style={{
             gridTemplateColumns: `repeat(${favColumns}, minmax(0, 1fr))`,
             minHeight: lockedGridHeight,
@@ -401,10 +401,11 @@ export const Favorites: FC<FavoritesProps> = ({
               item={item}
               onToggle={onToggleFavorite}
               onClick={onItemClick}
+              addToFavoritesAriaLabel={addToFavoritesAriaLabel}
+              removeFromFavoritesAriaLabel={removeFromFavoritesAriaLabel}
             />
           ))}
         </div>
-
       </section>
     </div>
   );

@@ -4,6 +4,17 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Filter } from '../Filter';
 
+vi.mock('../Filter.module.scss', () => ({
+  default: {
+    chip: 'chip',
+    chipActive: 'chipActive',
+    overlay: 'overlay',
+    item: 'item',
+    separator: 'separator',
+    sectionLabel: 'sectionLabel',
+  },
+}));
+
 vi.mock('@epam/ai-dial-ui-kit', () => ({
   DIAL_ICON_SIZE: { SM: 16 },
   DialDropdown: ({
@@ -40,17 +51,24 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
       {label}
     </label>
   ),
-  DialLinkButton: ({
+}));
+
+vi.mock('@epam/ai-dial-kit', () => ({
+  GhostButton: ({
     label,
     className,
   }: {
     label: string;
     className?: string;
+    iconBefore?: React.ReactNode;
     iconAfter?: React.ReactNode;
   }) => <button className={className}>{label}</button>,
 }));
 
-vi.mock('@tabler/icons-react', () => ({ IconChevronDown: () => null }));
+vi.mock('@tabler/icons-react', () => ({
+  IconChevronDown: () => null,
+  IconFilter: () => null,
+}));
 vi.mock('@epam/ai-dial-chat-shared', () => ({
   mergeClasses: (...args: (string | undefined)[]) =>
     args.filter(Boolean).join(' '),
@@ -126,12 +144,12 @@ describe('Filter', () => {
   it('applies active CSS class to trigger when any filter is on', () => {
     const { container } = renderFilter({ isMyAppsActive: true });
     const btn = container.querySelector('button');
-    expect(btn?.className).toContain('activeLabel');
+    expect(btn?.className).toContain('chipActive');
   });
 
   it('does not apply active CSS class when no filter is on', () => {
     const { container } = renderFilter();
     const btn = container.querySelector('button');
-    expect(btn?.className ?? '').not.toContain('activeLabel');
+    expect(btn?.className ?? '').not.toContain('chipActive');
   });
 });

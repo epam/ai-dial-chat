@@ -2,7 +2,6 @@ import {
   DisplayAttachment,
   isStatusMessage,
   MessageRole,
-  ResponseFormat,
   StatusEvent,
   type Attachment,
   type Conversation,
@@ -18,9 +17,9 @@ import type {
   MessageActionAriaLabels,
   MessageActionTooltips,
 } from '@epam/ai-dial-conversation-messages';
+import { NeutralButton } from '@epam/ai-dial-kit';
 import {
   DialFabButton,
-  DialNeutralButton,
   DialNotification,
   NotificationVariant,
 } from '@epam/ai-dial-ui-kit';
@@ -62,9 +61,9 @@ import { usePageFileDrag } from '../../hooks/usePageFileDrag';
 import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
+import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
 import { ModelPickerPanel } from '../ModelPicker/ModelPickerPanel';
-import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -105,6 +104,7 @@ interface Props {
   isAssistantTyping?: boolean;
   initialModelId: string;
   streamErrorText: string;
+  stoppedGeneratingText: string;
   isReadOnly?: boolean;
   onDuplicateConversation?: () => void;
   duplicateError?: string;
@@ -138,6 +138,7 @@ const ConversationView: FC<Props> = ({
   isAssistantTyping = false,
   initialModelId,
   streamErrorText,
+  stoppedGeneratingText,
   isReadOnly = false,
   onDuplicateConversation,
   duplicateError,
@@ -434,7 +435,9 @@ const ConversationView: FC<Props> = ({
         }),
         responseFormat: true,
       },
-      responseFormat: conversation.responseFormat ?? ResponseFormat.Markdown,
+      responseFormat: normalizeResponseFormat(
+        conversation.responseFormat as string | undefined,
+      ),
       systemPrompt: conversation.prompt ?? '',
       temperature: conversation.temperature ?? 0.5,
       onSave: (values: ChatSettingsValues) => {
@@ -575,6 +578,7 @@ const ConversationView: FC<Props> = ({
                   )}
                   formatStatusModelChangedBody={formatStatusModelChangedBody}
                   streamErrorText={streamErrorText}
+                  stoppedGeneratingText={stoppedGeneratingText}
                   thinkingLabel={t(ChatI18nKeys.Thinking)}
                   executedLabel={t(ConversationI18nKeys.StagesExecuted)}
                   stepsLabel={(count) =>
@@ -624,7 +628,7 @@ const ConversationView: FC<Props> = ({
                 message={duplicateError}
               />
             )}
-            <DialNeutralButton
+            <NeutralButton
               label={t(ConversationPanelI18nKeys.DuplicateReadOnlyDescription)}
               iconBefore={<IconCopy />}
               onClick={onDuplicateConversation}

@@ -154,7 +154,7 @@ In read-only conversations, the Dislike button is not rendered, so the modal can
   - "Should have triggered thinking"
   - "Should have search the web"
 - Optional `DialTextarea` with placeholder **"Type an optional comment to your feedback"**
-- `DialPrimaryButton` labelled **"Send"** — disabled until a category is selected
+- `PrimaryButton` labelled **"Send"** — disabled until a category is selected
 - Close (×) icon button
 
 **Comment encoding:** On submit, category and comment are combined as `"${category}: ${comment}"` when both are present, or just `"${category}"` when no comment is entered. This combined string is passed as the `comment` field of `POST /api/v1/rate`. No new backend fields are required.

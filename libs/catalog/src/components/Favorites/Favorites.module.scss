@@ -54,7 +54,7 @@
 }
 
 .card {
-  background: var(--bg-layer-0, #FCFCFC);
+  background: var(--bg-layer-0, #fcfcfc);
   border-color: rgba(0, 0, 0, 0.06);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
   transition:
@@ -65,7 +65,7 @@
   @media (hover: hover) {
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(16, 24, 40, 0.10);
+      box-shadow: 0 12px 32px rgba(16, 24, 40, 0.1);
       border-color: rgba(0, 0, 0, 0.12);
     }
   }

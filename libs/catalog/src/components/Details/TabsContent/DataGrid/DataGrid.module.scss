@@ -1,19 +1,19 @@
 .container {
-  border: 1px solid var(--stroke-secondary, #242c42);
+  border: 1px solid var(--stroke-secondary, #d1dbea);
 }
 
 .header {
-  color: var(--text-secondary, #9fa6bd);
-  background: var(--bg-layer-1, #0d1425);
+  color: var(--text-secondary, #575f73);
+  background: var(--bg-layer-1, #e0e6f0);
   letter-spacing: 0.06em;
   font-weight: 500;
 }
 
 .cell {
-  color: var(--text-primary, #e4e6f0);
-  border-top: 1px solid var(--stroke-secondary, #242c42);
+  color: var(--text-primary, #161b2d);
+  border-top: 1px solid var(--stroke-secondary, #d1dbea);
 }
 
 .evenRow {
-  background: var(--bg-layer-1, rgba(0, 0, 0, 0.025));
+  background: var(--bg-layer-7, #00000006);
 }

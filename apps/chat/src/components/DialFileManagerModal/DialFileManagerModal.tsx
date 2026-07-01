@@ -2,21 +2,21 @@ import {
   isMimeTypeAllowed,
   mimeTypesToExtensionLabels,
 } from '@epam/ai-dial-attachment-input';
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import {
   DialFileManager,
   DialFileManagerActions,
   DialFileManagerTabs,
   DialFileNodeType,
-  DialLoader,
+  DialSpinner,
   DialPopup,
-  DialPrimaryButton,
   GridSelectionMode,
   NOT_ALLOWED_SYMBOLS_REGEXP,
   NotificationVariant,
   PopupSize,
+  useDialFileManagerTabs,
   type DialFile,
   type FileManagerGridRow,
-  useDialFileManagerTabs,
 } from '@epam/ai-dial-ui-kit';
 import {
   memo,
@@ -386,7 +386,7 @@ const DialFileManagerModal: FC<Props> = ({
       (file) => file.status !== FileUploadStatus.Uploading,
     ).length;
 
-    return t('dialFileManager.uploadProgressSummary', {
+    return t(DialFileManagerI18nKeys.UploadProgressSummary, {
       done,
       total: uploadBatchState.files.length,
     });
@@ -593,9 +593,10 @@ const DialFileManagerModal: FC<Props> = ({
         size={PopupSize.Lg}
         className="flex !h-[min(800px,100dvh)] w-full flex-col !bg-layer-2 [&>[aria-label='popup-description']]:flex [&>[aria-label='popup-description']]:min-h-0 [&>[aria-label='popup-description']]:flex-col"
         onClose={onClose}
+        hideClose={true}
         footer={
           <div className="flex justify-end px-6 py-4">
-            <DialPrimaryButton
+            <PrimaryButton
               label={attachLabel}
               disabled={
                 selectedFiles.length === 0 || isLoading || isOperationInProgress
@@ -608,7 +609,7 @@ const DialFileManagerModal: FC<Props> = ({
         {error != null ? (
           <div role="alert" className="flex flex-col items-center gap-4 p-6">
             <p>{errorMessage}</p>
-            <DialPrimaryButton label={retryLabel} onClick={retry} />
+            <PrimaryButton label={retryLabel} onClick={retry} />
           </div>
         ) : (
           <div className="relative flex min-h-0 w-full grow overflow-auto bg-layer-2">
@@ -658,7 +659,7 @@ const DialFileManagerModal: FC<Props> = ({
                 aria-live="polite"
                 className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
               >
-                <DialLoader
+                <DialSpinner
                   size={32}
                   fullWidth={false}
                   ariaLabel={downloadingLabel}
@@ -670,7 +671,7 @@ const DialFileManagerModal: FC<Props> = ({
                 aria-live="polite"
                 className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
               >
-                <DialLoader
+                <DialSpinner
                   size={32}
                   fullWidth={false}
                   ariaLabel={deletingLabel}
@@ -682,7 +683,7 @@ const DialFileManagerModal: FC<Props> = ({
                 aria-live="polite"
                 className="absolute inset-0 z-[52] flex items-center justify-center bg-blackout md:p-4"
               >
-                <DialLoader
+                <DialSpinner
                   size={32}
                   fullWidth={false}
                   ariaLabel={t(DialFileManagerI18nKeys.RenamingLabel)}

@@ -9,36 +9,41 @@
 }
 
 .model {
-  color: var(--cat-entity-type-model, #2764D9);
-  background: var(--cat-entity-model-bg, rgba(39, 100, 217, 0.10));
+  color: var(--cat-entity-type-model, #2764d9);
+  background: var(--cat-entity-model-bg, rgba(39, 100, 217, 0.1));
+}
+
+.application {
+  color: var(--cat-entity-type-application, #059669);
+  background: var(--cat-entity-application-bg, rgba(5, 150, 105, 0.1));
 }
 
 .agent {
-  color: var(--cat-entity-type-agent, #7C3AED);
-  background: var(--cat-entity-agent-bg, rgba(124, 58, 237, 0.10));
+  color: var(--cat-entity-type-agent, #7c3aed);
+  background: var(--cat-entity-agent-bg, rgba(124, 58, 237, 0.1));
 }
 
 .skill {
-  color: var(--cat-entity-type-skill, #0E7490);
-  background: var(--cat-entity-skill-bg, rgba(14, 116, 144, 0.10));
+  color: var(--cat-entity-type-skill, #0e7490);
+  background: var(--cat-entity-skill-bg, rgba(14, 116, 144, 0.1));
 }
 
 .toolset {
-  color: var(--cat-entity-type-toolset, #B45309);
-  background: var(--cat-entity-toolset-bg, rgba(180, 83, 9, 0.10));
+  color: var(--cat-entity-type-toolset, #b45309);
+  background: var(--cat-entity-toolset-bg, rgba(180, 83, 9, 0.1));
 }
 
 .guardrail {
-  color: var(--cat-entity-type-guardrail, #BE123C);
-  background: var(--cat-entity-guardrail-bg, rgba(190, 18, 60, 0.10));
+  color: var(--cat-entity-type-guardrail, #be123c);
+  background: var(--cat-entity-guardrail-bg, rgba(190, 18, 60, 0.1));
 }
 
 .mcp {
-  color: var(--cat-entity-type-mcp, #0E7490);
-  background: var(--cat-entity-mcp-bg, rgba(14, 116, 144, 0.10));
+  color: var(--cat-entity-type-mcp, #0e7490);
+  background: var(--cat-entity-mcp-bg, rgba(14, 116, 144, 0.1));
 }
 
 .fallback {
-  color: var(--cat-entity-type-fallback, var(--text-secondary, #9fa6bd));
-  background: var(--cat-entity-fallback-bg, rgba(159, 166, 189, 0.10));
+  color: var(--cat-entity-type-fallback, var(--text-secondary, #575f73));
+  background: var(--cat-entity-fallback-bg, rgba(159, 166, 189, 0.1));
 }
