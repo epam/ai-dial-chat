@@ -402,6 +402,16 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [onRequestedFilterChange, onActiveFilterChange],
   );
 
+  const panelClassName = useMemo(() => {
+    if (isMobile) return mergeClasses('inset-y-0 start-0', isOpen && 'z-50');
+    if (isOpen)
+      return mergeClasses(
+        '[border-inline-end:none!important]',
+        '[--sb-bg-resize-handler:transparent]',
+      );
+    return undefined;
+  }, [isMobile, isOpen]);
+
   return (
     <>
       <ConversationPanel
@@ -424,12 +434,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         actionsLabel={t(ConversationPanelI18nKeys.ActionsLabel)}
         onToggle={isMobile ? onClose : undefined}
         closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
-        className={
-          isMobile
-            ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
-            : undefined
-        }
-        styles={{ typography: { fontClassName: 'dial-body-text' } }}
+        className={panelClassName}
+        styles={{
+          typography: { fontClassName: 'dial-body-text', itemIconBadgeClassName: 'rounded-lg', newChatLabelClassName: 'dial-small-text', groupHeaderClassName: 'dial-tiny-semi-text uppercase tracking-wider' },
+          colors: { border: '#00000004', text: 'var(--text-primary)' },
+        }}
         resizable={!isMobile}
         defaultPanelWidth={defaultPanelWidth}
         maxPanelWidth={maxPanelWidth}

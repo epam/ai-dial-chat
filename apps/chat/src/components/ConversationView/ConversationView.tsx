@@ -535,7 +535,7 @@ const ConversationView: FC<Props> = ({
           aria-relevant="additions"
           className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden"
         >
-          <div className="mx-auto flex w-full min-w-0 max-w-[760px] flex-1 flex-col gap-[26px] overflow-x-hidden px-6 pb-[18px] pt-7">
+          <div className="mx-auto flex w-full min-w-0 max-w-[760px] flex-1 flex-col gap-[26px] overflow-x-hidden px-6 pt-7">
             {messages.map((msg, index) => {
               const isThisMessageEditing = editingMessageIndexes?.has(index);
               return (
@@ -618,7 +618,7 @@ const ConversationView: FC<Props> = ({
       <div
         role="region"
         aria-label={t(ChatI18nKeys.MessageInput)}
-        className="w-full bg-layer-0 px-6 pb-[22px] pt-3.5"
+        className="w-full px-6 pb-4"
       >
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
@@ -638,15 +638,15 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
-                styles={CONVERSATION_INPUT_STYLES}
-                onSend={onSend}
-                onUploadAttachment={onUploadAttachment}
-                onStop={onStop}
                 styles={{
+                  ...CONVERSATION_INPUT_STYLES,
                   typography: {
                     input: { fontClassName: 'dial-body-paragraph-text' },
                   },
                 }}
+                onSend={onSend}
+                onUploadAttachment={onUploadAttachment}
+                onStop={onStop}
                 isStreaming={isAssistantTyping}
                 onAttachmentsChange={onAttachmentsChange}
                 placeholder={placeholder}

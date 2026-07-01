@@ -1,10 +1,16 @@
-import { DIAL_ICON_SIZE, DialGhostIconButton } from '@epam/ai-dial-ui-kit';
+import {
+  DIAL_ICON_SIZE,
+  DialGhostIconButton,
+} from '@epam/ai-dial-ui-kit';
 import type { FC } from 'react';
 import { memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Link, useLocation } from 'react-router-dom';
 import { NAVIGATION_CONFIG } from '../../constants/navigation';
-import { ChatI18nKeys, NavigationI18nKeys } from '../../constants/translation-keys';
+import {
+  ChatI18nKeys,
+  NavigationI18nKeys,
+} from '../../constants/translation-keys';
 import { useTheme } from '../../context/ThemeContext';
 import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useLogout } from '../../hooks/logout/useLogout';
@@ -52,14 +58,14 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
       {!isMobile && (
         <nav
           aria-label={t(NavigationI18nKeys.AriaLabel)}
-          className="flex h-full w-[60px] flex-col justify-between bg-layer-3 [box-shadow:2px_0_8px_rgba(0,0,0,0.08)] rtl:[box-shadow:-2px_0_8px_rgba(0,0,0,0.08)]"
+          className="flex h-full w-[60px] flex-col justify-between bg-layer-3"
         >
-          <div className="flex flex-col items-center gap-2 p-2">
+          <div className="flex flex-col items-center">
             {currentThemeFavicon && (
               <a
                 href="/"
                 aria-label={t(ChatI18nKeys.Logo)}
-                className="mb-1 flex items-center justify-center"
+                className="flex h-16 w-full shrink-0 items-center justify-center"
               >
                 <span
                   style={{
@@ -69,7 +75,9 @@ const Navigation: FC<Props> = ({ isOpen = false, onClose }) => {
                 />
               </a>
             )}
-            {navItems}
+            <div className="flex flex-col items-center gap-2 p-2">
+              {navItems}
+            </div>
           </div>
           <UserMenu />
         </nav>

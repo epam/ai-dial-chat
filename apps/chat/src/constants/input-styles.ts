@@ -1,16 +1,16 @@
 import type { ConversationInputStyles } from '@epam/ai-dial-conversation-input';
 
-/** Shared visual style for ConversationInput — matches the Catalog browse search bar. */
+/** Shared visual style for ConversationInput. */
 export const CONVERSATION_INPUT_STYLES: ConversationInputStyles = {
   colors: {
     input: {
       background: 'var(--bg-layer-0, #fcfcfc)',
       placeholder: 'var(--text-tertiary, var(--text-secondary, #9fa6bd))',
-      border: 'var(--stroke-secondary, #d1dbea)',
-      borderHover: 'var(--stroke-accent-primary)',
+      border: 'rgba(0, 0, 0, 0.07)',
+      borderHover: 'rgba(0, 0, 0, 0.12)',
       borderFocus: 'var(--stroke-accent-primary)',
-      shadow: 'none',
-      shadowFocus: '0 0 0 4px var(--bg-accent-primary-alpha)',
+      shadow: '0 8px 24px rgba(16, 24, 40, 0.08)',
+      shadowFocus: '0 8px 24px rgba(16, 24, 40, 0.08), 0 0 0 4px var(--bg-accent-primary-alpha)',
     },
   },
 };

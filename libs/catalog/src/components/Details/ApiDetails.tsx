@@ -1,14 +1,17 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { NeutralButton } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialDropdown,
   DialGhostIconButton,
+  DialNeutralButton,
   ElementSize,
 } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconCopy } from '@tabler/icons-react';
-import { FC, useCallback, useMemo, useState } from 'react';
-import type { CatalogItemApiDetails } from '../../models/item-details-data';
+import { FC, useCallback, useEffect, useMemo, useState } from 'react';
+import type {
+  CatalogItemApiDetails,
+  CodeSnippet,
+} from '../../models/item-details-data';
 import { CodeLanguage } from '../../types/code-language';
 import { TableView, type TableViewRow } from '../TableView/TableView';
 import styles from './CatalogApiDetails.module.scss';
@@ -25,11 +28,13 @@ export interface ApiDetailsProps {
   api: CatalogItemApiDetails;
   /** "Resource" section heading. Default: `'Resource'`. */
   resourceSectionLabel?: string;
-  /** "Code snippet" section heading. Default: `'Code snippet'`. */
+  /** "Endpoint" section heading for the multi-endpoint selector. Default: `'Endpoint'`. */
+  endpointSectionLabel?: string;
+  /** "Code snippet" section heading (legacy top-level snippets). Default: `'Code snippet'`. */
   snippetSectionLabel?: string;
   /** "Model ID" row label. Default: `'Model ID'`. */
   modelIdLabel?: string;
-  /** "Endpoint" row label. Default: `'Endpoint'`. */
+  /** URL row label inside each endpoint option. Default: `'Endpoint'`. */
   endpointLabel?: string;
   /** "Request example" row label. Default: `'Request example'`. */
   requestExampleLabel?: string;
@@ -47,10 +52,102 @@ export interface ApiDetailsProps {
   sectionClassName?: string;
 }
 
-/** Renders the API tab: resource identity rows and multi-language code snippets. */
+interface SnippetBlockProps {
+  snippets: CodeSnippet[];
+  sectionLabel?: string;
+  copyAriaLabel?: string;
+  codeClassName?: string;
+  sectionClassName?: string;
+}
+
+const SnippetBlock: FC<SnippetBlockProps> = ({
+  snippets,
+  sectionLabel,
+  copyAriaLabel = 'Copy',
+  codeClassName = 'dial-code-text',
+  sectionClassName = 'dial-caption-text',
+}) => {
+  const [activeSnippet, setActiveSnippet] = useState<string>(
+    snippets[0]?.language ?? CodeLanguage.Python,
+  );
+
+  useEffect(() => {
+    setActiveSnippet(snippets[0]?.language ?? CodeLanguage.Python);
+  }, [snippets]);
+
+  const snippetItems = useMemo(
+    () =>
+      snippets.map((s) => ({
+        key: s.language,
+        label: LANGUAGE_LABELS[s.language] ?? s.language,
+        onClick: () => setActiveSnippet(s.language),
+      })),
+    [snippets],
+  );
+
+  const activeLabel =
+    LANGUAGE_LABELS[activeSnippet as CodeLanguage] ?? activeSnippet;
+  const activeCode =
+    snippets.find((s) => s.language === activeSnippet)?.code ?? '';
+
+  const handleCopy = useCallback(() => {
+    void navigator.clipboard.writeText(activeCode);
+  }, [activeCode]);
+
+  return (
+    <section>
+      {sectionLabel != null && (
+        <p
+          className={mergeClasses(
+            'mb-3 mt-0',
+            sectionClassName,
+            styles.sectionHeading,
+          )}
+        >
+          {sectionLabel}
+        </p>
+      )}
+      <div className={mergeClasses(styles.snippetWrapper)}>
+        <div
+          className={mergeClasses(
+            styles.snippetTabs,
+            'flex items-center justify-end gap-2',
+          )}
+        >
+          <DialDropdown items={snippetItems}>
+            <DialNeutralButton
+              size={ElementSize.Small}
+              label={activeLabel}
+              iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
+            />
+          </DialDropdown>
+          <DialGhostIconButton
+            icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
+            aria-label={copyAriaLabel}
+            onClick={handleCopy}
+          />
+        </div>
+        <div className={styles.codeBlock}>
+          <pre
+            className={mergeClasses(
+              'm-0 overflow-x-auto',
+              codeClassName,
+              styles.pre,
+            )}
+          >
+            <code>{activeCode}</code>
+          </pre>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+/** Renders the API tab: resource identity rows, multi-endpoint selector (models), and code snippets. */
 export const ApiDetails: FC<ApiDetailsProps> = ({
   api,
   resourceSectionLabel = 'Resource',
+  endpointSectionLabel = 'Endpoint',
   snippetSectionLabel = 'Code snippet',
   modelIdLabel = 'Model ID',
   endpointLabel = 'Endpoint',
@@ -62,43 +159,35 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
   codeClassName = 'dial-code-text',
   sectionClassName = 'dial-caption-text',
 }) => {
-  const [activeSnippet, setActiveSnippet] = useState<string>(
-    api.snippets?.[0]?.language ?? CodeLanguage.Python,
-  );
+  const [activeEndpointIdx, setActiveEndpointIdx] = useState(0);
 
-  const snippetItems = useMemo(
+  const endpoints = useMemo(() => api.endpoints ?? [], [api.endpoints]);
+  const hasEndpoints = endpoints.length > 0;
+  const activeEndpoint = endpoints[activeEndpointIdx] ?? null;
+
+  const endpointDropdownItems = useMemo(
     () =>
-      (api.snippets ?? []).map((s) => ({
-        key: s.language,
-        label: LANGUAGE_LABELS[s.language] ?? s.language,
-        onClick: () => setActiveSnippet(s.language),
+      endpoints.map((e, i) => ({
+        key: String(i),
+        label: e.label,
+        onClick: () => setActiveEndpointIdx(i),
       })),
-    [api.snippets],
+    [endpoints],
   );
 
-  const activeLabel =
-    LANGUAGE_LABELS[activeSnippet as CodeLanguage] ?? activeSnippet;
-
-  const activeCode =
-    api.snippets?.find((s) => s.language === activeSnippet)?.code ?? '';
-
-  const handleCopy = useCallback(() => {
-    void navigator.clipboard.writeText(activeCode);
-  }, [activeCode]);
-
-  const resourceValues: TableViewRow[] = [];
+  const resourceRows: TableViewRow[] = [];
   if (api.resource?.modelId != null) {
-    resourceValues.push({ label: modelIdLabel, value: api.resource.modelId });
+    resourceRows.push({ label: modelIdLabel, value: api.resource.modelId });
   }
   if (api.resource?.endpointUrl != null) {
-    resourceValues.push({
+    resourceRows.push({
       label: endpointLabel,
       value: api.resource.endpointUrl,
     });
   }
 
-  const hasResource = resourceValues.length > 0;
-  const hasSnippets = snippetItems.length > 0;
+  const hasResource = resourceRows.length > 0;
+  const hasLegacySnippets = (api.snippets?.length ?? 0) > 0;
   const hasRequestExample = api.requestExample != null;
   const hasResponseSchema = api.responseSchema != null;
 
@@ -107,57 +196,83 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
       {hasResource && (
         <TableView
           sectionLabel={resourceSectionLabel}
-          values={resourceValues}
+          values={resourceRows}
           labelClassName={labelClassName}
           valueClassName={valueClassName}
           sectionClassName={sectionClassName}
         />
       )}
 
-      {hasSnippets && (
+      {hasEndpoints && (
         <section>
-          <p
-            className={mergeClasses(
-              'mb-3 mt-0',
-              sectionClassName,
-              styles.sectionHeading,
-            )}
-          >
-            {snippetSectionLabel}
-          </p>
-          <div className={mergeClasses(styles.snippetWrapper)}>
-            <div
+          <div className="mb-3 flex items-center justify-between">
+            <p
               className={mergeClasses(
-                styles.snippetTabs,
-                'flex items-center justify-between',
+                'm-0',
+                sectionClassName,
+                styles.sectionHeading,
               )}
             >
-              <DialDropdown items={snippetItems}>
-                <NeutralButton
-                  size={ElementSize.Small}
-                  label={activeLabel}
-                  iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
-                />
-              </DialDropdown>
+              {endpointSectionLabel}
+            </p>
+            <DialDropdown items={endpointDropdownItems}>
+              <DialNeutralButton
+                size={ElementSize.Small}
+                label={activeEndpoint?.label}
+                iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} />}
+              />
+            </DialDropdown>
+          </div>
+
+          {/* URL link + copy button */}
+          {activeEndpoint != null && (
+            <div
+              className={mergeClasses(
+                'mt-3 flex items-start gap-2 rounded-lg px-3 py-2.5',
+                styles.urlBox,
+              )}
+            >
+              <a
+                href={activeEndpoint.url}
+                target="_blank"
+                rel="noreferrer"
+                className={mergeClasses('flex-1 break-all', codeClassName)}
+              >
+                {activeEndpoint.url}
+              </a>
               <DialGhostIconButton
                 icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
                 aria-label={copyAriaLabel}
-                onClick={handleCopy}
+                onClick={() =>
+                  void navigator.clipboard.writeText(activeEndpoint.url)
+                }
               />
             </div>
-            <div className={styles.codeBlock}>
-              <pre
-                className={mergeClasses(
-                  'm-0 overflow-x-auto',
-                  codeClassName,
-                  styles.pre,
-                )}
-              >
-                <code>{activeCode}</code>
-              </pre>
-            </div>
-          </div>
+          )}
+
+          {activeEndpoint?.snippets != null &&
+            activeEndpoint.snippets.length > 0 && (
+              <div className="mt-4">
+                <SnippetBlock
+                  key={activeEndpointIdx}
+                  snippets={activeEndpoint.snippets}
+                  copyAriaLabel={copyAriaLabel}
+                  codeClassName={codeClassName}
+                  sectionClassName={sectionClassName}
+                />
+              </div>
+            )}
         </section>
+      )}
+
+      {!hasEndpoints && hasLegacySnippets && (
+        <SnippetBlock
+          snippets={api.snippets!}
+          sectionLabel={snippetSectionLabel}
+          copyAriaLabel={copyAriaLabel}
+          codeClassName={codeClassName}
+          sectionClassName={sectionClassName}
+        />
       )}
 
       {hasRequestExample && (

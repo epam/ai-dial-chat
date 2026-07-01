@@ -148,32 +148,57 @@ aside[class~='dial-body-text']
   padding: 8px 12px !important;
 }
 
-// New chat button — sidebar-matching bg, primary blue label, gradient icon circle
+// New chat button — white pill, centered icon + label, gradient-tinted shadow
 aside[class~='dial-body-text']
   [class~='border-b'][class~='py-1'][class~='px-2']
   > button {
-  background-color: var(--bg-layer-0) !important;
-  border-radius: 12px !important;
-  color: var(--text-accent-primary) !important;
-  box-shadow: none !important;
+  background: var(--bg-layer-0, #fff) !important;
+  border: none !important;
+  border-radius: 9999px !important;
+  box-shadow:
+    0 1px 3px rgba(92, 141, 234, 0.2),
+    0 2px 10px rgba(169, 114, 255, 0.14) !important;
+  color: var(--text-accent-primary, #2764d9) !important;
+  transition:
+    box-shadow 150ms ease,
+    background-color 150ms ease !important;
+
+  // Label span — semibold, inherits accent blue from button
+  > span:last-child {
+    font-weight: 600 !important;
+  }
 
   &:hover {
-    background-color: rgba(0, 0, 0, 0.04) !important;
+    background: var(--bg-layer-0, #fff) !important;
+    box-shadow:
+      0 2px 6px rgba(92, 141, 234, 0.28),
+      0 4px 16px rgba(169, 114, 255, 0.2) !important;
   }
 
   &:active {
-    background-color: rgba(0, 0, 0, 0.08) !important;
+    background: var(--bg-layer-1, #f5f7fa) !important;
+    box-shadow:
+      0 1px 2px rgba(92, 141, 234, 0.15),
+      0 1px 6px rgba(169, 114, 255, 0.1) !important;
+  }
+}
+
+// Rail new chat button — primary action button style
+.new-chat-rail-btn {
+  border-radius: var(--cp-new-chat-radius, 4px) !important;
+
+  &:hover {
+    background: var(
+      --cp-new-chat-hover,
+      var(--bg-accent-secondary-alpha, #37babc2e)
+    ) !important;
   }
 
-  // Icon circle — brand gradient with white plus icon
-  [class~='rounded-full'] {
-    background: linear-gradient(
-      135deg,
-      var(--bg-accent-secondary, #37babc) 0%,
-      var(--bg-accent-primary, #5c8dea) 50%,
-      var(--bg-accent-tertiary, #a972ff) 100%
+  &:active {
+    background: var(
+      --cp-new-chat-active,
+      var(--controls-bg-accent-secondary-alpha-active, #37babc5c)
     ) !important;
-    color: #fff !important;
   }
 }
 
@@ -182,56 +207,47 @@ aside[class~='dial-body-text'] [class~='border-b']:not([class~='flex-wrap']) {
   border-bottom-color: var(--stroke-tertiary);
 }
 
-// Search wrapper — Catalog-style card: full border, near-white bg, inset shadow, accent focus ring.
-// Uses :has() to identify the SearchInput wrapper div (which has border-b) by its dial-input descendant.
-// The `border` shorthand here overrides the `border-b`-only color set by the general rule above.
-aside[class~='dial-body-text'] [class~='border-b']:has([class~='dial-input']) {
-  border: 1px solid var(--stroke-secondary, #d1dbea) !important;
-  border-radius: 12px !important;
-  background-color: var(--bg-layer-0, #fcfcfc) !important;
-  box-shadow: inset 0 1px 2px rgba(16, 24, 40, 0.03);
-  box-sizing: border-box;
-  overflow: hidden;
-  margin: 12px 12px 0;
-  width: calc(100% - 24px);
-  transition: border-color 0.15s, box-shadow 0.15s;
+// Search wrapper — no background, input uses panel text colours.
+// Padding/border-bottom come from the shared `border-b px-2 py-1` rule above.
+aside[class~='dial-body-text'] [data-cp-search-wrapper] {
+  background: transparent !important;
 
-  &:hover:not(:focus-within) {
-    border-color: var(--controls-bg-accent, #5c8dea) !important;
-  }
+  input {
+    color: var(--cp-text, var(--text-primary)) !important;
 
-  &:focus-within {
-    border-color: var(--stroke-accent-primary) !important;
-    box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha) !important;
+    &::placeholder {
+      color: var(--cp-text-secondary, var(--text-secondary)) !important;
+    }
   }
 }
 
-// Segmented filter control — increased gaps above (vs search) and below (vs list)
+// Filter pill row — no track, just spaced pills
 aside[class~='dial-body-text'] [class~='flex-wrap'][class~='gap-2'] {
   flex-wrap: nowrap;
-  gap: 2px;
-  padding: 3px;
-  margin: 12px 12px 12px;
+  gap: 4px;
+  padding: 0;
+  margin: 8px 12px 4px;
   width: calc(100% - 24px);
-  background-color: #f0f2f5;
-  border-radius: 9999px;
+  background-color: transparent;
+  border-radius: 0;
   border-bottom: none;
 }
 
-// Individual chips — equal width, transparent bg, secondary text
+// Individual pill — subtle primary tint bg, secondary text
 aside[class~='dial-body-text'] [class~='flex-wrap'][class~='gap-2'] > div {
   flex: 1 !important;
   height: auto !important;
-  padding-block: 7px !important;
+  padding-block: 5px !important;
   justify-content: center !important;
-  border: none !important;
+  border: 1px solid rgba(92, 141, 234, 0.14) !important;
   background-color: transparent !important;
   border-radius: 9999px !important;
-  color: var(--text-secondary) !important;
+  color: var(--text-tertiary, #808898) !important;
 
   &:hover {
-    color: var(--text-primary) !important;
-    background-color: transparent !important;
+    color: var(--text-secondary) !important;
+    background-color: rgba(92, 141, 234, 0.06) !important;
+    border-color: rgba(92, 141, 234, 0.25) !important;
   }
 
   > span {
@@ -240,45 +256,43 @@ aside[class~='dial-body-text'] [class~='flex-wrap'][class~='gap-2'] > div {
   }
 }
 
-// Active chip — white surface + accent text + micro shadow
+// Active pill — solid blue tint, visible stroke, accent text
 aside[class~='dial-body-text']
   [class~='flex-wrap'][class~='gap-2']
   > div[class~='bg-accent-primary-alpha'] {
-  background-color: #fff !important;
-  color: var(--text-accent-primary) !important;
-  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04) !important;
+  background-color: rgba(39, 100, 217, 0.14) !important;
+  border-color: rgba(39, 100, 217, 0.45) !important;
+  color: var(--text-accent-primary, #2764d9) !important;
+  box-shadow: none !important;
   justify-content: center !important;
 }
 
-// Group section headers ("MY CHATS", "ORGANIZATION") — subtle, reduced prominence
+
+// Group section headers — muted tertiary colour
 aside[class~='dial-body-text'] [class~='uppercase'][class~='tracking-wider'] {
-  opacity: 0.55;
+  color: var(--text-tertiary, #808898) !important;
 }
 
-// Chat row buttons — 8px radius (not pill), correct text color, vertical padding
-aside[class~='dial-body-text'] [class~='group/conversation'] > button {
-  border-radius: 8px;
+// Chat row — 8px radius, correct text color, vertical padding.
+// Each item is: <li> → <a class="contents"> → <button class="border-l-2 …">
+// The <a> is display:contents (invisible), so we must target the inner <button>.
+aside[class~='dial-body-text'] li > a > button {
+  border-radius: 12px !important;
   padding-block: 9px;
-  color: var(--text-primary);
+  color: var(--text-secondary) !important;
 }
 
-// Conversation avatar — rounded square instead of circle
-aside[class~='dial-body-text'] [class~='group/conversation'] [class~='rounded-full'] {
-  border-radius: 6px !important;
-}
-
-// Active chat row — 3px brand-gradient start-edge indicator bar
-// Anchor: aria-current="page" on the button, parent has class "group/conversation relative"
+// Active chat row — grey background, no left indicator bar.
 aside[class~='dial-body-text']
-  [class~='group/conversation']:has(> button[aria-current='page'])::before {
-  content: '';
-  position: absolute;
-  inset-block: 4px;
-  inset-inline-start: 0;
-  width: 3px;
-  border-radius: 0 2px 2px 0;
-  background: linear-gradient(180deg, #37babc 0%, #5c8dea 48%, #a972ff 100%);
+  li:has(> a > button[aria-current='page'])::before {
+  content: none !important;
 }
+
+aside[class~='dial-body-text'] li > a > button[aria-current='page'] {
+  background: var(--bg-layer-2, #eeeef0) !important;
+  border-left-color: transparent !important;
+}
+
 
 // Composer input — match catalog search bar radius (not exposed via ci- vars)
 [role='region'] [class~='rounded-xl'][class~='border'] {

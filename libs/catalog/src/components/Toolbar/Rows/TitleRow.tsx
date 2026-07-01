@@ -1,99 +1,133 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
-import { GhostIconButton } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   ButtonVariant,
   DIAL_ICON_SIZE,
   DialButtonDropdown,
-  ElementSize,
 } from '@epam/ai-dial-ui-kit';
-import { IconLayoutCards, IconLayoutList } from '@tabler/icons-react';
+import { IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
 import { FC } from 'react';
-import { DEFAULT_SORT_OPTIONS } from '../../../constants/catalog-defaults';
-import { ToolbarProps } from '../../../models/toolbar-props';
+import { CatalogSortOption, ToolbarProps } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
 import { ItemHeader } from '../../ItemHeader/ItemHeader';
-import styles from '../Toolbar.module.scss';
+import { SearchBar } from '../../SearchBar/SearchBar';
 
 interface TitleRowProps {
   totalCount?: number;
   viewMode: CatalogViewMode;
   onViewModeChange: (mode: CatalogViewMode) => void;
-  sortKey: string;
-  onSortChange: (key: string) => void;
   title?: string;
-  sortOptions?: { value: string; label: string }[];
   styles?: ToolbarProps['styles'];
+  query: string;
+  onQueryChange: (q: string) => void;
+  searchPlaceholder?: string;
+  sortKey?: string;
+  onSortChange?: (key: string) => void;
+  sortOptions?: CatalogSortOption[];
 }
 
-/** Browse section header: title + count, segmented view toggle, sort dropdown. */
+/** Browse section header: title + view toggle + sort, then search bar below. */
 export const TitleRow: FC<TitleRowProps> = ({
   totalCount,
   viewMode,
   onViewModeChange,
+  title = 'Browse',
+  styles: browseStyles,
+  query,
+  onQueryChange,
+  searchPlaceholder,
   sortKey,
   onSortChange,
-  title = 'Browse',
-  sortOptions = DEFAULT_SORT_OPTIONS,
-  styles: browseStyles,
+  sortOptions,
 }) => {
   const titleClassName =
-    browseStyles?.typography?.titleClassName ?? 'dial-h3-text';
+    browseStyles?.typography?.titleClassName ?? 'dial-body-semi-text';
   const countClassName =
     browseStyles?.typography?.countClassName ?? 'dial-tiny-text';
 
-  const currentSortLabel =
-    sortOptions.find((o) => o.value === sortKey)?.label ?? '';
+  const activeLabel =
+    sortOptions?.find((o) => o.value === sortKey)?.label ?? '';
 
   return (
-    <div className="mb-4 flex items-center">
-      <ItemHeader
-        title={title}
-        postfix={totalCount}
-        titleClassName={titleClassName}
-        postfixClassName={countClassName}
-        className="flex-1"
-      />
-
+    <div className="mb-4 flex flex-col gap-3">
+      {/* Row 1: title | view toggle | divider | sort */}
       <div className="flex items-center gap-2">
-        <div className="flex items-center rounded-[8px] bg-layer-3 p-0.5">
-          {([CatalogViewMode.Grid, CatalogViewMode.List] as const).map(
-            (mode) => {
-              const isActive = viewMode === mode;
-              return (
-                <GhostIconButton
-                  key={mode}
-                  size={ElementSize.Small}
-                  icon={
-                    mode === CatalogViewMode.Grid ? (
-                      <IconLayoutCards size={DIAL_ICON_SIZE.SM} />
+        <ItemHeader
+          title={title}
+          postfix={totalCount}
+          titleClassName={titleClassName}
+          postfixClassName={countClassName}
+          className="shrink-0"
+        />
+
+        <div className="ms-auto flex items-center gap-2">
+          {/* Segmented view toggle */}
+          <div
+            className="flex items-center rounded-full border p-[3px]"
+            style={{
+              background: 'var(--bg-layer-2, #EEEEF0)',
+              borderColor: 'var(--stroke-tertiary, #e0e6f0)',
+            }}
+          >
+            {([CatalogViewMode.Grid, CatalogViewMode.List] as const).map(
+              (mode) => {
+                const isActive = viewMode === mode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    aria-label={
+                      mode === CatalogViewMode.Grid ? 'Grid view' : 'List view'
+                    }
+                    aria-pressed={isActive}
+                    onClick={() => onViewModeChange(mode)}
+                    className={mergeClasses(
+                      'flex items-center justify-center rounded-full px-3 py-1.5 transition-colors',
+                      isActive
+                        ? 'bg-layer-0 text-accent-primary shadow-sm'
+                        : 'text-secondary hover:text-primary',
+                    )}
+                  >
+                    {mode === CatalogViewMode.Grid ? (
+                      <IconLayoutGrid size={DIAL_ICON_SIZE.SM} />
                     ) : (
                       <IconLayoutList size={DIAL_ICON_SIZE.SM} />
-                    )
-                  }
-                  onClick={() => onViewModeChange(mode)}
-                  isActive={isActive}
-                />
-              );
-            },
+                    )}
+                  </button>
+                );
+              },
+            )}
+          </div>
+
+          {sortOptions != null && sortOptions.length > 0 && (
+            <>
+              {/* Vertical divider */}
+              <div
+                className="h-4 w-px shrink-0"
+                style={{ background: 'var(--stroke-secondary, #d1dbea)' }}
+              />
+
+              <DialButtonDropdown
+                label={activeLabel}
+                variant={ButtonVariant.Primary}
+                appearance={ButtonAppearance.Ghost}
+                items={sortOptions.map((o) => ({
+                  key: o.value,
+                  label: o.label,
+                  onClick: ({ key }: { key: string }) => onSortChange?.(key),
+                }))}
+              />
+            </>
           )}
         </div>
-
-        <div className={mergeClasses('mx-0.5 h-5 w-px', styles.divider)} />
-
-        <div className="max-w-[175px] flex-shrink-0">
-          <DialButtonDropdown
-            label={currentSortLabel}
-            variant={ButtonVariant.Primary}
-            appearance={ButtonAppearance.Ghost}
-            items={sortOptions.map((o) => ({
-              key: o.value,
-              label: o.label,
-              onClick: ({ key }: { key: string }) => onSortChange(key),
-            }))}
-          />
-        </div>
       </div>
+
+      {/* Row 2: full-width search bar */}
+      <SearchBar
+        value={query}
+        onChange={onQueryChange}
+        placeholder={searchPlaceholder}
+      />
     </div>
   );
 };

@@ -105,8 +105,6 @@ const renderToolbar = (props?: Partial<React.ComponentProps<typeof Toolbar>>) =>
       onClearFilters={vi.fn()}
       viewMode={CatalogViewMode.Grid}
       onViewModeChange={vi.fn()}
-      sortKey="recently-updated"
-      onSortChange={vi.fn()}
       {...props}
     />,
   );

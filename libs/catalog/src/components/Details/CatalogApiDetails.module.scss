@@ -22,6 +22,10 @@
   padding: 0;
 }
 
+.urlBox {
+  background: var(--bg-layer-2, #eeeef0);
+}
+
 .snippetWrapper {
   border: 1px solid var(--stroke-secondary, #242c42);
   border-radius: 8px;

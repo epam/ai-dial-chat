@@ -2,13 +2,26 @@
 // Layout, spacing, and border-radius live in Tailwind classes in the TSX file.
 
 .root {
-  background: var(--cat-bg, var(--layer-6, #f8fafc));
+  background: var(--cat-bg, #F5F7FA);
 }
 
 .heading {
-  background: var(--cat-bg, var(--layer-6, #f8fafc));
+  background: var(--cat-bg, #F5F7FA);
 }
 
 .headingTitle {
-  color: var(--cat-heading-title-text, var(--text-primary));
+  color: var(--cat-heading-title-text, var(--text-primary, #eef1f7));
+}
+
+.tabsRow {
+  border-bottom-color: var(--stroke-tertiary, #e0e6f0);
+}
+
+.activeTab {
+  border-image: linear-gradient(
+    135deg,
+    var(--bg-accent-secondary, #37babc) 0%,
+    var(--bg-accent-primary, #5c8dea) 30%,
+    var(--bg-accent-tertiary, #a972ff) 100%
+  ) 1;
 }

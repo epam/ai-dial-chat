@@ -63,6 +63,10 @@ export interface ConversationHistoryTypography {
   newChatLabelClassName?: string;
   /** Typography class applied to each filter tab label. Defaults to `'dial-tiny-semi-text'`. */
   tabClassName?: string;
+  /** Text color class applied to each filter tab label. Defaults to `'text-primary'`. */
+  tabColorClassName?: string;
+  /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
+  itemIconBadgeClassName?: string;
 }
 
 /** CSS custom-property overrides for `ConversationPanel`. */

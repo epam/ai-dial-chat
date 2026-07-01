@@ -65,7 +65,8 @@ export const Favorites: FC<FavoritesProps> = ({
   removeFromFavoritesAriaLabel,
 }) => {
   const titleClassName =
-    favoritesStyles?.typography?.titleClassName ?? 'dial-h3-text text-primary';
+    favoritesStyles?.typography?.titleClassName ??
+    'dial-body-semi-text text-primary';
   const countClassName =
     favoritesStyles?.typography?.countClassName ??
     'dial-tiny-text text-secondary';
