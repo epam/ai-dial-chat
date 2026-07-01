@@ -1,0 +1,26 @@
+name: SDLC Dispatch / Schedule
+
+# Batch dispatcher for agents that triage a standing backlog rather than gate a
+# PR (e.g. snyk-jira-ingest -> snyk-triage over the daily Jira report).
+#
+# IMPORTANT: both `schedule` and `workflow_dispatch` only fire when this file is
+# on the repository's DEFAULT branch — GitHub does not register either trigger
+# from a non-default branch.
+
+on:
+  schedule:
+    - cron: '0 6 * * *'   # daily 06:00 UTC (default branch only)
+  workflow_dispatch: {}    # manual run (default branch only)
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  security-events: write
+  id-token: write   # required by anthropics/claude-code-action for OIDC auth
+  actions: read     # caller cap: run-agent.yml's `gh run download` needs this
+
+jobs:
+  dispatch:
+    uses: ./.github/workflows/dispatch-core.yml
+    secrets: inherit
