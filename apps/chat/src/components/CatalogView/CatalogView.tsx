@@ -10,6 +10,7 @@ import { memo, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { QUERY_VALUE_TRUE } from '../../constants/apps-editor';
+import { ToolsetEditorQuery } from '../../constants/toolsets';
 import {
   ButtonsI18nKeys,
   CatalogI18nKeys,
@@ -100,7 +101,6 @@ const CatalogView: FC = () => {
     const quickAppSchema = schemas.find(
       (s) => s.id?.endsWith('quickapps2') || s.displayName === 'Quick app 2.0',
     );
-    const toolsetSchema = schemas.find((s) => s.id?.includes('toolset'));
 
     if (quickAppSchema?.id) {
       const schemaId = quickAppSchema.id;
@@ -110,13 +110,15 @@ const CatalogView: FC = () => {
       });
     }
 
-    if (toolsetSchema?.id) {
-      const schemaId = toolsetSchema.id;
-      options.push({
-        label: t(CatalogI18nKeys.CreateToolset),
-        onClick: () => navigate(buildEditorUrl(schemaId)),
-      });
-    }
+    options.push({
+      label: t(CatalogI18nKeys.CreateToolset),
+      onClick: () => {
+        const params = new URLSearchParams({
+          [ToolsetEditorQuery.ReturnUrl]: ROUTES.Catalog,
+        });
+        navigate(`${ROUTES.ToolsetEditor}?${params.toString()}`);
+      },
+    });
 
     return options;
   }, [schemas, navigate, t, buildEditorUrl]);

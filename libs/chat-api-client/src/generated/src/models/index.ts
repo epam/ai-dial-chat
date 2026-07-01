@@ -1794,6 +1794,12 @@ export interface DialToolsetAuthSettingsDto {
    * @type {string}
    * @memberof DialToolsetAuthSettingsDto
    */
+  apiKeyHeader?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
   clientId?: string;
   /**
    *
@@ -1960,6 +1966,12 @@ export interface DialToolsetDto {
    * @memberof DialToolsetDto
    */
   updatedAt?: number;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  endpoint?: string;
   /**
    *
    * @type {string}
@@ -2345,6 +2357,19 @@ export type MessageDtoRoleEnum =
 /**
  *
  * @export
+ * @interface MutatedToolsetDto
+ */
+export interface MutatedToolsetDto {
+  /**
+   *
+   * @type {string}
+   * @memberof MutatedToolsetDto
+   */
+  id: string;
+}
+/**
+ *
+ * @export
  * @interface ProviderInfoDto
  */
 export interface ProviderInfoDto {
@@ -2727,6 +2752,290 @@ export interface ThemeImagesDto {
    */
   chatFavicon?: string;
 }
+/**
+ *
+ * @export
+ * @interface ToolsetAuthResultDto
+ */
+export interface ToolsetAuthResultDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof ToolsetAuthResultDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
+ * @interface ToolsetAuthSettingsBodyDto
+ */
+export interface ToolsetAuthSettingsBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  authenticationType: ToolsetAuthSettingsBodyDtoAuthenticationTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  apiKeyHeader?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  clientSecret?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  tokenEndpoint?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  scopesSupported?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  redirectUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  codeChallengeMethod?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  codeChallenge?: string;
+}
+
+/**
+ * @export
+ */
+export const ToolsetAuthSettingsBodyDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ToolsetAuthSettingsBodyDtoAuthenticationTypeEnum =
+  (typeof ToolsetAuthSettingsBodyDtoAuthenticationTypeEnum)[keyof typeof ToolsetAuthSettingsBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ToolsetBodyDto
+ */
+export interface ToolsetBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ToolsetBodyDto
+   */
+  topics?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  endpoint: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  transport: ToolsetBodyDtoTransportEnum;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ToolsetBodyDto
+   */
+  allowedTools?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {ToolsetAuthSettingsBodyDto}
+   * @memberof ToolsetBodyDto
+   */
+  authSettings: ToolsetAuthSettingsBodyDto;
+}
+
+/**
+ * @export
+ */
+export const ToolsetBodyDtoTransportEnum = {
+  Http: 'HTTP',
+  Sse: 'SSE',
+} as const;
+export type ToolsetBodyDtoTransportEnum =
+  (typeof ToolsetBodyDtoTransportEnum)[keyof typeof ToolsetBodyDtoTransportEnum];
+
+/**
+ *
+ * @export
+ * @interface ToolsetLoginBodyDto
+ */
+export interface ToolsetLoginBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  url: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  credentialsLevel: ToolsetLoginBodyDtoCredentialsLevelEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  authenticationType: ToolsetLoginBodyDtoAuthenticationTypeEnum;
+  /**
+   * API key value (API_KEY auth).
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  apiKey?: string;
+  /**
+   * OAuth authorization code (OAUTH auth).
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  code?: string;
+  /**
+   * OAuth redirect URI used for the code exchange.
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  redirectUri?: string;
+}
+
+/**
+ * @export
+ */
+export const ToolsetLoginBodyDtoCredentialsLevelEnum = {
+  Global: 'GLOBAL',
+  User: 'USER',
+  App: 'APP',
+} as const;
+export type ToolsetLoginBodyDtoCredentialsLevelEnum =
+  (typeof ToolsetLoginBodyDtoCredentialsLevelEnum)[keyof typeof ToolsetLoginBodyDtoCredentialsLevelEnum];
+
+/**
+ * @export
+ */
+export const ToolsetLoginBodyDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ToolsetLoginBodyDtoAuthenticationTypeEnum =
+  (typeof ToolsetLoginBodyDtoAuthenticationTypeEnum)[keyof typeof ToolsetLoginBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ToolsetLogoutBodyDto
+ */
+export interface ToolsetLogoutBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLogoutBodyDto
+   */
+  url: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLogoutBodyDto
+   */
+  credentialsLevel: ToolsetLogoutBodyDtoCredentialsLevelEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLogoutBodyDto
+   */
+  authenticationType: ToolsetLogoutBodyDtoAuthenticationTypeEnum;
+}
+
+/**
+ * @export
+ */
+export const ToolsetLogoutBodyDtoCredentialsLevelEnum = {
+  Global: 'GLOBAL',
+  User: 'USER',
+  App: 'APP',
+} as const;
+export type ToolsetLogoutBodyDtoCredentialsLevelEnum =
+  (typeof ToolsetLogoutBodyDtoCredentialsLevelEnum)[keyof typeof ToolsetLogoutBodyDtoCredentialsLevelEnum];
+
+/**
+ * @export
+ */
+export const ToolsetLogoutBodyDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ToolsetLogoutBodyDtoAuthenticationTypeEnum =
+  (typeof ToolsetLogoutBodyDtoAuthenticationTypeEnum)[keyof typeof ToolsetLogoutBodyDtoAuthenticationTypeEnum];
+
 /**
  *
  * @export
