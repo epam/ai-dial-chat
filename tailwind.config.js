@@ -18,7 +18,6 @@ const backgroundsColors = {
   success: 'var(--bg-success, #D9F0F1)',
   neutral: 'var(--bg-neutral, #FCFCFC)',
   inverted: 'var(--bg-inverted, #161B2D)',
-  'model-icon': 'var(--bg-model-icon, #FFFFFF00)',
   'accent-primary-alpha': 'var(--bg-accent-primary-alpha, #7DA4FF2E)',
   // Catalog tab bar — override via CSS custom properties for dark-theme support
   'catalog-badge-active': 'var(--cat-badge-active-bg, #EEF2FF)',
