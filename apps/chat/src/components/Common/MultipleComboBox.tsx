@@ -353,7 +353,7 @@ export function MultipleComboBox<T>({
               disabled={disabled}
               placeholder={selectedItems.length ? '' : placeholder || ''}
               className={classNames(
-                'w-full min-w-[10px] overflow-auto whitespace-break-spaces break-words bg-transparent outline-none placeholder:text-secondary',
+                'flex-1 min-w-[40px] bg-transparent outline-none placeholder:text-secondary',
                 selectedItems.length ? 'pl-1' : 'pl-2',
                 disabled && 'cursor-not-allowed',
                 fontSize,
