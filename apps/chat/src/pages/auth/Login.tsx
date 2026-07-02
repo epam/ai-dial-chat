@@ -1,4 +1,9 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import {
+  ButtonAppearance,
+  ButtonVariant,
+  DialButton,
+} from '@epam/ai-dial-ui-kit';
 import type { ProviderInfoDto } from '@epam/chat-api-client';
 import { memo, useCallback, useEffect, useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -29,22 +34,30 @@ const renderProviders = (
   <>
     <p className="text-center text-base text-primary">{signInLabel}</p>
     <div className="flex w-full flex-col gap-3">
-      {providers.map((provider) => (
-        <a
-          key={provider.id}
-          href={`/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`}
-          className="flex h-10 w-full items-center justify-center gap-2 rounded border border-primary px-3 text-sm font-semibold text-controls-neutral hover:bg-layer-3"
-        >
-          <img
-            src={`/auth-providers/${provider.id}.svg`}
-            alt=""
-            aria-hidden="true"
-            className="size-5 shrink-0"
-            onError={handleIconError}
+      {providers.map((provider) => {
+        const href = `/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
+        return (
+          <DialButton
+            key={provider.id}
+            variant={ButtonVariant.Neutral}
+            appearance={ButtonAppearance.Outlined}
+            className="w-full"
+            iconBefore={
+              <img
+                src={`/auth-providers/${provider.id}.svg`}
+                alt=""
+                aria-hidden="true"
+                className="size-5 shrink-0"
+                onError={handleIconError}
+              />
+            }
+            label={provider.label}
+            onClick={() => {
+              window.location.href = href;
+            }}
           />
-          {provider.label}
-        </a>
-      ))}
+        );
+      })}
     </div>
   </>
 );
@@ -66,18 +79,7 @@ const LoginPage: FC = () => {
     async (signal: { isCancelled: boolean }) => {
       try {
         const data = await getProviders();
-        setProviders([
-          { id: 'keycloak', label: 'Keycloak' },
-          { id: 'auth0', label: 'Auth0' },
-          { id: 'azure-ad-b2c', label: 'Azure AD B2C' },
-          { id: 'okta', label: 'Okta' },
-          { id: 'google', label: 'Google' },
-          { id: 'gitlab', label: 'GitLab' },
-          { id: 'dialx-entra', label: 'DIALX Entra' },
-          { id: 'ping-id', label: 'Ping Identity' },
-          { id: 'cognito', label: 'Amazon Cognito' },
-        ]);
-        // if (!signal.isCancelled) setProviders(data);
+        if (!signal.isCancelled) setProviders(data);
       } catch (err) {
         if (!signal.isCancelled) {
           console.error(err);
@@ -98,20 +100,22 @@ const LoginPage: FC = () => {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-2 mobile:bg-layer-0 mobile:px-6">
-      <picture
+      <div
         className="pointer-events-none absolute inset-0 size-full mobile:hidden"
         aria-hidden="true"
       >
-        <source
-          media="(min-width: 1920px)"
-          srcSet={`/1920_login_${themeSlug}%20mode.png`}
-        />
-        <img
-          src={`/768_login_${themeSlug}%20mode.png`}
-          alt=""
-          className="size-full object-cover"
-        />
-      </picture>
+        <picture className="block size-full">
+          <source
+            media="(min-width: 1920px)"
+            srcSet={`/1920_login_${themeSlug}%20mode.png`}
+          />
+          <img
+            src={`/768_login_${themeSlug}%20mode.png`}
+            alt=""
+            className="size-full object-cover"
+          />
+        </picture>
+      </div>
 
       <div
         className={mergeClasses(
