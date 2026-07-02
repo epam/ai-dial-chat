@@ -19,6 +19,18 @@ import {
   getDeploymentLabel,
 } from '../utils/deployment';
 
+const GradientCheck = () => (
+  <svg width={DIAL_ICON_SIZE.SM} height={DIAL_ICON_SIZE.SM} viewBox="0 0 24 24" fill="none" aria-hidden>
+    <defs>
+      <linearGradient id="ms-check-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+        <stop offset="0%" stopColor="#4b7be6" />
+        <stop offset="100%" stopColor="#9355f4" />
+      </linearGradient>
+    </defs>
+    <path d="M5 12l5 5L20 7" stroke="url(#ms-check-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 /** Options passed to `useModelSelector`. */
 export interface UseModelSelectorOptions {
   /** Available deployment items. When `undefined`, the selector is hidden. `iconUrl` must already be resolved by the host app. */
@@ -112,20 +124,25 @@ export const useModelSelector = ({
       }
       return [];
     }
-    return filterDeployments(deployments, searchQuery).map((item) => ({
-      key: item.id,
-      label: <DialEllipsisTooltip text={getDeploymentLabel(item)} />,
-      icon: buildDeploymentIcon(
-        item.iconUrl,
-        item.type,
-        item.displayName ?? item.id,
-      ),
-      onClick: () => onDeploymentChange?.(item.id),
-      className:
-        item.id === selectedDeploymentId
-          ? 'bg-accent-primary-alpha'
-          : undefined,
-    }));
+    return filterDeployments(deployments, searchQuery).map((item) => {
+      const isSelected = item.id === selectedDeploymentId;
+      return {
+        key: item.id,
+        label: (
+          <span className="flex w-full items-center justify-between gap-2">
+            <DialEllipsisTooltip text={getDeploymentLabel(item)} />
+            {isSelected && <GradientCheck />}
+          </span>
+        ),
+        icon: buildDeploymentIcon(
+          item.iconUrl,
+          item.type,
+          item.displayName ?? item.id,
+        ),
+        onClick: () => onDeploymentChange?.(item.id),
+        className: isSelected ? 'bg-accent-primary-alpha' : undefined,
+      };
+    });
   }, [
     deployments,
     isLoading,

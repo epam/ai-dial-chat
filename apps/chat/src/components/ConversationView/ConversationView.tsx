@@ -58,6 +58,7 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
+import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
@@ -639,6 +640,7 @@ const ConversationView: FC<Props> = ({
             <Suspense fallback={null}>
               <ConversationInput
                 styles={{
+                  ...CONVERSATION_INPUT_STYLES,
                   typography: {
                     input: { fontClassName: 'dial-body-paragraph-text' },
                   },

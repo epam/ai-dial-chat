@@ -300,7 +300,8 @@ export const Filter: FC<FilterProps> = ({
         onKeyDown={handleTriggerKeyDown}
         className={mergeClasses(
           styles.filterBtn,
-          (isActive || isOpen) && styles.filterBtnActive,
+          isActive && styles.filterBtnActive,
+          isOpen && styles.filterBtnOpen,
         )}
       >
         <IconFilter

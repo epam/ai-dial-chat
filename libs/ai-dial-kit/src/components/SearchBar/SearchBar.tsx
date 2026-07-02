@@ -14,6 +14,8 @@ export interface SearchBarProps {
   placeholder?: string;
   /** Accessible label for the input. Falls back to `placeholder` when omitted. */
   ariaLabel?: string;
+  /** Extra CSS class applied to the inner container div (border, background, radius, shadow). */
+  containerClassName?: string;
 }
 
 /** Search input with leading icon, hover/focus border, and aria-label fallback to placeholder. */
@@ -22,6 +24,7 @@ export const SearchBar: FC<SearchBarProps> = ({
   onChange,
   placeholder = 'Search',
   ariaLabel,
+  containerClassName,
 }) => {
   const resolvedAriaLabel = ariaLabel ?? placeholder;
 
@@ -31,6 +34,7 @@ export const SearchBar: FC<SearchBarProps> = ({
         className={mergeClasses(
           styles.container,
           'flex cursor-text items-center gap-3 rounded-xl border px-4 py-2 transition-[border-color,box-shadow] duration-150 ease-in-out',
+          containerClassName,
         )}
       >
         <IconSearch

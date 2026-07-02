@@ -69,7 +69,7 @@ export const Favorites: FC<FavoritesProps> = ({
     'dial-body-semi-text text-primary';
   const countClassName =
     favoritesStyles?.typography?.countClassName ??
-    'dial-tiny-text text-secondary';
+    'dial-tiny-semi-text text-secondary';
   const cssVars = {
     '--cat-favorites-border': favoritesStyles?.colors?.border,
   } as CSSProperties;

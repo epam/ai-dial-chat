@@ -265,9 +265,9 @@ aside[class~='dial-body-text'] [data-cp-search-wrapper] {
 }
 
 // Search row border — match catalog SearchBar strokes.
-// Anchored on stable Tailwind classes (h-9 w-full items-center ps-3 pe-3);
-// avoids the hashed CSS-module class name on the panel's internal row element.
-aside[class~='dial-body-text'] [class~='h-9'][class~='w-full'][class~='items-center'][class~='ps-3'][class~='pe-3'] {
+// Anchored on [data-cp-search-wrapper] > div (the inner row element);
+// avoids the hashed CSS-module class name and is stable across Tailwind class changes.
+aside[class~='dial-body-text'] [data-cp-search-wrapper] > div {
   border-color: rgba(0, 0, 0, 0.05) !important;
 
   @media (hover: hover) {

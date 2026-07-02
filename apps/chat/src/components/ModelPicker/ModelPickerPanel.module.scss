@@ -1,0 +1,17 @@
+// Overrides SearchBar's default filled/bordered look to match the sidebar SearchInput:
+// pill radius, transparent border at rest, no background fill, accent focus ring.
+.sidebarSearch {
+  background-color: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  border-radius: 9999px !important;
+
+  &:hover {
+    border-color: transparent !important;
+  }
+
+  &:focus-within {
+    border-color: var(--stroke-accent-primary, #7da4ff) !important;
+    box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff26) !important;
+  }
+}

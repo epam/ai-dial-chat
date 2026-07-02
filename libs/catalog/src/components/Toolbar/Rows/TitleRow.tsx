@@ -60,7 +60,7 @@ export const TitleRow: FC<TitleRowProps> = ({
   const titleClassName =
     browseStyles?.typography?.titleClassName ?? 'dial-body-semi-text';
   const countClassName =
-    browseStyles?.typography?.countClassName ?? 'dial-tiny-text';
+    browseStyles?.typography?.countClassName ?? 'dial-tiny-semi-text';
 
   const activeLabel =
     sortOptions?.find((o) => o.value === sortKey)?.label ?? '';
