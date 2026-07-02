@@ -18,6 +18,8 @@ const resolveBreakpoint = (): Breakpoint => {
     typeof window === 'undefined' ||
     typeof window.matchMedia !== 'function'
   ) {
+    // SSR / non-DOM test env: default to desktop so server-rendered markup
+    // matches the historical desktop-only baseline.
     return 'desktop';
   }
   for (const { query, breakpoint } of BREAKPOINT_QUERIES) {
@@ -32,8 +34,8 @@ const resolveBreakpoint = (): Breakpoint => {
  * Returns the current named breakpoint, kept in sync with viewport changes.
  *
  * Use only when a component must branch in JS — most responsive layout should
- * use Tailwind's `mobile:` / `desktop:` utility prefixes instead.
- * See `.claude/skills/responsive-design/SKILL.md` for the decision rubric.
+ * use Tailwind's `mobile:` / `desktop:` utility prefixes instead. See
+ * `.claude/skills/responsive-design/SKILL.md` for the decision rubric.
  *
  * @example
  * ```tsx

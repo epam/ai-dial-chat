@@ -62,7 +62,7 @@ const LoginPage: FC = () => {
   const [searchParams] = useSearchParams();
   const callbackUrl =
     searchParams.get('callbackUrl') ?? `${window.location.origin}/`;
-  useUser();
+  useUser(); // subscribes to auth state so useAuthRedirect can redirect authenticated users away from /login
   useAuthRedirect();
 
   const { currentThemeFavicon } = useTheme();
@@ -78,6 +78,7 @@ const LoginPage: FC = () => {
         }
       } catch {
         if (!signal.isCancelled) {
+          console.error(err);
           setHasError(true);
         }
       }
