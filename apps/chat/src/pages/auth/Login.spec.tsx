@@ -1,7 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { AuthI18nKeys } from '../../constants/translation-keys';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as ThemeContextModule from '../../context/ThemeContext';
 import * as useAuthRedirectModule from '../../hooks/auth/useAuthRedirect';
@@ -81,11 +80,11 @@ describe('LoginPage', () => {
   });
 
   it('renders loading state while providers are loading', () => {
-    mockGetProviders.mockReturnValue(new Promise(() => {}));
+    mockGetProviders.mockReturnValue(new Promise((_resolve) => undefined));
 
     renderLogin();
 
-    expect(screen.getByText(AuthI18nKeys.Loading)).toBeTruthy();
+    expect(screen.getByText('Checking your session…')).toBeTruthy();
   });
 
   it('renders error message when getProviders rejects', async () => {
@@ -93,7 +92,11 @@ describe('LoginPage', () => {
 
     renderLogin();
 
-    expect(await screen.findByText(AuthI18nKeys.ProvidersError)).toBeTruthy();
+    expect(
+      await screen.findByText(
+        'Could not load identity providers. Please retry.',
+      ),
+    ).toBeTruthy();
   });
 
   it('renders theme favicon when currentThemeFavicon is set', () => {

@@ -77,9 +77,8 @@ const LoginPage: FC = () => {
       try {
         const data = await getProviders();
         if (!signal.isCancelled) setProviders(data);
-      } catch (err) {
+      } catch {
         if (!signal.isCancelled) {
-          console.error(err);
           setHasError(true);
         }
       }
