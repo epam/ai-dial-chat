@@ -1,4 +1,5 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
+import { PrimaryButton } from '@epam/ai-dial-kit';
 import { DialDropdown } from '@epam/ai-dial-ui-kit';
 import { IconChevronDown, IconFilter } from '@tabler/icons-react';
 import {
@@ -278,16 +279,11 @@ export const Filter: FC<FilterProps> = ({
             >
               {clearLabel}
             </button>
-            <button
-              type="button"
-              className={mergeClasses(
-                styles.applyBtn,
-                'dial-primary-solid-button',
-              )}
+            <PrimaryButton
+              label={applyLabel}
+              className={styles.applyBtn}
               onClick={handleApply}
-            >
-              {applyLabel}
-            </button>
+            />
           </div>
         </div>
       )}

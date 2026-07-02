@@ -24,7 +24,7 @@
 
   &:focus-visible {
     outline: none;
-    border-color: rgba(125, 164, 255, 0.5);
+    border-color: color-mix(in srgb, var(--stroke-accent-primary, #7da4ff) 50%, transparent);
     box-shadow: none;
   }
 }
@@ -34,7 +34,7 @@
 }
 
 .filterBtnOpen {
-  border-color: rgba(125, 164, 255, 0.5);
+  border-color: color-mix(in srgb, var(--stroke-accent-primary, #7da4ff) 50%, transparent);
 }
 
 .filterBtnLabel {
@@ -212,19 +212,6 @@
   }
 }
 
-/* Apply — uses the app-level primary action gradient. */
 .applyBtn {
   margin-inline-start: auto;
-  padding-block: 7px;
-  padding-inline: 24px;
-  border: none;
-  font-size: 14px;
-  font-weight: 600;
-  color: #ffffff;
-  cursor: pointer;
-
-  &:focus-visible {
-    outline: 2px solid rgba(125, 164, 255, 0.5);
-    outline-offset: 2px;
-  }
 }

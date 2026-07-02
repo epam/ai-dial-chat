@@ -135,7 +135,6 @@ const CatalogView: FC = () => {
       titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),
         createLabel: t(ButtonsI18nKeys.Create),
-        createMenuCaption: t(CatalogI18nKeys.CreateMenuCaption),
         favoritesTitle: t(CatalogI18nKeys.FavoritesTitle),
         browseTitle: t(ButtonsI18nKeys.Browse),
         searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),

@@ -4,23 +4,11 @@ import {
   Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { GhostButton, GhostIconButton, SearchBar } from '@epam/ai-dial-kit';
+import { GhostButton, GhostIconButton, GradientCheckIcon, SearchBar } from '@epam/ai-dial-kit';
 import { DialEllipsisTooltip, DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, useMemo, useState } from 'react';
 import styles from './ModelPickerPanel.module.scss';
-
-const GradientCheck = () => (
-  <svg width={DIAL_ICON_SIZE.SM} height={DIAL_ICON_SIZE.SM} viewBox="0 0 24 24" fill="none" aria-hidden>
-    <defs>
-      <linearGradient id="mp-check-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#4b7be6" />
-        <stop offset="100%" stopColor="#9355f4" />
-      </linearGradient>
-    </defs>
-    <path d="M5 12l5 5L20 7" stroke="url(#mp-check-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 
 /** Localizable string labels for `ModelPickerPanel`. */
 export interface ModelPickerLabels {
@@ -165,7 +153,7 @@ export const ModelPickerPanel: FC<Props> = ({
                 </div>
                 {item.id === selectedId && (
                   <span className="flex-shrink-0">
-                    <GradientCheck />
+                    <GradientCheckIcon gradientId="mp-check-grad" />
                   </span>
                 )}
                 <GhostIconButton

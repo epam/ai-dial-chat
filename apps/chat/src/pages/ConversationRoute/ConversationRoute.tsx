@@ -559,7 +559,6 @@ const ConversationRoute: FC = () => {
                       CatalogI18nKeys.PickerSearchPlaceholder,
                     ),
                     searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
-                    favoritesLabel: t(CatalogI18nKeys.PickerFavoritesLabel),
                     emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
                     browseCatalogLabel: t(CatalogI18nKeys.PickerBrowseCatalog),
                     removeFromFavoritesLabel: t(

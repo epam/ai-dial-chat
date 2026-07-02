@@ -46,7 +46,6 @@ export const Catalog: FC<CatalogProps> = ({
 
   const pageTitle = titles?.pageTitle ?? 'Catalog';
   const createLabel = titles?.createLabel ?? 'Create';
-  const createMenuCaption = titles?.createMenuCaption;
   const favoritesTitle = titles?.favoritesTitle ?? 'Your favorites';
   const browseTitle = titles?.browseTitle ?? 'Browse';
   const searchPlaceholder =
@@ -239,7 +238,6 @@ export const Catalog: FC<CatalogProps> = ({
           </h1>
           <CreateButton
             label={createLabel}
-            menuCaption={createMenuCaption}
             options={createOptions}
             onClick={onCreateClick}
           />

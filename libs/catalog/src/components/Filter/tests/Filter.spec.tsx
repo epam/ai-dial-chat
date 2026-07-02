@@ -75,6 +75,15 @@ vi.mock('@epam/ai-dial-kit', () => ({
     iconBefore?: React.ReactNode;
     iconAfter?: React.ReactNode;
   }) => <button className={className}>{label}</button>,
+  PrimaryButton: ({
+    label,
+    className,
+    onClick,
+  }: {
+    label: string;
+    className?: string;
+    onClick?: () => void;
+  }) => <button className={className} onClick={onClick}>{label}</button>,
 }));
 
 vi.mock('@tabler/icons-react', () => ({
@@ -173,10 +182,8 @@ describe('Filter', () => {
     expect(btn?.className ?? '').not.toContain('filterBtnActive');
   });
 
-  it('uses the shared primary action class for Apply', () => {
+  it('renders the Apply button', () => {
     renderFilter();
-    expect(screen.getByRole('button', { name: 'Apply' }).className).toContain(
-      'dial-primary-solid-button',
-    );
+    expect(screen.getByRole('button', { name: 'Apply' })).toBeTruthy();
   });
 });

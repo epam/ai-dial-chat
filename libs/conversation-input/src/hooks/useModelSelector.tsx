@@ -1,4 +1,5 @@
 import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GradientCheckIcon } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
@@ -18,18 +19,6 @@ import {
   filterDeployments,
   getDeploymentLabel,
 } from '../utils/deployment';
-
-const GradientCheck = () => (
-  <svg width={DIAL_ICON_SIZE.SM} height={DIAL_ICON_SIZE.SM} viewBox="0 0 24 24" fill="none" aria-hidden>
-    <defs>
-      <linearGradient id="ms-check-grad" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-        <stop offset="0%" stopColor="#4b7be6" />
-        <stop offset="100%" stopColor="#9355f4" />
-      </linearGradient>
-    </defs>
-    <path d="M5 12l5 5L20 7" stroke="url(#ms-check-grad)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 
 /** Options passed to `useModelSelector`. */
 export interface UseModelSelectorOptions {
@@ -131,7 +120,7 @@ export const useModelSelector = ({
         label: (
           <span className="flex w-full items-center justify-between gap-2">
             <DialEllipsisTooltip text={getDeploymentLabel(item)} />
-            {isSelected && <GradientCheck />}
+            {isSelected && <GradientCheckIcon gradientId="ms-check-grad" />}
           </span>
         ),
         icon: buildDeploymentIcon(
