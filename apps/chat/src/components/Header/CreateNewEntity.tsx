@@ -101,7 +101,7 @@ export const CreateNewConversation: React.FC<Props> = ({ iconSize }) => {
     dispatch(ConversationsActions.resetSearch());
     dispatch(ConversationsActions.setIsStartedCustomViewerConversation(false));
     if (selectedPublicationUrl) {
-      dispatch(PublicationActions.selectPublication(null));
+      dispatch(PublicationActions.selectPublication({ url: null }));
     }
   }, [areConversationsLoaded, dispatch, selectedPublicationUrl]);
 

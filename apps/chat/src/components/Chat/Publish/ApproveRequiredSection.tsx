@@ -15,6 +15,7 @@ import { Publication, PublicationInfo } from '@/src/types/publication';
 
 import { ConversationsActions, PublicationActions } from '@/src/store/actions';
 import { useAppDispatch, useAppSelector } from '@/src/store/hooks';
+import { PublicationPanel } from '@/src/store/publication/publication.types';
 import {
   ConversationsSelectors,
   PublicationSelectors,
@@ -70,10 +71,18 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
     }
     setIsOpen((value) => !value);
 
+    const panel = featureTypes.includes(FeatureType.Chat)
+      ? PublicationPanel.Chat
+      : PublicationPanel.Prompt;
+
     if (publication.uploadStatus !== UploadStatus.LOADED) {
-      dispatch(PublicationActions.uploadPublication({ url: publication.url }));
+      dispatch(
+        PublicationActions.uploadPublication({ url: publication.url, panel }),
+      );
     } else {
-      dispatch(PublicationActions.selectPublication(publication.url));
+      dispatch(
+        PublicationActions.selectPublication({ url: publication.url, panel }),
+      );
     }
 
     dispatch(
@@ -81,7 +90,7 @@ const PublicationItem = ({ publication, featureTypes }: PublicationProps) => {
         conversationIds: [],
       }),
     );
-  }, [dispatch, publication, isMessageStreaming]);
+  }, [dispatch, publication, isMessageStreaming, featureTypes]);
 
   const showCaretIcon = featureTypesWithCaretIcon.some((type) =>
     publication.resourceTypes.includes(

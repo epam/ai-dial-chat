@@ -148,6 +148,16 @@ const ReviewQuickApp2SectionView = ({
     'timestamp' in (config?.features ?? {})
       ? !!config?.features?.timestamp
       : true;
+  const fileTools =
+    'dial_files' in (config?.features ?? {})
+      ? !!config?.features?.dial_files
+      : false;
+  const showProcessLargeFiles =
+    'attachment_strategy' in (config?.orchestrator ?? {});
+  const processLargeFiles =
+    'attachment_strategy' in (config?.orchestrator ?? {})
+      ? !!config?.orchestrator?.attachment_strategy
+      : false;
   const skills = useMemo(
     () =>
       (config?.skills ?? []).map(({ url }) => ({
@@ -166,6 +176,20 @@ const ReviewQuickApp2SectionView = ({
         <MarketplaceEntityInfoRow
           label={t(ChatI18nKeys.CodeInterpreter)}
           value={t(isCodeInterpreter ? ChatI18nKeys.On : ChatI18nKeys.Off)}
+          valueClassName="max-w-[414px] break-all text-primary"
+        />
+      )}
+
+      <MarketplaceEntityInfoRow
+        label={t(ChatI18nKeys.FileTools)}
+        value={t(fileTools ? ChatI18nKeys.On : ChatI18nKeys.Off)}
+        valueClassName="max-w-[414px] break-all text-primary"
+      />
+
+      {showProcessLargeFiles && (
+        <MarketplaceEntityInfoRow
+          label={t(ChatI18nKeys.ProcessLargeFiles)}
+          value={t(processLargeFiles ? ChatI18nKeys.On : ChatI18nKeys.Off)}
           valueClassName="max-w-[414px] break-all text-primary"
         />
       )}

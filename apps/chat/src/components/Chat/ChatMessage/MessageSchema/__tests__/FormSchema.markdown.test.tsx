@@ -36,6 +36,9 @@ vi.mock('@/src/store/selectors', () => ({
     selectIsPlaybackSelectedConversations: vi.fn(() => false),
     selectAction: vi.fn(() => null),
   },
+  SettingsSelectors: {
+    selectAllowedImageSources: vi.fn(() => ''),
+  },
 }));
 
 const buttonPropertySchema = {
