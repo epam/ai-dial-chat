@@ -3,7 +3,7 @@ import { IsArray, IsIn, IsOptional } from 'class-validator';
 
 export enum DeploymentInterfaceType {
   Chat = 'chat',
-  Embeddings = 'embeddings',
+  Embedding = 'embedding',
   Mcp = 'mcp',
   CustomUi = 'custom_ui',
   All = 'all',
