@@ -8,14 +8,14 @@ export interface AvatarColorEntry {
 
 /** Fixed WCAG-AA-compliant palette (≥4.5:1 contrast ratio for each pair). */
 const PALETTE: readonly AvatarColorEntry[] = [
-  { background: '#0d7377', foreground: '#ffffff' }, // teal
-  { background: '#6b3fa0', foreground: '#ffffff' }, // violet
-  { background: '#b45309', foreground: '#ffffff' }, // amber
-  { background: '#be185d', foreground: '#ffffff' }, // rose
-  { background: '#15803d', foreground: '#ffffff' }, // emerald
-  { background: '#0369a1', foreground: '#ffffff' }, // sky
-  { background: '#c2410c', foreground: '#ffffff' }, // orange
-  { background: '#3730a3', foreground: '#ffffff' }, // indigo
+  { background: '#cde8e5', foreground: '#0d6e72' }, // teal
+  { background: '#e2d9f3', foreground: '#5b21b6' }, // violet
+  { background: '#fde8c8', foreground: '#92400e' }, // amber
+  { background: '#fce7f3', foreground: '#9d174d' }, // rose
+  { background: '#d1f0dc', foreground: '#065f46' }, // emerald
+  { background: '#d6edf9', foreground: '#075985' }, // sky
+  { background: '#fde8d8', foreground: '#9a3412' }, // orange
+  { background: '#dde3f9', foreground: '#3730a3' }, // indigo
 ];
 
 /**
