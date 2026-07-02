@@ -185,6 +185,7 @@ describe('ConversationRoute', () => {
       isLoading: false,
       error: null,
       schemas: [],
+      toolsets: [],
     });
     mockUseUser.mockReturnValue({
       user: { sub: 'u1', providerId: 'p1', claims: {}, bucket: 'user-bucket' },
@@ -293,6 +294,7 @@ describe('ConversationRoute', () => {
       isLoading: false,
       error: null,
       schemas: [],
+      toolsets: [],
     });
 
     renderRoute();
@@ -317,6 +319,7 @@ describe('ConversationRoute', () => {
       isLoading: false,
       error: null,
       schemas: [],
+      toolsets: [],
     });
     renderRoute();
     await waitFor(() => {
@@ -341,6 +344,7 @@ describe('ConversationRoute', () => {
       isLoading: false,
       error: null,
       schemas: [],
+      toolsets: [],
     });
     renderRoute();
     await waitFor(() => {
@@ -376,6 +380,7 @@ describe('ConversationRoute', () => {
       isLoading: false,
       error: null,
       schemas: [],
+      toolsets: [],
     });
 
     renderRoute();
@@ -423,6 +428,7 @@ describe('ConversationRoute', () => {
       isLoading: false,
       error: null,
       schemas: [],
+      toolsets: [],
     });
 
     renderRoute();
@@ -469,6 +475,7 @@ describe('ConversationRoute', () => {
       isLoading: false,
       error: null,
       schemas: [],
+      toolsets: [],
     });
     mockCreateConversation.mockRejectedValueOnce({
       response: {

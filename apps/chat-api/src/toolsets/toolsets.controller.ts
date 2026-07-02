@@ -66,8 +66,8 @@ export class ToolsetsController {
     description: 'DIAL Core is unavailable or timed out',
   })
   listToolsets(@Req() req: Request) {
-    const { sub, at } = req.user as SessionUser;
-    return this.toolsetsService.listToolsets(sub, at);
+    const { sub, at, bucket } = req.user as SessionUser;
+    return this.toolsetsService.listToolsets(sub, at, bucket);
   }
 
   @Get(':toolsetName')
@@ -109,8 +109,8 @@ export class ToolsetsController {
     description: 'DIAL Core is unavailable or timed out',
   })
   getToolset(@Req() req: Request, @Param() dto: GetToolsetDto) {
-    const { sub, at } = req.user as SessionUser;
-    return this.toolsetsService.getToolset(sub, at, dto.toolsetName);
+    const { sub, at, bucket } = req.user as SessionUser;
+    return this.toolsetsService.getToolset(sub, at, bucket, dto.toolsetName);
   }
 
   @Post()

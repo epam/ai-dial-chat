@@ -3,6 +3,7 @@ import {
   ListDeploymentsInterfaceTypeEnum,
   type ApplicationSchemaSummaryDto,
   type DeploymentItemDto,
+  type DialToolsetDto,
 } from '@epam/chat-api-client';
 import {
   createContext,
@@ -16,6 +17,7 @@ import {
 import { getApplicationSchemas } from '../server-api/application-schemas';
 import { getDeploymentConfiguration } from '../server-api/deployments';
 import { getDeployments } from '../server-api/deployments.api';
+import { listToolsets } from '../server-api/toolsets';
 import { useAppConfig } from './AppConfigContext';
 import { useUserConfig } from './UserConfigContext';
 
@@ -40,6 +42,8 @@ export interface DeploymentsContextType {
   error: Error | null;
   /** List of application type schemas fetched in parallel with deployments. Empty when the fetch failed. */
   schemas: ApplicationSchemaSummaryDto[];
+  /** Toolsets fetched from the dedicated toolsets API for catalog surfaces. */
+  toolsets: DialToolsetDto[];
 }
 
 export const DeploymentsContext = createContext<
@@ -50,6 +54,20 @@ const sortDeployments = (
   deployments: DeploymentItemDto[],
 ): DeploymentItemDto[] => {
   return [...deployments].sort((a, b) => {
+    const nameCompare = (a.displayName ?? a.id).localeCompare(
+      b.displayName ?? b.id,
+      undefined,
+      { sensitivity: 'accent' },
+    );
+    if (nameCompare !== 0) {
+      return nameCompare;
+    }
+    return a.id.localeCompare(b.id, undefined, { sensitivity: 'accent' });
+  });
+};
+
+const sortToolsets = (toolsets: DialToolsetDto[]): DialToolsetDto[] => {
+  return [...toolsets].sort((a, b) => {
     const nameCompare = (a.displayName ?? a.id).localeCompare(
       b.displayName ?? b.id,
       undefined,
@@ -90,6 +108,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
 
   const [rawDeployments, setRawDeployments] = useState<DeploymentItemDto[]>([]);
   const [schemas, setSchemas] = useState<ApplicationSchemaSummaryDto[]>([]);
+  const [toolsets, setToolsets] = useState<DialToolsetDto[]>([]);
   const [selectedItemId, setSelectedItemIdState] = useState<string | null>(
     null,
   );
@@ -103,20 +122,16 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       setIsLoading(true);
       setError(null);
       setSchemas([]);
+      setToolsets([]);
 
-      const [deploymentsResult, schemasResult] = await Promise.allSettled([
-        getDeployments([ListDeploymentsInterfaceTypeEnum.Chat]),
-        getApplicationSchemas(),
-      ]);
+      const [deploymentsResult, schemasResult, toolsetsResult] =
+        await Promise.allSettled([
+          getDeployments([ListDeploymentsInterfaceTypeEnum.Chat]),
+          getApplicationSchemas(),
+          listToolsets(),
+        ]);
 
       if (signal.isCancelled) return;
-
-      if (deploymentsResult.status === 'rejected') {
-        const err = deploymentsResult.reason;
-        setError(err instanceof Error ? err : new Error(String(err)));
-        setIsLoading(false);
-        return;
-      }
 
       if (schemasResult.status === 'rejected') {
         console.warn(
@@ -125,6 +140,22 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         );
       } else {
         setSchemas(schemasResult.value.schemas ?? []);
+      }
+
+      if (toolsetsResult.status === 'rejected') {
+        console.warn(
+          '[DeploymentsContext] Failed to load toolsets; catalog toolsets unavailable.',
+          toolsetsResult.reason,
+        );
+      } else {
+        setToolsets(sortToolsets(toolsetsResult.value.data ?? []));
+      }
+
+      if (deploymentsResult.status === 'rejected') {
+        const err = deploymentsResult.reason;
+        setError(err instanceof Error ? err : new Error(String(err)));
+        setIsLoading(false);
+        return;
       }
 
       const deployments = sortDeployments(
@@ -225,6 +256,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       isLoading,
       error,
       schemas,
+      toolsets,
     }),
     [
       items,
@@ -235,6 +267,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
       isLoading,
       error,
       schemas,
+      toolsets,
     ],
   );
 

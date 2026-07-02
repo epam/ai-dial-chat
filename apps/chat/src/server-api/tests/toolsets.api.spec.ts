@@ -26,9 +26,23 @@ const rawSnakeToolset = {
   endpoint: 'https://example.com/mcp',
   transport: 'HTTP',
   allowed_tools: ['lookup'],
+  features: {
+    mcp: true,
+    chat_completion: false,
+    responses_api: false,
+    allow_resume: true,
+    parallel_tool_calls: true,
+    max_tokens_supported: true,
+    reasoning_efforts: [],
+  },
   auth_settings: {
-    authentication_type: 'API_KEY',
-    api_key_header: 'X-API-Key',
+    authentication_type: 'OAUTH',
+    client_id: 'my-client-id',
+    redirect_uri: 'https://example.com/callback',
+    code_challenge: 'challenge-value',
+    code_challenge_method: 'S256',
+    authorization_endpoint: 'https://example.com/authorize',
+    global_auth_status: 'SIGNED_OUT',
     user_level_auth_status: 'SIGNED_IN',
   },
 } as unknown as DialToolsetDto;
@@ -52,9 +66,23 @@ describe('toolsets API adapter', () => {
       createdAt: 100,
       updatedAt: 200,
       allowedTools: ['lookup'],
+      features: {
+        mcp: true,
+        chatCompletion: false,
+        responsesApi: false,
+        allowResume: true,
+        parallelToolCalls: true,
+        maxTokensSupported: true,
+        reasoningEfforts: [],
+      },
       authSettings: {
-        authenticationType: 'API_KEY',
-        apiKeyHeader: 'X-API-Key',
+        authenticationType: 'OAUTH',
+        clientId: 'my-client-id',
+        redirectUri: 'https://example.com/callback',
+        codeChallenge: 'challenge-value',
+        codeChallengeMethod: 'S256',
+        authorizationEndpoint: 'https://example.com/authorize',
+        globalAuthStatus: 'SIGNED_OUT',
         userLevelAuthStatus: 'SIGNED_IN',
       },
     });
@@ -68,6 +96,7 @@ describe('toolsets API adapter', () => {
     const result = await listToolsets();
 
     expect(result.data[0].displayName).toBe('My toolset');
-    expect(result.data[0].authSettings?.authenticationType).toBe('API_KEY');
+    expect(result.data[0].authSettings?.authenticationType).toBe('OAUTH');
+    expect(result.data[0].authSettings?.codeChallenge).toBe('challenge-value');
   });
 });
