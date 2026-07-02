@@ -142,12 +142,7 @@ export const DeploymentsProvider = ({ children }: { children: ReactNode }) => {
         setSchemas(schemasResult.value.schemas ?? []);
       }
 
-      if (toolsetsResult.status === 'rejected') {
-        console.warn(
-          '[DeploymentsContext] Failed to load toolsets; catalog toolsets unavailable.',
-          toolsetsResult.reason,
-        );
-      } else {
+      if (toolsetsResult.status !== 'rejected') {
         setToolsets(sortToolsets(toolsetsResult.value.data ?? []));
       }
 

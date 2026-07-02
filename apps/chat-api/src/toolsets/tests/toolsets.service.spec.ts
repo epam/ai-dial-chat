@@ -33,8 +33,8 @@ const mockToolset: DialToolsetDto = {
 const mockList: DialToolsetListResponseDto = { data: [mockToolset] };
 const mockEnrichedToolset: DialToolsetDto = {
   ...mockToolset,
-  isInstalled: false,
-  isMy: false,
+  is_installed: false,
+  is_my: false,
 };
 const mockEnrichedList: DialToolsetListResponseDto = {
   data: [mockEnrichedToolset],
@@ -147,8 +147,8 @@ describe('ToolsetsService', () => {
       const result = await service.listToolsets('user1', 'token-abc', 'bucket');
       expect(result.data[0]).toMatchObject({
         id: 'my-toolset',
-        isInstalled: true,
-        isMy: false,
+        is_installed: true,
+        is_my: false,
       });
     });
 
@@ -169,8 +169,8 @@ describe('ToolsetsService', () => {
       const result = await service.listToolsets('user1', 'token-abc', 'bucket');
       expect(result.data[0]).toMatchObject({
         id: 'toolsets/bucket/my-toolset',
-        isInstalled: false,
-        isMy: true,
+        is_installed: false,
+        is_my: true,
       });
     });
 
@@ -355,8 +355,8 @@ describe('ToolsetsService', () => {
       );
       expect(result).toMatchObject({
         id: 'toolsets/bucket/my-toolset',
-        isInstalled: true,
-        isMy: true,
+        is_installed: true,
+        is_my: true,
       });
     });
 

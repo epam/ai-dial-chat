@@ -56,6 +56,8 @@ type RawDialToolsetDto = DialToolsetDto & {
   allowed_tools?: string[];
   features?: RawDialModelFeaturesDto;
   auth_settings?: RawToolsetAuthSettingsDto;
+  is_installed?: boolean;
+  is_my?: boolean;
 };
 
 const normalizeFeatures = (
@@ -161,6 +163,8 @@ const normalizeToolset = (toolset: RawDialToolsetDto): DialToolsetDto => {
     allowed_tools,
     features,
     auth_settings,
+    is_installed,
+    is_my,
     ...rest
   } = toolset;
 
@@ -176,6 +180,8 @@ const normalizeToolset = (toolset: RawDialToolsetDto): DialToolsetDto => {
     allowedTools: rest.allowedTools ?? allowed_tools,
     features: normalizeFeatures(features),
     authSettings: normalizeAuthSettings(rest.authSettings ?? auth_settings),
+    isInstalled: rest.isInstalled ?? is_installed,
+    isMy: rest.isMy ?? is_my,
   };
 };
 

@@ -195,8 +195,7 @@ const isVisibleToolset = (toolset: DialToolsetDto): boolean =>
   Boolean(toolset.id) && !toolset.id.includes(HIDDEN_FILE);
 
 const isMyToolset = (toolset: DialToolsetDto, bucket: string): boolean =>
-  Boolean(bucket) &&
-  (toolset.id ?? toolset.toolset).split('/').includes(bucket);
+  Boolean(bucket) && toolset.id.split('/').includes(bucket);
 
 @Injectable()
 export class ToolsetsService extends AppService {
@@ -210,19 +209,15 @@ export class ToolsetsService extends AppService {
     super(configService);
   }
 
-  private async enrichToolsetOwnership(
+  private enrichToolsetWithOwnership(
     toolset: DialToolsetDto,
-    accessToken: string,
+    installedIdSet: Set<string>,
     bucket: string,
-  ): Promise<DialToolsetDto> {
-    const { toolsets } = await this.userConfigService.getInstalledIds(
-      accessToken,
-      bucket,
-    );
+  ): DialToolsetDto {
     return {
       ...toolset,
-      isInstalled: toolsets.includes(toolset.id),
-      isMy: isMyToolset(toolset, bucket),
+      is_installed: installedIdSet.has(toolset.id),
+      is_my: isMyToolset(toolset, bucket),
     };
   }
 
@@ -234,11 +229,9 @@ export class ToolsetsService extends AppService {
     const { toolsets: installedIds } =
       await this.userConfigService.getInstalledIds(accessToken, bucket);
     const installedSet = new Set(installedIds);
-    return toolsets.map((toolset) => ({
-      ...toolset,
-      isInstalled: installedSet.has(toolset.id),
-      isMy: isMyToolset(toolset, bucket),
-    }));
+    return toolsets.map((toolset) =>
+      this.enrichToolsetWithOwnership(toolset, installedSet, bucket),
+    );
   }
 
   async listToolsets(
@@ -298,12 +291,23 @@ export class ToolsetsService extends AppService {
     toolsetName: string,
   ): Promise<DialToolsetDto> {
     const cacheKey = `toolsets:single:${userSub}:${toolsetName}`;
+
+    const enrich = async (toolset: DialToolsetDto): Promise<DialToolsetDto> => {
+      const { toolsets: installedIds } =
+        await this.userConfigService.getInstalledIds(accessToken, bucket);
+      return this.enrichToolsetWithOwnership(
+        toolset,
+        new Set(installedIds),
+        bucket,
+      );
+    };
+
     const cached = await this.cacheManager.get<DialToolsetDto>(cacheKey);
     if (cached) {
       this.logger.debug(
         `Cache hit for toolset "${toolsetName}" (sub: ${userSub})`,
       );
-      return this.enrichToolsetOwnership(cached, accessToken, bucket);
+      return enrich(cached);
     }
 
     try {
@@ -321,7 +325,7 @@ export class ToolsetsService extends AppService {
         result.data as unknown as DialToolsetDto,
       );
       await this.cacheManager.set(cacheKey, data, 60 * 1000);
-      return this.enrichToolsetOwnership(data, accessToken, bucket);
+      return enrich(data);
     } catch (err) {
       return handleDialFetchError(
         err,

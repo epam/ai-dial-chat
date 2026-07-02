@@ -337,13 +337,13 @@ export class DialToolsetDto {
   @ApiPropertyOptional({
     description: 'Whether this toolset is installed by the current user',
   })
-  isInstalled?: boolean;
+  is_installed?: boolean;
 
   @ApiPropertyOptional({
     description:
       'True when the toolset id/path belongs to the current session user bucket',
   })
-  isMy?: boolean;
+  is_my?: boolean;
 }
 
 export class DialToolsetListResponseDto {

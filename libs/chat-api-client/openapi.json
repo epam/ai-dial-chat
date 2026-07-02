@@ -3679,11 +3679,11 @@
           "auth_settings": {
             "$ref": "#/components/schemas/DialToolsetAuthSettingsDto"
           },
-          "isInstalled": {
+          "is_installed": {
             "type": "boolean",
             "description": "Whether this toolset is installed by the current user"
           },
-          "isMy": {
+          "is_my": {
             "type": "boolean",
             "description": "True when the toolset id/path belongs to the current session user bucket"
           }
