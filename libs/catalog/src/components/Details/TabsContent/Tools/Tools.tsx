@@ -60,10 +60,22 @@ export const Tools: FC<ToolsProps> = ({
               columns={['Name', 'Type', 'Required']}
               columnsTemplate="1fr 1fr auto"
               rows={tool.inputParams.map((p) => [
-                <code key="name" className={mergeClasses('border-none bg-transparent p-0 text-inherit', styles.code)}>
+                <code
+                  key="name"
+                  className={mergeClasses(
+                    'text-inherit border-none bg-transparent p-0',
+                    styles.code,
+                  )}
+                >
                   {p.name}
                 </code>,
-                <code key="type" className={mergeClasses('border-none bg-transparent p-0 text-inherit', styles.code)}>
+                <code
+                  key="type"
+                  className={mergeClasses(
+                    'text-inherit border-none bg-transparent p-0',
+                    styles.code,
+                  )}
+                >
                   {p.type}
                 </code>,
                 p.isRequired ? '✓' : '—',
@@ -77,7 +89,13 @@ export const Tools: FC<ToolsProps> = ({
             <DataGrid
               columns={['Key', 'Value']}
               rows={tool.annotations.map((ann) => [
-                <code key="key" className={mergeClasses('border-none bg-transparent p-0 text-inherit', styles.code)}>
+                <code
+                  key="key"
+                  className={mergeClasses(
+                    'text-inherit border-none bg-transparent p-0',
+                    styles.code,
+                  )}
+                >
                   {ann.key}
                 </code>,
                 ann.value,

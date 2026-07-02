@@ -3,7 +3,10 @@
  * ============================================================ */
 
 .filterBtn {
-  background-color: var(--cat-filter-btn-bg, #ffffff); /* TODO: connect to design token */
+  background-color: var(
+    --cat-filter-btn-bg,
+    #ffffff
+  ); /* TODO: connect to design token */
   border: 1px solid rgba(0, 0, 0, 0.05);
   transition:
     border-color 150ms ease,
@@ -62,7 +65,10 @@
  * ============================================================ */
 
 .overlay {
-  background: var(--cat-filter-overlay-bg, #ffffff); /* TODO: connect to design token */
+  background: var(
+    --cat-filter-overlay-bg,
+    #ffffff
+  ); /* TODO: connect to design token */
   border: 1px solid rgba(0, 0, 0, 0.05);
   box-shadow: 0 16px 40px rgba(16, 24, 40, 0.12);
 }
@@ -100,7 +106,10 @@
 
 .checkbox {
   border: 1.5px solid rgba(0, 0, 0, 0.12); /* stroke-hover */
-  background: var(--cat-filter-checkbox-bg, #ffffff); /* TODO: connect to design token */
+  background: var(
+    --cat-filter-checkbox-bg,
+    #ffffff
+  ); /* TODO: connect to design token */
   transition:
     border-color 150ms ease,
     background-color 150ms ease;

@@ -16,6 +16,15 @@ import { CodeLanguage } from '../../types/code-language';
 import { TableView, type TableViewRow } from '../TableView/TableView';
 import styles from './CatalogApiDetails.module.scss';
 
+const isSafeUrl = (url: string): boolean => {
+  try {
+    const { protocol } = new URL(url);
+    return protocol === 'https:' || protocol === 'http:';
+  } catch {
+    return false;
+  }
+};
+
 const LANGUAGE_LABELS: Record<CodeLanguage, string> = {
   [CodeLanguage.Python]: 'Python',
   [CodeLanguage.Curl]: 'cURL',
@@ -261,14 +270,22 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
                 styles.urlBox,
               )}
             >
-              <a
-                href={activeEndpoint.url}
-                target="_blank"
-                rel="noreferrer"
-                className={mergeClasses('flex-1 break-all', codeClassName)}
-              >
-                {activeEndpoint.url}
-              </a>
+              {isSafeUrl(activeEndpoint.url) ? (
+                <a
+                  href={activeEndpoint.url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={mergeClasses('flex-1 break-all', codeClassName)}
+                >
+                  {activeEndpoint.url}
+                </a>
+              ) : (
+                <span
+                  className={mergeClasses('flex-1 break-all', codeClassName)}
+                >
+                  {activeEndpoint.url}
+                </span>
+              )}
               <DialGhostIconButton
                 icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
                 aria-label={copyAriaLabel}
