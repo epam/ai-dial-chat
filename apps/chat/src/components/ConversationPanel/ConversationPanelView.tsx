@@ -402,15 +402,15 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [onRequestedFilterChange, onActiveFilterChange],
   );
 
-  const panelClassName = useMemo(() => {
-    if (isMobile) return mergeClasses('inset-y-0 start-0', isOpen && 'z-50');
-    if (isOpen)
-      return mergeClasses(
-        '[border-inline-end:none!important]',
-        '[--sb-bg-resize-handler:transparent]',
-      );
-    return undefined;
-  }, [isMobile, isOpen]);
+  let panelClassName: string | undefined;
+  if (isMobile) {
+    panelClassName = mergeClasses('inset-y-0 start-0', isOpen && 'z-50');
+  } else if (isOpen) {
+    panelClassName = mergeClasses(
+      '[--sb-border-inline-end:transparent]',
+      '[--sb-bg-resize-handler:transparent]',
+    );
+  }
 
   return (
     <>
