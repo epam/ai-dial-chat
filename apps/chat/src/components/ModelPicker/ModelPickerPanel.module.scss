@@ -1,9 +1,18 @@
-// Focus ring applied on top of the Tailwind !important base/hover overrides
-// (passed inline as containerClassName). Only focus-within needs CSS variable
-// references so it lives here instead of as an arbitrary Tailwind class.
-.searchFocus {
+.searchBar {
+  border-color: rgba(0, 0, 0, 0.05) !important;
+
+  @media (hover: hover) {
+    &:hover:not(:focus-within) {
+      border-color: rgba(0, 0, 0, 0.12) !important;
+    }
+  }
+
   &:focus-within {
-    border-color: var(--stroke-accent-primary, #7da4ff) !important;
-    box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff26) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--stroke-accent-primary, #7da4ff) 50%,
+      transparent
+    ) !important;
+    box-shadow: none !important;
   }
 }

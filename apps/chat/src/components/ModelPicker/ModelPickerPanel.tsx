@@ -116,8 +116,8 @@ const ModelPickerPanel: FC<Props> = ({
           ariaLabel={searchAriaLabel}
           onChange={setQuery}
           containerClassName={mergeClasses(
-            styles.searchFocus,
-            '!bg-transparent !border-transparent hover:!border-transparent !rounded-full !shadow-none',
+            styles.searchBar,
+            '!bg-transparent !rounded-full !shadow-none',
           )}
         />
       </div>
