@@ -1,7 +1,12 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { GhostButton } from '@epam/ai-dial-kit';
 import { DIAL_ICON_SIZE, DialDropdown } from '@epam/ai-dial-ui-kit';
-import { IconCheck, IconChevronDown, IconLayoutGrid, IconLayoutList } from '@tabler/icons-react';
+import {
+  IconCheck,
+  IconChevronDown,
+  IconLayoutGrid,
+  IconLayoutList,
+} from '@tabler/icons-react';
 import { FC } from 'react';
 import { CatalogSortOption, ToolbarProps } from '../../../models/toolbar-props';
 import { CatalogViewMode } from '../../../types/view-mode';
@@ -145,7 +150,9 @@ export const TitleRow: FC<TitleRowProps> = ({
               >
                 <GhostButton
                   label={activeLabel}
-                  iconAfter={<IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />}
+                  iconAfter={
+                    <IconChevronDown size={DIAL_ICON_SIZE.SM} aria-hidden />
+                  }
                 />
               </DialDropdown>
             </>

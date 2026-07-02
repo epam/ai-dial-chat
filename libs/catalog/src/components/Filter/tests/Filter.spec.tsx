@@ -83,7 +83,11 @@ vi.mock('@epam/ai-dial-kit', () => ({
     label: string;
     className?: string;
     onClick?: () => void;
-  }) => <button className={className} onClick={onClick}>{label}</button>,
+  }) => (
+    <button className={className} onClick={onClick}>
+      {label}
+    </button>
+  ),
 }));
 
 vi.mock('@tabler/icons-react', () => ({

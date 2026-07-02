@@ -10,7 +10,8 @@
 // Gradient and shadow are now handled globally by .dial-primary-solid-button.dial-primary-solid-button
 // in styles.scss. This class only needs to exist so the className prop can be set;
 // no extra declarations required.
-.gradientBtn {}
+.gradientBtn {
+}
 
 // ── Chevron ──────────────────────────────────────────────────────────────────
 

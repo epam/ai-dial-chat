@@ -55,7 +55,9 @@
 
 .card {
   background: var(--bg-layer-0, #fcfcfc);
-  box-shadow: 0 1px 3px rgba(16, 24, 40, 0.04), 0 6px 20px rgba(16, 24, 40, 0.05);
+  box-shadow:
+    0 1px 3px rgba(16, 24, 40, 0.04),
+    0 6px 20px rgba(16, 24, 40, 0.05);
   transition:
     transform 200ms ease-out,
     box-shadow 200ms ease-out;
@@ -63,7 +65,9 @@
   @media (hover: hover) {
     &:hover {
       transform: translateY(-3px);
-      box-shadow: 0 4px 10px rgba(16, 24, 40, 0.06), 0 18px 44px rgba(16, 24, 40, 0.10);
+      box-shadow:
+        0 4px 10px rgba(16, 24, 40, 0.06),
+        0 18px 44px rgba(16, 24, 40, 0.1);
     }
   }
 

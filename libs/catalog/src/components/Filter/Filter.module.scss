@@ -14,7 +14,9 @@
   border-radius: 12px;
   cursor: pointer;
   white-space: nowrap;
-  transition: border-color 150ms ease, box-shadow 150ms ease;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
 
   @media (hover: hover) {
     &:hover:not(:focus-visible) {
@@ -24,7 +26,11 @@
 
   &:focus-visible {
     outline: none;
-    border-color: color-mix(in srgb, var(--stroke-accent-primary, #7da4ff) 50%, transparent);
+    border-color: color-mix(
+      in srgb,
+      var(--stroke-accent-primary, #7da4ff) 50%,
+      transparent
+    );
     box-shadow: none;
   }
 }
@@ -34,7 +40,11 @@
 }
 
 .filterBtnOpen {
-  border-color: color-mix(in srgb, var(--stroke-accent-primary, #7da4ff) 50%, transparent);
+  border-color: color-mix(
+    in srgb,
+    var(--stroke-accent-primary, #7da4ff) 50%,
+    transparent
+  );
 }
 
 .filterBtnLabel {
@@ -127,7 +137,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: border-color 150ms ease, background-color 150ms ease;
+  transition:
+    border-color 150ms ease,
+    background-color 150ms ease;
 
   @media (prefers-reduced-motion: reduce) {
     transition: none;

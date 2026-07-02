@@ -4,7 +4,12 @@ import {
   Highlight,
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
-import { GhostButton, GhostIconButton, GradientCheckIcon, SearchBar } from '@epam/ai-dial-kit';
+import {
+  GhostButton,
+  GhostIconButton,
+  GradientCheckIcon,
+  SearchBar,
+} from '@epam/ai-dial-kit';
 import { DialEllipsisTooltip, DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
 import { type FC, type KeyboardEvent, useMemo, useState } from 'react';

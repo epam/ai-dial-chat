@@ -172,7 +172,9 @@ aside[class~='dial-body-text'] > [class~='h-12'][class~='shrink-0'] {
   border-bottom: none !important;
 }
 
-aside[class~='dial-body-text'] > [class~='h-12'][class~='shrink-0'] > span:first-child {
+aside[class~='dial-body-text']
+  > [class~='h-12'][class~='shrink-0']
+  > span:first-child {
   font-size: 22px !important;
   line-height: 32px !important;
   font-weight: 600 !important;
@@ -283,7 +285,8 @@ aside[class~='dial-body-text'] [data-cp-search-wrapper] > div {
 
 // Filter pill row — remove track background, use flat spaced layout.
 // ui-kit v0.11+ uses flex-nowrap + rounded-full for the row (was flex-wrap).
-aside[class~='dial-body-text'] [class~='flex-nowrap'][class~='gap-2'][class~='rounded-full'] {
+aside[class~='dial-body-text']
+  [class~='flex-nowrap'][class~='gap-2'][class~='rounded-full'] {
   gap: 4px !important;
   padding: 0 !important;
   background-color: transparent !important;
@@ -315,13 +318,13 @@ aside[class~='dial-body-text'] .cp-filter-tab {
 }
 
 // Active pill — very subtle tint, no border, secondary text
-aside[class~='dial-body-text'] .cp-filter-tab[class~='bg-accent-primary-alpha'] {
+aside[class~='dial-body-text']
+  .cp-filter-tab[class~='bg-accent-primary-alpha'] {
   background-color: rgba(39, 100, 217, 0.07) !important;
   border-color: transparent !important;
   color: var(--text-secondary, #64748b) !important;
   box-shadow: none !important;
 }
-
 
 // Group section headers — muted tertiary colour, reduced prominence
 aside[class~='dial-body-text'] [class~='uppercase'][class~='tracking-wider'] {
@@ -350,7 +353,6 @@ aside[class~='dial-body-text'] li > a > button[aria-current='page'] {
   background: var(--bg-layer-2, #eeeef0) !important;
   border-inline-start-color: transparent !important;
 }
-
 
 // Composer input — match catalog search bar radius (not exposed via ci- vars)
 [role='region'] [class~='rounded-xl'][class~='border'] {
@@ -399,4 +401,3 @@ aside[class~='dial-body-text']
 .dial-small-text {
   line-height: 24px;
 }
-
