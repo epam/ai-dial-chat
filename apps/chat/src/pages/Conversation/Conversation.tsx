@@ -53,6 +53,7 @@ import { ROUTES } from '../../types/routes';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
+import { isAwaitingGenerationResume } from '../../utils/generation-resume';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 interface Props {
@@ -269,6 +270,10 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   // loadConversation) firing two concurrent generations, which the backend
   // rejects with 409 and surfaces as a spurious "Something went wrong" error.
   const autoStartedPathsRef = useRef<Set<string>>(new Set());
+  // Conversation paths whose resume-watch (for a still-generating placeholder
+  // found on load) has already been kicked off — same StrictMode double-mount
+  // guard as autoStartedPathsRef, applied to the resume branch instead.
+  const resumeWatchStartedPathsRef = useRef<Set<string>>(new Set());
 
   const handleStopError = useCallback(() => {
     showNotification({
@@ -277,12 +282,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     });
   }, [showNotification, t]);
 
-  const { startStream, handleStop, isStreaming } = useConversationStream({
-    conversationId,
-    setConversation,
-    conversationRef,
-    onStopError: handleStopError,
-  });
+  const { startStream, handleStop, resumeIfAwaitingGeneration, isStreaming } =
+    useConversationStream({
+      conversationId,
+      setConversation,
+      conversationRef,
+      onStopError: handleStopError,
+    });
 
   useEffect(() => {
     return () => {
@@ -397,6 +403,18 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           }
         } else {
           setConversation(result);
+
+          // A hard refresh mid-generation loads the backend's empty
+          // start-state placeholder (no incremental save exists to show
+          // partial content). Watch for its resolution instead of leaving a
+          // static empty bubble — see resumeIfAwaitingGeneration.
+          if (isAwaitingGenerationResume(result)) {
+            const conversationPath = getConversationPath(id);
+            if (!resumeWatchStartedPathsRef.current.has(conversationPath)) {
+              resumeWatchStartedPathsRef.current.add(conversationPath);
+              resumeIfAwaitingGeneration(id, result);
+            }
+          }
         }
       } catch {
         navigate(ROUTES.Root);
@@ -408,6 +426,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       navigate,
       restoreSelectedItemId,
       startStream,
+      resumeIfAwaitingGeneration,
       updateConversationTitle,
       getGeneration,
     ],

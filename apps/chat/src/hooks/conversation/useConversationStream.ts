@@ -18,9 +18,19 @@ import {
   stopCompletion,
   streamCompletion,
 } from '../../server-api/chat-stream.api';
-import { getConversation } from '../../server-api/conversations.api';
+import {
+  getConversation,
+  watchConversation,
+} from '../../server-api/conversations.api';
 import { applyChunkToMessages } from '../../utils/apply-chunk';
 import { getConversationPath } from '../../utils/conversation-path';
+import { isAwaitingGenerationResume } from '../../utils/generation-resume';
+
+// Safety-net only: the primary completion signal is the `/watch` SSE event
+// fired when the backend's finalize() save happens, independent of how long
+// the generation itself takes. This bounds the wait if that event is ever
+// missed (e.g. a backend crash mid-generation that never reaches finalize()).
+const GENERATION_RESUME_WATCH_TIMEOUT_MS = 5 * 60 * 1000;
 
 interface Params {
   conversationId: string | undefined;
@@ -40,6 +50,10 @@ interface Result {
     mode?: SendCompletionDtoModeEnum,
   ) => void;
   handleStop: () => void;
+  resumeIfAwaitingGeneration: (
+    currentConversationId: string,
+    conversation: Conversation,
+  ) => void;
   isStreaming: boolean;
   hasStreamError: boolean;
   setHasStreamError: Dispatch<SetStateAction<boolean>>;
@@ -227,6 +241,116 @@ export const useConversationStream = ({
     );
   }, [conversationId, onStopError]);
 
+  // A hard refresh mid-generation loads a conversation whose last message is
+  // the backend's empty start-state placeholder (no incremental save exists
+  // to show partial content). Rather than leaving that static and forever
+  // empty, mark the path as streaming — for free, this reuses the same
+  // typing indicator and the isStreaming guards already in
+  // useConversationHandlers (regenerate/edit/starter no-op while streaming)
+  // — and watch the conversation's existing resource-update SSE channel
+  // until the backend's finalize() save resolves the placeholder.
+  const resumeIfAwaitingGeneration = useCallback(
+    (currentConversationId: string, conversation: Conversation): void => {
+      if (!isAwaitingGenerationResume(conversation)) return;
+
+      const conversationPath = getConversationPath(currentConversationId);
+      addStreamingPath(conversationPath);
+
+      const controller = new AbortController();
+
+      const finish = (result?: Conversation) => {
+        removeStreamingPath(conversationPath);
+        if (result && isPathDisplayed(conversationPath)) {
+          setConversation(result);
+          conversationRef.current = result;
+        }
+      };
+
+      const finalCheck = async () => {
+        try {
+          const result = (await getConversation(
+            conversationPath,
+          )) as Conversation;
+          finish(result);
+        } catch {
+          finish();
+        }
+      };
+
+      const run = async () => {
+        let stream: ReadableStream<Uint8Array>;
+        try {
+          stream = await watchConversation(conversationPath, controller.signal);
+        } catch {
+          await finalCheck();
+          return;
+        }
+
+        const reader = stream.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
+
+        const timeoutId = window.setTimeout(() => {
+          controller.abort();
+        }, GENERATION_RESUME_WATCH_TIMEOUT_MS);
+
+        try {
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() ?? '';
+
+            for (const line of lines) {
+              const trimmed = line.trim();
+              if (!trimmed.startsWith('data:')) continue;
+
+              const data = trimmed.slice(5).trim();
+              let event: { action?: string } | null = null;
+              try {
+                event = JSON.parse(data) as { action?: string };
+              } catch {
+                continue;
+              }
+
+              if (event?.action !== 'UPDATE') continue;
+
+              try {
+                const result = (await getConversation(
+                  conversationPath,
+                )) as Conversation;
+                if (!isAwaitingGenerationResume(result)) {
+                  finish(result);
+                  return;
+                }
+              } catch {
+                // Keep watching until stream ends or timeout.
+              }
+            }
+          }
+        } catch {
+          // AbortError on timeout, or unexpected stream error — fall through
+          // to the final check below.
+        } finally {
+          clearTimeout(timeoutId);
+          reader.releaseLock();
+        }
+
+        // Timed out or the stream ended without a qualifying event: do one
+        // last check before giving up, so Regenerate/edit become available
+        // again either way.
+        await finalCheck();
+      };
+
+      void run();
+    },
+    // setConversation and conversationRef are stable refs — intentionally omitted
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [addStreamingPath, removeStreamingPath, isPathDisplayed],
+  );
+
   // Reflects only the currently-displayed conversation: a stream running in a
   // different chat must not show this chat as generating.
   const isStreaming =
@@ -236,6 +360,7 @@ export const useConversationStream = ({
   return {
     startStream,
     handleStop,
+    resumeIfAwaitingGeneration,
     isStreaming,
     hasStreamError,
     setHasStreamError,
