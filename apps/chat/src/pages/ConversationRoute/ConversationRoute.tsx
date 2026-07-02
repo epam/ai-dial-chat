@@ -30,7 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
-import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
+import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
@@ -511,10 +511,7 @@ const ConversationRoute: FC = () => {
               firstName || undefined,
             )}
             placeholder={t(ChatI18nKeys.Placeholder)}
-            styles={{
-              ...CONVERSATION_INPUT_STYLES,
-              typography: { welcomeClassName: 'dial-display2-text' },
-            }}
+            styles={CONVERSATION_ROUTE_INPUT_STYLES}
             deployments={deploymentItems}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}

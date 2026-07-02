@@ -37,6 +37,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
+import { CONVERSATION_VIEW_INPUT_STYLES } from '../../constants/input-styles';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -58,7 +59,6 @@ import { useIsMobile } from '../../hooks/breakpoint/useBreakpoint';
 import { useKeyboardShortcutPreference } from '../../hooks/keyboard-shortcut/useKeyboardShortcutPreference';
 import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { usePageFileDrag } from '../../hooks/usePageFileDrag';
-import { CONVERSATION_INPUT_STYLES } from '../../constants/input-styles';
 import { dialFilesToAttachments } from '../../utils/dial-file-to-attachment';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
@@ -639,12 +639,7 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
-                styles={{
-                  ...CONVERSATION_INPUT_STYLES,
-                  typography: {
-                    input: { fontClassName: 'dial-body-paragraph-text' },
-                  },
-                }}
+                styles={CONVERSATION_VIEW_INPUT_STYLES}
                 onSend={onSend}
                 onUploadAttachment={onUploadAttachment}
                 onStop={onStop}

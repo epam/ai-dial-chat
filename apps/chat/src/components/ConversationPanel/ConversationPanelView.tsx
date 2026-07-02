@@ -5,6 +5,7 @@ import {
   FilterTab,
   type ConversationHistoryItem,
   type ConversationMove,
+  type ConversationPanelStyles,
 } from '@epam/ai-dial-conversation-panel';
 import {
   ConfirmationPopupVariant,
@@ -53,6 +54,17 @@ import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
 import DeleteAllConversationsAction from './DeleteAllConversationsAction';
 import { getConversationSource } from './get-conversation-source';
+
+const PANEL_STYLES: ConversationPanelStyles = {
+  typography: {
+    fontClassName: 'dial-body-text',
+    itemIconBadgeClassName: 'rounded-lg',
+    newChatLabelClassName: 'dial-small-text',
+    groupHeaderClassName: 'dial-tiny-semi-text uppercase tracking-wider',
+    tabClassName: 'dial-tiny-semi-text cp-filter-tab',
+  },
+  colors: { border: 'rgba(0, 0, 0, 0.016)', text: 'var(--text-primary)' },
+};
 
 interface ConversationPanelViewProps {
   isOpen: boolean;
@@ -436,17 +448,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onToggle={isMobile ? onClose : undefined}
         closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
         className={panelClassName}
-        styles={{
-          typography: {
-            fontClassName: 'dial-body-text',
-            itemIconBadgeClassName: 'rounded-lg',
-            newChatLabelClassName: 'dial-small-text',
-            groupHeaderClassName:
-              'dial-tiny-semi-text uppercase tracking-wider',
-            tabClassName: 'dial-tiny-semi-text cp-filter-tab',
-          },
-          colors: { border: '#00000004', text: 'var(--text-primary)' },
-        }}
+        styles={PANEL_STYLES}
         resizable={!isMobile}
         defaultPanelWidth={defaultPanelWidth}
         maxPanelWidth={maxPanelWidth}
