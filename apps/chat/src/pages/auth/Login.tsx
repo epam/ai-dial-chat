@@ -12,7 +12,6 @@ import { useUser } from '../../context/auth/UserContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { getProviders } from '../../server-api/auth.api';
-import { ThemeId } from '../../types/theme-id';
 import { getIconPath } from '../../utils/icon-path';
 
 const getProviderIconUrl = (id: string) =>
@@ -66,8 +65,7 @@ const LoginPage: FC = () => {
   useUser();
   useAuthRedirect();
 
-  const { currentThemeFavicon, currentTheme } = useTheme();
-  const themeSlug = currentTheme === ThemeId.Light ? 'light' : 'dark';
+  const { currentThemeFavicon } = useTheme();
   const [providers, setProviders] = useState<ProviderInfoDto[] | null>(null);
   const [hasError, setHasError] = useState(false);
 
