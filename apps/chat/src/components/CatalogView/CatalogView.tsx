@@ -17,10 +17,15 @@ import {
 } from '../../constants/translation-keys';
 import { useDeployments } from '../../context/DeploymentsContext';
 import { useNotification } from '../../context/NotificationContext';
-import useFavoriteApplications from '../../hooks/useFavoriteApplications/useFavoriteApplications';
+import useFavoriteApplications, {
+  FavoriteEntityType,
+} from '../../hooks/useFavoriteApplications/useFavoriteApplications';
 import { AppsEditorQuery, AppsEditorStep } from '../../types/apps-editor';
 import { ROUTES } from '../../types/routes';
-import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
+import {
+  mapDeploymentToCatalogItem,
+  mapToolsetToCatalogItem,
+} from '../../utils/map-deployment-to-catalog-item';
 
 const CatalogView: FC = () => {
   const { t } = useTranslation();
@@ -30,6 +35,7 @@ const CatalogView: FC = () => {
     items: deployments,
     isLoading: isDeploymentsLoading,
     schemas,
+    toolsets,
   } = useDeployments();
   const {
     favoriteIds,
@@ -40,11 +46,15 @@ const CatalogView: FC = () => {
   const isLoading = isDeploymentsLoading || isFavoritesLoading;
 
   const catalogItems = useMemo(
-    () =>
-      deployments.map((d) =>
+    () => [
+      ...deployments.map((d) =>
         mapDeploymentToCatalogItem(d, favoriteIds, undefined, t),
       ),
-    [deployments, favoriteIds, t],
+      ...toolsets.map((toolset) =>
+        mapToolsetToCatalogItem(toolset, favoriteIds),
+      ),
+    ],
+    [deployments, favoriteIds, t, toolsets],
   );
 
   const favorites = useMemo(
@@ -63,8 +73,15 @@ const CatalogView: FC = () => {
   const onToggleFavorite = useCallback(
     (id: string, isFavorite: boolean) => {
       if (isLoading) return;
-      toggleFavorite(id, isFavorite);
-      const name = catalogItems.find((item) => item.id === id)?.name ?? id;
+      const item = catalogItems.find((catalogItem) => catalogItem.id === id);
+      toggleFavorite(
+        id,
+        isFavorite,
+        item?.type === CatalogEntityType.Toolset
+          ? FavoriteEntityType.Toolset
+          : FavoriteEntityType.Deployment,
+      );
+      const name = item?.name ?? id;
 
       showNotification({
         variant: isFavorite
@@ -147,6 +164,7 @@ const CatalogView: FC = () => {
         tabLabels: {
           [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),
           [CatalogEntityType.Application]: t(CatalogI18nKeys.TabApplications),
+          [CatalogEntityType.Toolset]: t(CatalogI18nKeys.TabToolsets),
         },
       }}
       detailsTexts={{

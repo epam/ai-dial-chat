@@ -101,7 +101,8 @@
     "favoriteRemoved": "\"{{name}}\" removed from Favorites",
     "tab": {
       "models": "Models",
-      "applications": "Agents"
+      "applications": "Agents",
+      "toolsets": "Toolsets"
     },
     "folder": {
       "personal": "Personal",

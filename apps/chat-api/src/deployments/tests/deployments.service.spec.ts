@@ -178,7 +178,7 @@ describe('DeploymentsService', () => {
           id: 'embed-model',
           displayName: 'Embed',
           type: 'model',
-          interfaces: ['embeddings'],
+          interfaces: ['embedding'],
         },
         { id: 'no-iface', displayName: 'None', type: 'model' },
       ];

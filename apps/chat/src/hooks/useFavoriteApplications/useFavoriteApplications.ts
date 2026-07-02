@@ -2,12 +2,22 @@ import { useCallback, useEffect, useState } from 'react';
 import {
   getUserConfig,
   updateInstalledDeployment,
+  updateInstalledToolset,
 } from '../../server-api/user-config.api';
+
+export enum FavoriteEntityType {
+  Deployment = 'deployment',
+  Toolset = 'toolset',
+}
 
 interface UseFavoriteApplicationsResult {
   favoriteIds: ReadonlySet<string>;
   isLoading: boolean;
-  toggleFavorite: (id: string, isFavorite: boolean) => void;
+  toggleFavorite: (
+    id: string,
+    isFavorite: boolean,
+    entityType?: FavoriteEntityType,
+  ) => void;
 }
 
 /** Loads and persists catalog application favorites via the user config API. */
@@ -24,7 +34,12 @@ const useFavoriteApplications = (): UseFavoriteApplicationsResult => {
       try {
         const config = await getUserConfig();
         if (!cancelled.value) {
-          setFavoriteIds(new Set(config.deployments.installed));
+          setFavoriteIds(
+            new Set([
+              ...(config.deployments?.installed ?? []),
+              ...(config.toolsets?.installed ?? []),
+            ]),
+          );
         }
       } catch {
         // silently fall back to empty set
@@ -42,29 +57,41 @@ const useFavoriteApplications = (): UseFavoriteApplicationsResult => {
     };
   }, []);
 
-  const toggleFavorite = useCallback((id: string, isFavorite: boolean) => {
-    setFavoriteIds((prev) => {
-      const next = new Set(prev);
-      if (isFavorite) {
-        next.add(id);
-      } else {
-        next.delete(id);
-      }
-      return next;
-    });
-
-    updateInstalledDeployment(id, isFavorite).catch(() => {
+  const toggleFavorite = useCallback(
+    (
+      id: string,
+      isFavorite: boolean,
+      entityType = FavoriteEntityType.Deployment,
+    ) => {
       setFavoriteIds((prev) => {
-        const restored = new Set(prev);
+        const next = new Set(prev);
         if (isFavorite) {
-          restored.delete(id);
+          next.add(id);
         } else {
-          restored.add(id);
+          next.delete(id);
         }
-        return restored;
+        return next;
       });
-    });
-  }, []);
+
+      const updateInstalled =
+        entityType === FavoriteEntityType.Toolset
+          ? updateInstalledToolset
+          : updateInstalledDeployment;
+
+      updateInstalled(id, isFavorite).catch(() => {
+        setFavoriteIds((prev) => {
+          const restored = new Set(prev);
+          if (isFavorite) {
+            restored.delete(id);
+          } else {
+            restored.add(id);
+          }
+          return restored;
+        });
+      });
+    },
+    [],
+  );
 
   return { favoriteIds, isLoading, toggleFavorite };
 };
