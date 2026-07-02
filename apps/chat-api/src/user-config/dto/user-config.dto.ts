@@ -19,6 +19,8 @@ export interface UserConfig {
   conversations: ConversationsConfig;
   toolsets: ToolsetsConfig;
   deployments: DeploymentsConfig;
+  /** Internal flag: set after legacy installation files have been consolidated once. */
+  legacyMigrationDone?: boolean;
 }
 
 export class ConversationsConfigDto implements ConversationsConfig {
@@ -139,6 +141,9 @@ export const migrateConfig = (raw: unknown): UserConfig => {
       ? deploymentsSelectedIdRaw
       : null;
 
+  const legacyMigrationDone =
+    obj['legacyMigrationDone'] === true ? true : undefined;
+
   return {
     version: CURRENT_CONFIG_VERSION,
     conversations: { pinnedIds },
@@ -147,5 +152,6 @@ export const migrateConfig = (raw: unknown): UserConfig => {
       installed: deploymentsInstalled,
       selectedId: deploymentsSelectedId,
     },
+    legacyMigrationDone,
   };
 };
