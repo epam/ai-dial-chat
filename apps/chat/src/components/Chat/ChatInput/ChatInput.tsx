@@ -70,7 +70,6 @@ export const ChatInput = Inversify.register(
         textContent?: string,
         selection?: { start: number; end: number },
       ) => {
-        if (canAttachFiles) uploadFiles(files);
         if (textContent) {
           dispatch(
             ChatActions.setInputContent(
@@ -84,7 +83,7 @@ export const ChatInput = Inversify.register(
                 : textContent,
             ),
           );
-        }
+        } else if (canAttachFiles) uploadFiles(files);
       },
       [canAttachFiles, chatInputContent, dispatch, uploadFiles],
     );
