@@ -129,7 +129,7 @@ export const ModelSelectorControl: FC<Props> = ({
         renderOverlay={() =>
           modelPickerOverlay(() => onPickerOpenChange?.(false))
         }
-        listClassName="cp-dropdown-overlay"
+        listClassName="cp-dropdown-overlay !w-[480px]"
       >
         <button
           type="button"

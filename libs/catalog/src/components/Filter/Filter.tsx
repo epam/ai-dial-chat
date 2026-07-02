@@ -189,10 +189,12 @@ export const Filter: FC<FilterProps> = ({
       placement="bottom-start"
       open={isOpen}
       onOpenChange={handleOpenChange}
+      listClassName="rounded-xl"
       renderOverlay={() => (
         <div
           role="menu"
           aria-label={defaultLabel}
+          tabIndex={-1}
           className={styles.overlay}
           onKeyDown={handleMenuKeyDown}
         >

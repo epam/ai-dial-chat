@@ -146,7 +146,7 @@ export const ModelPickerPanel: FC<Props> = ({
                     <DialEllipsisTooltip text={item.name} />
                   )}
                   {item.version != null && (
-                    <span className="dial-tiny-text flex-shrink-0 text-secondary">
+                    <span className="dial-tiny-text min-w-0 truncate text-secondary">
                       {item.version}
                     </span>
                   )}

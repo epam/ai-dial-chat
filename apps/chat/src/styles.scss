@@ -32,11 +32,6 @@
   }
 }
 
-// DS token overrides
-.dial-small-text {
-  line-height: 24px;
-}
-
 // ── Shared dropdown overlay style ────────────────────────────────────────────
 // Applied via listClassName="cp-dropdown-overlay" on every DialDropdown to match
 // the Filter overlay spec: 12px radius, 1px hairline border, large ambient shadow,
@@ -277,7 +272,11 @@ aside[class~='dial-body-text'] [data-cp-search-wrapper] > div {
   }
 
   &:focus-within {
-    border-color: rgba(125, 164, 255, 0.5) !important;
+    border-color: color-mix(
+      in srgb,
+      var(--stroke-accent-primary, #7da4ff) 50%,
+      transparent
+    ) !important;
     box-shadow: none !important;
   }
 }
@@ -324,9 +323,10 @@ aside[class~='dial-body-text'] .cp-filter-tab[class~='bg-accent-primary-alpha'] 
 }
 
 
-// Group section headers — muted tertiary colour
+// Group section headers — muted tertiary colour, reduced prominence
 aside[class~='dial-body-text'] [class~='uppercase'][class~='tracking-wider'] {
   color: var(--text-tertiary, #808898) !important;
+  opacity: 0.55;
 }
 
 // Chat row — 8px radius, correct text color, vertical padding.
@@ -348,7 +348,7 @@ aside[class~='dial-body-text']
 
 aside[class~='dial-body-text'] li > a > button[aria-current='page'] {
   background: var(--bg-layer-2, #eeeef0) !important;
-  border-left-color: transparent !important;
+  border-inline-start-color: transparent !important;
 }
 
 
@@ -374,26 +374,6 @@ aside[class~='dial-body-text'] li > a > button[aria-current='page'] {
   }
 }
 
-// libs\sidebar\src\components\Header\Header.tsx
-aside[class~='dial-body-text'] > [class~='h-12'][class~='shrink-0'] {
-  height: 64px !important;
-}
-
-// libs\sidebar\src\components\Header\Header.tsx
-aside[class~='dial-body-text']
-  > [class~='h-12'][class~='shrink-0']
-  > span:first-child {
-  font-size: 22px !important;
-  line-height: 32px !important;
-  font-weight: 600 !important;
-}
-
-// apps\chat\src\components\ModelPicker\ModelPickerPanel.tsx
-// Group section headers ("MY CHATS", "ORGANIZATION") — subtle, reduced prominence
-aside[class~='dial-body-text'] [class~='uppercase'][class~='tracking-wider'] {
-  opacity: 0.55;
-}
-
 // Active chat row — 3px brand-gradient start-edge indicator bar
 // Anchor: aria-current="page" on the button; the <a class="contents"> sits between li and button.
 aside[class~='dial-body-text']
@@ -403,7 +383,8 @@ aside[class~='dial-body-text']
   inset-block: 4px;
   inset-inline-start: 0;
   width: 3px;
-  border-radius: 0 2px 2px 0;
+  border-start-end-radius: 2px;
+  border-end-end-radius: 2px;
   background: linear-gradient(180deg, #37babc 0%, #5c8dea 48%, #a972ff 100%);
 }
 
@@ -418,3 +399,4 @@ aside[class~='dial-body-text']
 .dial-small-text {
   line-height: 24px;
 }
+
