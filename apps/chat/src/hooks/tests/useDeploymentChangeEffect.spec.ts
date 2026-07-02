@@ -19,6 +19,7 @@ const makeDeploymentsContext = (selectedItemId: string | null) => ({
   isLoading: false,
   error: null,
   schemas: [],
+  toolsets: [],
 });
 
 describe('useDeploymentChangeEffect', () => {

@@ -471,7 +471,7 @@
               "type": "array",
               "items": {
                 "type": "string",
-                "enum": ["chat", "embeddings", "mcp", "custom_ui", "all"]
+                "enum": ["chat", "embedding", "mcp", "custom_ui", "all"]
               }
             }
           }
@@ -3333,6 +3333,33 @@
           "mcp": {
             "type": "boolean",
             "example": false
+          },
+          "chat_completion": {
+            "type": "boolean",
+            "example": false
+          },
+          "responses_api": {
+            "type": "boolean",
+            "example": false
+          },
+          "max_tokens_supported": {
+            "type": "boolean",
+            "example": true
+          },
+          "max_completion_tokens_supported": {
+            "type": "boolean",
+            "example": false
+          },
+          "custom_temperature_supported": {
+            "type": "boolean",
+            "example": true
+          },
+          "reasoning_efforts": {
+            "example": [],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         }
       },
@@ -3549,6 +3576,10 @@
             "type": "string",
             "example": ""
           },
+          "code_challenge": {
+            "type": "string",
+            "example": "base64-url-code-challenge"
+          },
           "code_challenge_method": {
             "type": "string",
             "example": "S256"
@@ -3635,6 +3666,9 @@
             "type": "number",
             "example": 1672534900
           },
+          "features": {
+            "$ref": "#/components/schemas/DialModelFeaturesDto"
+          },
           "endpoint": {
             "type": "string",
             "example": "https://my-toolset.example.com/mcp"
@@ -3652,6 +3686,14 @@
           },
           "auth_settings": {
             "$ref": "#/components/schemas/DialToolsetAuthSettingsDto"
+          },
+          "is_installed": {
+            "type": "boolean",
+            "description": "Whether this toolset is installed by the current user"
+          },
+          "is_my": {
+            "type": "boolean",
+            "description": "True when the toolset id/path belongs to the current session user bucket"
           }
         },
         "required": ["id", "toolset"]

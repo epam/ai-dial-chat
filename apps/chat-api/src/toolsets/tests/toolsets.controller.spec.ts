@@ -23,7 +23,11 @@ const mockToolset: DialToolsetDto = {
 };
 const mockList: DialToolsetListResponseDto = { data: [mockToolset] };
 
-const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
+const TEST_USER = {
+  sub: 'user-123',
+  at: 'test-access-token',
+  bucket: 'user-bucket',
+};
 
 async function buildApp(
   service: unknown,
@@ -90,6 +94,7 @@ describe('ToolsetsController (integration)', () => {
       expect(service.listToolsets).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        TEST_USER.bucket,
       );
     });
 
@@ -114,6 +119,7 @@ describe('ToolsetsController (integration)', () => {
       expect(service.getToolset).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        TEST_USER.bucket,
         'my-toolset',
       );
     });
