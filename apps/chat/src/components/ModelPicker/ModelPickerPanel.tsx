@@ -122,7 +122,10 @@ export const ModelPickerPanel: FC<Props> = ({
           placeholder={searchPlaceholder}
           ariaLabel={searchAriaLabel}
           onChange={setQuery}
-          containerClassName={styles.sidebarSearch}
+          containerClassName={mergeClasses(
+            styles.searchFocus,
+            '!bg-transparent !border-transparent hover:!border-transparent !rounded-full !shadow-none',
+          )}
         />
       </div>
 

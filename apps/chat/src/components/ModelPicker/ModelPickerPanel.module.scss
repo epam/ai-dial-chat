@@ -1,15 +1,7 @@
-// Overrides SearchBar's default filled/bordered look to match the sidebar SearchInput:
-// pill radius, transparent border at rest, no background fill, accent focus ring.
-.sidebarSearch {
-  background-color: transparent !important;
-  border-color: transparent !important;
-  box-shadow: none !important;
-  border-radius: 9999px !important;
-
-  &:hover {
-    border-color: transparent !important;
-  }
-
+// Focus ring applied on top of the Tailwind !important base/hover overrides
+// (passed inline as containerClassName). Only focus-within needs CSS variable
+// references so it lives here instead of as an arbitrary Tailwind class.
+.searchFocus {
   &:focus-within {
     border-color: var(--stroke-accent-primary, #7da4ff) !important;
     box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff26) !important;
