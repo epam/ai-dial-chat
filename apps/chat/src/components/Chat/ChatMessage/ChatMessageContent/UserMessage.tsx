@@ -655,13 +655,6 @@ export const UserMessage = memo(function UserMessage({
       textContent?: string,
       selection?: { start: number; end: number },
     ) => {
-      if (canAttachFiles) {
-        uploadPastedFiles(files)?.then((newFiles) => {
-          setNewEditableAttachmentsIds((ids) =>
-            uniq(ids.concat(newFiles.map(({ id }) => id))),
-          );
-        });
-      }
       if (textContent) {
         setMessageContent((prev) =>
           selection
@@ -673,6 +666,12 @@ export const UserMessage = memo(function UserMessage({
               )
             : textContent,
         );
+      } else if (canAttachFiles) {
+        uploadPastedFiles(files)?.then((newFiles) => {
+          setNewEditableAttachmentsIds((ids) =>
+            uniq(ids.concat(newFiles.map(({ id }) => id))),
+          );
+        });
       }
     },
     [uploadPastedFiles, canAttachFiles],
