@@ -189,13 +189,16 @@ export const Filter: FC<FilterProps> = ({
       placement="bottom-start"
       open={isOpen}
       onOpenChange={handleOpenChange}
-      listClassName="rounded-xl"
+      listClassName="!bg-transparent !shadow-none !p-0"
       renderOverlay={() => (
         <div
           role="menu"
           aria-label={defaultLabel}
           tabIndex={-1}
-          className={styles.overlay}
+          className={mergeClasses(
+            'min-w-[360px] rounded-xl p-[6px]',
+            styles.overlay,
+          )}
           onKeyDown={handleMenuKeyDown}
         >
           {/* My Apps row */}
@@ -207,6 +210,7 @@ export const Filter: FC<FilterProps> = ({
               rowRefs.current[0] = el;
             }}
             className={mergeClasses(
+              'flex cursor-pointer select-none items-center gap-3 rounded-lg px-[10px] py-[9px] outline-none',
               styles.row,
               pendingMyApps && styles.rowChecked,
             )}
@@ -215,6 +219,7 @@ export const Filter: FC<FilterProps> = ({
           >
             <span
               className={mergeClasses(
+                'flex size-5 shrink-0 items-center justify-center rounded-[6px]',
                 styles.checkbox,
                 pendingMyApps && styles.checkboxChecked,
               )}
@@ -225,11 +230,21 @@ export const Filter: FC<FilterProps> = ({
 
           {topics.length > 0 && (
             <>
-              <div role="separator" className={styles.divider} aria-hidden />
-              <div className={styles.sectionLabel} aria-hidden>
+              <div
+                role="separator"
+                className={mergeClasses('my-1 h-px', styles.divider)}
+                aria-hidden
+              />
+              <div
+                className={mergeClasses(
+                  'px-[10px] pb-1 pt-[10px] uppercase tracking-[0.06em]',
+                  styles.sectionLabel,
+                )}
+                aria-hidden
+              >
                 {topicsLabel}
               </div>
-              <div className={styles.topicsList}>
+              <div className="max-h-[220px] overflow-y-auto">
                 {topics.map((topic, i) => {
                   const isChecked = pendingChecked.has(topic);
                   const idx = i + 1;
@@ -245,6 +260,7 @@ export const Filter: FC<FilterProps> = ({
                         rowRefs.current[idx] = el;
                       }}
                       className={mergeClasses(
+                        'flex cursor-pointer select-none items-center gap-3 rounded-lg px-[10px] py-[9px] outline-none',
                         styles.row,
                         isChecked && styles.rowChecked,
                       )}
@@ -253,6 +269,7 @@ export const Filter: FC<FilterProps> = ({
                     >
                       <span
                         className={mergeClasses(
+                          'flex size-5 shrink-0 items-center justify-center rounded-[6px]',
                           styles.checkbox,
                           isChecked && styles.checkboxChecked,
                         )}
@@ -267,7 +284,10 @@ export const Filter: FC<FilterProps> = ({
           )}
 
           <div
-            className={styles.footer}
+            className={mergeClasses(
+              'mt-1 flex items-center px-1 py-3',
+              styles.footer,
+            )}
             onKeyDown={(e) => {
               if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
                 e.stopPropagation();
@@ -276,14 +296,17 @@ export const Filter: FC<FilterProps> = ({
           >
             <button
               type="button"
-              className={styles.clearBtn}
+              className={mergeClasses(
+                'cursor-pointer rounded-lg border-none bg-transparent px-3 py-[7px]',
+                styles.clearBtn,
+              )}
               onClick={handleClear}
             >
               {clearLabel}
             </button>
             <PrimaryButton
               label={applyLabel}
-              className={styles.applyBtn}
+              className="ms-auto"
               onClick={handleApply}
             />
           </div>
@@ -297,6 +320,7 @@ export const Filter: FC<FilterProps> = ({
         aria-expanded={isOpen}
         onKeyDown={handleTriggerKeyDown}
         className={mergeClasses(
+          'flex h-[50px] shrink-0 cursor-pointer items-center gap-[7px] whitespace-nowrap rounded-xl px-[18px]',
           styles.filterBtn,
           isActive && styles.filterBtnActive,
           isOpen && styles.filterBtnOpen,
@@ -305,7 +329,7 @@ export const Filter: FC<FilterProps> = ({
         <IconFilter
           size={16}
           strokeWidth={1.8}
-          className={styles.filterBtnFunnel}
+          className={mergeClasses('shrink-0', styles.filterBtnFunnel)}
           aria-hidden
         />
         <span className={styles.filterBtnLabel}>{buttonLabel}</span>
@@ -313,8 +337,9 @@ export const Filter: FC<FilterProps> = ({
           size={14}
           strokeWidth={2.2}
           className={mergeClasses(
+            'shrink-0 transition-transform duration-150',
             styles.filterBtnChevron,
-            isOpen && styles.filterBtnChevronOpen,
+            isOpen && 'rotate-180',
           )}
           aria-hidden
         />

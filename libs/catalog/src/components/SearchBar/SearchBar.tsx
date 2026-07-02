@@ -35,16 +35,26 @@ export const SearchBar: FC<SearchBarProps> = ({
   const resolvedAriaLabel = ariaLabel ?? placeholder;
 
   return (
-    <div role="search" className={mergeClasses(styles.container, className)}>
+    <div
+      role="search"
+      className={mergeClasses(
+        'flex h-[50px] cursor-text items-center gap-3 rounded-xl px-[18px]',
+        styles.container,
+        className,
+      )}
+    >
       <IconSearch
         size={18}
         strokeWidth={1.8}
-        className={styles.icon}
+        className={mergeClasses('shrink-0', styles.icon)}
         aria-hidden
       />
       <input
         type="search"
-        className={styles.input}
+        className={mergeClasses(
+          'min-w-0 flex-1 border-none bg-transparent outline-none',
+          styles.input,
+        )}
         value={value}
         placeholder={placeholder}
         aria-label={resolvedAriaLabel}

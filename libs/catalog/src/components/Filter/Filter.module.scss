@@ -3,17 +3,8 @@
  * ============================================================ */
 
 .filterBtn {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  flex-shrink: 0;
-  height: 50px;
-  padding-inline: 18px;
-  background-color: #ffffff;
+  background-color: var(--cat-filter-btn-bg, #ffffff); /* TODO: connect to design token */
   border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
-  cursor: pointer;
-  white-space: nowrap;
   transition:
     border-color 150ms ease,
     box-shadow 150ms ease;
@@ -54,12 +45,10 @@
 }
 
 .filterBtnFunnel {
-  flex-shrink: 0;
   color: var(--text-secondary, #64748b);
 }
 
 .filterBtnChevron {
-  flex-shrink: 0;
   color: var(--text-tertiary, #98a2b3);
   transition: transform 150ms ease;
 
@@ -68,35 +57,19 @@
   }
 }
 
-.filterBtnChevronOpen {
-  transform: rotate(180deg);
-}
-
 /* ============================================================
  * Dropdown overlay
  * ============================================================ */
 
 .overlay {
-  min-width: 360px;
-  padding: 6px;
-  background: #ffffff;
+  background: var(--cat-filter-overlay-bg, #ffffff); /* TODO: connect to design token */
   border: 1px solid rgba(0, 0, 0, 0.05);
-  border-radius: 12px;
   box-shadow: 0 16px 40px rgba(16, 24, 40, 0.12);
 }
 
 /* Checkbox row ------------------------------------------------ */
 
 .row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 9px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  outline: none;
-  user-select: none;
-
   @media (hover: hover) {
     &:hover {
       background: var(--bg-layer-3, rgba(0, 0, 0, 0.04));
@@ -119,8 +92,6 @@
 }
 
 .rowLabel {
-  flex: 1;
-  min-width: 0;
   font-size: 15px;
   color: var(--text-primary, #131a29);
 }
@@ -128,15 +99,8 @@
 /* Custom 20 × 20 checkbox ------------------------------------ */
 
 .checkbox {
-  flex-shrink: 0;
-  width: 20px;
-  height: 20px;
-  border-radius: 6px;
   border: 1.5px solid rgba(0, 0, 0, 0.12); /* stroke-hover */
-  background: #ffffff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  background: var(--cat-filter-checkbox-bg, #ffffff); /* TODO: connect to design token */
   transition:
     border-color 150ms ease,
     background-color 150ms ease;
@@ -167,49 +131,22 @@
 /* Section separator ----------------------------------------- */
 
 .divider {
-  height: 1px;
   background: rgba(0, 0, 0, 0.05); /* stroke-primary */
-  margin: 4px 0;
 }
 
 /* Topics section label --------------------------------------- */
 
 .sectionLabel {
-  padding: 10px 10px 4px;
   font-size: 11px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--text-tertiary, #98a2b3);
-}
-
-/* Scrollable topics list ------------------------------------ */
-
-.topicsList {
-  max-height: 220px;
-  overflow-y: auto;
-}
-
-/* Footer ---------------------------------------------------- */
-
-.footer {
-  display: flex;
-  align-items: center;
-  padding: 12px 4px;
-  margin-top: 4px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05); /* stroke-primary */
 }
 
 /* Clear — ghost style */
 .clearBtn {
-  padding: 7px 12px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary, #64748b);
-  cursor: pointer;
   transition: background-color 150ms ease;
 
   @media (hover: hover) {
@@ -224,6 +161,8 @@
   }
 }
 
-.applyBtn {
-  margin-inline-start: auto;
+/* Footer ---------------------------------------------------- */
+
+.footer {
+  border-top: 1px solid rgba(0, 0, 0, 0.05); /* stroke-primary */
 }

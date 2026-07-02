@@ -114,11 +114,16 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
           {sectionLabel}
         </p>
       )}
-      <div className={mergeClasses(styles.snippetWrapper)}>
+      <div
+        className={mergeClasses(
+          'overflow-hidden rounded-lg',
+          styles.snippetWrapper,
+        )}
+      >
         <div
           className={mergeClasses(
+            'flex items-center justify-end gap-2 px-3 py-[6px]',
             styles.snippetTabs,
-            'flex items-center justify-end gap-2',
           )}
         >
           <DialDropdown
@@ -138,10 +143,12 @@ const SnippetBlock: FC<SnippetBlockProps> = ({
             onClick={handleCopy}
           />
         </div>
-        <div className={styles.codeBlock}>
+        <div
+          className={mergeClasses('relative rounded-lg p-3', styles.codeBlock)}
+        >
           <pre
             className={mergeClasses(
-              'm-0 overflow-x-auto',
+              'm-0 overflow-x-auto pe-8',
               codeClassName,
               styles.pre,
             )}
@@ -308,18 +315,26 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
           >
             {requestExampleLabel}
           </p>
-          <div className={styles.codeBlock}>
+          <div
+            className={mergeClasses(
+              'relative rounded-lg p-3',
+              styles.codeBlock,
+            )}
+          >
             <DialGhostIconButton
               icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
               aria-label={copyAriaLabel}
               onClick={() => {
                 void navigator.clipboard.writeText(api.requestExample ?? '');
               }}
-              className={styles.copyButton}
+              className={mergeClasses(
+                'absolute end-2 top-2 flex size-6 cursor-pointer items-center justify-center rounded border-none p-0',
+                styles.copyButton,
+              )}
             />
             <pre
               className={mergeClasses(
-                'm-0 overflow-x-auto',
+                'm-0 overflow-x-auto pe-8',
                 codeClassName,
                 styles.pre,
               )}
@@ -341,18 +356,26 @@ export const ApiDetails: FC<ApiDetailsProps> = ({
           >
             {responseSchemaLabel}
           </p>
-          <div className={styles.codeBlock}>
+          <div
+            className={mergeClasses(
+              'relative rounded-lg p-3',
+              styles.codeBlock,
+            )}
+          >
             <DialGhostIconButton
               icon={<IconCopy size={DIAL_ICON_SIZE.SM} />}
               aria-label={copyAriaLabel}
               onClick={() => {
                 void navigator.clipboard.writeText(api.responseSchema ?? '');
               }}
-              className={styles.copyButton}
+              className={mergeClasses(
+                'absolute end-2 top-2 flex size-6 cursor-pointer items-center justify-center rounded border-none p-0',
+                styles.copyButton,
+              )}
             />
             <pre
               className={mergeClasses(
-                'm-0 overflow-x-auto',
+                'm-0 overflow-x-auto pe-8',
                 codeClassName,
                 styles.pre,
               )}

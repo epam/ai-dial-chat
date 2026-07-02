@@ -1,24 +1,10 @@
 .pageNav {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px 6px;
   border: 1px solid rgba(39, 100, 217, 0.2);
-  border-radius: 9999px;
   background: rgba(39, 100, 217, 0.06);
 }
 
 .navBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: none;
-  background: transparent;
-  border-radius: 9999px;
   color: var(--text-accent-primary, #2764d9);
-  cursor: pointer;
   transition: background-color 150ms ease;
 
   @media (hover: hover) {
@@ -38,14 +24,10 @@
 }
 
 .pageCounter {
-  min-width: 32px;
-  padding-inline: 4px;
-  text-align: center;
   font-size: 11px;
   font-weight: 600;
   line-height: 1;
   color: var(--text-secondary, #575f73);
-  user-select: none;
 }
 
 .section {

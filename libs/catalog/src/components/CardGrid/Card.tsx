@@ -120,14 +120,14 @@ export const Card: FC<CardProps> = ({
       <p
         className={mergeClasses(
           descriptionClassName,
-          'line-clamp-2',
+          'line-clamp-2 min-h-[44px] !leading-[22px]',
           styles.description,
         )}
       >
         {item.description}
       </p>
 
-      <div className={styles.tagsRow}>
+      <div className="min-h-[28px]">
         <TopicsLine topics={item.topics} />
       </div>
 
