@@ -19,6 +19,7 @@ import { useVoiceRecorder } from '@/src/hooks/useVoiceRecorder';
 
 import { addTrailingSlashIfAbsent } from '@/src/utils/app/common';
 import { getUserCustomContent } from '@/src/utils/app/file';
+import { dispatchRetryFileUpload } from '@/src/utils/app/file-upload-dispatch';
 import {
   getConversationSchema,
   isFormValueValid,
@@ -531,7 +532,7 @@ export const ChatInputMessage = Inversify.register(
 
     const handleRetry = useCallback(
       (fileId: string) => {
-        dispatch(FilesActions.reuploadFile({ fileId }));
+        dispatchRetryFileUpload(dispatch, fileId);
       },
       [dispatch],
     );
