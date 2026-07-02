@@ -1,11 +1,13 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GhostButton } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialDropdown,
   DialEllipsisTooltip,
-  DialGhostButton,
   DialIconButton,
+  DialSkeleton,
+  DialSkeletonVariant,
   ElementSize,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
@@ -87,10 +89,19 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
 
-  const avatar = (
+  const avatar = item.isIconLoading ? (
+    <DialSkeleton
+      variant={DialSkeletonVariant.Circular}
+      width={DIAL_ICON_SIZE.LG}
+      height={DIAL_ICON_SIZE.LG}
+      color="var(--bg-layer-4)"
+      aria-hidden
+    />
+  ) : (
     <DeploymentIcon
       src={item.iconUrl}
       size={DIAL_ICON_SIZE.LG}
+      initialsName={item.iconTooltip ?? ''}
       tooltip={item.iconTooltip}
     />
   );
@@ -155,7 +166,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         className="contents"
         onClick={(e) => e.preventDefault()}
       >
-        <DialGhostButton
+        <GhostButton
           iconBefore={avatar}
           label={
             <DialEllipsisTooltip

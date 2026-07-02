@@ -122,14 +122,25 @@ export enum CatalogI18nKeys {
   DetailsApiCopy = 'catalog.details.api.copy',
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
+  CreateMenuCaption = 'catalog.create.menuCaption',
   CreateQuickApp = 'catalog.create.quickApp',
   CreateToolset = 'catalog.create.toolset',
   FavoriteAddedTitle = 'catalog.favoriteAddedTitle',
   FavoriteAdded = 'catalog.favoriteAdded',
   FavoriteRemovedTitle = 'catalog.favoriteRemovedTitle',
   FavoriteRemoved = 'catalog.favoriteRemoved',
+  TabModels = 'catalog.tab.models',
+  TabApplications = 'catalog.tab.applications',
+  TabToolsets = 'catalog.tab.toolsets',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
+  PickerTitle = 'catalog.picker.title',
+  PickerSearchPlaceholder = 'catalog.picker.searchPlaceholder',
+  PickerSearchAriaLabel = 'catalog.picker.searchAriaLabel',
+  PickerFavoritesLabel = 'catalog.picker.favoritesLabel',
+  PickerEmptyHint = 'catalog.picker.emptyHint',
+  PickerBrowseCatalog = 'catalog.picker.browseCatalogLabel',
+  PickerRemoveFromFavorites = 'catalog.picker.removeFromFavoritesLabel',
 }
 
 export enum DeploymentsI18nKeys {
@@ -149,6 +160,7 @@ export enum ConversationI18nKeys {
   StagesExecuted = 'conversation.stages.executed',
   StagesStep = 'conversation.stages.step',
   AttachMenuDialFileSystem = 'conversation.attachMenuDialFileSystem',
+  AddMenuTitle = 'conversation.addMenuTitle',
 }
 
 export enum DialFileManagerI18nKeys {
@@ -221,6 +233,7 @@ export enum DialFileManagerI18nKeys {
   RenameReservedName = 'dialFileManager.renameReservedName',
   RenameInvalidChars = 'dialFileManager.renameInvalidChars',
   RenameNameTooLong = 'dialFileManager.renameNameTooLong',
+  UploadProgressSummary = 'dialFileManager.uploadProgressSummary',
 }
 
 export enum AuthI18nKeys {
@@ -235,6 +248,7 @@ export enum AuthI18nKeys {
   LogOut = 'auth.logOut',
   LogOutConfirmTitle = 'auth.logOutConfirmTitle',
   LogOutConfirmDescription = 'auth.logOutConfirmDescription',
+  UserAvatar = 'auth.userAvatar',
 }
 
 export enum SettingsI18nKeys {
@@ -340,6 +354,7 @@ export enum ChatSettingsI18nKeys {
   TemperatureNeutral = 'chatSettings.temperatureNeutral',
   TemperatureCreative = 'chatSettings.temperatureCreative',
   SaveLabel = 'chatSettings.saveLabel',
+  SaveDisabledTooltip = 'chatSettings.saveDisabledTooltip',
   TemperatureHint = 'chatSettings.temperatureHint',
   SystemPromptTooltip = 'chatSettings.systemPromptTooltip',
   SavedNotification = 'chatSettings.savedNotification',
@@ -350,4 +365,95 @@ export enum AttachmentCanvasI18nKeys {
   CloseLabel = 'attachmentCanvas.closeLabel',
   DownloadLabel = 'attachmentCanvas.downloadLabel',
   UnsupportedLabel = 'attachmentCanvas.unsupportedLabel',
+}
+
+export enum AppsEditorI18nKeys {
+  StepGeneral = 'appsEditor.stepGeneral',
+  StepSettings = 'appsEditor.stepSettings',
+  StepsNavAriaLabel = 'appsEditor.stepsNavAriaLabel',
+  GeneralFormNameLabel = 'appsEditor.generalForm.nameLabel',
+  GeneralFormNamePlaceholder = 'appsEditor.generalForm.namePlaceholder',
+  GeneralFormDescriptionLabel = 'appsEditor.generalForm.descriptionLabel',
+  GeneralFormDescriptionPlaceholder = 'appsEditor.generalForm.descriptionPlaceholder',
+  GeneralFormIconUrlLabel = 'appsEditor.generalForm.iconUrlLabel',
+  GeneralFormIconUrlPlaceholder = 'appsEditor.generalForm.iconUrlPlaceholder',
+  GeneralFormNextButton = 'appsEditor.generalForm.nextButton',
+  GeneralFormNameRequired = 'appsEditor.generalForm.nameRequired',
+  GeneralFormNameInvalid = 'appsEditor.generalForm.nameInvalid',
+  GeneralFormVersionInvalid = 'appsEditor.generalForm.versionInvalid',
+  GeneralFormVersionLabel = 'appsEditor.generalForm.versionLabel',
+  GeneralFormVersionPlaceholder = 'appsEditor.generalForm.versionPlaceholder',
+  GeneralFormTopicsLabel = 'appsEditor.generalForm.topicsLabel',
+  GeneralFormTopicsPlaceholder = 'appsEditor.generalForm.topicsPlaceholder',
+  GeneralFormPreviewTitle = 'appsEditor.generalForm.previewTitle',
+  SettingsStepLoadingLabel = 'appsEditor.settingsStep.loadingLabel',
+  SettingsStepNoEditorPlaceholder = 'appsEditor.settingsStep.noEditorPlaceholder',
+  ErrorCreateFailed = 'appsEditor.error.createFailed',
+}
+
+export enum ToolsetEditorI18nKeys {
+  StepGeneral = 'toolsetEditor.stepGeneral',
+  StepSettings = 'toolsetEditor.stepSettings',
+  StepsNavAriaLabel = 'toolsetEditor.stepsNavAriaLabel',
+  NextButton = 'toolsetEditor.nextButton',
+  SaveButton = 'toolsetEditor.saveButton',
+  PreviewTitle = 'toolsetEditor.previewTitle',
+  // General form
+  NameLabel = 'toolsetEditor.general.nameLabel',
+  NamePlaceholder = 'toolsetEditor.general.namePlaceholder',
+  NameRequired = 'toolsetEditor.general.nameRequired',
+  VersionLabel = 'toolsetEditor.general.versionLabel',
+  VersionPlaceholder = 'toolsetEditor.general.versionPlaceholder',
+  IconUrlLabel = 'toolsetEditor.general.iconUrlLabel',
+  IconUrlPlaceholder = 'toolsetEditor.general.iconUrlPlaceholder',
+  DescriptionLabel = 'toolsetEditor.general.descriptionLabel',
+  DescriptionPlaceholder = 'toolsetEditor.general.descriptionPlaceholder',
+  TopicsLabel = 'toolsetEditor.general.topicsLabel',
+  TopicsPlaceholder = 'toolsetEditor.general.topicsPlaceholder',
+  // Settings form
+  EndpointLabel = 'toolsetEditor.settings.endpointLabel',
+  EndpointPlaceholder = 'toolsetEditor.settings.endpointPlaceholder',
+  EndpointRequired = 'toolsetEditor.settings.endpointRequired',
+  EndpointInvalid = 'toolsetEditor.settings.endpointInvalid',
+  ProtocolLabel = 'toolsetEditor.settings.protocolLabel',
+  AllowedToolsLabel = 'toolsetEditor.settings.allowedToolsLabel',
+  AllowedToolsPlaceholder = 'toolsetEditor.settings.allowedToolsPlaceholder',
+  CopyUrlLabel = 'toolsetEditor.settings.copyUrlLabel',
+  // Authentication
+  AuthSectionTitle = 'toolsetEditor.auth.sectionTitle',
+  AuthTypeOAuth = 'toolsetEditor.auth.typeOAuth',
+  AuthTypeApiKey = 'toolsetEditor.auth.typeApiKey',
+  AuthTypeNone = 'toolsetEditor.auth.typeNone',
+  WithLoginLabel = 'toolsetEditor.auth.withLoginLabel',
+  WithoutLoginLabel = 'toolsetEditor.auth.withoutLoginLabel',
+  WithConfigLabel = 'toolsetEditor.auth.withConfigLabel',
+  KeyHeaderLabel = 'toolsetEditor.auth.keyHeaderLabel',
+  KeyHeaderRequired = 'toolsetEditor.auth.keyHeaderRequired',
+  ApiKeyLabel = 'toolsetEditor.auth.apiKeyLabel',
+  ApiKeyRequired = 'toolsetEditor.auth.apiKeyRequired',
+  ClientIdLabel = 'toolsetEditor.auth.clientIdLabel',
+  ClientIdRequired = 'toolsetEditor.auth.clientIdRequired',
+  ClientSecretLabel = 'toolsetEditor.auth.clientSecretLabel',
+  ClientSecretRequired = 'toolsetEditor.auth.clientSecretRequired',
+  AuthorizationEndpointLabel = 'toolsetEditor.auth.authorizationEndpointLabel',
+  TokenEndpointLabel = 'toolsetEditor.auth.tokenEndpointLabel',
+  ScopesLabel = 'toolsetEditor.auth.scopesLabel',
+  ScopesPlaceholder = 'toolsetEditor.auth.scopesPlaceholder',
+  LogInButton = 'toolsetEditor.auth.logInButton',
+  LogOutButton = 'toolsetEditor.auth.logOutButton',
+  LoggedInLabel = 'toolsetEditor.auth.loggedInLabel',
+  LogoutConfirmTitle = 'toolsetEditor.auth.logoutConfirmTitle',
+  LogoutConfirmDescription = 'toolsetEditor.auth.logoutConfirmDescription',
+  // Errors
+  ErrorCreateFailed = 'toolsetEditor.error.createFailed',
+  ErrorUpdateFailed = 'toolsetEditor.error.updateFailed',
+  ErrorLoginFailed = 'toolsetEditor.error.loginFailed',
+  ErrorLogoutFailed = 'toolsetEditor.error.logoutFailed',
+}
+
+export enum ErrorBoundaryI18nKeys {
+  Heading = 'errorBoundary.heading',
+  Description = 'errorBoundary.description',
+  RetryLabel = 'errorBoundary.retryLabel',
+  ReloadLabel = 'errorBoundary.reloadLabel',
 }

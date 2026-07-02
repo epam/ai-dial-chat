@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { CatalogEntityType } from '../types/entity-type';
 import type { CatalogItem } from './catalog-item';
 import type { CatalogStyles } from './catalog-styles';
@@ -7,6 +8,15 @@ import type { ItemDetailsTexts } from './item-details-props';
 export interface CreateOption {
   /** Display label shown in the dropdown menu. */
   label: string;
+  /** Short description shown below the label (single line, truncated). */
+  description?: string;
+  /** Leading icon rendered inside a tinted 32 px square. */
+  icon?: ReactNode;
+  /**
+   * Tailwind classes applied to the icon container — controls background tint
+   * and icon colour. Example: `'bg-accent-secondary-alpha text-accent-secondary'`.
+   */
+  iconContainerClassName?: string;
   /** Called when this option is selected. */
   onClick: () => void;
 }
@@ -17,6 +27,8 @@ export interface CatalogTitles {
   pageTitle?: string;
   /** Create button label. Default: 'Create'. */
   createLabel?: string;
+  /** Caption shown at the top of the Create dropdown menu. Default: 'Create new'. */
+  createMenuCaption?: string;
   /** Favorites section heading. Default: 'Your Favorites'. */
   favoritesTitle?: string;
   /** Browse section heading. Default: 'Browse'. */

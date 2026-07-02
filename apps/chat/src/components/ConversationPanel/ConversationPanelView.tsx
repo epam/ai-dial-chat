@@ -30,10 +30,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
-import {
-  getConversationRoute,
-  normalizeConversationId,
-} from '../../constants/routes';
+import { getConversationRoute } from '../../constants/routes';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -47,9 +44,12 @@ import useViewportWidth from '../../hooks/use-viewport-width';
 import useLocalStorage from '../../hooks/useLocalStorage';
 import { ROUTES } from '../../types/routes';
 import { StorageKey } from '../../types/storage-key';
+import {
+  conversationIdsMatch,
+  toPanelConversationId,
+} from '../../utils/conversation-id-match';
 import { getModelIdFromConversationId } from '../../utils/get-model-id-from-conversation-id';
 import { resolveCatalogIconUrl } from '../../utils/icon-path';
-import { safeDecodeURIComponent } from '../../utils/string-utils';
 import RenameConversationPopup from '../RenameConversationPopup/RenameConversationPopup';
 import DeleteAllConversationsAction from './DeleteAllConversationsAction';
 import { getConversationSource } from './get-conversation-source';
@@ -62,6 +62,7 @@ interface ConversationPanelViewProps {
   onNewChat: () => void;
   requestedFilter?: FilterTab;
   onRequestedFilterChange?: () => void;
+  onActiveFilterChange?: (tab: FilterTab) => void;
   onDuplicateReadonly?: () => void;
 }
 
@@ -73,6 +74,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   onNewChat,
   requestedFilter,
   onRequestedFilterChange,
+  onActiveFilterChange,
   onDuplicateReadonly,
 }) => {
   const { t } = useTranslation();
@@ -99,7 +101,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     refreshConversations,
   } = useConversations();
 
-  const { items: deployments } = useDeployments();
+  const { items: deployments, isLoading: isDeploymentsLoading } =
+    useDeployments();
   const deploymentIconByModelId = useMemo(
     () => new Map(deployments.map((d) => [d.id, d.iconUrl])),
     [deployments],
@@ -109,14 +112,22 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [deployments],
   );
 
+  const panelActiveConversationId = useMemo(
+    () =>
+      activeConversationId
+        ? toPanelConversationId(activeConversationId)
+        : undefined,
+    [activeConversationId],
+  );
+
   useEffect(() => {
-    if (!activeConversationId) return;
-    const isListed = items.some(
-      (item) => normalizeConversationId(item.id) === activeConversationId,
+    if (!panelActiveConversationId) return;
+    const isListed = items.some((item) =>
+      conversationIdsMatch(item.id, panelActiveConversationId),
     );
     if (!isListed) void refreshConversations();
     // Intentionally not including items or refreshConversations in the dependency array to avoid re-triggering on every list update.
-  }, [activeConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [panelActiveConversationId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -132,14 +143,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
   /** Map panel id → context id for reverse lookup */
   const panelToContextId = useMemo(
     () =>
-      new Map(items.map((item) => [normalizeConversationId(item.id), item.id])),
+      new Map(items.map((item) => [toPanelConversationId(item.id), item.id])),
     [items],
   );
 
   const conversations: ConversationHistoryItem[] = useMemo(
     () =>
       items.map((item) => {
-        const id = normalizeConversationId(item.id);
+        const id = toPanelConversationId(item.id);
         const modelId = getModelIdFromConversationId(item.id);
         const iconUrl = modelId
           ? deploymentIconByModelId.get(modelId)
@@ -153,11 +164,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           iconTooltip: modelId
             ? deploymentNameByModelId.get(modelId)
             : undefined,
+          isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: getConversationRoute(id),
         };
       }),
-    [items, deploymentIconByModelId, deploymentNameByModelId],
+    [
+      items,
+      deploymentIconByModelId,
+      deploymentNameByModelId,
+      isDeploymentsLoading,
+    ],
   );
 
   const filterLabels = useMemo(
@@ -232,7 +249,11 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onClick: async () => {
           try {
             const newPath = await duplicateConversation(contextId);
-            if (isReadonlyItem && panelItem.id === activeConversationId) {
+            if (
+              isReadonlyItem &&
+              panelActiveConversationId &&
+              conversationIdsMatch(panelItem.id, panelActiveConversationId)
+            ) {
               onDuplicateReadonly?.();
             }
             navigate(getConversationRoute(newPath));
@@ -280,7 +301,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       t,
       pinConversation,
       duplicateConversation,
-      activeConversationId,
+      panelActiveConversationId,
       navigate,
       onDuplicateReadonly,
       showNotification,
@@ -313,11 +334,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setIsDeleting(false);
     setPendingDeleteId(null);
 
-    const normalizedId = normalizeConversationId(idToDelete);
     const isActiveDeletion =
-      activeConversationId != null &&
-      safeDecodeURIComponent(normalizedId) ===
-        safeDecodeURIComponent(activeConversationId);
+      panelActiveConversationId != null &&
+      conversationIdsMatch(idToDelete, panelActiveConversationId);
     if (isActiveDeletion) {
       navigate(ROUTES.Root);
     }
@@ -325,7 +344,7 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     pendingDeleteId,
     showNotification,
     deleteConversation,
-    activeConversationId,
+    panelActiveConversationId,
     navigate,
     t,
   ]);
@@ -354,15 +373,15 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
       setIsRenaming(false);
       setPendingRenameItem(null);
 
-      const activeContextId = activeConversationId
-        ? panelToContextId.get(activeConversationId)
+      const activeContextId = panelActiveConversationId
+        ? panelToContextId.get(panelActiveConversationId)
         : undefined;
       if (activeContextId === id) navigate(getConversationRoute(newPath));
     },
     [
       pendingRenameItem,
       renameConversation,
-      activeConversationId,
+      panelActiveConversationId,
       panelToContextId,
       navigate,
       t,
@@ -375,6 +394,14 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     setRenameError(null);
   }, [isRenaming]);
 
+  const handleActiveFilterChange = useCallback(
+    (tab: FilterTab) => {
+      onRequestedFilterChange?.();
+      onActiveFilterChange?.(tab);
+    },
+    [onRequestedFilterChange, onActiveFilterChange],
+  );
+
   return (
     <>
       <ConversationPanel
@@ -382,9 +409,9 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         isLoading={isLoading}
         isOpen={isOpen}
         onSelectConversation={onSelectConversation}
-        activeConversationId={activeConversationId}
+        activeConversationId={panelActiveConversationId}
         activeFilter={requestedFilter}
-        onActiveFilterChange={onRequestedFilterChange}
+        onActiveFilterChange={handleActiveFilterChange}
         title={t(ConversationPanelI18nKeys.Title)}
         emptyLabel={t(ConversationPanelI18nKeys.Empty)}
         noResultsLabel={t(BasicI18nKeys.NoResults)}

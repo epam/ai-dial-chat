@@ -100,7 +100,9 @@ describe('useClipboardPaste', () => {
   it('ignores the image and pastes text when clipboard contains both image and text', () => {
     const onAttachments = vi.fn();
     const { result } = renderHook(() => useClipboardPaste(onAttachments, 10));
-    const event = makeImageWithTextEvent('This text is longer than ten characters');
+    const event = makeImageWithTextEvent(
+      'This text is longer than ten characters',
+    );
     result.current.handlePaste(event);
     expect(onAttachments).toHaveBeenCalledWith(
       expect.arrayContaining([

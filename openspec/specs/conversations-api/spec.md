@@ -4,24 +4,26 @@
 
 ### Requirement: POST /api/v1/conversations creates and persists a new conversation
 
-The backend SHALL expose `POST /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The controller MUST be versioned (`version: '1'`), annotated with `@ApiTags('conversations')`, and delegate all logic to `ConversationService`. The endpoint accepts a JSON body validated by `CreateConversationDto`. On success it returns HTTP 201 with the created `Conversation`. The service generates a UUID via `crypto.randomUUID()`, constructs a `Conversation` object using the provided `catalogItemId` for `model.id` and `assistantModelId`, and persists it to DIAL Core via the SDK client.
+The backend SHALL expose `POST /api/v1/conversations` in `apps/chat-api/src/conversations/conversation.controller.ts`. The controller MUST be versioned (`version: '1'`), annotated with `@ApiTags('conversations')`, and delegate all logic to `ConversationService`. The endpoint accepts a JSON body validated by `CreateConversationDto`. On success it returns HTTP 201 with the created `Conversation`. The service generates a UUID via `crypto.randomUUID()`, constructs a `Conversation` object using the provided `deploymentId` for `model.id` and `assistantModelId`, and persists it to DIAL Core via the SDK client.
 
 Request body (`CreateConversationDto`):
 
 ```
 {
-  "firstMessage": "<string, @IsString, @MinLength(1), @MaxLength(4000)>",
-  "catalogItemId": "<string, @IsString, @MinLength(1), @MaxLength(256), @Matches(/^[\w.\-:@/]+$/)>",
-  "attachments"?: "<AttachmentDto[], optional>"
+  "firstMessage": "<string, @IsString, @MaxLength(4000)>",
+  "deploymentId": "<string, @IsString, @MinLength(1), @MaxLength(256), @Matches(/^(?:[\w.\-:@/]|%[\dA-Fa-f]{2})+$/)>",
+  "custom_content"?: "<MessageCustomContentDto, optional>"
 }
 ```
+
+`firstMessage` may be an empty string when `custom_content` carries `attachments`, `form_value`, or `configuration_value`; at least one of `firstMessage` (non-empty) or a non-empty `custom_content` field MUST be present (enforced by `@IsMessageOrAttachmentsPresent`).
 
 Response body (201 Created) — shape matches the `Conversation` type from `@epam/ai-dial-chat-shared`:
 
 ```
 {
   "id": "<folder/path>",
-  "model": { "id": "<catalogItemId>" },
+  "model": { "id": "<deploymentId>" },
   "messages": [...],
   "createdAt": "<ISO-8601>"
 }
@@ -31,40 +33,44 @@ Rate limiting: `@Throttle({ default: { limit: 20, ttl: 60000 } })` on the handle
 
 Error codes:
 
-- `400 Bad Request` — body fails DTO validation (empty `firstMessage`, exceeds 4000 chars, missing `catalogItemId`, empty `catalogItemId`, `catalogItemId` exceeds 256 chars, `catalogItemId` contains disallowed characters)
+- `400 Bad Request` — body fails DTO validation (both `firstMessage` and `custom_content` absent/empty, `firstMessage` exceeds 4000 chars, missing `deploymentId`, empty `deploymentId`, `deploymentId` exceeds 256 chars, `deploymentId` contains disallowed characters)
 - `401 Unauthorized` — missing or invalid bearer token
-- `502 Bad Gateway` — DIAL Core returned an error response
-- `503 Service Unavailable` — DIAL Core unreachable
+- `500 Internal Server Error` — unexpected server-side failure
 
 #### Scenario: Valid request returns 201 with conversation
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello", "catalogItemId": "anthropic.claude-v3-sonnet" }`
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello", "deploymentId": "anthropic.claude-v3-sonnet" }`
 - **THEN** the response status is 201 and the body contains a `Conversation` with `model.id === "anthropic.claude-v3-sonnet"`, `messages` array with one user message, and an `id` string
 
-#### Scenario: Empty firstMessage returns 400
+#### Scenario: Empty firstMessage without custom_content returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "", "catalogItemId": "dep-1" }`
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "", "deploymentId": "dep-1" }` and no `custom_content`
 - **THEN** the response status is 400 with a validation error message
+
+#### Scenario: Empty firstMessage with attachments returns 201
+
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "", "deploymentId": "dep-1", "custom_content": { "attachments": [...] } }`
+- **THEN** the response status is 201 (custom_content with attachments satisfies the validation)
 
 #### Scenario: Missing firstMessage returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "catalogItemId": "dep-1" }`
+- **WHEN** `POST /api/v1/conversations` is called with `{ "deploymentId": "dep-1" }` and no `custom_content`
 - **THEN** the response status is 400
 
 #### Scenario: firstMessage exceeding 4000 chars returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `firstMessage` of length 4001 and a valid `catalogItemId`
+- **WHEN** `POST /api/v1/conversations` is called with `firstMessage` of length 4001 and a valid `deploymentId`
 - **THEN** the response status is 400
 
-#### Scenario: Missing catalogItemId returns 400
+#### Scenario: Missing deploymentId returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello" }` and no `catalogItemId`
-- **THEN** the response status is 400 with a validation error referencing `catalogItemId`
+- **WHEN** `POST /api/v1/conversations` is called with `{ "firstMessage": "Hello" }` and no `deploymentId`
+- **THEN** the response status is 400 with a validation error referencing `deploymentId`
 
-#### Scenario: catalogItemId with disallowed characters returns 400
+#### Scenario: deploymentId with disallowed characters returns 400
 
-- **WHEN** `POST /api/v1/conversations` is called with `catalogItemId` containing characters outside `[\w.\-:@/]` (e.g. `"bad id!"`)
-- **THEN** the response status is 400 with a validation error referencing `catalogItemId`
+- **WHEN** `POST /api/v1/conversations` is called with `deploymentId` containing characters outside `[\w.\-:@/]` or invalid percent-encoding (e.g. `"bad id!"`)
+- **THEN** the response status is 400 with a validation error referencing `deploymentId`
 
 ---
 
@@ -97,17 +103,20 @@ The `Conversation` and `Message` interfaces SHALL be declared in `libs/chat-shar
 
 ### Requirement: GET /api/v1/conversations fetches a conversation from the correct DIAL Core bucket
 
-The backend SHALL expose `GET /api/v1/conversations` accepting a `path` query parameter (`@IsString @MinLength(1)`). The `path` encodes both the DIAL Core bucket and the resource name as `{bucket}/{conversationName}`. The service extracts the bucket as the first `/`-delimited segment and the resource name as the remainder.
+The backend SHALL expose `GET /api/v1/conversations` accepting a `path` query parameter (`@IsString @MinLength(1)`). The `path` encodes both the DIAL Core bucket and the resource name as `{bucket}/{conversationName}`. The service MUST extract the bucket as the first `/`-delimited segment and the resource name as the remainder, for ALL paths — including those that begin with a bucket that is neither the session bucket nor the public bucket.
 
 If `path` contains no `/`, the session bucket is used as a fallback (backward-compatible with legacy callers that strip the bucket before sending). This allows users to open their own conversations, as well as public and shared conversations whose bucket differs from the session bucket.
 
 ```
-path = "public/gpt-4o__title__uuid"  →  getConversation("public", "gpt-4o__title__uuid")
-path = "otherBucket/name"             →  getConversation("otherBucket", "name")
-path = "name"                         →  getConversation(sessionBucket, "name")  [legacy]
+path = "userBucket/gpt-4o__title"   →  getConversation("userBucket", "gpt-4o__title")
+path = "public/gpt-4o__title"       →  getConversation("public", "gpt-4o__title")
+path = "otherBucket/name"           →  getConversation("otherBucket", "name")
+path = "name"                       →  getConversation(sessionBucket, "name")  [legacy]
 ```
 
 DIAL Core's sharing mechanism grants READ access to the resource at its original path using the requesting user's auth token, so no special headers or bucket substitution are needed for shared or public conversations.
+
+`resolveConversationLocation` in `ConversationService` is the single implementation point for this routing logic. It MUST NOT fall back to the session bucket when the first path segment is neither the session bucket nor `public` — it SHALL extract and use that segment as the target bucket.
 
 **Frontend behaviour.** The `Conversation` page passes the full URL wildcard param (`{bucket}/{name}`) directly to `GET /api/v1/conversations?path=...` after `decodeURIComponent`. The same decoded path (with the bucket stripped) is used for `saveConversation` and `streamCompletion`, which operate on the user's own copy only.
 
@@ -126,13 +135,18 @@ DIAL Core's sharing mechanism grants READ access to the resource at its original
 - **WHEN** the path is `"otherUserBucket/gpt-4o__title__uuid"` and the user has been granted access via the sharing mechanism
 - **THEN** the service calls `client.getConversation("otherUserBucket", "gpt-4o__title__uuid")` and returns 200
 
+#### Scenario: Path with no slash falls back to session bucket
+
+- **WHEN** the path is `"some-conversation-name"` with no `/`
+- **THEN** the service calls `client.getConversation(sessionBucket, "some-conversation-name")` and returns 200
+
 ---
 
 ### Requirement: GET /api/v1/conversations/list returns a merged list from the user bucket, public bucket, and shared resources
 
 The backend SHALL expose `GET /api/v1/conversations/list` in `apps/chat-api/src/conversations/conversation.controller.ts`. The endpoint is backed by DIAL Core metadata and the DIAL Core sharing API (not an in-memory store). It accepts the following query parameters validated by `ListConversationsQueryDto`:
 
-- `limit` — integer, default 20, max 100 (`@IsInt @Min(1) @Max(100) @IsOptional`)
+- `limit` — integer, default 100, max 1000 (`@IsInt @Min(1) @Max(1000) @IsOptional`)
 - `nextToken` — opaque pagination cursor from a previous response (`@IsString @MaxLength(512) @IsOptional`)
 - `path` — string subfolder path to scope the listing, default `''` (bucket root = "My Files") (`@IsString @MaxLength(512) @IsOptional`)
 
@@ -170,7 +184,7 @@ Items from all three sources are merged and sorted by `updatedAt` descending. `F
 
 `isPinned` is populated by `UserConfigService.getPinnedIds` against the user's DIAL Core bucket. See the [user-config-api spec](../user-config-api/spec.md). Errors fall back to `[]`.
 
-Rate limiting: `@Throttle({ default: { limit: 30, ttl: 60000 } })` on the handler.
+Rate limiting: global default applies (no handler-level `@Throttle` override).
 
 Generated-client impact:
 - OpenAPI operationId: `listConversations`
@@ -179,7 +193,7 @@ Generated-client impact:
 - Frontend callers use the normal (non-Raw) generated method via `apps/chat/src/server-api/conversations.api.ts`
 
 Error codes:
-- `400 Bad Request` — invalid `limit` (out of range or non-integer), `nextToken` or `path` exceeds 512 chars
+- `400 Bad Request` — invalid `limit` (out of range [1–1000] or non-integer), `nextToken` or `path` exceeds 512 chars
 - `401 Unauthorized` — missing or invalid bearer token
 - `502 Bad Gateway` — user bucket DIAL Core returned an error response
 
@@ -240,7 +254,7 @@ Error codes:
 
 #### Scenario: Invalid limit returns 400
 
-- **WHEN** `GET /api/v1/conversations/list?limit=200` is called (exceeds max 100)
+- **WHEN** `GET /api/v1/conversations/list?limit=1001` is called (exceeds max 1000)
 - **THEN** the response is 400 with a validation error
 
 ---
@@ -342,3 +356,71 @@ Error codes:
 
 - **WHEN** the integration test suite for `ConversationController` runs
 - **THEN** it covers: 200 with valid path and newTitle, 400 with empty newTitle, 400 with missing path
+
+---
+
+### Requirement: POST /api/v1/conversations sets unsuffixed message-derived name
+
+On `POST /api/v1/conversations`, `ConversationService.createConversation` SHALL set `conversation.name` to the base name from `getConversationName('New chat', firstMessage)` without calling `resolveUniqueConversationName`.
+
+When the 2-part storage path `{deploymentId}__{baseName}` collides with an existing resource, the service SHALL persist at `{deploymentId}__{baseName}__{uuid}` while keeping `conversation.name` as the unsuffixed base name. See the [auto-index-duplicate-names spec](../auto-index-duplicate-names/spec.md).
+
+`llmNamingDone` SHALL NOT be set on create (field absent or false).
+
+#### Scenario: Create returns unsuffixed name when duplicate title exists
+
+- **GIVEN** a conversation with `name: "Hello"` already exists in the user's bucket
+- **WHEN** `POST /api/v1/conversations` is called with `firstMessage: "Hello"`
+- **THEN** the response body has `name: "Hello"` (not `"Hello 1"`)
+
+#### Scenario: Create does not invoke LLM naming
+
+- **GIVEN** `features.llmConversationNaming` is enabled
+- **WHEN** `POST /api/v1/conversations` succeeds
+- **THEN** no utility-model chat completion is requested during create
+
+---
+
+### Requirement: saveConversation may trigger backend-only LLM rename after first reply
+
+`ConversationService.saveConversation` SHALL, after a successful DIAL Core persist, optionally invoke LLM conversation naming as defined in the [llm-conversation-naming spec](../llm-conversation-naming/spec.md).
+
+The rename is fire-and-forget: the `saveConversation` response MUST return immediately with the conversation as saved, without waiting for the LLM or rename to complete.
+
+No new HTTP endpoint is added for LLM naming.
+
+#### Scenario: saveConversation response is not delayed by LLM
+
+- **GIVEN** `features.llmConversationNaming` is enabled
+- **WHEN** `saveConversation` persists the first assistant reply
+- **THEN** the HTTP response is sent before the utility-model call completes
+
+#### Scenario: Client discovers renamed title on subsequent fetch
+
+- **GIVEN** LLM naming succeeds asynchronously after the first save
+- **WHEN** the client later calls `GET /api/v1/conversations` or `GET /api/v1/conversations/:id`
+- **THEN** the response reflects the updated `name` and `llmNamingDone: true`
+
+---
+
+### Requirement: saveConversation preserves LLM display name from stale client saves
+
+Before persisting, `ConversationService.saveConversation` SHALL call `preserveLlmDisplayName`: when the stored conversation already has `llmNamingDone: true` and a non-empty `name`, the save body MUST keep that server `name` and `llmNamingDone: true` even if the client sent a stale message-derived title.
+
+#### Scenario: Stale client save does not overwrite LLM title
+
+- **GIVEN** DIAL Core stores `name: "Docker networking basics"` and `llmNamingDone: true`
+- **WHEN** `saveConversation` is called with `name: "How do I..."` and `llmNamingDone` unset
+- **THEN** the persisted body keeps `name: "Docker networking basics"` and `llmNamingDone: true`
+
+---
+
+### Requirement: Conversation list uses stored display name for writable items
+
+`ConversationService.listConversations` SHALL enrich writable user-owned list items with `conversation.name` from `getConversation` when available, so list `title` reflects the stored display name (including LLM-renamed titles), not only the filename-derived title.
+
+#### Scenario: List title reflects LLM-renamed display name
+
+- **GIVEN** a conversation is stored at `gpt-4o__Hello__<uuid>` with `name: "Docker networking basics"`
+- **WHEN** `GET /api/v1/conversations` is called
+- **THEN** the matching list item `title` is `"Docker networking basics"`

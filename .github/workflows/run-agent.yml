@@ -1,0 +1,361 @@
+name: SDLC / Run Agent
+
+on:
+  workflow_call:
+    inputs:
+      agent_name:
+        required: true
+        type: string
+      upstream_artifacts:
+        description: 'Comma-separated agent names whose stage-output artifacts to download into upstream/{name}/ before running.'
+        required: false
+        type: string
+        default: ''
+      timeout_minutes:
+        description: 'Per-agent timeout in minutes (from manifest).'
+        required: false
+        type: number
+        default: 15
+      concurrency_group:
+        description: 'Concurrency group (from manifest or derived by the matcher).'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+  security-events: write
+  id-token: write   # required by anthropics/claude-code-action for OIDC auth
+  actions: read     # `gh run download` (upstream-artifact step) hits the Actions API
+
+jobs:
+  agent:
+    # Name the inner (leaf) reusable job after the agent. GitHub's "All jobs"
+    # sidebar — the primary nav — shows the LEAF reusable job's name, so this is
+    # what makes each matrix row distinguishable (a generic `agent` rendered
+    # every row identically). The dispatcher's matrix job uses a constant middle
+    # segment, so the graph path reads `dispatch / agent / <agent>` (no doubling)
+    # while the sidebar reads `<agent>`. The upstream-wait step matches the agent
+    # name as the trailing path segment.
+    name: ${{ inputs.agent_name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: ${{ inputs.timeout_minutes }}
+    concurrency:
+      group: ${{ inputs.concurrency_group != '' && inputs.concurrency_group || format('{0}-{1}-{2}', github.workflow, inputs.agent_name, github.ref) }}
+      cancel-in-progress: true
+    env:
+      # ANTHROPIC_API_KEY MUST be a job-level env: the composite action reads it
+      # via `${{ env.ANTHROPIC_API_KEY }}`, and a composite action's expression
+      # context does NOT see vars set with GITHUB_ENV in caller steps (only its
+      # process env does). DIAL key when DIAL_CORE_URL is set, else the direct
+      # Anthropic key.
+      ANTHROPIC_API_KEY: ${{ vars.DIAL_CORE_URL != '' && secrets.DIAL_API_KEY || secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          fetch-depth: 0
+
+      - name: Configure inference route
+        # ANTHROPIC_API_KEY is the job-level env above. Here we add the DIAL-only
+        # vars that claude-code-action reads from the PROCESS env (GITHUB_ENV DOES
+        # propagate to later steps' / the composite action's process env, even
+        # though it's invisible to their `${{ env.X }}` expressions). In direct-
+        # Anthropic mode these stay unset — exactly the prior behavior.
+        env:
+          DIAL_CORE_URL: ${{ vars.DIAL_CORE_URL }}
+          DIAL_API_KEY: ${{ secrets.DIAL_API_KEY }}
+          # DIAL deployment id to route to (e.g. anthropic.claude-sonnet-4-5-
+          # 20250929-v1:0). DIAL names rarely match Anthropic model strings, so
+          # set this to a deployment your key actually has. If unset, the
+          # platform falls back to `anthropic.<manifest model>`.
+          DIAL_MODEL: ${{ vars.DIAL_MODEL }}
+        run: |
+          set -euo pipefail
+          if [ -n "${DIAL_CORE_URL:-}" ]; then
+            if [ -z "${DIAL_API_KEY:-}" ]; then
+              echo "::error::DIAL_CORE_URL is set but the DIAL_API_KEY secret is missing."
+              exit 1
+            fi
+            base="${DIAL_CORE_URL%/}/anthropic"
+            { echo "ANTHROPIC_BASE_URL=${base}"
+              echo "ANTHROPIC_AUTH_TOKEN=${DIAL_API_KEY}"
+              echo "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC=1"
+              echo "SDLC_DIAL_MODE=1"
+              if [ -n "${DIAL_MODEL:-}" ]; then echo "SDLC_DIAL_MODEL=${DIAL_MODEL}"; fi
+            } >> "$GITHUB_ENV"
+            echo "Inference route: DIAL (${base}) deployment=${DIAL_MODEL:-anthropic.<manifest model>}"
+          else
+            echo "Inference route: direct Anthropic"
+          fi
+
+      - name: Install YAML parser
+        run: pip install --quiet pyyaml
+
+      - name: Wait for and download upstream artifacts
+        # No rounds: every matched agent starts at once, so a `needs:` upstream
+        # may still be running. For each one, poll until its artifact is ready
+        # (download succeeds), or until its job finishes WITHOUT one (failed /
+        # cancelled) — then proceed and let the agent-wrapper handle the absent
+        # artifact. This gives per-edge scheduling: a dependent waits only for
+        # ITS upstream, not a whole round.
+        if: inputs.upstream_artifacts != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          UPSTREAM: ${{ inputs.upstream_artifacts }}
+          REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -uo pipefail   # NOT -e: the download retries are expected to fail until ready
+          mkdir -p upstream
+          IFS=',' read -ra NAMES <<< "$UPSTREAM"
+          for name in "${NAMES[@]}"; do
+            [ -z "$name" ] && continue
+            echo "Waiting for upstream agent: ${name}"
+            got=0
+            for i in $(seq 1 160); do   # ~40 min cap (160 × 15s)
+              if gh run download "$RUN_ID" -R "$REPO" -n "stage-output-${name}" -D "upstream/${name}/" 2>/dev/null; then
+                echo "  ✓ downloaded stage-output-${name}"; got=1; break
+              fi
+              # Break early if the upstream JOB has finished without an artifact.
+              # The dispatcher's matrix job is named after the agent, so the
+              # agent name is always a path segment of the job's full name
+              # (e.g. "dispatch / <agent> / …") — match it as a segment.
+              concl=$(gh api "repos/${REPO}/actions/runs/${RUN_ID}/jobs" --paginate \
+                --jq "[.jobs[] | select(.name | test(\"(^| / )${name}( / |\$)\")) | .conclusion] | map(select(. != null)) | last // \"\"" 2>/dev/null || echo "")
+              if [ -n "$concl" ] && [ "$concl" != "success" ]; then
+                echo "::warning::upstream ${name} finished as '${concl}' with no artifact; proceeding without it"
+                break
+              fi
+              sleep 15
+            done
+            [ "$got" = 1 ] || echo "::notice::upstream ${name} not available; the agent will note the absent artifact"
+          done
+          echo "Upstream payloads available at:"
+          find upstream/ -type f -name 'stage-output.json' 2>/dev/null || true
+
+      - name: Load manifest
+        id: manifest
+        env:
+          AGENT_NAME: ${{ inputs.agent_name }}
+        run: |
+          set -euo pipefail
+          MANIFEST="agents/${AGENT_NAME}/agent.yml"
+          if [ ! -f "$MANIFEST" ]; then
+            echo "::error::Manifest not found: $MANIFEST"
+            exit 1
+          fi
+          # Skill-only: no per-agent prompt.md. The composite action composes
+          # the full prompt from the manifest's `skill:` value. Fail loudly if
+          # a stray prompt.md is committed — it has no effect and signals drift.
+          if [ -f "agents/${AGENT_NAME}/prompt.md" ]; then
+            echo "::error::agents/${AGENT_NAME}/prompt.md exists but is no longer honored. Remove the file and put any reusable agent logic into a Claude skill at .claude/skills/<skill>/SKILL.md or .claude/commands/<skill>.md."
+            exit 1
+          fi
+          python3 - <<'EOF' >> "$GITHUB_OUTPUT"
+          import json, os, yaml
+          with open(f"agents/{os.environ['AGENT_NAME']}/agent.yml") as f:
+              m = yaml.safe_load(f) or {}
+          skill = m.get("skill")
+          if not skill:
+              raise SystemExit("::error::manifest missing required field: skill (agents must wrap a local skill)")
+          tools = m.get("allowed_tools")
+          if not tools:
+              raise SystemExit("::error::manifest missing required field: allowed_tools")
+          # tools.extra: optional list of CLI tools to install on the runner
+          # before invocation. Items can be either:
+          #   - a string (npm package name; installed via npm install -g)
+          #   - an object {name, install} where `install` is a shell command
+          # Emit as a single JSON line; the install step dispatches on shape.
+          extra = (m.get("tools") or {}).get("extra") or []
+          # secrets: declared env-var names the agent needs. The inject step
+          # below promotes ONLY these from the inherited secret bag into the
+          # job env. Emit as a JSON list (empty list when none declared).
+          secrets = m.get("secrets") or []
+          print(f"skill={skill}")
+          print(f"allowed_tools={tools}")
+          print(f"agent_version={m.get('agent_version', 'unknown')}")
+          print(f"model={m.get('model', '')}")
+          print(f"max_turns={m.get('max_turns', 18)}")
+          print(f"tools_extra_json={json.dumps(extra)}")
+          print(f"secrets_json={json.dumps(secrets)}")
+          # vars: declared NON-secret config names to inject from the Actions
+          # Variables context (operator-tunable knobs, e.g. JIRA_MAX_FINDINGS).
+          print(f"vars_json={json.dumps(m.get('vars') or [])}")
+          # private_output: encrypt this agent's artifact and decrypt encrypted
+          # upstream artifacts (public-repo leak protection). See the encrypt
+          # step in run-claude-stage and the decrypt step below.
+          print(f"private_output={str(m.get('private_output', False)).lower()}")
+          # analysis_ref: overlay this ref's source for the agent to inspect.
+          # emit_sarif: convert findings[] -> SARIF and upload to code scanning.
+          print(f"analysis_ref={m.get('analysis_ref', '')}")
+          print(f"emit_sarif={str(m.get('emit_sarif', False)).lower()}")
+          EOF
+
+      - name: Install agent-declared CLI tools
+        # Iterates `tools.extra` from the manifest. Three shapes:
+        #   - "pkg"                                          → npm install -g pkg
+        #   - {name: "pkg", version: "1.2.3"}                → npm install -g pkg@1.2.3
+        #   - {name: "x", version?: ..., install: "...{{version}}..."} → shell, with
+        #     {{version}} substituted from the sibling version field
+        # Failure exits early before Claude is invoked — loud failure, not silent.
+        # Agents without extra deps pay zero install cost (step skipped when array is empty).
+        if: steps.manifest.outputs.tools_extra_json != '[]' && steps.manifest.outputs.tools_extra_json != ''
+        env:
+          EXTRA_JSON: ${{ steps.manifest.outputs.tools_extra_json }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, subprocess, sys
+          extra = json.loads(os.environ['EXTRA_JSON'])
+          for entry in extra:
+              if isinstance(entry, str):
+                  print(f"::group::npm install -g {entry}")
+                  subprocess.run(["npm", "install", "-g", entry], check=True)
+                  print("::endgroup::")
+                  continue
+              if not isinstance(entry, dict) or "name" not in entry:
+                  sys.stderr.write(f"::error::Invalid tools.extra entry shape: {entry!r}\n")
+                  sys.exit(1)
+              name = entry["name"]
+              version = entry.get("version")
+              install = entry.get("install")
+              if install:
+                  # Shell form. Substitute {{version}} placeholder (empty when no version).
+                  cmd = install.replace("{{version}}", version or "")
+                  label = f"{name}" + (f" v{version}" if version else "")
+                  print(f"::group::install {label}")
+                  print(f"+ {cmd}")
+                  subprocess.run(cmd, shell=True, check=True)
+                  print("::endgroup::")
+              else:
+                  # npm form, optionally pinned via @-syntax.
+                  pkg = f"{name}@{version}" if version else name
+                  print(f"::group::npm install -g {pkg}")
+                  subprocess.run(["npm", "install", "-g", pkg], check=True)
+                  print("::endgroup::")
+          PY
+
+      - name: Inject declared secrets
+        # Generic secret plumbing: promote ONLY the secrets a manifest declares
+        # (`secrets:` in agents/<name>/agent.yml) from the inherited secret bag
+        # into the job env, so the wrapped skill's committed helper scripts can
+        # read them. Adding a new secret-using agent needs NO platform edit —
+        # declare the name here and add the matching Actions secret.
+        #
+        # Why this shape: GitHub has no dynamic `secrets[name]` access, so we
+        # take the whole bag via toJSON(secrets) and select the declared names.
+        # Claude never types secret values (the agent-wrapper forbids shell
+        # expansion in Bash tool calls); secrets are referenced only inside
+        # committed scripts that read them from env. We print names only, never
+        # values — and GHA masks registered secret values in logs regardless.
+        if: steps.manifest.outputs.secrets_json != '[]' && steps.manifest.outputs.secrets_json != ''
+        env:
+          SECRETS_JSON: ${{ toJSON(secrets) }}
+          DECLARED: ${{ steps.manifest.outputs.secrets_json }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          allsec = json.loads(os.environ["SECRETS_JSON"])
+          declared = json.loads(os.environ["DECLARED"])
+          missing = [n for n in declared if not allsec.get(n)]
+          if missing:
+              raise SystemExit(
+                  f"::error::Declared secrets unavailable to run-agent: {missing}. "
+                  "Add them under repo/org Settings -> Secrets -> Actions, or fix "
+                  "the manifest `secrets:` list.")
+          with open(os.environ["GITHUB_ENV"], "a") as fh:
+              for name in declared:
+                  fh.write(f"{name}<<__SDLC_SECRET_EOF__\n{allsec[name]}\n__SDLC_SECRET_EOF__\n")
+          print(f"Injected {len(declared)} declared secret(s) into job env: {', '.join(declared)}")
+          PY
+
+      - name: Inject declared vars
+        # Non-secret counterpart of secret injection: promote ONLY the Actions
+        # Variables a manifest declares (`vars:`) into the job env, so an
+        # operator can tune knobs (e.g. JIRA_MAX_FINDINGS) in Settings ->
+        # Variables WITHOUT editing the skill. Missing vars are skipped — the
+        # skill's own default applies — so this never fails the run.
+        if: steps.manifest.outputs.vars_json != '[]' && steps.manifest.outputs.vars_json != ''
+        env:
+          VARS_JSON: ${{ toJSON(vars) }}
+          DECLARED: ${{ steps.manifest.outputs.vars_json }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          allvars = json.loads(os.environ["VARS_JSON"])
+          declared = json.loads(os.environ["DECLARED"])
+          injected = []
+          with open(os.environ["GITHUB_ENV"], "a") as fh:
+              for name in declared:
+                  val = allvars.get(name)
+                  if val not in (None, ""):
+                      fh.write(f"{name}<<__SDLC_VAR_EOF__\n{val}\n__SDLC_VAR_EOF__\n")
+                      injected.append(name)
+          print(f"Injected vars: {injected or '(none set; skill defaults apply)'}")
+          PY
+
+      - name: Decrypt upstream artifacts
+        # Upstream producers flagged `private_output` upload their stage-output
+        # AES-encrypted (.enc). Decrypt any here — after secret injection, so
+        # SDLC_ARTIFACT_KEY is in the env — into the plaintext path the agent
+        # expects (upstream/<name>/stage-output.json). No-op when no .enc exists.
+        if: inputs.upstream_artifacts != ''
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          enc_found=0
+          for enc in upstream/*/stage-output.json.enc; do
+            enc_found=1
+            if [ -z "${SDLC_ARTIFACT_KEY:-}" ]; then
+              echo "::error::Encrypted upstream artifact ${enc} but SDLC_ARTIFACT_KEY is not in env. Add it to this agent's manifest \`secrets:\` list."
+              exit 1
+            fi
+            out="$(dirname "$enc")/stage-output.json"
+            openssl enc -d -aes-256-cbc -pbkdf2 -in "$enc" -out "$out" -pass env:SDLC_ARTIFACT_KEY
+            echo "Decrypted ${enc} -> ${out}"
+          done
+          if [ "$enc_found" = 0 ]; then echo "No encrypted upstream artifacts to decrypt."; fi
+
+      - name: Overlay analysis-ref source
+        # When a manifest declares `analysis_ref`, the agent must inspect THAT
+        # ref's code (e.g. snyk-triage validates findings against `development`,
+        # the branch the scanner ran on — not the sandbox base). We cannot
+        # `actions/checkout` that ref: the framework (composite action, prompts,
+        # schemas, skills) lives ONLY on the sandbox base, so a full checkout
+        # would strip it. Instead overlay the ref's source while preserving the
+        # framework paths (.github, .claude, agents). Also capture its sha/ref so
+        # an emit_sarif upload can be scoped to the scanned commit.
+        #
+        # `agents` is excluded alongside .github/.claude because the overlaid ref
+        # is untrusted under pull_request_target (a fork PR head). The base
+        # manifest — already read into step outputs before this step — must keep
+        # governing the run; letting the overlaid ref replace agents/<name>/agent.yml
+        # would expose tools.extra/secrets/allowed_tools to attacker control.
+        if: steps.manifest.outputs.analysis_ref != ''
+        env:
+          ANALYSIS_REF: ${{ steps.manifest.outputs.analysis_ref }}
+        run: |
+          set -euo pipefail
+          git fetch --depth=1 origin "$ANALYSIS_REF"
+          SHA="$(git rev-parse FETCH_HEAD)"
+          git checkout FETCH_HEAD -- . ':(exclude).github' ':(exclude).claude' ':(exclude)agents'
+          echo "ANALYSIS_SHA=${SHA}" >> "$GITHUB_ENV"
+          echo "ANALYSIS_REF_FULL=refs/heads/${ANALYSIS_REF}" >> "$GITHUB_ENV"
+          echo "Overlaid source from ${ANALYSIS_REF}@${SHA:0:7}; .github/.claude/agents preserved."
+
+      - id: stage
+        uses: ./.github/actions/run-claude-stage
+        with:
+          stage_name: ${{ inputs.agent_name }}
+          skill: ${{ steps.manifest.outputs.skill }}
+          allowed_tools: ${{ steps.manifest.outputs.allowed_tools }}
+          agent_version: ${{ steps.manifest.outputs.agent_version }}
+          model: ${{ steps.manifest.outputs.model }}
+          max_turns: ${{ steps.manifest.outputs.max_turns }}
+          upstream_artifacts: ${{ inputs.upstream_artifacts }}
+          private_output: ${{ steps.manifest.outputs.private_output }}
+          emit_sarif: ${{ steps.manifest.outputs.emit_sarif }}

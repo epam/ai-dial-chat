@@ -71,6 +71,26 @@ describe('conversation naming helpers', () => {
       const result = prepareEntityName('\n\nHello world\nAnother line');
       expect(result).toBe('Hello world');
     });
+
+    it('should strip null bytes', () => {
+      const result = prepareEntityName('Hello\u0000world');
+      expect(result).toBe('Hello world');
+    });
+
+    it('should strip Unicode bidi override characters', () => {
+      const result = prepareEntityName('Hello\u202Eworld');
+      expect(result).toBe('Hello world');
+    });
+
+    it('should strip Unicode bidi embedding codepoints', () => {
+      const result = prepareEntityName('\u202AHello\u202Cworld\u202B');
+      expect(result).toBe('Hello world');
+    });
+
+    it('should strip Unicode bidi isolate codepoints', () => {
+      const result = prepareEntityName('\u2066Hello\u2069world');
+      expect(result).toBe('Hello world');
+    });
   });
 
   describe('getConversationName', () => {

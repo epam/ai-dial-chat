@@ -13,6 +13,7 @@ import AppConfigProvider from './context/AppConfigContext';
 import { UserProvider } from './context/auth/UserContext';
 import { ConversationsProvider } from './context/ConversationsContext';
 import { DeploymentsProvider } from './context/DeploymentsContext';
+import { GenerationProvider } from './context/GenerationContext';
 import { NotificationProvider } from './context/NotificationContext';
 import { SourcesSidebarProvider } from './context/SourcesSidebarContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -44,13 +45,15 @@ root.render(
                           path="*"
                           element={
                             <RequireAuth>
-                              <UserConfigProvider>
-                                <DeploymentsProvider>
-                                  <ConversationsProvider>
-                                    <App />
-                                  </ConversationsProvider>
-                                </DeploymentsProvider>
-                              </UserConfigProvider>
+                              <GenerationProvider>
+                                <UserConfigProvider>
+                                  <DeploymentsProvider>
+                                    <ConversationsProvider>
+                                      <App />
+                                    </ConversationsProvider>
+                                  </DeploymentsProvider>
+                                </UserConfigProvider>
+                              </GenerationProvider>
                             </RequireAuth>
                           }
                         />

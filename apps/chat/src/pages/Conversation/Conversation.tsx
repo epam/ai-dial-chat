@@ -30,11 +30,16 @@ import { useAppConfig } from '../../context/AppConfigContext';
 import { useUser } from '../../context/auth/UserContext';
 import { useConversations } from '../../context/ConversationsContext';
 import { useDeployments } from '../../context/DeploymentsContext';
+import {
+  ClientGenerationStatus,
+  useGeneration,
+} from '../../context/GenerationContext';
 import { useNotification } from '../../context/NotificationContext';
 import { useSourcesSidebar } from '../../context/SourcesSidebarContext';
 import { useConversationHandlers } from '../../hooks/conversation/useConversationHandlers';
 import { useConversationStream } from '../../hooks/conversation/useConversationStream';
 import { useDeploymentChangeEffect } from '../../hooks/useDeploymentChangeEffect';
+import { CompletionMode } from '../../server-api/chat-stream.api';
 import {
   transcribeAudio,
   transcribeAudioWithAsrModel,
@@ -47,6 +52,7 @@ import { uploadFile } from '../../server-api/files.api';
 import { ROUTES } from '../../types/routes';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
+import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 interface Props {
@@ -55,7 +61,7 @@ interface Props {
 
 export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const { '*': conversationId } = useParams<{ '*': string }>();
-  const { state } = useLocation();
+  const { state, pathname, search } = useLocation();
   const prefetchedConversation =
     (state as { conversation?: Conversation } | null)?.conversation ?? null;
   const [conversation, setConversation] = useState<Conversation | null>(
@@ -65,6 +71,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     !prefetchedConversation && !!conversationId,
   );
   const conversationRef = useRef<Conversation | null>(null);
+  const displayNameWatchCleanupRef = useRef<(() => void) | null>(null);
+  const displayNameWatchKeyRef = useRef<string | null>(null);
   const navigate = useNavigate();
   const { t } = useTranslation();
   const {
@@ -80,7 +88,12 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     useSourcesSidebar();
   const { user } = useUser();
   const bucket = user?.bucket ?? '';
-  const { conversations, duplicateConversation } = useConversations();
+  const {
+    conversations,
+    duplicateConversation,
+    updateConversationTitle,
+    watchForDisplayNameUpdate,
+  } = useConversations();
   const [duplicateError, setDuplicateError] = useState<string | null>(null);
 
   const isTranscriptionSupported = useMemo(() => {
@@ -250,12 +263,79 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     isConversationLoaded,
   );
 
+  const { getGeneration } = useGeneration();
+  // Conversation paths whose auto-stream has already been kicked off. Guards
+  // against React 18 StrictMode double-mounting (and any other re-run of
+  // loadConversation) firing two concurrent generations, which the backend
+  // rejects with 409 and surfaces as a spurious "Something went wrong" error.
+  const autoStartedPathsRef = useRef<Set<string>>(new Set());
+
+  const handleStopError = useCallback(() => {
+    showNotification({
+      variant: NotificationVariant.Error,
+      message: t(ChatI18nKeys.StreamError),
+    });
+  }, [showNotification, t]);
+
   const { startStream, handleStop, isStreaming } = useConversationStream({
     conversationId,
-    stoppedGeneratingText: t(ChatI18nKeys.StoppedGenerating),
     setConversation,
     conversationRef,
+    onStopError: handleStopError,
   });
+
+  useEffect(() => {
+    return () => {
+      displayNameWatchCleanupRef.current?.();
+    };
+  }, []);
+
+  const messageCount = conversation?.messages.length ?? 0;
+  const conversationName = conversation?.name ?? '';
+
+  useEffect(() => {
+    if (
+      !conversationId ||
+      !conversation ||
+      !shouldWatchForDisplayNameUpdate(conversation)
+    ) {
+      displayNameWatchKeyRef.current = null;
+      displayNameWatchCleanupRef.current?.();
+      displayNameWatchCleanupRef.current = null;
+      return;
+    }
+
+    const watchKey = `${conversationId}:${messageCount}`;
+    if (displayNameWatchKeyRef.current === watchKey) return;
+    displayNameWatchKeyRef.current = watchKey;
+
+    displayNameWatchCleanupRef.current?.();
+    displayNameWatchCleanupRef.current = watchForDisplayNameUpdate(
+      conversationId,
+      conversationName,
+      (title) => {
+        setConversation((prev) =>
+          prev
+            ? ({ ...prev, name: title, llmNamingDone: true } as Conversation)
+            : prev,
+        );
+        if (conversationRef.current) {
+          conversationRef.current = {
+            ...conversationRef.current,
+            name: title,
+            llmNamingDone: true,
+          } as Conversation;
+        }
+        displayNameWatchCleanupRef.current = null;
+      },
+    );
+  }, [
+    conversation,
+    conversationId,
+    conversationName,
+    messageCount,
+    watchForDisplayNameUpdate,
+  ]);
 
   const loadConversation = useCallback(
     async (id: string, initialData?: Conversation | null) => {
@@ -265,6 +345,9 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       try {
         const result: Conversation =
           initialData ?? ((await apiGetConversation(id)) as Conversation);
+        if (result.name) {
+          updateConversationTitle(id, result.name);
+        }
 
         // Restore the last selected agent from the conversation's change history
         // so the deployment selector reflects what was active, not the default.
@@ -278,6 +361,8 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         const lastMsg = result.messages[result.messages.length - 1];
 
         if (lastMsg?.role === MessageRole.User) {
+          // The conversation still awaits an assistant reply: show the typing
+          // placeholder so streamed chunks have a slot to land in.
           const assistantPlaceholder: Message = {
             role: MessageRole.Assistant,
             content: '',
@@ -289,13 +374,27 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           };
           setConversation(withPlaceholder);
           conversationRef.current = withPlaceholder;
-          startStream(
-            id,
-            lastMsg.content,
-            withPlaceholder.messages.length - 1,
-            lastDeploymentId ?? result.model.id,
-            lastMsg.custom_content,
-          );
+
+          // Start the generation only once per conversation. Guards against
+          // React StrictMode double-mounting (and any re-run of loadConversation)
+          // launching a second stream — which the backend rejects with 409.
+          const conversationPath = getConversationPath(id);
+          const alreadyStarted =
+            autoStartedPathsRef.current.has(conversationPath) ||
+            getGeneration(conversationPath)?.status ===
+              ClientGenerationStatus.Active;
+          if (!alreadyStarted) {
+            autoStartedPathsRef.current.add(conversationPath);
+            startStream(
+              id,
+              lastMsg.content,
+              withPlaceholder.messages.length - 1,
+              lastDeploymentId ?? result.model.id,
+              lastMsg.custom_content,
+              crypto.randomUUID(),
+              CompletionMode.ContinueLastUser,
+            );
+          }
         } else {
           setConversation(result);
         }
@@ -305,7 +404,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
         setIsFetching(false);
       }
     },
-    [navigate, restoreSelectedItemId, startStream],
+    [
+      navigate,
+      restoreSelectedItemId,
+      startStream,
+      updateConversationTitle,
+      getGeneration,
+    ],
   );
 
   useEffect(() => {
@@ -318,6 +423,17 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     // re-running when it changes would re-initialize an already-loaded conversation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, loadConversation]);
+
+  const clearedPrefetchIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!conversationId || !prefetchedConversation) return;
+    if (clearedPrefetchIdRef.current === conversationId) return;
+    clearedPrefetchIdRef.current = conversationId;
+    // history.state survives a hard refresh, so leaving the just-created
+    // user-only snapshot in it would make every reload re-run the auto-start
+    // stream instead of fetching the up-to-date conversation from the server.
+    navigate(`${pathname}${search}`, { replace: true, state: null });
+  }, [conversationId, prefetchedConversation, navigate, pathname, search]);
 
   const {
     handleSend,
@@ -426,6 +542,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
           streamErrorText={t(ChatI18nKeys.StreamError)}
+          stoppedGeneratingText={t(ChatI18nKeys.StoppedGenerating)}
           isReadOnly={isReadOnly}
           onDuplicateConversation={handleDuplicateConversation}
           duplicateError={duplicateError ?? undefined}

@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Chat API (1.0.0)",
-    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 38 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
+    "description": "REST API for the chat application. Provides endpoints for theme configuration, authentication, and management. All endpoints return appropriate HTTP status codes (200, 400, 401, 403, 404, 502, 503) with descriptive error messages.\n\nGenerated from libs/chat-api-client/openapi.json. Contains 48 requests grouped by OpenAPI tag.\n\nAuthentication uses the Postman cookie jar. Start the OIDC flow with the login request, then call “Get current user”; its response supplies the CSRF token used by authenticated write requests.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "event": [
@@ -256,7 +256,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"conversation\": {\n    \"id\": \"test-bucket/uuid__Hello\",\n    \"folderId\": \"test-bucket\",\n    \"name\": \"Hello\",\n    \"model\": {\n      \"id\": \"anthropic.claude-v3-sonnet\"\n    },\n    \"prompt\": \"\",\n    \"temperature\": 1,\n    \"messages\": [\n      {\n        \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n        \"role\": \"user\",\n        \"content\": \"Hello!\",\n        \"timestamp\": \"2026-05-19T16:00:00.000Z\",\n        \"custom_content\": {\n          \"attachments\": [\n            {\n              \"index\": 0,\n              \"type\": \"type\",\n              \"title\": \"title\",\n              \"data\": \"data\",\n              \"url\": \"url\",\n              \"reference_type\": \"reference_type\",\n              \"reference_url\": \"reference_url\"\n            }\n          ],\n          \"configuration_value\": {\n            \"button\": 1\n          },\n          \"form_value\": {\n            \"field1\": \"value\",\n            \"field2\": 42\n          },\n          \"event_type\": \"model_changed\",\n          \"previous_deployment_id\": \"gpt-4o\",\n          \"new_deployment_id\": \"claude-3\"\n        }\n      }\n    ],\n    \"lastActivityDate\": 1779206400000,\n    \"updatedAt\": 1779206400000,\n    \"selectedAddons\": [],\n    \"assistantModelId\": \"anthropic.claude-v3-sonnet\"\n  }\n}\n",
+              "raw": "{\n  \"conversation\": {\n    \"id\": \"test-bucket/uuid__Hello\",\n    \"folderId\": \"test-bucket\",\n    \"name\": \"Hello\",\n    \"model\": {\n      \"id\": \"anthropic.claude-v3-sonnet\"\n    },\n    \"prompt\": \"\",\n    \"temperature\": 1,\n    \"messages\": [\n      {\n        \"id\": \"cfeaf733-4ecd-4898-ad3b-d6835c0b5fc8\",\n        \"role\": \"user\",\n        \"content\": \"Hello!\",\n        \"timestamp\": \"2026-05-19T16:00:00.000Z\",\n        \"custom_content\": {\n          \"attachments\": [\n            {\n              \"index\": 0,\n              \"type\": \"type\",\n              \"title\": \"title\",\n              \"data\": \"data\",\n              \"url\": \"url\",\n              \"reference_type\": \"reference_type\",\n              \"reference_url\": \"reference_url\"\n            }\n          ],\n          \"configuration_value\": {\n            \"button\": 1\n          },\n          \"form_value\": {\n            \"field1\": \"value\",\n            \"field2\": 42\n          },\n          \"event_type\": \"model_changed\",\n          \"previous_deployment_id\": \"gpt-4o\",\n          \"new_deployment_id\": \"claude-3\"\n        }\n      }\n    ],\n    \"lastActivityDate\": 1779206400000,\n    \"updatedAt\": 1779206400000,\n    \"selectedAddons\": [],\n    \"assistantModelId\": \"anthropic.claude-v3-sonnet\",\n    \"responseFormat\": \"markdown\",\n    \"llmNamingDone\": false\n  }\n}\n",
               "options": { "raw": { "language": "json" } }
             },
             "url": {
@@ -518,6 +518,25 @@
             },
             "description": "Returns the JSON Schema of configuration supported by the deployment. Only available for deployments whose `features.configuration` flag is `true`. Results are cached server-side for 60 seconds per user."
           }
+        },
+        {
+          "name": "Get deployment usage limits",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/deployments/{{deploymentName}}/limits",
+              "host": ["{{baseUrl}}"],
+              "path": [
+                "api",
+                "v1",
+                "deployments",
+                "{{deploymentName}}",
+                "limits"
+              ]
+            },
+            "description": "Returns spent/limit statistics for a single deployment. Proxies GET /v1/deployments/{deployment_name}/limits using the caller's session access token. Not cached — every request hits DIAL Core for real-time usage data."
+          }
         }
       ]
     },
@@ -538,7 +557,13 @@
               "formdata": [
                 { "key": "file", "type": "file", "src": [] },
                 { "key": "bucket", "type": "text", "value": "{{bucket}}" },
-                { "key": "path", "type": "text", "value": "{{path}}" }
+                { "key": "path", "type": "text", "value": "{{path}}" },
+                {
+                  "key": "uploadMode",
+                  "type": "text",
+                  "value": "overwrite",
+                  "disabled": true
+                }
               ]
             },
             "url": {
@@ -600,6 +625,78 @@
           }
         },
         {
+          "name": "List files from the organization (public) bucket",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "public"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "disabled": true,
+                  "description": "Folder path within public bucket (no leading slash, no ..)"
+                },
+                {
+                  "key": "token",
+                  "value": "token",
+                  "disabled": true,
+                  "description": "Pagination token from previous response"
+                },
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "disabled": true,
+                  "description": "Max items to return"
+                },
+                {
+                  "key": "recursive",
+                  "value": "false",
+                  "disabled": true,
+                  "description": "Return items recursively"
+                }
+              ]
+            },
+            "description": "Returns files from the fixed public bucket. Permissions are always false — users cannot write to the public bucket."
+          }
+        },
+        {
+          "name": "List files shared with the current user",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/shared",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "shared"],
+              "query": [
+                {
+                  "key": "path",
+                  "value": "{{path}}",
+                  "disabled": true,
+                  "description": "Folder path filter (no leading slash, no ..)"
+                },
+                {
+                  "key": "token",
+                  "value": "token",
+                  "disabled": true,
+                  "description": "Pagination token from previous response"
+                },
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "disabled": true,
+                  "description": "Max items to return"
+                }
+              ]
+            },
+            "description": "Proxies the DIAL Core sharing API to return files shared with the authenticated user."
+          }
+        },
+        {
           "name": "Get file metadata",
           "request": {
             "method": "GET",
@@ -622,6 +719,94 @@
               ]
             },
             "description": "Returns metadata for a single named file from DIAL Core. Path must not end with /."
+          }
+        },
+        {
+          "name": "Create a folder",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bucket\": \"my-bucket\",\n  \"parentPath\": \"reports/\",\n  \"name\": \"reports\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/folders",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "folders"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Download files and folders as a ZIP archive",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/zip" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"bucket\": \"my-bucket\",\n      \"path\": \"reports/\",\n      \"name\": \"reports\",\n      \"nodeType\": \"item\"\n    }\n  ]\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/download-archive",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "download-archive"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Delete files and folders",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"bucket\": \"my-bucket\",\n      \"path\": \"reports/\",\n      \"name\": \"reports\",\n      \"nodeType\": \"item\"\n    }\n  ]\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/delete",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "delete"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Rename files and folders",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"items\": [\n    {\n      \"bucket\": \"my-bucket\",\n      \"sourcePath\": \"reports/q1.pdf\",\n      \"destinationPath\": \"reports/q1-final.pdf\",\n      \"nodeType\": \"item\",\n      \"name\": \"q1.pdf\"\n    }\n  ]\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/files/rename",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "files", "rename"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }
         },
         {
@@ -767,6 +952,37 @@
       ]
     },
     {
+      "name": "toolsets",
+      "item": [
+        {
+          "name": "List available toolsets",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/toolsets",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "toolsets"]
+            },
+            "description": "Returns the list of DIAL Core toolsets visible to the authenticated session user. Proxies GET /openai/toolsets using the caller's session access token. Results are cached server-side for 30 seconds per user."
+          }
+        },
+        {
+          "name": "Get toolset by name",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/toolsets/{{toolsetName}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "toolsets", "{{toolsetName}}"]
+            },
+            "description": "Returns a single DIAL Core toolset by name for the authenticated session user. Proxies GET /openai/toolsets/{toolset_name} using the caller's session access token. Results are cached server-side for 60 seconds per user per toolset."
+          }
+        }
+      ]
+    },
+    {
       "name": "transcription",
       "item": [
         {
@@ -870,6 +1086,28 @@
               "raw": "{{baseUrl}}/api/v1/user-config/deployments",
               "host": ["{{baseUrl}}"],
               "path": ["api", "v1", "user-config", "deployments"]
+            },
+            "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
+          }
+        },
+        {
+          "name": "Set the selected deployment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Origin", "value": "{{origin}}" },
+              { "key": "X-CSRF-Token", "value": "{{csrfToken}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{id}}\"\n}\n",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/user-config/deployments/selected",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "user-config", "deployments", "selected"]
             },
             "description": "CSRF: run an authenticated GET request first (for example “Get current user”) so the collection captures X-CSRF-Token."
           }

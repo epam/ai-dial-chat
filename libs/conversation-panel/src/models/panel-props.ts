@@ -30,6 +30,8 @@ export interface ConversationHistoryItem {
   iconUrl?: string;
   /** Tooltip text shown on the deployment icon. Typically the agent or model display name. */
   iconTooltip?: string;
+  /** When `true`, a skeleton placeholder is shown instead of the deployment icon. */
+  isIconLoading?: boolean;
   /**
    * Browser-navigable URL for the conversation (e.g. `/conversations/<id>`).
    * When provided, a middle mouse button click on the row opens this URL in a new tab,
@@ -61,8 +63,6 @@ export interface ConversationHistoryTypography {
   newChatLabelClassName?: string;
   /** Typography class applied to each filter tab label. Defaults to `'dial-tiny-semi-text'`. */
   tabClassName?: string;
-  /** Text color class applied to each filter tab label. Defaults to `'text-primary'`. */
-  tabColorClassName?: string;
 }
 
 /** CSS custom-property overrides for `ConversationPanel`. */
@@ -71,8 +71,6 @@ export interface ConversationHistoryColors {
   background?: string;
   /** Inner-edge divider border color. */
   border?: string;
-  /** Header bar bottom-border color. */
-  headerBorder?: string;
   /** Hover background for a conversation row. */
   itemHover?: string;
   /** Active/selected background for a conversation row. */
@@ -93,8 +91,6 @@ export interface ConversationHistoryColors {
   newChatIconBackgroundActive?: string;
   /** Color of the plus icon inside the New chat button. */
   newChatIconColor?: string;
-  /** Border-radius of the New chat button. Defaults to `0.25rem`. */
-  newChatBorderRadius?: string;
   /** Bottom-border color of the New chat button container divider. */
   newChatDivider?: string;
 }

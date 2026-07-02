@@ -6,16 +6,16 @@
 }
 
 .panel {
-  background: var(--bg-layer-0, #000000);
+  background: var(--bg-layer-0, #fcfcfc);
   border-inline-start-color: var(--stroke-secondary, #242c42);
 }
 
 .divider {
-  border-block-end: 1px solid var(--stroke-secondary, #242c42);
+  border-block-end: 1px solid var(--stroke-tertiary, #e0e6f0);
 }
 
 .version {
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #575f73);
   // Align version baseline with the bottom of the name text
   padding-bottom: 6px;
 }
@@ -26,5 +26,5 @@
 }
 
 .introCaption {
-  color: var(--text-secondary, #9fa6bd);
+  color: var(--text-secondary, #575f73);
 }

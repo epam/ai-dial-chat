@@ -46,4 +46,12 @@ export interface FavoritesProps {
   isLeaving?: boolean;
   /** Called when the section exit animation finishes so the parent can safely unmount. */
   onExitComplete?: () => void;
+  /** Accessible label for the "previous page" button. Default: 'Previous page'. */
+  prevPageAriaLabel?: string;
+  /** Accessible label for the "next page" button. Default: 'Next page'. */
+  nextPageAriaLabel?: string;
+  /** Accessible label for the star button when the item is not starred. Default: 'Add to favorites'. */
+  addToFavoritesAriaLabel?: string;
+  /** Accessible label for the star button when the item is already starred. Default: 'Remove from favorites'. */
+  removeFromFavoritesAriaLabel?: string;
 }

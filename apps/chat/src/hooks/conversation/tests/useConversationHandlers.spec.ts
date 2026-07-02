@@ -136,6 +136,8 @@ describe('useConversationHandlers — handleSend', () => {
       1,
       'selected-deployment',
       { attachments: undefined },
+      expect.any(String),
+      'append',
     );
   });
 
@@ -155,6 +157,8 @@ describe('useConversationHandlers — handleSend', () => {
       1,
       'selected-deployment',
       { attachments: undefined },
+      expect.any(String),
+      'append',
     );
   });
 
@@ -304,6 +308,8 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
       1,
       'selected-deployment',
       undefined,
+      expect.any(String),
+      'regenerate',
     );
   });
 
@@ -323,6 +329,8 @@ describe('useConversationHandlers — handleRegenerateMessage', () => {
       1,
       'selected-deployment',
       { attachments: undefined },
+      expect.any(String),
+      'append',
     );
   });
 });

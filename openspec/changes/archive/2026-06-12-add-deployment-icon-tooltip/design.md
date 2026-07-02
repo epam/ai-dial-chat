@@ -1,6 +1,6 @@
 ## Context
 
-`DeploymentIcon` (in `libs/conversation-input`) renders a rounded badge with a model/agent image. It is used in `ConversationRow` (in `libs/conversation-panel`) as the `iconBefore` of a `DialGhostButton`. Currently no tooltip is shown, so users cannot identify the agent/model from the icon alone without reading the conversation title.
+`DeploymentIcon` (in `libs/conversation-input`) renders a rounded badge with a model/agent image. It is used in `ConversationRow` (in `libs/conversation-panel`) as the `iconBefore` of a `GhostButton`. Currently no tooltip is shown, so users cannot identify the agent/model from the icon alone without reading the conversation title.
 
 The UI kit provides `DialTooltip`, which wraps any element and shows a hover/focus tooltip. `DeploymentIcon` is a pure display component with no deps on routing, i18n, or app state — an optional `tooltip` prop can be added without violating lib isolation rules.
 
@@ -34,7 +34,7 @@ A plain string field is the simplest contract. The app already maps deployment o
 
 ## Risks / Trade-offs
 
-- **Risk**: `DialTooltip` adds a wrapper `<span>` (via `triggerClassName`) around the badge — this could affect the flex layout of `DialGhostButton`'s `iconBefore` slot.
+- **Risk**: `DialTooltip` adds a wrapper `<span>` (via `triggerClassName`) around the badge — this could affect the flex layout of `GhostButton`'s `iconBefore` slot.
   **Mitigation**: Inspect `DialTooltip`'s rendered structure and pass `triggerClassName` with `flex shrink-0` if needed to preserve sizing.
 
 - **Risk**: Consumers already constructing `ConversationHistoryItem` objects will not pass `iconTooltip`, leaving tooltips absent — this is intentional (opt-in) and not a regression.

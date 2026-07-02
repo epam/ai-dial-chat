@@ -1,9 +1,5 @@
-import {
-  ButtonAppearance,
-  ButtonVariant,
-  DialButton,
-  ElementSize,
-} from '@epam/ai-dial-ui-kit';
+import { NeutralButton } from '@epam/ai-dial-kit';
+import { ElementSize } from '@epam/ai-dial-ui-kit';
 import { FC, memo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CitationsI18nKeys } from '../../../constants/translation-keys';
@@ -20,18 +16,19 @@ interface Props {
 const CitationMarker: FC<Props> = ({ sourceName, annotationCount, onOpen }) => {
   const { t } = useTranslation();
 
-  const label =
-    annotationCount > 1
-      ? t(CitationsI18nKeys.MarkerLabelWithOverflow, {
-          source: sourceName,
-          count: annotationCount - 1,
-        })
-      : t(CitationsI18nKeys.MarkerLabel, { source: sourceName });
+  const label = (
+    <span className="dial-caption-text">
+      {annotationCount > 1
+        ? t(CitationsI18nKeys.MarkerLabelWithOverflow, {
+            source: sourceName,
+            count: annotationCount - 1,
+          })
+        : t(CitationsI18nKeys.MarkerLabel, { source: sourceName })}
+    </span>
+  );
 
   return (
-    <DialButton
-      variant={ButtonVariant.Neutral}
-      appearance={ButtonAppearance.Outlined}
+    <NeutralButton
       size={ElementSize.Small}
       label={label}
       aria-label={t(CitationsI18nKeys.MarkerAriaLabel, { source: sourceName })}

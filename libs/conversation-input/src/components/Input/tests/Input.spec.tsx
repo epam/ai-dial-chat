@@ -164,10 +164,13 @@ describe('Input', () => {
     expect(wrapper.style.getPropertyValue('--ci-text')).toBe('');
   });
 
-  it('should set --ci-font-size CSS variable when typography prop is provided', () => {
-    const { container } = render(<Input typography={{ fontSize: '16px' }} />);
-    const wrapper = container.firstElementChild as HTMLElement;
-    expect(wrapper.style.getPropertyValue('--ci-font-size')).toBe('16px');
+  it('should apply the typography fontClassName to the textarea', () => {
+    const { container } = render(
+      <Input typography={{ fontClassName: 'dial-body-paragraph-text' }} />,
+    );
+    expect(container.querySelector('textarea')?.className).toContain(
+      'dial-body-paragraph-text',
+    );
   });
 
   it('should use custom placeholder when provided', () => {

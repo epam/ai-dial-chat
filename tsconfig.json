@@ -44,6 +44,9 @@
     },
     {
       "path": "./libs/attachment-input"
+    },
+    {
+      "path": "./libs/ai-dial-kit"
     }
   ]
 }

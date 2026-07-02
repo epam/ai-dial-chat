@@ -806,6 +806,12 @@ export interface ConversationResponseDto {
    * @memberof ConversationResponseDto
    */
   responseFormat?: ConversationResponseDtoResponseFormatEnum;
+  /**
+   * When true, automatic LLM conversation naming has already run for this conversation.
+   * @type {boolean}
+   * @memberof ConversationResponseDto
+   */
+  llmNamingDone?: boolean;
 }
 
 /**
@@ -830,6 +836,49 @@ export interface ConversationsConfigDto {
    * @memberof ConversationsConfigDto
    */
   pinnedIds: Array<string>;
+}
+/**
+ *
+ * @export
+ * @interface CreateApplicationBodyDto
+ */
+export interface CreateApplicationBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  type: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreateApplicationBodyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof CreateApplicationBodyDto
+   */
+  topics?: Array<string>;
 }
 /**
  *
@@ -923,6 +972,31 @@ export interface CreateFolderResponseDto {
    * @memberof CreateFolderResponseDto
    */
   folderId: string;
+}
+/**
+ *
+ * @export
+ * @interface CreatedApplicationDto
+ */
+export interface CreatedApplicationDto {
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedApplicationDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedApplicationDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof CreatedApplicationDto
+   */
+  object?: string;
 }
 /**
  *
@@ -1232,6 +1306,73 @@ export const DeploymentItemDtoTypeEnum = {
 export type DeploymentItemDtoTypeEnum =
   (typeof DeploymentItemDtoTypeEnum)[keyof typeof DeploymentItemDtoTypeEnum];
 
+/**
+ *
+ * @export
+ * @interface DeploymentLimitsResponseDto
+ */
+export interface DeploymentLimitsResponseDto {
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  hourRequestStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  dayRequestStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  minuteTokenStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  dayTokenStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  weekTokenStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  monthTokenStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  minuteCostStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  dayCostStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  weekCostStats?: LimitStatsDto;
+  /**
+   *
+   * @type {LimitStatsDto}
+   * @memberof DeploymentLimitsResponseDto
+   */
+  monthCostStats?: LimitStatsDto;
+}
 /**
  *
  * @export
@@ -1578,6 +1719,42 @@ export interface DialModelFeaturesDto {
    * @memberof DialModelFeaturesDto
    */
   mcp?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  chatCompletion?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  responsesApi?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  maxTokensSupported?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  maxCompletionTokensSupported?: boolean;
+  /**
+   *
+   * @type {boolean}
+   * @memberof DialModelFeaturesDto
+   */
+  customTemperatureSupported?: boolean;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialModelFeaturesDto
+   */
+  reasoningEfforts?: Array<string>;
 }
 /**
  *
@@ -1635,6 +1812,257 @@ export interface DialModelPricingDto {
    * @memberof DialModelPricingDto
    */
   completion?: string;
+}
+/**
+ *
+ * @export
+ * @interface DialToolsetAuthSettingsDto
+ */
+export interface DialToolsetAuthSettingsDto {
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  authenticationType: DialToolsetAuthSettingsDtoAuthenticationTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  apiKeyHeader?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  redirectUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  tokenEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  codeChallenge?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  codeChallengeMethod?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  scopesSupported?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  globalAuthStatus?: DialToolsetAuthSettingsDtoGlobalAuthStatusEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetAuthSettingsDto
+   */
+  userLevelAuthStatus?: DialToolsetAuthSettingsDtoUserLevelAuthStatusEnum;
+}
+
+/**
+ * @export
+ */
+export const DialToolsetAuthSettingsDtoAuthenticationTypeEnum = {
+  Oauth: 'OAUTH',
+  ApiKey: 'API_KEY',
+  None: 'NONE',
+} as const;
+export type DialToolsetAuthSettingsDtoAuthenticationTypeEnum =
+  (typeof DialToolsetAuthSettingsDtoAuthenticationTypeEnum)[keyof typeof DialToolsetAuthSettingsDtoAuthenticationTypeEnum];
+
+/**
+ * @export
+ */
+export const DialToolsetAuthSettingsDtoGlobalAuthStatusEnum = {
+  SignedIn: 'SIGNED_IN',
+  SignedOut: 'SIGNED_OUT',
+} as const;
+export type DialToolsetAuthSettingsDtoGlobalAuthStatusEnum =
+  (typeof DialToolsetAuthSettingsDtoGlobalAuthStatusEnum)[keyof typeof DialToolsetAuthSettingsDtoGlobalAuthStatusEnum];
+
+/**
+ * @export
+ */
+export const DialToolsetAuthSettingsDtoUserLevelAuthStatusEnum = {
+  SignedIn: 'SIGNED_IN',
+  SignedOut: 'SIGNED_OUT',
+} as const;
+export type DialToolsetAuthSettingsDtoUserLevelAuthStatusEnum =
+  (typeof DialToolsetAuthSettingsDtoUserLevelAuthStatusEnum)[keyof typeof DialToolsetAuthSettingsDtoUserLevelAuthStatusEnum];
+
+/**
+ *
+ * @export
+ * @interface DialToolsetDto
+ */
+export interface DialToolsetDto {
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  id: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  toolset: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  displayName?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  displayVersion?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  owner?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  object?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  status?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialToolsetDto
+   */
+  descriptionKeywords?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {number}
+   * @memberof DialToolsetDto
+   */
+  maxRetryAttempts?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof DialToolsetDto
+   */
+  createdAt?: number;
+  /**
+   *
+   * @type {number}
+   * @memberof DialToolsetDto
+   */
+  updatedAt?: number;
+  /**
+   *
+   * @type {DialModelFeaturesDto}
+   * @memberof DialToolsetDto
+   */
+  features?: DialModelFeaturesDto;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  endpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof DialToolsetDto
+   */
+  transport?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof DialToolsetDto
+   */
+  allowedTools?: Array<string>;
+  /**
+   *
+   * @type {DialToolsetAuthSettingsDto}
+   * @memberof DialToolsetDto
+   */
+  authSettings?: DialToolsetAuthSettingsDto;
+  /**
+   * Whether this toolset is installed by the current user
+   * @type {boolean}
+   * @memberof DialToolsetDto
+   */
+  isInstalled?: boolean;
+  /**
+   * True when the toolset id/path belongs to the current session user bucket
+   * @type {boolean}
+   * @memberof DialToolsetDto
+   */
+  isMy?: boolean;
+}
+/**
+ *
+ * @export
+ * @interface DialToolsetListResponseDto
+ */
+export interface DialToolsetListResponseDto {
+  /**
+   *
+   * @type {Array<DialToolsetDto>}
+   * @memberof DialToolsetListResponseDto
+   */
+  data: Array<DialToolsetDto>;
 }
 /**
  *
@@ -1759,6 +2187,25 @@ export interface FileUploadResponseDto {
    * @memberof FileUploadResponseDto
    */
   url: string;
+}
+/**
+ *
+ * @export
+ * @interface LimitStatsDto
+ */
+export interface LimitStatsDto {
+  /**
+   *
+   * @type {number}
+   * @memberof LimitStatsDto
+   */
+  total: number;
+  /**
+   *
+   * @type {number}
+   * @memberof LimitStatsDto
+   */
+  used: number;
 }
 /**
  *
@@ -1967,6 +2414,19 @@ export const MessageDtoRoleEnum = {
 export type MessageDtoRoleEnum =
   (typeof MessageDtoRoleEnum)[keyof typeof MessageDtoRoleEnum];
 
+/**
+ *
+ * @export
+ * @interface MutatedToolsetDto
+ */
+export interface MutatedToolsetDto {
+  /**
+   *
+   * @type {string}
+   * @memberof MutatedToolsetDto
+   */
+  id: string;
+}
 /**
  *
  * @export
@@ -2185,17 +2645,17 @@ export interface SaveConversationBodyDto {
  */
 export interface SendCompletionDto {
   /**
+   * Client-generated UUID identifying this generation attempt.
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  generationId: string;
+  /**
    * Conversation path ({deploymentId}__{name}__{uuid}). May contain slashes.
    * @type {string}
    * @memberof SendCompletionDto
    */
   path: string;
-  /**
-   * The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.
-   * @type {string}
-   * @memberof SendCompletionDto
-   */
-  message: string;
   /**
    * DIAL Core deployment name to use for completion
    * @type {string}
@@ -2203,11 +2663,61 @@ export interface SendCompletionDto {
    */
   model: string;
   /**
+   * How the message should be inserted into history. append = new user+assistant turn; continue_last_user = conversation already ends with a user message; regenerate = replace assistant at messageIndex; edit = replace user message at messageIndex.
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  mode: SendCompletionDtoModeEnum;
+  /**
+   * The new user message to send. May be empty when custom_content carries attachments, form_value, or configuration_value.
+   * @type {string}
+   * @memberof SendCompletionDto
+   */
+  message?: string;
+  /**
+   * Zero-based message index for regenerate and edit modes. Ignored for append/continue_last_user.
+   * @type {number}
+   * @memberof SendCompletionDto
+   */
+  messageIndex?: number;
+  /**
    * Extra DIAL payload attached to the user message
    * @type {MessageCustomContentDto}
    * @memberof SendCompletionDto
    */
   customContent?: MessageCustomContentDto;
+}
+
+/**
+ * @export
+ */
+export const SendCompletionDtoModeEnum = {
+  Append: 'append',
+  ContinueLastUser: 'continue_last_user',
+  Regenerate: 'regenerate',
+  Edit: 'edit',
+} as const;
+export type SendCompletionDtoModeEnum =
+  (typeof SendCompletionDtoModeEnum)[keyof typeof SendCompletionDtoModeEnum];
+
+/**
+ *
+ * @export
+ * @interface StopCompletionDto
+ */
+export interface StopCompletionDto {
+  /**
+   * Generation ID that was returned by the active stream.
+   * @type {string}
+   * @memberof StopCompletionDto
+   */
+  generationId: string;
+  /**
+   * Conversation path of the active generation.
+   * @type {string}
+   * @memberof StopCompletionDto
+   */
+  path: string;
 }
 /**
  *
@@ -2302,6 +2812,290 @@ export interface ThemeImagesDto {
    */
   chatFavicon?: string;
 }
+/**
+ *
+ * @export
+ * @interface ToolsetAuthResultDto
+ */
+export interface ToolsetAuthResultDto {
+  /**
+   *
+   * @type {boolean}
+   * @memberof ToolsetAuthResultDto
+   */
+  success: boolean;
+}
+/**
+ *
+ * @export
+ * @interface ToolsetAuthSettingsBodyDto
+ */
+export interface ToolsetAuthSettingsBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  authenticationType: ToolsetAuthSettingsBodyDtoAuthenticationTypeEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  apiKeyHeader?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  clientId?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  clientSecret?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  authorizationEndpoint?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  tokenEndpoint?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  scopesSupported?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  redirectUri?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  codeChallengeMethod?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetAuthSettingsBodyDto
+   */
+  codeChallenge?: string;
+}
+
+/**
+ * @export
+ */
+export const ToolsetAuthSettingsBodyDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ToolsetAuthSettingsBodyDtoAuthenticationTypeEnum =
+  (typeof ToolsetAuthSettingsBodyDtoAuthenticationTypeEnum)[keyof typeof ToolsetAuthSettingsBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ToolsetBodyDto
+ */
+export interface ToolsetBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  name: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  version?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  description?: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  iconUrl?: string;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ToolsetBodyDto
+   */
+  topics?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  endpoint: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  transport: ToolsetBodyDtoTransportEnum;
+  /**
+   *
+   * @type {Array<string>}
+   * @memberof ToolsetBodyDto
+   */
+  allowedTools?: Array<string>;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetBodyDto
+   */
+  reference?: string;
+  /**
+   *
+   * @type {ToolsetAuthSettingsBodyDto}
+   * @memberof ToolsetBodyDto
+   */
+  authSettings: ToolsetAuthSettingsBodyDto;
+}
+
+/**
+ * @export
+ */
+export const ToolsetBodyDtoTransportEnum = {
+  Http: 'HTTP',
+  Sse: 'SSE',
+} as const;
+export type ToolsetBodyDtoTransportEnum =
+  (typeof ToolsetBodyDtoTransportEnum)[keyof typeof ToolsetBodyDtoTransportEnum];
+
+/**
+ *
+ * @export
+ * @interface ToolsetLoginBodyDto
+ */
+export interface ToolsetLoginBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  url: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  credentialsLevel: ToolsetLoginBodyDtoCredentialsLevelEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  authenticationType: ToolsetLoginBodyDtoAuthenticationTypeEnum;
+  /**
+   * API key value (API_KEY auth).
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  apiKey?: string;
+  /**
+   * OAuth authorization code (OAUTH auth).
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  code?: string;
+  /**
+   * OAuth redirect URI used for the code exchange.
+   * @type {string}
+   * @memberof ToolsetLoginBodyDto
+   */
+  redirectUri?: string;
+}
+
+/**
+ * @export
+ */
+export const ToolsetLoginBodyDtoCredentialsLevelEnum = {
+  Global: 'GLOBAL',
+  User: 'USER',
+  App: 'APP',
+} as const;
+export type ToolsetLoginBodyDtoCredentialsLevelEnum =
+  (typeof ToolsetLoginBodyDtoCredentialsLevelEnum)[keyof typeof ToolsetLoginBodyDtoCredentialsLevelEnum];
+
+/**
+ * @export
+ */
+export const ToolsetLoginBodyDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ToolsetLoginBodyDtoAuthenticationTypeEnum =
+  (typeof ToolsetLoginBodyDtoAuthenticationTypeEnum)[keyof typeof ToolsetLoginBodyDtoAuthenticationTypeEnum];
+
+/**
+ *
+ * @export
+ * @interface ToolsetLogoutBodyDto
+ */
+export interface ToolsetLogoutBodyDto {
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLogoutBodyDto
+   */
+  url: string;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLogoutBodyDto
+   */
+  credentialsLevel: ToolsetLogoutBodyDtoCredentialsLevelEnum;
+  /**
+   *
+   * @type {string}
+   * @memberof ToolsetLogoutBodyDto
+   */
+  authenticationType: ToolsetLogoutBodyDtoAuthenticationTypeEnum;
+}
+
+/**
+ * @export
+ */
+export const ToolsetLogoutBodyDtoCredentialsLevelEnum = {
+  Global: 'GLOBAL',
+  User: 'USER',
+  App: 'APP',
+} as const;
+export type ToolsetLogoutBodyDtoCredentialsLevelEnum =
+  (typeof ToolsetLogoutBodyDtoCredentialsLevelEnum)[keyof typeof ToolsetLogoutBodyDtoCredentialsLevelEnum];
+
+/**
+ * @export
+ */
+export const ToolsetLogoutBodyDtoAuthenticationTypeEnum = {
+  None: 'NONE',
+  ApiKey: 'API_KEY',
+  Oauth: 'OAUTH',
+} as const;
+export type ToolsetLogoutBodyDtoAuthenticationTypeEnum =
+  (typeof ToolsetLogoutBodyDtoAuthenticationTypeEnum)[keyof typeof ToolsetLogoutBodyDtoAuthenticationTypeEnum];
+
 /**
  *
  * @export
@@ -2459,4 +3253,17 @@ export interface UserProfileDto {
    * @memberof UserProfileDto
    */
   bucket: string;
+}
+/**
+ *
+ * @export
+ * @interface WatchConversationBodyDto
+ */
+export interface WatchConversationBodyDto {
+  /**
+   * Conversation sub-path (bucket-stripped), e.g. "gpt-4o__My Chat".
+   * @type {string}
+   * @memberof WatchConversationBodyDto
+   */
+  path: string;
 }

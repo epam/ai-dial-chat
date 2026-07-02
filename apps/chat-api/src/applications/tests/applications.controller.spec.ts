@@ -1,4 +1,5 @@
 import {
+  ConflictException,
   INestApplication,
   ServiceUnavailableException,
   UnauthorizedException,
@@ -14,6 +15,10 @@ import type { ApplicationsResponseDto } from '../dto/application.dto';
 
 const mockApp = { id: 'my-app', object: 'application', display_name: 'My App' };
 const mockList: ApplicationsResponseDto = { data: [mockApp] };
+const createdApp = {
+  id: 'users/u/applications/new-app',
+  displayName: 'New App',
+};
 
 const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
 
@@ -54,10 +59,16 @@ async function buildApp(
 
 describe('ApplicationsController (integration)', () => {
   let app: INestApplication;
-  let service: { listApplications: ReturnType<typeof vi.fn> };
+  let service: {
+    listApplications: ReturnType<typeof vi.fn>;
+    createApplication: ReturnType<typeof vi.fn>;
+  };
 
   beforeEach(async () => {
-    service = { listApplications: vi.fn().mockResolvedValue(mockList) };
+    service = {
+      listApplications: vi.fn().mockResolvedValue(mockList),
+      createApplication: vi.fn().mockResolvedValue(createdApp),
+    };
     app = await buildApp(service);
   });
 
@@ -92,6 +103,80 @@ describe('ApplicationsController (integration)', () => {
       );
       await request(app.getHttpServer())
         .get('/api/v1/applications')
+        .expect(503);
+    });
+  });
+
+  describe('POST /api/v1/applications', () => {
+    const validBody = {
+      name: 'New App',
+      type: 'https://mydial.epam.com/custom_application_schemas/quickapps2',
+    };
+
+    it('returns 201 with created application on success', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send(validBody)
+        .expect(201);
+
+      expect(res.body).toEqual(createdApp);
+      expect(service.createApplication).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        validBody,
+      );
+    });
+
+    it('returns 400 when name is missing', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send({ type: 'https://mydial.epam.com/schema' })
+        .expect(400);
+
+      expect(service.createApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when type is missing', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send({ name: 'My App' })
+        .expect(400);
+
+      expect(service.createApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns 401 when service throws UnauthorizedException', async () => {
+      service.createApplication.mockRejectedValue(new UnauthorizedException());
+      await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send(validBody)
+        .expect(401);
+    });
+
+    it('returns 400 when unknown fields are sent (forbidNonWhitelisted)', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send({ ...validBody, unknown_field: 'value' })
+        .expect(400);
+
+      expect(service.createApplication).not.toHaveBeenCalled();
+    });
+
+    it('returns 409 when service throws ConflictException', async () => {
+      service.createApplication.mockRejectedValue(new ConflictException());
+      await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send(validBody)
+        .expect(409);
+    });
+
+    it('returns 503 when service throws ServiceUnavailableException', async () => {
+      service.createApplication.mockRejectedValue(
+        new ServiceUnavailableException(),
+      );
+      await request(app.getHttpServer())
+        .post('/api/v1/applications')
+        .send(validBody)
         .expect(503);
     });
   });

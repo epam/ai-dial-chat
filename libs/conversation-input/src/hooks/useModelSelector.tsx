@@ -39,6 +39,8 @@ export interface UseModelSelectorResult {
   selectorIcon: ReactNode;
   /** Accessible label for the trigger button. */
   selectorAriaLabel: string;
+  /** Display name of the currently selected deployment, or `undefined` when none is selected or loading. */
+  selectedLabel: string | undefined;
   /** Menu items for the deployment dropdown. */
   menuItems: DropdownItem[];
   /** Sticky search header rendered above the menu items. */
@@ -71,8 +73,8 @@ export const useModelSelector = ({
         buildDeploymentIcon(
           selectedItem?.iconUrl,
           selectedItem?.type,
+          selectedItem?.displayName ?? selectedItem?.id ?? '',
           DIAL_ICON_SIZE.LG,
-          selectedItem?.displayName ?? selectedItem?.id,
         )
       ),
     [isLoading, selectedItem],
@@ -113,7 +115,11 @@ export const useModelSelector = ({
     return filterDeployments(deployments, searchQuery).map((item) => ({
       key: item.id,
       label: <DialEllipsisTooltip text={getDeploymentLabel(item)} />,
-      icon: buildDeploymentIcon(item.iconUrl, item.type),
+      icon: buildDeploymentIcon(
+        item.iconUrl,
+        item.type,
+        item.displayName ?? item.id,
+      ),
       onClick: () => onDeploymentChange?.(item.id),
       className:
         item.id === selectedDeploymentId
@@ -163,6 +169,7 @@ export const useModelSelector = ({
   return {
     selectorIcon,
     selectorAriaLabel,
+    selectedLabel,
     menuItems,
     menuHeader,
     onOpenChange: handleOpenChange,

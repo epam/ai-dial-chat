@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Logger, ValidationPipe, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule } from '@nestjs/swagger';
@@ -9,12 +10,10 @@ import {
   openApiDocumentOptions,
 } from './openapi/openapi.config';
 
-declare const module: {
-  hot?: { accept: () => void; dispose: (cb: () => void) => void };
-};
-
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    logger: ['log', 'error', 'warn'],
+  });
 
   app.use(cookieParser());
 
@@ -33,6 +32,7 @@ async function bootstrap() {
           ],
           fontSrc: ["'self'", 'https://fonts.gstatic.com'],
           scriptSrc: ["'self'"],
+          workerSrc: ["'self'", 'blob:'],
           imgSrc: ["'self'", 'data:', 'blob:', 'https:'],
         },
       },
@@ -63,10 +63,11 @@ async function bootstrap() {
   await app.listen(port);
 
   Logger.log(
-    `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`,
+    `Application is running on: http://localhost:${port}/${globalPrefix}`,
   );
 
-  if (process.env['NODE_ENV'] !== 'production') {
+  const shouldExposeSwagger = process.env['NODE_ENV'] !== 'production';
+  if (shouldExposeSwagger) {
     const document = SwaggerModule.createDocument(
       app,
       createOpenApiConfig(port),
@@ -77,11 +78,12 @@ async function bootstrap() {
       `📚 Swagger documentation available at: http://localhost:${port}/api/docs`,
     );
   }
-
-  if (module.hot) {
-    module.hot.accept();
-    module.hot.dispose(() => app.close());
-  }
 }
 
-bootstrap();
+bootstrap().catch((error: unknown) => {
+  Logger.error(
+    'Failed to start application',
+    error instanceof Error ? error.stack : error,
+  );
+  process.exitCode = 1;
+});

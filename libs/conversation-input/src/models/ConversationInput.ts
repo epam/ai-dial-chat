@@ -4,6 +4,7 @@ import type {
   DeploymentItem,
   DisplayAttachment,
 } from '@epam/ai-dial-chat-shared';
+import type { ReactNode } from 'react';
 import type {
   ChatSettingsConfig,
   InputColors,
@@ -24,16 +25,8 @@ export interface ConversationInputColors {
 
 /** Typography overrides for the `ConversationInput` component. */
 export interface ConversationInputTypography {
-  /** Tailwind (or custom) class applied to the welcome heading — takes precedence over the individual font properties below. */
+  /** Tailwind (or custom) class applied to the welcome heading. */
   welcomeClassName?: string;
-  /** Font family of the welcome heading (CSS value, e.g. `"'Inter', sans-serif"`). Ignored when `welcomeClassName` is set. */
-  welcomeFontFamily?: string;
-  /** Font size of the welcome heading (CSS value, e.g. `'24px'`). Ignored when `welcomeClassName` is set. */
-  welcomeFontSize?: string;
-  /** Font weight of the welcome heading. Ignored when `welcomeClassName` is set. */
-  welcomeFontWeight?: string | number;
-  /** Line height of the welcome heading. Ignored when `welcomeClassName` is set. */
-  welcomeLineHeight?: string | number;
   /** Typography overrides forwarded to the inner `Input` component. */
   input?: InputTypography;
 }
@@ -78,7 +71,7 @@ export interface EditMessageInputProps {
   /** Accessible label for each attachment card's retry button (error state only). */
   retryLabel?: string;
   /** Accessible label for the add-menu trigger button. */
-  addMenuLabel?: string;
+  addMenuTitle?: string;
   /** Label for the attach-file menu item. */
   attachLabel?: string;
   /** Heading text shown in the mobile bottom-sheet add-menu. Defaults to `'Menu'`. */
@@ -203,6 +196,8 @@ export interface ConversationInputProps {
   onDialFileSystemClick?: () => void;
   /** Label for the "DIAL file system" menu item. Defaults to `'DIAL file system'`. */
   dialFileSystemLabel?: string;
+  /** Accessible label for the `+` trigger button. Defaults to `'Add'`. */
+  addMenuTitle?: string;
   /**
    * Called synchronously for each attachment after it is added, before upload begins.
    * Return an `AttachmentErrorReason` to reject the attachment (it enters error state
@@ -223,4 +218,11 @@ export interface ConversationInputProps {
    * When absent the card is not rendered as interactive.
    */
   onAttachmentClick?: (attachment: Attachment) => void;
+  /**
+   * When provided, the desktop model-selector chip opens this panel instead of
+   * the flat deployment list. Receives `onClose` so the panel can close the
+   * popover after a selection or an explicit dismiss.
+   */
+  // TODO: review usage
+  modelPickerOverlay?: (onClose: () => void) => ReactNode;
 }

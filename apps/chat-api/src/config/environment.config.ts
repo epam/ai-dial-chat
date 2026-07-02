@@ -39,6 +39,10 @@ export class EnvironmentVariables {
   DIAL_API_VERSION?: string = '2024-10-21';
 
   @IsOptional()
+  @IsString()
+  DIAL_API_KEY?: string;
+
+  @IsOptional()
   @IsUrl({ require_tld: false })
   THEMES_CONFIG_URL?: string;
 
@@ -138,6 +142,25 @@ export class EnvironmentVariables {
   @IsOptional()
   @IsString()
   ASR_MODEL?: string;
+
+  @IsOptional()
+  @IsString()
+  UTILITY_MODEL?: string;
+
+  @IsOptional()
+  @Transform(({ value }) => {
+    if (value == null) return undefined;
+    if (typeof value === 'boolean') return value;
+    return !['false', '0', 'no'].includes(String(value).toLowerCase());
+  })
+  @IsBoolean()
+  LLM_CONVERSATION_NAMING_ENABLED?: boolean = false;
+
+  @IsOptional()
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsInt()
+  @Min(1000)
+  UTILITY_NAMING_TIMEOUT_MS?: number = 10_000;
 
   @IsOptional()
   @Transform(({ value }) => parseInt(value, 10))

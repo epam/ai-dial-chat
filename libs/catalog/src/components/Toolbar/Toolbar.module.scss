@@ -1,15 +1,22 @@
 .section {
-  background: var(--cat-browse-bg, var(--bg-layer-1, #0c101d));
+  background: var(--cat-bg, var(--bg-layer-6, #f8fafc));
 }
 
 .icon {
-  color: var(--cat-browse-icon, var(--text-secondary, #9fa6bd));
+  color: var(--cat-browse-icon, var(--text-secondary, #575f73));
 }
 
 .divider {
-  background: var(--cat-browse-divider, var(--stroke-secondary, #242c42));
+  background: var(--cat-browse-divider, var(--stroke-tertiary, #e0e6f0));
 }
-// TODO: add for filters
+
 .clearAll {
-  color: var(--cat-browse-clear-all, var(--text-error, #f76464));
+  color: var(--cat-browse-clear-all, var(--text-secondary, #575f73));
+}
+
+.viewToggle {
+  background-color: var(
+    --cat-browse-view-toggle-bg,
+    var(--bg-layer-3, #fcfcfc)
+  );
 }

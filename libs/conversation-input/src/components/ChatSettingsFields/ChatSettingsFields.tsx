@@ -15,8 +15,8 @@ const LABEL_CLASS_NAME =
 export interface ChatSettingsFieldsProps {
   /** Feature flags controlling which fields are rendered. */
   features: DeploymentFeatures;
-  /** Current response format value. */
-  responseFormat: ResponseFormat;
+  /** Current response format value. `undefined` when no option is selected. */
+  responseFormat: ResponseFormat | undefined;
   /** Current system prompt value. */
   systemPrompt: string;
   /** Current temperature value. */
@@ -72,7 +72,7 @@ export const ChatSettingsFields: FC<ChatSettingsFieldsProps> = ({
         fieldTitle={responseFormatLabel}
         elementId="response-format"
         orientation={RadioGroupOrientation.Column}
-        activeRadioButton={responseFormat}
+        activeRadioButton={responseFormat ?? ResponseFormat.Markdown}
         labelDescription={responseFormatHint}
         labelClassName={LABEL_CLASS_NAME}
         radioButtons={[
