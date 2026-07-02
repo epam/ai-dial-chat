@@ -16,14 +16,11 @@ import { getProviders } from '../../server-api/auth.api';
 import { ThemeId } from '../../types/theme-id';
 import { getIconPath } from '../../utils/icon-path';
 
+const getProviderIconUrl = (id: string) =>
+  `https://authjs.dev/img/providers/${id.replace(/[1-9]\d*$/, '')}.svg`;
+
 const handleIconError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-  const img = e.currentTarget;
-  if (img.dataset.fallback !== 'true') {
-    img.dataset.fallback = 'true';
-    img.src = '/auth-providers/keycloak.svg';
-  } else {
-    img.style.display = 'none';
-  }
+  e.currentTarget.style.display = 'none';
 };
 
 const renderProviders = (
@@ -44,7 +41,7 @@ const renderProviders = (
             className="w-full"
             iconBefore={
               <img
-                src={`/auth-providers/${provider.id}.svg`}
+                src={getProviderIconUrl(provider.id)}
                 alt=""
                 aria-hidden="true"
                 className="size-5 shrink-0"
