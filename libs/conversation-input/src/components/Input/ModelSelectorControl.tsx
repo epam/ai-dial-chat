@@ -135,7 +135,7 @@ export const ModelSelectorControl: FC<Props> = ({
           type="button"
           aria-label={selectorAriaLabel}
           className={mergeClasses(
-            'relative flex items-center justify-center rounded-[6px] p-2',
+            'relative flex items-center justify-center rounded-md p-2',
             styles.modelSelectorButton,
             isInputDisabled || isStreaming ? disabledIconClassName : undefined,
             isInputDisabled && styles.modelSelectorButtonDisabled,

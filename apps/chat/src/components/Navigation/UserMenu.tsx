@@ -76,6 +76,7 @@ export const UserMenu = memo(() => {
     />
   );
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const themeChildren = [
     hasDark && {
       key: 'theme-dark',
@@ -126,11 +127,11 @@ export const UserMenu = memo(() => {
       key: 'identity',
       type: DropdownItemType.PlainText,
       label: (
-        <div className="flex h-[40px] min-w-0 items-center gap-4">
+        <div className="flex h-[40px] min-w-0 items-center gap-3">
           <AvatarInitials shortName={shortName} />
           <DialEllipsisTooltip
             text={displayName}
-            className="dial-small-text min-w-0 flex-1 truncate text-secondary"
+            className="dial-small-text min-w-0 flex-1 truncate text-primary"
           />
         </div>
       ),
@@ -149,14 +150,15 @@ export const UserMenu = memo(() => {
           },
         ]
       : []),
-    {
-      key: 'theme',
-      label: (
-        <span className="dial-small-text">{t(SettingsI18nKeys.Theme)}</span>
-      ),
-      icon: <IconColorSwatch size={DIAL_ICON_SIZE.SM} aria-hidden />,
-      children: themeChildren,
-    },
+    // TODO: for today we support only light theme
+    // {
+    //   key: 'theme',
+    //   label: (
+    //     <span className="dial-small-text">{t(SettingsI18nKeys.Theme)}</span>
+    //   ),
+    //   icon: <IconColorSwatch size={DIAL_ICON_SIZE.SM} aria-hidden />,
+    //   children: themeChildren,
+    // },
     {
       key: 'keyboard-shortcuts',
       label: (
@@ -206,8 +208,8 @@ export const UserMenu = memo(() => {
           placement="top-end"
           matchReferenceWidth={false}
           items={menuItems}
-          listClassName="shadow-md"
           separatorClassName="m-0"
+          listClassName="shadow-md rounded-md"
           overlayContentClassName="p-0"
         >
           <button
