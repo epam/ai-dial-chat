@@ -1113,6 +1113,13 @@ const approvePublicationEpic: AppEpic = (action$, state$) =>
                 nextPublication: getNextFocusedPublication(state, payload.url),
               }),
             ),
+            of(
+              UIActions.showSuccessToast(
+                translate(CommonI18nKeys.PublicationApprovedSuccessfully, {
+                  ns: Translation.Common,
+                }),
+              ),
+            ),
           );
         }),
         catchError((err) => {
@@ -1152,11 +1159,20 @@ const rejectPublicationEpic: AppEpic = (action$, state$) =>
 
       return PublicationService.rejectPublication(payload.url).pipe(
         switchMap(() =>
-          of(
-            PublicationActions.rejectPublicationSuccess({
-              url: payload.url,
-              nextPublication,
-            }),
+          concat(
+            of(
+              PublicationActions.rejectPublicationSuccess({
+                url: payload.url,
+                nextPublication,
+              }),
+            ),
+            of(
+              UIActions.showSuccessToast(
+                translate(CommonI18nKeys.PublicationRejectedSuccessfully, {
+                  ns: Translation.Common,
+                }),
+              ),
+            ),
           ),
         ),
         catchError((err) => {
