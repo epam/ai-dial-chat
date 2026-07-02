@@ -631,8 +631,9 @@ export const useFileManager = ({
       uploadEnabled = isRootId(currentPath) && currentPath ? false : true;
     }
 
-    if (
-      previousActiveTabRef.current &&
+    if (!!initialPath && !previousActiveTabRef.current) {
+      previousActiveTabRef.current = activeTab;
+    } else if (
       activeTab !== previousActiveTabRef.current &&
       rootFolder.id &&
       isRootId(rootFolder.id)
@@ -651,7 +652,15 @@ export const useFileManager = ({
       currentPathRootAlias: pathRootAlias,
       uploadEnabled,
     };
-  }, [files, folders, activeTab, reviewBucket, currentPath, translateChat]);
+  }, [
+    files,
+    folders,
+    activeTab,
+    reviewBucket,
+    currentPath,
+    translateChat,
+    initialPath,
+  ]);
 
   const stableFileTreeItems = freezeItems(fileTreeItems);
 
