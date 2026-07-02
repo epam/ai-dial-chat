@@ -149,6 +149,33 @@ describe('Input', () => {
     expect(handleSend).toHaveBeenCalledWith('Click send', []);
   });
 
+  it('should show stop button while streaming when onStop is provided', () => {
+    const handleStop = vi.fn();
+    render(
+      <Input isStreaming onStop={handleStop} stopLabel="Stop streaming" />,
+    );
+
+    fireEvent.click(screen.getByLabelText('Stop streaming'));
+
+    expect(handleStop).toHaveBeenCalledOnce();
+    expect(screen.queryByLabelText('Send message')).toBeNull();
+  });
+
+  it('should not show stop or send while streaming when onStop is omitted', () => {
+    const handleSend = vi.fn();
+    const { container } = render(
+      <Input isStreaming message="Draft" onSend={handleSend} />,
+    );
+    const textarea = container.querySelector('textarea');
+    if (textarea) {
+      fireEvent.keyDown(textarea, { key: 'Enter', shiftKey: false });
+    }
+
+    expect(screen.queryByLabelText('Stop streaming')).toBeNull();
+    expect(screen.queryByLabelText('Send message')).toBeNull();
+    expect(handleSend).not.toHaveBeenCalled();
+  });
+
   it('should set --ci-bg and --ci-text CSS variables when colors prop is provided', () => {
     const { container } = render(
       <Input colors={{ background: '#fff', text: '#000' }} />,

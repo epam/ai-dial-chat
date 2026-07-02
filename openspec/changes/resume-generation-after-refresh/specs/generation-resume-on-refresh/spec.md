@@ -16,7 +16,7 @@
 
 ### Requirement: Awaiting-resume state reuses the existing streaming state
 
-`apps/chat/src/hooks/conversation/useConversationStream.ts` SHALL expose a function (e.g. `resumeIfAwaitingGeneration(conversationId, conversation)`) that, when `isAwaitingGenerationResume(conversation)` is `true`, adds the conversation's path to the same `streamingPaths` set that backs `isStreaming`/`isAssistantTyping` for a live generation — without issuing a new completion request. State ownership stays entirely inside `useConversationStream`; no new prop or context is introduced to `ConversationView`, `ConversationMessageItem`, or `useConversationHandlers` — they continue reading `isStreaming`/`isAssistantTyping` as they do today.
+`apps/chat/src/hooks/conversation/useConversationStream.ts` SHALL expose a function (e.g. `resumeIfAwaitingGeneration(conversationId, conversation)`) that, when `isAwaitingGenerationResume(conversation)` is `true`, adds the conversation's path to the same `streamingPaths` set that backs `isStreaming`/`isAssistantTyping` for a live generation — without issuing a new completion request. State ownership stays entirely inside `useConversationStream`; no new prop or context is introduced to `ConversationMessageItem` or `useConversationHandlers` — they continue reading `isStreaming`/`isAssistantTyping` as they do today. `ConversationView` MAY receive a separate stop-availability flag so a resumed server-side generation that lacks a local `generationId` can block input like streaming without exposing a non-functional Stop action.
 
 #### Scenario: Typing indicator renders during resume
 
@@ -32,6 +32,11 @@
 
 - **WHEN** the resume watch is active for the displayed conversation
 - **THEN** `handleEditMessage` and starter-submit handlers also no-op via their existing `isStreaming` guards, consistent with their behavior during a live generation
+
+#### Scenario: Stop is not exposed while resuming without a local generation id
+
+- **WHEN** the resume watch is active for the displayed conversation but the current page instance did not start that generation and has no local `generationId`
+- **THEN** the message input remains in streaming/blocked mode but does not render an actionable Stop control, and no `stopCompletion` request is sent for the resumed generation
 
 ### Requirement: Resume watch subscribes to the existing conversation-watch SSE channel
 

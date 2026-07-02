@@ -408,6 +408,7 @@ describe('useConversationStream', () => {
     });
 
     expect(result.current.isStreaming).toBe(false);
+    expect(result.current.canStopStreaming).toBe(false);
   });
 
   it('handleStop calls the stopCompletion API for the active generation', async () => {
@@ -433,6 +434,8 @@ describe('useConversationStream', () => {
         'stop-gen-id',
       );
     });
+
+    expect(result.current.canStopStreaming).toBe(true);
 
     await act(async () => {
       result.current.handleStop();
@@ -636,6 +639,34 @@ describe('useConversationStream', () => {
       });
 
       expect(result.current.isStreaming).toBe(true);
+      expect(result.current.canStopStreaming).toBe(false);
+    });
+
+    it('does not call stopCompletion for a resumed generation without a local generation id', async () => {
+      mockWatchConversation.mockReturnValue(new Promise(() => undefined));
+
+      const { result } = renderHook(
+        () =>
+          useConversationStream(
+            makeParams({ conversationId: 'bucket/gpt-4o__Hello__uuid' }),
+          ),
+        { wrapper },
+      );
+
+      act(() => {
+        result.current.resumeIfAwaitingGeneration(
+          'bucket/gpt-4o__Hello__uuid',
+          makeAwaitingConversation(),
+        );
+      });
+
+      await act(async () => {
+        result.current.handleStop();
+      });
+
+      expect(result.current.isStreaming).toBe(true);
+      expect(result.current.canStopStreaming).toBe(false);
+      expect(mockStopCompletion).not.toHaveBeenCalled();
     });
 
     it('does nothing for a conversation that is not awaiting resume', () => {
@@ -696,6 +727,70 @@ describe('useConversationStream', () => {
         expect(setConversation).toHaveBeenCalledWith(resolvedConversation);
         expect(result.current.isStreaming).toBe(false);
       });
+    });
+
+    it('deduplicates only active resume watches for the same path', async () => {
+      const firstResolvedConversation = {
+        id: 'first-resolved',
+        messages: [{ role: 'assistant', content: 'First final answer' }],
+      } as unknown as Conversation;
+      const secondResolvedConversation = {
+        id: 'second-resolved',
+        messages: [{ role: 'assistant', content: 'Second final answer' }],
+      } as unknown as Conversation;
+
+      mockWatchConversation
+        .mockResolvedValueOnce(makeSseStream(['data: {"action":"UPDATE"}\n\n']))
+        .mockResolvedValueOnce(
+          makeSseStream(['data: {"action":"UPDATE"}\n\n']),
+        );
+      mockGetConversation
+        .mockResolvedValueOnce(firstResolvedConversation)
+        .mockResolvedValueOnce(secondResolvedConversation);
+
+      const setConversation = vi.fn();
+      const { result } = renderHook(
+        () =>
+          useConversationStream(
+            makeParams({
+              conversationId: 'bucket/gpt-4o__Hello__uuid',
+              setConversation,
+            }),
+          ),
+        { wrapper },
+      );
+
+      act(() => {
+        result.current.resumeIfAwaitingGeneration(
+          'bucket/gpt-4o__Hello__uuid',
+          makeAwaitingConversation(),
+        );
+        result.current.resumeIfAwaitingGeneration(
+          'bucket/gpt-4o__Hello__uuid',
+          makeAwaitingConversation(),
+        );
+      });
+
+      await waitFor(() => {
+        expect(setConversation).toHaveBeenCalledWith(firstResolvedConversation);
+        expect(result.current.isStreaming).toBe(false);
+      });
+      expect(mockWatchConversation).toHaveBeenCalledTimes(1);
+
+      act(() => {
+        result.current.resumeIfAwaitingGeneration(
+          'bucket/gpt-4o__Hello__uuid',
+          makeAwaitingConversation(),
+        );
+      });
+
+      await waitFor(() => {
+        expect(setConversation).toHaveBeenCalledWith(
+          secondResolvedConversation,
+        );
+        expect(result.current.isStreaming).toBe(false);
+      });
+      expect(mockWatchConversation).toHaveBeenCalledTimes(2);
     });
 
     it('keeps watching past a non-qualifying UPDATE event', async () => {

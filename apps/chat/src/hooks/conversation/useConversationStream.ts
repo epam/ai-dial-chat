@@ -55,6 +55,7 @@ interface Result {
     conversation: Conversation,
   ) => void;
   isStreaming: boolean;
+  canStopStreaming: boolean;
   hasStreamError: boolean;
   setHasStreamError: Dispatch<SetStateAction<boolean>>;
 }
@@ -70,8 +71,11 @@ export const useConversationStream = ({
   const [streamingPaths, setStreamingPaths] = useState<Set<string>>(
     () => new Set(),
   );
+  const [stoppablePath, setStoppablePath] = useState<string | null>(null);
   const [hasStreamError, setHasStreamError] = useState(false);
   const activeGenerationIdRef = useRef<string | null>(null);
+  const activeGenerationPathRef = useRef<string | null>(null);
+  const resumingPathsRef = useRef<Set<string>>(new Set());
   const { startGeneration, completeGeneration } = useGeneration();
 
   // ConversationPage is NOT remounted when navigating between conversations
@@ -124,6 +128,8 @@ export const useConversationStream = ({
       const genId = generationId ?? crypto.randomUUID();
       const conversationPath = getConversationPath(currentConversationId);
       activeGenerationIdRef.current = genId;
+      activeGenerationPathRef.current = conversationPath;
+      setStoppablePath(conversationPath);
 
       // `messageIndex` is the local placeholder index (for onChunk); translate it
       // to the backend's truncation index. Regenerate truncates at the assistant
@@ -167,6 +173,8 @@ export const useConversationStream = ({
             removeStreamingPath(conversationPath);
             if (activeGenerationIdRef.current === genId) {
               activeGenerationIdRef.current = null;
+              activeGenerationPathRef.current = null;
+              setStoppablePath(null);
             }
             completeGeneration(conversationPath, genId);
             // Only refresh displayed state if the user is still viewing this
@@ -189,6 +197,8 @@ export const useConversationStream = ({
             removeStreamingPath(conversationPath);
             if (activeGenerationIdRef.current === genId) {
               activeGenerationIdRef.current = null;
+              activeGenerationPathRef.current = null;
+              setStoppablePath(null);
             }
             // Surface the error only on the conversation the user is viewing.
             if (!isPathDisplayed(conversationPath)) return;
@@ -228,6 +238,7 @@ export const useConversationStream = ({
     if (!genId || !conversationId) return;
 
     const conversationPath = getConversationPath(conversationId);
+    if (activeGenerationPathRef.current !== conversationPath) return;
 
     // Only signal the backend; it aborts upstream, saves the partial, and closes
     // the stream. Keeping our fetch open lets onComplete reload the saved partial
@@ -254,11 +265,14 @@ export const useConversationStream = ({
       if (!isAwaitingGenerationResume(conversation)) return;
 
       const conversationPath = getConversationPath(currentConversationId);
+      if (resumingPathsRef.current.has(conversationPath)) return;
+      resumingPathsRef.current.add(conversationPath);
       addStreamingPath(conversationPath);
 
       const controller = new AbortController();
 
       const finish = (result?: Conversation) => {
+        resumingPathsRef.current.delete(conversationPath);
         removeStreamingPath(conversationPath);
         if (result && isPathDisplayed(conversationPath)) {
           setConversation(result);
@@ -356,12 +370,18 @@ export const useConversationStream = ({
   const isStreaming =
     conversationId != null &&
     streamingPaths.has(getConversationPath(conversationId));
+  const displayedConversationPath =
+    conversationId != null ? getConversationPath(conversationId) : null;
+  const canStopStreaming =
+    displayedConversationPath != null &&
+    stoppablePath === displayedConversationPath;
 
   return {
     startStream,
     handleStop,
     resumeIfAwaitingGeneration,
     isStreaming,
+    canStopStreaming,
     hasStreamError,
     setHasStreamError,
   };

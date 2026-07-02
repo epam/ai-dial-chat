@@ -51,6 +51,9 @@ The primary signal is the `UPDATE` SSE event, which fires as soon as the backend
 ### Regenerate/edit get no new UI-disabling logic
 Because "resuming" reuses `streamingPaths`, `handleRegenerateMessage`'s existing `if (isStreaming) return;` guard (and the analogous guards for edit and starter-submit) already covers the resumed case, and the message actions row already hides behind hover (`hasAlwaysVisibleActions={!isStreaming}`) during any streaming state. This matches what the user already experiences during a live, same-tab generation — no separate "make Regenerate inactive/hidden" logic is needed.
 
+### Stop remains available only for live same-tab streams
+The resumed state is an observation of a server-side generation that started before the current page instance existed. The client has no local `generationId` for that run, so it cannot call `stopCompletion` safely. `useConversationStream` therefore exposes a separate "can stop" flag tied to the currently displayed path's live same-tab generation. The input still receives `isStreaming` while resuming, so sending/model changes remain blocked, but the Stop button is hidden unless an actual local stop handler can act on the displayed generation.
+
 ## Risks / Trade-offs
 
 - **[Risk]** Small race window between the initial `getConversation` that detects the placeholder and the `/watch` subscription actually attaching — a finalize-save that lands in that gap could be missed. → **Mitigation**: the timeout fallback does one final `getConversation` before giving up, so the window only costs, at most, the timeout duration in the rare case it's hit; not a correctness issue, just a UX delay in an already-rare race.

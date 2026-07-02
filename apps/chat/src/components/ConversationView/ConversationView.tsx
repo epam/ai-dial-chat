@@ -102,6 +102,7 @@ interface Props {
   editingMessageIndexes?: Set<number>;
   placeholder: string;
   isAssistantTyping?: boolean;
+  canStopAssistant?: boolean;
   initialModelId: string;
   streamErrorText: string;
   stoppedGeneratingText: string;
@@ -136,6 +137,7 @@ const ConversationView: FC<Props> = ({
   editingMessageIndexes,
   placeholder,
   isAssistantTyping = false,
+  canStopAssistant = false,
   initialModelId,
   streamErrorText,
   stoppedGeneratingText,
@@ -640,7 +642,7 @@ const ConversationView: FC<Props> = ({
               <ConversationInput
                 onSend={onSend}
                 onUploadAttachment={onUploadAttachment}
-                onStop={onStop}
+                onStop={canStopAssistant ? onStop : undefined}
                 styles={{
                   typography: {
                     input: { fontClassName: 'dial-body-paragraph-text' },

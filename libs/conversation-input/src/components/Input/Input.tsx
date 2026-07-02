@@ -409,9 +409,10 @@ export const Input: FC<InputProps> = ({
                   onPickerToggle={() => setIsPickerOpen((prev) => !prev)}
                   onPickerOpenChange={setIsPickerOpen}
                 />
-                {isStreaming ? (
+                {isStreaming && onStop ? (
                   <StopButton onStop={onStop} ariaLabel={stopLabel} />
                 ) : (
+                  !isStreaming &&
                   hasSendableContent && (
                     <SendButton
                       onSend={handleSend}
