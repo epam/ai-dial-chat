@@ -1,6 +1,7 @@
 import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import { type CSSProperties, FC } from 'react';
 import { ToolbarProps } from '../../models/toolbar-props';
+import { FilterRow } from './Rows/FilterRow';
 import { TitleRow } from './Rows/TitleRow';
 import styles from './Toolbar.module.scss';
 
@@ -62,6 +63,11 @@ export const Toolbar: FC<ToolbarProps> = ({
         filterMyAppsLabel={filterMyAppsLabel}
         filterTopicsLabel={filterTopicsLabel}
         {...innerProps}
+      />
+      <FilterRow
+        isAnyFilterActive={isAnyFilterActive}
+        onClearFilters={onClearFilters}
+        clearAllLabel={clearAllLabel}
       />
     </section>
   );
