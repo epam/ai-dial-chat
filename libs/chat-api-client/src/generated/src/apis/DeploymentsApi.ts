@@ -191,7 +191,7 @@ export class DeploymentsApi extends runtime.BaseAPI {
  */
 export const ListDeploymentsInterfaceTypeEnum = {
   Chat: 'chat',
-  Embeddings: 'embeddings',
+  Embedding: 'embedding',
   Mcp: 'mcp',
   CustomUi: 'custom_ui',
   All: 'all',

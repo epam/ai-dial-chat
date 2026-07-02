@@ -131,6 +131,7 @@ export enum CatalogI18nKeys {
   FavoriteRemoved = 'catalog.favoriteRemoved',
   TabModels = 'catalog.tab.models',
   TabApplications = 'catalog.tab.applications',
+  TabToolsets = 'catalog.tab.toolsets',
   FolderPersonal = 'catalog.folder.personal',
   FolderPublic = 'catalog.folder.public',
   PickerTitle = 'catalog.picker.title',
