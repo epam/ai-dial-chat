@@ -26,7 +26,7 @@ describe('navigateToLocale', () => {
       ...overrides,
     }) as NextRouter;
 
-  it('uses router.push when locale is in router.locales', () => {
+  it('uses router.push when all available locales are in router.locales', () => {
     const router = createRouter({ locales: ['en', 'ar'], asPath: '/chat' });
 
     navigateToLocale(router, 'ar', ['en', 'ar']);
@@ -44,6 +44,38 @@ describe('navigateToLocale', () => {
 
     expect(push).not.toHaveBeenCalled();
     expect(assign).toHaveBeenCalledWith('/ar/chat?foo=bar');
+  });
+
+  it('uses full-page navigation when runtime locales are not fully baked', () => {
+    const router = createRouter({
+      locale: 'ar',
+      asPath: '/ar',
+    });
+
+    navigateToLocale(router, 'en', ['en', 'ar']);
+
+    expect(push).not.toHaveBeenCalled();
+    expect(assign).toHaveBeenCalledWith('/');
+  });
+
+  it('strips locale prefix from polluted asPath before navigating to default locale', () => {
+    const router = createRouter({
+      locale: 'ar',
+      asPath: '/ar/marketplace?tab=1',
+    });
+
+    navigateToLocale(router, 'en', ['en', 'ar']);
+
+    expect(assign).toHaveBeenCalledWith('/marketplace?tab=1');
+  });
+
+  it('navigates to runtime-only locale via full-page navigation', () => {
+    const router = createRouter({ asPath: '/' });
+
+    navigateToLocale(router, 'ar', ['en', 'ar']);
+
+    expect(push).not.toHaveBeenCalled();
+    expect(assign).toHaveBeenCalledWith('/ar');
   });
 
   it('does nothing when locale is not in availableLocales', () => {
