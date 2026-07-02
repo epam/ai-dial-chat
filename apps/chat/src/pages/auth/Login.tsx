@@ -75,7 +75,9 @@ const LoginPage: FC = () => {
     async (signal: { isCancelled: boolean }) => {
       try {
         const data = await getProviders();
-        if (!signal.isCancelled) setProviders(data);
+        if (!signal.isCancelled) {
+          setProviders(data);
+        }
       } catch {
         if (!signal.isCancelled) {
           setHasError(true);
@@ -100,10 +102,7 @@ const LoginPage: FC = () => {
         aria-hidden="true"
       >
         <picture className="block size-full">
-          <source
-            media="(min-width: 1920px)"
-            srcSet={`/1920_login.png`}
-          />
+          <source media="(min-width: 1920px)" srcSet={`/1920_login.png`} />
           <img
             src={`/768_login.png`}
             alt=""
@@ -112,7 +111,7 @@ const LoginPage: FC = () => {
         </picture>
       </div>
 
-      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-blackout p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
+      <div className="bg-overlay relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
         {currentThemeFavicon && (
           <span
             style={{
