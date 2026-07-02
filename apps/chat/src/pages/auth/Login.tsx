@@ -75,7 +75,7 @@ const LoginPage: FC = () => {
     async (signal: { isCancelled: boolean }) => {
       try {
         const data = await getProviders();
-        if (!signal.isCancelled) setProviders([...data,{id: 'epam', label: 'EPAM SSO'}]);
+        if (!signal.isCancelled) setProviders(data);
       } catch {
         if (!signal.isCancelled) {
           setHasError(true);
@@ -102,10 +102,10 @@ const LoginPage: FC = () => {
         <picture className="block size-full">
           <source
             media="(min-width: 1920px)"
-            srcSet={`/1920_login_${themeSlug}%20mode.png`}
+            srcSet={`/1920_login.png`}
           />
           <img
-            src={`/768_login_${themeSlug}%20mode.png`}
+            src={`/768_login.png`}
             alt=""
             className="size-full object-cover"
           />
