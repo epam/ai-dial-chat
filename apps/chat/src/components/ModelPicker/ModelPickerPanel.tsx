@@ -12,7 +12,7 @@ import {
 } from '@epam/ai-dial-kit';
 import { DialEllipsisTooltip, DIAL_ICON_SIZE } from '@epam/ai-dial-ui-kit';
 import { IconStarFilled } from '@tabler/icons-react';
-import { type FC, type KeyboardEvent, useMemo, useState } from 'react';
+import { memo, type FC, type KeyboardEvent, useMemo, useState } from 'react';
 import styles from './ModelPickerPanel.module.scss';
 
 /** Localizable string labels for `ModelPickerPanel`. */
@@ -46,7 +46,7 @@ interface Props {
   labels?: ModelPickerLabels;
 }
 
-export const ModelPickerPanel: FC<Props> = ({
+const ModelPickerPanel: FC<Props> = ({
   favorites,
   selectedId,
   onSelect,
@@ -195,3 +195,5 @@ export const ModelPickerPanel: FC<Props> = ({
     </div>
   );
 };
+
+export default memo(ModelPickerPanel);

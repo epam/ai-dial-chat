@@ -1,4 +1,4 @@
-import { type CSSProperties, type ReactElement } from 'react';
+import { type CSSProperties, type FC } from 'react';
 import { CARD_ROW_HEIGHT } from '../../constants/virtual-grid';
 import type { CardRowData } from '../../models/card-row-data';
 import { Card } from './Card';
@@ -14,7 +14,7 @@ export interface CardRowRendererProps extends CardRowData {
  * Empty column slots in the last row are filled with invisible spacer divs
  * so that earlier cards keep their flex-1 width.
  */
-export const CardRowRenderer = ({
+export const CardRowRenderer: FC<CardRowRendererProps> = ({
   rowIndex,
   items,
   columnCount,
@@ -24,7 +24,7 @@ export const CardRowRenderer = ({
   featuredLabel,
   addToFavoritesAriaLabel,
   removeFromFavoritesAriaLabel,
-}: CardRowRendererProps): ReactElement => {
+}) => {
   const start = rowIndex * columnCount;
   const rowItems = items.slice(start, start + columnCount);
 

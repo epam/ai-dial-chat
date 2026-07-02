@@ -36,6 +36,13 @@ export const Card: FC<CardProps> = ({
   const descriptionClassName =
     cardStyles?.typography?.descriptionClassName ??
     'dial-small-text text-secondary';
+  const featuredChipClassName =
+    cardStyles?.typography?.featuredChipClassName ??
+    'dial-tiny-semi-text uppercase tracking-[0.06em]';
+  const folderLabelClassName =
+    cardStyles?.typography?.folderLabelClassName ?? 'dial-tiny-text';
+  const folderLeafClassName =
+    cardStyles?.typography?.folderLeafClassName ?? 'dial-tiny-semi-text';
   const handleClick = onClick ? () => onClick(item) : undefined;
 
   const handleKeyDown = useCallback(
@@ -91,7 +98,7 @@ export const Card: FC<CardProps> = ({
           label={featuredLabel}
           className={mergeClasses(
             'absolute end-[22px] top-0 -translate-y-1/2',
-            'dial-tiny-semi-text uppercase tracking-[0.06em]',
+            featuredChipClassName,
             styles.featuredChip,
           )}
         />
@@ -130,8 +137,8 @@ export const Card: FC<CardProps> = ({
             {item.folder.length > 0 && (
               <FolderPath
                 segments={item.folder}
-                labelClassName="dial-tiny-text"
-                leafClassName="dial-tiny-semi-text"
+                labelClassName={folderLabelClassName}
+                leafClassName={folderLeafClassName}
               />
             )}
           </div>

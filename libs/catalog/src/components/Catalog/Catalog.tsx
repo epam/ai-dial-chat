@@ -211,6 +211,12 @@ export const Catalog: FC<CatalogProps> = ({
 
   const isAnyFilterActive = filters.size > 0 || isMyAppsActive;
 
+  const emptyTitle = query ? noResultsTitle(query) : 'No items';
+  const cardGridTitles = useMemo(
+    () => ({ noResultsTitle: emptyTitle, featuredLabel }),
+    [emptyTitle, featuredLabel],
+  );
+
   if (isLoading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -218,7 +224,6 @@ export const Catalog: FC<CatalogProps> = ({
       </div>
     );
   }
-  const emptyTitle = query ? noResultsTitle(query) : 'No items';
 
   return (
     <section
@@ -315,7 +320,7 @@ export const Catalog: FC<CatalogProps> = ({
                 query={query}
                 onToggleFavorite={onToggleFavorite}
                 onItemClick={handleOpenDetails}
-                titles={{ noResultsTitle: emptyTitle, featuredLabel }}
+                titles={cardGridTitles}
               />
             </div>
           )}

@@ -89,10 +89,9 @@ const DialFileManagerModal = lazy(async () => {
   return { default: module.default };
 });
 
-const ModelPickerPanel = lazy(async () => {
-  const module = await import('../../components/ModelPicker/ModelPickerPanel');
-  return { default: module.ModelPickerPanel };
-});
+const ModelPickerPanel = lazy(
+  () => import('../../components/ModelPicker/ModelPickerPanel'),
+);
 
 const CatalogPickerModal = lazy(async () => {
   const module =

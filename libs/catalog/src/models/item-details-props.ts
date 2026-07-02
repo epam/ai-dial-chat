@@ -84,6 +84,10 @@ export interface ItemDetailsTypography {
   overviewValueClassName?: string;
   /** Typography class for "Yes" spec values. Default: `'dial-small-text'`. */
   overviewValueTrueClassName?: string;
+  /** Typography class applied to folder path separator labels. Default: `'dial-tiny-text'`. */
+  folderLabelClassName?: string;
+  /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
+  folderLeafClassName?: string;
 }
 
 /** Grouped style overrides for `DetailsPanel`. */
