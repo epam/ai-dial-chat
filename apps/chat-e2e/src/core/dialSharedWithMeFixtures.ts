@@ -247,7 +247,6 @@ const dialSharedWithMeTest = dialTest.extend<{
     },
     { scope: 'test', auto: true },
   ],
-  // eslint-disable-next-line no-empty-pattern
   additionalShareUserDownloadAssertion: async ({}, use) => {
     const additionalShareUserDownloadAssertion = new DownloadAssertion();
     await use(additionalShareUserDownloadAssertion);
@@ -537,10 +536,11 @@ const dialSharedWithMeTest = dialTest.extend<{
     { additionalShareUserPublishingRequestDialog },
     use,
   ) => {
-    const additionalShareUserP = new PublishingRequestDialogAssertion(
-      additionalShareUserPublishingRequestDialog,
-    );
-    await use(additionalShareUserP);
+    const additionalShareUserPublishingRequestDialogAssertion =
+      new PublishingRequestDialogAssertion(
+        additionalShareUserPublishingRequestDialog,
+      );
+    await use(additionalShareUserPublishingRequestDialogAssertion);
   },
   additionalShareUserToolsetToPublishAssertion: async (
     { additionalShareUserToolsetsToPublishTree },

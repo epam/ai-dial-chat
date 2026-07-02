@@ -227,7 +227,7 @@ dialAdminTest(
     });
 
     await dialAdminTest.step('Setup admin user OAuth mocks', async () => {
-      const publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
+      publishedToolset = await adminUserItemApiHelper.getItem<Toolset>(
         toolsetResource.targetUrl!,
       );
       adminOAuthMockHelper = new OAuthMockHelper(
@@ -340,6 +340,12 @@ dialAdminTest(
           1,
           ExpectedMessages.elementsCountIsValid,
         );
+        const editableToolset =
+          await marketplaceEntitiesSection.findEntityElement(
+            toolsetEntity.name,
+            { isWorkspaceEntity: true, isEditable: true },
+          );
+        await baseAssertion.assertElementState(editableToolset, 'visible');
       },
     );
   },
@@ -372,15 +378,23 @@ dialSharedWithMeTest(
       version: GeneratorUtil.randomEntityVersion(),
       endpoint: GeneratorUtil.randomUrl(),
     };
+    let filename: string;
+    let iconUrl: string;
     let initialToolset: Toolset;
     let publishedToolset: Toolset;
-    const filename = GeneratorUtil.randomFilename('svg');
-    const iconUrl = await fileApiHelper.putFileWithCustomName(
-      filename,
-      Attachment.appIconSvg,
-    );
     let expectedPublishedIconUrl: string;
     let toolsetResource: PublicationResource;
+
+    await dialSharedWithMeTest.step(
+      'Precondition: Upload an svg icon via API',
+      async () => {
+        filename = GeneratorUtil.randomFilename('svg');
+        iconUrl = await fileApiHelper.putFileWithCustomName(
+          filename,
+          Attachment.appIconSvg,
+        );
+      },
+    );
 
     await dialSharedWithMeTest.step(
       'Precondition: Create toolset with a custom icon via API',
