@@ -208,7 +208,7 @@ Use the repository skills and rules as the source of truth before applying gener
 | Workspace structure, project ownership | `openspec/config.yaml`, `AGENTS.md`, `.agents/skills/nx-workspace/SKILL.md`                                                        |
 | Multi-file implementation or refactor  | thin vertical slices + per-slice verify (`openspec/config.yaml` task rules)                                                        |
 | HTTP API contract or generated client  | `.agents/skills/api-design/SKILL.md`                                                                                               |
-| `apps/chat-api/**`                     | `.agents/skills/nestjs-chat-api/SKILL.md` and `apps/chat-api/AGENTS.md`                                                            |
+| `apps/chat-api/**`                     | `apps/chat-api/AGENTS.md`                                                                                                          |
 | `libs/*` React components              | `openspec/config.yaml`, library isolation rules from `AGENTS.md`, `openspec/lib-styling-guide.md` plus exported-symbol JSDoc rules |
 | UI kit components                      | Use the `@epam/ai-dial-ui-kit` MCP tools before recommending raw HTML primitives                                                   |
 | Responsive / mobile parity             | `.claude/skills/responsive-design/SKILL.md`                                                                                        |
