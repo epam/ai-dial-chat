@@ -1,11 +1,11 @@
 /**
- * Card height: 2border + 36padding + 44identity(sm) + 14gap + 40desc(2ln@20px) + 14gap + 24tags + auto-space + 29strip(1border+12pt+16content) = ~220.
+ * Card height: 44padding + 44identity(sm) + 14gap + 44desc(2ln@22px,min44) + 14gap + 28tags(min28) + auto-space + 29strip(1border+12pt+16content) = ~217 + auto.
  * Strip is pinned to card bottom via mt-auto; auto-space absorbs remaining flex free space.
  */
-export const CARD_HEIGHT = 232;
+export const CARD_HEIGHT = 248;
 
-/** Vertical gap between card rows, matching the `gap-4` grid spacing (16 px). */
-export const CARD_ROW_GAP = 16;
+/** Vertical gap between card rows, matching the `gap-5` grid spacing (20 px). */
+export const CARD_ROW_GAP = 20;
 
 /** Total height allocated per virtual row. */
 export const CARD_ROW_HEIGHT = CARD_HEIGHT + CARD_ROW_GAP;

@@ -140,6 +140,8 @@ module.exports = {
       },
       boxShadow: {
         DEFAULT: '0 0 4px 0 var(--shadow-default, rgba(0, 0, 0, 0.30))',
+        'main-inset': 'inset 1px 0 8px rgba(0, 0, 0, 0.04)',
+        'main-inset-rtl': 'inset -1px 0 8px rgba(0, 0, 0, 0.04)',
       },
       borderRadius: {
         DEFAULT: '3px',

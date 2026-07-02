@@ -110,17 +110,22 @@ vi.mock('@epam/ai-dial-sidebar', () => ({
     onChange,
     placeholder,
     value,
+    clearLabel,
   }: {
     onChange: (v: string) => void;
     placeholder: string;
     value: string;
+    clearLabel: string;
   }) => (
-    <input
-      type="search"
-      placeholder={placeholder}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-    />
+    <>
+      <input
+        type="search"
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      />
+      <button aria-label={clearLabel} onClick={() => onChange('')} />
+    </>
   ),
   SidebarPanel: ({
     children,
@@ -206,6 +211,7 @@ const BASE_PROPS = {
   noResultsLabel: 'No results found',
   newChatLabel: 'New chat',
   searchPlaceholder: 'Search chat…',
+  searchClearLabel: 'Clear search',
   filterLabels: FILTER_LABELS,
 };
 
