@@ -61,7 +61,7 @@ interface Props {
 
 export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   const { '*': conversationId } = useParams<{ '*': string }>();
-  const { state } = useLocation();
+  const { state, pathname, search } = useLocation();
   const prefetchedConversation =
     (state as { conversation?: Conversation } | null)?.conversation ?? null;
   const [conversation, setConversation] = useState<Conversation | null>(
@@ -423,6 +423,17 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     // re-running when it changes would re-initialize an already-loaded conversation.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conversationId, loadConversation]);
+
+  const clearedPrefetchIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (!conversationId || !prefetchedConversation) return;
+    if (clearedPrefetchIdRef.current === conversationId) return;
+    clearedPrefetchIdRef.current = conversationId;
+    // history.state survives a hard refresh, so leaving the just-created
+    // user-only snapshot in it would make every reload re-run the auto-start
+    // stream instead of fetching the up-to-date conversation from the server.
+    navigate(`${pathname}${search}`, { replace: true, state: null });
+  }, [conversationId, prefetchedConversation, navigate, pathname, search]);
 
   const {
     handleSend,
