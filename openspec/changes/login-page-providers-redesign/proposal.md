@@ -5,9 +5,9 @@ The existing login page was a minimal, unstyled form with no visual branding and
 ## What Changes
 
 - **Full-screen themed background**: Two sets of static images (`768_login_*`, `1920_login_*`) for light and dark themes, served via a `<picture>` element with a `(min-width: 1920px)` media query; hidden on mobile where the card is transparent.
-- **Branded card**: Semi-transparent, rounded card centered on the page. On light theme uses `bg-blackout-light`; on dark uses `bg-blackout`. Shows the theme favicon at the top when configured. Hidden background and transparent layout on mobile.
-- **Dynamic provider list**: Fetches `ProviderInfoDto[]` from `GET /api/v1/auth/providers` (via `authApi.listProviders()`) on mount. Each provider renders as a full-width anchor button linking to `/api/v1/auth/login/{providerId}?callbackUrl=...`.
-- **Provider icons**: SVG icons from `/auth-providers/{id}.svg` with two-stage fallback — first error falls back to `keycloak.svg`, second hides the image entirely.
+- **Branded card**: Semi-transparent, rounded card centered on the page. Uses `bg-blackout`. Shows the theme favicon at the top when configured. Hidden background and transparent layout on mobile.
+- **Dynamic provider list**: Fetches `ProviderInfoDto[]` from `GET /api/v1/auth/providers` (via `authApi.listProviders()`) on mount. Each provider renders as a full-width button navigating to `/api/v1/auth/login/{providerId}?callbackUrl=...`.
+- **Provider icons**: SVG icons loaded from the `authjs.dev` CDN (`https://authjs.dev/img/providers/{id}.svg`); hidden on load error.
 - **Loading and error states**: Shows a loading message while the providers request is in-flight; shows an error message if the request fails.
 - **New i18n keys**: `auth.loginTitle`, `auth.loginDescription`, `auth.loading`, `auth.providersError`, `auth.providerButtonLabel` added to `AuthI18nKeys` and `en.json`.
 

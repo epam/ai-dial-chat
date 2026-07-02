@@ -1,4 +1,3 @@
-import { mergeClasses } from '@epam/ai-dial-chat-shared';
 import {
   ButtonAppearance,
   ButtonVariant,
@@ -76,7 +75,7 @@ const LoginPage: FC = () => {
     async (signal: { isCancelled: boolean }) => {
       try {
         const data = await getProviders();
-        if (!signal.isCancelled) setProviders(data);
+        if (!signal.isCancelled) setProviders([...data,{id: 'epam', label: 'EPAM SSO'}]);
       } catch {
         if (!signal.isCancelled) {
           setHasError(true);
@@ -113,12 +112,7 @@ const LoginPage: FC = () => {
         </picture>
       </div>
 
-      <div
-        className={mergeClasses(
-          'relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0',
-          currentTheme === ThemeId.Light ? 'bg-blackout-light' : 'bg-blackout',
-        )}
-      >
+      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-blackout p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
         {currentThemeFavicon && (
           <span
             style={{

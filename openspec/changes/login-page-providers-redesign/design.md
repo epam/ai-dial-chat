@@ -28,11 +28,11 @@
 - CSS `background-image` with media queries: would require the image paths in a `style` prop or Tailwind arbitrary values, losing semantic alt text and making theme switching more complex.
 - Separate `<img>` elements toggled by CSS: loads both images; not art-direction-friendly.
 
-### D2 — Semi-transparent card with `bg-blackout` / `bg-blackout-light`
+### D2 — Semi-transparent card with `bg-blackout`
 
-**Decision:** The card `div` applies `bg-blackout` on dark theme and `bg-blackout-light` on light theme via `mergeClasses`. Card is `rounded-xl p-16` on tablet/desktop and `rounded-none bg-transparent p-0` on mobile.
+**Decision:** The card `div` applies `bg-blackout` unconditionally. Card is `rounded-xl p-16` on desktop and `rounded-none bg-transparent p-0` on mobile.
 
-**Rationale:** The Figma design shows a frosted-glass panel over the background image. `bg-blackout` and `bg-blackout-light` are existing design-token classes that provide the correct opacity. The mobile layout has no background image, so the card background must be transparent there.
+**Rationale:** The Figma design shows a frosted-glass panel over the background image. `bg-blackout` is an existing design-token class that provides the correct opacity. The mobile layout has no background image, so the card background must be transparent there.
 
 **Alternatives considered:**
 

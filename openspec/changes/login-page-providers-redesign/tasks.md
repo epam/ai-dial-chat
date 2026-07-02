@@ -19,7 +19,7 @@
 - [x] 3.1 Rewrite `apps/chat/src/pages/auth/Login.tsx`:
   - Full-screen container (`relative flex min-h-screen items-center justify-center overflow-hidden bg-layer-2 mobile:bg-layer-0 mobile:px-6`)
   - `<picture>` element with `(min-width: 1920px)` source and 768-px fallback `<img>`; hidden on mobile (`mobile:hidden`)
-  - Theme-aware card: `bg-blackout` (dark) / `bg-blackout-light` (light) via `mergeClasses`; mobile: `bg-transparent rounded-none p-0`
+  - Card: `bg-blackout`; mobile: `bg-transparent rounded-none p-0`
   - Theme favicon span (rendered when `currentThemeFavicon` is set)
   - `<h1>` with `t(AuthI18nKeys.LoginTitle)`; responsive font size (`text-[28px] mobile:text-[22px]`)
   - Loading state: `<p>{t(AuthI18nKeys.Loading)}</p>` while `providers === null && !hasError`
