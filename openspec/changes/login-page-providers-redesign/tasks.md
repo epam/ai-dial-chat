@@ -2,7 +2,6 @@
 
 - [x] 1.1 Add `apps/chat/public/1920_login_dark mode.png` and `apps/chat/public/1920_login_light mode.png` — large-screen background images
 - [x] 1.2 Add `apps/chat/public/768_login_dark mode.png` and `apps/chat/public/768_login_light mode.png` — mid-size background images
-- [x] 1.3 Add `apps/chat/public/auth-providers/` SVG icons: `auth0.svg`, `azure-ad.svg`, `azure-ad-b2c.svg`, `cognito.svg`, `dialx-entra.svg`, `gitlab.svg`, `google.svg`, `keycloak.svg`, `okta.svg`
 
 ## 2. i18n & Translation Keys
 
@@ -25,8 +24,8 @@
   - Loading state: `<p>{t(AuthI18nKeys.Loading)}</p>` while `providers === null && !hasError`
   - Error state: `<p>{t(AuthI18nKeys.ProvidersError)}</p>` when `hasError`
   - Provider list via `renderProviders()` helper once `providers` is loaded
-- [x] 3.2 Add module-level `handleIconError` — two-stage fallback: first error → keycloak.svg, second error → hide image
-- [x] 3.3 Add module-level `renderProviders(providers, callbackUrl, signInLabel)` — renders sign-in label paragraph and vertical stack of provider `<a>` buttons with SVG icons
+- [x] 3.2 Add module-level `handleIconError` — single-stage fallback: hides the image element on load error (`style.display = 'none'`); icons are loaded from the Auth.js CDN (`https://authjs.dev/img/providers/{id}.svg`) so a local fallback file is not needed
+- [x] 3.3 Add module-level `renderProviders(providers, callbackUrl, signInLabel)` — renders sign-in label paragraph and vertical stack of `NeutralButton` buttons (from `@epam/ai-dial-kit`) with provider SVG icons; navigation is via `window.location.href`
 
 ## 4. Login Page — API Integration (slice 2)
 

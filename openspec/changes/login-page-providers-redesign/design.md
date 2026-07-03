@@ -59,18 +59,20 @@
 - `<button onClick={() => window.location.href = ...}`: loses native link semantics.
 - `<Link>` from React Router: performs client-side navigation, which bypasses the BFF redirect.
 
-### D4 — Two-stage icon fallback via `onError` handler
+### D4 — Provider icons loaded from the Auth.js CDN (`authjs.dev`)
 
-**Decision:** `handleIconError` is a module-level function (not a hook) that:
-1. On first error (`img.dataset.fallback !== 'true'`): sets `img.src = '/auth-providers/keycloak.svg'` and marks `dataset.fallback = 'true'`.
-2. On second error: sets `img.style.display = 'none'`.
+**Decision:** Provider icons are loaded at runtime from `https://authjs.dev/img/providers/{id}.svg`. The `id` has trailing digits stripped (`/[1-9]\d*$/`) to normalize versioned provider IDs (e.g. `azure-ad2` → `azure-ad`). A single-stage `handleIconError` handler hides the image element if the URL fails to load (`e.currentTarget.style.display = 'none'`).
 
-**Rationale:** Provider icons are optional decoration; missing an SVG must not break the button. Keycloak is the most common fallback provider in DIAL deployments. The `dataset` flag avoids an infinite error loop if the fallback itself is missing.
+**Why `authjs.dev` is acceptable:**
+Auth.js (formerly NextAuth.js) is the de-facto open-source OAuth/OIDC library for JavaScript. Its CDN at `authjs.dev/img/providers/` is the canonical public source of OAuth provider SVG icons, used in Auth.js's own documentation and referenced by a large number of open-source projects. The icons cover all common OIDC providers (Keycloak, Auth0, Azure AD, Okta, Cognito, Google, GitLab, etc.) and the URL scheme is stable.
+
+**Rationale:** Hosting provider icons in the repository creates a maintenance burden (keeping icons current, adding new providers, correct licensing per icon). The Auth.js CDN is maintained by the Auth.js team and always reflects the current set of providers. Icons are optional decoration — the button functions correctly without them, so a CDN dependency for a non-critical asset is acceptable.
 
 **Alternatives considered:**
 
-- React state for icon error: would require per-provider state, complicating the `renderProviders` helper and causing re-renders.
-- CSS `onerror` inline attribute: not recommended in React.
+- Bundled SVG icons in `apps/chat/public/auth-providers/`: requires manual updates per provider, per icon design change. Removed in favour of the CDN approach.
+- React state for icon error: would require per-provider state, complicating the `renderProviders` helper and causing re-renders on error.
+- Two-stage fallback (error → keycloak.svg → hide): adds complexity for no clear gain; hiding the missing icon is sufficient.
 
 ### D5 — `renderProviders` as a module-level helper function
 
@@ -95,14 +97,15 @@
 
 **Rationale:** The app router may append a `callbackUrl` when redirecting unauthenticated users to `/login`. The fallback ensures a valid post-login destination in direct navigation scenarios.
 
-### D8 — Tailwind breakpoints: `mobile` (max-width), `tablet` (min-width 769px), `desktop` (min-width 1920px)
+### D8 — Tailwind breakpoints: `mobile` (max-width 768px) and `desktop` (min-width 769px)
 
-**Decision:** Three breakpoints are added/adjusted in `tailwind.config.js`:
-- `mobile`: `{ max: '768px' }` — max-width, so `mobile:` prefixes apply at ≤768 px
-- `tablet`: `{ min: '769px' }` — min-width baseline
-- `desktop`: `{ min: '1920px' }` — large-screen override (bumped from previous 769 px)
+**Decision:** The project uses two named breakpoints in `tailwind.config.js`, unchanged by this feature:
+- `mobile`: `{ max: '768px' }` — applies at ≤768 px (the only max-width breakpoint)
+- `desktop`: `{ min: '769px' }` — applies at ≥769 px (all non-mobile sizes)
 
-**Rationale:** The login page Figma design has three distinct layouts: full-mobile (≤768 px), tablet/mid-desktop (769–1919 px), and large-desktop (≥1920 px). The existing `desktop` breakpoint at 769 px conflated all non-mobile sizes, making the 1920-px art-direction impossible without a new breakpoint.
+Art-direction between 769–1919 px and ≥1920 px is handled purely via the `<picture>` / `<source media="(min-width: 1920px)">` element without a separate Tailwind breakpoint.
+
+**Rationale:** The project deliberately keeps a two-breakpoint vocabulary (`mobile` / `desktop`) to keep responsive code simple. `desktop:` means "not mobile" — it does not imply a minimum of 1920 px. Adding a `tablet` breakpoint was considered and explicitly rejected to avoid a three-tier breakpoint proliferation across unrelated components.
 
 ## Risks / Trade-offs
 

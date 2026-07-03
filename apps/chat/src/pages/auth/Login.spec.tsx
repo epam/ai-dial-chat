@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as ThemeContextModule from '../../context/ThemeContext';
 import * as useAuthRedirectModule from '../../hooks/auth/useAuthRedirect';
@@ -44,23 +45,37 @@ describe('LoginPage', () => {
     mockUseAuthRedirect.mockReturnValue(undefined);
   });
 
-  it('renders provider links with callbackUrl forwarded to BFF login', async () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it('navigates to BFF login with callbackUrl forwarded when a provider button is clicked', async () => {
     mockGetProviders.mockResolvedValue([
       { id: 'keycloak', label: 'Keycloak' },
       { id: 'auth0', label: 'Auth0' },
     ]);
 
+    const navigatedUrls: string[] = [];
+    vi.stubGlobal('location', {
+      ...window.location,
+      origin: 'http://localhost:4207',
+      set href(v: string) {
+        navigatedUrls.push(v);
+      },
+    });
+
+    const user = userEvent.setup();
     renderLogin(
       '/login?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
 
-    const keycloakLink = await screen.findByRole('link', { name: 'Keycloak' });
-    const auth0Link = screen.getByRole('link', { name: 'Auth0' });
-
-    expect(keycloakLink.getAttribute('href')).toBe(
+    await user.click(await screen.findByRole('button', { name: 'Keycloak' }));
+    expect(navigatedUrls[0]).toBe(
       '/api/v1/auth/login/keycloak?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
-    expect(auth0Link.getAttribute('href')).toBe(
+
+    await user.click(screen.getByRole('button', { name: 'Auth0' }));
+    expect(navigatedUrls[1]).toBe(
       '/api/v1/auth/login/auth0?callbackUrl=http%3A%2F%2Flocalhost%3A4207%2Fconversation%3Fx%3D1',
     );
   });
@@ -68,14 +83,22 @@ describe('LoginPage', () => {
   it('defaults callbackUrl to application root when it is absent', async () => {
     mockGetProviders.mockResolvedValue([{ id: 'keycloak', label: 'Keycloak' }]);
 
+    const navigatedUrls: string[] = [];
+    vi.stubGlobal('location', {
+      ...window.location,
+      origin: 'http://localhost',
+      set href(v: string) {
+        navigatedUrls.push(v);
+      },
+    });
+
+    const user = userEvent.setup();
     renderLogin();
 
-    const keycloakLink = await screen.findByRole('link', { name: 'Keycloak' });
+    await user.click(await screen.findByRole('button', { name: 'Keycloak' }));
 
-    expect(keycloakLink.getAttribute('href')).toBe(
-      `/api/v1/auth/login/keycloak?callbackUrl=${encodeURIComponent(
-        `${window.location.origin}/`,
-      )}`,
+    expect(navigatedUrls[0]).toBe(
+      `/api/v1/auth/login/keycloak?callbackUrl=${encodeURIComponent('http://localhost/')}`,
     );
   });
 
@@ -103,21 +126,19 @@ describe('LoginPage', () => {
     mockGetProviders.mockResolvedValue([{ id: 'keycloak', label: 'Keycloak' }]);
 
     let assignedHref = '';
-    Object.defineProperty(window, 'location', {
-      writable: true,
-      value: {
-        ...window.location,
-        origin: 'http://localhost',
-        set href(v: string) {
-          assignedHref = v;
-        },
+    vi.stubGlobal('location', {
+      ...window.location,
+      origin: 'http://localhost',
+      set href(v: string) {
+        assignedHref = v;
       },
     });
 
+    const user = userEvent.setup();
     renderLogin('/login?callbackUrl=https%3A%2F%2Fevil.example.com%2Fsteal');
 
     const keycloakBtn = await screen.findByRole('button', { name: 'Keycloak' });
-    keycloakBtn.click();
+    await user.click(keycloakBtn);
 
     expect(assignedHref).toContain(
       `callbackUrl=${encodeURIComponent('http://localhost/')}`,
@@ -137,6 +158,8 @@ describe('LoginPage', () => {
 
     const { container } = renderLogin();
 
-    expect(container.querySelector('[style*="background-image"]')).toBeTruthy();
+    const faviconEl = container.querySelector('[style*="background-image"]');
+    expect(faviconEl).toBeTruthy();
+    expect(faviconEl?.getAttribute('style')).toContain('favicon.png');
   });
 });

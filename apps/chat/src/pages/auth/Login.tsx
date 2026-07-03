@@ -1,10 +1,12 @@
-import {
-  ButtonAppearance,
-  ButtonVariant,
-  DialButton,
-} from '@epam/ai-dial-ui-kit';
 import type { ProviderInfoDto } from '@epam/chat-api-client';
-import { memo, useCallback, useEffect, useState, type FC } from 'react';
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FC,
+} from 'react';
 import { useTranslation } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom';
 import { AuthI18nKeys } from '../../constants/translation-keys';
@@ -13,6 +15,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAuthRedirect } from '../../hooks/auth/useAuthRedirect';
 import { getProviders } from '../../server-api/auth.api';
 import { getIconPath } from '../../utils/icon-path';
+import { ButtonAppearance, DialNeutralButton } from '@epam/ai-dial-ui-kit';
 
 const getProviderIconUrl = (id: string) =>
   `https://authjs.dev/img/providers/${id.replace(/[1-9]\d*$/, '')}.svg`;
@@ -32,11 +35,10 @@ const renderProviders = (
       {providers.map((provider) => {
         const href = `/api/v1/auth/login/${encodeURIComponent(provider.id)}?callbackUrl=${encodeURIComponent(callbackUrl)}`;
         return (
-          <DialButton
+          <DialNeutralButton
             key={provider.id}
-            variant={ButtonVariant.Neutral}
-            appearance={ButtonAppearance.Outlined}
             className="w-full"
+            appearance={ButtonAppearance.Outlined}
             iconBefore={
               <img
                 src={getProviderIconUrl(provider.id)}
@@ -60,18 +62,19 @@ const renderProviders = (
 const LoginPage: FC = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const rawCallbackUrl = searchParams.get('callbackUrl');
-  const callbackUrl = (() => {
-    if (rawCallbackUrl) {
+  const callbackUrl = useMemo(() => {
+    const raw = searchParams.get('callbackUrl');
+    if (raw) {
+      if (raw.startsWith('//')) return `${window.location.origin}/`;
       try {
-        const parsed = new URL(rawCallbackUrl);
-        if (parsed.origin === window.location.origin) return rawCallbackUrl;
+        const parsed = new URL(raw);
+        if (parsed.origin === window.location.origin) return raw;
       } catch {
         // fall through to default
       }
     }
     return `${window.location.origin}/`;
-  })();
+  }, [searchParams]);
   useUser(); // subscribes to auth state so useAuthRedirect can redirect authenticated users away from /login
   useAuthRedirect();
 
@@ -110,20 +113,16 @@ const LoginPage: FC = () => {
         aria-hidden="true"
       >
         <picture className="block size-full">
-          <source media="(min-width: 1920px)" srcSet={`/1920_login.png`} />
-          <img
-            src={`/768_login.png`}
-            alt=""
-            className="size-full object-cover"
-          />
+          <source media="(min-width: 1920px)" srcSet="/1920_login.png" />
+          <img src="/768_login.png" alt="" className="size-full object-cover" />
         </picture>
       </div>
 
-      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-overlay p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
+      <div className="bg-overlay relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
         {currentThemeFavicon && (
           <span
             style={{
-              backgroundImage: `url(${getIconPath(currentThemeFavicon)})`,
+              backgroundImage: `url("${getIconPath(currentThemeFavicon)}")`,
             }}
             className="size-8 shrink-0 bg-contain bg-center bg-no-repeat"
             aria-hidden="true"
