@@ -113,23 +113,27 @@ export const getImportPreparedPrompts = ({
   prompts: Prompt[];
   folders: FolderInterface[];
 }): Prompt[] =>
-  prompts.map((prompt) => {
-    const { path } = getPathToFolderById(folders, prompt.folderId, {
-      forRenaming: false,
-      trimEndDotsRequired: true,
-      prepareNames: true,
-    });
-    const newName = prepareEntityName(prompt.name);
+  prompts
+    .map((prompt) => {
+      const { path } = getPathToFolderById(folders, prompt.folderId, {
+        forRenaming: false,
+        trimEndDotsRequired: true,
+        prepareNames: true,
+      });
+      const newName = prepareEntityName(prompt.name ?? '');
 
-    const folderId = isRootPromptId(path)
-      ? path
-      : constructPath(getPromptRootId(), path);
-    const promptId = constructPath(folderId, newName);
+      if (!newName) return null;
 
-    return {
-      ...prompt,
-      id: promptId,
-      name: newName,
-      folderId: folderId,
-    };
-  }); // to send prompts with proper parentPath
+      const folderId = isRootPromptId(path)
+        ? path
+        : constructPath(getPromptRootId(), path);
+      const promptId = constructPath(folderId, newName);
+
+      return {
+        ...prompt,
+        id: promptId,
+        name: newName,
+        folderId: folderId,
+      };
+    })
+    .filter((prompt): prompt is Prompt => prompt !== null); // to send prompts with proper parentPath

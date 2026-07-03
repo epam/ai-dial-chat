@@ -220,7 +220,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant anymore since 'Attach' btn click does not trigger any api call
+dialTest.skip(
   'Send button is unavailable while attachment is being uploaded.\n' +
     'Blue loading bar is shown while the file is being uploaded to the message box',
   async ({
@@ -543,7 +544,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   'Error icon and red file name appear because of Network error while file is being uploaded',
   async ({
     dialHomePage,

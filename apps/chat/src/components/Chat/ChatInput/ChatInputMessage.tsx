@@ -10,7 +10,6 @@ import React, {
 
 import classNames from 'classnames';
 
-import { useChatUploadFiles } from '@/src/hooks/useChatUploadFiles';
 import { usePromptSelection } from '@/src/hooks/usePromptSelection';
 import { useTextareaInsertInPosition } from '@/src/hooks/useTextareaInsertInPosition';
 import { useTokenizer } from '@/src/hooks/useTokenizer';
@@ -26,7 +25,6 @@ import {
 } from '@/src/utils/app/form-schema';
 import { getPromptLimitDescription } from '@/src/utils/app/modals';
 import { doesAgentHaveChatCompletion } from '@/src/utils/app/models';
-import type { ResolvedUploadFile } from '@/src/utils/app/prepare-files-for-upload';
 import { translateErrorMessage } from '@/src/utils/app/translateErrorMessage';
 
 import { DialLink } from '@/src/types/files';
@@ -549,18 +547,6 @@ export const ChatInputMessage = Inversify.register(
       [dispatch],
     );
 
-    const { dispatchPreparedFiles } = useChatUploadFiles();
-
-    const handleUploadFromDevice = useCallback(
-      (selectedFiles: ResolvedUploadFile[], folderPath: string | undefined) => {
-        dispatchPreparedFiles(selectedFiles, folderPath, {
-          showSuccessMessage: true,
-          isFromDeviceAttachment: true,
-        });
-      },
-      [dispatchPreparedFiles],
-    );
-
     const handleAddLinkToMessage = useCallback((link: DialLink) => {
       setSelectedDialLinks((links) => links.concat([link]));
     }, []);
@@ -751,7 +737,6 @@ export const ChatInputMessage = Inversify.register(
                 <AttachButton
                   selectedFilesIds={selectedAttachmentsIds}
                   onSelectAlreadyUploaded={handleSelectAlreadyUploaded}
-                  onUploadFromDevice={handleUploadFromDevice}
                   onAddLinkToMessage={handleAddLinkToMessage}
                 />
               </div>
