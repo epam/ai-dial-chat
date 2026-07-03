@@ -57,6 +57,7 @@ async function bootstrap() {
   app.enableCors({
     origin: process.env.CORS_ORIGIN || 'http://localhost:4207',
     credentials: true,
+    exposedHeaders: ['X-CSRF-Token'],
   });
 
   const port = process.env.PORT || 3005;
