@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { AuthI18nKeys } from '../../constants/translation-keys';
 import * as UserContextModule from '../../context/auth/UserContext';
 import * as ThemeContextModule from '../../context/ThemeContext';
 import * as useAuthRedirectModule from '../../hooks/auth/useAuthRedirect';
@@ -107,7 +108,7 @@ describe('LoginPage', () => {
 
     renderLogin();
 
-    expect(screen.getByText('Checking your session…')).toBeTruthy();
+    expect(screen.getByText(AuthI18nKeys.Loading)).toBeTruthy();
   });
 
   it('renders error message when getProviders rejects', async () => {
@@ -115,11 +116,7 @@ describe('LoginPage', () => {
 
     renderLogin();
 
-    expect(
-      await screen.findByText(
-        'Could not load identity providers. Please retry.',
-      ),
-    ).toBeTruthy();
+    expect(await screen.findByText(AuthI18nKeys.ProvidersError)).toBeTruthy();
   });
 
   it('replaces an external callbackUrl with the app root', async () => {
