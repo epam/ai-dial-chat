@@ -53,6 +53,7 @@ import { ROUTES } from '../../types/routes';
 import { buildUploadPath } from '../../utils/build-upload-path';
 import { getConversationPath } from '../../utils/conversation-path';
 import { shouldWatchForDisplayNameUpdate } from '../../utils/display-name-watch';
+import { isAwaitingGenerationResume } from '../../utils/generation-resume';
 import { getLastDeploymentId } from '../../utils/message-utils';
 
 interface Props {
@@ -269,7 +270,6 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
   // loadConversation) firing two concurrent generations, which the backend
   // rejects with 409 and surfaces as a spurious "Something went wrong" error.
   const autoStartedPathsRef = useRef<Set<string>>(new Set());
-
   const handleStopError = useCallback(() => {
     showNotification({
       variant: NotificationVariant.Error,
@@ -277,7 +277,13 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
     });
   }, [showNotification, t]);
 
-  const { startStream, handleStop, isStreaming } = useConversationStream({
+  const {
+    startStream,
+    handleStop,
+    resumeIfAwaitingGeneration,
+    isStreaming,
+    canStopStreaming,
+  } = useConversationStream({
     conversationId,
     setConversation,
     conversationRef,
@@ -397,6 +403,14 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           }
         } else {
           setConversation(result);
+
+          // A hard refresh mid-generation loads the backend's empty
+          // start-state placeholder (no incremental save exists to show
+          // partial content). Watch for its resolution instead of leaving a
+          // static empty bubble — see resumeIfAwaitingGeneration.
+          if (isAwaitingGenerationResume(result)) {
+            resumeIfAwaitingGeneration(id, result);
+          }
         }
       } catch {
         navigate(ROUTES.Root);
@@ -408,6 +422,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
       navigate,
       restoreSelectedItemId,
       startStream,
+      resumeIfAwaitingGeneration,
       updateConversationTitle,
       getGeneration,
     ],
@@ -539,6 +554,7 @@ export const ConversationPage: FC<Props> = ({ onDuplicateReadonly }) => {
           onEditMessage={handleEditMessage}
           editingMessageIndexes={editingMessageIndexes}
           isAssistantTyping={isStreaming}
+          canStopAssistant={canStopStreaming}
           placeholder={t(ChatI18nKeys.Placeholder)}
           onSelectStarter={handleButtonSelect}
           streamErrorText={t(ChatI18nKeys.StreamError)}

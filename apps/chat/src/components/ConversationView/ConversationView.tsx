@@ -103,6 +103,7 @@ interface Props {
   editingMessageIndexes?: Set<number>;
   placeholder: string;
   isAssistantTyping?: boolean;
+  canStopAssistant?: boolean;
   initialModelId: string;
   streamErrorText: string;
   stoppedGeneratingText: string;
@@ -137,6 +138,7 @@ const ConversationView: FC<Props> = ({
   editingMessageIndexes,
   placeholder,
   isAssistantTyping = false,
+  canStopAssistant = false,
   initialModelId,
   streamErrorText,
   stoppedGeneratingText,
@@ -642,7 +644,7 @@ const ConversationView: FC<Props> = ({
                 styles={CONVERSATION_VIEW_INPUT_STYLES}
                 onSend={onSend}
                 onUploadAttachment={onUploadAttachment}
-                onStop={onStop}
+                onStop={canStopAssistant ? onStop : undefined}
                 isStreaming={isAssistantTyping}
                 onAttachmentsChange={onAttachmentsChange}
                 placeholder={placeholder}
