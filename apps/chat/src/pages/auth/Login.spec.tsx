@@ -99,6 +99,32 @@ describe('LoginPage', () => {
     ).toBeTruthy();
   });
 
+  it('replaces an external callbackUrl with the app root', async () => {
+    mockGetProviders.mockResolvedValue([{ id: 'keycloak', label: 'Keycloak' }]);
+
+    let assignedHref = '';
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: {
+        ...window.location,
+        origin: 'http://localhost',
+        set href(v: string) {
+          assignedHref = v;
+        },
+      },
+    });
+
+    renderLogin('/login?callbackUrl=https%3A%2F%2Fevil.example.com%2Fsteal');
+
+    const keycloakBtn = await screen.findByRole('button', { name: 'Keycloak' });
+    keycloakBtn.click();
+
+    expect(assignedHref).toContain(
+      `callbackUrl=${encodeURIComponent('http://localhost/')}`,
+    );
+    expect(assignedHref).not.toContain('evil.example.com');
+  });
+
   it('renders theme favicon when currentThemeFavicon is set', () => {
     mockUseTheme.mockReturnValue({
       currentTheme: ThemeId.Light,

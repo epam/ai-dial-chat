@@ -60,8 +60,18 @@ const renderProviders = (
 const LoginPage: FC = () => {
   const { t } = useTranslation();
   const [searchParams] = useSearchParams();
-  const callbackUrl =
-    searchParams.get('callbackUrl') ?? `${window.location.origin}/`;
+  const rawCallbackUrl = searchParams.get('callbackUrl');
+  const callbackUrl = (() => {
+    if (rawCallbackUrl) {
+      try {
+        const parsed = new URL(rawCallbackUrl);
+        if (parsed.origin === window.location.origin) return rawCallbackUrl;
+      } catch {
+        // fall through to default
+      }
+    }
+    return `${window.location.origin}/`;
+  })();
   useUser(); // subscribes to auth state so useAuthRedirect can redirect authenticated users away from /login
   useAuthRedirect();
 
@@ -78,7 +88,6 @@ const LoginPage: FC = () => {
         }
       } catch {
         if (!signal.isCancelled) {
-          console.error(err);
           setHasError(true);
         }
       }
@@ -110,7 +119,7 @@ const LoginPage: FC = () => {
         </picture>
       </div>
 
-      <div className="bg-overlay relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
+      <div className="relative mx-6 flex flex-col items-center gap-12 overflow-hidden rounded-xl bg-overlay p-16 mobile:mx-0 mobile:mt-10 mobile:w-full mobile:rounded-none mobile:bg-transparent mobile:p-0">
         {currentThemeFavicon && (
           <span
             style={{
