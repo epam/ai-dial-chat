@@ -3,7 +3,12 @@ import { act, renderHook, waitFor } from '@testing-library/react';
 import { ReactNode } from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import * as authApi from '../../server-api/auth.api';
-import { onUnauthorized, UnauthorizedError } from '../../server-api/base';
+import {
+  getCsrfToken,
+  notifyUnauthorized,
+  setCsrfToken,
+  UnauthorizedError,
+} from '../../server-api/base';
 import { AuthStatus } from '../../types/auth-status';
 import { UserProvider, useUser } from './UserContext';
 
@@ -20,6 +25,7 @@ const wrapper = ({ children }: { children: ReactNode }) => (
 
 describe('UserContext', () => {
   beforeEach(() => {
+    setCsrfToken(null);
     vi.restoreAllMocks();
   });
 
@@ -35,6 +41,7 @@ describe('UserContext', () => {
   });
 
   it('401 path: status becomes unauthenticated and user is null', async () => {
+    setCsrfToken('stale-csrf-token');
     vi.spyOn(authApi, 'getMe').mockRejectedValue(
       new UnauthorizedError('/api/v1/auth/me'),
     );
@@ -45,6 +52,7 @@ describe('UserContext', () => {
       expect(result.current.status).toBe(AuthStatus.Unauthenticated),
     );
     expect(result.current.user).toBeNull();
+    expect(getCsrfToken()).toBeNull();
   });
 
   it('network failure: status becomes unauthenticated and console.error is emitted', async () => {
@@ -67,6 +75,7 @@ describe('UserContext', () => {
 
   it('reset() clears state without re-fetching', async () => {
     vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
+    setCsrfToken('csrf-token');
 
     const { result } = renderHook(() => useUser(), { wrapper });
     await waitFor(() =>
@@ -79,6 +88,7 @@ describe('UserContext', () => {
 
     expect(result.current.status).toBe(AuthStatus.Unauthenticated);
     expect(result.current.user).toBeNull();
+    expect(getCsrfToken()).toBeNull();
   });
 
   it('refresh() re-runs the fetch and updates state', async () => {
@@ -107,8 +117,9 @@ describe('UserContext', () => {
     );
   });
 
-  it('onUnauthorized listener from any subsequent call resets context', async () => {
+  it('notifyUnauthorized from any subsequent call resets context', async () => {
     vi.spyOn(authApi, 'getMe').mockResolvedValue(mockProfile);
+    setCsrfToken('csrf-token');
 
     const { result } = renderHook(() => useUser(), { wrapper });
     await waitFor(() =>
@@ -117,11 +128,11 @@ describe('UserContext', () => {
 
     // Simulate a 401 from any API call via the listener mechanism
     act(() => {
-      onUnauthorized(() => undefined);
-      result.current.reset();
+      notifyUnauthorized('/api/test');
     });
 
     expect(result.current.status).toBe(AuthStatus.Unauthenticated);
     expect(result.current.user).toBeNull();
+    expect(getCsrfToken()).toBeNull();
   });
 });
