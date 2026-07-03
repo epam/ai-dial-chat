@@ -151,15 +151,25 @@ describe('unauthorizedMiddleware', () => {
     cleanup();
   });
 
-  it('clears CSRF token and notifies listener on invalid CSRF responses', async () => {
+  it('refreshes CSRF token and retries once on invalid CSRF responses', async () => {
     setCsrfToken('stale-token');
-    global.fetch = vi.fn<typeof fetch>().mockResolvedValue(
-      makeResponse(403, {
-        message: 'Invalid CSRF token',
-        error: 'Forbidden',
-        statusCode: 403,
-      }),
-    );
+    const fetchSpy = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        makeResponse(403, {
+          message: 'Invalid CSRF token',
+          error: 'Forbidden',
+          statusCode: 403,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 200,
+          headers: { 'x-csrf-token': 'fresh-token' },
+        }),
+      )
+      .mockResolvedValueOnce(makeResponse(200));
+    global.fetch = fetchSpy;
     const listener = vi.fn();
     const cleanup = onUnauthorized(listener);
 
@@ -173,8 +183,45 @@ describe('unauthorizedMiddleware', () => {
       }),
     );
 
-    expect(listener).toHaveBeenCalledOnce();
-    expect(getCsrfToken()).toBeNull();
+    expect(listener).not.toHaveBeenCalled();
+    expect(getCsrfToken()).toBe('fresh-token');
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+    expect(getLastRequestHeaders(fetchSpy).get('X-CSRF-Token')).toBe(
+      'stale-token',
+    );
+    expect(fetchSpy.mock.calls[1]?.[0]).toBe('/api/v1/auth/me');
+    expect(
+      new Headers(fetchSpy.mock.calls[2]?.[1]?.headers).get('X-CSRF-Token'),
+    ).toBe('fresh-token');
+
+    cleanup();
+  });
+
+  it('does not clear a newer CSRF token when a stale invalid CSRF response arrives', async () => {
+    setCsrfToken('stale-token');
+    global.fetch = vi.fn<typeof fetch>().mockImplementation(async () => {
+      setCsrfToken('fresh-token');
+      return makeResponse(403, {
+        message: 'Invalid CSRF token',
+        error: 'Forbidden',
+        statusCode: 403,
+      });
+    });
+    const listener = vi.fn();
+    const cleanup = onUnauthorized(listener);
+
+    const api = new ConversationsApi(createApiConfiguration());
+    await ignoreRejection(
+      api.createConversation({
+        createConversationDto: {
+          firstMessage: 'hi',
+          deploymentId: 'test-deployment',
+        },
+      }),
+    );
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(getCsrfToken()).toBe('fresh-token');
 
     cleanup();
   });

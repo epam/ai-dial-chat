@@ -15,8 +15,10 @@ import {
 import {
   UnauthorizedError,
   getCsrfToken,
-  notifyUnauthorized,
+  isInvalidCsrfErrorBody,
+  refreshCsrfToken,
   setCsrfToken,
+  notifyUnauthorized,
 } from './base';
 
 const csrfMiddleware: Middleware = {
@@ -49,10 +51,38 @@ const isInvalidCsrfResponse = async (response: Response): Promise<boolean> => {
   }
 
   try {
-    return (await response.clone().text()).includes('Invalid CSRF token');
+    return isInvalidCsrfErrorBody(await response.clone().text());
   } catch {
     return false;
   }
+};
+
+const getRequestCsrfToken = (init: RequestInit): string | null =>
+  new Headers(init.headers).get('X-CSRF-Token');
+
+const retryWithFreshCsrf = async (
+  context: Parameters<NonNullable<Middleware['post']>>[0],
+): Promise<Response | undefined> => {
+  const requestCsrfToken = getRequestCsrfToken(context.init);
+  if (getCsrfToken() !== requestCsrfToken) {
+    return undefined;
+  }
+
+  const refreshed = await refreshCsrfToken();
+  const csrfToken = getCsrfToken();
+  if (!refreshed || csrfToken === null) {
+    return undefined;
+  }
+
+  const headers = new Headers(context.init.headers);
+  if (context.init.method !== 'GET') {
+    headers.set('X-CSRF-Token', csrfToken);
+  }
+
+  return fetch(context.url, {
+    ...context.init,
+    headers,
+  });
 };
 
 const unauthorizedMiddleware: Middleware = {
@@ -62,7 +92,10 @@ const unauthorizedMiddleware: Middleware = {
       throw new UnauthorizedError(context.url);
     }
     if (await isInvalidCsrfResponse(context.response)) {
-      notifyUnauthorized(context.url);
+      const retryResponse = await retryWithFreshCsrf(context);
+      if (retryResponse) {
+        return retryResponse;
+      }
     }
     return context.response;
   },

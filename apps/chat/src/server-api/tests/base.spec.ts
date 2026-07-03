@@ -84,26 +84,75 @@ describe('onUnauthorized', () => {
     expect(listener).not.toHaveBeenCalled();
   });
 
-  it('clears CSRF token and notifies listener on invalid CSRF responses', async () => {
+  it('refreshes CSRF token and retries once on invalid CSRF responses', async () => {
     setCsrfToken('stale-csrf-token');
     const listener = vi.fn();
     const unregister = onUnauthorized(listener);
+    const fetchSpy = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: vi.fn().mockResolvedValue(
+          JSON.stringify({
+            message: 'Invalid CSRF token',
+            error: 'Forbidden',
+            statusCode: 403,
+          }),
+        ),
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'x-csrf-token': 'fresh-csrf-token' }),
+      } as Response)
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: vi.fn().mockResolvedValue({ data: 'ok' }),
+      } as unknown as Response);
+    global.fetch = fetchSpy;
 
-    mockFetch({
-      ok: false,
-      status: 403,
-      text: vi.fn().mockResolvedValue(
-        JSON.stringify({
-          message: 'Invalid CSRF token',
-          error: 'Forbidden',
-          statusCode: 403,
-        }),
-      ),
+    await expect(post('/api/test', {})).resolves.toEqual({ data: 'ok' });
+    expect(listener).not.toHaveBeenCalled();
+    expect(getCsrfToken()).toBe('fresh-csrf-token');
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+    expect(fetchSpy.mock.calls[0]?.[1]?.headers).toMatchObject({
+      'X-CSRF-Token': 'stale-csrf-token',
+    });
+    expect(fetchSpy.mock.calls[1]?.[0]).toBe(ApiEndpoints.AUTH_ME);
+    expect(fetchSpy.mock.calls[2]?.[1]?.headers).toMatchObject({
+      'X-CSRF-Token': 'fresh-csrf-token',
+    });
+
+    unregister();
+  });
+
+  it('does not clear a newer CSRF token when a stale invalid CSRF response arrives', async () => {
+    setCsrfToken('stale-csrf-token');
+    const listener = vi.fn();
+    const unregister = onUnauthorized(listener);
+    global.fetch = vi.fn<typeof fetch>().mockImplementation(async () => {
+      setCsrfToken('fresh-csrf-token');
+      return {
+        ok: false,
+        status: 403,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: vi.fn().mockResolvedValue(
+          JSON.stringify({
+            message: 'Invalid CSRF token',
+            error: 'Forbidden',
+            statusCode: 403,
+          }),
+        ),
+      } as unknown as Response;
     });
 
     await expect(post('/api/test', {})).rejects.toThrow('Invalid CSRF token');
-    expect(listener).toHaveBeenCalledWith('/api/test');
-    expect(getCsrfToken()).toBeNull();
+    expect(listener).not.toHaveBeenCalled();
+    expect(getCsrfToken()).toBe('fresh-csrf-token');
 
     unregister();
   });
@@ -316,6 +365,7 @@ describe('ApiEndpoints', () => {
     expect(ApiEndpoints.THEMES).toBe('/api/themes');
     expect(ApiEndpoints.CONVERSATIONS).toBe('/api/v1/conversations');
     expect(ApiEndpoints.MODELS).toBe('/api/v1/models');
+    expect(ApiEndpoints.AUTH_ME).toBe('/api/v1/auth/me');
     expect(ApiEndpoints.AUTH_LOGOUT).toBe('/api/v1/auth/logout');
   });
 });

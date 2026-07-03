@@ -4,6 +4,7 @@ export enum ApiEndpoints {
   CHAT_COMPLETIONS = '/api/v1/chat/completions',
   CONVERSATIONS = '/api/v1/conversations',
   MODELS = '/api/v1/models',
+  AUTH_ME = '/api/v1/auth/me',
   AUTH_LOGOUT = '/api/v1/auth/logout',
   TRANSCRIPTION = '/api/v1/transcription',
 }
@@ -47,8 +48,29 @@ type RequestOptions = Omit<RequestInit, 'method' | 'body'> & {
   responseHandler?: (response: Response) => void;
 };
 
-const isInvalidCsrfErrorBody = (body: string): boolean =>
+export const isInvalidCsrfErrorBody = (body: string): boolean =>
   body.includes('Invalid CSRF token');
+
+export const refreshCsrfToken = async (): Promise<boolean> => {
+  clearCsrfToken();
+
+  const response = await fetch(ApiEndpoints.AUTH_ME, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  const csrfToken = response.headers.get('x-csrf-token');
+  if (csrfToken) {
+    setCsrfToken(csrfToken);
+  }
+
+  if (response.status === 401) {
+    notifyUnauthorized(ApiEndpoints.AUTH_ME);
+    throw new UnauthorizedError(ApiEndpoints.AUTH_ME);
+  }
+
+  return response.ok && csrfToken != null;
+};
 
 // Type guard for validating response structure
 export const isValidResponse = <T>(
@@ -101,9 +123,11 @@ const request = async <TResponse>(
   url: string,
   method: RequestMethod,
   options: RequestOptions = {},
+  allowCsrfRetry = true,
 ): Promise<TResponse> => {
   const { body, headers, responseHandler, ...restOptions } = options;
   const isFormData = body instanceof FormData;
+  const csrfTokenForRequest = _csrfToken;
 
   const response = await fetch(url, {
     ...restOptions,
@@ -132,7 +156,12 @@ const request = async <TResponse>(
       errorBody = '';
     }
     if (response.status === 403 && isInvalidCsrfErrorBody(errorBody)) {
-      notifyUnauthorized(url);
+      if (allowCsrfRetry && _csrfToken === csrfTokenForRequest) {
+        const refreshed = await refreshCsrfToken();
+        if (refreshed) {
+          return request(url, method, options, false);
+        }
+      }
     }
     throw new Error(
       `Request failed with status ${response.status} for ${method} ${url}: ${errorBody}`,
