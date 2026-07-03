@@ -43,11 +43,26 @@ const csrfMiddleware: Middleware = {
   },
 };
 
+const isInvalidCsrfResponse = async (response: Response): Promise<boolean> => {
+  if (response.status !== 403) {
+    return false;
+  }
+
+  try {
+    return (await response.clone().text()).includes('Invalid CSRF token');
+  } catch {
+    return false;
+  }
+};
+
 const unauthorizedMiddleware: Middleware = {
   post: async (context) => {
     if (context.response.status === 401) {
       notifyUnauthorized(context.url);
       throw new UnauthorizedError(context.url);
+    }
+    if (await isInvalidCsrfResponse(context.response)) {
+      notifyUnauthorized(context.url);
     }
     return context.response;
   },

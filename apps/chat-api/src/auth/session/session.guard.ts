@@ -59,7 +59,8 @@ export class SessionGuard implements CanActivate {
 
     const now = Math.floor(Date.now() / 1000);
     if (payload.at_exp < now + 60) {
-      payload = await this.refresh.refresh(payload);
+      const refreshedPayload = await this.refresh.refresh(payload);
+      payload = { ...refreshedPayload, csrf: csrfForCurrentRequest };
       const newToken = await this.session.encrypt(payload);
       const cookieName = getSessionCookieName(this.config);
       setCookieValue(

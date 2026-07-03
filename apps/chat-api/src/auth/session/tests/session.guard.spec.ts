@@ -147,7 +147,10 @@ describe('SessionGuard', () => {
 
     await expect(guard.canActivate(context)).resolves.toBe(true);
     expect(refreshService.refresh).toHaveBeenCalledWith(payload);
-    expect(sessionService.encrypt).toHaveBeenCalledWith(refreshed);
+    expect(sessionService.encrypt).toHaveBeenCalledWith({
+      ...refreshed,
+      csrf: payload.csrf,
+    });
     expect(res.cookie).toHaveBeenCalledWith(
       COOKIE_NAME,
       'new-encrypted-token',
@@ -165,7 +168,7 @@ describe('SessionGuard', () => {
     const refreshed = makePayload({
       at_exp: now + 3600,
       rt_exp: now + 86400,
-      csrf: payload.csrf,
+      csrf: randomUUID(),
     });
 
     sessionService.decryptFromRequest.mockResolvedValue(payload);
@@ -175,6 +178,10 @@ describe('SessionGuard', () => {
     await guard.canActivate(context);
 
     expect((req.user as { csrf: string }).csrf).toBe(payload.csrf);
+    expect(sessionService.encrypt).toHaveBeenCalledWith({
+      ...refreshed,
+      csrf: payload.csrf,
+    });
     expect(res.setHeader).toHaveBeenCalledWith('X-CSRF-Token', payload.csrf);
   });
 

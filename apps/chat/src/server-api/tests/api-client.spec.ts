@@ -12,8 +12,8 @@ import {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const makeResponse = (status: number): Response =>
-  new Response(JSON.stringify({ data: [] }), {
+const makeResponse = (status: number, body: unknown = { data: [] }): Response =>
+  new Response(JSON.stringify(body), {
     status,
     headers: { 'content-type': 'application/json' },
   });
@@ -124,6 +124,7 @@ describe('csrfMiddleware', () => {
 
 describe('unauthorizedMiddleware', () => {
   it('throws UnauthorizedError and calls listener on 401', async () => {
+    setCsrfToken('stale-token');
     setupFetch(401);
     const listener = vi.fn();
     const cleanup = onUnauthorized(listener);
@@ -131,6 +132,7 @@ describe('unauthorizedMiddleware', () => {
     const api = new ModelsApi(createApiConfiguration());
     await expect(api.listModels()).rejects.toBeInstanceOf(UnauthorizedError);
     expect(listener).toHaveBeenCalledOnce();
+    expect(getCsrfToken()).toBeNull();
 
     cleanup();
   });
@@ -145,6 +147,34 @@ describe('unauthorizedMiddleware', () => {
       UnauthorizedError,
     );
     expect(listener).not.toHaveBeenCalled();
+
+    cleanup();
+  });
+
+  it('clears CSRF token and notifies listener on invalid CSRF responses', async () => {
+    setCsrfToken('stale-token');
+    global.fetch = vi.fn<typeof fetch>().mockResolvedValue(
+      makeResponse(403, {
+        message: 'Invalid CSRF token',
+        error: 'Forbidden',
+        statusCode: 403,
+      }),
+    );
+    const listener = vi.fn();
+    const cleanup = onUnauthorized(listener);
+
+    const api = new ConversationsApi(createApiConfiguration());
+    await ignoreRejection(
+      api.createConversation({
+        createConversationDto: {
+          firstMessage: 'hi',
+          deploymentId: 'test-deployment',
+        },
+      }),
+    );
+
+    expect(listener).toHaveBeenCalledOnce();
+    expect(getCsrfToken()).toBeNull();
 
     cleanup();
   });

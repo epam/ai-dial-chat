@@ -3,6 +3,7 @@ import {
   ApiEndpoints,
   UnauthorizedError,
   get,
+  getCsrfToken,
   hasRequiredProperties,
   isValidResponse,
   onUnauthorized,
@@ -59,6 +60,7 @@ describe('UnauthorizedError', () => {
 
 describe('onUnauthorized', () => {
   it('calls registered listener when a 401 occurs', async () => {
+    setCsrfToken('stale-csrf-token');
     const listener = vi.fn();
     const unregister = onUnauthorized(listener);
 
@@ -66,6 +68,7 @@ describe('onUnauthorized', () => {
 
     await expect(get('/api/test')).rejects.toBeInstanceOf(UnauthorizedError);
     expect(listener).toHaveBeenCalledWith('/api/test');
+    expect(getCsrfToken()).toBeNull();
 
     unregister();
   });
@@ -79,6 +82,30 @@ describe('onUnauthorized', () => {
 
     await expect(get('/api/test')).rejects.toBeInstanceOf(UnauthorizedError);
     expect(listener).not.toHaveBeenCalled();
+  });
+
+  it('clears CSRF token and notifies listener on invalid CSRF responses', async () => {
+    setCsrfToken('stale-csrf-token');
+    const listener = vi.fn();
+    const unregister = onUnauthorized(listener);
+
+    mockFetch({
+      ok: false,
+      status: 403,
+      text: vi.fn().mockResolvedValue(
+        JSON.stringify({
+          message: 'Invalid CSRF token',
+          error: 'Forbidden',
+          statusCode: 403,
+        }),
+      ),
+    });
+
+    await expect(post('/api/test', {})).rejects.toThrow('Invalid CSRF token');
+    expect(listener).toHaveBeenCalledWith('/api/test');
+    expect(getCsrfToken()).toBeNull();
+
+    unregister();
   });
 });
 

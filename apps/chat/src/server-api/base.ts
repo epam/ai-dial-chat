@@ -18,6 +18,16 @@ export class UnauthorizedError extends Error {
 
 type UnauthorizedListener = (url: string) => void;
 const listeners = new Set<UnauthorizedListener>();
+
+let _csrfToken: string | null = null;
+export const setCsrfToken = (token: string | null): void => {
+  _csrfToken = token;
+};
+export const getCsrfToken = (): string | null => _csrfToken;
+export const clearCsrfToken = (): void => {
+  _csrfToken = null;
+};
+
 export const onUnauthorized = (
   listener: UnauthorizedListener,
 ): (() => void) => {
@@ -26,6 +36,7 @@ export const onUnauthorized = (
 };
 
 export const notifyUnauthorized = (url: string): void => {
+  clearCsrfToken();
   listeners.forEach((l) => l(url));
 };
 
@@ -36,11 +47,8 @@ type RequestOptions = Omit<RequestInit, 'method' | 'body'> & {
   responseHandler?: (response: Response) => void;
 };
 
-let _csrfToken: string | null = null;
-export const setCsrfToken = (token: string | null): void => {
-  _csrfToken = token;
-};
-export const getCsrfToken = (): string | null => _csrfToken;
+const isInvalidCsrfErrorBody = (body: string): boolean =>
+  body.includes('Invalid CSRF token');
 
 // Type guard for validating response structure
 export const isValidResponse = <T>(
@@ -114,7 +122,7 @@ const request = async <TResponse>(
 
   if (!response.ok) {
     if (response.status === 401) {
-      listeners.forEach((l) => l(url));
+      notifyUnauthorized(url);
       throw new UnauthorizedError(url);
     }
     let errorBody = '';
@@ -122,6 +130,9 @@ const request = async <TResponse>(
       errorBody = await response.text();
     } catch {
       errorBody = '';
+    }
+    if (response.status === 403 && isInvalidCsrfErrorBody(errorBody)) {
+      notifyUnauthorized(url);
     }
     throw new Error(
       `Request failed with status ${response.status} for ${method} ${url}: ${errorBody}`,
