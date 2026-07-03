@@ -85,8 +85,9 @@ export interface UseDialFileManagerResult {
 
   /**
    * Search: called by DialFileManager when the user types in the search box.
-   * The `folder` argument is accepted for DialFileManager API parity; this hook
-   * searches from the active-tab root stored in `folderPath`.
+   * `folder` is accepted for API parity with DialFileManager but is intentionally
+   * unused — this hook always searches from the active-tab root stored in
+   * `folderPath`, not from the passed-in `folder` (see design decision D3).
    */
   onSearchFiles: (folder: string, query: string) => void;
   /** Search: true while a search request is in flight. */
@@ -453,7 +454,7 @@ const fetchByTab = (
   }).then((res) => ({ items: res.items, permissions: res.permissions }));
 };
 
-const fetchForSearch = (
+const fetchForSearch = async (
   tab: DialFileManagerTabs,
   bucket: string,
   folderPath: string,
@@ -466,34 +467,35 @@ const fetchForSearch = (
     const sharedRootName =
       firstSlash === -1 ? folderPath : folderPath.slice(0, firstSlash);
     const meta = sharedRootMeta.get(sharedRootName);
-    if (meta) {
-      const rootPathInBucket = dialCorePathToRelative(
-        meta.dialCorePath,
-        meta.bucket,
-      );
-      const subPath = firstSlash === -1 ? '' : folderPath.slice(firstSlash + 1);
-      const actualPath = rootPathInBucket + subPath;
-      return listFiles({
-        bucket: meta.bucket,
-        path: actualPath,
-        permissions: true,
-        recursive: true,
-      }).then((res) => ({ items: res.items }));
-    }
-    return Promise.resolve({ items: [] });
+    if (!meta) return { items: [] };
+    const rootPathInBucket = dialCorePathToRelative(
+      meta.dialCorePath,
+      meta.bucket,
+    );
+    const subPath = firstSlash === -1 ? '' : folderPath.slice(firstSlash + 1);
+    const actualPath = rootPathInBucket + subPath;
+    const { items } = await listFiles({
+      bucket: meta.bucket,
+      path: actualPath,
+      permissions: true,
+      recursive: true,
+    });
+    return { items };
   }
   if (tab === DialFileManagerTabs.Organization) {
-    return listPublicFiles({
+    const { items } = await listPublicFiles({
       path: folderPath || undefined,
       recursive: true,
-    }).then((res) => ({ items: res.items }));
+    });
+    return { items };
   }
-  return listFiles({
+  const { items } = await listFiles({
     bucket,
     path: folderPath,
     permissions: true,
     recursive: true,
-  }).then((res) => ({ items: res.items }));
+  });
+  return { items };
 };
 
 const mapSearchItem = (
@@ -505,10 +507,7 @@ const mapSearchItem = (
   const name = safeDecodeURI(item.name);
   const itemBucket = item.bucket ?? fallbackBucket;
   const dialCorePath = item.url ?? item.path ?? '';
-  const bucketPrefix = `files/${itemBucket}/`;
-  const relativePath = dialCorePath.startsWith(bucketPrefix)
-    ? dialCorePath.slice(bucketPrefix.length)
-    : dialCorePath;
+  const relativePath = dialCorePathToRelative(dialCorePath, itemBucket);
   const relativeStripped = relativePath.replace(/\/$/, '');
   const lastSlash = relativeStripped.lastIndexOf('/');
   const parentRelative =
@@ -561,6 +560,10 @@ export const useDialFileManager = ({
   const [cache, setCache] = useState<Map<string, ListFilesItemDto[]>>(
     () => new Map(),
   );
+  const cacheRef = useRef(cache);
+  useEffect(() => {
+    cacheRef.current = cache;
+  }, [cache]);
   const [listingPermissionsCache, setListingPermissionsCache] = useState<
     Map<string, string[] | undefined>
   >(() => new Map());
@@ -588,6 +591,9 @@ export const useDialFileManager = ({
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchCancelRef = useRef<(() => void) | null>(null);
   const expandingApiPathsRef = useRef<Set<string>>(new Set());
+  // Folder api paths whose last expand fetch failed — excluded from auto-retry
+  // on unrelated expand/collapse until the user collapses and re-expands them.
+  const erroredApiPathsRef = useRef<Set<string>>(new Set());
 
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
     () => new Set(),
@@ -603,6 +609,8 @@ export const useDialFileManager = ({
     setFolderPath('');
     setSharedRootIds(undefined);
     sharedRootMetaRef.current = new Map();
+    expandingApiPathsRef.current = new Set();
+    erroredApiPathsRef.current = new Set();
     if (searchDebounceRef.current != null) {
       clearTimeout(searchDebounceRef.current);
       searchDebounceRef.current = null;
@@ -740,37 +748,54 @@ export const useDialFileManager = ({
 
   const onExpandedPathsChange = useCallback(
     (paths: Set<string>) => {
+      // Collapsed folders drop out of `paths` — clear their errored state so
+      // re-expanding the same folder later retries instead of staying blocked.
+      expandedPaths.forEach((p) => {
+        if (!paths.has(p)) {
+          erroredApiPathsRef.current.delete(virtualPathToApiPath(p, rootLabel));
+        }
+      });
+
       setExpandedPaths(paths);
       const newlyExpanded = [...paths].filter((p) => {
         const apiPath = virtualPathToApiPath(p, rootLabel);
         return (
-          !cache.has(apiPath) && !expandingApiPathsRef.current.has(apiPath)
+          !cacheRef.current.has(apiPath) &&
+          !expandingApiPathsRef.current.has(apiPath) &&
+          !erroredApiPathsRef.current.has(apiPath)
         );
       });
       newlyExpanded.forEach((virtualPath) => {
         const apiPath = virtualPathToApiPath(virtualPath, rootLabel);
         expandingApiPathsRef.current.add(apiPath);
-        fetchByTab(activeTab, bucket, apiPath, sharedRootMetaRef.current)
-          .then(({ items: flat, permissions }) => {
+        const loadFolder = async (): Promise<void> => {
+          try {
+            const { items: flat, permissions } = await fetchByTab(
+              activeTab,
+              bucket,
+              apiPath,
+              sharedRootMetaRef.current,
+            );
             setCache((prev) => new Map(prev).set(apiPath, flat));
             if (permissions != null) {
               setListingPermissionsCache((prev) =>
                 new Map(prev).set(apiPath, permissions),
               );
             }
-          })
-          .catch(() => {
+          } catch {
+            erroredApiPathsRef.current.add(apiPath);
             onNotification?.({
               variant: NotificationVariant.Error,
               message: t(DialFileManagerI18nKeys.FolderLoadError),
             });
-          })
-          .finally(() => {
+          } finally {
             expandingApiPathsRef.current.delete(apiPath);
-          });
+          }
+        };
+        void loadFolder();
       });
     },
-    [activeTab, bucket, cache, onNotification, rootLabel, t],
+    [activeTab, bucket, expandedPaths, onNotification, rootLabel, t],
   );
 
   const clearSearchResults = useCallback(() => {
@@ -788,10 +813,14 @@ export const useDialFileManager = ({
     (_folder: string, query: string) => {
       if (searchDebounceRef.current != null) {
         clearTimeout(searchDebounceRef.current);
+        searchDebounceRef.current = null;
       }
+      // Cancel any in-flight search immediately on every keystroke, so a
+      // slower stale fetch can never overwrite the results of a newer one.
+      searchCancelRef.current?.();
+      searchCancelRef.current = null;
+
       if (!query.trim()) {
-        searchCancelRef.current?.();
-        searchCancelRef.current = null;
         setSearchResults(null);
         setIsSearching(false);
         return;
@@ -802,6 +831,8 @@ export const useDialFileManager = ({
 
         // Shared root: filter already-loaded root items from the cache (no BFF call).
         if (activeTab === DialFileManagerTabs.Shared && folderPath === '') {
+          searchCancelRef.current?.();
+          searchCancelRef.current = null;
           setIsSearching(true);
           const rootItems = cache.get('') ?? [];
           const matched = rootItems.filter((item) =>
@@ -817,7 +848,6 @@ export const useDialFileManager = ({
         }
 
         let cancelled = false;
-        searchCancelRef.current?.();
         searchCancelRef.current = () => {
           cancelled = true;
         };

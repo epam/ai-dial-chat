@@ -273,7 +273,28 @@ const DialFileManagerModal: FC<Props> = ({
       });
     }
 
-    const totalCount = dedupedFiles.length + dedupedFolderPaths.length;
+    const dialCoreFolderPaths = dedupedFolderPaths.flatMap((virtualPath) => {
+      const file = filesByPath.get(virtualPath);
+      if (file == null) return [];
+      const source = file.url ?? file.id ?? '';
+      if (!source) return [];
+      const dialPath = source.startsWith('files/')
+        ? source
+        : `files/${file.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
+      // Strip any `../`/`./` segments before the path is forwarded to DIAL Core —
+      // the BFF is the trust boundary, but this guards against a compromised response.
+      const normalizedDialPath = dialPath
+        .split('/')
+        .filter((segment) => segment !== '..' && segment !== '.')
+        .join('/');
+      return [
+        normalizedDialPath.endsWith('/')
+          ? normalizedDialPath
+          : `${normalizedDialPath}/`,
+      ];
+    });
+
+    const totalCount = dedupedFiles.length + dialCoreFolderPaths.length;
     if (
       maximumAttachmentsAmount != null &&
       maximumAttachmentsAmount > 0 &&
@@ -289,17 +310,6 @@ const DialFileManagerModal: FC<Props> = ({
       });
       return;
     }
-
-    const dialCoreFolderPaths = dedupedFolderPaths.flatMap((virtualPath) => {
-      const file = filesByPath.get(virtualPath);
-      if (file == null) return [];
-      const source = file.url ?? file.id ?? '';
-      if (!source) return [];
-      const dialPath = source.startsWith('files/')
-        ? source
-        : `files/${file.bucket ?? bucket}/${source.replace(/^\/+/, '')}`;
-      return [dialPath.endsWith('/') ? dialPath : `${dialPath}/`];
-    });
 
     onAttach({ files: dedupedFiles, folderPaths: dialCoreFolderPaths });
   }, [
