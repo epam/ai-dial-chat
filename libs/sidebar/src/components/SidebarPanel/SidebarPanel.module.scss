@@ -16,6 +16,10 @@
 
 .panel {
   border-color: var(--sb-border, var(--stroke-tertiary, #e0e6f0));
+  border-inline-end-color: var(
+    --sb-border-inline-end,
+    var(--sb-border, var(--stroke-tertiary, #e0e6f0))
+  );
 }
 
 @keyframes fadeIn {

@@ -21,6 +21,8 @@ export interface ConversationSourcesPanelLabels {
   closeLabel: string;
   /** Placeholder text shown inside the search input. */
   searchPlaceholder: string;
+  /** Accessible label for the search input clear button. */
+  searchClearLabel: string;
   /** Text shown when the panel has no files or sources. */
   emptyLabel: string;
   /** Text shown when a search query matches nothing. */
@@ -176,6 +178,7 @@ const ConversationSourcesPanel: FC<ConversationSourcesPanelProps> = ({
           placeholder={labels.searchPlaceholder}
           value={searchQuery}
           onChange={setSearchQuery}
+          clearLabel={labels.searchClearLabel}
         />
       )}
       <div className="flex-1 overflow-y-auto p-4">

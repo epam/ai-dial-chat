@@ -47,6 +47,7 @@ export enum RateI18nKeys {
 
 export enum BasicI18nKeys {
   SearchPlaceholder = 'basic.searchPlaceholder',
+  ClearSearch = 'basic.clearSearch',
   NoResults = 'basic.noResults',
   Empty = 'basic.noData',
 }
@@ -110,6 +111,8 @@ export enum CatalogI18nKeys {
   SortNewest = 'catalog.sortNewest',
   SortNameAZ = 'catalog.sortNameAZ',
   FeaturedLabel = 'catalog.featuredLabel',
+  GridViewLabel = 'catalog.gridViewLabel',
+  ListViewLabel = 'catalog.listViewLabel',
   // Details panel
   DetailsTabTools = 'catalog.details.tabTools',
   DetailsDailyLimit = 'catalog.details.dailyLimit',
@@ -122,7 +125,6 @@ export enum CatalogI18nKeys {
   DetailsApiCopy = 'catalog.details.api.copy',
   DetailsPricingPricesSection = 'catalog.details.pricing.pricesSection',
   DetailsPricingLimitsSection = 'catalog.details.pricing.limitsSection',
-  CreateMenuCaption = 'catalog.create.menuCaption',
   CreateQuickApp = 'catalog.create.quickApp',
   CreateToolset = 'catalog.create.toolset',
   FavoriteAddedTitle = 'catalog.favoriteAddedTitle',
@@ -137,7 +139,6 @@ export enum CatalogI18nKeys {
   PickerTitle = 'catalog.picker.title',
   PickerSearchPlaceholder = 'catalog.picker.searchPlaceholder',
   PickerSearchAriaLabel = 'catalog.picker.searchAriaLabel',
-  PickerFavoritesLabel = 'catalog.picker.favoritesLabel',
   PickerEmptyHint = 'catalog.picker.emptyHint',
   PickerBrowseCatalog = 'catalog.picker.browseCatalogLabel',
   PickerRemoveFromFavorites = 'catalog.picker.removeFromFavoritesLabel',

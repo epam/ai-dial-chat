@@ -154,6 +154,11 @@
       "description": "When true, the platform converts the agent's payload.findings[] into SARIF 2.1.0 and uploads it to GitHub code scanning (Security tab) — a write-access-gated surface, unlike public PR comments/summaries. Findings with non-actionable verdicts (FALSE_POSITIVE/NOT_APPLICABLE/DUPLICATE) are uploaded as dismissed. If analysis_ref is set, the SARIF is scoped to that branch/commit so alerts render against the scanned code.",
       "default": false
     },
+    "publish_inline_comments": {
+      "type": "boolean",
+      "description": "When true on pull_request runs, the platform publishes payload.findings[] entries with file+line as GitHub inline PR review comments when the line is present in the PR diff. Successfully posted inline findings are omitted from the sticky summary to avoid duplication.",
+      "default": false
+    },
     "analysis_ref": {
       "type": "string",
       "description": "Optional git ref whose code the agent should inspect instead of the PR working tree (e.g. the branch a scanner ran against). run-agent.yml fetches it and overlays its source onto the working tree before invoking the agent, preserving the framework paths (.github, .claude) so the composite action and skills keep working. The agent reads the findings' repo-relative paths directly — no skill/prompt awareness of branches needed. Also scopes emit_sarif uploads to this ref/commit."

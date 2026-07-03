@@ -63,6 +63,10 @@ export interface ConversationHistoryTypography {
   newChatLabelClassName?: string;
   /** Typography class applied to each filter tab label. Defaults to `'dial-tiny-semi-text'`. */
   tabClassName?: string;
+  /** Text color class applied to each filter tab label. Defaults to `'text-primary'`. */
+  tabColorClassName?: string;
+  /** CSS class applied to the icon badge in each conversation row. Defaults to `'rounded-full'`. */
+  itemIconBadgeClassName?: string;
 }
 
 /** CSS custom-property overrides for `ConversationPanel`. */
@@ -127,6 +131,8 @@ export interface ConversationPanelProps {
   newChatLabel: string;
   /** Placeholder text for the search input (e.g. `"Search chat…"`). */
   searchPlaceholder: string;
+  /** Accessible label for the search input clear button. */
+  searchClearLabel: string;
   /** Labels for the four filter tabs. */
   filterLabels: FilterLabels;
   /** Labels for collapsible group section headings. */

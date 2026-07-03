@@ -36,6 +36,13 @@ export const Card: FC<CardProps> = ({
   const descriptionClassName =
     cardStyles?.typography?.descriptionClassName ??
     'dial-small-text text-secondary';
+  const featuredChipClassName =
+    cardStyles?.typography?.featuredChipClassName ??
+    'dial-tiny-semi-text uppercase tracking-[0.06em]';
+  const folderLabelClassName =
+    cardStyles?.typography?.folderLabelClassName ?? 'dial-tiny-text';
+  const folderLeafClassName =
+    cardStyles?.typography?.folderLeafClassName ?? 'dial-tiny-semi-text';
   const handleClick = onClick ? () => onClick(item) : undefined;
 
   const handleKeyDown = useCallback(
@@ -80,7 +87,7 @@ export const Card: FC<CardProps> = ({
       }
       className={mergeClasses(
         'relative box-border flex cursor-pointer flex-col gap-[14px]',
-        'rounded-[16px] border p-[18px]',
+        'rounded-[20px] p-[22px]',
         styles.card,
         item.isFeatured ? styles.featuredCard : undefined,
         className,
@@ -90,8 +97,8 @@ export const Card: FC<CardProps> = ({
         <DialTag
           label={featuredLabel}
           className={mergeClasses(
-            'absolute end-[18px] top-0 -translate-y-1/2',
-            'dial-tiny-semi-text uppercase tracking-[0.06em]',
+            'absolute end-[22px] top-0 -translate-y-1/2',
+            featuredChipClassName,
             styles.featuredChip,
           )}
         />
@@ -106,19 +113,23 @@ export const Card: FC<CardProps> = ({
         query={query}
         className="min-w-0 flex-1"
         typeColor={ENTITY_TYPE_COLOR[item.type]}
+        iconClassName={styles.cardIcon}
       />
 
+      {/* Description */}
       <p
         className={mergeClasses(
           descriptionClassName,
-          'line-clamp-2',
+          'line-clamp-2 min-h-[44px] !leading-[22px]',
           styles.description,
         )}
       >
         {item.description}
       </p>
 
-      <TopicsLine topics={item.topics} />
+      <div className="min-h-[28px]">
+        <TopicsLine topics={item.topics} />
+      </div>
 
       <div className="mt-auto border-t border-tertiary pt-3">
         <div className="flex items-center gap-2">
@@ -126,8 +137,8 @@ export const Card: FC<CardProps> = ({
             {item.folder.length > 0 && (
               <FolderPath
                 segments={item.folder}
-                labelClassName="dial-tiny-text"
-                leafClassName="dial-tiny-semi-text"
+                labelClassName={folderLabelClassName}
+                leafClassName={folderLeafClassName}
               />
             )}
           </div>
@@ -138,6 +149,10 @@ export const Card: FC<CardProps> = ({
             ariaLabel={
               isStarred ? removeFromFavoritesAriaLabel : addToFavoritesAriaLabel
             }
+            className={mergeClasses(
+              styles.starBtn,
+              !isStarred && styles.emptyStarHidden,
+            )}
           />
         </div>
       </div>

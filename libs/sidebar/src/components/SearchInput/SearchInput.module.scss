@@ -1,0 +1,19 @@
+.row {
+  border: 1px solid transparent;
+  border-radius: 9999px;
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+
+  &:focus-within {
+    border-color: var(--stroke-accent-primary, #7da4ff);
+    box-shadow: 0 0 0 4px var(--bg-accent-primary-alpha, #7da4ff26);
+  }
+}
+
+.input {
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 400;
+  font-family: inherit;
+}

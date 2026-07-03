@@ -37,6 +37,8 @@ export interface ConversationRowProps {
   actionsLabel?: string;
   /** Typography class for the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
+  /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
+  itemIconBadgeClassName?: string;
   /**
    * The group this row belongs to — required to enable drag-and-drop.
    * When absent the row is not draggable (used by `ConversationGroup`).
@@ -73,6 +75,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   getActions,
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
+  itemIconBadgeClassName,
   rowGroupKey,
   rows,
   draggingId,
@@ -103,6 +106,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
       size={DIAL_ICON_SIZE.LG}
       initialsName={item.iconTooltip ?? ''}
       tooltip={item.iconTooltip}
+      badgeClassName={itemIconBadgeClassName}
     />
   );
 
@@ -201,7 +205,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
             items={menuItems}
             onOpenChange={setIsMenuOpen}
             matchReferenceWidth={false}
-            listClassName="w-[140px] shadow-md"
+            listClassName="w-[140px] cp-dropdown-overlay"
           >
             <DialIconButton
               icon={

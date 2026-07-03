@@ -1,6 +1,7 @@
 {
   "basic": {
     "searchPlaceholder": "Search...",
+    "clearSearch": "Clear search",
     "noResults": "No results found",
     "noData": "No data"
   },
@@ -73,6 +74,8 @@
     "sortNewest": "Newest",
     "sortNameAZ": "Name A-Z",
     "featuredLabel": "Featured",
+    "gridViewLabel": "Grid view",
+    "listViewLabel": "List view",
     "details": {
       "tabTools": "Tools",
       "dailyLimit": "Daily limit",

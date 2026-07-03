@@ -1,17 +1,22 @@
 .card {
   background: var(--bg-layer-0, #fcfcfc);
-  border-color: rgba(0, 0, 0, 0.07);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+  box-shadow:
+    0 1px 3px rgba(16, 24, 40, 0.04),
+    0 6px 20px rgba(16, 24, 40, 0.05);
   transition:
-    transform 180ms ease-out,
-    box-shadow 180ms ease-out;
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out;
 
   @media (hover: hover) {
     &:hover {
-      transform: translateY(-2px);
+      transform: translateY(-3px);
       box-shadow:
-        0 6px 16px rgba(0, 0, 0, 0.08),
-        0 2px 4px rgba(0, 0, 0, 0.04);
+        0 4px 10px rgba(16, 24, 40, 0.06),
+        0 18px 44px rgba(16, 24, 40, 0.1);
+    }
+
+    &:hover .emptyStarHidden {
+      opacity: 1;
     }
   }
 
@@ -21,11 +26,30 @@
     &:hover {
       transform: none;
     }
+
+    .starBtn {
+      transition: none !important;
+    }
+
+    .emptyStarHidden {
+      transition: none !important;
+    }
   }
 }
 
-.featuredCard {
-  border-color: rgba(0, 0, 0, 0.07);
+.starBtn {
+  transition: transform 150ms ease !important;
+
+  @media (hover: hover) {
+    &:hover {
+      transform: scale(1.15) !important;
+    }
+  }
+}
+
+.emptyStarHidden {
+  opacity: 0;
+  transition: opacity 150ms ease !important;
 }
 
 .description {
@@ -46,5 +70,4 @@
 
 .skeletonCard {
   background: var(--bg-layer-0, #fcfcfc);
-  border-color: rgba(0, 0, 0, 0.07);
 }

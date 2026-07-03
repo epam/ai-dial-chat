@@ -17,6 +17,7 @@ export const RowRenderer = ({
   actionsLabel,
   groupHeaderClassName,
   itemTitleClassName,
+  itemIconBadgeClassName,
   draggingId,
   dragOverId,
   allowedDropGroups,
@@ -31,7 +32,7 @@ export const RowRenderer = ({
   if (row.kind === VirtualRowKind.Header) {
     const isPinnedHeader = row.groupKey === ConversationGroupKey.Pinned;
     return (
-      <div style={style} className={index === 0 ? undefined : 'pt-2'}>
+      <div style={style} className={index === 0 ? 'pt-0' : 'pt-8'}>
         <ConversationGroupHeader
           label={row.label}
           isExpanded={expandedGroups.has(row.groupKey)}
@@ -60,6 +61,7 @@ export const RowRenderer = ({
         getActions={getActions}
         actionsLabel={actionsLabel}
         itemTitleClassName={itemTitleClassName}
+        itemIconBadgeClassName={itemIconBadgeClassName}
         rowGroupKey={row.groupKey}
         rows={rows}
         draggingId={draggingId}

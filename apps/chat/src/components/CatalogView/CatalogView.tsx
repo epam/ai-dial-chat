@@ -148,10 +148,12 @@ const CatalogView: FC = () => {
       createOptions={createOptions}
       onFetchAboutContent={fetchAboutContent}
       onToggleFavorite={onToggleFavorite}
+      styles={{
+        typography: { pageHeadingFontClassName: 'catalog-heading-text' },
+      }}
       titles={{
         pageTitle: t(CatalogI18nKeys.PageTitle),
         createLabel: t(ButtonsI18nKeys.Create),
-        createMenuCaption: t(CatalogI18nKeys.CreateMenuCaption),
         favoritesTitle: t(CatalogI18nKeys.FavoritesTitle),
         browseTitle: t(ButtonsI18nKeys.Browse),
         searchPlaceholder: t(CatalogI18nKeys.SearchPlaceholder),
@@ -160,6 +162,8 @@ const CatalogView: FC = () => {
         sortNewestLabel: t(CatalogI18nKeys.SortNewest),
         sortNameAZLabel: t(CatalogI18nKeys.SortNameAZ),
         featuredLabel: t(CatalogI18nKeys.FeaturedLabel),
+        gridViewLabel: t(CatalogI18nKeys.GridViewLabel),
+        listViewLabel: t(CatalogI18nKeys.ListViewLabel),
         ariaLabel: t(CatalogI18nKeys.AriaLabel),
         tabLabels: {
           [CatalogEntityType.Model]: t(CatalogI18nKeys.TabModels),

@@ -1,24 +1,10 @@
 .pageNav {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 3px 6px;
   border: 1px solid rgba(39, 100, 217, 0.2);
-  border-radius: 9999px;
   background: rgba(39, 100, 217, 0.06);
 }
 
 .navBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  border: none;
-  background: transparent;
-  border-radius: 9999px;
   color: var(--text-accent-primary, #2764d9);
-  cursor: pointer;
   transition: background-color 150ms ease;
 
   @media (hover: hover) {
@@ -38,14 +24,10 @@
 }
 
 .pageCounter {
-  min-width: 32px;
-  padding-inline: 4px;
-  text-align: center;
   font-size: 11px;
   font-weight: 600;
   line-height: 1;
   color: var(--text-secondary, #575f73);
-  user-select: none;
 }
 
 .section {
@@ -55,18 +37,19 @@
 
 .card {
   background: var(--bg-layer-0, #fcfcfc);
-  border-color: rgba(0, 0, 0, 0.06);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+  box-shadow:
+    0 1px 3px rgba(16, 24, 40, 0.04),
+    0 6px 20px rgba(16, 24, 40, 0.05);
   transition:
-    transform 180ms ease-out,
-    box-shadow 180ms ease-out,
-    border-color 180ms ease-out;
+    transform 200ms ease-out,
+    box-shadow 200ms ease-out;
 
   @media (hover: hover) {
     &:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 12px 32px rgba(16, 24, 40, 0.1);
-      border-color: rgba(0, 0, 0, 0.12);
+      transform: translateY(-3px);
+      box-shadow:
+        0 4px 10px rgba(16, 24, 40, 0.06),
+        0 18px 44px rgba(16, 24, 40, 0.1);
     }
   }
 

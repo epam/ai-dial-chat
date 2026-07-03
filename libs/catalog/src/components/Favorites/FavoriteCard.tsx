@@ -79,7 +79,7 @@ export const FavoriteCard: FC<FavoriteCardProps> = ({
       aria-label={item.name}
       className={mergeClasses(
         'box-border flex min-w-0 cursor-pointer items-start gap-1',
-        'rounded-[16px] border px-4 py-3 text-start',
+        'rounded-[20px] p-[22px] text-start',
         styles.card,
         isLeaving && styles.cardLeaving,
       )}
