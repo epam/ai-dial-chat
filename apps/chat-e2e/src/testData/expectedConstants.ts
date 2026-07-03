@@ -224,6 +224,7 @@ export const ExpectedConstants = {
   replayVariableModalTitle: 'Please, enter variables for the template:',
   exportedFileExtension: '.json',
   successfulPublishingMessage: 'Publication request created successfully',
+  noLimitsApplied: 'No limits applied',
   publishToLabel: 'Publish to',
   authorLabel: 'Author',
   publicAuthorLabel: `Author's public name`,
@@ -621,6 +622,7 @@ export const API = {
   tokenEndpoint: (endpoint: string) => `${endpoint}/oauth/token`,
   toolsetSignInHost: () => `${API.api}/ops/${ServerSlugs.TOOLSET_SIGN_IN}`,
   unsubscribeHost: () => `${API.api}/client-channels/unsubscribe`,
+  limitsHost: (id: string) => `/api/deployments/${id}/limits`,
 };
 
 export const Import = {

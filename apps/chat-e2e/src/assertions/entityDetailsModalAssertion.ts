@@ -1,10 +1,13 @@
+import { MarketplaceI18nKeys } from '@/chat/constants/i18n';
 import { BaseAssertion } from '@/src/assertions/base/baseAssertion';
 import {
+  ElementCaretState,
   ElementState,
   ExpectedConstants,
   ExpectedMessages,
   PublishingExpectedMessages,
 } from '@/src/testData';
+import { Attributes } from '@/src/ui/domData';
 import { BaseElement, EntityDetailsModal } from '@/src/ui/webElements';
 import { DateUtil } from '@/src/utils';
 
@@ -178,5 +181,22 @@ export class EntityDetailsModalAssertion extends BaseAssertion {
           this.entityDetailsModal.openInNewTabButtonTitle.getNthElement(2),
           ExpectedConstants.openInNewTabButtonTitle.split(' ')[0],
         );
+  }
+
+  public async assertSectionExpandedState(
+    expectedCaretState: ElementCaretState,
+    sectionKey: MarketplaceI18nKeys,
+  ) {
+    const expectedClass =
+      expectedCaretState === 'expanded'
+        ? new RegExp(Attributes.rotated90)
+        : new RegExp(`^(?!.*${Attributes.rotated90}).+$`);
+    await this.assertElementClass(
+      this.entityDetailsModal.sectionByKeyCaret(sectionKey),
+      expectedClass,
+      expectedCaretState === 'expanded'
+        ? ExpectedMessages.caretIsExpanded
+        : ExpectedMessages.caretIsCollapsed,
+    );
   }
 }

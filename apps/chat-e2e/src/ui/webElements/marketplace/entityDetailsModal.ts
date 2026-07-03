@@ -1,3 +1,4 @@
+import { MarketplaceI18nKeys } from '@/chat/constants/i18n';
 import { isApiStorageType } from '@/src/hooks/global-setup';
 import { API } from '@/src/testData';
 import { Tags } from '@/src/ui/domData';
@@ -144,6 +145,22 @@ export class EntityDetailsModal extends BaseElement {
     this.page,
     MarketplaceDetailsModal.connectButton,
     this.rootLocator,
+  );
+  public sectionByKey = (sectionKey: MarketplaceI18nKeys) =>
+    this.getChildElementBySelector(
+      MarketplaceDetailsModal.sectionContainer,
+    ).getElementLocatorByText(sectionKey);
+  public sectionByKeyCaret = (sectionKey: MarketplaceI18nKeys) =>
+    this.sectionByKey(sectionKey).locator(IconSelectors.chevronRightIcon);
+  public limitsGrid = this.getChildElementBySelector(
+    MarketplaceDetailsModal.limitsGrid,
+  );
+  public limitItemByKey = (limitKey: MarketplaceI18nKeys) =>
+    this.limitsGrid
+      .getChildElementBySelector(MarketplaceDetailsModal.limitItem)
+      .getElementLocatorByText(limitKey);
+  public noLimitsApplied = this.getChildElementBySelector(
+    MarketplaceDetailsModal.noLimits,
   );
 
   public async clickUseButton({
