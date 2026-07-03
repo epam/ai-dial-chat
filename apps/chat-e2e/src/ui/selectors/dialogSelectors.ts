@@ -372,6 +372,8 @@ export const AgentsBrowserModalSelectors = {
   searchInput: '[data-qa="search-agents"]',
   myWorkspaceTab: '[data-qa="workspace"]',
   marketplaceTab: '[data-qa="marketplace"]',
+  noResultsFound: '[data-qa="no-data"]', // shown when a search returns nothing
+  selectedTab: '.border-accent-primary', // accent border marks the active tab
 };
 
 export const AgentAndToolsetModalSelector = {

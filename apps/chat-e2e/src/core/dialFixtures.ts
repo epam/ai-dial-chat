@@ -110,6 +110,7 @@ import {
   VariableModalAssertion,
 } from '@/src/assertions';
 import { InputAttachmentsAssertions } from '@/src/assertions/InputAttachmentsAssertions';
+import { AgentAndToolsetSelectModalAssertion } from '@/src/assertions/agentAndToolsetSelectModalAssertion';
 import { PublicationApiAssertion } from '@/src/assertions/api/publicationApiAssertion';
 import { ConfirmationPopupAssertion } from '@/src/assertions/common/confirmationPopupAssertion';
 import { FileConflictResolutionPopupAssertion } from '@/src/assertions/common/fileConflictResolutionPopupAssertion';
@@ -440,6 +441,7 @@ const dialTest = test.extend<{
   toolsetEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
   toolsetEditorSettingsPreviewToggleAssertion: EntityEditorPreviewToggleAssertion;
   toolsetEditorViewFormAssertion: ToolsetEditorViewFormAssertion;
+  agentAndToolsetSelectModalAssertion: AgentAndToolsetSelectModalAssertion;
   externalAppEditorSettingsPreviewCardAssertion: EntityEditorPreviewCardAssertion;
   replaceConfirmationModalAssertion: ReplaceConfirmationModalAssertion;
   replaceConfirmationModalFolders: ReplaceConfirmationModalFolders;
@@ -1093,6 +1095,13 @@ const dialTest = test.extend<{
       BucketUtil.getAdminUserBucket(),
     );
     await use(adminApplicationApiHelper);
+  },
+  adminToolsetApiHelper: async ({ adminUserRequestContext }, use) => {
+    const adminToolsetApiHelper = new ToolsetApiHelper(
+      adminUserRequestContext,
+      BucketUtil.getAdminUserBucket(),
+    );
+    await use(adminToolsetApiHelper);
   },
   adminShareApiHelper: async ({ adminUserRequestContext }, use) => {
     const adminShareApiHelper = new ShareApiHelper(
@@ -1798,6 +1807,14 @@ const dialTest = test.extend<{
       toolsetEditorViewForm,
     );
     await use(toolsetEditorViewFormAssertion);
+  },
+  agentAndToolsetSelectModalAssertion: async (
+    { agentAndToolsetSelectModal },
+    use,
+  ) => {
+    const agentAndToolsetSelectModalAssertion =
+      new AgentAndToolsetSelectModalAssertion(agentAndToolsetSelectModal);
+    await use(agentAndToolsetSelectModalAssertion);
   },
   replaceConfirmationModalAssertion: async (
     { replaceConfirmationModal },
