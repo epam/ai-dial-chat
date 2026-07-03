@@ -100,6 +100,21 @@ describe('messageAttachmentToDisplayAttachment', () => {
     expect(attachment.previewUrl).toBe('data:image/png;base64,iVBORw0KGgo=');
   });
 
+  it('does not synthesize a data: URL when inline data MIME type is not media', () => {
+    const dto: MessageAttachment = {
+      type: 'text/html',
+      title: 'image.png',
+      data: 'PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==',
+    };
+
+    const attachment = messageAttachmentToDisplayAttachment(dto);
+
+    expect(attachment.type).toBe(AttachmentType.File);
+    expect(attachment.previewUrl).toBeUndefined();
+    expect(attachment.playUrl).toBeUndefined();
+    expect(attachment.data).toBe('PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==');
+  });
+
   it('preserves inline data for non-image, non-audio attachments', () => {
     const dto: MessageAttachment = {
       type: 'text/markdown',

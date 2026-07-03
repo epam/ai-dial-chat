@@ -112,7 +112,7 @@ export const handleDialFetchError = (
   }
 
   logger?.error(
-    `Unexpected error during ${context}: ${error.message}`,
+    `Unexpected error during ${context}: ${error.name ?? 'Error'}`,
     error.stack,
   );
   throw new ServiceUnavailableException('DIAL Core is currently unavailable');

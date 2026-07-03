@@ -23,6 +23,16 @@ const getAttachmentType = (mimeType: string | undefined): AttachmentType => {
   return AttachmentType.File;
 };
 
+const getInlineDataUrl = (
+  mimeType: string | undefined,
+  data: string | undefined,
+  allowedPrefix: 'image/' | 'audio/',
+): string | undefined => {
+  if (!mimeType?.startsWith(allowedPrefix) || !data) return undefined;
+
+  return `data:${mimeType};base64,${data}`;
+};
+
 /**
  * Maps a {@link MessageAttachment} DTO to the display-only {@link DisplayAttachment}
  * model used by UI components. This is a pure function: any app/host-specific URL
@@ -43,7 +53,7 @@ export const messageAttachmentToDisplayAttachment = (
     if (dto.url) {
       previewUrl = resolvers.resolvePreviewUrl?.(dto) ?? dto.url;
     } else if (dto.data) {
-      previewUrl = `data:${dto.type};base64,${dto.data}`;
+      previewUrl = getInlineDataUrl(dto.type, dto.data, 'image/');
     }
   }
 
@@ -52,7 +62,7 @@ export const messageAttachmentToDisplayAttachment = (
     if (dto.url) {
       playUrl = resolvers.resolvePlayUrl?.(dto) ?? dto.url;
     } else if (dto.data) {
-      playUrl = `data:${dto.type ?? 'audio/mpeg'};base64,${dto.data}`;
+      playUrl = getInlineDataUrl(dto.type, dto.data, 'audio/');
     }
   }
 

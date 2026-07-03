@@ -201,6 +201,26 @@ describe('handleDialFetchError', () => {
     }
   });
 
+  it('logs unexpected error type without raw upstream message details', () => {
+    const logger = { error: vi.fn() } as unknown as Logger;
+    const err = new Error('token=secret bucket=user-data');
+    err.name = 'DialFetchError';
+
+    try {
+      handleDialFetchError(err, 'ctx', logger);
+      expect.fail('should have thrown');
+    } catch {
+      expect(logger.error).toHaveBeenCalledWith(
+        'Unexpected error during ctx: DialFetchError',
+        err.stack,
+      );
+      expect(logger.error).not.toHaveBeenCalledWith(
+        expect.stringContaining('token=secret'),
+        expect.anything(),
+      );
+    }
+  });
+
   it('does not require a logger', () => {
     expect(() => handleDialFetchError(new Error('boom'), 'ctx')).toThrow(
       ServiceUnavailableException,
