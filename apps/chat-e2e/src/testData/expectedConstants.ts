@@ -424,6 +424,7 @@ export const ExpectedConstants = {
     `Successful logout\nYou have successfully logged out of the "${name}" version ${version} with credentials to entire organization.`,
   copyToolsetUrlPattern: (toolset: Toolset) =>
     new RegExp(`/v1/toolset/${toolset.id ?? toolset.name}/mcp$`),
+  toolsetNotFoundToast: 'Toolset by this link not found',
 };
 
 export const withTraceId = (message: string): RegExp => {
