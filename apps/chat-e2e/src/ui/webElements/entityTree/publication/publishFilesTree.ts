@@ -1,5 +1,6 @@
 import {
   EntitySelectors,
+  ErrorLabelSelectors,
   FileSelectors,
   FolderSelectors,
   IconSelectors,
@@ -36,4 +37,8 @@ export class PublishFilesTree extends PublishEntitiesTree {
       FolderSelectors.folderName,
     ).getElementLocatorByText(name, index);
   }
+
+  public errorMessageContainer = this.getChildElementBySelector(
+    ErrorLabelSelectors.errorContainer,
+  );
 }
