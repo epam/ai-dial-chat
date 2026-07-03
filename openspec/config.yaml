@@ -108,7 +108,13 @@ rules:
   proposal:
     - 'Keep proposals concise but include every required section: Problem, Solution, Non-goals,
       Acceptance criteria (how we know the change is done and correct).'
-    - State an alternatives-considered line — what was rejected and why (prevents re-litigation)
+    - >-
+      Compare alternatives before committing. For broad or architectural changes, weigh 2-4
+      options (include a conservative baseline) oтn correctness, complexity/delivery risk,
+      security/performance, and migration/rollback, then state the pick and why the rest were
+      rejected (prevents re-litigation). Base any "best practice" claim on authoritative sources;
+      separate facts from assumptions and flag unknowns explicitly. For small changes, a one-line
+      alternatives-considered is enough.
     - Include a rollback / backward-compat note — is this breaking, and how do we revert it?
     - Investigate the codebase before proposing — check if the pattern already exists in
       context/, hooks/, server-api/, or common/. Cite the closest existing file as `path:line`

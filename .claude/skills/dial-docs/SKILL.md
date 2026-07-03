@@ -5,7 +5,7 @@ description: On-demand index of the AI DIAL Chat design docs in docs/. Use when 
 
 # DIAL Docs
 
-Ground-truth design docs live in `docs/`. This skill is the index. Open **only** the doc that matches your task — don't read all of them. When your change alters behavior a doc describes, update that doc (and any affected diagram) in the **same commit**.
+Ground-truth design docs live in `docs/`. This skill is the index. Open **only** the doc that matches your task — don't read all of them.
 
 ## Index
 
@@ -21,4 +21,3 @@ Ground-truth design docs live in `docs/`. This skill is the index. Open **only**
 
 1. Match your task to a row above and open that one doc.
 2. For auth work, start with `auth-bff-encrypted-cookie.md`; use the diagrams for flow detail.
-3. If your change alters documented behavior, edit the matching doc in the same commit.
