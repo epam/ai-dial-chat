@@ -18,6 +18,7 @@ This keeps the 404 behaviour consistent with Catalog, editor, and conversation r
 
 - catalog background via `--cat-bg` fallback in `NotFound.module.scss`
 - centered empty-state content
+- animated 404 text with staggered digit motion, gradient shimmer, a small orbiting accent on the zero, and a subtle scanner underline
 - no decorative icon container, border, or contrasting background
 - primary action to Catalog, secondary action to New chat, and a text back action
 
@@ -44,7 +45,7 @@ The page uses centered layout and logical-free spacing that does not encode left
 
 ### Accessibility
 
-The 404 surface is a labelled `section` landmark using `notFound.ariaLabel`. Buttons use existing UI kit button semantics. The decorative grid icon is `aria-hidden`.
+The 404 surface is a labelled `section` landmark using `notFound.ariaLabel`. Buttons use existing UI kit button semantics. The animated 404 digits are hidden from assistive technology and the container exposes the localized `notFound.eyebrow` label. Motion is disabled under `prefers-reduced-motion: reduce`.
 
 ### Feature Flags and APIs
 

@@ -25,9 +25,25 @@ const NotFoundPage: FC = () => {
       className={`flex min-h-0 flex-1 flex-col ${styles.root}`}
     >
       <div className="flex min-h-0 flex-1 items-center justify-center overflow-auto px-4 py-10 desktop:px-8">
-        <div className="flex w-full max-w-[560px] flex-col items-center text-center">
-          <p className="catalog-heading-text mb-3 text-accent-primary">
-            {t(NotFoundI18nKeys.Eyebrow)}
+        <div
+          className={`flex w-full max-w-[560px] flex-col items-center text-center ${styles.content}`}
+        >
+          <p
+            aria-label={t(NotFoundI18nKeys.Eyebrow)}
+            className={`mb-4 text-accent-primary ${styles.code}`}
+          >
+            <span aria-hidden="true" className={styles.digit}>
+              4
+            </span>
+            <span
+              aria-hidden="true"
+              className={`${styles.digit} ${styles.zero}`}
+            >
+              0
+            </span>
+            <span aria-hidden="true" className={styles.digit}>
+              4
+            </span>
           </p>
           <h1 className="dial-h3-text mb-3 text-primary">
             {t(NotFoundI18nKeys.Title)}

@@ -164,7 +164,7 @@ The change SHALL ship co-located Vitest specs covering: `Navigation.spec.tsx` an
 
 The authenticated React Router route table in `apps/chat/src/app/app.tsx` SHALL include an explicit catch-all route for unknown paths. The catch-all route MUST lazy-load an app-owned 404 page and render it inside the existing `RouteErrorBoundary` and `Suspense` route wrapper pattern.
 
-The 404 page SHALL present a visible "Page not found" state instead of an empty application shell. It SHALL provide recovery actions to navigate to `/catalog`, navigate to `/`, and navigate back in browser history.
+The 404 page SHALL present a visible "Page not found" state instead of an empty application shell. It SHALL provide recovery actions to navigate to `/catalog`, navigate to `/`, and navigate back in browser history. The visual 404 label MAY animate, but MUST disable non-essential motion when the user prefers reduced motion.
 
 All user-visible strings introduced by the 404 page MUST be resolved through `react-i18next` keys in `apps/chat/src/i18n/locales/en.json` and typed constants in `apps/chat/src/constants/translation-keys.ts`.
 
@@ -193,3 +193,8 @@ All user-visible strings introduced by the 404 page MUST be resolved through `re
 
 - **WHEN** the document direction is `rtl`
 - **THEN** the 404 page back arrow is visually mirrored
+
+#### Scenario: Reduced motion disables 404 animation
+
+- **WHEN** the user has `prefers-reduced-motion: reduce` enabled
+- **THEN** non-essential 404 text motion is disabled

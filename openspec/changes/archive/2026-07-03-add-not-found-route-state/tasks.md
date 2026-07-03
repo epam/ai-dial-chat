@@ -9,6 +9,7 @@
 - [x] 2.2 Style the page as a catalog-like centered empty state using `NotFound.module.scss`
 - [x] 2.3 Add recovery actions for Catalog, New chat, and Back
 - [x] 2.4 Mirror the directional back icon in RTL
+- [x] 2.5 Add lightweight 404 text animation with `prefers-reduced-motion` support
 
 ## 3. i18n
 
