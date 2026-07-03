@@ -13,15 +13,27 @@ export interface CodeSnippet {
 export interface ApiResource {
   /** Deployment or model ID used in API calls. */
   modelId?: string;
-  /** Full base endpoint URL. */
+  /** Full base endpoint URL (used for single-endpoint entities such as Agents). */
   endpointUrl?: string;
+}
+
+/** A named endpoint with its own URL and optional per-language code snippets. */
+export interface EndpointOption {
+  /** Display label shown in the endpoint selector, e.g. `'Azure OpenAI Endpoint'`. */
+  label: string;
+  /** Full base URL for this endpoint. */
+  url: string;
+  /** Language-keyed code snippets specific to this endpoint. */
+  snippets?: CodeSnippet[];
 }
 
 /** Complete data for the API details tab. */
 export interface CatalogItemApiDetails {
-  /** Resource identity section (Model ID, endpoint URL). */
+  /** Resource identity section (Model ID; single endpoint URL for agents). */
   resource?: ApiResource;
-  /** Code snippets selectable by language. */
+  /** Multi-endpoint selector (Azure OpenAI, Anthropic, Responses, …). When present, the endpoint selector UI replaces the single-endpoint row. */
+  endpoints?: EndpointOption[];
+  /** Top-level code snippets selectable by language (legacy / non-model entities). */
   snippets?: CodeSnippet[];
   /** Raw cURL request example (Agent / Toolset). */
   requestExample?: string;

@@ -8,6 +8,12 @@ export interface CardTypography {
   versionClassName?: string;
   /** Typography class applied to the description text. Default: `'dial-small-text'`. */
   descriptionClassName?: string;
+  /** Typography class applied to the featured chip label. Default: `'dial-tiny-semi-text uppercase tracking-[0.06em]'`. */
+  featuredChipClassName?: string;
+  /** Typography class applied to folder path separator labels. Default: `'dial-tiny-text'`. */
+  folderLabelClassName?: string;
+  /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
+  folderLeafClassName?: string;
 }
 
 /** Color overrides applied as CSS custom properties for `Card`. */

@@ -14,12 +14,6 @@
   border-block-end: 1px solid var(--stroke-tertiary, #e0e6f0);
 }
 
-.version {
-  color: var(--text-secondary, #575f73);
-  // Align version baseline with the bottom of the name text
-  padding-bottom: 6px;
-}
-
 .content {
   scrollbar-width: thin;
   scrollbar-color: var(--stroke-secondary, #242c42) transparent;
@@ -27,4 +21,18 @@
 
 .introCaption {
   color: var(--text-secondary, #575f73);
+}
+
+.tabsRow {
+  border-bottom-color: var(--stroke-tertiary, #e0e6f0);
+}
+
+.activeTab {
+  border-image: linear-gradient(
+      135deg,
+      var(--bg-accent-secondary, #37babc) 0%,
+      var(--bg-accent-primary, #5c8dea) 30%,
+      var(--bg-accent-tertiary, #a972ff) 100%
+    )
+    1;
 }

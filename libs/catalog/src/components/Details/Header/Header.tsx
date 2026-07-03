@@ -29,8 +29,11 @@ export const Header: FC<HeaderProps> = ({
   texts,
   detailsStyles,
 }) => {
-  const { nameClassName = 'dial-body-semi-text text-primary' } =
-    detailsStyles?.typography ?? {};
+  const {
+    nameClassName = 'dial-body-semi-text text-primary',
+    folderLabelClassName = 'dial-tiny-text',
+    folderLeafClassName = 'dial-tiny-semi-text',
+  } = detailsStyles?.typography ?? {};
   const handleUseInChat = useCallback(() => {
     onUseInChat?.(item);
   }, [item, onUseInChat]);
@@ -50,8 +53,8 @@ export const Header: FC<HeaderProps> = ({
           item.folder.length > 0 ? (
             <FolderPath
               segments={item.folder}
-              labelClassName="dial-tiny-text"
-              leafClassName="dial-tiny-semi-text"
+              labelClassName={folderLabelClassName}
+              leafClassName={folderLeafClassName}
             />
           ) : undefined
         }

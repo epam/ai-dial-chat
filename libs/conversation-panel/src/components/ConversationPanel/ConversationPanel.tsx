@@ -57,6 +57,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     onNewChat,
     newChatLabel,
     searchPlaceholder,
+    searchClearLabel,
     filterLabels,
     groupLabels,
     styles: panelStyles,
@@ -284,6 +285,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         actionsLabel,
         groupHeaderClassName: typography?.groupHeaderClassName,
         itemTitleClassName: typography?.itemTitleClassName,
+        itemIconBadgeClassName: typography?.itemIconBadgeClassName,
         draggingId,
         dragOverId,
         allowedDropGroups,
@@ -303,6 +305,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
         actionsLabel,
         typography?.groupHeaderClassName,
         typography?.itemTitleClassName,
+        typography?.itemIconBadgeClassName,
         draggingId,
         dragOverId,
         allowedDropGroups,
@@ -362,6 +365,7 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
           placeholder={searchPlaceholder}
           value={searchQuery}
           onChange={setSearchQuery}
+          clearLabel={searchClearLabel}
         />
 
         <FilterTabs
