@@ -12,7 +12,7 @@ Sanitization logic SHALL be extracted to `apps/chat/src/utils/file-name.ts` as `
 
 `NOT_ALLOWED_SYMBOLS_REGEXP` MUST be imported from `@epam/ai-dial-ui-kit` — the symbol list SHALL NOT be duplicated.
 
-The `forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}` prop MUST be passed to `DialFileManager` in `DialFileManagerModal` for consistent rename / create-folder validation UX.
+The `forbiddenSymbolsRegExp={NOT_ALLOWED_SYMBOLS_REGEXP}` prop MUST be passed to `DialFileManager` in `DialFileManagerShell` for consistent rename / create-folder validation UX.
 
 **State ownership:** No new state. Sanitization is a pure transformation applied in `onValidateUpload`.
 

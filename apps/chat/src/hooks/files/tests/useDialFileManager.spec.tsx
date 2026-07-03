@@ -12,6 +12,10 @@ import { ListFilesItemDtoNodeTypeEnum } from '@epam/chat-api-client';
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import * as filesApi from '../../../server-api/files.api';
+import {
+  DialFileManagerActionProfile,
+  DialFileManagerVariant,
+} from '../../../types/file-manager-variant';
 import * as fileNameUtils from '../../../utils/file-name';
 import { useDialFileManager } from '../useDialFileManager';
 
@@ -114,6 +118,31 @@ describe('useDialFileManager', () => {
     await waitFor(() => expect(result.current.isLoading).toBe(false));
     expect(result.current.error).toBeNull();
     expect(mockListFiles).toHaveBeenCalledTimes(2);
+  });
+
+  describe('variant', () => {
+    it('defaults to Attach and fetches the root listing on mount', async () => {
+      const { result } = renderHook(() =>
+        useDialFileManager({ bucket: BUCKET }),
+      );
+      expect(mockListFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ path: '' }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+    });
+
+    it('fetches the root listing on mount for the Standalone variant', async () => {
+      const { result } = renderHook(() =>
+        useDialFileManager({
+          bucket: BUCKET,
+          variant: DialFileManagerVariant.Standalone,
+        }),
+      );
+      expect(mockListFiles).toHaveBeenCalledWith(
+        expect.objectContaining({ path: '' }),
+      );
+      await waitFor(() => expect(result.current.isLoading).toBe(false));
+    });
   });
 
   it('navigates to a subfolder via onPathChange', async () => {
@@ -1062,6 +1091,36 @@ describe('useDialFileManager', () => {
         expect(
           result.current.actionLabels[DialFileManagerActions.Delete],
         ).toBeUndefined();
+      });
+    });
+
+    describe.each([
+      DialFileManagerTabs.MyFiles,
+      DialFileManagerTabs.Shared,
+      DialFileManagerTabs.Organization,
+    ])('actionLabels parity between attach and browse (%s tab)', (tab) => {
+      it('produces identical actionLabels for actionProfile Attach and Browse', async () => {
+        const { result: attachResult } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: tab,
+            actionProfile: DialFileManagerActionProfile.Attach,
+          }),
+        );
+        await waitFor(() => expect(attachResult.current.isLoading).toBe(false));
+
+        const { result: browseResult } = renderHook(() =>
+          useDialFileManager({
+            bucket: BUCKET,
+            activeTab: tab,
+            actionProfile: DialFileManagerActionProfile.Browse,
+          }),
+        );
+        await waitFor(() => expect(browseResult.current.isLoading).toBe(false));
+
+        expect(browseResult.current.actionLabels).toEqual(
+          attachResult.current.actionLabels,
+        );
       });
     });
 
