@@ -4,7 +4,7 @@ import { Reflector } from '@nestjs/core';
 import { describe, expect, it, vi } from 'vitest';
 import { EnvironmentVariables } from '../../config/environment.config';
 import { SessionUser } from '../session/session.types';
-import { CsrfGuard } from './csrf.guard';
+import { CsrfErrorCode, CsrfGuard } from './csrf.guard';
 
 const APP_ORIGIN = 'https://app.example.com';
 
@@ -53,6 +53,27 @@ function buildContext(options: {
     getHandler: () => ({}),
     getClass: () => ({}),
   } as unknown as ExecutionContext;
+}
+
+function expectInvalidCsrfError(action: () => void): void {
+  let error: unknown;
+  try {
+    action();
+  } catch (caught) {
+    error = caught;
+  }
+
+  expect(error).toBeInstanceOf(ForbiddenException);
+  if (!(error instanceof ForbiddenException)) {
+    return;
+  }
+
+  expect(error.getResponse()).toMatchObject({
+    code: CsrfErrorCode.Invalid,
+    error: 'Forbidden',
+    message: 'Invalid CSRF token',
+    statusCode: 403,
+  });
 }
 
 describe('CsrfGuard', () => {
@@ -107,7 +128,7 @@ describe('CsrfGuard', () => {
   it('throws ForbiddenException when X-CSRF-Token header is missing', () => {
     const guard = buildGuard();
     const ctx = buildContext({ origin: APP_ORIGIN });
-    expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
+    expectInvalidCsrfError(() => guard.canActivate(ctx));
   });
 
   it('throws ForbiddenException when X-CSRF-Token does not match session csrf', () => {
@@ -116,7 +137,7 @@ describe('CsrfGuard', () => {
       origin: APP_ORIGIN,
       csrfHeader: 'wrong-token',
     });
-    expect(() => guard.canActivate(ctx)).toThrow(ForbiddenException);
+    expectInvalidCsrfError(() => guard.canActivate(ctx));
   });
 
   it('passes when Origin matches and X-CSRF-Token is correct', () => {

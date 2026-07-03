@@ -6,6 +6,7 @@ import {
   get,
   getCsrfToken,
   hasRequiredProperties,
+  isInvalidCsrfErrorBody,
   isValidResponse,
   onUnauthorized,
   post,
@@ -197,6 +198,32 @@ describe('onUnauthorized', () => {
     expect(getCsrfToken()).toBe('fresh-csrf-token');
   });
 
+  it('keeps the current CSRF token while refresh is in flight', async () => {
+    setCsrfToken('stale-csrf-token');
+    let resolveRefresh: (response: Response) => void = () => undefined;
+    const refreshResponse = new Promise<Response>((resolve) => {
+      resolveRefresh = resolve;
+    });
+    global.fetch = vi.fn<typeof fetch>().mockReturnValue(refreshResponse);
+
+    const refreshPromise = refreshCsrfToken();
+
+    expect(getCsrfToken()).toBe('stale-csrf-token');
+
+    resolveRefresh(
+      new Response(null, {
+        status: 200,
+        headers: { 'x-csrf-token': 'fresh-csrf-token' },
+      }),
+    );
+
+    await expect(refreshPromise).resolves.toEqual({
+      status: CsrfRefreshStatus.Ok,
+      token: 'fresh-csrf-token',
+    });
+    expect(getCsrfToken()).toBe('fresh-csrf-token');
+  });
+
   it('does not clear a newer CSRF token when a stale invalid CSRF response arrives', async () => {
     setCsrfToken('stale-csrf-token');
     const listener = vi.fn();
@@ -222,6 +249,37 @@ describe('onUnauthorized', () => {
     expect(getCsrfToken()).toBe('fresh-csrf-token');
 
     unregister();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CSRF errors
+// ---------------------------------------------------------------------------
+
+describe('isInvalidCsrfErrorBody', () => {
+  it('detects invalid CSRF by stable error code', () => {
+    expect(
+      isInvalidCsrfErrorBody(
+        JSON.stringify({
+          code: 'CSRF_INVALID',
+          error: 'Forbidden',
+          message: 'Different message',
+          statusCode: 403,
+        }),
+      ),
+    ).toBe(true);
+  });
+
+  it('keeps the legacy backend message fallback', () => {
+    expect(
+      isInvalidCsrfErrorBody(
+        JSON.stringify({
+          error: 'Forbidden',
+          message: 'Invalid CSRF token',
+          statusCode: 403,
+        }),
+      ),
+    ).toBe(true);
   });
 });
 

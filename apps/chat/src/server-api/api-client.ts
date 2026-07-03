@@ -66,6 +66,14 @@ const isInvalidCsrfResponse = async (response: Response): Promise<boolean> => {
   }
 };
 
+const readResponseBody = async (response: Response): Promise<string> => {
+  try {
+    return await response.clone().text();
+  } catch {
+    return '';
+  }
+};
+
 const retryWithFreshCsrf = async (
   context: MiddlewarePostContext,
 ): Promise<Response | undefined> => {
@@ -94,10 +102,10 @@ const retryWithFreshCsrf = async (
   });
 };
 
-const handleRetryResponse = (
+const handleRetryResponse = async (
   context: MiddlewarePostContext,
   response: Response,
-): Response => {
+): Promise<Response> => {
   const rotated = response.headers.get('x-csrf-token');
   if (rotated) {
     setCsrfToken(rotated);
@@ -106,6 +114,18 @@ const handleRetryResponse = (
   if (response.status === 401) {
     notifyUnauthorized(context.url);
     throw new UnauthorizedError(context.url);
+  }
+
+  if (await isInvalidCsrfResponse(response)) {
+    notifyUnauthorized(context.url);
+    throw new UnauthorizedError(context.url);
+  }
+
+  if (!response.ok) {
+    const errorBody = await readResponseBody(response);
+    throw new Error(
+      `Request failed with status ${response.status} for ${context.init.method ?? 'GET'} ${context.url}: ${errorBody}`,
+    );
   }
 
   return response;

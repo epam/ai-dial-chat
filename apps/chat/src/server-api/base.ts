@@ -27,6 +27,10 @@ export type CsrfRefreshResult =
   | { status: CsrfRefreshStatus.Ok; token: string }
   | { status: CsrfRefreshStatus.Unauthorized | CsrfRefreshStatus.Failed };
 
+enum CsrfErrorCode {
+  Invalid = 'CSRF_INVALID',
+}
+
 type UnauthorizedListener = (url: string) => void;
 const listeners = new Set<UnauthorizedListener>();
 
@@ -58,14 +62,45 @@ type RequestOptions = Omit<RequestInit, 'method' | 'body'> & {
   responseHandler?: (response: Response) => void;
 };
 
-export const isInvalidCsrfErrorBody = (body: string): boolean =>
-  body.includes('Invalid CSRF token');
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const hasInvalidCsrfMessage = (value: unknown): boolean => {
+  if (typeof value === 'string') {
+    return value.includes('Invalid CSRF token');
+  }
+
+  if (Array.isArray(value)) {
+    return value.some(hasInvalidCsrfMessage);
+  }
+
+  return false;
+};
+
+export const isInvalidCsrfErrorBody = (body: string): boolean => {
+  try {
+    const parsed: unknown = JSON.parse(body);
+    if (!isRecord(parsed)) {
+      return hasInvalidCsrfMessage(parsed);
+    }
+
+    if (parsed.code === CsrfErrorCode.Invalid) {
+      return true;
+    }
+
+    return (
+      parsed.statusCode === 403 &&
+      parsed.error === 'Forbidden' &&
+      hasInvalidCsrfMessage(parsed.message)
+    );
+  } catch {
+    return body.includes('Invalid CSRF token');
+  }
+};
 
 let csrfRefreshPromise: Promise<CsrfRefreshResult> | null = null;
 
 const runCsrfRefresh = async (): Promise<CsrfRefreshResult> => {
-  clearCsrfToken();
-
   let response: Response;
   try {
     response = await fetch(ApiEndpoints.AUTH_ME, {
@@ -73,10 +108,12 @@ const runCsrfRefresh = async (): Promise<CsrfRefreshResult> => {
       credentials: 'include',
     });
   } catch {
+    clearCsrfToken();
     return { status: CsrfRefreshStatus.Failed };
   }
 
   if (response.status === 401) {
+    clearCsrfToken();
     return { status: CsrfRefreshStatus.Unauthorized };
   }
 
@@ -86,6 +123,7 @@ const runCsrfRefresh = async (): Promise<CsrfRefreshResult> => {
     return { status: CsrfRefreshStatus.Ok, token: csrfToken };
   }
 
+  clearCsrfToken();
   return { status: CsrfRefreshStatus.Failed };
 };
 

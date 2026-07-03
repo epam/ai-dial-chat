@@ -157,6 +157,7 @@ describe('unauthorizedMiddleware', () => {
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
         makeResponse(403, {
+          code: 'CSRF_INVALID',
           message: 'Invalid CSRF token',
           error: 'Forbidden',
           statusCode: 403,
@@ -211,6 +212,7 @@ describe('unauthorizedMiddleware', () => {
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
         makeResponse(403, {
+          code: 'CSRF_INVALID',
           message: 'Invalid CSRF token',
           error: 'Forbidden',
           statusCode: 403,
@@ -244,12 +246,100 @@ describe('unauthorizedMiddleware', () => {
     cleanup();
   });
 
+  it('throws UnauthorizedError when retried request gets another invalid CSRF response', async () => {
+    setCsrfToken('stale-token');
+    const fetchSpy = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        makeResponse(403, {
+          code: 'CSRF_INVALID',
+          message: 'Invalid CSRF token',
+          error: 'Forbidden',
+          statusCode: 403,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 200,
+          headers: { 'x-csrf-token': 'fresh-token' },
+        }),
+      )
+      .mockResolvedValueOnce(
+        makeResponse(403, {
+          code: 'CSRF_INVALID',
+          message: 'Invalid CSRF token',
+          error: 'Forbidden',
+          statusCode: 403,
+        }),
+      );
+    global.fetch = fetchSpy;
+    const listener = vi.fn();
+    const cleanup = onUnauthorized(listener);
+
+    const api = new ConversationsApi(createApiConfiguration());
+    await expect(
+      api.createConversation({
+        createConversationDto: {
+          firstMessage: 'hi',
+          deploymentId: 'test-deployment',
+        },
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+
+    expect(listener).toHaveBeenCalledWith('/api/v1/conversations');
+    expect(getCsrfToken()).toBeNull();
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+
+    cleanup();
+  });
+
+  it('throws a descriptive error when retried request gets a non-CSRF error', async () => {
+    setCsrfToken('stale-token');
+    const fetchSpy = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        makeResponse(403, {
+          code: 'CSRF_INVALID',
+          message: 'Invalid CSRF token',
+          error: 'Forbidden',
+          statusCode: 403,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 200,
+          headers: { 'x-csrf-token': 'fresh-token' },
+        }),
+      )
+      .mockResolvedValueOnce(makeResponse(500, { message: 'server error' }));
+    global.fetch = fetchSpy;
+    const listener = vi.fn();
+    const cleanup = onUnauthorized(listener);
+
+    const api = new ConversationsApi(createApiConfiguration());
+    await expect(
+      api.createConversation({
+        createConversationDto: {
+          firstMessage: 'hi',
+          deploymentId: 'test-deployment',
+        },
+      }),
+    ).rejects.toThrow('Request failed with status 500');
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(getCsrfToken()).toBe('fresh-token');
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+
+    cleanup();
+  });
+
   it('throws UnauthorizedError when CSRF refresh gets a 401 response', async () => {
     setCsrfToken('stale-token');
     const fetchSpy = vi
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
         makeResponse(403, {
+          code: 'CSRF_INVALID',
           message: 'Invalid CSRF token',
           error: 'Forbidden',
           statusCode: 403,
@@ -283,6 +373,7 @@ describe('unauthorizedMiddleware', () => {
       .fn<typeof fetch>()
       .mockResolvedValueOnce(
         makeResponse(403, {
+          code: 'CSRF_INVALID',
           message: 'Invalid CSRF token',
           error: 'Forbidden',
           statusCode: 403,
@@ -304,6 +395,7 @@ describe('unauthorizedMiddleware', () => {
     ).rejects.toThrow('CSRF refresh failed');
 
     expect(listener).not.toHaveBeenCalled();
+    expect(getCsrfToken()).toBeNull();
     expect(fetchSpy).toHaveBeenCalledTimes(2);
 
     cleanup();
@@ -314,6 +406,7 @@ describe('unauthorizedMiddleware', () => {
     global.fetch = vi.fn<typeof fetch>().mockImplementation(async () => {
       setCsrfToken('fresh-token');
       return makeResponse(403, {
+        code: 'CSRF_INVALID',
         message: 'Invalid CSRF token',
         error: 'Forbidden',
         statusCode: 403,

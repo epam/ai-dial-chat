@@ -13,6 +13,10 @@ import type { SessionUser } from '../session/session.types';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+export enum CsrfErrorCode {
+  Invalid = 'CSRF_INVALID',
+}
+
 @Injectable()
 export class CsrfGuard implements CanActivate {
   constructor(
@@ -72,7 +76,12 @@ export class CsrfGuard implements CanActivate {
     const raw = req.headers['x-csrf-token'];
     const headerToken = Array.isArray(raw) ? raw[0] : raw;
     if (!headerToken || headerToken !== user.csrf) {
-      throw new ForbiddenException('Invalid CSRF token');
+      throw new ForbiddenException({
+        code: CsrfErrorCode.Invalid,
+        error: 'Forbidden',
+        message: 'Invalid CSRF token',
+        statusCode: 403,
+      });
     }
   }
 }
