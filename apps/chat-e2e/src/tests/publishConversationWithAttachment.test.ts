@@ -584,6 +584,7 @@ dialAdminTest(
           { name: plotlyConversation.name },
           'visible',
         );
+        await adminToast.closeToast();
       },
     );
 
