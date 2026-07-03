@@ -1,11 +1,13 @@
 import { DeploymentIcon, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GhostButton } from '@epam/ai-dial-kit';
 import {
   ButtonAppearance,
   DIAL_ICON_SIZE,
   DialDropdown,
   DialEllipsisTooltip,
-  DialGhostButton,
   DialIconButton,
+  DialSkeleton,
+  DialSkeletonVariant,
   ElementSize,
   type DropdownItem,
 } from '@epam/ai-dial-ui-kit';
@@ -35,6 +37,8 @@ export interface ConversationRowProps {
   actionsLabel?: string;
   /** Typography class for the conversation title text. Defaults to `'dial-small-text'`. */
   itemTitleClassName?: string;
+  /** CSS class applied to the icon badge. Defaults to `'rounded-full'`. */
+  itemIconBadgeClassName?: string;
   /**
    * The group this row belongs to — required to enable drag-and-drop.
    * When absent the row is not draggable (used by `ConversationGroup`).
@@ -71,6 +75,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   getActions,
   actionsLabel = 'More actions',
   itemTitleClassName = 'dial-small-text',
+  itemIconBadgeClassName,
   rowGroupKey,
   rows,
   draggingId,
@@ -87,11 +92,21 @@ export const ConversationRow: FC<ConversationRowProps> = ({
   const menuItems = getActions?.(item) ?? [];
   const hasActions = menuItems.length > 0;
 
-  const avatar = (
+  const avatar = item.isIconLoading ? (
+    <DialSkeleton
+      variant={DialSkeletonVariant.Circular}
+      width={DIAL_ICON_SIZE.LG}
+      height={DIAL_ICON_SIZE.LG}
+      color="var(--bg-layer-4)"
+      aria-hidden
+    />
+  ) : (
     <DeploymentIcon
       src={item.iconUrl}
       size={DIAL_ICON_SIZE.LG}
+      initialsName={item.iconTooltip ?? ''}
       tooltip={item.iconTooltip}
+      badgeClassName={itemIconBadgeClassName}
     />
   );
 
@@ -155,7 +170,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
         className="contents"
         onClick={(e) => e.preventDefault()}
       >
-        <DialGhostButton
+        <GhostButton
           iconBefore={avatar}
           label={
             <DialEllipsisTooltip
@@ -190,7 +205,7 @@ export const ConversationRow: FC<ConversationRowProps> = ({
             items={menuItems}
             onOpenChange={setIsMenuOpen}
             matchReferenceWidth={false}
-            listClassName="w-[140px] shadow-md"
+            listClassName="w-[140px] cp-dropdown-overlay"
           >
             <DialIconButton
               icon={

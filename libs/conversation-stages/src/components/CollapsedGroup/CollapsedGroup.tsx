@@ -43,13 +43,11 @@ export const CollapsedGroup: FC<CollapsedGroupProps> = ({
 
   const { colors, typography = { fontClassName: 'dial-tiny-text' } } =
     groupStyles ?? {};
-  const noCustomFont = !typography.fontClassName;
   const cssVars = buildCssVars({
     '--cs-cg-label': colors?.labelColor,
     '--cs-cg-label-hover': colors?.labelHoverColor,
     '--cs-cg-steps-count': colors?.stepsCountColor,
     '--cs-cg-border': colors?.contentBorderColor,
-    '--cs-cg-font-family': noCustomFont ? typography.fontFamily : undefined,
   });
 
   if (stages.length < collapseThreshold) {

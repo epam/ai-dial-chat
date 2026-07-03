@@ -3,7 +3,10 @@ import { safeDecodeURIComponent } from '../../common/utils/uri';
 import { COMPOUND_TOKEN_PREFIX } from '../constants/conversation.constants';
 import type { CompoundNextToken } from '../types/conversation.types';
 
-const notAllowedSymbolsRegex = /[:;,=/{}%&"]/g;
+// Strips characters unsafe in DIAL Core resource names: path separators (/ %),
+// null bytes, and Unicode bidi codepoints that can spoof filenames (CWE-116).
+const notAllowedSymbolsRegex =
+  /[:;,=/{}%&"\0\u200E\u200F\u202A-\u202E\u2066-\u2069]/gu;
 const trailingDotsRegex = /\.+$/g;
 const MAX_ENTITY_BYTES = 255;
 const CONVERSATION_NAME_SEPARATOR = '__';
@@ -104,6 +107,16 @@ export const buildRenamedFilename = (
     sanitisedTitle,
     ...(legacySuffix ? [legacySuffix] : []),
   ].join(CONVERSATION_NAME_SEPARATOR);
+};
+
+/**
+ * Returns the deployment key (e.g. `"gpt-4o"` or `"app__1.0.0"`) from a
+ * bare conversation filename. Used when building a clean destination path
+ * for duplicate (where the legacy UUID suffix must NOT be carried over).
+ */
+export const getDeploymentKey = (filename: string): string => {
+  const parts = filename.split(CONVERSATION_NAME_SEPARATOR);
+  return getDeploymentNameParts(parts).join(CONVERSATION_NAME_SEPARATOR);
 };
 
 /**

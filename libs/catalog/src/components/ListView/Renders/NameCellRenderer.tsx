@@ -23,7 +23,7 @@ export const NameCellRenderer: FC<
   if (!data) return null;
   return (
     <div className="flex h-full items-center gap-2.5">
-      <DeploymentIcon src={data.iconUrl} size={48} />
+      <DeploymentIcon src={data.iconUrl} size={48} initialsName={data.name} />
       <div className="flex min-w-0 flex-col gap-0.5">
         <ItemHeader
           title={data.name}

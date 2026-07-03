@@ -21,6 +21,10 @@ vi.mock('@epam/ai-dial-ui-kit', () => ({
   ),
 }));
 
+vi.mock('../../../context/ThemeContext', () => ({
+  useTheme: () => ({ currentThemeFavicon: undefined }),
+}));
+
 vi.mock('../UserMenu', () => ({
   default: () => <div>User menu</div>,
 }));

@@ -23,6 +23,7 @@ import {
   useMatch,
   useNavigate,
 } from 'react-router-dom';
+import ChatLayout from '../components/ChatLayout/ChatLayout';
 import ConversationPanelView from '../components/ConversationPanel/ConversationPanelView';
 import ConversationSourcesPanel from '../components/ConversationSourcesPanel/ConversationSourcesPanel';
 import { RouteErrorBoundary } from '../components/ErrorBoundary/ErrorBoundary';
@@ -39,13 +40,18 @@ import {
 } from '../constants/translation-keys';
 import { useTheme } from '../context/ThemeContext';
 import { useIsMobile } from '../hooks/breakpoint/useBreakpoint';
-import useLocalStorage from '../hooks/useLocalStorage';
 import ConversationRoute from '../pages/ConversationRoute/ConversationRoute';
 import { ROUTES } from '../types/routes';
-import { StorageKey } from '../types/storage-key';
 import { ThemeId } from '../types/theme-id';
 
 const CatalogView = lazy(() => import('../components/CatalogView/CatalogView'));
+const AppsEditorPage = lazy(() => import('../pages/AppsEditor/AppsEditor'));
+const ToolsetEditorPage = lazy(
+  () => import('../pages/ToolsetEditor/ToolsetEditor'),
+);
+const ToolsetEditorCallbackPage = lazy(
+  () => import('../pages/ToolsetEditor/ToolsetEditorCallback'),
+);
 
 // Start loading the module immediately so the Suspense fallback is skipped on first navigation.
 const conversationPageModule = import('../pages/Conversation/Conversation');
@@ -71,10 +77,7 @@ const App: FC = () => {
   const closeNav = useCallback(() => setIsNavOpen(false), []);
   const toggleNav = useCallback(() => setIsNavOpen((prev) => !prev), []);
 
-  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useLocalStorage(
-    StorageKey.ConversationPanelOpen,
-    false,
-  );
+  const [isHistoryPanelOpen, setIsHistoryPanelOpen] = useState(true);
   const toggleHistoryPanel = useCallback(
     () => setIsHistoryPanelOpen(!isHistoryPanelOpen),
     [isHistoryPanelOpen, setIsHistoryPanelOpen],
@@ -89,13 +92,18 @@ const App: FC = () => {
     if (isMobile) closeHistoryPanel();
   }, [isMobile]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => {
-    if (pathname === ROUTES.Catalog) closeHistoryPanel();
-  }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
-
   const { closeCanvas, isOpen: isCanvasOpen } = useAttachmentCanvas();
   useEffect(() => {
     closeCanvas();
+    if (
+      pathname !== ROUTES.Root &&
+      pathname !== ROUTES.Conversations &&
+      !pathname.startsWith(ROUTES.Conversations)
+    ) {
+      closeHistoryPanel();
+    } else if (!isMobile && !isCanvasOpen) {
+      setIsHistoryPanelOpen(true);
+    }
   }, [pathname]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -173,15 +181,38 @@ const App: FC = () => {
       <main
         id="main-content"
         role="main"
-        className="flex min-h-0 min-w-0 flex-1 flex-col bg-layer-1"
+        className="flex min-h-0 min-w-0 flex-1 flex-col shadow-main-inset"
       >
         <Header
           onMenuToggle={toggleNav}
           isConversationPanelOpen={isHistoryPanelOpen}
           onConversationPanelToggle={toggleHistoryPanel}
+          onNewChat={() => navigate(ROUTES.Root)}
         />
         <Routes>
-          <Route path={ROUTES.Root} element={<ConversationRoute />} />
+          <Route
+            element={
+              <ChatLayout
+                isHistoryPanelOpen={isHistoryPanelOpen}
+                onToggleHistoryPanel={toggleHistoryPanel}
+                onNewChat={() => navigate(ROUTES.Root)}
+              />
+            }
+          >
+            <Route path={ROUTES.Root} element={<ConversationRoute />} />
+            <Route
+              path="/conversations/*"
+              element={
+                <RouteErrorBoundary>
+                  <Suspense fallback={<RouteFallback />}>
+                    <ConversationPage
+                      onDuplicateReadonly={handleDuplicateReadonly}
+                    />
+                  </Suspense>
+                </RouteErrorBoundary>
+              }
+            />
+          </Route>
           <Route
             path={ROUTES.Catalog}
             element={
@@ -193,13 +224,31 @@ const App: FC = () => {
             }
           />
           <Route
-            path="/conversations/*"
+            path={ROUTES.AppsEditor}
             element={
               <RouteErrorBoundary>
                 <Suspense fallback={<RouteFallback />}>
-                  <ConversationPage
-                    onDuplicateReadonly={handleDuplicateReadonly}
-                  />
+                  <AppsEditorPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.ToolsetEditorCallback}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ToolsetEditorCallbackPage />
+                </Suspense>
+              </RouteErrorBoundary>
+            }
+          />
+          <Route
+            path={ROUTES.ToolsetEditor}
+            element={
+              <RouteErrorBoundary>
+                <Suspense fallback={<RouteFallback />}>
+                  <ToolsetEditorPage />
                 </Suspense>
               </RouteErrorBoundary>
             }

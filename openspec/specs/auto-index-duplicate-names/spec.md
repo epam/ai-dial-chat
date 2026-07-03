@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Define how new conversations derive display names and storage paths in DIAL Core. Create uses unsuffixed message-derived titles; path uniqueness uses an optional UUID segment on collision instead of numeric title deduplication.
+Define how conversations derive display names and storage paths in DIAL Core. Both create and duplicate use unsuffixed titles; path uniqueness uses an optional UUID segment on collision instead of numeric title deduplication.
 
 ## Requirements
 
@@ -42,59 +42,55 @@ When `POST /api/v1/conversations` is called, the backend SHALL set `conversation
 
 ---
 
-### Requirement: `resolveUniqueConversationName` is a pure deterministic utility
+### Requirement: `duplicateConversation` preserves the source display name without numeric suffix
 
-`resolveUniqueConversationName(base, existingTitles)` in `apps/chat-api/src/conversations/utils/resolve-unique-conversation-name.ts` SHALL:
+When `duplicateConversation` creates a copy, the new conversation's `name` SHALL equal the source display name — read from the source conversation's JSON `name` field (which may have been updated by LLM naming), sanitised via `prepareEntityName` — with **no numeric suffix appended**.
 
-- Return `base` unchanged when `base` is not in `existingTitles`.
-- Return `` `${base} ${n}` `` where `n` is the smallest positive integer whose string is not in `existingTitles`.
-- Use a single space as the separator (not underscore, dash, or any other character).
-- Be stateless and free of side-effects.
+Path uniqueness SHALL be handled by the same UUID-segment mechanism as `createConversation`: if `{deploymentId}__{name}` is already taken, the copy is stored at `{deploymentId}__{name}__{uuid}`; `conversation.name` remains the unsuffixed base name in both cases. The destination path is always built as a clean two-part (or three-part for versioned deployments) filename; the legacy UUID from the source path is never carried over.
 
-The utility SHALL be used by `duplicateConversation` only. It SHALL NOT be used by `createConversation`.
+`duplicateConversation` SHALL NOT call `fetchAllUserTitles`.
+`duplicateConversation` SHALL NOT call `resolveUniqueConversationName`.
+`duplicateConversation` SHALL NOT invoke `ConversationNamingService`, SHALL NOT call the utility model, and SHALL NOT read or write `llmNamingDone`.
 
-```typescript
-resolveUniqueConversationName('New chat', new Set())         // → 'New chat'
-resolveUniqueConversationName('New chat', new Set(['New chat']))  // → 'New chat 1'
-resolveUniqueConversationName('New chat', new Set(['New chat', 'New chat 1'])) // → 'New chat 2'
-```
+#### Scenario: Duplicate preserves source name as-is
 
-#### Scenario: Duplicate conversation still uses numeric suffix
+- **GIVEN** a source conversation titled `"hello"`
+- **WHEN** `duplicateConversation` is called
+- **THEN** the duplicate display name is `"hello"`
 
-- **GIVEN** a conversation titled `"My query"` exists in the bucket
-- **WHEN** `duplicateConversation` is called for a source titled `"My query"`
-- **THEN** the duplicate receives a name with a numeric suffix (e.g. `"My query 1"`)
+#### Scenario: Duplicate of suffixed title preserves the full title
 
----
+- **GIVEN** a source conversation titled `"hello 1"`
+- **WHEN** `duplicateConversation` is called
+- **THEN** the duplicate display name is `"hello 1"` (not `"hello 1 1"`, not `"hello 2"`)
 
-### Requirement: All existing titles are fetched with pagination before name resolution
+#### Scenario: Duplicate of LLM-renamed conversation uses the LLM-assigned name
 
-`ConversationService.fetchAllUserTitles(token, bucket)` SHALL:
+- **GIVEN** a source conversation whose storage path encodes the original first-message name (e.g. `gpt-4o__Hello there`) but whose JSON `name` field was updated by LLM naming to `"AI Discussion"`
+- **WHEN** `duplicateConversation` is called
+- **THEN** the duplicate display name is `"AI Discussion"` and the destination path starts with `gpt-4o__AI Discussion`
 
-- Call `getConversationMetadata` with `recursive: true` and `limit: 1000`.
-- Follow `nextToken` / `data.nextToken` pagination until the token is absent or empty.
-- Collect the human-readable title of every non-folder item via `getConversationTitleFromName(filename)`.
-- Return a `Set<string>` of all collected titles.
-- Catch any thrown exception and return the partial (possibly empty) set — the method is resilient and never propagates errors.
-
-The method SHALL be called from `duplicateConversation` only. It SHALL NOT be called from `createConversation`.
-
-#### Scenario: Duplicate fetches titles before suffix resolution
+#### Scenario: No bucket scan during duplicate
 
 - **WHEN** `duplicateConversation` is called
-- **THEN** `fetchAllUserTitles` is invoked to build the reserved title set
+- **THEN** `fetchAllUserTitles` is NOT invoked
+
+#### Scenario: LLM naming is not invoked during duplicate
+
+- **WHEN** `duplicateConversation` is called
+- **THEN** `ConversationNamingService` is NOT invoked and `llmNamingDone` is NOT read or written
 
 ---
 
 ### Requirement: Conversation path uses `{deploymentId}__{name}` format without a UUID suffix
 
-The DIAL Core storage path for a newly created conversation SHALL be:
+The DIAL Core storage path for a newly created or duplicated conversation SHALL be:
 
 ```
 {deploymentId}__{baseName}
 ```
 
-when no resource already exists at that path in the user's bucket, where `{baseName}` is the sanitised name derived from `firstMessage`. No UUID segment is appended in this case.
+when no resource already exists at that path in the user's bucket, where `{baseName}` is the sanitised display name. No UUID segment is appended in this case.
 
 When a resource **already exists** at `{deploymentId}__{baseName}`, the backend SHALL instead persist at:
 
@@ -102,7 +98,7 @@ When a resource **already exists** at `{deploymentId}__{baseName}`, the backend 
 {deploymentId}__{baseName}__{uuid}
 ```
 
-where `{uuid}` is `crypto.randomUUID()` generated at create time. In both cases `conversation.name` SHALL remain the unsuffixed `{baseName}`.
+where `{uuid}` is `crypto.randomUUID()` generated at create/duplicate time. In both cases `conversation.name` SHALL remain the unsuffixed `{baseName}`.
 
 Collision detection SHALL use a targeted existence check for `{deploymentId}__{baseName}` — not a full-bucket title scan.
 

@@ -5,6 +5,7 @@ import {
   FilterTab,
   type ConversationHistoryItem,
   type ConversationMove,
+  type ConversationPanelStyles,
 } from '@epam/ai-dial-conversation-panel';
 import {
   ConfirmationPopupVariant,
@@ -54,6 +55,17 @@ import RenameConversationPopup from '../RenameConversationPopup/RenameConversati
 import DeleteAllConversationsAction from './DeleteAllConversationsAction';
 import { getConversationSource } from './get-conversation-source';
 
+const PANEL_STYLES: ConversationPanelStyles = {
+  typography: {
+    fontClassName: 'dial-body-text',
+    itemIconBadgeClassName: 'rounded-lg',
+    newChatLabelClassName: 'dial-small-text',
+    groupHeaderClassName: 'dial-tiny-semi-text uppercase tracking-wider',
+    tabClassName: 'dial-tiny-semi-text cp-filter-tab',
+  },
+  colors: { border: 'rgba(0, 0, 0, 0.016)', text: 'var(--text-primary)' },
+};
+
 interface ConversationPanelViewProps {
   isOpen: boolean;
   activeConversationId?: string;
@@ -101,7 +113,8 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     refreshConversations,
   } = useConversations();
 
-  const { items: deployments } = useDeployments();
+  const { items: deployments, isLoading: isDeploymentsLoading } =
+    useDeployments();
   const deploymentIconByModelId = useMemo(
     () => new Map(deployments.map((d) => [d.id, d.iconUrl])),
     [deployments],
@@ -163,11 +176,17 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
           iconTooltip: modelId
             ? deploymentNameByModelId.get(modelId)
             : undefined,
+          isIconLoading: isDeploymentsLoading,
           source: getConversationSource(item),
           href: getConversationRoute(id),
         };
       }),
-    [items, deploymentIconByModelId, deploymentNameByModelId],
+    [
+      items,
+      deploymentIconByModelId,
+      deploymentNameByModelId,
+      isDeploymentsLoading,
+    ],
   );
 
   const filterLabels = useMemo(
@@ -395,6 +414,16 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
     [onRequestedFilterChange, onActiveFilterChange],
   );
 
+  let panelClassName: string | undefined;
+  if (isMobile) {
+    panelClassName = mergeClasses('inset-y-0 start-0', isOpen && 'z-50');
+  } else if (isOpen) {
+    panelClassName = mergeClasses(
+      '[--sb-border-inline-end:transparent]',
+      '[--sb-bg-resize-handler:transparent]',
+    );
+  }
+
   return (
     <>
       <ConversationPanel
@@ -411,18 +440,15 @@ const ConversationPanelView: FC<ConversationPanelViewProps> = ({
         onNewChat={onNewChat}
         newChatLabel={t(ConversationPanelI18nKeys.NewChat)}
         searchPlaceholder={t(BasicI18nKeys.SearchPlaceholder)}
+        searchClearLabel={t(BasicI18nKeys.ClearSearch)}
         filterLabels={filterLabels}
         groupLabels={groupLabels}
         getActions={getActions}
         actionsLabel={t(ConversationPanelI18nKeys.ActionsLabel)}
         onToggle={isMobile ? onClose : undefined}
         closeAriaLabel={t(ConversationPanelI18nKeys.ToggleAriaLabel)}
-        className={
-          isMobile
-            ? mergeClasses('inset-y-0 start-0', isOpen && 'z-50')
-            : undefined
-        }
-        styles={{ typography: { fontClassName: 'dial-body-text' } }}
+        className={panelClassName}
+        styles={PANEL_STYLES}
         resizable={!isMobile}
         defaultPanelWidth={defaultPanelWidth}
         maxPanelWidth={maxPanelWidth}

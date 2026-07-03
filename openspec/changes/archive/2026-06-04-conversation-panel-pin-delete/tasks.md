@@ -24,7 +24,7 @@
 
 - [x] 3.1 Replace individual action props with a single `getActions?: (item: ConversationHistoryItem) => DropdownItem[]` callback on `ConversationPanelProps` and `ConversationGroupProps` — app builds the items, lib is action-agnostic
 - [x] 3.2 Extract `ConversationRow` to `libs/conversation-panel/src/components/ConversationGroup/ConversationRow.tsx` — owns `isMenuOpen` state so trigger stays visible while menu is open
-- [x] 3.3 `ConversationRow` uses `DialGhostButton` (UI kit) for the selection row and `DialDropdown` wrapping `DialIconButton` (UI kit) for the `IconDotsVertical` trigger — no raw `<button>` elements
+- [x] 3.3 `ConversationRow` uses `GhostButton` (UI kit) for the selection row and `DialDropdown` wrapping `DialIconButton` (UI kit) for the `IconDotsVertical` trigger — no raw `<button>` elements
 - [x] 3.4 Actions container: `opacity-0 group-hover:opacity-100`, stays `opacity-100` when `isMenuOpen` is true
 - [x] 3.5 Trigger button styled via `.trigger` / `.triggerIcon` SCSS classes using `--cp-trigger-bg` → `--controls-bg-accent-secondary-alpha-active` (#37BABC5C) and `--cp-trigger-icon` → `--text-accent-secondary` (#37BABC) following the three-tier CSS var convention
 - [x] 3.6 All icon sizes use `DIAL_ICON_SIZE.SM` (16px) from `@epam/ai-dial-ui-kit`

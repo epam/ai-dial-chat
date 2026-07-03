@@ -70,7 +70,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
   menuTitle,
   menuCloseLabel,
   style,
-  listClassName = '!w-[240px] shadow-md',
+  listClassName = 'cp-dropdown-overlay !w-[240px]',
   isDisabled = false,
   chatSettings,
   extraMenuItems,
@@ -173,6 +173,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               temperatureLabels={chatSettings.temperatureLabels}
               temperatureHint={chatSettings.temperatureHint}
               saveLabel={chatSettings.saveLabel}
+              saveDisabledTooltip={chatSettings.saveDisabledTooltip}
             />
           )}
         </>
@@ -218,6 +219,7 @@ export const AddAttachmentButton: FC<AddAttachmentButtonProps> = ({
               temperatureLabels={chatSettings.temperatureLabels}
               temperatureHint={chatSettings.temperatureHint}
               saveLabel={chatSettings.saveLabel}
+              saveDisabledTooltip={chatSettings.saveDisabledTooltip}
             />
           )}
         </>

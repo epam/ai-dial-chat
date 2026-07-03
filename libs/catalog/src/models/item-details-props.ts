@@ -44,7 +44,9 @@ export interface ItemDetailsTexts {
   apiSnippetSectionLabel?: string;
   /** "Model ID" row label in the API tab. Default: `'Model ID'`. */
   apiModelIdLabel?: string;
-  /** "Endpoint" row label in the API tab. Default: `'Endpoint'`. */
+  /** "Endpoint" section heading in the API tab (multi-endpoint selector). Default: `'Endpoint'`. */
+  apiEndpointSectionLabel?: string;
+  /** URL row label inside each endpoint option. Default: `'Endpoint'`. */
   apiEndpointLabel?: string;
   /** "Request example" row label in the API tab. Default: `'Request example'`. */
   apiRequestExampleLabel?: string;
@@ -60,8 +62,10 @@ export interface ItemDetailsTexts {
 
 /** Typography class overrides for `DetailsPanel` text elements. */
 export interface ItemDetailsTypography {
-  /** Typography class for the entity name. Default: `'dial-display-2-text'`. */
+  /** Typography class for the entity name. Default: `'dial-body-semi-text text-primary'`. */
   nameClassName?: string;
+  /** Typography class for the provider label below the entity name. Default: `'dial-tiny-text text-secondary'`. */
+  providerClassName?: string;
   /** Typography class for the version string. Default: `'dial-tiny-text'`. */
   versionClassName?: string;
   /** Typography class for the intro section caption. Default: `'dial-caption-text'`. */
@@ -80,6 +84,10 @@ export interface ItemDetailsTypography {
   overviewValueClassName?: string;
   /** Typography class for "Yes" spec values. Default: `'dial-small-text'`. */
   overviewValueTrueClassName?: string;
+  /** Typography class applied to folder path separator labels. Default: `'dial-tiny-text'`. */
+  folderLabelClassName?: string;
+  /** Typography class applied to the leaf (last) folder path segment. Default: `'dial-tiny-semi-text'`. */
+  folderLeafClassName?: string;
 }
 
 /** Grouped style overrides for `DetailsPanel`. */

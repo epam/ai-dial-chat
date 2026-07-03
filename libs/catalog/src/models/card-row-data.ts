@@ -14,4 +14,8 @@ export interface CardRowData {
   onItemClick?: (item: CatalogItem) => void;
   /** Label for the "Featured" tag rendered on featured cards. */
   featuredLabel: string;
+  /** Accessible label for the star button when the item is not starred. */
+  addToFavoritesAriaLabel: string;
+  /** Accessible label for the star button when the item is already starred. */
+  removeFromFavoritesAriaLabel: string;
 }

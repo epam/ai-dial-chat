@@ -32,17 +32,14 @@ export const SidebarPanel: FC<SidebarPanelProps> = ({
 }) => {
   const { colors, typography, bodyClassName, cssVars, titleClassName } =
     panelStyles ?? {};
-  const noCustomFont = !typography?.fontClassName;
 
   const panelCssVars = useMemo(
     () =>
       buildCssVars({
         '--sb-bg': colors?.background,
         '--sb-border': colors?.border,
-        '--sb-header-border': colors?.headerBorder,
-        '--sb-font-family': noCustomFont ? typography?.fontFamily : undefined,
       }),
-    [colors, typography, noCustomFont],
+    [colors],
   );
 
   // Track actual panel width so the closing animation matches the real size,

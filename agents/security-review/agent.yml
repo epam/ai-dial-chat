@@ -1,0 +1,19 @@
+contract_version: "0.1"
+name: security-review
+# Wraps the pre-existing BUILT-IN Claude Code `security-review` skill (no
+# .claude/skills/ file is authored for it). The composite action resolves
+# `/security-review` at runtime. This mirrors the deployed
+# ai-dial-chat@development-1.0/.github/workflows/claude-security-review.yml,
+# which moved off the specialized claude-code-security-review Action onto this
+# built-in skill. See security/ satellite for sourcing rationale.
+skill: security-review
+agent_version: "0.1.0"
+description: "AI security code review of the PR diff via the built-in /security-review skill."
+triggers: [pull_request]
+allowed_tools: "Read,Grep,Glob,LS,Task,Bash(git diff:*),Bash(git log:*),Bash(git show:*),Skill"
+model: claude-sonnet-4-6
+phase: sandbox
+cost_class: medium
+publish_inline_comments: false
+timeout_minutes: 15
+max_turns: 50

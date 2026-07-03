@@ -1,4 +1,5 @@
 import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GradientCheckIcon } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
@@ -39,6 +40,8 @@ export interface UseModelSelectorResult {
   selectorIcon: ReactNode;
   /** Accessible label for the trigger button. */
   selectorAriaLabel: string;
+  /** Display name of the currently selected deployment, or `undefined` when none is selected or loading. */
+  selectedLabel: string | undefined;
   /** Menu items for the deployment dropdown. */
   menuItems: DropdownItem[];
   /** Sticky search header rendered above the menu items. */
@@ -71,8 +74,8 @@ export const useModelSelector = ({
         buildDeploymentIcon(
           selectedItem?.iconUrl,
           selectedItem?.type,
+          selectedItem?.displayName ?? selectedItem?.id ?? '',
           DIAL_ICON_SIZE.LG,
-          selectedItem?.displayName ?? selectedItem?.id,
         )
       ),
     [isLoading, selectedItem],
@@ -110,16 +113,25 @@ export const useModelSelector = ({
       }
       return [];
     }
-    return filterDeployments(deployments, searchQuery).map((item) => ({
-      key: item.id,
-      label: <DialEllipsisTooltip text={getDeploymentLabel(item)} />,
-      icon: buildDeploymentIcon(item.iconUrl, item.type),
-      onClick: () => onDeploymentChange?.(item.id),
-      className:
-        item.id === selectedDeploymentId
-          ? 'bg-accent-primary-alpha'
-          : undefined,
-    }));
+    return filterDeployments(deployments, searchQuery).map((item) => {
+      const isSelected = item.id === selectedDeploymentId;
+      return {
+        key: item.id,
+        label: (
+          <span className="flex w-full items-center justify-between gap-2">
+            <DialEllipsisTooltip text={getDeploymentLabel(item)} />
+            {isSelected && <GradientCheckIcon gradientId="ms-check-grad" />}
+          </span>
+        ),
+        icon: buildDeploymentIcon(
+          item.iconUrl,
+          item.type,
+          item.displayName ?? item.id,
+        ),
+        onClick: () => onDeploymentChange?.(item.id),
+        className: isSelected ? 'bg-accent-primary-alpha' : undefined,
+      };
+    });
   }, [
     deployments,
     isLoading,
@@ -163,6 +175,7 @@ export const useModelSelector = ({
   return {
     selectorIcon,
     selectorAriaLabel,
+    selectedLabel,
     menuItems,
     menuHeader,
     onOpenChange: handleOpenChange,

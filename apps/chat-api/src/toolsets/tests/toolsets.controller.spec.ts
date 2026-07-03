@@ -23,7 +23,11 @@ const mockToolset: DialToolsetDto = {
 };
 const mockList: DialToolsetListResponseDto = { data: [mockToolset] };
 
-const TEST_USER = { sub: 'user-123', at: 'test-access-token' };
+const TEST_USER = {
+  sub: 'user-123',
+  at: 'test-access-token',
+  bucket: 'user-bucket',
+};
 
 async function buildApp(
   service: unknown,
@@ -90,6 +94,7 @@ describe('ToolsetsController (integration)', () => {
       expect(service.listToolsets).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        TEST_USER.bucket,
       );
     });
 
@@ -114,6 +119,7 @@ describe('ToolsetsController (integration)', () => {
       expect(service.getToolset).toHaveBeenCalledWith(
         TEST_USER.sub,
         TEST_USER.at,
+        TEST_USER.bucket,
         'my-toolset',
       );
     });
@@ -150,6 +156,238 @@ describe('ToolsetsController (integration)', () => {
       await request(app.getHttpServer())
         .get('/api/v1/toolsets/folder.toolset-v1')
         .expect(200);
+    });
+  });
+});
+
+const validBody = {
+  name: 'My toolset',
+  endpoint: 'https://my-toolset.example.com/mcp',
+  transport: 'HTTP',
+  authSettings: { authenticationType: 'NONE' },
+};
+
+describe('ToolsetsController — write operations (integration)', () => {
+  let app: INestApplication;
+  let service: {
+    createToolset: ReturnType<typeof vi.fn>;
+    updateToolset: ReturnType<typeof vi.fn>;
+    deleteToolset: ReturnType<typeof vi.fn>;
+    loginToolset: ReturnType<typeof vi.fn>;
+    logoutToolset: ReturnType<typeof vi.fn>;
+  };
+
+  beforeEach(async () => {
+    service = {
+      createToolset: vi.fn().mockResolvedValue({ id: 'toolsets/b/my__0.0.1' }),
+      updateToolset: vi.fn().mockResolvedValue({ id: 'my-toolset' }),
+      deleteToolset: vi.fn().mockResolvedValue(undefined),
+      loginToolset: vi.fn().mockResolvedValue(undefined),
+      logoutToolset: vi.fn().mockResolvedValue(undefined),
+    };
+    app = await buildApp(service);
+  });
+
+  afterEach(async () => {
+    vi.clearAllMocks();
+    await app.close();
+  });
+
+  describe('POST /api/v1/toolsets', () => {
+    it('returns 201 with the created id for a valid body', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/toolsets')
+        .send(validBody)
+        .expect(201);
+      expect(res.body).toEqual({ id: 'toolsets/b/my__0.0.1' });
+      expect(service.createToolset).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        expect.objectContaining({ name: 'My toolset' }),
+      );
+    });
+
+    it('returns 400 when a required field is missing', async () => {
+      const { endpoint: _omitted, ...noEndpoint } = validBody;
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets')
+        .send(noEndpoint)
+        .expect(400);
+      expect(service.createToolset).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 for an invalid endpoint protocol', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets')
+        .send({ ...validBody, endpoint: 'ftp://nope' })
+        .expect(400);
+    });
+
+    it('returns 400 for an unknown extra property (forbidNonWhitelisted)', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets')
+        .send({ ...validBody, hacker: 'x' })
+        .expect(400);
+    });
+  });
+
+  describe('PATCH /api/v1/toolsets/:toolsetName', () => {
+    it('returns 200 with the updated id for a valid body', async () => {
+      const res = await request(app.getHttpServer())
+        .patch('/api/v1/toolsets/my-toolset')
+        .send(validBody)
+        .expect(200);
+      expect(res.body).toEqual({ id: 'my-toolset' });
+      expect(service.updateToolset).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'my-toolset',
+        expect.objectContaining({ name: 'My toolset' }),
+      );
+    });
+
+    it('returns 400 for a toolset name with invalid characters', async () => {
+      await request(app.getHttpServer())
+        .patch('/api/v1/toolsets/bad;name')
+        .send(validBody)
+        .expect(400);
+    });
+  });
+
+  describe('DELETE /api/v1/toolsets/:toolsetName', () => {
+    it('returns 204 on success', async () => {
+      await request(app.getHttpServer())
+        .delete('/api/v1/toolsets/my-toolset')
+        .expect(204);
+      expect(service.deleteToolset).toHaveBeenCalledWith(
+        TEST_USER.sub,
+        TEST_USER.at,
+        'my-toolset',
+      );
+    });
+
+    it('returns 400 for a toolset name with invalid characters', async () => {
+      await request(app.getHttpServer())
+        .delete('/api/v1/toolsets/bad;name')
+        .expect(400);
+    });
+  });
+
+  describe('POST /api/v1/toolsets/:toolsetName/login', () => {
+    it('returns 200 with { success: true } for a valid API key body', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'API_KEY',
+          apiKey: 'secret',
+        })
+        .expect(200);
+      expect(res.body).toEqual({ success: true });
+    });
+
+    it('returns 400 when credentialsLevel is invalid', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'NOPE',
+          authenticationType: 'API_KEY',
+        })
+        .expect(400);
+    });
+
+    it('returns 400 when API key auth omits the API key', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'API_KEY',
+        })
+        .expect(400);
+      expect(service.loginToolset).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when API key auth sends an empty API key', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'API_KEY',
+          apiKey: '',
+        })
+        .expect(400);
+      expect(service.loginToolset).not.toHaveBeenCalled();
+    });
+
+    it('returns 200 for a valid OAuth body', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'OAUTH',
+          code: 'auth-code',
+          redirectUri: 'https://example.com/toolset-editor/callback',
+        })
+        .expect(200);
+      expect(res.body).toEqual({ success: true });
+    });
+
+    it('returns 400 when OAuth auth omits the code', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'OAUTH',
+          redirectUri: 'https://example.com/toolset-editor/callback',
+        })
+        .expect(400);
+      expect(service.loginToolset).not.toHaveBeenCalled();
+    });
+
+    it('returns 400 when OAuth auth omits the redirect URI', async () => {
+      await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/login')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'OAUTH',
+          code: 'auth-code',
+        })
+        .expect(400);
+      expect(service.loginToolset).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('POST /api/v1/toolsets/:toolsetName/logout', () => {
+    it('returns 200 with { success: true }', async () => {
+      const res = await request(app.getHttpServer())
+        .post('/api/v1/toolsets/my-toolset/logout')
+        .send({
+          url: 'my-toolset',
+          credentialsLevel: 'USER',
+          authenticationType: 'OAUTH',
+        })
+        .expect(200);
+      expect(res.body).toEqual({ success: true });
+    });
+  });
+
+  describe('unauthenticated', () => {
+    it('returns 500 when no session user is present on a write', async () => {
+      const noUserApp = await buildApp(service, false);
+      // No req.user → controller reads undefined; the global pipe accepts the
+      // body but the handler throws when destructuring the session user.
+      await request(noUserApp.getHttpServer())
+        .post('/api/v1/toolsets')
+        .send(validBody)
+        .expect(500);
+      await noUserApp.close();
     });
   });
 });
