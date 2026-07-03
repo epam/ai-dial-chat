@@ -96,30 +96,30 @@ Memoisation: dedup runs inside `handleAttach` (in `useCallback`), not on every r
 
 ---
 
-### Requirement: canAttachFolders derived from client config at call sites
+### Requirement: canAttachFolders derived from selected deployment at call sites
 
-`ConversationRoute` and `ConversationView` SHALL read `attachFolders` from the `useClientConfig()` context hook and pass it as `canAttachFolders` to `DialFileManagerModal`. When `attachFolders` is absent or `false` in the client config, `canAttachFolders` SHALL default to `false`.
+`ConversationRoute` and `ConversationView` SHALL read `selectedDeployment?.features?.folderAttachments` and pass it as `canAttachFolders` to `DialFileManagerModal`. When `folderAttachments` is absent or `false` on the selected deployment, `canAttachFolders` SHALL default to `false`.
 
-State ownership: `useClientConfig` context (existing); no new state introduced at the call sites.
-Feature flag: `features.attachFolders` from `/api/v1/client-config` response.
+State ownership: `DeploymentsContext` selected deployment state (existing); no new state introduced at the call sites.
+Feature flag: `features.folderAttachments` from the selected deployment object, mapped from DIAL Core `features.folder_attachments`.
 RTL: none.
-Memoisation: none required — value is a stable boolean from context.
+Memoisation: none required — value is read from the selected deployment object.
 
-#### Scenario: canAttachFolders true when client config enables it
+#### Scenario: canAttachFolders true when selected deployment enables it
 
-- **WHEN** `useClientConfig()` returns `{ features: { attachFolders: true } }`
+- **WHEN** `selectedDeployment?.features?.folderAttachments` is `true`
 - **THEN** `DialFileManagerModal` receives `canAttachFolders={true}`
 
-#### Scenario: canAttachFolders false when client config omits the flag
+#### Scenario: canAttachFolders false when selected deployment omits the flag
 
-- **WHEN** `useClientConfig()` returns a config object without `features.attachFolders`
+- **WHEN** `selectedDeployment` is absent or does not include `features.folderAttachments`
 - **THEN** `DialFileManagerModal` receives `canAttachFolders={false}` (default)
 
 ---
 
 ### Requirement: handleAttachDialFiles forwards folderPaths as folder Attachments
 
-Both `ConversationRoute.handleAttachDialFiles` and `ConversationView.handleAttachDialFiles` SHALL accept `AttachResult` and map `result.folderPaths` to `Attachment` objects with `type: 'folder'` (equivalent to how `dialFilesToAttachments` maps files to attachments). The resulting folder attachments SHALL be merged with file attachments before being added to the conversation.
+Both `ConversationRoute.handleAttachDialFiles` and `ConversationView.handleAttachDialFiles` SHALL accept `AttachResult` and map `result.folderPaths` to `Attachment` objects with `type: AttachmentType.File` (equivalent to how `dialFilesToAttachments` maps files to attachments). DIAL Core resolves folder contents server-side regardless of client-side attachment type value. The resulting folder attachments SHALL be merged with file attachments before being added to the conversation.
 
 RTL: none.
 Feature flag: none — behavior is conditional on `folderPaths.length > 0`.
