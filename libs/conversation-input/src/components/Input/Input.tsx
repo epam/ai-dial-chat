@@ -52,7 +52,6 @@ export const Input: FC<InputProps> = ({
   removeLabel,
   retryLabel,
   sendLabel,
-  sendTitle,
   stopLabel,
   micLabel = 'Record voice message',
   colors,
@@ -297,7 +296,7 @@ export const Input: FC<InputProps> = ({
     />
   );
 
-  return (
+  const inputBox = (
     <div
       ref={containerRef}
       style={cssVars}
@@ -338,7 +337,7 @@ export const Input: FC<InputProps> = ({
       ) : (
         <div
           className={mergeClasses(
-            'flex items-center gap-2 mobile:gap-y-3',
+            'flex items-center gap-2',
             isStackedLayout ? 'flex-wrap' : 'flex-wrap desktop:flex-nowrap',
           )}
         >
@@ -409,9 +408,10 @@ export const Input: FC<InputProps> = ({
                   onPickerToggle={() => setIsPickerOpen((prev) => !prev)}
                   onPickerOpenChange={setIsPickerOpen}
                 />
-                {isStreaming ? (
+                {isStreaming && onStop ? (
                   <StopButton onStop={onStop} ariaLabel={stopLabel} />
                 ) : (
+                  !isStreaming &&
                   hasSendableContent && (
                     <SendButton
                       onSend={handleSend}
@@ -421,7 +421,6 @@ export const Input: FC<InputProps> = ({
                         hasBlockedAttachments
                       }
                       ariaLabel={sendLabel}
-                      title={sendTitle}
                     />
                   )
                 )}
@@ -441,4 +440,6 @@ export const Input: FC<InputProps> = ({
       )}
     </div>
   );
+
+  return inputBox;
 };

@@ -46,7 +46,6 @@ export const Catalog: FC<CatalogProps> = ({
 
   const pageTitle = titles?.pageTitle ?? 'Catalog';
   const createLabel = titles?.createLabel ?? 'Create';
-  const createMenuCaption = titles?.createMenuCaption;
   const favoritesTitle = titles?.favoritesTitle ?? 'Your favorites';
   const browseTitle = titles?.browseTitle ?? 'Browse';
   const searchPlaceholder =
@@ -54,6 +53,8 @@ export const Catalog: FC<CatalogProps> = ({
   const noResultsTitle =
     titles?.noResultsTitle ?? ((q: string) => `No results for "${q}"`);
   const featuredLabel = titles?.featuredLabel ?? 'Featured';
+  const gridViewLabel = titles?.gridViewLabel ?? 'Grid view';
+  const listViewLabel = titles?.listViewLabel ?? 'List view';
   const resolvedAriaLabel = titles?.ariaLabel ?? 'Catalog';
 
   const sortOptions = [
@@ -210,6 +211,12 @@ export const Catalog: FC<CatalogProps> = ({
 
   const isAnyFilterActive = filters.size > 0 || isMyAppsActive;
 
+  const emptyTitle = query ? noResultsTitle(query) : 'No items';
+  const cardGridTitles = useMemo(
+    () => ({ noResultsTitle: emptyTitle, featuredLabel }),
+    [emptyTitle, featuredLabel],
+  );
+
   if (isLoading) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -217,7 +224,6 @@ export const Catalog: FC<CatalogProps> = ({
       </div>
     );
   }
-  const emptyTitle = query ? noResultsTitle(query) : 'No items';
 
   return (
     <section
@@ -237,7 +243,6 @@ export const Catalog: FC<CatalogProps> = ({
           </h1>
           <CreateButton
             label={createLabel}
-            menuCaption={createMenuCaption}
             options={createOptions}
             onClick={onCreateClick}
           />
@@ -272,6 +277,8 @@ export const Catalog: FC<CatalogProps> = ({
             onClearFilters={clearAllFilters}
             title={browseTitle}
             searchPlaceholder={searchPlaceholder}
+            gridViewLabel={gridViewLabel}
+            listViewLabel={listViewLabel}
             sortOptions={sortOptions}
             filters={filters}
             onFiltersChange={setFilters}
@@ -313,7 +320,7 @@ export const Catalog: FC<CatalogProps> = ({
                 query={query}
                 onToggleFavorite={onToggleFavorite}
                 onItemClick={handleOpenDetails}
-                titles={{ noResultsTitle: emptyTitle, featuredLabel }}
+                titles={cardGridTitles}
               />
             </div>
           )}

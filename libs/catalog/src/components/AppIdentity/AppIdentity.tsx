@@ -4,6 +4,7 @@ import {
   mergeClasses,
 } from '@epam/ai-dial-chat-shared';
 import { FC, ReactNode } from 'react';
+import styles from './AppIdentity.module.scss';
 
 /** Props for the shared AppIdentity block used in browse and favorite cards. */
 export interface AppIdentityProps {
@@ -41,6 +42,8 @@ export interface AppIdentityProps {
   lastUsedClassName?: string;
   /** Element rendered at the end of the last-used row (size 'lg' only). */
   lastUsedTrailing?: ReactNode;
+  /** Additional CSS class applied to the icon wrapper div (e.g. for hover-scale animations). */
+  iconClassName?: string;
 }
 
 /** Shared identity block: logo + type + name + version + optional last-used row. */
@@ -59,6 +62,7 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   versionClassName = 'dial-tiny-text text-secondary',
   lastUsedClassName = 'dial-tiny-text text-tertiary',
   lastUsedTrailing,
+  iconClassName,
 }) => {
   const isLg = size === 'lg';
   const logoClass = isLg
@@ -67,9 +71,17 @@ export const AppIdentity: FC<AppIdentityProps> = ({
   const logoSize = isLg ? 54 : 44;
 
   return (
-    <div className={mergeClasses('flex min-w-0 items-start gap-3', className)}>
+    <div
+      className={mergeClasses('flex min-w-0 items-start gap-[14px]', className)}
+    >
       {/* Logo — flex-shrink-0 so a long name can never squeeze the icon */}
-      <div className={mergeClasses('flex-shrink-0 overflow-hidden', logoClass)}>
+      <div
+        className={mergeClasses(
+          'flex-shrink-0 overflow-hidden',
+          logoClass,
+          iconClassName,
+        )}
+      >
         <DeploymentIcon
           src={icon ?? undefined}
           size={logoSize}
@@ -81,13 +93,10 @@ export const AppIdentity: FC<AppIdentityProps> = ({
       </div>
 
       {/* Text stack — type sits above a tightly grouped name+last-used cluster */}
-      <div className="flex min-w-0 flex-1 flex-col">
-        {/* Type: more space below separates it from the name group */}
+      <div className="flex min-w-0 flex-1 flex-col gap-[5px]">
+        {/* Type label: plain uppercase text, entity colour carried by icon tint */}
         <span
-          className={mergeClasses(
-            'mb-2 uppercase tracking-[0.06em]',
-            typeClassName,
-          )}
+          className={mergeClasses('uppercase tracking-[0.06em]', typeClassName)}
           style={typeColor ? { color: typeColor } : undefined}
         >
           {type}
@@ -98,12 +107,18 @@ export const AppIdentity: FC<AppIdentityProps> = ({
           {/* Name + version: version sits immediately after name text */}
           <div className="flex min-w-0 items-start gap-1 overflow-hidden">
             <span
-              className={mergeClasses('min-w-0 flex-1 truncate', nameClassName)}
+              className={mergeClasses('min-w-0 shrink truncate', nameClassName)}
             >
               {query ? <Highlight text={name} query={query} /> : name}
             </span>
             {version != null && (
-              <span className={mergeClasses('flex-shrink-0', versionClassName)}>
+              <span
+                className={mergeClasses(
+                  'shrink-0',
+                  styles.numericText,
+                  versionClassName,
+                )}
+              >
                 {version}
               </span>
             )}
@@ -112,7 +127,11 @@ export const AppIdentity: FC<AppIdentityProps> = ({
           {/* Last-used row — rendered only in size 'lg' */}
           {isLg && lastUsed != null && (
             <div className="flex items-center gap-2">
-              <span className={lastUsedClassName}>{lastUsed}</span>
+              <span
+                className={mergeClasses(styles.numericText, lastUsedClassName)}
+              >
+                {lastUsed}
+              </span>
               {lastUsedTrailing}
             </div>
           )}

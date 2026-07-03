@@ -10,8 +10,6 @@ import styles from './CreateButton.module.scss';
 export interface CreateButtonProps {
   /** Button label. */
   label: string;
-  /** Caption shown at the top of the dropdown menu. Default: 'Create new'. */
-  menuCaption?: string;
   /**
    * When provided, the button opens a dropdown with these options instead of
    * calling `onClick` directly.
@@ -24,7 +22,6 @@ export interface CreateButtonProps {
 /** Renders either a plain primary button or a split-chevron dropdown. */
 export const CreateButton: FC<CreateButtonProps> = ({
   label,
-  menuCaption = 'Create new',
   options,
   onClick,
 }) => {
@@ -112,15 +109,6 @@ export const CreateButton: FC<CreateButtonProps> = ({
             className={styles.menu}
             onKeyDown={handleMenuKeyDown}
           >
-            <div
-              className={mergeClasses(
-                styles.menuCaption,
-                'dial-tiny-semi-text',
-              )}
-            >
-              {menuCaption}
-            </div>
-
             {options.map((opt, i) => (
               <button
                 key={String(i)}

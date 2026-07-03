@@ -1,4 +1,5 @@
 .tag {
-  color: var(--cat-pricing-tag-text, var(--text-secondary, #575f73));
-  border-color: var(--cat-pricing-tag-border, var(--stroke-default, #3e4557));
+  color: var(--cat-pricing-tag-text, var(--text-secondary, #575f73)) !important;
+  border: 1px solid #e8eef5 !important;
+  background: var(--cat-pricing-tag-bg, #eff3f8) !important;
 }

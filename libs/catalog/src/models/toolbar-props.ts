@@ -1,5 +1,12 @@
 import { CatalogViewMode } from '../types/view-mode';
-import { CatalogSortOption } from './sort';
+
+/** A single option in the sort dropdown. */
+export interface CatalogSortOption {
+  /** Sort key passed to `onSortChange`. */
+  value: string;
+  /** Display label shown in the dropdown. */
+  label: string;
+}
 
 /** Typography class overrides for `Toolbar`. */
 export interface ToolbarTypography {
@@ -43,10 +50,6 @@ export interface ToolbarProps {
   viewMode: CatalogViewMode;
   /** Called when the display mode changes. */
   onViewModeChange: (mode: CatalogViewMode) => void;
-  /** Current sort key. */
-  sortKey: string;
-  /** Called when sort changes. */
-  onSortChange: (key: string) => void;
   /** Current search query. */
   query: string;
   /** Called when the query changes. */
@@ -59,8 +62,10 @@ export interface ToolbarProps {
   title?: string;
   /** Search input placeholder. Default: 'Search models, tools, agents…'. */
   searchPlaceholder?: string;
-  /** Sort dropdown options. Default: DEFAULT_SORT_OPTIONS. */
-  sortOptions?: CatalogSortOption[];
+  /** Accessible label for switching to grid view. Default: 'Grid view'. */
+  gridViewLabel?: string;
+  /** Accessible label for switching to list view. Default: 'List view'. */
+  listViewLabel?: string;
   /** Grouped typography and color overrides. */
   styles?: ToolbarStyles;
   /** Label for the "Clear all" filters button. Default: 'Clear all'. */
@@ -81,4 +86,10 @@ export interface ToolbarProps {
   filterMyAppsLabel?: string;
   /** Label for the Topics section inside the filter dropdown. Default: 'Topics'. */
   filterTopicsLabel?: string;
+  /** Currently active sort key. */
+  sortKey?: string;
+  /** Called when the user selects a different sort option. */
+  onSortChange?: (key: string) => void;
+  /** Available sort options shown in the dropdown. */
+  sortOptions?: CatalogSortOption[];
 }

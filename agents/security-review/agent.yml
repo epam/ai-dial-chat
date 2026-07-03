@@ -14,5 +14,6 @@ allowed_tools: "Read,Grep,Glob,LS,Task,Bash(git diff:*),Bash(git log:*),Bash(git
 model: claude-sonnet-4-6
 phase: sandbox
 cost_class: medium
+publish_inline_comments: false
 timeout_minutes: 15
 max_turns: 50
