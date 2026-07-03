@@ -172,7 +172,7 @@ describe('onUnauthorized', () => {
     unregister();
   });
 
-  it('notifies unauthorized when CSRF refresh fails during invalid CSRF recovery', async () => {
+  it('throws a plain error without logging out when CSRF refresh fails transiently', async () => {
     setCsrfToken('stale-csrf-token');
     const listener = vi.fn();
     const unregister = onUnauthorized(listener);
@@ -194,11 +194,11 @@ describe('onUnauthorized', () => {
       .mockResolvedValueOnce(new Response(null, { status: 200 }));
     global.fetch = fetchSpy;
 
-    await expect(post('/api/test', {})).rejects.toBeInstanceOf(
+    await expect(post('/api/test', {})).rejects.not.toBeInstanceOf(
       UnauthorizedError,
     );
-    expect(listener).toHaveBeenCalledWith('/api/test');
-    expect(getCsrfToken()).toBeNull();
+    expect(listener).not.toHaveBeenCalled();
+    expect(getCsrfToken()).toBe('stale-csrf-token');
     expect(fetchSpy).toHaveBeenCalledTimes(2);
 
     unregister();

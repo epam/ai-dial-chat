@@ -215,19 +215,24 @@ const request = async <TResponse>(
     } catch {
       errorBody = '';
     }
-    if (response.status === 403 && isInvalidCsrfErrorBody(errorBody)) {
-      if (allowCsrfRetry && _csrfToken === csrfTokenForRequest) {
-        const refreshed = await refreshCsrfToken();
-        if (refreshed.status === CsrfRefreshStatus.Ok) {
-          return request(url, method, options, false);
-        }
-        if (refreshed.status === CsrfRefreshStatus.Unauthorized) {
-          notifyUnauthorized(ApiEndpoints.AUTH_ME);
-          throw new UnauthorizedError(ApiEndpoints.AUTH_ME);
-        }
-        notifyUnauthorized(url);
-        throw new UnauthorizedError(url);
+    if (
+      response.status === 403 &&
+      isInvalidCsrfErrorBody(errorBody) &&
+      allowCsrfRetry
+    ) {
+      if (_csrfToken !== null && _csrfToken !== csrfTokenForRequest) {
+        // A concurrent request already refreshed the token; reuse it.
+        return request(url, method, options, false);
       }
+      const refreshed = await refreshCsrfToken();
+      if (refreshed.status === CsrfRefreshStatus.Ok) {
+        return request(url, method, options, false);
+      }
+      if (refreshed.status === CsrfRefreshStatus.Unauthorized) {
+        notifyUnauthorized(ApiEndpoints.AUTH_ME);
+        throw new UnauthorizedError(ApiEndpoints.AUTH_ME);
+      }
+      throw new Error(`CSRF refresh failed for ${method} ${url}`);
     }
     throw new Error(
       `Request failed with status ${response.status} for ${method} ${url}: ${errorBody}`,

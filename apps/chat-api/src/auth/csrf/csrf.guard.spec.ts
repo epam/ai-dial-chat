@@ -56,6 +56,7 @@ function buildContext(options: {
 }
 
 function expectInvalidCsrfError(action: () => void): void {
+  expect.assertions(2);
   let error: unknown;
   try {
     action();

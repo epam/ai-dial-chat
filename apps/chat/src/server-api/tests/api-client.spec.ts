@@ -367,7 +367,7 @@ describe('unauthorizedMiddleware', () => {
     cleanup();
   });
 
-  it('throws UnauthorizedError when CSRF refresh does not return a token', async () => {
+  it('throws a plain error without logging out when CSRF refresh does not return a token', async () => {
     setCsrfToken('stale-token');
     const fetchSpy = vi
       .fn<typeof fetch>()
@@ -392,26 +392,35 @@ describe('unauthorizedMiddleware', () => {
           deploymentId: 'test-deployment',
         },
       }),
-    ).rejects.toBeInstanceOf(UnauthorizedError);
+    ).rejects.not.toBeInstanceOf(UnauthorizedError);
 
-    expect(listener).toHaveBeenCalledWith('/api/v1/conversations');
-    expect(getCsrfToken()).toBeNull();
+    expect(listener).not.toHaveBeenCalled();
+    expect(getCsrfToken()).toBe('stale-token');
     expect(fetchSpy).toHaveBeenCalledTimes(2);
 
     cleanup();
   });
 
-  it('does not clear a newer CSRF token when a stale invalid CSRF response arrives', async () => {
+  it('retries with an already-refreshed token when a concurrent request updated it', async () => {
     setCsrfToken('stale-token');
-    global.fetch = vi.fn<typeof fetch>().mockImplementation(async () => {
-      setCsrfToken('fresh-token');
-      return makeResponse(403, {
-        code: 'CSRF_INVALID',
-        message: 'Invalid CSRF token',
-        error: 'Forbidden',
-        statusCode: 403,
-      });
-    });
+    const fetchSpy = vi
+      .fn<typeof fetch>()
+      .mockImplementationOnce(async () => {
+        setCsrfToken('fresh-token');
+        return makeResponse(403, {
+          code: 'CSRF_INVALID',
+          message: 'Invalid CSRF token',
+          error: 'Forbidden',
+          statusCode: 403,
+        });
+      })
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: [] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+      );
+    global.fetch = fetchSpy;
     const listener = vi.fn();
     const cleanup = onUnauthorized(listener);
 
@@ -427,7 +436,10 @@ describe('unauthorizedMiddleware', () => {
 
     expect(listener).not.toHaveBeenCalled();
     expect(getCsrfToken()).toBe('fresh-token');
-    expect(global.fetch).toHaveBeenCalledTimes(1);
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+    expect(
+      new Headers(fetchSpy.mock.calls[1]?.[1]?.headers).get('X-CSRF-Token'),
+    ).toBe('fresh-token');
 
     cleanup();
   });

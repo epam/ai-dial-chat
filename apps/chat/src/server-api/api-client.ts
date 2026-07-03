@@ -25,45 +25,27 @@ import {
 
 type MiddlewarePostContext = Parameters<NonNullable<Middleware['post']>>[0];
 
-const csrfTokenAtDispatch = new WeakMap<RequestInit, string | null>();
-
 const csrfMiddleware: Middleware = {
   pre: async (context) => {
     const token = getCsrfToken();
-    if (context.init.method !== 'GET' && token !== null) {
-      const headers = new Headers(context.init.headers);
-      headers.set('X-CSRF-Token', token);
-      const init = {
+    if (context.init.method === 'GET' || token === null) {
+      return context;
+    }
+    const headers = new Headers(context.init.headers);
+    headers.set('X-CSRF-Token', token);
+    return {
+      ...context,
+      init: {
         ...context.init,
         headers,
-      };
-      csrfTokenAtDispatch.set(init, token);
-
-      return {
-        ...context,
-        init,
-      };
-    }
-    csrfTokenAtDispatch.set(context.init, token);
-    return context;
+      },
+    };
   },
   post: async (context) => {
     const rotated = context.response.headers.get('x-csrf-token');
     if (rotated) setCsrfToken(rotated);
     return context.response;
   },
-};
-
-const isInvalidCsrfResponse = async (response: Response): Promise<boolean> => {
-  if (response.status !== 403) {
-    return false;
-  }
-
-  try {
-    return isInvalidCsrfErrorBody(await response.clone().text());
-  } catch {
-    return false;
-  }
 };
 
 const readResponseBody = async (response: Response): Promise<string> => {
@@ -74,12 +56,34 @@ const readResponseBody = async (response: Response): Promise<string> => {
   }
 };
 
+// The runtime threads the exact `init` object built in `csrfMiddleware.pre`
+// through to `post`, so the token actually sent can be read back from it.
+const getDispatchCsrfToken = (init: RequestInit): string | null =>
+  new Headers(init.headers).get('X-CSRF-Token');
+
+const fetchWithCsrfToken = (
+  context: MiddlewarePostContext,
+  token: string,
+): Promise<Response> => {
+  const headers = new Headers(context.init.headers);
+  if (context.init.method !== 'GET') {
+    headers.set('X-CSRF-Token', token);
+  }
+  return fetch(context.url, {
+    ...context.init,
+    headers,
+  });
+};
+
 const retryWithFreshCsrf = async (
   context: MiddlewarePostContext,
-): Promise<Response | undefined> => {
-  const dispatchToken = csrfTokenAtDispatch.get(context.init) ?? null;
-  if (getCsrfToken() !== dispatchToken) {
-    return undefined;
+): Promise<Response> => {
+  const dispatchToken = getDispatchCsrfToken(context.init);
+  const currentToken = getCsrfToken();
+
+  if (currentToken !== null && currentToken !== dispatchToken) {
+    // A concurrent request already refreshed the token; reuse it.
+    return fetchWithCsrfToken(context, currentToken);
   }
 
   const refreshed = await refreshCsrfToken();
@@ -88,19 +92,10 @@ const retryWithFreshCsrf = async (
     throw new UnauthorizedError(ApiEndpoints.AUTH_ME);
   }
   if (refreshed.status !== CsrfRefreshStatus.Ok) {
-    notifyUnauthorized(context.url);
-    throw new UnauthorizedError(context.url);
+    throw new Error(`CSRF refresh failed for ${context.url}`);
   }
 
-  const headers = new Headers(context.init.headers);
-  if (context.init.method !== 'GET') {
-    headers.set('X-CSRF-Token', refreshed.token);
-  }
-
-  return fetch(context.url, {
-    ...context.init,
-    headers,
-  });
+  return fetchWithCsrfToken(context, refreshed.token);
 };
 
 const handleRetryResponse = async (
@@ -117,13 +112,12 @@ const handleRetryResponse = async (
     throw new UnauthorizedError(context.url);
   }
 
-  if (await isInvalidCsrfResponse(response)) {
-    notifyUnauthorized(context.url);
-    throw new UnauthorizedError(context.url);
-  }
-
   if (!response.ok) {
     const errorBody = await readResponseBody(response);
+    if (response.status === 403 && isInvalidCsrfErrorBody(errorBody)) {
+      notifyUnauthorized(context.url);
+      throw new UnauthorizedError(context.url);
+    }
     throw new Error(
       `Request failed with status ${response.status} for ${context.init.method ?? 'GET'} ${context.url}: ${errorBody}`,
     );
@@ -138,15 +132,12 @@ const unauthorizedMiddleware: Middleware = {
       notifyUnauthorized(context.url);
       throw new UnauthorizedError(context.url);
     }
-    if (await isInvalidCsrfResponse(context.response)) {
-      const retryResponse = await retryWithFreshCsrf(context);
-      if (retryResponse) {
+    if (context.response.status === 403) {
+      const body = await readResponseBody(context.response);
+      if (isInvalidCsrfErrorBody(body)) {
+        const retryResponse = await retryWithFreshCsrf(context);
         return handleRetryResponse(context, retryResponse);
       }
-      const errorBody = await readResponseBody(context.response);
-      throw new Error(
-        `Request failed with status ${context.response.status} for ${context.init.method ?? 'GET'} ${context.url}: ${errorBody}`,
-      );
     }
     return context.response;
   },
