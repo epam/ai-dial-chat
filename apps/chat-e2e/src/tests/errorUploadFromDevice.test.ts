@@ -1,8 +1,8 @@
 import dialTest from '@/src/core/dialFixtures';
 import {
+  API,
   Attachment,
   ExpectedConstants,
-  ImportResolutionOption,
   UploadMenuOptions,
 } from '@/src/testData';
 import { DateUtil } from '@/src/utils';
@@ -126,14 +126,14 @@ dialTest(
     dialHomePage,
     setTestIds,
     attachmentDropdownMenu,
-    uploadFromDeviceModal,
     localStorageManager,
     sendMessage,
     fileApiHelper,
-    baseAssertion,
+    fileManagerModal,
+    fileManagerModalGridAssertion,
+    fileConflictConfirmationPopup,
+    fileConflictConfirmationPopupAssertion,
     sendMessageInputAttachmentsAssertions,
-    replaceConfirmationModal,
-    replaceConfirmationModalAssertion,
   }) => {
     setTestIds('EPMRTC-3217', 'EPMRTC-3194', 'EPMRTC-1779');
 
@@ -143,18 +143,11 @@ dialTest(
     const sanitizedFilename = ExpectedConstants.replacedRestrictedCharsName(
       Attachment.restrictedSemicolonCharFilename,
     );
-    const renamedSunImageName = Attachment.sunImageName.replace(
-      /(\.)([^.]+)$/,
-      ' 1.$2',
-    );
-    const renamedRestrictedCharFilename = sanitizedFilename.replace(
-      /(\.)([^.]+)$/,
-      ' 1.$2',
-    );
-    const renamedCloudImageName = Attachment.cloudImageName.replace(
-      /(\.)([^.]+)$/,
-      ' 1.$2',
-    );
+    const expectedFiles = [
+      Attachment.cloudImageName,
+      Attachment.sunImageName,
+      sanitizedFilename,
+    ];
 
     await dialTest.step('Upload file with valid name to app', async () => {
       await fileApiHelper.putFile(Attachment.sunImageName, {
@@ -194,43 +187,44 @@ dialTest(
     );
 
     await dialTest.step(
-      'Verify files with restricted chars are auto-sanitized in modal',
+      'Verify conflict modal is displayed for the 1st image',
       async () => {
-        await baseAssertion.assertElementState(
-          uploadFromDeviceModal
-            .getUploadedFilenameInput(sanitizedFilename)
-            .getNthElement(1),
-          'visible',
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupHeader(
+          ExpectedConstants.replaceAttachmentConfirmationTitle,
         );
-        await baseAssertion.assertElementState(
-          uploadFromDeviceModal
-            .getUploadedFilenameInput(sanitizedFilename)
-            .getNthElement(2),
-          'visible',
+        await fileConflictConfirmationPopupAssertion.assertConfirmationPopupContent(
+          ExpectedConstants.replaceAttachmentConfirmationMessage(
+            Attachment.sunImageName,
+          ),
         );
       },
     );
 
-    await dialTest.step(
-      'Upload all files and verify duplicates are auto-renamed in attachments',
-      async () => {
-        await uploadFromDeviceModal.uploadButton.click();
-        await baseAssertion.assertElementText(
-          replaceConfirmationModal.title,
-          ExpectedConstants.uploadDuplicateNamesModalTitle,
-        );
-        await baseAssertion.assertElementText(
-          replaceConfirmationModal.description,
-          ExpectedConstants.uploadDuplicateNamesModalDescription,
-        );
-        await replaceConfirmationModalAssertion.assertAllItemsOption(
-          ImportResolutionOption.Postfix,
-        );
-        await replaceConfirmationModal.confirmUploadDuplicates();
-        await baseAssertion.assertElementState(uploadFromDeviceModal, 'hidden');
+    await dialTest.step('Confirm replacing', async () => {
+      await fileConflictConfirmationPopup.confirm({
+        triggeredHttpMethod: 'PUT',
+        triggeredHttpHost: API.fileHost(),
+      });
+    });
 
+    await dialTest.step(
+      'Verify files with restricted chars are auto-sanitized in modal',
+      async () => {
+        for (const file of expectedFiles) {
+          await fileManagerModalGridAssertion.assertGridRowByNameState(
+            file,
+            'visible',
+          );
+        }
+      },
+    );
+
+    await dialTest.step(
+      'Attach files and verify they are displayed in the send message input',
+      async () => {
+        await fileManagerModal.getAttachButton().click();
         await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
-          renamedSunImageName,
+          Attachment.sunImageName,
           'visible',
         );
         await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
@@ -238,15 +232,7 @@ dialTest(
           'visible',
         );
         await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
-          renamedRestrictedCharFilename,
-          'visible',
-        );
-        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
           Attachment.cloudImageName,
-          'visible',
-        );
-        await sendMessageInputAttachmentsAssertions.assertAttachedFileState(
-          renamedCloudImageName,
           'visible',
         );
       },
