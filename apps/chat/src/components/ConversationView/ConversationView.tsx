@@ -242,8 +242,10 @@ const ConversationView: FC<Props> = ({
     [items],
   );
 
-  // For each message, resolve the deployment active at that point in the conversation.
-  // Scans status messages in order so messages before a model change get the initial model icon.
+  /*
+   * For each message, resolve the deployment active at that point in the conversation.
+   * Scans status messages in order so messages before a model change get the initial model icon.
+   */
   const effectiveDeploymentIds = useMemo<(string | undefined)[]>(
     () =>
       messages.reduce<{
@@ -328,8 +330,10 @@ const ConversationView: FC<Props> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const endRef = useRef<HTMLDivElement>(null);
 
-  // True when the user has manually scrolled up during a stream.
-  // Pauses auto-scroll until they click the scroll button or send a new message.
+  /*
+   * True when the user has manually scrolled up during a stream.
+   * Pauses auto-scroll until they click the scroll button or send a new message.
+   */
   const userScrolledRef = useRef(false);
 
   // Prevents the scroll handler from misreading programmatic scrolls as user input.
@@ -360,9 +364,11 @@ const ConversationView: FC<Props> = ({
         isProgrammaticRef.current = false;
       });
     } else {
-      // Smooth scroll fires scroll events for its entire ~300 ms animation.
-      // Keep the flag set until the browser signals the scroll is complete;
-      // fall back to a timeout for Safari < 17.4 which lacks scrollend.
+      /*
+       * Smooth scroll fires scroll events for its entire ~300 ms animation.
+       * Keep the flag set until the browser signals the scroll is complete;
+       * fall back to a timeout for Safari < 17.4 which lacks scrollend.
+       */
       const reset = () => {
         if (smoothScrollTimerRef.current != null) {
           clearTimeout(smoothScrollTimerRef.current);
@@ -382,9 +388,11 @@ const ConversationView: FC<Props> = ({
     }
   }, [isAssistantTyping]);
 
-  // Scroll on message updates.
-  // During streaming: instant + skip if user scrolled up.
-  // On new turns (non-streaming message count change): always smooth-scroll.
+  /*
+   * Scroll on message updates.
+   * During streaming: instant + skip if user scrolled up.
+   * On new turns (non-streaming message count change): always smooth-scroll.
+   */
   const prevLengthRef = useRef(messages.length);
   useEffect(() => {
     const lengthChanged = messages.length !== prevLengthRef.current;

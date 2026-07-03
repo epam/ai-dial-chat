@@ -95,8 +95,10 @@ export const ConversationPanel: FC<ConversationPanelProps> = memo(
     const [allowedDropGroups, setAllowedDropGroups] =
       useState<Set<ConversationGroupKey> | null>(null);
 
-    // Refs let the drop handler read current values without being in the useCallback dep array,
-    // avoiding recreating the handler (and remounting rows) on every drag-state change.
+    /*
+     * Refs let the drop handler read current values without being in the useCallback dep array,
+     * avoiding recreating the handler (and remounting rows) on every drag-state change.
+     */
     const draggingIdRef = useRef<string | null>(null);
     const allowedDropGroupsRef = useRef<Set<ConversationGroupKey> | null>(null);
 

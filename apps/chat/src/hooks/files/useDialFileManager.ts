@@ -421,8 +421,10 @@ const fetchByTab = (
         items: res.items,
       }));
     }
-    // Navigating inside a shared folder — find the owner bucket from the root meta
-    // and call listFiles against their bucket with the correct relative path.
+    /*
+     * Navigating inside a shared folder — find the owner bucket from the root meta
+     * and call listFiles against their bucket with the correct relative path.
+     */
     const firstSlash = folderPath.indexOf('/');
     const sharedRootName =
       firstSlash === -1 ? folderPath : folderPath.slice(0, firstSlash);
@@ -461,8 +463,10 @@ const fetchForSearch = async (
   sharedRootMeta: Map<string, SharedRootMeta>,
 ): Promise<{ items: ListFilesItemDto[] }> => {
   if (tab === DialFileManagerTabs.Shared) {
-    // Shared root is handled via client-side cache filter in onSearchFiles.
-    // This branch only runs for nested shared folders.
+    /*
+     * Shared root is handled via client-side cache filter in onSearchFiles.
+     * This branch only runs for nested shared folders.
+     */
     const firstSlash = folderPath.indexOf('/');
     const sharedRootName =
       firstSlash === -1 ? folderPath : folderPath.slice(0, firstSlash);
@@ -591,8 +595,10 @@ export const useDialFileManager = ({
   const searchDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchCancelRef = useRef<(() => void) | null>(null);
   const expandingApiPathsRef = useRef<Set<string>>(new Set());
-  // Folder api paths whose last expand fetch failed — excluded from auto-retry
-  // on unrelated expand/collapse until the user collapses and re-expands them.
+  /*
+   * Folder api paths whose last expand fetch failed — excluded from auto-retry
+   * on unrelated expand/collapse until the user collapses and re-expands them.
+   */
   const erroredApiPathsRef = useRef<Set<string>>(new Set());
 
   const [expandedPaths, setExpandedPaths] = useState<Set<string>>(
@@ -748,8 +754,10 @@ export const useDialFileManager = ({
 
   const onExpandedPathsChange = useCallback(
     (paths: Set<string>) => {
-      // Collapsed folders drop out of `paths` — clear their errored state so
-      // re-expanding the same folder later retries instead of staying blocked.
+      /*
+       * Collapsed folders drop out of `paths` — clear their errored state so
+       * re-expanding the same folder later retries instead of staying blocked.
+       */
       expandedPaths.forEach((p) => {
         if (!paths.has(p)) {
           erroredApiPathsRef.current.delete(virtualPathToApiPath(p, rootLabel));
@@ -815,8 +823,10 @@ export const useDialFileManager = ({
         clearTimeout(searchDebounceRef.current);
         searchDebounceRef.current = null;
       }
-      // Cancel any in-flight search immediately on every keystroke, so a
-      // slower stale fetch can never overwrite the results of a newer one.
+      /*
+       * Cancel any in-flight search immediately on every keystroke, so a
+       * slower stale fetch can never overwrite the results of a newer one.
+       */
       searchCancelRef.current?.();
       searchCancelRef.current = null;
 

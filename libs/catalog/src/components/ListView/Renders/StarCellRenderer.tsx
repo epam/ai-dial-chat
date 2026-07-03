@@ -4,9 +4,11 @@ import { CatalogItem } from '../../../models/catalog-item';
 import { GridContext } from '../../../models/grid-context';
 import { StarToggleButton } from '../../StarToggleButton/StarToggleButton';
 
-// ag-grid calls refresh() on cell renderers instead of re-mounting when rowData
-// updates. Returning true tells ag-grid "handled" and preserves local state,
-// preventing the optimistic toggle from being overwritten by a stale data.isStarred.
+/*
+ * ag-grid calls refresh() on cell renderers instead of re-mounting when rowData
+ * updates. Returning true tells ag-grid "handled" and preserves local state,
+ * preventing the optimistic toggle from being overwritten by a stale data.isStarred.
+ */
 export const StarCellRenderer = forwardRef<
   unknown,
   ICellRendererParams<CatalogItem, unknown, GridContext>

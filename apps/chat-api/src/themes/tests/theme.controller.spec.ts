@@ -172,8 +172,10 @@ describe('ThemeController (integration)', () => {
     it('should include CORS headers in response', async () => {
       mockThemeService.getThemes.mockResolvedValue({ themes: [] });
 
-      // Note: CORS headers would be added by the app.enableCors() in main.ts
-      // This test verifies the endpoint is accessible for CORS testing
+      /*
+       * Note: CORS headers would be added by the app.enableCors() in main.ts
+       * This test verifies the endpoint is accessible for CORS testing
+       */
       await request(app.getHttpServer()).get('/themes').expect(200);
     });
   });
@@ -186,8 +188,10 @@ describe('ThemeController (integration)', () => {
         controllers: [ThemeController],
         providers: [
           { provide: ThemeService, useValue: mockThemeService },
-          // SessionGuard dependencies — decryptFromRequest always throws so any
-          // non-public route would return 401; public routes must bypass it.
+          /*
+           * SessionGuard dependencies — decryptFromRequest always throws so any
+           * non-public route would return 401; public routes must bypass it.
+           */
           {
             provide: SessionService,
             useValue: {

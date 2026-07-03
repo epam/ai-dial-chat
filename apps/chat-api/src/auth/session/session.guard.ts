@@ -52,9 +52,11 @@ export class SessionGuard implements CanActivate {
       throw new UnauthorizedException();
     }
 
-    // Keep the CSRF token stable across access-token refreshes. Rotating it
-    // together with the session cookie creates a race where another in-flight
-    // request or browser tab sends the previous header with the new cookie.
+    /*
+     * Keep the CSRF token stable across access-token refreshes. Rotating it
+     * together with the session cookie creates a race where another in-flight
+     * request or browser tab sends the previous header with the new cookie.
+     */
     const csrfForCurrentRequest = payload.csrf;
 
     const now = Math.floor(Date.now() / 1000);

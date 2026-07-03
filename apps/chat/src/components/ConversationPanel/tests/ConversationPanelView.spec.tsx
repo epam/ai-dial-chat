@@ -303,8 +303,10 @@ describe('ConversationPanelView — delete-all header action', () => {
       failed: [],
     });
 
-    // Use empty conversations list to guard against stale-closure regression:
-    // navigation must not depend on finding the active conversation in the list.
+    /*
+     * Use empty conversations list to guard against stale-closure regression:
+     * navigation must not depend on finding the active conversation in the list.
+     */
     vi.mocked(useConversations).mockReturnValue({
       ...baseContextValue,
       conversations: [],
@@ -592,9 +594,11 @@ describe('ConversationPanelView — single-conversation delete navigation', () =
   });
 
   it('navigates to root when ID comparison requires decodeURIComponent', async () => {
-    // Simulates a conversation whose title contains a space stored as %20 in the API id.
-    // getConversationRoute double-encodes to %2520; app.tsx decodes once back to %20.
-    // So activeConversationId still contains %20, not a literal space.
+    /*
+     * Simulates a conversation whose title contains a space stored as %20 in the API id.
+     * getConversationRoute double-encodes to %2520; app.tsx decodes once back to %20.
+     * So activeConversationId still contains %20, not a literal space.
+     */
     const encodedConversation = {
       id: 'conversations/bucket/gpt-4__My%20Chat.json',
       title: 'My Chat',

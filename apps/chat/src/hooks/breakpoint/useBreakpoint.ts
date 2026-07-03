@@ -18,8 +18,10 @@ const resolveBreakpoint = (): Breakpoint => {
     typeof window === 'undefined' ||
     typeof window.matchMedia !== 'function'
   ) {
-    // SSR / non-DOM test env: default to desktop so server-rendered markup
-    // matches the historical desktop-only baseline.
+    /*
+     * SSR / non-DOM test env: default to desktop so server-rendered markup
+     * matches the historical desktop-only baseline.
+     */
     return 'desktop';
   }
   for (const { query, breakpoint } of BREAKPOINT_QUERIES) {

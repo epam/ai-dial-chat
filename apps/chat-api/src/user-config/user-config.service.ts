@@ -190,8 +190,10 @@ export class UserConfigService extends AppService {
       }
     }
 
-    // Mark migration as done so subsequent readConfig calls skip this block entirely,
-    // regardless of whether any legacy files were found or whether delete succeeded.
+    /*
+     * Mark migration as done so subsequent readConfig calls skip this block entirely,
+     * regardless of whether any legacy files were found or whether delete succeeded.
+     */
     current = { ...current, legacyMigrationDone: true };
     changed = true;
 
@@ -209,8 +211,10 @@ export class UserConfigService extends AppService {
         CONFIG_PATH,
         {
           headers: getBearerAuthHeaders(token),
-          // FormData ensures fetch emits Content-Type: multipart/form-data;boundary=…
-          // A plain Buffer causes openapi-fetch to send a boundary-less header, which DIAL Core rejects.
+          /*
+           * FormData ensures fetch emits Content-Type: multipart/form-data;boundary=…
+           * A plain Buffer causes openapi-fetch to send a boundary-less header, which DIAL Core rejects.
+           */
           body: (() => {
             const fd = new FormData();
             fd.append('file', new Blob([JSON.stringify(config)]), CONFIG_PATH);
