@@ -6,13 +6,6 @@
 
 // ---- Shared enums ----
 
-export enum Availability {
-  AlwaysOn = 'ALWAYS_ON',
-  OnDemand = 'ON_DEMAND',
-  Scheduled = 'SCHEDULED',
-  Deprecated = 'DEPRECATED',
-}
-
 export enum AuthenticationType {
   None = 'NONE',
   ApiKey = 'API_KEY',
@@ -23,14 +16,38 @@ export enum AuthenticationType {
 
 // ---- Model entity ----
 
+export enum ModelProvider {
+  OpenAI = 'OPEN_AI',
+  Anthropic = 'ANTHROPIC',
+  Google = 'GOOGLE',
+  Meta = 'META',
+  Mistral = 'MISTRAL',
+  Azure = 'AZURE',
+  Amazon = 'AMAZON',
+  Cohere = 'COHERE',
+}
+
+export enum ModelEndpointType {
+  AzureOpenAI = 'AZURE_OPEN_AI',
+  Anthropic = 'ANTHROPIC',
+  Responses = 'RESPONSES',
+}
+
+export interface ModelEndpointSnippets {
+  pythonSnippet?: string;
+  curlSnippet?: string;
+  jsSnippet?: string;
+}
+
+export interface ModelEndpoint {
+  type: ModelEndpointType;
+  url: string;
+  snippets?: ModelEndpointSnippets;
+}
+
 export interface ModelCapabilities {
-  hasChat: boolean;
   hasReasoning: boolean;
-  hasGeneration: boolean;
-  hasKnowledge: boolean;
   hasInstructions: boolean;
-  hasContext: boolean;
-  hasMultimodal: boolean;
   hasTools: boolean;
   hasStructuredOutput: boolean;
 }
@@ -41,14 +58,7 @@ export interface ModelSpecification {
   inputTypes?: string[];
   outputTypes?: string[];
   languages?: string[];
-  availability?: Availability;
-  hasSystemPrompt?: boolean;
-  hasTools?: boolean;
-  hasTemperature?: boolean;
-  hasSeed?: boolean;
-  hasUrlAttachments?: boolean;
-  hasFolderAttachments?: boolean;
-  hasAssistantAttachments?: boolean;
+  hostedBy?: string;
 }
 
 export interface ModelPricing {
@@ -63,13 +73,11 @@ export interface ModelPricing {
 
 export interface ModelApiDetails {
   modelId?: string;
-  endpointUrl?: string;
-  pythonSnippet?: string;
-  curlSnippet?: string;
-  jsSnippet?: string;
+  endpoints?: ModelEndpoint[];
 }
 
 export interface ModelEntityDetails {
+  provider?: ModelProvider;
   capabilities?: ModelCapabilities;
   specification?: ModelSpecification;
   pricing?: ModelPricing;

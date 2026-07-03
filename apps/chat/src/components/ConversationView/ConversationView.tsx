@@ -37,6 +37,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
+import { CONVERSATION_VIEW_INPUT_STYLES } from '../../constants/input-styles';
 import {
   BasicI18nKeys,
   ButtonsI18nKeys,
@@ -63,7 +64,7 @@ import { resolveCatalogIconUrl } from '../../utils/icon-path';
 import { mapDeploymentToCatalogItem } from '../../utils/map-deployment-to-catalog-item';
 import { normalizeResponseFormat } from '../../utils/message-utils';
 import type { AttachResult } from '../DialFileManagerModal/types/attach-result';
-import { ModelPickerPanel } from '../ModelPicker/ModelPickerPanel';
+import ModelPickerPanel from '../ModelPicker/ModelPickerPanel';
 import ConversationMessageItem from './ConversationMessageItem';
 
 const ConversationInput = lazy(async () => {
@@ -537,7 +538,7 @@ const ConversationView: FC<Props> = ({
           aria-relevant="additions"
           className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden"
         >
-          <div className="mx-auto flex w-full min-w-0 max-w-[760px] flex-1 flex-col gap-[26px] overflow-x-hidden px-6 pb-[18px] pt-7">
+          <div className="mx-auto flex w-full min-w-0 max-w-[760px] flex-1 flex-col gap-[26px] overflow-x-hidden px-6 pt-7">
             {messages.map((msg, index) => {
               const isThisMessageEditing = editingMessageIndexes?.has(index);
               return (
@@ -620,7 +621,7 @@ const ConversationView: FC<Props> = ({
       <div
         role="region"
         aria-label={t(ChatI18nKeys.MessageInput)}
-        className="w-full bg-layer-0 px-6 pb-[22px] pt-3.5"
+        className="relative z-10 w-full px-6 pb-4"
       >
         {isReadOnly ? (
           <div className="flex flex-col items-center justify-center gap-2 p-4">
@@ -640,14 +641,10 @@ const ConversationView: FC<Props> = ({
           <>
             <Suspense fallback={null}>
               <ConversationInput
+                styles={CONVERSATION_VIEW_INPUT_STYLES}
                 onSend={onSend}
                 onUploadAttachment={onUploadAttachment}
                 onStop={canStopAssistant ? onStop : undefined}
-                styles={{
-                  typography: {
-                    input: { fontClassName: 'dial-body-paragraph-text' },
-                  },
-                }}
                 isStreaming={isAssistantTyping}
                 onAttachmentsChange={onAttachmentsChange}
                 placeholder={placeholder}
@@ -705,7 +702,6 @@ const ConversationView: FC<Props> = ({
                         CatalogI18nKeys.PickerSearchPlaceholder,
                       ),
                       searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
-                      favoritesLabel: t(CatalogI18nKeys.PickerFavoritesLabel),
                       emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
                       browseCatalogLabel: t(
                         CatalogI18nKeys.PickerBrowseCatalog,

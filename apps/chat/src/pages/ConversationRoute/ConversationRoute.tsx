@@ -30,6 +30,7 @@ import { useNavigate } from 'react-router-dom';
 import RouteFallback from '../../components/RouteFallback/RouteFallback';
 import StarterButtons from '../../components/StarterButtons/StarterButtons';
 import { MAX_SELECTABLE_FILE_SIZE_BYTES } from '../../constants/files';
+import { CONVERSATION_ROUTE_INPUT_STYLES } from '../../constants/input-styles';
 import { getConversationRoute } from '../../constants/routes';
 import {
   AttachmentsI18nKeys,
@@ -88,10 +89,9 @@ const DialFileManagerModal = lazy(async () => {
   return { default: module.default };
 });
 
-const ModelPickerPanel = lazy(async () => {
-  const module = await import('../../components/ModelPicker/ModelPickerPanel');
-  return { default: module.ModelPickerPanel };
-});
+const ModelPickerPanel = lazy(
+  () => import('../../components/ModelPicker/ModelPickerPanel'),
+);
 
 const CatalogPickerModal = lazy(async () => {
   const module =
@@ -510,9 +510,7 @@ const ConversationRoute: FC = () => {
               firstName || undefined,
             )}
             placeholder={t(ChatI18nKeys.Placeholder)}
-            styles={{
-              typography: { welcomeClassName: 'dial-display2-text' },
-            }}
+            styles={CONVERSATION_ROUTE_INPUT_STYLES}
             deployments={deploymentItems}
             selectedDeploymentId={selectedItemId}
             onDeploymentChange={setSelectedItemId}
@@ -557,7 +555,6 @@ const ConversationRoute: FC = () => {
                       CatalogI18nKeys.PickerSearchPlaceholder,
                     ),
                     searchAriaLabel: t(CatalogI18nKeys.PickerSearchAriaLabel),
-                    favoritesLabel: t(CatalogI18nKeys.PickerFavoritesLabel),
                     emptyHint: t(CatalogI18nKeys.PickerEmptyHint),
                     browseCatalogLabel: t(CatalogI18nKeys.PickerBrowseCatalog),
                     removeFromFavoritesLabel: t(

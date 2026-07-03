@@ -1,6 +1,7 @@
 // Primary — gradient pill
 .dial-primary-solid-button {
   background-color: transparent !important;
+  padding-inline: 24px !important;
   background-image: linear-gradient(
     135deg,
     var(--bg-accent-secondary, #37babc) 0%,

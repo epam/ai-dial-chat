@@ -65,10 +65,11 @@ export const Favorites: FC<FavoritesProps> = ({
   removeFromFavoritesAriaLabel,
 }) => {
   const titleClassName =
-    favoritesStyles?.typography?.titleClassName ?? 'dial-h3-text text-primary';
+    favoritesStyles?.typography?.titleClassName ??
+    'dial-body-semi-text text-primary';
   const countClassName =
     favoritesStyles?.typography?.countClassName ??
-    'dial-tiny-text text-secondary';
+    'dial-tiny-semi-text text-secondary';
   const cssVars = {
     '--cat-favorites-border': favoritesStyles?.colors?.border,
   } as CSSProperties;
@@ -362,23 +363,39 @@ export const Favorites: FC<FavoritesProps> = ({
           postfixClassName={countClassName}
           trailing={
             favTotalPages > 1 ? (
-              <div className={styles.pageNav}>
+              <div
+                className={mergeClasses(
+                  'inline-flex items-center gap-[2px] rounded-full px-[6px] py-[3px]',
+                  styles.pageNav,
+                )}
+              >
                 <button
                   aria-label={prevPageAriaLabel}
                   disabled={favPage === 1}
                   onClick={() => setFavPage((p) => p - 1)}
-                  className={styles.navBtn}
+                  className={mergeClasses(
+                    'flex size-[22px] cursor-pointer items-center justify-center rounded-full border-none bg-transparent',
+                    styles.navBtn,
+                  )}
                 >
                   <IconChevronLeft size={14} className="rtl:scale-x-[-1]" />
                 </button>
-                <span className={styles.pageCounter}>
+                <span
+                  className={mergeClasses(
+                    'min-w-[32px] select-none px-1 text-center',
+                    styles.pageCounter,
+                  )}
+                >
                   {favPage} / {favTotalPages}
                 </span>
                 <button
                   aria-label={nextPageAriaLabel}
                   disabled={favPage === favTotalPages}
                   onClick={() => setFavPage((p) => p + 1)}
-                  className={styles.navBtn}
+                  className={mergeClasses(
+                    'flex size-[22px] cursor-pointer items-center justify-center rounded-full border-none bg-transparent',
+                    styles.navBtn,
+                  )}
                 >
                   <IconChevronRight size={14} className="rtl:scale-x-[-1]" />
                 </button>
@@ -389,7 +406,7 @@ export const Favorites: FC<FavoritesProps> = ({
 
         <div
           ref={gridRef}
-          className={mergeClasses('grid content-start gap-4', styles.gridPage)}
+          className={mergeClasses('grid content-start gap-5', styles.gridPage)}
           style={{
             gridTemplateColumns: `repeat(${favColumns}, minmax(0, 1fr))`,
             minHeight: lockedGridHeight,

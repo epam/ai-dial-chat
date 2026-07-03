@@ -16,14 +16,30 @@ const getLabelText = (label: unknown): string | undefined => {
   }
 
   if (
-    label != null &&
-    typeof label === 'object' &&
-    'props' in label &&
-    label.props != null &&
-    typeof label.props === 'object' &&
-    'text' in label.props
+    label == null ||
+    typeof label !== 'object' ||
+    !('props' in label) ||
+    label.props == null ||
+    typeof label.props !== 'object'
   ) {
-    return label.props.text as string;
+    return undefined;
+  }
+
+  const props = label.props as Record<string, unknown>;
+
+  if ('text' in props && typeof props.text === 'string') {
+    return props.text;
+  }
+
+  // label is a wrapper element (e.g. <span>) — look for text in the first child
+  if ('children' in props) {
+    const children = Array.isArray(props.children)
+      ? props.children
+      : [props.children];
+    for (const child of children) {
+      const text = getLabelText(child);
+      if (text !== undefined) return text;
+    }
   }
 
   return undefined;

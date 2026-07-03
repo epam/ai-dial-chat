@@ -1,4 +1,5 @@
 import { type DeploymentItem, mergeClasses } from '@epam/ai-dial-chat-shared';
+import { GradientCheckIcon } from '@epam/ai-dial-kit';
 import {
   DIAL_ICON_SIZE,
   DialEllipsisTooltip,
@@ -112,20 +113,25 @@ export const useModelSelector = ({
       }
       return [];
     }
-    return filterDeployments(deployments, searchQuery).map((item) => ({
-      key: item.id,
-      label: <DialEllipsisTooltip text={getDeploymentLabel(item)} />,
-      icon: buildDeploymentIcon(
-        item.iconUrl,
-        item.type,
-        item.displayName ?? item.id,
-      ),
-      onClick: () => onDeploymentChange?.(item.id),
-      className:
-        item.id === selectedDeploymentId
-          ? 'bg-accent-primary-alpha'
-          : undefined,
-    }));
+    return filterDeployments(deployments, searchQuery).map((item) => {
+      const isSelected = item.id === selectedDeploymentId;
+      return {
+        key: item.id,
+        label: (
+          <span className="flex w-full items-center justify-between gap-2">
+            <DialEllipsisTooltip text={getDeploymentLabel(item)} />
+            {isSelected && <GradientCheckIcon gradientId="ms-check-grad" />}
+          </span>
+        ),
+        icon: buildDeploymentIcon(
+          item.iconUrl,
+          item.type,
+          item.displayName ?? item.id,
+        ),
+        onClick: () => onDeploymentChange?.(item.id),
+        className: isSelected ? 'bg-accent-primary-alpha' : undefined,
+      };
+    });
   }, [
     deployments,
     isLoading,
