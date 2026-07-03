@@ -4,7 +4,7 @@ The existing login page was a minimal, unstyled form with no visual branding and
 
 ## What Changes
 
-- **Full-screen themed background**: Two sets of static images (`768_login_*`, `1920_login_*`) for light and dark themes, served via a `<picture>` element with a `(min-width: 1920px)` media query; hidden on mobile where the card is transparent.
+- **Full-screen background**: Two static images (`768_login.png`, `1920_login.png`), served via a `<picture>` element with a `(min-width: 1920px)` media query; hidden on mobile where the card is transparent. No light/dark theme variants — a single image set is used regardless of theme.
 - **Branded card**: Semi-transparent, rounded card centered on the page. Uses `bg-blackout`. Shows the theme favicon at the top when configured. Hidden background and transparent layout on mobile.
 - **Dynamic provider list**: Fetches `ProviderInfoDto[]` from `GET /api/v1/auth/providers` (via `authApi.listProviders()`) on mount. Each provider renders as a full-width button navigating to `/api/v1/auth/login/{providerId}?callbackUrl=...`.
 - **Provider icons**: SVG icons loaded at runtime from the Auth.js CDN (`https://authjs.dev/img/providers/{id}.svg`). Auth.js is the de-facto OAuth/OIDC library for JavaScript and its CDN is the canonical public source for OAuth provider icons. Trailing digits are stripped from provider IDs before the URL is constructed (e.g. `azure-ad2` → `azure-ad`). A missing or failed icon is hidden — it does not affect button function.
@@ -28,8 +28,8 @@ The existing login page was a minimal, unstyled form with no visual branding and
 
 - **Modified**: `apps/chat/src/pages/auth/Login.tsx` — full rewrite
 - **Added**: `apps/chat/src/pages/auth/Login.spec.tsx` — test suite
-- **Added**: `apps/chat/public/1920_login_dark mode.png`, `apps/chat/public/1920_login_light mode.png` — large-screen background images
-- **Added**: `apps/chat/public/768_login_dark mode.png`, `apps/chat/public/768_login_light mode.png` — mid-size background images
+- **Added**: `apps/chat/public/1920_login.png` — large-screen background image
+- **Added**: `apps/chat/public/768_login.png` — mid-size background image
 - **Modified**: `apps/chat/src/constants/translation-keys.ts` — `AuthI18nKeys` extended with `LoginTitle`, `LoginDescription`, `Loading`, `ProviderButtonLabel`, `ProvidersError`
 - **Modified**: `apps/chat/src/i18n/locales/en.json` — matching English strings
 - **Rollback**: revert `Login.tsx`, remove public assets, revert translation keys; no database or API contract changes

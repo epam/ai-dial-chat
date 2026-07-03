@@ -8,25 +8,26 @@
 
 - Branded, visually rich login page matching the Figma design
 - Dynamic provider list from `authApi.listProviders()` with loading and error states
-- Responsive layout: full-screen background on tablet/desktop, transparent card on mobile
-- Theme-aware background images and favicon
-- Per-provider SVG icons with two-stage fallback
+- Responsive layout: full-screen background on desktop, transparent card on mobile
+- Theme favicon shown when configured; single background image set (no light/dark variants)
+- Per-provider SVG icons loaded from the Auth.js CDN with hide-on-error fallback
 - i18n for all visible strings; `callbackUrl` forwarding preserved
 
-**Non-goals:** BFF auth endpoint changes, logout/session handling, provider CRUD, multi-language background image variants, animated transitions.
+**Non-goals:** BFF auth endpoint changes, logout/session handling, provider CRUD, theme-variant background images, animated transitions.
 
 ## Decisions
 
-### D1 — `<picture>` element for responsive themed background
+### D1 — `<picture>` element for responsive background; no theme variants
 
-**Decision:** Use a single `<picture>` element with one `<source>` for `(min-width: 1920px)` and an `<img>` fallback for the 768-px asset. Theme (light/dark) is encoded in the filename via a `themeSlug` variable derived from `currentTheme`. The picture is hidden on mobile (`mobile:hidden`) where no background is shown.
+**Decision:** Use a single `<picture>` element with one `<source>` for `(min-width: 1920px)` (`/1920_login.png`) and an `<img>` fallback for the 768-px asset (`/768_login.png`). The picture is hidden on mobile (`mobile:hidden`) where no background is shown. No light/dark theme variants — a single image pair is served regardless of active theme.
 
-**Rationale:** `<picture>` is the semantic HTML mechanism for art-direction breakpoints and avoids loading both resolutions. Encoding theme in the filename keeps the switch to a single conditional string with no JS image loading logic.
+**Rationale:** `<picture>` is the semantic HTML mechanism for art-direction breakpoints and avoids loading both resolutions. Providing theme variants would double the asset count and require runtime theme-to-filename mapping; the design does not require it.
 
 **Alternatives considered:**
 
-- CSS `background-image` with media queries: would require the image paths in a `style` prop or Tailwind arbitrary values, losing semantic alt text and making theme switching more complex.
-- Separate `<img>` elements toggled by CSS: loads both images; not art-direction-friendly.
+- Theme-encoded filenames (`768_login_light.png`, `768_login_dark.png`): doubles asset count, adds a JS conditional for the filename — rejected as over-engineering for the current design.
+- CSS `background-image` with media queries: loses semantic alt text and makes art-direction more complex.
+- Separate `<img>` elements toggled by CSS: loads both resolutions simultaneously.
 
 ### D2 — Semi-transparent card with `bg-blackout`
 

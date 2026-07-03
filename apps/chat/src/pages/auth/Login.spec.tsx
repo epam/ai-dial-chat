@@ -104,7 +104,7 @@ describe('LoginPage', () => {
   });
 
   it('renders loading state while providers are loading', () => {
-    mockGetProviders.mockReturnValue(new Promise((_resolve) => undefined));
+    mockGetProviders.mockReturnValue(new Promise(() => undefined));
 
     renderLogin();
 
