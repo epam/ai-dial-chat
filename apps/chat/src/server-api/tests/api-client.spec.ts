@@ -168,7 +168,15 @@ describe('unauthorizedMiddleware', () => {
           headers: { 'x-csrf-token': 'fresh-token' },
         }),
       )
-      .mockResolvedValueOnce(makeResponse(200));
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ data: [] }), {
+          status: 200,
+          headers: {
+            'content-type': 'application/json',
+            'x-csrf-token': 'retry-token',
+          },
+        }),
+      );
     global.fetch = fetchSpy;
     const listener = vi.fn();
     const cleanup = onUnauthorized(listener);
@@ -184,7 +192,7 @@ describe('unauthorizedMiddleware', () => {
     );
 
     expect(listener).not.toHaveBeenCalled();
-    expect(getCsrfToken()).toBe('fresh-token');
+    expect(getCsrfToken()).toBe('retry-token');
     expect(fetchSpy).toHaveBeenCalledTimes(3);
     expect(getLastRequestHeaders(fetchSpy).get('X-CSRF-Token')).toBe(
       'stale-token',
@@ -193,6 +201,110 @@ describe('unauthorizedMiddleware', () => {
     expect(
       new Headers(fetchSpy.mock.calls[2]?.[1]?.headers).get('X-CSRF-Token'),
     ).toBe('fresh-token');
+
+    cleanup();
+  });
+
+  it('throws UnauthorizedError when retried request gets a 401 response', async () => {
+    setCsrfToken('stale-token');
+    const fetchSpy = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        makeResponse(403, {
+          message: 'Invalid CSRF token',
+          error: 'Forbidden',
+          statusCode: 403,
+        }),
+      )
+      .mockResolvedValueOnce(
+        new Response(null, {
+          status: 200,
+          headers: { 'x-csrf-token': 'fresh-token' },
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 401 }));
+    global.fetch = fetchSpy;
+    const listener = vi.fn();
+    const cleanup = onUnauthorized(listener);
+
+    const api = new ConversationsApi(createApiConfiguration());
+    await expect(
+      api.createConversation({
+        createConversationDto: {
+          firstMessage: 'hi',
+          deploymentId: 'test-deployment',
+        },
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+
+    expect(listener).toHaveBeenCalledWith('/api/v1/conversations');
+    expect(getCsrfToken()).toBeNull();
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+
+    cleanup();
+  });
+
+  it('throws UnauthorizedError when CSRF refresh gets a 401 response', async () => {
+    setCsrfToken('stale-token');
+    const fetchSpy = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        makeResponse(403, {
+          message: 'Invalid CSRF token',
+          error: 'Forbidden',
+          statusCode: 403,
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 401 }));
+    global.fetch = fetchSpy;
+    const listener = vi.fn();
+    const cleanup = onUnauthorized(listener);
+
+    const api = new ConversationsApi(createApiConfiguration());
+    await expect(
+      api.createConversation({
+        createConversationDto: {
+          firstMessage: 'hi',
+          deploymentId: 'test-deployment',
+        },
+      }),
+    ).rejects.toBeInstanceOf(UnauthorizedError);
+
+    expect(listener).toHaveBeenCalledOnce();
+    expect(getCsrfToken()).toBeNull();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    cleanup();
+  });
+
+  it('throws a descriptive error when CSRF refresh does not return a token', async () => {
+    setCsrfToken('stale-token');
+    const fetchSpy = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        makeResponse(403, {
+          message: 'Invalid CSRF token',
+          error: 'Forbidden',
+          statusCode: 403,
+        }),
+      )
+      .mockResolvedValueOnce(new Response(null, { status: 200 }));
+    global.fetch = fetchSpy;
+    const listener = vi.fn();
+    const cleanup = onUnauthorized(listener);
+
+    const api = new ConversationsApi(createApiConfiguration());
+    await expect(
+      api.createConversation({
+        createConversationDto: {
+          firstMessage: 'hi',
+          deploymentId: 'test-deployment',
+        },
+      }),
+    ).rejects.toThrow('CSRF refresh failed');
+
+    expect(listener).not.toHaveBeenCalled();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
 
     cleanup();
   });
@@ -222,6 +334,7 @@ describe('unauthorizedMiddleware', () => {
 
     expect(listener).not.toHaveBeenCalled();
     expect(getCsrfToken()).toBe('fresh-token');
+    expect(global.fetch).toHaveBeenCalledTimes(1);
 
     cleanup();
   });

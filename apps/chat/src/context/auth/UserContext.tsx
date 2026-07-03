@@ -40,6 +40,8 @@ export const UserProvider = ({ children }: { children: ReactNode }) => {
     } catch (err) {
       if (!signal.isCancelled) {
         if (!(err instanceof UnauthorizedError)) {
+          // Keep CSRF across transient bootstrap failures; mutating requests
+          // re-prime it through the invalid-CSRF retry path if it became stale.
           console.error('UserContext bootstrap failed', err);
         } else {
           clearCsrfToken();

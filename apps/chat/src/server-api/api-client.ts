@@ -13,13 +13,19 @@ import {
   UserConfigApi,
 } from '@epam/chat-api-client';
 import {
+  ApiEndpoints,
+  CsrfRefreshStatus,
   UnauthorizedError,
   getCsrfToken,
   isInvalidCsrfErrorBody,
+  notifyUnauthorized,
   refreshCsrfToken,
   setCsrfToken,
-  notifyUnauthorized,
 } from './base';
+
+type MiddlewarePostContext = Parameters<NonNullable<Middleware['post']>>[0];
+
+const csrfTokenAtDispatch = new WeakMap<RequestInit, string | null>();
 
 const csrfMiddleware: Middleware = {
   pre: async (context) => {
@@ -27,15 +33,18 @@ const csrfMiddleware: Middleware = {
     if (context.init.method !== 'GET' && token !== null) {
       const headers = new Headers(context.init.headers);
       headers.set('X-CSRF-Token', token);
+      const init = {
+        ...context.init,
+        headers,
+      };
+      csrfTokenAtDispatch.set(init, token);
 
       return {
         ...context,
-        init: {
-          ...context.init,
-          headers,
-        },
+        init,
       };
     }
+    csrfTokenAtDispatch.set(context.init, token);
     return context;
   },
   post: async (context) => {
@@ -57,32 +66,49 @@ const isInvalidCsrfResponse = async (response: Response): Promise<boolean> => {
   }
 };
 
-const getRequestCsrfToken = (init: RequestInit): string | null =>
-  new Headers(init.headers).get('X-CSRF-Token');
-
 const retryWithFreshCsrf = async (
-  context: Parameters<NonNullable<Middleware['post']>>[0],
+  context: MiddlewarePostContext,
 ): Promise<Response | undefined> => {
-  const requestCsrfToken = getRequestCsrfToken(context.init);
-  if (getCsrfToken() !== requestCsrfToken) {
+  const dispatchToken = csrfTokenAtDispatch.get(context.init) ?? null;
+  if (getCsrfToken() !== dispatchToken) {
     return undefined;
   }
 
   const refreshed = await refreshCsrfToken();
-  const csrfToken = getCsrfToken();
-  if (!refreshed || csrfToken === null) {
+  if (refreshed.status === CsrfRefreshStatus.Unauthorized) {
+    notifyUnauthorized(ApiEndpoints.AUTH_ME);
+    throw new UnauthorizedError(ApiEndpoints.AUTH_ME);
+  }
+  if (refreshed.status !== CsrfRefreshStatus.Ok) {
     return undefined;
   }
 
   const headers = new Headers(context.init.headers);
   if (context.init.method !== 'GET') {
-    headers.set('X-CSRF-Token', csrfToken);
+    headers.set('X-CSRF-Token', refreshed.token);
   }
 
   return fetch(context.url, {
     ...context.init,
     headers,
   });
+};
+
+const handleRetryResponse = (
+  context: MiddlewarePostContext,
+  response: Response,
+): Response => {
+  const rotated = response.headers.get('x-csrf-token');
+  if (rotated) {
+    setCsrfToken(rotated);
+  }
+
+  if (response.status === 401) {
+    notifyUnauthorized(context.url);
+    throw new UnauthorizedError(context.url);
+  }
+
+  return response;
 };
 
 const unauthorizedMiddleware: Middleware = {
@@ -94,8 +120,9 @@ const unauthorizedMiddleware: Middleware = {
     if (await isInvalidCsrfResponse(context.response)) {
       const retryResponse = await retryWithFreshCsrf(context);
       if (retryResponse) {
-        return retryResponse;
+        return handleRetryResponse(context, retryResponse);
       }
+      throw new Error(`CSRF refresh failed for ${context.url}`);
     }
     return context.response;
   },

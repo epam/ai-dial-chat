@@ -17,6 +17,16 @@ export class UnauthorizedError extends Error {
   }
 }
 
+export enum CsrfRefreshStatus {
+  Ok = 'ok',
+  Unauthorized = 'unauthorized',
+  Failed = 'failed',
+}
+
+export type CsrfRefreshResult =
+  | { status: CsrfRefreshStatus.Ok; token: string }
+  | { status: CsrfRefreshStatus.Unauthorized | CsrfRefreshStatus.Failed };
+
 type UnauthorizedListener = (url: string) => void;
 const listeners = new Set<UnauthorizedListener>();
 
@@ -51,25 +61,39 @@ type RequestOptions = Omit<RequestInit, 'method' | 'body'> & {
 export const isInvalidCsrfErrorBody = (body: string): boolean =>
   body.includes('Invalid CSRF token');
 
-export const refreshCsrfToken = async (): Promise<boolean> => {
+let csrfRefreshPromise: Promise<CsrfRefreshResult> | null = null;
+
+const runCsrfRefresh = async (): Promise<CsrfRefreshResult> => {
   clearCsrfToken();
 
-  const response = await fetch(ApiEndpoints.AUTH_ME, {
-    method: 'GET',
-    credentials: 'include',
-  });
-
-  const csrfToken = response.headers.get('x-csrf-token');
-  if (csrfToken) {
-    setCsrfToken(csrfToken);
+  let response: Response;
+  try {
+    response = await fetch(ApiEndpoints.AUTH_ME, {
+      method: 'GET',
+      credentials: 'include',
+    });
+  } catch {
+    return { status: CsrfRefreshStatus.Failed };
   }
 
   if (response.status === 401) {
-    notifyUnauthorized(ApiEndpoints.AUTH_ME);
-    throw new UnauthorizedError(ApiEndpoints.AUTH_ME);
+    return { status: CsrfRefreshStatus.Unauthorized };
   }
 
-  return response.ok && csrfToken != null;
+  const csrfToken = response.headers.get('x-csrf-token');
+  if (response.ok && csrfToken != null) {
+    setCsrfToken(csrfToken);
+    return { status: CsrfRefreshStatus.Ok, token: csrfToken };
+  }
+
+  return { status: CsrfRefreshStatus.Failed };
+};
+
+export const refreshCsrfToken = (): Promise<CsrfRefreshResult> => {
+  csrfRefreshPromise ??= runCsrfRefresh().finally(() => {
+    csrfRefreshPromise = null;
+  });
+  return csrfRefreshPromise;
 };
 
 // Type guard for validating response structure
@@ -158,8 +182,12 @@ const request = async <TResponse>(
     if (response.status === 403 && isInvalidCsrfErrorBody(errorBody)) {
       if (allowCsrfRetry && _csrfToken === csrfTokenForRequest) {
         const refreshed = await refreshCsrfToken();
-        if (refreshed) {
+        if (refreshed.status === CsrfRefreshStatus.Ok) {
           return request(url, method, options, false);
+        }
+        if (refreshed.status === CsrfRefreshStatus.Unauthorized) {
+          notifyUnauthorized(ApiEndpoints.AUTH_ME);
+          throw new UnauthorizedError(ApiEndpoints.AUTH_ME);
         }
       }
     }

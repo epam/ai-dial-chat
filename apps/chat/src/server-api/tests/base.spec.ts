@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   ApiEndpoints,
+  CsrfRefreshStatus,
   UnauthorizedError,
   get,
   getCsrfToken,
@@ -9,6 +10,7 @@ import {
   onUnauthorized,
   post,
   put,
+  refreshCsrfToken,
   setCsrfToken,
 } from '../base';
 
@@ -28,6 +30,10 @@ const mockFetch = (overrides: Partial<Response> = {}) => {
   global.fetch = vi.fn().mockResolvedValue(response as Response);
   return response as Response;
 };
+
+afterEach(() => {
+  setCsrfToken(null);
+});
 
 // ---------------------------------------------------------------------------
 // UnauthorizedError
@@ -128,6 +134,67 @@ describe('onUnauthorized', () => {
     });
 
     unregister();
+  });
+
+  it('notifies unauthorized when CSRF refresh gets a 401 response', async () => {
+    setCsrfToken('stale-csrf-token');
+    const listener = vi.fn();
+    const unregister = onUnauthorized(listener);
+    const fetchSpy = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        text: vi.fn().mockResolvedValue(
+          JSON.stringify({
+            message: 'Invalid CSRF token',
+            error: 'Forbidden',
+            statusCode: 403,
+          }),
+        ),
+      } as unknown as Response)
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 401,
+        headers: new Headers(),
+      } as Response);
+    global.fetch = fetchSpy;
+
+    await expect(post('/api/test', {})).rejects.toBeInstanceOf(
+      UnauthorizedError,
+    );
+    expect(listener).toHaveBeenCalledWith(ApiEndpoints.AUTH_ME);
+    expect(getCsrfToken()).toBeNull();
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    unregister();
+  });
+
+  it('shares one in-flight CSRF refresh request', async () => {
+    const fetchSpy = vi.fn<typeof fetch>().mockResolvedValue(
+      new Response(null, {
+        status: 200,
+        headers: { 'x-csrf-token': 'fresh-csrf-token' },
+      }),
+    );
+    global.fetch = fetchSpy;
+
+    const [first, second] = await Promise.all([
+      refreshCsrfToken(),
+      refreshCsrfToken(),
+    ]);
+
+    expect(first).toEqual({
+      status: CsrfRefreshStatus.Ok,
+      token: 'fresh-csrf-token',
+    });
+    expect(second).toEqual({
+      status: CsrfRefreshStatus.Ok,
+      token: 'fresh-csrf-token',
+    });
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+    expect(getCsrfToken()).toBe('fresh-csrf-token');
   });
 
   it('does not clear a newer CSRF token when a stale invalid CSRF response arrives', async () => {
