@@ -11,6 +11,7 @@ import {
   getDialFilesWithInvalidFileType,
   getShortExtensionsListFromMimeType,
   isAllowedMimeType,
+  prepareFileName,
 } from '@/src/utils/app/file';
 import { isParentFolderSelected } from '@/src/utils/app/folders';
 import { isHiddenPath } from '@/src/utils/app/search';
@@ -48,6 +49,7 @@ import {
 
 interface Props {
   isOpen: boolean;
+  initialPath?: string;
   selectedFilesIds?: string[];
   allowedTypes?: string[];
   allowedTypesLabel?: string | null;
@@ -64,11 +66,13 @@ interface Props {
     files: DialFile[];
     folders?: FolderInterface[];
   };
+  isPreUploadOpen?: boolean;
 }
 
 export const FileManagerModal = memo(
   ({
     isOpen,
+    initialPath,
     allowedTypes = [],
     allowedTypesLabel,
     selectedFilesIds: previousSelectedFilesIds = [],
@@ -82,6 +86,7 @@ export const FileManagerModal = memo(
     warningMessage,
     maxSelectableFileSize,
     additionalFilesAndFolders,
+    isPreUploadOpen,
   }: Props) => {
     const dispatch = useAppDispatch();
     const { t } = useTranslation(Translation.Chat);
@@ -372,6 +377,7 @@ export const FileManagerModal = memo(
       availableTabs,
       reviewBucket,
       additionalFilesAndFolders,
+      initialPath,
     });
 
     const mergedGridOptions = useMemo(
@@ -488,6 +494,7 @@ export const FileManagerModal = memo(
               deleteConfirmationOptions={deleteConfirmationOptions}
               conflictResolutionPopupOptions={conflictResolutionPopupOptions}
               onUploadFiles={handleUploadFiles}
+              prepareUploadFileName={prepareFileName}
               onCreateFolder={handleCreateFolder}
               onUploadArchive={handleUploadArchive}
               onMoveToFiles={handleMoveFiles}
@@ -500,6 +507,12 @@ export const FileManagerModal = memo(
               emptyStateDescription={emptyStateDescription}
               hideSearchPathItemName
               autoSelectUploadedItems
+              initialUploadFilesOpen={
+                isPreUploadOpen &&
+                !areFilesLoading &&
+                !areFoldersLoading &&
+                !isAnyOperationInProgress
+              }
             />
             {isAnyOperationInProgress && (
               <div className="absolute inset-0 z-50 flex items-center justify-center bg-overlay">

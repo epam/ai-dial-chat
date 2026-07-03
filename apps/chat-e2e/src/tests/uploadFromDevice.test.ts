@@ -28,7 +28,8 @@ dialTest.beforeAll(async () => {
   );
 });
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   '"Add more files..." on "Upload from device" opens system file manager.\n' +
     '[Upload from device] is closed on X',
   async ({
@@ -128,7 +129,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   'Delete a file from "Upload from device".\n' +
     'Three dots appear at the end of long file name on "Upload from device".\n' +
     '"Upload" button become disabled if to remove all files from "Upload from device"',
@@ -257,7 +259,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   '[Upload from device] opened from message box. Select 15 files at the same time.\n' +
     '[Upload from device] opened from Attach files. Select 15 files at the same time.\n' +
     '[Upload from device] Images are allowed to be selected if images are allowed only',
@@ -367,7 +370,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   '[Upload from device] No error appears if to load two files with equal names but different extensions.\n' +
     '[Upload from device] Files with weight 0 and 512Mb are uploaded',
   async ({
@@ -444,7 +448,8 @@ dialTest(
   },
 );
 
-dialTest(
+//test-case is not relevant since no uploadFromDeviceModal is displayed anymore
+dialTest.skip(
   `Focus stays in the file named while it's being renamed manually on "Upload from device".\n` +
     "[Upload from device] It's allowed to upload a file with a dot at the end of the name but before extension. Renamed file.\n" +
     "[Upload from device] It's allowed to upload a file with a dot at the end of the name but before extension.\n" +
